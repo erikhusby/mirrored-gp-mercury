@@ -16,22 +16,29 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.ArraysQcDao;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcFingerprint;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.run.ArchetypeAttribute;
+import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.text.NumberFormat;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -43,7 +50,7 @@ import java.util.Set;
 
 
 @UrlBinding(value = "/view/metricsView.action")
-public class MetricsViewActionBean extends HeatMapActionBean {
+public class MetricsViewActionBean extends CoreActionBean {
     private static final Log logger = LogFactory.getLog(LabEventFactory.class);
 
     private static final String VIEW_PAGE = "/vessel/vessel_metrics_view.jsp";
@@ -62,12 +69,16 @@ public class MetricsViewActionBean extends HeatMapActionBean {
     @Inject
     private ProductEjb productEjb;
 
+    @Inject
+    private AttributeArchetypeDao attributeArchetypeDao;
+
     @Validate(required = true, on = {SEARCH_ACTION})
     private String labVesselIdentifier;
 
     private LabVessel labVessel;
     private StaticPlate staticPlate;
-    private Map<String, Map<String, Object>> metricToPositionToValue;
+    private GenotypingChip genotypingChip;
+    private PlateMap plateMap;
     private String metricsTableJson;
     private boolean foundResults;
     private boolean isInfinium;
@@ -75,21 +86,50 @@ public class MetricsViewActionBean extends HeatMapActionBean {
     private final static String YELLOW = "#fcf8e3";
     private final static String RED = "#f2dede";
     private final static String BLUE = "#d9edf7";
+    private final static String SLATE_GRAY = "slategray";
 
+    @JsonSerialize(using = PlateMapMetricsJsonSerializer.class)
+    public enum PlateMapMetrics {
+        CALL_RATE("Call Rate", true, ChartType.Category, "greaterThanOrEqual"),
+        HET_PCT("Heterozygosity (%)", true, ChartType.Category, "greaterThanOrEqual"),
+        FP_GENDER("FP Gender", false, ChartType.Category, "equals"),
+        REPORTED_GENDER("Reported Gender", false, ChartType.Category, "equals"),
+        AUTOCALL_GENDER("Autocall Gender", false, ChartType.Category, "equals"),
+        GENDER_CONCORDANCE_PF("Gender Concordance PF", false, ChartType.Category, "equals"),
+        P95_GREEN("P95 Green", true, ChartType.Category, "equals"),
+        P95_GREEN_PF("P95 Green PF", false, ChartType.Category, "equals"),
+        P95_RED("P95 Red", true, ChartType.Category, "equals"),
+        P95_RED_PF("P95 Red PF", false, ChartType.Category, "equals"),
+        HAPLOTYPE_DIFFERENCE("Haplotype Difference", true, ChartType.Category, "equals");
 
-    public final Map<String, List<Options>> INF_METRIC_TYPES = new HashMap<String, List<Options>>() {{
-        put("callRate", new OptionsBuilder().
-                addOption(">= 98", "98", GREEN).
-                addOption(">=95", "95", YELLOW).
-                addOption("Fail", "0", RED).build());
-        put("fpGender", new OptionsBuilder().
-                addOption("M", "M", BLUE).
-                addOption("F", "F", RED).build());
-        put("hetPct", new OptionsBuilder().
-                addOption(">= 25", "25", RED).
-                addOption(">= 20", "20", YELLOW).
-                addOption("Pass", "0", GREEN).build());
-    }};
+        private String displayName;
+        private final boolean displayValue;
+        private final ChartType chartType;
+        private String evalType;
+
+        PlateMapMetrics(String displayName, boolean displayValue, ChartType chartType, String evalType) {
+            this.displayName = displayName;
+            this.displayValue = displayValue;
+            this.chartType = chartType;
+            this.evalType = evalType;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        public boolean isDisplayValue() {
+            return displayValue;
+        }
+
+        public ChartType getChartType() {
+            return chartType;
+        }
+
+        public String getEvalType() {
+            return evalType;
+        }
+    }
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -138,132 +178,262 @@ public class MetricsViewActionBean extends HeatMapActionBean {
                         ProductOrder productOrder = productOrderSample.getProductOrder();
                         Date effectiveDate =  productOrder.getCreatedDate();
                         chipPair = productEjb.getGenotypingChip(productOrder, effectiveDate);
+                        break;
                     }
                 }
             }
         }
 
         isInfinium = chipPair != null && chipPair.getLeft() != null && chipPair.getRight() != null;
+        if (isInfinium) {
+            if (chipPair.getLeft() != null && chipPair.getRight() != null) {
+                genotypingChip = attributeArchetypeDao.findGenotypingChip(chipPair.getLeft(),
+                        chipPair.getRight());
+                if (genotypingChip == null) {
+                    addGlobalValidationError("Chip " + chipPair.getRight() + " is not configured");
+                    return;
+                }
+            }
+        }
         foundResults = true;
     }
 
     private void buildMetricsTable() {
         if (isInfinium) {
-            buildInfiniumMetricsTable();
-        }
-    }
-
-    private void buildInfiniumMetricsTable() {
-        boolean isHybChip = false;
-        metricToPositionToValue = new HashMap<>();
-        if (isInfinium) {
-            Set<LabVessel> chips = new HashSet<>();
-            Set<String> chipWellBarcodes = new HashSet<>();
-            Map<String, String> chipWellToSourcePosition = new HashMap<>();
-
-            Set<LabEvent> hybEvents = new HashSet<>();
-            if (staticPlate.getVesselGeometry().name().contains("CHIP")) {
-                chips.add(labVessel);
-                hybEvents.addAll(labVessel.getTransfersTo());
-                isHybChip = true;
-            } else {
-                List<LabEventType> infiniumRootEventTypes =
-                        Collections.singletonList(LabEventType.INFINIUM_HYBRIDIZATION);
-                TransferTraverserCriteria.VesselForEventTypeCriteria eventTypeCriteria
-                        = new TransferTraverserCriteria.VesselForEventTypeCriteria(infiniumRootEventTypes, true);
-
-                if (labVessel.getContainerRole() != null) {
-                    labVessel.getContainerRole().applyCriteriaToAllPositions(eventTypeCriteria,
-                            TransferTraverserCriteria.TraversalDirection.Descendants);
-                }
-
-                for (Map.Entry<LabEvent, Set<LabVessel>> eventEntry : eventTypeCriteria.getVesselsForLabEventType()
-                        .entrySet()) {
-                    for (LabVessel labVessel : eventEntry.getValue()) {
-                        if (labVessel.getVesselGeometry().name().contains("CHIP")) {
-                            chips.addAll(eventEntry.getValue());
-                            hybEvents.add(eventEntry.getKey());
-                        }
-                    }
-                }
-            }
-            if (chips.isEmpty()) {
-                addValidationError("labVesselIdentifier", "No infinium metrics found for lab vessel");
-                return;
-            }
-
-            for (LabEvent labEvent : hybEvents) {
-                Set<CherryPickTransfer> cherryPickTransfers = labEvent.getCherryPickTransfers();
-                for (CherryPickTransfer cherryPickTransfer : cherryPickTransfers) {
-                    VesselPosition sourcePosition = cherryPickTransfer.getSourcePosition();
-                    VesselPosition destinationPosition = cherryPickTransfer.getTargetPosition();
-                    LabVessel chip = cherryPickTransfer.getTargetVesselContainer().getEmbedder();
-                    String chipWellBarcode = chip.getLabel() + "_" + destinationPosition.name();
-                    chipWellBarcodes.add(chipWellBarcode);
-                    if (isHybChip) {
-                        chipWellToSourcePosition.put(chipWellBarcode, destinationPosition.name());
-                    } else {
-                        chipWellToSourcePosition.put(chipWellBarcode, sourcePosition.name());
-                    }
-                }
-            }
-
-            List<ArraysQc> arraysQcList = arraysQcDao.findByBarcodes(new ArrayList<>(chipWellBarcodes));
-            Set<String> metrics = INF_METRIC_TYPES.keySet();
-            for (String field : metrics) {
-                if (!metricToPositionToValue.containsKey(field)) {
-                    metricToPositionToValue.put(field, new HashMap<String, Object>());
-                }
-            }
-
-            MetricsTable metricsTable = new MetricsTable(
-                    labVessel.getVesselGeometry().getColumnNames(), labVessel.getVesselGeometry().getRowNames());
-
-            ObjectMapper mapper = new ObjectMapper();
-            for (String metric : metrics) {
-                Dataset dataset = new Dataset();
-                dataset.setType(ChartType.Category);
-                dataset.setLabel(metric);
-                List<Options> options = INF_METRIC_TYPES.get(metric);
-                dataset.setOptions(options);
-                metricsTable.getDatasets().add(dataset);
-                for (ArraysQc arraysQc : arraysQcList) {
-                    Map<String, Object> props = mapper.convertValue(arraysQc, Map.class);
-                    if (props.containsKey(metric)) {
-                        String chipWellbarcode = arraysQc.getChipWellBarcode();
-                        String startPosition = chipWellToSourcePosition.get(chipWellbarcode);
-                        Data data = new Data();
-                        Object value = props.get(metric);
-                        if (value instanceof Double) {
-                            value = formatNoPercentSign(value);
-                        }
-                        data.setValue(value);
-                        data.setWell(startPosition);
-                        dataset.getData().add(data);
-
-                        data.getMetadata().add(Metadata.create("Well Name", startPosition));
-                        data.getMetadata().add(Metadata.create("Sample Alias", arraysQc.getSampleAlias()));
-                        data.getMetadata().add(Metadata.create("Chip Well Barcode", arraysQc.getChipWellBarcode()));
-                        data.getMetadata().add(Metadata.create("Call Rate", String.valueOf(arraysQc.getCallRate())));
-                    }
-                }
-            }
-
             try {
-                metricsTableJson = mapper.writeValueAsString(metricsTable);
+                buildInfiniumMetricsTable();
             } catch (IOException e) {
-                logger.error("Failed to generate JSON", e);
-                addGlobalValidationError("Failed to generate JSON");
-                return;
+                logger.error("Error building Infinium Metrics Table", e);
+                addGlobalValidationError("Failed to generate metrics view");
             }
-            setHeatMapFields(new ArrayList<>(metrics));
         }
     }
 
-    private static String formatNoPercentSign(Object value) {
-        NumberFormat formatter = NumberFormat.getPercentInstance();
-        formatter.setMinimumFractionDigits(2);
-        return formatter.format(value).replace("%", "");
+    public void buildInfiniumMetricsTable() throws IOException {
+        boolean isHybChip = false;
+        Set<LabVessel> chips = new HashSet<>();
+        Set<String> chipWellBarcodes = new HashSet<>();
+        Map<String, String> chipWellToSourcePosition = new HashMap<>();
+
+        Set<LabEvent> hybEvents = new HashSet<>();
+        if (staticPlate.getVesselGeometry().name().contains("CHIP")) {
+            chips.add(labVessel);
+            hybEvents.addAll(labVessel.getTransfersTo());
+            isHybChip = true;
+        } else {
+            List<LabEventType> infiniumRootEventTypes =
+                    Collections.singletonList(LabEventType.INFINIUM_HYBRIDIZATION);
+            TransferTraverserCriteria.VesselForEventTypeCriteria eventTypeCriteria
+                    = new TransferTraverserCriteria.VesselForEventTypeCriteria(infiniumRootEventTypes, true);
+
+            if (labVessel.getContainerRole() != null) {
+                labVessel.getContainerRole().applyCriteriaToAllPositions(eventTypeCriteria,
+                        TransferTraverserCriteria.TraversalDirection.Descendants);
+            }
+
+            for (Map.Entry<LabEvent, Set<LabVessel>> eventEntry : eventTypeCriteria.getVesselsForLabEventType()
+                    .entrySet()) {
+                for (LabVessel labVessel : eventEntry.getValue()) {
+                    if (labVessel.getVesselGeometry().name().contains("CHIP")) {
+                        chips.addAll(eventEntry.getValue());
+                        hybEvents.add(eventEntry.getKey());
+                    }
+                }
+            }
+        }
+        if (chips.isEmpty()) {
+            addValidationError("labVesselIdentifier", "No infinium metrics found for lab vessel");
+            return;
+        }
+
+        for (LabEvent labEvent : hybEvents) {
+            Set<CherryPickTransfer> cherryPickTransfers = labEvent.getCherryPickTransfers();
+            for (CherryPickTransfer cherryPickTransfer : cherryPickTransfers) {
+                VesselPosition sourcePosition = cherryPickTransfer.getSourcePosition();
+                VesselPosition destinationPosition = cherryPickTransfer.getTargetPosition();
+                LabVessel chip = cherryPickTransfer.getTargetVesselContainer().getEmbedder();
+                String chipWellBarcode = chip.getLabel() + "_" + destinationPosition.name();
+                chipWellBarcodes.add(chipWellBarcode);
+                if (isHybChip) {
+                    chipWellToSourcePosition.put(chipWellBarcode, destinationPosition.name());
+                } else {
+                    chipWellToSourcePosition.put(chipWellBarcode, sourcePosition.name());
+                }
+            }
+        }
+
+        List<ArraysQc> arraysQcList = arraysQcDao.findByBarcodes(new ArrayList<>(chipWellBarcodes));
+        if (arraysQcList.isEmpty()) {
+            addGlobalValidationError("Failed to find any Arrays QC data for vessel " + labVessel.getLabel());
+            return;
+        }
+
+        // Call Rate threshold depends on the Genotyping Chip
+        List<Options> callRateOptions = null;
+        int passingCallRateThreshold = 0;
+        int warningCallRateThreshold = 0;
+        Map<String, String> chipAttributes = genotypingChip.getAttributeMap();
+        if (productOrder != null) {
+            productOrderId = productOrder.getJiraTicketKey();
+            productName = productOrder.getProduct().getProductName();
+            productFamily = productOrder.getProduct().getProductFamily().getName();
+            partNumber = productOrder.getProduct().getPartNumber();
+
+            //Attempt to override default chip attributes if changed in product order
+            GenotypingProductOrderMapping genotypingProductOrderMapping =
+                    attributeArchetypeDao.findGenotypingProductOrderMapping(productOrder.getJiraTicketKey());
+            if (genotypingProductOrderMapping != null) {
+                for (ArchetypeAttribute archetypeAttribute : genotypingProductOrderMapping.getAttributes()) {
+                    if (chipAttributes.containsKey(archetypeAttribute.getAttributeName()) &&
+                        archetypeAttribute.getAttributeValue() != null) {
+                        chipAttributes.put(
+                                archetypeAttribute.getAttributeName(), archetypeAttribute.getAttributeValue());
+                    }
+                }
+            }
+        }
+        if (chipAttributes.containsKey("call_rate_threshold")) {
+            String call_rate_threshold = chipAttributes.get("call_rate_threshold");
+            passingCallRateThreshold = Integer.parseInt(call_rate_threshold);
+            warningCallRateThreshold = passingCallRateThreshold - 3;
+            String passingLegendLabel = String.format(">= %d", passingCallRateThreshold);
+            String warningLegendLabel = String.format(">= %d", warningCallRateThreshold);
+            callRateOptions = new OptionsBuilder().
+                    addOption(passingLegendLabel, call_rate_threshold, GREEN).
+                    addOption(warningLegendLabel, String.valueOf(passingCallRateThreshold), YELLOW).
+                    addOption("Fail", "0", RED).build();
+        } else {
+            addGlobalValidationError(
+                    "Failed to find call rate threshold for genotyping chip " + genotypingChip.getChipName());
+            return;
+        }
+
+        if (callRateOptions == null) {
+            addGlobalValidationError(
+                    "Failed to configure call rate options for genotyping chip " + genotypingChip.getChipName());
+            return;
+        }
+
+        List<Options> fpGenderOptions = new OptionsBuilder().addOption("M", "M", BLUE).addOption("F", "F", RED).
+                addOption("Not Fingerprinted", "U", SLATE_GRAY).build();
+
+        List<Options> genderOptions = new OptionsBuilder().addOption("M", "M", BLUE).addOption("F", "F", RED).build();
+
+        List<Options> trueFalseOption = new OptionsBuilder().addOption("True", Boolean.TRUE.toString(), GREEN)
+                .addOption("False",  Boolean.TRUE.toString(), RED).build();
+
+        List<Options> hetPctOptions = new OptionsBuilder().addOption(">= 25", "25", RED).addOption(">= 20", "20", YELLOW).
+                addOption("Pass", "0", GREEN).build();
+
+        List<Options> emptyOptions = new OptionsBuilder().build();
+
+        plateMap = new PlateMap();
+        Map<PlateMapMetrics, WellDataset> plateMapToWellDataSet = new HashMap<>();
+        for (PlateMapMetrics plateMapMetric: PlateMapMetrics.values()) {
+            WellDataset wellDataset = new WellDataset(plateMapMetric);
+            plateMapToWellDataSet.put(plateMapMetric, wellDataset);
+            plateMap.getDatasets().add(wellDataset);
+        }
+
+        for(ArraysQc arraysQc: arraysQcList) {
+            String chipWellbarcode = arraysQc.getChipWellBarcode();
+            String startPosition = chipWellToSourcePosition.get(chipWellbarcode);
+
+            List<Metadata> metadata = new ArrayList<>();
+            metadata.add(Metadata.create("Well Name", startPosition));
+            metadata.add(Metadata.create("Sample Alias", arraysQc.getSampleAlias()));
+            metadata.add(Metadata.create("Call Rate", String.valueOf(arraysQc.getCallRate())));
+            metadata.add(Metadata.create("Total SNPs", String.valueOf(arraysQc.getTotalSnps())));
+            metadata.add(Metadata.create("Total Assays", String.valueOf(arraysQc.getTotalAssays())));
+            metadata.add(Metadata.create("Chip Well Barcode", (arraysQc.getChipWellBarcode())));
+
+            // Sample ID metadata
+            VesselPosition vesselPosition = VesselPosition.getByName(startPosition);
+            if (vesselPosition != null) {
+                Set<SampleInstanceV2> sampleInstancesAtPositionV2 = staticPlate.getContainerRole()
+                        .getSampleInstancesAtPositionV2(vesselPosition);
+                if (sampleInstancesAtPositionV2 != null && sampleInstancesAtPositionV2.size() == 1) {
+                    SampleInstanceV2 sampleInstanceV2 = sampleInstancesAtPositionV2.iterator().next();
+                    String mercuryRootSampleName = sampleInstanceV2.getMercuryRootSampleName();
+                    metadata.add(Metadata.create("Sample ID", mercuryRootSampleName));
+                }
+            }
+
+            // Call Rate
+            String value = ColumnValueType.TWO_PLACE_DECIMAL.format(
+                    arraysQc.getCallRate().multiply(BigDecimal.valueOf(100)), "");
+            WellDataset wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.CALL_RATE);
+            wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
+            wellDataset.setOptions(callRateOptions);
+
+            // FP Gender
+            value = String.valueOf(arraysQc.getFpGender());
+            wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.FP_GENDER);
+            wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
+            wellDataset.setOptions(fpGenderOptions);
+
+            // Reported Gender
+            value = String.valueOf(arraysQc.getReportedGender());
+            wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.REPORTED_GENDER);
+            wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
+            wellDataset.setOptions(genderOptions);
+
+            // Autocall Gender
+            value = String.valueOf(arraysQc.getAutocallGender());
+            wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.AUTOCALL_GENDER);
+            wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
+            wellDataset.setOptions(genderOptions);
+
+            // Gender Concordance PF
+            value = String.valueOf(arraysQc.getGenderConcordancePf());
+            wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.GENDER_CONCORDANCE_PF);
+            wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
+            wellDataset.setOptions(trueFalseOption);
+
+            // Het PCT
+            value = ColumnValueType.TWO_PLACE_DECIMAL.format(
+                    arraysQc.getHetPct().multiply(BigDecimal.valueOf(100)), "");
+            wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.HET_PCT);
+            wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
+            wellDataset.setOptions(hetPctOptions);
+
+            // P95_GREEN
+            value = String.valueOf(arraysQc.getP95Green());
+            wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.P95_GREEN);
+            wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
+            wellDataset.setOptions(emptyOptions);
+
+            // P95 Green PF
+            value = String.valueOf(arraysQc.getP95GreenPf());
+            wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.P95_GREEN_PF);
+            wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
+            wellDataset.setOptions(trueFalseOption);
+
+            // P95 Red
+            value = String.valueOf(arraysQc.getP95Red());
+            wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.P95_RED);
+            wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
+            wellDataset.setOptions(emptyOptions);
+
+            // P95 Red PF
+            value = String.valueOf(arraysQc.getP95RedPf());
+            wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.P95_RED_PF);
+            wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
+            wellDataset.setOptions(trueFalseOption);
+
+            // Haplotype Difference
+            if (!arraysQc.getArraysQcFingerprints().isEmpty()) {
+                ArraysQcFingerprint arraysQcFingerprint = arraysQc.getArraysQcFingerprints().iterator().next();
+                value = String.valueOf(Math.abs(arraysQcFingerprint.getHaplotypesConfidentlyChecked() -
+                                                arraysQcFingerprint.getHaplotypesConfidentlyMatchin()));
+                wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.HAPLOTYPE_DIFFERENCE);
+                wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
+                wellDataset.setOptions(emptyOptions);
+            }
+
+        }
+        ObjectMapper mapper = new ObjectMapper();
+        metricsTableJson = mapper.writeValueAsString(plateMap);
     }
 
     public String getLabVesselIdentifier() {
@@ -282,6 +452,10 @@ public class MetricsViewActionBean extends HeatMapActionBean {
         this.labVessel = labVessel;
     }
 
+    public PlateMap getPlateMap() {
+        return plateMap;
+    }
+
     public String getMetricsTableJson() {
         return metricsTableJson;
     }
@@ -294,11 +468,106 @@ public class MetricsViewActionBean extends HeatMapActionBean {
         this.foundResults = foundResults;
     }
 
+    public void setLabVesselDao(LabVesselDao labVesselDao) {
+        this.labVesselDao = labVesselDao;
+    }
+
+    public void setArraysQcDao(ArraysQcDao arraysQcDao) {
+        this.arraysQcDao = arraysQcDao;
+    }
+
+    public void setProductOrderSampleDao(
+            ProductOrderSampleDao productOrderSampleDao) {
+        this.productOrderSampleDao = productOrderSampleDao;
+    }
+
+    public void setProductEjb(ProductEjb productEjb) {
+        this.productEjb = productEjb;
+    }
+
+    public void setAttributeArchetypeDao(
+            AttributeArchetypeDao attributeArchetypeDao) {
+        this.attributeArchetypeDao = attributeArchetypeDao;
+    }
+
+    /**
+     * JSON object that feeds into PlateMap.js
+     */
+    public class PlateMap {
+        private List<WellDataset> datasets;
+
+        public List<WellDataset> getDatasets() {
+            if (datasets == null) {
+                datasets = new ArrayList<>();
+            }
+            return datasets;
+        }
+
+        public void setDatasets(
+                List<WellDataset> datasets) {
+            this.datasets = datasets;
+        }
+    }
+
+    public class WellDataset {
+        PlateMapMetrics plateMapMetrics;
+        List<WellData> wellData;
+        List<Options> options;
+
+        public WellDataset(PlateMapMetrics plateMapMetrics) {
+            this.plateMapMetrics = plateMapMetrics;
+        }
+
+        public PlateMapMetrics getPlateMapMetrics() {
+            return plateMapMetrics;
+        }
+
+        public List<WellData> getWellData() {
+            if (wellData == null) {
+                wellData = new ArrayList<>();
+            }
+            return wellData;
+        }
+
+        public List<Options> getOptions() {
+            return options;
+        }
+
+        public void setOptions(
+                List<Options> options) {
+            this.options = options;
+        }
+    }
+
+    public class WellData {
+        private String well;
+        private String value;
+        private List<Metadata> metadata;
+
+        public WellData(String well, String value, List<Metadata> metadata) {
+            this.well = well;
+            this.value = value;
+            this.metadata = metadata;
+        }
+
+        public String getWell() {
+            return well;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        public List<Metadata> getMetadata() {
+            return metadata;
+        }
+    }
+
     public enum ChartType {
         Category, Heatmap
     }
 
-    private class OptionsBuilder {
+    private static class OptionsBuilder {
         private List<Options> options;
 
         public OptionsBuilder() {
@@ -315,130 +584,6 @@ public class MetricsViewActionBean extends HeatMapActionBean {
         }
 
         public List<Options> build() {return this.options;}
-    }
-
-    // TODO JW schema
-    public class MetricsTable
-    {
-
-        private List<Dataset> datasets;
-
-        private final String[] columnNames;
-        private final String[] rowNames;
-
-        public MetricsTable(String[] columnNames, String[] rowNames) {
-            this.columnNames = columnNames;
-            this.rowNames = rowNames;
-        }
-
-        public List<Dataset> getDatasets() {
-            if (datasets == null) {
-                datasets = new ArrayList<>();
-            }
-            return datasets;
-        }
-
-        public void setDatasets(
-                List<Dataset> datasets) {
-            this.datasets = datasets;
-        }
-
-        public String[] getColumnNames() {
-            return columnNames;
-        }
-
-        public String[] getRowNames() {
-            return rowNames;
-        }
-    }
-
-    public class Dataset
-    {
-        private List<Data> data;
-
-        private String label;
-
-        private ChartType type;
-
-        private List<Options> options;
-
-        public List<Data> getData() {
-            if (data == null) {
-                data = new ArrayList<>();
-            }
-            return data;
-        }
-
-        public void setData(
-                List<Data> data) {
-            this.data = data;
-        }
-
-        public void setOptions(
-                List<Options> options) {
-            this.options = options;
-        }
-
-        public List<Options> getOptions() {
-            return options;
-        }
-
-        public String getLabel ()
-        {
-            return label;
-        }
-
-        public void setLabel (String label)
-        {
-            this.label = label;
-        }
-
-        public ChartType getType() {
-            return type;
-        }
-
-        public void setType(ChartType type) {
-            this.type = type;
-        }
-    }
-
-    public class Data
-    {
-        private Object value;
-
-        private String well;
-
-        private List<Metadata> metadata;
-
-        public Object getValue() {
-            return value;
-        }
-
-        public void setValue(Object value) {
-            this.value = value;
-        }
-
-        public String getWell ()
-        {
-            return well;
-        }
-
-        public void setWell (String well)
-        {
-            this.well = well;
-        }
-
-        public List<Metadata> getMetadata() {
-            if (metadata == null) {
-                metadata = new ArrayList<>();
-            }
-            return metadata;
-        }
-
-        public void setMetadata(
-                List<Metadata> metadata) {
-            this.metadata = metadata;
-        }
     }
 
     public static class Metadata
@@ -475,13 +620,17 @@ public class MetricsViewActionBean extends HeatMapActionBean {
         }
     }
 
-    public class Options
+    /**
+     * Represent possible Categories for a given dataset, e.g. Male vs Female in a gender metric or a
+     * ranking of 95% or greater for a percentage metric
+     */
+    public static class Options
     {
         private String color;
 
         private String name;
 
-        private String value;
+        private Object value;
 
         public String getColor ()
         {
@@ -503,20 +652,14 @@ public class MetricsViewActionBean extends HeatMapActionBean {
             this.name = name;
         }
 
-        public String getValue ()
+        public Object getValue ()
         {
             return value;
         }
 
-        public void setValue (String value)
+        public void setValue (Object value)
         {
             this.value = value;
-        }
-
-        @Override
-        public String toString()
-        {
-            return "ClassPojo [color = "+color+", name = "+name+", value = "+value+"]";
         }
     }
 }

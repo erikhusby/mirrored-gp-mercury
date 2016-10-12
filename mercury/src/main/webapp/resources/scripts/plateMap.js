@@ -1,157 +1,160 @@
-(function ( $ ) {
-    $.fn.platemap = function( options ) {
-        var settings = $.extend({
+;(function ( $, window, document, undefined ) {
+    var pluginName = 'plateMap',
+        defaults = {
+            metricsSelectorId: '#metricsList',
             onchangeselector : '#heatField',
-            datasets: [],
-            rowNames : ["A", "B", "C", "D", "E", "F", "G", "H"],
-            columnNames : ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"]
-        }, options );
-
-        var applyCategory = function (wellSelector, data, options) {
-            wellSelector.css("background-color", "");
-            var nan = isNaN(data.value);
-            console.log("isNan: " + nan + " " + data.toString());
-
-            if (!nan && data.toString().indexOf('0.') != -1) {
-                data = parseFloat(data) * 100;
-                data = data.toFixed(2);
-                console.log("new data: " + data);
-            }
-            var eval = nan ? "equality" : "compare";
-            wellSelector.removeClass('success warning error');
-            for (var i = 0; i < options.length; i++) {
-                var opt = options[i];
-                if (eval === 'compare') {
-                    if (data.value >= opt.value) {
-                        wellSelector.css('background-color', opt.color);
-                        break;
-                    }
-                } else if (eval === 'equality') {
-                    if (data.value  === opt.value) {
-                        wellSelector.css('background-color', opt.color);
-                        break;
-                    }
+            metadataDefinitionListId: '#metadataDefinitionList',
+            legendId: '#legend',
+            tableId: '#platemap',
+            datasets:[
+                {
+                    plateMapMetrics:{
+                        displayName:"Call Rate",
+                        displayValue:true,
+                        chartType:"Category",
+                        evalType: "greaterThanOrEqual"
+                    },
+                    options : [
+                        { name : 'Pass', value : 95, color : '#dff0d8'},
+                        { name : 'Warn', value : 90, color : '#fcf8e3 '},
+                        { name : 'Fail', value : 0, color : '#f2dede'}
+                    ],
+                    wellData:[
+                        {
+                            well:"R01C02",
+                            value:"86.03",
+                            metadata : [{label : 'Sample Name', value: 'SM-TEST'},
+                                { well : 'B01', value : '0.93321'}, { well : 'C01', value : '0.6577'}]
+                        },
+                        {
+                            well : "R12C02",
+                            value : "98.61"
+                        },
+                        {
+                            well : "R05C02",
+                            value: "86.03",
+                            metadata : []
+                        }
+                    ]
                 }
-            }
-            wellSelector.hover(function(){
-                var metadataDl = $('#sampleMetadataList');
-                console.log(data.metadata);
-                metadataDl.empty();
-                if (data.metadata != undefined) {
-                    $.each(data.metadata, function (idx, metadata) {
-                        var dt = $('<dt></dt>').text(metadata.label);
-                        var dd = $('<dd></dd>').text(metadata.value);
-                        metadataDl.append(dt);
-                        metadataDl.append(dd);
-                    });
-                }
-            }, function () {
-                var metadataDl = $('#sampleMetadataList');
-                metadataDl.empty();
-            });
+            ]
         };
 
-        // Build select
-        var selectContainer = $('<div></div>').addClass('row');
-        var spacer = $('<div></div>').addClass('span2');
-        selectContainer.append(spacer);
-        var metricNames = settings.datasets.map(function(data){return data.label;});
-        var sel = $('<select>').attr('id', 'heatField');
-        sel.append($("<option>").attr('value', '').text(''));
-        $(metricNames).each(function(idx, value) {
-            sel.append($("<option>").attr('value', value).text(value));
+    // The actual plugin constructor
+    function Plugin( element, options ) {
+        this.element = element;
+        this.options = $.extend( {}, defaults, options);
+        this.metricsListSelector = $(this.options.metricsSelectorId);
+        this.legendSelector = $(this.options.legendId);
+        this.metadataSelector = $(this.options.metadataDefinitionListId);
+        this._defaults = defaults;
+        this._name = pluginName;
+        console.log(this.options);
+        this.init();
+    }
+
+    Plugin.prototype.init = function () {
+        var datasets = this.options.datasets;
+        var plugin = this;
+        var legend = this.legendSelector;
+        var metricNames = $.map(this.options.datasets, function(val, i) {
+            return val.plateMapMetrics.displayName;
         });
-        selectContainer.append(sel);
-        this.append(selectContainer);
-
-        // Handle selected metric change
-        sel.change(function() {
-            var selectedField = this.value;
-            var result = $.grep(settings.datasets, function(e){ return e.label === selectedField; });
-            if (result.length === 1) {
-                var dataset = result[0];
-                console.log(dataset);
-                var type = dataset.type;
-                var applyFunction = null;
-                switch(type) {
-                    case "Category":
-                        applyFunction = applyCategory;
-                    default:
-                        applyFunction = applyCategory;
-                }
-                $.each(dataset.data, function (idx, wellValue) {
-                    var well = $('#' + wellValue.well);
-                    well.text(wellValue.value);
-                    function sortNumber(a,b) {
-                        return b.value - a.value;
+        var metricsListBox = this.buildMetricsSelectList(metricNames);
+        metricsListBox.change(function() {
+            var selectedMetric = this.value;
+            var datasetList = $.grep(datasets, function(e){
+                return e.plateMapMetrics.displayName === selectedMetric;
+            });
+            // Clear all cells and legend
+            var wells = $(".metricCell");
+            $.each(wells, function () {
+                $(this).text("");
+                $(this).css("background-color", "");
+            });
+            legend.empty();
+            if (datasetList.length === 1){
+                var dataset = datasetList[0];
+                var chartType = dataset.plateMapMetrics.chartType;
+                plugin.buildLegend(dataset.options);
+                $.each(dataset.wellData, function (idx, wellData) {
+                    var wellElem = $('#' + wellData.well);
+                    plugin.attachMetadata(wellElem, wellData.metadata);
+                    if (dataset.plateMapMetrics.displayValue)
+                        wellElem.text(wellData.value);
+                    if (chartType === 'Category') {
+                        for (var i = 0; i < dataset.options.length; i++) {
+                            var option = dataset.options[i];
+                            var evalFunction = dataset.plateMapMetrics.evalType;
+                            if (plugin[evalFunction](wellData.value, option.value)) {
+                                wellElem.css('background-color', option.color);
+                                break;
+                            }
+                        }
                     }
-                    var sortedOptions = dataset.options.sort(sortNumber);
-                    applyFunction(well, wellValue, sortedOptions);
                 });
-
-                // Create legend
-                var legend = $('#legend');
-                legend.empty();
-                var legendList = $('<ul></ul>').addClass('legend');
-                for (var i = 0; i < dataset.options.length; i++) {
-                    var li = $('<li></li>');
-                    var opt = dataset.options[i];
-                    var span = $('<span></span>');
-                    span.css('background-color', opt.color);
-                    li.text(opt.name);
-                    li.prepend(span);
-                    legendList.append(li);
-                }
-                legend.append(legendList);
-            } else {
-                $.error("Metric not found in datasets: " + selectedField);
             }
         });
-
-        // Container
-        var container = $('<div></div>').addClass('row');
-        this.append(container);
-
-        // Build legend
-        var legendContainer = $('<div></div>').addClass('span2');
-        container.append(legendContainer);
-
-        var legend = $('<div></div>').attr('id', 'legend');
-        legendContainer.append(legend);
-
-        // Build Sample Metadata list
-        var dl = $('<dl></dl>');
-        dl.attr('id', 'sampleMetadataList');
-        legendContainer.append(dl);
-
-        var tableContainer = $('<div></div>').addClass('span10');
-        container.append(tableContainer);
-
-        // Build Table
-        var table = $('<table></table>').addClass('platemap table table-bordered table-condensed');
-        var headerTr = $('<tr></tr>');
-        table.append(headerTr);
-        var blankTh = $('<th></th>').addClass('fit');
-        headerTr.append(blankTh);
-        tableContainer.append(table);
-
-        $.each(settings.columnNames, function(idx, value){
-            var th = $('<th></th>').addClass('fit').text(value);
-            headerTr.append(th);
-        });
-
-        $.each(settings.rowNames, function (rowIndex, row) {
-            var tr = $('<tr></tr>');
-            var rowNameTh = $('<th></th>').append(row);
-            tr.append(rowNameTh);
-            $.each(settings.columnNames, function(colIdx, col){
-                var td = $('<td></td>').addClass('heatable').attr('id', row + col);
-                tr.append(td);
-            });
-            table.append(tr);
-        });
-
-        return this;
     };
 
-}( jQuery ));
+    Plugin.prototype.buildMetricsSelectList = function(metricNames) {
+        var metricsListBox = this.metricsListSelector;
+        metricsListBox.append($("<option>").attr('value', '').text(''));
+        $(metricNames).each(function(idx, value) {
+            metricsListBox.append($("<option>").attr('value', value).text(value));
+        });
+        return metricsListBox;
+    };
+
+    Plugin.prototype.buildLegend = function(options) {
+        var legend = this.legendSelector;
+        legend.empty();
+        var legendList = $('<ul></ul>').addClass('legend');
+        for (var i = 0; i < options.length; i++) {
+            var option = options[i];
+            var li = $('<li></li>');
+            var span = $('<span></span>');
+            span.css('background-color', option.color);
+            li.text(option.name);
+            li.prepend(span);
+            legendList.append(li);
+        }
+        legend.append(legendList);
+    };
+
+    Plugin.prototype.attachMetadata = function(wellElem, metadataList) {
+        var metadataSelector = this.metadataSelector;
+        wellElem.hover(function(){
+            metadataSelector.empty();
+            if (metadataList != undefined) {
+                $.each(metadataList, function (idx, metadata) {
+                    var dt = $('<dt></dt>').text(metadata.label);
+                    var dd = $('<dd></dd>').text(metadata.value);
+                    metadataSelector.append(dt);
+                    metadataSelector.append(dd);
+                });
+            }
+        }, function () {
+            metadataSelector.empty();
+        });
+    };
+
+    Plugin.prototype.greaterThanOrEqual = function(a, b) {
+        return a >= b;
+    };
+
+    Plugin.prototype.equals = function(a, b) {
+        return a === b;
+    };
+
+    // preventing against multiple instantiations
+    $.fn[pluginName] = function ( options ) {
+        return this.each(function () {
+            if (!$.data(this, 'plugin_' + pluginName)) {
+                $.data(this, 'plugin_' + pluginName,
+                    new Plugin( this, options ));
+            }
+        });
+    }
+
+})( jQuery, window, document );

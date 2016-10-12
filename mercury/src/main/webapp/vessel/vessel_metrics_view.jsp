@@ -11,18 +11,23 @@
                 width: auto;
             }
 
-            .legend { display: block; }
+            .platemap td {
+                width: 35px;
+            }
 
-            .legend li { display: inline-block;}
+            .legend li {
+                display: block;
+                float: right;
+                clear: right;
+            }
 
-            .legend span { margin: 10px; border: 1px solid #ccc; float: left; width: 12px; height: 12px;}
+            .legend span { margin: 10px; border: 1px solid #ccc; float: right; width: 12px; height: 12px;}
         </style>
         <script type="text/javascript">
             $j(document).ready(function () {
                 <c:if test="${actionBean.labVessel != null}">
                     var json = ${actionBean.metricsTableJson};
-                    console.log(json);
-                    $j('#platemapme').platemap(json);
+                    $j('#platemapme').plateMap(json);
                 </c:if>
             });
         </script>
@@ -46,7 +51,52 @@
         <div id="searchResults">
             <c:if test="${actionBean.foundResults}">
                 <c:if test="${actionBean.labVessel != null}">
-                    <div id="platemapme"></div>
+                    <div id="platemapme">
+                        <div class="row">
+                            <div class="form-horizontal">
+                                <div class="control-group">
+                                    <stripes:label for="visualizations" class="control-label">Visualization(s)</stripes:label>
+                                    <div class="controls">
+                                        <select id='metricsList'></select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="span2">
+                                <div id="legend">
+                                </div>
+                            </div>
+                            <div class="span5">
+                                <?xml version="1.0" encoding="UTF-8"?>
+                                <table id="platemap" class="platemap table table-bordered table-condensed">
+                                    <tbody>
+                                        <tr>
+                                            <th class="fit" ></th>
+                                            <c:forEach items="${actionBean.labVessel.vesselGeometry.columnNames}" var="colName">
+                                                <th class="fit">${colName}</th>
+                                            </c:forEach>
+                                        </tr>
+                                        <c:forEach items="${actionBean.labVessel.vesselGeometry.rowNames}" var="rowName">
+                                            <tr>
+                                                <th>${rowName}</th>
+                                                <c:forEach items="${actionBean.labVessel.vesselGeometry.columnNames}" var="colName">
+                                                    <td id="${rowName}${colName}" class="metricCell"></td>
+                                                </c:forEach>
+                                            </tr>
+                                        </c:forEach>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="span4">
+                                <div class="well">
+                                    Well Metadata
+                                    <dl class="dl-horizontal" id="metadataDefinitionList">
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </c:if>
             </c:if>
         </div>
