@@ -15,7 +15,6 @@ import java.util.List;
 public class HeatMapActionBean extends CoreActionBean {
 
     private static final String VIEW_PAGE = "/container/heat_map.jsp";
-    private static final String VIEW_HEAT_MAP = "viewHeatMap";
 
     private String heatMapFieldString;
     private String jqueryClass;
@@ -60,8 +59,7 @@ public class HeatMapActionBean extends CoreActionBean {
     }
 
     @DefaultHandler
-    @HandlesEvent(VIEW_HEAT_MAP)
-    public Resolution viewHeatMap() {
+    public Resolution view() {
         return new ForwardResolution(VIEW_PAGE);
     }
 
