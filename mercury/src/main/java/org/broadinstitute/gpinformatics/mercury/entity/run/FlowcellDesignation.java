@@ -12,6 +12,7 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
@@ -38,6 +39,7 @@ public class FlowcellDesignation {
 
     @Nonnull
     @ManyToOne
+    @JoinColumn(name = "LOADING_TUBE" )
     private LabVessel loadingTube;
 
     /**
@@ -45,12 +47,14 @@ public class FlowcellDesignation {
      * LCSET returned after walking the chain of custody.
      */
     @ManyToOne
+    @JoinColumn(name = "CHOSEN_LCSET" )
     private LabBatch chosenLcset;
 
     /** The lab event that gave rise to the loading tube, typically normalization transfer, denature transfer,
      * or pooling transfer */
     @Nonnull
     @OneToOne
+    @JoinColumn(name = "LOADING_TUBE_EVENT" )
     private LabEvent loadingTubeEvent;
 
     @Enumerated(EnumType.STRING)
