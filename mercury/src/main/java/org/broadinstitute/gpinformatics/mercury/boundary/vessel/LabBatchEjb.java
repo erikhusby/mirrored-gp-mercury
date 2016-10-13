@@ -779,8 +779,12 @@ public class LabBatchEjb {
             errorString += (isValid ? "" : "and ") + "read length (" + designationDto.getReadLength() + ") ";
             isValid = false;
         }
-        if (designationDto.getSequencerModel() == null) {
-            errorString += (isValid ? "" : "and ") + "sequencer model (null) ";
+        if (designationDto.getSequencerModel() == null ||
+            designationDto.getSequencerModel().getCreateFct() == IlluminaFlowcell.CreateFct.NO ||
+            designationDto.getSequencerModel().getIssueType() == null) {
+            errorString += (isValid ? "" : "and ") + "sequencer model (" +
+                           (designationDto.getSequencerModel() == null ?
+                                   "null" : designationDto.getSequencerModel().getDisplayName()) + ") ";
             isValid = false;
         }
         if (designationDto.getIndexType() == null) {
