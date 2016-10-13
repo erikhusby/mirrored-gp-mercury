@@ -252,6 +252,7 @@ public class InfiniumRunResource {
                     chipAttributes.get("manifest_location_unix"),
                     chipAttributes.get("cluster_location_unix"),
                     chipAttributes.get("zcall_threshold_unix"),
+                    sampleInstanceV2.getNearestMercurySampleName(),
                     sampleData.getCollaboratorsSampleName(),
                     sampleData.getSampleLsid(),
                     sampleData.getGender(),
