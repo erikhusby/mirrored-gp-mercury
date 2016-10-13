@@ -189,8 +189,12 @@
                                               beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.MolecularIndexPlateActionBean"
                                               event="view">Upload Molecular Index Plate(s) from Manifest</stripes:link>
                             </li>
-
                         </security:authorizeBlock>
+                        <li>
+                            <stripes:link id="sampleSheet"
+                                    beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.SampleSheetActionBean"
+                                    event="view">Arrays Sample Sheet</stripes:link>
+                        </li>
                     </ul>
                 </li>
             </security:authorizeBlock>
