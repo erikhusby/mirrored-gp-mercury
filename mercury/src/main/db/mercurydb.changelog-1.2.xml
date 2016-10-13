@@ -605,17 +605,57 @@
         </addColumn>
     </changeSet>
 
-    <changeSet id="GPLIM-4321-3" author="dwilson">
-        <addColumn schemaName="mercury" tableName="lab_vessel">
-            <column name="abandon_reason" type="varchar2(255)"/>
-            <column name="abandon_date" type="oracle.sql.TIMESTAMP"/>
-        </addColumn>
+    <changeSet id="GPLIM-4321-10" author="dwilson">
+    <createTable schemaName="mercury" tableName="abandon_vessel">
+        <column name="abandon_vessel_id" type="number(19,0)">
+            <constraints primaryKey="true"/>
+        </column>
+        <column name="lab_vessel" type="number(19,0)"/>
+        <column name="reason" type="varchar2(255)"/>
+        <column name="abandoned_on" type="oracle.sql.TIMESTAMP"/>
+    </createTable>
     </changeSet>
-    <changeSet id="GPLIM-4321-4" author="dwilson">
-        <addColumn schemaName="mercury" tableName="lab_vessel_aud">
-            <column name="abandon_reason" type="varchar2(255)"/>
-            <column name="abandon_date" type="oracle.sql.TIMESTAMP"/>
-        </addColumn>
+
+    <changeSet id="GPLIM-4321-11" author="dwilson">
+        <createTable schemaName="mercury" tableName="abandon_vessel_position">
+            <column name="abandon_vessel_position_id" type="number(19,0)">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="abandon_vessel" type="number(19,0)"/>
+            <column name="vessel_position" type="varchar2(255)"/>
+            <column name="reason" type="varchar2(255)"/>
+            <column name="abandoned_on" type="oracle.sql.TIMESTAMP"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-4321-12" author="dwilson">
+        <createTable tableName="abandon_vessel_aud" schemaName="mercury">
+            <column name="abandon_vessel_id" type="number(19,0)"/>
+            <column name="lab_vessel" type="number(19,0)"/>
+            <column name="reason" type="varchar2(255)"/>
+            <column name="abandoned_on" type="oracle.sql.TIMESTAMP"/>
+            <column name="rev" type="number(19,0)" />
+            <column name="revtype" type="number(3,0)" />
+        </createTable>
+        <createTable tableName="abandon_vessel_position_aud" schemaName="mercury">
+            <column name="abandon_vessel_position_id" type="number(19,0)"/>
+            <column name="abandon_vessel" type="number(19,0)"/>
+            <column name="vessel_position" type="varchar2(255)"/>
+            <column name="reason" type="varchar2(255)"/>
+            <column name="abandoned_on" type="oracle.sql.TIMESTAMP"/>
+            <column name="rev" type="number(19,0)" />
+            <column name="revtype" type="number(3,0)" />
+        </createTable>
+            <addPrimaryKey tableName="abandon_vessel_aud" schemaName="mercury" columnNames="abandon_vessel_id, rev"/>
+            <addPrimaryKey tableName="abandon_vessel_position_aud" schemaName="mercury" columnNames="abandon_vessel_position_id, rev"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-4321-13" author="dwilson">
+        <createSequence schemaName="mercury" sequenceName="seq_abandon_vessel_position" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-4321-14" author="dwilson">
+        <createSequence schemaName="mercury" sequenceName="seq_abandon_vessel" incrementBy="50"/>
     </changeSet>
 
 </databaseChangeLog>

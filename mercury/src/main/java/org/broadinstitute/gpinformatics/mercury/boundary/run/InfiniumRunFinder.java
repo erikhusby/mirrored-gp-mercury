@@ -82,12 +82,9 @@ public class InfiniumRunFinder implements Serializable {
                 try {
                     if (OrmUtil.proxySafeIsInstance(labVessel, StaticPlate.class)) {
                         StaticPlate staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
-                        //Do not process if the chip is marked as abandoned.
-                        if(!staticPlate.isAbandoned()) {
-                            utx.begin();
-                            processChip(staticPlate);
-                            utx.commit();
-                        }
+                        utx.begin();
+                        processChip(staticPlate);
+                        utx.commit();
                     }
                 } catch (Exception e) {
                     utx.rollback();
@@ -112,25 +109,28 @@ public class InfiniumRunFinder implements Serializable {
         Set<LabEventMetadata> labEventMetadata = someStartedEvent.getLabEventMetadatas();
         boolean allComplete = true;
         for (VesselPosition vesselPosition : chipWellResults.getPositionWithSampleInstance()) {
-            boolean autocallStarted = false;
-            for (LabEventMetadata metadata : labEventMetadata) {
-                if (metadata.getLabEventMetadataType() ==
-                    LabEventMetadata.LabEventMetadataType.AutocallStarted) {
-                    if (metadata.getValue().equals(vesselPosition.name())) {
-                        autocallStarted = true;
-                        break;
+            //Check to see if any of the wells in the chip are abandoned.
+            if(!staticPlate.isPositionAbandoned(vesselPosition.toString())) {
+                boolean autocallStarted = false;
+                for (LabEventMetadata metadata : labEventMetadata) {
+                    if (metadata.getLabEventMetadataType() ==
+                            LabEventMetadata.LabEventMetadataType.AutocallStarted) {
+                        if (metadata.getValue().equals(vesselPosition.name())) {
+                            autocallStarted = true;
+                            break;
+                        }
                     }
                 }
-            }
 
-            if (!autocallStarted && chipWellResults.getWellCompleteMap().get(vesselPosition)) {
-                if (callStarterOnWell(staticPlate, vesselPosition)) {
-                    LabEventMetadata newMetadata = new LabEventMetadata();
-                    newMetadata.setLabEventMetadataType(LabEventMetadata.LabEventMetadataType.AutocallStarted);
-                    newMetadata.setValue(vesselPosition.name());
-                    someStartedEvent.addMetadata(newMetadata);
-                } else {
-                    allComplete = false;
+                if (!autocallStarted && chipWellResults.getWellCompleteMap().get(vesselPosition)) {
+                    if (callStarterOnWell(staticPlate, vesselPosition)) {
+                        LabEventMetadata newMetadata = new LabEventMetadata();
+                        newMetadata.setLabEventMetadataType(LabEventMetadata.LabEventMetadataType.AutocallStarted);
+                        newMetadata.setValue(vesselPosition.name());
+                        someStartedEvent.addMetadata(newMetadata);
+                    } else {
+                        allComplete = false;
+                    }
                 }
             }
         }
@@ -138,22 +138,25 @@ public class InfiniumRunFinder implements Serializable {
         // Check to see if autocall has now been started on all wells
         boolean starterCalledOnAllWells = true;
         for (VesselPosition vesselPosition: staticPlate.getVesselGeometry().getVesselPositions()) {
-            Set<SampleInstanceV2> sampleInstancesAtPositionV2 =
-                    staticPlate.getContainerRole().getSampleInstancesAtPositionV2(vesselPosition);
-            if (sampleInstancesAtPositionV2 != null && !sampleInstancesAtPositionV2.isEmpty()) {
-                boolean autocallStarted = false;
-                for (LabEventMetadata metadata : someStartedEvent.getLabEventMetadatas()) {
-                    if (metadata.getLabEventMetadataType() ==
-                        LabEventMetadata.LabEventMetadataType.AutocallStarted) {
-                        if (metadata.getValue().equals(vesselPosition.name())) {
-                            autocallStarted = true;
-                            break;
+            //Check to see if any of the wells in the chip are abandoned.
+            if(!staticPlate.isPositionAbandoned(vesselPosition.toString())) {
+                Set<SampleInstanceV2> sampleInstancesAtPositionV2 =
+                        staticPlate.getContainerRole().getSampleInstancesAtPositionV2(vesselPosition);
+                if (sampleInstancesAtPositionV2 != null && !sampleInstancesAtPositionV2.isEmpty()) {
+                    boolean autocallStarted = false;
+                    for (LabEventMetadata metadata : someStartedEvent.getLabEventMetadatas()) {
+                        if (metadata.getLabEventMetadataType() ==
+                                LabEventMetadata.LabEventMetadataType.AutocallStarted) {
+                            if (metadata.getValue().equals(vesselPosition.name())) {
+                                autocallStarted = true;
+                                break;
+                            }
                         }
                     }
-                }
-                if (!autocallStarted) {
-                    starterCalledOnAllWells = false;
-                    break;
+                    if (!autocallStarted) {
+                        starterCalledOnAllWells = false;
+                        break;
+                    }
                 }
             }
         }

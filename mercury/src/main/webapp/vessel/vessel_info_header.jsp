@@ -1,6 +1,7 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:layout-definition>
+    <%--@elvariable id="abandonedVessel" type="org.broadinstitute.gpinformatics.mercury.entity.vessel.abandonedvessels"--%>
     <%--@elvariable id="vessel" type="org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel"--%>
     <%--@elvariable id="bean" type="org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean"--%>
     <input type="hidden" name="vesselLabel" id="vesselLabel"  value="${vessel.label}">
@@ -16,6 +17,6 @@
         <div>Sample Instance Count: ${vessel.sampleInstancesV2.size()}</div>
         <div>Unique Index Count: ${vessel.uniqueIndexesCount}</div>
         <div>Abandon Reason: ${vessel.abandonReason}</div>
-        <div>Abandon Date: ${vessel.abandonDate}</div>
+        <div>Abandon Date: ${vessel.abandonedDate}</div>
     </div>
 </stripes:layout-definition>

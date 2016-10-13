@@ -1370,7 +1370,7 @@ public class LabVesselSearchDefinition {
         }
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("Ababdon Reason");
+        searchTerm.setName("Abandon Reason");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
@@ -1384,14 +1384,14 @@ public class LabVesselSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("Ababdon Date");
+        searchTerm.setName("Abandon Date");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
                 LabVessel labVessel = (LabVessel) entity;
                 Set<String> abandonDate = null;
                 abandonDate = new HashSet<>();
-                abandonDate.add(labVessel.getAbandonDate().toString());
+                abandonDate.add(labVessel.getAbandonedDate().toString());
                 return abandonDate;
             }
         });
