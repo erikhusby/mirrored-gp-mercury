@@ -10,7 +10,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -37,7 +36,6 @@ public class EventAncestryEtlUtil {
     // Avoid the repeated overhead of parsing workflow for the same event if it is not flagged for ancestry
     Set<Long> ignoreAncestryForEventList = new HashSet();
 
-    @Inject
     public EventAncestryEtlUtil(WorkflowConfig workflowConfig) {
         this.workflowConfig = workflowConfig;
     }
