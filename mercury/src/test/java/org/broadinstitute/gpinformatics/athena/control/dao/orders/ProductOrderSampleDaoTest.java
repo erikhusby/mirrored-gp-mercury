@@ -14,6 +14,7 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
+import javax.validation.constraints.AssertTrue;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -109,7 +110,13 @@ public class ProductOrderSampleDaoTest extends ContainerTest {
             returnedSampleNames.add(productOrderSample.getName());
         }
 
-        Assert.assertEquals(returnedSampleNames,sampleNamesSubset);
+        Assert.assertEquals(sampleNamesSubset.size(), returnedSampleNames.size());
+
+        for( String returnedID : returnedSampleNames ) {
+            Assert.assertTrue( sampleNamesSubset.contains(returnedID), "Returned sample " + returnedID + " not in list of expected samples" );
+        }
+
+
     }
 
     @Test(groups = TestGroups.STUBBY, enabled = true)
