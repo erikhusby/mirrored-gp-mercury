@@ -21,7 +21,7 @@
                 clear: right;
             }
 
-            .legend span { margin: 10px; border: 1px solid #ccc; float: right; width: 12px; height: 12px;}
+            .legend span { margin: 5px; border: 1px solid #ccc; float: right; width: 12px; height: 12px;}
         </style>
         <script type="text/javascript">
             $j(document).ready(function () {

@@ -49,7 +49,6 @@
         this.metadataSelector = $(this.options.metadataDefinitionListId);
         this._defaults = defaults;
         this._name = pluginName;
-        console.log(this.options);
         this.init();
     }
 
@@ -140,11 +139,15 @@
     };
 
     Plugin.prototype.greaterThanOrEqual = function(a, b) {
-        return a >= b;
+        return Number(a) >= Number(b);
     };
 
     Plugin.prototype.equals = function(a, b) {
-        return a === b;
+        return Number(a) === Number(b);
+    };
+    
+    Plugin.prototype.greaterThan = function(a, b) {
+        return Number(a) > Number(b);
     };
 
     // preventing against multiple instantiations

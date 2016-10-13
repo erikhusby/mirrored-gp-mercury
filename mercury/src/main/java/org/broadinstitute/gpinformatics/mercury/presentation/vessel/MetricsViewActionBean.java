@@ -14,9 +14,12 @@ import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.ArraysQcDao;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcFingerprint;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcGtConcordance;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -76,12 +79,16 @@ public class MetricsViewActionBean extends CoreActionBean {
     private String labVesselIdentifier;
 
     private LabVessel labVessel;
+    private Set<ProductOrder> productOrders;
     private StaticPlate staticPlate;
     private GenotypingChip genotypingChip;
+    private Set<String> foundChipTypes;
     private PlateMap plateMap;
+
     private String metricsTableJson;
     private boolean foundResults;
     private boolean isInfinium;
+    private boolean isClinical;
     private final static String GREEN = "#dff0d8";
     private final static String YELLOW = "#fcf8e3";
     private final static String RED = "#f2dede";
@@ -100,7 +107,9 @@ public class MetricsViewActionBean extends CoreActionBean {
         P95_GREEN_PF("P95 Green PF", false, ChartType.Category, "equals"),
         P95_RED("P95 Red", true, ChartType.Category, "equals"),
         P95_RED_PF("P95 Red PF", false, ChartType.Category, "equals"),
-        HAPLOTYPE_DIFFERENCE("Haplotype Difference", true, ChartType.Category, "equals");
+        HAPLOTYPE_DIFFERENCE("Haplotype Difference", true, ChartType.Category, "equals"),
+        FINGERPRINT_CONCORDANCE("Fingerprint Concordance", false, ChartType.Category, "greaterThan"),
+        HAPMAP_CONCORDANCE("HapMap Concordance", false, ChartType.Category, "greaterThanOrEqual");
 
         private String displayName;
         private final boolean displayValue;
@@ -164,35 +173,56 @@ public class MetricsViewActionBean extends CoreActionBean {
 
         staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
 
-        Pair<String, String> chipPair = null;
+        productOrders = new HashSet<>();
+        Set<Pair<String, String>> chipPairs = new HashSet<>();
         for(SampleInstanceV2 sampleInstance: labVessel.getSampleInstancesV2()) {
-            if (sampleInstance.getSingleBucketEntry() != null) {
-                ProductOrder productOrder = sampleInstance.getSingleBucketEntry().getProductOrder();
+            ProductOrderSample productOrderSample = sampleInstance.getProductOrderSampleForSingleBucket();
+            if (productOrderSample != null) {
+                ProductOrder productOrder = productOrderSample.getProductOrder();
                 Date effectiveDate =  productOrder.getCreatedDate();
-                chipPair = productEjb.getGenotypingChip(productOrder, effectiveDate);
+                Pair<String, String> chipPair = productEjb.getGenotypingChip(productOrder, effectiveDate);
+                chipPairs.add(chipPair);
+                productOrders.add(productOrder);
             } else {
                 List<ProductOrderSample> productOrderSamples = productOrderSampleDao.findBySamples(
                         Collections.singletonList(sampleInstance.getRootOrEarliestMercurySampleName()));
-                for (ProductOrderSample productOrderSample: productOrderSamples) {
-                    if (productOrderSample.getProductOrder() != null) {
-                        ProductOrder productOrder = productOrderSample.getProductOrder();
+                for (ProductOrderSample pdoSample: productOrderSamples) {
+                    if (pdoSample.getProductOrder() != null) {
+                        ProductOrder productOrder = pdoSample.getProductOrder();
+                        productOrders.add(productOrder);
                         Date effectiveDate =  productOrder.getCreatedDate();
-                        chipPair = productEjb.getGenotypingChip(productOrder, effectiveDate);
-                        break;
+                        Pair<String, String> chipPair = productEjb.getGenotypingChip(productOrder, effectiveDate);
+                        chipPairs.add(chipPair);
                     }
                 }
             }
         }
 
-        isInfinium = chipPair != null && chipPair.getLeft() != null && chipPair.getRight() != null;
-        if (isInfinium) {
-            if (chipPair.getLeft() != null && chipPair.getRight() != null) {
-                genotypingChip = attributeArchetypeDao.findGenotypingChip(chipPair.getLeft(),
-                        chipPair.getRight());
-                if (genotypingChip == null) {
-                    addGlobalValidationError("Chip " + chipPair.getRight() + " is not configured");
-                    return;
+        foundChipTypes = new HashSet<>();
+        if (!chipPairs.isEmpty()) {
+            Pair<String, String> firstChipPair = chipPairs.iterator().next();
+            isInfinium = firstChipPair != null && firstChipPair.getLeft() != null && firstChipPair.getRight() != null;
+            if (isInfinium) {
+                for (Pair<String, String> chipPair : chipPairs) {
+                    if (chipPair.getLeft() != null && chipPair.getRight() != null) {
+                        genotypingChip = attributeArchetypeDao.findGenotypingChip(chipPair.getLeft(),
+                                chipPair.getRight());
+                        if (genotypingChip == null) {
+                            addGlobalValidationError("Chip " + chipPair.getRight() + " is not configured");
+                            return;
+                        }
+                        foundChipTypes.add(genotypingChip.getChipName());
+                    }
                 }
+            }
+        }
+
+        // Check if clinical
+        isClinical = true;
+        for (ProductOrder productOrder : productOrders) {
+            ResearchProject researchProject = productOrder.getResearchProject();
+            if (!researchProject.getRegulatoryDesignation().isClinical()) {
+                isClinical = false;
             }
         }
         foundResults = true;
@@ -206,6 +236,8 @@ public class MetricsViewActionBean extends CoreActionBean {
                 logger.error("Error building Infinium Metrics Table", e);
                 addGlobalValidationError("Failed to generate metrics view");
             }
+        } else {
+            addGlobalValidationError("Currently only used to display Arrays QC data");
         }
     }
 
@@ -270,48 +302,43 @@ public class MetricsViewActionBean extends CoreActionBean {
 
         // Call Rate threshold depends on the Genotyping Chip
         List<Options> callRateOptions = null;
-        int passingCallRateThreshold = 0;
-        int warningCallRateThreshold = 0;
-        Map<String, String> chipAttributes = genotypingChip.getAttributeMap();
-        if (productOrder != null) {
-            productOrderId = productOrder.getJiraTicketKey();
-            productName = productOrder.getProduct().getProductName();
-            productFamily = productOrder.getProduct().getProductFamily().getName();
-            partNumber = productOrder.getProduct().getPartNumber();
-
-            //Attempt to override default chip attributes if changed in product order
-            GenotypingProductOrderMapping genotypingProductOrderMapping =
-                    attributeArchetypeDao.findGenotypingProductOrderMapping(productOrder.getJiraTicketKey());
-            if (genotypingProductOrderMapping != null) {
-                for (ArchetypeAttribute archetypeAttribute : genotypingProductOrderMapping.getAttributes()) {
-                    if (chipAttributes.containsKey(archetypeAttribute.getAttributeName()) &&
-                        archetypeAttribute.getAttributeValue() != null) {
-                        chipAttributes.put(
-                                archetypeAttribute.getAttributeName(), archetypeAttribute.getAttributeValue());
+        if (foundChipTypes.size() == 1 && genotypingChip != null) {
+            Map<String, String> chipAttributes = genotypingChip.getAttributeMap();
+            if (productOrders.size() == 1) {
+                ProductOrder productOrder = productOrders.iterator().next();
+                GenotypingProductOrderMapping genotypingProductOrderMapping =
+                        attributeArchetypeDao.findGenotypingProductOrderMapping(productOrder.getJiraTicketKey());
+                if (genotypingProductOrderMapping != null) {
+                    for (ArchetypeAttribute archetypeAttribute : genotypingProductOrderMapping.getAttributes()) {
+                        if (chipAttributes.containsKey(archetypeAttribute.getAttributeName()) &&
+                            archetypeAttribute.getAttributeValue() != null) {
+                            chipAttributes.put(
+                                    archetypeAttribute.getAttributeName(), archetypeAttribute.getAttributeValue());
+                        }
                     }
                 }
             }
-        }
-        if (chipAttributes.containsKey("call_rate_threshold")) {
-            String call_rate_threshold = chipAttributes.get("call_rate_threshold");
-            passingCallRateThreshold = Integer.parseInt(call_rate_threshold);
-            warningCallRateThreshold = passingCallRateThreshold - 3;
-            String passingLegendLabel = String.format(">= %d", passingCallRateThreshold);
-            String warningLegendLabel = String.format(">= %d", warningCallRateThreshold);
-            callRateOptions = new OptionsBuilder().
-                    addOption(passingLegendLabel, call_rate_threshold, GREEN).
-                    addOption(warningLegendLabel, String.valueOf(passingCallRateThreshold), YELLOW).
-                    addOption("Fail", "0", RED).build();
-        } else {
-            addGlobalValidationError(
-                    "Failed to find call rate threshold for genotyping chip " + genotypingChip.getChipName());
-            return;
-        }
 
-        if (callRateOptions == null) {
-            addGlobalValidationError(
-                    "Failed to configure call rate options for genotyping chip " + genotypingChip.getChipName());
-            return;
+            if (chipAttributes.containsKey("call_rate_threshold")) {
+                String call_rate_threshold = chipAttributes.get("call_rate_threshold");
+                int passingCallRateThreshold = Integer.parseInt(call_rate_threshold);
+                int warningCallRateThreshold = passingCallRateThreshold - 3;
+                String passingLegendLabel = String.format(">= %d", passingCallRateThreshold);
+                String warningLegendLabel = String.format(">= %d", warningCallRateThreshold);
+                callRateOptions = new OptionsBuilder().
+                        addOption(passingLegendLabel, call_rate_threshold, GREEN).
+                        addOption(warningLegendLabel, String.valueOf(passingCallRateThreshold), YELLOW).
+                        addOption("Fail", "0", RED).build();
+            } else {
+                addGlobalValidationError(
+                        "Failed to find call rate threshold for genotyping chip " + genotypingChip.getChipName());
+                return;
+            }
+        } else {
+            callRateOptions = new OptionsBuilder().
+                    addOption(">= 98", "98", GREEN).
+                    addOption(">= 95", "95", YELLOW).
+                    addOption("Fail", "0", RED).build();
         }
 
         List<Options> fpGenderOptions = new OptionsBuilder().addOption("M", "M", BLUE).addOption("F", "F", RED).
@@ -322,8 +349,19 @@ public class MetricsViewActionBean extends CoreActionBean {
         List<Options> trueFalseOption = new OptionsBuilder().addOption("True", Boolean.TRUE.toString(), GREEN)
                 .addOption("False",  Boolean.TRUE.toString(), RED).build();
 
-        List<Options> hetPctOptions = new OptionsBuilder().addOption(">= 25", "25", RED).addOption(">= 20", "20", YELLOW).
+        List<Options> hetPctOptions = new OptionsBuilder().addOption(">= 25", "25", RED).
+                addOption(">= 20", "20", YELLOW).
                 addOption("Pass", "0", GREEN).build();
+
+        String fingerPrintPassingValue = isClinical ? "10" : "3";
+        List<Options> fingerprintingConcordanceOptions = new OptionsBuilder().
+                addOption("Pass", fingerPrintPassingValue, GREEN).
+                addOption("Fail", "-3", RED).
+                addOption("Not Comparable", String.valueOf(Integer.MIN_VALUE), YELLOW).build();
+
+        List<Options> hapMapConcordanceOptions = new OptionsBuilder().addOption(">= 90", "90", RED).
+                addOption(">= 85", "85", YELLOW).
+                addOption("Fail", "0", GREEN).build();
 
         List<Options> emptyOptions = new OptionsBuilder().build();
 
@@ -421,6 +459,15 @@ public class MetricsViewActionBean extends CoreActionBean {
             wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
             wellDataset.setOptions(trueFalseOption);
 
+            // Fingerprinting Concordance
+            if (!arraysQc.getArraysQcFingerprints().isEmpty()) {
+                ArraysQcFingerprint arraysQcFingerprint = arraysQc.getArraysQcFingerprints().iterator().next();
+                value = String.valueOf(arraysQcFingerprint.getLodExpectedSample());
+                wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.FINGERPRINT_CONCORDANCE);
+                wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
+                wellDataset.setOptions(fingerprintingConcordanceOptions);
+            }
+
             // Haplotype Difference
             if (!arraysQc.getArraysQcFingerprints().isEmpty()) {
                 ArraysQcFingerprint arraysQcFingerprint = arraysQc.getArraysQcFingerprints().iterator().next();
@@ -429,6 +476,15 @@ public class MetricsViewActionBean extends CoreActionBean {
                 wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.HAPLOTYPE_DIFFERENCE);
                 wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
                 wellDataset.setOptions(emptyOptions);
+            }
+
+            // HapMap Concordance
+            if (!arraysQc.getArraysQcGtConcordances().isEmpty()) {
+                ArraysQcGtConcordance arraysQcGtConcordance = arraysQc.getArraysQcGtConcordances().iterator().next();
+                value = String.valueOf(arraysQcGtConcordance.getGenotypeConcordance());
+                wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.HAPMAP_CONCORDANCE);
+                wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
+                wellDataset.setOptions(hapMapConcordanceOptions);
             }
 
         }
