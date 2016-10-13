@@ -1,43 +1,13 @@
 ;(function ( $, window, document, undefined ) {
     var pluginName = 'plateMap',
         defaults = {
+            logEnabled : true,
             metricsSelectorId: '#metricsList',
             onchangeselector : '#heatField',
             metadataDefinitionListId: '#metadataDefinitionList',
             legendId: '#legend',
             tableId: '#platemap',
-            datasets:[
-                {
-                    plateMapMetrics:{
-                        displayName:"Call Rate",
-                        displayValue:true,
-                        chartType:"Category",
-                        evalType: "greaterThanOrEqual"
-                    },
-                    options : [
-                        { name : 'Pass', value : 95, color : '#dff0d8'},
-                        { name : 'Warn', value : 90, color : '#fcf8e3 '},
-                        { name : 'Fail', value : 0, color : '#f2dede'}
-                    ],
-                    wellData:[
-                        {
-                            well:"R01C02",
-                            value:"86.03",
-                            metadata : [{label : 'Sample Name', value: 'SM-TEST'},
-                                { well : 'B01', value : '0.93321'}, { well : 'C01', value : '0.6577'}]
-                        },
-                        {
-                            well : "R12C02",
-                            value : "98.61"
-                        },
-                        {
-                            well : "R05C02",
-                            value: "86.03",
-                            metadata : []
-                        }
-                    ]
-                }
-            ]
+            datasets:[]
         };
 
     // The actual plugin constructor
@@ -74,6 +44,7 @@
             legend.empty();
             if (datasetList.length === 1){
                 var dataset = datasetList[0];
+                plugin.log(dataset);
                 var chartType = dataset.plateMapMetrics.chartType;
                 plugin.buildLegend(dataset.options);
                 $.each(dataset.wellData, function (idx, wellData) {
@@ -143,11 +114,21 @@
     };
 
     Plugin.prototype.equals = function(a, b) {
-        return Number(a) === Number(b);
+        return a === b;
     };
     
     Plugin.prototype.greaterThan = function(a, b) {
         return Number(a) > Number(b);
+    };
+
+    Plugin.prototype.log = function(msg) {
+        if (this.options.logEnabled && typeof console != "undefined") {
+            try {
+                console.log(msg);
+            }
+            catch (e) {
+            }
+        }
     };
 
     // preventing against multiple instantiations

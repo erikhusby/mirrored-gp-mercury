@@ -347,7 +347,7 @@ public class MetricsViewActionBean extends CoreActionBean {
         List<Options> genderOptions = new OptionsBuilder().addOption("M", "M", BLUE).addOption("F", "F", RED).build();
 
         List<Options> trueFalseOption = new OptionsBuilder().addOption("True", Boolean.TRUE.toString(), GREEN)
-                .addOption("False",  Boolean.TRUE.toString(), RED).build();
+                .addOption("False",  Boolean.FALSE.toString(), RED).build();
 
         List<Options> hetPctOptions = new OptionsBuilder().addOption(">= 25", "25", RED).
                 addOption(">= 20", "20", YELLOW).
@@ -479,12 +479,14 @@ public class MetricsViewActionBean extends CoreActionBean {
             }
 
             // HapMap Concordance
-            if (!arraysQc.getArraysQcGtConcordances().isEmpty()) {
-                ArraysQcGtConcordance arraysQcGtConcordance = arraysQc.getArraysQcGtConcordances().iterator().next();
-                value = String.valueOf(arraysQcGtConcordance.getGenotypeConcordance());
-                wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.HAPMAP_CONCORDANCE);
-                wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
-                wellDataset.setOptions(hapMapConcordanceOptions);
+            for (ArraysQcGtConcordance arraysQcGtConcordance: arraysQc.getArraysQcGtConcordances()) {
+                if (arraysQcGtConcordance.getVariantType().equals("SNP")) {
+                    value = ColumnValueType.TWO_PLACE_DECIMAL.format(
+                            arraysQcGtConcordance.getGenotypeConcordance().multiply(BigDecimal.valueOf(100)), "");
+                    wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.HAPMAP_CONCORDANCE);
+                    wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
+                    wellDataset.setOptions(hapMapConcordanceOptions);
+                }
             }
 
         }
