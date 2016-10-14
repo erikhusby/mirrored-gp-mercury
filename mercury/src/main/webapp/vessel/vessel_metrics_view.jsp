@@ -23,6 +23,7 @@
 
             .legend span { margin: 5px; border: 1px solid #ccc; float: right; width: 12px; height: 12px;}
         </style>
+        <script src="${ctxpath}/resources/scripts/plateMap.js"></script>
         <script type="text/javascript">
             $j(document).ready(function () {
                 <c:if test="${actionBean.labVessel != null}">
