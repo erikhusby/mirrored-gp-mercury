@@ -18,31 +18,25 @@ import java.util.Set;
 @BatchSize(size = 50)
 public class AbandonVessel {
 
-
-
-
     @SequenceGenerator(name = "seq_abandon_vessel", schema = "mercury",  sequenceName = "seq_abandon_vessel")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_abandon_vessel")
     @Id
-    @Column(name = "abandon_vessel_id")
-    private Long abandonedVesselsId;
+    private Long abandonVesselId;
 
-    @Column(name = "lab_vessel")
-    private Long labVessel;
+    @ManyToOne(fetch = FetchType.LAZY)
+    private LabVessel labVessel;
 
-    @Column(name = "reason")
     private String reason;
 
-    @Column(name = "abandoned_on")
     private Date abandonedOn;
 
     @OneToMany(mappedBy = "abandonVessel", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @BatchSize(size = 100)
     private Set<AbandonVesselPosition> abandonVesselPosition = new HashSet<>();
 
-    public Long getAbandonedVesselsId()
+    public Long getAbandonVesselId()
     {
-        return this.abandonedVesselsId;
+        return this.abandonVesselId;
     }
 
     public Set<AbandonVesselPosition> getAbandonedVesselPosition() {
@@ -63,13 +57,11 @@ public class AbandonVessel {
 
     public AbandonVessel getAbandonVessel() { return this; }
 
-    public long getLabVessel() {
+    public LabVessel getLabVessel() {
         return labVessel;
     }
 
-    public void setAbandonedVessel(LabVessel labVessel) {
-        this.labVessel = labVessel.getLabVesselId();
-    }
+    public void setAbandonedVessel(LabVessel labVessel) { this.labVessel = labVessel; }
 
     public void addAbandonVesselPosition(AbandonVesselPosition abandonedWells) {
         abandonVesselPosition.add(abandonedWells);

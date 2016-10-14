@@ -6,8 +6,6 @@ import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import org.broadinstitute.bsp.client.util.MessageCollection;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.AbandonVesselPositionDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.AbandonVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
@@ -54,17 +52,10 @@ public class AbandonVesselActionBean  extends SearchActionBean {
             "Depleted"
     };
 
-    MessageCollection messageCollection = new MessageCollection();
+     private MessageCollection messageCollection = new MessageCollection();
 
     @Inject
     private LabVesselDao labVesselDao;
-
-    @Inject
-    private AbandonVesselDao abandonVesselDao;
-
-    @Inject
-    private AbandonVesselPositionDao abandonVesselPositionDao;
-
 
     @Override
     @DefaultHandler
@@ -135,22 +126,21 @@ public class AbandonVesselActionBean  extends SearchActionBean {
         }
 
         for (LabVessel vessel : getFoundVessels()) {
-                AbandonVessel abandonVessel = getVesselToAbandon(vessel);
-                abandonVessel.setReason(chipReason);
-                abandonVessel.setAbandonedOn(true);
-                VesselPosition[] vesselPositions =  vessel.getVesselGeometry().getVesselPositions();
+            AbandonVessel abandonVessel = getVesselToAbandon(vessel);
+            abandonVessel.setReason(chipReason);
+            abandonVessel.setAbandonedOn(true);
 
-                for (VesselPosition position : vessel.getVesselGeometry().getVesselPositions())
-                    {
-                        AbandonVesselPosition abandonVesselPosition = new AbandonVesselPosition();
-                        abandonVesselPosition.setAbandonedOn(true);
-                        abandonVesselPosition.setReason(reason);
-                        abandonVesselPosition.setPosition(position.toString());
-                        abandonVessel.addAbandonVesselPosition(abandonVesselPosition);
-                    }
-                    vessel.addAbandonedVessel(abandonVessel);
-                    abandonVesselDao.flush();
+            for (VesselPosition position : vessel.getVesselGeometry().getVesselPositions())
+                {
+                    AbandonVesselPosition abandonVesselPosition = new AbandonVesselPosition();
+                    abandonVesselPosition.setAbandonedOn(true);
+                    abandonVesselPosition.setReason(reason);
+                    abandonVesselPosition.setPosition(position.toString());
+                    abandonVessel.addAbandonVesselPosition(abandonVesselPosition);
                 }
+                vessel.addAbandonedVessel(abandonVessel);
+                labVesselDao.flush();
+            }
 
         messageCollection.addInfo("All Positions Successfully Abandoned.. " );
         addMessages(messageCollection);
@@ -169,14 +159,12 @@ public class AbandonVesselActionBean  extends SearchActionBean {
         String vesselPosition = getVesselPosition();
 
         for (LabVessel vessel : getFoundVessels()) {
-            LabVesselDao d = new LabVesselDao();
-            for (AbandonVessel abaondendVessel : vessel.getAbandonVessel()) {
+            for (AbandonVessel abaondendVessel : vessel.getAbandonVessels()) {
                 for (AbandonVesselPosition abandonVesselPosition : abaondendVessel.getAbandonedVesselPosition()) {
                     if (abandonVesselPosition.getPosition().equals(vesselPosition)) {
-                        abandonVesselPosition = abandonVesselPositionDao.findByIdentifier(abandonVesselPosition.getAbandonVesselPositionId());
                         abaondendVessel.removeAbandonedWells(abandonVesselPosition);
                         if (vessel.getParentAbandonVessel().getAbandonedVesselPosition().size() == 0) {
-                            vessel.removeAbandonedVessel(vessel.getAbandonVessel());
+                            vessel.removeAbandonedVessel(vessel.getAbandonVessels());
                         }
                         labVesselDao.flush();
                         messageCollection.addInfo("Position Successfully Un-Abandoned. " );
@@ -230,7 +218,7 @@ public class AbandonVesselActionBean  extends SearchActionBean {
         setSearchKey(vesselLabel);
         doSearch(SearchActionBean.SearchType.VESSELS_BY_BARCODE);
         for (LabVessel vessel : getFoundVessels()) {
-            vessel.removeAbandonedVessel(vessel.getAbandonVessel());
+            vessel.removeAbandonedVessel(vessel.getAbandonVessels());
         }
 
         labVesselDao.flush();
@@ -247,7 +235,7 @@ public class AbandonVesselActionBean  extends SearchActionBean {
      */
     public boolean isVesselAbandoned() {
 
-        if (labVessel.getAbandonVessel().size() == 0) {
+        if (labVessel.getAbandonVessels().size() == 0) {
             return false;
         }
         return true;
@@ -261,7 +249,7 @@ public class AbandonVesselActionBean  extends SearchActionBean {
     public boolean isPositionAbandoned(String vesselPosition)
     {
         for (LabVessel vessel : getFoundVessels()) {
-            for (AbandonVessel abaondendVessel : vessel.getAbandonVessel()) {
+            for (AbandonVessel abaondendVessel : vessel.getAbandonVessels()) {
                 for (AbandonVesselPosition abandonVesselPosition : abaondendVessel.getAbandonedVesselPosition()) {
                     if(abandonVesselPosition.getPosition().equals(vesselPosition)){
                         return true;
@@ -280,7 +268,7 @@ public class AbandonVesselActionBean  extends SearchActionBean {
     public String getAbandonReason(String vesselPosition)
     {
         for (LabVessel vessel : getFoundVessels()) {
-            for (AbandonVessel abaondendVessel : vessel.getAbandonVessel()) {
+            for (AbandonVessel abaondendVessel : vessel.getAbandonVessels()) {
                 for (AbandonVesselPosition abandonVesselPosition : abaondendVessel.getAbandonedVesselPosition()) {
                     if(abandonVesselPosition.getPosition().equals(vesselPosition)){
                        return abandonVesselPosition.getReason();
@@ -334,7 +322,7 @@ public class AbandonVesselActionBean  extends SearchActionBean {
 
     public AbandonVessel getVesselToAbandon(LabVessel vessel)
     {
-        if(vessel.getAbandonVessel().size() == 0) {
+        if(vessel.getAbandonVessels().size() == 0) {
             return new AbandonVessel();
         }
         return vessel.getParentAbandonVessel();

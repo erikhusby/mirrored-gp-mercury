@@ -26,34 +26,19 @@ public class AbandonVesselPosition {
     @SequenceGenerator(name = "seq_abandon_vessel_position", schema = "mercury",  sequenceName = "seq_abandon_vessel_position")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_abandon_vessel_position")
     @Id
-    @Column(name = "abandon_vessel_position_id")
     private Long abandonVesselPositionId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     private AbandonVessel abandonVessel;
 
-    @Column(name = "abandon_vessel", insertable = false, updatable = false, nullable = false)
-    private Long abandonVesselId;
-
-    @Column(name = "vessel_position")
     private String vesselPosition;
 
-    @Column(name = "reason")
     private String reason;
 
-    @Column(name = "abandoned_on")
     private Date abandonedOn;
 
     public Long getAbandonVesselPositionId() {
         return abandonVesselPositionId;
-    }
-
-    public Long getAbandonVessel() {
-        return abandonVesselId;
-    }
-
-    public void setAbandonVessel(Long abandonVessel) {
-        this.abandonVesselId = abandonVessel;
     }
 
     public AbandonVessel getLabVessel() {

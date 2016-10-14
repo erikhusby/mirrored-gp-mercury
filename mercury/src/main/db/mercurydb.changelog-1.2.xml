@@ -606,14 +606,14 @@
     </changeSet>
 
     <changeSet id="GPLIM-4321-10" author="dwilson">
-    <createTable schemaName="mercury" tableName="abandon_vessel">
-        <column name="abandon_vessel_id" type="number(19,0)">
-            <constraints primaryKey="true"/>
-        </column>
-        <column name="lab_vessel" type="number(19,0)"/>
-        <column name="reason" type="varchar2(255)"/>
-        <column name="abandoned_on" type="oracle.sql.TIMESTAMP"/>
-    </createTable>
+        <createTable schemaName="mercury" tableName="abandon_vessel">
+            <column name="abandon_vessel_id" type="number(19,0)">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="lab_vessel" type="number(19,0)"/>
+            <column name="reason" type="varchar2(255)"/>
+            <column name="abandoned_on" type="oracle.sql.TIMESTAMP"/>
+        </createTable>
     </changeSet>
 
     <changeSet id="GPLIM-4321-11" author="dwilson">
@@ -646,8 +646,14 @@
             <column name="rev" type="number(19,0)" />
             <column name="revtype" type="number(3,0)" />
         </createTable>
-            <addPrimaryKey tableName="abandon_vessel_aud" schemaName="mercury" columnNames="abandon_vessel_id, rev"/>
-            <addPrimaryKey tableName="abandon_vessel_position_aud" schemaName="mercury" columnNames="abandon_vessel_position_id, rev"/>
+        <addPrimaryKey tableName="abandon_vessel_aud" schemaName="mercury" columnNames="rev, abandon_vessel_id"/>
+        <createIndex tableName="abandon_vessel_aud" indexName="ix_abandon_vessel_aud">
+            <column name="abandon_vessel_id"/>
+        </createIndex>
+        <addPrimaryKey tableName="abandon_vessel_position_aud" schemaName="mercury" columnNames="rev, abandon_vessel_position_id"/>
+        <createIndex tableName="abandon_vessel_position_aud" indexName="ix_abandon_vessel_position_aud">
+            <column name="abandon_vessel_position_id"/>
+        </createIndex>
     </changeSet>
 
     <changeSet id="GPLIM-4321-13" author="dwilson">

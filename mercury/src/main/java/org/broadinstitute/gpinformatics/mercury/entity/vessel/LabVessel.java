@@ -174,7 +174,7 @@ public abstract class LabVessel implements Serializable {
 
     @OneToMany(mappedBy = "labVessel", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @BatchSize(size = 100)
-    private Set<AbandonVessel> abandonVessel = new HashSet<>();
+    private Set<AbandonVessel> abandonVessels = new HashSet<>();
 
     @OneToMany // todo jmt should this have mappedBy?
     @JoinTable(schema = "mercury")
@@ -343,7 +343,7 @@ public abstract class LabVessel implements Serializable {
      *
      */
     public boolean isVesselAbandoned() {
-        if (getAbandonVessel().size() == 0) {
+        if (getAbandonVessels().size() == 0) {
             return false;
         }
         return true;
@@ -376,13 +376,13 @@ public abstract class LabVessel implements Serializable {
      */
     public boolean isPositionAbandoned(String well)
     {
-            for (AbandonVessel abaondendVessel : this.getAbandonVessel()) {
-                for (AbandonVesselPosition abandonVesselPosition : abaondendVessel.getAbandonedVesselPosition()) {
-                    if(abandonVesselPosition.getPosition().equals(well)){
-                        return true;
-                    }
+        for (AbandonVessel abaondendVessel : this.getAbandonVessels()) {
+            for (AbandonVesselPosition abandonVesselPosition : abaondendVessel.getAbandonedVesselPosition()) {
+                if(abandonVesselPosition.getPosition().equals(well)){
+                    return true;
                 }
             }
+        }
         return false;
     }
 
@@ -448,12 +448,12 @@ public abstract class LabVessel implements Serializable {
     }
 
     public void addAbandonedVessel(AbandonVessel vessels) {
-        abandonVessel.add(vessels);
+        abandonVessels.add(vessels);
         vessels.setAbandonedVessel(this);
     }
 
     public void removeAbandonedVessel(Set<AbandonVessel> abandonVessel) {
-        this.abandonVessel.removeAll(abandonVessel);
+        this.abandonVessels.removeAll(abandonVessel);
     }
 
     public Set<LabMetric> getMetrics() {
@@ -959,8 +959,8 @@ public abstract class LabVessel implements Serializable {
         this.receptacleWeight = receptacleWeight;
     }
 
-    public Set<AbandonVessel> getAbandonVessel() {
-        return abandonVessel;
+    public Set<AbandonVessel> getAbandonVessels() {
+        return abandonVessels;
     }
 
     /**
@@ -970,8 +970,8 @@ public abstract class LabVessel implements Serializable {
      */
     public AbandonVessel getParentAbandonVessel()
     {
-        if(getAbandonVessel().size() > 0)
-            return new ArrayList<AbandonVessel>(getAbandonVessel()).get(0);
+        if(getAbandonVessels().size() > 0)
+            return new ArrayList<AbandonVessel>(getAbandonVessels()).get(0);
         else
             return null;
     }
@@ -1015,9 +1015,9 @@ public abstract class LabVessel implements Serializable {
         }
     }
 
-    public void setAbandonVessel(AbandonVessel abandonVessel)
+    public void setAbandonVessels(AbandonVessel abandonVessels)
     {
-        this.abandonVessel.add(abandonVessel);
+        this.abandonVessels.add(abandonVessels);
     }
 
     public Set<BucketEntry> getBucketEntries() {
