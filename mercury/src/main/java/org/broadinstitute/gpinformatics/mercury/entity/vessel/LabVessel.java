@@ -392,12 +392,21 @@ public abstract class LabVessel implements Serializable {
      */
     public boolean isMultiplePositions()
     {
-        if(this.getVesselGeometry().getColumnCount() * this.getVesselGeometry().getRowCount() > 1) {
+        if(getGeometrySize() > 1) {
             return true;
         }
         else {
             return false;
         }
+    }
+
+    /**
+     *  Returns the size of the vessel rows * columns.
+     *
+     */
+    public int getGeometrySize()
+    {
+        return this.getVesselGeometry().getColumnCount() * this.getVesselGeometry().getRowCount();
     }
 
     /**

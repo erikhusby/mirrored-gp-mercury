@@ -26,9 +26,18 @@
             }
 
             .btn-xs{
+                background-color: #5a86de;
+                background-image:none;
                 padding: 0.5px 2px;
                 font-size: 8px;
-                border-radius: 8px;
+                text-align: right;
+                background-image:none;
+            }
+
+            .ddl-xs{
+                width:75px;
+                padding: 0.5px 2px;
+                font-size: 8px;
                 text-align: right;
                 background-image:none;
             }
@@ -174,7 +183,7 @@
                         <c:choose>
                             <c:when test="${actionBean.isVesselAbandoned()}">
                                 <security:authorizeBlock roles="<%= roles(Developer, PDM ,LabManager) %>">
-                                    <stripes:submit id="unAbandonVessel" name="unAbandonVessel" value="Un-Abandon All Positions" class="btn btn-primary"/>
+                                    <stripes:submit id="unAbandonVessel" name="unAbandonVessel" value="Unbandon All Positions" class="btn btn-primary"/>
                                 </security:authorizeBlock>
                             </c:when>
                             <c:otherwise>
@@ -208,14 +217,14 @@
                                             <c:choose>
                                             <c:when test="${actionBean.isPositionAbandoned(wellTest)}">
                                                 <security:authorizeBlock roles="<%= roles(Developer, PDM ,LabManager) %>">
-                                                <stripes:submit id="${rowName}${columnName}" name="unAbandonPosition" value="Un-Abandon Position" onclick="abandonPositions(this.id)" class="btn btn-primary"/>
+                                                <stripes:submit id="${rowName}${columnName}" name="unAbandonPosition" value="Unabandon" onclick="abandonPositions(this.id)" class="btn btn-primary ${actionBean.shrinkCss('btn-xs')}"/>
                                                 </security:authorizeBlock>
                                             </c:when>
                                             <c:otherwise>
-                                                <stripes:submit id="${rowName}${columnName}" name="abandonPosition" value="Abandon Position" onclick="abandonPositions(this.id)" class="btn btn-primary"/>
+                                                <stripes:submit id="${rowName}${columnName}" name="abandonPosition" value="Abandon" onclick="abandonPositions(this.id)" class="btn btn-primary ${actionBean.shrinkCss('btn-xs')}"/>
                                             </c:otherwise>
                                             </c:choose>
-                                            <select class='filterDropdown' id="reason_${rowName}${columnName}" name="reason_${rowName}${columnName}">
+                                            <select class="filterDropdown ${actionBean.shrinkCss('ddl-xs')}" id="reason_${rowName}${columnName}" name="reasonDdl">
                                                 <c:forEach items="${reasonCodes}" var="reasonValue" varStatus="reasonStatus">
                                                     <option value="${reasonValue}">${reasonValue}</option>
                                                 </c:forEach>
@@ -233,7 +242,7 @@
                             <c:choose>
                             <c:when test="${actionBean.isVesselAbandoned()}">
                                 <security:authorizeBlock roles="<%= roles(Developer, PDM , LabManager) %>">
-                                <stripes:submit id="unAbandonVessel" name="unAbandonVessel" value="Un-Abandon" class="btn btn-primary"/>
+                                <stripes:submit id="unAbandonVessel" name="unAbandonVessel" value="Unabandon" class="btn btn-primary"/>
                                 </security:authorizeBlock>
                             </c:when>
                             <c:otherwise>
@@ -256,10 +265,9 @@
                     <label>Reason:</label>
                 </p>
                 <select class='filterDropdown' id="reasonCode" name="reasonCode">
-                    <option value="Failed QC">Failed QC</option>
-                    <option value="Lab incident">Lab incident</option>
-                    <option value="Equipment failure">Equipment failure</option>
-                    <option value="Depleted">Depleted</option>
+                    <c:forEach items="${reasonCodes}" var="reasonValue" varStatus="reasonStatus">
+                        <option value="${reasonValue}">${reasonValue}</option>
+                    </c:forEach>
                 </select>
             </div>
         </div>

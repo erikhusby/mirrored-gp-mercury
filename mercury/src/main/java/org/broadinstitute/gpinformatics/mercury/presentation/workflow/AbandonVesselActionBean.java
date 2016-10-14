@@ -69,6 +69,11 @@ public class AbandonVesselActionBean  extends SearchActionBean {
     public Resolution vesselSearch() throws Exception {
         doSearch(SearchActionBean.SearchType.VESSELS_BY_BARCODE);
         orderResults();
+        if(!isResultsAvailable()) {
+            setSearchDone(false);
+            messageCollection.addError("No results found for: " + getSearchKey());
+            addMessages(messageCollection);
+        }
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
 
@@ -167,7 +172,7 @@ public class AbandonVesselActionBean  extends SearchActionBean {
                             vessel.removeAbandonedVessel(vessel.getAbandonVessels());
                         }
                         labVesselDao.flush();
-                        messageCollection.addInfo("Position Successfully Un-Abandoned. " );
+                        messageCollection.addInfo("Position Successfully Unabandoned. " );
                         addMessages(messageCollection);
                         return vesselSearch();
                     }
@@ -222,7 +227,7 @@ public class AbandonVesselActionBean  extends SearchActionBean {
         }
 
         labVesselDao.flush();
-        messageCollection.addInfo("Vessel: " + vesselLabel + " Successfully Un-Abandoned. " );
+        messageCollection.addInfo("Vessel: " + vesselLabel + " Successfully Unabandoned. " );
         addMessages(messageCollection);
         return vesselSearch();
     }
@@ -326,6 +331,20 @@ public class AbandonVesselActionBean  extends SearchActionBean {
             return new AbandonVessel();
         }
         return vessel.getParentAbandonVessel();
+    }
+
+    /**
+     *
+     *  If the vessel has > 24 positions, change the CSS set to shrink
+     *  the elements so they fit on the screen.
+     *
+     */
+    public String shrinkCss(String cssType)
+    {
+        if(labVessel.getGeometrySize() > 24) {
+            return cssType;
+        }
+        return null;
     }
 
     public  void setLabVessel(LabVessel vessel)
