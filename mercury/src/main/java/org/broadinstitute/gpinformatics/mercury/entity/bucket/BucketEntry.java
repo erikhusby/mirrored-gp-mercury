@@ -306,11 +306,18 @@ public class BucketEntry {
 
     @Override
     public String toString() {
+        String workflowString=null;
+        if (workflows == null) {
+            workflowString="(not initialized)";
+        } else if (workflows.isEmpty()) {
+            workflowString = "(no workflows)";
+        }
+
         return String.format("Bucket: %s, %s, Vessel %s, Batch %s, Workflow: %s",
                 bucket != null ? bucket.getBucketDefinitionName() : "(no bucket)",
                 productOrder != null?productOrder.getBusinessKey():"(no product order)",
                 labVessel != null ? labVessel.getLabel() : "(no vessel)",
-                workflows != null && !workflows.isEmpty() ? workflows: "(no workflows)",
+                workflowString == null ? this.workflows : workflowString,
                 labBatch != null ? labBatch.getBatchName() : "(not batched)");
     }
 

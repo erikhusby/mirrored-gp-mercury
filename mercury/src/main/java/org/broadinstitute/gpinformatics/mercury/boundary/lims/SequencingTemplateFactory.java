@@ -239,7 +239,7 @@ public class SequencingTemplateFactory {
         if (isPairedEnd == null && productPairedEnds.size() == 1) {
             isPairedEnd = productPairedEnds.iterator().next();
         }
-        SequencingConfigDef sequencingConfig = getSequencingConfig(isPoolTest, workflowConfig);
+        SequencingConfigDef sequencingConfig = getSequencingConfig(isPoolTest);
         String readStructure =  makeReadStructure(readLength, isPoolTest, molecularIndexReadStructures, isPairedEnd);
         if (StringUtils.isBlank(readStructure)) {
             readStructure = sequencingConfig.getReadStructure().getValue();
@@ -336,7 +336,7 @@ public class SequencingTemplateFactory {
         if (isPairedEnd == null && productPairedEnds.size() == 1) {
             isPairedEnd = productPairedEnds.iterator().next();
         }
-        SequencingConfigDef sequencingConfig = getSequencingConfig(isPoolTest, workflowConfig);
+        SequencingConfigDef sequencingConfig = getSequencingConfig(isPoolTest);
         String readStructure =  makeReadStructure(readLength, isPoolTest, molecularIndexReadStructures, isPairedEnd);
         if (StringUtils.isBlank(readStructure)) {
             readStructure = sequencingConfig.getReadStructure().getValue();
@@ -425,7 +425,7 @@ public class SequencingTemplateFactory {
                 IlluminaFlowcell.FlowcellType.MiSeqFlowcell.getVesselGeometry().getRowNames()[0],
                 loadingConcentration, "", loadingTubes.iterator().next().getLabel()));
 
-        SequencingConfigDef sequencingConfig = getSequencingConfig(isPoolTest, workflowConfig);
+        SequencingConfigDef sequencingConfig = getSequencingConfig(isPoolTest);
 
         return LimsQueryObjectFactory.createSequencingTemplate(null, null, isPairedEnd,
                 sequencingConfig.getInstrumentWorkflow().getValue(), sequencingConfig.getChemistry().getValue(),
@@ -489,7 +489,7 @@ public class SequencingTemplateFactory {
         return strandCode + indexCode + ((isPairedEnd == null || isPairedEnd) ? strandCode : "");
     }
 
-    private static SequencingConfigDef getSequencingConfig(boolean isPoolTest, WorkflowConfig workflowConfig) {
+    private SequencingConfigDef getSequencingConfig(boolean isPoolTest) {
         if (isPoolTest) {
             return workflowConfig.getSequencingConfigByName("Resequencing-Pool-Default");
         } else {
