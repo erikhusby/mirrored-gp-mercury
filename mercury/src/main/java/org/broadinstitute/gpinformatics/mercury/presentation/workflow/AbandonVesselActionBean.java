@@ -8,12 +8,15 @@ import net.sourceforge.stripes.action.UrlBinding;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
-import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 
 /**
@@ -22,7 +25,7 @@ import java.util.LinkedHashSet;
  */
 
 @UrlBinding(value = "/workflow/AbandonVessel.action")
-public class AbandonVesselActionBean  extends SearchActionBean {
+public class AbandonVesselActionBean  extends CoreActionBean {
     public static final String ACTIONBEAN_URL_BINDING = "/search/vessel.action";
     public static final String VESSEL_SEARCH = "vesselSearch";
     public static final String ABANDON_POSITION = "abandonPosition";
@@ -30,9 +33,13 @@ public class AbandonVesselActionBean  extends SearchActionBean {
     public static final String UN_ABANDON_VESSEL = "unAbandonVessel";
     public static final String ABANDON_VESSEL = "abandonVessel";
     public static final String ABANDON_ALL_POSITIONS = "abandonAllPositions";
-
+    private Set<LabVessel> foundVessels = new HashSet<>();
     private static final String SESSION_LIST_PAGE = "/workflow/abandon_vessel.jsp";
     private static String chipReason = "Vessel Position(s)";
+    private String resultSummaryString;
+    private boolean resultsAvailable = false;
+    private boolean isSearchDone = false;
+    private int numSearchTerms;
     private String abandonComment;
     private String unAbandonComment;
     private String vesselBarcode;
@@ -43,31 +50,23 @@ public class AbandonVesselActionBean  extends SearchActionBean {
     private String vesselPositionReason;
     private boolean isMultiplePositions = false;
     private LabVessel labVessel;
-
-    private String [] abandonReasons = {
-            "--Select--",
-            "Failed QC",
-            "Lab incident",
-            "Equipment failure",
-            "Depleted"
-    };
-
-     private MessageCollection messageCollection = new MessageCollection();
+    private String searchKey;
+    private MessageCollection messageCollection = new MessageCollection();
+    private String reasonSelect = new AbandonVessel().getReasonList()[0].getDisplayName();
 
     @Inject
     private LabVesselDao labVesselDao;
 
-    @Override
+
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
-        getSearchKey();
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
 
     @HandlesEvent(VESSEL_SEARCH)
     public Resolution vesselSearch() throws Exception {
-        doSearch(SearchActionBean.SearchType.VESSELS_BY_BARCODE);
+        doSearch();
         orderResults();
         if(!isResultsAvailable()) {
             setSearchDone(false);
@@ -86,11 +85,11 @@ public class AbandonVesselActionBean  extends SearchActionBean {
     public Resolution abandonPosition() throws Exception {
 
         setSearchKey(vesselLabel);
-        doSearch(SearchActionBean.SearchType.VESSELS_BY_BARCODE);
+        doSearch();
         String vesselPosition = getVesselPosition();
         String reason = getVesselPositionReason();
 
-        if(reason.equals(abandonReasons[0])) {
+        if(reason.equals(reasonSelect)) {
             messageCollection.addError("Please select a reason for abandoning the well.");
             addMessages(messageCollection);
             return vesselSearch();
@@ -121,10 +120,10 @@ public class AbandonVesselActionBean  extends SearchActionBean {
     @HandlesEvent(ABANDON_ALL_POSITIONS)
     public Resolution abandonAllPositions() throws Exception {
         setSearchKey(vesselLabel);
-        doSearch(SearchActionBean.SearchType.VESSELS_BY_BARCODE);
+        doSearch();
         String reason = getVesselPositionReason();
 
-        if(reason.equals(abandonReasons[0])) {
+        if(reason.equals(reasonSelect)) {
             messageCollection.addError("Please select a reason for abandoning all wells.");
             addMessages(messageCollection);
             return vesselSearch();
@@ -160,7 +159,7 @@ public class AbandonVesselActionBean  extends SearchActionBean {
     @HandlesEvent(UN_ABANDON_POSITION)
     public Resolution unAbandonPosition() throws Exception {
         setSearchKey(vesselLabel);
-        doSearch(SearchActionBean.SearchType.VESSELS_BY_BARCODE);
+        doSearch();
         String vesselPosition = getVesselPosition();
 
         for (LabVessel vessel : getFoundVessels()) {
@@ -191,9 +190,9 @@ public class AbandonVesselActionBean  extends SearchActionBean {
     public Resolution abandonVessel() throws Exception {
 
         setSearchKey(vesselLabel);
-        doSearch(SearchActionBean.SearchType.VESSELS_BY_BARCODE);
+        doSearch();
 
-        if(abandonComment.equals(abandonReasons[0])) {
+        if(abandonComment.equals(reasonSelect)) {
             messageCollection.addError("Please select a reason for abandoning the vessel.");
             addMessages(messageCollection);
             return vesselSearch();
@@ -221,7 +220,7 @@ public class AbandonVesselActionBean  extends SearchActionBean {
     public Resolution unAbandonVessel() throws Exception {
 
         setSearchKey(vesselLabel);
-        doSearch(SearchActionBean.SearchType.VESSELS_BY_BARCODE);
+        doSearch();
         for (LabVessel vessel : getFoundVessels()) {
             vessel.removeAbandonedVessel(vessel.getAbandonVessels());
         }
@@ -281,7 +280,7 @@ public class AbandonVesselActionBean  extends SearchActionBean {
                 }
             }
         }
-        return abandonReasons[0];
+        return reasonSelect;
     }
 
     /**
@@ -299,13 +298,33 @@ public class AbandonVesselActionBean  extends SearchActionBean {
             getMultiplePositions(vessel);
         }
         setFoundVessels(new LinkedHashSet<LabVessel>());
-        List<String> searchOrder = cleanInputString(getSearchKey());
+        List<String> searchOrder = new ArrayList<String>();
+        searchOrder.add(searchKey);
         for (String key : searchOrder) {
             LabVessel labVessel = labelToVessel.get(key);
             if (labVessel != null) {
                 getFoundVessels().add(labVessel);
             }
         }
+    }
+
+    /**
+     * This method creates a list of found vessels for the abandon_vessel.jsp page.
+     *
+     */
+    protected void doSearch()
+    {
+         List<String> searchList = new ArrayList<String>();
+         searchList.add(searchKey);
+         LabVessel vessel = labVesselDao.findByIdentifier(searchList.get(0));
+         if (vessel != null) {
+             foundVessels.add(vessel);
+             resultsAvailable = true;
+         }
+         else {
+             resultsAvailable = false;
+         }
+         isSearchDone = true;
     }
 
     /**
@@ -347,6 +366,42 @@ public class AbandonVesselActionBean  extends SearchActionBean {
         return null;
     }
 
+    public void setSearchKey(String searchKey) {
+        this.searchKey = searchKey;
+    }
+
+    public Set<LabVessel> getFoundVessels() {
+        return foundVessels;
+    }
+
+    public void setFoundVessels(Set<LabVessel> foundVessels) {
+        this.foundVessels = foundVessels;
+    }
+
+    public void setSearchDone(boolean searchDone) {
+        isSearchDone = searchDone;
+    }
+
+    public boolean isSearchDone() {
+        return isSearchDone;
+    }
+
+    public String getResultSummaryString() {
+        return resultSummaryString;
+    }
+
+    public void setResultSummaryString(String resultSummaryString) {
+        this.resultSummaryString = resultSummaryString;
+    }
+
+    public  String getSearchKey() {
+        return searchKey;
+    }
+
+    public  boolean isResultsAvailable() {
+        return resultsAvailable;
+    }
+
     public  void setLabVessel(LabVessel vessel)
     {
         this.labVessel = vessel;
@@ -375,9 +430,7 @@ public class AbandonVesselActionBean  extends SearchActionBean {
         this.vesselPosition = vesselPosition;
     }
 
-    public String[] getReasonCodes() {
-        return abandonReasons;
-    }
+    public AbandonVessel.Reason[] getReasonCodes() { return new AbandonVessel().getReasonList(); }
 
     public String getAbandonComment() { return abandonComment; }
 

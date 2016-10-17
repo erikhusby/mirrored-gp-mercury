@@ -1,8 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
+import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -26,6 +29,7 @@ public class AbandonVessel {
     @ManyToOne(fetch = FetchType.LAZY)
     private LabVessel labVessel;
 
+    @Enumerated(EnumType.STRING)
     private String reason;
 
     private Date abandonedOn;
@@ -80,5 +84,24 @@ public class AbandonVessel {
         }
     }
 
+    public enum Reason implements Displayable {
+        Select("--Select--"),
+        FailedQC("Failed QC"),
+        LabIncident("Lab incident"),
+        EquipmentFailure("Equipment failure"),
+        Depleted("Depleted");
 
+        private final String value;
+
+        Reason(String value) {
+            this.value = value;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return value;
+        }
+}
+
+    public  Reason[] getReasonList() {  return  Reason.values();   }
 }

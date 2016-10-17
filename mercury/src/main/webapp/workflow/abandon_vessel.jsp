@@ -162,7 +162,7 @@
                 <div id="accordion" style="display:none;" class="accordion">
                     <c:forEach items="${actionBean.foundVessels}" var="vessel" varStatus="status">
                         <div style="padding-left: 30px;padding-bottom: 2px">
-                            <stripes:layout-render name="/vessel/vessel_info_header.jsp" bean="${actionBean}"
+                            <stripes:layout-render name="/vessel/abandon_vessel_info_header.jsp" bean="${actionBean}"
                                                    vessel="${vessel}"/>
                         </div>
                     </c:forEach>
@@ -177,7 +177,7 @@
                         <div>
                         <select class='filterDropdown' id="reasonCodeAllPositions" name="reasonCodeAllPositions">
                             <c:forEach items="${reasonCodes}" var="reasonValue" varStatus="reasonStatus">
-                                <option value="${reasonValue}">${reasonValue}</option>
+                                <option value="${reasonValue.getDisplayName()}">${reasonValue.getDisplayName()}</option>
                             </c:forEach>
                         </select>
                         <c:choose>
@@ -226,7 +226,9 @@
                                             </c:choose>
                                             <select class="filterDropdown ${actionBean.shrinkCss('ddl-xs')}" id="reason_${rowName}${columnName}" name="reasonDdl">
                                                 <c:forEach items="${reasonCodes}" var="reasonValue" varStatus="reasonStatus">
-                                                    <option value="${reasonValue}">${reasonValue}</option>
+                                                    <c:if test="${reasonStatus.count > 1}">
+                                                          <option value="${reasonValue.getDisplayName()}">${reasonValue.getDisplayName()}</option>
+                                                    </c:if>
                                                 </c:forEach>
                                                 <option selected="selected">${actionBean.getAbandonReason(wellTest)}</option>
                                             </select>
@@ -266,7 +268,7 @@
                 </p>
                 <select class='filterDropdown' id="reasonCode" name="reasonCode">
                     <c:forEach items="${reasonCodes}" var="reasonValue" varStatus="reasonStatus">
-                        <option value="${reasonValue}">${reasonValue}</option>
+                        <option value="${reasonValue.getDisplayName()}">${reasonValue.getDisplayName()}</option>
                     </c:forEach>
                 </select>
             </div>
