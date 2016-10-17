@@ -5,7 +5,7 @@
     <groupId>Mercury</groupId>
     <artifactId>Mercury</artifactId>
     <!-- Unfortunately (for now) there is also a rest-pom.xml.  Changes to this version should be reflected in that
-    file as position until such a time that we reconfigure the mercury structure to have a dependant project or something
+    file as well until such a time that we reconfigure the mercury structure to have a dependant project or something
      that can inherit this version setting. -->
 
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
@@ -890,7 +890,7 @@
                 <database.delimiterType>row</database.delimiterType>
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@192.168.195.13:1521:gpinfprd</database.url>
+                <database.url>jdbc:oracle:thin:@vmgpinform:1521:gpinfdev</database.url>
                 <passwords.properties>src/test/resources/mercury-dev-passwords.properties</passwords.properties>
             </properties>
             <build>
@@ -911,7 +911,7 @@
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@192.168.195.13:1521:gpinfprd</database.url>
+                <database.url>jdbc:oracle:thin:@gpinfqa:1521:gpinfqa</database.url>
                 <passwords.properties>src/test/resources/mercury-qa-passwords.properties</passwords.properties>
                 <!--<database.url>jdbc:oracle:thin:@mercuryrc.cloud.broad:1521:gpinfprd</database.url>-->
                 <!--<database.url>jdbc:oracle:thin:${mercury.rc.ip}:1521:gpinfprd</database.url>-->
@@ -936,7 +936,7 @@
                 <database.delimiterType>row</database.delimiterType>
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@192.168.195.13:1521:gpinfprd</database.url>
+                <database.url>jdbc:oracle:thin:@gpinfqa:1521:gpinfqa</database.url>
                 <passwords.properties>src/test/resources/mercury-qa-passwords.properties</passwords.properties>
             </properties>
         </profile>
@@ -953,7 +953,7 @@
                 <database.delimiterType>row</database.delimiterType>
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@192.168.195.13:1521:gpinfprd</database.url>
+                <database.url>jdbc:oracle:thin:@gpinfoprod:1521:gpinfprd</database.url>
                 <!-- The production password is stored outside of the GIT repo in the Release Engineer's home directory -->
                 <passwords.properties>${user.home}/mercury-prod-passwords.properties</passwords.properties>
             </properties>
@@ -1575,7 +1575,7 @@ nodePrinter.print(webapp)
             <groupId>org.broadinstitute.bsp</groupId>
             <artifactId>bspclient</artifactId>
             <!-- Unfortunately (for now) there is also a rest-pom.xml.  Changes to this version should be reflected in that
-            file as position until such a time that we reconfigure the mercury structure to have a dependant project or something.
+            file as well until such a time that we reconfigure the mercury structure to have a dependant project or something.
              -->
 
             <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
@@ -2309,7 +2309,6 @@ nodePrinter.print(webapp)
                 <version>2.2</version>
                 <configuration>
                     <webappDirectory>${project.build.directory}/${project.artifactId}.war</webappDirectory>
-                    <outputDirectory>F:\jboss-as-7.1.1.Final\standalone\deployments</outputDirectory>
                     <!-- We'll keep mercury-config-local.yaml in src/main/resources for now. We can add a local directory later if needed.
                                         <webResources>
                                             <resource>
