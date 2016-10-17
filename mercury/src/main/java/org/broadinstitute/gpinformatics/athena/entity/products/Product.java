@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
@@ -302,11 +303,16 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     @Nullable
     public Boolean getPairedEndRead() {
+        // Disallows null when sequencing params are present.
+        if (StringUtils.isNotBlank(aggregationDataType)) {
+            return Boolean.TRUE.equals(pairedEndRead);
+        }
         return pairedEndRead;
     }
 
     public void setPairedEndRead(Boolean pairedEndRead) {
-        this.pairedEndRead = pairedEndRead;
+        // Disallows setting a non-null value to null.
+        this.pairedEndRead = (this.pairedEndRead != null) ? Boolean.TRUE.equals(pairedEndRead) : pairedEndRead;
     }
 
     public boolean isTopLevelProduct() {
