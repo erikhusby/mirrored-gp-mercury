@@ -102,6 +102,16 @@
                             </li>
                         </security:authorizeBlock>
                         <li>
+                            <stripes:link id="flowcellDesignations"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationActionBean"
+                                          event="view">Designate Loading Tubes</stripes:link>
+                        </li>
+                        <li>
+                            <stripes:link id="designationFct"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationFctActionBean"
+                                          event="view">Create FCT from Designations</stripes:link>
+                        </li>
+                        <li>
                             <stripes:link id="createFCT"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.CreateFCTActionBean"
                                           event="view">Create FCT Ticket</stripes:link>
@@ -179,12 +189,16 @@
                                               beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.MolecularIndexPlateActionBean"
                                               event="view">Upload Molecular Index Plate(s) from Manifest</stripes:link>
                             </li>
-
                         </security:authorizeBlock>
                         <li>
                             <stripes:link id="abandonVessels"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.AbandonVesselActionBean"
                                           event="view">Abandon Vessels</stripes:link>
+                        </li>
+                        <li>
+                            <stripes:link id="sampleSheet"
+                                    beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.SampleSheetActionBean"
+                                    event="view">Arrays Sample Sheet</stripes:link>
                         </li>
                     </ul>
                 </li>
@@ -263,6 +277,11 @@
                         <stripes:link id="transferVisualizer"
                                 beanclass="org.broadinstitute.gpinformatics.mercury.presentation.labevent.TransferVisualizerActionBean"
                                 event="view">Transfer Visualizer</stripes:link>
+                    </li>
+                    <li>
+                        <stripes:link id="plateMapView"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.MetricsViewActionBean"
+                                      event="view">Plate Map Metrics</stripes:link>
                     </li>
                 </ul>
             </li>

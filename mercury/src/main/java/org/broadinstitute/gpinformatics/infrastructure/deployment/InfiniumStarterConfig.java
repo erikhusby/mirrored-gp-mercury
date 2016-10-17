@@ -2,13 +2,14 @@ package org.broadinstitute.gpinformatics.infrastructure.deployment;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import java.io.Serializable;
 
 /**
  * Configuration for the infinium run starter processing.
  */
 @SuppressWarnings("UnusedDeclaration")
 @ConfigKey("infiniumStarter")
-public class InfiniumStarterConfig extends AbstractConfig {
+public class InfiniumStarterConfig extends AbstractConfig implements Serializable {
     private String dataPath;
     private long minimumIdatFileLength;
     private String jmsHost;

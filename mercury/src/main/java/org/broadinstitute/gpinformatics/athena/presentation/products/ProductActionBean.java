@@ -404,6 +404,10 @@ public class ProductActionBean extends CoreActionBean {
 
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() {
+        // An unchecked box should set paired end to false.
+        if (editProduct.getPairedEndRead() == null && StringUtils.isNotBlank(editProduct.getAggregationDataType())) {
+            editProduct.setPairedEndRead(false);
+        }
         productEjb.saveProduct(editProduct, addOnTokenInput, priceItemTokenInput, allLengthsMatch(),
                 criteria, operators, values, genotypingChipInfo);
         addMessage("Product \"" + editProduct.getProductName() + "\" has been saved");

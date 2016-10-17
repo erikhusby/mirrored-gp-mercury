@@ -49,11 +49,26 @@
 
                 $j('#addRegulatoryInfo').click(function(event) {
                     event.preventDefault();
-                    resetRegulatoryInfoDialog();
-                    $j('#addRegulatoryInfoDialog').dialog("open");
+                    openRegulatoryInfoDialog(
+                            '${actionBean.editResearchProject.businessKey}',
+                            '${actionBean.editResearchProject.businessKey} - ${actionBean.editResearchProject.title}',
+                            function() {
+                                location.reload(true);
+                            }
+                    );
                 });
 
-                $j('#regulatoryInfoSearchForm').submit(searchRegulatoryInfo);
+                $j('.editRegulatoryInfo').click(function(event) {
+                    event.preventDefault();
+                    $target = $j(event.target);
+                    openRegulatoryInfoEditDialog(
+                            $target.attr('regulatoryInfoId'),
+                            '${actionBean.editResearchProject.businessKey} - ${actionBean.editResearchProject.title}',
+                            function() {
+                                location.reload(true);
+                            }
+                    );
+                });
 
                 $j('#orderList').dataTable({
                     "oTableTools": ttExportDefines
@@ -114,49 +129,6 @@
                         }
                     ]
                 });
-            }
-
-            function resetRegulatoryInfoDialog() {
-                $j('#regulatoryInfoQuery').val('');
-                $j('#addRegulatoryInfoDialogSheet2').html('');
-                $j('#addRegulatoryInfoDialogSheet1').show();
-            }
-
-            function searchRegulatoryInfo(event) {
-                event.preventDefault();
-                $j.ajax({
-                    url: '${ctxpath}/projects/project.action',
-                    data: {
-                        '<%= ResearchProjectActionBean.REGULATORY_INFO_QUERY_ACTION %>': '',
-                        researchProject: '${actionBean.editResearchProject.businessKey}',
-                        q: $j('#regulatoryInfoQuery').val()
-                    },
-                    dataType: 'html',
-                    success: function(html) {
-                        $j('#addRegulatoryInfoDialogSheet2').html(html);
-                    }
-                });
-                $j('#addRegulatoryInfoDialogSheet1').hide();
-            }
-
-            function openRegulatoryInfoEditDialog(regulatoryInfoId) {
-                $j('#addRegulatoryInfoDialogSheet2').html('');
-                $j('#addRegulatoryInfoDialogSheet1').hide();
-                $j('#addRegulatoryInfoDialog').dialog("open");
-
-                $j.ajax({
-                    url: '${ctxpath}/projects/project.action',
-                    data: {
-                        '<%= ResearchProjectActionBean.VIEW_REGULATORY_INFO_ACTION %>': '',
-                        regulatoryInfoId: regulatoryInfoId,
-                        researchProject: '${actionBean.editResearchProject.businessKey}'
-                    },
-                    dataType: 'html',
-                    success: function(html) {
-                        $j('#addRegulatoryInfoDialogSheet2').html(html);
-                    }
-                });
-                return false;
             }
         </script>
     </stripes:layout-component>
@@ -517,24 +489,10 @@
             </fieldset>
         </div>
 
-        <div id="addRegulatoryInfoDialog" title="Add Regulatory Information for ${actionBean.editResearchProject.title} (${actionBean.editResearchProject.businessKey})" class="form-horizontal">
+        <stripes:layout-render name="/projects/regulatory_info_dialog.jsp"
+                               rpKey="${actionBean.editResearchProject.businessKey}"
+                               rpTitle="${actionBean.editResearchProject.title}" />
 
-            <div id="addRegulatoryInfoDialogSheet1">
-                <p>Enter the ORSP Determination number to see if the regulatory information is already known to Mercury.</p>
-                <stripes:form id="regulatoryInfoSearchForm" beanclass="${actionBean.class.name}">
-                    <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
-                    <div class="control-group">
-                        <stripes:label for="regulatoryInfoQuery" class="control-label">ORSP #</stripes:label>
-                        <div class="controls">
-                            <input id="regulatoryInfoQuery" type="text" name="q" required>
-                            <button id="regulatoryInfoSearchButton" class="btn btn-primary">Search</button>
-                        </div>
-                    </div>
-                </stripes:form>
-            </div>
-
-            <div id="addRegulatoryInfoDialogSheet2"></div>
-        </div>
 
         <div style="clear:both;" class="tableBar">
             <h4 style="display:inline">Regulatory Information for ${actionBean.editResearchProject.title}</h4>
@@ -562,7 +520,16 @@
                             <td>${regulatoryInfo.identifier}</td>
                             <td>${regulatoryInfo.name}</td>
                             <td>${regulatoryInfo.type.name}</td>
-                            <td style="text-align:center"><a href="#" onclick="return openRegulatoryInfoEditDialog(${regulatoryInfo.regulatoryInfoId});">Edit...</a></td>
+                            <td style="text-align:center">
+                                <c:choose>
+                                    <c:when test="${actionBean.isRegulatoryInfoEditAllowed(regulatoryInfo)}">
+                                        <a href="#" class="editRegulatoryInfo" regulatoryInfoId="${regulatoryInfo.regulatoryInfoId}">Edit...</a>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="disabled-link" style="font-size: 12px;" title="Editing regulatory information from the ORSP Portal is not allowed.">Edit...</span>
+                                    </c:otherwise>
+                                </c:choose>
+                            </td>
                             <td style="text-align:center"><stripes:submit name="remove" onclick="$j('#removeRegulatoryInfoId').val(${regulatoryInfo.regulatoryInfoId});" disabled="${actionBean.isRegulatoryInfoInProductOrdersForThisResearchProject(regulatoryInfo)}" class="btn">Remove</stripes:submit></td>
                         </tr>
                     </c:forEach>

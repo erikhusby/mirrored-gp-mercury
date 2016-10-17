@@ -30,6 +30,7 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -62,6 +63,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     public static final String EXOME_EXPRESS_V2_PART_NUMBER = "P-EX-0007";
     public static final String EXOME_EXPRESS = "Exome Express";
     public static final String EXOME = "Exome";
+    public static final String INFINIUM = "Infinium";
 
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT", schema = "athena", sequenceName = "SEQ_PRODUCT")
@@ -105,6 +107,8 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     private Integer readLength;
     private Integer insertSize;
+    private BigDecimal loadingConcentration;
+    private Boolean pairedEndRead;
 
     /**
      * A sample with MetadataSource.BSP can have its initial quant in Mercury, e.g. SONIC.  This flag avoids the
@@ -285,6 +289,24 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     public void setInsertSize(Integer insertSize) {
         this.insertSize = insertSize;
+    }
+
+    @Nullable
+    public BigDecimal getLoadingConcentration() {
+        return loadingConcentration;
+    }
+
+    public void setLoadingConcentration(BigDecimal loadingConcentration) {
+        this.loadingConcentration = loadingConcentration;
+    }
+
+    @Nullable
+    public Boolean getPairedEndRead() {
+        return pairedEndRead;
+    }
+
+    public void setPairedEndRead(Boolean pairedEndRead) {
+        this.pairedEndRead = pairedEndRead;
     }
 
     public boolean isTopLevelProduct() {
