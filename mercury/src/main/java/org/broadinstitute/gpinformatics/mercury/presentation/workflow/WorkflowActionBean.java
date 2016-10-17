@@ -91,7 +91,7 @@ public class WorkflowActionBean extends CoreActionBean {
     /**
      * Initialize the product with the passed in key for display in the form.
      */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, GET_WORKFLOW_IMAGE_ACTION})
+    @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
         // Collects all workflows, each with possibly multiple effective dates.
         int id = 0;
