@@ -48,6 +48,8 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -111,10 +113,63 @@ public class LabBatchFixUpTest extends Arquillian {
     @Inject
     private MercurySampleDao mercurySampleDao;
 
+    @Inject
+    private UserTransaction utx;
+
     // Use (RC, "rc"), (PROD, "prod") to push the backfill to RC and production respectively.
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
+    }
+
+    @BeforeMethod
+    public void setUp() throws Exception {
+        // Skip if no injections, meaning we're not running in container
+        if (utx == null) {
+            return;
+        }
+        utx.begin();
+    }
+
+    @AfterMethod
+    public void tearDown() throws Exception {
+        // Skip if no injections, meaning we're not running in container
+        if (utx == null) {
+            return;
+        }
+
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void gplim4393removeSamplesFromLcset() throws Exception {
+        userBean.loginOSUser();
+
+        LabBatch labBatch = labBatchDao.findByName("LCSET-9978");
+        List<String> samplesToRemove = Arrays.asList("SM-9J5HB", "SM-9J5HC");
+        removeSamples(samplesToRemove, labBatch);
+
+        labBatchDao.persist(new FixupCommentary("GPLIM-4393: Remove samples from LCSET-9978"));
+    }
+
+
+    private List<LabBatchStartingVessel> removeSamples(List<String> sampleNames, LabBatch labBatch) {
+        List<LabBatchStartingVessel> vesselsToRemove = new ArrayList<>();
+        for (LabBatchStartingVessel startingVessel : labBatch.getLabBatchStartingVessels()) {
+            Set<SampleInstanceV2> sampleInstances = startingVessel.getLabVessel().getSampleInstancesV2();
+            for (SampleInstanceV2 sampleInstance : sampleInstances) {
+                String sample = sampleInstance.getRootOrEarliestMercurySampleName();
+                if (sampleNames.contains(sample)) {
+                    vesselsToRemove.add(startingVessel);
+                }
+            }
+        }
+        for (LabBatchStartingVessel vesselToRemove : vesselsToRemove) {
+            labBatch.getLabBatchStartingVessels().remove(vesselToRemove);
+            vesselToRemove.getLabVessel().getLabBatchStartingVessels().remove(vesselToRemove);
+            labBatchDao.remove(vesselToRemove);
+        }
+        return vesselsToRemove;
     }
 
     @Test(enabled = false)
