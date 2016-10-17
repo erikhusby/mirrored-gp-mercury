@@ -68,7 +68,7 @@ public class InfiniumRunResource {
     private static final Log log = LogFactory.getLog(InfiniumRunResource.class);
 
     /** Extract barcode, row and column from e.g. 3999595020_R12C02 */
-    private static final Pattern BARCODE_PATTERN = Pattern.compile("(\\d*)_(R\\d*)(C\\d*)");
+    private static final Pattern BARCODE_PATTERN = Pattern.compile("([a-zA-Z0-9]*)_(R\\d*)(C\\d*)");
     /** This matches with attribute_definition.attribute_family in the database. */
     public static final String INFINIUM_GROUP = "Infinium";
     private static String DATA_PATH = null;
