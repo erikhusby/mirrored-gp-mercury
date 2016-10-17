@@ -342,6 +342,7 @@ public abstract class LabVessel implements Serializable {
      *  @return true if the vessel is abandoned
      *
      */
+    @SuppressWarnings("unused") // used in JSP
     public boolean isVesselAbandoned() {
         if (getAbandonVessels().size() == 0) {
             return false;
@@ -350,32 +351,12 @@ public abstract class LabVessel implements Serializable {
     }
 
     /**
-     *  If the vessel is a chip, check to see if all the wells are abandoned.
-     *
-     *  @return true if the entire chip is abandoned
-     */
-    public boolean isEntireChipAbandoned()
-    {
-        int geometrySize = 0;
-        while(this.getVesselGeometry().getPositionNames().hasNext()) {
-            geometrySize++;
-            this.getVesselGeometry().getPositionNames().next();
-        }
-
-        if(geometrySize == this.getParentAbandonVessel().getAbandonedVesselPosition().size())
-            return true;
-        else
-            return false;
-    }
-
-    /**
      *  If the vessel is a chip, check to see is a specific well has been abandoned.
      *
      * @param well The well name we are checking
      * @return true if the well has been abandoned
      */
-    public boolean isPositionAbandoned(String well)
-    {
+    public boolean isPositionAbandoned(String well) {
         for (AbandonVessel abaondendVessel : this.getAbandonVessels()) {
             for (AbandonVesselPosition abandonVesselPosition : abaondendVessel.getAbandonedVesselPosition()) {
                 if(abandonVesselPosition.getPosition().equals(well)){
@@ -390,8 +371,7 @@ public abstract class LabVessel implements Serializable {
      *  Determine if the given vessel has multiple positions within it
      *
      */
-    public boolean isMultiplePositions()
-    {
+    public boolean isMultiplePositions() {
         if(getGeometrySize() > 1) {
             return true;
         }
@@ -404,8 +384,7 @@ public abstract class LabVessel implements Serializable {
      *  Returns the size of the vessel rows * columns.
      *
      */
-    public int getGeometrySize()
-    {
+    public int getGeometrySize() {
         return this.getVesselGeometry().getColumnCount() * this.getVesselGeometry().getRowCount();
     }
 
@@ -977,10 +956,9 @@ public abstract class LabVessel implements Serializable {
      * Returns just the parent vessel for vessels with multiple positions.
      *
      */
-    public AbandonVessel getParentAbandonVessel()
-    {
+    public AbandonVessel getParentAbandonVessel() {
         if(getAbandonVessels().size() > 0)
-            return new ArrayList<AbandonVessel>(getAbandonVessels()).get(0);
+            return new ArrayList<>(getAbandonVessels()).get(0);
         else
             return null;
     }
@@ -990,6 +968,7 @@ public abstract class LabVessel implements Serializable {
      * Returns the date a vessel or position was abandoned on, if it exists.
      *
      */
+    @Nullable
     public Date getAbandonedDate() {
        if(getParentAbandonVessel() != null)
           return getParentAbandonVessel().getAbandonedOn();
@@ -1022,11 +1001,6 @@ public abstract class LabVessel implements Serializable {
         else {
             return abandonVessel.getReason().getDisplayName();
         }
-    }
-
-    public void setAbandonVessels(AbandonVessel abandonVessels)
-    {
-        this.abandonVessels.add(abandonVessels);
     }
 
     public Set<BucketEntry> getBucketEntries() {

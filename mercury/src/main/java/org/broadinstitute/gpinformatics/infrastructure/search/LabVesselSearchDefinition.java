@@ -44,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1376,12 +1377,9 @@ public class LabVesselSearchDefinition {
         searchTerm.setName("Abandon Reason");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public Set<String> evaluate(Object entity, SearchContext context) {
+            public String evaluate(Object entity, SearchContext context) {
                 LabVessel labVessel = (LabVessel) entity;
-                Set<String> abandonReason = null;
-                abandonReason = new HashSet<>();
-                abandonReason.add(labVessel.getAbandonReason());
-                return abandonReason;
+                return labVessel.getAbandonReason();
             }
         });
         searchTerms.add(searchTerm);
@@ -1390,12 +1388,9 @@ public class LabVesselSearchDefinition {
         searchTerm.setName("Abandon Date");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public Set<String> evaluate(Object entity, SearchContext context) {
+            public Date evaluate(Object entity, SearchContext context) {
                 LabVessel labVessel = (LabVessel) entity;
-                Set<String> abandonDate = null;
-                abandonDate = new HashSet<>();
-                abandonDate.add(labVessel.getAbandonedDate().toString());
-                return abandonDate;
+                return labVessel.getAbandonedDate();
             }
         });
         searchTerms.add(searchTerm);
