@@ -133,7 +133,7 @@ public class InfiniumJaxbBuilder {
         bettaLIMSMessage.getPlateEvent().add(infiniumPostResuspensionHybOvenJaxb);
 
         for (int i = 0; i <= numSamples / 24; i++) {
-            hybridizationChips.add(testPrefix + "HybridizationChip" + i);
+            hybridizationChips.add(testPrefix + "HC" + i);
         }
 
         // 24 chip type

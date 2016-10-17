@@ -18,7 +18,6 @@ public class ArraysQc {
     @Id
     private Long id;
     private String chipWellBarcode;
-    private String researchProjectId;
     private String sampleAlias;
     private Long analysisVersion;
     private Boolean isLatest;
@@ -37,12 +36,8 @@ public class ArraysQc {
     private String clusterFileName;
     @Column(name = "P95_GREEN")
     private Long p95Green;
-    @Column(name = "P95_GREEN_PF")
-    private Boolean p95GreenPf;
     @Column(name = "P95_RED")
     private Long p95Red;
-    @Column(name = "P95_RED_PF")
-    private Boolean p95RedPf;
     private String autocallVersion;
     private String zcallVersion;
     private Long totalAssays;
@@ -70,10 +65,6 @@ public class ArraysQc {
 
     public String getChipWellBarcode() {
         return chipWellBarcode;
-    }
-
-    public String getResearchProjectId() {
-        return researchProjectId;
     }
 
     public String getSampleAlias() {
@@ -144,16 +135,8 @@ public class ArraysQc {
         return p95Green;
     }
 
-    public Boolean getP95GreenPf() {
-        return p95GreenPf;
-    }
-
     public Long getP95Red() {
         return p95Red;
-    }
-
-    public Boolean getP95RedPf() {
-        return p95RedPf;
     }
 
     public String getAutocallVersion() {
