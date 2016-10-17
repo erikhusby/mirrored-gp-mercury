@@ -33,7 +33,8 @@ public class AbandonVesselPosition {
 
     private String vesselPosition;
 
-    private String reason;
+    @Enumerated(EnumType.STRING)
+    private AbandonVessel.Reason reason;
 
     private Date abandonedOn;
 
@@ -57,13 +58,9 @@ public class AbandonVesselPosition {
         this.vesselPosition = vesselPosition;
     }
 
-    public String getReason() {
-        return reason;
-    }
+    public AbandonVessel.Reason getReason() { return reason;  }
 
-    public void setReason(String reason) {
-        this.reason = reason;
-    }
+    public void setReason(AbandonVessel.Reason reason) { this.reason = reason; }
 
     public Date getAbandonedOn() {
         return this.abandonedOn;

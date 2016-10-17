@@ -1015,12 +1015,12 @@ public abstract class LabVessel implements Serializable {
         String reason ="Vessel Position(s): ";
         if(abandonVessel.getAbandonedVesselPosition().size() > 0) {
             for (AbandonVesselPosition abandonVesselPosition : abandonVessel.getAbandonedVesselPosition()) {
-                reason += "(" + abandonVesselPosition.getPosition() + ":" + abandonVesselPosition.getReason() + ") ";
+                reason += "(" + abandonVesselPosition.getPosition() + ":" + abandonVesselPosition.getReason().getDisplayName() + ") ";
             }
             return reason;
         }
         else {
-            return abandonVessel.getReason();
+            return abandonVessel.getReason().getDisplayName();
         }
     }
 

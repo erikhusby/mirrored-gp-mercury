@@ -30,7 +30,7 @@ public class AbandonVessel {
     private LabVessel labVessel;
 
     @Enumerated(EnumType.STRING)
-    private String reason;
+    private Reason reason;
 
     private Date abandonedOn;
 
@@ -51,13 +51,9 @@ public class AbandonVessel {
 
     public void getAbandonedVesselPosition(AbandonVesselPosition abandonVesselPosition)  { this.abandonVesselPosition.add(abandonVesselPosition); }
 
-    public String getReason() {
-        return reason;
-    }
+    public Reason getReason() { return reason;  }
 
-    public void setReason(String reason) {
-        this.reason = reason;
-    }
+    public void setReason(Reason reason) { this.reason = reason;  }
 
     public AbandonVessel getAbandonVessel() { return this; }
 
@@ -85,11 +81,11 @@ public class AbandonVessel {
     }
 
     public enum Reason implements Displayable {
-        Select("--Select--"),
-        FailedQC("Failed QC"),
-        LabIncident("Lab incident"),
-        EquipmentFailure("Equipment failure"),
-        Depleted("Depleted");
+        SELECT("--Select--"),
+        FAILED_QC("Failed QC"),
+        LAB_INCIDENT("Lab incident"),
+        EQUIPMENT_FAILURE("Equipment failure"),
+        DEPLETED("Depleted");
 
         private final String value;
 

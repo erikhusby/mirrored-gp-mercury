@@ -70,9 +70,9 @@
             }
 
             function abandonPositions(position) {
-                var reason = $("#"+"reason_"+position).val();
+                var reason = $("#"+"reason_"+position);
                 $j("#vesselPosition").attr("value", position);
-                $j("#vesselPositionReason").attr("value", reason);
+                $j("#vesselPositionReason").attr("value", reason.val());
             }
 
             function showAbandonDialog() {
@@ -96,7 +96,7 @@
                                 $j(this).dialog("close");
                                 $j("#abandonOkButton").attr("disabled", "disabled");
                                 $j("#abandonStatus").attr("value", $j("#abandonDialogId").attr("checked") != undefined);
-                                $j("#abandonComment").attr("value", $( "#reasonCode option:selected" ).text());
+                                $j("#abandonComment").attr("value", $( "#reasonCode option:selected" ).val());
                                 $j("#vesselBarcode").attr("value", $("#vesselLabel").val());
                                 $('#abandonVessel').trigger('click');
                             }
@@ -177,7 +177,7 @@
                         <div>
                         <select class='filterDropdown' id="reasonCodeAllPositions" name="reasonCodeAllPositions">
                             <c:forEach items="${reasonCodes}" var="reasonValue" varStatus="reasonStatus">
-                                <option value="${reasonValue.getDisplayName()}">${reasonValue.getDisplayName()}</option>
+                                <option value="${reasonValue}">${reasonValue.getDisplayName()}</option>
                             </c:forEach>
                         </select>
                         <c:choose>
@@ -227,10 +227,10 @@
                                             <select class="filterDropdown ${actionBean.shrinkCss('ddl-xs')}" id="reason_${rowName}${columnName}" name="reasonDdl">
                                                 <c:forEach items="${reasonCodes}" var="reasonValue" varStatus="reasonStatus">
                                                     <c:if test="${reasonStatus.count > 1}">
-                                                          <option value="${reasonValue.getDisplayName()}">${reasonValue.getDisplayName()}</option>
+                                                          <option value="${reasonValue}">${reasonValue.getDisplayName()}</option>
                                                     </c:if>
                                                 </c:forEach>
-                                                <option selected="selected">${actionBean.getAbandonReason(wellTest)}</option>
+                                                <option selected="SELECT">${actionBean.getAbandonReason(wellTest)}</option>
                                             </select>
                                         </td>
                                     </c:forEach>
@@ -268,7 +268,7 @@
                 </p>
                 <select class='filterDropdown' id="reasonCode" name="reasonCode">
                     <c:forEach items="${reasonCodes}" var="reasonValue" varStatus="reasonStatus">
-                        <option value="${reasonValue.getDisplayName()}">${reasonValue.getDisplayName()}</option>
+                        <option value="${reasonValue}">${reasonValue.getDisplayName()}</option>
                     </c:forEach>
                 </select>
             </div>
