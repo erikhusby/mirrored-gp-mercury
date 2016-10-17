@@ -273,6 +273,11 @@
                                 beanclass="org.broadinstitute.gpinformatics.mercury.presentation.labevent.TransferVisualizerActionBean"
                                 event="view">Transfer Visualizer</stripes:link>
                     </li>
+                    <li>
+                        <stripes:link id="plateMapView"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.MetricsViewActionBean"
+                                      event="view">Plate Map Metrics</stripes:link>
+                    </li>
                 </ul>
             </li>
         </ul>
