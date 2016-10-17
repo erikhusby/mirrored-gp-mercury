@@ -113,9 +113,6 @@ public class LabBatchFixUpTest extends Arquillian {
     @Inject
     private MercurySampleDao mercurySampleDao;
 
-    @Inject
-    private UserTransaction utx;
-
     // Use (RC, "rc"), (PROD, "prod") to push the backfill to RC and production respectively.
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -125,20 +122,20 @@ public class LabBatchFixUpTest extends Arquillian {
     @BeforeMethod
     public void setUp() throws Exception {
         // Skip if no injections, meaning we're not running in container
-        if (utx == null) {
+        if (userTransaction == null) {
             return;
         }
-        utx.begin();
+        userTransaction.begin();
     }
 
     @AfterMethod
     public void tearDown() throws Exception {
         // Skip if no injections, meaning we're not running in container
-        if (utx == null) {
+        if (userTransaction == null) {
             return;
         }
 
-        utx.commit();
+        userTransaction.commit();
     }
 
     @Test(enabled = false)
@@ -151,7 +148,6 @@ public class LabBatchFixUpTest extends Arquillian {
 
         labBatchDao.persist(new FixupCommentary("GPLIM-4393: Remove samples from LCSET-9978"));
     }
-
 
     private List<LabBatchStartingVessel> removeSamples(List<String> sampleNames, LabBatch labBatch) {
         List<LabBatchStartingVessel> vesselsToRemove = new ArrayList<>();
