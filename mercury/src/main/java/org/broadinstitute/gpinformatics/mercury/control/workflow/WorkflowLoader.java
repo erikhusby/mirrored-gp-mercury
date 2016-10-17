@@ -3,10 +3,12 @@ package org.broadinstitute.gpinformatics.mercury.control.workflow;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDao;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
-import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
+import javax.ejb.Stateful;
+import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.xml.bind.JAXBContext;
@@ -18,12 +20,15 @@ import java.io.Serializable;
  * Loads a workflow configuration from the file system if outside a container (DBFree tests)
  *  or from preference table if called from within a container (Deployed app and Arquillian tests)
  */
+@Stateful
+@RequestScoped
 public class WorkflowLoader implements Serializable {
 
     // Use file based configuration access for DBFree testing
     private static boolean IS_STANDALONE = false;
 
-    // In-container only - do not inject or DBFree tests will fail
+    // Valid for in-container only - DBFree tests will load workflow from file system
+    @Inject
     private PreferenceDao preferenceDao;
 
     // Standalone only (DBFree tests)
@@ -56,7 +61,7 @@ public class WorkflowLoader implements Serializable {
     private WorkflowConfig loadFromPrefs() {
 
         if( preferenceDao == null ) {
-            preferenceDao = ServiceAccessUtility.getBean(PreferenceDao.class);
+            throw new RuntimeException("Attempt to load preferences from DB without JavaEE container services.");
         }
 
         Preference workflowConfigPref = preferenceDao.getGlobalPreference(PreferenceType.WORKFLOW_CONFIGURATION);
