@@ -104,9 +104,7 @@ public class MetricsViewActionBean extends CoreActionBean {
         AUTOCALL_GENDER("Autocall Gender", false, ChartType.Category, "equals"),
         GENDER_CONCORDANCE_PF("Gender Concordance PF", false, ChartType.Category, "equals"),
         P95_GREEN("P95 Green", true, ChartType.Category, "equals"),
-        P95_GREEN_PF("P95 Green PF", false, ChartType.Category, "equals"),
         P95_RED("P95 Red", true, ChartType.Category, "equals"),
-        P95_RED_PF("P95 Red PF", false, ChartType.Category, "equals"),
         HAPLOTYPE_DIFFERENCE("Haplotype Difference", true, ChartType.Category, "equals"),
         FINGERPRINT_CONCORDANCE("Fingerprint Concordance", false, ChartType.Category, "greaterThan"),
         HAPMAP_CONCORDANCE("HapMap Concordance", false, ChartType.Category, "greaterThanOrEqual");
@@ -441,23 +439,11 @@ public class MetricsViewActionBean extends CoreActionBean {
             wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
             wellDataset.setOptions(emptyOptions);
 
-            // P95 Green PF
-            value = String.valueOf(arraysQc.getP95GreenPf());
-            wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.P95_GREEN_PF);
-            wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
-            wellDataset.setOptions(trueFalseOption);
-
             // P95 Red
             value = String.valueOf(arraysQc.getP95Red());
             wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.P95_RED);
             wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
             wellDataset.setOptions(emptyOptions);
-
-            // P95 Red PF
-            value = String.valueOf(arraysQc.getP95RedPf());
-            wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.P95_RED_PF);
-            wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
-            wellDataset.setOptions(trueFalseOption);
 
             // Fingerprinting Concordance
             if (!arraysQc.getArraysQcFingerprints().isEmpty()) {
