@@ -191,6 +191,11 @@
                             </li>
                         </security:authorizeBlock>
                         <li>
+                            <stripes:link id="abandonVessels"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.AbandonVesselActionBean"
+                                          event="view">Abandon Vessels</stripes:link>
+                        </li>
+                        <li>
                             <stripes:link id="sampleSheet"
                                     beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.SampleSheetActionBean"
                                     event="view">Arrays Sample Sheet</stripes:link>

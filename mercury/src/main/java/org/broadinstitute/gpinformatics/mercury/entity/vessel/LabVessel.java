@@ -88,7 +88,8 @@ public abstract class LabVessel implements Serializable {
 
     private static final Log logger = LogFactory.getLog(LabVessel.class);
 
-    /** Determines whether diagnostics are printed.  This is done as a constant, rather than as a logging level,
+    /**
+     * Determines whether diagnostics are printed.  This is done as a constant, rather than as a logging level,
      * because the compiler should be smart enough to remove the printing code if the constant is false, whereas
      * a logging level would require frequent checks in heavily used code.
      */
@@ -100,10 +101,14 @@ public abstract class LabVessel implements Serializable {
     @Id
     private Long labVesselId;
 
-    /** Typically a barcode. */
+    /**
+     * Typically a barcode.
+     */
     private String label;
 
-    /** A human readable name e.g. BSP plate name. */
+    /**
+     * A human readable name e.g. BSP plate name.
+     */
     protected String name;
 
     private Date createdOn;
@@ -167,6 +172,10 @@ public abstract class LabVessel implements Serializable {
     @BatchSize(size = 100)
     private Set<LabEvent> inPlaceLabEvents = new HashSet<>();
 
+    @OneToMany(mappedBy = "labVessel", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @BatchSize(size = 100)
+    private Set<AbandonVessel> abandonVessels = new HashSet<>();
+
     @OneToMany // todo jmt should this have mappedBy?
     @JoinTable(schema = "mercury")
     private Collection<StatusNote> notes = new HashSet<>();
@@ -212,7 +221,7 @@ public abstract class LabVessel implements Serializable {
     private Map<LabMetric.MetricType, Set<LabMetric>> descendantMetricMap;
 
     @Transient
-    private MaterialType latestMaterialType=null;
+    private MaterialType latestMaterialType = null;
 
     protected LabVessel(String label) {
         createdOn = new Date();
@@ -243,6 +252,7 @@ public abstract class LabVessel implements Serializable {
 
     /**
      * Find the latest material type by first searching the event history then falling back on the sample's metadata.
+     *
      * @return
      */
     public MaterialType getLatestMaterialType() {
@@ -256,7 +266,7 @@ public abstract class LabVessel implements Serializable {
                 }
             }
         }
-        if (latestMaterialType == MaterialType.NONE || latestMaterialType==null) {
+        if (latestMaterialType == MaterialType.NONE || latestMaterialType == null) {
             logger.error(String.format("No material type was found for vessel '%s'.", label));
         }
         return latestMaterialType;
@@ -275,9 +285,10 @@ public abstract class LabVessel implements Serializable {
 
     /**
      * Initializes SampleData for all vessels with data used when viewing Buckets.
+     *
      * @param labVessels
      */
-    public static void loadSampleDataForBuckets(Collection<LabVessel> labVessels){
+    public static void loadSampleDataForBuckets(Collection<LabVessel> labVessels) {
         SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
         Map<String, MercurySample> samplesBySampleKey = new HashMap<>();
         for (LabVessel labVessel : labVessels) {
@@ -295,6 +306,7 @@ public abstract class LabVessel implements Serializable {
 
     /**
      * Find the current MaterialType of this LabVesel.
+     *
      * @param materialType materialType to test
      * @return true if the event history indicates the latest MaterialType matches input
      */
@@ -304,6 +316,7 @@ public abstract class LabVessel implements Serializable {
 
     /**
      * Traverse the event history of this LabVessel to find the current MaterialType.
+     *
      * @return the current MaterialType
      */
     public MaterialType getLatestMaterialTypeFromEventHistory() {
@@ -321,6 +334,79 @@ public abstract class LabVessel implements Serializable {
                 new TransferTraverserCriteria.NearestMaterialTypeTraverserCriteria();
         evaluateCriteria(materialTypeTraverserCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
         return materialTypeTraverserCriteria;
+    }
+
+    /**
+     *  Check to see if the vessel has been abandoned.
+     *
+     *  @return true if the vessel is abandoned
+     *
+     */
+    public boolean isVesselAbandoned() {
+        if (getAbandonVessels().size() == 0) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     *  If the vessel is a chip, check to see if all the wells are abandoned.
+     *
+     *  @return true if the entire chip is abandoned
+     */
+    public boolean isEntireChipAbandoned()
+    {
+        int geometrySize = 0;
+        while(this.getVesselGeometry().getPositionNames().hasNext()) {
+            geometrySize++;
+            this.getVesselGeometry().getPositionNames().next();
+        }
+
+        if(geometrySize == this.getParentAbandonVessel().getAbandonedVesselPosition().size())
+            return true;
+        else
+            return false;
+    }
+
+    /**
+     *  If the vessel is a chip, check to see is a specific well has been abandoned.
+     *
+     * @param well The well name we are checking
+     * @return true if the well has been abandoned
+     */
+    public boolean isPositionAbandoned(String well)
+    {
+        for (AbandonVessel abaondendVessel : this.getAbandonVessels()) {
+            for (AbandonVesselPosition abandonVesselPosition : abaondendVessel.getAbandonedVesselPosition()) {
+                if(abandonVesselPosition.getPosition().equals(well)){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     *  Determine if the given vessel has multiple positions within it
+     *
+     */
+    public boolean isMultiplePositions()
+    {
+        if(getGeometrySize() > 1) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    /**
+     *  Returns the size of the vessel rows * columns.
+     *
+     */
+    public int getGeometrySize()
+    {
+        return this.getVesselGeometry().getColumnCount() * this.getVesselGeometry().getRowCount();
     }
 
     /**
@@ -368,6 +454,15 @@ public abstract class LabVessel implements Serializable {
     public void addMetric(LabMetric labMetric) {
         labMetrics.add(labMetric);
         labMetric.setLabVessel(this);
+    }
+
+    public void addAbandonedVessel(AbandonVessel vessels) {
+        abandonVessels.add(vessels);
+        vessels.setAbandonedVessel(this);
+    }
+
+    public void removeAbandonedVessel(Set<AbandonVessel> abandonVessel) {
+        this.abandonVessels.removeAll(abandonVessel);
     }
 
     public Set<LabMetric> getMetrics() {
@@ -873,6 +968,67 @@ public abstract class LabVessel implements Serializable {
         this.receptacleWeight = receptacleWeight;
     }
 
+    public Set<AbandonVessel> getAbandonVessels() {
+        return abandonVessels;
+    }
+
+    /**
+     *
+     * Returns just the parent vessel for vessels with multiple positions.
+     *
+     */
+    public AbandonVessel getParentAbandonVessel()
+    {
+        if(getAbandonVessels().size() > 0)
+            return new ArrayList<AbandonVessel>(getAbandonVessels()).get(0);
+        else
+            return null;
+    }
+
+    /**
+     *
+     * Returns the date a vessel or position was abandoned on, if it exists.
+     *
+     */
+    public Date getAbandonedDate() {
+       if(getParentAbandonVessel() != null)
+          return getParentAbandonVessel().getAbandonedOn();
+        else {
+           return null;
+       }
+    }
+
+    /**
+     *
+     * Returns the reason that a vessel was abandoned. If the vessel has multiple position, it concatenates them
+     * into a single string for screen display and user-defined search.
+     *
+     */
+    public String getAbandonReason() {
+
+        AbandonVessel abandonVessel = getParentAbandonVessel();
+
+        if(abandonVessel == null) {
+            return "";
+        }
+
+        String reason ="Vessel Position(s): ";
+        if(abandonVessel.getAbandonedVesselPosition().size() > 0) {
+            for (AbandonVesselPosition abandonVesselPosition : abandonVessel.getAbandonedVesselPosition()) {
+                reason += "(" + abandonVesselPosition.getPosition() + ":" + abandonVesselPosition.getReason().getDisplayName() + ") ";
+            }
+            return reason;
+        }
+        else {
+            return abandonVessel.getReason().getDisplayName();
+        }
+    }
+
+    public void setAbandonVessels(AbandonVessel abandonVessels)
+    {
+        this.abandonVessels.add(abandonVessels);
+    }
+
     public Set<BucketEntry> getBucketEntries() {
         return bucketEntries;
     }
@@ -995,6 +1151,7 @@ public abstract class LabVessel implements Serializable {
 
         return builder.toComparison();
     }
+
 
     /**
      * This is over ridden by subclasses that implement {@link VesselContainerEmbedder}

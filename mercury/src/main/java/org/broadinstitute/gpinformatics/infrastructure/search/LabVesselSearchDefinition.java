@@ -1372,6 +1372,34 @@ public class LabVesselSearchDefinition {
             }
         }
 
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Abandon Reason");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                LabVessel labVessel = (LabVessel) entity;
+                Set<String> abandonReason = null;
+                abandonReason = new HashSet<>();
+                abandonReason.add(labVessel.getAbandonReason());
+                return abandonReason;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Abandon Date");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                LabVessel labVessel = (LabVessel) entity;
+                Set<String> abandonDate = null;
+                abandonDate = new HashSet<>();
+                abandonDate.add(labVessel.getAbandonedDate().toString());
+                return abandonDate;
+            }
+        });
+        searchTerms.add(searchTerm);
+
         return searchTerms;
     }
 
