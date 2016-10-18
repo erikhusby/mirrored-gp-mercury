@@ -900,4 +900,48 @@ public abstract class TransferTraverserCriteria {
             this.lcsetNames = lcsetNames;
         }
     }
+
+    public static class VesselPositionForEvent extends TransferTraverserCriteria {
+
+        private Set<LabEventType> eventTypes;
+        private LabBatch labBatch;
+        private Map<LabEventType, VesselAndPosition> mapTypeToVesselPosition = new HashMap<>();
+
+        public VesselPositionForEvent(Set<LabEventType> eventTypes) {
+            this.eventTypes = eventTypes;
+        }
+
+        public VesselPositionForEvent(Set<LabEventType> eventTypes, LabBatch labBatch) {
+            this.eventTypes = eventTypes;
+            this.labBatch = labBatch;
+        }
+
+        @Override
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            if (context != null) {
+                LabVessel.VesselEvent vesselEvent = context.getVesselEvent();
+                if (vesselEvent != null) {
+                    LabEvent labEvent = vesselEvent.getLabEvent();
+                    LabEventType labEventType = labEvent.getLabEventType();
+                    if (eventTypes.contains(labEventType)) {
+                        if (labBatch == null || labEvent.getComputedLcSets().contains(labBatch)) {
+                            mapTypeToVesselPosition.put(labEventType, new VesselAndPosition(
+                                    context.getContextVesselContainer().getEmbedder(),
+                                    context.getContextVesselAndPosition().getRight()));
+                        }
+                    }
+                }
+            }
+            return TraversalControl.ContinueTraversing;
+        }
+
+        @Override
+        public void evaluateVesselPostOrder(Context context) {
+
+        }
+
+        public Map<LabEventType, VesselAndPosition> getMapTypeToVesselPosition() {
+            return mapTypeToVesselPosition;
+        }
+    }
 }

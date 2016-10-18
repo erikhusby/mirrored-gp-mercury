@@ -95,4 +95,25 @@ public class LedgerEntryFixupDao extends GenericDao {
             }
         });
     }
+
+    /**
+     * Find the two (!) LedgerEntry instances that have been billed but do not have a "Billed successfully" message.
+     *
+     * @return the billed ledger entries missing a billing message
+     */
+    public List<LedgerEntry> findBilledWithoutBillingMessage() {
+        return findAll(LedgerEntry.class, new GenericDao.GenericDaoCallback<LedgerEntry>() {
+            @Override
+            public void callback(CriteriaQuery<LedgerEntry> criteriaQuery, Root<LedgerEntry> root) {
+                CriteriaBuilder cb = getCriteriaBuilder();
+
+                Join<LedgerEntry, BillingSession> billingSessionJoin = root.join(LedgerEntry_.billingSession);
+
+                criteriaQuery.where(
+                        cb.isNotNull(billingSessionJoin.get(BillingSession_.billedDate)),
+                        cb.isNull(root.get(LedgerEntry_.billingMessage))
+                );
+            }
+        });
+    }
 }

@@ -69,6 +69,7 @@ Move the mouse over the question marks to see details about each section.
     <stripes:hidden name="readOnly" id="readOnly"/>
     <stripes:hidden name="entityName" id="entityName"/>
     <stripes:hidden name="minimal" id="minimal"/>
+    <input type="hidden" name="searchInstance.timeoutLength" id="timeoutLength" value="${actionBean.searchInstance.timeoutLength}"/>
     <c:choose>
         <c:when test="${actionBean.readOnly}">
             <stripes:hidden name="selectedSearchName" id="selectedSearchName"/>

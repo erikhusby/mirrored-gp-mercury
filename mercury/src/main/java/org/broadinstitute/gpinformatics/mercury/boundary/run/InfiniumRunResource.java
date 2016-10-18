@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
@@ -18,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.run.ArchetypeAttribute;
 import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -66,7 +68,7 @@ public class InfiniumRunResource {
     private static final Log log = LogFactory.getLog(InfiniumRunResource.class);
 
     /** Extract barcode, row and column from e.g. 3999595020_R12C02 */
-    private static final Pattern BARCODE_PATTERN = Pattern.compile("(\\d*)_(R\\d*)(C\\d*)");
+    private static final Pattern BARCODE_PATTERN = Pattern.compile("([a-zA-Z0-9]*)_(R\\d*)(C\\d*)");
     /** This matches with attribute_definition.attribute_family in the database. */
     public static final String INFINIUM_GROUP = "Infinium";
     private static String DATA_PATH = null;
@@ -228,7 +230,21 @@ public class InfiniumRunResource {
                 productName = productOrder.getProduct().getProductName();
                 productFamily = productOrder.getProduct().getProductFamily().getName();
                 partNumber = productOrder.getProduct().getPartNumber();
+
+                //Attempt to override default chip attributes if changed in product order
+                GenotypingProductOrderMapping genotypingProductOrderMapping =
+                        attributeArchetypeDao.findGenotypingProductOrderMapping(productOrder.getJiraTicketKey());
+                if (genotypingProductOrderMapping != null) {
+                    for (ArchetypeAttribute archetypeAttribute : genotypingProductOrderMapping.getAttributes()) {
+                        if (chipAttributes.containsKey(archetypeAttribute.getAttributeName()) &&
+                            archetypeAttribute.getAttributeValue() != null) {
+                            chipAttributes.put(
+                                    archetypeAttribute.getAttributeName(), archetypeAttribute.getAttributeValue());
+                        }
+                    }
+                }
             }
+
             infiniumRunBean = new InfiniumRunBean(
                     idatPrefix + "_Red.idat",
                     idatPrefix + "_Grn.idat",
@@ -236,6 +252,7 @@ public class InfiniumRunResource {
                     chipAttributes.get("manifest_location_unix"),
                     chipAttributes.get("cluster_location_unix"),
                     chipAttributes.get("zcall_threshold_unix"),
+                    sampleInstanceV2.getNearestMercurySampleName(),
                     sampleData.getCollaboratorsSampleName(),
                     sampleData.getSampleLsid(),
                     sampleData.getGender(),
@@ -350,6 +367,10 @@ public class InfiniumRunResource {
 
     public void setInfiniumStarterConfig(InfiniumStarterConfig infiniumStarterConfig) {
         this.infiniumStarterConfig = infiniumStarterConfig;
+    }
+
+    public void setAttributeArchetypeDao(AttributeArchetypeDao attributeArchetypeDao) {
+        this.attributeArchetypeDao = attributeArchetypeDao;
     }
 
     private static final Map<String, String> mapSerialNumberToMachineName = new HashMap<>();

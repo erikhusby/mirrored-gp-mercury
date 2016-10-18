@@ -46,6 +46,10 @@ public class LabVesselDao extends GenericDao {
         return findListByList(LabVessel.class, LabVessel_.label, barcodes);
     }
 
+    public LabVessel findByListIdentifiers(Long vid) {
+        return findSingle(LabVessel.class, LabVessel_.labVesselId, vid);
+    }
+
     public List<LabVessel> findBySampleKeyList(List<String> sampleKeys) {
         return findBySampleKeyList((Collection<String>) sampleKeys);
     }

@@ -84,6 +84,14 @@
             </c:otherwise>
         </c:choose>
 
+        <script src="${ctxpath}/resources/scripts/jquery-ui-1.9.2.custom.min.js"></script>
+        <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-dropdown.js"></script>
+        <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-tooltip.js"></script>
+        <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-popover.js"></script>
+        <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-alert.js"></script>
+
+        <script src="${ctxpath}/resources/scripts/jquery.dateRangeSelector.js"></script>
+
         <c:if test="${withColVis}">
             <script src="${ctxpath}/resources/scripts/DataTablesPlugins-1.10/Buttons-1.2.2/js/buttons.colVis.min.js"></script>
         </c:if>

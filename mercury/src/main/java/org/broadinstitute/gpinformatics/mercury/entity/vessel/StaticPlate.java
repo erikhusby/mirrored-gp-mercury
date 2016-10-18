@@ -193,6 +193,10 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
 
     }
 
+   public String getAutomationName()
+   {
+       return plateType.automationName;
+   }
 
     @Embedded
     private VesselContainer<PlateWell> vesselContainer = new VesselContainer<>(this);
@@ -349,6 +353,7 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         return plateType.getVesselGeometry();
     }
 
+
     public PlateType getPlateType() {
         return plateType;
     }
@@ -357,6 +362,7 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
     public ContainerType getType() {
         return ContainerType.STATIC_PLATE;
     }
+
 
     public VesselContainer<PlateWell> getContainerRole() {
         return this.vesselContainer;

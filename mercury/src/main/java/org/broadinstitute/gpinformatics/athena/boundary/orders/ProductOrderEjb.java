@@ -23,6 +23,8 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDeta
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.StaleLedgerUpdateException;
+import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingChipMapping;
+import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationWithRollbackException;
@@ -42,6 +44,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
@@ -103,6 +106,9 @@ public class ProductOrderEjb {
     private MercurySampleDao mercurySampleDao;
 
     private ProductOrderJiraUtil productOrderJiraUtil;
+
+    @Inject
+    private AttributeArchetypeDao attributeArchetypeDao;
 
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
@@ -1141,5 +1147,16 @@ public class ProductOrderEjb {
     @Inject
     public void setProductOrderSampleDao(ProductOrderSampleDao productOrderSampleDao) {
         this.productOrderSampleDao = productOrderSampleDao;
+    }
+
+    public GenotypingProductOrderMapping findOrCreateGenotypingChipProductOrderMapping(String productOrderJiraTicket) {
+        GenotypingProductOrderMapping mapping =
+                attributeArchetypeDao.findGenotypingProductOrderMapping(productOrderJiraTicket);
+        if (mapping == null) {
+            mapping = new GenotypingProductOrderMapping(productOrderJiraTicket, null, null);
+            attributeArchetypeDao.persist(mapping);
+            attributeArchetypeDao.flush();
+        }
+        return mapping;
     }
 }

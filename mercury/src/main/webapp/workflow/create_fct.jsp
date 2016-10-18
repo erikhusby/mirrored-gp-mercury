@@ -86,9 +86,9 @@
         <style type="text/css">
             /* Fixed width columns except for product name. */
             #tubeList { table-layout: fixed; }
-            .fixedWidthColumn { width: 8em; word-wrap: break-word; }
-            .smallerWidthColumn { width: 5em; }
-            .widerFixedWidthColumn { width: 10em; }
+            .width8 { width: 8em; word-wrap: break-word; }
+            .width4 { width: 5em; }
+            .width10 { width: 10em; }
         </style>
 
     </stripes:layout-component>
@@ -148,37 +148,37 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <c:forEach items="${actionBean.rowDtos}" var="rowDto" varStatus="item">
+                    <c:forEach items="${actionBean.createFctDtos}" var="dto" varStatus="item">
                         <tr>
                             <td class="fixedWidthColumn">
                                 <stripes:link id="transferVisualizer" event="view" target="_blank"
                                               beanclass="org.broadinstitute.gpinformatics.mercury.presentation.labevent.TransferVisualizerActionBean">
-                                    <stripes:param name="barcodes" value="${rowDto.barcode}"/>
-                                    ${rowDto.barcode}
+                                    <stripes:param name="barcodes" value="${dto.barcode}"/>
+                                    ${dto.barcode}
                                 </stripes:link>
                             </td>
                             <td class="fixedWidthColumn">
-                                <a href="${rowDto.lcsetUrl}" target="JIRA">${rowDto.lcset}</a>${rowDto.additionalLcsets}
+                                <a href="${dto.lcsetUrl}" target="JIRA">${dto.lcset}</a>${dto.additionalLcsets}
                             </td>
-                            <td class="fixedWidthColumn">${rowDto.tubeType}</td>
-                            <td class="smallerWidthColumn">${rowDto.numberSamples}</td>
-                            <td class="smallerWidthColumn"><input style='width:5em' class="numLanes" name="rowDtos[${item.index}].numberLanes"
-                                       value="${rowDto.numberLanes}" onkeyup="updateSumOfLanes()"/></td>
-                            <td class="smallerWidthColumn"><input style='width:5em' class="loadConc" name="rowDtos[${item.index}].loadingConc"
-                                       value="${rowDto.loadingConc}"/></td>
-                            <td class="fixedWidthColumn">${rowDto.eventDate}</td>
-                            <td class="fixedWidthColumn">${rowDto.regulatoryDesignation}</td>
-                            <td class="widerFixedWidthColumn"><span title="${rowDto.startingBatchVessels}">${rowDto.product}</span></td>
-                            <input type="hidden" name="rowDtos[${item.index}].barcode" value="${rowDto.barcode}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].lcset" value="${rowDto.lcset}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].additionalLcsets" value="${rowDto.additionalLcsets}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].tubeType" value="${rowDto.tubeType}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].numberSamples" value="${rowDto.numberSamples}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].eventDate" value="${rowDto.eventDate}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].regulatoryDesignation" value="${rowDto.regulatoryDesignation}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].product" value="${rowDto.product}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].startingBatchVessels" value="${rowDto.startingBatchVessels}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].lcsetUrl" value="${rowDto.lcsetUrl}"/>
+                            <td class="fixedWidthColumn">${dto.tubeType}</td>
+                            <td class="smallerWidthColumn">${dto.numberSamples}</td>
+                            <td class="smallerWidthColumn"><input style='width:5em' class="numLanes" name="createFctDtos[${item.index}].numberLanes"
+                                       value="${dto.numberLanes}" onkeyup="updateSumOfLanes()"/></td>
+                            <td class="smallerWidthColumn"><input style='width:5em' class="loadConc" name="createFctDtos[${item.index}].loadingConc"
+                                       value="${dto.loadingConc}"/></td>
+                            <td class="fixedWidthColumn">${dto.eventDate}</td>
+                            <td class="fixedWidthColumn">${dto.regulatoryDesignation}</td>
+                            <td class="widerFixedWidthColumn"><span title="${dto.startingBatchVessels}">${dto.product}</span></td>
+                            <input type="hidden" name="createFctDtos[${item.index}].barcode" value="${dto.barcode}"/>
+                            <input type="hidden" name="createFctDtos[${item.index}].lcset" value="${dto.lcset}"/>
+                            <input type="hidden" name="createFctDtos[${item.index}].additionalLcsets" value="${dto.additionalLcsets}"/>
+                            <input type="hidden" name="createFctDtos[${item.index}].tubeType" value="${dto.tubeType}"/>
+                            <input type="hidden" name="createFctDtos[${item.index}].numberSamples" value="${dto.numberSamples}"/>
+                            <input type="hidden" name="createFctDtos[${item.index}].eventDate" value="${dto.eventDate}"/>
+                            <input type="hidden" name="createFctDtos[${item.index}].regulatoryDesignation" value="${dto.regulatoryDesignation}"/>
+                            <input type="hidden" name="createFctDtos[${item.index}].product" value="${dto.product}"/>
+                            <input type="hidden" name="createFctDtos[${item.index}].startingBatchVessels" value="${dto.startingBatchVessels}"/>
+                            <input type="hidden" name="createFctDtos[${item.index}].lcsetUrl" value="${dto.lcsetUrl}"/>
                             </tr>
                     </c:forEach>
                     </tbody>
