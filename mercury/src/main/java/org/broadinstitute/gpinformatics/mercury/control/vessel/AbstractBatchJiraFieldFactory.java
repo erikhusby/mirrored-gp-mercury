@@ -30,15 +30,13 @@ import java.util.TreeSet;
  */
 public abstract class AbstractBatchJiraFieldFactory {
 
-    private WorkflowConfig workflowConfig;
     protected final LabBatch batch;
 
     private final CreateFields.ProjectType projectType;
 
-    public AbstractBatchJiraFieldFactory(@Nonnull LabBatch batch, @Nonnull CreateFields.ProjectType projectType, WorkflowConfig workflowConfig) {
+    public AbstractBatchJiraFieldFactory(@Nonnull LabBatch batch, @Nonnull CreateFields.ProjectType projectType) {
         this.batch = batch;
         this.projectType = projectType;
-        this.workflowConfig = workflowConfig;
     }
 
     /**
@@ -142,11 +140,11 @@ public abstract class AbstractBatchJiraFieldFactory {
         AbstractBatchJiraFieldFactory builder;
 
         if (projectType == null) {
-            return getInstanceByBatchType(batch, workflowConfig);
+            return getInstanceByBatchType(batch);
         }
         switch (projectType) {
         case FCT_PROJECT:
-            builder = getInstanceByBatchType(batch, workflowConfig);
+            builder = getInstanceByBatchType(batch);
             break;
         case EXTRACTION_PROJECT:
             builder = new ExtractionJiraFieldFactory(batch, productOrderDao, workflowConfig);
@@ -161,16 +159,16 @@ public abstract class AbstractBatchJiraFieldFactory {
     }
 
     /**
-     * @param batch an instance of a {@link org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch} entity
+     * @param batch an instance of a {@link LabBatch} entity
      *              and is the primary source of the data from which the custom submission fields will be generated
      * @return The instance of the JIRA field factory for the given project type
      */
-    private static AbstractBatchJiraFieldFactory getInstanceByBatchType(LabBatch batch, WorkflowConfig workflowConfig) {
+    private static AbstractBatchJiraFieldFactory getInstanceByBatchType(LabBatch batch) {
         AbstractBatchJiraFieldFactory builder;
         switch (batch.getLabBatchType()) {
         case MISEQ:
         case FCT:
-            builder = new FCTJiraFieldFactory(batch, workflowConfig);
+            builder = new FCTJiraFieldFactory(batch);
             break;
         default:
             throw new IllegalArgumentException("Not enough information was passed to determine the type of Jira ticket"
