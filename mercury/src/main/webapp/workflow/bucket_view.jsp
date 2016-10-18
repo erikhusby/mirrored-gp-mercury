@@ -69,6 +69,7 @@
 
         div.dt-buttons {
         float: none;
+            padding-top:1em;
         }
 
         /*div.buttons-colvis {*/
@@ -471,22 +472,12 @@
                         }
                     ]
                 });
-                var buttonContainer=$j(buttons.container(), {css: "float: none;"});
-
-                buttonContainer.prependTo($j("#filtering ").parent());
-//                prependTo("#filtering");
-//                buttonContainer.css('z-index', '100');
-//                buttonContainer.css('float', 'left');
-//                $j("#filtering.accordion:last-child").append(buttons.container());
+                var buttonContainer = $j(buttons.container(), {'class': "bucket-control"});
+                buttonContainer.appendTo($j(".actionControls"));
             }
 
 
             includeAdvancedFilter(oTable, "#bucketEntryView");
-//            if ($j(".bucket-checkbox").is("visible")) {
-//                $j(".column-filter").hide();
-//            } else {
-//                $j(".column-filter").show();
-//            }
 
             $j('.bucket-checkbox').enableCheckboxRangeSelection({
                 checkAllClass:'bucket-checkAll',
@@ -660,6 +651,9 @@
         <br/>
         <ul id="editable-text"> <li>If you would like to change the value of a PDO for an item in the bucket, click on the value of the PDO in the table and select the new value.</li> </ul>
         <div class="actionControls" style="margin-bottom: 20px">
+            <div style="padding:1em;"> Select Next <input value="92" style="width: 3em;" id="batchSize"/>&nbsp;<input
+                type="button" id="chooseNbutton" value="Select" class="btn"/>
+            </div>
             <stripes:submit name="createBatch" value="Create Batch" class="btn bucket-control" disabled="true"/>
             <stripes:submit name="addToBatch" value="Add to Batch" class="btn bucket-control" disabled="true"/>
             <stripes:submit name="removeFromBucket" value="Remove From Bucket" class="btn bucket-control"
@@ -668,14 +662,6 @@
                 <%--title="Use a pasted-in list of tube barcodes to select samples">Choose via list of vessel or sample names...</a>--%>
 
             <a href="#" id="cancel" onClick="submitBucket()" style="display: none;">Cancel</a>
-
-                <%--<br/><div class="control-label" style="margin-bottom: 20px;"> --%>
-            <br/>
-            Select Next <input value="92" style="width: 3em;" id="batchSize"/>&nbsp;<input
-                type="button" id="chooseNbutton" value="Select" class="btn"/>
-
-                <%--</div>--%>
-
         </div>
         <p></p>
         <table id="bucketEntryView" class="bucket-checkbox table simple dt-responsive">
