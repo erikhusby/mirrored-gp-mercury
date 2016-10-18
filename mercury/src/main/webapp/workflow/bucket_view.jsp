@@ -239,8 +239,9 @@
 
             $j("#dueDate").datepicker();
 
-            showOrHideControls();
-            $j("input[name='selectedEntryIds'], .bucket-checkAll").change(showOrHideControls);
+            $j(".bucket-checkbox").on("click blur ready", function () {
+                showOrHideControls();
+            });
 
             $j("#lcsetText").change(function () {
                 var jiraTicketId = $j("#lcsetText").val();
