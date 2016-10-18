@@ -1,0 +1,12 @@
+/*
+ * The Broad Institute
+ * SOFTWARE COPYRIGHT NOTICE AGREEMENT
+ * This software and its documentation are copyright 2016 by the
+ * Broad Institute/Massachusetts Institute of Technology. All rights are reserved.
+ *
+ * This software is supplied without any warranty or guaranteed support
+ * whatsoever. Neither the Broad Institute nor MIT can be responsible for its
+ * use, misuse, or functionality.
+ */
+
+div.DTS{display:block !important}div.DTS tbody th,div.DTS tbody td{white-space:nowrap}div.DTS div.DTS_Loading{z-index:1}div.DTS div.dataTables_scrollBody{background:repeating-linear-gradient(45deg, #edeeff, #edeeff 10px, #fff 10px, #fff 20px)}div.DTS div.dataTables_scrollBody table{z-index:2}div.DTS div.dataTables_paginate,div.DTS div.dataTables_length{display:none}
