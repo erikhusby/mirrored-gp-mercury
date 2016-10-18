@@ -993,6 +993,26 @@ public abstract class LabVessel implements Serializable {
 
         String reason ="Vessel Position(s): ";
         if(abandonVessel.getAbandonedVesselPosition().size() > 0) {
+
+            int index = 0;
+            int duplicate = 0;
+
+            //If all the reasons are the same, collapse them down and return them as a single reason.
+            for (AbandonVesselPosition abandonVesselPosition : abandonVessel.getAbandonedVesselPosition()) {
+                if(index == 0) {
+                    reason = abandonVesselPosition.getReason().getDisplayName();
+                }
+                if(!reason.equals(abandonVesselPosition.getReason().getDisplayName()))
+                    duplicate++;
+
+                index++;
+            }
+
+            if(duplicate == 0)
+                return reason;
+
+            //Return a concatenated list of reasons if there are differences.
+            reason = "";
             for (AbandonVesselPosition abandonVesselPosition : abandonVessel.getAbandonedVesselPosition()) {
                 reason += "(" + abandonVesselPosition.getPosition() + ":" + abandonVesselPosition.getReason().getDisplayName() + ") ";
             }
