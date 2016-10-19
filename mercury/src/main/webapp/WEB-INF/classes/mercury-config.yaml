@@ -237,14 +237,14 @@ infiniumStarter:
         minimumIdatFileLength: -1
         jmsHost: vpicard01
         jmsPort: 61616
-        jmsQueue: broad.arrays.enqueue
+        jmsQueue: broad.arrays.enqueue_staging
 
     QA:
         dataPath: /humgen/illumina_data/qa
         minimumIdatFileLength: -1
         jmsHost: vpicard01
         jmsPort: 61616
-        jmsQueue: broad.arrays.enqueue
+        jmsQueue: broad.arrays.enqueue_staging
 
     PROD:
         dataPath: /humgen/illumina_data

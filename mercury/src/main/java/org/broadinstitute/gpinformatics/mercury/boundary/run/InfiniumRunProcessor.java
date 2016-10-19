@@ -120,7 +120,11 @@ public class InfiniumRunProcessor {
                             XPathConstants.NODESET);
                     Node elemNode = scannerIdNodeList.item(0);
                     String scannerId = elemNode.getFirstChild().getNodeValue();
-                    return InfiniumRunResource.mapSerialNumberToMachineName.get(scannerId);
+                    String scannerName = InfiniumRunResource.mapSerialNumberToMachineName.get(scannerId);
+                    if (scannerName == null) {
+                        scannerName = "Unknown";
+                    }
+                    return scannerName;
                 }
             }
         } catch (Exception e) {
