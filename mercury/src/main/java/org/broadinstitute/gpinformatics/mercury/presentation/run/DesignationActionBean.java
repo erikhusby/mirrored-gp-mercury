@@ -260,12 +260,13 @@ public class DesignationActionBean extends CoreActionBean implements Designation
                     if (tube != null) {
                         loadTubes.add(tube);
                     } else {
-                        String lcsetName = "LCSET-" + token;
+                        String lcsetName = (Character.isDigit(token.charAt(0)) ? "LCSET-" + token : token);
                         LabBatch batch = labBatchDao.findByBusinessKey(lcsetName);
                         if (batch != null) {
                             loadLcsets.add(batch);
                         } else {
-                            addValidationError("lcsetsBarcodes", "Could not find barcode or lcset for " + token);
+                            addValidationError("lcsetsBarcodes", "Could not find barcode for " + token +
+                                                                 " nor lcset for " + lcsetName);
                         }
                     }
                 }
