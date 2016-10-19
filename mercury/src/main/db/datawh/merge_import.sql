@@ -32,37 +32,37 @@ AS
     V_VAL      VARCHAR2(19);
     V_PK_ARR   PK_ARR_TY;
     V_INPUT    VARCHAR2(1024);
-  BEGIN
-    V_INPUT := TRIM( V_ARRAYSTR );
+    BEGIN
+      V_INPUT := TRIM( V_ARRAYSTR );
 
-    -- Nothing to do, return empty array
-    IF V_INPUT IS NULL OR LENGTH(V_INPUT) < 3 THEN
-      RETURN V_PK_ARR;
-    END IF;
-
-    -- Wish there was a split() function...
-    V_CUR_POS := 2;
-    LOOP
-      V_NEXT_POS := INSTR( V_INPUT, ',', V_CUR_POS );
-      IF V_NEXT_POS = 0 THEN
-        V_VAL := SUBSTR( V_INPUT, V_CUR_POS, LENGTH(V_INPUT) - V_CUR_POS);
-      ELSE
-        V_VAL := SUBSTR( V_INPUT, V_CUR_POS, V_NEXT_POS - V_CUR_POS );
-        V_CUR_POS := V_NEXT_POS + 1;
+      -- Nothing to do, return empty array
+      IF V_INPUT IS NULL OR LENGTH(V_INPUT) < 3 THEN
+        RETURN V_PK_ARR;
       END IF;
-      V_PK_ARR( V_PK_ARR.COUNT + 1 ) := TO_NUMBER( TRIM( V_VAL ) );
-      EXIT WHEN V_NEXT_POS = 0;
-    END LOOP;
 
-    RETURN V_PK_ARR;
+      -- Wish there was a split() function...
+      V_CUR_POS := 2;
+      LOOP
+        V_NEXT_POS := INSTR( V_INPUT, ',', V_CUR_POS );
+        IF V_NEXT_POS = 0 THEN
+          V_VAL := SUBSTR( V_INPUT, V_CUR_POS, LENGTH(V_INPUT) - V_CUR_POS);
+        ELSE
+          V_VAL := SUBSTR( V_INPUT, V_CUR_POS, V_NEXT_POS - V_CUR_POS );
+          V_CUR_POS := V_NEXT_POS + 1;
+        END IF;
+        V_PK_ARR( V_PK_ARR.COUNT + 1 ) := TO_NUMBER( TRIM( V_VAL ) );
+        EXIT WHEN V_NEXT_POS = 0;
+      END LOOP;
 
-  END PKS_FROM_JAVA_ARRAYSTOSTRING;
+      RETURN V_PK_ARR;
+
+    END PKS_FROM_JAVA_ARRAYSTOSTRING;
 
   PROCEDURE SHOW_ETL_STATS( A_UPD_COUNT PLS_INTEGER, A_INS_COUNT PLS_INTEGER, A_TBL_NAME VARCHAR2 )
   IS
-  BEGIN
-    DBMS_OUTPUT.PUT_LINE('Table ' || A_TBL_NAME || ': ' || A_UPD_COUNT || ' updates, ' || A_INS_COUNT || ' inserts.' );
-  END SHOW_ETL_STATS;
+    BEGIN
+      DBMS_OUTPUT.PUT_LINE('Table ' || A_TBL_NAME || ': ' || A_UPD_COUNT || ' updates, ' || A_INS_COUNT || ' inserts.' );
+    END SHOW_ETL_STATS;
 
   /* ************************
    * Deletes rows in the reporting tables when the import has is_delete = 'T'.
@@ -82,49 +82,49 @@ AS
 
       -- Process (rare - from fix-up tests) raw deletes related to events
       DELETE FROM event_fact
-       WHERE lab_event_id IN (
-             SELECT d.lab_event_id
-               FROM im_event_fact d
-              WHERE d.is_delete = 'T' );
+      WHERE lab_event_id IN (
+        SELECT d.lab_event_id
+        FROM im_event_fact d
+        WHERE d.is_delete = 'T' );
       DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' event_fact rows' );
 
       DELETE FROM LIBRARY_LCSET_SAMPLE_BASE
-       WHERE library_event_id IN (
-              SELECT d.lab_event_id
-                FROM im_event_fact d
-               WHERE d.is_delete = 'T' );
+      WHERE library_event_id IN (
+        SELECT d.lab_event_id
+        FROM im_event_fact d
+        WHERE d.is_delete = 'T' );
       DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' library_lcset_sample_base rows' );
 
       DELETE FROM LIBRARY_ANCESTRY
       WHERE CHILD_EVENT_ID IN (
-            SELECT d.lab_event_id
-              FROM im_event_fact d
-             WHERE d.is_delete = 'T' );
+        SELECT d.lab_event_id
+        FROM im_event_fact d
+        WHERE d.is_delete = 'T' );
       DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' library_ancestry child rows' );
 
       -- Tables event_fact, library_ancestry, and library_lcset_sample_base require full refresh
       --   Clear data ONLY IF newer ETL than already saved.
       SELECT DISTINCT im.lab_event_id
       BULK COLLECT INTO V_PK_DEL_ARR
-        FROM event_fact e
-         --  Avoid quadratic joins
-          , ( SELECT DISTINCT lab_event_id, etl_date
-                FROM im_event_fact
-               WHERE is_delete = 'F' ) im
-       WHERE e.lab_event_id = im.lab_event_id
-         AND e.etl_date     < im.etl_date;
+      FROM event_fact e
+        --  Avoid quadratic joins
+        , ( SELECT DISTINCT lab_event_id, etl_date
+            FROM im_event_fact
+            WHERE is_delete = 'F' ) im
+      WHERE e.lab_event_id = im.lab_event_id
+            AND e.etl_date     < im.etl_date;
 
       IF V_PK_DEL_ARR.COUNT > 0 THEN
         -- Wipe links in LIBRARY_LCSET_SAMPLE_BASE
         FORALL IDX IN V_PK_DEL_ARR.FIRST .. V_PK_DEL_ARR.LAST
         DELETE FROM LIBRARY_LCSET_SAMPLE_BASE
-         WHERE library_event_id = V_PK_DEL_ARR(IDX);
+        WHERE library_event_id = V_PK_DEL_ARR(IDX);
         DBMS_OUTPUT.PUT_LINE( 'Pre-deleted ' || SQL%ROWCOUNT || ' updates to library_lcset_sample_base rows' );
 
         -- Wipe child and all ancestors from LIBRARY_ANCESTRY
         FORALL IDX IN V_PK_DEL_ARR.FIRST .. V_PK_DEL_ARR.LAST
         DELETE FROM LIBRARY_ANCESTRY
-         WHERE CHILD_EVENT_ID = V_PK_DEL_ARR(IDX);
+        WHERE CHILD_EVENT_ID = V_PK_DEL_ARR(IDX);
         DBMS_OUTPUT.PUT_LINE( 'Pre-deleted ' || SQL%ROWCOUNT || ' updates to library_ancestry child rows' );
 
         -- Finally, delete from event_fact
@@ -140,11 +140,11 @@ AS
       SELECT DISTINCT im.lab_event_id
       BULK COLLECT INTO V_PK_DEL_ARR
       FROM event_fact e
-         , ( SELECT DISTINCT lab_event_id, etl_date
-               FROM im_event_fact
-              WHERE is_delete = 'F' ) im
+        , ( SELECT DISTINCT lab_event_id, etl_date
+            FROM im_event_fact
+            WHERE is_delete = 'F' ) im
       WHERE e.lab_event_id = im.lab_event_id
-        AND e.etl_date    >= im.etl_date;
+            AND e.etl_date    >= im.etl_date;
 
       IF V_PK_DEL_ARR.COUNT > 0 THEN
         FORALL IDX IN V_PK_DEL_ARR.FIRST .. V_PK_DEL_ARR.LAST
@@ -160,8 +160,8 @@ AS
       DELETE FROM product_order_sample
       WHERE product_order_sample_id IN (
         SELECT product_order_sample_id
-          FROM im_product_order_sample
-         WHERE is_delete = 'T' );
+        FROM im_product_order_sample
+        WHERE is_delete = 'T' );
       DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' product_order_sample rows' );
 
       DELETE FROM research_project_status
@@ -1542,14 +1542,14 @@ AS
     BEGIN
       V_LIBRARY_INS_COUNT := 0;
       FOR new IN (SELECT lab_vessel_id as library_id
-                       , lab_event_id as event_id
-                       , library_name as library_type
-                       , event_date as library_creation
-                       , MIN(line_number) as line_number
-                       , etl_date
-                    FROM im_event_fact
-                   WHERE library_name IS NOT NULL
-                     AND is_delete = 'F'
+                    , lab_event_id as event_id
+                    , library_name as library_type
+                    , event_date as library_creation
+                    , MIN(line_number) as line_number
+                    , etl_date
+                  FROM im_event_fact
+                  WHERE library_name IS NOT NULL
+                        AND is_delete = 'F'
                   GROUP BY lab_vessel_id, lab_event_id, library_name, event_date, etl_date
       ) LOOP
         BEGIN
@@ -1574,6 +1574,187 @@ AS
       END LOOP;
       SHOW_ETL_STATS(  V_UPD_COUNT, V_LIBRARY_INS_COUNT, 'library_lcset_sample_base (from library ancestry)' );
     END MERGE_LIBRARY_SAMPLE;
+
+  /*
+   * Builds out events in a horizontal row for each sample in an Infinium process flow
+   *    from DNA plate to amp plate to chip well
+   * Does not deal with event deletions because no event type is available for deleted rows and otherwise would have to
+   *    scan 14 separate event IDs horizontally in each row for every event deleted to clear any (rarely) deleted data
+   */
+  PROCEDURE MERGE_ARRAY_PROCESS_FLOW
+  IS
+    V_COUNT     PLS_INTEGER;
+    V_IS_INSERT CHAR;
+    V_THE_ROWID ROWID;
+    BEGIN
+      V_COUNT := 0;
+
+      FOR new IN (
+      SELECT *
+      FROM im_event_fact
+      WHERE is_delete = 'F'
+            AND product_order_id  IS NOT NULL
+            AND lcset_sample_name IS NOT NULL
+            AND NVL(batch_name, 'NONE') <> 'NONE'
+            AND lab_event_type IN (
+        'ArrayPlatingDilution',
+        'InfiniumHybridization',
+        'InfiniumAmplification',
+        'InfiniumPostFragmentationHybOvenLoaded',
+        'InfiniumFragmentation',
+        'InfiniumPrecipitation',
+        'InfiniumPostPrecipitationHeatBlockLoaded',
+        'InfiniumPrecipitationIsopropanolAddition',
+        'InfiniumResuspension',
+        'InfiniumPostResuspensionHybOven',
+        'InfiniumPostHybridizationHybOvenLoaded',
+        'InfiniumHybChamberLoaded',
+        'InfiniumXStain',
+        'InfiniumAutocallSomeStarted',
+        'InfiniumAutoCallAllStarted' ) )
+      LOOP
+        -- Find initial base row
+        BEGIN
+          SELECT ROWID INTO V_THE_ROWID
+          FROM array_process_flow
+          WHERE product_order_id  = new.product_order_id
+                AND lcset_sample_name = new.lcset_sample_name
+                AND batch_name = new.batch_name;
+          V_IS_INSERT := 'N';
+          EXCEPTION WHEN NO_DATA_FOUND THEN
+          V_IS_INSERT := 'Y';
+        END;
+
+        BEGIN
+
+          IF V_IS_INSERT = 'Y' THEN
+            -- Have to create initial base row data
+            INSERT INTO array_process_flow (
+              product_order_id, batch_name, lcset_sample_name, sample_name )
+            VALUES( new.product_order_id, new.batch_name, new.lcset_sample_name, new.sample_name )
+            RETURNING ROWID INTO V_THE_ROWID;
+          END IF;
+
+          -- Update applicable process flow values in base row
+          CASE new.lab_event_type
+            WHEN 'ArrayPlatingDilution' THEN
+            UPDATE array_process_flow
+            SET plating_event_id = new.lab_event_id
+              , plating_dilution_station = new.station_name
+              , dna_plate_position = new.position
+              , plating_dilution_date = new.event_date
+              -- Strip position suffix from label to get plate barcode
+              , dna_plate = ( SELECT REGEXP_REPLACE( LABEL, new.position || '$', '' ) FROM LAB_VESSEL WHERE LAB_VESSEL_ID = new.LAB_VESSEL_ID )
+            WHERE ROWID = V_THE_ROWID;
+            WHEN 'InfiniumHybridization' THEN
+            UPDATE array_process_flow
+            SET hyb_event_id = new.lab_event_id
+              , hyb_station = new.station_name
+              , hyb_position = new.position
+              , hyb_date = new.event_date
+              -- Append underscore and position suffix to chip barcode to get chip well pseudo-barcode
+              , ( chip, chip_well_barcode ) = ( SELECT LABEL, LABEL || '_' || new.position FROM LAB_VESSEL WHERE LAB_VESSEL_ID = new.LAB_VESSEL_ID )
+            WHERE ROWID = V_THE_ROWID;
+            WHEN 'InfiniumAmplification' THEN
+            UPDATE array_process_flow
+            SET amp_event_id = new.lab_event_id
+              , amp_station = new.station_name
+              , amp_plate_position = new.position
+              , amp_date = new.event_date
+              , amp_plate = ( SELECT LABEL FROM LAB_VESSEL WHERE LAB_VESSEL_ID = new.LAB_VESSEL_ID )
+            WHERE ROWID = V_THE_ROWID;
+            WHEN 'InfiniumPostFragmentationHybOvenLoaded' THEN
+            UPDATE array_process_flow
+            SET post_frag_event_id = new.lab_event_id
+              , post_frag_hyb_oven = new.station_name
+              , post_frag_hyb_oven_date = new.event_date
+            WHERE ROWID = V_THE_ROWID;
+            WHEN 'InfiniumFragmentation' THEN
+            UPDATE array_process_flow
+            SET frag_event_id = new.lab_event_id
+              , frag_station = new.station_name
+              , frag_date = new.event_date
+            WHERE ROWID = V_THE_ROWID;
+            WHEN 'InfiniumPrecipitation' THEN
+            UPDATE array_process_flow
+            SET precip_event_id = new.lab_event_id
+              , precip_station = new.station_name
+              , precip_date = new.event_date
+            WHERE ROWID = V_THE_ROWID;
+            WHEN 'InfiniumPostPrecipitationHeatBlockLoaded' THEN
+            UPDATE array_process_flow
+            SET post_precip_event_id = new.lab_event_id
+              , post_precip_hyb_oven = new.station_name
+              , post_precip_hyb_oven_date = new.event_date
+            WHERE ROWID = V_THE_ROWID;
+            WHEN 'InfiniumPrecipitationIsopropanolAddition' THEN
+            UPDATE array_process_flow
+            SET precip_ipa_event_id = new.lab_event_id
+              , precip_ipa_station = new.station_name
+              , precip_ipa_date = new.event_date
+            WHERE ROWID = V_THE_ROWID;
+            WHEN 'InfiniumResuspension' THEN
+            UPDATE array_process_flow
+            SET resuspension_event_id = new.lab_event_id
+              , resuspension_station = new.station_name
+              , resuspension_date = new.event_date
+            WHERE ROWID = V_THE_ROWID;
+            WHEN 'InfiniumPostResuspensionHybOven' THEN
+            UPDATE array_process_flow
+            SET postresusphyboven_event_id = new.lab_event_id
+              , postresusphyboven_station = new.station_name
+              , postresusphyboven_date = new.event_date
+            WHERE ROWID = V_THE_ROWID;
+            WHEN 'InfiniumPostHybridizationHybOvenLoaded' THEN
+            UPDATE array_process_flow
+            SET posthybhybovenloaded_event_id = new.lab_event_id
+              , posthybhybovenloaded_station = new.station_name
+              , posthybhybovenloaded_date = new.event_date
+            WHERE ROWID = V_THE_ROWID;
+            WHEN 'InfiniumHybChamberLoaded' THEN
+            UPDATE array_process_flow
+            SET hybchamberloaded_event_id = new.lab_event_id
+              , hybchamberloaded = new.station_name
+              , hybchamberloaded_date = new.event_date
+            WHERE ROWID = V_THE_ROWID;
+            WHEN 'InfiniumXStain' THEN
+            UPDATE array_process_flow
+            SET xstain_event_id = new.lab_event_id
+              , xstain = new.station_name
+              , xstain_date = new.event_date
+            WHERE ROWID = V_THE_ROWID;
+            WHEN 'InfiniumAutocallSomeStarted' THEN
+            UPDATE array_process_flow
+            SET autocall_event_id = new.lab_event_id
+              --, scanner = new.station_name
+              , autocall_started = new.event_date
+            WHERE ROWID = V_THE_ROWID;
+            WHEN  'InfiniumAutoCallAllStarted' THEN
+            UPDATE array_process_flow
+            SET autocall_event_id = new.lab_event_id
+              --, scanner = new.station_name
+              , autocall_started = new.event_date
+            WHERE ROWID = V_THE_ROWID
+                  AND ( autocall_event_id IS NULL
+                        OR
+                        -- Don't overwrite some started with all started
+                        new.event_date < autocall_started );
+          ELSE
+            -- Shouldn't get here if event types match case list, but avoid error and don't count
+            V_COUNT := V_COUNT - 1;
+          END CASE;
+
+          V_COUNT := V_COUNT + 1;
+          EXCEPTION WHEN OTHERS THEN
+          errmsg := SQLERRM;
+          DBMS_OUTPUT.PUT_LINE(
+              TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_event_fact.dat line ' || new.line_number || ' (array_process_flow merge) ' || errmsg);
+          CONTINUE;
+        END;
+      END LOOP;
+      SHOW_ETL_STATS(  V_COUNT, 0, ' array process flow events added' );
+    END MERGE_ARRAY_PROCESS_FLOW;
+
 
   /*
    * Links flowcell ticket batch vessels to flowcell barcodes
@@ -2132,6 +2313,7 @@ AS
       MERGE_EVENT_FACT();
       MERGE_ANCESTRY();
       MERGE_LIBRARY_SAMPLE();
+      MERGE_ARRAY_PROCESS_FLOW();
       MERGE_FCT_BATCH_CRUD();
       MERGE_FCT_LOAD();
 
