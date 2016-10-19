@@ -32,37 +32,37 @@ AS
     V_VAL      VARCHAR2(19);
     V_PK_ARR   PK_ARR_TY;
     V_INPUT    VARCHAR2(1024);
-    BEGIN
-      V_INPUT := TRIM( V_ARRAYSTR );
+  BEGIN
+    V_INPUT := TRIM( V_ARRAYSTR );
 
-      -- Nothing to do, return empty array
-      IF V_INPUT IS NULL OR LENGTH(V_INPUT) < 3 THEN
-        RETURN V_PK_ARR;
-      END IF;
-
-      -- Wish there was a split() function...
-      V_CUR_POS := 2;
-      LOOP
-        V_NEXT_POS := INSTR( V_INPUT, ',', V_CUR_POS );
-        IF V_NEXT_POS = 0 THEN
-          V_VAL := SUBSTR( V_INPUT, V_CUR_POS, LENGTH(V_INPUT) - V_CUR_POS);
-        ELSE
-          V_VAL := SUBSTR( V_INPUT, V_CUR_POS, V_NEXT_POS - V_CUR_POS );
-          V_CUR_POS := V_NEXT_POS + 1;
-        END IF;
-        V_PK_ARR( V_PK_ARR.COUNT + 1 ) := TO_NUMBER( TRIM( V_VAL ) );
-        EXIT WHEN V_NEXT_POS = 0;
-      END LOOP;
-
+    -- Nothing to do, return empty array
+    IF V_INPUT IS NULL OR LENGTH(V_INPUT) < 3 THEN
       RETURN V_PK_ARR;
+    END IF;
 
-    END PKS_FROM_JAVA_ARRAYSTOSTRING;
+    -- Wish there was a split() function...
+    V_CUR_POS := 2;
+    LOOP
+      V_NEXT_POS := INSTR( V_INPUT, ',', V_CUR_POS );
+      IF V_NEXT_POS = 0 THEN
+        V_VAL := SUBSTR( V_INPUT, V_CUR_POS, LENGTH(V_INPUT) - V_CUR_POS);
+      ELSE
+        V_VAL := SUBSTR( V_INPUT, V_CUR_POS, V_NEXT_POS - V_CUR_POS );
+        V_CUR_POS := V_NEXT_POS + 1;
+      END IF;
+      V_PK_ARR( V_PK_ARR.COUNT + 1 ) := TO_NUMBER( TRIM( V_VAL ) );
+      EXIT WHEN V_NEXT_POS = 0;
+    END LOOP;
+
+    RETURN V_PK_ARR;
+
+  END PKS_FROM_JAVA_ARRAYSTOSTRING;
 
   PROCEDURE SHOW_ETL_STATS( A_UPD_COUNT PLS_INTEGER, A_INS_COUNT PLS_INTEGER, A_TBL_NAME VARCHAR2 )
   IS
-    BEGIN
-      DBMS_OUTPUT.PUT_LINE('Table ' || A_TBL_NAME || ': ' || A_UPD_COUNT || ' updates, ' || A_INS_COUNT || ' inserts.' );
-    END SHOW_ETL_STATS;
+  BEGIN
+    DBMS_OUTPUT.PUT_LINE('Table ' || A_TBL_NAME || ': ' || A_UPD_COUNT || ' updates, ' || A_INS_COUNT || ' inserts.' );
+  END SHOW_ETL_STATS;
 
   /* ************************
    * Deletes rows in the reporting tables when the import has is_delete = 'T'.
@@ -82,49 +82,49 @@ AS
 
       -- Process (rare - from fix-up tests) raw deletes related to events
       DELETE FROM event_fact
-      WHERE lab_event_id IN (
-        SELECT d.lab_event_id
-        FROM im_event_fact d
-        WHERE d.is_delete = 'T' );
+       WHERE lab_event_id IN (
+             SELECT d.lab_event_id
+               FROM im_event_fact d
+              WHERE d.is_delete = 'T' );
       DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' event_fact rows' );
 
       DELETE FROM LIBRARY_LCSET_SAMPLE_BASE
-      WHERE library_event_id IN (
-        SELECT d.lab_event_id
-        FROM im_event_fact d
-        WHERE d.is_delete = 'T' );
+       WHERE library_event_id IN (
+              SELECT d.lab_event_id
+                FROM im_event_fact d
+               WHERE d.is_delete = 'T' );
       DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' library_lcset_sample_base rows' );
 
       DELETE FROM LIBRARY_ANCESTRY
       WHERE CHILD_EVENT_ID IN (
-        SELECT d.lab_event_id
-        FROM im_event_fact d
-        WHERE d.is_delete = 'T' );
+            SELECT d.lab_event_id
+              FROM im_event_fact d
+             WHERE d.is_delete = 'T' );
       DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' library_ancestry child rows' );
 
       -- Tables event_fact, library_ancestry, and library_lcset_sample_base require full refresh
       --   Clear data ONLY IF newer ETL than already saved.
       SELECT DISTINCT im.lab_event_id
       BULK COLLECT INTO V_PK_DEL_ARR
-      FROM event_fact e
-        --  Avoid quadratic joins
-        , ( SELECT DISTINCT lab_event_id, etl_date
-            FROM im_event_fact
-            WHERE is_delete = 'F' ) im
-      WHERE e.lab_event_id = im.lab_event_id
-            AND e.etl_date     < im.etl_date;
+        FROM event_fact e
+         --  Avoid quadratic joins
+          , ( SELECT DISTINCT lab_event_id, etl_date
+                FROM im_event_fact
+               WHERE is_delete = 'F' ) im
+       WHERE e.lab_event_id = im.lab_event_id
+         AND e.etl_date     < im.etl_date;
 
       IF V_PK_DEL_ARR.COUNT > 0 THEN
         -- Wipe links in LIBRARY_LCSET_SAMPLE_BASE
         FORALL IDX IN V_PK_DEL_ARR.FIRST .. V_PK_DEL_ARR.LAST
         DELETE FROM LIBRARY_LCSET_SAMPLE_BASE
-        WHERE library_event_id = V_PK_DEL_ARR(IDX);
+         WHERE library_event_id = V_PK_DEL_ARR(IDX);
         DBMS_OUTPUT.PUT_LINE( 'Pre-deleted ' || SQL%ROWCOUNT || ' updates to library_lcset_sample_base rows' );
 
         -- Wipe child and all ancestors from LIBRARY_ANCESTRY
         FORALL IDX IN V_PK_DEL_ARR.FIRST .. V_PK_DEL_ARR.LAST
         DELETE FROM LIBRARY_ANCESTRY
-        WHERE CHILD_EVENT_ID = V_PK_DEL_ARR(IDX);
+         WHERE CHILD_EVENT_ID = V_PK_DEL_ARR(IDX);
         DBMS_OUTPUT.PUT_LINE( 'Pre-deleted ' || SQL%ROWCOUNT || ' updates to library_ancestry child rows' );
 
         -- Finally, delete from event_fact
@@ -140,11 +140,11 @@ AS
       SELECT DISTINCT im.lab_event_id
       BULK COLLECT INTO V_PK_DEL_ARR
       FROM event_fact e
-        , ( SELECT DISTINCT lab_event_id, etl_date
-            FROM im_event_fact
-            WHERE is_delete = 'F' ) im
+         , ( SELECT DISTINCT lab_event_id, etl_date
+               FROM im_event_fact
+              WHERE is_delete = 'F' ) im
       WHERE e.lab_event_id = im.lab_event_id
-            AND e.etl_date    >= im.etl_date;
+        AND e.etl_date    >= im.etl_date;
 
       IF V_PK_DEL_ARR.COUNT > 0 THEN
         FORALL IDX IN V_PK_DEL_ARR.FIRST .. V_PK_DEL_ARR.LAST
@@ -160,8 +160,8 @@ AS
       DELETE FROM product_order_sample
       WHERE product_order_sample_id IN (
         SELECT product_order_sample_id
-        FROM im_product_order_sample
-        WHERE is_delete = 'T' );
+          FROM im_product_order_sample
+         WHERE is_delete = 'T' );
       DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' product_order_sample rows' );
 
       DELETE FROM research_project_status
@@ -1542,14 +1542,14 @@ AS
     BEGIN
       V_LIBRARY_INS_COUNT := 0;
       FOR new IN (SELECT lab_vessel_id as library_id
-                    , lab_event_id as event_id
-                    , library_name as library_type
-                    , event_date as library_creation
-                    , MIN(line_number) as line_number
-                    , etl_date
-                  FROM im_event_fact
-                  WHERE library_name IS NOT NULL
-                        AND is_delete = 'F'
+                       , lab_event_id as event_id
+                       , library_name as library_type
+                       , event_date as library_creation
+                       , MIN(line_number) as line_number
+                       , etl_date
+                    FROM im_event_fact
+                   WHERE library_name IS NOT NULL
+                     AND is_delete = 'F'
                   GROUP BY lab_vessel_id, lab_event_id, library_name, event_date, etl_date
       ) LOOP
         BEGIN
