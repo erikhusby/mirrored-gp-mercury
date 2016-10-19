@@ -373,7 +373,7 @@ public class InfiniumRunResource {
         this.attributeArchetypeDao = attributeArchetypeDao;
     }
 
-    private static final Map<String, String> mapSerialNumberToMachineName = new HashMap<>();
+    public static final Map<String, String> mapSerialNumberToMachineName = new HashMap<>();
     static {
         mapSerialNumberToMachineName.put("N296", "Practical Pig");
         mapSerialNumberToMachineName.put("N370", "Big Bad Wolf");
