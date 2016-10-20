@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -13,7 +14,6 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarterConfig;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
-import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -38,6 +38,14 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathFactory;
+import java.io.File;
+import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -48,14 +56,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathFactory;
-import java.io.File;
-import java.io.FileInputStream;
 
 /**
  * A JAX-RS resource for Infinium genotyping runs.
@@ -106,7 +106,11 @@ public class InfiniumRunResource {
             String column = matcher.group(3);
             VesselPosition vesselPosition = VesselPosition.valueOf(row + column);
             LabVessel chip = labVesselDao.findByIdentifier(chipBarcode);
+            if (chip == null) {
+                throw new ResourceException("No such chip: " + chipBarcode, Response.Status.INTERNAL_SERVER_ERROR);
+            }
             infiniumRunBean = buildRunBean(chip, vesselPosition, runDate(chip));
+
         } else {
             throw new ResourceException("Barcode is not of expected format", Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -114,6 +118,9 @@ public class InfiniumRunResource {
     }
 
     private Date runDate(LabVessel chip) {
+        if (CollectionUtils.isEmpty(chip.getEvents())) {
+            throw new ResourceException("No chip events found", Response.Status.INTERNAL_SERVER_ERROR);
+        }
         for (LabEvent event : chip.getEvents()) {
             if (event.getLabEventType() == LabEventType.INFINIUM_XSTAIN) {
                 return event.getEventDate();
