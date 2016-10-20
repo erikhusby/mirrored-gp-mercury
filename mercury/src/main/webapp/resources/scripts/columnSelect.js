@@ -11,6 +11,9 @@
 
 function initColumnSelect(settings, columnNames, filterStatusSelector, columnFilterClass, ctxPath) {
     var api = new $j.fn.dataTable.Api(settings);
+    if (tableEmpty(settings)){
+        return;
+    }
 
     var filterStatusContainer = $j(filterStatusSelector); // MaterialType-filters
     // filterStatusContainer.hide();
@@ -26,13 +29,13 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
         var savedFilterValue=column.search();
 
         var header = $j(column.header());
-        var headerText = header.text().trim();
-        var cleanTitle = headerText.replace(/\s+/, '');
+        var headerLabel = header.text().trim();
+        var cleanTitle = headerLabel.replace(/\s+/, '');
         var selectType = "select";
         var filterColumn = false;
         columnNames.forEach(function (col) {
             $j.each(col, function (column, type) {
-                if (column === headerText) {
+                if (column === headerLabel) {
                     selectType = type;
                     columnHeader = column;
                     filterColumn = true;
@@ -44,7 +47,6 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
         function updateFilter(column, input) {
             searchString = input.replace(/[,|\s]+/g, '|');
             var searchInstance = column.search(input ?  searchString : '', true, false, true);
-            console.log(searchString);
             searchInstance.draw();
         }
 
@@ -68,7 +70,7 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
 
         function updateFilterInfo(filterLabel, filterValue) {
             var filteredItemsHeader = $j(".filtered-items-header");
-            var filterHeader = getElement("<li></li>", {class: "filter-header-item", id: cleanTitle, text: headerText});
+            var filterHeader = getElement("<li></li>", {class: "filter-header-item", id: cleanTitle, text: headerLabel});
 
             var filterItemTitle = "filter-item-" + cleanTitle;
             $j("#"+filterItemTitle).remove();
@@ -114,9 +116,9 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                 })
             }
             if (filterStatusContainer.find("li").length==0){
-                filterStatusContainer.hide();
+                filterStatusContainer.fadeOut();
             }else{
-                filterStatusContainer.show();
+                filterStatusContainer.fadeIn();
             }
         }
 
@@ -125,8 +127,10 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                 type: 'textarea',
                 css: 'height:1',
                 class: columnFilterClass,
-                value: savedFilterValue
+                value: savedFilterValue,
+                placeholder: "Filter " + headerLabel
             });
+            textInput.prepend("<br/>");
             header.append(textInput);
             $j(textInput).on('click', function () {
                 return false;
@@ -138,7 +142,7 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
 
             $j(textInput).on('keyup change blur', function () {
                 doUpdateFilter(column, $j(this).val().trim());
-                updateFilterInfo(headerText, $j(this).val().trim());
+                updateFilterInfo(headerLabel, $j(this).val().trim());
             });
         }
         if (selectType === 'select' && filterColumn) {
@@ -160,21 +164,22 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                 display_disabled_options: false,
                 width: width,
                 inherit_select_classes: true,
-                placeholder_text_single: "Select a " + headerText,
-                placeholder_text_multiple: "Select a " + headerText
+                placeholder_text_single: "Select a " + headerLabel,
+                placeholder_text_multiple: "Select a " + headerLabel
             });
             chosen.on("change chosen:updated", function (event, what) {
                 // chosen.on("nothing", function (event, what) {
                 if (what) {
+                    var filterText=what[eventAction];
                     var eventAction = Object.keys(what)[0]; // ['selected','deselected']
-                    updateFilterInfo(headerText, what[eventAction]);
+                    if (eventAction==='deselected'){
+                        filterText = "";
+                    }
+                    updateFilterInfo(headerLabel, filterText);
                 }
             });
             $j(".filtering-label img").on("click",function(){
-                console.log("click ", this);
-                debugger;
-
-                // chosen.trigger("change", $j(this).text())
+                chosen.trigger("change", $j(this).text())
             });
 
             // select.trigger("chosen:updated");
@@ -196,7 +201,7 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
             });
         }
         api.on('init.dt', function (event, settings) {
-                updateFilterInfo(headerText, savedFilterValue);
+                updateFilterInfo(headerLabel, savedFilterValue);
         });
     });
 
@@ -226,6 +231,10 @@ function buildHeaderFilterOptions(header, columns) {
     });
 
     return $j(select);
+}
+function tableEmpty(settings){
+    var api = $j.fn.dataTable.Api(settings);
+    return api.data().length===0;
 }
 
 function updateSearchText(settings) {
