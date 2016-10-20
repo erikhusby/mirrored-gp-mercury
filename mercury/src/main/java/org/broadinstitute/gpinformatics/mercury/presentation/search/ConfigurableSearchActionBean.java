@@ -49,13 +49,9 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import javax.ejb.EJBTransactionRolledbackException;
 import javax.inject.Inject;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
-import javax.transaction.NotSupportedException;
-import javax.transaction.SystemException;
-import javax.transaction.UserTransaction;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -90,8 +86,6 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
     public static final String AJAX_SCAN_EVENT = "ajaxScan";
     public static final String RACK_SCAN_PAGE_TITLE = "Rack Scan Barcodes";
     public static final String DRILL_DOWN_EVENT = "drillDown";
-    private static final String TIMEOUT_MESSAGE = "The request took too long, please try to be more specific in " +
-            "your Search Terms, or remove Result Columns.";
 
     @HandlesEvent(AJAX_SELECT_LAB_EVENT)
     public Resolution selectLab() {
@@ -317,9 +311,6 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
     @Inject
     private ConstrainedValueDao constrainedValueDao;
 
-    @Inject
-    private UserTransaction userTransaction;
-
     /**
      * Called from the search menu selection link.
      * User must select the base entity to begin a search or select an existing USER or GLOBAL saved search.
@@ -520,8 +511,6 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
             }
 
             try {
-                userTransaction.setTransactionTimeout(searchInstance.getTimeoutLength());
-                userTransaction.begin();
                 ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
                         searchInstance, configurableSearchDef, columnSetName, sortColumnIndex, dbSortPath,
                         sortDirection,  getEntityName() );
@@ -533,15 +522,6 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
                 addGlobalValidationError(ve.getMessage());
             } catch (BSPLookupException bspse) {
                 handleRemoteServiceFailure(bspse);
-            } catch (SystemException | NotSupportedException e) {
-                throw new RuntimeException(e);
-            } catch (EJBTransactionRolledbackException e) {
-                addGlobalValidationError(TIMEOUT_MESSAGE);
-            } finally {
-                try {
-                    userTransaction.rollback();
-                } catch (SystemException ignored) {
-                }
             }
         }
         return new ForwardResolution("/search/configurable_search.jsp");
@@ -570,23 +550,12 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
         buildSearchContext();
 
         try {
-            userTransaction.setTransactionTimeout(searchInstance.getTimeoutLength());
-            userTransaction.begin();
             configurableResultList =
                     configurableListFactory.getSubsequentResultsPage(searchInstance, pageNumber, getEntityName(),
                             (PaginationUtil.Pagination) getContext().getRequest().getSession().getAttribute(
                                     PAGINATION_PREFIX + sessionKey));
         } catch (BSPLookupException bspse) {
             handleRemoteServiceFailure( bspse );
-        } catch (SystemException | NotSupportedException e) {
-            throw new RuntimeException(e);
-        } catch (EJBTransactionRolledbackException e) {
-            addGlobalValidationError(TIMEOUT_MESSAGE);
-        } finally {
-            try {
-                userTransaction.rollback();
-            } catch (SystemException ignored) {
-            }
         }
         return new ForwardResolution("/search/configurable_search.jsp");
     }
