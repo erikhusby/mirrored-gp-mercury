@@ -101,11 +101,11 @@ public class InfiniumRunFinder implements Serializable {
 
     private void processChip(StaticPlate staticPlate) throws Exception {
         InfiniumRunProcessor.ChipWellResults chipWellResults = infiniumRunProcessor.process(staticPlate);
-        if (!chipWellResults.isHasRunStarted()) {
+        if (!chipWellResults.isHasRunStarted() || chipWellResults.getScannerName() == null) {
             return;
         }
         log.debug("Processing chip: " + staticPlate.getLabel());
-        LabEvent someStartedEvent = findOrCreateSomeStartedEvent(staticPlate);
+        LabEvent someStartedEvent = findOrCreateSomeStartedEvent(staticPlate, chipWellResults.getScannerName());
         Set<LabEventMetadata> labEventMetadata = someStartedEvent.getLabEventMetadatas();
         boolean allComplete = true;
         for (VesselPosition vesselPosition : chipWellResults.getPositionWithSampleInstance()) {
@@ -162,7 +162,7 @@ public class InfiniumRunFinder implements Serializable {
         }
 
         if (allComplete && starterCalledOnAllWells) {
-            createEvent(staticPlate, LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
+            createEvent(staticPlate, LabEventType.INFINIUM_AUTOCALL_ALL_STARTED, someStartedEvent.getEventLocation());
         }
     }
 
@@ -170,10 +170,10 @@ public class InfiniumRunFinder implements Serializable {
         return infiniumPipelineClient.callStarterOnWell(staticPlate, vesselPosition);
     }
 
-    private LabEvent findOrCreateSomeStartedEvent(StaticPlate staticPlate) throws Exception {
+    private LabEvent findOrCreateSomeStartedEvent(StaticPlate staticPlate, String eventLocation) throws Exception {
         LabEvent labEvent = findLabEvent(staticPlate, LabEventType.INFINIUM_AUTOCALL_SOME_STARTED);
         if (labEvent == null) {
-            labEvent = createEvent(staticPlate, LabEventType.INFINIUM_AUTOCALL_SOME_STARTED);
+            labEvent = createEvent(staticPlate, LabEventType.INFINIUM_AUTOCALL_SOME_STARTED, eventLocation);
         }
 
         return labEvent;
@@ -188,12 +188,12 @@ public class InfiniumRunFinder implements Serializable {
         return null;
     }
 
-    private LabEvent createEvent(StaticPlate staticPlate, LabEventType eventType) throws Exception {
+    private LabEvent createEvent(StaticPlate staticPlate, LabEventType eventType, String eventLocation) throws Exception {
         Date start = new Date();
         BspUser bspUser = getBspUser("seqsystem");
         long operator = bspUser.getUserId();
         LabEvent labEvent =
-                new LabEvent(eventType, start, LabEvent.UI_PROGRAM_NAME, 1L, operator, LabEvent.UI_PROGRAM_NAME);
+                new LabEvent(eventType, start, eventLocation, 1L, operator, LabEvent.UI_PROGRAM_NAME);
         staticPlate.addInPlaceEvent(labEvent);
         labEventDao.persist(labEvent);
         labEventDao.flush();
