@@ -146,7 +146,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private Map<String, BucketCount> mapBucketToBucketEntryCount;
     private CreateFields.ProjectType projectType = null;
     private String filterState;
-    private String tableState;
+    private String tableState = "{}";
 
     private String searchKey;
     private static final List<String> PREFETCH_COLUMN_NAMES =
@@ -183,10 +183,25 @@ public class BucketViewActionBean extends CoreActionBean {
                 List<String> tableStatePreferenceValue = nameValueDefinitionValue.getDataMap().get(TABLE_STATE_KEY);
                 if (CollectionUtils.isNotEmpty(tableStatePreferenceValue)) {
                     tableState = tableStatePreferenceValue.iterator().next();
+                    State state = readTableState(tableState);
+                    buildHeaderVisibilityMap(state);
                 }
             }
         } catch (Exception e) {
             log.error("Load table state preference", e);
+        }
+    }
+
+    private void buildHeaderVisibilityMap(State state) {
+        for (Column column : state.getColumns()) {
+            boolean visible = true;
+            if (column!=null){
+                visible = column.isVisible();
+            }
+            String headerName = column.getHeaderName();
+            if (StringUtils.isNotBlank(headerName)) {
+                headerVisibilityMap.put(headerName, visible);
+            }
         }
     }
 
@@ -198,11 +213,6 @@ public class BucketViewActionBean extends CoreActionBean {
     @HandlesEvent("watchersAutoComplete")
     public Resolution watchersAutoComplete() throws JSONException {
         return createTextResolution(jiraUserTokenInput.getJsonString(getJiraUserQuery()));
-    }
-
-    @DefaultHandler
-    public Resolution view() {
-        return new ForwardResolution(VIEW_PAGE);
     }
 
     @ValidationMethod(on = CREATE_BATCH_ACTION)
@@ -312,15 +322,9 @@ public class BucketViewActionBean extends CoreActionBean {
                 String tableStateJson = null;
                 if (bucketList != null) {
                     tableStateJson = bucketList.iterator().next();
-                    if (true) {
-                        return new StreamingResolution("text", tableStateJson);
-                    }
-
                     State state = readTableState(tableStateJson);
-                    for (Column column : state.getColumns()) {
-                        headerVisibilityMap.put(column.getHeaderName(), column.isVisible());
-                    }
-                    jsonObject.put(TABLE_STATE_KEY, writeTableState(state));
+                    buildHeaderVisibilityMap(state);
+                    return new StreamingResolution("text", tableStateJson);
                 } else {
                     jsonObject = new JSONObject();
                 }
