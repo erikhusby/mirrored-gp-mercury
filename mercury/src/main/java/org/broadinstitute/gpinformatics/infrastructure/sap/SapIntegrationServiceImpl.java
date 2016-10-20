@@ -292,9 +292,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      */
     private SapIntegrationClientImpl.SAPCompanyConfiguration determineCompanyCode(ProductOrder companyProductOrder) {
         SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
-        if (companyProductOrder.getResearchProject().getRegulatoryDesignation()
-            != ResearchProject.RegulatoryDesignation.RESEARCH_ONLY ||
-            companyProductOrder.getProduct().isExternalProduct()) {
+        if (companyProductOrder.getProduct().isExternalProduct()) {
             companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES;
         }
 
