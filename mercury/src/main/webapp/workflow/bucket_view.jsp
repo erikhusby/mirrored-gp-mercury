@@ -67,41 +67,6 @@
             content: "";
         }
 
-        div.dt-buttons {
-        float: none;
-            padding-top:1em;
-        }
-
-        /*div.buttons-colvis {*/
-        /*float: left;*/
-        /*}*/
-
-        /* jQuery UI - v1.11.4 */
-        <%--.ui-helper-clearfix:before, .ui-helper-clearfix:after {content: ""; display: table; border-collapse: collapse;}--%>
-        <%--.ui-helper-clearfix:after {clear: both;}--%>
-        <%--.ui-helper-clearfix {position: relative;min-height: 0;}--%>
-        <%--.ui-state-disabled {cursor: default !important;}--%>
-        <%--.ui-button {display: inline-block;position: relative;overflow: visible;}--%>
-        <%--.ui-button .ui-button-text {display: block;line-height: normal;}--%>
-        <%--.ui-button-text-only .ui-button-text {padding: .4em 1em;}--%>
-        <%--.ui-buttonset {margin-right: 7px;}--%>
-        <%--.ui-buttonset .ui-button {margin-left: 0;   margin-right: -.1em;}--%>
-        <%--.ui-widget-header {border: 1px solid black;background: #5c9ccc;color: #ffffff;font-weight: bold;margin: -.1em 0;}--%>
-        <%--.ui-state-default, .ui-widget-header .ui-state-default, table.dataTable tfoot th:hover {border: 1px solid black;background: #d7ebf9;font-weight: bold;color: #2779aa;cursor: pointer;}--%>
-        <%--th.sorting.ui-state-default.sorting_asc, th.sorting.ui-state-default.sorting_desc {border: 1px solid black;background: #3baae3;font-weight: bold;color: #ffffff;}--%>
-        <%--.ui-state-default:hover, .ui-widget-header .ui-state-default:hover {border: 1px solid black;background: #79c9ec;font-weight: bold;color: #026890;}--%>
-        <%--th.sorting.ui-state-default.sorting_asc:hover, th.sorting.ui-state-default.sorting_desc:hover {border: 1px solid black;background: #e4f1fb;font-weight: bold;color: #0070a3;}--%>
-        <%--.active,.ui-widget-header .active {border: 1px solid black;background: #3baae3;font-weight: bold;color: #ffffff;}--%>
-        <%--.ui-widget-header .ui-state-disabled {background: #e4f1fb;color: #0070a3;opacity: .35;filter:Alpha(Opacity=35);}--%>
-        <%--.ui-widget-header:hover .ui-state-disabled {background: #e4f1fb;color: #0070a3;opacity: .35;filter:Alpha(Opacity=35);}--%>
-
-        <%--/* Buttons for DataTables 1.1.0 */--%>
-        <%--div.dt-buttons {position: relative;float: left;font: 0.9em Arial; padding-bottom: 0.25em;}--%>
-        <%--div.dt-buttons .dt-button {margin: 0.25em 0.333em 0.25em 0;}--%>
-        <%--div.dt-button-collection {font: 0.9em Arial;position: absolute;margin-top: 3px; padding: 4px;border: 1px solid #ccc;background-color: #fff;overflow:hidden; z-index: 2002;}--%>
-        <%--div.dt-button-collection .dt-button {text-align: center;position: relative;display: block;margin-right: 0;width: 100px;}--%>
-        <%--div.dt-button-background {zoom: 1;position: fixed;top: 0; left: 0;width: 100%;height: 100%;background: #000;filter: alpha(opacity=35);opacity: .35;z-index: 2001;}--%>
-        <%--a.dt-button.buttons-select-cells, a.dt-button.buttons-select-rows, a.dt-button.buttons-select-columns {position: relative; width: 175px;text-align: left;}--%>
         a.dt-button.buttons-columnVisibility span {
             padding-left: 12px;
         }
@@ -162,6 +127,40 @@
             background-position: 16px 0px;
         }
 
+        .dataTables_length, .dataTables_info, .dataTables_paginate {
+            padding-top: 10px;
+            padding-right: 10px;
+        }
+
+        .info-header-display {
+            overflow: hidden;
+            padding-top: 2em;
+        }
+
+        .info-header-display .dt-buttons {
+            display: initial;
+        }
+
+        .dataTables_processing {
+            width: 400px;
+            border: 2px solid #644436;
+            height: 55px;
+            color: black;
+            left: 40%;
+            visibility: visible;
+            z-index: 10;
+            top: 0;
+        }
+
+        .dataTables_info {
+            float: right;
+        }
+
+        .em-turtle {
+            <%--background-image: url("${ctxpath}/images/turtle.png");--%>
+            <%--background-size: 16px 16px;--%>
+            <%--background-repeat: no-repeat;--%>
+        }
     </style>
     <%--<script src="${ctxpath}/resources/scripts/jquery.pasteSelect.js" type="text/javascript"></script>--%>
     <script src="${ctxpath}/resources/scripts/jquery.jeditable.mini.js" type="text/javascript"></script>
@@ -186,9 +185,11 @@
         function showOrHideControls() {
             var inputControls = $j(".actionControls").find("input.bucket-control");
             if ($j("input[name='selectedEntryIds']:checked").length == 0) {
-                inputControls.attr("disabled", "disabled")
+                inputControls.attr("disabled", "disabled");
+                $j("#chooseNext.bucket-control").hide();
             } else {
                 inputControls.removeAttr("disabled");
+                $j("#chooseNext.bucket-control").show();
             }
         }
 
@@ -351,65 +352,27 @@
             };
 
             var bucketName = $j('#bucketSelect :selected').val();
-            var colVis = {};
+            var localStorageKey = 'DT_bucketEntryView';
             oTable = $j('#bucketEntryView').DataTable({
-//                dom: "B<'row-fluid<'#filtering.accordion'>" +
-//                "<'row-fluid't>>" +
-//                "<'row-fluid'<'span12'p>>",
-                dom: "<'row-fluid' <'#filtering'>t>",
-//                dom: "<'#filtering'>lript",
-//                buttons: [{
-//                    text: "Show or Hide Columns",
-//                    extend: 'colvis',
-//                    columns: ':gt(0)'
-//                }, 'copyHtml5', 'excelHtml5', 'pdfHtml5'],
+                dom: "<'info-header-display'iB><'#filtering'>rtpl",
                 saveState: true,
-                paging: true,
                 info:true,
+                paging: true,
+                lengthMenu:[ [10, 25, 50, 100, 500, -1], [10, 25, 50, 100, 500, "All"] ],
+                lengthChange:true,
+                pageLength: 100,
                 searchDelay: 500,
-                displayLength: 100,
                 deferRender: true,
-                select: {
-                    items: 'cells',
-                    info: false
-                },
-                "aaSorting": [[1,'asc'], [7,'asc']],
-                stateSaveCallback: function (settings, data) {
-                    var api = new $j.fn.dataTable.Api(settings);
-                        for (var index = 0; index < data.columns.length; index++) {
-                            var item = data.columns[index];
-                            var header = $j(api.data().column(index).header());
-                            if (header) {
-                                item.headerName = header.text().trim();
-                            }
-                        }
-
-                        if (bucketName !== '') {[]
-                            var stateData = {
-                                "<%= BucketViewActionBean.TABLE_STATE_KEY %>": JSON.stringify(data),
-                                "<%= BucketViewActionBean.SELECTED_BUCKET_KEY %>": bucketName
-                            };
-                            var serverData = {};
-                            $j.ajax({
-                                async: false,
-                                'url': "${ctxpath}/workflow/bucketView.action?<%= BucketViewActionBean.SAVE_SEARCH_DATA %>=",
-                                'data': stateData,
-                                dataType: 'json',
-                                type: 'POST',
-                                success(savedData){
-                                    serverData = savedData;
-                                }
-                            });
-//                            return serverData;
-                        }
-                },
-                "stateLoadCallback": function (settings) {
-                    var serverData = '${actionBean.tableState}' === '' ? '' : '${actionBean.tableState}';
-                    if (serverData) {
-                        return JSON.parse(serverData);
-                    }
-                },
-
+                renderer: "bootstrap",
+                buttons: [{
+                    extend: 'colvis',
+                    text: "Show or Hide Columns",
+                    columns: ':gt(0)'
+                }],
+                "language": {
+                    "info": "Showing _START_ to _END_ of _TOTAL_ bucket entries displayed.",
+                    "lengthMenu": "Displaying _MENU_ bucket entries per page"
+                    },
                 "columns": [
                     {"bSortable": false},
                     {"bSortable": true, "sClass": "nowrap"},
@@ -430,9 +393,47 @@
                     {"bSortable":true},
                     {"bSortable":true}
                 ],
+                "aaSorting": [[1,'asc'], [7,'asc']],
+                stateSaveCallback: function (settings, data) {
+                    var api = new $j.fn.dataTable.Api(settings);
+                        for (var index = 0; index < data.columns.length; index++) {
+                            var item = data.columns[index];
+                            var header = $j(api.data().column(index).header());
+                            if (header) {
+                                item.headerName = header.text().trim();
+                            }
+                        }
+
+                        if (bucketName !== '') {
+                            var stateData = {
+                                "<%= BucketViewActionBean.TABLE_STATE_KEY %>": JSON.stringify(data),
+                                "<%= BucketViewActionBean.SELECTED_BUCKET_KEY %>": bucketName
+                            };
+                            localStorage.setItem(localStorageKey, JSON.stringify(stateData) );
+                            $j.ajax({
+                                'url': "${ctxpath}/workflow/bucketView.action?<%= BucketViewActionBean.SAVE_SEARCH_DATA %>=",
+                                'data': stateData,
+                                dataType: 'json',
+                                type: 'POST'
+                            });
+                        }
+                },
+                "stateLoadCallback": function (settings) {
+                    var serverData = '${actionBean.tableState}';
+                    if (!serverData){
+                        serverData = localStorage.getItem(localStorageKey);
+                    }
+                    if (serverData) {
+                        try {
+                            serverData = JSON.parse(serverData);
+                        } catch (e) {
+                            console.log(e);
+                        }
+                    }
+                    return serverData;
+                },
                 "fnDrawCallback": editablePdo,
                 "initComplete": function (settings) {
-
                     initColumnSelect(settings, [
                         {"Vessel Name": 'text'},
                         {"Sample Name": 'text'},
@@ -451,33 +452,13 @@
                     ], "#filtering", "column-filter", "${ctxpath}");
 
                     $j("#filtering").accordion({
-                        "collapsible": true, "heightStyle": "content", 'active': false
+                        "collapsible": true, "heightStyle": "content", 'active': false,
                     });
-
-                    $j("#filtering").css("z-index: 0");
-                    buildShowHideButton(settings);
+                    $j("#filtering").css("z-index: 0; display: inline-block; width: 100%;");
                 }
 
 
             });
-
-            function buildShowHideButton(settings) {
-                var dataTable = new $j.fn.dataTable.Api(settings);
-                var buttons = new $j.fn.dataTable.Buttons(dataTable, {
-                    saveState: true,
-                    buttons: [
-                        {
-                            extend: 'colvis',
-                            columns: ':gt(0)'
-                        }
-                    ]
-                });
-                var buttonContainer = $j(buttons.container(), {'class': "bucket-control"});
-                buttonContainer.appendTo($j(".actionControls"));
-            }
-
-
-            includeAdvancedFilter(oTable, "#bucketEntryView");
 
             $j('.bucket-checkbox').enableCheckboxRangeSelection({
                 checkAllClass:'bucket-checkAll',
@@ -652,19 +633,15 @@
         <br/>
         <ul id="editable-text"> <li>If you would like to change the value of a PDO for an item in the bucket, click on the value of the PDO in the table and select the new value.</li> </ul>
         <div class="actionControls" style="margin-bottom: 20px">
-            <div style="padding:1em;"> Select Next <input value="92" style="width: 3em;" id="batchSize"/>&nbsp;<input
-                type="button" id="chooseNbutton" value="Select" class="btn"/>
-            </div>
             <stripes:submit name="createBatch" value="Create Batch" class="btn bucket-control" disabled="true"/>
             <stripes:submit name="addToBatch" value="Add to Batch" class="btn bucket-control" disabled="true"/>
             <stripes:submit name="removeFromBucket" value="Remove From Bucket" class="btn bucket-control"
                             disabled="true"/>
-                <%--<a href="javascript:void(0)" id="PasteBarcodesList" class="bucket-control"--%>
-                <%--title="Use a pasted-in list of tube barcodes to select samples">Choose via list of vessel or sample names...</a>--%>
-
-            <a href="#" id="cancel" onClick="submitBucket()" style="display: none;">Cancel</a>
+        <a href="#" id="cancel" onClick="submitBucket()" style="display: none;">Cancel</a>
+        <div id="chooseNext" class="bucket-control table-control">Select Next <input value="92" style="width: 3em;" id="batchSize"/>&nbsp;<input
+                type="button" id="chooseNbutton" value="Select" class="btn"/>
         </div>
-        <p></p>
+</div>
         <table id="bucketEntryView" class="bucket-checkbox table simple dt-responsive">
             <thead>
             <tr>
@@ -674,15 +651,15 @@
                 </th>
                 <th width="60">Vessel Name</th>
                 <th width="50">Sample Name</th>
-                <th>Material Type</th>
+                <th class="em-turtle">Material Type</th>
                 <th>PDO</th>
                 <th>PDO Name</th>
                 <th>PDO Owner</th>
-                <th style="min-width: 50px">Batch Name</th>
-                <th>Workflow</th>
+                <th style="min-width: 50px" class="em-turtle">Batch Name</th>
+                <th class="em-turtle">Workflow</th>
                 <th>Product</th>
                 <th>Add-ons</th>
-                <th width="100">Receipt Date</th>
+                <th width="100" class="em-turtle">Receipt Date</th>
                 <th width="100">Created Date</th>
                 <th>Bucket Entry Type</th>
                 <th>Rework Reason</th>
@@ -692,6 +669,9 @@
             </tr>
             </thead>
             <tbody>
+
+            <c:set var="headerVisibilityMap" value="${actionBean.headerVisibilityMap}"/>
+
             <c:forEach items="${actionBean.collectiveEntries}" var="entry">
                 <tr id="${entry.bucketEntryId}" data-vessel-label="${entry.labVessel.label}">
                     <td class="bucket-control">
@@ -699,75 +679,85 @@
                                           value="${entry.bucketEntryId}"/>
                     </td>
                     <td>
+                    <c:if test="${headerVisibilityMap['Vessel Name']}">
                         <a href="${ctxpath}/search/vessel.action?vesselSearch=&searchKey=${entry.labVessel.label}">
                                 ${entry.labVessel.label}
-                        </a></td>
-
-                    <td>
+                        </a>
+                    </c:if></td>
+                    <td><c:if test="${headerVisibilityMap['Sample Name']}">
                         <c:forEach items="${entry.labVessel.mercurySamples}" var="mercurySample" varStatus="stat">
                             <a href="${ctxpath}/search/sample.action?sampleSearch=&searchKey=${mercurySample.sampleKey}">
                                     ${mercurySample.sampleKey}</a>
                             <c:if test="${!stat.last}">&nbsp;</c:if>
                         </c:forEach>
-                    </td>
+                    </c:if></td>
                     <td class="ellipsis">
-                            ${entry.labVessel.latestMaterialType.displayName}
+                        <c:if test="${headerVisibilityMap['Material Type']}">
+                        ${entry.labVessel.latestMaterialType.displayName}
+                    </c:if>
                     </td>
-                    <td class="editable"><span class="ellipsis">${entry.productOrder.businessKey}</span><span
-                            style="display: none;"
-                            class="icon-pencil"></span>
+                    <td><c:if test="${headerVisibilityMap['PDO']}">
+                        <span class="ellipsis editable"> ${entry.productOrder.businessKey} </span>
+                        <span style="display: none;" class="icon-pencil"></span>
+                    </c:if>
                     </td>
                     <td>
-                        <div class="ellipsis" style="width: 300px">${entry.productOrder.title}</div>
+                        <c:if test="${headerVisibilityMap['PDO Name']}">
+                        <div class="ellipsis" style="width: 300px"> ${entry.productOrder.title} </div>
+                        </c:if>
                     </td>
                     <td class="ellipsis">
-                            ${actionBean.getUserFullName(entry.productOrder.createdBy)}
+                        <c:if test="${headerVisibilityMap['PDO Owner']}">
+                            ${actionBean.getUserFullName(entry.productOrder.createdBy)}</c:if>
                     </td>
                     <td>
-                        <c:forEach items="${entry.labVessel.nearestWorkflowLabBatches}" var="batch" varStatus="stat">
-                            ${actionBean.getLink(batch.businessKey)} <c:if test="${!stat.last}">&nbsp;</c:if></c:forEach>
+                        <c:if test="${headerVisibilityMap['Batch Name']}">
+                            <c:forEach items="${entry.labVessel.nearestWorkflowLabBatches}" var="batch" varStatus="stat">
+                            ${actionBean.getLink(batch.businessKey)} <c:if test="${!stat.last}">&nbsp;</c:if></c:forEach></c:if>
                     </td>
                     <td>
                         <div class="ellipsis" style="max-width: 250px;">
-                            <c:if test="${! actionBean.headerVisibilityMap[selectedBucket]}">
+                            <c:if test="${headerVisibilityMap['Workflow']}">
                                 ${mercuryStatic:join(actionBean.getWorkflowNames(entry), "<br/>")}
                             </c:if>
                         </div>
                     </td>
                     <td>
-                        <div class="ellipsis" style="max-width: 250px;">${entry.productOrder.product.name}</div>
+                        <c:if test="${headerVisibilityMap['Product']}">
+                            <div class="ellipsis" style="max-width: 250px;">${entry.productOrder.product.name}</div></c:if>
                     </td>
                     <td>
-                        <div class="ellipsis" style="max-width: 250px;">
-                                ${entry.productOrder.getAddOnList("<br/>")}
-                        </div>
-                    </td>
+                        <c:if test="${headerVisibilityMap['Add-ons']}">
+                            <div class="ellipsis" style="max-width: 250px;">
+                                    ${entry.productOrder.getAddOnList("<br/>")}
+                            </div>
+                        </c:if></td>
                     <td class="ellipsis">
-                        <c:forEach items="${entry.labVessel.mercurySamples}" var="mercurySample" varStatus="stat">
+                        <c:if test="${headerVisibilityMap['Receipt Date']}"><c:forEach items="${entry.labVessel.mercurySamples}" var="mercurySample" varStatus="stat">
                             <fmt:formatDate value="${mercurySample.receivedDate}" pattern="MM/dd/yyyy HH:mm"/>
                             <c:if test="${!stat.last}">&nbsp;</c:if>
-                        </c:forEach>
+                        </c:forEach></c:if>
                     </td>
                     <td class="ellipsis">
-                        <fmt:formatDate value="${entry.createdDate}" pattern="MM/dd/yyyy HH:mm"/>
+                        <c:if test="${headerVisibilityMap['Created Date']}"><fmt:formatDate value="${entry.createdDate}" pattern="MM/dd/yyyy HH:mm"/></c:if>
                     </td>
                     <td>
-                            ${entry.entryType.name}
+                        <c:if test="${headerVisibilityMap['Bucket Entry Type']}">${entry.entryType.name}</c:if>
                     </td>
                     <td>
-                            ${entry.reworkDetail.reason.reason}
+                        <c:if test="${headerVisibilityMap['Rework Reason']}">${entry.reworkDetail.reason.reason}</c:if>
                     </td>
                     <td>
-                        <div class="ellipsis">${entry.reworkDetail.comment}</div>
+                        <c:if test="${headerVisibilityMap['Rework Comment']}"><div class="ellipsis">${entry.reworkDetail.comment}</div></c:if>
                     </td>
                     <td>
-                        <c:if test="${entry.reworkDetail != null}">
+                        <c:if test="${entry.reworkDetail != null && headerVisibilityMap['Rework User']}">
                             ${actionBean.getUserFullName(entry.reworkDetail.addToReworkBucketEvent.eventOperator)}
                         </c:if>
                     </td>
                     <td>
-                        <fmt:formatDate value="${entry.reworkDetail.addToReworkBucketEvent.eventDate}"
-                                        pattern="MM/dd/yyyy HH:mm:ss"/>
+                        <c:if test="${headerVisibilityMap['Rework Date']}"><fmt:formatDate value="${entry.reworkDetail.addToReworkBucketEvent.eventDate}"
+                                        pattern="MM/dd/yyyy HH:mm:ss"/></c:if>
                     </td>
                 </tr>
             </c:forEach>

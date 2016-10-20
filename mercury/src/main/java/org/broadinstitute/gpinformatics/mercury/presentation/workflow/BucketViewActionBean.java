@@ -91,8 +91,6 @@ public class BucketViewActionBean extends CoreActionBean {
     public static final String TABLE_STATE_KEY = "tableState";
 
     @Inject
-    WorkflowConfig workflowConfig;
-    @Inject
     JiraUserTokenInput jiraUserTokenInput;
     @Inject
     private WorkflowLoader workflowLoader;
@@ -118,7 +116,7 @@ public class BucketViewActionBean extends CoreActionBean {
     LabVesselDao labVesselDao;
     @Inject
     private PreferenceEjb preferenceEjb;
-
+    private WorkflowConfig workflowConfig;
     private static final Log log = LogFactory.getLog(BucketViewActionBean.class);
 
     @Validate(required = true, on = {CREATE_BATCH_ACTION})
@@ -149,7 +147,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private Map<String, BucketCount> mapBucketToBucketEntryCount;
     private CreateFields.ProjectType projectType = null;
     private String filterState;
-    private String tableState;
+    private String tableState = "{}";
 
     private String searchKey;
     private static final List<String> PREFETCH_COLUMN_NAMES =
@@ -158,7 +156,7 @@ public class BucketViewActionBean extends CoreActionBean {
 
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
-        WorkflowConfig workflowConfig = workflowLoader.load();
+        workflowConfig = workflowLoader.load();
         // Gets bucket names for supported products (workflows), and associates workflow(s) for each bucket.
         Multimap<String, String> bucketWorkflows = HashMultimap.create();
         for (Workflow workflow : Workflow.SUPPORTED_WORKFLOWS) {
@@ -181,10 +179,25 @@ public class BucketViewActionBean extends CoreActionBean {
                 List<String> tableStatePreferenceValue = nameValueDefinitionValue.getDataMap().get(TABLE_STATE_KEY);
                 if (CollectionUtils.isNotEmpty(tableStatePreferenceValue)) {
                     tableState = tableStatePreferenceValue.iterator().next();
+                    State state = readTableState(tableState);
+                    buildHeaderVisibilityMap(state);
                 }
             }
         } catch (Exception e) {
             log.error("Load table state preference", e);
+        }
+    }
+
+    private void buildHeaderVisibilityMap(State state) {
+        for (Column column : state.getColumns()) {
+            boolean visible = true;
+            if (column!=null){
+                visible = column.isVisible();
+            }
+            String headerName = column.getHeaderName();
+            if (StringUtils.isNotBlank(headerName)) {
+                headerVisibilityMap.put(headerName, visible);
+            }
         }
     }
 
@@ -305,15 +318,9 @@ public class BucketViewActionBean extends CoreActionBean {
                 String tableStateJson = null;
                 if (bucketList != null) {
                     tableStateJson = bucketList.iterator().next();
-                    if (true) {
-                        return new StreamingResolution("text", tableStateJson);
-                    }
-
                     State state = readTableState(tableStateJson);
-                    for (Column column : state.getColumns()) {
-                        headerVisibilityMap.put(column.getHeaderName(), column.isVisible());
-                    }
-                    jsonObject.put(TABLE_STATE_KEY, writeTableState(state));
+                    buildHeaderVisibilityMap(state);
+                    return new StreamingResolution("text", tableStateJson);
                 } else {
                     jsonObject = new JSONObject();
                 }
@@ -489,7 +496,6 @@ public class BucketViewActionBean extends CoreActionBean {
 
     private Map<String, BucketCount> initBucketCountsMap(Map<String, BucketCount> bucketCountMap) {
         Map<String, BucketCount> resultBucketCountMap = new TreeMap<>();
-        WorkflowConfig workflowConfig = workflowLoader.load();
         for (Workflow workflow : Workflow.SUPPORTED_WORKFLOWS) {
             ProductWorkflowDef workflowDef = workflowConfig.getWorkflowByName(workflow.getWorkflowName());
             ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
@@ -677,16 +683,12 @@ public class BucketViewActionBean extends CoreActionBean {
 
     public Collection<String> getWorkflowNames(BucketEntry bucketEntry) {
         Collection<String> workflows = new HashSet<>();
-        Boolean showWorkflow = headerVisibilityMap.get("Workflow");
-        if (showWorkflow != null && showWorkflow) {
-            WorkflowConfig workflowConfig = workflowLoader.load();
-            for (Workflow workflow : bucketEntry.getProductOrder().getProductWorkflows()) {
-                ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflow(workflow);
-                for (WorkflowBucketDef workflowBucketDef : productWorkflowDef.getEffectiveVersion().getBuckets()) {
-                    if (workflowBucketDef
-                            .meetsBucketCriteria(bucketEntry.getLabVessel(), bucketEntry.getProductOrder())) {
-                        workflows.add(workflow.getWorkflowName());
-                    }
+        for (Workflow workflow : bucketEntry.getProductOrder().getProductWorkflows()) {
+            ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflow(workflow);
+            for (WorkflowBucketDef workflowBucketDef : productWorkflowDef.getEffectiveVersion().getBuckets()) {
+                if (workflowBucketDef
+                        .meetsBucketCriteria(bucketEntry.getLabVessel(), bucketEntry.getProductOrder())) {
+                    workflows.add(workflow.getWorkflowName());
                 }
             }
         }
