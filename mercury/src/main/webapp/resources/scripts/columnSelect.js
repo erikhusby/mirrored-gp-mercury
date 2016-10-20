@@ -157,7 +157,6 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
             header.append(select);
             buildHeaderFilterOptions(header, column.data());
             select.find("option[value='" + savedFilterValue + "']").attr('selected', 'selected');
-
             var chosen = select.chosen({
                 disable_search_threshold: 10,
                 display_selected_options: false,
@@ -167,6 +166,9 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                 placeholder_text_single: "Select a " + headerLabel,
                 placeholder_text_multiple: "Select a " + headerLabel
             });
+            $j("div." + columnFilterClass).on("click", function () {
+                return false;
+            }),
             chosen.on("change chosen:updated", function (event, what) {
                 // chosen.on("nothing", function (event, what) {
                 if (what) {
