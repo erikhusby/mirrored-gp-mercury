@@ -127,11 +127,10 @@ public class InfiniumRunResource {
      */
     private InfiniumRunBean buildRunBean(LabVessel chip, VesselPosition vesselPosition, Date effectiveDate) {
         if (DATA_PATH == null) {
-            DATA_PATH = attributeArchetypeDao.findChipFamilyAttribute(INFINIUM_GROUP, "data_path");
+            DATA_PATH = infiniumStarterConfig.getDataPath();
         }
         if (DATA_PATH == null) {
-            throw new ResourceException("No configuration for " + INFINIUM_GROUP +
-                                        " data_path attribute", Response.Status.INTERNAL_SERVER_ERROR);
+            throw new ResourceException("No configuration for DataPath", Response.Status.INTERNAL_SERVER_ERROR);
         }
         InfiniumRunBean infiniumRunBean;
         Set<SampleInstanceV2> sampleInstancesAtPositionV2 =
@@ -376,8 +375,12 @@ public class InfiniumRunResource {
     public static final Map<String, String> mapSerialNumberToMachineName = new HashMap<>();
     static {
         mapSerialNumberToMachineName.put("N296", "Practical Pig");
+        mapSerialNumberToMachineName.put("N0296", "Practical Pig");
         mapSerialNumberToMachineName.put("N370", "Big Bad Wolf");
+        mapSerialNumberToMachineName.put("N0370", "Big Bad Wolf");
         mapSerialNumberToMachineName.put("N700", "Fiddler Pig");
+        mapSerialNumberToMachineName.put("N0700", "Fiddler Pig");
         mapSerialNumberToMachineName.put("N588", "Fiffer Pig");
+        mapSerialNumberToMachineName.put("N0588", "Fiffer Pig");
     }
 }
