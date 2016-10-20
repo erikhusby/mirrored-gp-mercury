@@ -19,7 +19,7 @@
                     <stripes:label for="technologyAndParserType" class="control-label">Technology And Parser</stripes:label>
                     <div class="controls">
                         <stripes:select name="technologyAndParserType">
-                            <stripes:options-collection collection="${actionBean.technologiesAndParsers}"
+                            <stripes:options-collection collection="${actionBean.activeTechnologiesAndParsers}"
                                                         label="prettyName"/>
                         </stripes:select>
                     </div>
