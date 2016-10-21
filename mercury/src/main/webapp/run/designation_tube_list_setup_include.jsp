@@ -10,10 +10,10 @@
                         {"bSortable":true},  // tube type
                         {"bSortable":true},  // sequencer model
                         {"bSortable":true},  // number samples
-                        {"bSortable":true},  // number lanes
-                        {"bSortable":true},  // loading conc
+                        {"bSortable":false}, // number lanes
+                        {"bSortable":false}, // loading conc
                         {"bSortable":true},  // tube create date
-                        {"bSortable":true},  // read length
+                        {"bSortable":false}, // read length
                         {"bSortable":true},  // index type
                         {"bSortable":true},  // number cycles
                         {"bSortable":true},  // paired end
