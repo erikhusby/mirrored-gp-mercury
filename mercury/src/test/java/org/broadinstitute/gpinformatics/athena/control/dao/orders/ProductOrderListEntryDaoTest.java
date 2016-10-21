@@ -22,6 +22,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -31,7 +32,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Test(groups = TestGroups.STUBBY, enabled = true)
+@Test(groups = TestGroups.STUBBY, enabled = true, singleThreaded = true)
+@Transactional
 public class ProductOrderListEntryDaoTest extends ContainerTest {
 
     @Inject

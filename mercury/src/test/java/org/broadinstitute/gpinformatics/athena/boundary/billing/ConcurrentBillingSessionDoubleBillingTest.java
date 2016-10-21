@@ -30,6 +30,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
+import javax.transaction.Transactional;
 import javax.transaction.UserTransaction;
 import java.util.Collections;
 import java.util.Date;
@@ -42,7 +43,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * a very, very bad thing.  See https://gpinfojira.broadinstitute.org:8443/jira/browse/GPLIM-2501
  * for an example of double billing.
  */
-@Test(groups = TestGroups.ALTERNATIVES)
+@Test(groups = TestGroups.ALTERNATIVES, singleThreaded = true)
+@Transactional
 public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTest {
 
     private static final Log logger = LogFactory.getLog(ConcurrentBillingSessionDoubleBillingTest.class);

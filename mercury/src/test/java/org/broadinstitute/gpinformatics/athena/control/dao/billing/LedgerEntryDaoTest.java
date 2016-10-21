@@ -21,6 +21,7 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
+import javax.transaction.Transactional;
 import javax.transaction.UserTransaction;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -29,7 +30,8 @@ import java.util.List;
 import java.util.Set;
 
 
-@Test(groups = TestGroups.STUBBY)
+@Test(groups = TestGroups.STUBBY, singleThreaded = true)
+@Transactional
 public class LedgerEntryDaoTest extends ContainerTest {
 
     @Inject

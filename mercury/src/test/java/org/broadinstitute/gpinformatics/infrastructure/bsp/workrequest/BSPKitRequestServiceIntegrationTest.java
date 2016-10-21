@@ -30,7 +30,7 @@ import java.util.Set;
 /**
  * Integration tests for {@link BSPKitRequestService}.
  */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION, singleThreaded = true)
 public class BSPKitRequestServiceIntegrationTest {
 
     private static final Log log = LogFactory.getLog(BSPKitRequestServiceIntegrationTest.class);

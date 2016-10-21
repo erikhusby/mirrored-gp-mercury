@@ -16,6 +16,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.transaction.Transactional;
 import javax.transaction.UserTransaction;
 import java.util.Calendar;
 import java.util.Date;
@@ -25,7 +26,8 @@ import java.util.UUID;
 import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDaoTest.DateSpec.*;
 
 
-@Test(groups = TestGroups.STUBBY)
+@Test(groups = TestGroups.STUBBY, singleThreaded = true)
+@Transactional
 public class ProductDaoTest extends ContainerTest {
 
     @Inject

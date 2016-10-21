@@ -20,11 +20,13 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.transaction.Transactional;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-@Test(groups = TestGroups.ALTERNATIVES, enabled = true)
+@Test(groups = TestGroups.ALTERNATIVES, enabled = true, singleThreaded = true)
+@Transactional
 public class BillingWorkItemPersistenceTest extends AbstractContainerTest {
 
     @Inject
