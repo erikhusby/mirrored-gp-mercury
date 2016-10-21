@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBeanContext;
 import org.broadinstitute.gpinformatics.mercury.test.builders.InfiniumEntityBuilder;
@@ -32,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.mercury.test.LabEventTest.buildSamplePlates;
+import static org.mockito.Matchers.anyCollection;
 import static org.mockito.Matchers.anyList;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -88,6 +90,10 @@ public class MetricsViewActionBeanTest {
         StaticPlate hybChip = hybChips.iterator().next();
 
         when(labVesselDaoMock.findByIdentifier(hybChip.getLabel())).thenReturn(hybChip);
+        Map<String, LabVessel> barcodeToVesselMap = new HashMap<>();
+        barcodeToVesselMap.put(hybChip.getLabel(), hybChip);
+        when(labVesselDaoMock.findByBarcodes(Collections.singletonList(hybChip.getLabel()))).
+                thenReturn(barcodeToVesselMap);
 
         ProductOrderSample productOrderSample = mock(ProductOrderSample.class);
         when(productOrderSampleDaoMock.findBySamples(anyList())).thenReturn(
@@ -102,16 +108,15 @@ public class MetricsViewActionBeanTest {
         attributeMap.put("call_rate_threshold", "98");
         when(genotypingChip.getAttributeMap()).thenReturn(attributeMap);
 
-        actionBean.setLabVesselIdentifier(hybChip.getLabel());
+        actionBean.setBarcodes(hybChip.getLabel());
         actionBean.validateData();
         assertTrue(actionBean.isFoundResults());
-        assertNotNull(actionBean.getLabVessel());
 
         ArraysQc arraysQc = mock(ArraysQc.class);
         when(arraysQc.getCallRate()).thenReturn(new BigDecimal(".9877"));
         when(arraysQc.getHetPct()).thenReturn(new BigDecimal(".19"));
         when(arraysQcDaoMock.findByBarcodes(anyList())).thenReturn(Collections.singletonList(arraysQc));
-        actionBean.buildInfiniumMetricsTable();
+        actionBean.buildInfiniumMetricsTable(hybChip);
 
         MetricsViewActionBean.PlateMap plateMap = actionBean.getPlateMap();
         assertNotNull(plateMap);
