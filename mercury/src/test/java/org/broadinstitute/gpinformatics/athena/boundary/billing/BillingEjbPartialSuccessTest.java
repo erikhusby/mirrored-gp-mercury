@@ -34,9 +34,9 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import javax.ejb.Stateless;
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
-import javax.transaction.Transactional;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -60,8 +60,8 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
-@Test(groups = TestGroups.ALTERNATIVES, enabled = true, singleThreaded = true)
-@Transactional
+@Test(groups = TestGroups.ALTERNATIVES, enabled = true)
+@Stateless
 public class BillingEjbPartialSuccessTest extends Arquillian {
 
     @Inject

@@ -14,21 +14,17 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.ejb.Stateless;
 import javax.inject.Inject;
-import javax.transaction.Transactional;
-import javax.transaction.UserTransaction;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION, singleThreaded = true)
-@Transactional
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Stateless
 public class SubmissionTrackerContainerTest extends ContainerTest {
 
     @Inject
     ResearchProjectDao researchProjectDao;
-
-    @Inject
-    private UserTransaction utx;
 
     private static String testAccessionID = "SA-2342";
     private static String testProjectId = "P123";
@@ -42,19 +38,19 @@ public class SubmissionTrackerContainerTest extends ContainerTest {
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
         // Skip if no injections, meaning we're not running in container
-        if (utx == null) {
+        if (researchProjectDao == null) {
             return;
         }
-        utx.begin();
+
     }
 
     @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void tearDown() throws Exception {
         // Skip if no injections, meaning we're not running in container
-        if (utx == null) {
+        if (researchProjectDao == null) {
             return;
         }
-        utx.rollback();
+
     }
 
     public void testTrackerConfiguration() throws Exception {
@@ -65,7 +61,6 @@ public class SubmissionTrackerContainerTest extends ContainerTest {
         testProject.addSubmissionTracker(tracker);
 
         researchProjectDao.persist(testProject);
-        researchProjectDao.flush();
 
         Assert.assertNotNull(tracker.createSubmissionIdentifier());
         Assert.assertNotNull(tracker.getSubmissionTrackerId());

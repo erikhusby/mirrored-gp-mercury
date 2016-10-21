@@ -13,14 +13,17 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.ejb.Stateless;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.inject.Inject;
-import javax.transaction.Transactional;
 import javax.transaction.UserTransaction;
 import java.util.Arrays;
 import java.util.List;
 
-@Test(groups = TestGroups.STUBBY, singleThreaded = true)
-@Transactional
+@Test(groups = TestGroups.STUBBY)
+@Stateless
+@TransactionManagement(TransactionManagementType.BEAN)
 public class ProductOrderSampleStatusTest extends ContainerTest {
 
     @Inject

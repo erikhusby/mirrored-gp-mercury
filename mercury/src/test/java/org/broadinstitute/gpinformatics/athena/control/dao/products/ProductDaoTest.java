@@ -15,8 +15,10 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import javax.ejb.Stateless;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.inject.Inject;
-import javax.transaction.Transactional;
 import javax.transaction.UserTransaction;
 import java.util.Calendar;
 import java.util.Date;
@@ -26,8 +28,9 @@ import java.util.UUID;
 import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDaoTest.DateSpec.*;
 
 
-@Test(groups = TestGroups.STUBBY, singleThreaded = true)
-@Transactional
+@Test(groups = TestGroups.STUBBY)
+@Stateless
+@TransactionManagement(TransactionManagementType.BEAN)
 public class ProductDaoTest extends ContainerTest {
 
     @Inject
@@ -248,6 +251,8 @@ public class ProductDaoTest extends ContainerTest {
      */
     @Test(dataProvider = "availability")
     public void testFindAvailableProducts(DatesAndAvailability datesAndAvailability) {
+
+        System.out.println("Calling with " + datesAndAvailability.toString());
 
         Product product = datesAndAvailability.createDatesAndAvailabilityProduct();
         dao.persist(product);

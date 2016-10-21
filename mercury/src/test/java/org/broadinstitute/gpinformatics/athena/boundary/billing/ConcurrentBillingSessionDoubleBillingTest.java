@@ -26,11 +26,13 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.ejb.Stateless;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
-import javax.transaction.Transactional;
 import javax.transaction.UserTransaction;
 import java.util.Collections;
 import java.util.Date;
@@ -43,8 +45,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  * a very, very bad thing.  See https://gpinfojira.broadinstitute.org:8443/jira/browse/GPLIM-2501
  * for an example of double billing.
  */
-@Test(groups = TestGroups.ALTERNATIVES, singleThreaded = true)
-@Transactional
+@Test(groups = TestGroups.ALTERNATIVES)
+@Stateless
+@TransactionManagement(TransactionManagementType.BEAN)
 public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTest {
 
     private static final Log logger = LogFactory.getLog(ConcurrentBillingSessionDoubleBillingTest.class);
