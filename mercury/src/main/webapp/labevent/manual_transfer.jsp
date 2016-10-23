@@ -97,7 +97,7 @@
                     </stripes:select>
                 </c:if>
 
-                <c:if test="${not empty actionBean.manualTransferDetails.reagentNames}">
+                <c:if test="${not empty actionBean.stationEvents[0].reagent}">
                     <h5>Reagents</h5>
                     Expiration date format is mm/dd/yyyy.
                     <c:set var="prevReagentType" value=""/>

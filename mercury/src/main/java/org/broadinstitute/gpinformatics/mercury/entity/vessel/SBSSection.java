@@ -1084,6 +1084,16 @@ public enum SBSSection {
             VesselPosition.B10,
             VesselPosition.B11,
             VesselPosition.B12)),
+    // The first eight columns in the first row of a 96 well plate (result of extraction)
+    P96_ROWA_8("P96_ROWA_8", Arrays.asList(
+            VesselPosition.A01,
+            VesselPosition.A02,
+            VesselPosition.A03,
+            VesselPosition.A04,
+            VesselPosition.A05,
+            VesselPosition.A06,
+            VesselPosition.A07,
+            VesselPosition.A08)),
     // In a 384 well plate, alternate wells in column 2, starting at row B
     P384_COL2_1INTERVAL_B("P384_COL2_1INTERVAL_B", Arrays.asList(
             VesselPosition.B02,
