@@ -119,6 +119,8 @@
         <xs:sequence>
             <xs:element type="xs:string" name="version"/>
             <xs:element type="xs:string" name="effectiveDate"/>
+            <xs:element type="xs:string" name="batchJiraProjectType"/>
+            <xs:element type="xs:string" name="batchJiraIssueType"/>
             <xs:element type="xs:string" name="workflowProcessDefs" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element type="xs:string" name="sequencingConfigDefs" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element name="routingRule" minOccurs="0">
