@@ -200,6 +200,11 @@
                                     beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.SampleSheetActionBean"
                                     event="view">Arrays Sample Sheet</stripes:link>
                         </li>
+                        <li>
+                            <stripes:link id="tagVessel"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.TagVesselActionBean"
+                                          event="view">Add Dev Condition To Vessel</stripes:link>
+                        </li>
                     </ul>
                 </li>
             </security:authorizeBlock>

@@ -627,6 +627,14 @@ public abstract class LabVessel implements Serializable {
             ticketsCreated.add(jiraTicket);
         }
     }
+    /**
+     * Remove the association of the LabeVessel and the JiraTicket.
+     */
+    public void removeJiraTicket(JiraTicket jiraTicket) {
+        if (jiraTicket != null) {
+            ticketsCreated.remove(jiraTicket);
+        }
+    }
 
     /**
      * Get all the {@link JiraTicket jira tickets} that were started
