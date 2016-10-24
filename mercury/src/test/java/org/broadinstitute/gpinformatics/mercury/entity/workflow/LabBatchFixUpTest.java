@@ -48,7 +48,6 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -128,16 +127,6 @@ public class LabBatchFixUpTest extends Arquillian {
         userTransaction.begin();
     }
 
-    @AfterMethod
-    public void tearDown() throws Exception {
-        // Skip if no injections, meaning we're not running in container
-        if (userTransaction == null) {
-            return;
-        }
-
-        userTransaction.commit();
-    }
-
     @Test(enabled = false)
     public void gplim4393removeSamplesFromLcset() throws Exception {
         userBean.loginOSUser();
@@ -147,6 +136,7 @@ public class LabBatchFixUpTest extends Arquillian {
         removeSamples(samplesToRemove, labBatch);
 
         labBatchDao.persist(new FixupCommentary("GPLIM-4393: Remove samples from LCSET-9978"));
+        userTransaction.commit();
     }
 
     private List<LabBatchStartingVessel> removeSamples(List<String> sampleNames, LabBatch labBatch) {
@@ -163,7 +153,6 @@ public class LabBatchFixUpTest extends Arquillian {
         for (LabBatchStartingVessel vesselToRemove : vesselsToRemove) {
             labBatch.getLabBatchStartingVessels().remove(vesselToRemove);
             vesselToRemove.getLabVessel().getLabBatchStartingVessels().remove(vesselToRemove);
-            labBatchDao.remove(vesselToRemove);
         }
         return vesselsToRemove;
     }
