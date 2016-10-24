@@ -14,13 +14,13 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.ejb.Stateless;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-@Stateless
+@RequestScoped
 public class SubmissionTrackerContainerTest extends ContainerTest {
 
     @Inject

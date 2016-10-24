@@ -35,7 +35,6 @@ import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.ejb.Stateless;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Alternative;
@@ -49,11 +48,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.instanceOf;
 
 @Test(groups = TestGroups.ALTERNATIVES)
-@Stateless
+@RequestScoped
 public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
 
     private static final Log logger = LogFactory.getLog(ConcurrentProductOrderDoubleCreateTest.class);

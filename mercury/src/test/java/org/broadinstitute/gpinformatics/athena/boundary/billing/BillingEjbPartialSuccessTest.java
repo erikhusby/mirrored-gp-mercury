@@ -34,7 +34,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-import javax.ejb.Stateless;
+import javax.enterprise.context.RequestScoped;
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 import java.util.Arrays;
@@ -61,7 +61,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
 @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
-@Stateless
+@RequestScoped
 public class BillingEjbPartialSuccessTest extends Arquillian {
 
     @Inject

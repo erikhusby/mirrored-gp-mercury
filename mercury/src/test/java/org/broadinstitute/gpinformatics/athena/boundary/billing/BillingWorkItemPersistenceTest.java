@@ -19,14 +19,14 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.ejb.Stateless;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
 @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
-@Stateless
+@RequestScoped
 public class BillingWorkItemPersistenceTest extends AbstractContainerTest {
 
     @Inject

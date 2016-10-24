@@ -26,9 +26,6 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.ejb.Stateless;
-import javax.ejb.TransactionManagement;
-import javax.ejb.TransactionManagementType;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Alternative;
@@ -46,8 +43,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * for an example of double billing.
  */
 @Test(groups = TestGroups.ALTERNATIVES)
-@Stateless
-@TransactionManagement(TransactionManagementType.BEAN)
+@RequestScoped
 public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTest {
 
     private static final Log logger = LogFactory.getLog(ConcurrentBillingSessionDoubleBillingTest.class);
