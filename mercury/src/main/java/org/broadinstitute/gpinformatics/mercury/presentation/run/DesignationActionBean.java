@@ -287,6 +287,7 @@ public class DesignationActionBean extends CoreActionBean implements Designation
 
         // Iterates on the loading tubes specified by barcode by the user.
         for (LabVessel loadingTube : loadingTubeToLcset.keySet()) {
+            Set<LabVessel> startingVessels = new HashSet<>();
             for (LabEvent labEvent : loadingTube.getInPlaceAndTransferToEvents()) {
                 if (labEvent.getLabEventType() == LabEventType.DENATURE_TRANSFER ||
                     labEvent.getLabEventType() == LabEventType.NORMALIZATION_TRANSFER ||
@@ -299,7 +300,6 @@ public class DesignationActionBean extends CoreActionBean implements Designation
             if (CollectionUtils.isNotEmpty(loadingTubeToLabEvent.get(loadingTube))) {
                 // The tube's single LCSET has already been determined by traversal or been chosen by the user.
                 LabBatch lcset = loadingTubeToLcset.get(loadingTube);
-                Set<LabVessel> startingVessels = new HashSet<>();
 
                 for (SampleInstanceV2 sampleInstance : loadingTube.getSampleInstancesV2()) {
                     if (sampleInstance.getSingleBatch() != null &&
@@ -330,9 +330,11 @@ public class DesignationActionBean extends CoreActionBean implements Designation
                     controls.remove(bucketEntry.getLabVessel());
                 }
                 loadingTubeToControl.putAll(loadingTube, controls);
-
-            } else {
-                addMessage("Tube " + loadingTube.getLabel() + " has no denature, norm, or pooling event.");
+            }
+            if (startingVessels.isEmpty()) {
+                addMessage((CollectionUtils.isEmpty(loadingTubeToLabEvent.get(loadingTube)) ?
+                        "No denature, norm, or pooling event found for " :
+                        "No bucketed starting vessels found for ") + loadingTube.getLabel());
             }
         }
 
@@ -343,10 +345,10 @@ public class DesignationActionBean extends CoreActionBean implements Designation
             // need to be checked for the best lcset(s), and only be used if the target lcset is among
             // them. Typically there is only one best lcset but a pooled tube may be in two equivalently
             // good lcsets so that case must be handled correctly.
+            Map<LabEvent, Set<LabVessel>> loadingEventsAndVessels = null;
             for (LabVessel startingBatchVessel : targetLcset.getStartingBatchLabVessels()) {
-                Map<LabEvent, Set<LabVessel>> loadingEventsAndVessels =
-                        startingBatchVessel.findVesselsForLabEventType(selectedEventType, true, DESCENDANTS);
-
+                loadingEventsAndVessels = startingBatchVessel.findVesselsForLabEventType(selectedEventType, true,
+                        DESCENDANTS);
                 for (LabEvent targetEvent : loadingEventsAndVessels.keySet()) {
                     for (LabVessel loadingTube : loadingEventsAndVessels.get(targetEvent)) {
                         // Only processes a loading tube for this lcset once.
@@ -384,6 +386,9 @@ public class DesignationActionBean extends CoreActionBean implements Designation
                         }
                     }
                 }
+            }
+            if (loadingEventsAndVessels == null || loadingEventsAndVessels.keySet().isEmpty()) {
+                addMessage(targetLcset.getBatchName() + " has no starting vessels linked to loading vessels.");
             }
         }
 
@@ -431,6 +436,8 @@ public class DesignationActionBean extends CoreActionBean implements Designation
                     // Tube-lcset combinations to be resolved by the user.
                     addTubeLcsetAssignment(targetTube, lcsets);
                 }
+            } else {
+                addMessage("Cannot find an LCSET for " + targetTube.getLabel());
             }
         }
         DesignationUtils.LcsetAssignmentDto.sort(tubeLcsetAssignments);
