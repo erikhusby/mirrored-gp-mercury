@@ -397,4 +397,29 @@ public class AttributeArchetypeFixupTest extends Arquillian {
         attributeArchetypeDao.flush();
         utx.commit();
     }
+
+    @Test(enabled = false)
+    public void Gplim4397AddForwardToGap() throws Exception {
+        utx.begin();
+        userBean.loginOSUser();
+
+        final String chipFamily = InfiniumRunResource.INFINIUM_GROUP;
+
+        List<AttributeDefinition> definitions = new ArrayList<AttributeDefinition>() {{
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_CHIP,
+                    chipFamily, "forward_to_gap", true));
+        }};
+
+        Set<GenotypingChip> genotypingChips = attributeArchetypeDao.findGenotypingChips(chipFamily);
+        for (GenotypingChip genotypingChip: genotypingChips) {
+            genotypingChip.addOrSetAttribute("forward_to_gap", "Y");
+        }
+
+        String fixupReason = "GPLIM-4397 add forward_to_gap";
+        attributeArchetypeDao.persist(new FixupCommentary(fixupReason));
+        attributeArchetypeDao.persistAll(definitions);
+        attributeArchetypeDao.persistAll(genotypingChips);
+        attributeArchetypeDao.flush();
+        utx.commit();
+    }
 }
