@@ -369,29 +369,29 @@
                     text: "Show or Hide Columns",
                     columns: ':gt(0)'
                 }],
-                "language": {
-                    "info": "Showing _START_ to _END_ of _TOTAL_ bucket entries displayed.",
-                    "lengthMenu": "Displaying _MENU_ bucket entries per page"
+                language: {
+                    info: "Showing _START_ to _END_ of _TOTAL_ bucket entries displayed.",
+                    lengthMenu: "Displaying _MENU_ bucket entries per page"
                     },
-                "columns": [
-                    {"bSortable": false},
-                    {"bSortable": true, "sClass": "nowrap"},
-                    {"bSortable": true, "sClass": "nowrap"},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable": true},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true, "sType":"date"},
-                    {"bSortable": true, "sType": "date"},
-                    {"bSortable":true},
-                    {"bSortable": true, "sClass": "nowrap"},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true}
+                columns: [
+                    {sortable: false},
+                    {sortable: true, "sClass": "nowrap"},
+                    {sortable: true, "sClass": "nowrap"},
+                    {sortable: true},
+                    {sortable: true},
+                    {sortable: true},
+                    {sortable: true},
+                    {sortable: true},
+                    {sortable: true},
+                    {sortable: true},
+                    {sortable: true, "sType": "date"},
+                    {sortable: true, "sType": "date"},
+                    {sortable: true},
+                    {sortable: true, "sClass": "nowrap"},
+                    {sortable: true},
+                    {sortable: true},
+                    {sortable: true},
+                    {sortable: true}
                 ],
                 "aaSorting": [[1,'asc'], [7,'asc']],
                 stateSaveCallback: function (settings, data) {
@@ -455,6 +455,24 @@
                         "collapsible": true, "heightStyle": "content", 'active': false,
                     });
                     $j("#filtering").css("z-index: 0; display: inline-block; width: 100%;");
+                    var columnsChanged = false;
+                    var api = new $j.fn.dataTable.Api(settings);
+
+//                    api.buttons().each(function(button){
+//                        $j(button).on("click",function(){
+//                            columnsChanged=true;
+//                        })
+//                    })
+                    $j(".dt-button").on("click", ".dt-button-collection, .dt-button-background", function () {
+                        if (columnsChanged) {
+                            submitBucket();
+                        }
+                    });
+
+
+                    $j(document.body).on('click blur', '.buttons-columnVisibility', function () {
+                        columnsChanged = true;
+                    });
                 }
 
 
