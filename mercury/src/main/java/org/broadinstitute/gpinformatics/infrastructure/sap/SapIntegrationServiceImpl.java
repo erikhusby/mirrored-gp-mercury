@@ -177,7 +177,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     public static int getSampleCount(ProductOrder placedOrder, Product product) {
-        return (product.getProductFamily().getName().equals(ProductFamily.ProductFamilyName.SEQUENCE_ONLY.name()) &&
+        return (placedOrder.getProduct().getProductFamily().getName().equals(ProductFamily.ProductFamilyName.SEQUENCE_ONLY.getFamilyName()) &&
         placedOrder.getLaneCount()>0)
                 ?placedOrder.getNonAbandonedCount()*placedOrder.getLaneCount()
                 :placedOrder.getNonAbandonedCount();
