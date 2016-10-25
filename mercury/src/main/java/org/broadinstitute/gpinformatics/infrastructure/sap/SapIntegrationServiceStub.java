@@ -14,9 +14,13 @@ import javax.enterprise.inject.Alternative;
 @Alternative
 public class SapIntegrationServiceStub implements SapIntegrationService {
 
+    public static final String TEST_SAP_NUMBER = "Test000001";
+    public static final String TEST_CUSTOMER_NUMBER = "CUST_000002";
+    public static final String TEST_DELIVERY_DOCUMENT_ID = "DD_0000003";
+
     @Override
     public String createOrder(ProductOrder placedOrder) throws SAPIntegrationException {
-        return null;
+        return TEST_SAP_NUMBER;
     }
 
     @Override
@@ -25,12 +29,12 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
 
     @Override
     public String findCustomer(Quote foundQuote, SapIntegrationClientImpl.SAPCompanyConfiguration companyCode) throws SAPIntegrationException {
-        return null;
+        return TEST_CUSTOMER_NUMBER;
     }
 
     @Override
     public String billOrder(QuoteImportItem item) throws SAPIntegrationException {
-        return null;
+        return TEST_DELIVERY_DOCUMENT_ID;
     }
 
     @Override
@@ -41,5 +45,10 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
     @Override
     public void changeProductInSAP(Product product) throws SAPIntegrationException {
 
+    }
+
+    @Override
+    public SapIntegrationClientImpl.SAPCompanyConfiguration determineCompanyCode(ProductOrder companyProductOrder) {
+        return SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
     }
 }

@@ -88,7 +88,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJ
 import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
@@ -153,6 +152,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String SET_RISK = "setRisk";
     private static final String SET_PROCEED_OOS = "setProceedOos";
     private static final String RECALCULATE_RISK = "recalculateRisk";
+    private static final String REPLACE_SAMPLES = "replaceSamples";
     protected static final String PLACE_ORDER_ACTION = "placeOrder";
     protected static final String VALIDATE_ORDER = "validate";
     private static final String PUBLISH_PDO_TO_SAP = "publishProductOrderToSAP";
@@ -262,6 +262,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private List<ProductOrderListEntry> displayedProductOrderListEntries;
 
     private String sampleList;
+    private String replacementSampleList;
 
     @Validate(required = true, on = {EDIT_ACTION})
     private String productOrder;
@@ -278,6 +279,8 @@ public class ProductOrderActionBean extends CoreActionBean {
      * token input fields
      */
     private ProductOrder editOrder;
+
+    private ProductOrder replacementSampleOrder;
 
     // For create, we can also have a research project key to default.
     private String researchProjectKey;
@@ -462,8 +465,14 @@ public class ProductOrderActionBean extends CoreActionBean {
             // Since just getting the one item, get all the lazy data.
             editOrder = productOrderDao.findByBusinessKey(productOrder, ProductOrderDao.FetchSpec.RISK_ITEMS);
             if (editOrder != null) {
-                progressFetcher = new CompletionStatusFetcher(
-                        productOrderDao.getProgress(Collections.singleton(editOrder.getProductOrderId())));
+                List<Long> productOrderIds = new ArrayList<>();
+                productOrderIds.add(editOrder.getProductOrderId());
+                if (CollectionUtils.isNotEmpty(editOrder.getChildOrders())) {
+                    for (ProductOrder childOrder : editOrder.getChildOrders()) {
+                        productOrderIds.add(childOrder.getProductOrderId());
+                    }
+                }
+                progressFetcher = new CompletionStatusFetcher(productOrderDao.getProgress(productOrderIds));
             }
         }
     }
@@ -993,7 +1002,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     // All actions that can result in the view page loading (either by a validation error or view itself)
     @After(stages = LifecycleStage.BindingAndValidation,
             on = {EDIT_ACTION, VIEW_ACTION, ADD_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK, ABANDON_SAMPLES_ACTION,
-                    DELETE_SAMPLES_ACTION, PLACE_ORDER_ACTION, VALIDATE_ORDER, UNABANDON_SAMPLES_ACTION, GET_SUMMARY})
+                    DELETE_SAMPLES_ACTION, PLACE_ORDER_ACTION, VALIDATE_ORDER, UNABANDON_SAMPLES_ACTION, GET_SUMMARY, REPLACE_SAMPLES})
     public void entryInit() {
         if (editOrder != null) {
             productOrderListEntry = editOrder.isDraft() ? ProductOrderListEntry.createDummy() :
@@ -1301,6 +1310,36 @@ public class ProductOrderActionBean extends CoreActionBean {
         // new restrictions
 //        validateQuoteDetails(editOrder.getQuoteId(), ErrorLevel.WARNING);
         return createViewResolution(editOrder.getBusinessKey());
+    }
+
+    @HandlesEvent(REPLACE_SAMPLES)
+    public Resolution replaceSamples() throws Exception {
+
+        boolean shareSapOrder = false;
+        MessageCollection saveOrderMessageCollection = new MessageCollection();
+
+        if(editOrder.getNumberForReplacement() >0) {
+            if(editOrder.isOneBilled() && (editOrder.getNonAbandonedCount() < editOrder.latestSapOrderDetail().getPrimaryQuantity()) ) {
+                shareSapOrder = true;
+            }
+            ProductOrder.SaveType saveType = ProductOrder.SaveType.CREATING;
+            replacementSampleOrder = new ProductOrder(editOrder, shareSapOrder);
+            replacementSampleOrder.setSamples(stringToSampleListExisting(replacementSampleList));
+            Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
+            try {
+                productOrderEjb.persistProductOrder(saveType, replacementSampleOrder , deletedIdsConverted, kitDetails,
+                        saveOrderMessageCollection);
+                addMessages(saveOrderMessageCollection);
+                addMessage("Product Order \"{0}\" has been saved.", replacementSampleOrder.getTitle());
+            } catch (SAPInterfaceException e) {
+                addGlobalValidationError(e.getMessage());
+            }
+
+        } else {
+            addGlobalValidationError("There are no samples to replace.  If you must process samples, please open a new Product Order");
+        }
+
+        return createViewResolution(replacementSampleOrder==null?editOrder.getBusinessKey():replacementSampleOrder.getBusinessKey());
     }
 
     void updateRegulatoryInformation() {
@@ -2496,4 +2535,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public String getPublishSAPAction() {return PUBLISH_PDO_TO_SAP;}
 
+    public void setReplacementSampleList(String replacementSampleList) {
+        this.replacementSampleList = replacementSampleList;
+    }
 }

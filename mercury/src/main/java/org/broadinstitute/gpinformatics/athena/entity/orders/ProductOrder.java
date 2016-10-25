@@ -11,6 +11,8 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.time.DateUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
@@ -210,6 +212,16 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Column(name = "sap_order_number")
     private String sapOrderNumber;
 
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "referenceProductOrder")
+    private List<SapOrderDetail> sapReferenceOrders = new ArrayList<>();
+
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "parentOrder")
+    private List<ProductOrder> childOrders = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinColumn(name = "PARENT_PRODUCT_ORDER")
+    private ProductOrder parentOrder;
+
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.
      */
@@ -230,6 +242,34 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      */
     public ProductOrder(@Nonnull BspUser createdBy, ResearchProject researchProject) {
         this(createdBy.getUserId(), "", new ArrayList<ProductOrderSample>(), "", null, researchProject);
+    }
+
+    public ProductOrder(ProductOrder toClone, boolean shareSapOrder) {
+
+        this(toClone.getCreatedBy(), "Clone" + toClone.getChildOrders().size() + ": " + toClone.getTitle(),
+                new ArrayList<ProductOrderSample>(), toClone.getQuoteId(), toClone.getProduct(),
+                toClone.getResearchProject());
+
+        if(shareSapOrder){
+            addSapOrderDetail(new SapOrderDetail(toClone.latestSapOrderDetail().getSapOrderNumber(),
+                    toClone.latestSapOrderDetail().getPrimaryQuantity(), toClone.latestSapOrderDetail().getQuoteId(),
+                    toClone.latestSapOrderDetail().getCompanyCode()));
+        }
+
+        this.setParentOrder(toClone);
+    }
+
+    public boolean isOneBilled() {
+        boolean oneBilled = false;
+        for(ProductOrderSample sample:this.getSamples()) {
+            for (LedgerEntry ledgerEntry : sample.getLedgerItems()) {
+                if(ledgerEntry.getBillingSession().isComplete()) {
+                    oneBilled = true;
+                    break;
+                }
+            }
+        }
+        return oneBilled;
     }
 
     /**
@@ -895,12 +935,21 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public int getNonAbandonedCount() {
         int count = 0;
-        for(ProductOrderSample sample:samples) {
+        for(ProductOrderSample sample:getSamples()) {
             if(sample.getDeliveryStatus() != ProductOrderSample.DeliveryStatus.ABANDONED) {
                 count++;
             }
         }
+
+        for(ProductOrder childOrder:getChildOrders()) {
+            count += childOrder.getNonAbandonedCount();
+        }
+
         return count;
+    }
+
+    public int getParentSampleCount() {
+        return samples.size();
     }
 
     /**
@@ -1143,7 +1192,16 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public String getSapOrderNumber() {
-        return sapOrderNumber;
+
+        return (CollectionUtils.isEmpty(sapReferenceOrders))?sapOrderNumber:latestSapOrderDetail().getSapOrderNumber();
+    }
+
+    public SapOrderDetail latestSapOrderDetail() {
+
+        ArrayList<SapOrderDetail> orderDetailSortList = new ArrayList<>(sapReferenceOrders);
+        Collections.sort(orderDetailSortList);
+
+        return orderDetailSortList.get(orderDetailSortList.size()-1);
     }
 
     public void setSapOrderNumber(String sapOrderNumber) {
@@ -1735,5 +1793,67 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return (filteredResults != null)?Iterators.size(filteredResults.iterator()):0;
     }
 
-    public boolean isSavedInSAP() {return StringUtils.isNotBlank(sapOrderNumber);}
+    public boolean isSavedInSAP() {return StringUtils.isNotBlank(getSapOrderNumber());}
+
+    public ProductOrder getParentOrder() {
+        return parentOrder;
+    }
+
+    public void setParentOrder(ProductOrder parentOrder) {
+
+        if(this.parentOrder != null) {
+            this.parentOrder.childOrders.remove(this);
+        }
+        if(parentOrder != null) {
+            parentOrder.childOrders.add(this);
+        }
+
+        this.parentOrder = parentOrder;
+    }
+
+    public Collection<ProductOrder> getChildOrders() {
+        Collection<ProductOrder> result = Collections.emptyList();
+
+        if(CollectionUtils.isNotEmpty(childOrders)) {
+            result = childOrders;
+        }
+        return result;
+    }
+
+    public void setChildOrders(Collection<ProductOrder> childOrders) {
+
+        for(ProductOrder childOrder: this.childOrders) {
+            addChildOrder(childOrder);
+        };
+    }
+
+    public void addChildOrder(ProductOrder childOrder) {
+        childOrder.setParentOrder(this);
+    }
+
+    public int getNumberForReplacement() {
+        return samples.size() - getNonAbandonedCount();
+    }
+
+    public boolean isChildOrder() {
+        return this.parentOrder != null;
+    }
+
+    public List<SapOrderDetail> getSapReferenceOrders() {
+        return sapReferenceOrders;
+    }
+
+    public void setSapReferenceOrders(
+            List<SapOrderDetail> sapReferenceOrders) {
+        for(SapOrderDetail orderDetail:sapReferenceOrders) {
+            addSapOrderDetail(orderDetail);
+        }
+    }
+
+    public void addSapOrderDetail(SapOrderDetail orderDetail) {
+
+        this.sapReferenceOrders.add(orderDetail);
+        orderDetail.setReferenceProductOrder(this);
+
+    }
 }

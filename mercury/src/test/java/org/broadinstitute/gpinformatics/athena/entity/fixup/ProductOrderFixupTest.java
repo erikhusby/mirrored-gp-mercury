@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
+import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
@@ -26,6 +27,8 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
@@ -86,7 +89,7 @@ import static org.hamcrest.Matchers.is;
  * Set @Test(enabled=false) after running once.
  */
 @Test(groups = TestGroups.FIXUP)
-public class    ProductOrderFixupTest extends Arquillian {
+public class ProductOrderFixupTest extends Arquillian {
 
     @Inject
     private ProductOrderDao productOrderDao;
@@ -122,6 +125,9 @@ public class    ProductOrderFixupTest extends Arquillian {
 
     @Inject
     private UserTransaction utx;
+
+    @Inject
+    private SapIntegrationService sapIntegrationService;
 
     // When you run this on prod, change to PROD and prod.
     @Deployment
@@ -922,5 +928,29 @@ public class    ProductOrderFixupTest extends Arquillian {
         public RegulatoryInfo.Type getRegulatoryInfoType() {
             return regulatoryInfoType;
         }
+    }
+
+    @Test(enabled = true)
+    public void updateSAPRecords() {
+
+        userBean.loginOSUser();
+
+        List<ProductOrder> listWithWildcard =
+                productOrderDao.findListWithWildcard(ProductOrder.class, "%%", true, ProductOrder_.sapOrderNumber);
+
+        for(ProductOrder orderWithSap:listWithWildcard) {
+            if(CollectionUtils.isEmpty(orderWithSap.getSapReferenceOrders())) {
+                SapOrderDetail newDetail = new SapOrderDetail(orderWithSap.getSapOrderNumber(),
+                        SapIntegrationServiceImpl.getSampleCount(orderWithSap, orderWithSap.getProduct()),
+                        orderWithSap.getQuoteId(), sapIntegrationService.determineCompanyCode(orderWithSap).getCompanyCode());
+                orderWithSap.addSapOrderDetail(newDetail);
+            } else {
+                SapOrderDetail latestDetail = orderWithSap.latestSapOrderDetail();
+                latestDetail.setQuoteId(orderWithSap.getQuoteId());
+                latestDetail.setCompanyCode(sapIntegrationService.determineCompanyCode(orderWithSap).getCompanyCode());
+            }
+        }
+
+        productOrderDao.persist(new FixupCommentary("Adding entities for SAP Order Detail to account for new tables"));
     }
 }

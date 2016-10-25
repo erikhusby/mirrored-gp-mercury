@@ -60,6 +60,9 @@ public class ProductOrderTest {
     private final List<ProductOrderSample> fourBspSamplesWithDupes =
             ProductOrderSampleTestFactory
                     .createDBFreeSampleList(MercurySample.MetadataSource.BSP, "SM-2ACGC", "SM-2ABDD", "SM-2ACGC", "SM-2AB1B", "SM-2ACJC", "SM-2ACGC");
+    private final List<ProductOrderSample> fourBspSamplesWithNoDupes =
+            ProductOrderSampleTestFactory
+                    .createDBFreeSampleList(MercurySample.MetadataSource.BSP, "SM-2ABDD", "SM-2AB1B", "SM-2ACJC", "SM-2ACGC");
     private final List<ProductOrderSample> sixSamplesWithNotAllNamesInBspFormat =
             ProductOrderSampleTestFactory
                     .createDBFreeSampleList(MercurySample.MetadataSource.BSP, "SM-2ACGC", "SM2ABDD", "SM2ACKV", "SM-2AB1B", "SM-2ACJC", "SM-2AD5D");
@@ -346,6 +349,34 @@ public class ProductOrderTest {
         billSampleOut(testProductOrder, sample2, 1);
 
         Assert.assertEquals(testProductOrder.getUnbilledSampleCount(), 0);
+    }
+
+    public void testNonAbandonedCount() {
+        ProductOrder testParentOrder = new ProductOrder(TEST_CREATOR, "Test order with Abandoned Count",sixMercurySamplesNoDupes, QUOTE,null, null);
+
+        Assert.assertEquals(6, testParentOrder.getNonAbandonedCount());
+        Assert.assertEquals(0, testParentOrder.getNumberForReplacement());
+
+        int numberOfAbandoned = 4;
+        for(ProductOrderSample sampleToAbandon:testParentOrder.getSamples()) {
+
+            if (numberOfAbandoned == 0) {
+                break;
+            }
+            sampleToAbandon.setDeliveryStatus(ProductOrderSample.DeliveryStatus.ABANDONED);
+            numberOfAbandoned--;
+        }
+        Assert.assertEquals(2, testParentOrder.getNonAbandonedCount());
+        Assert.assertEquals(4, testParentOrder.getNumberForReplacement());
+
+        ProductOrder cloneOrder = new ProductOrder(testParentOrder, true);
+
+        Assert.assertEquals(2, testParentOrder.getNonAbandonedCount());
+        Assert.assertEquals(4, testParentOrder.getNumberForReplacement());
+        cloneOrder.addSamples(fourBspSamplesWithNoDupes);
+
+        Assert.assertEquals(6, testParentOrder.getNonAbandonedCount());
+        Assert.assertEquals(0, testParentOrder.getNumberForReplacement());
     }
 
     private void billSampleOut(ProductOrder productOrder, ProductOrderSample sample, int expected) {

@@ -173,10 +173,14 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                 priceListCache.findByKeyFields(product.getPrimaryPriceItem().getPlatform(),
                         product.getPrimaryPriceItem().getCategory(),
                         product.getPrimaryPriceItem().getName()).getPrice(),
-                (product.getProductFamily().getName().equals(ProductFamily.ProductFamilyName.SEQUENCE_ONLY.name()) &&
-                placedOrder.getLaneCount()>0)
-                        ?placedOrder.getNonAbandonedCount()*placedOrder.getLaneCount()
-                        :placedOrder.getNonAbandonedCount());
+                getSampleCount(placedOrder, product));
+    }
+
+    public static int getSampleCount(ProductOrder placedOrder, Product product) {
+        return (product.getProductFamily().getName().equals(ProductFamily.ProductFamilyName.SEQUENCE_ONLY.name()) &&
+        placedOrder.getLaneCount()>0)
+                ?placedOrder.getNonAbandonedCount()*placedOrder.getLaneCount()
+                :placedOrder.getNonAbandonedCount();
     }
 
     @Override
@@ -290,7 +294,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      * @param companyProductOrder Product Order from which the company code is to be determined
      * @return an indicator that represents one of the configured companies within SAP
      */
-    private SapIntegrationClientImpl.SAPCompanyConfiguration determineCompanyCode(ProductOrder companyProductOrder) {
+    @Override
+    public SapIntegrationClientImpl.SAPCompanyConfiguration determineCompanyCode(ProductOrder companyProductOrder) {
         SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
         if (companyProductOrder.getProduct().isExternalProduct()) {
             companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES;

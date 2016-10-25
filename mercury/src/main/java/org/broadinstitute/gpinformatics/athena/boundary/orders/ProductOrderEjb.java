@@ -22,6 +22,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
+import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.StaleLedgerUpdateException;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
@@ -42,6 +43,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerExceptio
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
@@ -233,24 +235,35 @@ public class ProductOrderEjb {
 
     public void publishProductOrderToSAP(ProductOrder editedProductOrder, MessageCollection messageCollection,
                                          boolean allowCreateOrder) throws SAPInterfaceException {
+        ProductOrder orderToPublish = editedProductOrder;
+        if(editedProductOrder.getParentOrder() != null && editedProductOrder.getSapOrderNumber() != null) {
+            orderToPublish = editedProductOrder.getParentOrder();
+        }
         try {
-            if (isOrderEligibleForSAP(editedProductOrder)) {
-                if (StringUtils.isEmpty(editedProductOrder.getSapOrderNumber()) && allowCreateOrder) {
-                    String sapOrderIdentifier = sapService.createOrder(editedProductOrder);
-                    editedProductOrder.setSapOrderNumber(sapOrderIdentifier);
-                    messageCollection.addInfo("Order "+editedProductOrder.getJiraTicketKey() + " has been successfully created in SAP");
-                } else if(editedProductOrder.isSavedInSAP()){
-                    sapService.updateOrder(editedProductOrder);
-                    messageCollection.addInfo("Order "+editedProductOrder.getJiraTicketKey() + " has been successfully updated in SAP");
+            if (isOrderEligibleForSAP(orderToPublish)) {
+                if (StringUtils.isEmpty(orderToPublish.getSapOrderNumber()) && allowCreateOrder) {
+                    String sapOrderIdentifier = sapService.createOrder(orderToPublish);
+
+                    orderToPublish.addSapOrderDetail(new SapOrderDetail(sapOrderIdentifier,
+                            SapIntegrationServiceImpl.getSampleCount(orderToPublish, orderToPublish.getProduct()), orderToPublish.getQuoteId(), sapService.determineCompanyCode(orderToPublish).getCompanyCode()));
+
+//                    orderToPublish.setSapOrderNumber(sapOrderIdentifier);
+                    messageCollection.addInfo("Order "+orderToPublish.getJiraTicketKey() + " has been successfully created in SAP");
+                } else if(orderToPublish.isSavedInSAP()){
+                    sapService.updateOrder(orderToPublish);
+                    orderToPublish.latestSapOrderDetail()
+                            .setPrimaryQuantity(SapIntegrationServiceImpl.getSampleCount(orderToPublish,
+                                    orderToPublish.getProduct()));
+                    messageCollection.addInfo("Order "+orderToPublish.getJiraTicketKey() + " has been successfully updated in SAP");
                 }
-                productOrderDao.persist(editedProductOrder);
+                productOrderDao.persist(orderToPublish);
             } else {
-                messageCollection.addInfo("The quote "+ editedProductOrder.getQuoteId() +" makes this order inelligible to post to SAP: ");
+                messageCollection.addInfo("The quote "+ orderToPublish.getQuoteId() +" makes this order inelligible to post to SAP: ");
             }
         } catch (org.broadinstitute.sap.services.SAPIntegrationException|QuoteServerException|QuoteNotFoundException e) {
             StringBuilder errorMessage = new StringBuilder();
                 errorMessage.append("Unable to ");
-            if (StringUtils.isEmpty(editedProductOrder.getSapOrderNumber())) {
+            if (StringUtils.isEmpty(orderToPublish.getSapOrderNumber())) {
                 errorMessage.append("create ");
             } else {
                 errorMessage.append("update ");
@@ -258,7 +271,7 @@ public class ProductOrderEjb {
             errorMessage.append("this order in SAP at this point in time: ").append(e.getMessage());
             messageCollection.addError(errorMessage.toString());
             log.error(errorMessage, e);
-            if(editedProductOrder.isSavedInSAP()) {
+            if(orderToPublish.isSavedInSAP()) {
                 throw new SAPInterfaceException(errorMessage.toString(), e);
             }
         }

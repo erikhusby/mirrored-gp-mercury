@@ -80,4 +80,6 @@ public interface SapIntegrationService {
      * @throws SAPIntegrationException
      */
     void changeProductInSAP(Product product) throws SAPIntegrationException;
+
+    SapIntegrationClientImpl.SAPCompanyConfiguration determineCompanyCode(ProductOrder companyProductOrder);
 }

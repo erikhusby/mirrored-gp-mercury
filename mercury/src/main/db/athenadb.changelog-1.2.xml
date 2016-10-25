@@ -392,4 +392,154 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-4375-1" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="PRODUCT_ORDER" columnName="PARENT_PRODUCT_ORDER" schemaName="ATHENA" />
+            </not>
+        </preConditions>
+        <addColumn tableName="PRODUCT_ORDER" schemaName="ATHENA">
+            <column name="PARENT_PRODUCT_ORDER" type="number(19,0)"></column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-4375-2" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="PRODUCT_ORDER_AUD" columnName="PARENT_PRODUCT_ORDER" schemaName="ATHENA" />
+            </not>
+        </preConditions>
+        <addColumn tableName="PRODUCT_ORDER_AUD" schemaName="ATHENA">
+            <column name="PARENT_PRODUCT_ORDER" type="number(19,0)"></column>
+        </addColumn>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-4375-3" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="SAP_ORDER_DETAIL" schemaName="ATHENA"/>
+            </not>
+        </preConditions>
+        <createTable tableName="SAP_ORDER_DETAIL">
+            <column name="SAP_ORDER_DETAIL_ID" type="number(19,0)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="SAP_ORDER_NUMBER" type="varchar (255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="created_by" type="numeric(15, 0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="modified_by" type="numeric(15, 0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_date" type="timestamp(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="modified_date" type="timestamp(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="primary_quantity" type="number(10,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="REFERENCE_PRODUCT_ORDER" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+        <createSequence sequenceName="SEQ_SAP_ORDER_DETAIL" schemaName="athena" startValue="1" incrementBy="50" />
+    </changeSet>
+
+    <changeSet id="GPLIM-4375-4" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="FK_SAP_DETAIL_TO_PDO" schemaName="athena" foreignKeyTableName="SAP_ORDER_DETAIL" />
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint baseTableName="SAP_ORDER_DETAIL" baseColumnNames="REFERENCE_PRODUCT_ORDER"
+                                 constraintName="FK_SAP_DETAIL_TO_PDO"
+                                 referencedTableName="PRODUCT_ORDER"
+                                 referencedColumnNames="PRODUCT_ORDER_ID"
+                                 referencedTableSchemaName="ATHENA" baseTableSchemaName="ATHENA" />
+    </changeSet>
+
+    <changeSet id="GPLIM-4375-5" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="SAP_ORDER_DETAIL_AUD" schemaName="ATHENA"/>
+            </not>
+        </preConditions>
+        <createTable tableName="SAP_ORDER_DETAIL_AUD">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)"/>
+            <column name="SAP_ORDER_DETAIL_ID" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="SAP_ORDER_NUMBER" type="varchar (255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="created_by" type="numeric(15, 0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="modified_by" type="numeric(15, 0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_date" type="timestamp(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="modified_date" type="timestamp(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="primary_quantity" type="number(10,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="REFERENCE_PRODUCT_ORDER" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-4375-6" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <primaryKeyExists schemaName="SAP_ORDER_DETAIL_AUD" primaryKeyName="PK_SAP_ORDER_DETAIL_AUD" tableName="SAP_ORDER_DETAIL_AUD" />
+            </not>
+        </preConditions>
+        <addPrimaryKey schemaName="athena" tableName="SAP_ORDER_DETAIL_AUD" columnNames="SAP_ORDER_DETAIL_ID,rev" constraintName="PK_SAP_ORDER_DETAIL_AUD"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-4375-7" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="SAP_ORDER_DETAIL" columnName="QUOTE_ID" schemaName="ATHENA" />
+            </not>
+        </preConditions>
+        <addColumn tableName="SAP_ORDER_DETAIL">
+            <column name="QUOTE_ID" type="varchar(255)">
+            </column>
+        </addColumn>
+        <addColumn tableName="SAP_ORDER_DETAIL_AUD">
+            <column name="QUOTE_ID" type="varchar(255)">
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-4375-8" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="SAP_ORDER_DETAIL" columnName="COMPANY_CODE" schemaName="ATHENA" />
+            </not>
+        </preConditions>
+        <addColumn tableName="SAP_ORDER_DETAIL">
+            <column name="COMPANY_CODE" type="varchar(255)">
+            </column>
+        </addColumn>
+        <addColumn tableName="SAP_ORDER_DETAIL_AUD">
+            <column name="COMPANY_CODE" type="varchar(255)">
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

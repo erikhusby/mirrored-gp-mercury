@@ -121,7 +121,7 @@ public class SapIntegrationServiceImplDBFreeTest {
 
     }
 
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void testInitializeSAPOrder() throws Exception {
 
         String jiraTicketKey= "PDO-SAP-test";
