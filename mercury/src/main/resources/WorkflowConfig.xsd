@@ -30,6 +30,7 @@
             <xs:element type="xs:string" name="targetSection"/>
             <xs:element type="xs:string" name="buttonValue" minOccurs="0"/>
             <xs:element type="xs:string" name="targetExpectedToExist" minOccurs="0"/>
+            <xs:element type="xs:string" name="targetExpectedEmpty" minOccurs="0"/>
             <xs:element type="xs:string" name="repeatedEvent" minOccurs="0"/>
             <xs:element type="xs:string" name="repeatedWorkflowQualifier" minOccurs="0"/>
         </xs:sequence>

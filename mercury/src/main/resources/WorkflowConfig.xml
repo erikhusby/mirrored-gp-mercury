@@ -1295,6 +1295,7 @@
                     <targetVesselTypeGeometryString>RackType.Matrix96</targetVesselTypeGeometryString>
                     <targetSection>P96_ROWA_8</targetSection>
                     <targetExpectedToExist>true</targetExpectedToExist>
+                    <targetExpectedEmpty>true</targetExpectedEmpty>
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
