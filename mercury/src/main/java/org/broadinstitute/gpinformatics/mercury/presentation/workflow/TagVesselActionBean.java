@@ -38,7 +38,6 @@ public class TagVesselActionBean extends RackScanActionBean {
     public static final String PAGE_TITLE = "Tag Vessel";
     public static final String TAG_VESSEL = "tagVessel";
     public static final String UNTAG_VESSEL = "unTagVessel";
-    public static final String VESSEL_SEARCH = "vesselSearch";
     public static final String TICKET_SEARCH = "ticketSearch";
     public static final String RACK_SCAN_EVENT = "rackScan";
     /** POSTed from the form, for rack scan. */
@@ -176,6 +175,7 @@ public class TagVesselActionBean extends RackScanActionBean {
      */
     public void addJiraTicket()
     {
+
         setShowResults(true);
         JiraTicket jiraTicket = new JiraTicket(jiraService,getVesselPositionReason());
         LabVessel vessel = labVesselDao.findByIdentifier(getVesselLabelByPosition(getVesselPosition()));
