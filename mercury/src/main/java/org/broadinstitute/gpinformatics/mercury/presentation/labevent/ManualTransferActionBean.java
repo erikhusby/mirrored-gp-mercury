@@ -674,8 +674,18 @@ public class ManualTransferActionBean extends RackScanActionBean {
     }
 
     private enum Direction {
-        SOURCE,
-        TARGET
+        SOURCE("Source"),
+        TARGET("Destination");
+
+        private String text;
+
+        Direction(String text) {
+            this.text = text;
+        }
+
+        public String getText() {
+            return text;
+        }
     }
 
     private Map<String, LabVessel> loadPlateFromDb(PlateType plateType, PositionMapType positionMapType,
@@ -689,12 +699,12 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 if (labVessel == null) {
                     // Racks don't have to exist, static plates do
                     if (required && positionMapType == null) {
-                        messageCollection.addError(barcode + " is not in the database");
+                        messageCollection.addError(direction.getText() + " " + barcode + " is not in the database");
                     } else {
-                        messageCollection.addInfo(barcode + " is not in the database");
+                        messageCollection.addInfo(direction.getText() + " " + barcode + " is not in the database");
                     }
                 } else {
-                    messageCollection.addInfo(barcode + " is in the database");
+                    messageCollection.addInfo(direction.getText() + " " + barcode + " is in the database");
                     returnMapBarcodeToVessel.put(labVessel.getLabel(), labVessel);
                 }
             }
@@ -711,14 +721,14 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 LabVessel labVessel = stringLabVesselEntry.getValue();
                 String barcode = stringLabVesselEntry.getKey();
                 if (labVessel == null) {
-                    String message = barcode + " is not in the database";
+                    String message = direction.getText() + " " + barcode + " is not in the database";
                     if (required) {
                         messageCollection.addError(message);
                     } else {
                         messageCollection.addInfo(message);
                     }
                 } else {
-                    String message = barcode + " is in the database";
+                    String message = direction.getText() + " " + barcode + " is in the database";
                     if (required) {
                         messageCollection.addInfo(message);
                     } else {
@@ -727,17 +737,17 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     if (expectedEmpty != null) {
                         if (labVessel.getTransfersTo().isEmpty()) {
                             if (!expectedEmpty) {
-                                messageCollection.addError(barcode + " is empty");
+                                messageCollection.addError(direction.getText() + " " + barcode + " is empty");
                             }
                         } else {
                             if (expectedEmpty) {
-                                messageCollection.addError(barcode + " is not empty");
+                                messageCollection.addError(direction.getText() + " " + barcode + " is not empty");
                             }
                         }
                     }
                     if (labBatch != null && direction == Direction.SOURCE &&
                             !labVessel.getNearestWorkflowLabBatches().contains(labBatch)) {
-                        messageCollection.addError(barcode + " is not in batch " + labBatch.getBatchName());
+                        messageCollection.addError(direction.getText() + " " + barcode + " is not in batch " + labBatch.getBatchName());
                     }
                 }
             }
