@@ -241,7 +241,8 @@ public class ProductOrderEjb {
         }
         try {
             if (isOrderEligibleForSAP(orderToPublish)) {
-                if (StringUtils.isEmpty(orderToPublish.getSapOrderNumber()) && allowCreateOrder) {
+                if ((StringUtils.isEmpty(orderToPublish.getSapOrderNumber()) && allowCreateOrder) ||
+                    !orderToPublish.getQuoteId().equals(orderToPublish.latestSapOrderDetail().getQuoteId())) {
                     String sapOrderIdentifier = sapService.createOrder(orderToPublish);
 
                     orderToPublish.addSapOrderDetail(new SapOrderDetail(sapOrderIdentifier,
