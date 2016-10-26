@@ -29,6 +29,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationWithRollbackException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -45,6 +46,7 @@ import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
+import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -109,6 +111,12 @@ public class ProductOrderEjb {
     private ProductOrderJiraUtil productOrderJiraUtil;
 
     private SapIntegrationService sapService;
+
+    @Inject
+    private AppConfig appConfig;
+
+    @Inject
+    private EmailSender emailSender;
 
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
@@ -241,25 +249,41 @@ public class ProductOrderEjb {
         }
         try {
             if (isOrderEligibleForSAP(orderToPublish)) {
-                if ((StringUtils.isEmpty(orderToPublish.getSapOrderNumber()) && allowCreateOrder) ||
-                    !orderToPublish.getQuoteId().equals(orderToPublish.latestSapOrderDetail().getQuoteId())) {
+                final boolean quoteIdChange = !orderToPublish.getQuoteId()
+                        .equals(orderToPublish.latestSapOrderDetail().getQuoteId());
+                if ((StringUtils.isEmpty(orderToPublish.getSapOrderNumber()) && allowCreateOrder) || quoteIdChange) {
                     String sapOrderIdentifier = sapService.createOrder(orderToPublish);
 
+                    String oldNumber = null;
+                    if(StringUtils.isNotBlank(orderToPublish.getSapOrderNumber())) {
+                        oldNumber =orderToPublish.getSapOrderNumber();
+                    }
                     orderToPublish.addSapOrderDetail(new SapOrderDetail(sapOrderIdentifier,
-                            SapIntegrationServiceImpl.getSampleCount(orderToPublish, orderToPublish.getProduct()), orderToPublish.getQuoteId(), sapService.determineCompanyCode(orderToPublish).getCompanyCode()));
+                            SapIntegrationServiceImpl.getSampleCount(orderToPublish, orderToPublish.getProduct()),
+                            orderToPublish.getQuoteId(),
+                            sapService.determineCompanyCode(orderToPublish).getCompanyCode()));
 
-//                    orderToPublish.setSapOrderNumber(sapOrderIdentifier);
-                    messageCollection.addInfo("Order "+orderToPublish.getJiraTicketKey() + " has been successfully created in SAP");
+                    if(quoteIdChange) {
+                        String body = "The SAP order " + oldNumber + " is being associated with a new quote by "+
+                                      userBean.getBspUser().getFullName() +" and needs" + " to be short closed.";
+                        Collection<String> ccAddresses = Collections.singletonList(userBean.getBspUser().getEmail());
+                        emailSender.sendHtmlEmailWithCC(appConfig, "BUSSYS@broadinstitute.org", ccAddresses,
+                                "SAP Order: Short Close Request", body);
+                    }
+                    messageCollection.addInfo("Order "+orderToPublish.getJiraTicketKey() +
+                                              " has been successfully created in SAP");
                 } else if(orderToPublish.isSavedInSAP()){
                     sapService.updateOrder(orderToPublish);
                     orderToPublish.latestSapOrderDetail()
                             .setPrimaryQuantity(SapIntegrationServiceImpl.getSampleCount(orderToPublish,
                                     orderToPublish.getProduct()));
-                    messageCollection.addInfo("Order "+orderToPublish.getJiraTicketKey() + " has been successfully updated in SAP");
+                    messageCollection.addInfo("Order "+orderToPublish.getJiraTicketKey() +
+                                              " has been successfully updated in SAP");
                 }
                 productOrderDao.persist(orderToPublish);
             } else {
-                messageCollection.addInfo("The quote "+ orderToPublish.getQuoteId() +" makes this order inelligible to post to SAP: ");
+                messageCollection.addInfo("The quote "+ orderToPublish.getQuoteId() +
+                                          " makes this order inelligible to post to SAP: ");
             }
         } catch (org.broadinstitute.sap.services.SAPIntegrationException|QuoteServerException|QuoteNotFoundException e) {
             StringBuilder errorMessage = new StringBuilder();

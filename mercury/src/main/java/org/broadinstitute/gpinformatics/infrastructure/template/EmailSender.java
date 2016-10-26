@@ -13,6 +13,8 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 
 /**
@@ -35,12 +37,20 @@ public class EmailSender implements Serializable {
      * @param body HTML
      */
     public void sendHtmlEmail(@Nonnull AppConfig appConfig, String to, String subject, String body) {
+        sendHtmlEmailWithCC(appConfig, to, Collections.<String>emptyList(), subject, body);
+    }
+
+    public void sendHtmlEmailWithCC(@Nonnull AppConfig appConfig, String to,
+                                    Collection<String> ccAddrdesses, String subject, String body) {
         if (appConfig.shouldSendEmail()) {
             if (mailSession != null) {
                 try {
                     Message message = new MimeMessage(mailSession);
                     message.setFrom(new InternetAddress("gplims@broadinstitute.org"));
                     message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to, false));
+                    for(String address: ccAddrdesses) {
+                        message.setRecipients(Message.RecipientType.CC, InternetAddress.parse(address, false));
+                    }
                     message.setSubject(subject);
                     message.setContent(body, "text/html; charset=utf-8");
                     message.setSentDate(new Date());
