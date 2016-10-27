@@ -1209,7 +1209,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public void setSapOrderNumber(String sapOrderNumber) {
-        this.sapOrderNumber = sapOrderNumber;
+        throw new UnsupportedOperationException("No longer just setting the SAP Order Number");
     }
 
     /**

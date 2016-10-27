@@ -112,10 +112,8 @@ public class ProductOrderEjb {
 
     private SapIntegrationService sapService;
 
-    @Inject
     private AppConfig appConfig;
 
-    @Inject
     private EmailSender emailSender;
 
     // EJBs require a no arg constructor.
@@ -306,7 +304,13 @@ public class ProductOrderEjb {
     public boolean isOrderEligibleForSAP(ProductOrder editedProductOrder)
             throws QuoteServerException, QuoteNotFoundException {
         Quote orderQuote = quoteService.getQuoteByAlphaId(editedProductOrder.getQuoteId());
-        return orderQuote.isEligibleForSAP() && !editedProductOrder.isDraft() && !editedProductOrder.isPending();
+
+        boolean eligibilityResult = false;
+        if(orderQuote != null) {
+            eligibilityResult =
+                    orderQuote.isEligibleForSAP() && !editedProductOrder.isDraft() && !editedProductOrder.isPending();
+        }
+        return eligibilityResult;
     }
 
     /**
@@ -1256,5 +1260,15 @@ public class ProductOrderEjb {
     @Inject
     public void setProductOrderSampleDao(ProductOrderSampleDao productOrderSampleDao) {
         this.productOrderSampleDao = productOrderSampleDao;
+    }
+
+    @Inject
+    public void setAppConfig(AppConfig appConfig) {
+        this.appConfig = appConfig;
+    }
+
+    @Inject
+    public void setEmailSender(EmailSender emailSender) {
+        this.emailSender = emailSender;
     }
 }
