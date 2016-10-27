@@ -46,6 +46,13 @@ class AcceptsAllWorkRegistrationsQuoteServiceStub implements QuoteService {
     }
 
     @Override
+    public String registerNewSAPWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
+                                     Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
+                                     String callbackParameterName, String callbackParameterValue) {
+        return WORK_ITEM_PREPEND + (1000 + counter++);
+    }
+
+    @Override
     public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
         return new Quote();
     }

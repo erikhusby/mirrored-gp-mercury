@@ -153,9 +153,10 @@ public class BillingEjb {
      * @param quoteIsReplacing    Set if the price item is replacing a previously defined item.
      * @param quoteServerWorkItem the pointer back to the quote server transaction
      * @param sapDeliveryId
+     * @param billingMessage
      */
     public void updateLedgerEntries(QuoteImportItem item, QuotePriceItem quoteIsReplacing, String quoteServerWorkItem,
-                                    String sapDeliveryId) {
+                                    String sapDeliveryId, String billingMessage) {
 
         // Now that we have successfully billed, update the Ledger Entries associated with this QuoteImportItem
         // with the quote for the QuoteImportItem, add the priceItemType, and the success message.
@@ -165,7 +166,7 @@ public class BillingEjb {
         for (QuotePriceItem replacementPriceItem : replacementPriceItems) {
             replacementPriceItemNames.add(replacementPriceItem.getName());
         }
-        item.updateLedgerEntries(quoteIsReplacing, BillingSession.SUCCESS, quoteServerWorkItem,
+        item.updateLedgerEntries(quoteIsReplacing, billingMessage, quoteServerWorkItem,
                 replacementPriceItemNames, sapDeliveryId);
         billingSessionDao.flush();
     }

@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import com.google.common.collect.HashMultimap;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
@@ -168,21 +167,9 @@ public class BillingAdaptor implements Serializable {
                         item.getPriceItem().setPrice(primaryPriceItemIfReplacement.getPrice());
                     }
 
-                    String workId;
-                    if(quote.isEligibleForSAP() && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
-                        // TODO SGM -- Insert new SAP friendly web service call here when it is ready
-                        workId = quoteService.registerNewWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
-                                item.getWorkCompleteDate(), item.getQuantity(),
-                                pageUrl, "billingSession", sessionKey);
-                    } else {
-                        workId = quoteService.registerNewWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
-                                item.getWorkCompleteDate(), item.getQuantity(),
-                                pageUrl, "billingSession", sessionKey);
-                    }
-
                     String sapBillingId = quote.isEligibleForSAP()? null:"NotEligible";
 
-                    if(quote.isEligibleForSAP()) {
+                    if(quote.isEligibleForSAP() && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
                         if(StringUtils.isBlank(item.getProductOrder().getSapOrderNumber())) {
                             throw new SAPInterfaceException(item.getProductOrder().getJiraTicketKey() +
                                                             " has not been submitted to SAP as an order yet.  Uable "
@@ -194,13 +181,29 @@ public class BillingAdaptor implements Serializable {
                         }
                     }
 
+                    String workId = null;
+
+                    billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacement, workId, sapBillingId, null);
+
+                    if(quote.isEligibleForSAP() && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
+                        // TODO SGM -- Insert new SAP friendly web service call here when it is ready
+                        workId = quoteService.registerNewSAPWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
+                                item.getWorkCompleteDate(), item.getQuantity(),
+                                pageUrl, "billingSession", sessionKey);
+                    } else {
+                        workId = quoteService.registerNewWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
+                                item.getWorkCompleteDate(), item.getQuantity(),
+                                pageUrl, "billingSession", sessionKey);
+                    }
+                    Set<String> billedPdoKeys = getBilledPdoKeys(result);
+
                     // Not sure I see the point of the next two lines!!!!
                     result.setWorkId(workId);
                     result.setSAPBillingId(sapBillingId);
 
-                    Set<String> billedPdoKeys = getBilledPdoKeys(result);
                     logBilling(workId, item, priceItemBeingBilled, billedPdoKeys, sapBillingId);
-                    billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacement, workId, sapBillingId);
+                    billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacement, workId, sapBillingId,
+                            BillingSession.SUCCESS);
                 } catch (Exception ex) {
 
                     StringBuilder errorMessage = new StringBuilder();

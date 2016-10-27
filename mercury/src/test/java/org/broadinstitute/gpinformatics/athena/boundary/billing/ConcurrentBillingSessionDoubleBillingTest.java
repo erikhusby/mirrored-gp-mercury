@@ -204,6 +204,20 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
         }
 
         @Override
+        public String registerNewSAPWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
+                                         Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
+                                         String callbackParameterName, String callbackParameterValue) {
+            try {
+                // sleep here for a while to increase the likelihood that the vm really does try to call bill() at the same time
+                Thread.sleep(1000);
+            }
+            catch (InterruptedException e) {
+                // Do nothing with this exception
+            }
+            return Integer.toString(++workItemNumber);
+        }
+
+        @Override
         public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
 
             Quote stubQuote = new Quote();
