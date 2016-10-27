@@ -6,7 +6,8 @@ if [ -e "/broad/tools/scripts/useuse" ]
 then
     source /broad/tools/scripts/useuse
     use Maven-3.1
-    use Java-1.8
+    #    use Java-1.8
+    use .java-jdk-1.8.0_112-x86-64
 fi
 
 if [ "x$JBOSS_HOME" == "x" ]
