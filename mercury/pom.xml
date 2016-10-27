@@ -1721,6 +1721,13 @@ nodePrinter.print(webapp)
             <version>1.9.2</version>
         </dependency>
 
+        <!-- Before bspclient until it's dependency version is updated from 1.4.4! -->
+        <dependency>
+            <groupId>com.thoughtworks.xstream</groupId>
+            <artifactId>xstream</artifactId>
+            <version>1.4.9</version>
+        </dependency>
+
         <dependency>
             <groupId>org.broadinstitute.bsp</groupId>
             <artifactId>bspclient</artifactId>
