@@ -44,6 +44,36 @@
         .addRegulatoryInfo {
             font-size: 12px;
         }
+
+        #regulatoryInfoSuggestions {
+            padding-top: 1em;
+        }
+
+        #regulatoryInfoSuggestions td.sample {
+            width: 20%;
+            word-break: break-word;
+        }
+
+        #regulatoryInfoSuggestions caption {
+            border: 1px solid #ccc;
+            padding: 3px 18px 3px 10px;
+            border-bottom: 1px solid black;
+            /*border-bottom: none;*/
+            font-weight: bold;
+            background: url(/Mercury/images/simple-th-background.png) repeat-x scroll 50% 50% #CCCCCC;
+        }
+
+        #regulatoryInfoSuggestions .orspRow td {
+            vertical-align: text-top;
+            border: none;
+        }
+        #regulatoryInfoSuggestions tbody>tr:nth-child(even) { background-color: #fff; }
+        #regulatoryInfoSuggestions tbody>tr:nth-child(odd) { background-color: #f5f5f5; }
+
+        #regulatoryInfoSuggestions .orspRow:nth-child(n+2) {
+            border-top: inherit
+        }
+
     </style>
         <script type="text/javascript">
 
@@ -598,39 +628,74 @@
         function showRegulatoryInfoSuggestions(data) {
             var $suggestionDiv = $j('#regulatoryInfoSuggestions');
             $suggestionDiv.empty();
+            var $suggestionTable = $j("<table></table>", {'class': 'table simple'}).appendTo($suggestionDiv);
             if (data.length != 0) {
-                $j.each(data, function(index, value) {
-                    var itemDiv = $j('<div></div>');
-                    itemDiv.append(value.identifier + ': ');
-                    itemDiv.append(value.name);
-                    if (value.regulatoryInfoId == undefined) {
-                        itemDiv.prepend($j('<button disabled="disabled">select</button> '));
-                        itemDiv = itemDiv.wrap('<div></div>');
-                        var addDiv = $j('<div style="padding-left: 6em;"></div>');
-                        addDiv.append('Not configured for ' + $j("#researchProject").val() + '. ');
-                        <c:if test="${actionBean.editResearchProjectAllowed}">
-                        addDiv.append('<a href="#" class="addRegulatoryInfo" identifier="' + value.identifier + '">Add now...</a>');
-                        </c:if>
-                        itemDiv.append(addDiv);
-                    } else {
-                        itemDiv.prepend($j('<button name="' + value.regulatoryInfoId + '">select</button>'));
-                    }
-                    itemDiv.css('padding-top', '8px');
-                    $suggestionDiv.append(itemDiv);
-                });
+                $suggestionTable.append($j("<caption></caption>", {text: "These Samples are associated with these ORSP(s)"}));
+                data.forEach(function (dataItem) {
+                    dataItem.forEach(function ($suggestionEntry) {
+                        var $outerRow = $j("<tr></tr>");
+                        var $samples = $j("<td></td>", {
+                            'text': $suggestionEntry.samples.join(', '),
+                            'rowspan': $suggestionEntry.orspProjects.length,
+                            'class': 'regulatorySuggestions sample',
+                            //style: 'width: 25%, word-break: break-word;'
+                        });
+                        $outerRow.append($samples);
+                        if ($suggestionEntry.orspProjects.length === 0) {
+                            var $orspProjects = $j("<td></td>");
+                            $orspProjects.text("No ORSP Projects found.");
+                            $outerRow.append($orspProjects);
+                        }else {
+                            var $orspProjectsOuter = $j("<td></td>");
+                            $outerRow.append($orspProjectsOuter);
+                        }
+                        $outerRow.appendTo($suggestionTable);
 
-                $suggestionDiv.find('button').click(function(event) {
-                    event.preventDefault();
-                    $j('input[name=selectedRegulatoryIds][value=' + $j(this).attr('name') + ']').click();
-                });
-                $suggestionDiv.find('.addRegulatoryInfo').click(function(event) {
-                    event.preventDefault();
-                    var projectSelection = $j("#researchProject").tokenInput('get')[0];
-                    openRegulatoryInfoDialog(projectSelection.id, projectSelection.name, function() {
-                        closeRegulatoryInfoDialog();
-                        populateRegulatorySelect();
-                        suggestRegulatoryInfo();
-                    }, $j(this).attr('identifier'));
+                        $suggestionEntry.orspProjects.forEach(function ($orspProject) {
+                            var $selectButton = $j("<button>select</button>");
+                            $selectButton.attr('disabled', true);
+
+                            var $innerOrspRow = $j("<tr></tr>", {'class': 'regulatorySuggestions orspRow'});
+                            var $orspNameCell = $j("<td width='100%'></td>");
+                            $orspNameCell.text($orspProject.identifier + ': ' + $orspProject.name);
+
+                            if ($orspProject.regulatoryInfoId !== undefined) {
+                                $selectButton.attr('name', $orspProject.regulatoryInfoId);
+                                $selectButton.attr('disabled', false);
+                                $selectButton.click(function (event) {
+                                    event.preventDefault();
+                                    $j('input[name=selectedRegulatoryIds][value=' + $j(this).attr('name') + ']').click();
+                                });
+                            } else {
+                                $selectButton.attr('disabled', true);
+                                $orspNameCell.append('<br/>Not configured for ' + $j("#researchProject").val() + '. ');
+                                <c:if test="${actionBean.editResearchProjectAllowed}">
+                                var linkText = 'Link ' + $orspProject.identifier + ' to ' + $j("#researchProject").val();
+                                var $addNow = $j('<a></a>', {
+                                    'text': linkText,
+                                    'title': 'Click here to link ' + linkText,
+                                    'href': '#',
+                                    'class': 'addRegulatoryInfo',
+                                    'identifier': $orspProject.identifier
+                                });
+                                $j($addNow).on("click", function (event) {
+                                    event.preventDefault();
+                                    var projectSelection = $j("#researchProject").tokenInput('get')[0];
+                                    openRegulatoryInfoDialog(projectSelection.id, projectSelection.name, function () {
+                                        closeRegulatoryInfoDialog();
+                                        populateRegulatorySelect();
+                                        suggestRegulatoryInfo();
+                                    }, $j(this).attr('identifier'));
+                                });
+                                $orspNameCell.append($addNow);
+                                </c:if>
+                            }
+                            $innerOrspRow.append($orspNameCell);
+                            $innerOrspRow.append($j('<td></td>',{html:$selectButton}));
+                            $orspProjectsOuter.append($innerOrspRow);
+                        });
+
+                    });
                 });
             }
         }
@@ -1213,7 +1278,8 @@
                 </c:choose>
                 <br/>
                 <br/>
-                <stripes:textarea readonly="${!actionBean.editOrder.draft}" class="controlledText" id="samplesToAdd" name="sampleList" rows="15" cols="120"/>
+                <stripes:textarea readonly="${!actionBean.editOrder.draft}" class="controlledText" id="samplesToAdd"
+                                  name="sampleList" rows="15" style="width: 100%;"/>
                 <div id="regulatoryInfoSuggestions"></div>
             </div>
             <div id="sampleInitiationKitRequestEdit" class="help-block span4" style="display: none">

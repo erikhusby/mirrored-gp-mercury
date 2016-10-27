@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -45,7 +46,7 @@ public class OrspProject {
 
     private String url;
 
-    @OneToMany(mappedBy = "orspProject")
+    @OneToMany(mappedBy = "orspProject", fetch = FetchType.EAGER)
     private Collection<OrspProjectConsent> consents = new HashSet<>();
 
     /**
