@@ -11,12 +11,14 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 
 @Test(groups = TestGroups.ALTERNATIVES)
+@RequestScoped
 public class TooManyBSPResultsPipelineAPITest extends Arquillian {
 
     @Inject

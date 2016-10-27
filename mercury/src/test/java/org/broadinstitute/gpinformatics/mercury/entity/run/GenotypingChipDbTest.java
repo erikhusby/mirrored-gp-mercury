@@ -10,6 +10,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  * Tests the GenotypingChip, its related entities, and its dao.
  */
 @Test(groups = TestGroups.ALTERNATIVES, singleThreaded = true)
+@RequestScoped
 public class GenotypingChipDbTest extends Arquillian {
 
     @SuppressWarnings("CdiInjectionPointsInspection")

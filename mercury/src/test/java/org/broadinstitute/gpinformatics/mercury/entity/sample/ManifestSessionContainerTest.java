@@ -75,6 +75,7 @@ import static org.hamcrest.Matchers.is;
  * Container tests for ManifestSessions.
  */
 @Test(groups = TestGroups.ALTERNATIVES)
+@RequestScoped
 public class ManifestSessionContainerTest extends Arquillian {
 
     private static Log logger = LogFactory.getLog(ManifestSessionContainerTest.class);

@@ -65,6 +65,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
 import java.io.File;
@@ -85,6 +86,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  * Tests the methods in the SolexaRunResource without any rest calls
  */
 @Test(groups = TestGroups.ALTERNATIVES)
+@RequestScoped
 public class SolexaRunResourceNonRestTest extends Arquillian {
 
     @Inject

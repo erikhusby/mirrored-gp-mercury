@@ -12,11 +12,13 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 
 @Test(groups = TestGroups.ALTERNATIVES)
+@RequestScoped
 public class NullBSPValuesPipelineAPITest extends Arquillian {
 
     @Inject

@@ -39,6 +39,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.persistence.Query;
 import javax.transaction.UserTransaction;
@@ -59,6 +60,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  */
 
 @Test(enabled = true, groups = TestGroups.ALTERNATIVES, singleThreaded = true)
+@RequestScoped
 public class ExtractTransformTest extends Arquillian {
     private static final Log logger = LogFactory.getLog(ExtractTransform.class);
     private String datafileDir;
