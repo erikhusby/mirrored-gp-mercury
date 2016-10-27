@@ -250,7 +250,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                 new ArrayList<ProductOrderSample>(), toClone.getQuoteId(), toClone.getProduct(),
                 toClone.getResearchProject());
 
-        if(shareSapOrder){
+        if(shareSapOrder & toClone.isSavedInSAP()){
             addSapOrderDetail(new SapOrderDetail(toClone.latestSapOrderDetail().getSapOrderNumber(),
                     toClone.latestSapOrderDetail().getPrimaryQuantity(), toClone.latestSapOrderDetail().getQuoteId(),
                     toClone.latestSapOrderDetail().getCompanyCode()));
@@ -1198,10 +1198,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public SapOrderDetail latestSapOrderDetail() {
 
-        ArrayList<SapOrderDetail> orderDetailSortList = new ArrayList<>(sapReferenceOrders);
-        Collections.sort(orderDetailSortList);
+        SapOrderDetail sapOrderDetail = null;
+        if(CollectionUtils.isNotEmpty(sapReferenceOrders)) {
+            ArrayList<SapOrderDetail> orderDetailSortList = new ArrayList<>(sapReferenceOrders);
+            Collections.sort(orderDetailSortList);
 
-        return orderDetailSortList.get(orderDetailSortList.size()-1);
+            sapOrderDetail = orderDetailSortList.get(orderDetailSortList.size() - 1);
+        }
+        return sapOrderDetail;
     }
 
     public void setSapOrderNumber(String sapOrderNumber) {

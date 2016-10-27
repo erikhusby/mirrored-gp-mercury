@@ -1319,7 +1319,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         MessageCollection saveOrderMessageCollection = new MessageCollection();
 
         if(editOrder.getNumberForReplacement() >0) {
-            if(editOrder.isOneBilled() && (editOrder.getNonAbandonedCount() < editOrder.latestSapOrderDetail().getPrimaryQuantity()) ) {
+            if(editOrder.isSavedInSAP() && editOrder.isOneBilled() &&
+               (editOrder.getNonAbandonedCount() < editOrder.latestSapOrderDetail().getPrimaryQuantity()) ) {
                 shareSapOrder = true;
             }
             ProductOrder.SaveType saveType = ProductOrder.SaveType.CREATING;

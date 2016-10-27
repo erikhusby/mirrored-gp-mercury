@@ -249,9 +249,10 @@ public class ProductOrderEjb {
         }
         try {
             if (isOrderEligibleForSAP(orderToPublish)) {
-                final boolean quoteIdChange = !orderToPublish.getQuoteId()
+                final boolean quoteIdChange = orderToPublish.isSavedInSAP() &&
+                                              !orderToPublish.getQuoteId()
                         .equals(orderToPublish.latestSapOrderDetail().getQuoteId());
-                if ((StringUtils.isEmpty(orderToPublish.getSapOrderNumber()) && allowCreateOrder) || quoteIdChange) {
+                if ((!orderToPublish.isSavedInSAP() && allowCreateOrder) || quoteIdChange) {
                     String sapOrderIdentifier = sapService.createOrder(orderToPublish);
 
                     String oldNumber = null;
@@ -283,12 +284,12 @@ public class ProductOrderEjb {
                 productOrderDao.persist(orderToPublish);
             } else {
                 messageCollection.addInfo("The quote "+ orderToPublish.getQuoteId() +
-                                          " makes this order inelligible to post to SAP: ");
+                                          " makes this order ineligible to post to SAP: ");
             }
         } catch (org.broadinstitute.sap.services.SAPIntegrationException|QuoteServerException|QuoteNotFoundException e) {
             StringBuilder errorMessage = new StringBuilder();
                 errorMessage.append("Unable to ");
-            if (StringUtils.isEmpty(orderToPublish.getSapOrderNumber())) {
+            if (!orderToPublish.isSavedInSAP()) {
                 errorMessage.append("create ");
             } else {
                 errorMessage.append("update ");
