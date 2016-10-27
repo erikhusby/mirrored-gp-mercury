@@ -53,6 +53,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -73,6 +74,7 @@ import static org.hamcrest.Matchers.hasItems;
  *
  */
 @Test(groups = TestGroups.ALTERNATIVES)
+@RequestScoped
 public class ReworkEjbTest extends Arquillian {
 
     public static final String SM_SGM_Test_Somatic_1_PATIENT_ID = "PT-1TS1";
