@@ -39,20 +39,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.math.BigDecimal;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Builds ConfigurableSearchDefinition for lab vessel user defined search logic
@@ -1391,16 +1378,12 @@ public class LabVesselSearchDefinition {
         searchTerm.setValueType(ColumnValueType.DATE_TIME);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public Set<Date> evaluate(Object entity, SearchContext context) {
+            public Date evaluate(Object entity, SearchContext context) {
                 LabVessel labVessel = (LabVessel) entity;
-                Set<Date> abandonDate = null;
-                abandonDate = new HashSet<>();
-                abandonDate.add(labVessel.getAbandonedDate());
-                return abandonDate;
+                return labVessel.getAbandonedDate();
             }
         });
         searchTerms.add(searchTerm);
-
         return searchTerms;
     }
 
