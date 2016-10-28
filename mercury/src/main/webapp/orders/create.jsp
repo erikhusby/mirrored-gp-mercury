@@ -630,13 +630,12 @@
             $suggestionDiv.empty();
             var $suggestionTable = $j("<table></table>", {'class': 'table simple'}).appendTo($suggestionDiv);
             if (data.length != 0) {
-                $suggestionTable.append($j("<caption></caption>", {text: "These Samples are associated with these ORSP(s)"}));
+                $suggestionTable.append($j("<caption></caption>", {text: "These samples are associated with these ORSP(s)"}));
                 data.forEach(function (dataItem) {
                     dataItem.forEach(function ($suggestionEntry) {
                         var $outerRow = $j("<tr></tr>");
                         var $samples = $j("<td></td>", {
                             'text': $suggestionEntry.samples.join(', '),
-                            'rowspan': $suggestionEntry.orspProjects.length,
                             'class': 'regulatorySuggestions sample',
                             //style: 'width: 25%, word-break: break-word;'
                         });
