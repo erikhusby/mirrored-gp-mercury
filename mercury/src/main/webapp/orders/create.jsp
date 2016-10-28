@@ -634,14 +634,13 @@
         function showRegulatoryInfoSuggestions(data) {
             String.prototype.trunc =
                     function (n) {
-                        if (this.length > n){
-                            var remaining = this.substr(n+1,this.length).split(/\s+/);
+                        if (this.length > n) {
+                            var remaining = this.substr(n + 1, this.length).split(/\s+/);
                             var label = "<br/><i>&hellip;(+" + remaining.length + " more)<i>";
-                            return  this.substr(0, n - 1) + label;
+                            return this.substr(0, n - 1) + label;
                         }
                         return this;
                     };
-
 
             var $suggestionDiv = $j('#regulatoryInfoSuggestions');
             $suggestionDiv.empty();
@@ -652,8 +651,8 @@
                 data.forEach(function (dataItem) {
                     dataItem.forEach(function ($suggestionEntry) {
                         var $outerRow = $j("<tr></tr>");
-                        var sampleIds;
 
+                        var sampleIds;
                         if (Array.isArray($suggestionEntry.samples)) {
                             sampleIds = $suggestionEntry.samples.join(", ");
                         } else {
@@ -670,7 +669,7 @@
                             var $orspProjects = $j("<td></td>", {'colspan': 2, 'class': 'noOrsp'});
                             $orspProjects.text("No ORSP Projects found.");
                             $outerRow.append($orspProjects);
-                        }else {
+                        } else {
                             var $orspProjectsOuter = $j("<td></td>");
                             $outerRow.append($orspProjectsOuter);
                             var collections = $suggestionEntry.collections;
@@ -679,8 +678,6 @@
                             }
                             $outerRow.append($j('<td></td>', {html: collections, title: collections}));
                         }
-
-
                         $outerRow.appendTo($suggestionTable);
 
                         $suggestionEntry.orspProjects.forEach(function ($orspProject) {
@@ -722,7 +719,6 @@
                                 $orspNameCell.append($addNow);
                                 </c:if>
                             }
-
                             $innerOrspRow.append($orspNameCell);
                             $innerOrspRow.append($j('<td></td>',{html:$selectButton}));
                             $orspProjectsOuter.append($innerOrspRow);
