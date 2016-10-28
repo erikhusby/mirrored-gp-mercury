@@ -85,7 +85,7 @@ public class ManifestSessionContainerTest extends Arquillian {
     private static final String GENDER_MALE = "Male";
     private static final String GENDER_FEMALE = "Female";
     private static final String COLLAB_PREFIX = "collab_";
-    public static final int NUM_RECORDS_IN_SPREADSHEET = 23;
+    private static final int NUM_RECORDS_IN_SPREADSHEET = 23;
 
     private ResearchProject researchProject;
     private ManifestSession manifestSessionI;
@@ -111,8 +111,8 @@ public class ManifestSessionContainerTest extends Arquillian {
     private List<String> secondUploadedSamplesDupes = Arrays.asList("03101231193", "03101752020");
     private Map<String, MercurySample> sourceSampleToMercurySample;
     private Map<String, LabVessel> sourceSampleToTargetVessel;
-    public ManifestSession uploadedSession;
-    public ManifestSession uploadedSession2;
+    private ManifestSession uploadedSession;
+    private ManifestSession uploadedSession2;
 
     @Inject
     private ManifestSessionEjb manifestSessionEjb;
