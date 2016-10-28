@@ -64,7 +64,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 public class ExtractTransformTest extends Arquillian {
     private static final Log logger = LogFactory.getLog(ExtractTransform.class);
     private String datafileDir;
-    public final long MSEC_IN_SEC = 1000L;
+    private final long MSEC_IN_SEC = 1000L;
     private final String barcode = "TEST" + System.currentTimeMillis();
 
     // This list should contain every class that can be backfilled.
