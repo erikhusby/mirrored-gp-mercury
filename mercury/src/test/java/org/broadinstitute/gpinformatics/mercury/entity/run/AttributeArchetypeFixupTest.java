@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.run;
 
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingChipMapping;
+import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
@@ -317,6 +318,28 @@ public class AttributeArchetypeFixupTest extends Arquillian {
         utx.commit();
     }
 
+    @Test(enabled = false)
+    public void gplim4320PdoOverrides() throws Exception {
+        utx.begin();
+        userBean.loginOSUser();
+
+        final String chipFamily = InfiniumRunResource.INFINIUM_GROUP;
+
+        List<AttributeDefinition> definitions = new ArrayList<AttributeDefinition>() {{
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_PRODUCT_ORDER,
+                    chipFamily, "call_rate_threshold", true));
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_PRODUCT_ORDER,
+                    chipFamily, "cluster_location_unix", true));
+        }};
+
+
+        String fixupReason = "GPLIM-4320 add pdo specific overrides.";
+        attributeArchetypeDao.persist(new FixupCommentary(fixupReason));
+        attributeArchetypeDao.persistAll(definitions);
+        attributeArchetypeDao.flush();
+        utx.commit();
+    }
+
 
     @Test(enabled = false)
     public void gplim4350IlluminaManifestAttribute() throws Exception {
@@ -368,6 +391,31 @@ public class AttributeArchetypeFixupTest extends Arquillian {
         }
 
         String fixupReason = "GPLIM-4350 add illumina manifest attribute.";
+        attributeArchetypeDao.persist(new FixupCommentary(fixupReason));
+        attributeArchetypeDao.persistAll(definitions);
+        attributeArchetypeDao.persistAll(genotypingChips);
+        attributeArchetypeDao.flush();
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void Gplim4397AddForwardToGap() throws Exception {
+        utx.begin();
+        userBean.loginOSUser();
+
+        final String chipFamily = InfiniumRunResource.INFINIUM_GROUP;
+
+        List<AttributeDefinition> definitions = new ArrayList<AttributeDefinition>() {{
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_CHIP,
+                    chipFamily, "forward_to_gap", true));
+        }};
+
+        Set<GenotypingChip> genotypingChips = attributeArchetypeDao.findGenotypingChips(chipFamily);
+        for (GenotypingChip genotypingChip: genotypingChips) {
+            genotypingChip.addOrSetAttribute("forward_to_gap", "Y");
+        }
+
+        String fixupReason = "GPLIM-4397 add forward_to_gap";
         attributeArchetypeDao.persist(new FixupCommentary(fixupReason));
         attributeArchetypeDao.persistAll(definitions);
         attributeArchetypeDao.persistAll(genotypingChips);

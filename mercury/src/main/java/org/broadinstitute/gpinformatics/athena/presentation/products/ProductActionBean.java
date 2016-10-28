@@ -404,6 +404,10 @@ public class ProductActionBean extends CoreActionBean {
 
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() {
+        // Sets paired end non-null when sequencing params are present.
+        if (StringUtils.isNotBlank(editProduct.getAggregationDataType())) {
+            editProduct.setPairedEndRead(editProduct.getPairedEndRead());
+        }
         productEjb.saveProduct(editProduct, addOnTokenInput, priceItemTokenInput, allLengthsMatch(),
                 criteria, operators, values, genotypingChipInfo);
         addMessage("Product \"" + editProduct.getProductName() + "\" has been saved");

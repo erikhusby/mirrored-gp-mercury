@@ -290,6 +290,11 @@ public class BspSampleData implements SampleData {
     }
 
     @Override
+    public String getCollectionId() {
+        return getValue(BSPSampleSearchColumn.BSP_COLLECTION_BARCODE);
+    }
+
+    @Override
     public String getCollaboratorsSampleName() {
         return getValue(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID);
     }

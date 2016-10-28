@@ -98,6 +98,9 @@ public class ResearchProjectEjbExternalIntegrationTest {
         for (String sampleName : sampleNames) {
             Map<BassDTO.BassResultColumn, String> valuesMap = new HashMap<>();
             valuesMap.put(BassDTO.BassResultColumn.sample, sampleName);
+            valuesMap.put(BassDTO.BassResultColumn.version, "1");
+            valuesMap.put(BassDTO.BassResultColumn.project, "RP-123");
+            valuesMap.put(BassDTO.BassResultColumn.file_type, "bam");
             BassDTO bassDTO = new BassDTO(valuesMap);
             results.add(new SubmissionDto(bassDTO, null, Collections.<ProductOrder>emptyList(), null));
         }

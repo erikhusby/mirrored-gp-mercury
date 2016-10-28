@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PushbackInputStream;
 import java.text.Format;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -257,6 +258,13 @@ public final class PoiSpreadsheetParser {
 
         List<String> sheetNames = new ArrayList<> ();
 
+        /*
+         * JavaDoc for WorkbookFactory.create says the input stream "MUST either support mark/reset, or be wrapped as a
+         * PushbackInputStream!"
+         */
+        if (!inputStream.markSupported()) {
+            inputStream = new PushbackInputStream(inputStream);
+        }
         Workbook workbook = WorkbookFactory.create(inputStream);
         int numberOfSheets = workbook.getNumberOfSheets();
         for (int i = 0; i < numberOfSheets; i++) {

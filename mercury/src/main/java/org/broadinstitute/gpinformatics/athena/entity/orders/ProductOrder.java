@@ -26,6 +26,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -206,6 +207,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     @Column(name = "squid_work_request")
     private String squidWorkRequest;
+
+    @OneToMany(mappedBy = "productOrder")
+    private Set<BucketEntry> bucketEntries;
 
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.
@@ -1044,6 +1048,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public void setSquidWorkRequest(String squidWorkRequest) {
         this.squidWorkRequest = squidWorkRequest;
+    }
+
+    public Set<BucketEntry> getBucketEntries() {
+        return bucketEntries;
     }
 
     /**

@@ -1,6 +1,9 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import org.apache.commons.collections4.CollectionUtils;
+import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel_;
@@ -10,6 +13,8 @@ import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Tied to LabBatchStartingVessel entity
@@ -18,13 +23,16 @@ import java.util.Collection;
 @Stateful
 public class FctCreateEtl extends GenericEntityEtl<LabBatchStartingVessel,LabBatchStartingVessel> {
 
+    FlowcellDesignationEjb flowcellDesignationEjb;
+
     public FctCreateEtl() {
     }
 
     @Inject
-    public FctCreateEtl(LabBatchDao dao) {
+    public FctCreateEtl(LabBatchDao dao, FlowcellDesignationEjb flowcellDesignationEjb) {
         super(LabBatchStartingVessel.class, "fct_create", "batch_starting_vessels_aud",
                 "batch_starting_vessel_id", dao);
+        this.flowcellDesignationEjb = flowcellDesignationEjb;
     }
 
     @Override
@@ -61,6 +69,13 @@ public class FctCreateEtl extends GenericEntityEtl<LabBatchStartingVessel,LabBat
             lane = labBatchStartingVessel.getVesselPosition().toString().replace("LANE","");
         }
 
+        // Gets pool test from the designation if it exists. Otherwise assumes MiSeq runs are pool tests.
+        List<FlowcellDesignation> flowcellDesignations = flowcellDesignationEjb.getFlowcellDesignations(
+                Collections.singleton(labBatchStartingVessel.getLabVessel()));
+        boolean poolTest = CollectionUtils.isNotEmpty(flowcellDesignations) ?
+                flowcellDesignations.iterator().next().isPoolTest() :
+                labBatch.getLabBatchType() == LabBatch.LabBatchType.MISEQ;
+
         return genericRecord(etlDateStr, isDelete,
                 labBatchStartingVessel.getBatchStartingVesselId(),
                 labBatch.getLabBatchId(),
@@ -71,7 +86,7 @@ public class FctCreateEtl extends GenericEntityEtl<LabBatchStartingVessel,LabBat
                 format(labBatch.getFlowcellType()!=null?labBatch.getFlowcellType().getDisplayName():""),
                 format(lane),
                 format(labBatchStartingVessel.getConcentration()),
-                labBatch.getLabBatchType() != LabBatch.LabBatchType.MISEQ?"N":"Y"
+                poolTest ? "Y":"N"
         );
     }
 }

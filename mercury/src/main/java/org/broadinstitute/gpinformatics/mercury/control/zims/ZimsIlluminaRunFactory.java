@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.control.zims;
 
 import edu.mit.broad.prodinfo.thrift.lims.IndexPosition;
 import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -18,6 +19,7 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -28,6 +30,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexRea
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
@@ -75,6 +78,7 @@ public class ZimsIlluminaRunFactory {
     private SequencingTemplateFactory sequencingTemplateFactory;
     private ProductOrderDao productOrderDao;
     private final CrspPipelineUtils crspPipelineUtils;
+    private FlowcellDesignationEjb flowcellDesignationEjb;
 
     private static final Log log = LogFactory.getLog(ZimsIlluminaRunFactory.class);
 
@@ -82,16 +86,19 @@ public class ZimsIlluminaRunFactory {
     public ZimsIlluminaRunFactory(SampleDataFetcher sampleDataFetcher,
                                   ControlDao controlDao, SequencingTemplateFactory sequencingTemplateFactory,
                                   ProductOrderDao productOrderDao,
-                                  CrspPipelineUtils crspPipelineUtils) {
+                                  CrspPipelineUtils crspPipelineUtils,
+                                  FlowcellDesignationEjb flowcellDesignationEjb) {
         this.sampleDataFetcher = sampleDataFetcher;
         this.controlDao = controlDao;
         this.sequencingTemplateFactory = sequencingTemplateFactory;
         this.productOrderDao = productOrderDao;
         this.crspPipelineUtils = crspPipelineUtils;
+        this.flowcellDesignationEjb = flowcellDesignationEjb;
     }
 
     public ZimsIlluminaRun makeZimsIlluminaRun(IlluminaSequencingRun illuminaRun) {
         RunCartridge flowcell = illuminaRun.getSampleCartridge();
+        FlowcellDesignation flowcellDesignation = null;
 
         List<List<SampleInstanceDto>> perLaneSampleInstanceDtos = new ArrayList<>();
         Set<String> sampleIds = new HashSet<>();
@@ -148,7 +155,15 @@ public class ZimsIlluminaRunFactory {
                     }
                     sampleIds.add(sampleId);
                     LabVessel libraryVessel = flowcell.getNearestTubeAncestorsForLanes().get(vesselPosition);
-
+                    if (flowcellDesignation == null) {
+                        // Only need one designation since all of them constituting this flowcell will have been
+                        // grouped by and therefore have the same flowcell parameters.
+                        List<FlowcellDesignation> flowcellDesignations =
+                                flowcellDesignationEjb.getFlowcellDesignations(Collections.singleton(libraryVessel));
+                        if (CollectionUtils.isNotEmpty(flowcellDesignations)) {
+                            flowcellDesignation = flowcellDesignations.get(0);
+                        }
+                    }
                     boolean isCrspLane = crspPipelineUtils.areAllSamplesForCrsp(
                             libraryVessel.getSampleInstancesV2());
 
@@ -157,7 +172,8 @@ public class ZimsIlluminaRunFactory {
 
                     sampleInstanceDtos.add(new SampleInstanceDto(laneNum, laneSampleInstance.getFirstPcrVessel(),
                             laneSampleInstance, sampleId, productOrderKey, libraryName, libraryVessel.getCreatedOn(),
-                            pdoSampleName,isCrspLane,metadataSource));
+                            pdoSampleName, isCrspLane, metadataSource));
+
 //                }
             }
         }
@@ -176,7 +192,7 @@ public class ZimsIlluminaRunFactory {
         }
 
         Format dateFormat = FastDateFormat.getInstance(ZimsIlluminaRun.DATE_FORMAT);
-        // TODO: fill in isPaired
+        boolean isPaired = flowcellDesignation != null && flowcellDesignation.isPairedEndRead();
 
         double imagedArea = 0;
         if (illuminaRun.getImagedAreaPerMM2() != null) {
@@ -188,7 +204,7 @@ public class ZimsIlluminaRunFactory {
                                                   flowcell.getLabel(), illuminaRun.getMachineName(),
                                                   flowcell.getSequencerModel(), dateFormat.format(
                 illuminaRun.getRunDate()),
-                                                  false, illuminaRun.getActualReadStructure(), imagedArea,
+                                                  isPaired, illuminaRun.getActualReadStructure(), imagedArea,
                                                   illuminaRun.getSetupReadStructure(), illuminaRun.getLanesSequenced(),
                                                   illuminaRun.getRunDirectory(), SystemRouter.System.MERCURY);
 

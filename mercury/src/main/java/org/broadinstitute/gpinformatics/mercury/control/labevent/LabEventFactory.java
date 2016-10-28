@@ -5,6 +5,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentration;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
@@ -27,6 +29,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationSetup
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsObjectFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -49,6 +52,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -127,6 +131,10 @@ public class LabEventFactory implements Serializable {
      */
     public static final String MODE_MERCURY = "Mercury";
     /**
+     * Used when backfilling messages from GAP, avoids forwarding them to GAP.
+     */
+    public static final String MODE_BACKFILL = "Backfill";
+    /**
      * Whether to create sources that are not found in the database.  Handling out of order messages requires this
      * to be true, but when running in parallel with Squid / BettaLIMS (which can't handle out of order messages)
      * we set this to false so Mercury fails in the same way as Squid / BettaLIMS.
@@ -174,6 +182,12 @@ public class LabEventFactory implements Serializable {
 
     @Inject
     private GapHandler gapHandler;
+
+    @Inject
+    private ProductEjb productEjb;
+
+    @Inject
+    private AttributeArchetypeDao attributeArchetypeDao;
 
     private BSPSetVolumeConcentration bspSetVolumeConcentration;
 
@@ -444,14 +458,36 @@ public class LabEventFactory implements Serializable {
         }
 
         if (!labEvents.isEmpty()) {
-            LabEventType.ForwardMessage forwardMessage = labEvents.get(0).getLabEventType().getForwardMessage();
+            LabEvent labEvent = labEvents.get(0);
+            LabEventType.ForwardMessage forwardMessage = labEvent.getLabEventType().getForwardMessage();
             switch (forwardMessage) {
                 case BSP:
                     samplesDaughterPlateHandler.postToBsp(bettaLIMSMessage,
                             SamplesDaughterPlateHandler.BSP_TRANSFER_REST_URL);
                     break;
                 case GAP:
-                    gapHandler.postToGap(bettaLIMSMessage);
+                    String forwardToGap = null;
+                    for (LabVessel labVessel : labEvent.getSourceLabVessels()) {
+                        for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                            ProductOrderSample productOrderSample =
+                                    sampleInstanceV2.getProductOrderSampleForSingleBucket();
+                            if (productOrderSample != null) {
+                                Pair<String, String> chipFamilyAndName = productEjb.getGenotypingChip(
+                                        productOrderSample.getProductOrder(), labEvent.getEventDate());
+                                if (chipFamilyAndName.getLeft() != null && chipFamilyAndName.getRight() != null) {
+                                    GenotypingChip chip = attributeArchetypeDao.findGenotypingChip(
+                                            chipFamilyAndName.getLeft(), chipFamilyAndName.getRight());
+                                    forwardToGap = chip.getAttributeMap().get("forward_to_gap");
+                                    if (forwardToGap != null) {
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (forwardToGap == null || forwardToGap.equalsIgnoreCase("Y")) {
+                        gapHandler.postToGap(bettaLIMSMessage);
+                    }
                     break;
                 case NONE:
                     break;

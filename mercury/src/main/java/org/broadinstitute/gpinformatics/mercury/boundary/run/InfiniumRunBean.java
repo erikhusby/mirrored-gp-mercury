@@ -19,6 +19,7 @@ public class InfiniumRunBean {
     private String beadPoolManifestPath;
     private String clusterFilePath;
     private String zCallThresholdsPath;
+    private String sampleId;
     private String collaboratorSampleId;
     private String sampleLsid;
     private String gender;
@@ -45,12 +46,12 @@ public class InfiniumRunBean {
     }
 
     public InfiniumRunBean(String redIDatPath, String greenIDatPath, String chipManifestPath,
-                           String beadPoolManifestPath, String clusterFilePath, String zCallThresholdsPath,
-                           String collaboratorSampleId, String sampleLsid, String gender, String participantId,
-                           String researchProjectId, boolean positiveControl, boolean negativeControl,
-                           String callRateThreshold, String genderClusterFile, String collaboratorParticpantId,
-                           String productOrderId, String productName, String productFamily, String productPartNumber,
-                           String labBatch, Date scanDate, String scannerName, String csvBeadPoolManifestPath) {
+            String beadPoolManifestPath, String clusterFilePath, String zCallThresholdsPath,
+            String sampleId, String collaboratorSampleId, String sampleLsid, String gender, String participantId,
+            String researchProjectId, boolean positiveControl, boolean negativeControl,
+            String callRateThreshold, String genderClusterFile, String collaboratorParticpantId,
+            String productOrderId, String productName, String productFamily, String productPartNumber,
+            String labBatch, Date scanDate, String scannerName, String csvBeadPoolManifestPath) {
         this.redIDatPath = redIDatPath;
         this.greenIDatPath = greenIDatPath;
         this.chipManifestPath = chipManifestPath;
@@ -58,6 +59,7 @@ public class InfiniumRunBean {
         this.clusterFilePath = clusterFilePath;
         this.zCallThresholdsPath = zCallThresholdsPath;
         this.collaboratorSampleId = collaboratorSampleId;
+        this.sampleId = sampleId;
         this.sampleLsid = sampleLsid;
         this.gender = gender;
         this.participantId = participantId;
@@ -99,6 +101,10 @@ public class InfiniumRunBean {
 
     public String getzCallThresholdsPath() {
         return zCallThresholdsPath;
+    }
+
+    public String getSampleId() {
+        return sampleId;
     }
 
     public String getCollaboratorSampleId() {
