@@ -1505,7 +1505,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (!getSampleList().isEmpty()) {
             List<ProductOrderSample> productOrderSamples = stringToSampleListExisting(getSampleList());
             // Bulk-fetch collection IDs for all samples to avoid having them fetched individually on demand.
-            ProductOrder.loadSampleData(productOrderSamples, BSPSampleSearchColumn.BSP_COLLECTION_BARCODE);
+            ProductOrder.loadSampleData(productOrderSamples, BSPSampleSearchColumn.BSP_COLLECTION_BARCODE, BSPSampleSearchColumn.COLLECTION);
 
             Multimap<String, ProductOrderSample> samplesByCollection = HashMultimap.create();
             for (ProductOrderSample productOrderSample : productOrderSamples) {
@@ -1517,7 +1517,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             List<OrspProject> orspProjects = orspProjectDao.findBySamples(productOrderSamples);
             if (!orspProjects.isEmpty()) {
-                Multimap<String, OrspProject> orspProjectByCollection = HashMultimap.create();
                 for (OrspProject orspProject : orspProjects) {
                     for (OrspProjectConsent consent : orspProject.getConsents()) {
                         Collection<ProductOrderSample> samples =
@@ -1544,38 +1543,31 @@ public class ProductOrderActionBean extends CoreActionBean {
      * result. This allows client-side scripts to match these results with entries in a regulatory info selection
      * widget.
      *
-     * @param samples
+     * @param productOrderSamples
      *@param regulatoryInfoById    the matching RegulatoryInfo record (or null)  @return a new JSONObject for the ORSP project
      */
-    private JSONArray orspProjectToJson(List<ProductOrderSample> samples, Map<String, RegulatoryInfo> regulatoryInfoById) {
+    private JSONArray orspProjectToJson(List<ProductOrderSample> productOrderSamples, Map<String, RegulatoryInfo> regulatoryInfoById) {
         JSONArray resultList = new JSONArray();
         try {
-            ListMultimap<OrspProject, String> orspProjectSamples = ArrayListMultimap.create();
+            ListMultimap<OrspProject, ProductOrderSample> orspProjectSamples = ArrayListMultimap.create();
             Set<String> samplesWithNoOrsp = new HashSet<>();
-            for (ProductOrderSample productOrderSample : samples) {
+            for (ProductOrderSample productOrderSample : productOrderSamples) {
                 if (productOrderSample.getOrspProjects().isEmpty()) {
                     samplesWithNoOrsp.add(productOrderSample.getSampleKey());
                 }
                 for (OrspProject orspProject : productOrderSample.getOrspProjects()) {
-                    orspProjectSamples.put(orspProject, productOrderSample.getSampleKey());
+                    orspProjectSamples.put(orspProject, productOrderSample);
                 }
             }
 
-            if (!samplesWithNoOrsp.isEmpty()) {
-                JSONObject result = new JSONObject();
-                result.put("orspProjects", new JSONArray());
-                result.put("samples", samplesWithNoOrsp);
-                resultList.put(result);
-            }
-
-            // Build an inverse map of orspProjectSamples, so when displayed the samples are grouped with their
+            // Build an inverse map of orspProjectSamples, so when displayed the productOrderSamples are grouped with their
             // respective ORSPs
-            ListMultimap<List<String>, OrspProject> inverseMap = ArrayListMultimap.create();
-            for (Map.Entry<OrspProject, Collection<String>> orspProjectCollectionEntry : orspProjectSamples.asMap()
+            ListMultimap<List<ProductOrderSample>, OrspProject> inverseMap = ArrayListMultimap.create();
+            for (Map.Entry<OrspProject, Collection<ProductOrderSample>> orspProjectCollectionEntry : orspProjectSamples.asMap()
                     .entrySet()) {
                 inverseMap.put(new ArrayList<>(orspProjectCollectionEntry.getValue()), orspProjectCollectionEntry.getKey());
             }
-            for (Map.Entry<List<String>, Collection<OrspProject>> collectionCollectionEntry : inverseMap.asMap()
+            for (Map.Entry<List<ProductOrderSample>, Collection<OrspProject>> collectionCollectionEntry : inverseMap.asMap()
                     .entrySet()) {
                 JSONArray orspProjects = new JSONArray();
                 for (OrspProject orspProject : collectionCollectionEntry.getValue()) {
@@ -1590,10 +1582,23 @@ public class ProductOrderActionBean extends CoreActionBean {
                     orspProjects.put(orspObject);
                 }
                 JSONObject suggestionEntry = new JSONObject();
-                suggestionEntry.put("samples", collectionCollectionEntry.getKey());
+                Set<String> samples = new HashSet<>();
+                Set<String> collections = new HashSet<>();
+                for (ProductOrderSample productOrderSample : collectionCollectionEntry.getKey()) {
+                    samples.add(productOrderSample.getSampleKey());
+                    collections.add(productOrderSample.getSampleData().getCollection());
+                }
+                suggestionEntry.put("samples", samples);
+                suggestionEntry.put("collections", collections);
                 suggestionEntry.put("orspProjects", orspProjects);
                 resultList.put(suggestionEntry);
-
+            }
+            if (!samplesWithNoOrsp.isEmpty()) {
+                JSONObject result = new JSONObject();
+                result.put("orspProjects", new JSONArray());
+                result.put("samples", samplesWithNoOrsp);
+                result.put("collections", Collections.emptyMap());
+                resultList.put(result);
             }
         } catch (JSONException e) {
             throw new RuntimeException("No, I didn't pass a null key to JSONObject.put()");
