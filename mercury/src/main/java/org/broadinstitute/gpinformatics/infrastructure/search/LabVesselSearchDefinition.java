@@ -1388,13 +1388,14 @@ public class LabVesselSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Abandon Date");
+        searchTerm.setValueType(ColumnValueType.DATE_TIME);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public Set<String> evaluate(Object entity, SearchContext context) {
+            public Set<Date> evaluate(Object entity, SearchContext context) {
                 LabVessel labVessel = (LabVessel) entity;
-                Set<String> abandonDate = null;
+                Set<Date> abandonDate = null;
                 abandonDate = new HashSet<>();
-                abandonDate.add(labVessel.getAbandonedDate().toString());
+                abandonDate.add(labVessel.getAbandonedDate());
                 return abandonDate;
             }
         });
