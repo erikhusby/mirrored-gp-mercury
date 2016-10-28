@@ -1551,7 +1551,6 @@ public class LabVesselSearchDefinition {
             }
         });
         searchTerms.add(searchTerm);
-
         return searchTerms;
     }
 
