@@ -182,7 +182,7 @@
                         </select>
                         <c:choose>
                             <c:when test="${actionBean.isVesselAbandoned()}">
-                                <security:authorizeBlock roles="<%= roles(Developer, PDM ,LabManager) %>">
+                                <security:authorizeBlock roles="<%= roles(Developer ,LabManager) %>">
                                     <stripes:submit id="unAbandonVessel" name="unAbandonVessel" value="Unbandon All Positions" class="btn btn-primary"/>
                                 </security:authorizeBlock>
                             </c:when>
@@ -216,7 +216,7 @@
                                         <td align="right">
                                             <c:choose>
                                             <c:when test="${actionBean.isPositionAbandoned(wellTest)}">
-                                                <security:authorizeBlock roles="<%= roles(Developer, PDM ,LabManager) %>">
+                                                <security:authorizeBlock roles="<%= roles(Developer, LabManager) %>">
                                                 <stripes:submit id="${rowName}${columnName}" name="unAbandonPosition" value="Unabandon" onclick="abandonPositions(this.id)" class="btn btn-primary ${actionBean.shrinkCss('btn-xs')}"/>
                                                 </security:authorizeBlock>
                                             </c:when>
@@ -243,7 +243,7 @@
                         <div>
                             <c:choose>
                             <c:when test="${actionBean.isVesselAbandoned()}">
-                                <security:authorizeBlock roles="<%= roles(Developer, PDM , LabManager) %>">
+                                <security:authorizeBlock roles="<%= roles(Developer, LabManager) %>">
                                 <stripes:submit id="unAbandonVessel" name="unAbandonVessel" value="Unabandon" class="btn btn-primary"/>
                                 </security:authorizeBlock>
                             </c:when>
