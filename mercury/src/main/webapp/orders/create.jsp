@@ -52,6 +52,7 @@
         #regulatoryInfoSuggestions td.sample {
             width: 20%;
             word-break: break-word;
+            text-overflow: ellipsis;
         }
 
         #regulatoryInfoSuggestions caption {
@@ -72,6 +73,11 @@
 
         #regulatoryInfoSuggestions .orspRow:nth-child(n+2) {
             border-top: inherit
+        }
+
+        #regulatoryInfoSuggestions .noOrsp {
+            text-align: center;
+            font-weight: bold;
         }
 
     </style>
@@ -626,28 +632,55 @@
         }
 
         function showRegulatoryInfoSuggestions(data) {
+            String.prototype.trunc =
+                    function (n) {
+                        if (this.length > n){
+                            var remaining = this.substr(n+1,this.length).split(/\s+/);
+                            var label = "<br/><i>&hellip;(+" + remaining.length + " more)<i>";
+                            return  this.substr(0, n - 1) + label;
+                        }
+                        return this;
+                    };
+
+
             var $suggestionDiv = $j('#regulatoryInfoSuggestions');
             $suggestionDiv.empty();
             var $suggestionTable = $j("<table></table>", {'class': 'table simple'}).appendTo($suggestionDiv);
             if (data.length != 0) {
-                $suggestionTable.append($j("<caption></caption>", {text: "These samples are associated with these ORSP(s)"}));
+                $suggestionTable.append($j("<caption></caption>", {text: "ORSP(s) associated with samples"}));
+                $suggestionTable.append($j("<tr><th>Sample IDs</th><th>ORSP</th><th>Sample Collection</th></tr>"));
                 data.forEach(function (dataItem) {
                     dataItem.forEach(function ($suggestionEntry) {
                         var $outerRow = $j("<tr></tr>");
-                        var $samples = $j("<td></td>", {
-                            'text': $suggestionEntry.samples.join(', '),
+                        var sampleIds;
+
+                        if (Array.isArray($suggestionEntry.samples)) {
+                            sampleIds = $suggestionEntry.samples.join(", ");
+                        } else {
+                            sampleIds = $suggestionEntry.samples;
+                        }
+                        var samples = $j("<td></td>", {
+                            'html': sampleIds.trunc(90),
+                            'title': sampleIds,
                             'class': 'regulatorySuggestions sample',
                             //style: 'width: 25%, word-break: break-word;'
                         });
-                        $outerRow.append($samples);
+                        $outerRow.append(samples);
                         if ($suggestionEntry.orspProjects.length === 0) {
-                            var $orspProjects = $j("<td></td>");
+                            var $orspProjects = $j("<td></td>", {'colspan': 2, 'class': 'noOrsp'});
                             $orspProjects.text("No ORSP Projects found.");
                             $outerRow.append($orspProjects);
                         }else {
                             var $orspProjectsOuter = $j("<td></td>");
                             $outerRow.append($orspProjectsOuter);
+                            var collections = $suggestionEntry.collections;
+                            if (Array.isArray($suggestionEntry.collections)) {
+                                collections = $suggestionEntry.collections.join("<br/>");
+                            }
+                            $outerRow.append($j('<td></td>', {html: collections, title: collections}));
                         }
+
+
                         $outerRow.appendTo($suggestionTable);
 
                         $suggestionEntry.orspProjects.forEach(function ($orspProject) {
@@ -655,7 +688,7 @@
                             $selectButton.attr('disabled', true);
 
                             var $innerOrspRow = $j("<tr></tr>", {'class': 'regulatorySuggestions orspRow'});
-                            var $orspNameCell = $j("<td width='100%'></td>");
+                            var $orspNameCell = $j("<td></td>");
                             $orspNameCell.text($orspProject.identifier + ': ' + $orspProject.name);
 
                             if ($orspProject.regulatoryInfoId !== undefined) {
@@ -689,6 +722,7 @@
                                 $orspNameCell.append($addNow);
                                 </c:if>
                             }
+
                             $innerOrspRow.append($orspNameCell);
                             $innerOrspRow.append($j('<td></td>',{html:$selectButton}));
                             $orspProjectsOuter.append($innerOrspRow);
