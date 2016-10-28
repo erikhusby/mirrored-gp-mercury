@@ -43,6 +43,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -76,19 +77,18 @@ public class MetricsViewActionBean extends CoreActionBean {
     private AttributeArchetypeDao attributeArchetypeDao;
 
     @Validate(required = true, on = {SEARCH_ACTION})
-    private String labVesselIdentifier;
+    private String barcodes;
 
-    private LabVessel labVessel;
-    private Set<ProductOrder> productOrders;
-    private StaticPlate staticPlate;
-    private GenotypingChip genotypingChip;
-    private Set<String> foundChipTypes;
+    private Map<String, Set<ProductOrder>> barcodeToProductOrders;
+    private List<StaticPlate> staticPlates;
+    private Map<String, GenotypingChip> barcodeToGenotypingChip;
+    private Map<String, Set<String>> barcodeToChipTypes;
     private PlateMap plateMap;
 
     private String metricsTableJson;
     private boolean foundResults;
     private boolean isInfinium;
-    private boolean isClinical;
+    private Map<String, Boolean> barcodeToIsClinical;
     private final static String GREEN = "#dff0d8";
     private final static String YELLOW = "#fcf8e3";
     private final static String RED = "#f2dede";
@@ -141,7 +141,7 @@ public class MetricsViewActionBean extends CoreActionBean {
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
-        if (labVesselIdentifier != null) {
+        if (barcodes != null) {
             validateData();
             if (foundResults)
                 buildMetricsTable();
@@ -160,68 +160,92 @@ public class MetricsViewActionBean extends CoreActionBean {
     @ValidationMethod(on = SEARCH_ACTION)
     public void validateData() {
         foundResults = false;
-        setLabVessel(labVesselDao.findByIdentifier(labVesselIdentifier));
-        if (getLabVessel() == null) {
-            addValidationError("labVesselIdentifier", "Could not find lab vessel " + labVesselIdentifier);
-            return;
-        } else if (!OrmUtil.proxySafeIsInstance(labVessel, StaticPlate.class)) {
-            addValidationError("labVesselIdentifier", "Only plates or chips currently allowed");
-            return;
+        if (barcodes == null) {
+            addValidationError("barcodes", "Enter at least one barcode.");
         }
-
-        staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
-
-        productOrders = new HashSet<>();
-        Set<Pair<String, String>> chipPairs = new HashSet<>();
-        for(SampleInstanceV2 sampleInstance: labVessel.getSampleInstancesV2()) {
-            ProductOrderSample productOrderSample = sampleInstance.getProductOrderSampleForSingleBucket();
-            if (productOrderSample != null) {
-                ProductOrder productOrder = productOrderSample.getProductOrder();
-                Date effectiveDate =  productOrder.getCreatedDate();
-                Pair<String, String> chipPair = productEjb.getGenotypingChip(productOrder, effectiveDate);
-                chipPairs.add(chipPair);
-                productOrders.add(productOrder);
+        staticPlates = new ArrayList<>();
+        String[] splitBarcodes = barcodes.trim().split("\\s+");
+        Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(Arrays.asList(splitBarcodes));
+        for (Map.Entry<String, LabVessel> barcodeLabVesselEntry : mapBarcodeToVessel.entrySet()) {
+            LabVessel labVessel = barcodeLabVesselEntry.getValue();
+            if (labVessel == null) {
+                addValidationError("barcodes", barcodeLabVesselEntry.getKey() + " not found.");
+            } else if (!OrmUtil.proxySafeIsInstance(labVessel, StaticPlate.class)) {
+                addValidationError("barcodes", "Only plates or chips currently allowed");
             } else {
-                List<ProductOrderSample> productOrderSamples = productOrderSampleDao.findBySamples(
-                        Collections.singletonList(sampleInstance.getRootOrEarliestMercurySampleName()));
-                for (ProductOrderSample pdoSample: productOrderSamples) {
-                    if (pdoSample.getProductOrder() != null) {
-                        ProductOrder productOrder = pdoSample.getProductOrder();
-                        productOrders.add(productOrder);
-                        Date effectiveDate =  productOrder.getCreatedDate();
-                        Pair<String, String> chipPair = productEjb.getGenotypingChip(productOrder, effectiveDate);
-                        chipPairs.add(chipPair);
-                    }
-                }
+                StaticPlate staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
+                staticPlates.add(staticPlate);
             }
         }
+        if (!getValidationErrors().isEmpty()) {
+            return;
+        }
 
-        foundChipTypes = new HashSet<>();
-        if (!chipPairs.isEmpty()) {
-            Pair<String, String> firstChipPair = chipPairs.iterator().next();
-            isInfinium = firstChipPair != null && firstChipPair.getLeft() != null && firstChipPair.getRight() != null;
-            if (isInfinium) {
-                for (Pair<String, String> chipPair : chipPairs) {
-                    if (chipPair.getLeft() != null && chipPair.getRight() != null) {
-                        genotypingChip = attributeArchetypeDao.findGenotypingChip(chipPair.getLeft(),
-                                chipPair.getRight());
-                        if (genotypingChip == null) {
-                            addGlobalValidationError("Chip " + chipPair.getRight() + " is not configured");
-                            return;
+        barcodeToProductOrders = new HashMap<>();
+        barcodeToGenotypingChip = new HashMap<>();
+        barcodeToChipTypes = new HashMap<>();
+        barcodeToIsClinical = new HashMap<>();
+        for (StaticPlate staticPlate: staticPlates) {
+            Set<ProductOrder> productOrders = new HashSet<>();
+            barcodeToProductOrders.put(staticPlate.getLabel(), productOrders);
+            Set<Pair<String, String>> chipPairs = new HashSet<>();
+            for (SampleInstanceV2 sampleInstance : staticPlate.getSampleInstancesV2()) {
+                ProductOrderSample productOrderSample = sampleInstance.getProductOrderSampleForSingleBucket();
+                if (productOrderSample != null) {
+                    ProductOrder productOrder = productOrderSample.getProductOrder();
+                    Date effectiveDate = productOrder.getCreatedDate();
+                    Pair<String, String> chipPair = productEjb.getGenotypingChip(productOrder, effectiveDate);
+                    chipPairs.add(chipPair);
+                    productOrders.add(productOrder);
+                } else {
+                    List<ProductOrderSample> productOrderSamples = productOrderSampleDao.findBySamples(
+                            Collections.singletonList(sampleInstance.getRootOrEarliestMercurySampleName()));
+                    for (ProductOrderSample pdoSample : productOrderSamples) {
+                        if (pdoSample.getProductOrder() != null) {
+                            ProductOrder productOrder = pdoSample.getProductOrder();
+                            productOrders.add(productOrder);
+                            Date effectiveDate = productOrder.getCreatedDate();
+                            Pair<String, String> chipPair = productEjb.getGenotypingChip(productOrder, effectiveDate);
+                            chipPairs.add(chipPair);
                         }
-                        foundChipTypes.add(genotypingChip.getChipName());
                     }
                 }
             }
-        }
 
-        // Check if clinical
-        isClinical = true;
-        for (ProductOrder productOrder : productOrders) {
-            ResearchProject researchProject = productOrder.getResearchProject();
-            if (!researchProject.getRegulatoryDesignation().isClinical()) {
-                isClinical = false;
+            Set<String> chipTypes = new HashSet<>();
+            barcodeToChipTypes.put(staticPlate.getLabel(), chipTypes);
+            if (!chipPairs.isEmpty()) {
+                Pair<String, String> firstChipPair = chipPairs.iterator().next();
+                isInfinium =
+                        firstChipPair != null && firstChipPair.getLeft() != null && firstChipPair.getRight() != null;
+                if (isInfinium) {
+                    for (Pair<String, String> chipPair : chipPairs) {
+                        if (chipPair.getLeft() != null && chipPair.getRight() != null) {
+                            GenotypingChip genotypingChip = attributeArchetypeDao.findGenotypingChip(chipPair.getLeft(),
+                                    chipPair.getRight());
+                            if (genotypingChip == null) {
+                                addGlobalValidationError("Chip " + chipPair.getRight() + " is not configured");
+                            } else {
+                                chipTypes.add(genotypingChip.getChipName());
+                            }
+                        }
+                    }
+                }
             }
+
+            if (!getValidationErrors().isEmpty()) {
+                return;
+            }
+
+            // Check if clinical
+            boolean isClinical = true;
+            for (ProductOrder productOrder : productOrders) {
+                ResearchProject researchProject = productOrder.getResearchProject();
+                if (!researchProject.getRegulatoryDesignation().isClinical()) {
+                    isClinical = false;
+                }
+            }
+            barcodeToIsClinical.put(staticPlate.getLabel(), isClinical);
         }
         foundResults = true;
     }
@@ -229,7 +253,19 @@ public class MetricsViewActionBean extends CoreActionBean {
     private void buildMetricsTable() {
         if (isInfinium) {
             try {
-                buildInfiniumMetricsTable();
+                List<PlateMap> plateMaps = new ArrayList<>();
+                for (StaticPlate staticPlate: staticPlates) {
+                    PlateMap plateMap = buildInfiniumMetricsTable(staticPlate);
+                    if (plateMap != null) {
+                        plateMaps.add(plateMap);
+                    }
+                }
+                if (getValidationErrors().isEmpty()) {
+                    ObjectMapper mapper = new ObjectMapper();
+                    metricsTableJson = mapper.writeValueAsString(plateMaps);
+                } else {
+                    setFoundResults(false);
+                }
             } catch (IOException e) {
                 logger.error("Error building Infinium Metrics Table", e);
                 addGlobalValidationError("Failed to generate metrics view");
@@ -239,16 +275,20 @@ public class MetricsViewActionBean extends CoreActionBean {
         }
     }
 
-    public void buildInfiniumMetricsTable() throws IOException {
+    public PlateMap buildInfiniumMetricsTable(StaticPlate staticPlate) throws IOException {
         boolean isHybChip = false;
         Set<LabVessel> chips = new HashSet<>();
         Set<String> chipWellBarcodes = new HashSet<>();
         Map<String, String> chipWellToSourcePosition = new HashMap<>();
+        Set<String> chipTypes = barcodeToChipTypes.get(staticPlate.getLabel());
+        Set<ProductOrder> productOrders = barcodeToProductOrders.get(staticPlate.getLabel());
+        GenotypingChip genotypingChip = barcodeToGenotypingChip.get(staticPlate.getLabel());
+        boolean isClinical = barcodeToIsClinical.get(staticPlate.getLabel());
 
         Set<LabEvent> hybEvents = new HashSet<>();
         if (staticPlate.getVesselGeometry().name().contains("CHIP")) {
-            chips.add(labVessel);
-            hybEvents.addAll(labVessel.getTransfersTo());
+            chips.add(staticPlate);
+            hybEvents.addAll(staticPlate.getTransfersTo());
             isHybChip = true;
         } else {
             List<LabEventType> infiniumRootEventTypes =
@@ -256,8 +296,8 @@ public class MetricsViewActionBean extends CoreActionBean {
             TransferTraverserCriteria.VesselForEventTypeCriteria eventTypeCriteria
                     = new TransferTraverserCriteria.VesselForEventTypeCriteria(infiniumRootEventTypes, true);
 
-            if (labVessel.getContainerRole() != null) {
-                labVessel.getContainerRole().applyCriteriaToAllPositions(eventTypeCriteria,
+            if (staticPlate.getContainerRole() != null) {
+                staticPlate.getContainerRole().applyCriteriaToAllPositions(eventTypeCriteria,
                         TransferTraverserCriteria.TraversalDirection.Descendants);
             }
 
@@ -273,7 +313,7 @@ public class MetricsViewActionBean extends CoreActionBean {
         }
         if (chips.isEmpty()) {
             addValidationError("labVesselIdentifier", "No infinium metrics found for lab vessel");
-            return;
+            return null;
         }
 
         for (LabEvent labEvent : hybEvents) {
@@ -294,13 +334,13 @@ public class MetricsViewActionBean extends CoreActionBean {
 
         List<ArraysQc> arraysQcList = arraysQcDao.findByBarcodes(new ArrayList<>(chipWellBarcodes));
         if (arraysQcList.isEmpty()) {
-            addGlobalValidationError("Failed to find any Arrays QC data for vessel " + labVessel.getLabel());
-            return;
+            addGlobalValidationError("Failed to find any Arrays QC data for vessel " + staticPlate.getLabel());
+            return null;
         }
 
         // Call Rate threshold depends on the Genotyping Chip
         List<Options> callRateOptions = null;
-        if (foundChipTypes.size() == 1 && genotypingChip != null) {
+        if (chipTypes.size() == 1 && genotypingChip != null) {
             Map<String, String> chipAttributes = genotypingChip.getAttributeMap();
             if (productOrders.size() == 1) {
                 ProductOrder productOrder = productOrders.iterator().next();
@@ -330,7 +370,7 @@ public class MetricsViewActionBean extends CoreActionBean {
             } else {
                 addGlobalValidationError(
                         "Failed to find call rate threshold for genotyping chip " + genotypingChip.getChipName());
-                return;
+                return null;
             }
         } else {
             callRateOptions = new OptionsBuilder().
@@ -364,6 +404,7 @@ public class MetricsViewActionBean extends CoreActionBean {
         List<Options> emptyOptions = new OptionsBuilder().build();
 
         plateMap = new PlateMap();
+        plateMap.setLabel(staticPlate.getLabel());
         Map<PlateMapMetrics, WellDataset> plateMapToWellDataSet = new HashMap<>();
         for (PlateMapMetrics plateMapMetric: PlateMapMetrics.values()) {
             WellDataset wellDataset = new WellDataset(plateMapMetric);
@@ -476,24 +517,19 @@ public class MetricsViewActionBean extends CoreActionBean {
             }
 
         }
-        ObjectMapper mapper = new ObjectMapper();
-        metricsTableJson = mapper.writeValueAsString(plateMap);
+        return plateMap;
     }
 
-    public String getLabVesselIdentifier() {
-        return labVesselIdentifier;
+    public String getBarcodes() {
+        return barcodes;
     }
 
-    public void setLabVesselIdentifier(String labVesselIdentifier) {
-        this.labVesselIdentifier = labVesselIdentifier;
+    public void setBarcodes(String barcodes) {
+        this.barcodes = barcodes;
     }
 
-    public LabVessel getLabVessel() {
-        return labVessel;
-    }
-
-    public void setLabVessel(LabVessel labVessel) {
-        this.labVessel = labVessel;
+    public List<StaticPlate> getStaticPlates() {
+        return staticPlates;
     }
 
     public PlateMap getPlateMap() {
@@ -539,6 +575,7 @@ public class MetricsViewActionBean extends CoreActionBean {
      */
     public class PlateMap {
         private List<WellDataset> datasets;
+        private String label;
 
         public List<WellDataset> getDatasets() {
             if (datasets == null) {
@@ -550,6 +587,14 @@ public class MetricsViewActionBean extends CoreActionBean {
         public void setDatasets(
                 List<WellDataset> datasets) {
             this.datasets = datasets;
+        }
+
+        public String getLabel() {
+            return label;
+        }
+
+        public void setLabel(String label) {
+            this.label = label;
         }
     }
 

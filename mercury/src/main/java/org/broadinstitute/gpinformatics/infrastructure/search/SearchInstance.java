@@ -779,11 +779,6 @@ public class SearchInstance implements Serializable {
     private int pageSize;
 
     /**
-     * For how many seconds to allow the search to run.
-     */
-    private int timeoutLength = 60 * 3;
-
-    /**
      * Default constructor for Stripes.
      */
     public SearchInstance() {
@@ -1207,11 +1202,4 @@ public class SearchInstance implements Serializable {
         }
     }
 
-    public int getTimeoutLength() {
-        return timeoutLength;
-    }
-
-    public void setTimeoutLength(int timeoutLength) {
-        this.timeoutLength = timeoutLength;
-    }
 }

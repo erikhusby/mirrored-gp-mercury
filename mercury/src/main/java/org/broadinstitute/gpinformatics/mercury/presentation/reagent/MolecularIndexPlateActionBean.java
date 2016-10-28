@@ -11,6 +11,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -57,5 +59,16 @@ public class MolecularIndexPlateActionBean extends CoreActionBean {
 
     public IndexedPlateFactory.TechnologiesAndParsers[] getTechnologiesAndParsers() {
         return IndexedPlateFactory.TechnologiesAndParsers.values();
+    }
+
+    public List<IndexedPlateFactory.TechnologiesAndParsers> getActiveTechnologiesAndParsers() {
+        List<IndexedPlateFactory.TechnologiesAndParsers> activeParsers = new ArrayList<>();
+        IndexedPlateFactory.TechnologiesAndParsers[] values = IndexedPlateFactory.TechnologiesAndParsers.values();
+        for (IndexedPlateFactory.TechnologiesAndParsers technologiesAndParser: values) {
+            if (technologiesAndParser.isActive()) {
+                activeParsers.add(technologiesAndParser);
+            }
+        }
+        return activeParsers;
     }
 }

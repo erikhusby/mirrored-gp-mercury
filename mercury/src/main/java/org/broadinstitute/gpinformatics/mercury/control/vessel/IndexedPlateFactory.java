@@ -39,32 +39,40 @@ public class IndexedPlateFactory {
 
     public enum TechnologiesAndParsers {
         FOUR54_SINGLE("454 (Single Index)",
-                new IndexedPlateParserFourColumnFormat(MolecularIndexingScheme.IndexPosition.FOUR54_A.getTechnology())),
+                new IndexedPlateParserFourColumnFormat(MolecularIndexingScheme.IndexPosition.FOUR54_A.getTechnology()),
+                false),
         ION_SINGLE("Ion Torrent (Single Index)",
-                new IndexedPlateParserFourColumnFormat(MolecularIndexingScheme.IndexPosition.ION_A.getTechnology())),
+                new IndexedPlateParserFourColumnFormat(MolecularIndexingScheme.IndexPosition.ION_A.getTechnology()),
+                false),
         ILLUMINA_SINGLE("Illumina (Single Index)",
-                new IndexedPlateParserIDTSpreadsheetFormat()),
+                new IndexedPlateParserIDTSpreadsheetFormat(),
+                true),
         ILLUMINA_TSCA("Illumina (TSCA)",
-                new IndexedPlateParserTSCAFormat()),
+                new IndexedPlateParserTSCAFormat(),
+                false),
         ILLUMINA_FP("Illumina (FP)",
-                new IndexedPlateParserTSCAFormat(), StaticPlate.PlateType.IndexedAdapterPlate384);
+                new IndexedPlateParserTSCAFormat(), StaticPlate.PlateType.IndexedAdapterPlate384,
+                true);
 
         private final String prettyName;
         private final IndexedPlateParser indexedPlateParser;
         private final StaticPlate.PlateType plateType;
+        private final boolean active;
 
-        TechnologiesAndParsers(String name, IndexedPlateParser indexedPlateParser) {
+        TechnologiesAndParsers(String name, IndexedPlateParser indexedPlateParser, boolean active) {
             prettyName = name;
             this.indexedPlateParser = indexedPlateParser;
             this.plateType = StaticPlate.PlateType.IndexedAdapterPlate96;
+            this.active = active;
         }
 
         TechnologiesAndParsers(String prettyName,
                                IndexedPlateParser indexedPlateParser,
-                               StaticPlate.PlateType plateType) {
+                               StaticPlate.PlateType plateType, boolean active) {
             this.prettyName = prettyName;
             this.indexedPlateParser = indexedPlateParser;
             this.plateType = plateType;
+            this.active = active;
         }
 
         public String getPrettyName() {
@@ -77,6 +85,10 @@ public class IndexedPlateFactory {
 
         public StaticPlate.PlateType getPlateType() {
             return plateType;
+        }
+
+        public boolean isActive() {
+            return active;
         }
     }
 

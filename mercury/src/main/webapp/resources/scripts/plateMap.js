@@ -2,34 +2,46 @@
     var pluginName = 'plateMap',
         defaults = {
             logEnabled : true,
-            metricsSelectorId: '#metricsList',
-            onchangeselector : '#heatField',
-            metadataDefinitionListId: '#metadataDefinitionList',
-            legendId: '#legend',
-            tableId: '#platemap',
-            datasets:[]
+            metricsSelectorClass: '.metricsList',
+            metadataDefinitionListClass: '.metadataDefinitionList',
+            legendClass: '.legend',
+            tableClass: '.platemap',
+            platemaps: []
         };
 
     // The actual plugin constructor
     function Plugin( element, options ) {
         this.element = element;
         this.options = $.extend( {}, defaults, options);
-        this.metricsListSelector = $(this.options.metricsSelectorId);
-        this.legendSelector = $(this.options.legendId);
-        this.metadataSelector = $(this.options.metadataDefinitionListId);
+        this.platemaps = $(this.options.platemaps);
+        this.tables = $(this.options.tableClass);
+        this.legends = $(this.options.legendClass);
+        this.metadataFields = $(this.options.metadataDefinitionListClass);
+        this.metrics = $(this.options.metricsSelectorClass);
         this._defaults = defaults;
         this._name = pluginName;
         this.init();
     }
 
-    Plugin.prototype.init = function () {
-        var datasets = this.options.datasets;
+    Plugin.prototype.init = function() {
         var plugin = this;
-        var legend = this.legendSelector;
-        var metricNames = $.map(this.options.datasets, function(val, i) {
+        $.each(this.platemaps, function (index, platemap) {
+            var legend = plugin.legends[index];
+            var metadata = plugin.metadataFields[index];
+            var metric = plugin.metrics[index];
+            plugin.initPlatemap(platemap, legend, metadata, metric);
+        });
+    };
+
+    Plugin.prototype.initPlatemap = function (platemap, legend, metadata, metric) {
+        var plugin = this;
+        var datasets = platemap.datasets;
+        var legend = $(legend);
+        var metricNames = $.map(platemap.datasets, function(val, i) {
             return val.plateMapMetrics.displayName;
         });
-        var metricsListBox = this.buildMetricsSelectList(metricNames);
+        var metricsListBox = this.buildMetricsSelectList(metricNames, $(metric));
+        var metadataSelector = $(metadata);
         metricsListBox.change(function() {
             var selectedMetric = this.value;
             var datasetList = $.grep(datasets, function(e){
@@ -37,7 +49,11 @@
             });
             // Clear all cells and legend
             var wells = $(".metricCell");
-            $.each(wells, function () {
+            var plateWells = $.grep(wells, function (e) {
+                var id = $(e).attr('id');
+                return id.indexOf(platemap.label) != -1;
+            });
+            $.each(plateWells, function () {
                 $(this).text("");
                 $(this).css("background-color", "");
             });
@@ -46,10 +62,11 @@
                 var dataset = datasetList[0];
                 plugin.log(dataset);
                 var chartType = dataset.plateMapMetrics.chartType;
-                plugin.buildLegend(dataset.options);
+                plugin.buildLegend(legend, dataset.options);
                 $.each(dataset.wellData, function (idx, wellData) {
-                    var wellElem = $('#' + wellData.well);
-                    plugin.attachMetadata(wellElem, wellData.metadata);
+                    var wellIdTag = '#' + platemap.label + "_" + wellData.well;
+                    var wellElem = $(wellIdTag);
+                    plugin.attachMetadata(wellElem, wellData.metadata, metadataSelector);
                     if (dataset.plateMapMetrics.displayValue)
                         wellElem.text(wellData.value);
                     if (chartType === 'Category') {
@@ -67,8 +84,7 @@
         });
     };
 
-    Plugin.prototype.buildMetricsSelectList = function(metricNames) {
-        var metricsListBox = this.metricsListSelector;
+    Plugin.prototype.buildMetricsSelectList = function(metricNames, metricsListBox) {
         metricsListBox.append($("<option>").attr('value', '').text(''));
         $(metricNames).each(function(idx, value) {
             metricsListBox.append($("<option>").attr('value', value).text(value));
@@ -76,8 +92,7 @@
         return metricsListBox;
     };
 
-    Plugin.prototype.buildLegend = function(options) {
-        var legend = this.legendSelector;
+    Plugin.prototype.buildLegend = function(legend, options) {
         legend.empty();
         var legendList = $('<ul></ul>').addClass('legend');
         for (var i = 0; i < options.length; i++) {
@@ -92,8 +107,7 @@
         legend.append(legendList);
     };
 
-    Plugin.prototype.attachMetadata = function(wellElem, metadataList) {
-        var metadataSelector = this.metadataSelector;
+    Plugin.prototype.attachMetadata = function(wellElem, metadataList, metadataSelector) {
         wellElem.hover(function(){
             metadataSelector.empty();
             if (metadataList != undefined) {
@@ -116,7 +130,7 @@
     Plugin.prototype.equals = function(a, b) {
         return a === b;
     };
-    
+
     Plugin.prototype.greaterThan = function(a, b) {
         return Number(a) > Number(b);
     };

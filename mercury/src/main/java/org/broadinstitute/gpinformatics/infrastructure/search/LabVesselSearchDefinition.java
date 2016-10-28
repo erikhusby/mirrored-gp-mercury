@@ -1029,6 +1029,54 @@ public class LabVesselSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
+        searchTerm.setName("EmergeVolumeTransfer Rack Barcode");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public List<String> evaluate(Object entity, SearchContext context) {
+                LabVessel labVessel = (LabVessel) entity;
+                List<String> results = new ArrayList<>();
+
+                Map<LabEvent, Set<LabVessel>> mapEventToVessels = labVessel.findVesselsForLabEventType(
+                        LabEventType.EMERGE_VOLUME_TRANSFER, true,
+                        EnumSet.of(TransferTraverserCriteria.TraversalDirection.Ancestors,
+                                TransferTraverserCriteria.TraversalDirection.Descendants));
+                for (Map.Entry<LabEvent, Set<LabVessel>> labEventSetEntry : mapEventToVessels.entrySet()) {
+                    for (SectionTransfer sectionTransfer : labEventSetEntry.getKey().getSectionTransfers()) {
+                        if (sectionTransfer.getAncillaryTargetVessel() != null) {
+                            results.add(sectionTransfer.getAncillaryTargetVessel().getLabel());
+                        }
+                    }
+                }
+                return results;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("EmergeVolumeTransfer Rack Position");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public List<String> evaluate(Object entity, SearchContext context) {
+                LabVessel labVessel = (LabVessel) entity;
+                List<String> results = new ArrayList<>();
+
+                Map<LabEvent, Set<LabVessel>> mapEventToVessels = labVessel.findVesselsForLabEventType(
+                        LabEventType.EMERGE_VOLUME_TRANSFER, true,
+                        EnumSet.of(TransferTraverserCriteria.TraversalDirection.Ancestors,
+                                TransferTraverserCriteria.TraversalDirection.Descendants));
+                for (Map.Entry<LabEvent, Set<LabVessel>> labEventSetEntry : mapEventToVessels.entrySet()) {
+                    for (SectionTransfer sectionTransfer : labEventSetEntry.getKey().getSectionTransfers()) {
+                        for (LabVessel vessel : labEventSetEntry.getValue()) {
+                            results.add(sectionTransfer.getTargetVesselContainer().getPositionOfVessel(vessel).toString());
+                        }
+                    }
+                }
+                return results;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
         searchTerm.setName("Rack Barcode");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
