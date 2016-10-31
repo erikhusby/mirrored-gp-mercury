@@ -272,12 +272,14 @@ public class AttributeArchetypeFixupTest extends Arquillian {
 
     /**
      * This test reads its parameters from a file, mercury/src/test/resources/testdata/FixupProductChipActiveDate.txt,
-     * so it can be used for other similar fixups, without writing a new test.  Example contents of the file are
-     * (the ticket in the FixupCommentary, the archetypeId, the product part number, the active date):
+     * so it can be used for other similar fixups, without writing a new test.  The format of the file is:
+     * one line with the ticket in the FixupCommentary
+     * followed by multiple lines with the archetypeId, the product part number, the active date, and optional
+     * inactive date
+     * For example:
      * SUPPORT-1877
-     * 1952
-     * P-WG-0023
-     * 09/01/2016
+     * 1952,P-WG-0023,2016-09-01 00:00:00
+     * 21,P-WG-0023,2015-10-09 11:13:00,2016-09-01 00:00:00
      */
     @Test(enabled = false)
     public void fixupSupport2223() {
@@ -285,16 +287,26 @@ public class AttributeArchetypeFixupTest extends Arquillian {
             userBean.loginOSUser();
             List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("FixupProductChipActiveDate.txt"));
             String ticketId = lines.get(0);
-            long archetypeId = Long.parseLong(lines.get(1));
-            String productPartNumber = lines.get(2);
-            String date = lines.get(3);
+            for (int i = 1; i < lines.size(); i++) {
+                String[] fields = lines.get(i).split(",");
+                long archetypeId = Long.parseLong(fields[0]);
+                String productPartNumber = fields[1];
+                String activeDate = fields[2];
+                String inactiveDate = null;
+                if (fields.length == 4) {
+                    inactiveDate = fields[3];
+                }
 
-            GenotypingChipMapping genotypingChipMapping = (GenotypingChipMapping) attributeArchetypeDao.findById(
-                    AttributeArchetype.class, archetypeId);
-            Assert.assertEquals(genotypingChipMapping.getArchetypeName(), productPartNumber);
-            genotypingChipMapping.setActiveDate(DateUtils.parseDate(date));
-            System.out.println("Changing date for " + genotypingChipMapping.getArchetypeId() + " to " +
-                    genotypingChipMapping.getActiveDate());
+                GenotypingChipMapping genotypingChipMapping = (GenotypingChipMapping) attributeArchetypeDao.findById(
+                        AttributeArchetype.class, archetypeId);
+                Assert.assertEquals(genotypingChipMapping.getArchetypeName(), productPartNumber);
+                genotypingChipMapping.setActiveDate(ArchetypeAttribute.dateFormat.parse(activeDate));
+                System.out.println("Changing date for " + genotypingChipMapping.getArchetypeId() + " to " +
+                        genotypingChipMapping.getActiveDate());
+                if (inactiveDate != null) {
+                    genotypingChipMapping.setInactiveDate(ArchetypeAttribute.dateFormat.parse(inactiveDate));
+                }
+            }
             attributeArchetypeDao.persist(new FixupCommentary(ticketId + " adjust Active date for chip mapping"));
             attributeArchetypeDao.flush();
         } catch (ParseException | IOException e) {
