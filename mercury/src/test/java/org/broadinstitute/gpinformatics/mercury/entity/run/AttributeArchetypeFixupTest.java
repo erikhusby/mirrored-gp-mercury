@@ -1,11 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.entity.run;
 
+import org.apache.commons.io.IOUtils;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingChipMapping;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.InfiniumRunResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -16,6 +18,7 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
+import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -265,5 +268,37 @@ public class AttributeArchetypeFixupTest extends Arquillian {
                 genotypingChipMapping.getActiveDate());
         attributeArchetypeDao.persist(new FixupCommentary("SUPPORT-1877 adjust Active date for chip mapping"));
         attributeArchetypeDao.flush();
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/FixupProductChipActiveDate.txt,
+     * so it can be used for other similar fixups, without writing a new test.  Example contents of the file are
+     * (the ticket in the FixupCommentary, the archetypeId, the product part number, the active date):
+     * SUPPORT-1877
+     * 1952
+     * P-WG-0023
+     * 09/01/2016
+     */
+    @Test(enabled = false)
+    public void fixupSupport2223() {
+        try {
+            userBean.loginOSUser();
+            List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("FixupProductChipActiveDate.txt"));
+            String ticketId = lines.get(0);
+            long archetypeId = Long.parseLong(lines.get(1));
+            String productPartNumber = lines.get(2);
+            String date = lines.get(3);
+
+            GenotypingChipMapping genotypingChipMapping = (GenotypingChipMapping) attributeArchetypeDao.findById(
+                    AttributeArchetype.class, archetypeId);
+            Assert.assertEquals(genotypingChipMapping.getArchetypeName(), productPartNumber);
+            genotypingChipMapping.setActiveDate(DateUtils.parseDate(date));
+            System.out.println("Changing date for " + genotypingChipMapping.getArchetypeId() + " to " +
+                    genotypingChipMapping.getActiveDate());
+            attributeArchetypeDao.persist(new FixupCommentary(ticketId + " adjust Active date for chip mapping"));
+            attributeArchetypeDao.flush();
+        } catch (ParseException | IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
