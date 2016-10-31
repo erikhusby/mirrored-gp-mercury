@@ -54,6 +54,7 @@ public class DeploymentBuilder {
                 .addAsWebInfResource(new File("src/test/resources/squid-" + dataSourceEnvironment + "-ds.xml"))
                 .addAsWebInfResource(new File("src/test/resources/metrics-prod-ds.xml"))
                 .addAsResource(new File("src/main/resources/META-INF/persistence.xml"), "META-INF/persistence.xml")
+                .addAsResource(new File("src/main/resources/META-INF/beans.xml"), "META-INF/beans.xml")
                 .addAsWebInfResource(new File("src/main/webapp/WEB-INF/ejb-jar.xml"))
                 .addAsWebInfResource(new File("src/main/webapp/WEB-INF/jboss-deployment-structure.xml"))
                 //TODO  Cherry Picking resources is not Ideal.  When we have more auto front end tests, we will need everything in resources.
@@ -93,22 +94,33 @@ public class DeploymentBuilder {
         return buildMercuryWar(Deployment.STUBBY);
     }
 
+    /**
+     * Replace the default beans.xml file as deployed with alternative beans for testing
+     * @param beansXml Contents of alternative beans.xml file
+     * @return WebArchive with alternative beans.xml file substituted
+     */
     public static WebArchive buildMercuryWar(String beansXml) {
-        return ShrinkWrap.create(WebArchive.class, MERCURY_WAR)
-                .addAsWebInfResource(new StringAsset(beansXml), "beans.xml")
-                .merge(buildMercuryWar());
+        WebArchive war = buildMercuryWar();
+        war.addAsResource(new StringAsset(beansXml), "META-INF/beans.xml");
+        return war;
     }
 
+    /**
+     * @see DeploymentBuilder#buildMercuryWar(String)
+     */
     private static WebArchive buildMercuryWar(String beansXml, Deployment deployment) {
-        return ShrinkWrap.create(WebArchive.class, MERCURY_WAR)
-                .addAsWebInfResource(new StringAsset(beansXml), "beans.xml")
-                .merge(buildMercuryWar(deployment));
+        WebArchive war = buildMercuryWar(deployment);
+        war.addAsResource(new StringAsset(beansXml), "META-INF/beans.xml");
+        return war;
     }
 
+    /**
+     * @see DeploymentBuilder#buildMercuryWar(String)
+     */
     private static WebArchive buildMercuryWar(String beansXml, String dataSourceEnvironment, Deployment deployment) {
-        return ShrinkWrap.create(WebArchive.class, MERCURY_WAR)
-                .addAsWebInfResource(new StringAsset(beansXml), "beans.xml")
-                .merge(buildMercuryWar(deployment, dataSourceEnvironment));
+        WebArchive war = buildMercuryWar(deployment, dataSourceEnvironment);
+        war.addAsResource(new StringAsset(beansXml), "META-INF/beans.xml");
+        return war;
     }
 
     @SuppressWarnings("UnusedDeclaration")
@@ -163,7 +175,11 @@ public class DeploymentBuilder {
      */
     public static String buildBeansXml(Class... alternatives) {
         StringBuilder sb = new StringBuilder();
-        sb.append("<beans>\n")
+        sb.append("<beans xmlns=\"http://xmlns.jcp.org/xml/ns/javaee\"\n" +
+                "       xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+                "       xsi:schemaLocation=\"http://xmlns.jcp.org/xml/ns/javaee\n" +
+                "\t\thttp://xmlns.jcp.org/xml/ns/javaee/beans_1_1.xsd\"\n" +
+                "       bean-discovery-mode=\"all\">\n")
                 .append("  <alternatives>\n");
         for (Class alternative : alternatives) {
             if (alternative.isAnnotation()) {

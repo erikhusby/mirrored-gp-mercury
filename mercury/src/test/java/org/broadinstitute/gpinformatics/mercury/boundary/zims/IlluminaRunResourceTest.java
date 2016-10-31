@@ -64,7 +64,8 @@ public class IlluminaRunResourceTest extends Arquillian {
     @Inject
     private ProductOrderDao pdoDao;
 
-    private TZamboniRun zamboniRun;
+    // RequestScoped test bean may use multiple instances
+    private TZamboniRun zamboniRun = new MockThriftService().fetchRun(RUN_NAME);
 
     public static final String RUN_NAME = "120320_SL-HBN_0159_AFCC0GHCACXX"; // has bsp samples
     public static final String RUN_BARCODE = "C0GHCACXX120320";
@@ -499,11 +500,6 @@ public class IlluminaRunResourceTest extends Arquillian {
             }
         }
         return null;
-    }
-
-    @BeforeClass(groups = ALTERNATIVES)
-    private void getZamboniRun() throws Exception {
-        zamboniRun = new MockThriftService().fetchRun(RUN_NAME);
     }
 
     public List<LibraryData> fetchLibraryDetailsByLibraryName(List<String> libraryNames) {

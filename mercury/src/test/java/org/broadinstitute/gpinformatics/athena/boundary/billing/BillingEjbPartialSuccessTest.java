@@ -95,8 +95,8 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
     private TestLogHandler testLogHandler;
 
-    @BeforeTest
-    public void setUpTestLogger() {
+    public BillingEjbPartialSuccessTest() {
+        super();
         Logger billingAdaptorLogger = Logger.getLogger(BillingAdaptor.class.getName());
         billingAdaptorLogger.setLevel(Level.ALL);
         testLogHandler = new TestLogHandler();
