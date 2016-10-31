@@ -1691,26 +1691,28 @@ public class LabEventFixupTest extends Arquillian {
         utx.commit();
     }
 
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void fixupGplim4302() throws Exception {
         userBean.loginOSUser();
         utx.begin();
         List<LabVessel> infiniumChips = labVesselDao.findAllWithEventButMissingAnother(LabEventType.INFINIUM_XSTAIN,
                 LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
         BspUser bspUser = userBean.getBspUser();
+        long disambiguator = 1L;
         for (LabVessel labVessel: infiniumChips) {
             Date start = new Date();
             long operator = bspUser.getUserId();
             LabEvent labEvent = new LabEvent(LabEventType.INFINIUM_AUTOCALL_ALL_STARTED, start,
-                    LabEvent.UI_PROGRAM_NAME, 1L, operator, LabEvent.UI_PROGRAM_NAME);
+                    LabEvent.UI_PROGRAM_NAME, disambiguator, operator, LabEvent.UI_PROGRAM_NAME);
             labVessel.addInPlaceEvent(labEvent);
+            disambiguator++;
             System.out.println("Adding InfiniumAutoCallAllStarted event as an in place lab event to chip " + labVessel.getLabel());
         }
 
         FixupCommentary fixupCommentary = new FixupCommentary(
                 "GPLIM-4302 - complete old infinium chips by adding InfiniumAutoCallAllStarted event");
-        labVesselDao.persist(fixupCommentary);
-        labVesselDao.flush();
+        labEventDao.persist(fixupCommentary);
+        labEventDao.flush();
 
         utx.commit();
     }
