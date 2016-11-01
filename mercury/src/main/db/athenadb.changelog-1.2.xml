@@ -542,4 +542,25 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-4377-1" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="access_control" schemaName="athena" />
+            </not>
+        </preConditions>
+        <createTable tableName="access_control">
+            <column name="id" type="number(19,0)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="dtype" type="varchar(31)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="access_status" type="varchar(255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="disabled_features" type="varchar(255)"></column>
+        </createTable>
+        <createSequence sequenceName="SEQ_ACCESS_CONTROL" schemaName="athena" startValue="1" incrementBy="50" />
+    </changeSet>
+
 </databaseChangeLog>
