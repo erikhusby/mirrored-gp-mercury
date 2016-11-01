@@ -1691,7 +1691,7 @@ public class LabEventFixupTest extends Arquillian {
         utx.commit();
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void fixupGplim4302() throws Exception {
         userBean.loginOSUser();
         utx.begin();
