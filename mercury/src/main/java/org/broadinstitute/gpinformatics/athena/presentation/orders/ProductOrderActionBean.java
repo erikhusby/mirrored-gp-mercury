@@ -1688,14 +1688,16 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @return a resolution for the JSON results
      */
     @HandlesEvent("suggestRegulatoryInfo")
-    public Resolution suggestRegulatoryInfo() {
-        JSONArray results = new JSONArray();
+    public Resolution suggestRegulatoryInfo() throws Exception {
+        JSONObject results = new JSONObject();
+        JSONArray jsonResults = new JSONArray();
 
         // Access sample list directly in order to suggest based on possibly not-yet-saved sample IDs.
         if (!getSampleList().isEmpty()) {
             List<ProductOrderSample> productOrderSamples = stringToSampleListExisting(getSampleList());
             // Bulk-fetch collection IDs for all samples to avoid having them fetched individually on demand.
-            ProductOrder.loadSampleData(productOrderSamples, BSPSampleSearchColumn.BSP_COLLECTION_BARCODE, BSPSampleSearchColumn.COLLECTION);
+            ProductOrder.loadSampleData(productOrderSamples, BSPSampleSearchColumn.BSP_COLLECTION_BARCODE,
+                    BSPSampleSearchColumn.COLLECTION);
 
             Multimap<String, ProductOrderSample> samplesByCollection = HashMultimap.create();
             for (ProductOrderSample productOrderSample : productOrderSamples) {
@@ -1706,22 +1708,23 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
 
             List<OrspProject> orspProjects = orspProjectDao.findBySamples(productOrderSamples);
-            if (!orspProjects.isEmpty()) {
-                for (OrspProject orspProject : orspProjects) {
-                    for (OrspProjectConsent consent : orspProject.getConsents()) {
-                        Collection<ProductOrderSample> samples =
-                                samplesByCollection.get(consent.getKey().getSampleCollection());
-                        for (ProductOrderSample sample : samples) {
-                            sample.addOrspProject(orspProject);
-                        }
+            for (OrspProject orspProject : orspProjects) {
+                for (OrspProjectConsent consent : orspProject.getConsents()) {
+                    Collection<ProductOrderSample> samples =
+                            samplesByCollection.get(consent.getKey().getSampleCollection());
+                    for (ProductOrderSample sample : samples) {
+                        sample.addOrspProject(orspProject);
                     }
                 }
-                // Fetching RP here instead of a @Before method to avoid the fetch when it won't be used.
-                ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
-                Map<String, RegulatoryInfo> regulatoryInfoByIdentifier = researchProject.getRegulatoryByIdentifier();
-                results.put(orspProjectToJson(productOrderSamples, regulatoryInfoByIdentifier));
             }
+            // Fetching RP here instead of a @Before method to avoid the fetch when it won't be used.
+            ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
+            Map<String, RegulatoryInfo> regulatoryInfoByIdentifier = researchProject.getRegulatoryByIdentifier();
+            jsonResults = orspProjectToJson(productOrderSamples, regulatoryInfoByIdentifier);
         }
+        results.put("data", jsonResults);
+        results.put("draw", 1);
+        results.put("recordsTotal", jsonResults.length());
 
         return createTextResolution(results.toString());
     }
@@ -1787,7 +1790,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 JSONObject result = new JSONObject();
                 result.put("orspProjects", new JSONArray());
                 result.put("samples", samplesWithNoOrsp);
-                result.put("collections", Collections.emptyMap());
+                result.put("collections", new JSONArray());
                 resultList.put(result);
             }
         } catch (JSONException e) {
