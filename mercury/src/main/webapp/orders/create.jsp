@@ -83,6 +83,12 @@
             readonlyText = ' readonly="readonly" ';
         }
 
+        function reloadRegulatorySuggestions() {
+            if ($j("#researchProject").val().trim() !== "" && $j("#samplesToAdd").val().trim() !== "") {
+                regulatorySuggestionDT.ajax.reload(null, false);
+            }
+        }
+
         var regulatorySuggestionDT;
         $j(document).ready(
 
@@ -155,8 +161,7 @@
                                 openRegulatoryInfoDialog(projectSelection.id, projectSelection.name, function () {
                                     closeRegulatoryInfoDialog();
                                     populateRegulatorySelect();
-                                    thisDatatable.ajax.reload(null, false);
-
+                                    reloadRegulatorySuggestions();
                                 }, $j(event.target).attr('identifier'));
                             });
                             </c:if>
@@ -177,9 +182,11 @@
                 ajax: {
                     url: "${ctxpath}/orders/order.action?suggestRegulatoryInfo",
                     data: {
-                        researchProjectKey: $j("#researchProject").val(),
-                        sampleList: function () {
-                            return $j('#samplesToAdd').val();
+                        researchProjectKey: function() {
+                            return $j("#researchProject").val();
+                        },
+                        sampleList: function(){
+                            return $j("#samplesToAdd").val();
                         }
                     },
                     dataType: 'json',
@@ -367,7 +374,7 @@
 
                     <c:if test="${actionBean.editOrder.draft}">
                     $j('#samplesToAdd').on('input', function () {
-                        regulatorySuggestionDT.ajax.reload(null, false);
+                        reloadRegulatorySuggestions();
                     });
                     </c:if>
                 }
@@ -484,8 +491,7 @@
             }
             handleUpdateRegulatory(skipRegulatory);
             <c:if test="${actionBean.editOrder.draft}">
-
-            regulatorySuggestionDT.ajax.reload();
+                reloadRegulatorySuggestions();
             </c:if>
         }
 
