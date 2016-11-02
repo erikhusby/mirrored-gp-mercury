@@ -41,7 +41,7 @@ public class SAPAccessControlActionBean extends CoreActionBean {
 
     private SAPAccessControl accessController;
 
-    private Set<String> priceListOptions = new HashSet<>();
+    private Set<QuotePriceItem> priceListOptions = new HashSet<>();
 
     private Set<String> selectedPriceItems = new HashSet<>();
 
@@ -55,7 +55,7 @@ public class SAPAccessControlActionBean extends CoreActionBean {
         }
         enabledAccess = accessController.getAccessStatus().name();
         for (QuotePriceItem quotePriceItem : priceListCache.getQuotePriceItems()) {
-            priceListOptions.add(quotePriceItem.getName());
+            priceListOptions.add(quotePriceItem);
         }
     }
 
@@ -81,7 +81,7 @@ public class SAPAccessControlActionBean extends CoreActionBean {
     public SAPAccessControl getAccessController() {
         return accessController;
     }
-    public Set<String> getPriceListOptions() {
+    public Set<QuotePriceItem> getPriceListOptions() {
         return priceListOptions;
     }
 

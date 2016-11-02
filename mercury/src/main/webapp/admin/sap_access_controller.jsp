@@ -12,17 +12,23 @@
 
     <stripes:layout-component name="content">
         <stripes:form beanclass="${actionBean.class.name}">
-            <div id="enableAccess">
-                <stripes:select name="enabledAccess" id="access">
-                    <stripes:option value="<%=AccessStatus.DISABLED.name()%>" label="Disable SAP Access"/>
-                    <stripes:option value="<%=AccessStatus.ENABLED.name()%>" label="Enable SAP Access"/>
-                </stripes:select>
-                        <%--<stripes:checkbox value="<%=AccessStatus.DISABLED.name()%>" name="enabledAccess" id="DISABLED-id"/> Disable SAP Access--%>
-                        <%--<stripes:checkbox value="<%=AccessStatus.ENABLED.name()%>" name="enabledAccess" id="ENABLED-id"/> Enable SAP Access--%>
-            </div>
+            <div class="form-horizontal span6">
 
-            <div class="form-horizontal span7">
+                <div class="control-group" id="enableAccess">
 
+                    <stripes:label for="access" class="control-label">
+                        Enable/Disable usage of SAP
+                    </stripes:label>
+                    <div class="controls">
+                        <stripes:select name="enabledAccess" id="access">
+                            <stripes:option value="<%=AccessStatus.DISABLED.name()%>" label="Disable SAP Access"/>
+                            <stripes:option value="<%=AccessStatus.ENABLED.name()%>" label="Enable SAP Access"/>
+                        </stripes:select>
+                    </div>
+                </div>
+
+                <fieldset>
+                    <legend><h4>Price Items to "Blacklist"</h4></legend>
                 <div id="priceItems" class="control-group">
                     <c:set var="preSelectedOptions" value="${actionBean.selectedOptionsString}"/>
 
@@ -31,28 +37,17 @@
                         <div class="controls">
                             <div class="form-value">
 
-                                    <%--<c:choose>--%>
-                                    <%--<c:when test="${fn:contains(preSelectedOptions, priceItem)}">--%>
-                                    <%--<stripes:checkbox name="selectedPriceItems" class="shiftCheckbox"--%>
-                                    <%--title="${priceItem}"--%>
-                                    <%--value="${priceItem}" id="${priceItem}"--%>
-                                    <%--checked="checked"/> ${priceItem}--%>
-                                    <%--</c:when>--%>
-                                    <%--<c:otherwise>--%>
                                 <stripes:checkbox name="selectedPriceItems" class="shiftCheckbox"
-                                                  title="${priceItem}"
-                                                  value="${priceItem}" id="${priceItem}-id"/>
+                                                  title="${priceItem.name}"
+                                                  value="${priceItem.name}" id="${priceItem.name}-id"/>
                                 <stripes:label for="${priceItem}-id">
-                                    ${priceItem}
+                                    ${priceItem.name} -- ${priceItem.platformName}
                                 </stripes:label>
-                                    <%--</c:otherwise>--%>
-                                    <%--</c:choose>--%>
                             </div>
-
-                                <%--<stripes:label for="${priceItem}" class="control-label">${priceItem}</stripes:label>--%>
                         </div>
                     </c:forEach>
                 </div>
+                </fieldset>
 
                 <div class="controls actionButtons">
                     <stripes:submit name="setAccess" value="Set Selected Access options" class="btn"/>

@@ -313,7 +313,7 @@ public class ProductOrderEjb {
         if(orderQuote != null && accessControl.isEnabled()) {
             eligibilityResult =
                     orderQuote.isEligibleForSAP() && !editedProductOrder.isDraft() && !editedProductOrder.isPending()
-                    && CollectionUtils.containsAll(accessControl.getDisabledFeatures(),
+                    && !CollectionUtils.containsAll(accessControl.getDisabledFeatures(),
                             Collections.singleton(editedProductOrder.getProduct().getPrimaryPriceItem().getName()));
         }
         return eligibilityResult;
