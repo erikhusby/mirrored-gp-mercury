@@ -1434,6 +1434,7 @@ public class LabVesselSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Abandon Date");
+        searchTerm.setValueType(ColumnValueType.DATE_TIME);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Date evaluate(Object entity, SearchContext context) {
@@ -1442,7 +1443,6 @@ public class LabVesselSearchDefinition {
             }
         });
         searchTerms.add(searchTerm);
-
         return searchTerms;
     }
 
