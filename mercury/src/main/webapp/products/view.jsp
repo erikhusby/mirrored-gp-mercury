@@ -281,6 +281,24 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Loading Concentration</label>
+                    <div class="controls">
+                        <div class="form-value">
+                                ${actionBean.editProduct.loadingConcentration}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Paired End Read</label>
+                    <div class="controls">
+                        <div class="form-value">
+                                ${actionBean.editProduct.pairedEndRead}
+                        </div>
+                    </div>
+                </div>
             </fieldset>
         </div>
 

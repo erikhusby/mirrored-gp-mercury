@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryFixupDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -281,5 +282,21 @@ public class LedgerEntryFixupTest extends Arquillian {
             String.format("GPLIM-4143 Correcting price item type for %s on %s", sample, pdoKey)));
 
         utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void gplim4371BackfillLedgerEntryBilledSuccessfullyMessage() {
+        userBean.loginOSUser();
+
+        List<LedgerEntry> ledgerEntries = ledgerEntryFixupDao.findBilledWithoutBillingMessage();
+        for (LedgerEntry ledgerEntry : ledgerEntries) {
+            ProductOrderSample productOrderSample = ledgerEntry.getProductOrderSample();
+            System.out.println(String.format("Updating billingMessage on billed LedgerEntry for sample %s in %s", productOrderSample.getSampleKey(), productOrderSample.getProductOrder().getBusinessKey()));
+            ledgerEntry.setBillingMessage(BillingSession.SUCCESS);
+        }
+
+        ledgerEntryFixupDao.persist(new FixupCommentary(
+                String.format("SUPPORT-2120 Backfilled \"%s\" billing message for %d billed ledger entries",
+                        BillingSession.SUCCESS, ledgerEntries.size())));
     }
 }

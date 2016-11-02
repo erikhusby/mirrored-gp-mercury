@@ -171,7 +171,7 @@ public class FlowcellDesignationEjb {
     /** Returns the flowcell designations used in the FCT or MISEQ batch sorted by descending create date. */
     public List<FlowcellDesignation> getFlowcellDesignations(LabBatch fct) {
         List<LabVessel> loadingTubes = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(fct.getLabBatchStartingVessels())) {
+        if (fct != null && CollectionUtils.isNotEmpty(fct.getLabBatchStartingVessels())) {
             for (LabBatchStartingVessel labBatchStartingVessel : fct.getLabBatchStartingVessels()) {
                 loadingTubes.add(labBatchStartingVessel.getLabVessel());
             }

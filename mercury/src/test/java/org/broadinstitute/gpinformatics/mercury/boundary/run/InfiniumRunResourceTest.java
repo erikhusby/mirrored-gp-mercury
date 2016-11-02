@@ -49,7 +49,9 @@ public class InfiniumRunResourceTest extends RestServiceContainerTest {
                 "/gap/illumina/beadstudio/Autocall/ChipInfo/Broad_GWAS_supplemental/Broad_GWAS_supplemental_15061359_A1.egt");
         Assert.assertEquals(response1.getzCallThresholdsPath(),
                 "/gap/illumina/beadstudio/Autocall/ChipInfo/Broad_GWAS_supplemental/thresholds.7.txt");
+        Assert.assertEquals(response1.getSampleId(), "SM-ATJSM");
         Assert.assertEquals(response1.getCollaboratorSampleId(), "TREDAP123");
+        Assert.assertEquals(response1.getSampleLsid(), "broadinstitute.org:bsp.prod.sample:ATJSM");
         Assert.assertFalse(response1.isPositiveControl());
         Assert.assertFalse(response1.isNegativeControl());
         Assert.assertEquals(response1.getResearchProjectId(), "RP-313");

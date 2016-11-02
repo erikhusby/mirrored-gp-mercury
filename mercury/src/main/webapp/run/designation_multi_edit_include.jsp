@@ -68,7 +68,7 @@
                         </stripes:select>
                     </td>
                     <td>
-                        <input type="hidden" id="multiPairedEndInput" name="multiEdit.pairedEnd"/>
+                        <input type="hidden" id="multiPairedEndInput" name="multiEdit.pairedEndRead"/>
                         <stripes:select style='width:6em' id="multiPairedEnd" class="multiEditSelect" name="">
                             <stripes:option value=""/>
                             <stripes:option value="false">No</stripes:option>

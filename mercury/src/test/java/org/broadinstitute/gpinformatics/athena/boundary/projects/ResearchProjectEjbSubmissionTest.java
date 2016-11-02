@@ -96,11 +96,10 @@ public class ResearchProjectEjbSubmissionTest {
         SubmissionTrackerDao submissionTrackerDao = Mockito.mock(SubmissionTrackerDao.class);
         setupSubmissionTrackerMock(submissionTrackerDao, Collections.singletonList(submissionTracker));
 
-        // data setup for submission request.
-        SubmissionDto newSubmissionDto = getSubmissionDto(dummyProductOrder, null, "/some/file");
         ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
-
         try {
+            // data setup for submission request.
+            SubmissionDto newSubmissionDto = getSubmissionDto(dummyProductOrder, null, "/some/file");
             researchProjectEjb.validateSubmissionDto(Collections.singletonList(newSubmissionDto));
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(e.getMessage().contains("No enum constant for"));

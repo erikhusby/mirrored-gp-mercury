@@ -13,6 +13,7 @@ import javax.persistence.PersistenceContextType;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
+import java.util.Collections;
 import java.util.List;
 
 @RequestScoped
@@ -24,10 +25,15 @@ public class ArraysQcDao {
     private EntityManager entityManager;
 
     public List<ArraysQc> findByBarcodes(List<String> chipWellBarcodes) {
+        if( chipWellBarcodes == null || chipWellBarcodes.isEmpty() ) {
+            return Collections.EMPTY_LIST;
+        }
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<ArraysQc> criteria = cb.createQuery(ArraysQc.class);
         Root<ArraysQc> root = criteria.from(ArraysQc.class);
-        criteria.select(root).where(root.get(ArraysQc_.chipWellBarcode).in(chipWellBarcodes));
+        criteria.select(root).where(cb.and(
+                root.get(ArraysQc_.chipWellBarcode).in(chipWellBarcodes)),
+                cb.equal(root.get(ArraysQc_.isLatest), 1));
         return entityManager.createQuery(criteria).getResultList();
     }
 }

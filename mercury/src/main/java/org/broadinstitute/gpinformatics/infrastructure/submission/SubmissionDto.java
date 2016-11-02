@@ -76,6 +76,9 @@ public class SubmissionDto implements Serializable {
     @JsonIgnore
     private String[] submittedErrorsArray;
 
+    @JsonProperty(value = SubmissionDto.SubmissionField.BASS_TUPLE)
+    private String bassTupleString="";
+
     @JsonProperty(value = SubmissionDto.SubmissionField.UUID)
     private String uuid="";
 
@@ -167,7 +170,7 @@ public class SubmissionDto implements Serializable {
             rpid = bassDTO.getRpid();
             fileName = bassDTO.getFileName();
             filePath = bassDTO.getPath();
-
+            bassTupleString = bassDTO.getTuple().jsonString();
         }
         if (aggregation != null) {
             String datatype = bassDTO.getDatatype();
@@ -365,6 +368,7 @@ public class SubmissionDto implements Serializable {
     }
 
     public class SubmissionField {
+        public static final String BASS_TUPLE = "bassDtoTuple";
         public static final String SAMPLE_NAME = "sampleName";
         public static final String DATA_TYPE = "dataType";
         public static final String RESEARCH_PROJECT = "researchProject";

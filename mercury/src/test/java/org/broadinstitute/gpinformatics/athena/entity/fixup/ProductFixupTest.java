@@ -93,11 +93,13 @@ public class ProductFixupTest extends Arquillian {
         userBean.loginOSUser();
         utx.begin();
         for (Product product : productDao.findAll(Product.class)) {
-            product.setPairedEndRead(true);
-            if (product.getAggregationDataType() != null && product.getAggregationDataType().startsWith("Exome")) {
-                product.setLoadingConcentration(BigDecimal.valueOf(225));
-            } else if (product.getAggregationDataType() != null && product.getAggregationDataType().equals("WGS")) {
-                product.setLoadingConcentration(BigDecimal.valueOf(180));
+            if (product.getAggregationDataType() != null) {
+                product.setPairedEndRead(true);
+                if (product.getAggregationDataType().startsWith("Exome")) {
+                    product.setLoadingConcentration(BigDecimal.valueOf(225));
+                } else if (product.getAggregationDataType().equals("WGS")) {
+                    product.setLoadingConcentration(BigDecimal.valueOf(180));
+                }
             }
         }
         productDao.persist(new FixupCommentary("GPLIM-4159 set initial values after adding new columns."));

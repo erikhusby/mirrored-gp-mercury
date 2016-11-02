@@ -42,6 +42,7 @@ import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ProductType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -231,12 +232,16 @@ public class SequencingTemplateFactory {
         }
 
         validateCollections(regulatoryDesignations, products, molecularIndexReadStructures);
-        // Provides defaults from product when there is no designation.
+        // Provides defaults from product when there is no designation. Pair end read should default to true.
         if (readLength == null && productReadLengths.size() == 1) {
             readLength = productReadLengths.iterator().next();
         }
-        if (isPairedEnd == null && productPairedEnds.size() == 1) {
-            isPairedEnd = productPairedEnds.iterator().next();
+        if (isPairedEnd == null) {
+            if (productPairedEnds.size() == 1 && Boolean.FALSE.equals(productPairedEnds.iterator().next())) {
+                isPairedEnd = false;
+            } else {
+                isPairedEnd = true;
+            }
         }
         SequencingConfigDef sequencingConfig = getSequencingConfig(isPoolTest);
         String readStructure =  makeReadStructure(readLength, isPoolTest, molecularIndexReadStructures, isPairedEnd);
@@ -328,12 +333,16 @@ public class SequencingTemplateFactory {
                 productReadLengths, productPairedEnds, molecularIndexReadStructures);
 
         validateCollections(regulatoryDesignations, products, molecularIndexReadStructures);
-        // Provides defaults from product when there is no designation.
+        // Provides defaults from product when there is no designation. Pair end read should default to true.
         if (readLength == null && productReadLengths.size() == 1) {
             readLength = productReadLengths.iterator().next();
         }
-        if (isPairedEnd == null && productPairedEnds.size() == 1) {
-            isPairedEnd = productPairedEnds.iterator().next();
+        if (isPairedEnd == null) {
+            if (productPairedEnds.size() == 1 && Boolean.FALSE.equals(productPairedEnds.iterator().next())) {
+                isPairedEnd = false;
+            } else {
+                isPairedEnd = true;
+            }
         }
         SequencingConfigDef sequencingConfig = getSequencingConfig(isPoolTest);
         String readStructure =  makeReadStructure(readLength, isPoolTest, molecularIndexReadStructures, isPairedEnd);
@@ -411,7 +420,7 @@ public class SequencingTemplateFactory {
         List<FlowcellDesignation> flowcellDesignations = flowcellDesignationEjb.getFlowcellDesignations(loadingTubes);
         BigDecimal loadingConcentration = miSeqReagentKit.getConcentration();
         boolean isPoolTest = poolTestDefault;
-        Boolean isPairedEnd = null;
+        boolean isPairedEnd = true;
         if (!flowcellDesignations.isEmpty()) {
             FlowcellDesignation designation = flowcellDesignations.iterator().next();
             loadingConcentration = designation.getLoadingConc();
@@ -482,10 +491,10 @@ public class SequencingTemplateFactory {
     }
 
     private String makeReadStructure(Integer readLength, boolean isPoolTest, Set<String> molecularIndexReadStructures,
-                                     Boolean isPairedEnd) {
+                                     @Nonnull Boolean isPairedEnd) {
         String strandCode = (readLength != null && !isPoolTest) ? readLength.intValue() + "T" : "";
         String indexCode = molecularIndexReadStructures.isEmpty() ? "" : molecularIndexReadStructures.iterator().next();
-        return strandCode + indexCode + ((isPairedEnd == null || isPairedEnd) ? strandCode : "");
+        return strandCode + indexCode + (isPairedEnd  ? strandCode : "");
     }
 
     private static SequencingConfigDef getSequencingConfig(boolean isPoolTest) {

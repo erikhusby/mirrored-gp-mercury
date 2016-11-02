@@ -81,8 +81,8 @@ public class InfiniumRunFinder implements Serializable {
                 UserTransaction utx = ejbContext.getUserTransaction();
                 try {
                     if (OrmUtil.proxySafeIsInstance(labVessel, StaticPlate.class)) {
-                        utx.begin();
                         StaticPlate staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
+                        utx.begin();
                         processChip(staticPlate);
                         utx.commit();
                     }
@@ -101,33 +101,36 @@ public class InfiniumRunFinder implements Serializable {
 
     private void processChip(StaticPlate staticPlate) throws Exception {
         InfiniumRunProcessor.ChipWellResults chipWellResults = infiniumRunProcessor.process(staticPlate);
-        if (!chipWellResults.isHasRunStarted()) {
+        if (!chipWellResults.isHasRunStarted() || chipWellResults.getScannerName() == null) {
             return;
         }
         log.debug("Processing chip: " + staticPlate.getLabel());
-        LabEvent someStartedEvent = findOrCreateSomeStartedEvent(staticPlate);
+        LabEvent someStartedEvent = findOrCreateSomeStartedEvent(staticPlate, chipWellResults.getScannerName());
         Set<LabEventMetadata> labEventMetadata = someStartedEvent.getLabEventMetadatas();
         boolean allComplete = true;
         for (VesselPosition vesselPosition : chipWellResults.getPositionWithSampleInstance()) {
-            boolean autocallStarted = false;
-            for (LabEventMetadata metadata : labEventMetadata) {
-                if (metadata.getLabEventMetadataType() ==
-                    LabEventMetadata.LabEventMetadataType.AutocallStarted) {
-                    if (metadata.getValue().equals(vesselPosition.name())) {
-                        autocallStarted = true;
-                        break;
+            //Check to see if any of the wells in the chip are abandoned.
+            if(!staticPlate.isPositionAbandoned(vesselPosition.toString())) {
+                boolean autocallStarted = false;
+                for (LabEventMetadata metadata : labEventMetadata) {
+                    if (metadata.getLabEventMetadataType() ==
+                            LabEventMetadata.LabEventMetadataType.AutocallStarted) {
+                        if (metadata.getValue().equals(vesselPosition.name())) {
+                            autocallStarted = true;
+                            break;
+                        }
                     }
                 }
-            }
 
-            if (!autocallStarted && chipWellResults.getWellCompleteMap().get(vesselPosition)) {
-                if (callStarterOnWell(staticPlate, vesselPosition)) {
-                    LabEventMetadata newMetadata = new LabEventMetadata();
-                    newMetadata.setLabEventMetadataType(LabEventMetadata.LabEventMetadataType.AutocallStarted);
-                    newMetadata.setValue(vesselPosition.name());
-                    someStartedEvent.addMetadata(newMetadata);
-                } else {
-                    allComplete = false;
+                if (!autocallStarted && chipWellResults.getWellCompleteMap().get(vesselPosition)) {
+                    if (callStarterOnWell(staticPlate, vesselPosition)) {
+                        LabEventMetadata newMetadata = new LabEventMetadata();
+                        newMetadata.setLabEventMetadataType(LabEventMetadata.LabEventMetadataType.AutocallStarted);
+                        newMetadata.setValue(vesselPosition.name());
+                        someStartedEvent.addMetadata(newMetadata);
+                    } else {
+                        allComplete = false;
+                    }
                 }
             }
         }
@@ -135,28 +138,31 @@ public class InfiniumRunFinder implements Serializable {
         // Check to see if autocall has now been started on all wells
         boolean starterCalledOnAllWells = true;
         for (VesselPosition vesselPosition: staticPlate.getVesselGeometry().getVesselPositions()) {
-            Set<SampleInstanceV2> sampleInstancesAtPositionV2 =
-                    staticPlate.getContainerRole().getSampleInstancesAtPositionV2(vesselPosition);
-            if (sampleInstancesAtPositionV2 != null && !sampleInstancesAtPositionV2.isEmpty()) {
-                boolean autocallStarted = false;
-                for (LabEventMetadata metadata : someStartedEvent.getLabEventMetadatas()) {
-                    if (metadata.getLabEventMetadataType() ==
-                        LabEventMetadata.LabEventMetadataType.AutocallStarted) {
-                        if (metadata.getValue().equals(vesselPosition.name())) {
-                            autocallStarted = true;
-                            break;
+            //Check to see if any of the wells in the chip are abandoned.
+            if(!staticPlate.isPositionAbandoned(vesselPosition.toString())) {
+                Set<SampleInstanceV2> sampleInstancesAtPositionV2 =
+                        staticPlate.getContainerRole().getSampleInstancesAtPositionV2(vesselPosition);
+                if (sampleInstancesAtPositionV2 != null && !sampleInstancesAtPositionV2.isEmpty()) {
+                    boolean autocallStarted = false;
+                    for (LabEventMetadata metadata : someStartedEvent.getLabEventMetadatas()) {
+                        if (metadata.getLabEventMetadataType() ==
+                                LabEventMetadata.LabEventMetadataType.AutocallStarted) {
+                            if (metadata.getValue().equals(vesselPosition.name())) {
+                                autocallStarted = true;
+                                break;
+                            }
                         }
                     }
-                }
-                if (!autocallStarted) {
-                    starterCalledOnAllWells = false;
-                    break;
+                    if (!autocallStarted) {
+                        starterCalledOnAllWells = false;
+                        break;
+                    }
                 }
             }
         }
 
         if (allComplete && starterCalledOnAllWells) {
-            createEvent(staticPlate, LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
+            createEvent(staticPlate, LabEventType.INFINIUM_AUTOCALL_ALL_STARTED, someStartedEvent.getEventLocation());
         }
     }
 
@@ -164,10 +170,10 @@ public class InfiniumRunFinder implements Serializable {
         return infiniumPipelineClient.callStarterOnWell(staticPlate, vesselPosition);
     }
 
-    private LabEvent findOrCreateSomeStartedEvent(StaticPlate staticPlate) throws Exception {
+    private LabEvent findOrCreateSomeStartedEvent(StaticPlate staticPlate, String eventLocation) throws Exception {
         LabEvent labEvent = findLabEvent(staticPlate, LabEventType.INFINIUM_AUTOCALL_SOME_STARTED);
         if (labEvent == null) {
-            labEvent = createEvent(staticPlate, LabEventType.INFINIUM_AUTOCALL_SOME_STARTED);
+            labEvent = createEvent(staticPlate, LabEventType.INFINIUM_AUTOCALL_SOME_STARTED, eventLocation);
         }
 
         return labEvent;
@@ -182,12 +188,12 @@ public class InfiniumRunFinder implements Serializable {
         return null;
     }
 
-    private LabEvent createEvent(StaticPlate staticPlate, LabEventType eventType) throws Exception {
+    private LabEvent createEvent(StaticPlate staticPlate, LabEventType eventType, String eventLocation) throws Exception {
         Date start = new Date();
         BspUser bspUser = getBspUser("seqsystem");
         long operator = bspUser.getUserId();
         LabEvent labEvent =
-                new LabEvent(eventType, start, LabEvent.UI_PROGRAM_NAME, 1L, operator, LabEvent.UI_PROGRAM_NAME);
+                new LabEvent(eventType, start, eventLocation, 1L, operator, LabEvent.UI_PROGRAM_NAME);
         staticPlate.addInPlaceEvent(labEvent);
         labEventDao.persist(labEvent);
         labEventDao.flush();
