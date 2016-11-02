@@ -20,7 +20,10 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @SuppressWarnings("unused")
@@ -41,7 +44,7 @@ public class SAPAccessControlActionBean extends CoreActionBean {
 
     private SAPAccessControl accessController;
 
-    private Set<QuotePriceItem> priceListOptions = new HashSet<>();
+    private List<QuotePriceItem> priceListOptions = new ArrayList<>();
 
     private Set<String> selectedPriceItems = new HashSet<>();
 
@@ -57,6 +60,8 @@ public class SAPAccessControlActionBean extends CoreActionBean {
         for (QuotePriceItem quotePriceItem : priceListCache.getQuotePriceItems()) {
             priceListOptions.add(quotePriceItem);
         }
+
+        Collections.sort(priceListOptions, QuotePriceItem.BY_PLATFORM_THEN_CATEGORY_THEN_NAME);
     }
 
     @DefaultHandler
@@ -81,7 +86,7 @@ public class SAPAccessControlActionBean extends CoreActionBean {
     public SAPAccessControl getAccessController() {
         return accessController;
     }
-    public Set<QuotePriceItem> getPriceListOptions() {
+    public List<QuotePriceItem> getPriceListOptions() {
         return priceListOptions;
     }
 

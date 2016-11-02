@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
+import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 
 import javax.annotation.Nonnull;
@@ -8,6 +9,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.text.SimpleDateFormat;
+import java.util.Comparator;
 import java.util.Date;
 
 @XmlRootElement(name = "priceItem")
@@ -278,4 +280,17 @@ public class QuotePriceItem {
         }
 
     }
+
+    public static Comparator<QuotePriceItem> BY_PLATFORM_THEN_CATEGORY_THEN_NAME = new Comparator<QuotePriceItem>() {
+        @Override
+        public int compare(QuotePriceItem o1, QuotePriceItem o2) {
+
+            CompareToBuilder builder = new CompareToBuilder();
+            builder.append(o1.getPlatformName(), o2.getPlatformName());
+            builder.append(o1.getCategoryName(), o2.getCategoryName());
+            builder.append(o1.getName(), o2.getName());
+
+            return builder.build();
+        }
+    };
 }
