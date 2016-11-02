@@ -90,4 +90,17 @@ public class SubmissionTupleTest {
         assertThat(tuple1, not(equalTo(tuple2)));
         assertThat(tuple2, not(equalTo(tuple1)));
     }
+
+    public void testTupleFromString() {
+        SubmissionTuple submissionTuple = new SubmissionTuple("p", "s", "v", BassFileType.BAM);
+        SubmissionTuple submissionTupleFromString = SubmissionTuple.fromJson("{\"project\":\"p\",\"sampleName\":\"s\",\"fileType\":\"BAM\",\"version\":\"v\"}");
+
+        assertThat(submissionTuple, equalTo(submissionTupleFromString));
+    }
+
+    public void testToJsonString() {
+        SubmissionTuple submissionTuple = new SubmissionTuple("p", "s", "v", BassFileType.BAM);
+
+        assertThat(submissionTuple.jsonString(), equalTo("{\"project\":\"p\",\"sampleName\":\"s\",\"fileType\":\"BAM\",\"version\":\"v\"}"));
+    }
 }

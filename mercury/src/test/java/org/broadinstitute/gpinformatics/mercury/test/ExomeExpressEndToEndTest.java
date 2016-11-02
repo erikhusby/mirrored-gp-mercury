@@ -31,6 +31,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
@@ -50,6 +51,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventName;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.AliquotParameters;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -549,11 +551,23 @@ public class ExomeExpressEndToEndTest {
                 }
             });
 
+            // Method calls on factory will always use our list of flowcell designations.
+            // Need not put anything into it for now.
+            final List<FlowcellDesignation> flowcellDesignations = new ArrayList<>();
+            FlowcellDesignationEjb testFlowcellDesignationEjb = new FlowcellDesignationEjb(){
+                @Override
+                public List<FlowcellDesignation> getFlowcellDesignations(LabBatch fct) {
+                return flowcellDesignations;
+            }
+                @Override
+                public List<FlowcellDesignation> getFlowcellDesignations(Collection<LabVessel> loadingTubes) {
+                    return flowcellDesignations;
+                }
+            };
+
             ZimsIlluminaRunFactory zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(new SampleDataFetcher(),
-                                                                                       null,
-                                                                                       new SequencingTemplateFactory(),
-                                                                                       productOrderDao,
-                                                                                       crspPipelineUtils);
+                    null, new SequencingTemplateFactory(), productOrderDao, crspPipelineUtils,
+                    testFlowcellDesignationEjb);
             ZimsIlluminaRun zimsRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
 
             // how to populate BspSampleData?  Ease of use from EL suggests an entity that can load itself, but this

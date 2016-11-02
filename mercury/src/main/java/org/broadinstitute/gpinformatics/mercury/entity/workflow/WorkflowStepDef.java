@@ -141,6 +141,14 @@ public class WorkflowStepDef implements Serializable {
         this.processDef = processDef;
     }
 
+    public void setBatchJiraIssueType(String issueType) {
+        this.batchJiraIssueType = issueType;
+    }
+
+    public void setBatchJiraProjectType(String issueType) {
+        this.batchJiraProjectType = issueType;
+    }
+
     public WorkflowProcessDef getProcessDef() {
         return processDef;
     }

@@ -57,6 +57,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexRea
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -311,7 +312,8 @@ public class LabEventTest extends BaseEventTest {
 
         illuminaSequencingRunFactory.storeReadsStructureDBFree(readStructureRequest, illuminaSequencingRun);
 
-        ZimsIlluminaRunFactory zimsIlluminaRunFactory = constructZimsIlluminaRunFactory(productOrder);
+        ZimsIlluminaRunFactory zimsIlluminaRunFactory = constructZimsIlluminaRunFactory(productOrder,
+                Collections.<FlowcellDesignation>emptyList());
         ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
         Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 8, "Wrong number of lanes");
         Assert.assertEquals(zimsIlluminaRun.getActualReadStructure(), readStructureRequest.getActualReadStructure());
@@ -485,7 +487,8 @@ public class LabEventTest extends BaseEventTest {
 
         runFactory.storeReadsStructureDBFree(readStructureRequest, run);
 
-        ZimsIlluminaRunFactory zimsIlluminaRunFactory = constructZimsIlluminaRunFactory(productOrder);
+        ZimsIlluminaRunFactory zimsIlluminaRunFactory = constructZimsIlluminaRunFactory(productOrder,
+                Collections.<FlowcellDesignation>emptyList());
         ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(run);
         Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 2, "Wrong number of lanes");
         Assert.assertEquals(zimsIlluminaRun.getActualReadStructure(), readStructureRequest.getActualReadStructure());
@@ -620,7 +623,8 @@ public class LabEventTest extends BaseEventTest {
 
         runFactory.storeReadsStructureDBFree(readStructureRequest, run);
 
-        ZimsIlluminaRunFactory zimsIlluminaRunFactory = constructZimsIlluminaRunFactory(productOrder);
+        ZimsIlluminaRunFactory zimsIlluminaRunFactory = constructZimsIlluminaRunFactory(productOrder,
+                Collections.<FlowcellDesignation>emptyList());
         ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(run);
         Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 2, "Wrong number of lanes");
         Assert.assertEquals(zimsIlluminaRun.getActualReadStructure(), readStructureRequest.getActualReadStructure());
@@ -773,7 +777,8 @@ public class LabEventTest extends BaseEventTest {
             String machineName = "Superman";
             IlluminaSequencingRunFactory runFactory =
                     new IlluminaSequencingRunFactory(EasyMock.createMock(JiraCommentUtil.class));
-            ZimsIlluminaRunFactory zimsIlluminaRunFactory = constructZimsIlluminaRunFactory(productOrder1);
+            ZimsIlluminaRunFactory zimsIlluminaRunFactory = constructZimsIlluminaRunFactory(productOrder1,
+                    Collections.<FlowcellDesignation>emptyList());
 
             SolexaRunBean runBean1 = new SolexaRunBean(flowcellBarcode, flowcellBarcode + dateFormat.format(runDate),
                                                        runDate, machineName, runPath.getAbsolutePath(), null);
@@ -934,7 +939,8 @@ public class LabEventTest extends BaseEventTest {
             String machineName = "Superman";
             IlluminaSequencingRunFactory runFactory =
                     new IlluminaSequencingRunFactory(EasyMock.createMock(JiraCommentUtil.class));
-            ZimsIlluminaRunFactory zimsIlluminaRunFactory = constructZimsIlluminaRunFactory(productOrder1);
+            ZimsIlluminaRunFactory zimsIlluminaRunFactory = constructZimsIlluminaRunFactory(productOrder1,
+                    Collections.<FlowcellDesignation>emptyList());
 
             SolexaRunBean runBean1 = new SolexaRunBean(flowcellBarcode, flowcellBarcode + dateFormat.format(runDate),
                                                        runDate, machineName, runPath.getAbsolutePath(), null);
@@ -1198,7 +1204,8 @@ public class LabEventTest extends BaseEventTest {
 
         runFactory.storeReadsStructureDBFree(readStructureRequest, run);
 
-        ZimsIlluminaRunFactory zimsIlluminaRunFactory = constructZimsIlluminaRunFactory(productOrder);
+        ZimsIlluminaRunFactory zimsIlluminaRunFactory = constructZimsIlluminaRunFactory(productOrder,
+                Collections.<FlowcellDesignation>emptyList());
         ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(run);
         Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 2, "Wrong number of lanes");
         Assert.assertEquals(zimsIlluminaRun.getActualReadStructure(), readStructureRequest.getActualReadStructure());

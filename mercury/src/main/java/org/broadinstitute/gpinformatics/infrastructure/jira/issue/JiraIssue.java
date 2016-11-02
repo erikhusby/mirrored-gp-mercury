@@ -19,12 +19,15 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
+
 public class JiraIssue implements Serializable {
 
     private final String key;
 
     private String summary;
     private String description;
+    private List<String> subTasks;
 
     private final Map<String, Object> extraFields = new HashMap<>();
 
@@ -114,6 +117,24 @@ public class JiraIssue implements Serializable {
         }
         foundValue = extraFields.get(fieldName);
         return foundValue;
+    }
+
+    public static List<String> parseSubTasks(List<Object> fields) throws IOException{
+        ArrayList<String> idList = new ArrayList<String>();
+        for (int index = 0; index < fields.size(); index++)
+        {
+            Map<String, Object> id = (Map<String, Object>)fields.get(index);
+            idList.add(id.get("id").toString());
+        }
+        return idList;
+    }
+
+    public List<String> getSubTasks(){
+        return this.subTasks;
+    }
+
+    public void setSubTasks(@Nonnull List<String> subTaskList){
+        this.subTasks = subTaskList;
     }
 
     private void copyFromJiraIssue(String fieldName) throws IOException {
