@@ -8,6 +8,7 @@ import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.inject.Inject;
 import java.util.Collections;
+import java.util.Set;
 
 /**
  * TODO scottmat fill in javadoc!!!
@@ -26,7 +27,12 @@ public class SAPAccessControlEjb {
     }
 
     public SAPAccessControl getCurrentControlDefinitions() {
-        return accessControlDao.getAccessControl();
+        SAPAccessControl accessControl = accessControlDao.getAccessControl();
+        if(accessControl == null) {
+            accessControl = new SAPAccessControl();
+            accessControlDao.persist(accessControl);
+        }
+        return accessControl;
     }
 
     public SAPAccessControl resetControlDefinitions() {
@@ -35,5 +41,15 @@ public class SAPAccessControlEjb {
         control.setDisabledFeatures(Collections.<String>emptySet());
 
         return control;
+    }
+
+    public SAPAccessControl setDefinitions(AccessStatus status, Set<String> restrictions) {
+
+        SAPAccessControl accessController = accessControlDao.getAccessControl();
+
+        accessController.setAccessStatus(status);
+        accessController.setDisabledFeatures(restrictions);
+
+        return accessController;
     }
 }

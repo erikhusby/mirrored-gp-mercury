@@ -11,8 +11,15 @@ import java.util.List;
 @Entity
 public class SAPAccessControl extends AccessControl {
 
+    private static final long serialVersionUID = 7054820080520463342L;
 
     public SAPAccessControl() {
+
+    }
+
+    @Override
+    public String getControlTitle() {
+        return "SAP Access Controller";
     }
 
 }

@@ -4,10 +4,14 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.envers.Audited;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -24,13 +28,14 @@ public abstract class AccessControl implements Serializable{
 
     private static final long serialVersionUID = -8698508477326258176L;
     @Id
+    @SequenceGenerator(name = "SEQ_ACCESS_CONTROL", schema = "athena", sequenceName = "SEQ_ACCESS_CONTROL")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_ACCESS_CONTROL")
     private Long id;
 
     @Enumerated(EnumType.STRING)
     private AccessStatus accessStatus = AccessStatus.ENABLED;
 
-
-
+    @Column
     private String disabledFeatures;
 
     public Long getId() {
@@ -67,5 +72,11 @@ public abstract class AccessControl implements Serializable{
         }
 
         setDisabledFeatures(currentFeatures);
+    }
+
+    public abstract String getControlTitle() ;
+
+    public boolean isEnabled() {
+        return accessStatus == AccessStatus.ENABLED;
     }
 }
