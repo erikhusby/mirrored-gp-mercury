@@ -164,6 +164,7 @@ public class BillingAdaptor implements Serializable {
                     if(primaryPriceItemIfReplacement == null) {
                         item.getPriceItem().setPrice(priceItemBeingBilled.getPrice());
                     } else {
+
                         item.getPriceItem().setPrice(primaryPriceItemIfReplacement.getPrice());
                     }
 
@@ -186,7 +187,6 @@ public class BillingAdaptor implements Serializable {
                     billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacement, workId, sapBillingId, null);
 
                     if(quote.isEligibleForSAP() && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
-                        // TODO SGM -- Insert new SAP friendly web service call here when it is ready
                         workId = quoteService.registerNewSAPWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
                                 item.getWorkCompleteDate(), item.getQuantity(),
                                 pageUrl, "billingSession", sessionKey);

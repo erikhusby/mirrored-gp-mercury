@@ -5,10 +5,12 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderKitTest;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
@@ -48,6 +50,7 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -75,6 +78,7 @@ public class ProductOrderEjbTest {
     public final SapIntegrationService mockSapService = Mockito.mock(SapIntegrationService.class);
     public final AppConfig mockAppConfig = Mockito.mock(AppConfig.class);
     public final EmailSender mockEmailSender = Mockito.mock(EmailSender.class);
+    public final SAPAccessControlEjb mockAccessController = Mockito.mock(SAPAccessControlEjb.class);
     ProductOrderEjb productOrderEjb = new ProductOrderEjb(productOrderDaoMock, null, mockQuoteService,
             JiraServiceProducer.stubInstance(), mockUserBean, null, null, null, mockMercurySampleDao,
             new ProductOrderJiraUtil(JiraServiceProducer.stubInstance(), mockUserBean),
@@ -83,6 +87,17 @@ public class ProductOrderEjbTest {
     private static final String[] sampleNames = {"SM-1234", "SM-5678", "SM-9101", "SM-1112"};
     ProductOrder productOrder = null;
     private Log logger = LogFactory.getLog(ProductOrderEjbTest.class);
+
+    @BeforeMethod
+    public void setUp() throws Exception {
+
+        Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenReturn(new SAPAccessControl());
+
+        productOrderEjb.setAppConfig(mockAppConfig);
+        productOrderEjb.setEmailSender(mockEmailSender);
+        productOrderEjb.setAccessController(mockAccessController);
+
+    }
 
     public void testUpdateKitInfo() throws Exception {
 
@@ -278,8 +293,6 @@ public class ProductOrderEjbTest {
 
     public void testCreateOrderInSap() throws Exception {
 
-        productOrderEjb.setAppConfig(mockAppConfig);
-        productOrderEjb.setEmailSender(mockEmailSender);
         Mockito.when(mockUserBean.getBspUser()).thenReturn(new BSPUserList.QADudeUser("PM", 2423L));
 
         Quote testSingleSourceQuote;

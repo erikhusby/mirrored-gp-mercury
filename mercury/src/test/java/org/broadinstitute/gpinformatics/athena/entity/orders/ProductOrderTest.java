@@ -122,6 +122,9 @@ public class ProductOrderTest {
                 .ignoreProperty("regulatoryInfos")
                 .ignoreProperty("squidWorkRequest")
                 .ignoreProperty("sapOrderNumber")
+                .ignoreProperty("sapReferenceOrders")
+                .ignoreProperty("childOrders")
+                .ignoreProperty("parentOrder")
                 .build();
         tester.testBean(ProductOrder.class, configuration);
 
