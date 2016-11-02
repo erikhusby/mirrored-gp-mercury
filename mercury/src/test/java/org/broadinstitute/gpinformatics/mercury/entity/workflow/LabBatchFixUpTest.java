@@ -1064,6 +1064,68 @@ public class LabBatchFixUpTest extends Arquillian {
         changeBucketEntriesToAliquots(tubeBarcodes, 1361856L, "LCSET-9347", "SUPPORT-1848");
     }
 
+    @Test(enabled = false)
+    public void fixupSupport2239Lcset10114() throws Exception{
+        List<String> tubeBarcodes = Arrays.asList(
+                "1140130880",
+                "1140130879",
+                "1140130878",
+                "1140130877",
+                "1140130876",
+                "1140130875",
+                "1140130874",
+                "1140130873",
+                "1140130872",
+                "1140130871",
+                "1140130883",
+                "1140130884",
+                "1140130885",
+                "1140130886",
+                "1140130887",
+                "1140130888",
+                "1140130889",
+                "1140130890",
+                "1140130891",
+                "1140130892",
+                "1140130893",
+                "1140130894",
+                "1140130906",
+                "1140130905",
+                "1140130904",
+                "1140130903",
+                "1140130902",
+                "1140130901",
+                "1140130900",
+                "1140130899",
+                "1140130898",
+                "1140130897",
+                "1140130896",
+                "1140130895");
+
+        changeBucketEntriesToAliquots(tubeBarcodes, 1676559L, "LCSET-10114", "SUPPORT-2239");
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport2239Lcset9978() throws Exception{
+        List<String> tubeBarcodes = Arrays.asList(
+                "1140130910",
+                "1140130911",
+                "1140130912",
+                "1140130913",
+                "1140130914",
+                "1140130915",
+                "1140130916",
+                "1140130917",
+                "1140130918",
+                "1140130930",
+                "1140130929",
+                "1140130928",
+                "1140130927",
+                "1140130926");
+
+        changeBucketEntriesToAliquots(tubeBarcodes, 1651091L, "LCSET-9978", "SUPPORT-2239");
+    }
+
     /**
      * At last step in extraction, the SM-ID was scanned, should have been the 2D barcode.
      */
