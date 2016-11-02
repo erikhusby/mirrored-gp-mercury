@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
@@ -110,6 +111,9 @@ public class LabBatchFixUpTest extends Arquillian {
 
     @Inject
     private MercurySampleDao mercurySampleDao;
+
+    @Inject
+    private SystemRouter systemRouter;
 
     // Use (RC, "rc"), (PROD, "prod") to push the backfill to RC and production respectively.
     @Deployment
@@ -719,6 +723,8 @@ public class LabBatchFixUpTest extends Arquillian {
             throws Exception {
         userBean.loginOSUser();
         userTransaction.begin();
+        Assert.assertEquals(systemRouter.routeForVesselBarcodes(childBarcodes), SystemRouter.System.MERCURY);
+
         LabBatch labBatch = labBatchDao.findByBusinessKey(lcset);
         Map<String, LabVessel> mapSourceToTarget = new HashMap<>();
 
@@ -765,6 +771,9 @@ public class LabBatchFixUpTest extends Arquillian {
 
         labBatchDao.persist(new FixupCommentary(ticket + " change bucket entries to aliquot"));
         labBatchDao.flush();
+        labVesselDao.clear();
+
+        Assert.assertEquals(systemRouter.routeForVesselBarcodes(childBarcodes), SystemRouter.System.SQUID);
         userTransaction.commit();
     }
 
