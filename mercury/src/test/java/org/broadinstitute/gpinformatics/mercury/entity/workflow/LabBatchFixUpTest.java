@@ -118,6 +118,35 @@ public class LabBatchFixUpTest extends Arquillian {
     }
 
     @Test(enabled = false)
+    public void gplim4393removeSamplesFromLcset() throws Exception {
+        userBean.loginOSUser();
+
+        LabBatch labBatch = labBatchDao.findByName("LCSET-9978");
+        List<String> samplesToRemove = Arrays.asList("SM-9J5HB", "SM-9J5HC");
+        removeSamples(samplesToRemove, labBatch);
+
+        labBatchDao.persist(new FixupCommentary("GPLIM-4393: Remove samples from LCSET-9978"));
+    }
+
+    private List<LabBatchStartingVessel> removeSamples(List<String> sampleNames, LabBatch labBatch) {
+        List<LabBatchStartingVessel> vesselsToRemove = new ArrayList<>();
+        for (LabBatchStartingVessel startingVessel : labBatch.getLabBatchStartingVessels()) {
+            Set<SampleInstanceV2> sampleInstances = startingVessel.getLabVessel().getSampleInstancesV2();
+            for (SampleInstanceV2 sampleInstance : sampleInstances) {
+                String sample = sampleInstance.getRootOrEarliestMercurySampleName();
+                if (sampleNames.contains(sample)) {
+                    vesselsToRemove.add(startingVessel);
+                }
+            }
+        }
+        for (LabBatchStartingVessel vesselToRemove : vesselsToRemove) {
+            labBatch.getLabBatchStartingVessels().remove(vesselToRemove);
+            vesselToRemove.getLabVessel().getLabBatchStartingVessels().remove(vesselToRemove);
+        }
+        return vesselsToRemove;
+    }
+
+    @Test(enabled = false)
     public void updateNullLabBatchType() {
         final List<LabBatch> nullTypes = labBatchDao.findList(LabBatch.class, LabBatch_.labBatchType, null);
         List<LabBatch> fixedBatches = new ArrayList<>(nullTypes.size());

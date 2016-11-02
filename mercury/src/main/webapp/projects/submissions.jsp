@@ -150,7 +150,7 @@
                         var tagAttributes = {};
                         if (status.length === 0) {
                             tagAttributes = {
-                                "name": "selectedSubmissionSamples",
+                                "name": "<%=ResearchProjectActionBean.SUBMISSION_TUPLES_PARAMETER%>",
                                 "value": data,
                                 "type": "checkbox",
                                 "class": "shiftCheckbox"
@@ -229,7 +229,7 @@
                         {"bSearchable": true, "aTargets": ["_all"]}
                     ],
                     "aoColumns": [
-                        {"mData": "<%=SubmissionField.SAMPLE_NAME%>","asSorting": ["desc", "asc"], "mRender": renderCheckbox},
+                        {"mData": "<%=SubmissionField.BASS_TUPLE%>","asSorting": ["desc", "asc"], "mRender": renderCheckbox},
                         {"mData": "<%=SubmissionField.SAMPLE_NAME%>"},
                         {"mData": "<%=SubmissionField.SUBMISSION_SITE%>", "sClass": "ellipsis"},
                         {"mData": "<%=SubmissionField.LIBRARY_DESCRIPTOR%>"},

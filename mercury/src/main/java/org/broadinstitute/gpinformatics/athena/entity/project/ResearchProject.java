@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -19,6 +21,7 @@ import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -46,6 +49,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -389,6 +393,16 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
 
     public Collection<RegulatoryInfo> getRegulatoryInfos() {
         return regulatoryInfos;
+    }
+
+    public Map<String, RegulatoryInfo> getRegulatoryByIdentifier() {
+        Collection<RegulatoryInfo> regulatoryInfos = getRegulatoryInfos();
+        return Maps.uniqueIndex(regulatoryInfos, new Function<RegulatoryInfo, String>() {
+            @Override
+            public String apply(@Nullable RegulatoryInfo input) {
+                return input.getIdentifier();
+            }
+        });
     }
 
     public List<String> getRegulatoryInfoStrings() {
