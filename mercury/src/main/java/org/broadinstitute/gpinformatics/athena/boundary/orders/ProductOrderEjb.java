@@ -13,10 +13,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
@@ -115,6 +117,8 @@ public class ProductOrderEjb {
     private AppConfig appConfig;
 
     private EmailSender emailSender;
+
+    private SAPAccessControlEjb accessController;
 
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
@@ -304,11 +308,13 @@ public class ProductOrderEjb {
     public boolean isOrderEligibleForSAP(ProductOrder editedProductOrder)
             throws QuoteServerException, QuoteNotFoundException {
         Quote orderQuote = quoteService.getQuoteByAlphaId(editedProductOrder.getQuoteId());
-
+        SAPAccessControl accessControl = accessController.getCurrentControlDefinitions();
         boolean eligibilityResult = false;
-        if(orderQuote != null) {
+        if(orderQuote != null && accessControl.isEnabled()) {
             eligibilityResult =
-                    orderQuote.isEligibleForSAP() && !editedProductOrder.isDraft() && !editedProductOrder.isPending();
+                    orderQuote.isEligibleForSAP() && !editedProductOrder.isDraft() && !editedProductOrder.isPending()
+                    && CollectionUtils.containsAll(accessControl.getDisabledFeatures(),
+                            Collections.singleton(editedProductOrder.getProduct().getPrimaryPriceItem().getName()));
         }
         return eligibilityResult;
     }
@@ -1270,5 +1276,11 @@ public class ProductOrderEjb {
     @Inject
     public void setEmailSender(EmailSender emailSender) {
         this.emailSender = emailSender;
+    }
+
+    @Inject
+    public void setAccessController(
+            SAPAccessControlEjb accessController) {
+        this.accessController = accessController;
     }
 }
