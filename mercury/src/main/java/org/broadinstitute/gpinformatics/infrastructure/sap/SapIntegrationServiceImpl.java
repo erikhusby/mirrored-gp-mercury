@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
+import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -295,10 +296,18 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      * @return an indicator that represents one of the configured companies within SAP
      */
     @Override
-    public SapIntegrationClientImpl.SAPCompanyConfiguration determineCompanyCode(ProductOrder companyProductOrder) {
+    public SapIntegrationClientImpl.SAPCompanyConfiguration determineCompanyCode(ProductOrder companyProductOrder)
+            throws SAPIntegrationException {
         SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
         if (companyProductOrder.getProduct().isExternalProduct()) {
             companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES;
+        }
+
+        final SapOrderDetail latestSapOrderDetail = companyProductOrder.latestSapOrderDetail();
+        if(latestSapOrderDetail != null && !latestSapOrderDetail.getCompanyCode().equals(companyCode.getCompanyCode())) {
+            throw new SAPIntegrationException("Unable to update the order in SAP.  "
+                                              + "This combination of Product and Order is attempting to change the "
+                                              + "company code to which this order will be associated.");
         }
 
         return companyCode;

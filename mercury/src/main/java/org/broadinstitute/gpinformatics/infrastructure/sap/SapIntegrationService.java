@@ -81,5 +81,6 @@ public interface SapIntegrationService {
      */
     void changeProductInSAP(Product product) throws SAPIntegrationException;
 
-    SapIntegrationClientImpl.SAPCompanyConfiguration determineCompanyCode(ProductOrder companyProductOrder);
+    SapIntegrationClientImpl.SAPCompanyConfiguration determineCompanyCode(ProductOrder companyProductOrder)
+            throws SAPIntegrationException;
 }
