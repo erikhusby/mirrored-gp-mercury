@@ -10,9 +10,6 @@ import javax.inject.Inject;
 import java.util.Collections;
 import java.util.Set;
 
-/**
- * TODO scottmat fill in javadoc!!!
- */
 @Singleton
 @Startup
 public class SAPAccessControlEjb {

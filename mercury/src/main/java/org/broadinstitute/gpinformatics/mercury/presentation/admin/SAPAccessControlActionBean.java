@@ -4,6 +4,7 @@ import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
+import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
@@ -11,6 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessStatus;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
@@ -46,7 +48,7 @@ public class SAPAccessControlActionBean extends CoreActionBean {
     private String enabledAccess;
 
     @Before(stages = LifecycleStage.BindingAndValidation)
-    private void initValues() {
+    public void initValues() {
         accessController = accessControlEjb.getCurrentControlDefinitions();
         for (String selectedFeature : accessController.getDisabledFeatures()) {
             selectedPriceItems.add(selectedFeature);
@@ -67,13 +69,13 @@ public class SAPAccessControlActionBean extends CoreActionBean {
     public Resolution setAccess() {
         AccessStatus status = AccessStatus.valueOf(enabledAccess);
         accessControlEjb.setDefinitions(status, selectedPriceItems);
-        return new ForwardResolution(SAP_ACCESS_CONTROL_PAGE);
+        return new RedirectResolution(SAPAccessControlActionBean.class, VIEW_ACTION);
     }
 
     @HandlesEvent(RESET_ACCESS_ACTION)
     public Resolution resetAccess() {
         accessControlEjb.setDefinitions(AccessStatus.ENABLED, new HashSet<String>());
-        return new ForwardResolution(SAP_ACCESS_CONTROL_PAGE);
+        return new RedirectResolution(SAPAccessControlActionBean.class, VIEW_ACTION);
     }
 
     public SAPAccessControl getAccessController() {
@@ -92,7 +94,7 @@ public class SAPAccessControlActionBean extends CoreActionBean {
     }
 
     public String getSelectedOptionsString() {
-        return StringUtils.join(accessController.getDisabledFeatures(), ",");
+        return StringUtils.join(accessController.getDisabledFeatures(), AccessControl.CONTROLLER_SEPARATOR_CHARS);
     }
 
     public void setEnabledAccess(String enabledAccess) {

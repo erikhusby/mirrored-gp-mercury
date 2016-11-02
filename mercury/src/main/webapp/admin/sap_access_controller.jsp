@@ -13,8 +13,12 @@
     <stripes:layout-component name="content">
         <stripes:form beanclass="${actionBean.class.name}">
             <div id="enableAccess">
-                        <stripes:checkbox value="<%=AccessStatus.DISABLED.name()%>" name="enabledAccess" id="DISABLED-id"/> Disable SAP Access
-                        <stripes:checkbox value="<%=AccessStatus.ENABLED.name()%>" name="enabledAccess" id="ENABLED-id"/> Enable SAP Access
+                <stripes:select name="enabledAccess" id="access">
+                    <stripes:option value="<%=AccessStatus.DISABLED.name()%>" label="Disable SAP Access"/>
+                    <stripes:option value="<%=AccessStatus.ENABLED.name()%>" label="Enable SAP Access"/>
+                </stripes:select>
+                        <%--<stripes:checkbox value="<%=AccessStatus.DISABLED.name()%>" name="enabledAccess" id="DISABLED-id"/> Disable SAP Access--%>
+                        <%--<stripes:checkbox value="<%=AccessStatus.ENABLED.name()%>" name="enabledAccess" id="ENABLED-id"/> Enable SAP Access--%>
             </div>
 
             <div class="form-horizontal span7">

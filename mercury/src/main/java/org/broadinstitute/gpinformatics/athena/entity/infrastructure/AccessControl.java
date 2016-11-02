@@ -27,6 +27,7 @@ import java.util.Set;
 public abstract class AccessControl implements Serializable{
 
     private static final long serialVersionUID = -8698508477326258176L;
+    public static final String CONTROLLER_SEPARATOR_CHARS = "|@|";
     @Id
     @SequenceGenerator(name = "SEQ_ACCESS_CONTROL", schema = "athena", sequenceName = "SEQ_ACCESS_CONTROL")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_ACCESS_CONTROL")
@@ -54,13 +55,13 @@ public abstract class AccessControl implements Serializable{
         final HashSet<String> featureSet = new HashSet<>();
 
         if (StringUtils.isNotBlank(disabledFeatures)) {
-            featureSet.addAll(Arrays.asList(StringUtils.split(disabledFeatures, ',')));
+            featureSet.addAll(Arrays.asList(StringUtils.split(disabledFeatures, CONTROLLER_SEPARATOR_CHARS)));
         }
         return featureSet;
     }
 
     public void setDisabledFeatures(Set<String> disabledFeatures) {
-        this.disabledFeatures = StringUtils.join(disabledFeatures, ',');
+        this.disabledFeatures = StringUtils.join(disabledFeatures, CONTROLLER_SEPARATOR_CHARS);
     }
 
     public void addDisabledFeatures(String feature) {
