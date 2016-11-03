@@ -1586,6 +1586,7 @@ AS
     V_COUNT     PLS_INTEGER;
     V_IS_INSERT CHAR;
     V_THE_ROWID ROWID;
+    V_LABEL VARCHAR2(255);
     BEGIN
       V_COUNT := 0;
 
@@ -1638,6 +1639,7 @@ AS
           -- Update applicable process flow values in base row
           CASE new.lab_event_type
             WHEN 'ArrayPlatingDilution' THEN
+
             UPDATE array_process_flow
             SET plating_event_id = new.lab_event_id
               , plating_dilution_station = new.station_name
@@ -1645,7 +1647,14 @@ AS
               , plating_dilution_date = new.event_date
               -- Strip position suffix from label to get plate barcode
               , dna_plate = ( SELECT REGEXP_REPLACE( LABEL, new.position || '$', '' ) FROM LAB_VESSEL WHERE LAB_VESSEL_ID = new.LAB_VESSEL_ID )
+            WHERE ROWID = V_THE_ROWID
+            RETURNING dna_plate INTO V_LABEL ;
+
+            -- DNA plate name is associated with plate, not plate well
+            UPDATE array_process_flow
+            SET dna_plate_name = ( SELECT NAME FROM LAB_VESSEL WHERE LABEL = V_LABEL )
             WHERE ROWID = V_THE_ROWID;
+
             WHEN 'InfiniumHybridization' THEN
             UPDATE array_process_flow
             SET hyb_event_id = new.lab_event_id
