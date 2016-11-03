@@ -80,7 +80,9 @@ public class ProductOrderDao extends GenericDao {
         SAMPLES,
         RISK_ITEMS,
         LEDGER_ITEMS,
-        PRODUCT_ORDER_KIT
+        PRODUCT_ORDER_KIT,
+        CHILD_ORDERS,
+        SAP_ORDER_INFO
     }
 
     private static class ProductOrderDaoCallback implements GenericDaoCallback<ProductOrder> {
@@ -127,6 +129,14 @@ public class ProductOrderDao extends GenericDao {
 
             if (fetchSpecs.contains(FetchSpec.PRODUCT_ORDER_KIT)) {
                 productOrder.fetch(ProductOrder_.productOrderKit, JoinType.LEFT);
+            }
+
+            if (fetchSpecs.contains(FetchSpec.CHILD_ORDERS)) {
+                productOrder.fetch(ProductOrder_.childOrders, JoinType.LEFT);
+            }
+
+            if (fetchSpecs.contains(FetchSpec.SAP_ORDER_INFO)) {
+                productOrder.fetch(ProductOrder_.sapReferenceOrders, JoinType.LEFT);
             }
         }
     }
@@ -198,7 +208,7 @@ public class ProductOrderDao extends GenericDao {
      */
     public List<ProductOrder> findListForBilling(Collection<String> businessKeys) {
         return findListByBusinessKeys(businessKeys, FetchSpec.PRODUCT, FetchSpec.RESEARCH_PROJECT, FetchSpec.SAMPLES,
-                                      FetchSpec.RISK_ITEMS, FetchSpec.LEDGER_ITEMS);
+                                      FetchSpec.RISK_ITEMS, FetchSpec.LEDGER_ITEMS, FetchSpec.SAP_ORDER_INFO, FetchSpec.CHILD_ORDERS);
     }
 
 

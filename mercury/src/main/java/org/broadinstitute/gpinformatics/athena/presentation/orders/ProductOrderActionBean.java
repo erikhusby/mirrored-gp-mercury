@@ -1201,18 +1201,19 @@ public class ProductOrderActionBean extends CoreActionBean {
             addMessage("Product Order \"{0}\" has been placed", editOrder.getTitle());
             originalBusinessKey = null;
 
-            productOrderEjb.handleSamplesAdded(editOrder.getBusinessKey(), editOrder.getSamples(), this);
-            productOrderDao.persist(editOrder);
-
             productOrderEjb.publishProductOrderToSAP(editOrder, placeOrderMessageCollection, true);
             addMessages(placeOrderMessageCollection);
+
+            productOrderEjb.handleSamplesAdded(editOrder.getBusinessKey(), editOrder.getSamples(), this);
+            productOrderDao.persist(editOrder);
 
         } catch (Exception e) {
 
             // If we get here with an original business key, then clear out the session and refetch the order.
             if (originalBusinessKey != null) {
                 productOrderDao.clear();
-                editOrder = productOrderEjb.findProductOrderByBusinessKeySafely(originalBusinessKey);
+                editOrder = productOrderEjb.findProductOrderByBusinessKeySafely(originalBusinessKey,
+                        ProductOrderDao.FetchSpec.CHILD_ORDERS);
             }
 
             addGlobalValidationError(e.getMessage());
@@ -2539,4 +2540,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void setReplacementSampleList(String replacementSampleList) {
         this.replacementSampleList = replacementSampleList;
     }
+
+
+
 }

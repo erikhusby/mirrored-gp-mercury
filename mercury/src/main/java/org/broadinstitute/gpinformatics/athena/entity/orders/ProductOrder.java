@@ -218,7 +218,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "parentOrder")
     private List<ProductOrder> childOrders = new ArrayList<>();
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "PARENT_PRODUCT_ORDER")
     private ProductOrder parentOrder;
 
@@ -935,13 +935,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public int getNonAbandonedCount() {
         int count = 0;
-        for(ProductOrderSample sample:getSamples()) {
+        for(ProductOrderSample sample:samples) {
             if(sample.getDeliveryStatus() != ProductOrderSample.DeliveryStatus.ABANDONED) {
                 count++;
             }
         }
 
-        for(ProductOrder childOrder:getChildOrders()) {
+        for(ProductOrder childOrder:childOrders) {
             count += childOrder.getNonAbandonedCount();
         }
 
