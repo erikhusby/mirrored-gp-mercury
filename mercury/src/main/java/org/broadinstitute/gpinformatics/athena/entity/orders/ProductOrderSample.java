@@ -1039,6 +1039,8 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
                     double quantityDelta = ledgerUpdate.getQuantityDelta();
 
                     if (!haveExistingEntry) {
+
+                        // FIXME: 11/3/16  SGM This may cause issues for Replacement Price Items
                         addLedgerItem(ledgerUpdate.getWorkCompleteDate(), ledgerUpdate.getPriceItem(), quantityDelta,
                                 getProductForPriceItem(ledgerUpdate.getPriceItem()));
                     } else {

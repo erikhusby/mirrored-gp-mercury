@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
@@ -16,6 +17,8 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
+import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -24,8 +27,10 @@ import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -58,19 +63,29 @@ public class BillingAdaptor implements Serializable {
 
     SapIntegrationService sapService;
 
+    private EmailSender emailSender;
+
+    private UserBean userBean;
+
+    private AppConfig appConfig;
+
     private static final FastDateFormat BILLING_DATE_FORMAT =
             FastDateFormat.getDateTimeInstance(FastDateFormat.SHORT, FastDateFormat.SHORT);
 
     @Inject
-    public BillingAdaptor(BillingEjb billingEjb, BillingSessionDao billingSessionDao,PriceListCache priceListCache,
-                          QuoteService quoteService,BillingSessionAccessEjb billingSessionAccessEjb,
-                          SapIntegrationService sapService) {
+    public BillingAdaptor(BillingEjb billingEjb, BillingSessionDao billingSessionDao, PriceListCache priceListCache,
+                          QuoteService quoteService, BillingSessionAccessEjb billingSessionAccessEjb,
+                          SapIntegrationService sapService, EmailSender emailSender, UserBean userBean,
+                          AppConfig appConfig) {
         this.billingEjb = billingEjb;
         this.billingSessionDao = billingSessionDao;
         this.priceListCache = priceListCache;
         this.quoteService = quoteService;
         this.billingSessionAccessEjb = billingSessionAccessEjb;
         this.sapService = sapService;
+        this.emailSender = emailSender;
+        this.userBean = userBean;
+        this.appConfig = appConfig;
     }
 
     public BillingAdaptor() {
@@ -152,25 +167,10 @@ public class BillingAdaptor implements Serializable {
                     // Get the quote items on the quote, adding to the quote item cache, if not there.
                     Collection<String> quoteItemNames = getQuoteItems(quoteItemsByQuote, item.getQuoteId());
 
-                    // If this is a replacement, the primary is not on the quote and the replacement IS on the quote,
-                    // set the primary to null so it will be billed as if it is a primary.
-                    if (primaryPriceItemIfReplacement != null) {
-                        if (!quoteItemNames.contains(primaryPriceItemIfReplacement.getName()) &&
-                                quoteItemNames.contains(priceItemBeingBilled.getName())) {
-                            primaryPriceItemIfReplacement = null;
-                        }
-                    }
-
-                    if(primaryPriceItemIfReplacement == null) {
-                        item.getPriceItem().setPrice(priceItemBeingBilled.getPrice());
-                    } else {
-
-                        item.getPriceItem().setPrice(primaryPriceItemIfReplacement.getPrice());
-                    }
-
                     String sapBillingId = quote.isEligibleForSAP()? null:"NotEligible";
 
-                    if(quote.isEligibleForSAP() && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
+                    if(productOrderEjb.isOrderEligibleForSAP(item.getProductOrder())
+                       && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
                         if(StringUtils.isBlank(item.getProductOrder().getSapOrderNumber())) {
                             throw new SAPInterfaceException(item.getProductOrder().getJiraTicketKey() +
                                                             " has not been submitted to SAP as an order yet.  Uable "
@@ -180,6 +180,39 @@ public class BillingAdaptor implements Serializable {
                                 sapBillingId = sapService.billOrder(item);
                             }
                         }
+                    }
+
+                    if(productOrderEjb.isOrderEligibleForSAP(item.getProductOrder())
+                       && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
+                       && primaryPriceItemIfReplacement != null) {
+                        BigDecimal replacementDifference ;
+                        BigDecimal primaryPrice = BigDecimal.valueOf(Double.valueOf(primaryPriceItemIfReplacement.getPrice()));
+                        BigDecimal replacementPrice  = BigDecimal.valueOf(Double.valueOf(priceItemBeingBilled.getPrice()));
+                        replacementDifference = primaryPrice.subtract(replacementPrice);
+
+                        String body = "For Delivery Document " + sapBillingId + " a discount of "+
+                                      replacementDifference + " is being requested by "
+                                      + userBean.getBspUser().getFullName() + ".  For SAP order "
+                                      + item.getProductOrder().getSapOrderNumber();
+
+                        emailSender.sendHtmlEmailWithCC(appConfig, "BUSSYS@broadinstitute.org", Collections.singleton(userBean.getBspUser().getEmail()), "Order Discount Request", body);
+
+                    }
+
+                    // If this is a replacement, the primary is not on the quote and the replacement IS on the quote,
+                    // set the primary to null so it will be billed as if it is a primary.
+                    if (primaryPriceItemIfReplacement != null) {
+                        if (!quoteItemNames.contains(primaryPriceItemIfReplacement.getName()) &&
+                            quoteItemNames.contains(priceItemBeingBilled.getName())) {
+                            primaryPriceItemIfReplacement = null;
+                        }
+                    }
+
+                    if(primaryPriceItemIfReplacement == null) {
+                        item.getPriceItem().setPrice(priceItemBeingBilled.getPrice());
+                    } else {
+
+                        item.getPriceItem().setPrice(primaryPriceItemIfReplacement.getPrice());
                     }
 
                     String workId = null;
