@@ -930,8 +930,8 @@ public class ProductOrderFixupTest extends Arquillian {
         }
     }
 
-    @Test(enabled = true)
-    public void updateSAPRecords() {
+    @Test(enabled = false)
+    public void updateSAPRecords() throws Exception {
 
         userBean.loginOSUser();
 
