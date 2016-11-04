@@ -52,6 +52,8 @@ public class QuoteImportItem {
                 updateDateRange(ledger.getWorkCompleteDate());
                 if (StringUtils.isNotBlank(ledger.getWorkItem())) {
                     workItems.add(ledger.getWorkItem());
+                }
+                if(StringUtils.isNotBlank(ledger.getSapDeliveryDocumentId())) {
                     sapItems.add(ledger.getSapDeliveryDocumentId());
                 }
             }
@@ -181,7 +183,9 @@ public class QuoteImportItem {
             ledgerEntry.setPriceItemType(priceItemType);
             ledgerEntry.setBillingMessage(billingMessage);
             ledgerEntry.setWorkItem(quoteServerWorkItem);
-            ledgerEntry.setSapDeliveryDocumentId(sapDeliveryId);
+            if(StringUtils.isNotBlank(sapDeliveryId)) {
+                ledgerEntry.setSapDeliveryDocumentId(sapDeliveryId);
+            }
         }
     }
 

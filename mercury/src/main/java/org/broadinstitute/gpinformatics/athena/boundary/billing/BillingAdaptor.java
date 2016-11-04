@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import com.google.common.collect.HashMultimap;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
@@ -171,8 +172,9 @@ public class BillingAdaptor implements Serializable {
 
                     String workId = null;
 
-                    if(productOrderEjb.isOrderEligibleForSAP(item.getProductOrder())
-                       && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
+                    if( productOrderEjb.isOrderEligibleForSAP(item.getProductOrder())
+                        && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
+                        && CollectionUtils.isEmpty(item.getSapItems())) {
                         if(StringUtils.isBlank(item.getProductOrder().getSapOrderNumber())) {
                             throw new SAPInterfaceException(item.getProductOrder().getJiraTicketKey() +
                                                             " has not been submitted to SAP as an order yet.  Unable "
@@ -182,27 +184,27 @@ public class BillingAdaptor implements Serializable {
                                 sapBillingId = sapService.billOrder(item);
                             }
                         }
+                        result.setSAPBillingId(sapBillingId);
+                        billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacement, workId, sapBillingId, null);
+
+                        if(productOrderEjb.isOrderEligibleForSAP(item.getProductOrder())
+                           && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
+                           && primaryPriceItemIfReplacement != null) {
+                            BigDecimal replacementDifference ;
+                            BigDecimal primaryPrice = BigDecimal.valueOf(Double.valueOf(primaryPriceItemIfReplacement.getPrice()));
+                            BigDecimal replacementPrice  = BigDecimal.valueOf(Double.valueOf(priceItemBeingBilled.getPrice()));
+                            replacementDifference = primaryPrice.subtract(replacementPrice);
+
+                            String body = "For Delivery Document " + sapBillingId + " a discount of "+
+                                          replacementDifference + " is being requested by "
+                                          + userBean.getBspUser().getFullName() + ".  For SAP order "
+                                          + item.getProductOrder().getSapOrderNumber();
+
+                            emailSender.sendHtmlEmailWithCC(appConfig, "BUSSYS@broadinstitute.org", Collections.singleton(userBean.getBspUser().getEmail()), "Order Discount Request", body);
+
+                        }
                     }
 
-                    result.setSAPBillingId(sapBillingId);
-                    billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacement, workId, sapBillingId, null);
-
-                    if(productOrderEjb.isOrderEligibleForSAP(item.getProductOrder())
-                       && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
-                       && primaryPriceItemIfReplacement != null) {
-                        BigDecimal replacementDifference ;
-                        BigDecimal primaryPrice = BigDecimal.valueOf(Double.valueOf(primaryPriceItemIfReplacement.getPrice()));
-                        BigDecimal replacementPrice  = BigDecimal.valueOf(Double.valueOf(priceItemBeingBilled.getPrice()));
-                        replacementDifference = primaryPrice.subtract(replacementPrice);
-
-                        String body = "For Delivery Document " + sapBillingId + " a discount of "+
-                                      replacementDifference + " is being requested by "
-                                      + userBean.getBspUser().getFullName() + ".  For SAP order "
-                                      + item.getProductOrder().getSapOrderNumber();
-
-                        emailSender.sendHtmlEmailWithCC(appConfig, "BUSSYS@broadinstitute.org", Collections.singleton(userBean.getBspUser().getEmail()), "Order Discount Request", body);
-
-                    }
 
                     // If this is a replacement, the primary is not on the quote and the replacement IS on the quote,
                     // set the primary to null so it will be billed as if it is a primary.
