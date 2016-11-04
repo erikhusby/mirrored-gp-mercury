@@ -87,7 +87,7 @@ public class SapIntegrationServiceImplTest extends Arquillian {
             Assert.fail("This should have thrown a system error");
         } catch (SAPIntegrationException e) {
             log.debug(e.getMessage());
-            Assert.assertTrue(e.getMessage().contains("the email address specified on the Quote or Mercury PDO is not attached to any SAP Customer account."));
+            Assert.assertTrue(e.getMessage().contains("the email address specified on the Quote is not attached to any SAP Customer account."));
         }
 
         try {
@@ -99,6 +99,8 @@ public class SapIntegrationServiceImplTest extends Arquillian {
 
         try {
             String goodUserNumber = sapIntegrationClient.findCustomer(testGoodQuote, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+            Assert.assertEquals(goodUserNumber , "0000300325");
+            goodUserNumber = sapIntegrationClient.findCustomer(testGoodQuote, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES);
             Assert.assertEquals(goodUserNumber , "0000300325");
         } catch (SAPIntegrationException e) {
             Assert.fail(e.getMessage());

@@ -61,6 +61,7 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
         this.sapOrderNumber = sapOrderNumber;
         this.primaryQuantity = primaryQuantity;
         this.quoteId = quoteId;
+        this.companyCode = companyCode;
     }
 
     public Long getSapOrderDetailId() {

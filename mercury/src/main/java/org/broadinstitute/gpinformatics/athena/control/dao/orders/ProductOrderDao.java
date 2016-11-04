@@ -208,7 +208,7 @@ public class ProductOrderDao extends GenericDao {
      */
     public List<ProductOrder> findListForBilling(Collection<String> businessKeys) {
         return findListByBusinessKeys(businessKeys, FetchSpec.PRODUCT, FetchSpec.RESEARCH_PROJECT, FetchSpec.SAMPLES,
-                                      FetchSpec.RISK_ITEMS, FetchSpec.LEDGER_ITEMS, FetchSpec.SAP_ORDER_INFO, FetchSpec.CHILD_ORDERS);
+                                      FetchSpec.RISK_ITEMS, FetchSpec.LEDGER_ITEMS);
     }
 
 

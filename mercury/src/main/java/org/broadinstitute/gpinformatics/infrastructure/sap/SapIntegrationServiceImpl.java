@@ -304,7 +304,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         }
 
         final SapOrderDetail latestSapOrderDetail = companyProductOrder.latestSapOrderDetail();
-        if(latestSapOrderDetail != null && !latestSapOrderDetail.getCompanyCode().equals(companyCode.getCompanyCode())) {
+        if(latestSapOrderDetail != null && latestSapOrderDetail.getCompanyCode()!= null
+           && !latestSapOrderDetail.getCompanyCode().equals(companyCode.getCompanyCode())) {
             throw new SAPIntegrationException("Unable to update the order in SAP.  "
                                               + "This combination of Product and Order is attempting to change the "
                                               + "company code to which this order will be associated.");

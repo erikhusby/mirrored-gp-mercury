@@ -152,7 +152,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     }
 
     public Product getProductForPriceItem(PriceItem priceItem) {
-        Product result = null;
+        Product result = getProductOrder().getProduct();
         if(getProductOrder().getProduct().getPrimaryPriceItem().equals(priceItem)) {
             result = getProductOrder().getProduct();
         } else {

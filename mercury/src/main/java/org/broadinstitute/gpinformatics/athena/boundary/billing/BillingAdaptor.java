@@ -169,11 +169,13 @@ public class BillingAdaptor implements Serializable {
 
                     String sapBillingId = quote.isEligibleForSAP()? null:"NotEligible";
 
+                    String workId = null;
+
                     if(productOrderEjb.isOrderEligibleForSAP(item.getProductOrder())
                        && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
                         if(StringUtils.isBlank(item.getProductOrder().getSapOrderNumber())) {
                             throw new SAPInterfaceException(item.getProductOrder().getJiraTicketKey() +
-                                                            " has not been submitted to SAP as an order yet.  Uable "
+                                                            " has not been submitted to SAP as an order yet.  Unable "
                                                             + "to bill until this happens");
                         } else {
                             if(item.getQuantityForSAP() != 0) {
@@ -181,6 +183,9 @@ public class BillingAdaptor implements Serializable {
                             }
                         }
                     }
+
+                    result.setSAPBillingId(sapBillingId);
+                    billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacement, workId, sapBillingId, null);
 
                     if(productOrderEjb.isOrderEligibleForSAP(item.getProductOrder())
                        && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
@@ -215,10 +220,6 @@ public class BillingAdaptor implements Serializable {
                         item.getPriceItem().setPrice(primaryPriceItemIfReplacement.getPrice());
                     }
 
-                    String workId = null;
-
-                    billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacement, workId, sapBillingId, null);
-
                     if(quote.isEligibleForSAP() && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
                         workId = quoteService.registerNewSAPWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
                                 item.getWorkCompleteDate(), item.getQuantity(),
@@ -232,15 +233,13 @@ public class BillingAdaptor implements Serializable {
 
                     // Not sure I see the point of the next two lines!!!!
                     result.setWorkId(workId);
-                    result.setSAPBillingId(sapBillingId);
-
                     logBilling(workId, item, priceItemBeingBilled, billedPdoKeys, sapBillingId);
                     billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacement, workId, sapBillingId,
                             BillingSession.SUCCESS);
                 } catch (Exception ex) {
 
                     StringBuilder errorMessage = new StringBuilder();
-                    if (StringUtils.isBlank(item.getProductOrder().getSapOrderNumber()) && quote != null &&
+                    if (StringUtils.isBlank(result.getSAPBillingId()) && quote != null &&
                         quote.isEligibleForSAP()) {
                         errorMessage.append("A problem occured attempting to post to SAP for ")
                                 .append(billingSession.getBusinessKey()).append(".");
