@@ -88,7 +88,9 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJ
 import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
@@ -648,7 +650,15 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         String quoteId = editOrder.getQuoteId();
         Quote quote = validateQuoteId(quoteId);
-        validateQuoteDetails(quote, ErrorLevel.ERROR);
+        try {
+            if(productOrderEjb.isOrderEligibleForSAP(editOrder)) {
+                validateQuoteDetails(quote, ErrorLevel.ERROR);
+            }
+        } catch (QuoteServerException e) {
+            addGlobalValidationError("The quote ''{2}'' is not valid: {3}", quoteId, e.getMessage());
+        } catch (QuoteNotFoundException e) {
+            addGlobalValidationError("The quote ''{2}'' was not found ", quoteId);
+        }
 
         if (editOrder != null) {
             validateRinScores(editOrder);
@@ -1307,9 +1317,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         } catch (SAPInterfaceException e) {
             addGlobalValidationError(e.getMessage());
         }
-        // Temporarily adding the quote validation when the order is saved to give the user a warning of upcoming
-        // new restrictions
-//        validateQuoteDetails(editOrder.getQuoteId(), ErrorLevel.WARNING);
+        if(!productOrderEjb.isOrderEligibleForSAP(editOrder)) {
+            validateQuoteDetails(editOrder.getQuoteId(), ErrorLevel.WARNING);
+        }
         return createViewResolution(editOrder.getBusinessKey());
     }
 
