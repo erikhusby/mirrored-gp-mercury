@@ -30,6 +30,7 @@ import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.GregorianCalendar;
@@ -349,6 +350,12 @@ public class DesignationActionBean extends CoreActionBean implements Designation
             for (LabVessel startingBatchVessel : targetLcset.getStartingBatchLabVessels()) {
                 loadingEventsAndVessels = startingBatchVessel.findVesselsForLabEventType(selectedEventType, true,
                         DESCENDANTS);
+                // Includes batched vessel if it was the target of a loading event, e.g. a bucketed pooled tube.
+                for (LabEvent labEvent : startingBatchVessel.getInPlaceAndTransferToEvents()) {
+                    if (labEvent.getLabEventType() == selectedEventType) {
+                        loadingEventsAndVessels.put(labEvent, Collections.singleton(startingBatchVessel));
+                    }
+                }
                 for (LabEvent targetEvent : loadingEventsAndVessels.keySet()) {
                     for (LabVessel loadingTube : loadingEventsAndVessels.get(targetEvent)) {
                         // Only processes a loading tube for this lcset once.
