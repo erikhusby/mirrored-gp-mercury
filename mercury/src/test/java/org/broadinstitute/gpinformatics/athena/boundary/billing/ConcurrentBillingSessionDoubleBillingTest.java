@@ -8,9 +8,12 @@ import org.apache.deltaspike.core.api.provider.BeanProvider;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
+import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFunding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePlatformType;
@@ -220,10 +223,13 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
         @Override
         public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
 
-            Quote stubQuote = new Quote();
+            FundingLevel level = new FundingLevel("100", new Funding(Funding.PURCHASE_ORDER,null, null));
+            QuoteFunding funding = new QuoteFunding(Collections.singleton(level));
+            Quote stubQuote = new Quote("testMMA", funding, ApprovalStatus.FUNDED);
             stubQuote.setAlphanumericId("testMMA");
 
-            QuoteItem stubItem = new QuoteItem("TestMMA", "testPI", "testingConcurrent", "1", "1", "1","Mercury","Exome Sequencing");
+            QuoteItem stubItem = new QuoteItem("TestMMA", "testPI", "testingConcurrent", "1", "1", "1","Mercury",
+                    "Exome Sequencing");
             stubQuote.setQuoteItems(Collections.singletonList(stubItem));
 
             return stubQuote;

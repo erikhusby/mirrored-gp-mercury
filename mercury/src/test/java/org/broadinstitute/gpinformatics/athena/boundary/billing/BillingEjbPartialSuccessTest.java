@@ -13,11 +13,15 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestLogHandler;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
+import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
+import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFunding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFundingList;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePlatformType;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
@@ -39,6 +43,7 @@ import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -190,12 +195,20 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
         @Override
         public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
-            return new Quote();
+            FundingLevel level = new FundingLevel("100", new Funding(Funding.PURCHASE_ORDER,null, null));
+            QuoteFunding funding = new QuoteFunding(Collections.singleton(level));
+            final Quote quote = new Quote("test1", funding, ApprovalStatus.FUNDED);
+
+            return quote;
         }
 
         @Override
         public Quote getQuoteWithPriceItems(String alphaId) throws QuoteServerException, QuoteNotFoundException {
-            return getQuoteByAlphaId(alphaId);
+            final Quote quoteByAlphaId = getQuoteByAlphaId(alphaId);
+
+            quoteByAlphaId.setQuoteItems(Collections.singleton(new QuoteItem("test1", "priceitem1","Price Item", "10",
+                    "1000", "each", "Genomics Platform", "testing")));
+            return quoteByAlphaId;
         }
 
         @Override
@@ -367,7 +380,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                               ".java.lang.RuntimeException: Intentional Work Registration Failure!";
             }
         }
-        String successMessagePattern = "Work item \'" + GOOD_WORK_ID + "\' with completion date .*";
+        String successMessagePattern = "Work item \'" + GOOD_WORK_ID + "\' and SAP Document 'null' with completion date .*";
         assertThat(failMessage, notNullValue());
 
         assertThat(testLogHandler.messageMatches(failMessage), is(true));
