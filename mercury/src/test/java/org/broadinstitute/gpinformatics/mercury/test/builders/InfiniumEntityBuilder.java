@@ -25,26 +25,41 @@ public class InfiniumEntityBuilder {
     private final LabEventHandler labEventHandler;
     private final StaticPlate sourceplate;
     private final String testPrefix;
+    private final IncludeMethylation includeMethylation;
     private InfiniumJaxbBuilder infiniumJaxbBuilder;
     private LabEvent amplifcationEvent;
     private StaticPlate amplificationPlate;
     private List<StaticPlate> hybChips = new ArrayList<>();
     private List<LabEvent> xStainEvents = new ArrayList<>();
 
+    public enum IncludeMethylation {
+        TRUE, FALSE
+    }
+
     public InfiniumEntityBuilder(
             BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
             LabEventFactory labEventFactory,
             LabEventHandler labEventHandler, StaticPlate sourceplate, String testPrefix) {
+        this(bettaLimsMessageTestFactory, labEventFactory, labEventHandler, sourceplate, testPrefix,
+                IncludeMethylation.FALSE);
+    }
+
+    public InfiniumEntityBuilder(
+            BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
+            LabEventFactory labEventFactory,
+            LabEventHandler labEventHandler, StaticPlate sourceplate, String testPrefix,
+            IncludeMethylation includeMethylation) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.labEventFactory = labEventFactory;
         this.labEventHandler = labEventHandler;
         this.sourceplate = sourceplate;
         this.testPrefix = testPrefix;
+        this.includeMethylation = includeMethylation;
     }
 
     public InfiniumEntityBuilder invoke() {
         infiniumJaxbBuilder = new InfiniumJaxbBuilder(bettaLimsMessageTestFactory, testPrefix,
-                sourceplate.getLabCentricName(), sourceplate.getSampleInstanceCount(),
+                sourceplate.getLabCentricName(), sourceplate.getSampleInstanceCount(), includeMethylation,
                 Arrays.asList(Triple.of("NaOH", "1234-NaOH", 1), Triple.of("MA1", "1234-MA1", 2)),
                 Arrays.asList(Triple.of("MA2", "1234-MA2", 3), Triple.of("MSM", "1234-MSM", 4)),
                 Arrays.asList(Triple.of("FMS", "1234-FMS", 5)),

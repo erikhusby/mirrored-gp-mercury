@@ -637,8 +637,14 @@ public class BaseEventTest {
     }
 
     public InfiniumEntityBuilder runInfiniumProcess(StaticPlate sourcePlate, String barcodeSuffix) {
+        return runInfiniumProcessWithMethylation(sourcePlate, barcodeSuffix,
+                InfiniumEntityBuilder.IncludeMethylation.FALSE);
+    }
+
+    public InfiniumEntityBuilder runInfiniumProcessWithMethylation(
+            StaticPlate sourcePlate, String barcodeSuffix, InfiniumEntityBuilder.IncludeMethylation includeMethylation) {
         return new InfiniumEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
-                sourcePlate, barcodeSuffix).invoke();
+                sourcePlate, barcodeSuffix, includeMethylation).invoke();
     }
 
     public ArrayPlatingEntityBuilder runArrayPlatingProcess( Map<String, BarcodedTube> mapBarcodeToTube,

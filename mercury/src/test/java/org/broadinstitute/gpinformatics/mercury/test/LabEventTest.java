@@ -1657,6 +1657,22 @@ public class LabEventTest extends BaseEventTest {
     }
 
     /**
+     * Build object graph for infinium messages
+     */
+    @Test(groups = {TestGroups.DATABASE_FREE})
+    public void testInfiniumMethylation() {
+        expectedRouting = SystemRouter.System.MERCURY;
+        int numSamples = NUM_POSITIONS_IN_RACK - 2;
+        ProductOrder productOrder = ProductOrderTestFactory.buildInfiniumProductOrder(numSamples);
+        List<StaticPlate> sourcePlates = buildSamplePlates(productOrder, "AmpPlate");
+        StaticPlate sourcePlate = sourcePlates.get(0);
+        InfiniumEntityBuilder infiniumEntityBuilder = runInfiniumProcessWithMethylation(sourcePlate, "Infinium",
+                InfiniumEntityBuilder.IncludeMethylation.TRUE);
+        Set<SampleInstanceV2> samples = infiniumEntityBuilder.getHybChips().get(0).getSampleInstancesV2();
+        Assert.assertEquals(samples.size(), 24, "Wrong number of sample instances");
+    }
+
+    /**
      * Build object graph for stool extraction to TNA messages
      */
     @Test(groups = {TestGroups.DATABASE_FREE})
