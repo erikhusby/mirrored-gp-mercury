@@ -107,6 +107,10 @@ public class QuoteImportInfo {
                 for (Map.Entry<ProductLedgerIndex, Map<Date, List<LedgerEntry>>> ledgerEntrybyLedgerIndex : quotePriceItems
                         .get(orderIndex).entrySet()) {
                     ProductLedgerIndex ledgerIndex = ledgerEntrybyLedgerIndex.getKey();
+                    ledgerIndex.getPriceItem()
+                            .setPrice(priceListCache.findByKeyFields(ledgerIndex.getPriceItem().getPlatform(),
+                                    ledgerIndex.getPriceItem().getCategory(),
+                                    ledgerIndex.getPriceItem().getName()).getPrice());
 
                     for (Date bucketDate : ledgerEntrybyLedgerIndex.getValue().keySet()) {
                         List<LedgerEntry> ledgerItems =

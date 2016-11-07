@@ -31,7 +31,7 @@ public class QuoteImportItem {
     private Date startRange;
     private Date endRange;
     private final Set<String> workItems = new HashSet<>();
-    private  String sapItems;
+    private String sapItems;
     private Product product;
     private ProductOrder productOrder;
 
@@ -234,7 +234,10 @@ public class QuoteImportItem {
         // to the values on the product's price item, so do the item by item compare.
         for (QuotePriceItem optional : priceListCache.getReplacementPriceItems(primaryPriceItem)) {
             if (optional.isMercuryPriceItemEqual(priceItem)) {
-                return QuotePriceItem.convertMercuryPriceItem(primaryPriceItem);
+                final QuotePriceItem priceItem = QuotePriceItem.convertMercuryPriceItem(primaryPriceItem);
+                priceItem.setPrice(priceListCache.findByKeyFields(primaryPriceItem.getPlatform(),
+                        primaryPriceItem.getCategory(), primaryPriceItem.getName()).getPrice());
+                return priceItem;
             }
         }
 

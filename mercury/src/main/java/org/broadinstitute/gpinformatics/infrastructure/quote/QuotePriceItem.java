@@ -40,6 +40,7 @@ public class QuotePriceItem {
         quotePriceItem.setName(priceItem.getName());
         quotePriceItem.setCategoryName(priceItem.getCategory());
         quotePriceItem.setPlatformName(priceItem.getPlatform());
+        quotePriceItem.setPrice(priceItem.getPrice());
         return quotePriceItem;
     }
 

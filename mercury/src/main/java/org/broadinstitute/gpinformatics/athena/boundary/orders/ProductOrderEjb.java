@@ -270,7 +270,7 @@ public class ProductOrderEjb {
                         String body = "The SAP order " + oldNumber + " is being associated with a new quote by "+
                                       userBean.getBspUser().getFullName() +" and needs" + " to be short closed.";
                         Collection<String> ccAddresses = Collections.singletonList(userBean.getBspUser().getEmail());
-                        emailSender.sendHtmlEmailWithCC(appConfig, "BUSSYS@broadinstitute.org", ccAddresses,
+                        emailSender.sendHtmlEmail(appConfig, "BUSSYS@broadinstitute.org", ccAddresses,
                                 "SAP Order: Short Close Request", body);
                     }
                     messageCollection.addInfo("Order "+orderToPublish.getJiraTicketKey() +

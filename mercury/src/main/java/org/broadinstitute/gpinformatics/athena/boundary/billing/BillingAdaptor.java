@@ -165,18 +165,18 @@ public class BillingAdaptor implements Serializable {
                     // Get the quote PriceItem that this is replacing, if it is a replacement.
                     QuotePriceItem primaryPriceItemIfReplacement = item.getPrimaryForReplacement(priceListCache);
 
-//                    BigDecimal replacementDifference = null;
-//                    if(primaryPriceItemIfReplacement != null) {
-//                        BigDecimal primaryPrice = new BigDecimal(primaryPriceItemIfReplacement.getPrice());
-//                        BigDecimal replacementPrice  = new BigDecimal(priceItemBeingBilled.getPrice());
-//                        replacementDifference = primaryPrice.subtract(replacementPrice);
-//
-//                    }
+                    BigDecimal replacementDifference = null;
+                    if(primaryPriceItemIfReplacement != null) {
+                        BigDecimal primaryPrice = new BigDecimal(primaryPriceItemIfReplacement.getPrice());
+                        BigDecimal replacementPrice  = new BigDecimal(priceItemBeingBilled.getPrice());
+                        replacementDifference = primaryPrice.subtract(replacementPrice);
+
+                    }
 
                     // Get the quote items on the quote, adding to the quote item cache, if not there.
                     Collection<String> quoteItemNames = getQuoteItems(quoteItemsByQuote, item.getQuoteId());
 
-                    String sapBillingId = quote.isEligibleForSAP()? null:"NotEligible";
+                    String sapBillingId = quote.isEligibleForSAP()? item.getSapItems():"NotEligible";
 
                     String workId = null;
 
@@ -195,20 +195,20 @@ public class BillingAdaptor implements Serializable {
                         result.setSAPBillingId(sapBillingId);
                         billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacement, workId, sapBillingId, null);
 
-//                        if(productOrderEjb.isOrderEligibleForSAP(item.getProductOrder())
-//                           && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
-//                           && primaryPriceItemIfReplacement != null) {
-//
-//                            String body = "For Delivery Document " + sapBillingId + " a discount of " +
-//                                          ((replacementDifference == null) ? "0" : replacementDifference)
-//                                          + " is being requested by "
-//                                          + userBean.getBspUser().getFullName() + ".  For SAP order "
-//                                          + item.getProductOrder().getSapOrderNumber();
-//
-//                            emailSender.sendHtmlEmailWithCC(appConfig, "BUSSYS@broadinstitute.org",
-//                                    Collections.singleton(userBean.getBspUser().getEmail()),
-//                                    "Order Discount Request", body);
-//                        }
+                        if(productOrderEjb.isOrderEligibleForSAP(item.getProductOrder())
+                           && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
+                           && primaryPriceItemIfReplacement != null) {
+
+                            String body = "For Delivery Document " + sapBillingId + " a discount of " +
+                                          ((replacementDifference == null) ? "0" : replacementDifference)
+                                          + " is being requested by "
+                                          + userBean.getBspUser().getFullName() + ".  For SAP order "
+                                          + item.getProductOrder().getSapOrderNumber();
+
+                            emailSender.sendHtmlEmail(appConfig, "BUSSYS@broadinstitute.org",
+                                    Collections.singleton(userBean.getBspUser().getEmail()),
+                                    "Order Discount Request", body);
+                        }
                     }
 
                     // If this is a replacement, the primary is not on the quote and the replacement IS on the quote,

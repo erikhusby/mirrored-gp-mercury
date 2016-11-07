@@ -33,14 +33,11 @@ public class EmailSender implements Serializable {
      * @param appConfig The configuration for the deployed app.  This determines
      *                  whether email will actually be sent.
      * @param to address
+     * @param ccAddrdesses collection of email addresses which should also be CC'ed when the email is sent out.
      * @param subject subject line
      * @param body HTML
      */
-    public void sendHtmlEmail(@Nonnull AppConfig appConfig, String to, String subject, String body) {
-        sendHtmlEmailWithCC(appConfig, to, Collections.<String>emptyList(), subject, body);
-    }
-
-    public void sendHtmlEmailWithCC(@Nonnull AppConfig appConfig, String to,
+    public void sendHtmlEmail(@Nonnull AppConfig appConfig, String to,
                                     Collection<String> ccAddrdesses, String subject, String body) {
         if (appConfig.shouldSendEmail()) {
             if (mailSession != null) {
