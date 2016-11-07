@@ -13,6 +13,7 @@ import javax.jms.DeliveryMode;
 import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.MapMessage;
+import javax.jms.Message;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
 
@@ -48,8 +49,8 @@ public class InfiniumPipelineClient {
             MessageProducer producer = session.createProducer(destination);
             producer.setDeliveryMode(DeliveryMode.PERSISTENT);
 
-            MapMessage message = session.createMapMessage();
-            message.setString("chipWellBarcode", chipWellBarcode);
+            Message message = session.createMessage();
+            message.setStringProperty("chipWellBarcode", chipWellBarcode);
 
             producer.send(message);
 
