@@ -888,6 +888,17 @@ public class ProductOrderEjb {
             transitionIssueToSameOrderStatus(order);
             // The status was changed, let the user know.
             reporter.addMessage("The order status of ''{0}'' is now {1}.", jiraTicketKey, order.getOrderStatus());
+
+            if((order.getOrderStatus() == OrderStatus.Completed &&
+                order.getNonAbandonedCount() < order.latestSapOrderDetail().getPrimaryQuantity()
+               )
+               || order.getOrderStatus() == OrderStatus.Abandoned){
+                String body = "The SAP order " + order.getSapOrderNumber()+ " has been marked as completed in Mercury by "+
+                              userBean.getBspUser().getFullName() +" and may need to be short closed.";
+                Collection<String> ccAddresses = Collections.singletonList(userBean.getBspUser().getEmail());
+                emailSender.sendHtmlEmail(appConfig, "BUSSYS@broadinstitute.org", ccAddresses,
+                        "SAP Order: Short Close Request", body);
+            }
         }
     }
 
