@@ -215,10 +215,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "referenceProductOrder")
     private List<SapOrderDetail> sapReferenceOrders = new ArrayList<>();
 
-    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "parentOrder")
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "parentOrder")
     private List<ProductOrder> childOrders = new ArrayList<>();
 
-    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY)
     @JoinColumn(name = "PARENT_PRODUCT_ORDER")
     private ProductOrder parentOrder;
 

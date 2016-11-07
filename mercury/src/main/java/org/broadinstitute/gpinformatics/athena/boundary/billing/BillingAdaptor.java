@@ -165,6 +165,14 @@ public class BillingAdaptor implements Serializable {
                     // Get the quote PriceItem that this is replacing, if it is a replacement.
                     QuotePriceItem primaryPriceItemIfReplacement = item.getPrimaryForReplacement(priceListCache);
 
+//                    BigDecimal replacementDifference = null;
+//                    if(primaryPriceItemIfReplacement != null) {
+//                        BigDecimal primaryPrice = new BigDecimal(primaryPriceItemIfReplacement.getPrice());
+//                        BigDecimal replacementPrice  = new BigDecimal(priceItemBeingBilled.getPrice());
+//                        replacementDifference = primaryPrice.subtract(replacementPrice);
+//
+//                    }
+
                     // Get the quote items on the quote, adding to the quote item cache, if not there.
                     Collection<String> quoteItemNames = getQuoteItems(quoteItemsByQuote, item.getQuoteId());
 
@@ -174,7 +182,7 @@ public class BillingAdaptor implements Serializable {
 
                     if( productOrderEjb.isOrderEligibleForSAP(item.getProductOrder())
                         && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
-                        && CollectionUtils.isEmpty(item.getSapItems())) {
+                        && StringUtils.isBlank(item.getSapItems())) {
                         if(StringUtils.isBlank(item.getProductOrder().getSapOrderNumber())) {
                             throw new SAPInterfaceException(item.getProductOrder().getJiraTicketKey() +
                                                             " has not been submitted to SAP as an order yet.  Unable "
@@ -187,24 +195,21 @@ public class BillingAdaptor implements Serializable {
                         result.setSAPBillingId(sapBillingId);
                         billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacement, workId, sapBillingId, null);
 
-                        if(productOrderEjb.isOrderEligibleForSAP(item.getProductOrder())
-                           && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
-                           && primaryPriceItemIfReplacement != null) {
-                            BigDecimal replacementDifference ;
-                            BigDecimal primaryPrice = BigDecimal.valueOf(Double.valueOf(primaryPriceItemIfReplacement.getPrice()));
-                            BigDecimal replacementPrice  = BigDecimal.valueOf(Double.valueOf(priceItemBeingBilled.getPrice()));
-                            replacementDifference = primaryPrice.subtract(replacementPrice);
-
-                            String body = "For Delivery Document " + sapBillingId + " a discount of "+
-                                          replacementDifference + " is being requested by "
-                                          + userBean.getBspUser().getFullName() + ".  For SAP order "
-                                          + item.getProductOrder().getSapOrderNumber();
-
-                            emailSender.sendHtmlEmailWithCC(appConfig, "BUSSYS@broadinstitute.org", Collections.singleton(userBean.getBspUser().getEmail()), "Order Discount Request", body);
-
-                        }
+//                        if(productOrderEjb.isOrderEligibleForSAP(item.getProductOrder())
+//                           && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
+//                           && primaryPriceItemIfReplacement != null) {
+//
+//                            String body = "For Delivery Document " + sapBillingId + " a discount of " +
+//                                          ((replacementDifference == null) ? "0" : replacementDifference)
+//                                          + " is being requested by "
+//                                          + userBean.getBspUser().getFullName() + ".  For SAP order "
+//                                          + item.getProductOrder().getSapOrderNumber();
+//
+//                            emailSender.sendHtmlEmailWithCC(appConfig, "BUSSYS@broadinstitute.org",
+//                                    Collections.singleton(userBean.getBspUser().getEmail()),
+//                                    "Order Discount Request", body);
+//                        }
                     }
-
 
                     // If this is a replacement, the primary is not on the quote and the replacement IS on the quote,
                     // set the primary to null so it will be billed as if it is a primary.

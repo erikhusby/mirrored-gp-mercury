@@ -31,7 +31,7 @@ public class QuoteImportItem {
     private Date startRange;
     private Date endRange;
     private final Set<String> workItems = new HashSet<>();
-    private final Set<String> sapItems = new HashSet<>();
+    private  String sapItems;
     private Product product;
     private ProductOrder productOrder;
 
@@ -54,7 +54,11 @@ public class QuoteImportItem {
                     workItems.add(ledger.getWorkItem());
                 }
                 if(StringUtils.isNotBlank(ledger.getSapDeliveryDocumentId())) {
-                    sapItems.add(ledger.getSapDeliveryDocumentId());
+                    sapItems = ledger.getSapDeliveryDocumentId();
+                } else {
+                    if(!sapItems.equals(ledger.getSapDeliveryDocumentId())) {
+                        throw new RuntimeException("Mis Matched SAPDelivery Document Found");
+                    }
                 }
             }
         }
@@ -63,8 +67,8 @@ public class QuoteImportItem {
     public Collection<String> getWorkItems() {
         return Collections.unmodifiableCollection(workItems);
     }
-    public Collection<String> getSapItems() {
-        return Collections.unmodifiableCollection(sapItems);
+    public String getSapItems() {
+        return sapItems;
     }
 
 
