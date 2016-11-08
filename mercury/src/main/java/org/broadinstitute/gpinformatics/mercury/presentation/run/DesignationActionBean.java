@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation_.loadingTube;
 
 @UrlBinding("/run/FlowcellDesignation.action")
 public class DesignationActionBean extends CoreActionBean implements DesignationUtils.Caller {
