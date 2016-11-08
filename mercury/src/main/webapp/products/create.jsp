@@ -297,6 +297,9 @@
                             </stripes:label>
                             <div class="controls">
                                 <stripes:checkbox id="externalOrderOnly" disabled="${actionBean.editProduct.savedInSAP}" name="editProduct.externalOnlyProduct" style="margin-top: 10px;"/>
+                                <c:if test="${actionBean.editProduct.savedInSAP}">
+                                    <stripes:hidden name="editProduct.externalOnlyProduct" value="${editProduct.externalOnlyProduct}" />
+                                </c:if>
                             </div>
                         </div>
                     </security:authorizeBlock>
