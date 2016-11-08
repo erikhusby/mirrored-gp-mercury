@@ -271,7 +271,7 @@ public class LabBatchEjb {
         allBucketEntries.addAll(reworkBucketEntries);
         bucketEjb.moveFromBucketToBatch(allBucketEntries, batch);
 
-        WorkflowBucketDef bucketDef = getWorkflowBucketDef(bucketName);
+        WorkflowBucketDef bucketDef = getWorkflowBucketDef(bucketName,workflowName);
 
         CreateFields.IssueType issueType = CreateFields.IssueType.valueOf(bucketDef.getBatchJiraIssueType());
 
@@ -286,23 +286,35 @@ public class LabBatchEjb {
         return batch;
     }
 
-    private WorkflowBucketDef getWorkflowBucketDef(String bucketName) {
+    private WorkflowBucketDef getWorkflowBucketDef(String bucketName, String workflowName) {
         WorkflowConfig workflowConfig = workflowLoader.load();
         WorkflowBucketDef bucketDef = null;
 
-        for (Workflow workflow : Workflow.SUPPORTED_WORKFLOWS) {
-            ProductWorkflowDef workflowDef = workflowConfig.getWorkflowByName(workflow.getWorkflowName());
-            ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
-            for (WorkflowBucketDef bucket : workflowVersion.getCreationBuckets()) {
-                if (bucketName.equals(bucket.getName())) {
-                    bucketDef = bucket;
-                }
+        ProductWorkflowDef workflowDef = workflowConfig.getWorkflowByName(workflowName);
+        ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
+        for (WorkflowBucketDef bucket : workflowVersion.getCreationBuckets()) {
+            if (bucketName.equals(bucket.getName())) {
+                bucketDef = updateBucketIssueProjectType(bucket,workflowDef);
             }
         }
         return bucketDef;
     }
 
     /**
+     * This method associates the correct Jira Issue and Project Type with the given bucket.
+     *
+     */
+    private WorkflowBucketDef updateBucketIssueProjectType(WorkflowBucketDef bucketDef,  ProductWorkflowDef workflowDef)
+    {
+        //If the issue & project type from workflowProcessDefs is not present. Use the one from productWorkflowDefs
+        if(bucketDef.getBatchJiraIssueType() == null && bucketDef.getBatchJiraProjectType() == null) {
+            bucketDef.setBatchJiraIssueType(workflowDef.getEffectiveVersion().getProductWorkflowDefBatchJiraIssueType());
+            bucketDef.setBatchJiraProjectType(workflowDef.getEffectiveVersion().getProductWorkflowDefBatchJiraProjectType());
+        }
+        return bucketDef;
+    }
+
+     /**
      * This method extracts all necessary information from the given batch object and creates (if necessary) and
      * associates a JIRA ticket that will represent this batch.
      *
@@ -492,7 +504,7 @@ public class LabBatchEjb {
         CreateFields.IssueType issueType=null;
 
         if(batch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
-            WorkflowBucketDef bucketDef = getWorkflowBucketDef(bucketName);
+            WorkflowBucketDef bucketDef = getWorkflowBucketDef(bucketName, batch.getWorkflowName());
             projectType = CreateFields.ProjectType.fromKeyPrefix(bucketDef.getBatchJiraProjectType());
             issueType= CreateFields.IssueType.valueOf(bucketDef.getBatchJiraIssueType());
         }

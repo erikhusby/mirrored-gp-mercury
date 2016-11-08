@@ -111,26 +111,6 @@ public class WorkflowProcessDefVersion implements Serializable {
         return jiraProjectTypes.get(0);
     }
 
-    public List<WorkflowBucketDef> getCreationBuckets() {
-        List<WorkflowBucketDef> workflowBucketDefs = new ArrayList<>();
-        for (WorkflowBucketDef workflowBucketDef : getBuckets()) {
-            if (workflowBucketDef.getBatchJiraProjectType() != null) {
-                workflowBucketDefs.add(workflowBucketDef);
-            }
-        }
-        return workflowBucketDefs;
-    }
-
-    public List<WorkflowBucketDef> getReworkBuckets() {
-        List<WorkflowBucketDef> workflowBucketDefs = new ArrayList<>();
-        for (WorkflowBucketDef workflowBucketDef : getBuckets()) {
-            if (workflowBucketDef.getBatchJiraProjectType() == null) {
-                workflowBucketDefs.add(workflowBucketDef);
-            }
-        }
-        return workflowBucketDefs;
-    }
-
     /**
      * Returns the bucket with the specified name, or null of no bucket is found.
      *
