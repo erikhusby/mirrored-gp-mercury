@@ -4,7 +4,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
-import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 
@@ -28,7 +28,7 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
     }
 
     @Override
-    public String findCustomer(Quote foundQuote, SapIntegrationClientImpl.SAPCompanyConfiguration companyCode) throws SAPIntegrationException {
+    public String findCustomer(SapIntegrationClientImpl.SAPCompanyConfiguration companyCode, FundingLevel fundingLevel) throws SAPIntegrationException {
         return TEST_CUSTOMER_NUMBER;
     }
 

@@ -8,10 +8,10 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
+import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
@@ -138,15 +138,22 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         newOrder.setExternalOrderNumber(placedOrder.getJiraTicketKey());
 
-        Funding funding = foundQuote.getFirstRelevantFundingLevel().getFunding();
+        FundingLevel fundingLevel = foundQuote.getFirstRelevantFundingLevel();
 
-        if (funding.getFundingType().equals(Funding.PURCHASE_ORDER)) {
-            newOrder.setFundingSource(funding.getPurchaseOrderNumber(), SAPOrder.FundingType.PURCHASE_ORDER);
-            String customerNumber = findCustomer(foundQuote, determineCompanyCode(placedOrder));
+        if (fundingLevel == null) {
+            // Too many funding sources to allow this to work with SAP.  Keep using the Quote Server as the definition
+            // of funding
+            throw new SAPIntegrationException(
+                    "Unable to continue with SAP.  The associated quote has either too few or too many funding sources");
+        }
+
+        if (fundingLevel.getFunding().getFundingType().equals(Funding.PURCHASE_ORDER)) {
+            String customerNumber = findCustomer(determineCompanyCode(placedOrder), fundingLevel);
 
             newOrder.setSapCustomerNumber(customerNumber);
+            newOrder.setFundingSource(fundingLevel.getFunding().getPurchaseOrderNumber(), SAPOrder.FundingType.PURCHASE_ORDER);
         } else {
-            newOrder.setFundingSource(funding.getFundsReservationNumber(), SAPOrder.FundingType.FUNDS_RESERVATION);
+            newOrder.setFundingSource(fundingLevel.getFunding().getFundsReservationNumber(), SAPOrder.FundingType.FUNDS_RESERVATION);
         }
 
         newOrder.setResearchProjectNumber(placedOrder.getResearchProject().getJiraTicketKey());
@@ -185,21 +192,21 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     @Override
-    public String findCustomer(Quote foundQuote,
-                               SapIntegrationClientImpl.SAPCompanyConfiguration companyCode) throws SAPIntegrationException {
+    public String findCustomer(SapIntegrationClientImpl.SAPCompanyConfiguration companyCode, FundingLevel fundingLevel) throws SAPIntegrationException {
 
         String customerNumber = null;
-        if (foundQuote.getQuoteFunding().getFundingLevel().size() > 1) {
+        if (fundingLevel == null) {
             // Too many funding sources to allow this to work with SAP.  Keep using the Quote Server as the definition
             // of funding
             throw new SAPIntegrationException(
-                    "Unable to continue with SAP.  The associated quote has multiple funding sources");
+                    "Unable to continue with SAP.  The associated quote has either too few or too many funding sources");
         } else {
 
-            Funding funding = foundQuote.getQuoteFunding().getFundingLevel().iterator().next().getFunding();
-            if (funding.getFundingType().equals(Funding.PURCHASE_ORDER)) {
+
+            if (fundingLevel.getFunding().getFundingType().equals(Funding.PURCHASE_ORDER)) {
                 try {
-                    customerNumber = getClient().findCustomerNumber(funding.getPurchaseOrderContact(), companyCode);
+                    customerNumber =
+                            getClient().findCustomerNumber(fundingLevel.getFunding().getPurchaseOrderContact(), companyCode);
                 } catch (SAPIntegrationException e) {
                     if (e.getMessage().equals(SapIntegrationClientImpl.MISSING_CUSTOMER_RESULT)) {
                         throw new SAPIntegrationException(

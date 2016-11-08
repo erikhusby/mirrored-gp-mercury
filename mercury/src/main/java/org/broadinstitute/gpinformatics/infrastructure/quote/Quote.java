@@ -124,24 +124,23 @@ public class Quote {
 
     public boolean isEligibleForSAP() {
 
-        int fundingSize = 0;
-        for(FundingLevel level : quoteFunding.getFundingLevel()) {
-            if(Integer.valueOf(level.getPercent()) >0) {
-                fundingSize++;
-            }
-        }
-        return !(fundingSize >1 || fundingSize==0);
+        FundingLevel singleLevel = getFirstRelevantFundingLevel();
+
+        return !(singleLevel == null);
     }
 
     public FundingLevel getFirstRelevantFundingLevel() {
-        FundingLevel funding = null;
+        FundingLevel singleLevel = null;
 
         for(FundingLevel level : quoteFunding.getFundingLevel()) {
             if(Integer.valueOf(level.getPercent()) >0) {
-                funding = level;
+                if(singleLevel == null) {
+                    singleLevel = level;
+                } else {
+                    return null;
+                }
             }
         }
-
-        return funding;
+        return singleLevel;
     }
 }
