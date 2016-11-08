@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessio
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
@@ -29,6 +30,7 @@ import javax.inject.Inject;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -68,6 +70,8 @@ public class BillingAdaptor implements Serializable {
     private UserBean userBean;
 
     private AppConfig appConfig;
+
+    private Deployment deployment;
 
     private static final FastDateFormat BILLING_DATE_FORMAT =
             FastDateFormat.getDateTimeInstance(FastDateFormat.SHORT, FastDateFormat.SHORT);
@@ -204,9 +208,11 @@ public class BillingAdaptor implements Serializable {
                                           + userBean.getBspUser().getFullName() + ".  For SAP order "
                                           + item.getProductOrder().getSapOrderNumber();
 
-                            emailSender.sendHtmlEmail(appConfig, "BUSSYS@broadinstitute.org",
-                                    Collections.singleton(userBean.getBspUser().getEmail()),
-                                    "Order Discount Request", body);
+                            emailSender.sendHtmlEmail(appConfig,
+                                    (deployment.equals(Deployment.PROD))?"BUSSYS@broadinstitute.org":"zsearle@broadinstitute.org",
+                                    (deployment.equals(Deployment.PROD))?Collections.singleton(userBean.getBspUser().getEmail()):
+                                            Arrays.asList("scottmat@broadinstitute.org", "smcdonou@broadinstitute.org"),
+                                    "Order Discount Request", body, (!deployment.equals(Deployment.PROD)));
                         }
                     }
 
@@ -366,5 +372,10 @@ public class BillingAdaptor implements Serializable {
     @Inject
     public void setProductOrderEjb(ProductOrderEjb productOrderEjb) {
         this.productOrderEjb = productOrderEjb;
+    }
+
+    @Inject
+    public void setDeployment(Deployment deployment) {
+        this.deployment = deployment;
     }
 }

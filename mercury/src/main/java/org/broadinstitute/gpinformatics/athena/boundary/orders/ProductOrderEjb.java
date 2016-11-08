@@ -32,6 +32,7 @@ import org.broadinstitute.gpinformatics.infrastructure.ValidationWithRollbackExc
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -119,6 +120,8 @@ public class ProductOrderEjb {
     private EmailSender emailSender;
 
     private SAPAccessControlEjb accessController;
+
+    private Deployment deployment;
 
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
@@ -270,8 +273,10 @@ public class ProductOrderEjb {
                         String body = "The SAP order " + oldNumber + " is being associated with a new quote by "+
                                       userBean.getBspUser().getFullName() +" and needs" + " to be short closed.";
                         Collection<String> ccAddresses = Collections.singletonList(userBean.getBspUser().getEmail());
-                        emailSender.sendHtmlEmail(appConfig, "BUSSYS@broadinstitute.org", ccAddresses,
-                                "SAP Order: Short Close Request", body);
+                        emailSender.sendHtmlEmail(appConfig,
+                                (deployment.equals(Deployment.PROD))?"BUSSYS@broadinstitute.org":"zsearle@broadinstitute.org",
+                                (deployment.equals(Deployment.PROD))?ccAddresses:Arrays.asList("scottmat@broadinstitute.org", "smcdonou@broadinstitute.org"),
+                                "SAP Order: Short Close Request", body, !(deployment.equals(Deployment.PROD)));
                     }
                     messageCollection.addInfo("Order "+orderToPublish.getJiraTicketKey() +
                                               " has been successfully created in SAP");
@@ -896,8 +901,10 @@ public class ProductOrderEjb {
                 String body = "The SAP order " + order.getSapOrderNumber()+ " has been marked as completed in Mercury by "+
                               userBean.getBspUser().getFullName() +" and may need to be short closed.";
                 Collection<String> ccAddresses = Collections.singletonList(userBean.getBspUser().getEmail());
-                emailSender.sendHtmlEmail(appConfig, "BUSSYS@broadinstitute.org", ccAddresses,
-                        "SAP Order: Short Close Request", body);
+                emailSender.sendHtmlEmail(appConfig,
+                        (deployment.equals(Deployment.PROD))?"BUSSYS@broadinstitute.org":"zsearle@broadinstitute.org",
+                        (deployment.equals(Deployment.PROD))?ccAddresses:Arrays.asList("scottmat@broadinstitute.org", "smcdonou@broadinstitute.org"),
+                        "SAP Order: Short Close Request", body, !(deployment.equals(Deployment.PROD)));
             }
         }
     }
@@ -1293,5 +1300,10 @@ public class ProductOrderEjb {
     public void setAccessController(
             SAPAccessControlEjb accessController) {
         this.accessController = accessController;
+    }
+
+    @Inject
+    public void setDeployment(Deployment deployment) {
+        this.deployment = deployment;
     }
 }

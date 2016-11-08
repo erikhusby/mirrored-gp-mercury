@@ -188,7 +188,7 @@ public class WorkflowValidator {
         if (!validationErrors.isEmpty()) {
             String body = renderTemplate(labVessels, stationEventType, validationErrors);
             emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), Collections.<String>emptyList(),
-                    "Workflow validation failure for " + stationEventType.getEventType(), body);
+                    "Workflow validation failure for " + stationEventType.getEventType(), body, false);
         }
     }
 

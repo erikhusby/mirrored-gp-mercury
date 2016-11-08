@@ -72,7 +72,7 @@ public class BettaLimsMessageBean implements MessageListener {
                         bettaLimsMessageResource.storeAndProcess(text);
                     } catch (Exception e) {
                         emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), Collections.<String>emptyList(),
-                                "[Mercury] Failed to process JMS message", e.getMessage());
+                                "[Mercury] Failed to process JMS message", e.getMessage(), false);
                     }
                 } else {
                     // todo jmt email LIMS oddities

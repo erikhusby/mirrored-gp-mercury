@@ -14,7 +14,6 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 
 /**
@@ -36,11 +35,12 @@ public class EmailSender implements Serializable {
      * @param ccAddrdesses collection of email addresses which should also be CC'ed when the email is sent out.
      * @param subject subject line
      * @param body HTML
+     * @param overrideForTest
      */
     public void sendHtmlEmail(@Nonnull AppConfig appConfig, String to,
-                                    Collection<String> ccAddrdesses, String subject, String body) {
+                              Collection<String> ccAddrdesses, String subject, String body, boolean overrideForTest) {
         if (appConfig.shouldSendEmail()) {
-            if (mailSession != null) {
+            if (mailSession != null || overrideForTest) {
                 try {
                     Message message = new MimeMessage(mailSession);
                     message.setFrom(new InternetAddress("gplims@broadinstitute.org"));
