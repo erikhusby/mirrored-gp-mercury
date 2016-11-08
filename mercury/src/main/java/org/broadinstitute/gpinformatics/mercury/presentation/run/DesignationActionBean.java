@@ -341,6 +341,7 @@ public class DesignationActionBean extends CoreActionBean implements Designation
 
         // Iterates on the LCSETs specified by the user.
         for (LabBatch targetLcset : loadLcsets) {
+            boolean foundLoadingTube = false;
             // Finds the loading tubes for each of the lcset's starting batch vessels. When a starting
             // tube is reworked it may have multiple loading tubes. Each of these loading tube will
             // need to be checked for the best lcset(s), and only be used if the target lcset is among
@@ -366,6 +367,7 @@ public class DesignationActionBean extends CoreActionBean implements Designation
                             Set<SampleInstanceV2> loadingTubeSampleInstances = loadingTubeTraversal.getRight();
 
                             if (loadingTubeLcsets.contains(targetLcset)) {
+                                foundLoadingTube = true;
                                 loadingTubeToLcset.put(loadingTube, targetLcset);
                                 loadingTubeToLabEvent.put(loadingTube, targetEvent);
 
@@ -394,8 +396,8 @@ public class DesignationActionBean extends CoreActionBean implements Designation
                     }
                 }
             }
-            if (loadingEventsAndVessels == null || loadingEventsAndVessels.keySet().isEmpty()) {
-                addMessage(targetLcset.getBatchName() + " has no starting vessels linked to loading vessels.");
+            if (!foundLoadingTube) {
+                addMessage("No " + selectedEventType + " tubes in " + targetLcset.getBatchName());
             }
         }
 
