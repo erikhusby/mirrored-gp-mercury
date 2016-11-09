@@ -87,24 +87,28 @@ public class WorkflowProcessDefVersion implements Serializable {
         return workflowBucketDefs;
     }
 
-    public List<WorkflowBucketDef> getCreationBuckets() {
-        List<WorkflowBucketDef> workflowBucketDefs = new ArrayList<>();
-        for (WorkflowBucketDef workflowBucketDef : getBuckets()) {
-            if (workflowBucketDef.getBatchJiraProjectType() != null) {
-                workflowBucketDefs.add(workflowBucketDef);
-            }
+    /**
+     * Returns batchJiraIssueType to override the value from productWorkflowDefs
+     */
+    public String getBatchJiraIssueType() {
+        List<String> jiraIssueTypes = new ArrayList<>();
+        for (WorkflowStepDef workflowStepDef : workflowStepDefs) {
+            workflowStepDef.getBatchJiraIssueType();
+            jiraIssueTypes.add(workflowStepDef.getBatchJiraIssueType());
         }
-        return workflowBucketDefs;
+        return jiraIssueTypes.get(0);
     }
 
-    public List<WorkflowBucketDef> getReworkBuckets() {
-        List<WorkflowBucketDef> workflowBucketDefs = new ArrayList<>();
-        for (WorkflowBucketDef workflowBucketDef : getBuckets()) {
-            if (workflowBucketDef.getBatchJiraProjectType() == null) {
-                workflowBucketDefs.add(workflowBucketDef);
-            }
+    /**
+     * Returns batchJiraProjectType to override the value from productWorkflowDefs
+     */
+    public String getBatchJiraProjectType() {
+        List<String> jiraProjectTypes = new ArrayList<>();
+        for (WorkflowStepDef workflowStepDef : workflowStepDefs) {
+            workflowStepDef.getBatchJiraIssueType();
+            jiraProjectTypes.add(workflowStepDef.getBatchJiraProjectType());
         }
-        return workflowBucketDefs;
+        return jiraProjectTypes.get(0);
     }
 
     /**

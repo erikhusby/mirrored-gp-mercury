@@ -59,6 +59,10 @@ public class ProductWorkflowDefVersion implements Serializable {
      */
     private String routingRule;
 
+    private String batchJiraIssueType;
+
+    private String batchJiraProjectType;
+
     /**
      * True if a validation LCSET is expected in the near future.   When a product is first rolled out,
      * routingRule be BOTH, and inValidation will be false. After a few weeks, inValidation will be
@@ -67,6 +71,19 @@ public class ProductWorkflowDefVersion implements Serializable {
      */
     private Boolean inValidation;
 
+    /**
+     * For ProductWorkflow level Jira Issue types
+     */
+    public String getProductWorkflowDefBatchJiraIssueType() {
+        return batchJiraIssueType;
+    }
+
+    /**
+     * For ProductWorkflow level Jira Project types
+     */
+    public String getProductWorkflowDefBatchJiraProjectType() {
+        return batchJiraProjectType;
+    }
 
     /**
      * For JAXB
@@ -156,7 +173,7 @@ public class ProductWorkflowDefVersion implements Serializable {
     public List<WorkflowBucketDef> getCreationBuckets() {
         List<WorkflowBucketDef> workflowBucketDefs = new ArrayList<>();
         for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {
-            workflowBucketDefs.addAll(workflowProcessDef.getEffectiveVersion().getCreationBuckets());
+            workflowBucketDefs.addAll(workflowProcessDef.getEffectiveVersion().getBuckets());
         }
         return workflowBucketDefs;
     }
@@ -164,7 +181,7 @@ public class ProductWorkflowDefVersion implements Serializable {
     public List<WorkflowBucketDef> getReworkBuckets() {
         List<WorkflowBucketDef> workflowBucketDefs = new ArrayList<>();
         for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {
-            workflowBucketDefs.addAll(workflowProcessDef.getEffectiveVersion().getReworkBuckets());
+            workflowBucketDefs.addAll(workflowProcessDef.getEffectiveVersion().getBuckets());
         }
         return workflowBucketDefs;
     }

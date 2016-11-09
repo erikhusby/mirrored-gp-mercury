@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
@@ -30,6 +31,7 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -62,6 +64,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     public static final String EXOME_EXPRESS_V2_PART_NUMBER = "P-EX-0007";
     public static final String EXOME_EXPRESS = "Exome Express";
     public static final String EXOME = "Exome";
+    public static final String INFINIUM = "Infinium";
 
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT", schema = "athena", sequenceName = "SEQ_PRODUCT")
@@ -105,6 +108,8 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     private Integer readLength;
     private Integer insertSize;
+    private BigDecimal loadingConcentration;
+    private Boolean pairedEndRead;
 
     /**
      * A sample with MetadataSource.BSP can have its initial quant in Mercury, e.g. SONIC.  This flag avoids the
@@ -285,6 +290,29 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     public void setInsertSize(Integer insertSize) {
         this.insertSize = insertSize;
+    }
+
+    @Nullable
+    public BigDecimal getLoadingConcentration() {
+        return loadingConcentration;
+    }
+
+    public void setLoadingConcentration(BigDecimal loadingConcentration) {
+        this.loadingConcentration = loadingConcentration;
+    }
+
+    @Nullable
+    public Boolean getPairedEndRead() {
+        // Disallows null when sequencing params are present.
+        if (StringUtils.isNotBlank(aggregationDataType)) {
+            return Boolean.TRUE.equals(pairedEndRead);
+        }
+        return pairedEndRead;
+    }
+
+    public void setPairedEndRead(Boolean pairedEndRead) {
+        // Disallows setting a non-null value to null.
+        this.pairedEndRead = (this.pairedEndRead != null) ? Boolean.TRUE.equals(pairedEndRead) : pairedEndRead;
     }
 
     public boolean isTopLevelProduct() {

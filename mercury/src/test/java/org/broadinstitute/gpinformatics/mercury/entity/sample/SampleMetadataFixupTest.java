@@ -158,6 +158,44 @@ public class SampleMetadataFixupTest extends Arquillian {
     }
 
     /**
+     * Excel auto-incremented NA12878 when user was creating manifest.
+     */
+    @Test(enabled = false)
+    public void testGPLIM_4354_NA12878_Excel() throws Exception {
+        Map<String, MetaDataFixupItem> fixupItems = new HashMap<>();
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3JZO", Metadata.Key.PATIENT_ID, "NA12879", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3K11", Metadata.Key.PATIENT_ID, "NA12880", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3K1D", Metadata.Key.PATIENT_ID, "NA12881", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3K1P", Metadata.Key.PATIENT_ID, "NA12882", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3K22", Metadata.Key.PATIENT_ID, "NA12883", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3K2E", Metadata.Key.PATIENT_ID, "NA12884", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3JYY", Metadata.Key.PATIENT_ID, "NA12885", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3JZB", Metadata.Key.PATIENT_ID, "NA12886", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3JZN", Metadata.Key.PATIENT_ID, "NA12887", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3JZZ", Metadata.Key.PATIENT_ID, "NA12888", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3K1C", Metadata.Key.PATIENT_ID, "NA12889", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3K1O", Metadata.Key.PATIENT_ID, "NA12890", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3K21", Metadata.Key.PATIENT_ID, "NA12891", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3K2D", Metadata.Key.PATIENT_ID, "NA12892", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3JYX", Metadata.Key.PATIENT_ID, "NA12893", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3JZA", Metadata.Key.PATIENT_ID, "NA12894", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3JZM", Metadata.Key.PATIENT_ID, "NA12895", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3JZY", Metadata.Key.PATIENT_ID, "NA12896", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3K1B", Metadata.Key.PATIENT_ID, "NA12897", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3K1N", Metadata.Key.PATIENT_ID, "NA12898", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3K1Z", Metadata.Key.PATIENT_ID, "NA12899", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3K2C", Metadata.Key.PATIENT_ID, "NA12900", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3JYW", Metadata.Key.PATIENT_ID, "NA12901", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3JZ9", Metadata.Key.PATIENT_ID, "NA12902", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3JZL", Metadata.Key.PATIENT_ID, "NA12903", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3JZX", Metadata.Key.PATIENT_ID, "NA12904", "NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-B3K1A", Metadata.Key.PATIENT_ID, "NA12905", "NA12878"));
+
+        String fixupComment = "see https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-4354";
+        updateMetadataAndValidate(fixupItems, fixupComment);
+    }
+
+    /**
      * Perform actual fixup and validate.
      */
     private void updateMetadataAndValidate(@Nonnull Map<String, MetaDataFixupItem> fixupItems,

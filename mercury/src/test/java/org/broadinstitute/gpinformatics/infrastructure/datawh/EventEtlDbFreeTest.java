@@ -225,13 +225,18 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(vessel.getLabel()).andReturn(String.valueOf(vesselId)).anyTimes();
 
         EasyMock.expect(sampleInst.getSingleBucketEntry()).andReturn(null);
-        EasyMock.expect(sampleInst.getAllBucketEntries()).andReturn(new ArrayList<BucketEntry>());
+        EasyMock.expect(sampleInst.getSingleBatch()).andReturn(labBatch);
+        EasyMock.expect(sampleInst.getNearestMercurySampleName()).andReturn(null);
         EasyMock.expect(sampleInst.getAllProductOrderSamples()).andReturn(new ArrayList<ProductOrderSample>());
         EasyMock.expect(sampleInst.getMolecularIndexingScheme()).andReturn(indexingScheme).times(2);
         EasyMock.expect(sampleInst.isReagentOnly()).andReturn(false);
 
+        EasyMock.expect(labBatch.getBatchName()).andReturn(labBatchName);
+        EasyMock.expect(labBatch.getCreatedOn()).andReturn(eventDate);
+        EasyMock.expect(labBatch.getWorkflowName()).andReturn(workflowName);
+
         EasyMock.expect(wfLookup.lookupWorkflowConfig(LabEventType.A_BASE.getName(),
-                null, eventDate)).andReturn(wfConfig);
+                workflowName, eventDate)).andReturn(wfConfig);
 
         EasyMock.expect(wfConfig.getWorkflowId()).andReturn(workflowId);
         EasyMock.expect(wfConfig.getProductWorkflowName()).andReturn(workflowName);
@@ -265,7 +270,9 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(vessel.getSampleInstancesV2()).andReturn(sampleInstList);
         EasyMock.expect(vessel.getLabel()).andReturn(String.valueOf(vesselId)).anyTimes();
 
+        EasyMock.expect(sampleInst.getNearestMercurySampleName()).andReturn(null);
         EasyMock.expect(sampleInst.getSingleBucketEntry()).andReturn(null);
+        EasyMock.expect(sampleInst.getSingleBatch()).andReturn(null);
         EasyMock.expect(sampleInst.getAllProductOrderSamples()).andReturn(pdoSamples);
         EasyMock.expect(sampleInst.getMolecularIndexingScheme()).andReturn(indexingScheme).times(2);
         EasyMock.expect(sampleInst.getAllBucketEntries()).andReturn(new ArrayList<BucketEntry>());
