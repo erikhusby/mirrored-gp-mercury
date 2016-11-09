@@ -185,7 +185,8 @@ public class InfiniumJaxbBuilder {
         bettaLIMSMessage.getPlateEvent().add(infiniumResuspensionJaxb);
         bettaLIMSMessage.getPlateEvent().add(infiniumPostResuspensionHybOvenJaxb);
 
-        for (int i = 0; i <= numSamples / 24; i++) {
+        int numChips = numSamples / 24;
+        for (int i = 0; i < numChips; i++) {
             hybridizationChips.add(testPrefix + "HC" + i);
         }
 
@@ -194,7 +195,7 @@ public class InfiniumJaxbBuilder {
         List<BettaLimsMessageTestFactory.CherryPick> cherryPicks = new ArrayList<>();
         bettaLIMSMessage = new BettaLIMSMessage();
         // The decks don't "know" that wells are empty, so do a cherry pick for every destination
-        for (int i = 0; i < Math.ceil(numSamples / 24.0) * 24; i++) {
+        for (int i = 0; i < numChips * 24; i++) {
             int chipIndex = i % 24;
             int chipNum = i / 24;
             cherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(ampPlate,
@@ -300,4 +301,39 @@ public class InfiniumJaxbBuilder {
         return messageList;
     }
 
+    public PlateEventType getInfiniumMethylationBufferAddition1Jaxb() {
+        return infiniumMethylationBufferAddition1Jaxb;
+    }
+
+    public PlateEventType getInfiniumMethylationBufferAddition2Jaxb() {
+        return infiniumMethylationBufferAddition2Jaxb;
+    }
+
+    public PlateTransferEventType getInfiniumMethlationFilterPlateJaxb() {
+        return infiniumMethlationFilterPlateJaxb;
+    }
+
+    public PlateEventType getInfiniumMethylationWash1Jaxb() {
+        return infiniumMethylationWash1Jaxb;
+    }
+
+    public PlateEventType getInfiniumMethylationDesulphonationJaxb() {
+        return infiniumMethylationDesulphonationJaxb;
+    }
+
+    public PlateEventType getInfiniumMethylationWash2Jaxb() {
+        return infiniumMethylationWash2Jaxb;
+    }
+
+    public PlateEventType getInfiniumMethylationWash3Jaxb() {
+        return infiniumMethylationWash3Jaxb;
+    }
+
+    public PlateTransferEventType getInfiniumMethylationElutionJaxb() {
+        return InfiniumMethylationElutionJaxb;
+    }
+
+    public InfiniumEntityBuilder.IncludeMethylation getIncludeMethylation() {
+        return includeMethylation;
+    }
 }

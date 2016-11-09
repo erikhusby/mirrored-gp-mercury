@@ -166,11 +166,6 @@ public class ProductOrderTestFactory {
                 "Test RP", rpSynopsis, ResearchProject.IRB_ENGAGED, "P-FPtest-1232", SAMPLE_SUFFIX, "ExExQuoteId");
     }
 
-    public static ProductOrder buildInfiniumProductOrder(int maxSamples) {
-        return createDummyProductOrder(maxSamples, "PDO-1INF", Workflow.NONE, 101,
-                "Test RP", rpSynopsis, ResearchProject.IRB_ENGAGED, "P-INFtest-1232", SAMPLE_SUFFIX, "ExExQuoteId");
-    }
-
     public static ProductOrder buildArrayPlatingProductOrder(int maxSamples) {
         return createDummyProductOrder(maxSamples, "PDO-1ARR", Workflow.NONE, 101,
                 "Test RP", rpSynopsis, ResearchProject.IRB_ENGAGED, "P-ARRtest-1232", SAMPLE_SUFFIX, "ExExQuoteId");
@@ -179,6 +174,14 @@ public class ProductOrderTestFactory {
     public static ProductOrder buildTruSeqStrandSpecificProductOrder(int maxSamples) {
         return createDummyProductOrder(maxSamples, "PDO-1TRUSS", Workflow.NONE, 101,
                 "Test RP", rpSynopsis, ResearchProject.IRB_ENGAGED, "P-TRUSStest-1232", SAMPLE_SUFFIX, "ExExQuoteId");
+    }
+
+    public static ProductOrder buildInfiniumMethylationProductOrder(int maxSamples) {
+        return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.INFINIUM_METHYLATION);
+    }
+
+    public static ProductOrder buildInfiniumProductOrder(int maxSamples) {
+        return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.INFINIUM);
     }
 
 

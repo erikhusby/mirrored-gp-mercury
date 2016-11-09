@@ -110,7 +110,7 @@ public class BaseEventTest {
     /**
      * Referenced in validation of routing.
      */
-    protected static SystemRouter.System expectedRouting = SystemRouter.System.MERCURY;
+    public static SystemRouter.System expectedRouting = SystemRouter.System.MERCURY;
     private final CrspPipelineUtils crspPipelineUtils = new CrspPipelineUtils(Deployment.DEV);
 
     private BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
@@ -1008,5 +1008,9 @@ public class BaseEventTest {
                 productOrderDao,
                 crspPipelineUtils, flowcellDesignationEjb
         );
+    }
+
+    public LabBatchEjb getLabBatchEJB() {
+        return labBatchEJB;
     }
 }

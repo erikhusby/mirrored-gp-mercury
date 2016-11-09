@@ -2235,6 +2235,65 @@
         </workflowProcessDefVersions>
     </workflowProcessDefs>
     <workflowProcessDefs>
+        <name>Infinium Methylation</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2016-11-07T10:03:24.085-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Infinium Bucket</name>
+                <labEventTypes>INFINIUM_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <bucketEntryEvaluator>
+                    <materialTypes>DNA</materialTypes>
+                    <materialTypes>DNA_DNA_GENOMIC</materialTypes>
+                    <materialTypes>DNA_DNA_SOMATIC</materialTypes>
+                </bucketEntryEvaluator>
+                <autoBucketFromPdoSubmission>false</autoBucketFromPdoSubmission>
+                <!-- No JIRA setup, because BSP creates ARRAY tickets -->
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>InfiniumMethylationBufferAddition1</name>
+                <labEventTypes>INFINIUM_METHYLATION_BUFFER_ADDITION_1</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>InfiniumMethylationBufferAddition2</name>
+                <labEventTypes>INFINIUM_METHYLATION_BUFFER_ADDITION_2</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>InfiniumMethylationFilterPlateTransfer</name>
+                <labEventTypes>INFINIUM_METHYLATION_FILTER_PLATE_TRANSFER</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>InfiniumMethylationWash1</name>
+                <labEventTypes>INFINIUM_METHYLATION_WASH_1</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>InfiniumMethylationDesulphonation</name>
+                <labEventTypes>INFINIUM_METHYLATION_DESULPHONATION</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>InfiniumMethylationWash2</name>
+                <labEventTypes>INFINIUM_METHYLATION_WASH_2</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>InfiniumMethylationWash3</name>
+                <labEventTypes>INFINIUM_METHYLATION_WASH_3</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>InfiniumMethylationElution</name>
+                <labEventTypes>INFINIUM_METHYLATION_ELUTION</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
         <name>Infinium</name>
         <workflowProcessDefVersions>
             <version>1.0</version>
@@ -2589,6 +2648,17 @@
             <!-- No JIRA setup, because BSP creates ARRAY tickets <batchJiraProjectType>LCSET</batchJiraProjectType>-->
             <!-- No JIRA setup, because BSP creates ARRAY tickets <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType> -->
             <effectiveDate>2015-10-01T10:03:24.085-04:00</effectiveDate>
+            <workflowProcessDefs>Infinium</workflowProcessDefs>
+            <routingRule>MERCURY</routingRule>
+            <inValidation>false</inValidation>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>Infinium Methylation</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2016-11-07T10:03:24.085-04:00</effectiveDate>
+            <workflowProcessDefs>Infinium Methylation</workflowProcessDefs>
             <workflowProcessDefs>Infinium</workflowProcessDefs>
             <routingRule>MERCURY</routingRule>
             <inValidation>false</inValidation>
