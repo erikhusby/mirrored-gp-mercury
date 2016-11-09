@@ -290,8 +290,7 @@ public class ProductOrderEjb {
                 }
                 productOrderDao.persist(orderToPublish);
             } else {
-                messageCollection.addInfo("The quote "+ orderToPublish.getQuoteId() +
-                                          " makes this order ineligible to post to SAP: ");
+                messageCollection.addInfo("This order is ineligible to post to SAP: ");
             }
         } catch (org.broadinstitute.sap.services.SAPIntegrationException|QuoteServerException|QuoteNotFoundException e) {
             StringBuilder errorMessage = new StringBuilder();

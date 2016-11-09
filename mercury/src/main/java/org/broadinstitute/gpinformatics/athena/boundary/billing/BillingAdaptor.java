@@ -30,9 +30,7 @@ import javax.inject.Inject;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -169,11 +167,12 @@ public class BillingAdaptor implements Serializable {
                     QuotePriceItem primaryPriceItemIfReplacement = item.getPrimaryForReplacement(priceListCache);
 
                     BigDecimal replacementDifference = null;
+                    BigDecimal replacementMultiplier = null;
                     if(primaryPriceItemIfReplacement != null) {
                         BigDecimal primaryPrice = new BigDecimal(primaryPriceItemIfReplacement.getPrice());
                         BigDecimal replacementPrice  = new BigDecimal(priceItemBeingBilled.getPrice());
-                        replacementDifference = primaryPrice.subtract(replacementPrice);
 
+                        replacementMultiplier = replacementPrice.divide(primaryPrice);
                     }
 
                     // Get the quote items on the quote, adding to the quote item cache, if not there.
@@ -192,28 +191,11 @@ public class BillingAdaptor implements Serializable {
                                                             + "to bill until this happens");
                         } else {
                             if(item.getQuantityForSAP() != 0) {
-                                sapBillingId = sapService.billOrder(item);
+                                sapBillingId = sapService.billOrder(item, replacementMultiplier);
                             }
                         }
                         result.setSAPBillingId(sapBillingId);
                         billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacement, workId, sapBillingId, null);
-
-                        if(productOrderEjb.isOrderEligibleForSAP(item.getProductOrder())
-                           && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
-                           && primaryPriceItemIfReplacement != null) {
-
-                            String body = "For Delivery Document " + sapBillingId + " a discount of " +
-                                          ((replacementDifference == null) ? "0" : replacementDifference)
-                                          + " is being requested by "
-                                          + userBean.getBspUser().getFullName() + ".  For SAP order "
-                                          + item.getProductOrder().getSapOrderNumber();
-
-                            emailSender.sendHtmlEmail(appConfig,
-                                    (deployment.equals(Deployment.PROD))?"BUSSYS@broadinstitute.org":"zsearle@broadinstitute.org",
-                                    (deployment.equals(Deployment.PROD))?Collections.singleton(userBean.getBspUser().getEmail()):
-                                            Arrays.asList("scottmat@broadinstitute.org", "smcdonou@broadinstitute.org"),
-                                    "Order Discount Request", body, (!deployment.equals(Deployment.PROD)));
-                        }
                     }
 
                     // If this is a replacement, the primary is not on the quote and the replacement IS on the quote,

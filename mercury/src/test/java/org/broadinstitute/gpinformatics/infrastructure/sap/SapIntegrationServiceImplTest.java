@@ -64,6 +64,7 @@ public class SapIntegrationServiceImplTest extends Arquillian {
         QuoteFunding quoteFunding = new QuoteFunding(Collections.singleton(fundingLevel));
         Quote testGoodQuote = new Quote("GPTest", quoteFunding, ApprovalStatus.FUNDED);
 
+
         Funding badContactFundingDefined = new Funding(Funding.PURCHASE_ORDER,null, null);
         badContactFundingDefined.setPurchaseOrderContact(testBadUser);
         FundingLevel badContactPurchaseOrderFundingLevel = new FundingLevel("100",badContactFundingDefined);
@@ -81,22 +82,12 @@ public class SapIntegrationServiceImplTest extends Arquillian {
         QuoteFunding test3Funding = new QuoteFunding(Arrays.asList(new FundingLevel[]{test3PurchaseOrderFundingLevel,test3PO2FundingLevel}));
         Quote testMultipleLevelQuote = new Quote("GPTest", test3Funding, ApprovalStatus.FUNDED);
 
-        try {
-            String badUserNumber = sapIntegrationClient.findCustomer(
-                    SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD, testBadContactQuote.getFirstRelevantFundingLevel());
-            Assert.fail("This should have thrown a system error");
-        } catch (SAPIntegrationException e) {
-            log.debug(e.getMessage());
-            Assert.assertTrue(e.getMessage().contains("the email address specified on the Quote is not attached to any SAP Customer account."));
-        }
 
-        try {
-            String badQuote = sapIntegrationClient.findCustomer(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
-                    testMultipleLevelQuote.getFirstRelevantFundingLevel());
-            Assert.fail("Should not have been able to find a customer with multiple funding levels");
-        } catch (SAPIntegrationException e) {
-            Assert.assertEquals(e.getMessage(),"Unable to continue with SAP.  The associated quote has either too few or too many funding sources");
-        }
+        Funding testFRFundingDefind = new Funding(Funding.FUNDS_RESERVATION, null, null);
+
+        FundingLevel testFRFundingLevel = new FundingLevel("50", testFRFundingDefind);
+        QuoteFunding testFRFunding = new QuoteFunding(Collections.singletonList(testFRFundingLevel));
+        Quote testFRQuote = new Quote("GPTest", testFRFunding, ApprovalStatus.FUNDED);
 
         try {
             String goodUserNumber = sapIntegrationClient.findCustomer(
@@ -109,6 +100,94 @@ public class SapIntegrationServiceImplTest extends Arquillian {
             Assert.assertEquals(goodUserNumber , "0000300325");
         } catch (SAPIntegrationException e) {
             Assert.fail(e.getMessage());
+        }
+
+        try {
+
+            testGoodQuote.getFirstRelevantFundingLevel().getFunding().setPurchaseOrderContact("zarasearle@broadinstitute.org");
+            String dupeName2 = sapIntegrationClient.findCustomer(
+                    SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
+                    testGoodQuote.getFirstRelevantFundingLevel());
+            Assert.assertEquals(dupeName2 , "0000300022");
+
+            testGoodQuote.getFirstRelevantFundingLevel().getFunding().setPurchaseOrderContact("zarasearle1@broadinstitute.org");
+            String dupeNameOne = sapIntegrationClient.findCustomer(
+                    SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
+                    testGoodQuote.getFirstRelevantFundingLevel());
+            Assert.assertEquals(dupeNameOne , "0000300023");
+
+        } catch (SAPIntegrationException e) {
+            Assert.fail(e.getMessage());
+        }
+
+//        try {
+//
+//            testGoodQuote.getFirstRelevantFundingLevel().getFunding().setPurchaseOrderContact("SusanM@gmail.com");
+//            String dupeName3 = sapIntegrationClient.findCustomer(
+//                    SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES,
+//                    testGoodQuote.getFirstRelevantFundingLevel());
+//            Assert.assertNotNull(dupeName3);
+////            Assert.assertEquals(dupeName3 , "0000300022");
+//
+//            testGoodQuote.getFirstRelevantFundingLevel().getFunding().setPurchaseOrderContact("SusanM@yahoo.com");
+//            String dupeName4 = sapIntegrationClient.findCustomer(
+//                    SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES,
+//                    testGoodQuote.getFirstRelevantFundingLevel());
+//            Assert.assertNotNull(dupeName4);
+////            Assert.assertEquals(dupeName4 , "0000300023");
+//
+//        } catch (SAPIntegrationException e) {
+//            Assert.fail(e.getMessage());
+//        }
+
+        try {
+            String missingCustomerNumber = sapIntegrationClient.findCustomer(
+                    SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD, testBadContactQuote.getFirstRelevantFundingLevel());
+            Assert.fail("This should have thrown a system error");
+        } catch (SAPIntegrationException e) {
+            log.debug(e.getMessage());
+            Assert.assertTrue(e.getMessage().contains("the email address specified on the Quote is not attached to any SAP Customer account."));
+        }
+
+        try {
+            testBadContactQuote.getFirstRelevantFundingLevel().getFunding().setPurchaseOrderContact("Shriekrvce@gmail.com");
+
+            String duplicateCustomerNumber = sapIntegrationClient.findCustomer(
+                    SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
+                    testBadContactQuote.getFirstRelevantFundingLevel());
+            Assert.fail("This should have thrown a system error");
+        } catch (SAPIntegrationException e) {
+            log.debug(e.getMessage());
+            Assert.assertTrue(e.getMessage().contains("the Quote is associated with more than 1 SAP Customer account"));
+        }
+
+
+//        try {
+//            testBadContactQuote.getFirstRelevantFundingLevel().getFunding().setPurchaseOrderContact("ScottM@gmail.com");
+//
+//            String duplicateCustomerNumber = sapIntegrationClient.findCustomer(
+//                    SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES,
+//                    testBadContactQuote.getFirstRelevantFundingLevel());
+//            Assert.fail("This should have thrown a system error");
+//        } catch (SAPIntegrationException e) {
+//            log.debug(e.getMessage());
+//            Assert.assertTrue(e.getMessage().contains("the Quote is associated with more than 1 SAP Customer account"));
+//        }
+//
+        try {
+            String invalidQuote = sapIntegrationClient.findCustomer(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
+                    testMultipleLevelQuote.getFirstRelevantFundingLevel());
+            Assert.fail("Should not have been able to find a customer with multiple funding levels");
+        } catch (SAPIntegrationException e) {
+            Assert.assertEquals(e.getMessage(),"Unable to continue with SAP.  The associated quote has either too few or too many funding sources");
+        }
+
+        try {
+            String fundsReservationQuote = sapIntegrationClient.findCustomer(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
+                    testFRQuote.getFirstRelevantFundingLevel());
+            Assert.assertNull(fundsReservationQuote);
+        } catch (SAPIntegrationException e) {
+            Assert.fail("An exception is not expected in this scenario");
         }
     }
 }

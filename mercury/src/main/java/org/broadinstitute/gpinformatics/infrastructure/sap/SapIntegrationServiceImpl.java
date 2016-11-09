@@ -202,7 +202,6 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                     "Unable to continue with SAP.  The associated quote has either too few or too many funding sources");
         } else {
 
-
             if (fundingLevel.getFunding().getFundingType().equals(Funding.PURCHASE_ORDER)) {
                 try {
                     customerNumber =
@@ -241,7 +240,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     @Override
-    public String billOrder(QuoteImportItem quoteItemForBilling) throws SAPIntegrationException {
+    public String billOrder(QuoteImportItem quoteItemForBilling, BigDecimal quantityOverride)
+            throws SAPIntegrationException {
 
         SAPDeliveryDocument deliveryDocument =
                 new SAPDeliveryDocument(SapIntegrationClientImpl.SystemIdentifier.MERCURY,
@@ -250,7 +250,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         SAPDeliveryItem lineItem =
                 new SAPDeliveryItem(quoteItemForBilling.getProduct().getPartNumber(),
-                        new BigDecimal(quoteItemForBilling.getQuantityForSAP()));
+                        (quantityOverride == null)?new BigDecimal(quoteItemForBilling.getQuantityForSAP()):quantityOverride);
         deliveryDocument.addDeliveryItem(lineItem);
 
 

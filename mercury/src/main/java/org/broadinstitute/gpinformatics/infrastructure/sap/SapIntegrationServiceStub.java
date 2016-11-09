@@ -9,6 +9,7 @@ import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 
 import javax.enterprise.inject.Alternative;
+import java.math.BigDecimal;
 
 @Stub
 @Alternative
@@ -33,7 +34,7 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
     }
 
     @Override
-    public String billOrder(QuoteImportItem item) throws SAPIntegrationException {
+    public String billOrder(QuoteImportItem item, BigDecimal quantityOverride) throws SAPIntegrationException {
         return TEST_DELIVERY_DOCUMENT_ID;
     }
 

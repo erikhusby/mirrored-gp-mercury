@@ -7,6 +7,8 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 
+import java.math.BigDecimal;
+
 /**
  *
  * The Genomic platform is the first group in the Broad Institute to attempt to replace the Quote Server as a financial
@@ -51,10 +53,11 @@ public interface SapIntegrationService {
      * This method will allow mercury to record completed work in SAP in order to complete the Billing process
      * @param item A structure previously utilized by logging information to the quote server which aggregates work
      *             by Quote, Product order, PDO and finally amount done.
+     * @param quantityOverride
      * @return A unique identifier associated with the recorded record of work in SAP
      * @throws SAPIntegrationException
      */
-    String billOrder(QuoteImportItem item) throws SAPIntegrationException;
+    String billOrder(QuoteImportItem item, BigDecimal quantityOverride) throws SAPIntegrationException;
 
     /**
      * With the introduction of a direct communication to SAP from Mercury, we will do away with Price Items for a
