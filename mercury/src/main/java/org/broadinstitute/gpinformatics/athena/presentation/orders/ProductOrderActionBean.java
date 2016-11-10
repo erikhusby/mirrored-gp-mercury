@@ -1317,8 +1317,14 @@ public class ProductOrderActionBean extends CoreActionBean {
         } catch (SAPInterfaceException e) {
             addGlobalValidationError(e.getMessage());
         }
-        if(!productOrderEjb.isOrderEligibleForSAP(editOrder)) {
-            validateQuoteDetails(editOrder.getQuoteId(), ErrorLevel.WARNING);
+        try {
+            if(!productOrderEjb.isOrderEligibleForSAP(editOrder)) {
+                validateQuoteDetails(editOrder.getQuoteId(), ErrorLevel.WARNING);
+            }
+        } catch (QuoteServerException e) {
+            addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
+        } catch (QuoteNotFoundException e) {
+            addGlobalValidationError("The quote ''{2}'' was not found ", editOrder.getQuoteId());
         }
         return createViewResolution(editOrder.getBusinessKey());
     }
