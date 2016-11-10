@@ -116,6 +116,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     public static final String PROJECT_VIEW_PAGE = "/projects/view.jsp";
     public static final String PROJECT_SUBMISSIONS_PAGE = "/projects/submissions.jsp";
     public static final String BIOPROJECT_PARAMETER = "bioProjectTokenInput.listOfKeys";
+    static final String SUBMISSIONS_UNAVAILABLE = "Submissions are temporarily unavailable.";
     public boolean supressValidationErrors;
     private static final String BEGIN_COLLABORATION_ACTION = "beginCollaboration";
 
@@ -307,7 +308,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     public void init() throws Exception {
         researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
 
-        loadSubmissionSelectLists();
+        loadSubmissionData();
 
         if (submissionRepository == null && StringUtils.isBlank(selectedSubmissionRepository)) {
             if (getActiveRepositories().size() == 1) {
@@ -325,15 +326,6 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
                 // If there is no collaboration service, for whatever reason, set the data to null so that we
                 collaborationData = null;
                 validCollaborationPortal = false;
-            }
-
-            String eventName = getContext().getEventName();
-            if (StringUtils.isNotBlank(editResearchProject.getSubmissionRepositoryName())) {
-                selectedSubmissionRepository = editResearchProject.getSubmissionRepositoryName();
-                submissionRepository = submissionsService.findRepositoryByKey(selectedSubmissionRepository);
-                    if (submissionRepository!=null && !submissionRepository.isActive() && eventName.equals(VIEW_SUBMISSIONS_ACTION)) {
-                        addMessage("Selected submission site ''{0}'' is not active.", submissionRepository.getDescription());
-                }
             }
 
             if (submissionLibraryDescriptor == null) {
@@ -373,12 +365,25 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         progressFetcher = new CompletionStatusFetcher(productOrderDao.getProgress(productOrderIds));
     }
 
-    void loadSubmissionSelectLists() {
+    void loadSubmissionData() {
         try {
             setSubmissionLibraryDescriptors(submissionsService.getSubmissionLibraryDescriptors());
             setSubmissionRepositories(submissionsService.getSubmissionRepositories());
+
+            if (!StringUtils.isBlank(researchProject)) {
+                String eventName = getContext().getEventName();
+                if (StringUtils.isNotBlank(editResearchProject.getSubmissionRepositoryName())) {
+                    selectedSubmissionRepository = editResearchProject.getSubmissionRepositoryName();
+                    submissionRepository = submissionsService.findRepositoryByKey(selectedSubmissionRepository);
+                    if (submissionRepository != null && !submissionRepository.isActive() && eventName
+                            .equals(VIEW_SUBMISSIONS_ACTION)) {
+                        addMessage("Selected submission site ''{0}'' is not active.",
+                                submissionRepository.getDescription());
+                    }
+                }
+            }
         } catch (Exception e) {
-            addMessage("Submissions are temporarily unavailable.");
+            addMessage(SUBMISSIONS_UNAVAILABLE);
             log.error(e.getMessage(), e);
         }
     }
@@ -836,6 +841,14 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
 
     @ValidationMethod(on = {VIEW_SUBMISSIONS_ACTION, POST_SUBMISSIONS_ACTION})
     public boolean validateViewOrPostSubmissions() {
+        try {
+            // Test if submissions server is currently available.
+            submissionsService.getSubmissionRepositories();
+        } catch (Exception e) {
+            if (!supressValidationErrors) {
+                addMessage(SUBMISSIONS_UNAVAILABLE);
+            }
+        }
         if (getUserBean().isDeveloperUser()) {
             return true;
         }
