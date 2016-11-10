@@ -32,7 +32,7 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION,enabled = false)
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class SubmissionsServiceImplTest {
 
     private static int sequenceNumber = 1;
@@ -68,6 +68,7 @@ public class SubmissionsServiceImplTest {
         assertThat(submissionSamples, hasItems(expectedSampleNames));
     }
 
+    @Test(enabled = false)
     public void testSubmit() {
         SubmissionBean submissionBean1 = new SubmissionBean(getTestUUID(), "jgentry",
                 bioProject, new SubmissionBioSampleBean(SAMPLE1_ID, "/some/funky/file.bam", contactBean));
@@ -99,6 +100,7 @@ public class SubmissionsServiceImplTest {
         }
     }
 
+    @Test(enabled = false)
     public void testGetSubmissionStatusReadyForSubmission() {
         String testUUID = getTestUUID();
 
