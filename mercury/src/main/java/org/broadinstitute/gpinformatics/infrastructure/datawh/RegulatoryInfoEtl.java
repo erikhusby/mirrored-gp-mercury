@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo_;
 
 import javax.ejb.Stateful;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
@@ -15,6 +16,7 @@ import java.util.Collection;
  * Data used to update denormalized records in PDO_REGULATORY_INFOS table
  */
 @Stateful
+@Dependent
 public class RegulatoryInfoEtl extends GenericEntityEtl<RegulatoryInfo,RegulatoryInfo> {
 
     public RegulatoryInfoEtl() {

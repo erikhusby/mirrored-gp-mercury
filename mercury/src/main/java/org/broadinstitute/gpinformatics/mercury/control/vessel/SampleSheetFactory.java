@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserC
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -31,6 +32,7 @@ import java.util.Set;
 /**
  * Create an arrays sample sheet, for Genome Studio.
  */
+@Dependent
 public class SampleSheetFactory {
 
     private static final Set<LabEventType> LAB_EVENT_TYPES = new HashSet<LabEventType>() {{

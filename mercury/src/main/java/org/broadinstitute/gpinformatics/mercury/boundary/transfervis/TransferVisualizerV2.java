@@ -30,6 +30,7 @@ import org.json.JSONWriter;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
 import java.awt.Font;
@@ -86,6 +87,7 @@ import java.util.Set;
  * </li>
  * </ul>
  */
+@Dependent
 public class TransferVisualizerV2 {
 
     private static final Log logger = LogFactory.getLog(TransferVisualizerV2.class);

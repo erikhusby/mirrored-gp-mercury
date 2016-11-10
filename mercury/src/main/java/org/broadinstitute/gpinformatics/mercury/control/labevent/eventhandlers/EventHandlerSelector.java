@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEvent
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
 /**
@@ -14,6 +15,7 @@ import javax.inject.Inject;
  * By triggering off of the {@link org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType}, we can
  * target each message at its own message validator.
  */
+@Dependent
 public class EventHandlerSelector {
 
     private SonicAliquotHandler sonicAliquotHandler;

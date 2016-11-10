@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
 import javax.ejb.Stateful;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
@@ -17,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Stateful
+@Dependent
 public class ProductOrderSampleEtl extends GenericEntityAndStatusEtl<ProductOrderSample, ProductOrderSample> {
     private String samplePositionJoinTable;
 

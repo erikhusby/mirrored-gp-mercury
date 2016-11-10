@@ -16,7 +16,9 @@ import org.jboss.shrinkwrap.resolver.api.maven.MavenResolvedArtifact;
 import org.jboss.shrinkwrap.resolver.api.maven.ScopeType;
 
 import java.io.File;
-import java.io.FileOutputStream;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -125,14 +127,22 @@ public class DeploymentBuilder {
 
     @SuppressWarnings("UnusedDeclaration")
     public static WebArchive buildMercuryWarWithAlternatives(String... alternatives) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("<beans>\n")
-                .append("  <alternatives>\n");
+        StringBuilder sbAlts = new StringBuilder();
+        sbAlts.append("  <alternatives>\n");
         for (String alternative : alternatives) {
-            sb.append("    <class>").append(alternative).append("</class>\n");
+           sbAlts.append("    <class>").append(alternative).append("</class>\n");
         }
-        sb.append("  </alternatives>\n")
-                .append("</beans>");
+        sbAlts.append("  </alternatives>\n");
+
+        // Small enough, dump it in a String
+        StringBuilder sb = new StringBuilder();
+        try {
+            sb.append(Files.readAllBytes(FileSystems.getDefault().getPath("src/main/resources/META-INF/beans.xml")));
+            sb.insert(sb.indexOf("</beans>"), sbAlts.toString());
+        } catch ( Exception ex ) {
+            throw new RuntimeException("Fail to read beans.xml template file: " + ex.getMessage() );
+        }
+
         return buildMercuryWar(sb.toString());
     }
 
@@ -174,22 +184,26 @@ public class DeploymentBuilder {
      * @return the string contents for a beans.xml file
      */
     public static String buildBeansXml(Class... alternatives) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("<beans xmlns=\"http://xmlns.jcp.org/xml/ns/javaee\"\n" +
-                "       xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                "       xsi:schemaLocation=\"http://xmlns.jcp.org/xml/ns/javaee\n" +
-                "\t\thttp://xmlns.jcp.org/xml/ns/javaee/beans_1_1.xsd\"\n" +
-                "       bean-discovery-mode=\"all\">\n")
-                .append("  <alternatives>\n");
+        StringBuilder sbAlts = new StringBuilder();
+        sbAlts.append("  <alternatives>\n");
         for (Class alternative : alternatives) {
             if (alternative.isAnnotation()) {
-                sb.append("    <stereotype>").append(alternative.getName()).append("</stereotype>\n");
+                sbAlts.append("    <stereotype>").append(alternative.getName()).append("</stereotype>\n");
             } else {
-                sb.append("    <class>").append(alternative.getName()).append("</class>\n");
+                sbAlts.append("    <class>").append(alternative.getName()).append("</class>\n");
             }
         }
-        sb.append("  </alternatives>\n")
-                .append("</beans>");
+        sbAlts.append("  </alternatives>\n");
+
+        // Small enough, dump it in a String
+        StringBuilder sb = new StringBuilder();
+        try {
+            sb.append(new String(Files.readAllBytes(Paths.get("./src/main/resources/META-INF/beans.xml"))));
+            sb.insert(sb.indexOf("</beans>"), sbAlts.toString());
+        } catch ( Exception ex ) {
+            throw new RuntimeException("Fail to read beans.xml template file: " + ex.getMessage() );
+        }
+
         return sb.toString();
     }
 

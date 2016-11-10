@@ -49,6 +49,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.text.Format;
@@ -71,6 +72,7 @@ import java.util.TreeSet;
  * @author breilly
  */
 @SuppressWarnings("FeatureEnvy")
+@Dependent
 public class ZimsIlluminaRunFactory {
 
     private SampleDataFetcher sampleDataFetcher;

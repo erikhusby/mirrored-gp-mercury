@@ -8,12 +8,14 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 
 import javax.ejb.Stateful;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
 import java.util.Collection;
 
 @Stateful
+@Dependent
 public class LedgerEntryEtl extends GenericEntityEtl<LedgerEntry, LedgerEntry> {
 
     public LedgerEntryEtl() {

@@ -70,6 +70,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -92,6 +93,7 @@ import java.util.regex.Pattern;
  */
 @SuppressWarnings({"FeatureEnvy", "OverlyCoupledClass", "serial", "CloneableClassWithoutClone",
         "ClassExtendsConcreteCollection", "OverlyComplexClass", "ClassWithTooManyMethods", "ClassWithTooManyFields"})
+@Dependent
 public class LabEventFactory implements Serializable {
 
     /**
@@ -148,6 +150,7 @@ public class LabEventFactory implements Serializable {
     @Inject
     private StaticPlateDao staticPlateDao;
 
+    @Inject
     private BSPUserList bspUserList;
 
     @Inject
@@ -189,11 +192,13 @@ public class LabEventFactory implements Serializable {
     @Inject
     private AttributeArchetypeDao attributeArchetypeDao;
 
+    @Inject
     private BSPSetVolumeConcentration bspSetVolumeConcentration;
 
     private static final Log logger = LogFactory.getLog(LabEventFactory.class);
 
-    @Inject
+    public LabEventFactory(){}
+
     public LabEventFactory(BSPUserList userList, BSPSetVolumeConcentration bspSetVolumeConcentration) {
         bspUserList = userList;
         this.bspSetVolumeConcentration = bspSetVolumeConcentration;

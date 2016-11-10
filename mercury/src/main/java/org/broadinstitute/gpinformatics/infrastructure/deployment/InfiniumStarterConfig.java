@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.deployment;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.Serializable;
 
@@ -9,6 +10,7 @@ import java.io.Serializable;
  */
 @SuppressWarnings("UnusedDeclaration")
 @ConfigKey("infiniumStarter")
+@Dependent
 public class InfiniumStarterConfig extends AbstractConfig implements Serializable {
     private String dataPath;
     private long minimumIdatFileLength;

@@ -8,9 +8,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.BSPJerseyClient;
 
+import javax.enterprise.context.Dependent;
+import javax.enterprise.inject.Default;
 import javax.ws.rs.core.MediaType;
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -22,7 +23,8 @@ import java.util.TreeSet;
 /**
  * This class handles grabbing collections from BSP for use in Mercury project set up.
  */
-@Impl
+@Dependent
+@Default
 public class BSPCohortSearchServiceImpl extends BSPJerseyClient implements BSPCohortSearchService {
 
     private static final long serialVersionUID = -1765914773249771569L;

@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
 import javax.ejb.Stateful;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
@@ -31,6 +32,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Stateful
+@Dependent
 public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, SequencingRun> {
     private Collection<SequencingRunDto> loggingDtos = new ArrayList<>();
     public static final String NONE = "NONE";

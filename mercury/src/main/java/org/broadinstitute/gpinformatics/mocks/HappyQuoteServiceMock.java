@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mocks;
 
 import org.broadinstitute.gpinformatics.infrastructure.quote.*;
 
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import java.util.Date;
 import java.util.Set;
@@ -14,6 +15,7 @@ import java.util.Set;
  * WHEN THE QUOTE SERVERS ARE DOWN.
  */
 @Alternative
+@Dependent
 public class HappyQuoteServiceMock implements QuoteService {
 
     @Override

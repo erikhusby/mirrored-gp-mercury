@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Tra
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import java.io.IOException;
 import java.util.Arrays;

@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ import java.util.Map;
  * Utility class that manages interactions between PDOs and jira.
  */
 @Stateful
+@Dependent
 public class ProductOrderJiraUtil {
 
     @Inject

@@ -12,6 +12,7 @@ import org.apache.activemq.artemis.core.remoting.impl.netty.NettyConnectorFactor
 import org.apache.activemq.artemis.core.remoting.impl.netty.TransportConstants;
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.jms.Connection;
 import javax.jms.DeliveryMode;
@@ -26,6 +27,7 @@ import java.util.Map;
 /**
  * Forward finished Infinium chip wells to the pipeline for analysis.
  */
+@Dependent
 public class InfiniumPipelineClient {
 
     private static final Log log = LogFactory.getLog(InfiniumPipelineClient.class);

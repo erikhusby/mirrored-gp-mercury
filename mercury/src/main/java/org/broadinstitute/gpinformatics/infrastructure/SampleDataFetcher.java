@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleDataFetcher
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -27,6 +28,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+@Dependent
 public class SampleDataFetcher implements Serializable {
 
     @Inject

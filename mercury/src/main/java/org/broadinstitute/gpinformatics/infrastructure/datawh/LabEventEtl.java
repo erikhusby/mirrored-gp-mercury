@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.ejb.Stateful;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
@@ -36,6 +37,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 @Stateful
+@Dependent
 public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     private WorkflowConfigLookup workflowConfigLookup;
     private final Collection<EventFactDto> loggingDtos = new ArrayList<>();

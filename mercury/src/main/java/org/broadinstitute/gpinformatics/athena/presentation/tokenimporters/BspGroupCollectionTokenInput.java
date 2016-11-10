@@ -6,12 +6,14 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPGroupCollectionLis
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.json.JSONException;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.text.MessageFormat;
 
 /**
  * Token Input support for BSP Groups and Collections.
  */
+@Dependent
 public class BspGroupCollectionTokenInput extends TokenInput<SampleCollection> {
 
     @Inject

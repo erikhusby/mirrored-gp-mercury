@@ -8,7 +8,6 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldJsonParser;
@@ -34,6 +33,8 @@ import org.codehaus.jackson.map.ObjectMapper;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.enterprise.context.Dependent;
+import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
@@ -50,7 +51,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Impl
+@Default
+@Dependent
 public class JiraServiceImpl extends AbstractJsonJerseyClientService implements JiraService {
 
     @Inject

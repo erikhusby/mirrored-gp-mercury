@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.util.Collection;
 import java.util.Collections;
@@ -31,6 +32,7 @@ import java.util.Set;
  * FlowcellMessageHandler takes care of updating the FCT ticket associated with creating a Flowcell with the Flowcell
  * barcode and other related information.
  */
+@Dependent
 public class FlowcellMessageHandler extends AbstractEventHandler {
 
     private static final Log logger = LogFactory.getLog(FlowcellMessageHandler.class);

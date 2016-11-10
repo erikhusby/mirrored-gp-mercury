@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.VesselSearchActionBean;
 
 import javax.annotation.Nullable;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Collection;
@@ -32,6 +33,7 @@ import java.util.Set;
  * Utility methods for sending human readable updates
  * about samples to project managers
  */
+@Dependent
 public class JiraCommentUtil {
 
     private final JiraService jiraService;

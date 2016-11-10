@@ -35,7 +35,6 @@ import org.xml.sax.helpers.XMLFilterImpl;
 import org.xml.sax.helpers.XMLReaderFactory;
 
 import javax.annotation.PostConstruct;
-import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
@@ -67,7 +66,6 @@ import java.util.Set;
  * defined by bettalims.xsd.  There is a BettaLIMS server that is part of the Squid suite of applications.
  */
 @Path("/bettalimsmessage")
-@Stateful
 @RequestScoped
 public class BettaLimsMessageResource {
 

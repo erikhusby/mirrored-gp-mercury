@@ -13,6 +13,7 @@ package org.broadinstitute.gpinformatics.infrastructure.bass;
 
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 @Stub
 @Alternative
+@Dependent
 public class BassSearchServiceStub implements BassSearchService {
     @Override
     public List<BassDTO> runSearch(Map<BassDTO.BassResultColumn, List<String>> parameters, BassFileType fileType) {

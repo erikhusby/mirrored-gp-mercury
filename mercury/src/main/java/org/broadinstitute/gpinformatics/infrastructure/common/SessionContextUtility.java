@@ -1,10 +1,9 @@
 package org.broadinstitute.gpinformatics.infrastructure.common;
 
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
-import org.jboss.weld.context.ManagedContext;
 import org.jboss.weld.context.bound.BoundSessionContext;
 
-import javax.enterprise.context.RequestScoped;
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.inject.Inject;
 import java.io.Serializable;
@@ -15,6 +14,7 @@ import java.util.HashMap;
  * exists.  This is useful in cases such as JMS message handlers and EJB Timers, where we need to call code
  * that injects {@link UserBean}.
  */
+@Dependent
 public class SessionContextUtility implements Serializable {
     private static final long serialVersionUID = 20130517L;
     protected final BoundSessionContext sessionContext;

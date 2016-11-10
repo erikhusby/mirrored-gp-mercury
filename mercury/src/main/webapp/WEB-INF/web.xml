@@ -3,8 +3,11 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
                              http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd" version="3.1">
-
-    <!-- BEGIN for JBoss AS 7 -->
+    <!-- Weld Probe (Why won't it disable?!)
+    <context-param>
+        <param-name>org.jboss.weld.development</param-name>
+        <param-value>false</param-value>
+    </context-param> -->
 
     <!-- JAX-RS -->
     <servlet>

@@ -28,6 +28,7 @@ import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransfe
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SampleInfoType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WellAndSourceTubeType;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -44,6 +45,7 @@ import java.util.SortedMap;
  *
  * @author breilly
  */
+@Dependent
 public class LimsQueries {
 
     private static final String NOT_FOUND = "NOT_FOUND";

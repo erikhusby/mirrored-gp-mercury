@@ -17,13 +17,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.BSPRestClient;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ObjectFactory;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -31,6 +26,7 @@ import javax.ws.rs.core.Response;
 /**
  * Handles bettalims messages that need to be passed to a BSP REST service for processing.
  */
+@Dependent
 public class SamplesDaughterPlateHandler {
     public static final String BSP_TRANSFER_REST_URL = "plate/transfer";
     private static final Log logger = LogFactory.getLog(SamplesDaughterPlateHandler.class);

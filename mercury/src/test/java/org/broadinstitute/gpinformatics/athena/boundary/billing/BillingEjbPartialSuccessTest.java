@@ -31,9 +31,9 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
@@ -109,6 +109,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
      * expect.
      */
     @Alternative
+    @Dependent
     protected static class PartiallySuccessfulQuoteServiceStub implements QuoteService {
         private static final long serialVersionUID = 6093273925949722169L;
         private Log log = LogFactory.getLog(QuoteFundingList.class);

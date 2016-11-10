@@ -6,12 +6,14 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.mercury.control.LoginAndPassword;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.Serializable;
 
 
 @SuppressWarnings("UnusedDeclaration")
 @ConfigKey("bsp")
+@Dependent
 public class BSPConfig extends AbstractConfig implements LoginAndPassword, Serializable {
 
     /** Use this path to perform a search on a BSP barcode. */

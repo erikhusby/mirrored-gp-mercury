@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientServ
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -30,6 +31,7 @@ import java.util.Set;
  * Wrapper around {@link BSPSampleSearchService} that
  * does a bit more object-ifying and type-safety.
  */
+@Dependent
 public class BSPSampleDataFetcher extends BSPJerseyClient implements Serializable {
     static final long serialVersionUID = -1432207534876411738L;
     // Many versions of this service written only for tests are considered as options by IntelliJ.

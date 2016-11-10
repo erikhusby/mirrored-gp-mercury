@@ -5,11 +5,13 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.Serializable;
 
 @SuppressWarnings("UnusedDeclaration")
 @ConfigKey("hipchat")
+@Dependent
 public class HipChatConfig extends AbstractConfig implements Serializable {
 
     private String authorizationToken;

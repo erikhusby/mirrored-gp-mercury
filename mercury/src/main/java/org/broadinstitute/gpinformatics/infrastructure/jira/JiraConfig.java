@@ -6,11 +6,13 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig
 import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.Serializable;
 
 @SuppressWarnings("UnusedDeclaration")
 @ConfigKey("jira")
+@Dependent
 public class JiraConfig extends AbstractConfig implements LoginAndPassword, Serializable {
     private String host;
 

@@ -18,11 +18,12 @@ import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.apache.commons.lang3.ArrayUtils;
 import org.broadinstitute.gpinformatics.infrastructure.common.QueryStringSplitter;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 
 import javax.annotation.Nullable;
+import javax.enterprise.context.Dependent;
+import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -44,7 +45,8 @@ import static org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO.BassR
  * @see <a href="https://confluence.broadinstitute.org/display/BASS/Application+Programming+Interface">Bass API Documentation</a>
  * @see <a href="https://bass.broadinstitute.org/list?rpid=RP-200">Example call to Bass WS</a>
  */
-@Impl
+@Dependent
+@Default
 public class BassSearchServiceImpl extends AbstractJerseyClientService implements BassSearchService {
     public static final String ONLY_IDS_MAY_BE_SPECIFIED = "If querying for IDs, only IDs may be specified.";
     private BassConfig bassConfig;

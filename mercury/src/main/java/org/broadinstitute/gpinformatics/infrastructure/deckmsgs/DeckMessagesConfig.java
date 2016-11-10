@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.Serializable;
 
@@ -12,6 +13,7 @@ import java.io.Serializable;
  * Configuration for the service that accepts messages from liquid handling decks
  */
 @ConfigKey("deckMsgs")
+@Dependent
 public class DeckMessagesConfig extends AbstractConfig implements Serializable {
 
     private String messageStoreDirRoot;

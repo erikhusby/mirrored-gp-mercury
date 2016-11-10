@@ -89,6 +89,7 @@ import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
 import javax.enterprise.context.RequestScoped;
+import javax.enterprise.inject.Any;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;

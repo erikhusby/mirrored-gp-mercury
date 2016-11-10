@@ -9,11 +9,13 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+@Dependent
 public class CrspPipelineUtils {
 
     private Deployment deployment;

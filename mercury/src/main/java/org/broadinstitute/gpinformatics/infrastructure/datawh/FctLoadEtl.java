@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
 import javax.ejb.Stateful;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
@@ -30,6 +31,7 @@ import java.util.Set;
  * Tied to LabEvent entity, but is only interested in ETL of loaded flowcell tickets as created for MISEQ and FCT batch types.
  */
 @Stateful
+@Dependent
 public class FctLoadEtl extends GenericEntityEtl<LabEvent,LabEvent> {
 
     // Events related to loading of FCT tickets that this process is only interested in

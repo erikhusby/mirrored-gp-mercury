@@ -5,12 +5,14 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession_;
 
 import javax.ejb.Stateful;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
 import java.util.Collection;
 
 @Stateful
+@Dependent
 public class BillingSessionEtl extends GenericEntityEtl<BillingSession, BillingSession> {
 
     public BillingSessionEtl() {

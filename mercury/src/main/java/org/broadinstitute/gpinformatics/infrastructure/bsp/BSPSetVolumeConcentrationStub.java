@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import java.math.BigDecimal;
 
@@ -10,6 +11,7 @@ import java.math.BigDecimal;
  */
 @Stub
 @Alternative
+@Dependent
 public class BSPSetVolumeConcentrationStub implements BSPSetVolumeConcentration {
 
     private static final long serialVersionUID = -4537906882178920633L;

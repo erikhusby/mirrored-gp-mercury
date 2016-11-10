@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,6 +24,7 @@ import java.util.Set;
  * Handles an aliquot message for Sonic.  The source rack is a mix of CRSP and BSP tubes.  Creates a transfer
  * containing only the BSP tubes, so BSP can create SM-IDs for the daughters, and export them back to Mercury.
  */
+@Dependent
 public class SonicAliquotHandler extends AbstractEventHandler {
 
     @Inject

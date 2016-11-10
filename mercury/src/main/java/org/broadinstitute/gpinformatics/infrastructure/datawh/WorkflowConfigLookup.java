@@ -7,12 +7,14 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 
 import javax.ejb.Stateful;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.Serializable;
 import java.text.ParseException;
 import java.util.*;
 
 @Stateful
+@Dependent
 public class WorkflowConfigLookup implements Serializable {
     private static Log logger = LogFactory.getLog(WorkflowConfigLookup.class);
     private WorkflowLoader workflowLoader;

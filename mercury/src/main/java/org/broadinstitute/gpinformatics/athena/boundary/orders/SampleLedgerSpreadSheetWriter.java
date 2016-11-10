@@ -3,9 +3,12 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 import org.apache.poi.ss.usermodel.IndexedColors;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
 
+import javax.enterprise.context.Dependent;
+
 /**
  * A {@link AbstractSpreadsheetExporter.SpreadSheetWriter} specific to writing billing tracker spreadsheets.
  */
+@Dependent
 public class SampleLedgerSpreadSheetWriter extends AbstractSpreadsheetExporter.SpreadSheetWriter {
 
     private static final int FIXED_HEADER_WIDTH = 259 * 15;

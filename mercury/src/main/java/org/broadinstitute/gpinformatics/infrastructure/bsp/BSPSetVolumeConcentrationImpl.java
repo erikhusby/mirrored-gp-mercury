@@ -8,11 +8,12 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.BSPJerseyClient;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.enterprise.context.Dependent;
+import javax.enterprise.inject.Default;
 import javax.ws.rs.core.MediaType;
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -24,7 +25,8 @@ import java.util.List;
 /**
  * This class provides Mercury with a way to send volume and concentration to BSP.
  */
-@Impl
+@Dependent
+@Default
 public class BSPSetVolumeConcentrationImpl extends BSPJerseyClient implements BSPSetVolumeConcentration {
 
     private static final long serialVersionUID = -2649024856161379565L;

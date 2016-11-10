@@ -16,6 +16,7 @@ import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
 import edu.mit.broad.prodinfo.thrift.lims.WellAndSourceTube;
 import org.broadinstitute.gpinformatics.infrastructure.Offline;
 
+import javax.enterprise.context.Dependent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +26,7 @@ import java.util.Map;
  * @author breilly
  */
 @Offline
+@Dependent
 public class OfflineThriftService implements ThriftService {
 
     private static int libraryNumber = 100;

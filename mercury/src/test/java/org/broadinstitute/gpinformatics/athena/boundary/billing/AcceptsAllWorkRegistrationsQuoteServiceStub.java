@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerExceptio
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quotes;
 
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import java.util.Date;
 import java.util.Set;
@@ -22,6 +23,7 @@ import java.util.Set;
  * be modified to be happier if new clients so require.
  */
 @Alternative
+@Dependent
 class AcceptsAllWorkRegistrationsQuoteServiceStub implements QuoteService {
 
     private static int counter = 0;

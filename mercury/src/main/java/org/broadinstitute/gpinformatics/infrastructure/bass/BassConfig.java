@@ -17,12 +17,14 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.mercury.control.LoginAndPassword;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.Serializable;
 
 
 @SuppressWarnings("UnusedDeclaration")
 @ConfigKey("bass")
+@Dependent
 public class BassConfig extends AbstractConfig implements LoginAndPassword, Serializable {
     public static final int BASS_MAX_URL_LENGTH  = 4096;
 

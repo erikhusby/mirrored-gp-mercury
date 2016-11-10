@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import javax.ws.rs.core.Response;
 
@@ -21,6 +22,7 @@ import javax.ws.rs.core.Response;
  */
 @Stub
 @Alternative
+@Dependent
 public class SquidConnectorStub implements SquidConnector{
 
     @Override

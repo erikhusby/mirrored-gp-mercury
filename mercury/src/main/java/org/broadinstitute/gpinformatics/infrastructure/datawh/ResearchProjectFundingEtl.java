@@ -5,12 +5,14 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectFun
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectFunding_;
 
 import javax.ejb.Stateful;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
 import java.util.Collection;
 
 @Stateful
+@Dependent
 public class ResearchProjectFundingEtl extends GenericEntityEtl<ResearchProjectFunding, ResearchProjectFunding> {
 
     public ResearchProjectFundingEtl() {

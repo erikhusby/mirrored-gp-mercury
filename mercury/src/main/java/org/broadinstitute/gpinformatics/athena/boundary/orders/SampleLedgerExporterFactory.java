@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.tableau.TableauConfig;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +27,7 @@ import java.util.TreeMap;
  * factory will simply provide SampleLedgerExporter with a list of {@link SampleLedgerRow}s containing the data to
  * write to the spreadsheet.
  */
+@Dependent
 public class SampleLedgerExporterFactory {
 
     private final PriceItemDao priceItemDao;
