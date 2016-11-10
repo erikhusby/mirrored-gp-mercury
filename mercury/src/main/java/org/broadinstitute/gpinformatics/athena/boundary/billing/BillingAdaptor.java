@@ -234,7 +234,7 @@ public class BillingAdaptor implements Serializable {
 
                     StringBuilder errorMessage = new StringBuilder();
                     if (StringUtils.isBlank(result.getSAPBillingId()) && quote != null &&
-                        quote.isEligibleForSAP()) {
+                        quote.isEligibleForSAP() && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
                         errorMessage.append("A problem occured attempting to post to SAP for ")
                                 .append(billingSession.getBusinessKey()).append(".");
                     }

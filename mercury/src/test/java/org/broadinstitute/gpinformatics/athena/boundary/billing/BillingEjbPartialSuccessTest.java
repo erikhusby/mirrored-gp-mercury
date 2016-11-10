@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 import com.google.common.collect.Multimap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
@@ -13,6 +14,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestLogHandler;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
@@ -28,10 +30,14 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quotes;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -88,9 +94,34 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
     protected static boolean cycleFails = true;
     protected static Result lastResult = Result.FAIL;
-    @Inject
-    private BillingAdaptor billingAdaptor;
 
+    @Inject
+    private BillingEjb billingEjb;
+
+    @Inject
+    private QuoteService quoteService;
+
+    @Inject
+    private BillingSessionAccessEjb billingSessionAccessEjb;
+
+    private SapIntegrationService sapService;
+
+    @Inject
+    private EmailSender emailSender;
+
+    @Inject
+    private UserBean userBean;
+
+    @Inject
+    private AppConfig appConfig;
+
+    @Inject
+    private ProductOrderEjb productOrderEjb;
+
+    @Inject
+    private org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment deployment;
+
+    private BillingAdaptor billingAdaptor;
     public enum Result {FAIL, SUCCESS}
 
     public static final Log log = LogFactory.getLog(BillingEjbPartialSuccessTest.class);
@@ -106,6 +137,24 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         testLogHandler = new TestLogHandler();
         billingAdaptorLogger.addHandler(testLogHandler);
         testLogHandler.setLevel(Level.ALL);
+    }
+
+    private void setBillingAdaptor(Collection<PriceItem> primaryPriceItems) {
+        final Collection<QuotePriceItem> quotePriceItems = priceListCache.getQuotePriceItems();
+        for(PriceItem primaryPriceItem: primaryPriceItems) {
+            quotePriceItems.add(new QuotePriceItem(primaryPriceItem.getCategory(),
+                    primaryPriceItem.getName() + "_id", primaryPriceItem.getName(),
+                    "250", "each", primaryPriceItem.getPlatform()));
+        }
+
+        PriceListCache tempPriceListCache = new PriceListCache(quotePriceItems);
+
+        sapService = SapIntegrationServiceProducer.stubInstance();
+
+        billingAdaptor = new BillingAdaptor(billingEjb, billingSessionDao, tempPriceListCache, quoteService,
+                billingSessionAccessEjb, sapService, emailSender, userBean, appConfig);
+        billingAdaptor.setProductOrderEjb(productOrderEjb);
+        billingAdaptor.setDeployment(deployment);
     }
 
     /**
@@ -255,14 +304,19 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
         Multimap<String, ProductOrderSample> samplesByName = ProductOrderTestFactory.groupBySampleId(productOrder);
 
+        Set<PriceItem> reusablePriceItems = new HashSet<>();
+
         for (String sampleName : orderSamples) {
             for (ProductOrderSample ledgerSample : samplesByName.get(sampleName)) {
 
+                reusablePriceItems.add(productOrder.getProduct().getPrimaryPriceItem());
                 if (FAILING_PRICE_ITEM_SAMPLE.equals(sampleName)) {
                     UUID uuid = UUID.randomUUID();
                     PriceItem replacementPriceItem =
                             new PriceItem(uuid.toString(), "Genomics Platform", "Testing Category",
                                           "Replacement PriceItem Name " + uuid);
+
+                    reusablePriceItems.add(replacementPriceItem);
                     FAILING_PRICE_ITEM_NAME = replacementPriceItem.getName();
                     billingSessionDao.persist(replacementPriceItem);
 
@@ -275,6 +329,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
             }
         }
 
+        setBillingAdaptor(reusablePriceItems);
         BillingSession billingSession = new BillingSession(-1L, billingSessionEntries);
         billingSessionDao.persist(billingSession);
 
@@ -300,18 +355,22 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
     protected BillingSession writeFixtureDataOneSamplePerProductOrder(String... orderSamples) {
 
         Set<LedgerEntry> billingSessionEntries = new HashSet<>(orderSamples.length);
+        Set<PriceItem> reusablePriceItems = new HashSet<>();
+
+
         for (String sample : orderSamples) {
             ProductOrder productOrder = ProductOrderDBTestFactory.createProductOrder(billingSessionDao, sample);
 
             Multimap<String, ProductOrderSample> samplesByName = ProductOrderTestFactory.groupBySampleId(productOrder);
 
             for (ProductOrderSample ledgerSample : samplesByName.get(sample)) {
-
+                reusablePriceItems.add(productOrder.getProduct().getPrimaryPriceItem());
                 if (FAILING_PRICE_ITEM_SAMPLE.equals(sample)) {
                     UUID uuid = UUID.randomUUID();
                     PriceItem replacementPriceItem =
                             new PriceItem(uuid.toString(), "Genomics Platform", "Testing Category",
                                           "Replacement PriceItem Name " + uuid);
+                    reusablePriceItems.add(replacementPriceItem);
                     FAILING_PRICE_ITEM_NAME = replacementPriceItem.getName();
                     billingSessionDao.persist(replacementPriceItem);
 
@@ -325,6 +384,8 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                 }
             }
         }
+        setBillingAdaptor(reusablePriceItems);
+
         BillingSession billingSession = new BillingSession(-1L, billingSessionEntries);
         billingSessionDao.persist(billingSession);
 

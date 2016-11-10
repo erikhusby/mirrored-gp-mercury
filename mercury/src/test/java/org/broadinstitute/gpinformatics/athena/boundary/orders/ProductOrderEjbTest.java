@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
@@ -96,7 +97,7 @@ public class ProductOrderEjbTest {
         productOrderEjb.setAppConfig(mockAppConfig);
         productOrderEjb.setEmailSender(mockEmailSender);
         productOrderEjb.setAccessController(mockAccessController);
-
+        productOrderEjb.setDeployment(Deployment.DEV);
     }
 
     public void testUpdateKitInfo() throws Exception {
