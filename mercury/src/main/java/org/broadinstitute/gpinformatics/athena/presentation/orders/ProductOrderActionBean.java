@@ -748,7 +748,6 @@ public class ProductOrderActionBean extends CoreActionBean {
                     }
                 }
             }
-
         }
         return value;
     }
