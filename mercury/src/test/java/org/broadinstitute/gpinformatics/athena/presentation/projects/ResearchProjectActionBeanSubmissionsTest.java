@@ -14,6 +14,7 @@ package org.broadinstitute.gpinformatics.athena.presentation.projects;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionConfig;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsService;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
@@ -22,6 +23,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.hamcrest.Matchers;
 import org.mockito.Mockito;
 import org.mockserver.integration.ClientAndServer;
+import org.mockserver.model.HttpRequest;
 import org.mockserver.model.HttpResponse;
 import org.mockserver.model.HttpStatusCode;
 import org.testng.Assert;
@@ -69,6 +71,7 @@ public class ResearchProjectActionBeanSubmissionsTest {
             actionBean.loadSubmissionData();
             assertThat(actionBean.getFormattedMessages(),
                     Matchers.contains(ResearchProjectActionBean.SUBMISSIONS_UNAVAILABLE));
+            mockServer.verify(HttpRequest.request().withPath("/" + SubmissionConfig.SUBMISSION_TYPES));
         } catch (Exception e) {
             Assert.fail("No Exception should have been thrown");
         }
@@ -93,8 +96,6 @@ public class ResearchProjectActionBeanSubmissionsTest {
         try {
             boolean validationPassed = actionBean.validateViewOrPostSubmissions();
             assertThat(validationPassed, Matchers.not(true));
-            assertThat(actionBean.getFormattedMessages(),
-                    Matchers.contains(ResearchProjectActionBean.SUBMISSIONS_UNAVAILABLE));
         } catch (Exception e) {
             Assert.fail("No Exception should have been thrown");
         }
