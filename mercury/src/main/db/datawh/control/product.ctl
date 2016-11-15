@@ -19,5 +19,7 @@ TRAILING NULLCOLS
  workflow_name,
  product_family_name,
  primary_price_item_id,
- aggregation_data_type
+ aggregation_data_type,
+ external_only_product,
+ saved_in_sap
 )

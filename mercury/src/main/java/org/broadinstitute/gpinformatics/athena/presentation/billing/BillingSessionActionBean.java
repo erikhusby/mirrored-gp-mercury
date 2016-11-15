@@ -229,7 +229,7 @@ public class BillingSessionActionBean extends CoreActionBean {
                                     billingResult.getWorkId());
 
                     String link = "<a href=\"" + workUrl + "\" target=\"QUOTE\">click here</a>";
-                    addMessage("Sent to quote server: " + link + " to see the value");
+                    addMessage("Sent to quote server and SAP: " + link + " to see the quotes server value");
                 }
             }
         } catch (BillingException e) {

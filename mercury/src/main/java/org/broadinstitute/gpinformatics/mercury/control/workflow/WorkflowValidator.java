@@ -32,6 +32,7 @@ import javax.inject.Inject;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -186,8 +187,8 @@ public class WorkflowValidator {
 
         if (!validationErrors.isEmpty()) {
             String body = renderTemplate(labVessels, stationEventType, validationErrors);
-            emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
-                    "Workflow validation failure for " + stationEventType.getEventType(), body);
+            emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), Collections.<String>emptyList(),
+                    "Workflow validation failure for " + stationEventType.getEventType(), body, false);
         }
     }
 

@@ -52,6 +52,7 @@ public class ProductOrderEtlDbFreeTest {
     private RegulatoryInfo regulatoryInfo = createMock(RegulatoryInfo.class);
 
     private Object[] mocks = new Object[]{auditReader, dao, pdo, researchProject, product, userList, owner, regulatoryInfo};
+    private String sapMockOrderNumber = "1000084774";
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
@@ -100,6 +101,7 @@ public class ProductOrderEtlDbFreeTest {
         expect(pdo.getPlacedDate()).andReturn(modifiedDate);
         expect(pdo.getSkipRegulatoryReason()).andReturn(null);
         expect(pdo.getRegulatoryInfos()).andReturn(regulatoryInfos);
+        expect(pdo.getSapOrderNumber()).andReturn(sapMockOrderNumber);
 
         expect(researchProject.getResearchProjectId()).andReturn(researchProjectId);
         expect(product.getProductId()).andReturn(productId);
@@ -115,7 +117,7 @@ public class ProductOrderEtlDbFreeTest {
 
     private void verifyRecord(String record) {
         int i = 0;
-        String[] parts = record.split(",", 15);
+        String[] parts = record.split(",", 16);
         assertEquals(parts[i++], etlDateString);
         assertEquals(parts[i++], "F");
         assertEquals(parts[i++], String.valueOf(entityId));
@@ -130,6 +132,7 @@ public class ProductOrderEtlDbFreeTest {
         assertEquals(parts[i++], ownerName);
         assertEquals(parts[i++], ExtractTransform.formatTimestamp(modifiedDate));
         assertEquals(parts[i++], "");
+        assertEquals(parts[i++], sapMockOrderNumber);
         assertEquals(parts[i++], "");
         assertEquals(parts.length, i);
     }

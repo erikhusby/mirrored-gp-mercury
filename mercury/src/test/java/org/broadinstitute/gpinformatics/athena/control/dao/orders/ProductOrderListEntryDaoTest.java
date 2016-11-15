@@ -167,7 +167,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
         LedgerEntry ledgerEntry =
                 new LedgerEntry(order.getSamples().iterator().next(), order.getProduct().getPrimaryPriceItem(),
-                        new Date(), 2);
+                        new Date(),order.getProduct(), 2);
 
         ledgerEntryDao.persist(ledgerEntry);
         ledgerEntryDao.flush();
@@ -183,7 +183,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
     public void testOneLedgerEntryWithBillingSession() {
         LedgerEntry ledgerEntry =
                 new LedgerEntry(order.getSamples().iterator().next(), order.getProduct().getPrimaryPriceItem(),
-                        new Date(), 2);
+                        new Date(), order.getProduct(), 2);
 
         BillingSession billingSession = new BillingSession(1L, Collections.singleton(ledgerEntry));
 

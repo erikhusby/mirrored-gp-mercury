@@ -1753,6 +1753,17 @@ nodePrinter.print(webapp)
             <version>0.2.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.broadinstitute.sapservices</groupId>
+            <artifactId>SAPServices</artifactId>
+            <version>1.3</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>javax.servlet</groupId>
+                    <artifactId>servlet-api</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
     </dependencies>
 
     <build>
@@ -2237,7 +2248,6 @@ nodePrinter.print(webapp)
                             <wsdlDirectory>${basedir}/src/main/wsdl/squid</wsdlDirectory>
                         </configuration>
                     </execution>
-
                 </executions>
 
 

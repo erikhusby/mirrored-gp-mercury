@@ -147,6 +147,30 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
         }
 
         @Override
+        public String registerNewSAPWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
+                                         Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
+                                         String callbackParameterName, String callbackParameterValue) {
+            // Simulate failure only for one particular PriceItem.
+            log.debug("In register New work");
+            String workId = "workItemId\t1000";
+            try {
+                failureTime.getAndAdd(failureIncrement.get());
+                if (failQuoteCall) {
+                    log.info("Configuration is set to fail quote");
+                    throw new RuntimeException("Error registering quote");
+                } else {
+                    log.info("Setting Sleep of " + failureTime.get());
+                    Thread.sleep(1000 * failureTime.get());
+                }
+                log.info("Woke up from quote call");
+            } catch (InterruptedException e) {
+                // do nothing with this error.
+            }
+
+            return workId;
+        }
+
+        @Override
         public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
             throw new NotImplementedException();
         }
@@ -204,7 +228,8 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
                                       "Replacement PriceItem Name " + uuid);
                 billingSessionDao1.persist(replacementPriceItem);
 
-                billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), 5));
+                billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(),
+                        productOrder.getProduct(), 5));
             }
         }
         BillingSession billingSession = new BillingSession(-1L, billingSessionEntries);

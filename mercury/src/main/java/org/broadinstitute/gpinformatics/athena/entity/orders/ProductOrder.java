@@ -11,6 +11,8 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.time.DateUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
@@ -211,6 +213,19 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @OneToMany(mappedBy = "productOrder")
     private Set<BucketEntry> bucketEntries;
 
+    @Column(name = "sap_order_number")
+    private String sapOrderNumber;
+
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "referenceProductOrder", orphanRemoval = true)
+    private List<SapOrderDetail> sapReferenceOrders = new ArrayList<>();
+
+    @OneToMany( mappedBy = "parentOrder", cascade = CascadeType.PERSIST, orphanRemoval = true)
+    private Collection<ProductOrder> childOrders = new HashSet<>();
+
+    @ManyToOne(cascade = {CascadeType.PERSIST})
+    @JoinColumn(name = "PARENT_PRODUCT_ORDER")
+    private ProductOrder parentOrder;
+
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.
      */
@@ -231,6 +246,34 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      */
     public ProductOrder(@Nonnull BspUser createdBy, ResearchProject researchProject) {
         this(createdBy.getUserId(), "", new ArrayList<ProductOrderSample>(), "", null, researchProject);
+    }
+
+    public ProductOrder(ProductOrder toClone, boolean shareSapOrder) {
+
+        this(toClone.getCreatedBy(), "Clone" + toClone.getChildOrders().size() + ": " + toClone.getTitle(),
+                new ArrayList<ProductOrderSample>(), toClone.getQuoteId(), toClone.getProduct(),
+                toClone.getResearchProject());
+
+        if(shareSapOrder & toClone.isSavedInSAP()){
+            addSapOrderDetail(new SapOrderDetail(toClone.latestSapOrderDetail().getSapOrderNumber(),
+                    toClone.latestSapOrderDetail().getPrimaryQuantity(), toClone.latestSapOrderDetail().getQuoteId(),
+                    toClone.latestSapOrderDetail().getCompanyCode()));
+        }
+
+        this.setParentOrder(toClone);
+    }
+
+    public boolean isOneBilled() {
+        boolean oneBilled = false;
+        for(ProductOrderSample sample:this.getSamples()) {
+            for (LedgerEntry ledgerEntry : sample.getLedgerItems()) {
+                if(ledgerEntry.getBillingSession().isComplete()) {
+                    oneBilled = true;
+                    break;
+                }
+            }
+        }
+        return oneBilled;
     }
 
     /**
@@ -902,6 +945,25 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return updateSampleCounts().notReceivedAndNotAbandonedCount;
     }
 
+    public int getNonAbandonedCount() {
+        int count = 0;
+        for(ProductOrderSample sample:getSamples()) {
+            if(sample.getDeliveryStatus() != ProductOrderSample.DeliveryStatus.ABANDONED) {
+                count++;
+            }
+        }
+
+        for(ProductOrder childOrder:getChildOrders()) {
+            count += childOrder.getNonAbandonedCount();
+        }
+
+        return count;
+    }
+
+    public int getParentSampleCount() {
+        return getSamples().size();
+    }
+
     /**
      * Helper method that determines how many BSP samples registered to the product order are
      * in an Active state.
@@ -1145,6 +1207,27 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return getProduct() != null && getProduct().isSampleInitiationProduct();
     }
 
+    public String getSapOrderNumber() {
+
+        return (CollectionUtils.isEmpty(sapReferenceOrders))?sapOrderNumber:latestSapOrderDetail().getSapOrderNumber();
+    }
+
+    public SapOrderDetail latestSapOrderDetail() {
+
+        SapOrderDetail sapOrderDetail = null;
+        if(CollectionUtils.isNotEmpty(sapReferenceOrders)) {
+            ArrayList<SapOrderDetail> orderDetailSortList = new ArrayList<>(sapReferenceOrders);
+            Collections.sort(orderDetailSortList);
+
+            sapOrderDetail = orderDetailSortList.get(orderDetailSortList.size() - 1);
+        }
+        return sapOrderDetail;
+    }
+
+    public void setSapOrderNumber(String sapOrderNumber) {
+        throw new UnsupportedOperationException("No longer just setting the SAP Order Number");
+    }
+
     /**
      * This is used to help create or update a PDO's Jira ticket.
      */
@@ -1326,6 +1409,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         private int missingBspMetaDataCount;
         private int uniqueSampleCount;
         private int uniqueParticipantCount;
+        private int abandonedCount;
 
         /**
          * This keeps track of unique and total samples per metadataSource.
@@ -1410,6 +1494,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             missingBspMetaDataCount = 0;
             onRiskCount = 0;
             notReceivedAndNotAbandonedCount = 0;
+            abandonedCount = 0;
             stockTypeCounter.clear();
             primaryDiseaseCounter.clear();
             genderCounter.clear();
@@ -1435,6 +1520,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                 receivedSampleCount++;
             } else if (!sample.getDeliveryStatus().isAbandoned()) {
                 notReceivedAndNotAbandonedCount++;
+            }
+
+            if(sample.getDeliveryStatus().isAbandoned()) {
+                abandonedCount++;
             }
 
             if (sampleData.isActiveStock()) {
@@ -1722,5 +1811,69 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                     });
 
         return (filteredResults != null)?Iterators.size(filteredResults.iterator()):0;
+    }
+
+    public boolean isSavedInSAP() {return StringUtils.isNotBlank(getSapOrderNumber());}
+
+    public ProductOrder getParentOrder() {
+        return parentOrder;
+    }
+
+    public void setParentOrder(ProductOrder parentOrder) {
+
+        if(this.parentOrder != null) {
+            this.parentOrder.childOrders.remove(this);
+        }
+        if(parentOrder != null) {
+            parentOrder.childOrders.add(this);
+        }
+
+        this.parentOrder = parentOrder;
+    }
+
+    public Collection<ProductOrder> getChildOrders() {
+        Collection<ProductOrder> result = Collections.emptyList();
+
+        if(CollectionUtils.isNotEmpty(childOrders)) {
+            result = childOrders;
+        }
+        return result;
+    }
+
+    public void setChildOrders(Collection<ProductOrder> childOrders) {
+
+        for(ProductOrder childOrder: this.childOrders) {
+            addChildOrder(childOrder);
+        };
+    }
+
+    public void addChildOrder(ProductOrder childOrder) {
+        childOrder.setParentOrder(this);
+    }
+
+    public int getNumberForReplacement() {
+        return getSamples().size() - getNonAbandonedCount();
+    }
+
+    public boolean isChildOrder() {
+        return this.parentOrder != null;
+    }
+
+    public List<SapOrderDetail> getSapReferenceOrders() {
+        return sapReferenceOrders;
+    }
+
+    public void setSapReferenceOrders(
+            List<SapOrderDetail> sapReferenceOrders) {
+        for(SapOrderDetail orderDetail:sapReferenceOrders) {
+            addSapOrderDetail(orderDetail);
+        }
+    }
+
+    public void addSapOrderDetail(SapOrderDetail orderDetail) {
+
+        this.sapReferenceOrders.add(orderDetail);
+        orderDetail.setReferenceProductOrder(this);
+
     }
 }

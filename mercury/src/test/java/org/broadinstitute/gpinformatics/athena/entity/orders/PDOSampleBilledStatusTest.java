@@ -31,7 +31,7 @@ public class PDOSampleBilledStatusTest {
         pdo.setProduct(new Product());
         pdo.addSample(pdoSample);
         pdo.getProduct().setPrimaryPriceItem(primaryPriceItem);
-        pdoSample.addLedgerItem(new Date(System.currentTimeMillis()), primaryPriceItem,3d);
+        pdoSample.addLedgerItem(new Date(System.currentTimeMillis()), primaryPriceItem,3d, pdo.getProduct());
 
         BillingSession billingSession = new BillingSession(3L,pdoSample.getLedgerItems());
         billingSession.setBilledDate(new Date(System.currentTimeMillis()));

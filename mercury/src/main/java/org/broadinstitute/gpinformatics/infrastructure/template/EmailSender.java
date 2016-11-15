@@ -13,6 +13,7 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Date;
 
 /**
@@ -31,16 +32,22 @@ public class EmailSender implements Serializable {
      * @param appConfig The configuration for the deployed app.  This determines
      *                  whether email will actually be sent.
      * @param to address
+     * @param ccAddrdesses collection of email addresses which should also be CC'ed when the email is sent out.
      * @param subject subject line
      * @param body HTML
+     * @param overrideForTest
      */
-    public void sendHtmlEmail(@Nonnull AppConfig appConfig, String to, String subject, String body) {
-        if (appConfig.shouldSendEmail()) {
+    public void sendHtmlEmail(@Nonnull AppConfig appConfig, String to,
+                              Collection<String> ccAddrdesses, String subject, String body, boolean overrideForTest) {
+        if (appConfig.shouldSendEmail() || overrideForTest) {
             if (mailSession != null) {
                 try {
                     Message message = new MimeMessage(mailSession);
                     message.setFrom(new InternetAddress("gplims@broadinstitute.org"));
                     message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to, false));
+                    for(String address: ccAddrdesses) {
+                        message.setRecipients(Message.RecipientType.CC, InternetAddress.parse(address, false));
+                    }
                     message.setSubject(subject);
                     message.setContent(body, "text/html; charset=utf-8");
                     message.setSentDate(new Date());
