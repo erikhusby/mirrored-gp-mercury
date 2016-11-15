@@ -212,13 +212,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Column(name = "sap_order_number")
     private String sapOrderNumber;
 
-    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "referenceProductOrder")
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "referenceProductOrder", orphanRemoval = true)
     private List<SapOrderDetail> sapReferenceOrders = new ArrayList<>();
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "parentOrder", cascade = CascadeType.PERSIST)
-    private List<ProductOrder> childOrders = new ArrayList<>();
+    @OneToMany( mappedBy = "parentOrder", cascade = CascadeType.PERSIST, orphanRemoval = true)
+    private Collection<ProductOrder> childOrders = new HashSet<>();
 
-    @ManyToOne(cascade = {CascadeType.PERSIST}, fetch = FetchType.LAZY)
+    @ManyToOne(cascade = {CascadeType.PERSIST})
     @JoinColumn(name = "PARENT_PRODUCT_ORDER")
     private ProductOrder parentOrder;
 
@@ -935,13 +935,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public int getNonAbandonedCount() {
         int count = 0;
-        for(ProductOrderSample sample:samples) {
+        for(ProductOrderSample sample:getSamples()) {
             if(sample.getDeliveryStatus() != ProductOrderSample.DeliveryStatus.ABANDONED) {
                 count++;
             }
         }
 
-        for(ProductOrder childOrder:childOrders) {
+        for(ProductOrder childOrder:getChildOrders()) {
             count += childOrder.getNonAbandonedCount();
         }
 
@@ -949,7 +949,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public int getParentSampleCount() {
-        return samples.size();
+        return getSamples().size();
     }
 
     /**
@@ -1836,7 +1836,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public int getNumberForReplacement() {
-        return samples.size() - getNonAbandonedCount();
+        return getSamples().size() - getNonAbandonedCount();
     }
 
     public boolean isChildOrder() {

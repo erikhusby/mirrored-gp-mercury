@@ -717,33 +717,34 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         for (ProductOrder testOrder : ordersWithCommonQuote) {
             int unbilledCount = testOrder.getUnbilledSampleCount();
+            if(testOrder.getProduct() != null) {
+                QuotePriceItem primaryPriceItem =
+                        priceListCache.findByKeyFields(testOrder.getProduct().getPrimaryPriceItem().getPlatform(),
+                                testOrder.getProduct().getPrimaryPriceItem().getCategory(),
+                                testOrder.getProduct().getPrimaryPriceItem().getName());
 
-            QuotePriceItem primaryPriceItem =
-                    priceListCache.findByKeyFields(testOrder.getProduct().getPrimaryPriceItem().getPlatform(),
-                            testOrder.getProduct().getPrimaryPriceItem().getCategory(),
-                            testOrder.getProduct().getPrimaryPriceItem().getName());
+                if (primaryPriceItem != null &&
+                    StringUtils.isNotBlank(primaryPriceItem.getPrice())) {
+                    Double productPrice = Double.valueOf(primaryPriceItem.getPrice());
 
-            if (primaryPriceItem != null &&
-                StringUtils.isNotBlank(primaryPriceItem.getPrice())) {
-                Double productPrice = Double.valueOf(primaryPriceItem.getPrice());
+                    if (productPrice != null) {
+                        value += productPrice * unbilledCount;
+                    }
 
-                if(productPrice != null) {
-                    value += productPrice * unbilledCount;
-                }
+                    for (ProductOrderAddOn testOrderAddon : testOrder.getAddOns()) {
+                        QuotePriceItem addonPriceItem =
+                                priceListCache
+                                        .findByKeyFields(testOrderAddon.getAddOn().getPrimaryPriceItem().getPlatform(),
+                                                testOrderAddon.getAddOn().getPrimaryPriceItem().getCategory(),
+                                                testOrderAddon.getAddOn().getPrimaryPriceItem().getName());
 
-                for (ProductOrderAddOn testOrderAddon : testOrder.getAddOns()) {
-                    QuotePriceItem addonPriceItem =
-                            priceListCache
-                                    .findByKeyFields(testOrderAddon.getAddOn().getPrimaryPriceItem().getPlatform(),
-                                            testOrderAddon.getAddOn().getPrimaryPriceItem().getCategory(),
-                                            testOrderAddon.getAddOn().getPrimaryPriceItem().getName());
+                        if (addonPriceItem != null &&
+                            StringUtils.isNotBlank(addonPriceItem.getPrice())) {
+                            Double addOnPrice = Double.valueOf(addonPriceItem.getPrice());
 
-                    if (addonPriceItem != null &&
-                        StringUtils.isNotBlank(addonPriceItem.getPrice())) {
-                        Double addOnPrice = Double.valueOf(addonPriceItem.getPrice());
-
-                        if(addOnPrice != null) {
-                            value += addOnPrice * unbilledCount;
+                            if (addOnPrice != null) {
+                                value += addOnPrice * unbilledCount;
+                            }
                         }
                     }
                 }
@@ -1213,6 +1214,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             productOrderEjb.publishProductOrderToSAP(editOrder, placeOrderMessageCollection, true);
             addMessages(placeOrderMessageCollection);
 
+            editOrder.getChildOrders().size();
+            editOrder.getSapReferenceOrders().size();
             productOrderEjb.handleSamplesAdded(editOrder.getBusinessKey(), editOrder.getSamples(), this);
             productOrderDao.persist(editOrder);
 
@@ -1221,8 +1224,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             // If we get here with an original business key, then clear out the session and refetch the order.
             if (originalBusinessKey != null) {
                 productOrderDao.clear();
-                editOrder = productOrderEjb.findProductOrderByBusinessKeySafely(originalBusinessKey,
-                        ProductOrderDao.FetchSpec.CHILD_ORDERS);
+                editOrder = productOrderEjb.findProductOrderByBusinessKeySafely(originalBusinessKey);
             }
 
             addGlobalValidationError(e.getMessage());

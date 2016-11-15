@@ -272,11 +272,7 @@ public class ProductOrderEjb {
                     if(quoteIdChange) {
                         String body = "The SAP order " + oldNumber + " is being associated with a new quote by "+
                                       userBean.getBspUser().getFullName() +" and needs" + " to be short closed.";
-                        Collection<String> ccAddresses = Collections.singletonList(userBean.getBspUser().getEmail());
-                        emailSender.sendHtmlEmail(appConfig,
-                                (deployment.equals(Deployment.PROD))?"BUSSYS@broadinstitute.org":"zsearle@broadinstitute.org",
-                                (deployment.equals(Deployment.PROD))?ccAddresses:Arrays.asList("scottmat@broadinstitute.org", "smcdonou@broadinstitute.org"),
-                                "SAP Order: Short Close Request", body, !(deployment.equals(Deployment.PROD)));
+                        sendSapOrderShortCloseRequest(body);
                     }
                     messageCollection.addInfo("Order "+orderToPublish.getJiraTicketKey() +
                                               " has been successfully created in SAP");
@@ -892,20 +888,27 @@ public class ProductOrderEjb {
             transitionIssueToSameOrderStatus(order);
             // The status was changed, let the user know.
             reporter.addMessage("The order status of ''{0}'' is now {1}.", jiraTicketKey, order.getOrderStatus());
-
             if((order.getOrderStatus() == OrderStatus.Completed &&
                 order.getNonAbandonedCount() < order.latestSapOrderDetail().getPrimaryQuantity()
                )
-               || order.getOrderStatus() == OrderStatus.Abandoned){
-                String body = "The SAP order " + order.getSapOrderNumber()+ " has been marked as completed in Mercury by "+
-                              userBean.getBspUser().getFullName() +" and may need to be short closed.";
-                Collection<String> ccAddresses = Collections.singletonList(userBean.getBspUser().getEmail());
-                emailSender.sendHtmlEmail(appConfig,
-                        (deployment.equals(Deployment.PROD))?"BUSSYS@broadinstitute.org":"zsearle@broadinstitute.org",
-                        (deployment.equals(Deployment.PROD))?ccAddresses:Arrays.asList("scottmat@broadinstitute.org", "smcdonou@broadinstitute.org"),
-                        "SAP Order: Short Close Request", body, !(deployment.equals(Deployment.PROD)));
+               || order.getOrderStatus() == OrderStatus.Abandoned) {
+
+                sendSapOrderShortCloseRequest(
+                        "The SAP order " + order.getSapOrderNumber() + " has been marked as completed in Mercury by " +
+                        userBean.getBspUser().getFullName() + " and may need to be short closed.");
             }
         }
+    }
+
+    private void sendSapOrderShortCloseRequest(String body) {
+            Collection<String> ccAddresses = Collections.singletonList(userBean.getBspUser().getEmail());
+        final boolean isProduction = deployment.equals(Deployment.PROD);
+        emailSender.sendHtmlEmail(appConfig,
+                    isProduction ?"BUSSYS@broadinstitute.org":"zsearle@broadinstitute.org",
+                    isProduction ?ccAddresses:
+                            Arrays.asList("scottmat@broadinstitute.org", "smcdonou@broadinstitute.org"),
+                    (!isProduction)?"test": "" + "SAP Order: Short Close Request", body,
+                    !isProduction);
     }
 
     /**
@@ -973,6 +976,17 @@ public class ProductOrderEjb {
         // Currently not setting abandon comments into PDO comments, that seems too intrusive.  We will record the comments
         // with the JIRA ticket.
         transitionJiraTicket(jiraTicketKey, JiraResolution.CANCELLED, JiraTransition.CANCEL, abandonComments);
+
+        if((productOrder.getOrderStatus() == OrderStatus.Completed &&
+            productOrder.getNonAbandonedCount() < productOrder.latestSapOrderDetail().getPrimaryQuantity()
+           )
+           || productOrder.getOrderStatus() == OrderStatus.Abandoned) {
+
+            sendSapOrderShortCloseRequest(
+                    "The SAP order " + productOrder.getSapOrderNumber() + " has been marked as completed in Mercury by "
+                    +
+                    userBean.getBspUser().getFullName() + " and may need to be short closed.");
+        }
     }
 
     /**

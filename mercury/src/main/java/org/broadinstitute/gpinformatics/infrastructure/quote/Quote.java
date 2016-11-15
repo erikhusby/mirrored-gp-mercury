@@ -133,12 +133,10 @@ public class Quote {
         FundingLevel singleLevel = null;
 
         for(FundingLevel level : quoteFunding.getFundingLevel()) {
-            if(Integer.valueOf(level.getPercent()) >0) {
-                if(singleLevel == null) {
-                    singleLevel = level;
-                } else {
-                    return null;
-                }
+            if (singleLevel == null) {
+                singleLevel = level;
+            } else {
+                return null;
             }
         }
         return singleLevel;

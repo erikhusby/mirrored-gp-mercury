@@ -39,8 +39,8 @@ public class EmailSender implements Serializable {
      */
     public void sendHtmlEmail(@Nonnull AppConfig appConfig, String to,
                               Collection<String> ccAddrdesses, String subject, String body, boolean overrideForTest) {
-        if (appConfig.shouldSendEmail()) {
-            if (mailSession != null || overrideForTest) {
+        if (appConfig.shouldSendEmail() || overrideForTest) {
+            if (mailSession != null) {
                 try {
                     Message message = new MimeMessage(mailSession);
                     message.setFrom(new InternetAddress("gplims@broadinstitute.org"));
