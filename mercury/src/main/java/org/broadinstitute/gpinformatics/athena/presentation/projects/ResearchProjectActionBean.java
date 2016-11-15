@@ -223,6 +223,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     public static final TypeReference<List<SubmissionDto>> SUBMISSION_SAMPLES_TYPE_REFERENCE =
             new TypeReference<List<SubmissionDto>>() {
             };
+    private boolean submissionServiceIsAvailable = true;
 
     public Map<String, String> getBioSamples() {
         return bioSamples;
@@ -383,9 +384,14 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
                 }
             }
         } catch (Exception e) {
-            addMessage(SUBMISSIONS_UNAVAILABLE);
+            submissionsUnavailable();
             log.error(e.getMessage(), e);
         }
+    }
+
+    private void submissionsUnavailable() {
+        submissionServiceIsAvailable = false;
+        addMessage(SUBMISSIONS_UNAVAILABLE);
     }
 
     SubmissionLibraryDescriptor findDefaultSubmissionType(ResearchProject researchProject) {
@@ -841,13 +847,8 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
 
     @ValidationMethod(on = {VIEW_SUBMISSIONS_ACTION, POST_SUBMISSIONS_ACTION})
     public boolean validateViewOrPostSubmissions() {
-        try {
-            // Test if submissions server is currently available.
-            submissionsService.getSubmissionRepositories();
-        } catch (Exception e) {
-            if (!supressValidationErrors) {
-                addMessage(SUBMISSIONS_UNAVAILABLE);
-            }
+        if (!submissionServiceIsAvailable) {
+            return false;
         }
         if (getUserBean().isDeveloperUser()) {
             return true;
@@ -1387,5 +1388,9 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
 
     public void setSupressValidationErrors(boolean supressValidationErrors) {
         this.supressValidationErrors = supressValidationErrors;
+    }
+
+    public boolean isSubmissionServiceIsAvailable() {
+        return submissionServiceIsAvailable;
     }
 }
