@@ -102,6 +102,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
+import org.hibernate.Hibernate;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.jvnet.inflector.Noun;
@@ -1214,8 +1215,15 @@ public class ProductOrderActionBean extends CoreActionBean {
             productOrderEjb.publishProductOrderToSAP(editOrder, placeOrderMessageCollection, true);
             addMessages(placeOrderMessageCollection);
 
-            editOrder.getChildOrders().size();
-            editOrder.getSapReferenceOrders().size();
+            /*
+             While fixing GPLIM-4481 we came across a scenario that left certain collections on the product order
+             uninitialized which caused a lazy initialization exception when they were access accessed on the
+             orders/view.jsp page. For this reason the calls to Hibernate.initialize were added below.
+
+             */
+            Hibernate.initialize(editOrder.getChildOrders());
+            Hibernate.initialize(editOrder.getSapReferenceOrders());
+
             productOrderEjb.handleSamplesAdded(editOrder.getBusinessKey(), editOrder.getSamples(), this);
             productOrderDao.persist(editOrder);
 
