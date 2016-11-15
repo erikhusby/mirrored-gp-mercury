@@ -138,7 +138,7 @@ public class ResearchProjectActionBeanTest {
         actionBean.setContext(testContext);
 
         actionBean.setSubmissionsService(new SubmissionsWillAlwaysFailSubmissionsService());
-        actionBean.loadSubmissionData();
+        actionBean.loadSubmissionSelectLists();
         assertThat(actionBean.getFormattedMessages(), contains(ResearchProjectActionBean.SUBMISSIONS_UNAVAILABLE));
     }
 }

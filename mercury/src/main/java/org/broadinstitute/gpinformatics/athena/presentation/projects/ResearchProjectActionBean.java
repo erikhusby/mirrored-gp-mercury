@@ -309,7 +309,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     public void init() throws Exception {
         researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
 
-        loadSubmissionData();
+        loadSubmissionSelectLists();
 
         if (submissionRepository == null && StringUtils.isBlank(selectedSubmissionRepository)) {
             if (getActiveRepositories().size() == 1) {
@@ -327,6 +327,19 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
                 // If there is no collaboration service, for whatever reason, set the data to null so that we
                 collaborationData = null;
                 validCollaborationPortal = false;
+            }
+
+            String eventName = getContext().getEventName();
+            if (StringUtils.isNotBlank(editResearchProject.getSubmissionRepositoryName())) {
+                selectedSubmissionRepository = editResearchProject.getSubmissionRepositoryName();
+                if (submissionServiceIsAvailable) {
+                    submissionRepository = submissionsService.findRepositoryByKey(selectedSubmissionRepository);
+                    if (submissionRepository != null && !submissionRepository.isActive() && eventName
+                            .equals(VIEW_SUBMISSIONS_ACTION)) {
+                        addMessage("Selected submission site ''{0}'' is not active.",
+                                submissionRepository.getDescription());
+                    }
+                }
             }
 
             if (submissionLibraryDescriptor == null) {
@@ -366,23 +379,10 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         progressFetcher = new CompletionStatusFetcher(productOrderDao.getProgress(productOrderIds));
     }
 
-    void loadSubmissionData() {
+    void loadSubmissionSelectLists() {
         try {
             setSubmissionLibraryDescriptors(submissionsService.getSubmissionLibraryDescriptors());
             setSubmissionRepositories(submissionsService.getSubmissionRepositories());
-
-            if (!StringUtils.isBlank(researchProject)) {
-                String eventName = getContext().getEventName();
-                if (StringUtils.isNotBlank(editResearchProject.getSubmissionRepositoryName())) {
-                    selectedSubmissionRepository = editResearchProject.getSubmissionRepositoryName();
-                    submissionRepository = submissionsService.findRepositoryByKey(selectedSubmissionRepository);
-                    if (submissionRepository != null && !submissionRepository.isActive() && eventName
-                            .equals(VIEW_SUBMISSIONS_ACTION)) {
-                        addMessage("Selected submission site ''{0}'' is not active.",
-                                submissionRepository.getDescription());
-                    }
-                }
-            }
         } catch (Exception e) {
             submissionsUnavailable();
             log.error(e.getMessage(), e);
