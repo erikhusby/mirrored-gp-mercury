@@ -348,7 +348,7 @@
                             <stripes:label for="submissionSite" class="control-label">Default Repository</stripes:label>
                             <div class="controls">
                                 <stripes:select id="submissionSite" name="editResearchProject.submissionRepositoryName"
-                                                disabled="${!actionBean.submissionServiceIsAvailable}">
+                                                disabled="${!actionBean.submissionServiceAvailable}">
                                     <stripes:option value="">Choose...</stripes:option>
                                     <stripes:options-collection label="description" value="name"
                                                                 collection="${actionBean.activeRepositories}"/>

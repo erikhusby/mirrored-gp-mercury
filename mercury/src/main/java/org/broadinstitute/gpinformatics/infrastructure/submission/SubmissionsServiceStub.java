@@ -120,4 +120,8 @@ public class SubmissionsServiceStub implements SubmissionsService {
         return null;
     }
 
+    @Override
+    public boolean isAvailable() {
+        return true;
+    }
 }

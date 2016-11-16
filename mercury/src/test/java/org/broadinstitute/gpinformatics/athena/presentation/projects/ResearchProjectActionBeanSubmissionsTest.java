@@ -68,7 +68,7 @@ public class ResearchProjectActionBeanSubmissionsTest {
                 MockSubmissionsService.serviceWithResponse(mockServer, serverUnavailable);
         actionBean.setSubmissionsService(submissionsService);
         try {
-            actionBean.loadSubmissionSelectLists();
+            actionBean.initSubmissions();
             assertThat(actionBean.getFormattedMessages(),
                     Matchers.contains(ResearchProjectActionBean.SUBMISSIONS_UNAVAILABLE));
             mockServer.verify(HttpRequest.request().withPath("/" + SubmissionConfig.SUBMISSION_TYPES));

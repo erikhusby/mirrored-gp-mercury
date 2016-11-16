@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
 import com.sun.jersey.api.client.ClientResponse;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -194,5 +195,17 @@ public class SubmissionsServiceImpl implements SubmissionsService {
             log.error(errorMessage);
             throw new InformaticsServiceException(errorMessage);
         }
+    }
+
+    @Override
+    public boolean isAvailable() {
+        try {
+            if (CollectionUtils.isNotEmpty(getSubmissionRepositories())) {
+                return true;
+            }
+        } catch (Exception e) {
+            log.error("Submissions Service is unavailable", e);
+        }
+        return false;
     }
 }
