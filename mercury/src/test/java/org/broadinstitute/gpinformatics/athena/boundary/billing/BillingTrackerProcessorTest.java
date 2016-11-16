@@ -111,7 +111,7 @@ public class BillingTrackerProcessorTest {
 
     public void testProcessRowDetailsBillingInProgress() {
         ProductOrderSample sample = order.getSamples().get(0);
-        sample.addLedgerItem(new Date(), new PriceItem(), 1, order.getProduct());
+        sample.addLedgerItem(new Date(), new PriceItem(), 1);
         BillingSession billingSession = new BillingSession(0L, sample.getLedgerItems());
 
         Date now = new Date();

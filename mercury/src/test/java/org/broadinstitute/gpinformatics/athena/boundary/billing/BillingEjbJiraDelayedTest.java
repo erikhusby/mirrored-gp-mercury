@@ -228,8 +228,7 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
                                       "Replacement PriceItem Name " + uuid);
                 billingSessionDao1.persist(replacementPriceItem);
 
-                billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(),
-                        productOrder.getProduct(), 5));
+                billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), 5));
             }
         }
         BillingSession billingSession = new BillingSession(-1L, billingSessionEntries);

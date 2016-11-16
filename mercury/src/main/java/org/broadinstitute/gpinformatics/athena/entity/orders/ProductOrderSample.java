@@ -643,10 +643,10 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      */
     public void autoBillSample(Date completedDate, double quantity) {
         Date now = new Date();
-        Map<ProductLedgerIndex, LedgerQuantities> ledgerQuantitiesMap = getLedgerQuantities();
+        Map<PriceItem, LedgerQuantities> ledgerQuantitiesMap = getLedgerQuantities();
         PriceItem priceItem = getProductOrder().getProduct().getPrimaryPriceItem();
 
-        LedgerQuantities quantities = ledgerQuantitiesMap.get(new ProductLedgerIndex(getProductOrder().getProduct(), priceItem));
+        LedgerQuantities quantities = ledgerQuantitiesMap.get(priceItem);
         if (quantities == null) {
             // No ledger item exists for this price item, create it using the current order's price item
             addAutoLedgerItem(completedDate, priceItem, quantity, now, getProductOrder().getProduct());
@@ -714,8 +714,6 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          */
         private double uploaded;
 
-        private Product product;
-
         /**
          * The quantity currently in active billing sessions but not yet billed externally.
          */
@@ -726,10 +724,9 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          */
         private double billed;
 
-        public LedgerQuantities(String sampleName, String priceItemName, Product product) {
+        public LedgerQuantities(String sampleName, String priceItemName) {
             this.sampleName = sampleName;
             this.priceItemName = priceItemName;
-            this.product = product;
         }
 
         /**
@@ -800,28 +797,26 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         }
     }
 
-    public Map<ProductLedgerIndex, LedgerQuantities> getLedgerQuantities() {
+    public Map<PriceItem, LedgerQuantities> getLedgerQuantities() {
         if (ledgerItems.isEmpty()) {
             return Collections.emptyMap();
         }
 
-        Map<ProductLedgerIndex, LedgerQuantities> sampleStatus = new HashMap<>();
+        Map<PriceItem, LedgerQuantities> sampleStatus = new HashMap<>();
         for (LedgerEntry item : ledgerItems) {
             PriceItem priceItem = item.getPriceItem();
-            ProductLedgerIndex ledgerIndex = new ProductLedgerIndex(item.getProduct(), priceItem);
-            if (!sampleStatus.containsKey(ledgerIndex)) {
-                sampleStatus.put(
-                        ledgerIndex, new LedgerQuantities(sampleName, priceItem.getName(), item.getProduct()));
+            if (!sampleStatus.containsKey(priceItem)) {
+                sampleStatus.put(priceItem, new LedgerQuantities(sampleName, priceItem.getName()));
             }
 
             if (item.isBilled()) {
-                sampleStatus.get(ledgerIndex).addToBilled(item.getQuantity());
+                sampleStatus.get(priceItem).addToBilled(item.getQuantity());
             } else if (item.isBeingBilled()) {
                 // The item is part of an active billing session.
-                sampleStatus.get(ledgerIndex).addToInProgress(item.getQuantity());
+                sampleStatus.get(priceItem).addToInProgress(item.getQuantity());
             } else {
                 // The item is not part of a completed billed session or successfully billed item from an active session.
-                sampleStatus.get(ledgerIndex).addToUploaded(item.getQuantity());
+                sampleStatus.get(priceItem).addToUploaded(item.getQuantity());
             }
         }
 
@@ -837,7 +832,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         for (LedgerEntry item : ledgerItems) {
             PriceItem priceItem = item.getPriceItem();
             if (!sampleStatus.containsKey(priceItem)) {
-                sampleStatus.put(priceItem, new LedgerQuantities(sampleName, priceItem.getName(), item.getProduct()));
+                sampleStatus.put(priceItem, new LedgerQuantities(sampleName, priceItem.getName()));
             }
 
             if (item.isBilled()) {
@@ -1059,9 +1054,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
                     if (!haveExistingEntry) {
 
-                        // FIXME: 11/3/16  SGM This may cause issues for Replacement Price Items
-                        addLedgerItem(ledgerUpdate.getWorkCompleteDate(), ledgerUpdate.getPriceItem(), quantityDelta,
-                                getProductForPriceItem(ledgerUpdate.getPriceItem()));
+                        addLedgerItem(ledgerUpdate.getWorkCompleteDate(), ledgerUpdate.getPriceItem(), quantityDelta);
                     } else {
 
                         if (existingLedgerEntry.isBeingBilled()) {
@@ -1100,7 +1093,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      */
     public void addAutoLedgerItem(Date workCompleteDate, PriceItem priceItem, double delta, Date currentDate,
                                   Product product) {
-        addLedgerItem(workCompleteDate, priceItem, delta, currentDate, product);
+        addLedgerItem(workCompleteDate, priceItem, delta, currentDate);
     }
 
     /**
@@ -1110,15 +1103,14 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      * @param workCompleteDate The date completed.
      * @param priceItem        The price item to charge.
      * @param delta            The plus or minus value to bill to the quote server.
-     * @param product
+     * @ param product
      */
-    public void addLedgerItem(Date workCompleteDate, PriceItem priceItem, double delta, Product product) {
-        addLedgerItem(workCompleteDate, priceItem, delta, null, product);
+    public void addLedgerItem(Date workCompleteDate, PriceItem priceItem, double delta) {
+        addLedgerItem(workCompleteDate, priceItem, delta, null);
     }
 
-    public void addLedgerItem(Date workCompleteDate, PriceItem priceItem, double delta, Date autoLedgerTimestamp,
-                              Product product) {
-        LedgerEntry ledgerEntry = new LedgerEntry(this, priceItem, workCompleteDate, product, delta);
+    public void addLedgerItem(Date workCompleteDate, PriceItem priceItem, double delta, Date autoLedgerTimestamp) {
+        LedgerEntry ledgerEntry = new LedgerEntry(this, priceItem, workCompleteDate, delta);
         ledgerEntry.setAutoLedgerTimestamp(autoLedgerTimestamp);
         ledgerItems.add(ledgerEntry);
         log.debug(MessageFormat.format(

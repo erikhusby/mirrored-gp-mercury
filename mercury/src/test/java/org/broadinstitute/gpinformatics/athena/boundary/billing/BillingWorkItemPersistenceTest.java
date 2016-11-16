@@ -110,7 +110,7 @@ public class BillingWorkItemPersistenceTest extends AbstractContainerTest {
         PriceItem priceItem = priceItemDao.findById(PriceItem.class, 46L);
         primaryPriceItems.add(priceItem);
         for (ProductOrderSample pdoSample : pdo.getSamples()) {
-            LedgerEntry ledgerEntry = new LedgerEntry(pdoSample, priceItem, new Date(), pdo.getProduct(), 3);
+            LedgerEntry ledgerEntry = new LedgerEntry(pdoSample, priceItem, new Date(), 3);
             pdoSample.getLedgerItems().add(ledgerEntry);
             ledgerEntries.add(ledgerEntry);
             ledgerEntryDao.persist(ledgerEntry);

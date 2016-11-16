@@ -319,13 +319,12 @@ public class BillingTrackerProcessor extends TableProcessor {
         // Get the stats for the order.
         Map<BillableRef, OrderBillSummaryStat> pdoSummaryStatsMap = chargesMapByPdo.get(rowPdoIdStr);
 
-        Map<ProductLedgerIndex, ProductOrderSample.LedgerQuantities> billCounts = productOrderSample.getLedgerQuantities();
+        Map<PriceItem, ProductOrderSample.LedgerQuantities> billCounts = productOrderSample.getLedgerQuantities();
 
         for (BillableRef billableRef : currentBillableRefs) {
             PriceItem priceItem = currentPriceItemsByName.get(billableRef.getPriceItemName());
             Product productForPriceItem = productOrderSample.getProductForPriceItem(priceItem);
-            ProductOrderSample.LedgerQuantities sampleQuantities = billCounts.get(new ProductLedgerIndex(
-                    productForPriceItem,priceItem));
+            ProductOrderSample.LedgerQuantities sampleQuantities = billCounts.get(priceItem);
 
             double trackerBilled = 0;
 
@@ -360,13 +359,13 @@ public class BillingTrackerProcessor extends TableProcessor {
             }
 
             doUpdate(dataRow, dataRowIndex, productOrderSample, pdoSummaryStatsMap, billableRef, priceItem,
-                    trackerBilled, priceItemName, productForPriceItem);
+                    trackerBilled, priceItemName);
         }
     }
 
     private void doUpdate(Map<String, String> dataRow, int dataRowIndex, ProductOrderSample productOrderSample,
                           Map<BillableRef, OrderBillSummaryStat> pdoSummaryStatsMap, BillableRef billableRef,
-                          PriceItem priceItem, double trackerBilled, String priceItemName, Product product) {
+                          PriceItem priceItem, double trackerBilled, String priceItemName) {
 
         String updateToKey = BillingTrackerHeader.getPriceItemPartNumberHeader(priceItem, billableRef) + " "
                              + BillingTrackerHeader.UPDATE;
@@ -444,7 +443,7 @@ public class BillingTrackerProcessor extends TableProcessor {
                 // If there are no messages AND we are persisting, then update the ledger Item, which will
                 // persist the change..
                 if (CollectionUtils.isEmpty(getMessages()) && doPersist) {
-                    productOrderSample.addLedgerItem(workCompleteDate, priceItem, delta, product);
+                    productOrderSample.addLedgerItem(workCompleteDate, priceItem, delta);
                 }
             }
         }

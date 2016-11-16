@@ -308,21 +308,25 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
         writer.writeCell(sortOrder);
 
         // The ledger amounts.
-        Map<ProductLedgerIndex, ProductOrderSample.LedgerQuantities> billCounts = sample.getLedgerQuantities();
-        Map<PriceItem, ProductLedgerIndex> indexByPriceItem = getPriceItemProductLedgerIndexMap(billCounts);
+        Map<PriceItem, ProductOrderSample.LedgerQuantities> billCounts = sample.getLedgerQuantities();
+//        Map<ProductLedgerIndex, ProductOrderSample.LedgerQuantities> billCounts = sample.getLedgerQuantities();
+//        Map<PriceItem, ProductLedgerIndex> indexByPriceItem = getPriceItemProductLedgerIndexMap(billCounts);
         // Write out the price item columns.
         for (PriceItem priceItem : historicalPriceItems) {
-            writeCountForHistoricalPriceItem(billCounts, indexByPriceItem.get(priceItem));
+//            writeCountForHistoricalPriceItem(billCounts, indexByPriceItem.get(priceItem));
+            writeCountForHistoricalPriceItem(billCounts, priceItem);
         }
 
         for (PriceItem item : sortedPriceItems) {
-            writeCountsForPriceItems(billCounts, indexByPriceItem.get(item));
+//            writeCountsForPriceItems(billCounts, indexByPriceItem.get(item));
+            writeCountsForPriceItems(billCounts, item);
         }
 
         // And for add-ons.
         for (Product addOn : sortedAddOns) {
             for (PriceItem item : getPriceItems(addOn, priceItemDao, priceListCache)) {
-                writeCountsForPriceItems(billCounts, indexByPriceItem.get(item));
+//                writeCountsForPriceItems(billCounts, indexByPriceItem.get(item));
+                writeCountsForPriceItems(billCounts, item);
             }
         }
 
@@ -345,17 +349,17 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
         }
     }
 
-    public static Map<PriceItem, ProductLedgerIndex> getPriceItemProductLedgerIndexMap(
-            Map<ProductLedgerIndex, ProductOrderSample.LedgerQuantities> billCounts) {
-        return Maps.uniqueIndex(billCounts.keySet(),
-                    new Function<ProductLedgerIndex, PriceItem>() {
-                        @Override
-                        public PriceItem apply(@Nullable ProductLedgerIndex productLedgerIndex) {
-
-                            return productLedgerIndex.getPriceItem();
-                        }
-                    });
-    }
+//    public static Map<PriceItem, ProductLedgerIndex> getPriceItemProductLedgerIndexMap(
+//            Map<ProductLedgerIndex, ProductOrderSample.LedgerQuantities> billCounts) {
+//        return Maps.uniqueIndex(billCounts.keySet(),
+//                    new Function<ProductLedgerIndex, PriceItem>() {
+//                        @Override
+//                        public PriceItem apply(@Nullable ProductLedgerIndex productLedgerIndex) {
+//
+//                            return productLedgerIndex.getPriceItem();
+//                        }
+//                    });
+//    }
 
     @SuppressWarnings("MagicNumber")
     private static final XSSFColor HISTORICAL_PRICE_ITEM_COLOR = new XSSFColor(new Color(204, 204, 204));
@@ -412,8 +416,10 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
      * @param billCounts All the counts for this PDO sample.
      * @param item The price item to look up.
      */
-    private void writeCountsForPriceItems(Map<ProductLedgerIndex, ProductOrderSample.LedgerQuantities> billCounts,
-                                          ProductLedgerIndex item) {
+//    private void writeCountsForPriceItems(Map<ProductLedgerIndex, ProductOrderSample.LedgerQuantities> billCounts,
+//                                          ProductLedgerIndex item) {
+    private void writeCountsForPriceItems(Map<PriceItem, ProductOrderSample.LedgerQuantities> billCounts,
+                                          PriceItem item) {
         ProductOrderSample.LedgerQuantities quantities = billCounts.get(item);
         if (quantities != null) {
             if (quantities.getBilled() == 0.0) {
@@ -436,8 +442,8 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
         }
     }
 
-    private void writeCountForHistoricalPriceItem(Map<ProductLedgerIndex, ProductOrderSample.LedgerQuantities> billCounts,
-                                                  ProductLedgerIndex item) {
+    private void writeCountForHistoricalPriceItem(Map<PriceItem, ProductOrderSample.LedgerQuantities> billCounts,
+                                                  PriceItem item) {
         ProductOrderSample.LedgerQuantities quantities = billCounts.get(item);
         if (quantities != null) {
             // If the entry for billed is 0, then don't highlight it, but show a light yellow for anything with values.

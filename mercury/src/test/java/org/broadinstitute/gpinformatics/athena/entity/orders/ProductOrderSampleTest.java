@@ -74,7 +74,7 @@ public class ProductOrderSampleTest {
         } else {
             billedPriceItem = new PriceItem(priceItemType.name(), "", null, priceItemType.name());
         }
-        sample.addLedgerItem(new Date(), billedPriceItem, 1, sample.getProductOrder().getProduct());
+        sample.addLedgerItem(new Date(), billedPriceItem, 1);
         LedgerEntry entry = sample.getLedgerItems().iterator().next();
         entry.setPriceItemType(priceItemType);
         new BillingSession(0L, Collections.singleton(entry));
@@ -145,7 +145,7 @@ public class ProductOrderSampleTest {
 
         // credit the price item already billed
         PriceItem billedPriceItem = sample.getProductOrder().getProduct().getPrimaryPriceItem();
-        sample.addLedgerItem(new Date(), billedPriceItem, -1, sample.getProductOrder().getProduct());
+        sample.addLedgerItem(new Date(), billedPriceItem, -1/*, sample.getProductOrder().getProduct()*/);
         LedgerEntry entry = sample.getLedgerItems().iterator().next();
         entry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
         entry.setBillingMessage(BillingSession.SUCCESS);
@@ -173,7 +173,7 @@ public class ProductOrderSampleTest {
 
         // credit the price item with an add-on ledger entry
         PriceItem billedPriceItem = sample.getProductOrder().getProduct().getPrimaryPriceItem();
-        sample.addLedgerItem(new Date(), billedPriceItem, -1, sample.getProductOrder().getProduct());
+        sample.addLedgerItem(new Date(), billedPriceItem, -1/*, sample.getProductOrder().getProduct()*/);
         LedgerEntry entry = sample.getLedgerItems().iterator().next();
         entry.setPriceItemType(LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM);
         entry.setBillingMessage(BillingSession.SUCCESS);
@@ -214,10 +214,13 @@ public class ProductOrderSampleTest {
     public static Object[][] makeAutoBillSampleData() {
         TestPDOData data = new TestPDOData("GSP-123");
         Date completedDate = new Date();
-        LedgerEntry ledgerEntry = new LedgerEntry(data.sample1, data.product.getPrimaryPriceItem(), completedDate,data.product, 1);
+        LedgerEntry ledgerEntry = new LedgerEntry(data.sample1, data.product.getPrimaryPriceItem(),
+                completedDate,
+//                data.product,
+                1);
 
         // Bill sample2.
-        data.sample2.addLedgerItem(completedDate, data.product.getPrimaryPriceItem(), 1, data.product);
+        data.sample2.addLedgerItem(completedDate, data.product.getPrimaryPriceItem(), 1/*, data.product*/);
         LedgerEntry ledger = data.sample2.getLedgerItems().iterator().next();
         ledger.setBillingMessage(BillingSession.SUCCESS);
         ledger.setBillingSession(new BillingSession(0L, Collections.singleton(ledger)));
@@ -633,8 +636,9 @@ public class ProductOrderSampleTest {
             addUnbilledLedgerEntry(productOrderSample, priceItem, quantityReadyToBill);
         }
 
-        ProductLedgerIndex quantityIndex = new ProductLedgerIndex(productOrderSample.getProductOrder().getProduct(), priceItem);
-        ProductOrderSample.LedgerQuantities ledgerQuantities = productOrderSample.getLedgerQuantities().get(quantityIndex );
+//        ProductLedgerIndex quantityIndex = new ProductLedgerIndex(productOrderSample.getProductOrder().getProduct(), priceItem);
+//        ProductOrderSample.LedgerQuantities ledgerQuantities = productOrderSample.getLedgerQuantities().get(quantityIndex );
+        ProductOrderSample.LedgerQuantities ledgerQuantities = productOrderSample.getLedgerQuantities().get(priceItem );
         double quantityBefore = ledgerQuantities != null ? ledgerQuantities.getTotal() : 0;
         double currentQuantity = quantityBefore; // these tests all assume no external changes
         Date workCompleteDate = new Date();
@@ -659,8 +663,8 @@ public class ProductOrderSampleTest {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.DAY_OF_MONTH, -1);
         Date oldWorkCompleteDate = calendar.getTime();
-        productOrderSample.addLedgerItem(oldWorkCompleteDate, priceItem, quantityReadyToBill,
-                productOrderSample.getProductOrder().getProduct());
+        productOrderSample.addLedgerItem(oldWorkCompleteDate, priceItem, quantityReadyToBill/*,
+                productOrderSample.getProductOrder().getProduct()*/);
     }
 
     @Test

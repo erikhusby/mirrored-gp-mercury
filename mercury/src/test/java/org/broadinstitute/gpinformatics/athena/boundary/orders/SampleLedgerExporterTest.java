@@ -118,7 +118,7 @@ public class SampleLedgerExporterTest {
          * associated with the product at some point in the past but no longer is.
          */
         PriceItem historicalPriceItem = new PriceItem("Quote-2", "Crush", "Test", "Test Historical Price Item");
-        productOrderSample.addLedgerItem(new Date(1L), historicalPriceItem, 1, product);
+        productOrderSample.addLedgerItem(new Date(1L), historicalPriceItem, 1/*, product*/);
         LedgerEntry historicalLedgerEntry = productOrderSample.getLedgerItems().iterator().next();
         new BillingSession(1L, Collections.singleton(historicalLedgerEntry));
         historicalLedgerEntry.setBillingMessage(BillingSession.SUCCESS);

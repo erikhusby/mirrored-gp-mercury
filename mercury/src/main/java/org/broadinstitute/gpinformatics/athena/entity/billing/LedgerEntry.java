@@ -46,10 +46,6 @@ public class LedgerEntry implements Serializable {
     @JoinColumn(name = "PRICE_ITEM_ID")
     private PriceItem priceItem;
 
-    @ManyToOne
-    @JoinColumn(name = "PRODUCT_ID")
-    private Product product;
-
     @Column(name = "QUANTITY")
     private double quantity;
 
@@ -83,7 +79,7 @@ public class LedgerEntry implements Serializable {
     @SuppressWarnings("UnusedDeclaration")
     protected LedgerEntry() {}
 
-    private LedgerEntry(@Nonnull ProductOrderSample productOrderSample,
+    public LedgerEntry(@Nonnull ProductOrderSample productOrderSample,
                        @Nonnull PriceItem priceItem,
                        @Nonnull Date workCompleteDate,
                        double quantity) {
@@ -91,13 +87,6 @@ public class LedgerEntry implements Serializable {
         this.priceItem = priceItem;
         this.quantity = quantity;
         this.workCompleteDate = workCompleteDate;
-    }
-
-    public LedgerEntry(ProductOrderSample productOrderSample,
-                       PriceItem priceItem, Date workCompleteDate,
-                       Product product, double quantity) {
-        this(productOrderSample, priceItem, workCompleteDate, quantity);
-        this.product = product;
     }
 
     public ProductOrderSample getProductOrderSample() {
@@ -254,8 +243,7 @@ public class LedgerEntry implements Serializable {
                 .append(priceItem, castOther.getPriceItem())
                 .append(priceItemType, castOther.getPriceItemType())
                 .append(quoteId, castOther.getQuoteId())
-                .append(billingSession, castOther.getBillingSession())
-                .append(product, castOther.getProduct()).isEquals();
+                .append(billingSession, castOther.getBillingSession()).isEquals();
     }
 
     @Override
@@ -265,16 +253,11 @@ public class LedgerEntry implements Serializable {
                 .append(priceItem)
                 .append(priceItemType)
                 .append(quoteId)
-                .append(billingSession)
-                .append(product).toHashCode();
+                .append(billingSession).toHashCode();
     }
 
     public Date getBucketDate() {
         return billingSession.getBucketDate(workCompleteDate);
-    }
-
-    public Product getProduct() {
-        return product;
     }
 
     /**

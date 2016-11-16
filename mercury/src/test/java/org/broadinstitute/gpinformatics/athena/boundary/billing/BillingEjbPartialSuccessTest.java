@@ -307,11 +307,11 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                     FAILING_PRICE_ITEM_NAME = replacementPriceItem.getName();
                     billingSessionDao.persist(replacementPriceItem);
 
-                    billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), ledgerSample.getProductOrder().getProduct(), 5));
+                    billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), 5));
                 } else {
                     billingSessionEntries.add(new LedgerEntry(ledgerSample,
                                                               productOrder.getProduct().getPrimaryPriceItem(),
-                                                              new Date(), ledgerSample.getProductOrder().getProduct(), 3));
+                                                              new Date(), 3));
                 }
             }
         }
@@ -361,13 +361,11 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                     FAILING_PRICE_ITEM_NAME = replacementPriceItem.getName();
                     billingSessionDao.persist(replacementPriceItem);
 
-                    billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(),
-                            ledgerSample.getProductOrder().getProduct(), 5));
+                    billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), 5));
                 } else {
                     billingSessionEntries.add(new LedgerEntry(ledgerSample,
                                                               productOrder.getProduct().getPrimaryPriceItem(),
-                                                              new Date(), ledgerSample.getProductOrder().getProduct(),
-                            3));
+                                                              new Date(), 3));
                 }
             }
         }
@@ -516,10 +514,8 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         BillingAdaptor adaptor = new BillingAdaptor();
         PriceItem priceItem = new PriceItem("quoteServerId", "myPlatform", "myCategory", "importItemName");
         Product product = new Product();
-        LedgerEntry ledgerEntry1 = new LedgerEntry(new ProductOrderSample("SM-1234"), priceItem, new Date(),
-                product, 5);
-        LedgerEntry ledgerEntry2 = new LedgerEntry(new ProductOrderSample("SM-5678"), priceItem, new Date(),
-                product, 5);
+        LedgerEntry ledgerEntry1 = new LedgerEntry(new ProductOrderSample("SM-1234"), priceItem, new Date(), 5);
+        LedgerEntry ledgerEntry2 = new LedgerEntry(new ProductOrderSample("SM-5678"), priceItem, new Date(), 5);
         List<LedgerEntry> ledgerItems = Arrays.asList(ledgerEntry1, ledgerEntry2);
         ProductOrder productOrder = new ProductOrder();
         QuoteImportItem quoteImportItem =

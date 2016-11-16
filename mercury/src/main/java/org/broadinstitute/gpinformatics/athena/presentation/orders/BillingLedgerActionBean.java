@@ -347,13 +347,13 @@ public class BillingLedgerActionBean extends CoreActionBean {
         for (int i = 0; i < ledgerData.size(); i++) {
             LedgerData data = ledgerData.get(i);
             ProductOrderSample productOrderSample = productOrder.getSamples().get(i);
-            Map<ProductLedgerIndex, ProductOrderSample.LedgerQuantities> ledgerQuantitiesMap =
+            Map<PriceItem, ProductOrderSample.LedgerQuantities> ledgerQuantitiesMap =
                     productOrderSample.getLedgerQuantities();
-            Map<PriceItem, ProductLedgerIndex> indexByPriceItem = SampleLedgerExporter.getPriceItemProductLedgerIndexMap(ledgerQuantitiesMap);
+
             for (Map.Entry<Long, ProductOrderSampleQuantities> entry : data.getQuantities().entrySet()) {
                 PriceItem priceItem = priceItemDao.findById(PriceItem.class, entry.getKey());
                 ProductOrderSampleQuantities quantities = entry.getValue();
-                ProductOrderSample.LedgerQuantities ledgerQuantities = ledgerQuantitiesMap.get(indexByPriceItem.get(priceItem));
+                ProductOrderSample.LedgerQuantities ledgerQuantities = ledgerQuantitiesMap.get(priceItem);
                 double currentQuantity = ledgerQuantities != null ? ledgerQuantities.getTotal() : 0;
                 ProductOrderSample.LedgerUpdate ledgerUpdate =
                         new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem,

@@ -83,7 +83,9 @@ public class QuoteImportItemTest {
         for (int i = 0; i < numSamples; i++) {
             ProductOrderSample sample = new ProductOrderSample("sam" + System.currentTimeMillis() + "." + i + pdo.getSamples().size());
             pdo.addSample(sample);
-            LedgerEntry ledgerEntry = new LedgerEntry(sample, priceItem,new Date(), pdo.getProduct(),amountPerLedgerEntry);
+            LedgerEntry ledgerEntry = new LedgerEntry(sample, priceItem,new Date(),
+//                    pdo.getProduct(),
+                    amountPerLedgerEntry);
             ledgerEntry.setWorkItem(workItem);
             sample.getLedgerItems().add(ledgerEntry);
         }
@@ -158,7 +160,9 @@ public class QuoteImportItemTest {
         pdo.addSample(blah);
         PriceItem priceItem = new PriceItem();
         product.setPrimaryPriceItem(priceItem);
-        LedgerEntry ledgerEntry = new LedgerEntry(blah, priceItem,new Date(), new Product(),2);
+        LedgerEntry ledgerEntry = new LedgerEntry(blah, priceItem,new Date(),
+//                new Product(),
+                2);
         ledgerEntry.setWorkItem(WORK_ITEM2);
         List<LedgerEntry> ledgerEntries = new ArrayList<>();
         ledgerEntries.add(ledgerEntry);

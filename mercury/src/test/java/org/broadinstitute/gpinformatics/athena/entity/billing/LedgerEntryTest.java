@@ -43,19 +43,19 @@ public class LedgerEntryTest {
     public static LedgerEntry createOneLedgerEntry(String sampleName, String priceItemName, double quantity,
                                                    Date workCompleteDate) {
         return new LedgerEntry(createSample(sampleName),
-                new PriceItem("quoteServerId", "platform", "category", priceItemName), workCompleteDate, new Product(), quantity);
+                new PriceItem("quoteServerId", "platform", "category", priceItemName), workCompleteDate, quantity);
     }
 
     public static LedgerEntry createOneLedgerEntry(ProductOrderSample sample, String priceItemName, double quantity,
                                                    Date workCompleteDate) {
         return new LedgerEntry(sample,
-                new PriceItem("quoteServerId", "platform", "category", priceItemName), workCompleteDate, new Product(), quantity);
+                new PriceItem("quoteServerId", "platform", "category", priceItemName), workCompleteDate, quantity);
     }
 
     public static LedgerEntry createBilledLedgerEntry(ProductOrderSample sample,
                                                       LedgerEntry.PriceItemType priceItemType) {
         LedgerEntry entry = new LedgerEntry(sample,
-                new PriceItem("quoteServerId", "platform", "category", "priceItem"), new Date(), new Product(), 1);
+                new PriceItem("quoteServerId", "platform", "category", "priceItem"), new Date(), 1);
         entry.setPriceItemType(priceItemType);
         entry.setBillingMessage(BillingSession.SUCCESS);
         return entry;

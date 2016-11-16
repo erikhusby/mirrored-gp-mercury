@@ -411,12 +411,12 @@ public class ProductOrderTest {
     private void billSampleOut(ProductOrder productOrder, ProductOrderSample sample, int expected) {
 
         LedgerEntry primaryItemSampleEntry = new LedgerEntry(sample,
-                productOrder.getProduct().getPrimaryPriceItem(), new Date(), productOrder.getProduct(), 1);
+                productOrder.getProduct().getPrimaryPriceItem(), new Date(), /*productOrder.getProduct(),*/ 1);
         primaryItemSampleEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
 
         LedgerEntry addonItemSampleEntry = new LedgerEntry(sample,
                 productOrder.getAddOns().iterator().next().getAddOn().getPrimaryPriceItem(),
-                new Date(), productOrder.getProduct(), 1);
+                new Date(), /*productOrder.getProduct(),*/ 1);
         addonItemSampleEntry.setPriceItemType(LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM);
         sample.getLedgerItems().add(primaryItemSampleEntry);
         sample.getLedgerItems().add(addonItemSampleEntry);
