@@ -49,16 +49,11 @@ public class ProductOrderTestFactory {
         }
 
         List<ProductOrderSample> productOrderSamples = new ArrayList<>(sampleCount);
-
-        List<String> sampleNameSet = new ArrayList<>();
         for (int sampleIndex = 1; sampleIndex <= sampleCount; sampleIndex++) {
             String bspStock = "SM-" + String.valueOf(sampleIndex) + String.valueOf(sampleIndex + 1) +
                               String.valueOf(sampleIndex + 3) + String.valueOf(sampleIndex + 2) + sampleSuffix;
             productOrderSamples.add(new ProductOrderSample(bspStock, new BspSampleData()));
         }
-
-        productOrderSamples =
-                ProductOrderSampleTestFactory.createSampleListWithMercurySamples(sampleNameSet.toArray(new String[sampleNameSet.size()]));
 
         ResearchProject researchProject = ResearchProjectTestFactory.createDummyResearchProject(
                 creatorId, rpTitle, rpSynopsis, irbNotEngaged);

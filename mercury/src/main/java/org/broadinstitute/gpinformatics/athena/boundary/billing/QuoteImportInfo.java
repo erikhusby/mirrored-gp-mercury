@@ -50,7 +50,9 @@ public class QuoteImportInfo {
         // The price item on the ledger entry.
         PriceItem priceItem = ledger.getPriceItem();
 
-        Product product = ledger.getProduct();
+        // FIXME: 11/16/16 SGM May not have to store Product on the ledger if we can do this at this point
+        Product product =
+                (ledger.getProduct() != null)?ledger.getProduct():ledger.getProductOrderSample().getProductForPriceItem(priceItem);
 
         // If we have not seen the quote yet, create the map entry for it.
         if (!quantitiesByQuotePriceItem.containsKey(quoteId)) {
@@ -111,7 +113,9 @@ public class QuoteImportInfo {
                             priceListCache.findByKeyFields(ledgerIndex.getPriceItem().getPlatform(),
                                     ledgerIndex.getPriceItem().getCategory(),
                                     ledgerIndex.getPriceItem().getName());
-                    ledgerIndex.getPriceItem().setPrice(ledgerIndexPriceItem.getPrice());
+                    if(ledgerIndexPriceItem != null) {
+                        ledgerIndex.getPriceItem().setPrice(ledgerIndexPriceItem.getPrice());
+                    }
 
                     for (Date bucketDate : ledgerEntrybyLedgerIndex.getValue().keySet()) {
                         List<LedgerEntry> ledgerItems =

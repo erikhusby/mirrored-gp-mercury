@@ -59,15 +59,6 @@ public class BillingWorkItemPersistenceTest extends AbstractContainerTest {
     private SapIntegrationService sapService;
 
     @Inject
-    private EmailSender emailSender;
-
-    @Inject
-    private UserBean userBean;
-
-    @Inject
-    private AppConfig appConfig;
-
-    @Inject
     private ProductOrderEjb productOrderEjb;
 
     @Inject
@@ -136,9 +127,8 @@ public class BillingWorkItemPersistenceTest extends AbstractContainerTest {
         sapService = SapIntegrationServiceProducer.stubInstance();
 
         billingAdaptor = new BillingAdaptor(billingEjb, billingSessionDao, tempPriceListCache, quoteService,
-                billingSessionAccessEjb, sapService, emailSender, userBean, appConfig);
+                billingSessionAccessEjb, sapService);
         billingAdaptor.setProductOrderEjb(productOrderEjb);
-        billingAdaptor.setDeployment(deployment);
 
         BillingSession billingSession = new BillingSession(-1L, ledgerEntries);
         billingSessionDao.persist(billingSession);
