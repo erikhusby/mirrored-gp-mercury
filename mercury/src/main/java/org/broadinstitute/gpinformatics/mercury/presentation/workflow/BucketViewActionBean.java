@@ -108,7 +108,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private final List<Long> bucketEntryIds = new ArrayList<>();
     private final List<Long> reworkEntryIds = new ArrayList<>();
     private final Set<BucketEntry> collectiveEntries = new HashSet<>();
-    private final Map<String, WorkflowBucketDef> mapBucketToBucketDef = new HashMap<>();
+    private final Map<String, String> mapBucketToJiraProject = new HashMap<>();
     private Map<String, Collection<String>> mapBucketToWorkflows;
     private List<BucketEntry> selectedEntries = new ArrayList<>();
 
@@ -137,8 +137,14 @@ public class BucketViewActionBean extends CoreActionBean {
             ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
             for (WorkflowBucketDef bucket : workflowVersion.getCreationBuckets()) {
                 String bucketName = bucket.getName();
+                // The jiraProjectType is stored in ProductWorkflowDefVersion but can be overridden in WorkflowBucketDef
+                // so check there first.
+                String jiraProjectType = bucket.getBatchJiraProjectType();
+                if (StringUtils.isBlank(jiraProjectType)) {
+                    jiraProjectType = workflowVersion.getProductWorkflowDefBatchJiraProjectType();
+                }
                 buckets.add(bucketName);
-                mapBucketToBucketDef.put(bucketName, bucket);
+                mapBucketToJiraProject.put(bucketName, jiraProjectType);
                 bucketWorkflows.put(bucketName, workflow.getWorkflowName());
             }
         }
@@ -218,8 +224,8 @@ public class BucketViewActionBean extends CoreActionBean {
             if (bucket != null) {
                 collectiveEntries.addAll(bucket.getBucketEntries());
                 collectiveEntries.addAll(bucket.getReworkEntries());
-                WorkflowBucketDef bucketDef = mapBucketToBucketDef.get(selectedBucket);
-                projectType = CreateFields.ProjectType.fromKeyPrefix(bucketDef.getBatchJiraProjectType());
+                String jiraProjectType = mapBucketToJiraProject.get(selectedBucket);
+                projectType = CreateFields.ProjectType.fromKeyPrefix(jiraProjectType);
                 preFetchSampleData(collectiveEntries);
             }
         }
