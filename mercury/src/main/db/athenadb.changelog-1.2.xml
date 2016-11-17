@@ -661,4 +661,12 @@
         <createSequence sequenceName="SEQ_ACCESS_CONTROL" schemaName="athena" startValue="1" incrementBy="50" />
     </changeSet>
 
+    <changeSet id="GPLIM-4375-9" author="scottmat">
+        <addForeignKeyConstraint baseTableName="PRODUCT_ORDER" baseColumnNames="PARENT_PRODUCT_ORDER"
+                                 constraintName="FK_PDO_PARENT_PRODUCT_ORDER"
+                                 referencedTableName="PRODUCT_ORDER"
+                                 referencedColumnNames="PRODUCT_ORDER_ID" baseTableSchemaName="ATHENA"
+                                 referencedTableSchemaName="ATHENA" />
+    </changeSet>
+
 </databaseChangeLog>

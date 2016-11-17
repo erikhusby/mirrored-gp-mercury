@@ -45,19 +45,19 @@ public class BillingAdaptor implements Serializable {
 
     private static final Log log = LogFactory.getLog(BillingAdaptor.class);
 
-    BillingEjb billingEjb;
+    private BillingEjb billingEjb;
 
-    BillingSessionDao billingSessionDao;
+    private BillingSessionDao billingSessionDao;
 
-    PriceListCache priceListCache;
+    private PriceListCache priceListCache;
 
-    ProductOrderEjb productOrderEjb;
+    private ProductOrderEjb productOrderEjb;
 
-    QuoteService quoteService;
+    private QuoteService quoteService;
 
-    BillingSessionAccessEjb billingSessionAccessEjb;
+    private BillingSessionAccessEjb billingSessionAccessEjb;
 
-    SapIntegrationService sapService;
+    private SapIntegrationService sapService;
 
     private static final FastDateFormat BILLING_DATE_FORMAT =
             FastDateFormat.getDateTimeInstance(FastDateFormat.SHORT, FastDateFormat.SHORT);
@@ -150,7 +150,6 @@ public class BillingAdaptor implements Serializable {
                     // Get the quote PriceItem that this is replacing, if it is a replacement.
                     QuotePriceItem primaryPriceItemIfReplacement = item.getPrimaryForReplacement(priceListCache);
 
-                    BigDecimal replacementDifference = null;
                     BigDecimal replacementMultiplier = null;
                     if(primaryPriceItemIfReplacement != null) {
                         BigDecimal primaryPrice = new BigDecimal(primaryPriceItemIfReplacement.getPrice());
@@ -187,7 +186,9 @@ public class BillingAdaptor implements Serializable {
                     if (primaryPriceItemIfReplacement != null) {
                         if (!quoteItemNames.contains(primaryPriceItemIfReplacement.getName()) &&
                             quoteItemNames.contains(priceItemBeingBilled.getName())) {
+
                             primaryPriceItemIfReplacement = null;
+
                         }
                     }
 

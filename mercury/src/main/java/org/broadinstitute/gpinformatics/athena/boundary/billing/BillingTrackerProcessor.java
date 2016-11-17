@@ -8,7 +8,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDa
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
-import org.broadinstitute.gpinformatics.athena.entity.billing.ProductLedgerIndex;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
@@ -323,7 +322,6 @@ public class BillingTrackerProcessor extends TableProcessor {
 
         for (BillableRef billableRef : currentBillableRefs) {
             PriceItem priceItem = currentPriceItemsByName.get(billableRef.getPriceItemName());
-            Product productForPriceItem = productOrderSample.getProductForPriceItem(priceItem);
             ProductOrderSample.LedgerQuantities sampleQuantities = billCounts.get(priceItem);
 
             double trackerBilled = 0;
