@@ -277,7 +277,8 @@ public class ProductOrderEjb {
                             sapService.determineCompanyCode(orderToPublish).getCompanyCode()));
 
                     if(quoteIdChange) {
-                        String body = "The SAP order " + oldNumber + " is being associated with a new quote by "+
+                        String body = "The SAP order " + oldNumber + " for PDO "+ orderToPublish.getBusinessKey()+
+                                      " is being associated with a new quote by "+
                                       userBean.getBspUser().getFullName() +" and needs" + " to be short closed.";
                         sendSapOrderShortCloseRequest(body);
                     }
@@ -902,7 +903,8 @@ public class ProductOrderEjb {
                || order.getOrderStatus() == OrderStatus.Abandoned) {
 
                 sendSapOrderShortCloseRequest(
-                        "The SAP order " + order.getSapOrderNumber() + " has been marked as completed in Mercury by " +
+                        "The SAP order " + order.getSapOrderNumber() + " for PDO "+order.getBusinessKey()+
+                        " has been marked as completed in Mercury by " +
                         userBean.getBspUser().getFullName() + " and may need to be short closed.");
             }
         }
@@ -990,7 +992,8 @@ public class ProductOrderEjb {
            || productOrder.getOrderStatus() == OrderStatus.Abandoned) {
 
             sendSapOrderShortCloseRequest(
-                    "The SAP order " + productOrder.getSapOrderNumber() + " has been marked as completed in Mercury by "
+                    "The SAP order " + productOrder.getSapOrderNumber() + " for PDO "+productOrder.getBusinessKey()+
+                    " has been marked as completed in Mercury by "
                     +
                     userBean.getBspUser().getFullName() + " and may need to be short closed.");
         }

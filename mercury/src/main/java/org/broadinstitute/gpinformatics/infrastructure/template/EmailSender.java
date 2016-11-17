@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.template;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
@@ -45,9 +46,7 @@ public class EmailSender implements Serializable {
                     Message message = new MimeMessage(mailSession);
                     message.setFrom(new InternetAddress("gplims@broadinstitute.org"));
                     message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to, false));
-                    for(String address: ccAddrdesses) {
-                        message.setRecipients(Message.RecipientType.CC, InternetAddress.parse(address, false));
-                    }
+                        message.setRecipients(Message.RecipientType.CC, InternetAddress.parse(StringUtils.join(ccAddrdesses,",")));
                     message.setSubject(subject);
                     message.setContent(body, "text/html; charset=utf-8");
                     message.setSentDate(new Date());
