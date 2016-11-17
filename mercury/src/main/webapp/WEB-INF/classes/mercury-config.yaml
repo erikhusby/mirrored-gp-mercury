@@ -132,7 +132,7 @@ quote:
     QA:
       login:    mercuryquote
       password: ml1m5qu0t3
-      url:      http://quoteqa:8080
+      url:      http://quotetest:8080
 
     PROD:
       login:    mercuryquote
