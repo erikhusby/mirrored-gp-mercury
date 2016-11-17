@@ -896,7 +896,7 @@ public class ProductOrderEjb {
             transitionIssueToSameOrderStatus(order);
             // The status was changed, let the user know.
             reporter.addMessage("The order status of ''{0}'' is now {1}.", jiraTicketKey, order.getOrderStatus());
-            if((order.getOrderStatus() == OrderStatus.Completed &&
+            if(order.isSavedInSAP() && (order.getOrderStatus() == OrderStatus.Completed &&
                 order.getNonAbandonedCount() < order.latestSapOrderDetail().getPrimaryQuantity()
                )
                || order.getOrderStatus() == OrderStatus.Abandoned) {
@@ -912,11 +912,10 @@ public class ProductOrderEjb {
             Collection<String> ccAddresses = Collections.singletonList(userBean.getBspUser().getEmail());
         final boolean isProduction = deployment.equals(Deployment.PROD);
         emailSender.sendHtmlEmail(appConfig,
-                    isProduction ?"BUSSYS@broadinstitute.org":"zsearle@broadinstitute.org",
-                    isProduction ?ccAddresses:
-                            Arrays.asList("scottmat@broadinstitute.org", "smcdonou@broadinstitute.org"),
-                    (!isProduction)?"test": "" + "SAP Order: Short Close Request", body,
-                    !isProduction);
+                isProduction ?"BUSSYS@broadinstitute.org":"zsearle@broadinstitute.org",
+                isProduction ?ccAddresses:Arrays.asList("scottmat@broadinstitute.org", "smcdonou@broadinstitute.org"),
+                ((!isProduction) ? "Test" : "") + "SAP Order: Short Close Request", body,
+                !isProduction);
     }
 
     /**
@@ -985,7 +984,7 @@ public class ProductOrderEjb {
         // with the JIRA ticket.
         transitionJiraTicket(jiraTicketKey, JiraResolution.CANCELLED, JiraTransition.CANCEL, abandonComments);
 
-        if((productOrder.getOrderStatus() == OrderStatus.Completed &&
+        if(productOrder.isSavedInSAP() && (productOrder.getOrderStatus() == OrderStatus.Completed &&
             productOrder.getNonAbandonedCount() < productOrder.latestSapOrderDetail().getPrimaryQuantity()
            )
            || productOrder.getOrderStatus() == OrderStatus.Abandoned) {
