@@ -235,8 +235,7 @@ public class QuoteImportItem {
         for (QuotePriceItem optional : priceListCache.getReplacementPriceItems(primaryPriceItem)) {
             if (optional.isMercuryPriceItemEqual(priceItem)) {
                 final QuotePriceItem priceItem = QuotePriceItem.convertMercuryPriceItem(primaryPriceItem);
-                priceItem.setPrice(priceListCache.findByKeyFields(primaryPriceItem.getPlatform(),
-                        primaryPriceItem.getCategory(), primaryPriceItem.getName()).getPrice());
+                priceItem.setPrice(priceListCache.findByKeyFields(primaryPriceItem).getPrice());
                 return priceItem;
             }
         }

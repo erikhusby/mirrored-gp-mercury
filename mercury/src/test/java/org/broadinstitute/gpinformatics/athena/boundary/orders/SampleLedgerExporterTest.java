@@ -122,7 +122,7 @@ public class SampleLedgerExporterTest {
         LedgerEntry historicalLedgerEntry = productOrderSample.getLedgerItems().iterator().next();
         new BillingSession(1L, Collections.singleton(historicalLedgerEntry));
         historicalLedgerEntry.setBillingMessage(BillingSession.SUCCESS);
-        productOrderSample.addAutoLedgerItem(new Date(1L), priceItem, 2, new Date(2L), product);
+        productOrderSample.addAutoLedgerItem(new Date(1L), priceItem, 2, new Date(2L));
 
         /*
          * Create the SampleLedgerExporter unit under test, including a mock spreadsheet writer in order to verify the

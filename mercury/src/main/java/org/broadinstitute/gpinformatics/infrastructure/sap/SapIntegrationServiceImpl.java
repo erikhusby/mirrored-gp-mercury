@@ -5,7 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
-import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
+import org.broadinstitute.gpinformatics.athena.entity.orders.SAPOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -178,13 +178,11 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      */
     protected SAPOrderItem getOrderItem(ProductOrder placedOrder, Product product) {
         return new SAPOrderItem(product.getPartNumber(),
-                priceListCache.findByKeyFields(product.getPrimaryPriceItem().getPlatform(),
-                        product.getPrimaryPriceItem().getCategory(),
-                        product.getPrimaryPriceItem().getName()).getPrice(),
-                getSampleCount(placedOrder, product));
+                priceListCache.findByKeyFields(product.getPrimaryPriceItem()).getPrice(),
+                getSampleCount(placedOrder));
     }
 
-    public static int getSampleCount(ProductOrder placedOrder, Product product) {
+    public static int getSampleCount(ProductOrder placedOrder) {
         return (placedOrder.getProduct().getProductFamily().getName().equals(ProductFamily.ProductFamilyInfo.SEQUENCE_ONLY.getFamilyName()) &&
         placedOrder.getLaneCount()>0)
                 ?placedOrder.getNonAbandonedCount()*placedOrder.getLaneCount()
@@ -310,7 +308,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES;
         }
 
-        final SapOrderDetail latestSapOrderDetail = companyProductOrder.latestSapOrderDetail();
+        final SAPOrderDetail latestSapOrderDetail = companyProductOrder.latestSapOrderDetail();
         if(latestSapOrderDetail != null && latestSapOrderDetail.getCompanyCode()!= null
            && !latestSapOrderDetail.getCompanyCode().equals(companyCode.getCompanyCode())) {
             throw new SAPIntegrationException("Unable to update the order in SAP.  "

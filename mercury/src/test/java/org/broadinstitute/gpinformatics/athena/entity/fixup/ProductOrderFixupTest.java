@@ -16,7 +16,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
-import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
+import org.broadinstitute.gpinformatics.athena.entity.orders.SAPOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
@@ -1005,12 +1005,12 @@ public class ProductOrderFixupTest extends Arquillian {
 
         for(ProductOrder orderWithSap:listWithWildcard) {
             if(CollectionUtils.isEmpty(orderWithSap.getSapReferenceOrders())) {
-                SapOrderDetail newDetail = new SapOrderDetail(orderWithSap.getSapOrderNumber(),
-                        SapIntegrationServiceImpl.getSampleCount(orderWithSap, orderWithSap.getProduct()),
+                SAPOrderDetail newDetail = new SAPOrderDetail(orderWithSap.getSapOrderNumber(),
+                        SapIntegrationServiceImpl.getSampleCount(orderWithSap),
                         orderWithSap.getQuoteId(), sapIntegrationService.determineCompanyCode(orderWithSap).getCompanyCode());
                 orderWithSap.addSapOrderDetail(newDetail);
             } else {
-                SapOrderDetail latestDetail = orderWithSap.latestSapOrderDetail();
+                SAPOrderDetail latestDetail = orderWithSap.latestSapOrderDetail();
                 latestDetail.setQuoteId(orderWithSap.getQuoteId());
                 latestDetail.setCompanyCode(sapIntegrationService.determineCompanyCode(orderWithSap).getCompanyCode());
             }

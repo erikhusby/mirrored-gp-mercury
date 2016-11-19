@@ -750,9 +750,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             int unbilledCount = testOrder.getUnbilledSampleCount();
             if(testOrder.getProduct() != null) {
                 QuotePriceItem primaryPriceItem =
-                        priceListCache.findByKeyFields(testOrder.getProduct().getPrimaryPriceItem().getPlatform(),
-                                testOrder.getProduct().getPrimaryPriceItem().getCategory(),
-                                testOrder.getProduct().getPrimaryPriceItem().getName());
+                        priceListCache.findByKeyFields(testOrder.getProduct().getPrimaryPriceItem());
 
                 if (primaryPriceItem != null &&
                     StringUtils.isNotBlank(primaryPriceItem.getPrice())) {
@@ -765,9 +763,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                     for (ProductOrderAddOn testOrderAddon : testOrder.getAddOns()) {
                         QuotePriceItem addonPriceItem =
                                 priceListCache
-                                        .findByKeyFields(testOrderAddon.getAddOn().getPrimaryPriceItem().getPlatform(),
-                                                testOrderAddon.getAddOn().getPrimaryPriceItem().getCategory(),
-                                                testOrderAddon.getAddOn().getPrimaryPriceItem().getName());
+                                        .findByKeyFields(testOrderAddon.getAddOn().getPrimaryPriceItem());
 
                         if (addonPriceItem != null &&
                             StringUtils.isNotBlank(addonPriceItem.getPrice())) {
@@ -1396,7 +1392,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         MessageCollection saveOrderMessageCollection = new MessageCollection();
 
         if(editOrder.getNumberForReplacement() >0) {
-            if(editOrder.isSavedInSAP() && editOrder.isOneBilled() &&
+            if(editOrder.isSavedInSAP() && editOrder.hasAtLeastOneBilledLedgerEntry() &&
                (editOrder.getNonAbandonedCount() < editOrder.latestSapOrderDetail().getPrimaryQuantity()) ) {
                 shareSapOrder = true;
             }

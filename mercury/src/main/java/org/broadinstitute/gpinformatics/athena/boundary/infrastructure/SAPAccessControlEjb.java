@@ -33,7 +33,7 @@ public class SAPAccessControlEjb {
     }
 
     public SAPAccessControl resetControlDefinitions() {
-        SAPAccessControl control = accessControlDao.getAccessControl();
+        SAPAccessControl control = getCurrentControlDefinitions();
         control.setAccessStatus(AccessStatus.ENABLED);
         control.setDisabledFeatures(Collections.<String>emptySet());
 
@@ -42,7 +42,7 @@ public class SAPAccessControlEjb {
 
     public SAPAccessControl setDefinitions(AccessStatus status, Set<String> restrictions) {
 
-        SAPAccessControl accessController = accessControlDao.getAccessControl();
+        SAPAccessControl accessController = getCurrentControlDefinitions();
 
         accessController.setAccessStatus(status);
         accessController.setDisabledFeatures(restrictions);

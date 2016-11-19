@@ -183,7 +183,7 @@ public class SampleLedgerExporterFactoryTest {
         Date workCompleteDate = new Date(1);
         Date autoLedgerDate = new Date(2);
         sample.addAutoLedgerItem(workCompleteDate, new PriceItem("Quote-1", "Crush", "Test", "Test Price Item"), 1,
-                autoLedgerDate, productOrder.getProduct());
+                autoLedgerDate);
 
         List<SampleLedgerRow> data = createLedgerRows();
         assertThat(data.get(0).getAutoLedgerDate(), equalTo(autoLedgerDate));
@@ -195,7 +195,7 @@ public class SampleLedgerExporterFactoryTest {
         Date workCompleteDate = new Date(1);
         Date autoLedgerDate = new Date(2);
         sample.addAutoLedgerItem(workCompleteDate, new PriceItem("Quote-1", "Crush", "Test", "Test Price Item"), 1,
-                autoLedgerDate, productOrder.getProduct());
+                autoLedgerDate);
 
         List<SampleLedgerRow> data = createLedgerRows();
         assertThat(data.get(0).getWorkCompleteDate(), equalTo(workCompleteDate));

@@ -5,7 +5,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerProcessor;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
-import org.broadinstitute.gpinformatics.athena.entity.billing.ProductLedgerIndex;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -649,7 +648,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         LedgerQuantities quantities = ledgerQuantitiesMap.get(priceItem);
         if (quantities == null) {
             // No ledger item exists for this price item, create it using the current order's price item
-            addAutoLedgerItem(completedDate, priceItem, quantity, now, getProductOrder().getProduct());
+            addAutoLedgerItem(completedDate, priceItem, quantity, now);
         } else {
             // This price item already has a ledger entry.
             // - If it's been billed, don't bill it again, but report this as an issue.
@@ -823,32 +822,6 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         return sampleStatus;
     }
 
-    public Map<PriceItem, LedgerQuantities> getLedgerQuantitiesByPriceItem() {
-        if (ledgerItems.isEmpty()) {
-            return Collections.emptyMap();
-        }
-
-        Map<PriceItem, LedgerQuantities> sampleStatus = new HashMap<>();
-        for (LedgerEntry item : ledgerItems) {
-            PriceItem priceItem = item.getPriceItem();
-            if (!sampleStatus.containsKey(priceItem)) {
-                sampleStatus.put(priceItem, new LedgerQuantities(sampleName, priceItem.getName()));
-            }
-
-            if (item.isBilled()) {
-                sampleStatus.get(priceItem).addToBilled(item.getQuantity());
-            } else if (item.isBeingBilled()) {
-                // The item is part of an active billing session.
-                sampleStatus.get(priceItem).addToInProgress(item.getQuantity());
-            } else {
-                // The item is not part of a completed billed session or successfully billed item from an active session.
-                sampleStatus.get(priceItem).addToUploaded(item.getQuantity());
-            }
-        }
-
-        return sampleStatus;
-    }
-
     public LedgerEntry findUnbilledLedgerEntryForPriceItem(PriceItem priceItem) {
         LedgerEntry ledgerEntry = null;
         for (LedgerEntry ledgerItem : ledgerItems) {
@@ -889,8 +862,6 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          * The price item for the ledger update.
          */
         private PriceItem priceItem;
-
-        private Product product;
 
         /**
          * The total quantity that the user was viewing when deciding what the new quantity should be.
@@ -1089,10 +1060,8 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      * @param priceItem        The price item to charge.
      * @param delta            The plus or minus value to bill to the quote server.
      * @param currentDate      The ledger entry needs a date to say when the auto entry was made.
-     * @param product
      */
-    public void addAutoLedgerItem(Date workCompleteDate, PriceItem priceItem, double delta, Date currentDate,
-                                  Product product) {
+    public void addAutoLedgerItem(Date workCompleteDate, PriceItem priceItem, double delta, Date currentDate) {
         addLedgerItem(workCompleteDate, priceItem, delta, currentDate);
     }
 
@@ -1103,7 +1072,6 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      * @param workCompleteDate The date completed.
      * @param priceItem        The price item to charge.
      * @param delta            The plus or minus value to bill to the quote server.
-     * @ param product
      */
     public void addLedgerItem(Date workCompleteDate, PriceItem priceItem, double delta) {
         addLedgerItem(workCompleteDate, priceItem, delta, null);

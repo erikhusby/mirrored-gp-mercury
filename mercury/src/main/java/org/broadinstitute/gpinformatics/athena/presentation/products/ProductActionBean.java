@@ -113,9 +113,6 @@ public class ProductActionBean extends CoreActionBean {
     private ResearchProjectDao researchProjectDao;
 
     @Inject
-    private AttributeArchetypeDao attributeArchetypeDao;
-
-    @Inject
     private SapIntegrationService sapService;
 
     // Data needed for displaying the view.

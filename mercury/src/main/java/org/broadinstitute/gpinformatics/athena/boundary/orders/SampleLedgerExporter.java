@@ -309,23 +309,18 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
 
         // The ledger amounts.
         Map<PriceItem, ProductOrderSample.LedgerQuantities> billCounts = sample.getLedgerQuantities();
-//        Map<ProductLedgerIndex, ProductOrderSample.LedgerQuantities> billCounts = sample.getLedgerQuantities();
-//        Map<PriceItem, ProductLedgerIndex> indexByPriceItem = getPriceItemProductLedgerIndexMap(billCounts);
         // Write out the price item columns.
         for (PriceItem priceItem : historicalPriceItems) {
-//            writeCountForHistoricalPriceItem(billCounts, indexByPriceItem.get(priceItem));
             writeCountForHistoricalPriceItem(billCounts, priceItem);
         }
 
         for (PriceItem item : sortedPriceItems) {
-//            writeCountsForPriceItems(billCounts, indexByPriceItem.get(item));
             writeCountsForPriceItems(billCounts, item);
         }
 
         // And for add-ons.
         for (Product addOn : sortedAddOns) {
             for (PriceItem item : getPriceItems(addOn, priceItemDao, priceListCache)) {
-//                writeCountsForPriceItems(billCounts, indexByPriceItem.get(item));
                 writeCountsForPriceItems(billCounts, item);
             }
         }
@@ -416,8 +411,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
      * @param billCounts All the counts for this PDO sample.
      * @param item The price item to look up.
      */
-//    private void writeCountsForPriceItems(Map<ProductLedgerIndex, ProductOrderSample.LedgerQuantities> billCounts,
-//                                          ProductLedgerIndex item) {
     private void writeCountsForPriceItems(Map<PriceItem, ProductOrderSample.LedgerQuantities> billCounts,
                                           PriceItem item) {
         ProductOrderSample.LedgerQuantities quantities = billCounts.get(item);

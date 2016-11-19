@@ -44,7 +44,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
     public QuoteServiceImpl() {
     }
 
-    /**
+    /**\
      * Non CDI constructor, all dependencies must be explicitly initialized!
      *
      * @param quoteConfig The configuration.

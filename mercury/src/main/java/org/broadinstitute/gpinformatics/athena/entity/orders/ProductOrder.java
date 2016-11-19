@@ -216,10 +216,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private String sapOrderNumber;
 
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "referenceProductOrder", orphanRemoval = true)
-    private List<SapOrderDetail> sapReferenceOrders = new ArrayList<>();
+    @OrderColumn(name="CREATED_DATE")
+    private List<SAPOrderDetail> sapReferenceOrders = new ArrayList<>();
 
     @OneToMany(mappedBy = "parentOrder", cascade = CascadeType.PERSIST, orphanRemoval = true)
-    private Collection<ProductOrder> childOrders = new HashSet<>();
+    private Set<ProductOrder> childOrders = new HashSet<>();
 
     @ManyToOne(cascade = {CascadeType.PERSIST})
     @JoinColumn(name = "PARENT_PRODUCT_ORDER")
@@ -254,7 +255,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                 toClone.getResearchProject());
 
         if (shareSapOrder & toClone.isSavedInSAP()) {
-            addSapOrderDetail(new SapOrderDetail(toClone.latestSapOrderDetail().getSapOrderNumber(),
+            addSapOrderDetail(new SAPOrderDetail(toClone.latestSapOrderDetail().getSapOrderNumber(),
                     toClone.latestSapOrderDetail().getPrimaryQuantity(), toClone.latestSapOrderDetail().getQuoteId(),
                     toClone.latestSapOrderDetail().getCompanyCode()));
         }
@@ -262,7 +263,12 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         this.setParentOrder(toClone);
     }
 
-    public boolean isOneBilled() {
+    /**
+     * helper method to see if at least one ledger entries across the collection of product order samples is marked
+     * as having completed billing.
+     * @return
+     */
+    public boolean hasAtLeastOneBilledLedgerEntry() {
         boolean oneBilled = false;
         for (ProductOrderSample sample : this.getSamples()) {
             for (LedgerEntry ledgerEntry : sample.getLedgerItems()) {
@@ -1217,11 +1223,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                 latestSapOrderDetail().getSapOrderNumber();
     }
 
-    public SapOrderDetail latestSapOrderDetail() {
+    public SAPOrderDetail latestSapOrderDetail() {
 
-        SapOrderDetail sapOrderDetail = null;
+        SAPOrderDetail sapOrderDetail = null;
         if (CollectionUtils.isNotEmpty(sapReferenceOrders)) {
-            ArrayList<SapOrderDetail> orderDetailSortList = new ArrayList<>(sapReferenceOrders);
+            ArrayList<SAPOrderDetail> orderDetailSortList = new ArrayList<>(sapReferenceOrders);
             Collections.sort(orderDetailSortList);
 
             sapOrderDetail = orderDetailSortList.get(orderDetailSortList.size() - 1);
@@ -1876,18 +1882,18 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return this.parentOrder != null;
     }
 
-    public List<SapOrderDetail> getSapReferenceOrders() {
+    public List<SAPOrderDetail> getSapReferenceOrders() {
         return sapReferenceOrders;
     }
 
     public void setSapReferenceOrders(
-            List<SapOrderDetail> sapReferenceOrders) {
-        for (SapOrderDetail orderDetail : sapReferenceOrders) {
+            List<SAPOrderDetail> sapReferenceOrders) {
+        for (SAPOrderDetail orderDetail : sapReferenceOrders) {
             addSapOrderDetail(orderDetail);
         }
     }
 
-    public void addSapOrderDetail(SapOrderDetail orderDetail) {
+    public void addSapOrderDetail(SAPOrderDetail orderDetail) {
 
         this.sapReferenceOrders.add(orderDetail);
         orderDetail.setReferenceProductOrder(this);

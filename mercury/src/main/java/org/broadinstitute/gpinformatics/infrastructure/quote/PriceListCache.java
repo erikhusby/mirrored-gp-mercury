@@ -173,14 +173,18 @@ public class PriceListCache extends AbstractCache implements Serializable {
         return null;
     }
 
+
+    public QuotePriceItem findByKeyFields(PriceItem priceItem) {
+        return findByKeyFields(priceItem.getPlatform(), priceItem.getCategory(), priceItem.getName());
+    }
+
     public Collection<QuotePriceItem> getReplacementPriceItems(Product product) {
         return getReplacementPriceItems(product.getPrimaryPriceItem());
     }
 
     public Collection<QuotePriceItem> getReplacementPriceItems(PriceItem primaryPriceItem) {
         try {
-            QuotePriceItem quotePriceItem = findByKeyFields(
-                    primaryPriceItem.getPlatform(), primaryPriceItem.getCategory(), primaryPriceItem.getName());
+            QuotePriceItem quotePriceItem = findByKeyFields(primaryPriceItem);
 
             return quotePriceItem.getReplacementItems().getQuotePriceItems();
         } catch (Throwable t) {

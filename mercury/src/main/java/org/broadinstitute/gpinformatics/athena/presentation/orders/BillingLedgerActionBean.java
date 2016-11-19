@@ -15,14 +15,12 @@ import net.sourceforge.stripes.controller.LifecycleStage;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
-// TODO: Move anything that is needed from SampleLedgerExporter into another class
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderListEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
-import org.broadinstitute.gpinformatics.athena.entity.billing.ProductLedgerIndex;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
@@ -47,6 +45,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+
+// TODO: Move anything that is needed from SampleLedgerExporter into another class
 
 @UrlBinding("/orders/ledger.action")
 public class BillingLedgerActionBean extends CoreActionBean {
@@ -483,7 +483,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
                 workCompleteDate = coverageFirstMet;
             }
 
-            ledgerQuantities = productOrderSample.getLedgerQuantitiesByPriceItem();
+            ledgerQuantities = productOrderSample.getLedgerQuantities();
 
             boolean primaryBilled = false;
             for (LedgerEntry ledgerEntry : productOrderSample.getLedgerItems()) {

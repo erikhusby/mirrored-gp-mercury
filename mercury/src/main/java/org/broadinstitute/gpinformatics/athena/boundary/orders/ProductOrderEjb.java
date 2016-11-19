@@ -24,9 +24,8 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
-import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
+import org.broadinstitute.gpinformatics.athena.entity.orders.SAPOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.StaleLedgerUpdateException;
-import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingChipMapping;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
@@ -271,8 +270,8 @@ public class ProductOrderEjb {
                     if(StringUtils.isNotBlank(orderToPublish.getSapOrderNumber())) {
                         oldNumber =orderToPublish.getSapOrderNumber();
                     }
-                    orderToPublish.addSapOrderDetail(new SapOrderDetail(sapOrderIdentifier,
-                            SapIntegrationServiceImpl.getSampleCount(orderToPublish, orderToPublish.getProduct()),
+                    orderToPublish.addSapOrderDetail(new SAPOrderDetail(sapOrderIdentifier,
+                            SapIntegrationServiceImpl.getSampleCount(orderToPublish),
                             orderToPublish.getQuoteId(),
                             sapService.determineCompanyCode(orderToPublish).getCompanyCode()));
 
@@ -287,8 +286,8 @@ public class ProductOrderEjb {
                 } else if(orderToPublish.isSavedInSAP()){
                     sapService.updateOrder(orderToPublish);
                     orderToPublish.latestSapOrderDetail()
-                            .setPrimaryQuantity(SapIntegrationServiceImpl.getSampleCount(orderToPublish,
-                                    orderToPublish.getProduct()));
+                            .setPrimaryQuantity(SapIntegrationServiceImpl.getSampleCount(orderToPublish
+                            ));
                     messageCollection.addInfo("Order "+orderToPublish.getJiraTicketKey() +
                                               " has been successfully updated in SAP");
                 }

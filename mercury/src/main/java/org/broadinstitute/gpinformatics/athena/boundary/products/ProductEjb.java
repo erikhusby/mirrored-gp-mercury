@@ -14,7 +14,6 @@ import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.PriceItemTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
-import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
@@ -59,12 +58,12 @@ public class ProductEjb {
     private AuditReaderDao auditReaderDao;
 
     @Inject
+    private SapIntegrationService sapService;
+
+    @Inject
     public ProductEjb(ProductDao productDao) {
         this.productDao = productDao;
     }
-
-    @Inject
-    public SapIntegrationService sapService;
 
     /**
      * Using the product here because I need all the edited fields for both save and edit.
@@ -287,15 +286,19 @@ public class ProductEjb {
         return chipInfo;
     }
 
-
+    /**
+     * This method has the responsibility to take the given product and attempt to publish it to SAP
+     * @param productToPublish A product which needs to have its information either created or updated in SAP
+     * @throws SAPIntegrationException
+     */
     public void publishProductToSAP(Product productToPublish) throws SAPIntegrationException {
         publishProductsToSAP(Collections.singleton(productToPublish));
     }
 
-
     /**
-     * Defined
-     * @param productsToPublish
+     * This method has the responsibility of taking the products passed to it and attempting to publish them to SAP.
+     * @param productsToPublish a collection of products which needs to have their information either created or
+     *                          updated in SAP
      * @throws SAPIntegrationException
      */
     public void publishProductsToSAP(Collection<Product> productsToPublish) throws SAPIntegrationException {
@@ -309,7 +312,6 @@ public class ProductEjb {
                 }
                 productToPublish.setSavedInSAP(true);
 
-                productDao.persist(productToPublish);
             } catch (SAPIntegrationException e) {
                 errorMessages.add(e.getMessage());
             }

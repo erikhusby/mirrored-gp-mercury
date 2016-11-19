@@ -108,9 +108,7 @@ public class QuoteImportInfo {
                         .get(orderIndex).entrySet()) {
                     ProductLedgerIndex ledgerIndex = ledgerEntrybyLedgerIndex.getKey();
                     final QuotePriceItem ledgerIndexPriceItem =
-                            priceListCache.findByKeyFields(ledgerIndex.getPriceItem().getPlatform(),
-                                    ledgerIndex.getPriceItem().getCategory(),
-                                    ledgerIndex.getPriceItem().getName());
+                            priceListCache.findByKeyFields(ledgerIndex.getPriceItem());
                     if(ledgerIndexPriceItem != null) {
                         ledgerIndex.getPriceItem().setPrice(ledgerIndexPriceItem.getPrice());
                     }
