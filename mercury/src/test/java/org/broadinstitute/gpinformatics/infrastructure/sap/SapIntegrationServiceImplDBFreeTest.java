@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.sap;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
@@ -110,7 +111,7 @@ public class SapIntegrationServiceImplDBFreeTest {
         PriceListCache mockPriceListCache = Mockito.mock(PriceListCache.class);
         QuotePriceItem testQuotePriceItem = new QuotePriceItem();
         testQuotePriceItem.setPrice("30.50");
-        Mockito.when(mockPriceListCache.findByKeyFields(Mockito.anyString(),Mockito.anyString(),Mockito.anyString())).thenReturn(testQuotePriceItem);
+        Mockito.when(mockPriceListCache.findByKeyFields(Mockito.any(PriceItem.class))).thenReturn(testQuotePriceItem);
 
         integrationService.setPriceListCache(mockPriceListCache);
     }
