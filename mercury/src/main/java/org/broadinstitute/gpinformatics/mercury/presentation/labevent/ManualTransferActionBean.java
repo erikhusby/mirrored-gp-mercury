@@ -362,7 +362,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
             case PLATE_EVENT:
                 for (StationEventType stationEvent : stationEvents) {
                     PlateEventType plateEventType = (PlateEventType) stationEvent;
-                    loadPlateFromDb(plateEventType.getPlate(), plateEventType.getPositionMap(), true, labBatch,
+                    loadPlateFromDb(plateEventType.getPlate(), plateEventType.getPositionMap(), true, null, labBatch,
                             messageCollection, Direction.SOURCE);
                 }
                 break;
@@ -370,7 +370,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 for (StationEventType stationEvent : stationEvents) {
                     PlateTransferEventType plateTransferEventType = (PlateTransferEventType) stationEvent;
                     Map<String, LabVessel> mapBarcodeToVessel = loadPlateFromDb(plateTransferEventType.getSourcePlate(),
-                            plateTransferEventType.getSourcePositionMap(), true, labBatch, messageCollection,
+                            plateTransferEventType.getSourcePositionMap(), true, null, labBatch, messageCollection,
                             Direction.SOURCE);
                     LabEventType repeatedEvent = manualTransferDetails.getRepeatedEvent();
                     if (repeatedEvent != null) {
@@ -378,7 +378,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
                                 manualTransferDetails.getRepeatedWorkflowQualifier(), messageCollection);
                     }
                     loadPlateFromDb(plateTransferEventType.getPlate(), plateTransferEventType.getPositionMap(),
-                            manualTransferDetails.isTargetExpectedToExist(), labBatch, messageCollection,
+                            manualTransferDetails.isTargetExpectedToExist(),
+                            manualTransferDetails.isTargetExpectedEmpty(), labBatch, messageCollection,
                             Direction.TARGET);
                 }
                 break;
@@ -392,11 +393,11 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     PlateCherryPickEvent plateCherryPickEvent = (PlateCherryPickEvent) stationEvent;
 
                     loadPlateFromDb(plateCherryPickEvent.getSourcePlate().get(0),
-                            plateCherryPickEvent.getSourcePositionMap().get(0), true, labBatch, messageCollection,
+                            plateCherryPickEvent.getSourcePositionMap().get(0), true, null, labBatch, messageCollection,
                             Direction.SOURCE);
 
                     loadPlateFromDb(plateCherryPickEvent.getPlate().get(0), plateCherryPickEvent.getPositionMap().get(0),
-                            false, labBatch, messageCollection,
+                            false, null, labBatch, messageCollection,
                             Direction.TARGET);
 
                     if (cherryPickJson == null) {
@@ -457,12 +458,11 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     PlateCherryPickEvent plateCherryPickEvent = (PlateCherryPickEvent) stationEvent;
 
                     Map<String, LabVessel> mapBarcodeToVessel = loadPlateFromDb(plateCherryPickEvent.getSourcePlate().get(0),
-                            plateCherryPickEvent.getSourcePositionMap().get(0), true, labBatch, messageCollection,
+                            plateCherryPickEvent.getSourcePositionMap().get(0), true, null, labBatch, messageCollection,
                             Direction.SOURCE);
 
                     loadPlateFromDb(plateCherryPickEvent.getPlate().get(0), plateCherryPickEvent.getPositionMap().get(0),
-                            false, labBatch, messageCollection,
-                            Direction.TARGET);
+                            false, null, labBatch, messageCollection, Direction.TARGET);
 
                     if(cherryPickJson == null) {
                         cherryPickJson = getContext().getRequest().getParameter("destPosList");
@@ -674,12 +674,23 @@ public class ManualTransferActionBean extends RackScanActionBean {
     }
 
     private enum Direction {
-        SOURCE,
-        TARGET
+        SOURCE("Source"),
+        TARGET("Destination");
+
+        private String text;
+
+        Direction(String text) {
+            this.text = text;
+        }
+
+        public String getText() {
+            return text;
+        }
     }
 
     private Map<String, LabVessel> loadPlateFromDb(PlateType plateType, PositionMapType positionMapType,
-            boolean required, @Nullable LabBatch labBatch, MessageCollection messageCollection, Direction direction) {
+            boolean required, Boolean expectedEmpty, @Nullable LabBatch labBatch, MessageCollection messageCollection,
+            Direction direction) {
         Map<String, LabVessel> returnMapBarcodeToVessel = new HashMap<>();
         if (plateType != null) {
             String barcode = plateType.getBarcode();
@@ -688,12 +699,12 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 if (labVessel == null) {
                     // Racks don't have to exist, static plates do
                     if (required && positionMapType == null) {
-                        messageCollection.addError(barcode + " is not in the database");
+                        messageCollection.addError(direction.getText() + " " + barcode + " is not in the database");
                     } else {
-                        messageCollection.addInfo(barcode + " is not in the database");
+                        messageCollection.addInfo(direction.getText() + " " + barcode + " is not in the database");
                     }
                 } else {
-                    messageCollection.addInfo(barcode + " is in the database");
+                    messageCollection.addInfo(direction.getText() + " " + barcode + " is in the database");
                     returnMapBarcodeToVessel.put(labVessel.getLabel(), labVessel);
                 }
             }
@@ -710,22 +721,33 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 LabVessel labVessel = stringLabVesselEntry.getValue();
                 String barcode = stringLabVesselEntry.getKey();
                 if (labVessel == null) {
-                    String message = barcode + " is not in the database";
+                    String message = direction.getText() + " " + barcode + " is not in the database";
                     if (required) {
                         messageCollection.addError(message);
                     } else {
                         messageCollection.addInfo(message);
                     }
                 } else {
-                    String message = barcode + " is in the database";
+                    String message = direction.getText() + " " + barcode + " is in the database";
                     if (required) {
                         messageCollection.addInfo(message);
                     } else {
                         messageCollection.addError(message);
                     }
+                    if (expectedEmpty != null) {
+                        if (labVessel.getTransfersTo().isEmpty()) {
+                            if (!expectedEmpty) {
+                                messageCollection.addError(direction.getText() + " " + barcode + " is empty");
+                            }
+                        } else {
+                            if (expectedEmpty) {
+                                messageCollection.addError(direction.getText() + " " + barcode + " is not empty");
+                            }
+                        }
+                    }
                     if (labBatch != null && direction == Direction.SOURCE &&
                             !labVessel.getNearestWorkflowLabBatches().contains(labBatch)) {
-                        messageCollection.addError(barcode + " is not in batch " + labBatch.getBatchName());
+                        messageCollection.addError(direction.getText() + " " + barcode + " is not in batch " + labBatch.getBatchName());
                     }
                 }
             }
