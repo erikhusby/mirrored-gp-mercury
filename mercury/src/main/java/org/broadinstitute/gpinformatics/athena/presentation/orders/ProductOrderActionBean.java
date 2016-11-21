@@ -683,7 +683,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         Quote quote = validateQuoteId(quoteId);
         try {
             if(productOrderEjb.isOrderEligibleForSAP(editOrder)) {
-                validateQuoteDetails(quote, ErrorLevel.ERROR);
+                validateQuoteDetails(quote, ErrorLevel.ERROR, !editOrder.hasJiraTicketKey());
             }
         } catch (QuoteServerException e) {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", quoteId, e.getMessage());
@@ -696,15 +696,15 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    private void validateQuoteDetails(String quoteId, final ErrorLevel errorLevel) {
+    private void validateQuoteDetails(String quoteId, final ErrorLevel errorLevel, boolean countOpenOrders) {
         Quote quote = validateQuoteId(quoteId);
 
         if (quote != null) {
-            validateQuoteDetails(quote, errorLevel);
+            validateQuoteDetails(quote, errorLevel, countOpenOrders);
         }
     }
 
-    private void validateQuoteDetails(Quote quote, ErrorLevel errorLevel) {
+    private void validateQuoteDetails(Quote quote, ErrorLevel errorLevel, boolean countOpenOrders) {
         if (!quote.getApprovalStatus().equals(ApprovalStatus.FUNDED)) {
             String unFundedMessage = "A quote should be funded in order to be used for a product order.";
             addMessageBasedOnErrorLevel(errorLevel, unFundedMessage);
@@ -713,7 +713,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         double fundsRemaining = Double.parseDouble(quote.getQuoteFunding().getFundsRemaining());
         double outstandingEstimate = estimateOutstandingOrders(quote.getAlphanumericId());
         double valueOfCurrentOrder = 0;
-        if(!editOrder.hasJiraTicketKey()) {
+        if(countOpenOrders) {
             valueOfCurrentOrder = getValueOfOpenOrders(Collections.singletonList(editOrder));
         }
 
@@ -1355,7 +1355,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
         try {
             if(!productOrderEjb.isOrderEligibleForSAP(editOrder)) {
-                validateQuoteDetails(editOrder.getQuoteId(), ErrorLevel.WARNING);
+                validateQuoteDetails(editOrder.getQuoteId(), ErrorLevel.WARNING, !editOrder.hasJiraTicketKey());
             }
         } catch (QuoteServerException e) {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
@@ -1925,8 +1925,20 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
         return createViewResolution(editOrder.getBusinessKey());
     }
+    @ValidationMethod(on = ADD_SAMPLES_ACTION)
+    public void addSampleExtraValidations() throws Exception {
+        try {
+            if (productOrderEjb.isOrderEligibleForSAP(editOrder)) {
+                validateQuoteDetails(editOrder.getQuoteId(), ErrorLevel.ERROR, true);
+            }
+        } catch (QuoteServerException e) {
+            addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
+        } catch (QuoteNotFoundException e) {
+            addGlobalValidationError("The quote ''{2}'' was not found ", editOrder.getQuoteId());
+        }
+    }
 
-    @HandlesEvent(ADD_SAMPLES_ACTION)
+        @HandlesEvent(ADD_SAMPLES_ACTION)
     public Resolution addSamples() throws Exception {
         List<ProductOrderSample> samplesToAdd = stringToSampleList(addSamplesText);
         try {
