@@ -5,7 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
-import org.broadinstitute.gpinformatics.athena.entity.orders.SAPOrderDetail;
+import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -308,7 +308,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES;
         }
 
-        final SAPOrderDetail latestSapOrderDetail = companyProductOrder.latestSapOrderDetail();
+        final SapOrderDetail latestSapOrderDetail = companyProductOrder.latestSapOrderDetail();
         if(latestSapOrderDetail != null && latestSapOrderDetail.getCompanyCode()!= null
            && !latestSapOrderDetail.getCompanyCode().equals(companyCode.getCompanyCode())) {
             throw new SAPIntegrationException("Unable to update the order in SAP.  "

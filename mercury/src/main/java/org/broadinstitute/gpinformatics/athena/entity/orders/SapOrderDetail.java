@@ -50,7 +50,7 @@ import java.io.Serializable;
 @EntityListeners(UpdatedEntityInterceptor.class)
 @Audited
 @Table(name = "SAP_ORDER_DETAIL", schema = "athena")
-public class SAPOrderDetail implements Serializable, Updatable, Comparable<SAPOrderDetail> {
+public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOrderDetail> {
 
     private static final long serialVersionUID = -4618988251536159923L;
 
@@ -77,10 +77,10 @@ public class SAPOrderDetail implements Serializable, Updatable, Comparable<SAPOr
     @JoinColumn(name="REFERENCE_PRODUCT_ORDER")
     private ProductOrder referenceProductOrder;
 
-    public SAPOrderDetail() {
+    public SapOrderDetail() {
     }
 
-    public SAPOrderDetail(String sapOrderNumber, int primaryQuantity, String quoteId, String companyCode) {
+    public SapOrderDetail(String sapOrderNumber, int primaryQuantity, String quoteId, String companyCode) {
         this.sapOrderNumber = sapOrderNumber;
         this.primaryQuantity = primaryQuantity;
         this.quoteId = quoteId;
@@ -121,7 +121,7 @@ public class SAPOrderDetail implements Serializable, Updatable, Comparable<SAPOr
     }
 
     @Override
-    public int compareTo(SAPOrderDetail that) {
+    public int compareTo(SapOrderDetail that) {
 
         CompareToBuilder compareToBuilder = new CompareToBuilder();
 
@@ -145,7 +145,7 @@ public class SAPOrderDetail implements Serializable, Updatable, Comparable<SAPOr
             return false;
         }
 
-        SAPOrderDetail that = (SAPOrderDetail) o;
+        SapOrderDetail that = (SapOrderDetail) o;
 
         return new EqualsBuilder()
                 .append(primaryQuantity, that.primaryQuantity)

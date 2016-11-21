@@ -392,10 +392,10 @@ public class ProductOrderTest {
         assertThat(testProductOrder.getSapOrderNumber(), isEmptyOrNullString());
 
         final String sapOrderNumber = "SAP_001";
-        final SAPOrderDetail orderDetail1 = new SAPOrderDetail(sapOrderNumber, 5, QUOTE,
+        final SapOrderDetail orderDetail1 = new SapOrderDetail(sapOrderNumber, 5, QUOTE,
                 SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode());
         orderDetail1.getUpdateData().setCreatedDate(new Date());
-        final SAPOrderDetail orderDetail2 = new SAPOrderDetail(sapOrderNumber + "2", 5, QUOTE,
+        final SapOrderDetail orderDetail2 = new SapOrderDetail(sapOrderNumber + "2", 5, QUOTE,
                 SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode());
         orderDetail2.getUpdateData().setCreatedDate(new Date());
         testProductOrder.addSapOrderDetail(orderDetail1);
