@@ -1218,7 +1218,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public String getSapOrderNumber() {
 
-        return latestSapOrderDetail().getSapOrderNumber();
+        String sapOrderNumber = null;
+        if(latestSapOrderDetail()!= null) {
+            sapOrderNumber = latestSapOrderDetail().getSapOrderNumber();
+        }
+        return sapOrderNumber;
     }
 
     public SapOrderDetail latestSapOrderDetail() {
