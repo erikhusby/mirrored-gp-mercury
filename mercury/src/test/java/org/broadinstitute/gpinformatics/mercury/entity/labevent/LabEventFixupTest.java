@@ -1726,4 +1726,5 @@ public class LabEventFixupTest extends Arquillian {
         labEventDao.persist(new FixupCommentary("GPLIM-4422 fixup extraction transfer"));
         labEventDao.flush();
     }
+
 }

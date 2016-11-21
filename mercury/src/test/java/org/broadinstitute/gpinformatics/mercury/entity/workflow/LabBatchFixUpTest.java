@@ -1205,4 +1205,30 @@ public class LabBatchFixUpTest extends Arquillian {
             }
         }
     }
+
+    /** Adds Jira links from LCSET to FCT. */
+    @Test(enabled = false)
+    public void gplim4491() throws Exception {
+        Map<String, String> fctLcsets = new HashMap<String, String>() {{
+            put("FCT-33529", "LCSET-10152");
+            put("FCT-33530", "LCSET-10152");
+            put("FCT-33531", "LCSET-10170");
+            put("FCT-33532", "LCSET-10170");
+            put("FCT-33533", "LCSET-10153");
+            put("FCT-33534", "LCSET-10153");
+            put("FCT-33535", "LCSET-10153");
+        }};
+        userBean.loginOSUser();
+        for (Map.Entry<String, String> fctLcset : fctLcsets.entrySet()) {
+            String lcsetName = fctLcset.getValue();
+            LabBatch fctBatch = labBatchDao.findByName(fctLcset.getKey());
+            Assert.assertNotNull(fctBatch, fctLcset.getKey());
+
+            System.out.println("Linking " + lcsetName + " to " + fctBatch.getBatchName());
+            labBatchEjb.linkJiraBatchToTicket(lcsetName, fctBatch);
+        }
+        // There is no database change except for the fixup commentary.
+        labBatchDao.persist(new FixupCommentary("GPLIM-4491 add Jira links from LCSET to FCT"));
+        labBatchDao.flush();
+    }
 }
