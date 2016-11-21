@@ -216,7 +216,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private String sapOrderNumber;
 
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "referenceProductOrder", orphanRemoval = true)
-    @OrderColumn(name="CREATED_DATE")
     private List<SapOrderDetail> sapReferenceOrders = new ArrayList<>();
 
     @OneToMany(mappedBy = "parentOrder", cascade = CascadeType.PERSIST, orphanRemoval = true)
@@ -1219,8 +1218,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public String getSapOrderNumber() {
 
-        return (CollectionUtils.isEmpty(sapReferenceOrders)) ? sapOrderNumber :
-                latestSapOrderDetail().getSapOrderNumber();
+        return latestSapOrderDetail().getSapOrderNumber();
     }
 
     public SapOrderDetail latestSapOrderDetail() {
