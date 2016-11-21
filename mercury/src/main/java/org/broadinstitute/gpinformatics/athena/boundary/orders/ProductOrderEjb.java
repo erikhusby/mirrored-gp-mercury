@@ -24,7 +24,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
-import org.broadinstitute.gpinformatics.athena.entity.orders.SAPOrderDetail;
+import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.StaleLedgerUpdateException;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -270,7 +270,7 @@ public class ProductOrderEjb {
                     if(StringUtils.isNotBlank(orderToPublish.getSapOrderNumber())) {
                         oldNumber =orderToPublish.getSapOrderNumber();
                     }
-                    orderToPublish.addSapOrderDetail(new SAPOrderDetail(sapOrderIdentifier,
+                    orderToPublish.addSapOrderDetail(new SapOrderDetail(sapOrderIdentifier,
                             SapIntegrationServiceImpl.getSampleCount(orderToPublish),
                             orderToPublish.getQuoteId(),
                             sapService.determineCompanyCode(orderToPublish).getCompanyCode()));

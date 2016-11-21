@@ -217,7 +217,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "referenceProductOrder", orphanRemoval = true)
     @OrderColumn(name="CREATED_DATE")
-    private List<SAPOrderDetail> sapReferenceOrders = new ArrayList<>();
+    private List<SapOrderDetail> sapReferenceOrders = new ArrayList<>();
 
     @OneToMany(mappedBy = "parentOrder", cascade = CascadeType.PERSIST, orphanRemoval = true)
     private Set<ProductOrder> childOrders = new HashSet<>();
@@ -255,7 +255,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                 toClone.getResearchProject());
 
         if (shareSapOrder & toClone.isSavedInSAP()) {
-            addSapOrderDetail(new SAPOrderDetail(toClone.latestSapOrderDetail().getSapOrderNumber(),
+            addSapOrderDetail(new SapOrderDetail(toClone.latestSapOrderDetail().getSapOrderNumber(),
                     toClone.latestSapOrderDetail().getPrimaryQuantity(), toClone.latestSapOrderDetail().getQuoteId(),
                     toClone.latestSapOrderDetail().getCompanyCode()));
         }
@@ -1223,11 +1223,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                 latestSapOrderDetail().getSapOrderNumber();
     }
 
-    public SAPOrderDetail latestSapOrderDetail() {
+    public SapOrderDetail latestSapOrderDetail() {
 
-        SAPOrderDetail sapOrderDetail = null;
+        SapOrderDetail sapOrderDetail = null;
         if (CollectionUtils.isNotEmpty(sapReferenceOrders)) {
-            ArrayList<SAPOrderDetail> orderDetailSortList = new ArrayList<>(sapReferenceOrders);
+            ArrayList<SapOrderDetail> orderDetailSortList = new ArrayList<>(sapReferenceOrders);
             Collections.sort(orderDetailSortList);
 
             sapOrderDetail = orderDetailSortList.get(orderDetailSortList.size() - 1);
@@ -1882,18 +1882,18 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return this.parentOrder != null;
     }
 
-    public List<SAPOrderDetail> getSapReferenceOrders() {
+    public List<SapOrderDetail> getSapReferenceOrders() {
         return sapReferenceOrders;
     }
 
     public void setSapReferenceOrders(
-            List<SAPOrderDetail> sapReferenceOrders) {
-        for (SAPOrderDetail orderDetail : sapReferenceOrders) {
+            List<SapOrderDetail> sapReferenceOrders) {
+        for (SapOrderDetail orderDetail : sapReferenceOrders) {
             addSapOrderDetail(orderDetail);
         }
     }
 
-    public void addSapOrderDetail(SAPOrderDetail orderDetail) {
+    public void addSapOrderDetail(SapOrderDetail orderDetail) {
 
         this.sapReferenceOrders.add(orderDetail);
         orderDetail.setReferenceProductOrder(this);
