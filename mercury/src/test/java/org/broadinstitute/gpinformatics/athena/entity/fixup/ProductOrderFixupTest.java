@@ -1022,10 +1022,12 @@ public class ProductOrderFixupTest extends Arquillian {
     @Test(enabled = false)
     public void gplim4501deleteDraftPdo() throws Exception {
         userBean.loginOSUser();
+        beginTransaction();
         ProductOrder productOrder = productOrderDao.findByTitle("Health_2000_GWAS");
         Assert.assertNotNull(productOrder);
         Assert.assertNull(productOrder.getJiraTicketKey());
         productOrderDao.remove(productOrder);
         productOrderDao.persist(new FixupCommentary("GPLIM-4501 delete draft pdo"));
+        commitTransaction();
     }
 }
