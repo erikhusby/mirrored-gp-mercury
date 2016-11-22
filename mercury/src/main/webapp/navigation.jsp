@@ -200,6 +200,11 @@
                                     beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.SampleSheetActionBean"
                                     event="view">Arrays Sample Sheet</stripes:link>
                         </li>
+                        <li>
+                            <stripes:link id="pooledTubeUpload"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.PooledTubeUploadActionBean"
+                                          event="view">Pooled Tube Upload</stripes:link>
+                        </li>
                     </ul>
                 </li>
             </security:authorizeBlock>

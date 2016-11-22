@@ -267,7 +267,10 @@ public class Metadata {
         DV_200(Category.LAB_METRIC, DataType.NUMBER, "DV200", Visibility.USER),
         LOWER_MARKER_TIME(Category.LAB_METRIC, DataType.NUMBER, "Lower Marker Time", Visibility.USER),
         NA(Category.LAB_METRIC, DataType.STRING, "NA", Visibility.USER),
-        BAIT_WELL(Category.REAGENT, DataType.STRING, "Bait Well", Visibility.USER);
+        BAIT_WELL(Category.REAGENT, DataType.STRING, "Bait Well", Visibility.USER),
+        LSID(Category.SAMPLE, DataType.STRING, "Life Science Identifier", Visibility.USER),
+        SPECIES(Category.SAMPLE, DataType.STRING, "Species", Visibility.USER),
+        SINGLE_LIBRARY_SAMPLE_NAME(Category.SAMPLE, DataType.STRING, "Single Library Sample Name", Visibility.USER);
 
 
         private final Category category;

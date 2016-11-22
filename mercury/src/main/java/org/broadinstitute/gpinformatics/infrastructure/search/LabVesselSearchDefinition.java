@@ -1395,6 +1395,17 @@ public class LabVesselSearchDefinition {
         });
         searchTerms.add(searchTerm);
 
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Dev Sub Tasks");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                LabVessel labVessel = (LabVessel) entity;
+                return labVessel.getSubTasks();
+            }
+        });
+        searchTerms.add(searchTerm);
+
         return searchTerms;
     }
 

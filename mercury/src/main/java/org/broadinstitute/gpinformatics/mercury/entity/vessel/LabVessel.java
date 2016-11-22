@@ -27,6 +27,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.TubeTransferException;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -175,6 +176,10 @@ public abstract class LabVessel implements Serializable {
     @OneToMany(mappedBy = "labVessel", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @BatchSize(size = 100)
     private Set<AbandonVessel> abandonVessels = new HashSet<>();
+
+    @OneToMany(mappedBy = "labVessel", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @BatchSize(size = 100)
+    private Set<SampleInstance> sampleInstance = new HashSet<>();
 
     @OneToMany // todo jmt should this have mappedBy?
     @JoinTable(schema = "mercury")
@@ -951,6 +956,10 @@ public abstract class LabVessel implements Serializable {
         return abandonVessels;
     }
 
+    public Set<SampleInstance> getSampleInstance() {
+        return sampleInstance;
+    }
+
     /**
      *
      * Returns just the parent vessel for vessels with multiple positions.
@@ -975,6 +984,32 @@ public abstract class LabVessel implements Serializable {
         else {
            return null;
        }
+    }
+
+    /**
+     * Returns the single sample instance library name.
+     *
+     */
+    public String getSampleInstanceLibraryName() {
+        if(sampleInstance.size() > 0) {
+            return  new ArrayList<>(sampleInstance).get(0).getSampleLibraryName();
+        }
+        else {
+            return null;
+        }
+    }
+
+    /**
+     * Returns the Jira dev sub tasks in the order they were created. It concatenates them
+     * into a single string for screen display and user-defined search.
+     */
+    public String getSubTasks() {
+        if(sampleInstance.size() > 0) {
+            return  new ArrayList<>(sampleInstance).get(0).getSubTasks();
+        }
+        else {
+            return null;
+        }
     }
 
     /**

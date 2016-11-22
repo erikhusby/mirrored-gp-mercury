@@ -749,4 +749,78 @@
         <createSequence schemaName="mercury" sequenceName="seq_abandon_vessel" incrementBy="50"/>
     </changeSet>
 
+    <changeSet id="GPLIM-4434-9" author="dwilson">
+        <createSequence schemaName="mercury" sequenceName="seq_sample_instance" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-4434-10" author="dwilson">
+        <createSequence schemaName="mercury" sequenceName="seq_sample_instance_sub_tasks" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-4434-11" author="dwilson">
+        <createTable schemaName="mercury" tableName="sample_instance">
+            <column name="sample_instance_id" type="number(19,0)">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="lab_vessel" type="number(19,0)">
+                <constraints foreignKeyName="FK_SAMPLE_INSTANCE_LAB_VESSEL" references="LAB_VESSEL(lab_vessel_id)"/>
+            </column>
+            <column name="reagent_id" type="number(19,0)"/>
+            <column name="molecular_index_id" type="number(19,0)"/>
+            <column name="mercury_sample" type="number(19,0)"/>
+            <column name="root_sample_id" type="varchar(255)"/>
+            <column name="sample_library_name" type="varchar(255)"/>
+            <column name="upload_date"  type="timestamp" />
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-4434-12" author="dwilson">
+        <createTable schemaName="mercury" tableName="sample_instance_aud">
+            <column name="sample_instance_id" type="number(19,0)"/>
+            <column name="lab_vessel" type="number(19,0)"/>
+            <column name="reagent_id" type="number(19,0)"/>
+            <column name="molecular_index_id" type="number(19,0)"/>
+            <column name="mercury_sample" type="number(19,0)"/>
+            <column name="sample_library_name" type="varchar(255)"/>
+            <column name="root_sample_id" type="varchar(255)"/>
+            <column name="upload_date"  type="timestamp" />
+            <column name="rev" type="number(19,0)" />
+            <column name="revtype" type="number(3,0)" />
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-4434-13" author="dwilson">
+        <createTable schemaName="mercury" tableName="sample_instance_sub_tasks">
+            <column name="sample_instance_sub_tasks_id" type="number(19,0)">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="sample_instance" type="number(19,0)"/>
+            <column name="sub_task" type="varchar(255)"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-4434-14" author="dwilson">
+        <createTable schemaName="mercury" tableName="sample_instance_sub_tasks_aud">
+            <column name="sample_instance_sub_tasks_id" type="number(19,0)"/>
+            <column name="sample_instance" type="number(19,0)"/>
+            <column name="sub_task" type="varchar(255)"/>
+            <column name="rev" type="number(19,0)" />
+            <column name="revtype" type="number(3,0)" />
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-4434-15" author="dwilson">
+        <addPrimaryKey tableName="sample_instance_sub_tasks_aud" schemaName="mercury" columnNames="rev, pooled_tube_sub_tasks_id"/>
+        <createIndex tableName="sample_instance_sub_tasks_aud" indexName="ix_samp_inst_subtsk_aud">
+            <column name="sample_instance_sub_tasks_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-4434-16" author="dwilson">
+        <addPrimaryKey tableName="sample_instance_aud" schemaName="mercury" columnNames="rev, sample_instance_id"/>
+        <createIndex tableName="sample_instance_aud" indexName="ix_sample_instance_aud">
+            <column name="sample_instance_id"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>

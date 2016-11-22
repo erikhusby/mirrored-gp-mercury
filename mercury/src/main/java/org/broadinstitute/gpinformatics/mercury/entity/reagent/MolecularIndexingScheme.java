@@ -410,4 +410,6 @@ public class MolecularIndexingScheme {
 
         return builder.toString();
     }
+
+    public Long getMolecularIndexingSchemeId() { return molecularIndexingSchemeId;  }
 }
