@@ -82,7 +82,7 @@ import java.util.TreeSet;
 @Entity
 @Audited
 @Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"label"}))
-@BatchSize(size = 50)
+@BatchSize(size = 20)
 public abstract class LabVessel implements Serializable {
 
     private static final long serialVersionUID = 2868707154970743503L;
@@ -122,18 +122,18 @@ public abstract class LabVessel implements Serializable {
 
     @OneToMany(cascade = CascadeType.PERSIST) // todo jmt should this have mappedBy?
     @JoinTable(schema = "mercury")
-    @BatchSize(size = 100)
+    @BatchSize(size = 20)
     private final Set<JiraTicket> ticketsCreated = new HashSet<>();
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "labVessel")
-    @BatchSize(size = 100)
+    @BatchSize(size = 20)
     private Set<LabBatchStartingVessel> labBatches = new HashSet<>();
 
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "dilutionVessel")
     private Set<LabBatchStartingVessel> dilutionReferences = new HashSet<>();
 
     @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "reworks")
-    @BatchSize(size = 100)
+    @BatchSize(size = 20)
     private Set<LabBatch> reworkLabBatches = new HashSet<>();
 
     // todo jmt separate role for reagents?
@@ -141,7 +141,7 @@ public abstract class LabVessel implements Serializable {
     // have to specify name, generated aud name is too long for Oracle
     @JoinTable(schema = "mercury", name = "lv_reagent_contents", joinColumns = @JoinColumn(name = "lab_vessel"),
             inverseJoinColumns = @JoinColumn(name = "reagent_contents"))
-    @BatchSize(size = 100)
+    @BatchSize(size = 20)
     private Set<Reagent> reagentContents = new HashSet<>();
 
     /**
@@ -155,7 +155,7 @@ public abstract class LabVessel implements Serializable {
     // todo jmt separate role for containee?
     @ManyToMany(cascade = CascadeType.PERSIST)
     @JoinTable(schema = "mercury")
-    @BatchSize(size = 100)
+    @BatchSize(size = 20)
     private Set<LabVessel> containers = new HashSet<>();
 
     /**
@@ -170,11 +170,11 @@ public abstract class LabVessel implements Serializable {
      * Reagent additions and machine loaded events, i.e. not transfers
      */
     @OneToMany(mappedBy = "inPlaceLabVessel", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
-    @BatchSize(size = 100)
+    @BatchSize(size = 20)
     private Set<LabEvent> inPlaceLabEvents = new HashSet<>();
 
     @OneToMany(mappedBy = "labVessel", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
-    @BatchSize(size = 100)
+    @BatchSize(size = 20)
     private Set<AbandonVessel> abandonVessels = new HashSet<>();
 
     @OneToMany(mappedBy = "labVessel", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
@@ -186,7 +186,7 @@ public abstract class LabVessel implements Serializable {
     private Collection<StatusNote> notes = new HashSet<>();
 
     @OneToMany(mappedBy = "labVessel", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
-    @BatchSize(size = 100)
+    @BatchSize(size = 20)
     private Set<BucketEntry> bucketEntries = new HashSet<>();
 
     /**
@@ -202,7 +202,7 @@ public abstract class LabVessel implements Serializable {
 
     // todo jmt separate role for sample holder?
     @ManyToMany(cascade = CascadeType.PERSIST)
-    @BatchSize(size = 100)
+    @BatchSize(size = 20)
     private Set<MercurySample> mercurySamples = new HashSet<>();
 
     @OneToMany(mappedBy = "sourceVessel", cascade = CascadeType.PERSIST)
@@ -418,8 +418,7 @@ public abstract class LabVessel implements Serializable {
         return name;
     }
 
-    /** For fixups only. */
-    void setName(String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
@@ -1028,6 +1027,26 @@ public abstract class LabVessel implements Serializable {
 
         String reason ="Vessel Position(s): ";
         if(abandonVessel.getAbandonedVesselPosition().size() > 0) {
+
+            int index = 0;
+            int duplicate = 0;
+
+            //If all the reasons are the same, collapse them down and return them as a single reason.
+            for (AbandonVesselPosition abandonVesselPosition : abandonVessel.getAbandonedVesselPosition()) {
+                if(index == 0) {
+                    reason = abandonVesselPosition.getReason().getDisplayName();
+                }
+                if(!reason.equals(abandonVesselPosition.getReason().getDisplayName()))
+                    duplicate++;
+
+                index++;
+            }
+
+            if(duplicate == 0)
+                return reason;
+
+            //Return a concatenated list of reasons if there are differences.
+            reason = "";
             for (AbandonVesselPosition abandonVesselPosition : abandonVessel.getAbandonedVesselPosition()) {
                 reason += "(" + abandonVesselPosition.getPosition() + ":" + abandonVesselPosition.getReason().getDisplayName() + ") ";
             }

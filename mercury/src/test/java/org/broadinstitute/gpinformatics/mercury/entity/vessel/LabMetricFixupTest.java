@@ -359,6 +359,19 @@ public class LabMetricFixupTest extends Arquillian {
         }
     }
 
+    @Test(enabled = false)
+    public void fixupGplim4444() {
+        try {
+            utx.begin();
+            userBean.loginOSUser();
+            deleteRun("LCSET-10117 FP Daughter Pico", "GPLIM-4444 remove FP run associated with wrong tubes");
+            utx.commit();
+        } catch (NotSupportedException | SystemException | RollbackException | HeuristicMixedException |
+                HeuristicRollbackException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private void deleteRun(String runName, String reason) {
         LabMetricRun labMetricRun = dao.findByName(runName);
         for (LabMetric labMetric : labMetricRun.getLabMetrics()) {

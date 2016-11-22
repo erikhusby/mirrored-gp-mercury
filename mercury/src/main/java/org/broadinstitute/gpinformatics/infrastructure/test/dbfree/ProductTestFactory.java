@@ -29,6 +29,7 @@ public class ProductTestFactory {
                         new Date(), new Date(), 12345678, 123456, 100, 96, "inputRequirements", "deliverables", true,
                         workflow, pdmOrderableOnly, "an aggregation data type");
         product.setReadLength(76);
+        product.setPairedEndRead(true);
         if (addRisk) {
             product.addRiskCriteria(new RiskCriterion(RiskCriterion.RiskCriteriaType.MANUAL, Operator.IS, "true"));
         }
@@ -61,6 +62,7 @@ public class ProductTestFactory {
             product.addRiskCriteria(
                     new RiskCriterion(RiskCriterion.RiskCriteriaType.TOTAL_DNA, Operator.LESS_THAN, ".250"));
             product.setLoadingConcentration(BigDecimal.valueOf(225));
+            product.setPairedEndRead(true);
         } catch (ParseException e) {
 
         }

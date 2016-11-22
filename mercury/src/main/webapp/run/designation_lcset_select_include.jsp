@@ -48,6 +48,7 @@
                 <input type="hidden" name="dtos[${item.index}].createdOn" value="${dto.createdOn}"/>
                 <input type="hidden" name="dtos[${item.index}].barcode" value="${dto.barcode}"/>
                 <input type="hidden" name="dtos[${item.index}].lcset" value="${dto.lcset}"/>
+                <input type="hidden" name="dtos[${item.index}].chosenLcset" value="${dto.chosenLcset}"/>
                 <input type="hidden" name="dtos[${item.index}].lcsetUrl" value="${dto.lcsetUrl}"/>
                 <input type="hidden" name="dtos[${item.index}].tubeType" value="${dto.tubeType}"/>
                 <input type="hidden" name="dtos[${item.index}].sequencerModel" value="${dto.sequencerModel}"/>

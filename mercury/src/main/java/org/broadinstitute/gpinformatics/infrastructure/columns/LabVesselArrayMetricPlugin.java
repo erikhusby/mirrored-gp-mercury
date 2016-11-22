@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.columns;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.ArraysQcDao;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcFingerprint;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcGtConcordance;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.search.LabVesselSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
@@ -36,7 +37,9 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
         GENDER_CONCORDANCE_PF("Gender Concordance PF"),
         P95_GREEN("P95 Green"),
         P95_RED("P95 Red"),
-        HAPLOTYPE_DIFF("Haplotype Difference");
+        FINGERPRINT_CONCORDANCE("Fingerprint Concordance"),
+        HAPLOTYPE_DIFF("Haplotype Difference"),
+        HAPMAP_CONCORDANCE("HapMap Concordance");
 
         private String displayName;
         private ConfigurableList.Header resultHeader;
@@ -145,14 +148,35 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
             row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.P95_RED.getResultHeader(),
                     value, value));
 
-            if (arraysQc.getArraysQcFingerprints().isEmpty()) {
+            ArraysQcFingerprint arraysQcFingerprint = null;
+            if (!arraysQc.getArraysQcFingerprints().isEmpty()) {
+                arraysQcFingerprint = arraysQc.getArraysQcFingerprints().iterator().next();
+            }
+
+            if (arraysQcFingerprint == null) {
                 value = null;
             } else {
-                ArraysQcFingerprint arraysQcFingerprint = arraysQc.getArraysQcFingerprints().iterator().next();
+                value = ColumnValueType.TWO_PLACE_DECIMAL.format(arraysQcFingerprint.getLodExpectedSample(), "");
+            }
+            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.FINGERPRINT_CONCORDANCE.getResultHeader(),
+                    value, value));
+
+            if (arraysQcFingerprint == null) {
+                value = null;
+            } else {
                 value = String.valueOf(Math.abs(arraysQcFingerprint.getHaplotypesConfidentlyChecked() -
                         arraysQcFingerprint.getHaplotypesConfidentlyMatchin()));
             }
             row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.HAPLOTYPE_DIFF.getResultHeader(),
+                    value, value));
+
+            for (ArraysQcGtConcordance arraysQcGtConcordance: arraysQc.getArraysQcGtConcordances()) {
+                if (arraysQcGtConcordance.getVariantType().equals("SNP")) {
+                    value = ColumnValueType.TWO_PLACE_DECIMAL.format(
+                            arraysQcGtConcordance.getGenotypeConcordance().multiply(BigDecimal.valueOf(100)), "");
+                }
+            }
+            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.HAPMAP_CONCORDANCE.getResultHeader(),
                     value, value));
 
             metricRows.add(row);
