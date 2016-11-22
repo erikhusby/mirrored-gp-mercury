@@ -1,7 +1,9 @@
 package org.broadinstitute.gpinformatics.athena.boundary.products;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
@@ -71,6 +73,12 @@ public class ProductEjbTest extends Arquillian {
                     "Another pdo named " + pdoSubstrings[1], date0).getRight(), chipNames[1]);
             Assert.assertEquals(productEjb.getGenotypingChip(partNumber,
                     "A pdo named " + pdoSubstrings[2], date0).getRight(), chipNames[2]);
+
+            // Tests a draft pdo.
+            Pair<String, String> pair = productEjb.getGenotypingChip(new ProductOrder("title", "comments", "quoteId"),
+                    date0);
+            Assert.assertNull(pair.getLeft());
+            Assert.assertNull(pair.getRight());
 
         } finally {
             utx.rollback();

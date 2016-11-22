@@ -153,9 +153,13 @@ public class ProductEjb {
      * @return (chip family, chip name) or (null, null) if no match was found.
      */
     public Pair<String, String> getGenotypingChip(ProductOrder productOrder, Date effectiveDate) {
-        String productPartNumber = productOrder.getProduct().getPartNumber();
-        String productOrderName = productOrder.getName();
-        return getGenotypingChip(productPartNumber, productOrderName, effectiveDate);
+        if (productOrder.getProduct() != null) {
+            String productPartNumber = productOrder.getProduct().getPartNumber();
+            String productOrderName = productOrder.getName();
+            return getGenotypingChip(productPartNumber, productOrderName, effectiveDate);
+        } else {
+            return Pair.of(null, null);
+        }
     }
 
     /**
