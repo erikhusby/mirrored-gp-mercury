@@ -77,7 +77,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_.product;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -1023,7 +1022,7 @@ public class ProductOrderFixupTest extends Arquillian {
     @Test(enabled = false)
     public void gplim4501deleteDraftPdo() throws Exception {
         userBean.loginOSUser();
-        ProductOrder productOrder = productOrderDao.findByTitle("UMB_FecalSampleLabels_batch1"); // "Health_2000_GWAS");
+        ProductOrder productOrder = productOrderDao.findByTitle("Health_2000_GWAS");
         Assert.assertNotNull(productOrder);
         Assert.assertNull(productOrder.getJiraTicketKey());
         productOrderDao.remove(productOrder);
