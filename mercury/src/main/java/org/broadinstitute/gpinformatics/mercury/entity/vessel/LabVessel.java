@@ -422,8 +422,7 @@ public abstract class LabVessel implements Serializable {
         return name;
     }
 
-    /** For fixups only. */
-    void setName(String name) {
+    public void setName(String name) {
         this.name = name;
     }
 

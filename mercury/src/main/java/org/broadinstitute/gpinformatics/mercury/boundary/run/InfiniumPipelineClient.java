@@ -19,15 +19,13 @@ import javax.jms.DeliveryMode;
 import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.MapMessage;
+import javax.jms.Message;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Forward finished Infinium chip wells to the pipeline for analysis.
  */
-@Dependent
 public class InfiniumPipelineClient {
 
     private static final Log log = LogFactory.getLog(InfiniumPipelineClient.class);
@@ -44,18 +42,12 @@ public class InfiniumPipelineClient {
         Connection connection = null;
         Session session = null;
         try {
-            Map<String, Object> connectionParams = new HashMap<>();
-            connectionParams.put(TransportConstants.PORT_PROP_NAME, infiniumStarterConfig.getJmsPort());
-            connectionParams.put(TransportConstants.HOST_PROP_NAME, infiniumStarterConfig.getJmsHost());
-            TransportConfiguration transportConfiguration = new TransportConfiguration(
-                    NettyConnectorFactory.class.getName(), connectionParams);
-            ActiveMQConnectionFactory connectionFactory = ActiveMQJMSClient.createConnectionFactoryWithoutHA(
-                    JMSFactoryType.CF, transportConfiguration);
+            String url = String.format(
+                    "tcp://%s:%d", infiniumStarterConfig.getJmsHost(), infiniumStarterConfig.getJmsPort());
+            ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(url);
+            connectionFactory.setUseAsyncSend(false);
+            connection = connectionFactory.createQueueConnection();
 
-            connectionFactory.setConnectionTTL(-1);
-            connectionFactory.setClientFailureCheckPeriod(Long.MAX_VALUE);
-
-            connection = connectionFactory.createConnection();
             connection.start();
 
             session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
@@ -63,8 +55,8 @@ public class InfiniumPipelineClient {
             MessageProducer producer = session.createProducer(destination);
             producer.setDeliveryMode(DeliveryMode.PERSISTENT);
 
-            MapMessage message = session.createMapMessage();
-            message.setString("chipWellBarcode", chipWellBarcode);
+            Message message = session.createMessage();
+            message.setStringProperty("chipWellBarcode", chipWellBarcode);
 
             producer.send(message);
 

@@ -30,6 +30,7 @@ import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.GregorianCalendar;
@@ -340,6 +341,7 @@ public class DesignationActionBean extends CoreActionBean implements Designation
 
         // Iterates on the LCSETs specified by the user.
         for (LabBatch targetLcset : loadLcsets) {
+            boolean foundLoadingTube = false;
             // Finds the loading tubes for each of the lcset's starting batch vessels. When a starting
             // tube is reworked it may have multiple loading tubes. Each of these loading tube will
             // need to be checked for the best lcset(s), and only be used if the target lcset is among
@@ -349,6 +351,12 @@ public class DesignationActionBean extends CoreActionBean implements Designation
             for (LabVessel startingBatchVessel : targetLcset.getStartingBatchLabVessels()) {
                 loadingEventsAndVessels = startingBatchVessel.findVesselsForLabEventType(selectedEventType, true,
                         DESCENDANTS);
+                // Includes batched vessel if it was the target of a loading event, e.g. a bucketed pooled tube.
+                for (LabEvent labEvent : startingBatchVessel.getInPlaceAndTransferToEvents()) {
+                    if (labEvent.getLabEventType() == selectedEventType) {
+                        loadingEventsAndVessels.put(labEvent, Collections.singleton(startingBatchVessel));
+                    }
+                }
                 for (LabEvent targetEvent : loadingEventsAndVessels.keySet()) {
                     for (LabVessel loadingTube : loadingEventsAndVessels.get(targetEvent)) {
                         // Only processes a loading tube for this lcset once.
@@ -359,6 +367,7 @@ public class DesignationActionBean extends CoreActionBean implements Designation
                             Set<SampleInstanceV2> loadingTubeSampleInstances = loadingTubeTraversal.getRight();
 
                             if (loadingTubeLcsets.contains(targetLcset)) {
+                                foundLoadingTube = true;
                                 loadingTubeToLcset.put(loadingTube, targetLcset);
                                 loadingTubeToLabEvent.put(loadingTube, targetEvent);
 
@@ -387,8 +396,8 @@ public class DesignationActionBean extends CoreActionBean implements Designation
                     }
                 }
             }
-            if (loadingEventsAndVessels == null || loadingEventsAndVessels.keySet().isEmpty()) {
-                addMessage(targetLcset.getBatchName() + " has no starting vessels linked to loading vessels.");
+            if (!foundLoadingTube) {
+                addMessage("No " + selectedEventType + " tubes in " + targetLcset.getBatchName());
             }
         }
 

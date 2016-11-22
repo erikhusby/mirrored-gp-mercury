@@ -94,6 +94,7 @@
             <name>Broad's Maven Repository</name>
             <layout>default</layout>
             <url>http://maven.broadinstitute.org:8000/maven</url>
+
         </repository>
 
         <!-- JBoss Repository for Arquillian, Hibernate, etc. -->
@@ -219,7 +220,8 @@
 
         <jboss.socket.https>8443</jboss.socket.https>
 
-        <bspclient.version>1.3.90</bspclient.version>
+        <bspclient.version>[1.3,)</bspclient.version>
+
     </properties>
 
     <profiles>

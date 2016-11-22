@@ -27,7 +27,7 @@ import java.util.Date;
 @Audited
 @Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"ARCHETYPE","ATTRIBUTE_NAME"}))
 public class ArchetypeAttribute {
-    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    public static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     @SequenceGenerator(name = "seq_archetype_attribute", schema = "mercury", sequenceName = "seq_archetype_attribute")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_archetype_attribute")
