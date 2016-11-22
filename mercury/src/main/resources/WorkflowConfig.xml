@@ -1528,6 +1528,7 @@
                     <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
                     <targetSection>ROWOF24</targetSection>
                     <targetExpectedToExist>true</targetExpectedToExist>
+                    <targetExpectedEmpty>false</targetExpectedEmpty>
                     <repeatedEvent>TRANSFER</repeatedEvent>
                     <repeatedWorkflowQualifier>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN1</repeatedWorkflowQualifier>
                 </manualTransferDetails>
@@ -1559,6 +1560,7 @@
                     <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
                     <targetSection>ROWOF24</targetSection>
                     <targetExpectedToExist>true</targetExpectedToExist>
+                    <targetExpectedEmpty>false</targetExpectedEmpty>
                     <repeatedEvent>TRANSFER</repeatedEvent>
                     <repeatedWorkflowQualifier>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN2</repeatedWorkflowQualifier>
                 </manualTransferDetails>
