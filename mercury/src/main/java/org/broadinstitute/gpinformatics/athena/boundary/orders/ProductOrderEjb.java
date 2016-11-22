@@ -259,7 +259,8 @@ public class ProductOrderEjb {
             orderToPublish = editedProductOrder.getParentOrder();
         }
         try {
-            if (isOrderEligibleForSAP(orderToPublish)) {
+            if (isOrderEligibleForSAP(orderToPublish)
+                && !orderToPublish.getOrderStatus().canPlace()) {
                 final boolean quoteIdChange = orderToPublish.isSavedInSAP() &&
                                               !orderToPublish.getQuoteId()
                         .equals(orderToPublish.latestSapOrderDetail().getQuoteId());
@@ -318,10 +319,12 @@ public class ProductOrderEjb {
         SAPAccessControl accessControl = accessController.getCurrentControlDefinitions();
         boolean eligibilityResult = false;
         if(orderQuote != null && accessControl.isEnabled()) {
-            eligibilityResult =
-                    orderQuote.isEligibleForSAP() && !editedProductOrder.isDraft() && !editedProductOrder.isPending()
-                    && !CollectionUtils.containsAll(accessControl.getDisabledFeatures(),
-                            Collections.singleton(editedProductOrder.getProduct().getPrimaryPriceItem().getName()));
+
+            eligibilityResult = orderQuote.isEligibleForSAP() &&
+                                !CollectionUtils.containsAll(accessControl.getDisabledFeatures(),
+                                        Collections.singleton(editedProductOrder.getProduct()
+                                                                                .getPrimaryPriceItem().getName()));
+
         }
         return eligibilityResult;
     }

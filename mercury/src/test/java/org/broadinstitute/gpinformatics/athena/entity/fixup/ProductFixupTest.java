@@ -23,6 +23,7 @@ import java.util.List;
 
 import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_.product;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.QA;
 
 /**
  *
@@ -49,7 +50,7 @@ public class ProductFixupTest extends Arquillian {
      */
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
+        return DeploymentBuilder.buildMercuryWar(QA, "QA");
     }
 
     // Required for Arquillian tests so it should remain enabled for sprint4.
@@ -107,6 +108,8 @@ public class ProductFixupTest extends Arquillian {
         productDao.persist(new FixupCommentary("GPLIM-4159 set initial values after adding new columns."));
         utx.commit();
     }
+
+    @Test(enabled = false)
     public void GPLIM3614InitializeNewValues() {
         userBean.loginOSUser();
         List<Product> allProducts = productDao.findAll(Product.class);

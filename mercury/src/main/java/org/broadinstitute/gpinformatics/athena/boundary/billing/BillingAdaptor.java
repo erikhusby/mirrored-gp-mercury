@@ -165,7 +165,8 @@ public class BillingAdaptor implements Serializable {
 
                     String workId = null;
 
-                    if( productOrderEjb.isOrderEligibleForSAP(item.getProductOrder())
+                    if( productOrderEjb.isOrderEligibleForSAP(item.getProductOrder() )
+                        && !item.getProductOrder().getOrderStatus().canPlace()
                         && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
                         && StringUtils.isBlank(item.getSapItems())) {
                         if(StringUtils.isBlank(item.getProductOrder().getSapOrderNumber())) {
