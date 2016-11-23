@@ -5,7 +5,9 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
+import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingChipMapping;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
@@ -43,26 +45,29 @@ import java.util.TreeSet;
  * Transactional manager for {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder}s.
  */
 public class ProductEjb {
-    private final ProductDao productDao;
+    private ProductDao productDao;
 
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
     public ProductEjb() {
-        this(null);
     }
 
-    @Inject
     private AttributeArchetypeDao attributeArchetypeDao;
 
-    @Inject
     private AuditReaderDao auditReaderDao;
 
-    @Inject
     private SapIntegrationService sapService;
 
+    private SAPAccessControlEjb accessController;
+
     @Inject
-    public ProductEjb(ProductDao productDao) {
+    public ProductEjb(ProductDao productDao, SapIntegrationService sapService, AuditReaderDao auditReaderDao,
+                      AttributeArchetypeDao attributeArchetypeDao, SAPAccessControlEjb accessController) {
         this.productDao = productDao;
+        this.attributeArchetypeDao = attributeArchetypeDao;
+        this.auditReaderDao = auditReaderDao;
+        this.sapService = sapService;
+        this.accessController = accessController;
     }
 
     /**
@@ -307,17 +312,24 @@ public class ProductEjb {
      */
     public void publishProductsToSAP(Collection<Product> productsToPublish) throws SAPIntegrationException {
         Set<String> errorMessages = new HashSet<>();
+        SAPAccessControl control = accessController.getCurrentControlDefinitions();
         for (Product productToPublish : productsToPublish) {
-            try {
-                if (productToPublish.isSavedInSAP()) {
-                    sapService.changeProductInSAP(productToPublish);
-                } else {
-                    sapService.createProductInSAP(productToPublish);
-                }
-                productToPublish.setSavedInSAP(true);
+            if(!CollectionUtils.containsAll(control.getDisabledFeatures(),
+                                            Collections.singleton(productToPublish.getPrimaryPriceItem().getName()))) {
+                try {
+                    if (productToPublish.isSavedInSAP()) {
+                        sapService.changeProductInSAP(productToPublish);
+                    } else {
+                        sapService.createProductInSAP(productToPublish);
+                    }
+                    productToPublish.setSavedInSAP(true);
 
-            } catch (SAPIntegrationException e) {
-                errorMessages.add(e.getMessage());
+                } catch (SAPIntegrationException e) {
+                    errorMessages.add(e.getMessage());
+                }
+            } else {
+                errorMessages.add(productToPublish.getName() +
+                                  " has a price item that makes it ineligible to be reflected in SAP.");
             }
         }
         if (CollectionUtils.isNotEmpty(errorMessages)) {
