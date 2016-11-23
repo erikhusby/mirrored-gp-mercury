@@ -66,6 +66,7 @@ public class LibraryConstructionJaxbBuilder {
     public enum PondType {
         PCR_FREE("PCRFreePondRegistration"),
         PCR_PLUS("PCRPlusPondRegistration"),
+        CELL_FREE("CFDnaPondRegistration"),
         REGULAR("PondRegistration");
 
         private String eventType;

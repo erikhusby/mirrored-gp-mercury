@@ -1264,6 +1264,26 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.PCR_PLUS_NORMALIZED_POND),
 
+    // HyperPrep PCRFree
+    END_REPAIR_ABASE("EndRepair_ABase",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    WGS_PCR_CLEANUP("WGSPCRCleanup",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.PCR_PLUS_POND),
+
+    // Cell Free
+    CF_DNA_PCR_SETUP("CFDnaPCRSetup",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    CF_DNA_POND_REGISTRATION("CFDnaPondRegistration",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.PCR, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.PCR_PLUS_POND),
+
     /**
      * TODO SGM  the following names are place holders.  They will be re-evaluated as development of
      */
