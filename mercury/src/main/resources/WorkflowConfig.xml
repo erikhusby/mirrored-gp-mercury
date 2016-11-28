@@ -466,13 +466,6 @@
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>EndRepairCleanup</name>
-                <labEventTypes>END_REPAIR_CLEANUP</labEventTypes>
-                <optional>false</optional>
-                <entryPoint>false</entryPoint>
-                <reEntryPoint>false</reEntryPoint>
-            </workflowStepDefs>
-            <workflowStepDefs>
                 <name>Indexed Adaptor Ligation</name>
                 <labEventTypes>INDEXED_ADAPTER_LIGATION</labEventTypes>
                 <optional>false</optional>
@@ -490,6 +483,20 @@
                 <name>Adaptor Ligation Cleanup</name>
                 <labEventTypes>ADAPTER_LIGATION_CLEANUP</labEventTypes>
                 <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Index P5 Pond Enrichment</name>
+                <labEventTypes>INDEX_P5_POND_ENRICHMENT</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>PostPondEnrichmentThermoCyclerLoaded</name>
+                <labEventTypes>POST_POND_ENRICHMENT_THERMO_CYCLER_LOADED</labEventTypes>
+                <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
@@ -545,6 +552,29 @@
                 <labEventTypes>PCR_PLUS_POND_REGISTRATION</labEventTypes>
                 <optional>false</optional>
                 <ancestryEtlFlag>true</ancestryEtlFlag>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Pond Pico</name>
+                <labEventTypes>POND_PICO</labEventTypes>
+                <optional>true</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>PCR Plus Pond Normalization</name>
+                <labEventTypes>PCR_PLUS_POND_NORMALIZATION</labEventTypes>
+                <optional>true</optional>
+                <ancestryEtlFlag>true</ancestryEtlFlag>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>PCR Plus Pond HyperPrep</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2016-07-01T21:03:24.085-04:00</effectiveDate>
+            <workflowStepDefs>
+                <name>WGS PCR-Plus Cleanup</name>
+                <labEventTypes>WGSPCRCleanup</labEventTypes>
+                <optional>false</optional>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Pond Pico</name>
@@ -2589,7 +2619,7 @@
             <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
             <workflowProcessDefs>WGS Library Construction Hyper Prep</workflowProcessDefs>
-            <workflowProcessDefs>PCR Plus Pond</workflowProcessDefs>
+            <workflowProcessDefs>PCR Plus Pond HyperPrep</workflowProcessDefs>
             <workflowProcessDefs>QTP</workflowProcessDefs>
             <workflowProcessDefs>HiSEQ</workflowProcessDefs>
             <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
