@@ -271,7 +271,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         boolean oneBilled = false;
         for (ProductOrderSample sample : this.getSamples()) {
             for (LedgerEntry ledgerEntry : sample.getLedgerItems()) {
-                if (ledgerEntry.getBillingSession().isComplete()) {
+                if (ledgerEntry.getBillingSession() != null && ledgerEntry.getBillingSession().isComplete()) {
                     oneBilled = true;
                     break;
                 }
