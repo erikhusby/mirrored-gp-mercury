@@ -69,6 +69,7 @@ public class InfiniumRunResourceContainerTest extends Arquillian {
         InputStream xmlFile = VarioskanParserTest.getSpreadsheet(XML_FILE);
         OutputStream outputStream = new FileOutputStream(tempFile);
         IOUtils.copy(xmlFile, outputStream);
+        outputStream.close();
         InfiniumStarterConfig config = mock(InfiniumStarterConfig.class);
         when(config.getDataPath()).thenReturn(tmpDir.getPath());
         infiniumRunResource.setInfiniumStarterConfig(config);

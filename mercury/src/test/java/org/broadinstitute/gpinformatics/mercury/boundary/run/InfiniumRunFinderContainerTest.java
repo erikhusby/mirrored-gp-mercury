@@ -25,7 +25,6 @@ import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -133,6 +132,7 @@ public class InfiniumRunFinderContainerTest extends Arquillian {
             InputStream xmlFile = VarioskanParserTest.getSpreadsheet(InfiniumRunResourceContainerTest.XML_FILE);
             OutputStream outputStream = new FileOutputStream(fXml);
             IOUtils.copy(xmlFile, outputStream);
+            outputStream.close();
 
             File fRed = new File(runDir, red);
             fRed.createNewFile();
