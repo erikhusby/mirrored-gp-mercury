@@ -132,7 +132,7 @@ quote:
     QA:
       login:    mercuryquote
       password: ml1m5qu0t3
-      url:      http://quoteqa:8080
+      url:      http://quotetest:8080
 
     PROD:
       login:    mercuryquote
@@ -280,6 +280,16 @@ submission:
       host:     seqsubmission01.broadinstitute.org
       port:     8080
 
+sap:
+    DEV:
+      login:      GPCOMU
+      password:   SAPERD300!
+    QA:
+      login:      GPCOMU
+      password:   SAPERQ300!
+    PROD:
+      login:      GPCOMU
+      password:   SAPERP300!
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 mercury:
 
@@ -301,6 +311,7 @@ mercury:
       bass: PROD
       submission: DEV
 #      infiniumStarter: DEV
+      sap:  QA
 
 
     AUTO_BUILD:
@@ -321,6 +332,7 @@ mercury:
       bass: PROD
       submission: DEV
       infiniumStarter: DEV
+      sap:  QA
 
     TEST:
 
@@ -340,6 +352,7 @@ mercury:
       bass:     PROD
       submission: DEV
       infiniumStarter: DEV
+      sap:  QA
 
     QA:
       app:      QA
@@ -358,6 +371,7 @@ mercury:
       bass:     PROD
       submission: DEV
       infiniumStarter: QA
+      sap:  QA
 
     RC:
 
@@ -377,6 +391,7 @@ mercury:
       bass:     PROD
       submission: DEV
       infiniumStarter: QA
+      sap:  QA
 
 
     PROD:
@@ -396,4 +411,5 @@ mercury:
       collaborate: PROD
       bass:     PROD
       submission: PROD
+      sap:  PROD
 

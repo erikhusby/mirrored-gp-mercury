@@ -1794,6 +1794,9 @@ public enum LabEventType {
         /** If true, display error message when target does not exist.  */
         private boolean targetExpectedToExist = false;
 
+        /** If false, display error message when target has transfers.  */
+        private boolean targetExpectedEmpty = true;
+
         /** How many reagent fields for each entry in reagentNames. */
         private int[] reagentFieldCounts;
     
@@ -1845,6 +1848,7 @@ public enum LabEventType {
             repeatedWorkflowQualifier = builder.repeatedWorkflowQualifier;
             buttonValue = builder.buttonValue;
             targetExpectedToExist = builder.targetExpectedToExist;
+            targetExpectedEmpty = builder.targetExpectedEmpty;
         }
 
         public static class Builder {
@@ -1864,6 +1868,7 @@ public enum LabEventType {
             private String repeatedWorkflowQualifier;
             private String buttonValue = "Transfer";
             private boolean targetExpectedToExist = false;
+            private boolean targetExpectedEmpty = true;
 
             public Builder(MessageType messageType, VesselTypeGeometry sourceVesselTypeGeometry,
                     VesselTypeGeometry targetVesselTypeGeometry) {
@@ -1932,6 +1937,11 @@ public enum LabEventType {
                 return this;
             }
 
+            public Builder targetExpectedEmpty(boolean targetExpectedEmpty) {
+                this.targetExpectedEmpty = targetExpectedEmpty;
+                return this;
+            }
+
             public ManualTransferDetails build() {
                 return new ManualTransferDetails(this);
             }
@@ -1984,6 +1994,10 @@ public enum LabEventType {
 
         public boolean isTargetExpectedToExist() {
             return targetExpectedToExist;
+        }
+
+        public boolean isTargetExpectedEmpty() {
+            return targetExpectedEmpty;
         }
 
         public String[] getReagentNames() {

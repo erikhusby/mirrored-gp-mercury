@@ -36,6 +36,13 @@ public class HappyQuoteServiceMock implements QuoteService {
     }
 
     @Override
+    public String registerNewSAPWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
+                                     Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
+                                     String callbackParameterName, String callbackParameterValue) {
+        throw new RuntimeException("happy mock can't do this");
+    }
+
+    @Override
     public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
         Quote q = new Quote();
         q.setAlphanumericId(alphaId);

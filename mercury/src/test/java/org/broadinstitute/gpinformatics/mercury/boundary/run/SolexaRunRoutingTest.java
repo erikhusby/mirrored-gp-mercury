@@ -25,6 +25,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserC
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
@@ -59,11 +60,12 @@ public class SolexaRunRoutingTest extends BaseEventTest {
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
     private String reagentBlockBarcode;
-
+    private WorkflowConfig workflowConfig;
     @Override
     @BeforeMethod
     public void setUp() {
         super.setUp();
+        workflowConfig = new WorkflowLoader().load();
     }
 
     /**
@@ -153,7 +155,7 @@ public class SolexaRunRoutingTest extends BaseEventTest {
         VesselTransferEjb vesselTransferEjb = EasyMock.createMock(VesselTransferEjb.class);
         BSPExportsService bspExportsService = EasyMock.createMock(BSPExportsService.class);
 
-        SystemRouter router = new SystemRouter(vesselDao, new WorkflowLoader(), bspExportsService);
+        SystemRouter router = new SystemRouter(vesselDao, workflowConfig, bspExportsService);
         HipChatMessageSender hipChatMsgSender = EasyMock.createNiceMock(HipChatMessageSender.class);
         MiSeqReagentKitDao reagentKitDao = EasyMock.createNiceMock(MiSeqReagentKitDao.class);
 
@@ -188,7 +190,7 @@ public class SolexaRunRoutingTest extends BaseEventTest {
         LabVesselDao vesselDao = EasyMock.createNiceMock(LabVesselDao.class);
         BSPExportsService bspExportsService = EasyMock.createMock(BSPExportsService.class);
 
-        SystemRouter router = new SystemRouter(vesselDao, new WorkflowLoader(), bspExportsService);
+        SystemRouter router = new SystemRouter(vesselDao, workflowConfig, bspExportsService);
         HipChatMessageSender hipChatMsgSender = EasyMock.createNiceMock(HipChatMessageSender.class);
         UriInfo uriInfoMock = EasyMock.createNiceMock(UriInfo.class);
 
@@ -319,7 +321,7 @@ public class SolexaRunRoutingTest extends BaseEventTest {
 
         IlluminaSequencingRunFactory runFactory = EasyMock.createMock(IlluminaSequencingRunFactory.class);
         BSPExportsService bspExportsService = EasyMock.createMock(BSPExportsService.class);
-        SystemRouter router = new SystemRouter(vesselDao, new WorkflowLoader(), bspExportsService);
+        SystemRouter router = new SystemRouter(vesselDao, workflowConfig, bspExportsService);
 
         HipChatMessageSender hipChatMsgSender = EasyMock.createNiceMock(HipChatMessageSender.class);
         VesselTransferEjb vesselTransferEjb = EasyMock.createMock(VesselTransferEjb.class);

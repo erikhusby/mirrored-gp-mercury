@@ -21,11 +21,11 @@ import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.BettaLimsMessageUtils;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
@@ -56,6 +56,7 @@ import javax.xml.validation.SchemaFactory;
 import java.io.File;
 import java.io.StringReader;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -105,14 +106,14 @@ public class BettaLimsMessageResource {
     private UserBean userBean;
 
     @Inject
-    private WorkflowLoader workflowLoader;
+    private WorkflowConfig workflowConfig;;
 
     public BettaLimsMessageResource() {
     }
 
     /** Constructor used for test purposes. */
-    public BettaLimsMessageResource(WorkflowLoader workflowLoader) {
-        this.workflowLoader = workflowLoader;
+    public BettaLimsMessageResource(WorkflowConfig workflowConfig) {
+        this.workflowConfig = workflowConfig;
         postConstructor();
     }
 
@@ -120,7 +121,7 @@ public class BettaLimsMessageResource {
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void postConstructor() {
         // Does the one-time lab event setup that is needed when processing messages.
-        LabEvent.setupEventTypesThatCanFollowBucket(workflowLoader);
+        LabEvent.setupEventTypesThatCanFollowBucket(workflowConfig);
     }
 
     /**
@@ -258,7 +259,7 @@ public class BettaLimsMessageResource {
                 log.error(e.getMessage());
             }
             emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
-                    "[Mercury] Failed to process message", e.getMessage());
+                    Collections.<String>emptyList(), "[Mercury] Failed to process message", e.getMessage(), false);
             throw e;
         }
     }
@@ -445,9 +446,9 @@ public class BettaLimsMessageResource {
         for (LabEvent labEvent : labEvents) {
             labEventHandler.processEvent(labEvent);
             if (labEvent.hasAmbiguousLcsetProblem()) {
-                emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
+                emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), Collections.<String>emptyList(),
                         "[Mercury] Vessels have ambiguous LCSET", "After " + labEvent.getLabEventType().getName() +
-                                                                  " (" + labEvent.getLabEventId() + ")");
+                                                                  " (" + labEvent.getLabEventId() + ")", false);
             }
         }
     }

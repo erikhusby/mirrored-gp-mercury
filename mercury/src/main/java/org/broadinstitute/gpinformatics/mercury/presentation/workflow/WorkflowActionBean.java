@@ -10,7 +10,6 @@ import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductResource;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -35,6 +34,8 @@ public class WorkflowActionBean extends CoreActionBean {
 
     @Inject
     private ProductResource productResource;
+    @Inject
+    private WorkflowConfig workflowConfig;
 
     // Combination of workflow def and one of its effective dates.
     public static class WorkflowDefDateDto {
@@ -62,7 +63,7 @@ public class WorkflowActionBean extends CoreActionBean {
     }
 
     // Data needed for displaying the list.
-    private final List<WorkflowDefDateDto> allWorkflows;
+    private List<WorkflowDefDateDto> allWorkflows = new ArrayList<>();
 
     @Validate(required = true, on = {VIEW_ACTION})
     private WorkflowDefDateDto workflowDto;
@@ -85,10 +86,13 @@ public class WorkflowActionBean extends CoreActionBean {
 
     public WorkflowActionBean() throws Exception {
         super(null, null, WORKFLOW_PARAMETER);
+    }
 
-        WorkflowLoader workflowLoader = new WorkflowLoader();
-        WorkflowConfig workflowConfig = workflowLoader.load();
-        allWorkflows = new ArrayList<>();
+    /**
+     * Initialize the product with the passed in key for display in the form.
+     */
+    @Before(stages = LifecycleStage.BindingAndValidation)
+    public void init() {
         // Collects all workflows, each with possibly multiple effective dates.
         int id = 0;
         for (ProductWorkflowDef workflowDef : workflowConfig.getProductWorkflowDefs()) {
@@ -96,17 +100,11 @@ public class WorkflowActionBean extends CoreActionBean {
                 allWorkflows.add(new WorkflowDefDateDto(id++, workflowDef, date));
             }
         }
-    }
 
-    /**
-     * Initialize the product with the passed in key for display in the form.
-     */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, GET_WORKFLOW_IMAGE_ACTION})
-    public void init() {
         String workflowDtoId = getContext().getRequest().getParameter(WORKFLOW_PARAMETER);
 
         if (!StringUtils.isBlank(workflowDtoId)) {
-            int id = Integer.valueOf(workflowDtoId);
+            id = Integer.valueOf(workflowDtoId);
             for (WorkflowDefDateDto dto : allWorkflows) {
                 if (dto.getId() == id) {
                     viewWorkflowDto = dto;

@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -32,7 +33,7 @@ import java.util.Set;
  * query.
  */
 @Dependent
-public class SampleDataSourceResolver {
+public class SampleDataSourceResolver implements Serializable{
 
     private final MercurySampleDao mercurySampleDao;
 

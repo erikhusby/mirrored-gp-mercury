@@ -54,6 +54,13 @@ public class QuoteServiceStub implements QuoteService {
     }
 
     @Override
+    public String registerNewSAPWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
+                                     Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
+                                     String callbackParameterName, String callbackParameterValue) {
+        return Integer.toString(workItemId++);
+    }
+
+    @Override
     public Quote getQuoteByAlphaId(String id) throws QuoteServerException, QuoteNotFoundException {
         Quote quote = null;
 

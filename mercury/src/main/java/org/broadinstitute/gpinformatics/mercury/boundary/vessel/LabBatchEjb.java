@@ -29,7 +29,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.AbstractBatchJiraFieldFactory;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
@@ -102,7 +101,7 @@ public class LabBatchEjb {
 
     private ControlDao controlDao;
 
-    private WorkflowLoader workflowLoader;
+    private WorkflowConfig workflowConfig;
 
     private LabVesselDao labVesselDao;
 
@@ -307,7 +306,6 @@ public class LabBatchEjb {
     }
 
     private WorkflowBucketDef getWorkflowBucketDef(String bucketName, String workflowName) {
-        WorkflowConfig workflowConfig = workflowLoader.load();
         WorkflowBucketDef bucketDef = null;
 
         ProductWorkflowDef workflowDef = workflowConfig.getWorkflowByName(workflowName);
@@ -374,7 +372,7 @@ public class LabBatchEjb {
             }
 
             AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory
-                    .getInstance(projectType, newBatch, productOrderDao);
+                    .getInstance(projectType, newBatch, productOrderDao, workflowConfig);
             if (projectType == null) {
                 projectType = fieldBuilder.getProjectType();
             }
@@ -530,7 +528,7 @@ public class LabBatchEjb {
         }
 
         AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory
-                .getInstance(projectType, batch, productOrderDao);
+                .getInstance(projectType, batch, productOrderDao, workflowConfig);
         if (projectType == null) {
             projectType = fieldBuilder.getProjectType();
         }
@@ -986,8 +984,8 @@ public class LabBatchEjb {
     }
 
     @Inject
-    public void setWorkflowLoader(WorkflowLoader workflowLoader) {
-        this.workflowLoader = workflowLoader;
+    public void setWorkflowConfig(WorkflowConfig workflowConfig) {
+        this.workflowConfig = workflowConfig;
     }
 
     @Inject

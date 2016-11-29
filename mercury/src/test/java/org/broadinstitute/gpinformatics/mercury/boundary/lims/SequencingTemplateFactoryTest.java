@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
@@ -98,6 +99,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
 
         super.setUp();
         factory = new SequencingTemplateFactory();
+        factory.setWorkflowConfig(new WorkflowLoader().load());
 
         // Method calls on factory will always use our list of flowcell designations.
         factory.setFlowcellDesignationEjb(new FlowcellDesignationEjb(){

@@ -19,5 +19,6 @@ TRAILING NULLCOLS
  owner,
  placed_date DATE "YYYYMMDDHH24MISS",
  skip_regulatory_reason,
+ sap_order_number,
  reg_info_ids
 )

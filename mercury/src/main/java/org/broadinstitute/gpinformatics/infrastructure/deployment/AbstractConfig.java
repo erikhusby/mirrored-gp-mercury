@@ -83,4 +83,8 @@ public abstract class AbstractConfig {
     public static String getHttpScheme() {
         return "http://";
     }
+
+    public Deployment getExternalDeployment() {
+        return externalDeployment;
+    }
 }
