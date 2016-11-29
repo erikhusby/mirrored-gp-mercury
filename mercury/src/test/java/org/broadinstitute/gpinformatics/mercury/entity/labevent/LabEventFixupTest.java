@@ -1716,4 +1716,25 @@ public class LabEventFixupTest extends Arquillian {
 
         utx.commit();
     }
+
+    @Test(enabled = false)
+    public void fixupGplim4508() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        long[] ids = {1727870L, 1727867L, 1727881L};
+        for (long wrongEventId : ids) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, wrongEventId);
+            if (labEvent == null || labEvent.getLabEventType() != LabEventType.EXTRACT_BLOOD_MICRO_TO_SPIN) {
+                throw new RuntimeException("cannot find " + wrongEventId + " or is not EXTRACT_BLOOD_MICRO_TO_SPIN");
+            }
+            System.out.println("LabEvent " + wrongEventId + " type " + labEvent.getLabEventType());
+            labEvent.setLabEventType(LabEventType.EXTRACT_FRESH_TISSUE_MICRO_TO_SPIN);
+            System.out.println("   updated to " + labEvent.getLabEventType());
+        }
+
+        labEventDao.persist(new FixupCommentary("GPLIM-4508 change event type to ExtractFreshTissueMicroToSpin"));
+        labEventDao.flush();
+        utx.commit();
+    }
 }
