@@ -17,6 +17,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.io.IOException;
@@ -37,6 +38,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  * Data fixups AttributeArchetype.
  */
 @Test(groups = TestGroups.FIXUP)
+@RequestScoped
 public class AttributeArchetypeFixupTest extends Arquillian {
 
     @Inject

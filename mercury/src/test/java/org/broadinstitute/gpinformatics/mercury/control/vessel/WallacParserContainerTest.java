@@ -24,6 +24,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.FileInputStream;
@@ -38,7 +39,8 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 /**
  * Test the Wallac upload with persistence.
  */
-@Test(groups = TestGroups.STANDARD)
+@Test(groups = TestGroups.STANDARD, singleThreaded = true)
+@RequestScoped
 public class WallacParserContainerTest extends Arquillian {
     public static final String WALLAC_OUTPUT = "Wallac96WellOutput.xls";
 

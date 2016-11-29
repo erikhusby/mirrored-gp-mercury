@@ -36,7 +36,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 /**
  * Test SampleVessel parsing with persistence
  */
-@Test(groups = TestGroups.STANDARD)
+@Test(groups = TestGroups.STANDARD, singleThreaded = true)
 @RequestScoped
 public class UploadSampleVesselsContainerTest extends Arquillian {
 

@@ -21,6 +21,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.text.SimpleDateFormat;
@@ -32,7 +33,8 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-@Test(groups = TestGroups.STUBBY)
+@Test(groups = TestGroups.STUBBY, singleThreaded = true)
+@RequestScoped
 public class LabBatchEJBTest extends ContainerTest {
 
     public static final String STUB_TEST_PDO_KEY = "PDO-999";

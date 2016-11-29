@@ -19,7 +19,7 @@ import javax.transaction.UserTransaction;
 import java.util.Arrays;
 import java.util.List;
 
-@Test(groups = TestGroups.STUBBY)
+@Test(groups = TestGroups.STUBBY, singleThreaded = true)
 @RequestScoped
 public class ProductOrderSampleStatusTest extends ContainerTest {
 
