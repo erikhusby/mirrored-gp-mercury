@@ -35,6 +35,7 @@ import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.enterprise.context.Dependent;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Alternative;
@@ -189,8 +190,12 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
         }
     }
 
+
+    @Dependent
     @Alternative
     public static class ControlBusinessKeyJiraService implements JiraService {
+
+        public ControlBusinessKeyJiraService(){}
 
         @Override
         public JiraIssue createIssue(CreateFields.ProjectType projectType, @Nullable String reporter,
