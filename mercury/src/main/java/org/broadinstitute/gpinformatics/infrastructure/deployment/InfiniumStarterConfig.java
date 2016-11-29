@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.deployment;
 
 import javax.annotation.Nonnull;
-import javax.enterprise.context.Dependent;
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.io.Serializable;
 
@@ -10,13 +10,15 @@ import java.io.Serializable;
  */
 @SuppressWarnings("UnusedDeclaration")
 @ConfigKey("infiniumStarter")
-@Dependent
+@ApplicationScoped
 public class InfiniumStarterConfig extends AbstractConfig implements Serializable {
     private String dataPath;
     private long minimumIdatFileLength;
     private String jmsHost;
     private int jmsPort;
     private String jmsQueue;
+
+    public InfiniumStarterConfig(){}
 
     @Inject
     public InfiniumStarterConfig(@Nonnull Deployment deploymentConfig) {

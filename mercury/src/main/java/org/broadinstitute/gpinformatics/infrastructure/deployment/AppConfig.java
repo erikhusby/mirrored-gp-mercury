@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.deployment;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nonnull;
-import javax.enterprise.context.Dependent;
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.io.Serializable;
 
@@ -13,7 +13,7 @@ import java.io.Serializable;
  */
 @SuppressWarnings("UnusedDeclaration")
 @ConfigKey("app")
-@Dependent
+@ApplicationScoped
 public class AppConfig extends AbstractConfig implements Serializable {
 
     // Force the JVM into headless mode. This avoids creating a visible icon when running the server locally,
@@ -21,6 +21,8 @@ public class AppConfig extends AbstractConfig implements Serializable {
     static {
         System.setProperty("java.awt.headless", "true");
     }
+
+    public AppConfig(){}
 
     @Inject
     public AppConfig(@Nonnull Deployment deploymentConfig) {

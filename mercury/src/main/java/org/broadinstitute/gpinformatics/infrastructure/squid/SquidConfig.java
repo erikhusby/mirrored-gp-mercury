@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
 import javax.annotation.Nonnull;
-import javax.enterprise.context.Dependent;
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.io.Serializable;
 
@@ -15,10 +15,12 @@ import java.io.Serializable;
  *
  */
 @ConfigKey("squid")
-@Dependent
+@ApplicationScoped
 public class SquidConfig extends AbstractConfig implements Serializable {
 
     private String url;
+
+    public SquidConfig(){}
 
     @Inject
     public SquidConfig(@Nonnull Deployment deployment) {

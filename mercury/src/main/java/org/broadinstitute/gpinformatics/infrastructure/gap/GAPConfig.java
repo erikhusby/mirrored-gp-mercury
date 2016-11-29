@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.mercury.control.LoginAndPassword;
 
 import javax.annotation.Nonnull;
-import javax.enterprise.context.Dependent;
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.io.Serializable;
 
@@ -15,7 +15,7 @@ import java.io.Serializable;
  */
 @SuppressWarnings("UnusedDeclaration")
 @ConfigKey("gap")
-@Dependent
+@ApplicationScoped
 public class GAPConfig extends AbstractConfig implements LoginAndPassword, Serializable {
 
     private String login;
@@ -25,6 +25,8 @@ public class GAPConfig extends AbstractConfig implements LoginAndPassword, Seria
     private String host;
 
     private int port;
+
+    public GAPConfig(){}
 
     @Inject
     public GAPConfig(@Nonnull Deployment deployment) {

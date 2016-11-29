@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.mercury.control.LoginAndPassword;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.Serializable;
@@ -15,7 +16,7 @@ import java.io.Serializable;
  */
 @SuppressWarnings("UnusedDeclaration")
 @ConfigKey("portal")
-@Dependent
+@ApplicationScoped
 public class PortalConfig extends AbstractConfig  implements LoginAndPassword, Serializable  {
 
     public static final String CRSP_PORTAL_NAME = "CRSP";
@@ -28,9 +29,9 @@ public class PortalConfig extends AbstractConfig  implements LoginAndPassword, S
 
     private int port;
 
+    public PortalConfig(){}
 
-    @Inject
-    public PortalConfig(@Nonnull Deployment deployment) {
+    @Inject@Nonnull public PortalConfig(Deployment deployment) {
         super(deployment);
     }
 
