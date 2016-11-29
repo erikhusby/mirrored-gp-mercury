@@ -2252,6 +2252,11 @@
                 <!-- No JIRA setup, because BSP creates ARRAY tickets -->
             </workflowStepDefs>
             <workflowStepDefs>
+                <name>InfiniumMethylationZymoTransferElution</name>
+                <labEventTypes>INFINIUM_METHYLATION_ZYMO_TRANSFER</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
                 <name>InfiniumMethylationBufferAddition1</name>
                 <labEventTypes>INFINIUM_METHYLATION_BUFFER_ADDITION_1</labEventTypes>
                 <optional>false</optional>

@@ -34,6 +34,7 @@ public class InfiniumEntityBuilder {
     private List<LabEvent> xStainEvents = new ArrayList<>();
     private StaticPlate filterPlate;
     private StaticPlate elutionPlate;
+    private StaticPlate zymoPlate;
 
     public enum IncludeMethylation {
         TRUE, FALSE
@@ -80,17 +81,23 @@ public class InfiniumEntityBuilder {
         Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
         mapBarcodeToVessel.put(sourceplate.getLabel(), sourceplate);
         if (includeMethylation == IncludeMethylation.TRUE) {
-            LabEventTest.validateWorkflow("InfiniumMethylationBufferAddition1", sourceplate);
+            LabEventTest.validateWorkflow("InfiniumMethylationZymoTransferElution", sourceplate);
+            LabEvent zymoPlateEvent = labEventFactory.buildFromBettaLims(
+                    infiniumJaxbBuilder.getInfiniumMethlationZymoPlateJaxb(), mapBarcodeToVessel);
+            labEventHandler.processEvent(zymoPlateEvent);
+            zymoPlate = (StaticPlate) zymoPlateEvent.getTargetLabVessels().iterator().next();
+
+            LabEventTest.validateWorkflow("InfiniumMethylationBufferAddition1", zymoPlate);
             LabEvent infiniumMethylationBufferAddition1Event = labEventFactory.buildFromBettaLimsPlateEventDbFree(
-                    infiniumJaxbBuilder.getInfiniumMethylationBufferAddition1Jaxb(), sourceplate);
+                    infiniumJaxbBuilder.getInfiniumMethylationBufferAddition1Jaxb(), zymoPlate);
             labEventHandler.processEvent(infiniumMethylationBufferAddition1Event);
 
-            LabEventTest.validateWorkflow("InfiniumMethylationBufferAddition2", sourceplate);
+            LabEventTest.validateWorkflow("InfiniumMethylationBufferAddition2", zymoPlate);
             LabEvent infiniumMethylationBufferAddition2Event = labEventFactory.buildFromBettaLimsPlateEventDbFree(
-                    infiniumJaxbBuilder.getInfiniumMethylationBufferAddition2Jaxb(), sourceplate);
+                    infiniumJaxbBuilder.getInfiniumMethylationBufferAddition2Jaxb(), zymoPlate);
             labEventHandler.processEvent(infiniumMethylationBufferAddition2Event);
 
-            LabEventTest.validateWorkflow("InfiniumMethylationFilterPlateTransfer", sourceplate);
+            LabEventTest.validateWorkflow("InfiniumMethylationFilterPlateTransfer", zymoPlate);
             LabEvent filterPlateEvent = labEventFactory.buildFromBettaLims(
                     infiniumJaxbBuilder.getInfiniumMethlationFilterPlateJaxb(), mapBarcodeToVessel);
             labEventHandler.processEvent(filterPlateEvent);
