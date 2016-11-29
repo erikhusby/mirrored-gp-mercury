@@ -50,7 +50,7 @@ public class ProductFixupTest extends Arquillian {
      */
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(QA, "QA");
+        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
     // Required for Arquillian tests so it should remain enabled for sprint4.
