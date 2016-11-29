@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.OrderBillSummaryStat;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -53,10 +52,6 @@ public class BillingTrackerImporterContainerTest extends Arquillian {
 
     @Inject
     private PriceListCache priceListCache;
-
-    @SuppressWarnings("CdiInjectionPointsInspection")
-    @Inject
-    private Log logger;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
