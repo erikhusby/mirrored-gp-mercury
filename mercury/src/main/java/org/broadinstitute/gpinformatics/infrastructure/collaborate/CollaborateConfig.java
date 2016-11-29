@@ -5,7 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
 import javax.annotation.Nonnull;
-import javax.enterprise.context.Dependent;
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 /**
@@ -13,10 +13,12 @@ import javax.inject.Inject;
  */
 @SuppressWarnings("UnusedDeclaration")
 @ConfigKey("collaborate")
-@Dependent
+@ApplicationScoped
 public class CollaborateConfig extends AbstractConfig {
 
     private String urlBase;
+
+    public CollaborateConfig(){}
 
     @Inject
     public CollaborateConfig(@Nonnull Deployment deployment) {
