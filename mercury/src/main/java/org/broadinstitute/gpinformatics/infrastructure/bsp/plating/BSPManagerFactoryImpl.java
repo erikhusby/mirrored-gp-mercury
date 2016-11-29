@@ -13,13 +13,13 @@ import org.broadinstitute.bsp.client.workrequest.WorkRequestManager;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
-import javax.enterprise.context.Dependent;
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
-@Dependent
+@ApplicationScoped
 @Default
 public class BSPManagerFactoryImpl implements BSPManagerFactory {
     @Inject
