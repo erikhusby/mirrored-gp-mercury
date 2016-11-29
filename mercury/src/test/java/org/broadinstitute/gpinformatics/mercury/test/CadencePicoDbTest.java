@@ -34,7 +34,7 @@ public class CadencePicoDbTest extends ContainerTest {
     private final SimpleDateFormat timestampFormat = new SimpleDateFormat("MMddHHmmss");
 
     @Test(enabled = true, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
-    @RunAsClient
+    //@RunAsClient
     public void testEndToEnd(@ArquillianResource URL baseUrl) throws Exception {
         String testSuffix = timestampFormat.format(new Date());
 

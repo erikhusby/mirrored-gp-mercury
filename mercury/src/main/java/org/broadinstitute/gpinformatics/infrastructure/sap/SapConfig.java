@@ -6,15 +6,19 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.mercury.control.LoginAndPassword;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.io.Serializable;
 
 @SuppressWarnings("UnusedDeclaration")
 @ConfigKey("sap")
+@ApplicationScoped
 public class SapConfig extends AbstractConfig implements LoginAndPassword, Serializable {
 
     private String login;
     private String password;
+
+    public SapConfig(){}
 
     @Inject
     public SapConfig(@Nonnull Deployment mercuryDeployment) {

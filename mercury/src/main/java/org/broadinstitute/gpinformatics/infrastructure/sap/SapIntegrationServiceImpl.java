@@ -26,10 +26,13 @@ import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.jetbrains.annotations.NotNull;
 
+import javax.enterprise.context.Dependent;
+import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 
-@Impl
+@Dependent
+@Default
 public class SapIntegrationServiceImpl implements SapIntegrationService {
 
     @Inject
