@@ -34,6 +34,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDa
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketCount;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -88,6 +89,7 @@ public class BucketViewActionBean extends CoreActionBean {
     public static final String LOAD_SEARCH_DATA = "loadSearchData";
     public static final String SELECTED_BUCKET_KEY = "selectedBucket";
     public static final String TABLE_STATE_KEY = "tableState";
+    public static final String SELECT_NEXT_SIZE = "selectNextSize";
 
     @Inject
     JiraUserTokenInput jiraUserTokenInput;
@@ -147,6 +149,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private CreateFields.ProjectType projectType = null;
     private String filterState;
     private String tableState = "{}";
+    private int selectNextSize = 92;
 
     private String searchKey;
     private static final List<String> PREFETCH_COLUMN_NAMES =
@@ -185,6 +188,10 @@ public class BucketViewActionBean extends CoreActionBean {
                     tableState = tableStatePreferenceValue.iterator().next();
                     State state = readTableState(tableState);
                     buildHeaderVisibilityMap(state);
+                }
+                List<String> selectNextPreferenceValue = nameValueDefinitionValue.getDataMap().get(SELECT_NEXT_SIZE);
+                if (CollectionUtils.isNotEmpty(selectNextPreferenceValue)) {
+                    selectNextSize = Integer.parseInt(selectNextPreferenceValue.iterator().next());
                 }
             }
         } catch (Exception e) {
@@ -266,10 +273,7 @@ public class BucketViewActionBean extends CoreActionBean {
     @HandlesEvent(SAVE_SEARCH_DATA)
     public Resolution saveSearchData() throws Exception {
         JSONObject jsonObject = new JSONObject(tableState);
-
-        if (selectedBucket != null) {
-            saveSearchData(readTableState(tableState));
-        }
+        saveSearchData(readTableState(tableState));
         return new StreamingResolution("text", jsonObject.toString());
     }
 
@@ -278,6 +282,7 @@ public class BucketViewActionBean extends CoreActionBean {
         if (selectedBucket != null) {
             definitionValue.put(SELECTED_BUCKET_KEY, selectedBucket);
         }
+        definitionValue.put(SELECT_NEXT_SIZE, String.valueOf(selectNextSize));
         definitionValue.put(TABLE_STATE_KEY, Collections.singletonList(writeTableState(state)));
 
         preferenceEjb.add(userBean.getBspUser().getUserId(), PreferenceType.BUCKET_PREFERENCES, definitionValue);
@@ -637,10 +642,10 @@ public class BucketViewActionBean extends CoreActionBean {
         return projectType;
     }
 
-    public void setProjectType(
-            CreateFields.ProjectType projectType) {
+    public void setProjectType(CreateFields.ProjectType projectType) {
         this.projectType = projectType;
     }
+
     public String getJiraUserQuery() {
         return jiraUserQuery;
     }
@@ -663,6 +668,14 @@ public class BucketViewActionBean extends CoreActionBean {
 
     public void setTableState(String tableState) {
         this.tableState = tableState;
+    }
+
+    public int getSelectNextSize() {
+        return selectNextSize;
+    }
+
+    public void setSelectNextSize(int selectNextSize) {
+        this.selectNextSize = selectNextSize;
     }
 
     public String getFilterState() {
