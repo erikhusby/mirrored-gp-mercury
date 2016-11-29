@@ -97,13 +97,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @JoinColumn(name = "product_order", nullable = false)
     @OrderColumn(name = "SAMPLE_POSITION", nullable = false)
     @AuditJoinTable(name = "product_order_sample_join_aud")
-    @BatchSize(size = 100)
+    @BatchSize(size = 500)
     private final List<ProductOrderSample> samples = new ArrayList<>();
 
     @Transient
     private final SampleCounts sampleCounts = new SampleCounts();
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "productOrder", orphanRemoval = true)
+    @BatchSize(size = 100)
     private final Set<ProductOrderAddOn> addOns = new HashSet<>();
 
     @Id

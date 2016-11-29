@@ -16,16 +16,112 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
     }
 
     var filterStatusContainer = $j(filterStatusSelector); // MaterialType-filters
-    // filterStatusContainer.hide();
+
     filterStatusContainer.append($j("<ul></ul>", {
         class: "filtered-items-header list",
     }));
     var extraDiv = $j("<div></div>", {id: "extraDiv"});
     filterStatusContainer.append(extraDiv);
     extraDiv.append($j("<ul></ul>", {class: "list", id: "filtered-items"}));
+    var chosenColumns=[];
+
+    function triggerChosenUpdate(column) {
+        chosenColumns.forEach(function(chosenItem){
+            if (chosenItem.attr("id") !== column.id){
+                chosenItem.trigger("chosen:updated");
+            }
+        })
+    }
+
+    function getElement(html, map) {
+        var selector;
+        var keys = Object.keys(map);
+        if (keys.includes("id")) {
+            var value = map["id"];
+            if (value) {
+                selector = "#" + value;
+            }
+        }
+        if (keys.includes("class")) {
+            var value = map["class"];
+            if (value) {
+                selector += "." + value;
+            }
+        }
+        return $j(selector).length ? $j(selector) : $j(html, map);
+    }
+
+    var updateFilter = $j.fn.dataTable.util.throttle(
+         function (column, filterValue) {
+             searchString = filterValue.replace(/[,|\s]+/g, '|');
+             var searchInstance = column.search(filterValue ?  searchString : '', true, false, true);
+             triggerChosenUpdate(column);
+             searchInstance.draw();
+         }, 500);
+
+    function updateFilterInfo(column, title, filterLabel, filterValue) {
+        var filteredItemsHeader = $j(".filtered-items-header");
+        var filterHeader = getElement("<li></li>", {class: "filter-header-item", id: title, text: filterLabel});
+
+        var filterItemTitle = "filter-item-" + title;
+        $j("#"+filterItemTitle).remove();
+        var filteredItem = $j("<li></li>", {id: filterItemTitle, class: "list"});
+        var columnContainer = $j("#filtered-items");
+
+        if (filterValue === "") {
+            filteredItemsHeader.find(filterHeader).remove();
+            columnContainer.find(filteredItem).remove();
+        } else {
+            var labelClass = 'filtering-label';
+
+            var filteredItemLabel = getElement("<span></span>", {class: labelClass, text: filterLabel + ":"});// eg Material Type
+            var filteredItedBullet = getElement("<img/>", {
+                src: ctxPath + '/images/error.png',
+                title: "Clear " + filterLabel + " filter"
+            });
+            filteredItedBullet.hover(function(){
+                $j(this).css("cursor", "pointer");
+            });
+            filteredItemLabel.prepend(filteredItedBullet);
+            var filteredItemValue = getElement("<span></span>", {class: 'filtering-text', text: filterValue});// DNA
+            filteredItemsHeader.append(filterHeader);
+            filteredItem.append(filteredItemLabel);
+            filteredItemLabel.after(filteredItemValue);
+            columnContainer.append(filteredItem);
+
+            filteredItem.on("click",function(){
+                $j("th").filter(function () {
+                    var columnTitle = $j(this).find(".title").text().trim();
+                    return columnTitle === filterLabel;
+                }).each(function () {
+                    var textArea = $j(this).find("input[type='textarea']");
+                    if (textArea.length > 0) {
+                        textArea.val('');
+                        textArea.trigger("change");
+                    } else {
+                        var select = $j(this).find("select");
+                        if (select.length>0){
+                            var optionSelector = "option[value='OPTION_VALUE']".replace("OPTION_VALUE",filterValue);
+                            $j(this).find(optionSelector).removeAttr('selected');
+                            var eventWhat = {'deselected': ''};
+                            select.trigger("chosen:updated", eventWhat);
+                        }
+                    }
+                    updateFilter(column, '');
+                });
+                $j(this).remove();
+            });
+        }
+        if (filterStatusContainer.find("li").length==0){
+            filterStatusContainer.fadeOut(75);
+        }else{
+            filterStatusContainer.fadeIn(75);
+        }
+    }
 
     api.columns().every(function (index) {
         var column = api.column(index);
+        var filteredRows = api.column(index, {search: 'none'}).data();
         var savedFilterValue=column.search();
 
         var header = $j(column.header());
@@ -44,84 +140,6 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
         });
         var width = Math.ceil(header.outerWidth() * 1.5) + "px";
 
-        function updateFilter(column, input) {
-            searchString = input.replace(/[,|\s]+/g, '|');
-            var searchInstance = column.search(input ?  searchString : '', true, false, true);
-            searchInstance.draw();
-        }
-
-        function getElement(html, map) {
-            var selector;
-            var keys = Object.keys(map);
-            if (keys.includes("id")) {
-                var value = map["id"];
-                if (value) {
-                    selector = "#" + value;
-                }
-            }
-            if (keys.includes("class")) {
-                var value = map["class"];
-                if (value) {
-                    selector += "." + value;
-                }
-            }
-            return $j(selector).length ? $j(selector) : $j(html, map);
-        }
-
-        function updateFilterInfo(filterLabel, filterValue) {
-            var filteredItemsHeader = $j(".filtered-items-header");
-            var filterHeader = getElement("<li></li>", {class: "filter-header-item", id: cleanTitle, text: headerLabel});
-
-            var filterItemTitle = "filter-item-" + cleanTitle;
-            $j("#"+filterItemTitle).remove();
-            var filteredItem = $j("<li></li>", {id: filterItemTitle, class: "list"});
-
-            var columnContainer = $j("#filtered-items");
-
-            if (filterValue === "") {
-                filteredItemsHeader.find(filterHeader).remove();
-                columnContainer.find(filteredItem).remove();
-            } else {
-                var labelClass = 'filtering-label';
-
-                var filteredItemLabel = getElement("<span></span>", {class: labelClass, text: filterLabel + ":"});// eg Material Type
-                var filteredItedBullet = getElement("<img/>", {src: ctxPath+ '/images/error.png',title:"clear filter"});
-                filteredItemLabel.prepend(filteredItedBullet);
-                var filteredItemValue = getElement("<span></span>", {class: 'filtering-text', text: filterValue});// DNA
-                filteredItemsHeader.append(filterHeader);
-                filteredItem.append(filteredItemLabel);
-                filteredItemLabel.after(filteredItemValue);
-                columnContainer.append(filteredItem);
-
-                filteredItedBullet.on("click",function(){
-                    $j("th").filter(function(){
-                        return $j(this).html().split("<")[0].trim() === filterLabel;
-                    }).each(function () {
-                        var textArea = $j(this).find("input[type='textarea']");
-                        if (textArea.length>0){
-                            textArea.val('');
-                            // textArea.removeAttr('value');
-                            textArea.trigger("change");
-                        } else {
-                            var select = $j(this).find("select");
-                            if (select.length>0){
-                                var optionSelector = "option[value='OPTION_VALUE']".replace("OPTION_VALUE",filterValue);
-                                $j(this).find(optionSelector).removeAttr('selected');
-                                var eventWhat = {'deselected': ''};
-                                select.trigger("chosen:updated", eventWhat);
-                            }
-                        }
-                        updateFilter(column, '');
-                    })
-                })
-            }
-            if (filterStatusContainer.find("li").length==0){
-                filterStatusContainer.fadeOut();
-            }else{
-                filterStatusContainer.fadeIn();
-            }
-        }
-
         if (selectType === 'text' && filterColumn) {
             var textInput = $j("<input/>", {
                 type: 'textarea',
@@ -130,19 +148,14 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                 value: savedFilterValue,
                 placeholder: "Filter " + headerLabel
             });
-            textInput.prepend("<br/>");
             header.append(textInput);
             $j(textInput).on('click', function () {
                 return false;
             });
-            var doUpdateFilter = $j.fn.dataTable.util.throttle(
-                function (where, what) {
-                    updateFilter(where, what)
-                }, 800);
 
-            $j(textInput).on('keyup change blur', function () {
-                doUpdateFilter(column, $j(this).val().trim());
-                updateFilterInfo(headerLabel, $j(this).val().trim());
+            $j(textInput).on('input blur change', function () {
+                updateFilter(column, $j(this).val().trim());
+                updateFilterInfo(column, cleanTitle, headerLabel, $j(this).val().trim());
             });
         }
         if (selectType === 'select' && filterColumn) {
@@ -153,10 +166,15 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                 class: columnFilterClass,
                 style: 'display: none',
             });
-            $j("<br/>").prependTo(select);
+
             header.append(select);
-            buildHeaderFilterOptions(header, column.data());
-            select.find("option[value='" + savedFilterValue + "']").attr('selected', 'selected');
+            buildHeaderFilterOptions(header, filteredRows);
+            // select.find("option[value='" + savedFilterValue + "']").attr('selected', 'selected');
+            if (savedFilterValue!=='') {
+                select.find("option").filter(function () {
+                    return this.value.match(savedFilterValue);
+                }).attr('selected', 'selected');
+            }
             var chosen = select.chosen({
                 disable_search_threshold: 10,
                 display_selected_options: false,
@@ -166,18 +184,20 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                 placeholder_text_single: "Select a " + headerLabel,
                 placeholder_text_multiple: "Select a " + headerLabel
             });
+
+            chosenColumns.push(chosen);
             $j("div." + columnFilterClass).on("click", function () {
                 return false;
-            }),
+            });
             chosen.on("change chosen:updated", function (event, what) {
                 // chosen.on("nothing", function (event, what) {
                 if (what) {
-                    var filterText=what[eventAction];
                     var eventAction = Object.keys(what)[0]; // ['selected','deselected']
+                    var filterText=what[eventAction];
                     if (eventAction==='deselected'){
                         filterText = "";
                     }
-                    updateFilterInfo(headerLabel, filterText);
+                    updateFilterInfo(column, cleanTitle, headerLabel, filterText);
                 }
             });
             $j(".filtering-label img").on("click",function(){
@@ -199,61 +219,63 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                 });
                 updateFilter(column, values.join(','));
                 // api.off(this);
-
             });
         }
         api.on('init.dt', function (event, settings) {
-                updateFilterInfo(headerLabel, savedFilterValue);
+                updateFilterInfo(column, cleanTitle, headerLabel, savedFilterValue);
         });
     });
 
     api.on('search.dt', function (event, settings) {
         updateSearchText(settings);
     });
-}
 
-function buildHeaderFilterOptions(header, columns) {
-    var select = $j(header).find("select");
+    function buildHeaderFilterOptions(header, columns) {
+        var select = $j(header).find("select");
+        var htmlExpression = /<(?:.|\n)*?>/gi;
 
-    function clearHtml(htmlString) {
-        return htmlString.replace(/<(?:.|\n)*?>/gm, '').trim();
+        function clearHtml(htmlString) {
+            return htmlString.replace(htmlExpression, '').trim();
+        }
+
+        var uniqueValues = [];
+        columns.each(function (row) {
+            var cell=row;
+            if (htmlExpression.test(row)) {
+                cell = clearHtml($j(row).text());
+            }
+            if (cell !== '' && uniqueValues.indexOf(cell) < 0) {
+                uniqueValues.push(cell);
+            }
+        });
+        uniqueValues.sort().forEach(function (thisOption) {
+            var items = $j("<option></option>", {value: thisOption, text: thisOption});
+            $j(select).append(items);
+        });
+
+        return $j(select);
+    }
+    function tableEmpty(settings){
+        var api = $j.fn.dataTable.Api(settings);
+        return api.data().length===0;
     }
 
-    var uniqueValues = [];
-    columns.each(function (row) {
-        var cell = clearHtml(row);
-        if (uniqueValues.indexOf(cell) < 0) {
-            uniqueValues.push(cell);
+    function updateSearchText(settings) {
+        var api = $j.fn.dataTable.Api(settings);
+        var currentFullTextSearch = api.search();
+        if (currentFullTextSearch !== undefined) {
+            var defaultText = "any text";
+            var matchContent = defaultText;
+            if (!isBlank(currentFullTextSearch)) {
+                matchContent = currentFullTextSearch;
+            }
+            var textJQuery = jQuery("<span></span>", {text: matchContent});
+            textColor = "";
+            if (matchContent !== defaultText) {
+                textColor = "red";
+            }
+            textJQuery.css("color", textColor);
+            $j(".dtFilters").html("<b>Search text matches</b>: " + textJQuery[0].outerHTML);
         }
-    });
-
-    uniqueValues.sort().forEach(function (thisOption) {
-        var items = $j("<option></option>", {value: thisOption, text: thisOption});
-        $j(select).append(items);
-    });
-
-    return $j(select);
-}
-function tableEmpty(settings){
-    var api = $j.fn.dataTable.Api(settings);
-    return api.data().length===0;
-}
-
-function updateSearchText(settings) {
-    var api = $j.fn.dataTable.Api(settings);
-    var currentFullTextSearch = api.search();
-    if (currentFullTextSearch !== undefined) {
-        var defaultText = "any text";
-        var matchContent = defaultText;
-        if (!isBlank(currentFullTextSearch)) {
-            matchContent = currentFullTextSearch;
-        }
-        var textJQuery = jQuery("<span></span>", {text: matchContent});
-        textColor = "";
-        if (matchContent !== defaultText) {
-            textColor = "red";
-        }
-        textJQuery.css("color", textColor);
-        $j(".dtFilters").html("<b>Search text matches</b>: " + textJQuery[0].outerHTML);
     }
 }
