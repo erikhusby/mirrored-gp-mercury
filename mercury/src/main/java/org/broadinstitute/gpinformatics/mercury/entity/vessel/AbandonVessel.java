@@ -27,6 +27,7 @@ public class AbandonVessel {
     private Long abandonVesselId;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "LAB_VESSEL")
     private LabVessel labVessel;
 
     @Enumerated(EnumType.STRING)

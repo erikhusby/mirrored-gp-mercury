@@ -29,6 +29,7 @@ public class AbandonVesselPosition {
     private Long abandonVesselPositionId;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ABANDON_VESSEL")
     private AbandonVessel abandonVessel;
 
     private String vesselPosition;
