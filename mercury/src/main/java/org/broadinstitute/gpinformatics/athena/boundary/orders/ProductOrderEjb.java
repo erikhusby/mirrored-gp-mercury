@@ -285,12 +285,14 @@ public class ProductOrderEjb {
                     messageCollection.addInfo("Order "+orderToPublish.getJiraTicketKey() +
                                               " has been successfully created in SAP");
                 } else if(orderToPublish.isSavedInSAP()){
-                    sapService.updateOrder(orderToPublish);
-                    orderToPublish.latestSapOrderDetail()
-                            .setPrimaryQuantity(SapIntegrationServiceImpl.getSampleCount(orderToPublish
-                            ));
-                    messageCollection.addInfo("Order "+orderToPublish.getJiraTicketKey() +
-                                              " has been successfully updated in SAP");
+                    if (SapIntegrationServiceImpl.getSampleCount(orderToPublish) > 0) {
+                        sapService.updateOrder(orderToPublish);
+                        orderToPublish.latestSapOrderDetail()
+                                .setPrimaryQuantity(SapIntegrationServiceImpl.getSampleCount(orderToPublish
+                                ));
+                        messageCollection.addInfo("Order "+orderToPublish.getJiraTicketKey() +
+                                                  " has been successfully updated in SAP");
+                    }
                 }
                 productOrderDao.persist(orderToPublish);
             } else {
