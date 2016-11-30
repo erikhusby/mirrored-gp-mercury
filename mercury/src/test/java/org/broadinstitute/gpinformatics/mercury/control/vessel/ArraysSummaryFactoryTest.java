@@ -6,7 +6,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -22,13 +21,13 @@ import java.util.List;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
 /**
- * Test generation of the samplesheet.csv
+ * Test generation of the report.
  */
 @Test(groups = TestGroups.STANDARD)
-public class SampleSheetFactoryTest extends Arquillian {
+public class ArraysSummaryFactoryTest extends Arquillian {
 
     @Inject
-    private SampleSheetFactory sampleSheetFactory;
+    private ArraysSummaryFactory arraysSummaryFactory;
 
     @Inject
     private ProductOrderDao productOrderDao;
@@ -45,7 +44,7 @@ public class SampleSheetFactoryTest extends Arquillian {
                 productOrder);
         Assert.assertEquals(vesselPositionPairs.size(), 288);
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        sampleSheetFactory.write(new PrintStream(byteArrayOutputStream), vesselPositionPairs,
+        arraysSummaryFactory.write(new PrintStream(byteArrayOutputStream), vesselPositionPairs,
                 productOrder.getResearchProject());
         System.out.println(byteArrayOutputStream.toString());
         // todo jmt asserts

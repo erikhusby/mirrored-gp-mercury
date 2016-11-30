@@ -49,7 +49,7 @@ public class SampleSheetFactory {
     @Inject
     private ProductEjb productEjb;
 
-    public List<Pair<LabVessel, VesselPosition>> loadByPdo(ProductOrder productOrder) {
+    public static List<Pair<LabVessel, VesselPosition>> loadByPdo(ProductOrder productOrder) {
         List<Pair<LabVessel, VesselPosition>> vesselPositionPairs = new ArrayList<>();
         // todo jmt include controls?
         for (BucketEntry bucketEntry : productOrder.getBucketEntries()) {
@@ -93,6 +93,7 @@ public class SampleSheetFactory {
         if (errors) {
             return;
         }
+        Map<String, SampleData> mapSampleNameToData = sampleDataFetcher.fetchSampleData(sampleNames);
 
         // Write header
         printStream.println("[Header]");
@@ -132,8 +133,6 @@ public class SampleSheetFactory {
         printStream.println("[Data]");
         printStream.println("Sample_ID,SentrixBarcode_A,SentrixPosition_A,Sample_Plate,Sample_Well,Sample_Group," +
                 "Gender,Sample_Name,Replicate,Parent1,Parent2,CallRate");
-
-        Map<String, SampleData> mapSampleNameToData = sampleDataFetcher.fetchSampleData(sampleNames);
 
         // Write a row per chip well
         for (Pair<LabVessel, VesselPosition> vesselPositionPair : vesselPositionPairs) {
