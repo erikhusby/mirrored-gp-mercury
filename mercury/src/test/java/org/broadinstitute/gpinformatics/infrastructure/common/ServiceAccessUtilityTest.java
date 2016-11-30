@@ -13,6 +13,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 
 /**
@@ -45,6 +46,7 @@ public class ServiceAccessUtilityTest {
      * An alternative implementation of AnInterface.
      */
     @Alternative
+    @Dependent
     public static class AlternativeImplementation implements AnInterface {
         @Override
         public String getName() {
@@ -65,6 +67,7 @@ public class ServiceAccessUtilityTest {
      * A subclass of AClass acting as an alternative implementation.
      */
     @Alternative
+    @Dependent
     public static class ASubclass extends AClass {
         @Override
         String getName() {

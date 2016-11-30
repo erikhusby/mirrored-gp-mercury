@@ -145,10 +145,10 @@ public class ManifestSessionContainerTest extends Arquillian {
     private ResearchProjectEjb researchProjectEjb;
 
     @Alternative
+    @RequestScoped
     public static class BSPCohortListProducer {
         @Produces
         @Alternative
-        @RequestScoped
         public static BSPCohortList produce() {
             BSPCohortList bspCohortList = Mockito.mock(BSPCohortList.class);
             Mockito.when(bspCohortList.getCohortListString(Mockito.any(String[].class))).thenReturn("");

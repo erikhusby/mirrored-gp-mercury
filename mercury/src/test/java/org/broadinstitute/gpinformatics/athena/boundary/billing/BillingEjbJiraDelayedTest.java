@@ -37,6 +37,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import javax.ejb.EJBTransactionRolledbackException;
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 import java.io.IOException;
@@ -86,6 +87,7 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
     private static Map<String, Integer> dpCallCount = new HashMap<>();
 
     @Alternative
+    @Dependent
     protected static class DelayedJiraService extends
             ConcurrentProductOrderDoubleCreateTest.ControlBusinessKeyJiraService {
         @Override
@@ -105,6 +107,7 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
     }
 
     @Alternative
+    @Dependent
     protected static class QuoteServiceStubWithWait implements QuoteService {
 
         private static final long serialVersionUID = 6093273925949722169L;
