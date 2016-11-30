@@ -214,6 +214,7 @@ public class HiSeq2500FlowcellEntityBuilder {
         case PCR_PLUS:
         case PCR_FREE_HYPER_PREP:
         case PCR_PLUS_HYPER_PREP:
+        case CELL_FREE_HYPER_PREP:
         case TRU_SEQ_STRAND_SPECIFIC_CRSP:
             reagentsSize = 1;
             break;

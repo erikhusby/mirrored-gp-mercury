@@ -115,7 +115,8 @@ public class LibraryConstructionEntityBuilder {
         ).invoke();
 
         if (pondType == LibraryConstructionJaxbBuilder.PondType.PCR_PLUS_HYPER_PREP ||
-            pondType == LibraryConstructionJaxbBuilder.PondType.PCR_FREE_HYPER_PREP) {
+            pondType == LibraryConstructionJaxbBuilder.PondType.PCR_FREE_HYPER_PREP ||
+            pondType == LibraryConstructionJaxbBuilder.PondType.CELL_FREE) {
             LabEventTest.validateWorkflow("EndRepair_ABase", shearingCleanupPlate);
             LabEvent endRepairAbaseEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
                     libraryConstructionJaxbBuilder.getEndRepairAbaseJaxb(), shearingCleanupPlate);
@@ -252,6 +253,11 @@ public class LibraryConstructionEntityBuilder {
                 LabEventTest.validateWorkflow("WGSPCRCleanup", ligationCleanupPlate);
                 LabEvent wgsPcrCleanupEvent = labEventFactory.buildFromBettaLimsPlateEventDbFree(
                         libraryConstructionJaxbBuilder.getWgsPCRCleanupJaxb(), ligationCleanupPlate);
+                labEventHandler.processEvent(wgsPcrCleanupEvent);
+            } else if (pondType == LibraryConstructionJaxbBuilder.PondType.CELL_FREE) {
+                LabEventTest.validateWorkflow("CFDnaPCRSetup", ligationCleanupPlate);
+                LabEvent wgsPcrCleanupEvent = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                        libraryConstructionJaxbBuilder.getCellFreePCRCleanupJaxb(), ligationCleanupPlate);
                 labEventHandler.processEvent(wgsPcrCleanupEvent);
             } else {
                 LabEventTest.validateWorkflow("HybSelPondEnrichmentCleanup", ligationCleanupPlate);

@@ -57,6 +57,7 @@ public class LibraryConstructionJaxbBuilder {
     private PlateCherryPickEvent pondNormJaxb;
     private PlateEventType endRepairAbaseJaxb;
     private PlateEventType wgsPCRCleanupJaxb;
+    private PlateEventType cellFreePCRCleanupJaxb;
 
     public enum TargetSystem {
         /** Messages that might be routed to Squid must have pre-registered lab machines and reagent kit types. */
@@ -157,6 +158,10 @@ public class LibraryConstructionJaxbBuilder {
         return wgsPCRCleanupJaxb;
     }
 
+    public PlateEventType getCellFreePCRCleanupJaxb() {
+        return cellFreePCRCleanupJaxb;
+    }
+
     public PlateTransferEventType getPondRegistrationJaxb() {
         return pondRegistrationJaxb;
     }
@@ -206,7 +211,8 @@ public class LibraryConstructionJaxbBuilder {
     }
 
     public LibraryConstructionJaxbBuilder invoke() {
-        if (pondType == PondType.PCR_FREE_HYPER_PREP || pondType == PondType.PCR_PLUS_HYPER_PREP) {
+        if (pondType == PondType.PCR_FREE_HYPER_PREP || pondType == PondType.PCR_PLUS_HYPER_PREP ||
+            pondType == PondType.CELL_FREE) {
             endRepairAbaseJaxb = bettaLimsMessageTestFactory.buildPlateEvent("EndRepair_ABase", shearCleanPlateBarcode,
                     targetSystem == TargetSystem.MERCURY_ONLY ?
                             BettaLimsMessageTestFactory.reagentList(endRepairReagents) : Collections.EMPTY_LIST);
@@ -270,7 +276,11 @@ public class LibraryConstructionJaxbBuilder {
         if (pondType ==  PondType.PCR_PLUS_HYPER_PREP) {
             wgsPCRCleanupJaxb = bettaLimsMessageTestFactory.buildPlateEvent("WGSPCRCleanup",
                     ligationCleanupBarcode);
-            bettaLimsMessageTestFactory.addMessage(messageList, pondCleanupJaxb);
+            bettaLimsMessageTestFactory.addMessage(messageList, wgsPCRCleanupJaxb);
+        } else if (pondType == PondType.CELL_FREE) {
+            cellFreePCRCleanupJaxb = bettaLimsMessageTestFactory.buildPlateEvent("CFDnaPCRSetup",
+                    ligationCleanupBarcode);
+            bettaLimsMessageTestFactory.addMessage(messageList, cellFreePCRCleanupJaxb);
         } else if (pondType != PondType.PCR_FREE_HYPER_PREP){
             pondCleanupBarcode = "pondCleanupPlate" + testPrefix;
             pondCleanupJaxb = bettaLimsMessageTestFactory.buildPlateToPlate("HybSelPondEnrichmentCleanup",

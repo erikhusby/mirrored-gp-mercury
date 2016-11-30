@@ -1282,7 +1282,7 @@ public enum LabEventType {
     CF_DNA_POND_REGISTRATION("CFDnaPondRegistration",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.PCR, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.PCR_PLUS_POND),
+            LibraryType.CF_POND),
 
     /**
      * TODO SGM  the following names are place holders.  They will be re-evaluated as development of
@@ -1746,6 +1746,7 @@ public enum LabEventType {
         ENRICHED_POND("Enriched Pond", "Pond"),
         PCR_FREE_POND("PCR-Free Pond", "Pond"),
         PCR_PLUS_POND("PCR-Plus Pond", "Pond"),
+        CF_POND("CF Pond", "Pond"),
         PCR_PLUS_NORMALIZED_POND("PCR-Plus Norm Pond", "Norm Pond"),
         HYBRID_SELECTION_AGILENT_CATCH("Enriched Catch", "Catch"),
         HYBRID_SELECTION_ICE_ENRICHED_CATCH("Enriched Catch", "Catch"),
