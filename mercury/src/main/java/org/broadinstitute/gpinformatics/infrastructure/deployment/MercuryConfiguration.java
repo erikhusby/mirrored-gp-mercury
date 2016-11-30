@@ -115,9 +115,22 @@ public class MercuryConfiguration {
     // system Deployment.
     private ApplicationConnections applicationConnections = new ApplicationConnections();
 
-    private static String getConfigKey(Class<? extends AbstractConfig> configClass) {
+    private String getConfigKey(Class<? extends AbstractConfig> configClass) {
+
+        // Try directly on config class
         ConfigKey annotation = configClass.getAnnotation(ConfigKey.class);
+
         if (annotation == null) {
+            // Config class may be a Weld proxy, the only annotation is @ApplicationScoped, try on superclass
+            // TODO: JMS Blech! Is this really the best way to do this?
+            // The config classes should be ApplicationScoped and initialized once and only once.
+            Class superClass = configClass.getSuperclass();
+            if( superClass != null ) {
+                annotation = configClass.getSuperclass().getAnnotation(ConfigKey.class);
+            }
+        }
+        if (annotation == null) {
+            // Give it up
             throw new RuntimeException("Failed to get config key for " + configClass.getName());
         }
         return annotation.value();
@@ -130,11 +143,11 @@ public class MercuryConfiguration {
      *
      * @return the ServletContext.
      */
-    private static ServletContext getServletContext() {
+    private ServletContext getServletContext() {
         return AppInitServlet.getInitServletContext();
     }
 
-    private static Class<? extends AbstractConfig> getConfigClass(String configKey) {
+    private Class<? extends AbstractConfig> getConfigClass(String configKey) {
         if (configKeyToClassMap == null) {
 
             ServletContext servletContext = getServletContext();

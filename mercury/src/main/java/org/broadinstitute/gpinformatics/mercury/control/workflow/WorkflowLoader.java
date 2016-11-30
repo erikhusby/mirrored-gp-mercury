@@ -8,9 +8,9 @@ import org.broadinstitute.gpinformatics.infrastructure.jmx.ExternalDataCacheCont
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Default;
-import javax.enterprise.inject.Produces;
+import javax.ejb.Singleton;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.inject.Inject;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -26,7 +26,7 @@ import java.io.Serializable;
  *
  * @see ExternalDataCacheControl#invalidateCache()
  */
-@ApplicationScoped
+@Singleton
 public class WorkflowLoader extends AbstractCache implements Serializable {
     private final Object lock = new Object();
 
@@ -53,8 +53,7 @@ public class WorkflowLoader extends AbstractCache implements Serializable {
 
     public WorkflowLoader(){}
 
-    @Produces
-    @Default
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public WorkflowConfig load() {
         if (workflowConfig==null){
             refreshCache();
@@ -63,6 +62,7 @@ public class WorkflowLoader extends AbstractCache implements Serializable {
     }
 
     @Override
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public void refreshCache() {
         synchronized (lock) {
             if (IS_STANDALONE) {
