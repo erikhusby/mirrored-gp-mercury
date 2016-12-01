@@ -11,7 +11,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.SampleSheetFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -65,14 +64,14 @@ public class SampleSheetActionBean extends CoreActionBean {
     public Resolution download() {
         final List<Pair<LabVessel, VesselPosition>> vesselPositionPairs = new ArrayList<>();
 
-        ResearchProject researchProject = null;
+        ProductOrder firstProductOrder = null;
         if (pdoBusinessKeys != null) {
             String[] pdoKeys = pdoBusinessKeys.trim().split("\\s+");
             for (String pdoKey : pdoKeys) {
                 ProductOrder productOrder = productOrderDao.findByBusinessKey(pdoKey);
-                vesselPositionPairs.addAll(sampleSheetFactory.loadByPdo(productOrder));
-                if (researchProject == null) {
-                    researchProject = productOrder.getResearchProject();
+                vesselPositionPairs.addAll(SampleSheetFactory.loadByPdo(productOrder));
+                if (firstProductOrder == null) {
+                    firstProductOrder = productOrder;
                 }
             }
         }
@@ -110,32 +109,32 @@ public class SampleSheetActionBean extends CoreActionBean {
                                     " not found");
                         }
                         vesselPositionPairs.add(new ImmutablePair<>(labVessel, vesselPosition));
-                        if (researchProject == null) {
+                        if (firstProductOrder == null) {
                             Set<SampleInstanceV2> sampleInstances =
                                     labVessel.getContainerRole().getSampleInstancesAtPositionV2(vesselPosition);
                             ProductOrderSample productOrderSample =
                                     sampleInstances.iterator().next().getProductOrderSampleForSingleBucket();
                             if (productOrderSample != null) {
-                                researchProject = productOrderSample.getProductOrder().getResearchProject();
+                                firstProductOrder = productOrderSample.getProductOrder();
                             }
                         }
                     }
                 }
             }
         }
-        if (researchProject == null) {
-            addGlobalValidationError("No research projects found.");
+        if (firstProductOrder == null) {
+            addGlobalValidationError("No product orders found.");
         }
 
         if (hasErrors()) {
             return new ForwardResolution(CREATE_PAGE);
         } else {
-            final ResearchProject finalResearchProject = researchProject;
+            final ProductOrder finalFirstProductOrder = firstProductOrder;
             return new StreamingResolution("text/plain") {
                 @Override
                 public void stream(HttpServletResponse response) throws Exception {
                     ServletOutputStream out = response.getOutputStream();
-                    sampleSheetFactory.write(new PrintStream(out), vesselPositionPairs, finalResearchProject);
+                    sampleSheetFactory.write(new PrintStream(out), vesselPositionPairs, finalFirstProductOrder);
                 }
             }.setFilename("Samplesheet.csv");
         }

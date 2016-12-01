@@ -44,8 +44,7 @@ public class ArraysSummaryFactoryTest extends Arquillian {
                 productOrder);
         Assert.assertEquals(vesselPositionPairs.size(), 3301);
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        arraysSummaryFactory.write(new PrintStream(byteArrayOutputStream), vesselPositionPairs,
-                productOrder.getResearchProject());
+        arraysSummaryFactory.write(new PrintStream(byteArrayOutputStream), vesselPositionPairs, productOrder);
         System.out.println(byteArrayOutputStream.toString());
         // todo jmt asserts
     }

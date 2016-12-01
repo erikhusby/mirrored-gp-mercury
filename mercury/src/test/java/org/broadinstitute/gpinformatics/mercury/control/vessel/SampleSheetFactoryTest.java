@@ -6,7 +6,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -45,8 +44,7 @@ public class SampleSheetFactoryTest extends Arquillian {
                 productOrder);
         Assert.assertEquals(vesselPositionPairs.size(), 288);
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        sampleSheetFactory.write(new PrintStream(byteArrayOutputStream), vesselPositionPairs,
-                productOrder.getResearchProject());
+        sampleSheetFactory.write(new PrintStream(byteArrayOutputStream), vesselPositionPairs, productOrder);
         System.out.println(byteArrayOutputStream.toString());
         // todo jmt asserts
     }

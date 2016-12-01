@@ -33,7 +33,7 @@ import java.util.Set;
  */
 public class SampleSheetFactory {
 
-    public static final Set<LabEventType> LAB_EVENT_TYPES = new HashSet<LabEventType>() {{
+    static final Set<LabEventType> LAB_EVENT_TYPES = new HashSet<LabEventType>() {{
         add(LabEventType.INFINIUM_AMPLIFICATION);
         add(LabEventType.INFINIUM_HYBRIDIZATION);
     }};
@@ -72,7 +72,7 @@ public class SampleSheetFactory {
     }
 
     public void write(PrintStream printStream, List<Pair<LabVessel, VesselPosition>> vesselPositionPairs,
-            ResearchProject researchProject) {
+            ProductOrder productOrder) {
         // Get samples
         List<String> sampleNames = new ArrayList<>();
         Map<Pair<LabVessel, VesselPosition>, SampleInstanceV2> mapPairToSampleInstance = new HashMap<>();
@@ -94,6 +94,7 @@ public class SampleSheetFactory {
             return;
         }
         Map<String, SampleData> mapSampleNameToData = sampleDataFetcher.fetchSampleData(sampleNames);
+        ResearchProject researchProject = productOrder.getResearchProject();
 
         // Write header
         printStream.println("[Header]");
@@ -125,7 +126,7 @@ public class SampleSheetFactory {
         printStream.println("[Manifests]");
         printStream.print("A,");
         LabVessel labVessel1 = vesselPositionPairs.get(0).getLeft();
-        String chipType = productEjb.getGenotypingChip(researchProject.getProductOrders().get(0),
+        String chipType = productEjb.getGenotypingChip(productOrder,
                 labVessel1.getEvents().iterator().next().getEventDate()).getRight();
         printStream.println(chipType);
 

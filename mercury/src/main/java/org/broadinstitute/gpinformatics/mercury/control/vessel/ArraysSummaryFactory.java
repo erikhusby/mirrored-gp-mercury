@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.ArraysQcDao;
@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcGtConcordance;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -43,7 +44,7 @@ public class ArraysSummaryFactory {
     private ProductEjb productEjb;
 
     public void write(PrintStream printStream, List<Pair<LabVessel, VesselPosition>> vesselPositionPairs,
-            ResearchProject researchProject) {
+            ProductOrder productOrder) {
 
         // Get samples
         List<MercurySample> sampleNames = new ArrayList<>();
@@ -73,7 +74,7 @@ public class ArraysSummaryFactory {
                 BSPSampleSearchColumn.STOCK_SAMPLE);
         Map<String, ArraysQc> mapBarcodeToArrayQc = arraysQcDao.findMapByBarcodes(chipWellBarcodes);
         LabVessel labVessel1 = vesselPositionPairs.get(0).getLeft();
-        String chipType = productEjb.getGenotypingChip(researchProject.getProductOrders().get(0),
+        String chipType = productEjb.getGenotypingChip(productOrder,
                 labVessel1.getEvents().iterator().next().getEventDate()).getRight();
 
         // Preamble
@@ -88,7 +89,7 @@ public class ArraysSummaryFactory {
                 "DNA Plate\tDNA Plate Well");
         for (int i = 0; i < vesselPositionPairs.size(); i++) {
             Pair<LabVessel, VesselPosition> vesselPositionPair = vesselPositionPairs.get(i);
-            LabVessel labVessel = vesselPositionPair.getLeft();
+            LabVessel chip = vesselPositionPair.getLeft();
             VesselPosition vesselPosition = vesselPositionPair.getRight();
             SampleInstanceV2 sampleInstanceV2 = mapPairToSampleInstance.get(vesselPositionPair);
             SampleData sampleData = mapSampleNameToData.get(sampleInstanceV2.getNearestMercurySampleName());
@@ -98,7 +99,7 @@ public class ArraysSummaryFactory {
             }
             TransferTraverserCriteria.VesselPositionForEvent traverserCriteria =
                     new TransferTraverserCriteria.VesselPositionForEvent(SampleSheetFactory.LAB_EVENT_TYPES);
-            labVessel.getContainerRole().evaluateCriteria(vesselPosition, traverserCriteria,
+            chip.getContainerRole().evaluateCriteria(vesselPosition, traverserCriteria,
                     TransferTraverserCriteria.TraversalDirection.Ancestors, 0);
 
             VesselAndPosition dnaPlateAndPosition = traverserCriteria.getMapTypeToVesselPosition().get(
@@ -158,16 +159,31 @@ public class ArraysSummaryFactory {
             printStream.print(arraysQc.getZcallVersion() + "\t");
             // Chip
             printStream.print(chipType + "\t");
-            // todo jmt fix next 3
             // Scan Date
+            for (LabEvent labEvent: chip.getInPlaceLabEvents()) {
+                if (labEvent.getLabEventType() == LabEventType.INFINIUM_AUTOCALL_SOME_STARTED) {
+                    printStream.print(labEvent.getEventDate());
+                    break;
+                }
+            }
+            printStream.print("\t");
             // Amp Date
+            for (LabEvent labEvent : dnaPlateAndPosition.getVessel().getTransfersFrom()) {
+                if (labEvent.getLabEventType() == LabEventType.INFINIUM_AMPLIFICATION) {
+                    printStream.print(labEvent.getEventDate());
+                    break;
+                }
+            }
+            printStream.print("\t");
+            // todo jmt fix
             // Scanner
+//            String scannerName = findScannerName(chip.getLabel(), vesselPosition.name());
             // Genotyping Run
             printStream.print(chipWellBarcodes.get(i) + "\t");
             // DNA Plate
             printStream.print(dnaPlateAndPosition.getVessel().getName() + "\t");
             // DNA Plate Well
-            printStream.print(dnaPlateAndPosition.getPosition() + "\t");
+            printStream.print(dnaPlateAndPosition.getPosition());
             printStream.println();
         }
     }
