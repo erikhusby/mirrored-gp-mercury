@@ -138,7 +138,6 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                 }
             })
         });
-        var width = Math.ceil(header.outerWidth() * 1.5) + "px";
 
         if (selectType === 'text' && filterColumn) {
             var textInput = $j("<input/>", {
@@ -175,6 +174,8 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                     return this.value.match(savedFilterValue);
                 }).attr('selected', 'selected');
             }
+            var width = Math.ceil(.6*$j(select).attr('width'))+"em";
+            // $j(select).css("width", width);
             var chosen = select.chosen({
                 disable_search_threshold: 10,
                 display_selected_options: false,
@@ -200,8 +201,8 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                     updateFilterInfo(column, cleanTitle, headerLabel, filterText);
                 }
             });
-            $j(".filtering-label img").on("click",function(){
-                chosen.trigger("change", $j(this).text())
+            column.on("column-sizing.dt", function () {
+                chosen.trigger("chosen:updated");
             });
 
             // select.trigger("chosen:updated");
@@ -248,10 +249,14 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                 uniqueValues.push(cell);
             }
         });
+        var maxWidth=0;
         uniqueValues.sort().forEach(function (thisOption) {
             var items = $j("<option></option>", {value: thisOption, text: thisOption});
+            maxWidth = thisOption.length > maxWidth?thisOption.length:maxWidth;
             $j(select).append(items);
         });
+
+        $j(select).attr('width',maxWidth);
 
         return $j(select);
     }
