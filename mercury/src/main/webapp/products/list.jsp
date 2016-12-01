@@ -13,6 +13,7 @@
                     "oTableTools": ttExportDefines,
                     "aaSorting": [[0,'asc']],
                     "aoColumns": [
+                        {"bSortable": false},
                         {"bSortable": true, "sType": "title-string"},
                         {"bSortable": true},
                         {"bSortable": true},
@@ -30,22 +31,26 @@
 
     <stripes:layout-component name="content">
         <div class="clearfix"></div>
+        <stripes:form id="list" beanclass="${actionBean.class.name}">
         <div class="actionButtons">
             <img src="${ctxpath}/images/pdficon_small.png" alt=""/>
             <stripes:link beanclass="${actionBean.class.name}" event="downloadProductDescriptions">
                 Download Product Descriptions</stripes:link>
-            <stripes:form id="list" beanclass="${actionBean.class.name}">
 
                 <stripes:radio onchange="changeAvailability()" value="<%= ProductDao.Availability.ALL%>"
                                name="availability"/> All Products
                 <stripes:radio onchange="changeAvailability()" value="<%= ProductDao.Availability.CURRENT%>"
                                name="availability"/> Available Products Only
-            </stripes:form>
+
+            <stripes:submit name="publishProductsToSap" value="Publish Selected Product(s) to SAP" class="btn padright" title="Click to publish products to SAP" />
         </div>
 
         <table id="productList" class="table simple">
             <thead>
             <tr>
+                <th width="40">
+                    <input for="count" type="checkbox" class="checkAll"/><span id="count" class="checkedCount"></span>
+                </th>
                 <th>Part Number</th>
                 <th>Product Name</th>
                 <th>Product Family</th>
@@ -56,6 +61,11 @@
             <tbody>
             <c:forEach items="${actionBean.allProducts}" var="product">
                 <tr>
+                    <td>
+                        <c:if test="${not product.savedInSAP}">
+                            <stripes:checkbox name="selectedProductPartNumbers" value="${product.partNumber}" class="shiftCheckbox" />
+                        </c:if>
+                    </td>
                     <td>
                         <stripes:link beanclass="${actionBean.class.name}" event="view" title="${product.businessKey}">
                             <stripes:param name="product" value="${product.businessKey}"/>
@@ -78,5 +88,6 @@
             </c:forEach>
             </tbody>
         </table>
+        </stripes:form>
     </stripes:layout-component>
 </stripes:layout-render>

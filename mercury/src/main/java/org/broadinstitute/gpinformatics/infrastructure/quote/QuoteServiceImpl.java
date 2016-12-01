@@ -11,6 +11,8 @@ import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
@@ -35,11 +37,14 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
 
     static final String WORK_ITEM_ID = "workItemId\t";
 
+    private final static Log log = LogFactory.getLog(QuoteServiceImpl.class);
+
+
     @SuppressWarnings("unused")
     public QuoteServiceImpl() {
     }
 
-    /**
+    /**\
      * Non CDI constructor, all dependencies must be explicitly initialized!
      *
      * @param quoteConfig The configuration.
@@ -60,7 +65,8 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         REGISTER_WORK("/quotes/ws/portals/private/createworkitem"),
         ALL_QUOTES("/quotes/ws/portals/private/getquotes?with_funding=true"),
         //TODO this next enum value will be removed soon.
-        SINGLE_NUMERIC_QUOTE("/quotes/ws/portals/private/getquotes?with_funding=true&quote_ids=");
+        SINGLE_NUMERIC_QUOTE("/quotes/ws/portals/private/getquotes?with_funding=true&quote_ids="),
+        REGISTER_BLOCKED_WORK("/quotes/rest/create_blocked_work");
 
         String suffixUrl;
 
@@ -78,10 +84,34 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
                                   Date reportedCompletionDate, double numWorkUnits,
                                   String callbackUrl, String callbackParameterName, String callbackParameterValue) {
 
+        return registerWorkHelper(quote, quotePriceItem, itemIsReplacing, reportedCompletionDate, numWorkUnits,
+                callbackUrl,
+                callbackParameterName, callbackParameterValue, Endpoint.REGISTER_WORK);
+    }
+
+    @Override
+    public String registerNewSAPWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
+                                  Date reportedCompletionDate, double numWorkUnits,
+                                  String callbackUrl, String callbackParameterName, String callbackParameterValue) {
+
+        return registerWorkHelper(quote, quotePriceItem, itemIsReplacing, reportedCompletionDate, numWorkUnits,
+                callbackUrl,
+                callbackParameterName, callbackParameterValue, Endpoint.REGISTER_BLOCKED_WORK);
+//        return registerWorkHelper(quote, quotePriceItem, itemIsReplacing, reportedCompletionDate, numWorkUnits,
+//                callbackUrl,
+//                callbackParameterName, callbackParameterValue, Endpoint.REGISTER_WORK);
+    }
+
+    private String registerWorkHelper(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
+                                      Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
+                                      String callbackParameterName, String callbackParameterValue,
+                                      Endpoint endpoint) {
         Format dateFormat = FastDateFormat.getInstance("MM/dd/yyyy");
 
         // see https://iwww.broadinstitute.org/blogs/quote/?page_id=272 for details.
-        String url = url(Endpoint.REGISTER_WORK);
+        String url = url(endpoint);
+        log.info("Quote server endpoint is:  " + url);
+
         MultivaluedMap<String, String> params = new MultivaluedMapImpl();
 
         params.add("quote_alpha_id", quote.getAlphanumericId());

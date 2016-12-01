@@ -32,6 +32,10 @@ public interface QuoteService extends Serializable {
         Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing, Date reportedCompletionDate,
         double numWorkUnits, String callbackUrl, String callbackParameterName, String callbackParameterValue);
 
+
+    public String registerNewSAPWork(
+            Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing, Date reportedCompletionDate,
+            double numWorkUnits, String callbackUrl, String callbackParameterName, String callbackParameterValue);
     /**
      * Get the quote for a particular quote identifier.
      *

@@ -23,6 +23,7 @@ public class ArrayPlatingEntityBuilder {
     private final LabEventFactory labEventFactory;
     private final LabEventHandler labEventHandler;
     private final String testPrefix;
+    private StaticPlate arrayPlatingPlate;
 
     public ArrayPlatingEntityBuilder( Map<String, BarcodedTube> mapBarcodeToTube,
             BettaLimsMessageTestFactory bettaLimsMessageTestFactory, LabEventFactory labEventFactory,
@@ -46,10 +47,14 @@ public class ArrayPlatingEntityBuilder {
                 arrayPlatingJaxb, mapBarcodeToVessel);
         labEventHandler.processEvent(arrayPlatingEvent);
         // asserts
-        StaticPlate arrayPlatingPlate = (StaticPlate) arrayPlatingEvent.getTargetLabVessels().iterator().next();
+        arrayPlatingPlate = (StaticPlate) arrayPlatingEvent.getTargetLabVessels().iterator().next();
         Assert.assertEquals(arrayPlatingPlate.getSampleInstancesV2().size(), mapBarcodeToTube.size(),
                 "Wrong number of sample instances");
 
         return this;
+    }
+
+    public StaticPlate getArrayPlatingPlate() {
+        return arrayPlatingPlate;
     }
 }

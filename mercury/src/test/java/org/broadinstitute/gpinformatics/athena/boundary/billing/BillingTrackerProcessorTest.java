@@ -41,10 +41,12 @@ public class BillingTrackerProcessorTest {
     public void setUp() {
         // Set up test data.
         Product product = new Product();
+
         product.setPrimaryPriceItem(new PriceItem());
 
         order = new ProductOrder();
         order.addSample(new ProductOrderSample(TEST_SAMPLE_ID));
+        order.setProduct(product);
 
         // Set up mocks.
         ProductDao mockProductDao = mock(ProductDao.class);

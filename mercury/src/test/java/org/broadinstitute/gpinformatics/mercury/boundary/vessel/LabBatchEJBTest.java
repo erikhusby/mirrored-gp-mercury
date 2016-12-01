@@ -38,7 +38,7 @@ public class LabBatchEJBTest extends ContainerTest {
     public static final String STUB_TEST_PDO_KEY = "PDO-999";
     public static final String BUCKET_NAME = "Pico/Plating Bucket";
     public static final String EXTRACTION_BUCKET = "Extract to DNA and RNA";
-    public static final String EXTRACTION_TO_DNA_BUCKET = "Extract To DNA";
+    public static final String EXTRACTION_TO_DNA_BUCKET = "Extract to DNA";
 
     @Inject
     private LabBatchEjb labBatchEJB;
