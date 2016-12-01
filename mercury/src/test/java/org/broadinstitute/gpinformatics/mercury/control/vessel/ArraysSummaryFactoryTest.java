@@ -39,10 +39,10 @@ public class ArraysSummaryFactoryTest extends Arquillian {
 
     @Test
     public void testBasics() {
-        ProductOrder productOrder = productOrderDao.findByBusinessKey("PDO-6743");
+        ProductOrder productOrder = productOrderDao.findByBusinessKey("PDO-9246");
         List<Pair<LabVessel, VesselPosition>> vesselPositionPairs = SampleSheetFactory.loadByPdo(
                 productOrder);
-        Assert.assertEquals(vesselPositionPairs.size(), 288);
+        Assert.assertEquals(vesselPositionPairs.size(), 3301);
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         arraysSummaryFactory.write(new PrintStream(byteArrayOutputStream), vesselPositionPairs,
                 productOrder.getResearchProject());

@@ -33,7 +33,7 @@ import java.util.Set;
  */
 public class SampleSheetFactory {
 
-    private static final Set<LabEventType> LAB_EVENT_TYPES = new HashSet<LabEventType>() {{
+    public static final Set<LabEventType> LAB_EVENT_TYPES = new HashSet<LabEventType>() {{
         add(LabEventType.INFINIUM_AMPLIFICATION);
         add(LabEventType.INFINIUM_HYBRIDIZATION);
     }};
@@ -74,7 +74,7 @@ public class SampleSheetFactory {
     public void write(PrintStream printStream, List<Pair<LabVessel, VesselPosition>> vesselPositionPairs,
             ResearchProject researchProject) {
         // Get samples
-        ArrayList<String> sampleNames = new ArrayList<>();
+        List<String> sampleNames = new ArrayList<>();
         Map<Pair<LabVessel, VesselPosition>, SampleInstanceV2> mapPairToSampleInstance = new HashMap<>();
         boolean errors = false;
         for (Pair<LabVessel, VesselPosition> vesselPositionPair : vesselPositionPairs) {
@@ -138,6 +138,9 @@ public class SampleSheetFactory {
         for (Pair<LabVessel, VesselPosition> vesselPositionPair : vesselPositionPairs) {
             LabVessel labVessel = vesselPositionPair.getLeft();
             VesselPosition vesselPosition = vesselPositionPair.getRight();
+            SampleData sampleData = mapSampleNameToData.get(mapPairToSampleInstance.get(
+                    vesselPositionPair).getNearestMercurySampleName());
+
             TransferTraverserCriteria.VesselPositionForEvent traverserCriteria =
                     new TransferTraverserCriteria.VesselPositionForEvent(LAB_EVENT_TYPES);
             labVessel.getContainerRole().evaluateCriteria(vesselPosition, traverserCriteria,
@@ -149,8 +152,6 @@ public class SampleSheetFactory {
             printStream.print("_");
             printStream.print(dnaPlateAndPosition.getPosition());
             printStream.print("_");
-            SampleData sampleData = mapSampleNameToData.get(mapPairToSampleInstance.get(
-                    vesselPositionPair).getNearestMercurySampleName());
             printStream.print(sampleData.getCollaboratorParticipantId());
             printStream.print("_");
             printStream.print(labVessel.getLabel());

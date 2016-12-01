@@ -72,6 +72,8 @@ public interface SampleData {
 
     String getCollaboratorParticipantId();
 
+    String getCollaboratorFamilyId();
+
     String getMaterialType();
 
     String getOriginalMaterialType();
