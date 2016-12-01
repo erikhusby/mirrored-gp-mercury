@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -1711,6 +1712,42 @@ public class LabEventFixupTest extends Arquillian {
 
         FixupCommentary fixupCommentary = new FixupCommentary(
                 "GPLIM-4302 - complete old infinium chips by adding InfiniumAutoCallAllStarted event");
+        labEventDao.persist(fixupCommentary);
+        labEventDao.flush();
+
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport2319() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        long[] ids = {1732578L,1732576L,1732580L,1732599L,1732608L,1732611L,1732616L,1732622L,1732627L,1732684L,
+                1732686L,1732688L,1732715L,1732759L};
+
+        Reagent undesired = reagentDao.findByReagentNameLotExpiration("HS buffer", "RG-10095", null);
+        Reagent desired = reagentDao.findByReagentNameLotExpiration("HS buffer", "RG-12126", null);
+        Assert.assertNotNull(undesired);
+        Assert.assertNotNull(desired);
+
+        for (long id: ids) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, id);
+            if (labEvent == null || labEvent.getLabEventType() != LabEventType.PICO_DILUTION_TRANSFER) {
+                throw new RuntimeException("cannot find " + id + " or is not PICO_DILUTION_TRANSFER");
+            }
+            for (LabEventReagent labEventReagent: labEvent.getLabEventReagents()) {
+                if (labEventReagent.getReagent().equals(undesired)) {
+                    System.out.println("Removing " + undesired.getName() + " on event " + labEvent.getLabEventId());
+                    labEvent.getLabEventReagents().remove(labEventReagent);
+                    genericReagentDao.remove(labEventReagent);
+                }
+            }
+            System.out.println("Adding " + desired.getName() + " on event " + labEvent.getLabEventId());
+            labEvent.addReagent(desired);
+        }
+
+        FixupCommentary fixupCommentary = new FixupCommentary(
+                "SUPPORT-2319 - Removing expired reagent for new one");
         labEventDao.persist(fixupCommentary);
         labEventDao.flush();
 
