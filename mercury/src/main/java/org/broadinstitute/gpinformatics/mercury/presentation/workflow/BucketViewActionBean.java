@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import net.sourceforge.stripes.action.After;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
@@ -34,7 +35,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDa
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketCount;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -153,8 +153,37 @@ public class BucketViewActionBean extends CoreActionBean {
 
     private String searchKey;
     private static final List<String> PREFETCH_COLUMN_NAMES =
-            Arrays.asList("Material Type", "Workflow", "Received Date");
+            Arrays.asList("Material Type", "Workflow", "Receipt Date");
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
+    public String getSlowColumns(){
+        return new JSONArray(Arrays.asList("Material Type", "Workflow", "Receipt Date")).toString();
+    }
     private Map<String, Boolean> headerVisibilityMap = new HashMap<>();
+
+    @After(stages = LifecycleStage.BindingAndValidation, on = VIEW_BUCKET_ACTION)
+    public void loadTableState() {
+        try {
+            NameValueDefinitionValue nameValueDefinitionValue = loadSearchData();
+            List<String> selectedBucketPreferenceValue = nameValueDefinitionValue.getDataMap().get(SELECTED_BUCKET_KEY);
+            if (CollectionUtils.isNotEmpty(selectedBucketPreferenceValue)) {
+                selectedBucket = selectedBucketPreferenceValue.iterator().next();
+                List<String> tableStatePreferenceValue = nameValueDefinitionValue.getDataMap().get(TABLE_STATE_KEY);
+                if (CollectionUtils.isNotEmpty(tableStatePreferenceValue)) {
+                    tableState = tableStatePreferenceValue.iterator().next();
+                    State state = objectMapper.readValue(tableState, State.class);
+                    buildHeaderVisibilityMap(state);
+                }
+                List<String> selectNextPreferenceValue = nameValueDefinitionValue.getDataMap().get(SELECT_NEXT_SIZE);
+                if (CollectionUtils.isNotEmpty(selectNextPreferenceValue)) {
+                    selectNextSize = Integer.parseInt(selectNextPreferenceValue.iterator().next());
+                }
+            }
+        } catch (Exception e) {
+            log.error("Load table state preference", e);
+        }
+
+    }
 
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
@@ -178,25 +207,6 @@ public class BucketViewActionBean extends CoreActionBean {
         }
         mapBucketToWorkflows = bucketWorkflows.asMap();
 
-        try {
-            NameValueDefinitionValue nameValueDefinitionValue = loadSearchData();
-            List<String> selectedBucketPreferenceValue = nameValueDefinitionValue.getDataMap().get(SELECTED_BUCKET_KEY);
-            if (CollectionUtils.isNotEmpty(selectedBucketPreferenceValue)) {
-                selectedBucket = selectedBucketPreferenceValue.iterator().next();
-                List<String> tableStatePreferenceValue = nameValueDefinitionValue.getDataMap().get(TABLE_STATE_KEY);
-                if (CollectionUtils.isNotEmpty(tableStatePreferenceValue)) {
-                    tableState = tableStatePreferenceValue.iterator().next();
-                    State state = readTableState(tableState);
-                    buildHeaderVisibilityMap(state);
-                }
-                List<String> selectNextPreferenceValue = nameValueDefinitionValue.getDataMap().get(SELECT_NEXT_SIZE);
-                if (CollectionUtils.isNotEmpty(selectNextPreferenceValue)) {
-                    selectNextSize = Integer.parseInt(selectNextPreferenceValue.iterator().next());
-                }
-            }
-        } catch (Exception e) {
-            log.error("Load table state preference", e);
-        }
     }
 
     private void buildHeaderVisibilityMap(State state) {
@@ -273,7 +283,7 @@ public class BucketViewActionBean extends CoreActionBean {
     @HandlesEvent(SAVE_SEARCH_DATA)
     public Resolution saveSearchData() throws Exception {
         JSONObject jsonObject = new JSONObject(tableState);
-        saveSearchData(readTableState(tableState));
+        saveSearchData(objectMapper.readValue(tableState, State.class));
         return new StreamingResolution("text", jsonObject.toString());
     }
 
@@ -283,20 +293,9 @@ public class BucketViewActionBean extends CoreActionBean {
             definitionValue.put(SELECTED_BUCKET_KEY, selectedBucket);
         }
         definitionValue.put(SELECT_NEXT_SIZE, String.valueOf(selectNextSize));
-        definitionValue.put(TABLE_STATE_KEY, Collections.singletonList(writeTableState(state)));
+        definitionValue.put(TABLE_STATE_KEY, Collections.singletonList(objectMapper.writeValueAsString(state)));
 
         preferenceEjb.add(userBean.getBspUser().getUserId(), PreferenceType.BUCKET_PREFERENCES, definitionValue);
-    }
-
-
-    protected static State readTableState(String tableState) throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        return objectMapper.readValue(tableState, State.class);
-    }
-
-    protected static String writeTableState(State state) throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        return objectMapper.writeValueAsString(state);
     }
 
 
@@ -317,31 +316,6 @@ public class BucketViewActionBean extends CoreActionBean {
         return new NameValueDefinitionValue();
     }
 
-    @HandlesEvent(LOAD_SEARCH_DATA)
-    public Resolution loadSearchJson() {
-        JSONObject jsonObject = new JSONObject();
-        if (selectedBucket != null) {
-            try {
-                HashMap<String, List<String>> dataMap = loadSearchData().getDataMap();
-                List<String> bucketList = dataMap.get(selectedBucket);
-                String tableStateJson = null;
-                if (bucketList != null) {
-                    tableStateJson = bucketList.iterator().next();
-                    State state = readTableState(tableStateJson);
-                    buildHeaderVisibilityMap(state);
-                    return new StreamingResolution("text", tableStateJson);
-                } else {
-                    jsonObject = new JSONObject();
-                }
-            } catch (Exception e) {
-                log.error("Could not load table state", e);
-            }
-
-        }
-
-        return new StreamingResolution("text", jsonObject.toString());
-    }
-
     @DefaultHandler
     @HandlesEvent(VIEW_BUCKET_ACTION)
     public Resolution viewBucket() {
@@ -355,18 +329,16 @@ public class BucketViewActionBean extends CoreActionBean {
                 collectiveEntries.addAll(bucket.getReworkEntries());
                 String jiraProjectType = mapBucketToJiraProject.get(selectedBucket);
                 projectType = CreateFields.ProjectType.fromKeyPrefix(jiraProjectType);
-                if (shouldPrefetchEventData(headerVisibilityMap)) {
-                    preFetchSampleData(collectiveEntries);
-                }
+                preFetchSampleData(collectiveEntries);
             }
         }
         return new ForwardResolution(VIEW_PAGE);
     }
 
     public boolean shouldPrefetchEventData(Map<String, Boolean> headerMap) {
-        if (true) {
-            return true;
-        }
+//        if (true) {
+//            return true;
+//        }
         for (String prefetchColumnName : PREFETCH_COLUMN_NAMES) {
             boolean prefetchColumn = headerMap.containsKey(prefetchColumnName) && headerMap.get(prefetchColumnName);
             if (prefetchColumn) {
@@ -696,25 +668,6 @@ public class BucketViewActionBean extends CoreActionBean {
 
     public Map<String, Boolean> getHeaderVisibilityMap() {
         return headerVisibilityMap;
-    }
-
-    public Collection<String> getWorkflowNames(BucketEntry bucketEntry) {
-        Collection<String> workflows = new HashSet<>();
-        Boolean showWorkflow = headerVisibilityMap.get("Workflow");
-        if (showWorkflow != null && showWorkflow) {
-            WorkflowConfig workflowConfig = workflowLoader.load();
-            for (Workflow workflow : bucketEntry.getProductOrder().getProductWorkflows()) {
-                ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflow(workflow);
-                for (WorkflowBucketDef workflowBucketDef : productWorkflowDef.getEffectiveVersion().getBuckets()) {
-                    if (workflowBucketDef
-                            .meetsBucketCriteria(bucketEntry.getLabVessel(), bucketEntry.getProductOrder())) {
-                        workflows.add(workflow.getWorkflowName());
-                    }
-                }
-            }
-        }
-        return workflows;
-
     }
 
     public List<String> bucketWorkflowNames(BucketEntry bucketEntry) {

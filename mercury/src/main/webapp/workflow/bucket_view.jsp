@@ -169,6 +169,10 @@
             content: '\A';
             white-space: pre;
         }
+        th select.table-control{
+            /*min-width:100%;*/
+        }
+
     </style>
     <script src="${ctxpath}/resources/scripts/jquery.jeditable.mini.js" type="text/javascript"></script>
 
@@ -366,7 +370,7 @@
                 });
 
                 // define columns which cause the page to render slowly.
-                var slowColumns = ['Material Type', 'Workflow', 'Receipt Date'];
+                var slowColumns = ${actionBean.slowColumns}
 
                 // When the "Show or Hide" button is clicked
                 $j(document.body).on("click", "a.buttons-colvis", function (event) {
@@ -493,8 +497,7 @@
                         {"Workflow": 'select'}
                     ], "#filtering", "table-control", "${ctxpath}");
 
-//                   set up the "Show or Hide" buttons
-                    initColumnVisibility();
+
                     $j("#filtering").accordion({
                         "collapsible": true, "heightStyle": "content", 'active': false
                     });
@@ -508,6 +511,8 @@
                     api.state.save();
                 }
             });
+            // set up the "Show or Hide" buttons
+            initColumnVisibility();
 
             $j('.bucket-checkbox').enableCheckboxRangeSelection({
                 checkAllClass:'bucket-checkAll',
@@ -767,7 +772,7 @@
                         <td>
                             <div class="ellipsis" style="max-width: 250px;">
                                 <c:if test="${headerVisibilityMap['Workflow']}">
-                                    ${mercuryStatic:join(actionBean.getWorkflowNames(entry), "<br/>")}
+                                    ${mercuryStatic:join(actionBean.bucketWorkflowNames(entry), "<br/>")}
                                 </c:if>
                             </div>
                         </td>
