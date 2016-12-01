@@ -157,9 +157,9 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         if(getProductOrder().getProduct().getPrimaryPriceItem().equals(priceItem)) {
             result = getProductOrder().getProduct();
         } else {
-            for(Product addOn:getProductOrder().getProduct().getAddOns()) {
-                if(addOn.getPrimaryPriceItem().equals(priceItem)) {
-                    result = addOn;
+            for(ProductOrderAddOn addOn:getProductOrder().getAddOns()) {
+                if(addOn.getAddOn().getPrimaryPriceItem().equals(priceItem)) {
+                    result = addOn.getAddOn();
                     break;
                 }
             }
