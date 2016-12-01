@@ -11,7 +11,9 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFa
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.mockito.Mockito;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
@@ -39,7 +41,12 @@ public class ProductEjbDBFreeTest {
         Product testProduct = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "SGM-TEST-SAP");
         testProduct.setPrimaryPriceItem(new PriceItem("qsID", "testPlatform", "testCategory", "blockThisItem"));
 
-        testEjb.publishProductToSAP(testProduct);
+        try {
+            testEjb.publishProductToSAP(testProduct);
+            Assert.fail();
+        } catch (SAPIntegrationException e) {
+
+        }
 
         assertThat(testProduct.isSavedInSAP(), is(false));
         Mockito.verify(mockSapService, Mockito.times(0)).createProductInSAP(testProduct);
@@ -51,7 +58,11 @@ public class ProductEjbDBFreeTest {
 
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(blockControl);
-        testEjb.publishProductToSAP(testProduct);
+        try {
+            testEjb.publishProductToSAP(testProduct);
+            Assert.fail();
+        } catch (SAPIntegrationException e) {
+        }
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockSapService, Mockito.times(1)).createProductInSAP(testProduct);
         Mockito.verify(mockSapService, Mockito.times(0)).changeProductInSAP(testProduct);
@@ -75,7 +86,12 @@ public class ProductEjbDBFreeTest {
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(blockControl);
 
-        testEjb.publishProductToSAP(testProduct);
+        try {
+            testEjb.publishProductToSAP(testProduct);
+            Assert.fail();
+        } catch (SAPIntegrationException e) {
+
+        }
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockSapService, Mockito.times(1)).createProductInSAP(testProduct);
         Mockito.verify(mockSapService, Mockito.times(3)).changeProductInSAP(testProduct);
