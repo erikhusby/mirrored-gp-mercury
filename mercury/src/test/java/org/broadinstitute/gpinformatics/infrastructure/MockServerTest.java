@@ -14,8 +14,9 @@ package org.broadinstitute.gpinformatics.infrastructure;
 import org.broadinstitute.gpinformatics.athena.presentation.projects.MockSubmissionsService;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsService;
 import org.mockserver.integration.ClientAndServer;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.mockserver.model.HttpResponse;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,8 +24,8 @@ import java.util.List;
 public class MockServerTest {
     private ClientAndServer mockServer;
 
-    @BeforeTest(alwaysRun = true)
-    protected void startMockServer() {
+    @BeforeClass(alwaysRun = true)
+    public void startMockServer() {
         mockServer = ClientAndServer.startClientAndServer(getPortList());
     }
 
@@ -36,12 +37,12 @@ public class MockServerTest {
         return portList.toArray(new Integer[portList.size()]);
     }
 
-    @AfterTest(alwaysRun = true)
-    protected void stopMockServer() {
+    @AfterClass(alwaysRun = true)
+    public void stopMockServer() {
         mockServer.stop();
     }
 
-    protected SubmissionsService serviceWithResponse(org.mockserver.model.HttpResponse httpResponse) {
+    protected SubmissionsService serviceWithResponse(HttpResponse httpResponse) {
         return MockSubmissionsService.serviceWithResponse(mockServer, httpResponse);
     }
 }
