@@ -51,6 +51,38 @@ var filterDropdownHtml = "<div class='filterOptions'>using <select class='filter
 function isBlank(value){
     return (value === undefined || value.trim() === '');
 }
+
+function standardButtons(checkboxClass="shiftCheckbox", headerClass) {
+    var defaultOptions = {
+        columns: ':visible :gt(0)',
+        rows: function (html, index, node) {
+            var $checked = $j(node).find('input:checked.' + checkboxClass);
+            return $checked!==undefined && $checked.length>0;
+        },
+        format: {
+            header: function(html, index, node){
+                if (headerClass){
+                    return $j(node).find("."+headerClass).text();
+                }
+                return $j(node).text();
+            }
+        },
+        modifier: {
+            search: 'applied',
+            order: 'current',
+            page: 'all'
+        }
+    };
+
+    return [{
+        extend: 'excelHtml5',
+        exportOptions: defaultOptions
+    }, {
+        extend: 'copyHtml5',
+        exportOptions: defaultOptions
+    }];
+}
+
 /**
  * Dynamically add the HTML element for the dropdown and the choices, as well as define the
  * dropdown behavior when the user changes it (clicks on it and selects another item).

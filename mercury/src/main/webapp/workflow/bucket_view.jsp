@@ -400,6 +400,7 @@
 
             var bucketName = $j('#bucketSelect :selected').val();
             var localStorageKey = 'DT_bucketEntryView';
+
             oTable = $j('#bucketEntryView').DataTable({
                 dom: "<'info-header-display'iB><'#filtering'>rtpl",
                 saveState: true,
@@ -410,8 +411,9 @@
                 pageLength: 100,
                 searchDelay: 500,
                 renderer: "bootstrap",
-                buttons: [{
+                buttons: [standardButtons('bucket-checkbox', 'title'), {
                     extend: 'colvis',
+                    className: 'show-or-hide',
                     text: "Show or Hide Columns",
                     columns: ':gt(0)'
                 }],
