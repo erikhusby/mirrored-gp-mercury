@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
 
-public class VesselPooledTubesProcessor extends VesselSpreadsheetProcessor {
+public class VesselPooledTubesProcessor extends TableProcessor {
 
     private List<String> headers;
     private List<String> barcodes = new ArrayList<>();
@@ -31,17 +31,17 @@ public class VesselPooledTubesProcessor extends VesselSpreadsheetProcessor {
         super(sheetName, TableProcessor.IgnoreTrailingBlankLines.YES);
     }
 
-    @Override
+
     public List<String> getHeaderNames() {
         return headers;
     }
 
-    @Override
+
     public void processHeader(List<String> headers, int row) {
         this.headers = headers;
     }
 
-    @Override
+
     public void processRowDetails(Map<String, String> dataRow, int dataRowIndex) {
 
         String tubeBarcode = dataRow.get(Headers.TUBE_BARCODE.getText());
@@ -63,12 +63,10 @@ public class VesselPooledTubesProcessor extends VesselSpreadsheetProcessor {
 
     }
 
-    @Override
     protected ColumnHeader[] getColumnHeaders() {
         return VesselPooledTubesProcessor.Headers.values();
     }
 
-    @Override
     public void close() {
     }
 

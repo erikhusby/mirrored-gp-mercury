@@ -269,9 +269,7 @@ public class Metadata {
         NA(Category.LAB_METRIC, DataType.STRING, "NA", Visibility.USER),
         BAIT_WELL(Category.REAGENT, DataType.STRING, "Bait Well", Visibility.USER),
         LSID(Category.SAMPLE, DataType.STRING, "Life Science Identifier", Visibility.USER),
-        SPECIES(Category.SAMPLE, DataType.STRING, "Species", Visibility.USER),
-        SINGLE_LIBRARY_SAMPLE_NAME(Category.SAMPLE, DataType.STRING, "Single Library Sample Name", Visibility.USER);
-
+        SPECIES(Category.SAMPLE, DataType.STRING, "Species", Visibility.USER);
 
         private final Category category;
         private final DataType dataType;
