@@ -215,14 +215,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Column(name = "sap_order_number")
     private String sapOrderNumber;
 
-    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "referenceProductOrder", orphanRemoval = true)
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "referenceProductOrder", orphanRemoval = true)
     private List<SapOrderDetail> sapReferenceOrders = new ArrayList<>();
 
-    @OneToMany(mappedBy = "parentOrder", cascade = CascadeType.PERSIST, orphanRemoval = true)
+    @OneToMany(mappedBy = "parentOrder", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     private Set<ProductOrder> childOrders = new HashSet<>();
 
-    @ManyToOne(cascade = {CascadeType.PERSIST})
-    @JoinColumn(name = "PARENT_PRODUCT_ORDER")
+    @ManyToOne(cascade = {CascadeType.PERSIST}, fetch = FetchType.EAGER)
+    @JoinColumn(name="PARENT_PRODUCT_ORDER")
     private ProductOrder parentOrder;
 
     /**
@@ -247,19 +247,36 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         this(createdBy.getUserId(), "", new ArrayList<ProductOrderSample>(), "", null, researchProject);
     }
 
-    public ProductOrder(ProductOrder toClone, boolean shareSapOrder) {
+    /**
+     * Helper method to take specific basic elements of a Product Order for the purposes of creating a new cloned order
+     * @param toClone Original order to be cloned AND set as the parent of the cloned order
+     * @param shareSapOrder Indicates whether the cloned order will refer to the original orders SAP order reference
+     * @return A new Product Order which has certain elements copied from the original order
+     */
+    public static ProductOrder cloneProductOrder(ProductOrder toClone, boolean shareSapOrder) {
 
-        this(toClone.getCreatedBy(), "Clone" + toClone.getChildOrders().size() + ": " + toClone.getTitle(),
+        final ProductOrder cloned = new ProductOrder(toClone.getCreatedBy(),
+                "Clone " + toClone.getChildOrders().size() + ": " + toClone.getTitle(),
                 new ArrayList<ProductOrderSample>(), toClone.getQuoteId(), toClone.getProduct(),
                 toClone.getResearchProject());
+        List<Product> potentialAddons = new ArrayList<>();
+
+        for(ProductOrderAddOn cloneAddon : toClone.getAddOns()) {
+            potentialAddons.add(cloneAddon.getAddOn());
+        }
+        if(CollectionUtils.isNotEmpty(potentialAddons)) {
+            cloned.updateAddOnProducts(potentialAddons);
+        }
 
         if (shareSapOrder & toClone.isSavedInSAP()) {
-            addSapOrderDetail(new SapOrderDetail(toClone.latestSapOrderDetail().getSapOrderNumber(),
+            cloned.addSapOrderDetail(new SapOrderDetail(toClone.latestSapOrderDetail().getSapOrderNumber(),
                     toClone.latestSapOrderDetail().getPrimaryQuantity(), toClone.latestSapOrderDetail().getQuoteId(),
                     toClone.latestSapOrderDetail().getCompanyCode()));
         }
 
-        this.setParentOrder(toClone);
+        toClone.addChildOrder(cloned);
+
+        return cloned;
     }
 
     /**
@@ -556,6 +573,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     /**
      * Call this method before saving changes to the database.  It updates the modified date and modified user,
      * and sets the create date and create user if these haven't been set yet.
+     *
+     * FIXME: 12/2/16 SGM This method call should be ripped out and have the Product Order class extend Updatable
+     * Doing so will automatically update these fields on save without this Hokey "Save Type"
      *
      * @param user     the user doing the save operation.
      * @param saveType a {@link SaveType} enum to define if creating or just updating
@@ -1846,13 +1866,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public void setParentOrder(ProductOrder parentOrder) {
 
-        if (this.parentOrder != null) {
-            this.parentOrder.childOrders.remove(this);
-        }
-        if (parentOrder != null) {
-            parentOrder.childOrders.add(this);
-        }
-
         this.parentOrder = parentOrder;
     }
 
@@ -1865,15 +1878,16 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return result;
     }
 
-    public void setChildOrders(Collection<ProductOrder> childOrders) {
+    public void addChildOrders(Collection<ProductOrder> childOrders) {
 
-        for (ProductOrder childOrder : this.childOrders) {
+        for (ProductOrder childOrder : childOrders) {
             addChildOrder(childOrder);
         }
     }
 
     public void addChildOrder(ProductOrder childOrder) {
         childOrder.setParentOrder(this);
+        childOrders.add(childOrder);
     }
 
     public int getNumberForReplacement() {
