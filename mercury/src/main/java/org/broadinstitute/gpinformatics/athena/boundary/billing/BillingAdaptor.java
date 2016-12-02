@@ -47,8 +47,6 @@ public class BillingAdaptor implements Serializable {
 
     private BillingEjb billingEjb;
 
-    private BillingSessionDao billingSessionDao;
-
     private PriceListCache priceListCache;
 
     private ProductOrderEjb productOrderEjb;
@@ -63,11 +61,10 @@ public class BillingAdaptor implements Serializable {
             FastDateFormat.getDateTimeInstance(FastDateFormat.SHORT, FastDateFormat.SHORT);
 
     @Inject
-    public BillingAdaptor(BillingEjb billingEjb, BillingSessionDao billingSessionDao, PriceListCache priceListCache,
+    public BillingAdaptor(BillingEjb billingEjb, PriceListCache priceListCache,
                           QuoteService quoteService, BillingSessionAccessEjb billingSessionAccessEjb,
                           SapIntegrationService sapService) {
         this.billingEjb = billingEjb;
-        this.billingSessionDao = billingSessionDao;
         this.priceListCache = priceListCache;
         this.quoteService = quoteService;
         this.billingSessionAccessEjb = billingSessionAccessEjb;
