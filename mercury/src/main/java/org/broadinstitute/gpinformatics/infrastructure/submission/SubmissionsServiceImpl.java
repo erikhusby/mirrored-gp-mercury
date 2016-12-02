@@ -56,7 +56,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
         String baseUrl = submissionsConfig.getWSUrl(SubmissionConfig.SUBMISSIONS_STATUS_URI);
         QueryStringSplitter splitter = new QueryStringSplitter(baseUrl.length(), EPSILON_9_MAX_URL_LENGTH);
         for (Map<String, List<String>> parameters : splitter.split("uuid", Arrays.asList(submissionIdentifiers))) {
-            ClientResponse response = clientResponseGet(baseUrl, parameters, "querying submission status");
+            ClientResponse response = clientResponseGet(baseUrl, parameters, "querying submission status", true);
             SubmissionStatusResultBean result = response.getEntity(SubmissionStatusResultBean.class);
             allResults.addAll(result.getSubmissionStatuses());
         }
@@ -108,7 +108,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
     public Collection<BioProject> getAllBioProjects() {
         ClientResponse response =
                 clientResponseGet(submissionsConfig.getWSUrl(SubmissionConfig.LIST_BIOPROJECTS_ACTION), NO_PARAMETERS,
-                        "querying submission status");
+                        "querying submission status", true);
         BioProjects bioProjects = response.getEntity(BioProjects.class);
         return bioProjects.getBioprojects();
     }
@@ -136,7 +136,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
 
         ClientResponse response =
                 clientResponseGet(submissionsConfig.getWSUrl(SubmissionConfig.SUBMISSION_SAMPLES_ACTION), parameterMap,
-                        "receiving submission samples list");
+                        "receiving submission samples list", true);
         return response.getEntity(SubmissionSampleResultBean.class).getSubmittedSampleIds();
     }
 
@@ -144,7 +144,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
     public List<SubmissionRepository> getSubmissionRepositories() {
         ClientResponse response =
                 clientResponseGet(SubmissionConfig.ALL_SUBMISSION_SITES, NO_PARAMETERS,
-                        "receiving Submission Repositories");
+                        "receiving Submission Repositories", true);
 
         return response.getEntity(SubmissionRepositories.class).getSubmissionRepositories();
     }
@@ -153,14 +153,21 @@ public class SubmissionsServiceImpl implements SubmissionsService {
     public List<SubmissionLibraryDescriptor> getSubmissionLibraryDescriptors() {
         ClientResponse response =
                 clientResponseGet(SubmissionConfig.SUBMISSION_TYPES, NO_PARAMETERS,
-                        "receiving Submission Library Descriptors");
+                        "receiving Submission Library Descriptors", true);
         return response.getEntity(SubmissionLibraryDescriptors.class).getSubmissionLibraryDescriptors();
     }
 
     private ClientResponse clientResponseGet(String servicePath, Map<String, List<String>> parameters,
-                                             String validationText) {
+                                             String validationText, boolean withValidation) {
         ClientResponse response = null;
-        if (isAvailable()) {
+        boolean preTestServer;
+        if (withValidation) {
+            preTestServer=isAvailable();
+        }else{
+            preTestServer = false;
+        }
+
+        if (preTestServer) {
             response = JerseyUtils.getWebResource(submissionsConfig.getWSUrl(servicePath),
                     MediaType.APPLICATION_JSON_TYPE, parameters).get(ClientResponse.class);
 
@@ -202,10 +209,19 @@ public class SubmissionsServiceImpl implements SubmissionsService {
         }
     }
 
+
+    private List<SubmissionRepository> submissionServiceAvailableService() {
+        ClientResponse response =
+                clientResponseGet(SubmissionConfig.ALL_SUBMISSION_SITES, NO_PARAMETERS,
+                        "receiving Submission Repositories", false);
+
+        return response.getEntity(SubmissionRepositories.class).getSubmissionRepositories();
+    }
+
     @Override
     public boolean isAvailable() {
         try {
-            if (CollectionUtils.isNotEmpty(getSubmissionRepositories())) {
+            if (CollectionUtils.isNotEmpty(submissionServiceAvailableService())) {
                 return true;
             }
         } catch (Exception e) {

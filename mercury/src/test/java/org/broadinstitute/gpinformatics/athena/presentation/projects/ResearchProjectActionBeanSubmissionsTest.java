@@ -14,49 +14,23 @@ package org.broadinstitute.gpinformatics.athena.presentation.projects;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionConfig;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsService;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.MockServerTest;
 import org.broadinstitute.gpinformatics.mercury.presentation.TestCoreActionBeanContext;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.hamcrest.Matchers;
 import org.mockito.Mockito;
-import org.mockserver.integration.ClientAndServer;
-import org.mockserver.model.HttpRequest;
 import org.mockserver.model.HttpResponse;
 import org.mockserver.model.HttpStatusCode;
 import org.testng.Assert;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @Test(groups = TestGroups.DATABASE_FREE)
-public class ResearchProjectActionBeanSubmissionsTest {
-    private ClientAndServer mockServer;
-
-    @BeforeTest
-    public void startMockServer() {
-        mockServer = ClientAndServer.startClientAndServer(getPortList());
-    }
-
-    private Integer[] getPortList() {
-        List<Integer> portList = new ArrayList<>();
-        while (portList.size() < 20) {
-            portList.add(6000+portList.size());
-        }
-        return portList.toArray(new Integer[portList.size()]);
-    }
-
-    @AfterTest(alwaysRun = true)
-    public void stopMockServer() {
-        mockServer.stop();
-    }
+public class ResearchProjectActionBeanSubmissionsTest extends MockServerTest {
 
     public void testLoadSubmissionData() throws Exception {
         ResearchProjectActionBean actionBean = new ResearchProjectActionBean();
@@ -64,14 +38,12 @@ public class ResearchProjectActionBeanSubmissionsTest {
         actionBean.setContext(testContext);
         HttpResponse serverUnavailable =
                 HttpResponse.response().withStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR_500.code());
-        SubmissionsService submissionsService =
-                MockSubmissionsService.serviceWithResponse(mockServer, serverUnavailable);
+        SubmissionsService submissionsService = serviceWithResponse(serverUnavailable);
         actionBean.setSubmissionsService(submissionsService);
         try {
             actionBean.initSubmissions();
             assertThat(actionBean.getFormattedMessages(),
                     Matchers.contains(ResearchProjectActionBean.SUBMISSIONS_UNAVAILABLE));
-            mockServer.verify(HttpRequest.request().withPath("/" + SubmissionConfig.SUBMISSION_TYPES));
         } catch (Exception e) {
             Assert.fail("No Exception should have been thrown");
         }
@@ -90,8 +62,7 @@ public class ResearchProjectActionBeanSubmissionsTest {
 
         HttpResponse serverUnavailable =
                 HttpResponse.response().withStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR_500.code());
-        SubmissionsService submissionsService =
-                MockSubmissionsService.serviceWithResponse(mockServer, serverUnavailable);
+        SubmissionsService submissionsService = serviceWithResponse(serverUnavailable);
         actionBean.setSubmissionsService(submissionsService);
         try {
             boolean validationPassed = actionBean.validateViewOrPostSubmissions();

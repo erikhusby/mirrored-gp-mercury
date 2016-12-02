@@ -18,12 +18,14 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
-import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsWillAlwaysFailSubmissionsService;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.MockServerTest;
 import org.broadinstitute.gpinformatics.mercury.presentation.TestCoreActionBeanContext;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.mockito.Mockito;
+import org.mockserver.model.HttpResponse;
+import org.mockserver.model.HttpStatusCode;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -42,7 +44,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 
 @Test(groups = TestGroups.DATABASE_FREE)
-public class ResearchProjectActionBeanTest {
+public class ResearchProjectActionBeanTest extends MockServerTest {
     @BeforeMethod(alwaysRun = true)
     public void setUp() throws Exception {
     }
@@ -136,8 +138,10 @@ public class ResearchProjectActionBeanTest {
         TestCoreActionBeanContext testContext = new TestCoreActionBeanContext();
 
         actionBean.setContext(testContext);
+        HttpResponse serverUnavailable =
+                HttpResponse.response().withStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR_500.code());
 
-        actionBean.setSubmissionsService(new SubmissionsWillAlwaysFailSubmissionsService());
+        actionBean.setSubmissionsService(serviceWithResponse(serverUnavailable));
         actionBean.initSubmissions();
         assertThat(actionBean.getFormattedMessages(), contains(ResearchProjectActionBean.SUBMISSIONS_UNAVAILABLE));
     }
