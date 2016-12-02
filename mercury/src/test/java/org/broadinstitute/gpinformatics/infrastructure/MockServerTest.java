@@ -23,8 +23,8 @@ import java.util.List;
 public class MockServerTest {
     private ClientAndServer mockServer;
 
-    @BeforeTest
-    private void startMockServer() {
+    @BeforeTest(alwaysRun = true)
+    protected void startMockServer() {
         mockServer = ClientAndServer.startClientAndServer(getPortList());
     }
 
@@ -37,11 +37,11 @@ public class MockServerTest {
     }
 
     @AfterTest(alwaysRun = true)
-    private void stopMockServer() {
+    protected void stopMockServer() {
         mockServer.stop();
     }
 
-    public SubmissionsService serviceWithResponse(org.mockserver.model.HttpResponse httpResponse) {
+    protected SubmissionsService serviceWithResponse(org.mockserver.model.HttpResponse httpResponse) {
         return MockSubmissionsService.serviceWithResponse(mockServer, httpResponse);
     }
 }
