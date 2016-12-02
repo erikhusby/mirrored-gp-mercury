@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.ArraysSummaryFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.SampleSheetFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -33,12 +34,15 @@ import java.util.regex.Pattern;
  * Stripes action bean that allows user to download as samplesheet.csv file for arrays.
  */
 @UrlBinding(value = "/vessel/SampleSheet.action")
-public class SampleSheetActionBean extends CoreActionBean {
-    private static final String CREATE_PAGE = "/vessel/sample_sheet.jsp";
+public class ArraysReportActionBean extends CoreActionBean {
+    private static final String CREATE_PAGE = "/vessel/arrays_report.jsp";
     private static final String DOWNLOAD_ACTION = "download";
 
     /** Extract barcode and position from e.g. 3999595020_R12C02 */
     private static final Pattern BARCODE_PATTERN = Pattern.compile("(\\d*)_(R\\d*C\\d*)");
+
+    /** POSTed from form. */
+    private ArraysReportActionBean.Report report;
 
     /** POSTed from form. */
     private String pdoBusinessKeys;
@@ -50,6 +54,9 @@ public class SampleSheetActionBean extends CoreActionBean {
     private SampleSheetFactory sampleSheetFactory;
 
     @Inject
+    private ArraysSummaryFactory arraysSummaryFactory;
+
+    @Inject
     private ProductOrderDao productOrderDao;
 
     @Inject
@@ -58,6 +65,21 @@ public class SampleSheetActionBean extends CoreActionBean {
     @DefaultHandler
     public Resolution view() {
         return new ForwardResolution(CREATE_PAGE);
+    }
+
+    public enum Report {
+        SAMPLE_SHEET("Samplesheet.csv"),
+        SUMMARY("Summary.txt");
+
+        private final String displayName;
+
+        Report(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
     }
 
     @HandlesEvent(DOWNLOAD_ACTION)
@@ -79,7 +101,7 @@ public class SampleSheetActionBean extends CoreActionBean {
         if (chipWellBarcodes != null) {
             String[] chipWellBarcodeArray = chipWellBarcodes.trim().split("\\s+");
             if (chipWellBarcodeArray.length > 0) {
-                ArrayList<String> barcodes = new ArrayList<>();
+                List<String> barcodes = new ArrayList<>();
                 for (String chipWellBarcode : chipWellBarcodeArray) {
                     Matcher matcher = BARCODE_PATTERN.matcher(chipWellBarcode);
                     if (matcher.matches()) {
@@ -134,9 +156,18 @@ public class SampleSheetActionBean extends CoreActionBean {
                 @Override
                 public void stream(HttpServletResponse response) throws Exception {
                     ServletOutputStream out = response.getOutputStream();
-                    sampleSheetFactory.write(new PrintStream(out), vesselPositionPairs, finalFirstProductOrder);
+                    switch (report) {
+                        case SAMPLE_SHEET:
+                            sampleSheetFactory.write(new PrintStream(out), vesselPositionPairs, finalFirstProductOrder);
+                            break;
+                        case SUMMARY:
+                            arraysSummaryFactory.write(new PrintStream(out), vesselPositionPairs, finalFirstProductOrder);
+                            break;
+                        default:
+                            throw new RuntimeException("Unexpected report " + report);
+                    }
                 }
-            }.setFilename("Samplesheet.csv");
+            }.setFilename(report.getDisplayName());
         }
     }
 
@@ -158,5 +189,13 @@ public class SampleSheetActionBean extends CoreActionBean {
     @SuppressWarnings("unused")
     public void setChipWellBarcodes(String chipWellBarcodes) {
         this.chipWellBarcodes = chipWellBarcodes;
+    }
+
+    public ArraysReportActionBean.Report getReport() {
+        return report;
+    }
+
+    public void setReport(ArraysReportActionBean.Report report) {
+        this.report = report;
     }
 }

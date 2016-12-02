@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -22,6 +23,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import javax.inject.Inject;
 import java.io.PrintStream;
 import java.math.BigDecimal;
+import java.text.Format;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +35,8 @@ import java.util.Set;
  * collaborators.
  */
 public class ArraysSummaryFactory {
+
+    private static final Format DATE_FORMAT = FastDateFormat.getInstance("MM/dd/yyyy hh:mm a");
 
     @Inject
     private SampleDataFetcher sampleDataFetcher;
@@ -77,7 +81,7 @@ public class ArraysSummaryFactory {
         String chipType = productEjb.getGenotypingChip(productOrder,
                 labVessel1.getEvents().iterator().next().getEventDate()).getRight();
 
-        // Preamble
+        // Preamble todo jmt
         // Header Group
         printStream.println("PED Data\t\tCall Rate\tSample\t\t\t\t\t\tFingerprint\tGender\t\t\t\tTrio\t" +
                 "BEADSTUDIO\t\t\t\t\tZCALL\t\tScan\t\t\t\t\tPlate\t\t\t");
@@ -162,7 +166,7 @@ public class ArraysSummaryFactory {
             // Scan Date
             for (LabEvent labEvent: chip.getInPlaceLabEvents()) {
                 if (labEvent.getLabEventType() == LabEventType.INFINIUM_AUTOCALL_SOME_STARTED) {
-                    printStream.print(labEvent.getEventDate());
+                    printStream.print(DATE_FORMAT.format(labEvent.getEventDate()));
                     break;
                 }
             }
@@ -170,7 +174,7 @@ public class ArraysSummaryFactory {
             // Amp Date
             for (LabEvent labEvent : dnaPlateAndPosition.getVessel().getTransfersFrom()) {
                 if (labEvent.getLabEventType() == LabEventType.INFINIUM_AMPLIFICATION) {
-                    printStream.print(labEvent.getEventDate());
+                    printStream.print(DATE_FORMAT.format(labEvent.getEventDate()));
                     break;
                 }
             }
@@ -178,6 +182,7 @@ public class ArraysSummaryFactory {
             // todo jmt fix
             // Scanner
 //            String scannerName = findScannerName(chip.getLabel(), vesselPosition.name());
+            printStream.print("\t");
             // Genotyping Run
             printStream.print(chipWellBarcodes.get(i) + "\t");
             // DNA Plate
