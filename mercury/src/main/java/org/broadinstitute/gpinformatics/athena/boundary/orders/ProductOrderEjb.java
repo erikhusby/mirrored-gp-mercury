@@ -254,7 +254,7 @@ public class ProductOrderEjb {
     }
 
     /**
-     * Modified version of persistProductOrder to deal with the new concept of Chiled ProductOrders introduced with the
+     * Modified version of persistProductOrder to deal with the new concept of child ProductOrders introduced with the
      * SAP integration.  The main difference here is that the Parent order has persist directly called on it instead of
      * the child order to enable the cascades to correctly save the entities instead of getting confused.
      *
