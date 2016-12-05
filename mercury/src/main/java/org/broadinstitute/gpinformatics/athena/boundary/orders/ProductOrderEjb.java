@@ -249,9 +249,54 @@ public class ProductOrderEjb {
             publishProductOrderToSAP(editedProductOrder, messageCollection, false);
         }
         attachMercurySamples(editedProductOrder.getSamples());
+
         productOrderDao.persist(editedProductOrder);
     }
 
+    /**
+     * Modified version of persistProductOrder to deal with the new concept of child ProductOrders introduced with the
+     * SAP integration.  The main difference here is that the Parent order has persist directly called on it instead of
+     * the child order to enable the cascades to correctly save the entities instead of getting confused.
+     *
+     * Whether the issues (GPLIM-4513, GPLIM-4514) that led to this being implemented are a Hibernate bug or an
+     * implementation issue is not known now, but should continue to be investigated.  Hopefully the upgrade to Java 8
+     * and Wildfly will show some improvement on this
+     *
+     * @param saveType indicates what state the ProductOrder is in when this method is called
+     * @param editedProductOrder
+     * @param messageCollection
+     * @throws IOException
+     * @throws QuoteNotFoundException
+     * @throws SAPInterfaceException
+     */
+    public void persistClonedProductOrder(ProductOrder.SaveType saveType, ProductOrder editedProductOrder,
+                                    MessageCollection messageCollection)
+            throws IOException, QuoteNotFoundException, SAPInterfaceException {
+
+
+        editedProductOrder.prepareToSave(userBean.getBspUser(), saveType);
+
+        if (!editedProductOrder.isDraft()) {
+            updateJiraIssue(editedProductOrder);
+
+            publishProductOrderToSAP(editedProductOrder, messageCollection, false);
+        }
+        attachMercurySamples(editedProductOrder.getSamples());
+
+        productOrderDao.persist(editedProductOrder.getParentOrder());
+    }
+
+    /**
+     * Takes care of the logic to publish the Product Order to SAP for the purposes of either creating or updating
+     * an SAP order.  This must be done in order to directly bill to SAP from mercury
+     *
+     * @param editedProductOrder Product order entity which intends to be reflected in SAP
+     * @param messageCollection Storage for error/success messages that happens during the publishing process
+     * @param allowCreateOrder Helper flag to know indicate if the scenario by which the method is called intends to
+     *                         allow a new order to be replaced (e.g. an order previously was associated with an SAP
+     *                         order but needs a new one)
+     * @throws SAPInterfaceException
+     */
     public void publishProductOrderToSAP(ProductOrder editedProductOrder, MessageCollection messageCollection,
                                          boolean allowCreateOrder) throws SAPInterfaceException {
         ProductOrder orderToPublish = editedProductOrder;
@@ -315,6 +360,15 @@ public class ProductOrderEjb {
         }
     }
 
+    /**
+     * Helper method to determine if, based on certain criteria, the order is allowed to be pushed to SAP at the time
+     * that the method is called.
+     *
+     * @param editedProductOrder The order to be tested for SAP eligibility
+     * @return Boolean indicator identifying SAP eligibility
+     * @throws QuoteServerException
+     * @throws QuoteNotFoundException
+     */
     public boolean isOrderEligibleForSAP(ProductOrder editedProductOrder)
             throws QuoteServerException, QuoteNotFoundException {
         Quote orderQuote = quoteService.getQuoteByAlphaId(editedProductOrder.getQuoteId());

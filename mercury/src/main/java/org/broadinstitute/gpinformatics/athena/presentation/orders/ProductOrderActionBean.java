@@ -842,6 +842,11 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @ValidationMethod(on = PLACE_ORDER_ACTION)
     public void validatePlacedOrder() {
+        Hibernate.initialize(editOrder.getChildOrders());
+        Hibernate.initialize(editOrder.getSapReferenceOrders());
+        Hibernate.initialize(editOrder.getSamples());
+        Hibernate.initialize(editOrder.getParentOrder());
+
         validatePlacedOrder(PLACE_ORDER_ACTION);
     }
 
@@ -1385,32 +1390,45 @@ public class ProductOrderActionBean extends CoreActionBean {
         return createViewResolution(editOrder.getBusinessKey());
     }
 
+    @ValidationMethod(on = REPLACE_SAMPLES)
+    public void validateReplacementSample() {
+
+        final List<ProductOrderSample> replacementSamples = stringToSampleList(replacementSampleList);
+
+        if(editOrder.getNumberForReplacement() <= 0 ) {
+            addGlobalValidationError("There are no samples to replace.  If you must process samples, please open a new Product Order");
+        } else if (replacementSamples.size() > editOrder.getNumberForReplacement()) {
+            addGlobalValidationError("You are attempting to replace more samples than you are able to.  Please reduce the number samples entered");
+        }
+    }
+
     @HandlesEvent(REPLACE_SAMPLES)
     public Resolution replaceSamples() throws Exception {
 
         boolean shareSapOrder = false;
         MessageCollection saveOrderMessageCollection = new MessageCollection();
 
-        if(editOrder.getNumberForReplacement() >0) {
-            if(editOrder.isSavedInSAP() && editOrder.hasAtLeastOneBilledLedgerEntry() &&
-               (editOrder.getNonAbandonedCount() < editOrder.latestSapOrderDetail().getPrimaryQuantity()) ) {
-                shareSapOrder = true;
-            }
-            ProductOrder.SaveType saveType = ProductOrder.SaveType.CREATING;
-            replacementSampleOrder = new ProductOrder(editOrder, shareSapOrder);
-            replacementSampleOrder.setSamples(stringToSampleListExisting(replacementSampleList));
-            Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
-            try {
-                productOrderEjb.persistProductOrder(saveType, replacementSampleOrder , deletedIdsConverted, kitDetails,
-                        saveOrderMessageCollection);
-                addMessages(saveOrderMessageCollection);
-                addMessage("Product Order \"{0}\" has been saved.", replacementSampleOrder.getTitle());
-            } catch (SAPInterfaceException e) {
-                addGlobalValidationError(e.getMessage());
-            }
+        Hibernate.initialize(editOrder.getChildOrders());
+        Hibernate.initialize(editOrder.getSapReferenceOrders());
+        Hibernate.initialize(editOrder.getSamples());
 
-        } else {
-            addGlobalValidationError("There are no samples to replace.  If you must process samples, please open a new Product Order");
+        final List<ProductOrderSample> replacementSamples = stringToSampleList(replacementSampleList);
+
+        if(editOrder.isSavedInSAP() && editOrder.hasAtLeastOneBilledLedgerEntry() &&
+           (editOrder.getNonAbandonedCount() < editOrder.latestSapOrderDetail().getPrimaryQuantity()) ) {
+            shareSapOrder = true;
+        }
+        ProductOrder.SaveType saveType = ProductOrder.SaveType.CREATING;
+        replacementSampleOrder = ProductOrder.cloneProductOrder(editOrder, shareSapOrder);
+        replacementSampleOrder.setSamples(replacementSamples);
+        Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
+        try {
+            productOrderEjb.persistClonedProductOrder(saveType, replacementSampleOrder, saveOrderMessageCollection);
+            addMessages(saveOrderMessageCollection);
+            addMessage("Product Order \"{0}\" has been saved.", replacementSampleOrder.getTitle());
+        } catch (SAPInterfaceException e) {
+            addGlobalValidationError(e.getMessage());
+            return getSourcePageResolution();
         }
 
         return createViewResolution(replacementSampleOrder==null?editOrder.getBusinessKey():replacementSampleOrder.getBusinessKey());
@@ -2132,7 +2150,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private static List<ProductOrderSample> stringToSampleList(String sampleListText) {
         List<ProductOrderSample> samples = new ArrayList<>();
-        for (String sampleName : SearchActionBean.cleanInputStringForSamples(sampleListText)) {
+        final List<String> sampleNames = SearchActionBean.cleanInputStringForSamples(sampleListText);
+        for (String sampleName : sampleNames) {
             samples.add(new ProductOrderSample(sampleName));
         }
 
@@ -2842,10 +2861,11 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
     public String getPublishSAPAction() {return PUBLISH_PDO_TO_SAP;}
 
+    public String getReplacementSampleList() {
+        return replacementSampleList;
+    }
+
     public void setReplacementSampleList(String replacementSampleList) {
         this.replacementSampleList = replacementSampleList;
     }
-
-
-
 }
