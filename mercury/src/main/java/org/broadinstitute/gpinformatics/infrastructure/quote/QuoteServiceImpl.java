@@ -97,9 +97,6 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         return registerWorkHelper(quote, quotePriceItem, itemIsReplacing, reportedCompletionDate, numWorkUnits,
                 callbackUrl,
                 callbackParameterName, callbackParameterValue, Endpoint.REGISTER_BLOCKED_WORK);
-//        return registerWorkHelper(quote, quotePriceItem, itemIsReplacing, reportedCompletionDate, numWorkUnits,
-//                callbackUrl,
-//                callbackParameterName, callbackParameterValue, Endpoint.REGISTER_WORK);
     }
 
     private String registerWorkHelper(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
