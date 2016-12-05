@@ -2,13 +2,14 @@ package org.broadinstitute.gpinformatics.infrastructure.submission;
 
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 
 /**
  * TODO scottmat fill in javadoc!!!
  */
-public interface SubmissionsService extends ServiceInfo {
+public interface SubmissionsService extends Serializable {
 
     Collection<SubmissionStatusDetailBean> getSubmissionStatus(String... uuids);
 
@@ -25,4 +26,6 @@ public interface SubmissionsService extends ServiceInfo {
     SubmissionRepository findRepositoryByKey(String key);
 
     SubmissionLibraryDescriptor findLibraryDescriptorTypeByKey(String selectedSubmissionDescriptor);
+
+    boolean isAvailable();
 }
