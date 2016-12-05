@@ -552,4 +552,32 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(result, containsString("\"kitType\":\"Cleavage Reagent Master Mix\""));
         assertThat(result, containsString("\"kitType\":\"Scan Reagent\","));
     }
+
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testValidateWorkflow(@ArquillianResource URL baseUrl)
+            throws Exception {
+        String pondRegistrationSourcePlate = "000009163073";
+        WebResource resource = makeWebResource(baseUrl, "validateWorkflow")
+                .queryParam("nextEventTypeName", "IceCatchEnrichmentCleanup")
+                .queryParam("q", pondRegistrationSourcePlate);
+        String result = get(resource);
+        assertThat(result, containsString("\"hasErrors\":true"));
+
+        resource = makeWebResource(baseUrl, "validateWorkflow")
+                .queryParam("nextEventTypeName", "PondRegistration")
+                .queryParam("q", pondRegistrationSourcePlate);
+        String result2 = get(resource);
+        assertThat(result2, containsString("\"hasErrors\":false"));
+
+        resource = makeWebResource(baseUrl, "validateWorkflow")
+                .queryParam("nextEventTypeName", "PondRegistration")
+                .queryParam("q", "IamAnUnknownBarcode");
+
+        UniformInterfaceException caught = getWithError(resource);
+        assertThat(caught.getResponse().getStatus(), equalTo(500));
+        assertThat(getResponseContent(caught),
+                startsWith(
+                        "Failed to find lab vessels with barcodes: [IamAnUnknownBarcode]"));
+    }
 }
