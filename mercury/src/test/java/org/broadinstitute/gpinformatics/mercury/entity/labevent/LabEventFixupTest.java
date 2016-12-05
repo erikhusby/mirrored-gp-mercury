@@ -1719,7 +1719,7 @@ public class LabEventFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
-    public void fixupSupport2319() throws Exception {
+    public void fixupSupport2330() throws Exception {
         userBean.loginOSUser();
         utx.begin();
         long[] ids = {1740607L};
