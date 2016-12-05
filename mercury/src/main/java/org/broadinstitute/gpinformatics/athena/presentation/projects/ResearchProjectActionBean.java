@@ -841,10 +841,21 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     @ValidationMethod(on = {VIEW_SUBMISSIONS_ACTION, POST_SUBMISSIONS_ACTION}, priority=0)
     public boolean isSubmissionServiceAvailable() {
         if (submissionsServiceAvailable==null){
-            submissionsServiceAvailable=submissionsService.isAvailable();
+            boolean errorLogged=false;
+            List<SubmissionLibraryDescriptor> libraryDescriptors;
+            try {
+                libraryDescriptors = submissionsService.getSubmissionLibraryDescriptors();
+                submissionsServiceAvailable = CollectionUtils.isNotEmpty(libraryDescriptors);
+            }catch (Exception e){
+                log.error(SUBMISSIONS_UNAVAILABLE, e);
+                errorLogged=true;
+                submissionsServiceAvailable=false;
+            }
             if (!submissionsServiceAvailable) {
                 // Only need to do this once per request.
-                log.error(SUBMISSIONS_UNAVAILABLE);
+                if (!errorLogged) {
+                    log.error(SUBMISSIONS_UNAVAILABLE);
+                }
                 addMessage(SUBMISSIONS_UNAVAILABLE);
             }
         }
