@@ -186,8 +186,19 @@ public class ArraysSummaryFactory {
             printStream.print("\t");
             // Scanner
             if (includeScannerName) {
-                printStream.print(InfiniumRunProcessor.findScannerName(chip.getLabel(), vesselPosition.name(),
-                        infiniumStarterConfig));
+                String scannerName = null;
+                for (LabEvent labEvent : chip.getInPlaceLabEvents()) {
+                    if (labEvent.getLabEventType() == LabEventType.INFINIUM_AUTOCALL_SOME_STARTED) {
+                        scannerName = labEvent.getEventLocation();
+                        break;
+                    }
+                }
+
+                if (scannerName == null) {
+                    scannerName = InfiniumRunProcessor.findScannerName(chip.getLabel(), vesselPosition.name(),
+                            infiniumStarterConfig);
+                }
+                printStream.print(scannerName);
             }
             printStream.print("\t");
             // Genotyping Run
