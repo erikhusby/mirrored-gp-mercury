@@ -59,7 +59,7 @@ public class UserBean implements Serializable {
     }};
 
     private boolean isTestUser() {
-        return BSPUserList.isTestUser(bspUser);
+        return bspUserList.isTestUser(bspUser);
     }
 
     /**

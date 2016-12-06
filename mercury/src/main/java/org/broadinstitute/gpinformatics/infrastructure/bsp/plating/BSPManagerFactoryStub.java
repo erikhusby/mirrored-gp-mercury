@@ -19,10 +19,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.users.UserManager;
 import org.broadinstitute.bsp.client.workrequest.WorkRequestManager;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
-import javax.enterprise.context.Dependent;
-import javax.enterprise.inject.Alternative;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -30,9 +27,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-@Stub
-@Alternative
-@Dependent
 public class BSPManagerFactoryStub implements BSPManagerFactory {
     public static final long QA_DUDE_USER_ID = 9382L;
 

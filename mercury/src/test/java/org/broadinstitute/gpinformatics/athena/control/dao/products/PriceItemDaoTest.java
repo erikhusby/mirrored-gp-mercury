@@ -1,11 +1,11 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.products;
 
-
-import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.testng.Assert;
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -21,9 +21,7 @@ public class PriceItemDaoTest extends ContainerTest {
     @Inject
     private PriceItemDao dao;
 
-    @SuppressWarnings("CdiInjectionPointsInspection")
-    @Inject
-    private Log log;
+    private Log log = LogFactory.getLog(this.getClass());
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject

@@ -763,31 +763,6 @@
         </profile>
 
         <profile>
-            <id>Arquillian-Weld</id>
-            <dependencies>
-                <!-- todo jmt fix -->
-                <dependency>
-                    <groupId>org.jboss.arquillian.container</groupId>
-                    <artifactId>arquillian-weld-ee-embedded-1.1</artifactId>
-                    <version>1.0.0.CR3</version>
-                    <scope>test</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.jboss.weld</groupId>
-                    <artifactId>weld-core</artifactId>
-                    <version>1.1.7.Final</version>
-                    <scope>test</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-log4j12</artifactId>
-                    <version>1.6.4</version>
-                    <scope>test</scope>
-                </dependency>
-            </dependencies>
-        </profile>
-
-        <profile>
             <id>Arquillian-WildFly10-Managed</id>
             <dependencies>
                 <dependency>
@@ -851,64 +826,58 @@
         <profile>
             <id>Arquillian-WildFly10-Remote</id>
             <!-- These dependencies won't get bundled into shrinkwrapped Arquillian archive -->
+            <dependencyManagement>
+                <dependencies>
+                    <!-- Child of arquillian-bom -->
+                    <dependency>
+                        <groupId>org.jboss.shrinkwrap.resolver</groupId>
+                        <artifactId>shrinkwrap-resolver-bom</artifactId>
+                        <version>2.2.0</version>
+                        <type>pom</type>
+                        <scope>import</scope>
+                    </dependency>
+                </dependencies>
+            </dependencyManagement>
+
+
             <dependencies>
                 <dependency>
                     <groupId>org.jboss.arquillian.testng</groupId>
-                    <artifactId>arquillian-testng-core</artifactId>
-                    <version>1.1.11.Final</version>
-                    <scope>test</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.jboss.arquillian.testng</groupId>
                     <artifactId>arquillian-testng-container</artifactId>
-                    <version>1.1.11.Final</version>
                     <scope>test</scope>
                 </dependency>
-                <!--
-                <dependency>
-                    <groupId>org.wildfly.arquillian</groupId>
-                    <artifactId>wildfly-arquillian-testng-integration</artifactId>
-                    <version>2.0.0.Final</version>
-                    <scope>test</scope>
-                </dependency>
-                -->
 
-                <dependency>
+                 <dependency>
                     <groupId>org.jboss.shrinkwrap.resolver</groupId>
                     <artifactId>shrinkwrap-resolver-api</artifactId>
-                    <version>2.2.2</version>
                     <scope>test</scope>
                 </dependency>
                 <dependency>
                     <groupId>org.jboss.shrinkwrap.resolver</groupId>
                     <artifactId>shrinkwrap-resolver-spi</artifactId>
-                    <version>2.2.2</version>
                     <scope>test</scope>
                 </dependency>
                 <dependency>
                     <groupId>org.jboss.shrinkwrap.resolver</groupId>
                     <artifactId>shrinkwrap-resolver-api-maven</artifactId>
-                    <version>2.2.2</version>
                     <scope>test</scope>
                 </dependency>
                 <dependency>
                     <groupId>org.jboss.shrinkwrap.resolver</groupId>
                     <artifactId>shrinkwrap-resolver-spi-maven</artifactId>
-                    <version>2.2.2</version>
                     <scope>test</scope>
                 </dependency>
                 <dependency>
                     <groupId>org.jboss.shrinkwrap.resolver</groupId>
                     <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
-                    <version>2.2.2</version>
                     <scope>test</scope>
                 </dependency>
                 <dependency>
                     <groupId>org.jboss.shrinkwrap.resolver</groupId>
                     <artifactId>shrinkwrap-resolver-impl-maven-archive</artifactId>
-                    <version>2.2.2</version>
                     <scope>test</scope>
                 </dependency>
+
                 <dependency>
                     <groupId>org.wildfly.arquillian</groupId>
                     <artifactId>wildfly-arquillian-container-remote</artifactId>
@@ -1263,16 +1232,13 @@ nodePrinter.print(webapp)
                 <version>${jersey.version}</version>
             </dependency>
 
-            <!-- todo jmt fix -->
-            <!--
             <dependency>
-              <groupId>org.jboss.arquillian</groupId>
-              <artifactId>arquillian-bom</artifactId>
-              <version>1.1.11.Final</version>
-              <type>pom</type>
-              <scope>import</scope>
+                <groupId>org.jboss.arquillian</groupId>
+                <artifactId>arquillian-bom</artifactId>
+                <version>1.1.11.Final</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
-            -->
 
             <dependency>
                 <groupId>org.eu.ingwar.tools</groupId>
@@ -1281,17 +1247,6 @@ nodePrinter.print(webapp)
                 <scope>test</scope>
             </dependency>
 
-            <!-- todo jmt delete references to seam? -->
-            <!-- this is needed for any seam 3 dependencies to work -->
-            <!--
-                        <dependency>
-                            <groupId>org.jboss.seam</groupId>
-                            <artifactId>seam-bom</artifactId>
-                            <version>${seam.version}</version>
-                            <type>pom</type>
-                            <scope>import</scope>
-                        </dependency>
--->
         </dependencies>
     </dependencyManagement>
 
@@ -1369,61 +1324,51 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.jboss.arquillian.core</groupId>
             <artifactId>arquillian-core-api</artifactId>
-            <version>1.1.11.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.arquillian.core</groupId>
             <artifactId>arquillian-core-spi</artifactId>
-            <version>1.1.11.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.arquillian.core</groupId>
             <artifactId>arquillian-core-impl-base</artifactId>
-            <version>1.1.11.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.arquillian.config</groupId>
             <artifactId>arquillian-config-api</artifactId>
-            <version>1.1.11.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.arquillian.config</groupId>
             <artifactId>arquillian-config-spi</artifactId>
-            <version>1.1.11.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.arquillian.config</groupId>
             <artifactId>arquillian-config-impl-base</artifactId>
-            <version>1.1.11.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.arquillian.test</groupId>
             <artifactId>arquillian-test-api</artifactId>
-            <version>1.1.11.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.arquillian.test</groupId>
             <artifactId>arquillian-test-spi</artifactId>
-            <version>1.1.11.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.arquillian.test</groupId>
             <artifactId>arquillian-test-impl-base</artifactId>
-            <version>1.1.11.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.arquillian.container</groupId>
             <artifactId>arquillian-container-spi</artifactId>
-            <version>1.1.11.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -1435,51 +1380,43 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.jboss.arquillian.container</groupId>
             <artifactId>arquillian-container-test-api</artifactId>
-            <version>1.1.11.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.arquillian.container</groupId>
             <artifactId>arquillian-container-test-spi</artifactId>
-            <version>1.1.11.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.arquillian.container</groupId>
             <artifactId>arquillian-container-test-impl-base</artifactId>
-            <version>1.1.11.Final</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.jboss.arquillian.testenricher</groupId>
             <artifactId>arquillian-testenricher-ejb</artifactId>
-            <version>1.1.11.Final</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.jboss.arquillian.testenricher</groupId>
             <artifactId>arquillian-testenricher-cdi</artifactId>
-            <version>1.1.11.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.arquillian.testenricher</groupId>
             <artifactId>arquillian-testenricher-resource</artifactId>
-            <version>1.1.11.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.arquillian.testenricher</groupId>
             <artifactId>arquillian-testenricher-initialcontext</artifactId>
-            <version>1.1.11.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.arquillian.protocol</groupId>
             <artifactId>arquillian-protocol-servlet</artifactId>
-            <version>1.1.11.Final</version>
             <scope>test</scope>
         </dependency>
         <!-- End of dependencies for Arquillian shrinkwrap war -->

@@ -11,22 +11,14 @@ import org.broadinstitute.bsp.client.users.UserManager;
 import org.broadinstitute.bsp.client.workrequest.BspWorkRequestManager;
 import org.broadinstitute.bsp.client.workrequest.WorkRequestManager;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Default;
-import javax.inject.Inject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
-@ApplicationScoped
-@Default
-public class BSPManagerFactoryImpl implements BSPManagerFactory {
-    @Inject
-    private BSPConfig params;
 
-    @Inject
-    private Deployment deployment;
+public class BSPManagerFactoryImpl implements BSPManagerFactory {
+
+    private BSPConfig params;
 
     private Object create(Class<?> clazz) {
         try {
@@ -37,10 +29,6 @@ public class BSPManagerFactoryImpl implements BSPManagerFactory {
                 IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    @SuppressWarnings("unused")
-    public BSPManagerFactoryImpl() {
     }
 
     public BSPManagerFactoryImpl(BSPConfig params) {

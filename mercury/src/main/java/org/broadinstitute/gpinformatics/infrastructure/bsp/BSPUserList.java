@@ -127,14 +127,14 @@ public class BSPUserList extends AbstractCache implements Serializable {
         return results;
     }
 
-    private static boolean anyFieldMatches(String lowerQuery, BspUser user) {
+    private boolean anyFieldMatches(String lowerQuery, BspUser user) {
         return safeToLowerCase(user.getFirstName()).contains(lowerQuery) ||
                safeToLowerCase(user.getLastName()).contains(lowerQuery) ||
                safeToLowerCase(user.getUsername()).contains(lowerQuery) ||
                safeToLowerCase(user.getEmail()).contains(lowerQuery);
     }
 
-    private static String safeToLowerCase(String s) {
+    private String safeToLowerCase(String s) {
         if (s == null) {
             return "";
         } else {
@@ -285,7 +285,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
         }
     }
 
-    public static boolean isTestUser(BspUser user) {
+    public boolean isTestUser(BspUser user) {
         return user instanceof QADudeUser;
     }
 }
