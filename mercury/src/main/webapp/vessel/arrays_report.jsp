@@ -8,17 +8,20 @@
 <stripes:layout-render name="/layout.jsp" pageTitle="Arrays Reports" sectionTitle="Arrays Reports">
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
+            function scannerCheckboxVisible() {
+                var select = $j("#report");
+                var div = $j("#includeScannerNameDiv");
+                if (select.val() == '<%=ArraysReportActionBean.Report.SUMMARY%>') {
+                    div.show();
+                } else {
+                    div.hide();
+                }
+            }
             $j(document).ready(function () {
-                $j("#includeScannerNameDiv").hide();
-
                 $j("#report").change(function () {
-                    var div = $j("#includeScannerNameDiv");
-                    if (this.value == '<%=ArraysReportActionBean.Report.SUMMARY%>') {
-                        div.show();
-                    } else {
-                        div.hide();
-                    }
+                    scannerCheckboxVisible();
                 });
+                scannerCheckboxVisible($j("#report"));
             });
         </script>
     </stripes:layout-component>
