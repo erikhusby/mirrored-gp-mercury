@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.metrics;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.hamcrest.Matchers;
 import org.testng.annotations.Test;
@@ -27,7 +27,7 @@ import static org.hamcrest.Matchers.equalTo;
  * </ul>
  */
 @Test(groups = TestGroups.STUBBY)
-public class AggregationMetricsFetcherTest extends ContainerTest {
+public class AggregationMetricsFetcherTest extends StubbyContainerTest {
 
     /**
      * Sample (a.k.a., "Collaborator Sample ID") for which there are known aggregations in the metrics database.

@@ -27,6 +27,10 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * Not a CDI bean
+ * @see org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer
+ */
 public class BSPManagerFactoryStub implements BSPManagerFactory {
     public static final long QA_DUDE_USER_ID = 9382L;
 

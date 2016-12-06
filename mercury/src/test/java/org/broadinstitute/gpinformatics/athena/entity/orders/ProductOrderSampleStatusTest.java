@@ -4,7 +4,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -21,7 +21,7 @@ import java.util.List;
 
 @Test(groups = TestGroups.STUBBY, singleThreaded = true)
 @RequestScoped
-public class ProductOrderSampleStatusTest extends ContainerTest {
+public class ProductOrderSampleStatusTest extends StubbyContainerTest {
 
     @Inject
     ProductOrderEjb productOrderEjb;

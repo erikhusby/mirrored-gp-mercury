@@ -18,7 +18,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceTestProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
@@ -189,7 +189,7 @@ public class BaseEventTest {
     @BeforeClass(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
         labBatchEJB = new LabBatchEjb();
-        JiraService jiraService = JiraServiceProducer.stubInstance();
+        JiraService jiraService = JiraServiceTestProducer.stubInstance();
         labBatchEJB.setJiraService(jiraService);
         labBatchEJB.setLabBatchDao(EasyMock.createMock(LabBatchDao.class));
 
@@ -215,12 +215,12 @@ public class BaseEventTest {
         EmailSender emailSender = new EmailSender();
 
         FlowcellMessageHandler flowcellMessageHandler = new FlowcellMessageHandler();
-        flowcellMessageHandler.setJiraService(JiraServiceProducer.stubInstance());
+        flowcellMessageHandler.setJiraService(JiraServiceTestProducer.stubInstance());
         flowcellMessageHandler.setEmailSender(emailSender);
         flowcellMessageHandler.setAppConfig(appConfig);
 
         FlowcellLoadedHandler flowcellLoadedHandler = new FlowcellLoadedHandler();
-        flowcellLoadedHandler.setJiraService(JiraServiceProducer.stubInstance());
+        flowcellLoadedHandler.setJiraService(JiraServiceTestProducer.stubInstance());
         flowcellLoadedHandler.setEmailSender(emailSender);
         flowcellLoadedHandler.setAppConfig(appConfig);
 

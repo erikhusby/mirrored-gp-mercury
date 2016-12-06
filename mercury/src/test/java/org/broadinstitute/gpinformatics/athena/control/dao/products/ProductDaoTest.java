@@ -6,7 +6,7 @@ import org.apache.commons.collections4.Predicate;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.testng.Assert;
@@ -30,7 +30,7 @@ import static org.broadinstitute.gpinformatics.athena.control.dao.products.Produ
 
 @Test(groups = TestGroups.STUBBY)
 @RequestScoped
-public class ProductDaoTest extends ContainerTest {
+public class ProductDaoTest extends StubbyContainerTest {
 
     @Inject
     private ProductDao dao;

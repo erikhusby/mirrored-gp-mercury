@@ -5,7 +5,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProj
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
@@ -35,7 +35,7 @@ import java.util.List;
 
 @Test(groups = TestGroups.STUBBY, singleThreaded = true)
 @RequestScoped
-public class LabBatchEJBTest extends ContainerTest {
+public class LabBatchEJBTest extends StubbyContainerTest {
 
     public static final String STUB_TEST_PDO_KEY = "PDO-999";
     public static final String BUCKET_NAME = "Pico/Plating Bucket";

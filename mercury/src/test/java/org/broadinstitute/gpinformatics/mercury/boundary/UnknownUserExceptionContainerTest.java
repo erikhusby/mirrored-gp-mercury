@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
-import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -20,7 +20,6 @@ import javax.ws.rs.core.Response;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.STUBBY;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
@@ -47,9 +46,12 @@ public class UnknownUserExceptionContainerTest extends RestServiceContainerTest 
         }
     }
 
+    /**
+     * Force use of stubby alternatives
+     */
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(STUBBY);
+        return StubbyContainerTest.buildMercuryWar();
     }
 
     @Override

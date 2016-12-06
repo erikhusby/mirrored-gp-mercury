@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
-import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -16,9 +16,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.STUBBY;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 
 /**
  * @author breilly
@@ -79,15 +78,15 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
 
     /**
      * Need to override this since {@link RestServiceContainerTest} does not subclass
-     * {@link org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest} and otherwise wouldn't have a
+     * {@link StubbyContainerTest} and otherwise wouldn't have a
      * {@link Deployment} method
      *
-     * @return {@link WebArchive} configured with the {@link org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment}
+     * @return {@link WebArchive} configured with the {@link org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment} STUBBY
      * specified within.
      */
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(STUBBY);
+        return StubbyContainerTest.buildMercuryWar();
     }
 
     @Override

@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.control.vessel;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceTestProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
@@ -113,7 +113,7 @@ public class LCSetJiraFieldFactoryTest {
             mapBarcodeToTube.put(barcode, bspAliquot);
         }
 
-        jiraFieldDefs = JiraServiceProducer.stubInstance().getCustomFields();
+        jiraFieldDefs = JiraServiceTestProducer.stubInstance().getCustomFields();
 
     }
 

@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.sample;
 
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.testng.Assert;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.testng.annotations.AfterMethod;
@@ -22,7 +22,7 @@ import java.util.List;
  */
 @Test(groups = TestGroups.STUBBY)
 @RequestScoped
-public class ControlDaoTest extends ContainerTest {
+public class ControlDaoTest extends StubbyContainerTest {
 
     @Inject
     ControlDao controlDao;

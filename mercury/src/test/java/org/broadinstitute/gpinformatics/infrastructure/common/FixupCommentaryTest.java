@@ -11,7 +11,7 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.common;
 
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditedRevDto;
@@ -28,7 +28,7 @@ import java.util.List;
 
 
 @Test(groups = TestGroups.STANDARD)
-public class FixupCommentaryTest extends ContainerTest {
+public class FixupCommentaryTest extends StubbyContainerTest {
 
     @Inject
     private AuditReaderDao auditReaderDao;

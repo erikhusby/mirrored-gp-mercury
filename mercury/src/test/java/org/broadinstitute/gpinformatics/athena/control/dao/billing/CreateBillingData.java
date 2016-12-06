@@ -5,7 +5,7 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.Test;
 
@@ -16,7 +16,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Test(groups = TestGroups.STANDARD)
-public class CreateBillingData extends ContainerTest {
+public class CreateBillingData extends StubbyContainerTest {
 
     @Inject
     private ProductOrderDao productOrderDao;

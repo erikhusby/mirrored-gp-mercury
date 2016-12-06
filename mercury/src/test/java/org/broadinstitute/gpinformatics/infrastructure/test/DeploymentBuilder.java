@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.DeploymentProd
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
-import org.jboss.shrinkwrap.api.formatter.Formatters;
 import org.jboss.shrinkwrap.api.importer.ExplodedImporter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -92,7 +91,6 @@ public class DeploymentBuilder {
     }
 
     public static WebArchive buildMercuryWar() {
-
         return buildMercuryWar(Deployment.STUBBY);
     }
 
@@ -137,7 +135,7 @@ public class DeploymentBuilder {
         // Small enough, dump it in a String
         StringBuilder sb = new StringBuilder();
         try {
-            sb.append(Files.readAllBytes(FileSystems.getDefault().getPath("src/main/resources/META-INF/beans.xml")));
+            sb.append(new String(Files.readAllBytes(FileSystems.getDefault().getPath("./src/main/resources/META-INF/beans.xml"))));
             sb.insert(sb.indexOf("</beans>"), sbAlts.toString());
         } catch ( Exception ex ) {
             throw new RuntimeException("Fail to read beans.xml template file: " + ex.getMessage() );
@@ -211,7 +209,7 @@ public class DeploymentBuilder {
     private static JavaArchive addTestHelpers(JavaArchive archive) {
         // TODO: put all test helpers into a single package or two to import all at once
         return archive
-                .addClass(ContainerTest.class)
+                .addClass(StubbyContainerTest.class)
                 .addClass(BettaLimsMessageTestFactory.class);
     }
 

@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.infrastructure.jira;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
@@ -29,12 +28,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Dummy implementation that writes calls
- * to {@link #addComment(String, String)}  and
- * {@link #addComment(String, String, Visibility.Type, Visibility.Value)}
- * to a logger.
+ * Dummy implementation that writes calls to {@link #addComment(String, String)}  and
+ * {@link #addComment(String, String, Visibility.Type, Visibility.Value)} to a logger. <br />
+ * Injected as an alternate into all TestGroups.STUBBY tests
  */
-@Stub
+@Dependent
 @Alternative
 public class JiraServiceStub implements JiraService {
 

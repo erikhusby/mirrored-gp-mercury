@@ -3,16 +3,12 @@ package org.broadinstitute.gpinformatics.mercury.integration.quotes;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceStub;
-import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.STUBBY;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
@@ -20,18 +16,13 @@ import static org.hamcrest.Matchers.equalTo;
  * Arquillian tests for PriceListCache.
  */
 @Test(groups = TestGroups.STUBBY)
-public class PriceListCacheContainerTest extends Arquillian {
+public class PriceListCacheContainerTest extends StubbyContainerTest {
 
     @Inject
     private CacheRefresher cacheRefresher;
 
     @Inject
     private PriceListCache priceListCache;
-
-    @Deployment
-    public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(STUBBY);
-    }
 
     /**
      * Test that {@link PriceListCache} refreshes are able to use the injected {@link QuoteService}. It was discovered

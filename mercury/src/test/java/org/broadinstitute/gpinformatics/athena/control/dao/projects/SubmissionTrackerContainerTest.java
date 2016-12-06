@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRepository;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.testng.Assert;
@@ -21,7 +21,7 @@ import java.util.Date;
 
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 @RequestScoped
-public class SubmissionTrackerContainerTest extends ContainerTest {
+public class SubmissionTrackerContainerTest extends StubbyContainerTest {
 
     @Inject
     ResearchProjectDao researchProjectDao;

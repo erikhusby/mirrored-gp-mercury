@@ -13,7 +13,7 @@ package org.broadinstitute.gpinformatics.infrastructure;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.testng.annotations.Test;
@@ -22,7 +22,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-public class SampleDataFetcherContainerTest extends ContainerTest {
+public class SampleDataFetcherContainerTest extends StubbyContainerTest {
 
     public void testGetProductOrderSampleData() {
         ProductOrder productOrder = ProductOrderTestFactory.createProductOrder("KGBN1", "KGBC1", "KGBC2");

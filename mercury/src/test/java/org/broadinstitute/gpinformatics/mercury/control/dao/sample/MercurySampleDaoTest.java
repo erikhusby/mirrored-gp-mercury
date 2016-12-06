@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.sample;
 
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.testng.annotations.BeforeMethod;
@@ -14,7 +14,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @Test(groups = TestGroups.STANDARD)
-public class MercurySampleDaoTest extends ContainerTest {
+public class MercurySampleDaoTest extends StubbyContainerTest {
 
     @Inject
     private MercurySampleDao mercurySampleDao;

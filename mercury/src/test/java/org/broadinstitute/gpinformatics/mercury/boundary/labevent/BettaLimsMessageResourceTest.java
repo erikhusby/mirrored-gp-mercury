@@ -26,7 +26,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceTestProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
@@ -89,7 +89,6 @@ import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
 import javax.enterprise.context.RequestScoped;
-import javax.enterprise.inject.Any;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
@@ -318,7 +317,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         String batchName = "LCSET-MsgTest-" + testPrefix;
         LabBatch labBatch = new LabBatch(batchName, starters, LabBatch.LabBatchType.WORKFLOW);
         labBatch.addReworks(reworks);
-        labBatch.setJiraTicket(new JiraTicket(JiraServiceProducer.stubInstance(), batchName));
+        labBatch.setJiraTicket(new JiraTicket(JiraServiceTestProducer.stubInstance(), batchName));
 
         List<Long> bucketIds = new ArrayList<>();
         List<Long> reworkBucketIds = new ArrayList<>();

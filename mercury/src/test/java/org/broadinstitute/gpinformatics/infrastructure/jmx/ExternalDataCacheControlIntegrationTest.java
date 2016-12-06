@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.jmx;
 
 
 import org.broadinstitute.gpinformatics.infrastructure.common.TestLogHandler;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mocks.ExplodingCache;
 import org.testng.Assert;
@@ -15,7 +15,7 @@ import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 @Test(groups = TestGroups.STANDARD)
-public class ExternalDataCacheControlIntegrationTest extends ContainerTest {
+public class ExternalDataCacheControlIntegrationTest extends StubbyContainerTest {
 
     private static final String EXPECTED_LOG_MESSAGE_REGEX = ".*" + ExplodingCache.class.getName() + ".*";
 

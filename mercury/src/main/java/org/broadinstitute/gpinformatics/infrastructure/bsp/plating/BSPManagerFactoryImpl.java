@@ -15,7 +15,10 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
-
+/**
+ * Not a CDI bean
+ * @see org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer
+ */
 public class BSPManagerFactoryImpl implements BSPManagerFactory {
 
     private BSPConfig params;

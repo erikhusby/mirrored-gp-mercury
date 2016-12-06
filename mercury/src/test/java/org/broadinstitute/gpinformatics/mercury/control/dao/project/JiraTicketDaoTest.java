@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.project;
 
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.testng.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.testng.annotations.AfterMethod;
@@ -19,7 +19,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.ST
  * Test persist and fetch
  */
 @Test(groups = TestGroups.STUBBY)
-public class JiraTicketDaoTest extends ContainerTest{
+public class JiraTicketDaoTest extends StubbyContainerTest {
 
     @Inject
     private JiraTicketDao jiraTicketDao;

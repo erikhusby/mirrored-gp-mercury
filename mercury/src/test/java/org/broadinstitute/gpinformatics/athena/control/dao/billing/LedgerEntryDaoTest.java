@@ -8,7 +8,7 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
 import org.testng.Assert;
@@ -27,7 +27,7 @@ import java.util.Set;
 
 @Test(groups = TestGroups.STUBBY)
 @RequestScoped
-public class LedgerEntryDaoTest extends ContainerTest {
+public class LedgerEntryDaoTest extends StubbyContainerTest {
 
     @Inject
     private LedgerEntryDao ledgerEntryDao;

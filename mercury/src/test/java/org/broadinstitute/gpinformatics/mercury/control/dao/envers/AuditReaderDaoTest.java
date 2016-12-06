@@ -5,7 +5,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -34,7 +34,7 @@ import java.util.Set;
  */
 
 @Test(enabled = true, groups = TestGroups.STANDARD)
-public class AuditReaderDaoTest extends ContainerTest {
+public class AuditReaderDaoTest extends StubbyContainerTest {
     private final static Random RANDOM = new Random(System.currentTimeMillis());
     private final static int NINE_NINES = 999999999;
 

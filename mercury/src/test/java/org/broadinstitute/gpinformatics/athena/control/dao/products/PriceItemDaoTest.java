@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.athena.control.dao.products;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -16,7 +16,7 @@ import java.util.List;
 
 
 @Test(groups = {TestGroups.STUBBY})
-public class PriceItemDaoTest extends ContainerTest {
+public class PriceItemDaoTest extends StubbyContainerTest {
 
     @Inject
     private PriceItemDao dao;

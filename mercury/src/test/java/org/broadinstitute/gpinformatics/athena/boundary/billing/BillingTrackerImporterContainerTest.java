@@ -35,8 +35,8 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 @Test(groups = TestGroups.STANDARD, enabled=true)
 public class BillingTrackerImporterContainerTest extends Arquillian {
 
-    public static final String GOOD_BILLING_TRACKER_TEST_FILENAME = "BillingTracker-ContainerTest.xlsx";
-    public static final String BAD_BILLING_TRACKER_TEST_FILENAME = "BillingTracker-ContainerTest-BadProductConfiguration.xlsx";
+    public static final String GOOD_BILLING_TRACKER_TEST_FILENAME = "BillingTracker-StubbyContainerTest.xlsx";
+    public static final String BAD_BILLING_TRACKER_TEST_FILENAME = "BillingTracker-StubbyContainerTest-BadProductConfiguration.xlsx";
 
     @Inject
     private ProductDao productDao;
