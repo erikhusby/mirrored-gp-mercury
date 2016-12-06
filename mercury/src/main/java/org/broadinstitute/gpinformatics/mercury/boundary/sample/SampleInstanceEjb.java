@@ -34,9 +34,6 @@ import java.util.HashMap;
 @RequestScoped
 public class SampleInstanceEjb  {
 
-    public static final String UPLOAD_TUBES = "uploadpooledTubes";
-    private static final String SESSION_LIST_PAGE = "/workflow/pooledTubeUpload.jsp";
-    private boolean overWriteFlag = false;
     private List<List<String>> jiraSubTaskList = new ArrayList<List<String>>();
     private List<String> collaboratorSampleId = new ArrayList<>();
     private List<String> collaboratorParticipantId = new ArrayList<>();
@@ -94,7 +91,7 @@ public class SampleInstanceEjb  {
     /**
      * Save uploaded data after it hs been verified by verifySpreadSheet();
      */
-    public void persistResults(VesselPooledTubesProcessor vesselSpreadsheetProcessor, MessageCollection messageCollection) {
+    private void persistResults(VesselPooledTubesProcessor vesselSpreadsheetProcessor, MessageCollection messageCollection) {
         int sampleIndex = 0;
         for (String sampleId : vesselSpreadsheetProcessor.getBroadSampleId()) {
             LabVessel labVessel = labVesselDao.findByIdentifier(vesselSpreadsheetProcessor.getBarcodes().get(sampleIndex));
@@ -155,13 +152,14 @@ public class SampleInstanceEjb  {
         } else {
             messageCollection.addError("No valid data found.");
         }
+
     }
 
 
     /**
      * Verify the spreadsheet contents before attempting to persist data.
      */
-    public void verifySpreadSheet(VesselPooledTubesProcessor vesselSpreadsheetProcessor, MessageCollection messageCollection) {
+    public void verifySpreadSheet(VesselPooledTubesProcessor vesselSpreadsheetProcessor, MessageCollection messageCollection, boolean overWriteFlag) {
         //Is the sample library name unique to the spreadsheet??
         Map<String, String> map = new HashMap<String, String>();
         int mapIndex = 0;
@@ -200,7 +198,7 @@ public class SampleInstanceEjb  {
         for (String molecularIndexScheme : vesselSpreadsheetProcessor.getMolecularIndexingScheme()) {
             MolecularIndexingScheme molecularIndexingScheme = molecularIndexingSchemeDao.findByName(molecularIndexScheme);
             if (molecularIndexingScheme == null) {
-                messageCollection.addError("Molecular Indexing Scheme not found: " + molecularIndexScheme.toString() + " At Row: " + (molecularIndexSchemeIndex + +rowOffset) + " Column: " + VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText());
+                messageCollection.addError("Molecular Indexing Scheme not found: " + molecularIndexScheme.toString() + " At Row: " + (molecularIndexSchemeIndex + rowOffset) + " Column: " + VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText());
             } else {
                 this.molecularIndexSchemes.add(molecularIndexingScheme);
             }
@@ -214,16 +212,16 @@ public class SampleInstanceEjb  {
             String cat = vesselSpreadsheetProcessor.getCat().get(baitCatIndex);
             ReagentDesign reagentDesignCat = reagentDesignDao.findByBusinessKey(cat);
 
-            if (bait != "" && cat != "") {
+            if (!bait.isEmpty() && !cat.isEmpty()) {
                 messageCollection.addError("Found both Bait and CAT on same line. Bait: " + bait + " CAT: " + cat + " At Row: " + (baitCatIndex + rowOffset) + " Column: " + VesselPooledTubesProcessor.Headers.BAIT.getText() + " & " + VesselPooledTubesProcessor.Headers.CAT.getText());
             }
-            if ((bait != "" && cat == "") && reagentDesignBait == null) {
+            if ((!cat.isEmpty() && cat.isEmpty()) && reagentDesignBait == null) {
                 messageCollection.addError("Bait: " + bait + " is not registered. At Row: " + (baitCatIndex + rowOffset) + " Column: " + VesselPooledTubesProcessor.Headers.BAIT.getText());
             }
             if (reagentDesignBait != null) {
                 reagents.add(reagentDesignBait);
             }
-            if ((cat != "" && bait == "") && reagentDesignCat == null) {
+            if ((!cat.isEmpty() && bait.isEmpty()) && reagentDesignCat == null) {
                 messageCollection.addError("Cat: " + cat + " is not registered. At Row: " + (baitCatIndex + rowOffset) + " Column: " + VesselPooledTubesProcessor.Headers.CAT.getText());
             }
             if (reagentDesignCat != null) {
@@ -238,37 +236,31 @@ public class SampleInstanceEjb  {
         List<Map<String, String>> devConditions = vesselSpreadsheetProcessor.getConditions();
         List<String> subTaskList = new ArrayList<String>();
         for (Map<String, String> devCondition : devConditions) {
-            {
-                String experiment = vesselSpreadsheetProcessor.getExperiment().get(conditionIndex);
-                JiraIssue jiraIssue = getIssueInfoNoException(experiment, null);
-                List<String> jiraSubTasks = new ArrayList<>();
-                if (jiraIssue == null) {
-                    messageCollection.addError("Dev ticket not found for Experiment: " + experiment + " At Row: " + experimentIndex + " Column: " + VesselPooledTubesProcessor.Headers.EXPERIMENT.getText());
-                } else {
-                    if (jiraIssue != null) {
-                        jiraSubTasks = jiraIssue.getSubTasks();
-                        if (jiraSubTasks != null && devConditions.size() > 0) {
-                            int subTaskIndex = 0;
-                            subTaskList = new ArrayList<String>(devCondition.values());
-                            for (String subTask : subTaskList) {
-                                boolean foundFlag = false;
-                                for (String jiraSubTask : jiraSubTasks) {
-                                    if (devCondition.containsKey(jiraSubTask)) {
-                                        foundFlag = true;
-                                        jiraSubTasks.remove(jiraSubTask);
-                                        break;
-                                    }
-                                }
-                                if (!foundFlag) {
-                                    messageCollection.addError("Condition / Sub Task: " + subTaskList.get(subTaskIndex) + " not found for Experiment: " + experiment + " At Row: " + experimentIndex + " Column: " + VesselPooledTubesProcessor.Headers.EXPERIMENT.getText());
-                                }
-                                subTaskIndex++;
+            String experiment = vesselSpreadsheetProcessor.getExperiment().get(conditionIndex);
+            JiraIssue jiraIssue = getIssueInfoNoException(experiment, null);
+            List<String> jiraSubTasks;
+            if (jiraIssue == null) {
+                messageCollection.addError("Dev ticket not found for Experiment: " + experiment + " At Row: " + experimentIndex + " Column: " + VesselPooledTubesProcessor.Headers.EXPERIMENT.getText());
+            } else {
+                jiraSubTasks = jiraIssue.getSubTasks();
+                if (jiraSubTasks != null && devConditions.size() > 0) {
+                    subTaskList = new ArrayList<String>(devCondition.values());
+                    for (String subTask : subTaskList) {
+                        boolean foundFlag = false;
+                        for (String jiraSubTask : jiraSubTasks) {
+                            if (devCondition.containsKey(jiraSubTask)) {
+                                foundFlag = true;
+                                jiraSubTasks.remove(jiraSubTask);
+                                break;
                             }
+                        }
+                        if (!foundFlag) {
+                            messageCollection.addError("Condition / Sub Task: " + subTask + " not found for Experiment: " + experiment + " At Row: " + experimentIndex + " Column: " + VesselPooledTubesProcessor.Headers.EXPERIMENT.getText());
                         }
                     }
                 }
-                jiraSubTaskList.add(subTaskList);
             }
+            jiraSubTaskList.add(subTaskList);
             experimentIndex++;
             conditionIndex++;
         }
@@ -299,6 +291,13 @@ public class SampleInstanceEjb  {
             }
             ++sampleIndex;
         }
+
+        /**
+         * If there are no errors attempt save the data to the database.
+         */
+        if (!messageCollection.hasErrors()) {
+            persistResults(vesselSpreadsheetProcessor, messageCollection);
+        }
     }
 
     /**
@@ -315,7 +314,7 @@ public class SampleInstanceEjb  {
      */
     private boolean isFieldEmpty(String field) {
         if (field != null) {
-            if (field.trim() == "") {
+            if (field.trim().isEmpty()) {
                 return true;
             }
         } else {
@@ -335,6 +334,6 @@ public class SampleInstanceEjb  {
         }
     }
 
-    public void setOverWriteFlag(boolean overWriteFlag) { this.overWriteFlag = overWriteFlag; }
+
 
 }

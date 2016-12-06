@@ -26,7 +26,7 @@ public class SampleInstanceSubTasks {
 
     public String getSubTask() { return this.subTask; }
 
-    public SampleInstance getPooledTubeUpload() { return sampleInstance;  }
+    public SampleInstance getSampleInstance() { return sampleInstance;  }
 
     public void setSampleInstance(SampleInstance sampleInstance) { this.sampleInstance = sampleInstance;  }
 }

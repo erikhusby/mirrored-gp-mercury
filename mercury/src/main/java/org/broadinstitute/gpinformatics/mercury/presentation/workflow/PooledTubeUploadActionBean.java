@@ -26,7 +26,7 @@ public class PooledTubeUploadActionBean extends CoreActionBean {
 
     public static final String UPLOAD_TUBES = "uploadpooledTubes";
     private static final String SESSION_LIST_PAGE = "/workflow/pooledTubeUpload.jsp";
-    private boolean overWriteFlag = false;
+    private boolean overWriteFlag;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -73,11 +73,7 @@ public class PooledTubeUploadActionBean extends CoreActionBean {
 
             PoiSpreadsheetParser.processSingleWorksheet(pooledTubesSpreadsheet.getInputStream(), vesselSpreadsheetProcessor);
 
-            sampleInstanceEjb.verifySpreadSheet(vesselSpreadsheetProcessor,messageCollection);
-
-            if (!messageCollection.hasErrors()) {
-                sampleInstanceEjb.persistResults(vesselSpreadsheetProcessor, messageCollection);
-            }
+            sampleInstanceEjb.verifySpreadSheet(vesselSpreadsheetProcessor,messageCollection, overWriteFlag);
 
             addMessages(messageCollection);
 
@@ -87,13 +83,9 @@ public class PooledTubeUploadActionBean extends CoreActionBean {
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
 
-    public void setOverWriteFlag(boolean overWriteFlag) {
-        sampleInstanceEjb.setOverWriteFlag(overWriteFlag);
-        this.overWriteFlag = overWriteFlag;
-    }
-
     public void setPooledTubesSpreadsheet(FileBean spreadsheet) { this.pooledTubesSpreadsheet = spreadsheet; }
 
+    public void setOverWriteFlag(boolean overWriteFlag) { this.overWriteFlag = overWriteFlag; }
 
 }
 

@@ -43,11 +43,9 @@ public class SampleInstance {
     @BatchSize(size = 100)
     private Set<SampleInstanceSubTasks> sampleInstanceSubTasks = new HashSet<>();
 
-    @Nonnull
     @ManyToOne
     private ReagentDesign reagentDesign;
 
-    @Nonnull
     @ManyToOne
     private MolecularIndexingScheme molecularIndexingScheme;
 

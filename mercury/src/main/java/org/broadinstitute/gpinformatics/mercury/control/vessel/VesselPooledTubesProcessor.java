@@ -44,7 +44,6 @@ public class VesselPooledTubesProcessor extends TableProcessor {
 
     public void processRowDetails(Map<String, String> dataRow, int dataRowIndex) {
 
-        String tubeBarcode = dataRow.get(Headers.TUBE_BARCODE.getText());
         barcodes.add(dataRow.get(Headers.TUBE_BARCODE.getText()));
         singleSampleLibraryName.add(dataRow.get(Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText()));
         broadSampleId.add(dataRow.get(Headers.BROAD_SAMPLE_ID.getText()));

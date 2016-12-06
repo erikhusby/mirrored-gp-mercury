@@ -282,15 +282,6 @@ public class MercurySample extends AbstractSample {
         return mercurySampleId;
     }
 
-    public String getSampleInstanceLibraryName() {
-        if(sampleInstance.size() > 0) {
-            return  new ArrayList<>(sampleInstance).get(0).getSampleLibraryName();
-        }
-        else {
-            return null;
-        }
-    }
-
     public Set<LabVessel> getLabVessel() {
         return labVessel;
     }

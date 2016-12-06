@@ -989,35 +989,9 @@ public abstract class LabVessel implements Serializable {
      * Returns the single sample instance library name.
      *
      */
-    public String getSampleInstanceLibraryName() {
-        if(sampleInstance.size() > 0) {
-            return  new ArrayList<>(sampleInstance).get(0).getSampleLibraryName();
-        }
-        else {
-            return null;
-        }
-    }
-
-    /**
-     * Returns the single sample instance library name.
-     *
-     */
     public String getMolecularIndexingScheme() {
         if(sampleInstance.size() > 0) {
             return  new ArrayList<>(sampleInstance).get(0).getMolecularIndexingScheme().getName();
-        }
-        else {
-            return null;
-        }
-    }
-
-    /**
-     * Returns the Jira dev sub tasks in the order they were created. It concatenates them
-     * into a single string for screen display and user-defined search.
-     */
-    public String getSubTasks() {
-        if(sampleInstance.size() > 0) {
-            return  new ArrayList<>(sampleInstance).get(0).getSubTasks();
         }
         else {
             return null;

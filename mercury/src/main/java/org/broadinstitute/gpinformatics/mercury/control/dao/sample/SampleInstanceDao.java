@@ -17,8 +17,4 @@ public class SampleInstanceDao extends GenericDao {
         return findSingle(SampleInstance.class, SampleInstance_.sampleLibraryName, sampleLibraryName );
     }
 
-    public SampleInstance findById(Long id) {
-        return findSingle(SampleInstance.class, SampleInstance_.sampleInstanceId, id );
-    }
-
 }

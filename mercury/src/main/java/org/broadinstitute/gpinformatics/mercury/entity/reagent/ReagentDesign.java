@@ -108,5 +108,4 @@ public class ReagentDesign implements BusinessObject {
         this.designedReagents.add(designedReagent);
     }
 
-    public Long getReagentDesignId() { return reagentDesignId; }
 }
