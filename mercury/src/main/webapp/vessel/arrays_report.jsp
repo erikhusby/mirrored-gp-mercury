@@ -1,21 +1,44 @@
+<%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.vessel.ArraysReportActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 <%@ taglib prefix='fn' uri='http://java.sun.com/jsp/jstl/functions' %>
 
 <stripes:useActionBean var="actionBean"
         beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.ArraysReportActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="Sample Sheet" sectionTitle="Sample Sheet">
+<stripes:layout-render name="/layout.jsp" pageTitle="Arrays Reports" sectionTitle="Arrays Reports">
+    <stripes:layout-component name="extraHead">
+        <script type="text/javascript">
+            $j(document).ready(function () {
+                $j("#includeScannerNameDiv").hide();
+
+                $j("#report").change(function () {
+                    var div = $j("#includeScannerNameDiv");
+                    if (this.value == '<%=ArraysReportActionBean.Report.SUMMARY%>') {
+                        div.show();
+                    } else {
+                        div.hide();
+                    }
+                });
+            });
+        </script>
+    </stripes:layout-component>
     <stripes:layout-component name="content">
         <stripes:form beanclass="${actionBean.class.name}" id="uploadForm" class="form-horizontal">
             <div class="form-horizontal">
                 <div class="control-group">
                     <stripes:label for="report" class="control-label">Report</stripes:label>
                     <div class="controls">
-                        <stripes:select name="report">
+                        <stripes:select name="report" id="report">
                             <stripes:options-enumeration
                                     enum="org.broadinstitute.gpinformatics.mercury.presentation.vessel.ArraysReportActionBean.Report"
                                     label="displayName"/>
                         </stripes:select>
+                    </div>
+                </div>
+                <div class="control-group" id="includeScannerNameDiv">
+                    <stripes:label for="includeScannerName" class="control-label">Include scanner name (slower)</stripes:label>
+                    <div class="controls">
+                        <input type="checkbox" name="includeScannerName">
                     </div>
                 </div>
                 <div class="control-group">

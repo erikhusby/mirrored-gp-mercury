@@ -31,9 +31,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Stripes action bean that allows user to download as samplesheet.csv file for arrays.
+ * Stripes action bean that allows user to download a Samplesheet.csv or Summary.txt file for arrays.
  */
-@UrlBinding(value = "/vessel/SampleSheet.action")
+@UrlBinding(value = "/vessel/ArraysReport.action")
 public class ArraysReportActionBean extends CoreActionBean {
     private static final String CREATE_PAGE = "/vessel/arrays_report.jsp";
     private static final String DOWNLOAD_ACTION = "download";
@@ -43,6 +43,9 @@ public class ArraysReportActionBean extends CoreActionBean {
 
     /** POSTed from form. */
     private ArraysReportActionBean.Report report;
+
+    /** POSTed from form. */
+    private boolean includeScannerName;
 
     /** POSTed from form. */
     private String pdoBusinessKeys;
@@ -161,7 +164,8 @@ public class ArraysReportActionBean extends CoreActionBean {
                             sampleSheetFactory.write(new PrintStream(out), vesselPositionPairs, finalFirstProductOrder);
                             break;
                         case SUMMARY:
-                            arraysSummaryFactory.write(new PrintStream(out), vesselPositionPairs, finalFirstProductOrder);
+                            arraysSummaryFactory.write(new PrintStream(out), vesselPositionPairs,
+                                    finalFirstProductOrder, includeScannerName);
                             break;
                         default:
                             throw new RuntimeException("Unexpected report " + report);
@@ -197,5 +201,10 @@ public class ArraysReportActionBean extends CoreActionBean {
 
     public void setReport(ArraysReportActionBean.Report report) {
         this.report = report;
+    }
+
+    @SuppressWarnings("unused")
+    public void setIncludeScannerName(boolean includeScannerName) {
+        this.includeScannerName = includeScannerName;
     }
 }

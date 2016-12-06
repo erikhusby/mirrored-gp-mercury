@@ -11,6 +11,8 @@ import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcGtConcordance;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarterConfig;
+import org.broadinstitute.gpinformatics.mercury.boundary.run.InfiniumRunProcessor;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -47,8 +49,11 @@ public class ArraysSummaryFactory {
     @Inject
     private ProductEjb productEjb;
 
+    @Inject
+    private InfiniumStarterConfig infiniumStarterConfig;
+
     public void write(PrintStream printStream, List<Pair<LabVessel, VesselPosition>> vesselPositionPairs,
-            ProductOrder productOrder) {
+            ProductOrder productOrder, boolean includeScannerName) {
 
         // Get samples
         List<MercurySample> sampleNames = new ArrayList<>();
@@ -179,9 +184,11 @@ public class ArraysSummaryFactory {
                 }
             }
             printStream.print("\t");
-            // todo jmt fix
             // Scanner
-//            String scannerName = findScannerName(chip.getLabel(), vesselPosition.name());
+            if (includeScannerName) {
+                printStream.print(InfiniumRunProcessor.findScannerName(chip.getLabel(), vesselPosition.name(),
+                        infiniumStarterConfig));
+            }
             printStream.print("\t");
             // Genotyping Run
             printStream.print(chipWellBarcodes.get(i) + "\t");
