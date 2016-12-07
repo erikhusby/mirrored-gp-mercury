@@ -14,6 +14,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.validation.constraints.AssertTrue;
 import java.util.Collections;
 import java.util.List;
 
@@ -86,18 +87,20 @@ public class VesselMetricDetailsPluginTest extends Arquillian {
         // 1st Catch Pico
         Assert.assertEquals(headers.get(8).getViewHeader(), "10-29-14_LCSET-6330_Buick Val_Catch "
                 + VesselMetricDetailsPlugin.MetricColumn.BARCODE.getDisplayName());
+
+        // Catch Pico spans 8 tubes, see that the drill down link has them all
+        String multiValLink = row.getRenderableCells().get(8);
+        String[] firstCatchBarcodes = {"0173519385","0173519387","0173519377","0173519344","0173519367","0173519391","0173519410","0173519390"};
+        for( String barcode : firstCatchBarcodes ) {
+            Assert.assertTrue( multiValLink.contains(barcode), "Drill down link should include barcode " + barcode );
+        }
         Assert.assertEquals(row.getRenderableCells().get(8), "0173519367");
-        Assert.assertEquals(row.getRenderableCells().get(9), "A01");
-        Assert.assertEquals(row.getRenderableCells().get(10), "2.38 ng/uL");
-        Assert.assertEquals(row.getRenderableCells().get(11), "10/29/2014 13:26:13");
+        // 9 thru 11 are placeholders for multiple positions/values/date
 
         // 2nd Catch Pico
         Assert.assertEquals(headers.get(12).getViewHeader(), "Newest Bait Catch Pico 121914 "
                 + VesselMetricDetailsPlugin.MetricColumn.BARCODE.getDisplayName());
-        Assert.assertEquals(row.getRenderableCells().get(12), "0173520489");
-        Assert.assertEquals(row.getRenderableCells().get(13), "H10");
-        Assert.assertEquals(row.getRenderableCells().get(14), "1.36 ng/uL");
-        Assert.assertEquals(row.getRenderableCells().get(15), "12/19/2014 15:31:25");
+        // 12 thru 15 are multiple barcodes/positions/values/date
 
         // Empty Plating Ribo
         Assert.assertEquals(headers.get(16).getViewHeader(), LabMetric.MetricType.PLATING_RIBO.getDisplayName()
