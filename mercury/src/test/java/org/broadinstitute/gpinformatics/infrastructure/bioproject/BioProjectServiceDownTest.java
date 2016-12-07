@@ -72,6 +72,10 @@ public class BioProjectServiceDownTest {
             return null;
         }
 
+        @Override
+        public boolean isAvailable() {
+            return false;
+        }
     }
 
 }

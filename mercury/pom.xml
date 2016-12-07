@@ -1270,6 +1270,12 @@ nodePrinter.print(webapp)
             <version>6.9.8</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+             <groupId>org.mock-server</groupId>
+             <artifactId>mockserver-netty</artifactId>
+             <version>3.10.4</version>
+            <scope>test</scope>
+        </dependency>
 
         <!-- ***
              * For WildFly, use org.jboss.spec:jboss-javaee-7.0 in lieu of javax:javaee-api.
