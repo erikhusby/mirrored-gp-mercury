@@ -14,7 +14,6 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import javax.validation.constraints.AssertTrue;
 import java.util.Collections;
 import java.util.List;
 
@@ -39,6 +38,8 @@ public class VesselMetricDetailsPluginTest extends Arquillian {
      */
     public void testVesselMetricDetailsPlugin() {
 
+        String linkBaseUrl = "http://dont/go/here";
+
         // Need a search instance set in context
         ConfigurableSearchDefinition configurableSearchDefinition =
                 SearchDefinitionFactory.getForEntity(ColumnEntity.LAB_VESSEL.getEntityName());
@@ -56,6 +57,14 @@ public class VesselMetricDetailsPluginTest extends Arquillian {
         // Nothing
         searchInstance.getPredefinedViewColumns().add(LabMetric.MetricType.PLATING_RIBO.getDisplayName());
         searchInstance.establishRelationships(configurableSearchDefinition);
+
+        // Force web output (drill down links vs. value lists)
+        SearchContext searchContext = new SearchContext();
+        searchContext.setBaseSearchURL( new StringBuffer(linkBaseUrl) );
+        searchContext.setResultCellTargetPlatform(SearchContext.ResultCellTargetPlatform.WEB);
+
+        searchInstance.setEvalContext(searchContext);
+
         searchInstance.postLoad();
 
         ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
@@ -88,13 +97,15 @@ public class VesselMetricDetailsPluginTest extends Arquillian {
         Assert.assertEquals(headers.get(8).getViewHeader(), "10-29-14_LCSET-6330_Buick Val_Catch "
                 + VesselMetricDetailsPlugin.MetricColumn.BARCODE.getDisplayName());
 
-        // Catch Pico spans 8 tubes, see that the drill down link has them all
+        // Catch Pico spans 8 tubes, see that the column (actually a web link) has them all
         String multiValLink = row.getRenderableCells().get(8);
         String[] firstCatchBarcodes = {"0173519385","0173519387","0173519377","0173519344","0173519367","0173519391","0173519410","0173519390"};
         for( String barcode : firstCatchBarcodes ) {
             Assert.assertTrue( multiValLink.contains(barcode), "Drill down link should include barcode " + barcode );
         }
-        Assert.assertEquals(row.getRenderableCells().get(8), "0173519367");
+        Assert.assertTrue( multiValLink.contains("Metric Run ID"), "Drill down link should include term: Metric Run ID");
+        Assert.assertTrue( multiValLink.contains(linkBaseUrl), "Drill down link should include server URL");
+
         // 9 thru 11 are placeholders for multiple positions/values/date
 
         // 2nd Catch Pico
