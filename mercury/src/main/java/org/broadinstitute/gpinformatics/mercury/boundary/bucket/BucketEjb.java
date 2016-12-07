@@ -26,7 +26,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySample
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -63,7 +62,7 @@ public class BucketEjb {
     private final BucketDao bucketDao;
     private final LabVesselDao labVesselDao;
     private final BucketEntryDao bucketEntryDao;
-    private final WorkflowLoader workflowLoader;
+    private final WorkflowConfig workflowConfig;;
     private final BSPUserList bspUserList;
     private final LabVesselFactory labVesselFactory;
     private final MercurySampleDao mercurySampleDao;
@@ -90,7 +89,7 @@ public class BucketEjb {
                      LabVesselFactory labVesselFactory,
                      BSPSampleDataFetcher bspSampleDataFetcher,
                      BSPUserList bspUserList,
-                     WorkflowLoader workflowLoader, ProductOrderDao productOrderDao, MercurySampleDao mercurySampleDao) {
+                     WorkflowConfig workflowConfig, ProductOrderDao productOrderDao, MercurySampleDao mercurySampleDao) {
         this.labEventFactory = labEventFactory;
         this.jiraService = jiraService;
         this.bucketDao = bucketDao;
@@ -99,7 +98,7 @@ public class BucketEjb {
         this.labVesselFactory = labVesselFactory;
         this.bspSampleDataFetcher = bspSampleDataFetcher;
         this.bspUserList = bspUserList;
-        this.workflowLoader = workflowLoader;
+        this.workflowConfig = workflowConfig;
         this.productOrderDao = productOrderDao;
         this.mercurySampleDao = mercurySampleDao;
     }
@@ -430,7 +429,6 @@ public class BucketEjb {
             List<LabVessel> vessels, ProductOrder productOrder, String username,
             ProductWorkflowDefVersion.BucketingSource bucketingSource) {
         Collection<BucketEntry> bucketEntries = new ArrayList<>(vessels.size());
-        WorkflowConfig workflowConfig = workflowLoader.load();
         List<Product> possibleProducts = new ArrayList<>();
         for (ProductOrderAddOn productOrderAddOn : productOrder.getAddOns()) {
             if (productOrderAddOn.getAddOn().getWorkflow() != Workflow.NONE) {

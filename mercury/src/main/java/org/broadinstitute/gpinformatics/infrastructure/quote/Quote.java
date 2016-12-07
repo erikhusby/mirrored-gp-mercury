@@ -121,4 +121,24 @@ public class Quote {
     public int hashCode() {
         return alphanumericId != null ? alphanumericId.hashCode() : 0;
     }
+
+    public boolean isEligibleForSAP() {
+
+        FundingLevel singleLevel = getFirstRelevantFundingLevel();
+
+        return !(singleLevel == null);
+    }
+
+    public FundingLevel getFirstRelevantFundingLevel() {
+        FundingLevel singleLevel = null;
+
+        for(FundingLevel level : quoteFunding.getFundingLevel()) {
+            if (singleLevel == null) {
+                singleLevel = level;
+            } else {
+                return null;
+            }
+        }
+        return singleLevel;
+    }
 }

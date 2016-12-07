@@ -289,7 +289,22 @@
             <div class="row">
                 <div class="form-horizontal span7" >
                 <stripes:hidden name="product"/>
-                <div class="control-group">
+
+                    <security:authorizeBlock roles="<%= roles(PDM, Developer) %>">
+                        <div class="control-group">
+                            <stripes:label for="externalOrderOnly" class="control-label">
+                                Clinical or Commercial Product
+                            </stripes:label>
+                            <div class="controls">
+                                <stripes:checkbox id="externalOrderOnly" disabled="${actionBean.editProduct.savedInSAP}" name="editProduct.externalOnlyProduct" style="margin-top: 10px;"/>
+                                <c:if test="${actionBean.editProduct.savedInSAP}">
+                                    <stripes:hidden name="editProduct.externalOnlyProduct" value="${editProduct.externalOnlyProduct}" />
+                                </c:if>
+                            </div>
+                        </div>
+                    </security:authorizeBlock>
+
+                    <div class="control-group">
                     <stripes:label for="productFamily" class="control-label">
                         Product Family *
                     </stripes:label>

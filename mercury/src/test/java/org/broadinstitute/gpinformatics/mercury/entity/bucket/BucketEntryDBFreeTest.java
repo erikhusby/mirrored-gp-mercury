@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.meanbean.test.BeanTester;
 import org.meanbean.test.Configuration;
@@ -102,6 +103,26 @@ public class BucketEntryDBFreeTest {
         for (BucketEntry bucketEntry : bucketEntries) {
             Assert.assertEquals(bucketEntry.getProductOrder(), productOrder2);
         }
+
+    }
+
+    public void testToStringNullWorkflow(){
+        BucketEntry bucketEntry = new BucketEntry();
+        Assert.assertTrue(bucketEntry.toString().contains("(not initialized)"));
+    }
+    public void testToStringNoWorkflows(){
+
+        final ProductOrder productOrder = ProductOrderTestFactory.createProductOrder();
+        productOrder.setJiraTicketKey("PO-1");
+        final String barcode = "SM-2432";
+        final String bucketName = "Pre-flight";
+        Bucket bucket = new Bucket(bucketName);
+
+        BucketEntry entry = new BucketEntry(
+                new BarcodedTube(barcode), productOrder, bucket, BucketEntry.BucketEntryType.PDO_ENTRY, 1);
+
+        entry.getWorkflows(new WorkflowLoader().load());
+        Assert.assertTrue(entry.toString().contains("(no workflows)"));
 
     }
 }

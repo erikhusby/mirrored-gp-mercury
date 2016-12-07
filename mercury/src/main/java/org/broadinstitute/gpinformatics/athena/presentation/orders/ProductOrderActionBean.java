@@ -94,8 +94,12 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJ
 import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
@@ -108,6 +112,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
+import org.hibernate.Hibernate;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -161,8 +166,10 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String SET_RISK = "setRisk";
     private static final String SET_PROCEED_OOS = "setProceedOos";
     private static final String RECALCULATE_RISK = "recalculateRisk";
+    private static final String REPLACE_SAMPLES = "replaceSamples";
     protected static final String PLACE_ORDER_ACTION = "placeOrder";
     protected static final String VALIDATE_ORDER = "validate";
+    private static final String PUBLISH_PDO_TO_SAP = "publishProductOrderToSAP";
     // Search field constants
     private static final String FAMILY = "productFamily";
     private static final String PRODUCT = "product";
@@ -272,9 +279,13 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private OrspProjectDao orspProjectDao;
 
+    @Inject
+    private SapIntegrationService sapService;
+
     private List<ProductOrderListEntry> displayedProductOrderListEntries;
 
     private String sampleList;
+    private String replacementSampleList;
 
     @Validate(required = true, on = {EDIT_ACTION})
     private String productOrder;
@@ -301,6 +312,8 @@ public class ProductOrderActionBean extends CoreActionBean {
      * token input fields
      */
     private ProductOrder editOrder;
+
+    private ProductOrder replacementSampleOrder;
 
     // For create, we can also have a research project key to default.
     private String researchProjectKey;
@@ -485,8 +498,14 @@ public class ProductOrderActionBean extends CoreActionBean {
             // Since just getting the one item, get all the lazy data.
             editOrder = productOrderDao.findByBusinessKey(productOrder, ProductOrderDao.FetchSpec.RISK_ITEMS);
             if (editOrder != null) {
-                progressFetcher = new CompletionStatusFetcher(
-                        productOrderDao.getProgress(Collections.singleton(editOrder.getProductOrderId())));
+                List<Long> productOrderIds = new ArrayList<>();
+                productOrderIds.add(editOrder.getProductOrderId());
+                if (CollectionUtils.isNotEmpty(editOrder.getChildOrders())) {
+                    for (ProductOrder childOrder : editOrder.getChildOrders()) {
+                        productOrderIds.add(childOrder.getProductOrderId());
+                    }
+                }
+                progressFetcher = new CompletionStatusFetcher(productOrderDao.getProgress(productOrderIds));
             }
         }
     }
@@ -662,7 +681,15 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         String quoteId = editOrder.getQuoteId();
         Quote quote = validateQuoteId(quoteId);
-//        validateQuoteDetails(quote, ErrorLevel.ERROR);
+        try {
+            if(productOrderEjb.isOrderEligibleForSAP(editOrder)) {
+                validateQuoteDetails(quote, ErrorLevel.ERROR);
+            }
+        } catch (QuoteServerException e) {
+            addGlobalValidationError("The quote ''{2}'' is not valid: {3}", quoteId, e.getMessage());
+        } catch (QuoteNotFoundException e) {
+            addGlobalValidationError("The quote ''{2}'' was not found ", quoteId);
+        }
 
         if (editOrder != null) {
             validateRinScores(editOrder);
@@ -721,38 +748,34 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         for (ProductOrder testOrder : ordersWithCommonQuote) {
             int unbilledCount = testOrder.getUnbilledSampleCount();
+            if(testOrder.getProduct() != null) {
+                QuotePriceItem primaryPriceItem =
+                        priceListCache.findByKeyFields(testOrder.getProduct().getPrimaryPriceItem());
 
-            QuotePriceItem primaryPriceItem =
-                    priceListCache.findByKeyFields(testOrder.getProduct().getPrimaryPriceItem().getPlatform(),
-                            testOrder.getProduct().getPrimaryPriceItem().getCategory(),
-                            testOrder.getProduct().getPrimaryPriceItem().getName());
+                if (primaryPriceItem != null &&
+                    StringUtils.isNotBlank(primaryPriceItem.getPrice())) {
+                    Double productPrice = Double.valueOf(primaryPriceItem.getPrice());
 
-            if (primaryPriceItem != null &&
-                StringUtils.isNotBlank(primaryPriceItem.getPrice())) {
-                Double productPrice = Double.valueOf(primaryPriceItem.getPrice());
+                    if (productPrice != null) {
+                        value += productPrice * unbilledCount;
+                    }
 
-                if(productPrice != null) {
-                    value += productPrice * unbilledCount;
-                }
+                    for (ProductOrderAddOn testOrderAddon : testOrder.getAddOns()) {
+                        QuotePriceItem addonPriceItem =
+                                priceListCache
+                                        .findByKeyFields(testOrderAddon.getAddOn().getPrimaryPriceItem());
 
-                for (ProductOrderAddOn testOrderAddon : testOrder.getAddOns()) {
-                    QuotePriceItem addonPriceItem =
-                            priceListCache
-                                    .findByKeyFields(testOrderAddon.getAddOn().getPrimaryPriceItem().getPlatform(),
-                                            testOrderAddon.getAddOn().getPrimaryPriceItem().getCategory(),
-                                            testOrderAddon.getAddOn().getPrimaryPriceItem().getName());
+                        if (addonPriceItem != null &&
+                            StringUtils.isNotBlank(addonPriceItem.getPrice())) {
+                            Double addOnPrice = Double.valueOf(addonPriceItem.getPrice());
 
-                    if (addonPriceItem != null &&
-                        StringUtils.isNotBlank(addonPriceItem.getPrice())) {
-                        Double addOnPrice = Double.valueOf(addonPriceItem.getPrice());
-
-                        if(addOnPrice != null) {
-                            value += addOnPrice * unbilledCount;
+                            if (addOnPrice != null) {
+                                value += addOnPrice * unbilledCount;
+                            }
                         }
                     }
                 }
             }
-
         }
         return value;
     }
@@ -1016,7 +1039,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     // All actions that can result in the view page loading (either by a validation error or view itself)
     @After(stages = LifecycleStage.BindingAndValidation,
             on = {EDIT_ACTION, VIEW_ACTION, ADD_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK, ABANDON_SAMPLES_ACTION,
-                    DELETE_SAMPLES_ACTION, PLACE_ORDER_ACTION, VALIDATE_ORDER, UNABANDON_SAMPLES_ACTION, GET_SUMMARY})
+                    DELETE_SAMPLES_ACTION, PLACE_ORDER_ACTION, VALIDATE_ORDER, UNABANDON_SAMPLES_ACTION, GET_SUMMARY, REPLACE_SAMPLES})
     public void entryInit() {
         if (editOrder != null) {
             productOrderListEntry = editOrder.isDraft() ? ProductOrderListEntry.createDummy() :
@@ -1189,6 +1212,16 @@ public class ProductOrderActionBean extends CoreActionBean {
         notificationListTokenInput.setup(editOrder.getProductOrderKit().getNotificationIds());
     }
 
+    @HandlesEvent(PUBLISH_PDO_TO_SAP)
+    public Resolution publishProductOrderToSAP() throws SAPInterfaceException {
+        MessageCollection placeOrderMessageCollection = new MessageCollection();
+
+        productOrderEjb.publishProductOrderToSAP(editOrder,placeOrderMessageCollection, true);
+
+        addMessages(placeOrderMessageCollection);
+        return createViewResolution(editOrder.getBusinessKey());
+    }
+
     @HandlesEvent(PLACE_ORDER_ACTION)
     public Resolution placeOrder() {
         String originalBusinessKey = editOrder.getBusinessKey();
@@ -1206,7 +1239,17 @@ public class ProductOrderActionBean extends CoreActionBean {
             addMessage("Product Order \"{0}\" has been placed", editOrder.getTitle());
             originalBusinessKey = null;
 
+            productOrderEjb.publishProductOrderToSAP(editOrder, placeOrderMessageCollection, true);
             addMessages(placeOrderMessageCollection);
+
+            /*
+             While fixing GPLIM-4481 we came across a scenario that left certain collections on the product order
+             uninitialized which caused a lazy initialization exception when they were access accessed on the
+             orders/view.jsp page. For this reason the calls to Hibernate.initialize were added below.
+
+             */
+            Hibernate.initialize(editOrder.getChildOrders());
+            Hibernate.initialize(editOrder.getSapReferenceOrders());
 
             productOrderEjb.handleSamplesAdded(editOrder.getBusinessKey(), editOrder.getSamples(), this);
             productOrderDao.persist(editOrder);
@@ -1290,6 +1333,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() throws Exception {
 
+        MessageCollection saveOrderMessageCollection = new MessageCollection();
+
         // Update the modified by and created by, if necessary.
         ProductOrder.SaveType saveType = ProductOrder.SaveType.UPDATING;
         if (isCreating()) {
@@ -1300,13 +1345,23 @@ public class ProductOrderActionBean extends CoreActionBean {
             updateRegulatoryInformation();
         }
         Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
-        productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails);
-
-        addMessage("Product Order \"{0}\" has been saved.", editOrder.getTitle());
-        // Temporarily adding the quote validation when the order is saved to give the user a warning of upcoming
-        // new restrictions
-        validateQuoteDetails(editOrder.getQuoteId(), ErrorLevel.WARNING);
-
+        try {
+            productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails,
+                    saveOrderMessageCollection);
+            addMessages(saveOrderMessageCollection);
+            addMessage("Product Order \"{0}\" has been saved.", editOrder.getTitle());
+        } catch (SAPInterfaceException e) {
+            addGlobalValidationError(e.getMessage());
+        }
+        try {
+            if(!productOrderEjb.isOrderEligibleForSAP(editOrder)) {
+                validateQuoteDetails(editOrder.getQuoteId(), ErrorLevel.WARNING);
+            }
+        } catch (QuoteServerException e) {
+            addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
+        } catch (QuoteNotFoundException e) {
+            addGlobalValidationError("The quote ''{2}'' was not found ", editOrder.getQuoteId());
+        }
         if (chipDefaults != null && attributes != null) {
             if (!chipDefaults.equals(attributes)) {
                 genotypingProductOrderMapping =
@@ -1328,6 +1383,37 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
         }
         return createViewResolution(editOrder.getBusinessKey());
+    }
+
+    @HandlesEvent(REPLACE_SAMPLES)
+    public Resolution replaceSamples() throws Exception {
+
+        boolean shareSapOrder = false;
+        MessageCollection saveOrderMessageCollection = new MessageCollection();
+
+        if(editOrder.getNumberForReplacement() >0) {
+            if(editOrder.isSavedInSAP() && editOrder.hasAtLeastOneBilledLedgerEntry() &&
+               (editOrder.getNonAbandonedCount() < editOrder.latestSapOrderDetail().getPrimaryQuantity()) ) {
+                shareSapOrder = true;
+            }
+            ProductOrder.SaveType saveType = ProductOrder.SaveType.CREATING;
+            replacementSampleOrder = new ProductOrder(editOrder, shareSapOrder);
+            replacementSampleOrder.setSamples(stringToSampleListExisting(replacementSampleList));
+            Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
+            try {
+                productOrderEjb.persistProductOrder(saveType, replacementSampleOrder , deletedIdsConverted, kitDetails,
+                        saveOrderMessageCollection);
+                addMessages(saveOrderMessageCollection);
+                addMessage("Product Order \"{0}\" has been saved.", replacementSampleOrder.getTitle());
+            } catch (SAPInterfaceException e) {
+                addGlobalValidationError(e.getMessage());
+            }
+
+        } else {
+            addGlobalValidationError("There are no samples to replace.  If you must process samples, please open a new Product Order");
+        }
+
+        return createViewResolution(replacementSampleOrder==null?editOrder.getBusinessKey():replacementSampleOrder.getBusinessKey());
     }
 
     void updateRegulatoryInformation() {
@@ -1696,7 +1782,12 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent(DELETE_SAMPLES_ACTION)
     public Resolution deleteSamples() throws Exception {
-        productOrderEjb.removeSamples(editOrder.getBusinessKey(), selectedProductOrderSamples, this);
+        try {
+            productOrderEjb.removeSamples(editOrder.getBusinessKey(), selectedProductOrderSamples, this);
+        } catch (SAPInterfaceException e) {
+            logger.error("SAP error when attempting to delete samples", e);
+            addGlobalValidationError(e.getMessage());
+        }
         return createViewResolution(editOrder.getBusinessKey());
     }
 
@@ -1794,6 +1885,16 @@ public class ProductOrderActionBean extends CoreActionBean {
             addMessage("Abandoned samples: {0}.",
                     StringUtils.join(ProductOrderSample.getSampleNames(selectedProductOrderSamples), ", "));
             productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey(), this);
+
+            MessageCollection abandonSamplesMessageCollection = new MessageCollection();
+
+            try {
+                productOrderEjb.publishProductOrderToSAP(editOrder, abandonSamplesMessageCollection, false);
+            } catch (SAPInterfaceException e) {
+                logger.error("SAP Error when attempting to abandon samples", e);
+                addGlobalValidationError(e.getMessage());
+            }
+            addMessages(abandonSamplesMessageCollection);
         }
         return createViewResolution(editOrder.getBusinessKey());
     }
@@ -1812,10 +1913,17 @@ public class ProductOrderActionBean extends CoreActionBean {
                         editOrder.getBusinessKey());
             }
             productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey(), this);
+
+            MessageCollection abandonSamplesMessageCollection = new MessageCollection();
+            try {
+                productOrderEjb.publishProductOrderToSAP(editOrder, abandonSamplesMessageCollection, false);
+            } catch (SAPInterfaceException e) {
+                logger.error("SAP Error when attempting to abandon samples", e);
+                addGlobalValidationError(e.getMessage());
+            }
+            addMessages(abandonSamplesMessageCollection);
         }
-
         return createViewResolution(editOrder.getBusinessKey());
-
     }
 
     @HandlesEvent(ADD_SAMPLES_ACTION)
@@ -1826,7 +1934,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         } catch (BucketException e) {
             logger.error("Problem adding samples to bucket", e);
             addGlobalValidationError(e.getMessage());
+        } catch (SAPInterfaceException sie) {
+            logger.error("Error from SAP when attempting to add samples");
+            addGlobalValidationError(sie.getMessage());
         }
+
         return createViewResolution(editOrder.getBusinessKey());
     }
 
@@ -2716,4 +2828,12 @@ public class ProductOrderActionBean extends CoreActionBean {
     public HashMap<String, String> getChipDefaults() {
         return chipDefaults;
     }
+    public String getPublishSAPAction() {return PUBLISH_PDO_TO_SAP;}
+
+    public void setReplacementSampleList(String replacementSampleList) {
+        this.replacementSampleList = replacementSampleList;
+    }
+
+
+
 }

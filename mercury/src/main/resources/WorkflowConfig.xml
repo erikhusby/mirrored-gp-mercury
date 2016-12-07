@@ -1078,17 +1078,28 @@
             <version>02</version>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
-                <name>Extract To DNA</name>
+                <name>Extract to DNA</name>
                 <labEventTypes>DNA_EXTRACTION_BUCKET</labEventTypes>
-                <optional>true</optional>
-                <entryPoint>false</entryPoint>
-                <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluator>
                     <materialTypes>FRESH_BLOOD</materialTypes>
                     <materialTypes>FRESH_FROZEN_BLOOD</materialTypes>
                     <materialTypes>WHOLE_BLOOD_WHOLE_BLOOD_FRESH</materialTypes>
                     <materialTypes>WHOLE_BLOOD_WHOLE_BLOOD_FROZEN</materialTypes>
+                    <workflows>CLINICAL_WHOLE_BLOOD_EXTRACTION</workflows>
                 </bucketEntryEvaluator>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Initial Scan</name>
+                <labEventTypes>IN_PLACE</labEventTypes>
+                <workflowQualifier>CRSP_BLOOD_INITIAL_SCAN</workflowQualifier>
+                <instructions>Scan all parent source SM-IDs to cross check against samples in XTR ticket
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_EVENT</messageType>
+                    <targetVesselTypeGeometryString>RackType.FlipperRackRow8</targetVesselTypeGeometryString>
+                    <targetSection>ROWOF8</targetSection>
+                    <buttonValue>Cross Check</buttonValue>
+                </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Prep Reagents</name>
@@ -1111,8 +1122,8 @@
                 <name>Incubate Samples</name>
                 <labEventTypes>INCUBATE</labEventTypes>
                 <workflowQualifier>Samples</workflowQualifier>
-                <instructions>Collect samples for extraction from +4°C fridge or freezer.
-                    If samples are frozen, incubate at 37°C for 10 minutes. Remove from incubator and place on ice.
+                <instructions>Collect samples for extraction from +4C fridge or freezer.
+                    If samples are frozen, incubate at 37C for 10 minutes. Remove from incubator and place on ice.
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1124,6 +1135,13 @@
                     Add 200ul of blood to each microcentrifuge tube.
                     Add 200ul of Buffer AL to each microcentrifuge tube.
                 </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>RackType.FlipperRackRow8</sourceVesselTypeGeometryString>
+                    <sourceSection>ROWOF8</sourceSection>
+                    <targetVesselTypeGeometryString>RackType.FlipperRackRow8</targetVesselTypeGeometryString>
+                    <targetSection>ROWOF8</targetSection>
+                </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Mix AL</name>
@@ -1136,7 +1154,7 @@
                 <name>Incubate AL</name>
                 <labEventTypes>INCUBATE</labEventTypes>
                 <workflowQualifier>AL</workflowQualifier>
-                <instructions>Incubate at 56°C for 10 minutes.
+                <instructions>Incubate at 56C for 10 minutes.
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1159,7 +1177,7 @@
                 <name>Mix Ethanol</name>
                 <labEventTypes>MIX</labEventTypes>
                 <workflowQualifier>Ethanol</workflowQualifier>
-                <instructions>Mix by pulse vortexing for 15 seconds.
+                <instructions>Mix by pulse vortexing for 15 seconds, then briefly spin down.
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1167,6 +1185,13 @@
                 <labEventTypes>EXTRACT_BLOOD_MICRO_TO_SPIN</labEventTypes>
                 <instructions>Apply the mixture to the QIAamp Mini spin column in a 2ml collection tube
                 </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>RackType.FlipperRackRow8</sourceVesselTypeGeometryString>
+                    <sourceSection>ROWOF8</sourceSection>
+                    <targetVesselTypeGeometryString>RackType.FlipperRackRow8</targetVesselTypeGeometryString>
+                    <targetSection>ROWOF8</targetSection>
+                </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Centrifuge Ethanol</name>
@@ -1263,11 +1288,20 @@
                 <labEventTypes>EXTRACT_BLOOD_SPIN_TO_MATRIX</labEventTypes>
                 <instructions>Transfer the eluate to a labeled 0.5ml barcoded 2D matrix tube.
                 </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>RackType.FlipperRackRow8</sourceVesselTypeGeometryString>
+                    <sourceSection>ROWOF8</sourceSection>
+                    <targetVesselTypeGeometryString>RackType.Matrix96</targetVesselTypeGeometryString>
+                    <targetSection>P96_ROWA_8</targetSection>
+                    <targetExpectedToExist>true</targetExpectedToExist>
+                    <targetExpectedEmpty>true</targetExpectedEmpty>
+                </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Store</name>
                 <labEventTypes>STORE</labEventTypes>
-                <instructions>If necessary, store at +4°C until ready to proceed to Plating.
+                <instructions>If necessary, store at +4C until ready to proceed to Plating.
                 </instructions>
             </workflowStepDefs>
         </workflowProcessDefVersions>
@@ -1494,6 +1528,7 @@
                     <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
                     <targetSection>ROWOF24</targetSection>
                     <targetExpectedToExist>true</targetExpectedToExist>
+                    <targetExpectedEmpty>false</targetExpectedEmpty>
                     <repeatedEvent>TRANSFER</repeatedEvent>
                     <repeatedWorkflowQualifier>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN1</repeatedWorkflowQualifier>
                 </manualTransferDetails>
@@ -1525,6 +1560,7 @@
                     <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
                     <targetSection>ROWOF24</targetSection>
                     <targetExpectedToExist>true</targetExpectedToExist>
+                    <targetExpectedEmpty>false</targetExpectedEmpty>
                     <repeatedEvent>TRANSFER</repeatedEvent>
                     <repeatedWorkflowQualifier>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN2</repeatedWorkflowQualifier>
                 </manualTransferDetails>
@@ -2235,6 +2271,70 @@
         </workflowProcessDefVersions>
     </workflowProcessDefs>
     <workflowProcessDefs>
+        <name>Infinium Methylation</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2016-11-07T10:03:24.085-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Infinium Bucket</name>
+                <labEventTypes>INFINIUM_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <bucketEntryEvaluator>
+                    <materialTypes>DNA</materialTypes>
+                    <materialTypes>DNA_DNA_GENOMIC</materialTypes>
+                    <materialTypes>DNA_DNA_SOMATIC</materialTypes>
+                </bucketEntryEvaluator>
+                <autoBucketFromPdoSubmission>false</autoBucketFromPdoSubmission>
+                <!-- No JIRA setup, because BSP creates ARRAY tickets -->
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>InfiniumMethylationZymoTransferElution</name>
+                <labEventTypes>INFINIUM_METHYLATION_ZYMO_TRANSFER</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>InfiniumMethylationBufferAddition1</name>
+                <labEventTypes>INFINIUM_METHYLATION_BUFFER_ADDITION_1</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>InfiniumMethylationBufferAddition2</name>
+                <labEventTypes>INFINIUM_METHYLATION_BUFFER_ADDITION_2</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>InfiniumMethylationFilterPlateTransfer</name>
+                <labEventTypes>INFINIUM_METHYLATION_FILTER_PLATE_TRANSFER</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>InfiniumMethylationWash1</name>
+                <labEventTypes>INFINIUM_METHYLATION_WASH_1</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>InfiniumMethylationDesulphonation</name>
+                <labEventTypes>INFINIUM_METHYLATION_DESULPHONATION</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>InfiniumMethylationWash2</name>
+                <labEventTypes>INFINIUM_METHYLATION_WASH_2</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>InfiniumMethylationWash3</name>
+                <labEventTypes>INFINIUM_METHYLATION_WASH_3</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>InfiniumMethylationElution</name>
+                <labEventTypes>INFINIUM_METHYLATION_ELUTION</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
         <name>Infinium</name>
         <workflowProcessDefVersions>
             <version>1.0</version>
@@ -2589,6 +2689,17 @@
             <!-- No JIRA setup, because BSP creates ARRAY tickets <batchJiraProjectType>LCSET</batchJiraProjectType>-->
             <!-- No JIRA setup, because BSP creates ARRAY tickets <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType> -->
             <effectiveDate>2015-10-01T10:03:24.085-04:00</effectiveDate>
+            <workflowProcessDefs>Infinium</workflowProcessDefs>
+            <routingRule>MERCURY</routingRule>
+            <inValidation>false</inValidation>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>Infinium Methylation</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2016-11-07T10:03:24.085-04:00</effectiveDate>
+            <workflowProcessDefs>Infinium Methylation</workflowProcessDefs>
             <workflowProcessDefs>Infinium</workflowProcessDefs>
             <routingRule>MERCURY</routingRule>
             <inValidation>false</inValidation>

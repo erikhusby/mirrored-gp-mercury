@@ -23,6 +23,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.VesselSearchActionBean;
 
@@ -32,6 +33,7 @@ import javax.inject.Inject;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,8 +48,6 @@ import java.util.Set;
 public class WorkflowValidator {
 
     private static final Log log = LogFactory.getLog(WorkflowValidator.class);
-    private final WorkflowLoader workflowLoader = new WorkflowLoader();
-
     @Inject
     private LabVesselDao labVesselDao;
 
@@ -59,6 +59,8 @@ public class WorkflowValidator {
 
     @Inject
     private EmailSender emailSender;
+
+    private WorkflowConfig workflowConfig;
 
     private ProductOrderDao productOrderDao;
 
@@ -186,8 +188,8 @@ public class WorkflowValidator {
 
         if (!validationErrors.isEmpty()) {
             String body = renderTemplate(labVessels, stationEventType, validationErrors);
-            emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
-                    "Workflow validation failure for " + stationEventType.getEventType(), body);
+            emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), Collections.<String>emptyList(),
+                    "Workflow validation failure for " + stationEventType.getEventType(), body, false);
         }
     }
 
@@ -231,7 +233,7 @@ public class WorkflowValidator {
                     is what will happen if the batch is not found (Sample exists in multiple batches)
                  */
                 if (workflowName != null && effectiveBatch != null) {
-                    ProductWorkflowDefVersion workflowVersion = workflowLoader.load().getWorkflowVersionByName(
+                    ProductWorkflowDefVersion workflowVersion = workflowConfig.getWorkflowVersionByName(
                             workflowName, effectiveBatch.getCreatedOn());
                     if (workflowVersion != null) {
                         List<ProductWorkflowDefVersion.ValidationError> errors =
@@ -277,5 +279,10 @@ public class WorkflowValidator {
     @Inject
     public void setProductOrderDao(ProductOrderDao productOrderDao) {
         this.productOrderDao = productOrderDao;
+    }
+
+    @Inject
+    public void setWorkflowConfig(WorkflowConfig workflowConfig) {
+        this.workflowConfig = workflowConfig;
     }
 }

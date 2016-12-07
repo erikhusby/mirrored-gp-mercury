@@ -116,6 +116,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     public static final String PROJECT_VIEW_PAGE = "/projects/view.jsp";
     public static final String PROJECT_SUBMISSIONS_PAGE = "/projects/submissions.jsp";
     public static final String BIOPROJECT_PARAMETER = "bioProjectTokenInput.listOfKeys";
+    static final String SUBMISSIONS_UNAVAILABLE = "Submissions are temporarily unavailable.";
     public boolean supressValidationErrors;
     private static final String BEGIN_COLLABORATION_ACTION = "beginCollaboration";
 
@@ -222,6 +223,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     public static final TypeReference<List<SubmissionDto>> SUBMISSION_SAMPLES_TYPE_REFERENCE =
             new TypeReference<List<SubmissionDto>>() {
             };
+    private Boolean submissionsServiceAvailable=null;
 
     public Map<String, String> getBioSamples() {
         return bioSamples;
@@ -307,14 +309,6 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     public void init() throws Exception {
         researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
 
-        loadSubmissionSelectLists();
-
-        if (submissionRepository == null && StringUtils.isBlank(selectedSubmissionRepository)) {
-            if (getActiveRepositories().size() == 1) {
-                selectedSubmissionRepository = getActiveRepositories().iterator().next().getDescription();
-            }
-        }
-
         if (!StringUtils.isBlank(researchProject)) {
 
             editResearchProject = researchProjectDao.findByBusinessKey(researchProject);
@@ -327,21 +321,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
                 validCollaborationPortal = false;
             }
 
-            String eventName = getContext().getEventName();
-            if (StringUtils.isNotBlank(editResearchProject.getSubmissionRepositoryName())) {
-                selectedSubmissionRepository = editResearchProject.getSubmissionRepositoryName();
-                submissionRepository = submissionsService.findRepositoryByKey(selectedSubmissionRepository);
-                    if (submissionRepository!=null && !submissionRepository.isActive() && eventName.equals(VIEW_SUBMISSIONS_ACTION)) {
-                        addMessage("Selected submission site ''{0}'' is not active.", submissionRepository.getDescription());
-                }
-            }
 
-            if (submissionLibraryDescriptor == null) {
-                submissionLibraryDescriptor = findDefaultSubmissionType(editResearchProject);
-                if (submissionLibraryDescriptor != null) {
-                    selectedSubmissionLibraryDescriptor = submissionLibraryDescriptor.getName();
-                }
-            }
             if (sessionCache == null) {
                 sessionCache = new SessionCache<>(getContext().getRequest().getSession(), VIEW_SUBMISSIONS_ACTION,
                         SUBMISSION_SAMPLES_TYPE_REFERENCE);
@@ -373,14 +353,38 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         progressFetcher = new CompletionStatusFetcher(productOrderDao.getProgress(productOrderIds));
     }
 
-    void loadSubmissionSelectLists() {
-        try {
+    @After(stages = LifecycleStage.BindingAndValidation,
+            on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, VIEW_SUBMISSIONS_ACTION,
+                    POST_SUBMISSIONS_ACTION, GET_SUBMISSION_STATUSES_ACTION})
+    public void initSubmissions() {
+        if (isSubmissionServiceAvailable()) {
             setSubmissionLibraryDescriptors(submissionsService.getSubmissionLibraryDescriptors());
             setSubmissionRepositories(submissionsService.getSubmissionRepositories());
-        } catch (Exception e) {
-            addMessage("Submissions are temporarily unavailable.");
-            log.error(e.getMessage(), e);
+
+            if (submissionRepository == null && StringUtils.isBlank(selectedSubmissionRepository)) {
+                if (getActiveRepositories().size() == 1) {
+                    selectedSubmissionRepository = getActiveRepositories().iterator().next().getDescription();
+                }
+            }
+            String eventName = getContext().getEventName();
+            if (StringUtils.isNotBlank(editResearchProject.getSubmissionRepositoryName())) {
+                selectedSubmissionRepository = editResearchProject.getSubmissionRepositoryName();
+                submissionRepository = submissionsService.findRepositoryByKey(selectedSubmissionRepository);
+                if (submissionRepository != null && !submissionRepository.isActive() && eventName
+                        .equals(VIEW_SUBMISSIONS_ACTION)) {
+                    addMessage("Selected submission site ''{0}'' is not active.",
+                            submissionRepository.getDescription());
+                }
+            }
+
+            if (submissionLibraryDescriptor == null) {
+                submissionLibraryDescriptor = findDefaultSubmissionType(editResearchProject);
+                if (submissionLibraryDescriptor != null) {
+                    selectedSubmissionLibraryDescriptor = submissionLibraryDescriptor.getName();
+                }
+            }
         }
+
     }
 
     SubmissionLibraryDescriptor findDefaultSubmissionType(ResearchProject researchProject) {
@@ -834,7 +838,20 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         return validateViewOrPostSubmissions();
     }
 
-    @ValidationMethod(on = {VIEW_SUBMISSIONS_ACTION, POST_SUBMISSIONS_ACTION})
+    @ValidationMethod(on = {VIEW_SUBMISSIONS_ACTION, POST_SUBMISSIONS_ACTION}, priority=0)
+    public boolean isSubmissionServiceAvailable() {
+        if (submissionsServiceAvailable==null){
+            submissionsServiceAvailable=submissionsService.isAvailable();
+            if (!submissionsServiceAvailable) {
+                // Only need to do this once per request.
+                log.error(SUBMISSIONS_UNAVAILABLE);
+                addMessage(SUBMISSIONS_UNAVAILABLE);
+            }
+        }
+        return submissionsServiceAvailable;
+    }
+
+    @ValidationMethod(on = {VIEW_SUBMISSIONS_ACTION, POST_SUBMISSIONS_ACTION}, priority=1)
     public boolean validateViewOrPostSubmissions() {
         if (getUserBean().isDeveloperUser()) {
             return true;

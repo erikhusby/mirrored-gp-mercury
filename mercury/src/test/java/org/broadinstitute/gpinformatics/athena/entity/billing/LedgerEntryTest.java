@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.billing;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.meanbean.test.BeanTester;
 import org.meanbean.test.EqualsMethodTester;
@@ -115,7 +116,7 @@ public class LedgerEntryTest {
     @Test
     public void testBean() {
         new BeanTester().testBean(LedgerEntry.class);
-        new EqualsMethodTester().testEqualsMethod(LedgerEntry.class, "autoLedgerTimestamp", "billingMessage", "quantity", "workItem", "workCompleteDate");
+        new EqualsMethodTester().testEqualsMethod(LedgerEntry.class, "autoLedgerTimestamp", "billingMessage", "quantity", "workItem", "workCompleteDate", "sapDeliveryDocumentId");
         new HashCodeMethodTester().testHashCodeMethod(LedgerEntry.class);
     }
 }

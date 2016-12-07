@@ -469,4 +469,5 @@ public class AttributeArchetypeFixupTest extends Arquillian {
             throw new RuntimeException(e);
         }
     }
+
 }
