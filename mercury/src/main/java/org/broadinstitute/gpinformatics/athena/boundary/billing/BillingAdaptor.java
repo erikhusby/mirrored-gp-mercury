@@ -155,7 +155,7 @@ public class BillingAdaptor implements Serializable {
                         BigDecimal primaryPrice = new BigDecimal(primaryPriceItemIfReplacement.getPrice());
                         BigDecimal replacementPrice  = new BigDecimal(priceItemBeingBilled.getPrice());
 
-                        replacementMultiplier = (replacementPrice.divide(primaryPrice, 3)).multiply(BigDecimal.valueOf(item.getQuantityForSAP()));
+                        replacementMultiplier = (replacementPrice.divide(primaryPrice, 3, BigDecimal.ROUND_HALF_UP)).multiply(BigDecimal.valueOf(item.getQuantityForSAP()));
                     }
 
                     // Get the quote items on the quote, adding to the quote item cache, if not there.
