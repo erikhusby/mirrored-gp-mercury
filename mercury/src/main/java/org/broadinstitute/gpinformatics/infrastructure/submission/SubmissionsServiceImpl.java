@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
 import com.sun.jersey.api.client.ClientResponse;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -56,7 +55,8 @@ public class SubmissionsServiceImpl implements SubmissionsService {
         String baseUrl = submissionsConfig.getWSUrl(SubmissionConfig.SUBMISSIONS_STATUS_URI);
         QueryStringSplitter splitter = new QueryStringSplitter(baseUrl.length(), EPSILON_9_MAX_URL_LENGTH);
         for (Map<String, List<String>> parameters : splitter.split("uuid", Arrays.asList(submissionIdentifiers))) {
-            ClientResponse response = clientResponseGet(baseUrl, parameters, "querying submission status", true);
+            ClientResponse response = clientResponseGet(SubmissionConfig.SUBMISSIONS_STATUS_URI, parameters);
+            validateResponseStatus("querying submission status",response);
             SubmissionStatusResultBean result = response.getEntity(SubmissionStatusResultBean.class);
             allResults.addAll(result.getSubmissionStatuses());
         }
@@ -107,9 +107,9 @@ public class SubmissionsServiceImpl implements SubmissionsService {
     @Override
     public Collection<BioProject> getAllBioProjects() {
         ClientResponse response =
-                clientResponseGet(submissionsConfig.getWSUrl(SubmissionConfig.LIST_BIOPROJECTS_ACTION), NO_PARAMETERS,
-                        "querying submission status", true);
+                clientResponseGet(SubmissionConfig.LIST_BIOPROJECTS_ACTION, NO_PARAMETERS);
         BioProjects bioProjects = response.getEntity(BioProjects.class);
+        validateResponseStatus("querying submission status", response);
         return bioProjects.getBioprojects();
     }
 
@@ -125,7 +125,6 @@ public class SubmissionsServiceImpl implements SubmissionsService {
                         MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).entity(submissions)
                            .post(ClientResponse.class);
         validateResponseStatus("posting submissions", response);
-
         return response.getEntity(SubmissionStatusResultBean.class).getSubmissionStatuses();
     }
 
@@ -135,44 +134,28 @@ public class SubmissionsServiceImpl implements SubmissionsService {
         parameterMap.put(ACCESSION_PARAMETER, Arrays.asList(bioProject.getAccession()));
 
         ClientResponse response =
-                clientResponseGet(submissionsConfig.getWSUrl(SubmissionConfig.SUBMISSION_SAMPLES_ACTION), parameterMap,
-                        "receiving submission samples list", true);
+                clientResponseGet(SubmissionConfig.SUBMISSION_SAMPLES_ACTION, parameterMap);
+        validateResponseStatus("receiving submission samples list", response);
         return response.getEntity(SubmissionSampleResultBean.class).getSubmittedSampleIds();
     }
 
     @Override
     public List<SubmissionRepository> getSubmissionRepositories() {
-        ClientResponse response =
-                clientResponseGet(SubmissionConfig.ALL_SUBMISSION_SITES, NO_PARAMETERS,
-                        "receiving Submission Repositories", true);
-
+        ClientResponse response = clientResponseGet(SubmissionConfig.ALL_SUBMISSION_SITES, NO_PARAMETERS);
+        validateResponseStatus("receiving Submission Repositories", response);
         return response.getEntity(SubmissionRepositories.class).getSubmissionRepositories();
     }
 
     @Override
     public List<SubmissionLibraryDescriptor> getSubmissionLibraryDescriptors() {
-        ClientResponse response =
-                clientResponseGet(SubmissionConfig.SUBMISSION_TYPES, NO_PARAMETERS,
-                        "receiving Submission Library Descriptors", true);
+        ClientResponse response = clientResponseGet(SubmissionConfig.SUBMISSION_TYPES, NO_PARAMETERS);
+        validateResponseStatus("receiving Submission Library Descriptors",response);
         return response.getEntity(SubmissionLibraryDescriptors.class).getSubmissionLibraryDescriptors();
     }
 
-    private ClientResponse clientResponseGet(String servicePath, Map<String, List<String>> parameters,
-                                             String validationText, boolean withValidation) {
-        ClientResponse response = null;
-        boolean preTestServer;
-        if (withValidation) {
-            preTestServer=isAvailable();
-        }else{
-            preTestServer = false;
-        }
-
-        if (preTestServer) {
-            response = JerseyUtils.getWebResource(submissionsConfig.getWSUrl(servicePath),
-                    MediaType.APPLICATION_JSON_TYPE, parameters).get(ClientResponse.class);
-
-            validateResponseStatus(validationText, response);
-        }
+    private ClientResponse clientResponseGet(String servicePath, Map<String, List<String>> parameters) {
+        ClientResponse response = JerseyUtils.getWebResource(submissionsConfig.getWSUrl(servicePath),
+                MediaType.APPLICATION_JSON_TYPE, parameters).get(ClientResponse.class);
         return response;
     }
 
@@ -207,26 +190,5 @@ public class SubmissionsServiceImpl implements SubmissionsService {
             log.error(errorMessage);
             throw new InformaticsServiceException(errorMessage);
         }
-    }
-
-
-    private List<SubmissionRepository> submissionServiceAvailableService() {
-        ClientResponse response =
-                clientResponseGet(SubmissionConfig.ALL_SUBMISSION_SITES, NO_PARAMETERS,
-                        "receiving Submission Repositories", false);
-
-        return response.getEntity(SubmissionRepositories.class).getSubmissionRepositories();
-    }
-
-    @Override
-    public boolean isAvailable() {
-        try {
-            if (CollectionUtils.isNotEmpty(submissionServiceAvailableService())) {
-                return true;
-            }
-        } catch (Exception e) {
-            log.error("Submissions Service is unavailable", e);
-        }
-        return false;
     }
 }
