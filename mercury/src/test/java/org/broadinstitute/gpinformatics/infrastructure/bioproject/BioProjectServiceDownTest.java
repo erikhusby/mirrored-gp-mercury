@@ -71,11 +71,6 @@ public class BioProjectServiceDownTest {
         public SubmissionLibraryDescriptor findLibraryDescriptorTypeByKey(String selectedSubmissionDescriptor) {
             return null;
         }
-
-        @Override
-        public boolean isAvailable() {
-            return false;
-        }
     }
 
 }
