@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -16,6 +17,7 @@ import static org.hamcrest.Matchers.equalTo;
  * Arquillian tests for PriceListCache.
  */
 @Test(groups = TestGroups.STUBBY)
+@RequestScoped
 public class PriceListCacheContainerTest extends StubbyContainerTest {
 
     @Inject

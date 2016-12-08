@@ -747,20 +747,6 @@
                 </plugins>
             </build>
         </profile>
-        <!-- A Java EE profile to include Java EE API dependencies
-             For WildFly, we globally use org.jboss.spec:jboss-javaee-7.0 in lieu of javax:javaee-api
-          -->
-        <profile>
-            <id>JavaEE</id>
-            <dependencies>
-                <dependency>
-                    <groupId>javax</groupId>
-                    <artifactId>javaee-api</artifactId>
-                    <version>7.0</version>
-                    <scope>provided</scope>
-                </dependency>
-            </dependencies>
-        </profile>
 
         <profile>
             <id>Arquillian-WildFly10-Managed</id>

@@ -2,6 +2,10 @@ package org.broadinstitute.gpinformatics.infrastructure.jira;
 
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
+/**
+ * <strong>Not a CDI producer!</strong><br/>
+ * Creates non-CDI test instances only.
+ */
 public class JiraServiceTestProducer {
 
     private static JiraService testInstance;

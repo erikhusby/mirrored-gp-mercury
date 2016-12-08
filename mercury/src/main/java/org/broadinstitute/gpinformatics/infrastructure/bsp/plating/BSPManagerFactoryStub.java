@@ -28,7 +28,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Not a CDI bean
+ * A CDI bean created by a producer
  * @see org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer
  */
 public class BSPManagerFactoryStub implements BSPManagerFactory {

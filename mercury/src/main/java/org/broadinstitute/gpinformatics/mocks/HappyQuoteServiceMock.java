@@ -1,8 +1,17 @@
 package org.broadinstitute.gpinformatics.mocks;
 
-import org.broadinstitute.gpinformatics.infrastructure.quote.*;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFunding;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePlatformType;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Quotes;
 
-import javax.enterprise.context.Dependent;
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Alternative;
 import java.util.Date;
 import java.util.Set;
@@ -15,7 +24,7 @@ import java.util.Set;
  * WHEN THE QUOTE SERVERS ARE DOWN.
  */
 @Alternative
-@Dependent
+@ApplicationScoped
 public class HappyQuoteServiceMock implements QuoteService {
 
     @Override

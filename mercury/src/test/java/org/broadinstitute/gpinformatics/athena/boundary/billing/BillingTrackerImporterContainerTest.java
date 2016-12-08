@@ -20,6 +20,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -33,10 +34,11 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 
 
 @Test(groups = TestGroups.STANDARD, enabled=true)
+@RequestScoped
 public class BillingTrackerImporterContainerTest extends Arquillian {
 
-    public static final String GOOD_BILLING_TRACKER_TEST_FILENAME = "BillingTracker-StubbyContainerTest.xlsx";
-    public static final String BAD_BILLING_TRACKER_TEST_FILENAME = "BillingTracker-StubbyContainerTest-BadProductConfiguration.xlsx";
+    public static final String GOOD_BILLING_TRACKER_TEST_FILENAME = "BillingTracker-ContainerTest.xlsx";
+    public static final String BAD_BILLING_TRACKER_TEST_FILENAME = "BillingTracker-ContainerTest-BadProductConfiguration.xlsx";
 
     @Inject
     private ProductDao productDao;

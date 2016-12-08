@@ -17,6 +17,7 @@ import edu.mit.broad.prodinfo.thrift.lims.WellAndSourceTube;
 import org.broadinstitute.gpinformatics.infrastructure.Offline;
 
 import javax.enterprise.context.Dependent;
+import javax.enterprise.inject.Alternative;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +27,7 @@ import java.util.Map;
  * @author breilly
  */
 @Offline
+@Alternative
 @Dependent
 public class OfflineThriftService implements ThriftService {
 

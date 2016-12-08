@@ -25,7 +25,13 @@ public class StubbyContainerTest extends Arquillian {
                 "org.broadinstitute.gpinformatics.infrastructure.bettalims.BettaLimsConnectorStub",
                 "org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortSearchServiceStub",
                 "org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleReceiptServiceStub",
-                "org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestServiceStub"
+                "org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub",
+                "org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestServiceStub",
+                "org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceStub",
+                "org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceStub",
+                "org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStoreStub",
+                "org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsServiceStub",
+                "org.broadinstitute.gpinformatics.infrastructure.thrift.OfflineThriftService"
         );
         return stubbyArchive;
     }

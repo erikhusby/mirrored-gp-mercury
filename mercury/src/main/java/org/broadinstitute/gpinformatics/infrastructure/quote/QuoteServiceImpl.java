@@ -18,7 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.w3c.dom.Document;
 
 import javax.annotation.Nonnull;
-import javax.enterprise.context.Dependent;
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
@@ -29,11 +29,13 @@ import java.text.Format;
 import java.util.Date;
 import java.util.Set;
 
-@Dependent
+@ApplicationScoped
 @Default
 public class QuoteServiceImpl extends AbstractJerseyClientService implements QuoteService {
+
     public static final String COMMUNICATION_ERROR = "Could not communicate with quote server at %s: %s";
     private static final long serialVersionUID = 8458283723746937096L;
+
     @Inject
     private QuoteConfig quoteConfig;
 

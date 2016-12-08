@@ -16,7 +16,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
 /**
- * Not a CDI bean
+ * A CDI bean created by a producer
  * @see org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer
  */
 public class BSPManagerFactoryImpl implements BSPManagerFactory {

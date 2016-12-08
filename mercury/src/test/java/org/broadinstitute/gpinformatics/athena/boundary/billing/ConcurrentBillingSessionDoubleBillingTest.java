@@ -29,7 +29,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.enterprise.context.Dependent;
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Alternative;
@@ -179,7 +179,7 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
     }
 
     @Alternative
-    @Dependent
+    @ApplicationScoped
     private static class RegisterWorkAlwaysWorks implements QuoteService {
 
         public static int workItemNumber;

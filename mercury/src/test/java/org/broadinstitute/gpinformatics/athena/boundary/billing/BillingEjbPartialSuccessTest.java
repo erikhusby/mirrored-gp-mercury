@@ -30,7 +30,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerExceptio
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quotes;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -41,7 +41,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import javax.enterprise.context.Dependent;
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
@@ -103,7 +103,8 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
     @Inject
     private BillingSessionAccessEjb billingSessionAccessEjb;
 
-    private SapIntegrationService sapService;
+    // Stub implementation
+    private SapIntegrationService sapService = new SapIntegrationServiceStub();
 
     @Inject
     private ProductOrderEjb productOrderEjb;
@@ -139,8 +140,6 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
         PriceListCache tempPriceListCache = new PriceListCache(quotePriceItems);
 
-        sapService = SapIntegrationServiceProducer.stubInstance();
-
         billingAdaptor = new BillingAdaptor(billingEjb, billingSessionDao, tempPriceListCache, quoteService,
                 billingSessionAccessEjb, sapService);
         billingAdaptor.setProductOrderEjb(productOrderEjb);
@@ -151,7 +150,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
      * expect.
      */
     @Alternative
-    @Dependent
+    @ApplicationScoped
     protected static class PartiallySuccessfulQuoteServiceStub implements QuoteService {
         private static final long serialVersionUID = 6093273925949722169L;
         private Log log = LogFactory.getLog(QuoteFundingList.class);

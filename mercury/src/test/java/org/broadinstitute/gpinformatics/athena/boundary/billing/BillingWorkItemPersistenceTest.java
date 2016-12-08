@@ -12,17 +12,14 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceProducer;
-import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.AbstractContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
@@ -58,7 +55,8 @@ public class BillingWorkItemPersistenceTest extends AbstractContainerTest {
     @Inject
     private BillingSessionAccessEjb billingSessionAccessEjb;
 
-    private SapIntegrationService sapService;
+    // Stub implementation
+    private SapIntegrationService sapService = new SapIntegrationServiceStub();
 
     @Inject
     private ProductOrderEjb productOrderEjb;
@@ -125,8 +123,6 @@ public class BillingWorkItemPersistenceTest extends AbstractContainerTest {
         }
 
         PriceListCache tempPriceListCache = new PriceListCache(quotePriceItems);
-
-        sapService = SapIntegrationServiceProducer.stubInstance();
 
         billingAdaptor = new BillingAdaptor(billingEjb, billingSessionDao, tempPriceListCache, quoteService,
                 billingSessionAccessEjb, sapService);
