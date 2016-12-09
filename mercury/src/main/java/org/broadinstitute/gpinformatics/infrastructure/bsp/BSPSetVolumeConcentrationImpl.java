@@ -34,7 +34,7 @@ public class BSPSetVolumeConcentrationImpl extends BSPJerseyClient implements BS
     private static final String VOLUME_CONCENTRATION_URL = "sample/setVolumeConcentration";
 
     /**
-     * Required for @Impl class.
+     * Required for CDI
      */
     @SuppressWarnings("unused")
     public BSPSetVolumeConcentrationImpl() {

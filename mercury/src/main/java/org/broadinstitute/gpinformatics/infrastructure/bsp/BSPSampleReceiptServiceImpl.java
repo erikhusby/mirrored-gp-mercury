@@ -30,7 +30,7 @@ public class BSPSampleReceiptServiceImpl extends BSPJerseyClient implements BSPS
     private static final XStream XSTREAM = new XStream();
 
     /**
-     * Required for @Impl class.
+     * Required for CDI
      */
     @SuppressWarnings("unused")
     public BSPSampleReceiptServiceImpl() {
