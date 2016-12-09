@@ -152,6 +152,18 @@ public class ProductOrderTestFactory {
         return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.PCR_PLUS);
     }
 
+    public static ProductOrder buildPcrPlusHyperPrepProductOrder(int maxSamples) {
+        return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.PCR_PLUS_HYPER_PREP);
+    }
+
+    public static ProductOrder buildPcrFreeHyperPrepProductOrder(int maxSamples) {
+        return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.PCR_FREE_HYPER_PREP);
+    }
+
+    public static ProductOrder buildCellFreeHyperPrepProductOrder(int maxSamples) {
+        return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.CELL_FREE_HYPER_PREP);
+    }
+
     public static ProductOrder buildSampleInitiationProductOrder(int maxSamples) {
 
         ProductOrder sampleInitiationProductOrder = createDummyProductOrder(maxSamples, JIRA_KEY, Workflow.NONE,
