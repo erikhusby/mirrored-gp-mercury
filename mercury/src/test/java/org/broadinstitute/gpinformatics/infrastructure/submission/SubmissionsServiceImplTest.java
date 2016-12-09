@@ -26,6 +26,7 @@ import org.testng.annotations.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.emptyCollectionOf;
@@ -38,7 +39,7 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION, singleThreaded = true)
 public class SubmissionsServiceImplTest {
 
     private static int sequenceNumber = 1;
@@ -60,8 +61,10 @@ public class SubmissionsServiceImplTest {
         contactBean =
                 new SubmissionContactBean("Jeff", "A", "Gentry", "jgentry@broadinstitute.org", "617-555-9292", "homer");
         submissionsService = new SubmissionsServiceImpl(SubmissionConfig.produce(Deployment.DEV));
-        submissionRepository = submissionsService.getSubmissionRepositories().iterator().next();
-        submissionLibraryDescriptor =submissionsService.getSubmissionLibraryDescriptors().iterator().next();
+        List<SubmissionRepository> submissionRepositories = submissionsService.getSubmissionRepositories();
+        submissionRepository = submissionRepositories.iterator().next();
+        List<SubmissionLibraryDescriptor> submissionLibraryDescriptors = submissionsService.getSubmissionLibraryDescriptors();
+        submissionLibraryDescriptor = submissionLibraryDescriptors.iterator().next();
     }
 
     public void testServerResponseBadRequest() {
