@@ -48,7 +48,7 @@ public class PriceListCacheContainerTest extends StubbyContainerTest {
 
         QuoteServiceStub.resetInvocationCount();
         cacheRefresher.queueRefresh(priceListCache);
-        Thread.sleep(100);
+        Thread.sleep(1000);
         assertThat(QuoteServiceStub.getInvocationCount(), equalTo(1));
     }
 }
