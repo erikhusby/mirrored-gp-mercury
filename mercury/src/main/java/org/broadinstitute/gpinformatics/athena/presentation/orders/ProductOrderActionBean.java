@@ -585,7 +585,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             editOrder.getProductOrderKit().getComments().length() > 255) {
             addValidationError("productOrderKit.comments", "Product order kit comments cannot exceed 255 characters");
         }
-//                @Validate(field = "count", on = {SAVE_ACTION}, label = "Number of Lanes"),
 
         // If this is not a draft, some fields are required.
         if (!editOrder.isDraft()) {
@@ -1357,6 +1356,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             addMessage("Product Order \"{0}\" has been saved.", editOrder.getTitle());
         } catch (SAPInterfaceException e) {
             addGlobalValidationError(e.getMessage());
+            getSourcePageResolution();
         }
         try {
             if(!productOrderEjb.isOrderEligibleForSAP(editOrder)) {
@@ -1450,20 +1450,27 @@ public class ProductOrderActionBean extends CoreActionBean {
                 tokenProject != null ? projectDao.findByBusinessKey(tokenProject.getBusinessKey()) : null;
         Product tokenProduct = productTokenInput.getTokenObject();
         Product product = tokenProduct != null ? productDao.findByPartNumber(tokenProduct.getPartNumber()) : null;
-        List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
-        editOrder.updateData(project, product, addOnProducts, stringToSampleListExisting(sampleList));
-        BspUser tokenOwner = owner.getTokenObject();
-        editOrder.setCreatedBy(tokenOwner != null ? tokenOwner.getUserId() : null);
 
-        // For sample initiation fields we will set token input fields.
-        if (editOrder.isSampleInitiation()) {
-            editOrder.getProductOrderKit().setSampleCollectionId(
-                    bspGroupCollectionTokenInput.getTokenObject() != null ?
-                            bspGroupCollectionTokenInput.getTokenObject().getCollectionId() : null);
-            editOrder.getProductOrderKit().setSiteId(
-                    bspShippingLocationTokenInput.getTokenObject() != null ?
-                            bspShippingLocationTokenInput.getTokenObject().getId() : null);
-            editOrder.getProductOrderKit().setNotificationIds(notificationListTokenInput.getTokenBusinessKeys());
+        if(editOrder.isSavedInSAP() && !editOrder.latestSapOrderDetail().getCompanyCode().equals(sapService.getSapCompanyConfigurationForProduct(product).getCompanyCode())) {
+            addGlobalValidationError("Unable to update the order in SAP.  This combination of Product and Order is "
+                                     + "attempting to change the company code to which this order will be associated.");
+        } else {
+
+            List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
+            editOrder.updateData(project, product, addOnProducts, stringToSampleListExisting(sampleList));
+            BspUser tokenOwner = owner.getTokenObject();
+            editOrder.setCreatedBy(tokenOwner != null ? tokenOwner.getUserId() : null);
+
+            // For sample initiation fields we will set token input fields.
+            if (editOrder.isSampleInitiation()) {
+                editOrder.getProductOrderKit().setSampleCollectionId(
+                        bspGroupCollectionTokenInput.getTokenObject() != null ?
+                                bspGroupCollectionTokenInput.getTokenObject().getCollectionId() : null);
+                editOrder.getProductOrderKit().setSiteId(
+                        bspShippingLocationTokenInput.getTokenObject() != null ?
+                                bspShippingLocationTokenInput.getTokenObject().getId() : null);
+                editOrder.getProductOrderKit().setNotificationIds(notificationListTokenInput.getTokenBusinessKeys());
+            }
         }
     }
 
