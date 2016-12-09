@@ -59,6 +59,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.sap.services.SAPIntegrationException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -308,7 +309,7 @@ public class ProductOrderEjb {
                 && !orderToPublish.getOrderStatus().canPlace()) {
                 final boolean quoteIdChange = orderToPublish.isSavedInSAP() &&
                                               !orderToPublish.getQuoteId()
-                        .equals(orderToPublish.latestSapOrderDetail().getQuoteId());
+                                                      .equals(orderToPublish.latestSapOrderDetail().getQuoteId());
                 if ((!orderToPublish.isSavedInSAP() && allowCreateOrder) || quoteIdChange) {
                     String sapOrderIdentifier = sapService.createOrder(orderToPublish);
 
@@ -343,7 +344,7 @@ public class ProductOrderEjb {
             } else {
                 messageCollection.addInfo("This order is ineligible to post to SAP: ");
             }
-        } catch (org.broadinstitute.sap.services.SAPIntegrationException|QuoteServerException|QuoteNotFoundException e) {
+        } catch (SAPIntegrationException | QuoteServerException | QuoteNotFoundException e) {
             StringBuilder errorMessage = new StringBuilder();
                 errorMessage.append("Unable to ");
             if (!orderToPublish.isSavedInSAP()) {
