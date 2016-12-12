@@ -16,6 +16,8 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.List;
@@ -169,6 +171,7 @@ public class PreferenceEjb {
      *
      * @return Preference The matching preference
      */
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public List<Preference> getPreferences(
             @Nonnull Long object1Id, @Nullable Long object2Id, @Nonnull PreferenceType preferenceType)
             throws Exception {
@@ -182,6 +185,7 @@ public class PreferenceEjb {
      *
      * @return Preference The matching preference
      */
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public List<Preference> getPreferences(@Nonnull Long associatedUser) throws Exception {
         return preferenceDao.getPreferences(associatedUser);
     }
@@ -194,6 +198,7 @@ public class PreferenceEjb {
      *
      * @return Preference The matching preference
      */
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public List<Preference> getPreferences(
             @Nonnull Long associatedUser, @Nullable PreferenceType preferenceType) throws Exception {
         return preferenceDao.getPreferences(associatedUser, preferenceType);

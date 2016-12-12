@@ -64,6 +64,8 @@ import org.broadinstitute.sap.services.SAPIntegrationException;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.persistence.LockModeType;
@@ -370,6 +372,7 @@ public class ProductOrderEjb {
      * @throws QuoteServerException
      * @throws QuoteNotFoundException
      */
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public boolean isOrderEligibleForSAP(ProductOrder editedProductOrder)
             throws QuoteServerException, QuoteNotFoundException {
         Quote orderQuote = quoteService.getQuoteByAlphaId(editedProductOrder.getQuoteId());
@@ -390,6 +393,7 @@ public class ProductOrderEjb {
      * Looks up the quote for the pdo (if the pdo has one) in the
      * quote server.
      */
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     void validateQuote(ProductOrder productOrder, QuoteService quoteService) throws QuoteNotFoundException {
         if (!StringUtils.isEmpty(productOrder.getQuoteId())) {
             try {

@@ -6,6 +6,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import java.util.List;
 
@@ -15,6 +17,7 @@ import java.util.List;
  */
 @Stateful
 @RequestScoped
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class ProductFamilyDao extends GenericDao {
 
     public List<ProductFamily> findAll() {

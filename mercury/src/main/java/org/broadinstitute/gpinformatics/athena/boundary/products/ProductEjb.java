@@ -22,6 +22,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -157,6 +159,7 @@ public class ProductEjb {
      *
      * @return (chip family, chip name) or (null, null) if no match was found.
      */
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public Pair<String, String> getGenotypingChip(ProductOrder productOrder, Date effectiveDate) {
         if (productOrder.getProduct() != null) {
             String productPartNumber = productOrder.getProduct().getPartNumber();
@@ -172,6 +175,7 @@ public class ProductEjb {
      *
      * @return (chip family, chip name) or (null, null) if no match was found.
      */
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public Pair<String, String> getGenotypingChip(String productPartNumber, String productOrderName,
                                                   Date effectiveDate) {
 

@@ -198,9 +198,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     private ProductDao productDao;
 
     @Inject
-    private ResearchProjectDao projectDao;
-
-    @Inject
     private BillingSessionDao billingSessionDao;
 
     @Inject
@@ -464,7 +461,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void init() {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
         if (!StringUtils.isBlank(productOrder)) {
-            editOrder = productOrderEjb.findProductOrderByBusinessKeySafely(productOrder);
+            editOrder = productOrderDao.findByBusinessKey(productOrder);
             if (editOrder != null) {
                 progressFetcher = new CompletionStatusFetcher(
                         productOrderDao.getProgress(Collections.singleton(editOrder.getProductOrderId())));
@@ -1263,7 +1260,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             // If we get here with an original business key, then clear out the session and refetch the order.
             if (originalBusinessKey != null) {
                 productOrderDao.clear();
-                editOrder = productOrderEjb.findProductOrderByBusinessKeySafely(originalBusinessKey);
+                editOrder = productOrderDao.findByBusinessKey(originalBusinessKey);
             }
 
             addGlobalValidationError(e.getMessage());
@@ -1447,30 +1444,29 @@ public class ProductOrderActionBean extends CoreActionBean {
         // Set the project, product and addOns for the order.
         ResearchProject tokenProject = projectTokenInput.getTokenObject();
         ResearchProject project =
-                tokenProject != null ? projectDao.findByBusinessKey(tokenProject.getBusinessKey()) : null;
+                tokenProject != null ? researchProjectDao.findByBusinessKey(tokenProject.getBusinessKey()) : null;
         Product tokenProduct = productTokenInput.getTokenObject();
         Product product = tokenProduct != null ? productDao.findByPartNumber(tokenProduct.getPartNumber()) : null;
 
         if(editOrder.isSavedInSAP() && !editOrder.latestSapOrderDetail().getCompanyCode().equals(sapService.getSapCompanyConfigurationForProduct(product).getCompanyCode())) {
             addGlobalValidationError("Unable to update the order in SAP.  This combination of Product and Order is "
                                      + "attempting to change the company code to which this order will be associated.");
-        } else {
+        }
 
-            List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
-            editOrder.updateData(project, product, addOnProducts, stringToSampleListExisting(sampleList));
-            BspUser tokenOwner = owner.getTokenObject();
-            editOrder.setCreatedBy(tokenOwner != null ? tokenOwner.getUserId() : null);
+        List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
+        editOrder.updateData(project, product, addOnProducts, stringToSampleListExisting(sampleList));
+        BspUser tokenOwner = owner.getTokenObject();
+        editOrder.setCreatedBy(tokenOwner != null ? tokenOwner.getUserId() : null);
 
-            // For sample initiation fields we will set token input fields.
-            if (editOrder.isSampleInitiation()) {
-                editOrder.getProductOrderKit().setSampleCollectionId(
-                        bspGroupCollectionTokenInput.getTokenObject() != null ?
-                                bspGroupCollectionTokenInput.getTokenObject().getCollectionId() : null);
-                editOrder.getProductOrderKit().setSiteId(
-                        bspShippingLocationTokenInput.getTokenObject() != null ?
-                                bspShippingLocationTokenInput.getTokenObject().getId() : null);
-                editOrder.getProductOrderKit().setNotificationIds(notificationListTokenInput.getTokenBusinessKeys());
-            }
+        // For sample initiation fields we will set token input fields.
+        if (editOrder.isSampleInitiation()) {
+            editOrder.getProductOrderKit().setSampleCollectionId(
+                    bspGroupCollectionTokenInput.getTokenObject() != null ?
+                            bspGroupCollectionTokenInput.getTokenObject().getCollectionId() : null);
+            editOrder.getProductOrderKit().setSiteId(
+                    bspShippingLocationTokenInput.getTokenObject() != null ?
+                            bspShippingLocationTokenInput.getTokenObject().getId() : null);
+            editOrder.getProductOrderKit().setNotificationIds(notificationListTokenInput.getTokenBusinessKeys());
         }
     }
 

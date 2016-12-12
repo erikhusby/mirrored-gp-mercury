@@ -19,6 +19,8 @@ import org.broadinstitute.gpinformatics.athena.entity.infrastructure.PublicMessa
 import javax.annotation.Nonnull;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.inject.Inject;
 
 /**
@@ -42,6 +44,7 @@ public class PublicMessageEjb {
 
     private PublicMessage message;
 
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public PublicMessage getPublicMessage() {
         try {
             message = publicMessageDao.getMessage();
