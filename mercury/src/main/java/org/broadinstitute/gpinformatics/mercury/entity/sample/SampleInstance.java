@@ -55,6 +55,8 @@ public class SampleInstance {
 
     private String rootSampleId;
 
+    private String experiment;
+
     public void removeSubTasks() {
         sampleInstanceSubTasks.clear();
     }
@@ -105,4 +107,7 @@ public class SampleInstance {
 
     public void setUploadDate(){ this.uploadDate = new Date(); }
 
+    public void setExperiment(String experiment) { this.experiment = experiment;  }
+
+    public String getExperiment() { return experiment; }
 }

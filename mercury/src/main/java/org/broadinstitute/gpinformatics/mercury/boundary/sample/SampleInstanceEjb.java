@@ -130,6 +130,7 @@ public class SampleInstanceEjb  {
             sampleInstance.setMolecularIndexScheme(molecularIndexSchemes.get(sampleIndex));
             sampleInstance.setMercurySampleId(mercurySamples.get(sampleIndex));
             sampleInstance.setRootSampleId(vesselSpreadsheetProcessor.getRootSampleId().get(sampleIndex));
+            sampleInstance.setExperiment(vesselSpreadsheetProcessor.getExperiment().get(sampleIndex));
 
             sampleInstance.setLabVessel(labVessel);
             sampleInstance.setUploadDate();
@@ -137,16 +138,15 @@ public class SampleInstanceEjb  {
             sampleInstance.removeSubTasks();
 
             //Persist the dev sub-tasks in the order they where provided.
-            for (List<String> subTaskList : jiraSubTaskList) {
-                for (String subTask : subTaskList) {
-                    SampleInstanceSubTasks sampleInstanceSubTasks = new SampleInstanceSubTasks();
-                    sampleInstanceSubTasks.setSubTask(subTask);
-                    sampleInstance.addSubTasks(sampleInstanceSubTasks);
-                }
+            for (String subTask : jiraSubTaskList.get(sampleIndex)) {
+                SampleInstanceSubTasks sampleInstanceSubTasks = new SampleInstanceSubTasks();
+                sampleInstanceSubTasks.setSubTask(subTask);
+                sampleInstance.addSubTasks(sampleInstanceSubTasks);
             }
 
             sampleInstanceDao.persist(sampleInstance);
             sampleInstanceDao.flush();
+            mapBarcodeToVessel.put(labVessel.getLabel(),labVessel);
 
             ++sampleIndex;
         }
@@ -191,7 +191,7 @@ public class SampleInstanceEjb  {
         for (String barcode : vesselSpreadsheetProcessor.getBarcodes()) {
             if (barcode == null) {
                 messageCollection.addError("Barcode not found: " + barcode.toString() + " At Row: " + (barcodeIndex + rowOffset) + " Column: " + VesselPooledTubesProcessor.Headers.TUBE_BARCODE.getText());
-            } else if (mapBarcodeToVessel != null && mapBarcodeToVessel.containsKey(barcode) && !overWriteFlag) {
+            } else if (mapBarcodeToVessel.get(barcode) != null && !overWriteFlag) {
                 messageCollection.addError("Barcode already registered: " + barcode.toString() + " At Row: " + (barcodeIndex + rowOffset) + " Column: " + VesselPooledTubesProcessor.Headers.TUBE_BARCODE.getText());
             } else {
                 this.barcode.add(barcode);

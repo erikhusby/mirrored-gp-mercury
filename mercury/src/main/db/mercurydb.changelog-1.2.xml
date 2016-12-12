@@ -762,6 +762,7 @@
             <column name="mercury_sample" type="number(19,0)"/>
             <column name="root_sample_id" type="varchar(255)"/>
             <column name="sample_library_name" type="varchar(255)"/>
+            <column name="experiment" type="varchar(255)"/>
             <column name="upload_date"  type="timestamp" />
         </createTable>
         <createTable schemaName="mercury" tableName="sample_instance_aud">
@@ -772,6 +773,7 @@
             <column name="mercury_sample" type="number(19,0)"/>
             <column name="sample_library_name" type="varchar(255)"/>
             <column name="root_sample_id" type="varchar(255)"/>
+            <column name="experiment" type="varchar(255)"/>
             <column name="upload_date"  type="timestamp" />
             <column name="rev" type="number(19,0)" />
             <column name="revtype" type="number(3,0)" />
@@ -799,7 +801,7 @@
     </changeSet>
 
     <changeSet id="GPLIM-4434-23" author="dwilson">
-        <addPrimaryKey tableName="sample_instance_sub_tasks_aud" schemaName="mercury" columnNames="rev, pooled_tube_sub_tasks_id"/>
+        <addPrimaryKey tableName="sample_instance_sub_tasks_aud" schemaName="mercury" columnNames="rev, sample_instance_sub_tasks_id"/>
         <createIndex tableName="sample_instance_sub_tasks_aud" indexName="ix_samp_inst_subtsk_aud">
             <column name="sample_instance_sub_tasks_id"/>
         </createIndex>
@@ -810,6 +812,11 @@
         <createIndex tableName="sample_instance_aud" indexName="ix_sample_instance_aud">
             <column name="sample_instance_id"/>
         </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-4434-25" author="dwilson">
+        <createSequence schemaName="mercury" sequenceName="seq_sample_instance" incrementBy="50"/>
+        <createSequence schemaName="mercury" sequenceName="seq_sample_instance_sub_tasks" incrementBy="50"/>
     </changeSet>
 
 </databaseChangeLog>
