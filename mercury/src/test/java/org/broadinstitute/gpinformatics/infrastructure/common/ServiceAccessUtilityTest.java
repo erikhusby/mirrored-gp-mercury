@@ -15,6 +15,7 @@ import org.testng.annotations.Test;
 
 import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
+import javax.enterprise.inject.Default;
 
 /**
  * Tests for {@link ServiceAccessUtility}. Note that this top-level class is a container for the actual @Test-annotated
@@ -35,6 +36,8 @@ public class ServiceAccessUtilityTest {
     /**
      * The primary implementation of AnInterface.
      */
+    @Default
+    @Dependent
     public static class AnImplementation implements AnInterface {
         @Override
         public String getName() {
@@ -57,6 +60,7 @@ public class ServiceAccessUtilityTest {
     /**
      * A simple class to act as a bean type for injection (without an interface).
      */
+    @Dependent
     public static class AClass {
         String getName() {
             return AClass.class.getName();
