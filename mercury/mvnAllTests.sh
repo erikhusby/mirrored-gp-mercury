@@ -34,11 +34,11 @@ fi
 
 MAVEN_OPTS="-Xms4g -XX:MaxMetaspaceSize=1g $SSL_OPTS"
 OPTIONS="-PArquillian-WildFly10-Remote,$BUILD_PROFILE -Djava.awt.headless=true --batch-mode -Dmaven.download.meter=silent "
-PROFILES="Tests.ArqSuite.Standard Tests.ArqSuite.Stubby Tests.Multithreaded Tests.DatabaseFree Tests.ExternalIntegration Tests.Alternatives"
+#PROFILES="Tests.ArqSuite.Standard Tests.ArqSuite.Stubby Tests.Multithreaded Tests.DatabaseFree Tests.ExternalIntegration Tests.Alternatives"
 #PROFILES="Tests.ExternalIntegration"
 #PROFILES="Tests.DatabaseFree"
 #PROFILES="Tests.Multithreaded"
-#PROFILES="Tests.Alternatives"
+PROFILES="Tests.Alternatives"
 
 EXIT_STATUS=0
 
