@@ -86,7 +86,6 @@ public class LabBatchEJBTest extends ContainerTest {
         scottmat = "scottmat";
     }
 
-    @Override
     @AfterMethod(groups = TestGroups.STUBBY)
     public void tearDown() throws Exception {
         if (utx == null) {

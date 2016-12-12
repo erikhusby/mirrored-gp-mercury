@@ -32,7 +32,7 @@ public class SubmissionTrackerContainerTest extends ContainerTest {
         if (researchProjectDao == null) {
             return;
         }
-        String testId = String.format("%d", System.currentTimeMillis());
+        String testId = String.valueOf(System.currentTimeMillis());
         testAccessionID  = "SA-"+testId;
         jiraTicketId = "RP" + testId;
         testProject = ResearchProjectTestFactory.createTestResearchProject(jiraTicketId);
