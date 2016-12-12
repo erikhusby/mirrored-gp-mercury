@@ -14,6 +14,7 @@ import java.util.Set;
 
 @Singleton
 @Startup
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class SAPAccessControlEjb {
     private SAPAccessControlDao accessControlDao;
 
@@ -25,7 +26,6 @@ public class SAPAccessControlEjb {
     public SAPAccessControlEjb() {
     }
 
-    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public SAPAccessControl getCurrentControlDefinitions() {
         SAPAccessControl accessControl = accessControlDao.getAccessControl();
         if(accessControl == null) {
@@ -35,6 +35,7 @@ public class SAPAccessControlEjb {
         return accessControl;
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public SAPAccessControl resetControlDefinitions() {
         SAPAccessControl control = getCurrentControlDefinitions();
         control.setAccessStatus(AccessStatus.ENABLED);
@@ -43,6 +44,7 @@ public class SAPAccessControlEjb {
         return control;
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public SAPAccessControl setDefinitions(AccessStatus status, Set<String> restrictions) {
 
         SAPAccessControl accessController = getCurrentControlDefinitions();

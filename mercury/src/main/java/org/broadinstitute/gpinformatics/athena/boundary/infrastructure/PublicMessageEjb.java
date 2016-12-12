@@ -29,6 +29,7 @@ import javax.inject.Inject;
  */
 @Singleton
 @Startup
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class PublicMessageEjb {
     private static final Log log = LogFactory.getLog(PublicMessageEjb.class);
 
@@ -44,7 +45,6 @@ public class PublicMessageEjb {
 
     private PublicMessage message;
 
-    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public PublicMessage getPublicMessage() {
         try {
             message = publicMessageDao.getMessage();
@@ -54,6 +54,7 @@ public class PublicMessageEjb {
         return message;
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void setPublicMessage(@Nonnull PublicMessage publicMessage) {
         clearPublicMessage();
         message = publicMessage;
@@ -65,10 +66,12 @@ public class PublicMessageEjb {
 
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void setPublicMessage(@Nonnull String publicMessageText) {
         setPublicMessage(new PublicMessage(publicMessageText));
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void clearPublicMessage() {
         message = null;
         try {

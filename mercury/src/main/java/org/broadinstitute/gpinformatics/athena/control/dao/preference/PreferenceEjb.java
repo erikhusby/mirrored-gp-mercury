@@ -29,6 +29,7 @@ import java.util.List;
  */
 @Stateful
 @RequestScoped
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class PreferenceEjb {
 
     @Inject
@@ -46,6 +47,7 @@ public class PreferenceEjb {
      *
      * @throws PreferenceException Any problems processing the preference.
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void add(
             @Nonnull Long associatedUser,
             @Nonnull PreferenceType preferenceType,
@@ -83,6 +85,7 @@ public class PreferenceEjb {
      *
      * @throws PreferenceException Any problems processing the preference.
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void add(
             long createdBy,
             long object1Id,
@@ -119,6 +122,7 @@ public class PreferenceEjb {
      *
      * @throws Exception Any problems processing the preference.
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void clear(@Nonnull Long associatedUser) throws Exception {
 
         List<Preference> userPreferences = preferenceDao.getPreferences(associatedUser);
@@ -135,6 +139,7 @@ public class PreferenceEjb {
      *
      * @throws Exception Any problems processing the preference.
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void clear(@Nonnull Long associatedUser, @Nonnull PreferenceType preferenceType) throws Exception {
         List<Preference> userPreferences = preferenceDao.getPreferences(associatedUser, preferenceType);
         for (Preference preference : userPreferences) {
@@ -152,6 +157,7 @@ public class PreferenceEjb {
      *
      * @throws PreferenceException Any errors.
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void clear(
             @Nonnull Long object1Id,
             @Nullable Long object2Id,
@@ -171,7 +177,6 @@ public class PreferenceEjb {
      *
      * @return Preference The matching preference
      */
-    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public List<Preference> getPreferences(
             @Nonnull Long object1Id, @Nullable Long object2Id, @Nonnull PreferenceType preferenceType)
             throws Exception {
@@ -185,7 +190,6 @@ public class PreferenceEjb {
      *
      * @return Preference The matching preference
      */
-    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public List<Preference> getPreferences(@Nonnull Long associatedUser) throws Exception {
         return preferenceDao.getPreferences(associatedUser);
     }
@@ -198,7 +202,6 @@ public class PreferenceEjb {
      *
      * @return Preference The matching preference
      */
-    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public List<Preference> getPreferences(
             @Nonnull Long associatedUser, @Nullable PreferenceType preferenceType) throws Exception {
         return preferenceDao.getPreferences(associatedUser, preferenceType);

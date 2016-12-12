@@ -46,6 +46,7 @@ import java.util.TreeSet;
 /**
  * Transactional manager for {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder}s.
  */
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class ProductEjb {
     private ProductDao productDao;
 
@@ -84,6 +85,7 @@ public class ProductEjb {
      * @param values              The values
      * @param genotypingChipInfo  Genotyping chips for this product
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void saveProduct(
             Product product, ProductTokenInput addOnTokenInput, PriceItemTokenInput priceItemTokenInput,
             boolean allLengthsMatch, String[] criteria, String[] operators, String[] values,
@@ -159,7 +161,6 @@ public class ProductEjb {
      *
      * @return (chip family, chip name) or (null, null) if no match was found.
      */
-    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public Pair<String, String> getGenotypingChip(ProductOrder productOrder, Date effectiveDate) {
         if (productOrder.getProduct() != null) {
             String productPartNumber = productOrder.getProduct().getPartNumber();
@@ -175,7 +176,6 @@ public class ProductEjb {
      *
      * @return (chip family, chip name) or (null, null) if no match was found.
      */
-    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public Pair<String, String> getGenotypingChip(String productPartNumber, String productOrderName,
                                                   Date effectiveDate) {
 
@@ -223,6 +223,7 @@ public class ProductEjb {
      * @param productPartNumber  the product part number to be mapped
      * @param genotypingChipInfo (Chip family, chip name, PDO name substring) to be mapped
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void persistGenotypingChipMappings(String productPartNumber,
                                               List<Triple<String, String, String>> genotypingChipInfo) {
         final Date now = new Date();
@@ -304,6 +305,7 @@ public class ProductEjb {
      * @param productToPublish A product which needs to have its information either created or updated in SAP
      * @throws SAPIntegrationException
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void publishProductToSAP(Product productToPublish) throws SAPIntegrationException {
         publishProductsToSAP(Collections.singleton(productToPublish));
     }
@@ -314,6 +316,7 @@ public class ProductEjb {
      *                          updated in SAP
      * @throws SAPIntegrationException
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void publishProductsToSAP(Collection<Product> productsToPublish) throws SAPIntegrationException {
         Set<String> errorMessages = new HashSet<>();
         SAPAccessControl control = accessController.getCurrentControlDefinitions();

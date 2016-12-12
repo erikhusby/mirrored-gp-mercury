@@ -1869,6 +1869,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         int originalOnRiskCount = editOrder.countItemsOnRisk();
 
         try {
+
+            //  FIXME SGM Must try this with setting the method to TransactionAttribute(TransactionAttributeType.REQUIRED)
+            // Currently it seems to cause an unintended Transaction to be started which will save the product order.
+            //  THere needs to be some persist action specifically called after the changes to risk in order to save
+            // The order.  it should not depend on what should be essentially a DBFree non transactional method.
+
             productOrderEjb.calculateRisk(editOrder.getBusinessKey(), selectedProductOrderSamples);
 
             // refetch the order to get updated risk status on the order.
