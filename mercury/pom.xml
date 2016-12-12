@@ -1222,8 +1222,8 @@ nodePrinter.print(webapp)
                 <groupId>org.jboss.arquillian</groupId>
                 <artifactId>arquillian-bom</artifactId>
                 <version>1.1.11.Final</version>
-                <type>pom</type>
                 <scope>import</scope>
+                <type>pom</type>
             </dependency>
 
             <dependency>
@@ -1253,7 +1253,7 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
-            <version>6.9.8</version>
+            <version>6.10</version>
             <scope>test</scope>
         </dependency>
         <dependency>
