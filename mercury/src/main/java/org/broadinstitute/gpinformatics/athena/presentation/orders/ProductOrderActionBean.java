@@ -679,7 +679,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         Quote quote = validateQuoteId(quoteId);
         try {
             if(productOrderEjb.isOrderEligibleForSAP(editOrder)) {
-                validateQuoteDetails(quote, ErrorLevel.ERROR, !editOrder.hasJiraTicketKey());
+                validateQuoteDetails(quote, ErrorLevel.ERROR, !editOrder.hasJiraTicketKey(), 0);
             }
         } catch (QuoteServerException e) {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", quoteId, e.getMessage());
@@ -692,15 +692,60 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
+    /**
+     * Determines if there is enough funds available on a quote to do any more work based on unbilled samples and funds
+     * remaining on the quote
+     *
+     * @param quoteId   Identifier for The quote which the user intends to use.  From this we can determine the
+     *                  collection of orders to include in evaluating and the funds remaining
+     * @param errorLevel indicator for if the user should see a validation error or just a warning
+     * @param countOpenOrders indicator for if the current order should be added.  Typically used if it is Draft or
+     *                        Pending
+     */
     private void validateQuoteDetails(String quoteId, final ErrorLevel errorLevel, boolean countOpenOrders) {
         Quote quote = validateQuoteId(quoteId);
 
         if (quote != null) {
-            validateQuoteDetails(quote, errorLevel, countOpenOrders);
+            validateQuoteDetails(quote, errorLevel, countOpenOrders, 0);
         }
     }
 
-    private void validateQuoteDetails(Quote quote, ErrorLevel errorLevel, boolean countOpenOrders) {
+    /**
+     * Determines if there is enough funds available on a quote to do any more work based on unbilled samples and funds
+     * remaining on the quote.  This particular method will also consider Samples added on the page but not yet
+     * refelcted on the order.
+     *
+     * The scenario for this is when the user clicks on the "Add Samples" button of a placed order
+     *
+     * @param quoteId   Identifier for The quote which the user intends to use.  From this we can determine the
+     *                  collection of orders to include in evaluating and the funds remaining
+     * @param errorLevel indicator for if the user should see a validation error or just a warning
+     * @param countOpenOrders indicator for if the current order should be added.  Typically used if it is Draft or
+     *                        Pending
+     * @param additionalSamplesCount Number of extra samples to be considered which are not currently
+     */
+    private void validateQuoteDetailsWithAddedSamples(String quoteId, final ErrorLevel errorLevel,
+                                                      boolean countOpenOrders, int additionalSamplesCount) {
+        Quote quote = validateQuoteId(quoteId);
+
+        if (quote != null) {
+            validateQuoteDetails(quote, errorLevel, countOpenOrders, additionalSamplesCount);
+        }
+    }
+
+    /**
+     * Determines if there is enough funds available on a quote to do any more work based on unbilled samples and funds
+     * remaining on the quote
+     *
+     * @param quote  The quote which the user intends to use.  From this we can determine the collection of orders to
+     *               include in evaluating and the funds remaining
+     * @param errorLevel indicator for if the user should see a validation error or just a warning
+     * @param countCurrentUnPlacedOrder indicator for if the current order should be added.  Typically used if it is Draft or
+     *                        Pending
+     * @param additionalSampleCount
+     */
+    private void validateQuoteDetails(Quote quote, ErrorLevel errorLevel, boolean countCurrentUnPlacedOrder,
+                                      int additionalSampleCount) {
         if (!quote.getApprovalStatus().equals(ApprovalStatus.FUNDED)) {
             String unFundedMessage = "A quote should be funded in order to be used for a product order.";
             addMessageBasedOnErrorLevel(errorLevel, unFundedMessage);
@@ -709,8 +754,10 @@ public class ProductOrderActionBean extends CoreActionBean {
         double fundsRemaining = Double.parseDouble(quote.getQuoteFunding().getFundsRemaining());
         double outstandingEstimate = estimateOutstandingOrders(quote.getAlphanumericId());
         double valueOfCurrentOrder = 0;
-        if(countOpenOrders) {
+        if(countCurrentUnPlacedOrder) {
             valueOfCurrentOrder = getValueOfOpenOrders(Collections.singletonList(editOrder));
+        } else if(additionalSampleCount > 0) {
+            valueOfCurrentOrder = getOrderValue(editOrder, additionalSampleCount);
         }
 
         if (fundsRemaining <= 0d ||
@@ -720,6 +767,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
+    /**
+     * Helper to determine if the returned message will be considered an full on validation error or simply a warning
+     * @param errorLevel Enum to trigger the logic for what message level is desired
+     * @param multiFundingLevelMessage Message to display to the user
+     */
     private void addMessageBasedOnErrorLevel(ErrorLevel errorLevel, String multiFundingLevelMessage) {
         switch (errorLevel) {
         case ERROR:
@@ -731,49 +783,80 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
+    /**
+     * Retrieves and determines the monitary value of a subset of Open Orders within Mercury
+     * @param quoteId Common quote id to be used to determine which open orders will be found
+     * @return total dollar amount of the monitary value of orders associated with the given quote
+     */
     private double estimateOutstandingOrders(String quoteId) {
 
         List<ProductOrder> ordersWithCommonQuote = productOrderDao.findOrdersWithCommonQuote(quoteId);
 
-        double value = getValueOfOpenOrders(ordersWithCommonQuote);
-        return value;
+        return getValueOfOpenOrders(ordersWithCommonQuote);
     }
 
+    /**
+     * Determines the total monitary value of all unbilled samples on a given list of orders
+     *
+     * @param ordersWithCommonQuote Subset of orders for which the monitary value is to be determined
+     * @return Total dollar amount which equates to the monitary value of all orders given
+     */
     private double getValueOfOpenOrders(List<ProductOrder> ordersWithCommonQuote) {
         double value = 0d;
 
         for (ProductOrder testOrder : ordersWithCommonQuote) {
-            int unbilledCount = testOrder.getUnbilledSampleCount();
-            if(testOrder.getProduct() != null) {
-                QuotePriceItem primaryPriceItem =
-                        priceListCache.findByKeyFields(testOrder.getProduct().getPrimaryPriceItem());
+            value += getOrderValue(testOrder, testOrder.getUnbilledSampleCount());
+        }
+        return value;
+    }
 
-                if (primaryPriceItem != null &&
-                    StringUtils.isNotBlank(primaryPriceItem.getPrice())) {
-                    Double productPrice = Double.valueOf(primaryPriceItem.getPrice());
-
-                    if (productPrice != null) {
-                        value += productPrice * unbilledCount;
-                    }
-
-                    for (ProductOrderAddOn testOrderAddon : testOrder.getAddOns()) {
-                        QuotePriceItem addonPriceItem =
-                                priceListCache
-                                        .findByKeyFields(testOrderAddon.getAddOn().getPrimaryPriceItem());
-
-                        if (addonPriceItem != null &&
-                            StringUtils.isNotBlank(addonPriceItem.getPrice())) {
-                            Double addOnPrice = Double.valueOf(addonPriceItem.getPrice());
-
-                            if (addOnPrice != null) {
-                                value += addOnPrice * unbilledCount;
-                            }
-                        }
-                    }
-                }
+    /**
+     * Helper method to consolidate the code for evaluating the monitary value of an order based on the price associated
+     * with its product(s) and the count of the unbilled samples
+     * @param testOrder Product order for which we wish to determine the monitary value
+     * @param sampleCount unbilled sample count to use for determining the order value.  Passed in separately to account
+     *                    for the scenario when we do not want to use the sample count on the order but a sample count
+     *                    that will potentially be on the order.
+     * @return Total monitary value of the order
+     */
+    private double getOrderValue(ProductOrder testOrder, int sampleCount) {
+        double value = 0d;
+        if(testOrder.getProduct() != null) {
+            final Product product = testOrder.getProduct();
+            double productValue = getProductValue(sampleCount, product);
+            value += productValue;
+            for (ProductOrderAddOn testOrderAddon : testOrder.getAddOns()) {
+                final Product addOn = testOrderAddon.getAddOn();
+                double addOnValue = getProductValue(sampleCount, addOn);
+                value += addOnValue;
             }
         }
         return value;
+    }
+
+    /**
+     * Based on a product and a sample count, this method will determine the monitary value for the sake of evaluating
+     * the monitary value of an order
+     *
+     * @param unbilledCount count of samples that have not yet been billed
+     * @param product Product from which the price can be determined
+     * @return Derived value of the Product price multiplied by the number of unbilled samples
+     */
+    private double getProductValue(int unbilledCount, Product product) {
+        double productValue = 0d;
+        QuotePriceItem primaryPriceItem =
+                priceListCache.findByKeyFields(product.getPrimaryPriceItem());
+
+        if (primaryPriceItem != null &&
+            StringUtils.isNotBlank(primaryPriceItem.getPrice())) {
+            Double productPrice = Double.valueOf(primaryPriceItem.getPrice());
+
+            if (productPrice != null) {
+                productValue = productPrice * (unbilledCount);
+            }
+
+        }
+        return productValue;
     }
 
     private void doSaveValidation(String action, ResearchProject researchProject) {
@@ -1956,7 +2039,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void addSampleExtraValidations() throws Exception {
         try {
             if (productOrderEjb.isOrderEligibleForSAP(editOrder)) {
-                validateQuoteDetails(editOrder.getQuoteId(), ErrorLevel.ERROR, true);
+                validateQuoteDetailsWithAddedSamples(editOrder.getQuoteId(), ErrorLevel.ERROR,
+                        !editOrder.hasJiraTicketKey(), stringToSampleList(addSamplesText).size());
             }
         } catch (QuoteServerException e) {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
