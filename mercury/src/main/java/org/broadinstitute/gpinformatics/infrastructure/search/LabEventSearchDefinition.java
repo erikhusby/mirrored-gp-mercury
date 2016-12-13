@@ -129,7 +129,7 @@ public class LabEventSearchDefinition {
         List<ConfigurableSearchDefinition.CriteriaProjection> criteriaProjections = new ArrayList<>();
 
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("reagent", "labEventId",
-                "reagents", LabEvent.class));
+                "labEventReagents", LabEvent.class));
 
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
                 ColumnEntity.LAB_EVENT, criteriaProjections, mapGroupSearchTerms);
@@ -413,7 +413,7 @@ public class LabEventSearchDefinition {
         });
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList("reagent", "reagents"));
+        criteriaPath.setCriteria(Arrays.asList("reagent", "labEventReagents", "reagent"));
         criteriaPath.setPropertyName("name");
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
@@ -424,7 +424,7 @@ public class LabEventSearchDefinition {
         searchTerm.setName("Reagent Lot");
         criteriaPaths = new ArrayList<>();
         criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList("reagent", "reagents"));
+        criteriaPath.setCriteria(Arrays.asList("reagent", "labEventReagents", "reagent"));
         criteriaPath.setPropertyName("lot");
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
@@ -446,7 +446,7 @@ public class LabEventSearchDefinition {
         searchTerm.setValueType( ColumnValueType.DATE );
         criteriaPaths = new ArrayList<>();
         criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList("reagent", "reagents"));
+        criteriaPath.setCriteria(Arrays.asList("reagent", "labEventReagents", "reagent"));
         criteriaPath.setPropertyName("expiration");
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
