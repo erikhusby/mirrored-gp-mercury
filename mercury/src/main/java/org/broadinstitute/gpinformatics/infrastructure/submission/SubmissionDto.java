@@ -266,7 +266,7 @@ public class SubmissionDto implements Serializable {
         return BassFileType.byBassValue(fileTypeString);
     }
 
-    public int getVersion() {
+    public Integer getVersion() {
         return version;
     }
 
@@ -348,6 +348,10 @@ public class SubmissionDto implements Serializable {
 
     String getSubmissionRepositoryName() {
         return submissionSite;
+    }
+
+    public String getBassTupleString() {
+        return bassTupleString;
     }
 
     @JsonIgnore
