@@ -11,6 +11,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.NoResultException;
 import javax.persistence.criteria.*;
@@ -25,6 +27,7 @@ import java.util.Set;
  */
 @Stateful
 @RequestScoped
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class LedgerEntryDao extends GenericDao {
 
     private enum BillingSessionInclusion { ALL, NO_SESSION_STARTED, SESSION_STARTED, SESSION_BILLED, CONFIRMATION_UPLOAD }

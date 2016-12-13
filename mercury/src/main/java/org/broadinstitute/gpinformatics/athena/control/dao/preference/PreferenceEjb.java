@@ -16,6 +16,8 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.List;
@@ -27,6 +29,7 @@ import java.util.List;
  */
 @Stateful
 @RequestScoped
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class PreferenceEjb {
 
     @Inject
@@ -44,6 +47,7 @@ public class PreferenceEjb {
      *
      * @throws PreferenceException Any problems processing the preference.
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void add(
             @Nonnull Long associatedUser,
             @Nonnull PreferenceType preferenceType,
@@ -81,6 +85,7 @@ public class PreferenceEjb {
      *
      * @throws PreferenceException Any problems processing the preference.
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void add(
             long createdBy,
             long object1Id,
@@ -117,6 +122,7 @@ public class PreferenceEjb {
      *
      * @throws Exception Any problems processing the preference.
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void clear(@Nonnull Long associatedUser) throws Exception {
 
         List<Preference> userPreferences = preferenceDao.getPreferences(associatedUser);
@@ -133,6 +139,7 @@ public class PreferenceEjb {
      *
      * @throws Exception Any problems processing the preference.
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void clear(@Nonnull Long associatedUser, @Nonnull PreferenceType preferenceType) throws Exception {
         List<Preference> userPreferences = preferenceDao.getPreferences(associatedUser, preferenceType);
         for (Preference preference : userPreferences) {
@@ -150,6 +157,7 @@ public class PreferenceEjb {
      *
      * @throws PreferenceException Any errors.
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void clear(
             @Nonnull Long object1Id,
             @Nullable Long object2Id,

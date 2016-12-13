@@ -64,6 +64,8 @@ import org.broadinstitute.sap.services.SAPIntegrationException;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.persistence.LockModeType;
@@ -90,6 +92,7 @@ import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder
 /**
  * Transactional manager for {@link ProductOrder}s.
  */
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class ProductOrderEjb {
 
     private ProductOrderDao productOrderDao;
@@ -165,6 +168,7 @@ public class ProductOrderEjb {
     /**
      * Remove all non-received samples from the order.
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void removeNonReceivedSamples(ProductOrder editOrder,
                                          MessageReporter reporter)
             throws NoSuchPDOException, IOException, SAPInterfaceException {
@@ -198,6 +202,7 @@ public class ProductOrderEjb {
      * @throws IOException
      * @throws QuoteNotFoundException
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void persistProductOrder(ProductOrder.SaveType saveType, ProductOrder editedProductOrder,
                                     @Nonnull Collection<String> deletedIds,
                                     @Nonnull Collection<ProductOrderKitDetail> kitDetailCollection)
@@ -206,6 +211,7 @@ public class ProductOrderEjb {
         persistProductOrder(saveType, editedProductOrder, deletedIds, kitDetailCollection, new MessageCollection());
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void persistProductOrder(ProductOrder.SaveType saveType, ProductOrder editedProductOrder,
                                     @Nonnull Collection<String> deletedIds,
                                     @Nonnull Collection<ProductOrderKitDetail> kitDetailCollection,
@@ -270,6 +276,7 @@ public class ProductOrderEjb {
      * @throws QuoteNotFoundException
      * @throws SAPInterfaceException
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void persistClonedProductOrder(ProductOrder.SaveType saveType, ProductOrder editedProductOrder,
                                     MessageCollection messageCollection)
             throws IOException, QuoteNotFoundException, SAPInterfaceException {
@@ -298,6 +305,7 @@ public class ProductOrderEjb {
      *                         order but needs a new one)
      * @throws SAPInterfaceException
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void publishProductOrderToSAP(ProductOrder editedProductOrder, MessageCollection messageCollection,
                                          boolean allowCreateOrder) throws SAPInterfaceException {
         ProductOrder orderToPublish = editedProductOrder;
@@ -407,6 +415,7 @@ public class ProductOrderEjb {
      *
      * @throws Exception Any errors in reporting the risk.
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void calculateRisk(String productOrderKey) throws Exception {
         calculateRisk(productOrderKey, null);
     }
@@ -420,6 +429,7 @@ public class ProductOrderEjb {
      *
      * @throws Exception Any errors in reporting the risk.
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void calculateRisk(String productOrderKey, List<ProductOrderSample> samples) throws Exception {
         ProductOrder editOrder = productOrderDao.findByBusinessKey(productOrderKey);
         if (editOrder == null) {
@@ -455,6 +465,7 @@ public class ProductOrderEjb {
      *
      * @throws IOException
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void addManualOnRisk(@Nonnull BspUser user, @Nonnull String productOrderKey,
                                 List<ProductOrderSample> orderSamples, boolean riskStatus, @Nonnull String riskComment)
             throws IOException {
@@ -485,6 +496,7 @@ public class ProductOrderEjb {
     /**
      * Set the Proceed if Out of Spec indicator.
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void proceedOos(@Nonnull BspUser user, @Nonnull List<ProductOrderSample> orderSamples,
                            @Nonnull ProductOrder productOrder,
                            @Nonnull ProductOrderSample.ProceedIfOutOfSpec proceedIfOutOfSpec) {
@@ -518,6 +530,7 @@ public class ProductOrderEjb {
                 username, isRisk, sampleCount, comment);
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void handleSamplesAdded(@Nonnull String productOrderKey, @Nonnull Collection<ProductOrderSample> newSamples,
                                    @Nonnull MessageReporter reporter) {
         ProductOrder order = productOrderDao.findByBusinessKey(productOrderKey);
@@ -552,6 +565,7 @@ public class ProductOrderEjb {
      *
      * @throws IOException
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void updateJiraIssue(ProductOrder productOrder) throws IOException, QuoteNotFoundException {
         validateQuote(productOrder, quoteService);
 
@@ -644,6 +658,7 @@ public class ProductOrderEjb {
      * @param productOrder     product order
      * @param addOnPartNumbers add-on part numbers
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void update(ProductOrder productOrder, List<String> addOnPartNumbers) throws QuoteNotFoundException {
         // update JIRA ticket with new quote
         // GPLIM-488
@@ -729,6 +744,16 @@ public class ProductOrderEjb {
         return productOrder;
     }
 
+
+    /**
+     * THis should have transactionAttributeType.REQUIRED in order to work.  It was removed because it is causing an
+     * undesired side effect of saving the Product order on ProductOrderActionBean before it should.  Will need to
+     * figure out another locking strategey for all entities that is more generic.
+     *
+     * @param jiraTicket
+     * @param fetchSpecs
+     * @return
+     */
     public ProductOrder findProductOrderByBusinessKeySafely(@Nonnull String jiraTicket,
                                                             ProductOrderDao.FetchSpec... fetchSpecs) {
         return productOrderDao.findByBusinessKey(jiraTicket, LockModeType.PESSIMISTIC_READ, fetchSpecs);
@@ -931,6 +956,7 @@ public class ProductOrderEjb {
      * Rollback on failures to update JIRA tickets with status changes is undesirable in billing as the status change is
      * fairly inconsequential in comparison to persisting database records of whether work was billed to the quote server.
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void updateOrderStatusNoRollback(@Nonnull String jiraTicketKey) throws NoSuchPDOException, IOException {
         try {
             updateOrderStatus(jiraTicketKey, MessageReporter.UNUSED);
@@ -947,6 +973,7 @@ public class ProductOrderEjb {
      *
      * @param jiraTicketKey the key to update
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void updateOrderStatus(@Nonnull String jiraTicketKey, @Nonnull MessageReporter reporter)
             throws NoSuchPDOException, IOException {
         // Since we can't directly change the JIRA status of a PDO, we need to use a JIRA transition which in turn will
@@ -1005,6 +1032,7 @@ public class ProductOrderEjb {
      *
      * @throws IOException
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void transitionJiraTicket(String jiraTicketKey, JiraResolution currentResolution, JiraTransition state,
                                      @Nullable String transitionComments) throws IOException {
         JiraIssue issue = jiraService.getIssue(jiraTicketKey);
@@ -1027,6 +1055,7 @@ public class ProductOrderEjb {
      * @throws NoSuchPDOException
      * @throws SampleDeliveryStatusChangeException
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void abandon(@Nonnull String jiraTicketKey, @Nullable String abandonComments)
             throws NoSuchPDOException, SampleDeliveryStatusChangeException, IOException {
 
@@ -1065,6 +1094,7 @@ public class ProductOrderEjb {
      * @param samples       the samples to abandon
      * @param comment       optional user supplied comment about this action.
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void abandonSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<ProductOrderSample> samples,
                                @Nonnull String comment)
             throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException {
@@ -1081,6 +1111,7 @@ public class ProductOrderEjb {
      * @param sampleIds     the samples to un-abandon
      * @param comment       optional user supplied comment about this action.
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void unAbandonSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<Long> sampleIds,
                                  @Nonnull String comment, @Nonnull MessageReporter reporter)
             throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException {
@@ -1150,6 +1181,7 @@ public class ProductOrderEjb {
      * @param samples       the samples to add. this argument must not be changed to Collection, or
      *                      ImmutableListMultiMap does not work correctly.
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void addSamples(@Nonnull String jiraTicketKey, @Nonnull List<ProductOrderSample> samples,
                            @Nonnull MessageReporter reporter)
             throws NoSuchPDOException, IOException, SAPInterfaceException {
@@ -1188,6 +1220,7 @@ public class ProductOrderEjb {
         }
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void removeSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<ProductOrderSample> samples,
                               @Nonnull MessageReporter reporter)
             throws IOException, NoSuchPDOException, SAPInterfaceException {
@@ -1220,6 +1253,7 @@ public class ProductOrderEjb {
      * @param businessKey       Business key by which to reference the currently persisted Product order
      * @param messageCollection Used to transmit errors or successes to the caller (Action bean) without returning
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public ProductOrder placeProductOrder(@Nonnull Long productOrderID, String businessKey,
                                           @Nonnull MessageCollection messageCollection) {
         ProductOrder editOrder =
@@ -1274,6 +1308,7 @@ public class ProductOrderEjb {
      * @param messageCollection Used to transmit errors or successes to the caller (Action bean) without returning
      *                          a value or throwing an exception.
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void submitSampleKitRequest(@Nonnull ProductOrder order, @Nonnull MessageCollection messageCollection) {
         String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(order);
         order.getProductOrderKit().setWorkRequestId(workRequestBarcode);
@@ -1290,6 +1325,7 @@ public class ProductOrderEjb {
      *
      * @return work request output
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public AutoWorkRequestOutput createSquidWorkRequest(@Nonnull String productOrderKey,
                                                         @Nonnull AutoWorkRequestInput squidInput) {
 
@@ -1340,6 +1376,7 @@ public class ProductOrderEjb {
      *
      * @throws StaleLedgerUpdateException if the previous quantity in any ledger update is out-of-date
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void updateSampleLedgers(Map<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> ledgerUpdates)
             throws ValidationWithRollbackException {
         List<String> errorMessages = new ArrayList<>();
@@ -1368,6 +1405,7 @@ public class ProductOrderEjb {
         this.productOrderSampleDao = productOrderSampleDao;
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public GenotypingProductOrderMapping findOrCreateGenotypingChipProductOrderMapping(String productOrderJiraTicket) {
         GenotypingProductOrderMapping mapping =
                 attributeArchetypeDao.findGenotypingProductOrderMapping(productOrderJiraTicket);
