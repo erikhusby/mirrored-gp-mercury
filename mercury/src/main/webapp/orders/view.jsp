@@ -1386,7 +1386,7 @@ function formatInput(item) {
                                         style="margin-left:15px;"
                                         onclick="showAbandonDialog()"/>
 
-                        <c:if test="${actionBean.editOrder.childOrder}">
+                        <c:if test="${!actionBean.editOrder.childOrder}">
                             <stripes:button name="replaceOrderSamples" id="replaceOrderSamples" value="Replace Abandoned Samples"
                                             onclick="showSampleReplacementDialog()" class="btn padright"
                                             title="Click to add replacement samples for abandoned samples" />
