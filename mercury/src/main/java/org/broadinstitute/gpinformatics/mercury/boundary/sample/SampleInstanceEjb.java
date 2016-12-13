@@ -7,7 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleInstanceDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleInstanceEntityDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VesselPooledTubesProcessor;
@@ -15,8 +15,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceSubTasks;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntityTsk;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
@@ -73,7 +73,7 @@ public class SampleInstanceEjb  {
     private MercurySampleDao mercurySampleDao;
 
     @Inject
-    private SampleInstanceDao sampleInstanceDao;
+    private SampleInstanceEntityDao sampleInstanceEntityDao;
 
 
 
@@ -104,9 +104,9 @@ public class SampleInstanceEjb  {
                 labVessel = new BarcodedTube(vesselSpreadsheetProcessor.getBarcodes().get(sampleIndex), BarcodedTube.BarcodedTubeType.MatrixTube);
             }
 
-            SampleInstance sampleInstance = sampleInstanceDao.findByName(vesselSpreadsheetProcessor.getSingleSampleLibraryName().get(sampleIndex));
-            if (sampleInstance == null) {
-                sampleInstance = new SampleInstance();
+            SampleInstanceEntity sampleInstanceEntity = sampleInstanceEntityDao.findByName(vesselSpreadsheetProcessor.getSingleSampleLibraryName().get(sampleIndex));
+            if (sampleInstanceEntity == null) {
+                sampleInstanceEntity = new SampleInstanceEntity();
             }
 
             //Check if the sample is registered in Mercury.
@@ -125,27 +125,27 @@ public class SampleInstanceEjb  {
             mercurySampleDao.persist(mercurySample);
             mercurySamples.add(mercurySample);
 
-            sampleInstance.setSampleLibraryName(vesselSpreadsheetProcessor.getSingleSampleLibraryName().get(sampleIndex));
-            sampleInstance.setReagentDesign(reagents.get(sampleIndex));
-            sampleInstance.setMolecularIndexScheme(molecularIndexSchemes.get(sampleIndex));
-            sampleInstance.setMercurySampleId(mercurySamples.get(sampleIndex));
-            sampleInstance.setRootSampleId(vesselSpreadsheetProcessor.getRootSampleId().get(sampleIndex));
-            sampleInstance.setExperiment(vesselSpreadsheetProcessor.getExperiment().get(sampleIndex));
+            sampleInstanceEntity.setSampleLibraryName(vesselSpreadsheetProcessor.getSingleSampleLibraryName().get(sampleIndex));
+            sampleInstanceEntity.setReagentDesign(reagents.get(sampleIndex));
+            sampleInstanceEntity.setMolecularIndexScheme(molecularIndexSchemes.get(sampleIndex));
+            sampleInstanceEntity.setMercurySampleId(mercurySamples.get(sampleIndex));
+            sampleInstanceEntity.setRootSampleId(vesselSpreadsheetProcessor.getRootSampleId().get(sampleIndex));
+            sampleInstanceEntity.setExperiment(vesselSpreadsheetProcessor.getExperiment().get(sampleIndex));
 
-            sampleInstance.setLabVessel(labVessel);
-            sampleInstance.setUploadDate();
+            sampleInstanceEntity.setLabVessel(labVessel);
+            sampleInstanceEntity.setUploadDate();
 
-            sampleInstance.removeSubTasks();
+            sampleInstanceEntity.removeSubTasks();
 
             //Persist the dev sub-tasks in the order they where provided.
             for (String subTask : jiraSubTaskList.get(sampleIndex)) {
-                SampleInstanceSubTasks sampleInstanceSubTasks = new SampleInstanceSubTasks();
-                sampleInstanceSubTasks.setSubTask(subTask);
-                sampleInstance.addSubTasks(sampleInstanceSubTasks);
+                SampleInstanceEntityTsk sampleInstanceEntityTsk = new SampleInstanceEntityTsk();
+                sampleInstanceEntityTsk.setSubTask(subTask);
+                sampleInstanceEntity.addSubTasks(sampleInstanceEntityTsk);
             }
 
-            sampleInstanceDao.persist(sampleInstance);
-            sampleInstanceDao.flush();
+            sampleInstanceEntityDao.persist(sampleInstanceEntity);
+            sampleInstanceEntityDao.flush();
             mapBarcodeToVessel.put(labVessel.getLabel(),labVessel);
 
             ++sampleIndex;
@@ -179,7 +179,7 @@ public class SampleInstanceEjb  {
                 sampleLibraryName.add(libraryName);
             }
 
-            if (sampleInstanceDao.findByName(libraryName) != null && !overWriteFlag) {
+            if (sampleInstanceEntityDao.findByName(libraryName) != null && !overWriteFlag) {
                 messageCollection.addError("Single sample library name : " + libraryName + " at Row: " + (mapIndex + 1) + " Column: "
                         + VesselPooledTubesProcessor.Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText()
                         + " exists in the database. Please choose the overwrite previous upload option.");

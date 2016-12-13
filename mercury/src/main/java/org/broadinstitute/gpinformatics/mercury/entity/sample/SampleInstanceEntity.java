@@ -16,21 +16,19 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 @Entity
 @Audited
-@Table(schema = "mercury", name = "sample_instance")
+@Table(schema = "mercury", name = "sample_instance_entity")
 @BatchSize(size = 50)
-public class SampleInstance {
+public class SampleInstanceEntity {
 
 
-    @SequenceGenerator(name = "seq_sample_instance", schema = "mercury",  sequenceName = "seq_sample_instance")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_sample_instance")
+    @SequenceGenerator(name = "seq_sample_instance_entity", schema = "mercury",  sequenceName = "seq_sample_instance_entity")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_sample_instance_entity")
     @Id
-    private Long sampleInstanceId;
+    private Long sampleInstanceEntityId;
 
     @Nonnull
     @ManyToOne
@@ -39,9 +37,9 @@ public class SampleInstance {
     @ManyToOne(cascade = CascadeType.PERSIST)
     private MercurySample mercurySample;
 
-    @OneToMany(mappedBy = "sampleInstance", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @OneToMany(mappedBy = "sampleInstanceEntity", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @BatchSize(size = 100)
-    private Set<SampleInstanceSubTasks> sampleInstanceSubTasks = new HashSet<>();
+    private Set<SampleInstanceEntityTsk> sampleInstanceEntityTsks = new HashSet<>();
 
     @ManyToOne
     private ReagentDesign reagentDesign;
@@ -58,12 +56,12 @@ public class SampleInstance {
     private String experiment;
 
     public void removeSubTasks() {
-        sampleInstanceSubTasks.clear();
+        sampleInstanceEntityTsks.clear();
     }
 
-    public void addSubTasks(SampleInstanceSubTasks subTasks) {
-        sampleInstanceSubTasks.add(subTasks);
-        subTasks.setSampleInstance(this);
+    public void addSubTasks(SampleInstanceEntityTsk subTasks) {
+        sampleInstanceEntityTsks.add(subTasks);
+        subTasks.setSampleInstanceEntity(this);
     }
 
     /**
@@ -72,16 +70,16 @@ public class SampleInstance {
      * into a single string for user-defined search.
      *
      */
-    public String getSubTasks() {
-
-       String subTask ="";
-       for(SampleInstanceSubTasks task : sampleInstanceSubTasks)
+    public List<String> getSubTasks() {
+       List<String> subTask = new ArrayList<>();
+       for(SampleInstanceEntityTsk task : sampleInstanceEntityTsks)
        {
-           subTask += (task.getSubTask() + " " );
+           subTask.add(task.getSubTask());
        }
 
        return subTask;
     }
+
 
     public String getRootSampleId() {  return rootSampleId;  }
 
@@ -97,11 +95,17 @@ public class SampleInstance {
 
     public void setReagentDesign(ReagentDesign reagentDesign){ this.reagentDesign = reagentDesign; }
 
-    public Long getSampleInstanceId() { return sampleInstanceId; }
+    public ReagentDesign getReagentDesign() { return this.reagentDesign; }
+
+    public void setSampleInstanceEntityId(Long sampleInstanceEntityId) {this.sampleInstanceEntityId = sampleInstanceEntityId; }
+
+    public Long getSampleInstanceEntityId() { return sampleInstanceEntityId; }
 
     public void setMolecularIndexScheme(MolecularIndexingScheme molecularIndexingScheme) { this.molecularIndexingScheme = molecularIndexingScheme; }
 
     public void setMercurySampleId(MercurySample mercurySample){ this.mercurySample = mercurySample; }
+
+    public MercurySample getMercurySample() { return this.mercurySample;    }
 
     public void setSampleLibraryName(String sampleLibraryName) { this.sampleLibraryName = sampleLibraryName; }
 
