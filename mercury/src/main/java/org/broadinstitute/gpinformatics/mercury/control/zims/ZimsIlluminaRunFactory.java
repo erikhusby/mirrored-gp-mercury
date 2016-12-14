@@ -347,12 +347,17 @@ public class ZimsIlluminaRunFactory {
             }
 
             SampleData sampleData = mapSampleIdToDto.get(sampleInstanceDto.getSampleId());
+            TZDevExperimentData devExperimentData = sampleInstance.getTzDevExperimentData();
 
+            String me;
+            if(sampleInstanceDto.getSampleId().equals("SM-4S9V6")) {
+                me = "";
+            }
             libraryBeans.add(createLibraryBean(sampleInstanceDto.getLabVessel(), productOrder, sampleData, lcSet,
                     baitName, indexingSchemeEntity, catNames, sampleInstanceDto.getSampleInstance().getWorkflowName(),
                     indexingSchemeDto, mapNameToControl, sampleInstanceDto.getPdoSampleName(),
                     sampleInstanceDto.isCrspLane(), sampleInstanceDto.getMetadataSourceForPipelineAPI(), analysisTypes,
-                    referenceSequenceKeys, aggregationDataTypes, positiveControlResearchProjects, insertSizes));
+                    referenceSequenceKeys, aggregationDataTypes, positiveControlResearchProjects, insertSizes, devExperimentData, sampleData.getSpecies(), sampleData.getSampleLsid()) );
         }
 
         // Make order predictable.  Include library name because for ICE there are 8 ancestor catch tubes, all with
@@ -383,7 +388,7 @@ public class ZimsIlluminaRunFactory {
             Map<String, Control> mapNameToControl, String pdoSampleName,
             boolean isCrspLane, String metadataSourceForPipelineAPI, Set<String> analysisTypes,
             Set<String> referenceSequenceKeys, Set<String> aggregationDataTypes,
-            Set<ResearchProject> positiveControlProjects, Set<Integer> insertSizes) {
+            Set<ResearchProject> positiveControlProjects, Set<Integer> insertSizes, TZDevExperimentData devExperimentData, String species, String lsid) {
 
         Format dateFormat = FastDateFormat.getInstance(ZimsIlluminaRun.DATE_FORMAT);
 
@@ -394,14 +399,12 @@ public class ZimsIlluminaRunFactory {
         Boolean hasIndexingRead = null;
         String expectedInsertSize = null;
         String organism = null;
-        String species = null;
         String strain = null;
         String rrbsSizeRange = null;
         String restrictionEnzyme = null;
         double labMeasuredInsertSize = 0.0;
         Boolean positiveControl = null;
         Boolean negativeControl = null;
-        TZDevExperimentData devExperimentData = null;
         Collection<String> gssrBarcodes = null;
         String gssrSampleType = null;
         Boolean doAggregation = Boolean.TRUE;
@@ -477,7 +480,7 @@ public class ZimsIlluminaRunFactory {
                 strain, aligner, rrbsSizeRange, restrictionEnzyme, bait, labMeasuredInsertSize,
                 positiveControl, negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation,
                 catNames, productOrder, lcSet, sampleData, labWorkflow, libraryCreationDate, pdoSampleName,
-                metadataSourceForPipelineAPI, aggregationDataType);
+                metadataSourceForPipelineAPI, aggregationDataType, lsid);
         if (isCrspLane) {
             crspPipelineUtils.setFieldsForCrsp(libraryBean, sampleData, bait);
         }

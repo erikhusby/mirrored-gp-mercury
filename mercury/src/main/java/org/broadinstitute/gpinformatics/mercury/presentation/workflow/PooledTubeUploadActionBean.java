@@ -12,7 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleInstanceDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleInstanceEntityDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VesselPooledTubesProcessor;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -56,7 +56,7 @@ public class PooledTubeUploadActionBean extends CoreActionBean {
     private MercurySampleDao mercurySampleDao;
 
     @Inject
-    private SampleInstanceDao sampleInstanceDao;
+    private SampleInstanceEntityDao sampleInstanceEntityDao;
 
     @Validate(required = true, on = UPLOAD_TUBES)
     private FileBean pooledTubesSpreadsheet;

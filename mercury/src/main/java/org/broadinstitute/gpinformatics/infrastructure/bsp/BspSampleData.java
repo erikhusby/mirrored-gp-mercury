@@ -255,6 +255,9 @@ public class BspSampleData implements SampleData {
     }
 
     @Override
+    public String getSpecies() { return ""; }
+
+    @Override
     public Double getRqs() {
         return getDoubleOrNull(BSPSampleSearchColumn.RQS);
     }

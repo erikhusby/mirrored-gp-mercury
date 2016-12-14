@@ -35,6 +35,8 @@ public class MercurySampleData implements SampleData {
     private Date receiptDate;
     private String materialType;
     private String originalMaterialType;
+    private String species;
+    private String sampleLSID;
     private QuantData quantData;
 
     public MercurySampleData(@Nonnull String sampleId, @Nonnull Set<Metadata> metadata) {
@@ -80,7 +82,14 @@ public class MercurySampleData implements SampleData {
                 break;
             case ORIGINAL_MATERIAL_TYPE:
                 this.originalMaterialType = value;
+               break;
+            case SPECIES:
+                this.species = value;
                 break;
+            case LSID:
+                this.sampleLSID = value;
+                break;
+
             }
         }
     }
@@ -275,7 +284,7 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public String getOrganism() {
-        return "";
+        return species;
     }
 
     @Override
@@ -285,7 +294,7 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public String getSampleLsid() {
-        return "";
+        return sampleLSID;
     }
 
     /**
@@ -322,6 +331,9 @@ public class MercurySampleData implements SampleData {
         }
         return 0;
     }
+
+    @Override
+    public String getSpecies() { return species; }
 
     @Override
     public String getSampleType() {

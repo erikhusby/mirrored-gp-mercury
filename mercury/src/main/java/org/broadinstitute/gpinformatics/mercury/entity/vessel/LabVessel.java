@@ -27,7 +27,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.TubeTransferException;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -179,7 +179,7 @@ public abstract class LabVessel implements Serializable {
 
     @OneToMany(mappedBy = "labVessel", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @BatchSize(size = 100)
-    private Set<SampleInstance> sampleInstance = new HashSet<>();
+    private Set<SampleInstanceEntity> sampleInstanceEntities = new HashSet<>();
 
     @OneToMany // todo jmt should this have mappedBy?
     @JoinTable(schema = "mercury")
@@ -955,8 +955,8 @@ public abstract class LabVessel implements Serializable {
         return abandonVessels;
     }
 
-    public Set<SampleInstance> getSampleInstance() {
-        return sampleInstance;
+    public Set<SampleInstanceEntity> getSampleInstanceEntities() {
+        return sampleInstanceEntities;
     }
 
     /**
@@ -990,8 +990,8 @@ public abstract class LabVessel implements Serializable {
      *
      */
     public String getMolecularIndexingScheme() {
-        if(sampleInstance.size() > 0) {
-            return  new ArrayList<>(sampleInstance).get(0).getMolecularIndexingScheme().getName();
+        if(sampleInstanceEntities.size() > 0) {
+            return  new ArrayList<>(sampleInstanceEntities).get(0).getMolecularIndexingScheme().getName();
         }
         else {
             return null;
@@ -1630,6 +1630,7 @@ public abstract class LabVessel implements Serializable {
             sampleInstances = new LinkedHashSet<>();
             if (getContainerRole() == null) {
                 List<VesselEvent> ancestorEvents = getAncestors();
+
                 if (ancestorEvents.isEmpty()) {
                     sampleInstances.add(new SampleInstanceV2(this));
                 } else {

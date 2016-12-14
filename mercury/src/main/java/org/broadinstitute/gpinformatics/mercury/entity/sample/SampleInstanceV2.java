@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
+import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -9,10 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.*;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -93,9 +91,11 @@ public class SampleInstanceV2 {
     private LabVessel currentLabVessel;
     private MolecularIndexingScheme molecularIndexingScheme;
     private LabVessel firstPcrVessel;
-
+    private SampleInstanceEntity sampleInstanceEntity;
     private int depth;
-
+    private boolean sampleInstanceFlag = false;
+    private List<String> devConditions = new ArrayList<>();
+    private TZDevExperimentData tzDevExperimentData;
     /**
      * For a reagent-only sample instance.
      */
@@ -145,8 +145,9 @@ public class SampleInstanceV2 {
         initialLabVessel = other.initialLabVessel;
         firstPcrVessel = other.firstPcrVessel;
         depth = other.depth + 1;
+        sampleInstanceEntity = other.getSampleInstanceEntity();
+        tzDevExperimentData = other.getTzDevExperimentData();
     }
-
     /**
      * Returns the sample that has no incoming transfers.  This is typically the sample that BSP received from the
      * collaborator, but in the absence of extraction transfers, Mercury may not be able to follow the transfer chain
@@ -445,6 +446,19 @@ public class SampleInstanceV2 {
      * Applies to a clone any new information in a LabVessel.
      */
     public final void applyVesselChanges(LabVessel labVessel) {
+
+        //Merge in sample instance pooled tubes upload.
+        if(labVessel.getSampleInstanceEntities().size() > 0) {
+            for(SampleInstanceEntity sampleInstanceEntity : labVessel.getSampleInstanceEntities())
+            {
+              MercurySample mercurySample = sampleInstanceEntity.getMercurySample();
+              mergeDevConditions(sampleInstanceEntity.getExperiment(), sampleInstanceEntity.getSubTasks());
+              mergeReagents(sampleInstanceEntity.getReagentDesign().getDesignedReagents());
+              mergeMolecularIndex(sampleInstanceEntity.getMolecularIndexingScheme());
+              mercurySamples.add(mercurySample);
+            }
+        }
+
         currentLabVessel = labVessel;
         // order of assignments is same as order of fields
         mercurySamples.addAll(labVessel.getMercurySamples());
@@ -540,6 +554,27 @@ public class SampleInstanceV2 {
         return firstPcrVessel;
     }
 
+    public void mergeMolecularIndex(MolecularIndexingScheme molecularIndexingScheme)
+    {
+        this.molecularIndexingScheme = molecularIndexingScheme;
+    }
+
+    public void mergeReagents(Set<DesignedReagent> reagents)
+    {
+        reagents.addAll(reagents);
+    }
+
+    public void mergeDevConditions(String experimentName, List<String> subTasks)
+    {
+        devConditions.addAll(subTasks);
+        tzDevExperimentData = new TZDevExperimentData(experimentName,subTasks);
+
+    }
+
+    public TZDevExperimentData getTzDevExperimentData() {
+        return this.tzDevExperimentData;
+    }
+
     /**
      * Returns a text description of the source
      * of the metadata.  Do not alter this string
@@ -581,6 +616,10 @@ public class SampleInstanceV2 {
         }
 
         return true;
+    }
+
+    public SampleInstanceEntity getSampleInstanceEntity() {
+        return sampleInstanceEntity;
     }
 
     @Override
