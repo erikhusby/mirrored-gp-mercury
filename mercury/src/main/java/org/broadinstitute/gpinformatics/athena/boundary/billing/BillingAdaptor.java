@@ -189,13 +189,6 @@ public class BillingAdaptor implements Serializable {
                         }
                     }
 
-                    if(primaryPriceItemIfReplacement == null) {
-                        item.getPriceItem().setPrice(priceItemBeingBilled.getPrice());
-                    } else {
-
-                        item.getPriceItem().setPrice(primaryPriceItemIfReplacement.getPrice());
-                    }
-
                     if(quote.isEligibleForSAP() && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
                         workId = quoteService.registerNewSAPWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
                                 item.getWorkCompleteDate(), item.getQuantity(),
