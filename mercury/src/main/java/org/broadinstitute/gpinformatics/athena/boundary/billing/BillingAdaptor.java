@@ -168,15 +168,10 @@ public class BillingAdaptor implements Serializable {
                     if( productOrderEjb.isOrderEligibleForSAP(item.getProductOrder() )
                         && !item.getProductOrder().getOrderStatus().canPlace()
                         && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
-                        && StringUtils.isBlank(item.getSapItems())) {
-                        if(StringUtils.isBlank(item.getProductOrder().getSapOrderNumber())) {
-                            throw new SAPInterfaceException(item.getProductOrder().getJiraTicketKey() +
-                                                            " has not been submitted to SAP as an order yet.  Unable "
-                                                            + "to bill until this happens");
-                        } else {
-                            if(item.getQuantityForSAP() != 0) {
-                                sapBillingId = sapService.billOrder(item, replacementMultiplier);
-                            }
+                        && StringUtils.isBlank(item.getSapItems()))
+                    {
+                        if(item.getQuantityForSAP() != 0) {
+                            sapBillingId = sapService.billOrder(item, replacementMultiplier);
                         }
                         result.setSAPBillingId(sapBillingId);
                         billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacement, workId, sapBillingId, null);
@@ -186,7 +181,8 @@ public class BillingAdaptor implements Serializable {
                     // set the primary to null so it will be billed as if it is a primary.
                     if (primaryPriceItemIfReplacement != null) {
                         if (!quoteItemNames.contains(primaryPriceItemIfReplacement.getName()) &&
-                            quoteItemNames.contains(priceItemBeingBilled.getName())) {
+                            quoteItemNames.contains(priceItemBeingBilled.getName()))
+                        {
 
                             primaryPriceItemIfReplacement = null;
 
