@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySample
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
 import javax.inject.Inject;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,7 +31,7 @@ import java.util.Set;
  * {@link MercurySampleDao#findMapIdToMercurySample(Collection)} for the second argument to avoid a redundant database
  * query.
  */
-public class SampleDataSourceResolver {
+public class SampleDataSourceResolver implements Serializable{
 
     private final MercurySampleDao mercurySampleDao;
 
