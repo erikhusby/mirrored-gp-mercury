@@ -47,6 +47,7 @@ public class SampleInstanceEjb  {
     private List<MolecularIndexingScheme> molecularIndexSchemes = new ArrayList<>();
     private List<ReagentDesign> reagents = new ArrayList<>();
     private List<MercurySample> mercurySamples = new ArrayList<>();
+    private List<MercurySample> rootSamples = new ArrayList<>();
     private List<Boolean> sampleRegistrationFlag = new ArrayList<>();
     private int rowOffset = 2;
 
@@ -129,7 +130,11 @@ public class SampleInstanceEjb  {
             sampleInstanceEntity.setReagentDesign(reagents.get(sampleIndex));
             sampleInstanceEntity.setMolecularIndexScheme(molecularIndexSchemes.get(sampleIndex));
             sampleInstanceEntity.setMercurySampleId(mercurySamples.get(sampleIndex));
-            sampleInstanceEntity.setRootSampleId(vesselSpreadsheetProcessor.getRootSampleId().get(sampleIndex));
+
+            if(rootSamples.size() >= sampleIndex) {
+                sampleInstanceEntity.setRootSample(rootSamples.get(sampleIndex));
+            }
+
             sampleInstanceEntity.setExperiment(vesselSpreadsheetProcessor.getExperiment().get(sampleIndex));
 
             sampleInstanceEntity.setLabVessel(labVessel);
@@ -211,6 +216,14 @@ public class SampleInstanceEjb  {
                 this.molecularIndexSchemes.add(molecularIndexingScheme);
             }
             molecularIndexSchemeIndex++;
+        }
+
+        //Add root samples
+        for (String rootSampleId : vesselSpreadsheetProcessor.getRootSampleId()) {
+            MercurySample mercurySample = mercurySampleDao.findBySampleKey(rootSampleId);
+            if (mercurySample != null) {
+                this.rootSamples.add(mercurySample);
+            }
         }
 
         //Was both bait and cat specified.

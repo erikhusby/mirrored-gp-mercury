@@ -455,6 +455,7 @@ public class SampleInstanceV2 {
               mergeDevConditions(sampleInstanceEntity.getExperiment(), sampleInstanceEntity.getSubTasks());
               mergeReagents(sampleInstanceEntity.getReagentDesign().getDesignedReagents());
               mergeMolecularIndex(sampleInstanceEntity.getMolecularIndexingScheme());
+              mergeRootSamples(sampleInstanceEntity.getRootSample());
               mercurySamples.add(mercurySample);
             }
         }
@@ -554,6 +555,13 @@ public class SampleInstanceV2 {
         return firstPcrVessel;
     }
 
+
+    public void mergeRootSamples(MercurySample mercurySample)
+    {
+        this.rootMercurySamples.add(mercurySample);
+    }
+
+
     public void mergeMolecularIndex(MolecularIndexingScheme molecularIndexingScheme)
     {
         this.molecularIndexingScheme = molecularIndexingScheme;
@@ -589,7 +597,8 @@ public class SampleInstanceV2 {
             throw new RuntimeException("Could not determine metadata source");
         }
         if (metadataSources.size() > 1) {
-            throw new RuntimeException(String.format("Found %s metadata sources",metadataSources.size()));
+            return "MERCURY";
+            //throw new RuntimeException(String.format("Found %s metadata sources",metadataSources.size()));
         }
         return metadataSources.iterator().next();
     }

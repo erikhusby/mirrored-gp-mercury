@@ -37,6 +37,10 @@ public class SampleInstanceEntity {
     @ManyToOne(cascade = CascadeType.PERSIST)
     private MercurySample mercurySample;
 
+    @ManyToOne(cascade = CascadeType.PERSIST)
+    private MercurySample rootSample;
+
+
     @OneToMany(mappedBy = "sampleInstanceEntity", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @BatchSize(size = 100)
     private Set<SampleInstanceEntityTsk> sampleInstanceEntityTsks = new HashSet<>();
@@ -50,8 +54,6 @@ public class SampleInstanceEntity {
     private String sampleLibraryName;
 
     private Date uploadDate;
-
-    private String rootSampleId;
 
     private String experiment;
 
@@ -81,9 +83,9 @@ public class SampleInstanceEntity {
     }
 
 
-    public String getRootSampleId() {  return rootSampleId;  }
+    public MercurySample getRootSample() {  return rootSample;  }
 
-    public void setRootSampleId(String rootSampleId) { this.rootSampleId = rootSampleId;  }
+    public void setRootSample(MercurySample rootSample) { this.rootSample = rootSample;  }
 
     public void setLabVessel(LabVessel labVessel) { this.labVessel = labVessel; }
 
