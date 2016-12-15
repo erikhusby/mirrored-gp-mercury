@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
+package org.broadinstitute.gpinformatics.mercury.presentation.vessel;
 
 import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.validation.Validate;
@@ -21,11 +21,11 @@ import javax.inject.Inject;
 import java.io.IOException;
 
 
-@UrlBinding(value = "/workflow/PooledTubeUpload.action")
+@UrlBinding(value = "/vessel/PooledTubeUpload.action")
 public class PooledTubeUploadActionBean extends CoreActionBean {
 
     public static final String UPLOAD_TUBES = "uploadpooledTubes";
-    private static final String SESSION_LIST_PAGE = "/workflow/pooledTubeUpload.jsp";
+    private static final String SESSION_LIST_PAGE = "/vessel/pooledTubeUpload.jsp";
     private boolean overWriteFlag;
 
     @DefaultHandler
