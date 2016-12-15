@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 
+import javax.annotation.Nonnull;
 import java.math.BigDecimal;
 
 /**
@@ -79,4 +80,7 @@ public interface SapIntegrationService {
 
     SapIntegrationClientImpl.SAPCompanyConfiguration determineCompanyCode(ProductOrder companyProductOrder)
             throws SAPIntegrationException;
+
+    @Nonnull
+    SapIntegrationClientImpl.SAPCompanyConfiguration getSapCompanyConfigurationForProduct(Product product);
 }

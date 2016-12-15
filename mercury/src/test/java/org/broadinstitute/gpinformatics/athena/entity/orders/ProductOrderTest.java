@@ -374,7 +374,7 @@ public class ProductOrderTest {
         Assert.assertEquals(2, testParentOrder.getNonAbandonedCount());
         Assert.assertEquals(4, testParentOrder.getNumberForReplacement());
 
-        ProductOrder cloneOrder = new ProductOrder(testParentOrder, true);
+        ProductOrder cloneOrder = ProductOrder.cloneProductOrder(testParentOrder, true);
 
         Assert.assertEquals(2, testParentOrder.getNonAbandonedCount());
         Assert.assertEquals(4, testParentOrder.getNumberForReplacement());

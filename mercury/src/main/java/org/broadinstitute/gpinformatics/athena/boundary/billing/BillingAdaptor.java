@@ -155,7 +155,7 @@ public class BillingAdaptor implements Serializable {
                         BigDecimal primaryPrice = new BigDecimal(primaryPriceItemIfReplacement.getPrice());
                         BigDecimal replacementPrice  = new BigDecimal(priceItemBeingBilled.getPrice());
 
-                        replacementMultiplier = (replacementPrice.divide(primaryPrice)).multiply(BigDecimal.valueOf(item.getQuantityForSAP()));
+                        replacementMultiplier = (replacementPrice.divide(primaryPrice, 3, BigDecimal.ROUND_DOWN)).multiply(BigDecimal.valueOf(item.getQuantityForSAP())).setScale(3, BigDecimal.ROUND_DOWN);
                     }
 
                     // Get the quote items on the quote, adding to the quote item cache, if not there.
@@ -165,17 +165,13 @@ public class BillingAdaptor implements Serializable {
 
                     String workId = null;
 
-                    if( productOrderEjb.isOrderEligibleForSAP(item.getProductOrder())
+                    if( productOrderEjb.isOrderEligibleForSAP(item.getProductOrder() )
+                        && !item.getProductOrder().getOrderStatus().canPlace()
                         && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
-                        && StringUtils.isBlank(item.getSapItems())) {
-                        if(StringUtils.isBlank(item.getProductOrder().getSapOrderNumber())) {
-                            throw new SAPInterfaceException(item.getProductOrder().getJiraTicketKey() +
-                                                            " has not been submitted to SAP as an order yet.  Unable "
-                                                            + "to bill until this happens");
-                        } else {
-                            if(item.getQuantityForSAP() != 0) {
-                                sapBillingId = sapService.billOrder(item, replacementMultiplier);
-                            }
+                        && StringUtils.isBlank(item.getSapItems()))
+                    {
+                        if(item.getQuantityForSAP() != 0) {
+                            sapBillingId = sapService.billOrder(item, replacementMultiplier);
                         }
                         result.setSAPBillingId(sapBillingId);
                         billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacement, workId, sapBillingId, null);
@@ -185,18 +181,12 @@ public class BillingAdaptor implements Serializable {
                     // set the primary to null so it will be billed as if it is a primary.
                     if (primaryPriceItemIfReplacement != null) {
                         if (!quoteItemNames.contains(primaryPriceItemIfReplacement.getName()) &&
-                            quoteItemNames.contains(priceItemBeingBilled.getName())) {
+                            quoteItemNames.contains(priceItemBeingBilled.getName()))
+                        {
 
                             primaryPriceItemIfReplacement = null;
 
                         }
-                    }
-
-                    if(primaryPriceItemIfReplacement == null) {
-                        item.getPriceItem().setPrice(priceItemBeingBilled.getPrice());
-                    } else {
-
-                        item.getPriceItem().setPrice(primaryPriceItemIfReplacement.getPrice());
                     }
 
                     if(quote.isEligibleForSAP() && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {

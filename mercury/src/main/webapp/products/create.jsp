@@ -343,7 +343,7 @@
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="partNumber" name="editProduct.partNumber" class="defaultText input-xxlarge"
-                            title="Enter the part number of the new product"/>
+                            title="Enter the part number of the new product" readonly="${actionBean.editProduct.savedInSAP}"/>
                     </div>
                 </div>
 

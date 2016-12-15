@@ -198,9 +198,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     private ProductDao productDao;
 
     @Inject
-    private ResearchProjectDao projectDao;
-
-    @Inject
     private BillingSessionDao billingSessionDao;
 
     @Inject
@@ -464,7 +461,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void init() {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
         if (!StringUtils.isBlank(productOrder)) {
-            editOrder = productOrderEjb.findProductOrderByBusinessKeySafely(productOrder);
+            editOrder = productOrderDao.findByBusinessKey(productOrder);
             if (editOrder != null) {
                 progressFetcher = new CompletionStatusFetcher(
                         productOrderDao.getProgress(Collections.singleton(editOrder.getProductOrderId())));
@@ -585,7 +582,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             editOrder.getProductOrderKit().getComments().length() > 255) {
             addValidationError("productOrderKit.comments", "Product order kit comments cannot exceed 255 characters");
         }
-//                @Validate(field = "count", on = {SAVE_ACTION}, label = "Number of Lanes"),
 
         // If this is not a draft, some fields are required.
         if (!editOrder.isDraft()) {
@@ -683,7 +679,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         Quote quote = validateQuoteId(quoteId);
         try {
             if(productOrderEjb.isOrderEligibleForSAP(editOrder)) {
-                validateQuoteDetails(quote, ErrorLevel.ERROR);
+                validateQuoteDetails(quote, ErrorLevel.ERROR, !editOrder.hasJiraTicketKey(), 0);
             }
         } catch (QuoteServerException e) {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", quoteId, e.getMessage());
@@ -696,15 +692,60 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    private void validateQuoteDetails(String quoteId, final ErrorLevel errorLevel) {
+    /**
+     * Determines if there is enough funds available on a quote to do any more work based on unbilled samples and funds
+     * remaining on the quote
+     *
+     * @param quoteId   Identifier for The quote which the user intends to use.  From this we can determine the
+     *                  collection of orders to include in evaluating and the funds remaining
+     * @param errorLevel indicator for if the user should see a validation error or just a warning
+     * @param countOpenOrders indicator for if the current order should be added.  Typically used if it is Draft or
+     *                        Pending
+     */
+    private void validateQuoteDetails(String quoteId, final ErrorLevel errorLevel, boolean countOpenOrders) {
         Quote quote = validateQuoteId(quoteId);
 
         if (quote != null) {
-            validateQuoteDetails(quote, errorLevel);
+            validateQuoteDetails(quote, errorLevel, countOpenOrders, 0);
         }
     }
 
-    private void validateQuoteDetails(Quote quote, ErrorLevel errorLevel) {
+    /**
+     * Determines if there is enough funds available on a quote to do any more work based on unbilled samples and funds
+     * remaining on the quote.  This particular method will also consider Samples added on the page but not yet
+     * refelcted on the order.
+     *
+     * The scenario for this is when the user clicks on the "Add Samples" button of a placed order
+     *
+     * @param quoteId   Identifier for The quote which the user intends to use.  From this we can determine the
+     *                  collection of orders to include in evaluating and the funds remaining
+     * @param errorLevel indicator for if the user should see a validation error or just a warning
+     * @param countOpenOrders indicator for if the current order should be added.  Typically used if it is Draft or
+     *                        Pending
+     * @param additionalSamplesCount Number of extra samples to be considered which are not currently
+     */
+    private void validateQuoteDetailsWithAddedSamples(String quoteId, final ErrorLevel errorLevel,
+                                                      boolean countOpenOrders, int additionalSamplesCount) {
+        Quote quote = validateQuoteId(quoteId);
+
+        if (quote != null) {
+            validateQuoteDetails(quote, errorLevel, countOpenOrders, additionalSamplesCount);
+        }
+    }
+
+    /**
+     * Determines if there is enough funds available on a quote to do any more work based on unbilled samples and funds
+     * remaining on the quote
+     *
+     * @param quote  The quote which the user intends to use.  From this we can determine the collection of orders to
+     *               include in evaluating and the funds remaining
+     * @param errorLevel indicator for if the user should see a validation error or just a warning
+     * @param countCurrentUnPlacedOrder indicator for if the current order should be added.  Typically used if it is Draft or
+     *                        Pending
+     * @param additionalSampleCount
+     */
+    private void validateQuoteDetails(Quote quote, ErrorLevel errorLevel, boolean countCurrentUnPlacedOrder,
+                                      int additionalSampleCount) {
         if (!quote.getApprovalStatus().equals(ApprovalStatus.FUNDED)) {
             String unFundedMessage = "A quote should be funded in order to be used for a product order.";
             addMessageBasedOnErrorLevel(errorLevel, unFundedMessage);
@@ -713,8 +754,10 @@ public class ProductOrderActionBean extends CoreActionBean {
         double fundsRemaining = Double.parseDouble(quote.getQuoteFunding().getFundsRemaining());
         double outstandingEstimate = estimateOutstandingOrders(quote.getAlphanumericId());
         double valueOfCurrentOrder = 0;
-        if(!editOrder.hasJiraTicketKey()) {
+        if(countCurrentUnPlacedOrder) {
             valueOfCurrentOrder = getValueOfOpenOrders(Collections.singletonList(editOrder));
+        } else if(additionalSampleCount > 0) {
+            valueOfCurrentOrder = getOrderValue(editOrder, additionalSampleCount);
         }
 
         if (fundsRemaining <= 0d ||
@@ -724,6 +767,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
+    /**
+     * Helper to determine if the returned message will be considered an full on validation error or simply a warning
+     * @param errorLevel Enum to trigger the logic for what message level is desired
+     * @param multiFundingLevelMessage Message to display to the user
+     */
     private void addMessageBasedOnErrorLevel(ErrorLevel errorLevel, String multiFundingLevelMessage) {
         switch (errorLevel) {
         case ERROR:
@@ -735,49 +783,80 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
+    /**
+     * Retrieves and determines the monitary value of a subset of Open Orders within Mercury
+     * @param quoteId Common quote id to be used to determine which open orders will be found
+     * @return total dollar amount of the monitary value of orders associated with the given quote
+     */
     private double estimateOutstandingOrders(String quoteId) {
 
         List<ProductOrder> ordersWithCommonQuote = productOrderDao.findOrdersWithCommonQuote(quoteId);
 
-        double value = getValueOfOpenOrders(ordersWithCommonQuote);
-        return value;
+        return getValueOfOpenOrders(ordersWithCommonQuote);
     }
 
+    /**
+     * Determines the total monitary value of all unbilled samples on a given list of orders
+     *
+     * @param ordersWithCommonQuote Subset of orders for which the monitary value is to be determined
+     * @return Total dollar amount which equates to the monitary value of all orders given
+     */
     private double getValueOfOpenOrders(List<ProductOrder> ordersWithCommonQuote) {
         double value = 0d;
 
         for (ProductOrder testOrder : ordersWithCommonQuote) {
-            int unbilledCount = testOrder.getUnbilledSampleCount();
-            if(testOrder.getProduct() != null) {
-                QuotePriceItem primaryPriceItem =
-                        priceListCache.findByKeyFields(testOrder.getProduct().getPrimaryPriceItem());
+            value += getOrderValue(testOrder, testOrder.getUnbilledSampleCount());
+        }
+        return value;
+    }
 
-                if (primaryPriceItem != null &&
-                    StringUtils.isNotBlank(primaryPriceItem.getPrice())) {
-                    Double productPrice = Double.valueOf(primaryPriceItem.getPrice());
-
-                    if (productPrice != null) {
-                        value += productPrice * unbilledCount;
-                    }
-
-                    for (ProductOrderAddOn testOrderAddon : testOrder.getAddOns()) {
-                        QuotePriceItem addonPriceItem =
-                                priceListCache
-                                        .findByKeyFields(testOrderAddon.getAddOn().getPrimaryPriceItem());
-
-                        if (addonPriceItem != null &&
-                            StringUtils.isNotBlank(addonPriceItem.getPrice())) {
-                            Double addOnPrice = Double.valueOf(addonPriceItem.getPrice());
-
-                            if (addOnPrice != null) {
-                                value += addOnPrice * unbilledCount;
-                            }
-                        }
-                    }
-                }
+    /**
+     * Helper method to consolidate the code for evaluating the monitary value of an order based on the price associated
+     * with its product(s) and the count of the unbilled samples
+     * @param testOrder Product order for which we wish to determine the monitary value
+     * @param sampleCount unbilled sample count to use for determining the order value.  Passed in separately to account
+     *                    for the scenario when we do not want to use the sample count on the order but a sample count
+     *                    that will potentially be on the order.
+     * @return Total monitary value of the order
+     */
+    private double getOrderValue(ProductOrder testOrder, int sampleCount) {
+        double value = 0d;
+        if(testOrder.getProduct() != null) {
+            final Product product = testOrder.getProduct();
+            double productValue = getProductValue(sampleCount, product);
+            value += productValue;
+            for (ProductOrderAddOn testOrderAddon : testOrder.getAddOns()) {
+                final Product addOn = testOrderAddon.getAddOn();
+                double addOnValue = getProductValue(sampleCount, addOn);
+                value += addOnValue;
             }
         }
         return value;
+    }
+
+    /**
+     * Based on a product and a sample count, this method will determine the monitary value for the sake of evaluating
+     * the monitary value of an order
+     *
+     * @param unbilledCount count of samples that have not yet been billed
+     * @param product Product from which the price can be determined
+     * @return Derived value of the Product price multiplied by the number of unbilled samples
+     */
+    private double getProductValue(int unbilledCount, Product product) {
+        double productValue = 0d;
+        QuotePriceItem primaryPriceItem =
+                priceListCache.findByKeyFields(product.getPrimaryPriceItem());
+
+        if (primaryPriceItem != null &&
+            StringUtils.isNotBlank(primaryPriceItem.getPrice())) {
+            Double productPrice = Double.valueOf(primaryPriceItem.getPrice());
+
+            if (productPrice != null) {
+                productValue = productPrice * (unbilledCount);
+            }
+
+        }
+        return productValue;
     }
 
     private void doSaveValidation(String action, ResearchProject researchProject) {
@@ -842,6 +921,11 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @ValidationMethod(on = PLACE_ORDER_ACTION)
     public void validatePlacedOrder() {
+        Hibernate.initialize(editOrder.getChildOrders());
+        Hibernate.initialize(editOrder.getSapReferenceOrders());
+        Hibernate.initialize(editOrder.getSamples());
+        Hibernate.initialize(editOrder.getParentOrder());
+
         validatePlacedOrder(PLACE_ORDER_ACTION);
     }
 
@@ -1259,7 +1343,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             // If we get here with an original business key, then clear out the session and refetch the order.
             if (originalBusinessKey != null) {
                 productOrderDao.clear();
-                editOrder = productOrderEjb.findProductOrderByBusinessKeySafely(originalBusinessKey);
+                editOrder = productOrderDao.findByBusinessKey(originalBusinessKey);
             }
 
             addGlobalValidationError(e.getMessage());
@@ -1352,10 +1436,11 @@ public class ProductOrderActionBean extends CoreActionBean {
             addMessage("Product Order \"{0}\" has been saved.", editOrder.getTitle());
         } catch (SAPInterfaceException e) {
             addGlobalValidationError(e.getMessage());
+            getSourcePageResolution();
         }
         try {
             if(!productOrderEjb.isOrderEligibleForSAP(editOrder)) {
-                validateQuoteDetails(editOrder.getQuoteId(), ErrorLevel.WARNING);
+                validateQuoteDetails(editOrder.getQuoteId(), ErrorLevel.WARNING, !editOrder.hasJiraTicketKey());
             }
         } catch (QuoteServerException e) {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
@@ -1385,32 +1470,45 @@ public class ProductOrderActionBean extends CoreActionBean {
         return createViewResolution(editOrder.getBusinessKey());
     }
 
+    @ValidationMethod(on = REPLACE_SAMPLES)
+    public void validateReplacementSample() {
+
+        final List<ProductOrderSample> replacementSamples = stringToSampleList(replacementSampleList);
+
+        if(editOrder.getNumberForReplacement() <= 0 ) {
+            addGlobalValidationError("There are no samples to replace.  If you must process samples, please open a new Product Order");
+        } else if (replacementSamples.size() > editOrder.getNumberForReplacement()) {
+            addGlobalValidationError("You are attempting to replace more samples than you are able to.  Please reduce the number samples entered");
+        }
+    }
+
     @HandlesEvent(REPLACE_SAMPLES)
     public Resolution replaceSamples() throws Exception {
 
         boolean shareSapOrder = false;
         MessageCollection saveOrderMessageCollection = new MessageCollection();
 
-        if(editOrder.getNumberForReplacement() >0) {
-            if(editOrder.isSavedInSAP() && editOrder.hasAtLeastOneBilledLedgerEntry() &&
-               (editOrder.getNonAbandonedCount() < editOrder.latestSapOrderDetail().getPrimaryQuantity()) ) {
-                shareSapOrder = true;
-            }
-            ProductOrder.SaveType saveType = ProductOrder.SaveType.CREATING;
-            replacementSampleOrder = new ProductOrder(editOrder, shareSapOrder);
-            replacementSampleOrder.setSamples(stringToSampleListExisting(replacementSampleList));
-            Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
-            try {
-                productOrderEjb.persistProductOrder(saveType, replacementSampleOrder , deletedIdsConverted, kitDetails,
-                        saveOrderMessageCollection);
-                addMessages(saveOrderMessageCollection);
-                addMessage("Product Order \"{0}\" has been saved.", replacementSampleOrder.getTitle());
-            } catch (SAPInterfaceException e) {
-                addGlobalValidationError(e.getMessage());
-            }
+        Hibernate.initialize(editOrder.getChildOrders());
+        Hibernate.initialize(editOrder.getSapReferenceOrders());
+        Hibernate.initialize(editOrder.getSamples());
 
-        } else {
-            addGlobalValidationError("There are no samples to replace.  If you must process samples, please open a new Product Order");
+        final List<ProductOrderSample> replacementSamples = stringToSampleList(replacementSampleList);
+
+        if(editOrder.isSavedInSAP() && editOrder.hasAtLeastOneBilledLedgerEntry() &&
+           (editOrder.getNonAbandonedCount() < editOrder.latestSapOrderDetail().getPrimaryQuantity()) ) {
+            shareSapOrder = true;
+        }
+        ProductOrder.SaveType saveType = ProductOrder.SaveType.CREATING;
+        replacementSampleOrder = ProductOrder.cloneProductOrder(editOrder, shareSapOrder);
+        replacementSampleOrder.setSamples(replacementSamples);
+        Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
+        try {
+            productOrderEjb.persistClonedProductOrder(saveType, replacementSampleOrder, saveOrderMessageCollection);
+            addMessages(saveOrderMessageCollection);
+            addMessage("Product Order \"{0}\" has been saved.", replacementSampleOrder.getTitle());
+        } catch (SAPInterfaceException e) {
+            addGlobalValidationError(e.getMessage());
+            return getSourcePageResolution();
         }
 
         return createViewResolution(replacementSampleOrder==null?editOrder.getBusinessKey():replacementSampleOrder.getBusinessKey());
@@ -1429,9 +1527,15 @@ public class ProductOrderActionBean extends CoreActionBean {
         // Set the project, product and addOns for the order.
         ResearchProject tokenProject = projectTokenInput.getTokenObject();
         ResearchProject project =
-                tokenProject != null ? projectDao.findByBusinessKey(tokenProject.getBusinessKey()) : null;
+                tokenProject != null ? researchProjectDao.findByBusinessKey(tokenProject.getBusinessKey()) : null;
         Product tokenProduct = productTokenInput.getTokenObject();
         Product product = tokenProduct != null ? productDao.findByPartNumber(tokenProduct.getPartNumber()) : null;
+
+        if(editOrder.isSavedInSAP() && !editOrder.latestSapOrderDetail().getCompanyCode().equals(sapService.getSapCompanyConfigurationForProduct(product).getCompanyCode())) {
+            addGlobalValidationError("Unable to update the order in SAP.  This combination of Product and Order is "
+                                     + "attempting to change the company code to which this order will be associated.");
+        }
+
         List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
         editOrder.updateData(project, product, addOnProducts, stringToSampleListExisting(sampleList));
         BspUser tokenOwner = owner.getTokenObject();
@@ -1848,6 +1952,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         int originalOnRiskCount = editOrder.countItemsOnRisk();
 
         try {
+
+            //  FIXME SGM Must try this with setting the method to TransactionAttribute(TransactionAttributeType.REQUIRED)
+            // Currently it seems to cause an unintended Transaction to be started which will save the product order.
+            //  THere needs to be some persist action specifically called after the changes to risk in order to save
+            // The order.  it should not depend on what should be essentially a DBFree non transactional method.
+
             productOrderEjb.calculateRisk(editOrder.getBusinessKey(), selectedProductOrderSamples);
 
             // refetch the order to get updated risk status on the order.
@@ -1925,8 +2035,21 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
         return createViewResolution(editOrder.getBusinessKey());
     }
+    @ValidationMethod(on = ADD_SAMPLES_ACTION)
+    public void addSampleExtraValidations() throws Exception {
+        try {
+            if (productOrderEjb.isOrderEligibleForSAP(editOrder)) {
+                validateQuoteDetailsWithAddedSamples(editOrder.getQuoteId(), ErrorLevel.ERROR,
+                        !editOrder.hasJiraTicketKey(), stringToSampleList(addSamplesText).size());
+            }
+        } catch (QuoteServerException e) {
+            addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
+        } catch (QuoteNotFoundException e) {
+            addGlobalValidationError("The quote ''{2}'' was not found ", editOrder.getQuoteId());
+        }
+    }
 
-    @HandlesEvent(ADD_SAMPLES_ACTION)
+        @HandlesEvent(ADD_SAMPLES_ACTION)
     public Resolution addSamples() throws Exception {
         List<ProductOrderSample> samplesToAdd = stringToSampleList(addSamplesText);
         try {
@@ -2120,7 +2243,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private static List<ProductOrderSample> stringToSampleList(String sampleListText) {
         List<ProductOrderSample> samples = new ArrayList<>();
-        for (String sampleName : SearchActionBean.cleanInputStringForSamples(sampleListText)) {
+        final List<String> sampleNames = SearchActionBean.cleanInputStringForSamples(sampleListText);
+        for (String sampleName : sampleNames) {
             samples.add(new ProductOrderSample(sampleName));
         }
 
@@ -2830,10 +2954,11 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
     public String getPublishSAPAction() {return PUBLISH_PDO_TO_SAP;}
 
+    public String getReplacementSampleList() {
+        return replacementSampleList;
+    }
+
     public void setReplacementSampleList(String replacementSampleList) {
         this.replacementSampleList = replacementSampleList;
     }
-
-
-
 }
