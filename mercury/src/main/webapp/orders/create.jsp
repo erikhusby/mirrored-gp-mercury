@@ -71,6 +71,7 @@
             float: right;
         }
     </style>
+        <script src="${ctxpath}/resources/scripts/clipboard.js" type="text/javascript"></script>
         <script type="text/javascript">
 
         var duration = {'duration' : 400};
@@ -197,9 +198,36 @@
                 order: [[ 1, 'desc' ], [ 2, 'asc' ],[ 0, 'asc' ]],
                 deferRender: true,
                 columns: [{
-                    data: "samples", title: "Sample IDs", class: "sample", render: {
-                        'display': function (samples) {
-                            return samples.join(", ").trunc(90);
+                    data: "samples", title: "Sample IDs", render: {
+                        display: function (samples, type, row, meta) {
+                            var linkId = 'orsp' + meta.row + meta.col;
+                            var api = $j.fn.dataTable.Api(meta.settings);
+                            var sampleString = samples.join(", ");
+                            var sampleLength = samples.length;
+                            var $href = $j("<a></a>", {
+                                'href': 'javascript:;',
+                                'id': linkId,
+                                'text': 'Click to copy',
+                                'data-placement': 'right',
+                                'data-delay': 2000,
+//                                'data-trigger': 'click',
+                                'data-toggle': "tooltip",
+                                'data-original-title': sampleLength + ' sample names copied to clipboard.',
+                                'data-clipboard-target': '#'+linkId,
+                                'data-clipboard-text': sampleString
+
+                            });
+                            var linkSelector = "a#" + linkId;
+                            var clipboard = new Clipboard(linkSelector);
+                            api.cell().on('click.dt', function(event) {
+                                $j(event.target).tooltip("show");
+                                setTimeout(function(){
+                                    $j(event.target).tooltip('hide');
+                                }, 2000);
+                            });
+
+                            return sampleString.trunc(90) + "<br/>" + '<div>' + $href[0].outerHTML+'</div>';
+
                         }
                     }
                 }, {
@@ -210,7 +238,7 @@
                 preDrawCallback: function (settings) {
                     var $container = $j($j.fn.dataTable.Api(settings).table().container());
                     $container.toggle(settings.fnRecordsDisplay() > 0);
-                },
+                }
             });
 
                     $j('#productList').dataTable({
