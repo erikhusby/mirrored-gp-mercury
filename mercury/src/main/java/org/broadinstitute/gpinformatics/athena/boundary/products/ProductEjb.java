@@ -322,7 +322,8 @@ public class ProductEjb {
         SAPAccessControl control = accessController.getCurrentControlDefinitions();
         for (Product productToPublish : productsToPublish) {
             if(!CollectionUtils.containsAll(control.getDisabledFeatures(),
-                                            Collections.singleton(productToPublish.getPrimaryPriceItem().getName()))) {
+                                            Collections.singleton(productToPublish.getPrimaryPriceItem().getName()))
+                    && control.isEnabled()) {
                 try {
                     if (productToPublish.isSavedInSAP()) {
                         sapService.changeProductInSAP(productToPublish);
