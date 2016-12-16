@@ -199,7 +199,7 @@
                 order: [[ 1, 'desc' ], [ 2, 'asc' ],[ 0, 'asc' ]],
                 deferRender: true,
                 columns: [{
-                    data: "samples", title: "Sample IDs", render: {
+                    data: "samples", title: "Sample IDs", 'class': "sample", render: {
                         display: function (samples, type, row, meta) {
                             var linkId = 'orsp' + meta.row + meta.col;
                             var sampleString = samples.join(", ");
