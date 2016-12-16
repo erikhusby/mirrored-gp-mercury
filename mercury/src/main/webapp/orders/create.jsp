@@ -129,49 +129,46 @@
                 event.preventDefault();
             }
 
-            function buildOrspTableCell(orspProjects, type, fullData, context) {
+            function buildOrspTableCell(orspProject, type, fullData, context) {
                 var thisDatatable = $j.fn.dataTable.Api(context.settings);
-                if (orspProjects.length > 0) {
-                    // no orspprojects?
-                    var $divTable = $j("<div></div>", {'class': 'divTable'});
-                    var $tableSelector = $j("#regulatoryInfoSuggestions");
-                    orspProjects.every(function (orspProject) {
-                        var $orspDescription = $j("<div></div>", {
-                            'class': 'divCell left',
-                            'text': orspProject.identifier + ": " + orspProject.name
-                        });
-                        $divTable.append($orspDescription);
-                        var $selectButton = $j("<button></button>", {'text': 'select', 'disabled': 'disabled'});
-                        if (orspProject.regulatoryInfoId !== undefined) {
-                            $selectButton.attr('name', orspProject.regulatoryInfoId);
-                            $selectButton.attr('disabled', false);
-                        } else {
-                            $orspDescription.append('<br/>Not configured for ' + $j("#researchProject").val() + '. ');
-                            <c:if test="${actionBean.editResearchProjectAllowed}">
-                            var linkText = 'Link ' + orspProject.identifier + ' to ' + $j("#researchProject").val();
-                            var $addNow = $j('<a></a>', {
-                                'text': linkText,
-                                'title': 'Click here to link ' + linkText,
-                                'href': '#',
-                                'class': 'addRegulatoryInfo',
-                                'identifier': orspProject.identifier,
-                            });
-                            $orspDescription.append($addNow);
-                            $tableSelector.on('click', "a[identifier='" + orspProject.identifier + "']", function (event) {
-                                event.preventDefault();
-                                var projectSelection = $j("#researchProject").tokenInput('get')[0];
-                                openRegulatoryInfoDialog(projectSelection.id, projectSelection.name, function () {
-                                    closeRegulatoryInfoDialog();
-                                    populateRegulatorySelect();
-                                    reloadRegulatorySuggestions();
-                                }, $j(event.target).attr('identifier'));
-                            });
-                            </c:if>
-
-                        }
-                        $tableSelector.on('click', "button[name='" + orspProject.regulatoryInfoId + "']", checkRegulatoryInfoItem);
-                        $divTable.append($j("<div></div>", {'class': 'divCell right', 'html': $selectButton}));
+                var $divTable = $j("<div></div>", {'class': 'divTable'});
+                var $tableSelector = $j("#regulatoryInfoSuggestions");
+                if (orspProject.identifier != undefined) {
+                    var $orspDescription = $j("<div></div>", {
+                        'class': 'divCell left',
+                        'text': orspProject.identifier + ": " + orspProject.name
                     });
+                    $divTable.append($orspDescription);
+                    var $selectButton = $j("<button></button>", {'text': 'select', 'disabled': 'disabled'});
+                    if (orspProject.regulatoryInfoId !== undefined) {
+                        $selectButton.attr('name', orspProject.regulatoryInfoId);
+                        $selectButton.attr('disabled', false);
+                    } else {
+                        $orspDescription.append('<br/>Not configured for ' + $j("#researchProject").val() + '. ');
+                        <c:if test="${actionBean.editResearchProjectAllowed}">
+                        var linkText = 'Link ' + orspProject.identifier + ' to ' + $j("#researchProject").val();
+                        var $addNow = $j('<a></a>', {
+                            'text': linkText,
+                            'title': 'Click here to link ' + linkText,
+                            'href': '#',
+                            'class': 'addRegulatoryInfo',
+                            'identifier': orspProject.identifier,
+                        });
+                        $orspDescription.append($addNow);
+                        $tableSelector.on('click', "a[identifier='" + orspProject.identifier + "']", function (event) {
+                            event.preventDefault();
+                            var projectSelection = $j("#researchProject").tokenInput('get')[0];
+                            openRegulatoryInfoDialog(projectSelection.id, projectSelection.name, function () {
+                                closeRegulatoryInfoDialog();
+                                populateRegulatorySelect();
+                                reloadRegulatorySuggestions();
+                            }, $j(event.target).attr('identifier'));
+                        });
+                        </c:if>
+
+                    }
+                    $tableSelector.on('click', "button[name='" + orspProject.regulatoryInfoId + "']", checkRegulatoryInfoItem);
+                    $divTable.append($j("<div></div>", {'class': 'divCell right', 'html': $selectButton}));
                     return $divTable[0].outerHTML;
                 }
                 return $j("<div></div>", {"class": "noOrsp", "text": "No ORSP Projects found."})[0].outerHTML
@@ -230,7 +227,7 @@
                         }
                     }
                 }, {
-                    data: "orspProjects", title: "ORSP", render: {"display": buildOrspTableCell}
+                    data: "orspProject", title: "ORSP", render: {"display": buildOrspTableCell}
                 }, {
                     data: "collections", title: "Sample Collection"
                 }],

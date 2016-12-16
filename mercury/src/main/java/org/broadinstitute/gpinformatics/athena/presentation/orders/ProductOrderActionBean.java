@@ -1753,45 +1753,29 @@ public class ProductOrderActionBean extends CoreActionBean {
                 }
             }
 
-            // Build an inverse map of orspProjectSamples, so when displayed the productOrderSamples are grouped with their
-            // respective ORSPs
-            ListMultimap<List<ProductOrderSample>, OrspProject> inverseMap = ArrayListMultimap.create();
-            for (Map.Entry<OrspProject, Collection<ProductOrderSample>> orspProjectCollectionEntry : orspProjectSamples.asMap()
+            for (Map.Entry<OrspProject, Collection<ProductOrderSample>> pdoSamplesEntry : orspProjectSamples.asMap()
                     .entrySet()) {
-                inverseMap.put(new ArrayList<>(orspProjectCollectionEntry.getValue()), orspProjectCollectionEntry.getKey());
-            }
-            for (Map.Entry<List<ProductOrderSample>, Collection<OrspProject>> collectionCollectionEntry : inverseMap.asMap()
-                    .entrySet()) {
-                JSONArray orspProjects = new JSONArray();
-                for (OrspProject orspProject : collectionCollectionEntry.getValue()) {
-                    JSONObject orspObject = new JSONObject();
-                    orspObject.put("identifier", orspProject.getProjectKey());
-                    orspObject.put("name", orspProject.getName());
+                OrspProject orspProject = pdoSamplesEntry.getKey();
+                JSONObject orspObject = new JSONObject();
+                orspObject.put("identifier", orspProject.getProjectKey());
+                orspObject.put("name", orspProject.getName());
 
-                    RegulatoryInfo regulatoryInfo = regulatoryInfoById.get(orspProject.getProjectKey());
-                    if (regulatoryInfo != null) {
-                        orspObject.put("regulatoryInfoId", regulatoryInfo.getRegulatoryInfoId());
-                    }
-                    orspProjects.put(orspObject);
+                RegulatoryInfo regulatoryInfo = regulatoryInfoById.get(orspProject.getProjectKey());
+                if (regulatoryInfo != null) {
+                    orspObject.put("regulatoryInfoId", regulatoryInfo.getRegulatoryInfoId());
                 }
-                JSONObject suggestionEntry = new JSONObject();
+
                 Set<String> samples = new HashSet<>();
                 Set<String> collections = new HashSet<>();
-                for (ProductOrderSample productOrderSample : collectionCollectionEntry.getKey()) {
+                for (ProductOrderSample productOrderSample : pdoSamplesEntry.getValue()) {
                     samples.add(productOrderSample.getSampleKey());
                     collections.add(productOrderSample.getSampleData().getCollection());
                 }
-                suggestionEntry.put("samples", samples);
-                suggestionEntry.put("collections", collections);
-                suggestionEntry.put("orspProjects", orspProjects);
-                resultList.put(suggestionEntry);
+
+                resultList.put(buildOrspJsonObject(orspObject, samples, collections));
             }
             if (!samplesWithNoOrsp.isEmpty()) {
-                JSONObject result = new JSONObject();
-                result.put("orspProjects", new JSONArray());
-                result.put("samples", samplesWithNoOrsp);
-                result.put("collections", new JSONArray());
-                resultList.put(result);
+                resultList.put(buildOrspJsonObject(new JSONObject(), samplesWithNoOrsp, Collections.<String>emptySet()));
             }
         } catch (JSONException e) {
             throw new RuntimeException("No, I didn't pass a null key to JSONObject.put()");
@@ -3026,4 +3010,14 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void setReplacementSampleList(String replacementSampleList) {
         this.replacementSampleList = replacementSampleList;
     }
+
+    public static JSONObject buildOrspJsonObject(JSONObject orspProject, Set<String> samples,
+                                                 Set<String> sampleCollections) throws JSONException {
+        JSONObject result = new JSONObject();
+        result.put("orspProject", orspProject);
+        result.put("samples", samples);
+        result.put("collections", sampleCollections);
+        return result;
+    }
+
 }

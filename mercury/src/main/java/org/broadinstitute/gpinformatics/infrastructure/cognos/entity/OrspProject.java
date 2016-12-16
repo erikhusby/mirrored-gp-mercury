@@ -8,6 +8,7 @@ import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -48,6 +49,8 @@ public class OrspProject {
 
     @OneToMany(mappedBy = "orspProject", fetch = FetchType.EAGER)
     private Collection<OrspProjectConsent> consents = new HashSet<>();
+    @Transient
+    private Long regulatoryInfoId;
 
     /**
      * For JPA.
@@ -154,5 +157,13 @@ public class OrspProject {
      */
     public Collection<OrspProjectConsent> getConsents() {
         return consents;
+    }
+
+    public void setRegulatoryInfoId(Long regulatoryInfoId) {
+        this.regulatoryInfoId = regulatoryInfoId;
+    }
+
+    public Long getRegulatoryInfoId() {
+        return regulatoryInfoId;
     }
 }
