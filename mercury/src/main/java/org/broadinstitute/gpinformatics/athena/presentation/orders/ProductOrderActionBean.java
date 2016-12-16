@@ -1540,14 +1540,14 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     /**
-     * todo: change this
-     * Constructs a JSONObject for an OrspProject. If regulatoryInfo is non-null, it is assumed to be an existing record
-     * with the same identifier associated with the research project in which case its primary key is also placed in the
-     * result. This allows client-side scripts to match these results with entries in a regulatory info selection
-     * widget.
+     * Create a JSON data structure linking all the input ProductOrderSamples to possible OSRP Projects and Sample
+     * Collections. If regulatoryInfo is non-null, it is assumed to be an existing record with the same identifier
+     * associated with the Research Project in which case its primary key is also placed in the result. This allows
+     * client-side scripts to match these results with entries in a regulatory info selection widget.
      *
-     * @param productOrderSamples
-     *@param regulatoryInfoById    the matching RegulatoryInfo record (or null)  @return a new JSONObject for the ORSP project
+     * @param productOrderSamples input samples to find possible regulatory information about.
+     * @param regulatoryInfoById the matching RegulatoryInfo record (or null)
+     * @return A JSONArray of JSONObjects which link the ProductOrderSamples to ORSP projects and Sample Collections.
      */
     private JSONArray orspProjectToJson(List<ProductOrderSample> productOrderSamples, Map<String, RegulatoryInfo> regulatoryInfoById) {
         JSONArray resultList = new JSONArray();
