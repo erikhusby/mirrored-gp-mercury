@@ -158,12 +158,4 @@ public class OrspProject {
     public Collection<OrspProjectConsent> getConsents() {
         return consents;
     }
-
-    public void setRegulatoryInfoId(Long regulatoryInfoId) {
-        this.regulatoryInfoId = regulatoryInfoId;
-    }
-
-    public Long getRegulatoryInfoId() {
-        return regulatoryInfoId;
-    }
 }
