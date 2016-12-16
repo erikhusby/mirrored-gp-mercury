@@ -1,15 +1,4 @@
 /*
- * The Broad Institute
- * SOFTWARE COPYRIGHT NOTICE AGREEMENT
- * This software and its documentation are copyright 2016 by the
- * Broad Institute/Massachusetts Institute of Technology. All rights are reserved.
- *
- * This software is supplied without any warranty or guaranteed support
- * whatsoever. Neither the Broad Institute nor MIT can be responsible for its
- * use, misuse, or functionality.
- */
-
-/*
 bindWithDelay jQuery plugin
 Author: Brian Grinstead
 MIT license: http://www.opensource.org/licenses/mit-license.php
@@ -47,7 +36,6 @@ $.fn.bindWithDelay = function( type, data, fn, timeout, throttle ) {
         var wait = null;
 
         function cb() {
-            console.log(new Date())
             var e = $.extend(true, { }, arguments[0]);
             var ctx = this;
             var throttler = function() {
