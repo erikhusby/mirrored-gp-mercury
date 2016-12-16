@@ -361,7 +361,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
                 }}
         };
 
-        bucket = labBatchTestUtils.putTubesInSpecificBucket(LabBatchEJBTest.EXTRACTION_BUCKET,
+        bucket = labBatchTestUtils.putTubesInSpecificBucket(LabBatchEJBTest.BUCKET_NAME,
                 BucketEntry.BucketEntryType.PDO_ENTRY, mapBarcodeToTube);
 
         boolean[] isClinicals = {false, false};
@@ -381,7 +381,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
             labBatches[idx] = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
                     Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), bucketIds, Collections.<Long>emptyList(),
                     "Batch_" + idx + System.currentTimeMillis(), "", new Date(), null, "epolk",
-                    LabBatchEJBTest.EXTRACTION_BUCKET, MessageReporter.UNUSED, Collections.<String>emptyList());
+                    LabBatchEJBTest.BUCKET_NAME, MessageReporter.UNUSED, Collections.<String>emptyList());
 
             Assert.assertEquals(labBatches[idx].getLabBatchStartingVessels().size(), bucketIds.size());
         };

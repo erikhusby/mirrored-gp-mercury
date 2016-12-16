@@ -28,7 +28,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDa
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketCount;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -78,7 +77,7 @@ public class BucketViewActionBean extends CoreActionBean {
     @Inject
     JiraUserTokenInput jiraUserTokenInput;
     @Inject
-    private WorkflowLoader workflowLoader;
+    private WorkflowConfig workflowConfig;
     @Inject
     private BucketDao bucketDao;
     @Inject
@@ -108,7 +107,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private final List<Long> bucketEntryIds = new ArrayList<>();
     private final List<Long> reworkEntryIds = new ArrayList<>();
     private final Set<BucketEntry> collectiveEntries = new HashSet<>();
-    private final Map<String, WorkflowBucketDef> mapBucketToBucketDef = new HashMap<>();
+    private final Map<String, String> mapBucketToJiraProject = new HashMap<>();
     private Map<String, Collection<String>> mapBucketToWorkflows;
     private List<BucketEntry> selectedEntries = new ArrayList<>();
 
@@ -129,7 +128,6 @@ public class BucketViewActionBean extends CoreActionBean {
 
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
-        WorkflowConfig workflowConfig = workflowLoader.load();
         // Gets bucket names for supported products (workflows), and associates workflow(s) for each bucket.
         Multimap<String, String> bucketWorkflows = HashMultimap.create();
         for (Workflow workflow : Workflow.SUPPORTED_WORKFLOWS) {
@@ -137,8 +135,14 @@ public class BucketViewActionBean extends CoreActionBean {
             ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
             for (WorkflowBucketDef bucket : workflowVersion.getCreationBuckets()) {
                 String bucketName = bucket.getName();
+                // The jiraProjectType is stored in ProductWorkflowDefVersion but can be overridden in WorkflowBucketDef
+                // so check there first.
+                String jiraProjectType = bucket.getBatchJiraProjectType();
+                if (StringUtils.isBlank(jiraProjectType)) {
+                    jiraProjectType = workflowVersion.getProductWorkflowDefBatchJiraProjectType();
+                }
                 buckets.add(bucketName);
-                mapBucketToBucketDef.put(bucketName, bucket);
+                mapBucketToJiraProject.put(bucketName, jiraProjectType);
                 bucketWorkflows.put(bucketName, workflow.getWorkflowName());
             }
         }
@@ -218,8 +222,8 @@ public class BucketViewActionBean extends CoreActionBean {
             if (bucket != null) {
                 collectiveEntries.addAll(bucket.getBucketEntries());
                 collectiveEntries.addAll(bucket.getReworkEntries());
-                WorkflowBucketDef bucketDef = mapBucketToBucketDef.get(selectedBucket);
-                projectType = CreateFields.ProjectType.fromKeyPrefix(bucketDef.getBatchJiraProjectType());
+                String jiraProjectType = mapBucketToJiraProject.get(selectedBucket);
+                projectType = CreateFields.ProjectType.fromKeyPrefix(jiraProjectType);
                 preFetchSampleData(collectiveEntries);
             }
         }
@@ -353,9 +357,8 @@ public class BucketViewActionBean extends CoreActionBean {
         return new StreamingResolution("text", new StringReader(newPdoValues.toString()));
     }
 
-    private static Map<String, BucketCount> initBucketCountsMap(Map<String, BucketCount> bucketCountMap) {
+    private Map<String, BucketCount> initBucketCountsMap(Map<String, BucketCount> bucketCountMap) {
         Map<String, BucketCount> resultBucketCountMap = new TreeMap<>();
-        WorkflowConfig workflowConfig = new WorkflowLoader().load();
         for (Workflow workflow : Workflow.SUPPORTED_WORKFLOWS) {
             ProductWorkflowDef workflowDef = workflowConfig.getWorkflowByName(workflow.getWorkflowName());
             ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
@@ -511,5 +514,13 @@ public class BucketViewActionBean extends CoreActionBean {
 
     public void setJiraUserTokenInput(JiraUserTokenInput jiraUserTokenInput) {
         this.jiraUserTokenInput = jiraUserTokenInput;
+    }
+
+    public List<String> bucketWorkflowNames(BucketEntry bucketEntry) {
+        List<String> workflowNames = new ArrayList<>();
+        for (Workflow workflow : bucketEntry.getWorkflows(workflowConfig)) {
+            workflowNames.add(workflow.getWorkflowName());
+        }
+        return workflowNames;
     }
 }

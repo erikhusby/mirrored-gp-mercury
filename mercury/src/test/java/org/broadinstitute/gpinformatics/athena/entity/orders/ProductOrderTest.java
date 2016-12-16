@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderT
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.hamcrest.Matchers;
 import org.meanbean.lang.EquivalentFactory;
 import org.meanbean.test.BeanTester;
@@ -40,6 +41,7 @@ import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 
@@ -60,6 +62,9 @@ public class ProductOrderTest {
     private final List<ProductOrderSample> fourBspSamplesWithDupes =
             ProductOrderSampleTestFactory
                     .createDBFreeSampleList(MercurySample.MetadataSource.BSP, "SM-2ACGC", "SM-2ABDD", "SM-2ACGC", "SM-2AB1B", "SM-2ACJC", "SM-2ACGC");
+    private final List<ProductOrderSample> fourBspSamplesWithNoDupes =
+            ProductOrderSampleTestFactory
+                    .createDBFreeSampleList(MercurySample.MetadataSource.BSP, "SM-2ABDD", "SM-2AB1B", "SM-2ACJC", "SM-2ACGC");
     private final List<ProductOrderSample> sixSamplesWithNotAllNamesInBspFormat =
             ProductOrderSampleTestFactory
                     .createDBFreeSampleList(MercurySample.MetadataSource.BSP, "SM-2ACGC", "SM2ABDD", "SM2ACKV", "SM-2AB1B", "SM-2ACJC", "SM-2AD5D");
@@ -116,6 +121,10 @@ public class ProductOrderTest {
                 .ignoreProperty("attestationConfirmed")
                 .ignoreProperty("regulatoryInfos")
                 .ignoreProperty("squidWorkRequest")
+                .ignoreProperty("sapOrderNumber")
+                .ignoreProperty("sapReferenceOrders")
+                .ignoreProperty("childOrders")
+                .ignoreProperty("parentOrder")
                 .build();
         tester.testBean(ProductOrder.class, configuration);
 
@@ -347,15 +356,67 @@ public class ProductOrderTest {
         Assert.assertEquals(testProductOrder.getUnbilledSampleCount(), 0);
     }
 
+    public void testNonAbandonedCount() {
+        ProductOrder testParentOrder = new ProductOrder(TEST_CREATOR, "Test order with Abandoned Count",sixMercurySamplesNoDupes, QUOTE,null, null);
+
+        Assert.assertEquals(6, testParentOrder.getNonAbandonedCount());
+        Assert.assertEquals(0, testParentOrder.getNumberForReplacement());
+
+        int numberOfAbandoned = 4;
+        for(ProductOrderSample sampleToAbandon:testParentOrder.getSamples()) {
+
+            if (numberOfAbandoned == 0) {
+                break;
+            }
+            sampleToAbandon.setDeliveryStatus(ProductOrderSample.DeliveryStatus.ABANDONED);
+            numberOfAbandoned--;
+        }
+        Assert.assertEquals(2, testParentOrder.getNonAbandonedCount());
+        Assert.assertEquals(4, testParentOrder.getNumberForReplacement());
+
+        ProductOrder cloneOrder = ProductOrder.cloneProductOrder(testParentOrder, true);
+
+        Assert.assertEquals(2, testParentOrder.getNonAbandonedCount());
+        Assert.assertEquals(4, testParentOrder.getNumberForReplacement());
+        cloneOrder.addSamples(fourBspSamplesWithNoDupes);
+
+        Assert.assertEquals(6, testParentOrder.getNonAbandonedCount());
+        Assert.assertEquals(0, testParentOrder.getNumberForReplacement());
+    }
+
+    public void testLatestSapOrder() {
+        ProductOrder testProductOrder = new ProductOrder(TEST_CREATOR, "Test SAPReference orders",
+                sixMercurySamplesNoDupes, QUOTE, null,null);
+
+        assertThat(testProductOrder.latestSapOrderDetail(), is(nullValue()));
+        assertThat(testProductOrder.getSapOrderNumber(), isEmptyOrNullString());
+
+        final String sapOrderNumber = "SAP_001";
+        final SapOrderDetail orderDetail1 = new SapOrderDetail(sapOrderNumber, 5, QUOTE,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode());
+        orderDetail1.getUpdateData().setCreatedDate(new Date());
+        final SapOrderDetail orderDetail2 = new SapOrderDetail(sapOrderNumber + "2", 5, QUOTE,
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode());
+        orderDetail2.getUpdateData().setCreatedDate(new Date());
+        testProductOrder.addSapOrderDetail(orderDetail1);
+
+        assertThat(testProductOrder.latestSapOrderDetail(), is(not(nullValue())));
+        assertThat(testProductOrder.getSapOrderNumber(), is(equalTo(sapOrderNumber)));
+
+        testProductOrder.addSapOrderDetail(orderDetail2);
+        assertThat(testProductOrder.latestSapOrderDetail(), is(not(nullValue())));
+        assertThat(testProductOrder.getSapOrderNumber(), is(equalTo(sapOrderNumber+"2")));
+    }
+
     private void billSampleOut(ProductOrder productOrder, ProductOrderSample sample, int expected) {
 
         LedgerEntry primaryItemSampleEntry = new LedgerEntry(sample,
-                productOrder.getProduct().getPrimaryPriceItem(), new Date(), 1);
+                productOrder.getProduct().getPrimaryPriceItem(), new Date(), /*productOrder.getProduct(),*/ 1);
         primaryItemSampleEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
 
         LedgerEntry addonItemSampleEntry = new LedgerEntry(sample,
                 productOrder.getAddOns().iterator().next().getAddOn().getPrimaryPriceItem(),
-                new Date(), 1);
+                new Date(), /*productOrder.getProduct(),*/ 1);
         addonItemSampleEntry.setPriceItemType(LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM);
         sample.getLedgerItems().add(primaryItemSampleEntry);
         sample.getLedgerItems().add(addonItemSampleEntry);

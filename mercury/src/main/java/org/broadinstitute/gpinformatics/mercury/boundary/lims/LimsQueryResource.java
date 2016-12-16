@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceResponseFactory;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
@@ -20,13 +21,16 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ConcentrationAndVolumeAndWeightType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.FlowcellDesignationType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LibraryDataType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PoolGroupType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ValidationErrorType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WellAndSourceTubeType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WorklowValidationErrorType;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -78,6 +82,9 @@ public class LimsQueryResource {
 
     @Inject
     private GenericReagentDao genericReagentDao;
+
+    @Inject
+    private WorkflowValidator workflowValidator;
 
     public LimsQueryResource() {
     }
@@ -527,5 +534,41 @@ public class LimsQueryResource {
         } catch (ParseException e) {
             throw new RuntimeException("Expiration string must be in the format of yyyy-MM-dd");
         }
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/validateWorkflow")
+    public WorklowValidationErrorType validateWorkflow(
+            @QueryParam("q") List<String> vesselBarcodes, @QueryParam("nextEventTypeName") String nextEventTypeName) {
+        if (vesselBarcodes == null || vesselBarcodes.isEmpty() || nextEventTypeName == null) {
+            throw new RuntimeException("vessel barcodes ('q') and nextEventTypeName are required query parameters.");
+        }
+        Map<String, LabVessel> mapBarcodetoVessel = labVesselDao.findByBarcodes(vesselBarcodes);
+        Set<String> unknownLabVesselBarcodes = new HashSet<>();
+        for (Map.Entry<String, LabVessel> entry: mapBarcodetoVessel.entrySet()) {
+            if (entry.getValue() == null) {
+                unknownLabVesselBarcodes.add(entry.getKey());
+            }
+        }
+        if (!unknownLabVesselBarcodes.isEmpty()) {
+            throw new RuntimeException("Failed to find lab vessels with barcodes: " + unknownLabVesselBarcodes);
+        }
+        List<WorkflowValidator.WorkflowValidationError> workflowValidationErrors =
+                workflowValidator.validateWorkflow(mapBarcodetoVessel.values(), nextEventTypeName);
+        WorklowValidationErrorType errorType = new WorklowValidationErrorType();
+        errorType.setHasErrors(!workflowValidationErrors.isEmpty());
+        if (errorType.isHasErrors()) {
+            for (WorkflowValidator.WorkflowValidationError workflowValidationError: workflowValidationErrors) {
+                for (ProductWorkflowDefVersion.ValidationError validationError: workflowValidationError.getErrors()) {
+                    ValidationErrorType validationErrorType = new ValidationErrorType();
+                    validationErrorType.setMessage(validationError.getMessage());
+                    validationErrorType.getActualEventTypes().addAll(validationError.getActualEventNames());
+                    validationErrorType.getExpectedEventTypes().addAll(validationError.getExpectedEventNames());
+                }
+            }
+
+        }
+        return errorType;
     }
 }

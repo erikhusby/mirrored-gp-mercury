@@ -174,6 +174,12 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     @JoinColumn(name = "POSITIVE_CONTROL_RP_ID")
     private ResearchProject positiveControlResearchProject;
 
+    @Column(name ="EXTERNAL_ONLY_PRODUCT")
+    private Boolean externalOnlyProduct = false;
+
+    @Column(name = "SAVED_IN_SAP")
+    private Boolean savedInSAP = false;
+
     /**
      * Default no-arg constructor, also used when creating a new Product.
      */
@@ -472,6 +478,12 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
                 (discontinuedDate == null || discontinuedDate.compareTo(now) > 0);
     }
 
+    public boolean isDiscontinued() {
+        Date now = Calendar.getInstance().getTime();
+
+        return discontinuedDate != null && discontinuedDate.before(now);
+    }
+
     public boolean isAvailableNowOrLater() {
         Date now = Calendar.getInstance().getTime();
 
@@ -726,6 +738,14 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         return getProductFamily().isSupportsSkippingQuote();
     }
 
+    public boolean isExternalProduct() {
+        return isExternallyNamed() || isExternalOnlyProduct();
+    }
+
+    public boolean isExternallyNamed() {
+        return getPartNumber().startsWith("XT");
+    }
+
     @Transient
     public static Comparator<Product> BY_PRODUCT_NAME = new Comparator<Product>() {
         @Override
@@ -758,5 +778,22 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     public void setExpectInitialQuantInMercury(Boolean expectInitialQuantInMercury) {
         this.expectInitialQuantInMercury = expectInitialQuantInMercury;
+    }
+
+
+    public boolean isExternalOnlyProduct() {
+        return externalOnlyProduct;
+    }
+
+    public void setExternalOnlyProduct(boolean externalOnlyProduct) {
+        this.externalOnlyProduct = externalOnlyProduct;
+    }
+
+    public boolean isSavedInSAP() {
+        return savedInSAP;
+    }
+
+    public void setSavedInSAP(boolean savedInSAP) {
+        this.savedInSAP = savedInSAP;
     }
 }

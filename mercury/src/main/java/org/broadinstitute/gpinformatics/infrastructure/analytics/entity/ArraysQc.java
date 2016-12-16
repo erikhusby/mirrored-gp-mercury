@@ -87,6 +87,13 @@ public class ArraysQc {
         return callRate;
     }
 
+    public BigDecimal getCallRatePct() {
+        if (callRate == null) {
+            return null;
+        }
+        return callRate.multiply(BigDecimal.valueOf(100)).setScale(3, BigDecimal.ROUND_HALF_UP);
+    }
+
     public Boolean getAutocallPf() {
         return autocallPf;
     }
@@ -121,6 +128,13 @@ public class ArraysQc {
 
     public BigDecimal getHetPct() {
         return hetPct;
+    }
+
+    public BigDecimal getHetPct100() {
+        if (hetPct == null) {
+            return null;
+        }
+        return hetPct.multiply(BigDecimal.valueOf(100)).setScale(3, BigDecimal.ROUND_HALF_UP);
     }
 
     public BigDecimal getHetHomvarRatio() {

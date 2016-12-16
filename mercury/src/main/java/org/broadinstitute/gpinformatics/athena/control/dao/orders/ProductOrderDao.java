@@ -22,6 +22,8 @@ import org.hibernate.type.StandardBasicTypes;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.EntityManager;
 import javax.persistence.LockModeType;
@@ -49,6 +51,7 @@ import java.util.Set;
 
 @Stateful
 @RequestScoped
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class ProductOrderDao extends GenericDao {
 
     /**
@@ -80,7 +83,9 @@ public class ProductOrderDao extends GenericDao {
         SAMPLES,
         RISK_ITEMS,
         LEDGER_ITEMS,
-        PRODUCT_ORDER_KIT
+        PRODUCT_ORDER_KIT,
+        CHILD_ORDERS,
+        SAP_ORDER_INFO
     }
 
     private static class ProductOrderDaoCallback implements GenericDaoCallback<ProductOrder> {
@@ -127,6 +132,14 @@ public class ProductOrderDao extends GenericDao {
 
             if (fetchSpecs.contains(FetchSpec.PRODUCT_ORDER_KIT)) {
                 productOrder.fetch(ProductOrder_.productOrderKit, JoinType.LEFT);
+            }
+
+            if (fetchSpecs.contains(FetchSpec.CHILD_ORDERS)) {
+                productOrder.fetch(ProductOrder_.childOrders, JoinType.LEFT);
+            }
+
+            if (fetchSpecs.contains(FetchSpec.SAP_ORDER_INFO)) {
+                productOrder.fetch(ProductOrder_.sapReferenceOrders, JoinType.LEFT);
             }
         }
     }

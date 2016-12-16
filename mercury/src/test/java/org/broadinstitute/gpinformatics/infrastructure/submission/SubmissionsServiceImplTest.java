@@ -118,6 +118,7 @@ public class SubmissionsServiceImplTest {
         }
     }
 
+    @Test
     public void testSubmit() {
         SubmissionBean submissionBean1 = new SubmissionBean(getTestUUID(), "jgentry",
                 bioProject, new SubmissionBioSampleBean(SAMPLE1_ID, "/some/funky/file.bam", contactBean),
@@ -151,6 +152,7 @@ public class SubmissionsServiceImplTest {
         }
     }
 
+    @Test
     public void testGetSubmissionStatusReadyForSubmission() {
         String testUUID = getTestUUID();
 

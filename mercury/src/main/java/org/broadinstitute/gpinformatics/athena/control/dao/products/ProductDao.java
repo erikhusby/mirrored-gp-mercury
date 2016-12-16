@@ -8,6 +8,8 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.persistence.criteria.CriteriaBuilder;
@@ -29,6 +31,7 @@ import java.util.List;
  * Dao for {@link Product}s, supporting the browse and CRUD UIs.
  *
  */
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class ProductDao extends GenericDao implements Serializable {
 
     @Inject

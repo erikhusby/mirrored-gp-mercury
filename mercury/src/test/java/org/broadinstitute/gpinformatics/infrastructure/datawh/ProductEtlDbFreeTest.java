@@ -38,6 +38,9 @@ public class ProductEtlDbFreeTest {
     private static final String PRODUCT_FAMILY_NAME = "Test ProductFamily";
     private static final long PRIMARY_PRICE_ITEM_ID = 987654321L;
     private static final String AGGREGATION_DATA_TYPE = "Exome";
+    private static final boolean commercialIndicator = true;
+    private static final boolean savedInSapIndicator = true;
+
     private ProductEtl productEtl;
 
     private final AuditReaderDao auditReader = EasyMock.createMock(AuditReaderDao.class);
@@ -98,6 +101,9 @@ public class ProductEtlDbFreeTest {
 
         EasyMock.expect(family.getName()).andReturn(PRODUCT_FAMILY_NAME);
 
+        EasyMock.expect(product.isExternalOnlyProduct()).andReturn(commercialIndicator);
+        EasyMock.expect(product.isSavedInSAP()).andReturn(savedInSapIndicator);
+
         EasyMock.replay(mocks);
 
         Collection<String> records = productEtl.dataRecords(etlDateString, false, ENTITY_ID);
@@ -126,6 +132,8 @@ public class ProductEtlDbFreeTest {
         Assert.assertEquals(parts[i++], PRODUCT_FAMILY_NAME);
         Assert.assertEquals(parts[i++], String.valueOf(PRIMARY_PRICE_ITEM_ID));
         Assert.assertEquals(parts[i++], String.valueOf(AGGREGATION_DATA_TYPE));
-        Assert.assertEquals(parts.length, i);
+        Assert.assertEquals(parts[i++], EtlTestUtilities.format(commercialIndicator));
+        Assert.assertEquals(parts[i++], EtlTestUtilities.format(savedInSapIndicator));
+        Assert.assertEquals(parts.length, 17);
     }
 }
