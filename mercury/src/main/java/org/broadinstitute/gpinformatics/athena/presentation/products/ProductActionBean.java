@@ -113,6 +113,9 @@ public class ProductActionBean extends CoreActionBean {
     @Inject
     private ResearchProjectDao researchProjectDao;
 
+    @Inject
+    private WorkflowConfig workflowConfig;
+
     // Data needed for displaying the view.
     private List<ProductFamily> productFamilies;
     private List<Product> allProducts;
