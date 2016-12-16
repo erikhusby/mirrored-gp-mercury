@@ -206,7 +206,6 @@ public class BucketViewActionBean extends CoreActionBean {
             }
         }
         mapBucketToWorkflows = bucketWorkflows.asMap();
-
     }
 
     private void buildHeaderVisibilityMap(State state) {
@@ -333,19 +332,6 @@ public class BucketViewActionBean extends CoreActionBean {
             }
         }
         return new ForwardResolution(VIEW_PAGE);
-    }
-
-    public boolean shouldPrefetchEventData(Map<String, Boolean> headerMap) {
-//        if (true) {
-//            return true;
-//        }
-        for (String prefetchColumnName : PREFETCH_COLUMN_NAMES) {
-            boolean prefetchColumn = headerMap.containsKey(prefetchColumnName) && headerMap.get(prefetchColumnName);
-            if (prefetchColumn) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private void preFetchSampleData(Set<BucketEntry> collectiveEntries) {

@@ -169,13 +169,9 @@
             content: '\A';
             white-space: pre;
         }
-        th select.table-control{
-            /*min-width:100%;*/
-        }
-
     </style>
-    <script src="${ctxpath}/resources/scripts/jquery.jeditable.mini.js" type="text/javascript"></script>
 
+    <script src="${ctxpath}/resources/scripts/jquery.jeditable.mini.js" type="text/javascript"></script>
     <script src="${ctxpath}/resources/scripts/hSpinner.js"></script>
     <script src="${ctxpath}/resources/scripts/columnSelect.js"></script>
     <script src="${ctxpath}/resources/scripts/chosen_v1.6.2/chosen.jquery.min.js" type="text/javascript"></script>
@@ -577,7 +573,7 @@
             );
             $j("#spinner").hide();
 
-            // prevent subprevent submit when hitting the return key in an input so ajax validation can happen.
+            // prevent submit when hitting the return key in an input so ajax validation can happen.
             $j("#bucketEntryForm :input:not(textarea)").keypress(function (event) {
                 return event.keyCode != 13;
             });
@@ -590,9 +586,7 @@
                     $j("#bucketEntryView").find("input[name='selectedEntryIds']:lt(" + batchSize + ")").click();
                 }
             })
-
         });
-
     </script>
 </stripes:layout-component>
 

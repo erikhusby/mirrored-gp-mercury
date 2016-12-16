@@ -52,14 +52,22 @@ function isBlank(value){
     return (value === undefined || value.trim() === '');
 }
 
+/**
+ * Create standard set of buttons used in Mercury: 'excel' and 'copy' which exports the data to chosen format.
+ *
+ * Exported data includes all checked entries in the DataTable with filtering, sorting:
+ */
 function standardButtons(checkboxClass="shiftCheckbox", headerClass) {
     var defaultOptions = {
+        /* do not export colum 0 (the checkbox column) */
         columns: ':visible :gt(0)',
         rows: function (html, index, node) {
+            /* include only checked rows in the export */
             var $checked = $j(node).find('input:checked.' + checkboxClass);
             return $checked!==undefined && $checked.length>0;
         },
         format: {
+            /* if there are any additional things in the headers such as filtering widgets, ignore them */
             header: function(html, index, node){
                 if (headerClass){
                     return $j(node).find("."+headerClass).text();
@@ -67,6 +75,7 @@ function standardButtons(checkboxClass="shiftCheckbox", headerClass) {
                 return $j(node).text();
             }
         },
+        /* export results should include only filtered results and for all pages, not just the current page. */
         modifier: {
             search: 'applied',
             order: 'current',
