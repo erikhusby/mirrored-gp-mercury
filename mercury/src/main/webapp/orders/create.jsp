@@ -71,7 +71,8 @@
             float: right;
         }
     </style>
-        <script src="${ctxpath}/resources/scripts/clipboard.js" type="text/javascript"></script>
+        <script src="${ctxpath}/resources/scripts/clipboard.min.js" type="text/javascript"></script>
+        <script src="${ctxpath}/resources/scripts/bindWithDelay.js" type="text/javascript"></script>
         <script type="text/javascript">
 
         var duration = {'duration' : 400};
@@ -85,7 +86,7 @@
         }
 
         function reloadRegulatorySuggestions() {
-            if ($j("#researchProject").val().trim() !== "" && $j("#samplesToAdd").val().trim() !== "") {
+            if ($j("#researchProject").val().trim() !== "") {
                 regulatorySuggestionDT.ajax.reload(null, false);
             }
         }
@@ -201,27 +202,25 @@
                     data: "samples", title: "Sample IDs", render: {
                         display: function (samples, type, row, meta) {
                             var linkId = 'orsp' + meta.row + meta.col;
-                            var api = $j.fn.dataTable.Api(meta.settings);
                             var sampleString = samples.join(", ");
                             var sampleLength = samples.length;
+                            var linkSelector = '#' + linkId;
                             var $href = $j("<a></a>", {
                                 'href': 'javascript:;',
                                 'id': linkId,
                                 'text': 'Click to copy',
                                 'data-placement': 'right',
                                 'data-delay': 2000,
-//                                'data-trigger': 'click',
                                 'data-toggle': "tooltip",
                                 'data-original-title': sampleLength + ' sample names copied to clipboard.',
-                                'data-clipboard-target': '#'+linkId,
+                                'data-clipboard-target': linkSelector,
                                 'data-clipboard-text': sampleString
-
                             });
-                            var linkSelector = "a#" + linkId;
-                            var clipboard = new Clipboard(linkSelector);
+                            var clipboard = new Clipboard("a" + linkSelector);
+                            var api = $j.fn.dataTable.Api(meta.settings);
                             api.cell().on('click.dt', function(event) {
                                 $j(event.target).tooltip("show");
-                                setTimeout(function(){
+                                setTimeout(function () {
                                     $j(event.target).tooltip('hide');
                                 }, 2000);
                             });
@@ -401,9 +400,7 @@
                     });
 
                     <c:if test="${actionBean.editOrder.draft}">
-                    $j('#samplesToAdd').on('input', function () {
-                        reloadRegulatorySuggestions();
-                    });
+                    $j('#samplesToAdd').bindWithDelay('input',reloadRegulatorySuggestions, 1000);
                     </c:if>
                 }
 
