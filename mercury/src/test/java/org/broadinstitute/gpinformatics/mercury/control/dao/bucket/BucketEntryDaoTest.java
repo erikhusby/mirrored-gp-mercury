@@ -91,7 +91,6 @@ public class BucketEntryDaoTest extends ContainerTest {
 
     }
 
-    @Override
     @AfterMethod(groups = TestGroups.STUBBY)
     public void tearDown() throws Exception {
         // Skip if no injections, meaning we're not running in container
