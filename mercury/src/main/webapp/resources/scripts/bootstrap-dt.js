@@ -16,6 +16,10 @@ if (isLegacyDataTables()) {
         "sSwfPath": "/Mercury/resources/scripts/DataTables-1.9.4/extras/TableTools/media/swf/copy_csv_xls.swf",
         "aButtons": ["copy", "csv", "print"]
     };
+} else {
+    $j.extend($j.fn.dataTable.defaults, {
+        buttons: [ 'copy', 'csv', 'excel' ]
+    });
 }
 var sDomNoTableToolsButtons = "lfrtip";
 

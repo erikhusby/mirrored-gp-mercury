@@ -1,5 +1,9 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Multimap;
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.MaterialInfo;
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
 import net.sourceforge.stripes.action.After;
@@ -85,6 +89,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitReq
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.cognos.OrspProjectDao;
 import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProject;
+import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProjectConsent;
 import org.broadinstitute.gpinformatics.infrastructure.common.MercuryEnumUtils;
 import org.broadinstitute.gpinformatics.infrastructure.common.MercuryStringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
@@ -1683,55 +1688,99 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @return a resolution for the JSON results
      */
     @HandlesEvent("suggestRegulatoryInfo")
-    public Resolution suggestRegulatoryInfo() {
-        JSONArray results = new JSONArray();
+    public Resolution suggestRegulatoryInfo() throws Exception {
+        JSONObject results = new JSONObject();
+        JSONArray jsonResults = new JSONArray();
 
         // Access sample list directly in order to suggest based on possibly not-yet-saved sample IDs.
         if (!getSampleList().isEmpty()) {
             List<ProductOrderSample> productOrderSamples = stringToSampleListExisting(getSampleList());
-
             // Bulk-fetch collection IDs for all samples to avoid having them fetched individually on demand.
-            ProductOrder.loadSampleData(productOrderSamples, BSPSampleSearchColumn.BSP_COLLECTION_BARCODE);
+            ProductOrder.loadSampleData(productOrderSamples, BSPSampleSearchColumn.BSP_COLLECTION_BARCODE,
+                    BSPSampleSearchColumn.COLLECTION);
 
-            List<OrspProject> orspProjects = orspProjectDao.findBySamples(productOrderSamples);
-            if (!orspProjects.isEmpty()) {
-
-                // Fetching RP here instead of a @Before method to avoid the fetch when it won't be used.
-                ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
-                Map<String, RegulatoryInfo> regulatoryInfoByIdentifier = researchProject.getRegulatoryByIdentifier();
-
-                for (OrspProject orspProject : orspProjects) {
-                    RegulatoryInfo regulatoryInfo = regulatoryInfoByIdentifier.get(orspProject.getProjectKey());
-                    results.put(orspProjectToJson(orspProject, regulatoryInfo));
+            Multimap<String, ProductOrderSample> samplesByCollection = HashMultimap.create();
+            for (ProductOrderSample productOrderSample : productOrderSamples) {
+                String collectionId = productOrderSample.getSampleData().getCollectionId();
+                if (!collectionId.isEmpty()) {
+                    samplesByCollection.put(collectionId, productOrderSample);
                 }
             }
+
+            List<OrspProject> orspProjects = orspProjectDao.findBySamples(productOrderSamples);
+            for (OrspProject orspProject : orspProjects) {
+                for (OrspProjectConsent consent : orspProject.getConsents()) {
+                    Collection<ProductOrderSample> samples =
+                            samplesByCollection.get(consent.getKey().getSampleCollection());
+                    for (ProductOrderSample sample : samples) {
+                        sample.addOrspProject(orspProject);
+                    }
+                }
+            }
+            // Fetching RP here instead of a @Before method to avoid the fetch when it won't be used.
+            ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
+            Map<String, RegulatoryInfo> regulatoryInfoByIdentifier = researchProject.getRegulatoryByIdentifier();
+            jsonResults = orspProjectToJson(productOrderSamples, regulatoryInfoByIdentifier);
         }
+        results.put("data", jsonResults);
+        results.put("draw", 1);
+        results.put("recordsTotal", jsonResults.length());
 
         return createTextResolution(results.toString());
     }
 
     /**
-     * Constructs a JSONObject for an OrspProject. If regulatoryInfo is non-null, it is assumed to be an existing record
-     * with the same identifier associated with the research project in which case its primary key is also placed in the
-     * result. This allows client-side scripts to match these results with entries in a regulatory info selection
-     * widget.
+     * Create a JSON data structure linking all the input ProductOrderSamples to possible OSRP Projects and Sample
+     * Collections. If regulatoryInfo is non-null, it is assumed to be an existing record with the same identifier
+     * associated with the Research Project in which case its primary key is also placed in the result. This allows
+     * client-side scripts to match these results with entries in a regulatory info selection widget.
      *
-     * @param orspProject       the ORSP project to serialize
-     * @param regulatoryInfo    the matching RegulatoryInfo record (or null)
-     * @return a new JSONObject for the ORSP project
+     * @param productOrderSamples input samples to find possible regulatory information about.
+     * @param regulatoryInfoById the matching RegulatoryInfo record (or null)
+     * @return A JSONArray of JSONObjects which link the ProductOrderSamples to ORSP projects and Sample Collections.
      */
-    private JSONObject orspProjectToJson(OrspProject orspProject, RegulatoryInfo regulatoryInfo) {
-        JSONObject result = new JSONObject();
+    private JSONArray orspProjectToJson(List<ProductOrderSample> productOrderSamples, Map<String, RegulatoryInfo> regulatoryInfoById) {
+        JSONArray resultList = new JSONArray();
         try {
-            result.put("identifier", orspProject.getProjectKey());
-            result.put("name", orspProject.getName());
-            if (regulatoryInfo != null) {
-                result.put("regulatoryInfoId", regulatoryInfo.getRegulatoryInfoId());
+            ListMultimap<OrspProject, ProductOrderSample> orspProjectSamples = ArrayListMultimap.create();
+            Set<String> samplesWithNoOrsp = new HashSet<>();
+            for (ProductOrderSample productOrderSample : productOrderSamples) {
+                if (productOrderSample.getOrspProjects().isEmpty()) {
+                    samplesWithNoOrsp.add(productOrderSample.getSampleKey());
+                }
+                for (OrspProject orspProject : productOrderSample.getOrspProjects()) {
+                    orspProjectSamples.put(orspProject, productOrderSample);
+                }
+            }
+
+            for (Map.Entry<OrspProject, Collection<ProductOrderSample>> pdoSamplesEntry : orspProjectSamples.asMap()
+                    .entrySet()) {
+                OrspProject orspProject = pdoSamplesEntry.getKey();
+                JSONObject orspObject = new JSONObject();
+                orspObject.put("identifier", orspProject.getProjectKey());
+                orspObject.put("name", orspProject.getName());
+
+                RegulatoryInfo regulatoryInfo = regulatoryInfoById.get(orspProject.getProjectKey());
+                if (regulatoryInfo != null) {
+                    orspObject.put("regulatoryInfoId", regulatoryInfo.getRegulatoryInfoId());
+                }
+
+                Set<String> samples = new HashSet<>();
+                Set<String> collections = new HashSet<>();
+                for (ProductOrderSample productOrderSample : pdoSamplesEntry.getValue()) {
+                    samples.add(productOrderSample.getSampleKey());
+                    collections.add(productOrderSample.getSampleData().getCollection());
+                }
+
+                resultList.put(buildOrspJsonObject(orspObject, samples, collections));
+            }
+            if (!samplesWithNoOrsp.isEmpty()) {
+                resultList.put(buildOrspJsonObject(new JSONObject(), samplesWithNoOrsp, Collections.<String>emptySet()));
             }
         } catch (JSONException e) {
             throw new RuntimeException("No, I didn't pass a null key to JSONObject.put()");
         }
-        return result;
+        return resultList;
     }
 
     @HandlesEvent("getPostReceiveOptions")
@@ -2961,4 +3010,14 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void setReplacementSampleList(String replacementSampleList) {
         this.replacementSampleList = replacementSampleList;
     }
+
+    public static JSONObject buildOrspJsonObject(JSONObject orspProject, Set<String> samples,
+                                                 Set<String> sampleCollections) throws JSONException {
+        JSONObject result = new JSONObject();
+        result.put("orspProject", orspProject);
+        result.put("samples", samples);
+        result.put("collections", sampleCollections);
+        return result;
+    }
+
 }
