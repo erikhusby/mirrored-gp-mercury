@@ -157,7 +157,8 @@ public class BucketViewActionBean extends CoreActionBean {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public String getSlowColumns(){
-        return new JSONArray(Arrays.asList("Material Type", "Workflow", "Receipt Date")).toString();
+        return new JSONArray(Arrays.asList("Material Type", "Workflow", "Receipt Date", "Rework Reason",
+                "Rework Comment","Rework User", "Rework Date")).toString();
     }
     private Map<String, Boolean> headerVisibilityMap = new HashMap<>();
 

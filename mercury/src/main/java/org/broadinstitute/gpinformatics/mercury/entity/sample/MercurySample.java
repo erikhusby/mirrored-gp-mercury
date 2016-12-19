@@ -163,7 +163,7 @@ public class MercurySample extends AbstractSample {
 
     // TODO: jms Shouldn't this be plural?
     @ManyToMany(mappedBy = "mercurySamples", cascade = CascadeType.PERSIST)
-    @BatchSize(size = 500)
+    @BatchSize(size = 100)
     protected Set<LabVessel> labVessel = new HashSet<>();
 
     /**
