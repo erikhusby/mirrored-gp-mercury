@@ -157,6 +157,43 @@ public class BucketViewActionBean extends CoreActionBean {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public String getSlowColumns(){
+        return new JSONArray(Arrays.asList("Material Type", "Workflow", "Receipt Date")).toString();
+    }
+    private Map<String, Boolean> headerVisibilityMap = new HashMap<>();
+
+    @After(stages = LifecycleStage.BindingAndValidation, on = VIEW_BUCKET_ACTION)
+    public void loadTableState() {
+        try {
+            NameValueDefinitionValue nameValueDefinitionValue = loadSearchData();
+            List<String> selectedBucketPreferenceValue = nameValueDefinitionValue.getDataMap().get(SELECTED_BUCKET_KEY);
+            if (CollectionUtils.isNotEmpty(selectedBucketPreferenceValue)) {
+                selectedBucket = selectedBucketPreferenceValue.iterator().next();
+                List<String> tableStatePreferenceValue = nameValueDefinitionValue.getDataMap().get(TABLE_STATE_KEY);
+                if (CollectionUtils.isNotEmpty(tableStatePreferenceValue)) {
+                    tableState = tableStatePreferenceValue.iterator().next();
+                    State state = objectMapper.readValue(tableState, State.class);
+                    buildHeaderVisibilityMap(state);
+                }
+                List<String> selectNextPreferenceValue = nameValueDefinitionValue.getDataMap().get(SELECT_NEXT_SIZE);
+                if (CollectionUtils.isNotEmpty(selectNextPreferenceValue)) {
+                    selectNextSize = Integer.parseInt(selectNextPreferenceValue.iterator().next());
+                }
+            }
+        } catch (Exception e) {
+            log.error("Load table state preference", e);
+        }
+
+    }
+    private String filterState;
+    private String tableState = "{}";
+    private int selectNextSize = 92;
+
+    private String searchKey;
+    private static final List<String> PREFETCH_COLUMN_NAMES =
+            Arrays.asList("Material Type", "Workflow", "Receipt Date");
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
+    public String getSlowColumns(){
         return new JSONArray(Arrays.asList("Material Type", "Workflow", "Receipt Date", "Rework Reason",
                 "Rework Comment","Rework User", "Rework Date")).toString();
     }

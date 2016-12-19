@@ -98,7 +98,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @JoinColumn(name = "product_order", nullable = false)
     @OrderColumn(name = "SAMPLE_POSITION", nullable = false)
     @AuditJoinTable(name = "product_order_sample_join_aud")
-    @BatchSize(size = 100)
+    @BatchSize(size = 500)
     private final List<ProductOrderSample> samples = new ArrayList<>();
 
     @Transient
