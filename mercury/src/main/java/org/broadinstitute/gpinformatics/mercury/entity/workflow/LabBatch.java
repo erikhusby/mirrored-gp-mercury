@@ -90,10 +90,13 @@ public class LabBatch {
         }
     }
 
-    public static final Comparator<LabBatch> byDate = new Comparator<LabBatch>() {
+    /**
+     * To support lab batch sorting by creation date, newest first
+     */
+    public static final Comparator<LabBatch> byDateDesc = new Comparator<LabBatch>() {
         @Override
         public int compare(LabBatch bucketEntryPrime, LabBatch bucketEntrySecond) {
-            return bucketEntryPrime.getCreatedOn().compareTo(bucketEntrySecond.getCreatedOn());
+            return bucketEntrySecond.getCreatedOn().compareTo(bucketEntryPrime.getCreatedOn());
         }
     };
 

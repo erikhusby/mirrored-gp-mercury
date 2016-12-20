@@ -277,15 +277,15 @@ public class SequencingTemplateFactory {
                                                         Set<VesselAndPosition> loadedVesselsAndPositions,
                                                         boolean poolTestDefault) {
 
-        // Finds the FCT for the flowcell.
+        // Finds the FCT for the flowcell, check for dilution vessel transfer first
         TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
                 new TransferTraverserCriteria.NearestLabBatchFinder(LabBatch.LabBatchType.FCT,
                         TransferTraverserCriteria.NearestLabBatchFinder.AssociationType.DILUTION_VESSEL);
         flowcell.getContainerRole().applyCriteriaToAllPositions(batchCriteria,
                 TransferTraverserCriteria.TraversalDirection.Ancestors);
 
-        LabBatch fctBatch = CollectionUtils.isNotEmpty(batchCriteria.getAllLabBatches()) ?
-                batchCriteria.getAllLabBatches().iterator().next() :
+        LabBatch fctBatch = CollectionUtils.isNotEmpty(batchCriteria.getNearestLabBatches()) ?
+                batchCriteria.getNearestLabBatches().iterator().next() :
                 (CollectionUtils.isNotEmpty(flowcell.getAllLabBatches(LabBatch.LabBatchType.FCT)) ?
                         flowcell.getAllLabBatches(LabBatch.LabBatchType.FCT).iterator().next() : null);
 

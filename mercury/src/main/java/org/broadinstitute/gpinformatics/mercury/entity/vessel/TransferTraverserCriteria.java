@@ -331,9 +331,13 @@ public abstract class TransferTraverserCriteria {
         public void evaluateVesselPostOrder(Context context) {
         }
 
+        /**
+         * In theory, should only return a single lab batch, the nearest.  Not sure what use-case would produce
+         * more than one lab batch at the same point in ancestry, but if so, sort by creation date, newest first.
+         */
         public Collection<LabBatch> getNearestLabBatches() {
             int nearest = Integer.MAX_VALUE;
-            Set<LabBatch> nearestSet = new HashSet<>();
+            Set<LabBatch> nearestSet = new TreeSet<>(LabBatch.byDateDesc);
             for (Map.Entry<Integer, Collection<LabBatch>> labBatchesForHopCount : labBatchesAtHopCount.entrySet()) {
                 if (labBatchesForHopCount.getKey() < nearest) {
                     nearest = labBatchesForHopCount.getKey();
@@ -356,8 +360,11 @@ public abstract class TransferTraverserCriteria {
             return nearestSet;
         }
 
+        /**
+         * Return all lab batches in ancestry, sorted by creation date, newest first.
+         */
         public Collection<LabBatch> getAllLabBatches() {
-            Set<LabBatch> allBatches = new HashSet<>();
+            Set<LabBatch> allBatches = new TreeSet<>(LabBatch.byDateDesc);
             for (Collection<LabBatch> collection : labBatchesAtHopCount.values()) {
                 allBatches.addAll(collection);
             }

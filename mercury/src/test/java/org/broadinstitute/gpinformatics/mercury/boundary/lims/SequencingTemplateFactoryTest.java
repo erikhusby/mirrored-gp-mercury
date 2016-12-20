@@ -82,6 +82,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
     private Date runDate;
     private String flowcellHiSeq2500Barcode;
     private BarcodedTube dilutionTube2500;
+    private BarcodedTube dilutionTube4000;
     private LabBatch fctBatch;
     private LabBatch miSeqBatch;
     private LabBatch fctBatchHiSeq2000;
@@ -220,9 +221,9 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         TubeFormation rearrayedDenatureRack = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
         rearrayedDenatureRack.addRackOfTubes(new RackOfTubes("denatureRearray", RackOfTubes.RackType.Matrix96));
         HiSeq4000FlowcellEntityBuilder flowcell4000EntityBuilder =
-                runHiSeq4000FlowcellProcess(rearrayedDenatureRack, null, BARCODE_SUFFIX + "ADXX",
+                runHiSeq4000FlowcellProcess(rearrayedDenatureRack, null, BARCODE_SUFFIX + "4ADXX",
                         fctBatchHiSeq4000, null, HiSeq4000FlowcellEntityBuilder.FCTCreationPoint.DENATURE);
-        dilutionTube2500 = flowcellEntityBuilder.getDilutionRack().getContainerRole().getVesselAtPosition(
+        dilutionTube4000 = flowcellEntityBuilder.getDilutionRack().getContainerRole().getVesselAtPosition(
                 VesselPosition.A01);
 
         flowcellHiSeq4000 = flowcell4000EntityBuilder.getIlluminaFlowcell();
@@ -459,7 +460,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
             LabBatch.VesselToLanesInfo laneInfo = null;
             if(vesselToLanesInfo.getLabVessel().getLabel().equals(lane.getDerivedVesselLabel())) {
                 laneInfo = vesselToLanesInfo;
-                assertThat(lane.getDerivedVesselLabel(), equalTo("DenatureTube10"));
+                assertThat(lane.getLoadingVesselLabel(), equalTo("DenatureTube10"));
             } else if(vesselToLanesInfo2.getLabVessel().getLabel().equals(lane.getDerivedVesselLabel())) {
                 laneInfo = vesselToLanesInfo2;
                 assertThat(lane.getLoadingVesselLabel(), equalTo("DenatureTube40000"));
