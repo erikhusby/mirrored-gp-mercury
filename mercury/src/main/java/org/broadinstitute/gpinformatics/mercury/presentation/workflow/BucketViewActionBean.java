@@ -20,6 +20,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceEjb;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.preference.NameValueDefinitionValue;
@@ -117,6 +118,8 @@ public class BucketViewActionBean extends CoreActionBean {
     LabVesselDao labVesselDao;
     @Inject
     private PreferenceEjb preferenceEjb;
+    @Inject
+    private PreferenceDao preferenceDao;
 
     private static final Log log = LogFactory.getLog(BucketViewActionBean.class);
 
@@ -298,7 +301,7 @@ public class BucketViewActionBean extends CoreActionBean {
 
 
     public NameValueDefinitionValue loadSearchData() throws Exception {
-        List<Preference> preferences = preferenceEjb.getPreferences(getUserBean().getBspUser().getUserId(),
+        List<Preference> preferences = preferenceDao.getPreferences(getUserBean().getBspUser().getUserId(),
                 PreferenceType.BUCKET_PREFERENCES);
         if (!preferences.isEmpty()) {
             Preference preference = preferences.iterator().next();

@@ -40,6 +40,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDa
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderListEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
@@ -211,6 +212,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private PreferenceEjb preferenceEjb;
+
+    @Inject
+    private PreferenceDao preferenceDao;
 
     @Inject
     private ProductOrderListEntryDao orderListEntryDao;
@@ -1001,7 +1005,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void setupSearchCriteria() throws Exception {
         // Get the saved search for the user.
         List<Preference> preferences =
-                preferenceEjb.getPreferences(getUserBean().getBspUser().getUserId(), PreferenceType.PDO_SEARCH);
+                preferenceDao.getPreferences(getUserBean().getBspUser().getUserId(), PreferenceType.PDO_SEARCH);
 
         productFamilyId = null;
 
