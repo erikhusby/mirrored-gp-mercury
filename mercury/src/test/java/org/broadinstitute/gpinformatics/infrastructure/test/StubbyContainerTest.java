@@ -23,6 +23,7 @@ public class StubbyContainerTest extends Arquillian {
                 "org.broadinstitute.gpinformatics.infrastructure.bass.BassSearchServiceStub",
                 "org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub",
                 "org.broadinstitute.gpinformatics.infrastructure.bettalims.BettaLimsConnectorStub",
+                "org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcherStub",
                 "org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortSearchServiceStub",
                 "org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleReceiptServiceStub",
                 "org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub",
