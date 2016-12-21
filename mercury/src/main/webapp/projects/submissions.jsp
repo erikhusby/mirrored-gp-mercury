@@ -145,36 +145,36 @@
 
                 if (oTable == undefined) {
                     function renderCheckbox(data, type, row) {
-                    if (type === 'display') {
-                        var status = row.<%=SubmissionField.SUBMITTED_STATUS %>;
-                        var tagAttributes = {};
-                        if (status.length === 0) {
-                            tagAttributes = {
-                                "name": "<%=ResearchProjectActionBean.SUBMISSION_TUPLES_PARAMETER%>",
-                                "value": data,
-                                "type": "checkbox",
-                                "class": "shiftCheckbox"
-                            };
-                        } else {
-                            tagAttributes = {
-                                "value": data,
-                                "type": "hidden"
-                            };
-                        }
+                        if (type === 'display') {
+                            var status = row.<%=SubmissionField.SUBMITTED_STATUS %>;
+                            var tagAttributes = {};
+                            if (status.length === 0) {
+                                tagAttributes = {
+                                    "name": "<%=ResearchProjectActionBean.SUBMISSION_TUPLES_PARAMETER%>",
+                                    "value": data,
+                                    "type": "checkbox",
+                                    "class": "shiftCheckbox"
+                                };
+                            } else {
+                                tagAttributes = {
+                                    "value": data,
+                                    "type": "hidden"
+                                };
+                            }
                         return jQuery("<input/>", tagAttributes)[0].outerHTML;
-                    }
-                    if (type === 'sort') {
-                        if (data === undefined || data === "") {
-                            return 1;
                         }
-                        var selector = 'input[type="checkbox"][value="data"]'.replace("data", data);
-                        var result = $j(selector).prop("checked");
-                        if (result === undefined) {
-                            result = 1;
+                        if (type === 'sort') {
+                            if (data === undefined || data === "") {
+                                return 1;
+                            }
+                            var selector = 'input[type="checkbox"][value="data"]'.replace("data", data);
+                            var result = $j(selector).prop("checked");
+                            if (result === undefined) {
+                                result = 1;
+                            }
+                            return result;
                         }
-                        return result;
-                    }
-                    return data;
+                        return data;
                 }
 
                     function displayPdoList(data, type, row) {
