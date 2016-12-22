@@ -131,7 +131,7 @@ public class SampleInstanceEjb  {
             sampleInstanceEntity.setMolecularIndexScheme(molecularIndexSchemes.get(sampleIndex));
             sampleInstanceEntity.setMercurySampleId(mercurySamples.get(sampleIndex));
 
-            if(rootSamples.size() >= sampleIndex) {
+            if(rootSamples.size() > sampleIndex) {
                 sampleInstanceEntity.setRootSample(rootSamples.get(sampleIndex));
             }
 
