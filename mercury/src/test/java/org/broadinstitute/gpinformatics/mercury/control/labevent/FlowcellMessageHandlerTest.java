@@ -299,6 +299,8 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
 
         LabBatch fctBatch2 = new LabBatch(FLOWCELL_2500_TICKET_KEY + "2", LabBatch.LabBatchType.FCT,
                 IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, denatureTube, BigDecimal.valueOf(12.33f));
+        // Make second FCT occur after first
+        fctBatch2.getCreatedOn().setTime(fctBatch2.getCreatedOn().getTime() + 1000L);
 
         final String denatureToFlowcellFlowcellBarcode = "ADTF";
 
@@ -487,6 +489,9 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         LabBatch miseqBatch2 = new LabBatch(MISEQ_TICKET_KEY + "2", LabBatch.LabBatchType.MISEQ,
                 IlluminaFlowcell.FlowcellType.MiSeqFlowcell, denatureTube, BigDecimal.valueOf(7f));
 
+        // Make second FCT occur after first
+        miseqBatch2.getCreatedOn().setTime(miseqBatch2.getCreatedOn().getTime() + 1000L);
+
         final String denatureToFlowcellFlowcellBarcode = "ADTF";
 
         EmailSender mockEmailSender = Mockito.mock(EmailSender.class);
@@ -579,8 +584,12 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                 IlluminaFlowcell.FlowcellType.MiSeqFlowcell, denatureTube, BigDecimal.valueOf(7f));
         LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET_KEY, LabBatch.LabBatchType.FCT,
                 IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, denatureTube, BigDecimal.valueOf(12.33f));
+        // Make FCT occur after MiSEQ
+        fctBatch.getCreatedOn().setTime(fctBatch.getCreatedOn().getTime() + 1000L);
         LabBatch fctBatch2 = new LabBatch(FLOWCELL_2500_TICKET_KEY + "2", LabBatch.LabBatchType.FCT,
                 IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, denatureTube, BigDecimal.valueOf(12.33f));
+        // Make second FCT occur after first
+        fctBatch2.getCreatedOn().setTime(fctBatch2.getCreatedOn().getTime() + 2000L);
 
         final String denatureToFlowcellFlowcellBarcode = "ADDF";
 
@@ -758,6 +767,8 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
 
         LabBatch secondFctBatch = new LabBatch("FCT-4", LabBatch.LabBatchType.FCT,
                 IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell, normTube, BigDecimal.valueOf(7f));
+        // Make second FCT occur after first
+        secondFctBatch.getCreatedOn().setTime(secondFctBatch.getCreatedOn().getTime() + 1000L);
 
         EmailSender mockEmailSender = Mockito.mock(EmailSender.class);
         JiraService mockJiraService = Mockito.mock(JiraService.class);
