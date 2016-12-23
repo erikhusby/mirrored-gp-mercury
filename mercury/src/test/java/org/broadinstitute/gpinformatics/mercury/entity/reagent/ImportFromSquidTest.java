@@ -211,7 +211,7 @@ public class ImportFromSquidTest extends Arquillian {
                     }
                 }
                 staticPlate = new StaticPlate(plateBarcode, StaticPlate.PlateType.IndexedAdapterPlate96);
-                if (!plates.contains(staticPlate) && mapBarcodeToVessel.get(staticPlate.getLabel()) == null) {
+                if (mapBarcodeToVessel.get(staticPlate.getLabel()) == null) {
                     plates.add(staticPlate);
                 }
             }
