@@ -157,6 +157,13 @@
                 <deadEndBranch>true</deadEndBranch>
             </workflowStepDefs>
             <workflowStepDefs>
+                <name>Spike In</name>
+                <labEventTypes>SPIKE_IN</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
                 <name>Fingerprinting Aliquot</name>
                 <labEventTypes>FINGERPRINTING_ALIQUOT</labEventTypes>
                 <optional>true</optional>
