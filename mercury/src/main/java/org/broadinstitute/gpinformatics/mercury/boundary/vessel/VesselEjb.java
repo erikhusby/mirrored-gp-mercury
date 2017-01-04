@@ -5,6 +5,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
@@ -24,6 +26,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeD
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.BSPRestSender;
 import org.broadinstitute.gpinformatics.mercury.control.sample.SampleVesselProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.CaliperPlateProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
@@ -32,6 +35,7 @@ import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanRowParse
 import org.broadinstitute.gpinformatics.mercury.control.vessel.WallacPlateProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.WallacRowParser;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
@@ -52,6 +56,9 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.validation.constraints.Null;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -95,6 +102,9 @@ public class VesselEjb {
     @Resource
     private EJBContext ejbContext;
 
+    @Inject
+    private BSPRestSender bspRestSender;
+
     /**
      * Registers {@code BarcodedTube}s for all specified {@param tubeBarcodes} as well as
      * registering any required {@code MercurySample}s.  No new {@code MercurySample}s will be
@@ -102,6 +112,7 @@ public class VesselEjb {
      * preexisting and newly created {@code MercurySample}s will be associated with the created
      * {@code BarcodedTube}s.  The sample names are gotten from the
      * {@code GetSampleDetails.SampleInfo} values of the {@param sampleInfoMap}.
+     *
      * @param tubeType either BarcodedTube.BarcodedTubeType.name or null (defaults to Matrix tube).
      */
     public void registerSamplesAndTubes(@Nonnull Collection<String> tubeBarcodes,
@@ -174,7 +185,8 @@ public class VesselEjb {
      * Create LabVessels and MercurySamples from a spreadsheet (from BSP).
      */
     public List<LabVessel> createSampleVessels(InputStream samplesSpreadsheetStream, String loginUserName,
-                                               MessageCollection messageCollection, SampleVesselProcessor sampleVesselProcessor)
+                                               MessageCollection messageCollection,
+                                               SampleVesselProcessor sampleVesselProcessor)
             throws InvalidFormatException, IOException, ValidationException {
         messageCollection.addErrors(PoiSpreadsheetParser.processSingleWorksheet(samplesSpreadsheetStream,
                 sampleVesselProcessor));
@@ -189,7 +201,8 @@ public class VesselEjb {
                 }
             }
 
-            List<MercurySample> mercurySamples = mercurySampleDao.findBySampleKeys(sampleVesselProcessor.getSampleIds());
+            List<MercurySample> mercurySamples =
+                    mercurySampleDao.findBySampleKeys(sampleVesselProcessor.getSampleIds());
             for (MercurySample mercurySample : mercurySamples) {
                 messageCollection.addError("Sample " + mercurySample.getSampleKey() + " is already in the database.");
             }
@@ -208,14 +221,15 @@ public class VesselEjb {
      * transferred into one or more plates, and the plates are in the spreadsheet.
      *
      * @param acceptRePico indicates when previous quants should be ignored and new quants processed.
+     *
      * @return Pair of LabMetricRun and the label of the tubeFormation that sourced the plates listed in the upload,
-     *         or null in case of error.
+     * or null in case of error.
      * In case of a duplicate upload the returned LabMetricRun is the previously uploaded one.
      */
     public Pair<LabMetricRun, String> createVarioskanRun(InputStream varioskanSpreadsheet,
                                                          LabMetric.MetricType metricType, Long decidingUser,
-                                                         MessageCollection messageCollection, boolean acceptRePico) {
-
+                                                         MessageCollection messageCollection,
+                                                         boolean acceptRePico) {
         try {
             Workbook workbook = WorkbookFactory.create(varioskanSpreadsheet);
             VarioskanRowParser varioskanRowParser = new VarioskanRowParser(workbook);
@@ -302,6 +316,7 @@ public class VesselEjb {
 
     /**
      * Create a LabMetricRun from a Varioskan spreadsheet.
+     *
      * @return Pair of LabMetricRun and the label of the tubeFormation that sourced the plates listed in the upload.
      */
     @DaoFree
@@ -421,8 +436,9 @@ public class VesselEjb {
      * transferred into one or more plates, and the plates are in the spreadsheet.
      *
      * @param acceptRePico indicates when previous quants should be ignored and new quants processed.
+     *
      * @return Pair of LabMetricRun and the label of the tubeFormation that sourced the plates listed in the upload,
-     *         or null in case of error.
+     * or null in case of error.
      * In case of a duplicate upload the returned LabMetricRun is the previously uploaded one.
      */
     public Pair<LabMetricRun, String> createWallacRun(InputStream wallacSpreadsheet, String runName,
@@ -435,7 +451,8 @@ public class VesselEjb {
 
             String plateBarcode1 = mapNameValueToValue.get(WallacRowParser.NameValue.PLATE_BARCODE_1);
             String plateBarcode2 = mapNameValueToValue.get(WallacRowParser.NameValue.PLATE_BARCODE_2);
-            WallacPlateProcessor wallacPlateProcessor = new WallacPlateProcessor(WallacRowParser.RESULTS_TABLE_TAB, plateBarcode1, plateBarcode2);
+            WallacPlateProcessor wallacPlateProcessor =
+                    new WallacPlateProcessor(WallacRowParser.RESULTS_TABLE_TAB, plateBarcode1, plateBarcode2);
             PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.<String, TableProcessor>emptyMap());
             parser.processRows(workbook.getSheet(WallacRowParser.RESULTS_TABLE_TAB), wallacPlateProcessor);
 
@@ -509,7 +526,7 @@ public class VesselEjb {
                 }
             }
             return pair;
-        } catch(IOException | InvalidFormatException | ValidationException e){
+        } catch (IOException | InvalidFormatException | ValidationException e) {
             throw new RuntimeException(e);
         }
     }
@@ -537,9 +554,10 @@ public class VesselEjb {
     }
 
     private String addPlateWellResults(LabMetricRun labMetricRun, Map<String, StaticPlate> mapBarcodeToPlate,
-                                     List<VarioskanPlateProcessor.PlateWellResult> plateWellResults, boolean runFailed,
-                                     Date runStarted, LabMetric.MetricType metricType, long decidingUser,
-                                     MessageCollection messageCollection) {
+                                       List<VarioskanPlateProcessor.PlateWellResult> plateWellResults,
+                                       boolean runFailed,
+                                       Date runStarted, LabMetric.MetricType metricType, long decidingUser,
+                                       MessageCollection messageCollection) {
         Map<LabVessel, List<BigDecimal>> mapTubeToListValues = new HashMap<>();
         Map<LabVessel, VesselPosition> mapTubeToPosition = new HashMap<>();
         String tubeFormationLabel = null;
@@ -647,7 +665,7 @@ public class VesselEjb {
     private TubeFormation getFirstTubeFormationFromPlates(Collection<StaticPlate> plates) {
         for (StaticPlate plate : plates) {
             for (SectionTransfer sectionTransfer : plate.getContainerRole().getSectionTransfersTo()) {
-                return (TubeFormation)sectionTransfer.getSourceVesselContainer().getEmbedder();
+                return (TubeFormation) sectionTransfer.getSourceVesselContainer().getEmbedder();
             }
         }
         return null;
@@ -659,8 +677,9 @@ public class VesselEjb {
      * transferred into one plate, and the plates are in the csv.
      *
      * @param acceptReCaliper indicates when previous quants should be ignored and new quants processed.
+     *
      * @return Pair of LabMetricRun and the label of the tubeFormation that sourced the plates listed in the upload,
-     *         or null in case of error.
+     * or null in case of error.
      * In case of a duplicate upload the returned LabMetricRun is the previously uploaded one.
      */
     public Pair<LabMetricRun, String> createRNACaliperRun(InputStream caliperCsvStream,
@@ -743,12 +762,14 @@ public class VesselEjb {
 
     /**
      * Create a LabMetricRun from a RNA Caliper csv.
+     *
      * @return Pair of LabMetricRun and the label of the tubeFormation that sourced the plates listed in the csv.
      */
     @DaoFree
     public Pair<LabMetricRun, String> createRNACaliperRunDaoFree(LabMetric.MetricType metricType,
                                                                  CaliperPlateProcessor.CaliperRun caliperRun,
-                                                                 Map<String, StaticPlate> mapBarcodeToPlate, long decidingUser,
+                                                                 Map<String, StaticPlate> mapBarcodeToPlate,
+                                                                 long decidingUser,
                                                                  MessageCollection messageCollection) {
         LabMetricRun labMetricRun = new LabMetricRun(caliperRun.getRunName(),
                 caliperRun.getRunDate(), metricType);
@@ -800,7 +821,7 @@ public class VesselEjb {
                         }
                         if (decision != null) {
                             sourceVesselLabMetric.setLabMetricDecision(decision);
-                            if(decision.isNeedsReview())
+                            if (decision.isNeedsReview())
                                 requiresReview = true;
                         }
 
@@ -815,14 +836,15 @@ public class VesselEjb {
             }
         }
 
-        if(requiresReview) {
+        if (requiresReview) {
             messageCollection.addWarning("Rows highlighted in yellow will require review.");
         }
 
         return Pair.of(labMetricRun, tubeFormationLabel);
     }
 
-    public LabMetricRun createLibraryQuantsFromRunBean(LibraryQuantRunBean libraryQuantRun, MessageCollection messageCollection) {
+    public LabMetricRun createLibraryQuantsFromRunBean(LibraryQuantRunBean libraryQuantRun,
+                                                       MessageCollection messageCollection) {
         LabMetricRun labMetricRun = labMetricRunDao.findByName(libraryQuantRun.getRunName());
         if (labMetricRun != null) {
             messageCollection.addError("This run has been uploaded previously.");
@@ -840,8 +862,9 @@ public class VesselEjb {
                 messageCollection.addError("A previous upload has the same Run Started timestamp.");
             } else {
                 LabMetric.MetricType metricType = LabMetric.MetricType.getByDisplayName(libraryQuantRun.getQuantType());
-                labMetricRun = createLibraryQuantsFromRunBeanDaoFree(mapBarcodeToVessel, mapBarcodeToLibraryBean, metricType,
-                        messageCollection, libraryQuantRun);
+                labMetricRun =
+                        createLibraryQuantsFromRunBeanDaoFree(mapBarcodeToVessel, mapBarcodeToLibraryBean, metricType,
+                                messageCollection, libraryQuantRun);
                 if (messageCollection.hasErrors()) {
                     ejbContext.setRollbackOnly();
                 } else {
@@ -856,10 +879,12 @@ public class VesselEjb {
     @DaoFree
     private LabMetricRun createLibraryQuantsFromRunBeanDaoFree(Map<String, LabVessel> mapBarcodeToVessel,
                                                                Map<String, LibraryQuantBeanType> mapBarcodeToLibraryBean,
-                                                               LabMetric.MetricType metricType, MessageCollection messageCollection,
+                                                               LabMetric.MetricType metricType,
+                                                               MessageCollection messageCollection,
                                                                LibraryQuantRunBean libraryQuantRun) {
-        LabMetricRun labMetricRun = new LabMetricRun(libraryQuantRun.getRunName(), libraryQuantRun.getRunDate(), metricType);
-        for (Map.Entry<String, LibraryQuantBeanType> barcodeAndQuant: mapBarcodeToLibraryBean.entrySet()) {
+        LabMetricRun labMetricRun =
+                new LabMetricRun(libraryQuantRun.getRunName(), libraryQuantRun.getRunDate(), metricType);
+        for (Map.Entry<String, LibraryQuantBeanType> barcodeAndQuant : mapBarcodeToLibraryBean.entrySet()) {
             String vesselLabel = barcodeAndQuant.getKey();
             LibraryQuantBeanType libraryBeans = barcodeAndQuant.getValue();
             LabVessel labVessel = mapBarcodeToVessel.get(vesselLabel);
@@ -896,7 +921,7 @@ public class VesselEjb {
                 messageCollection.addError("A previous upload has the same Run Started timestamp.");
             } else {
                 labMetricRun = createQpcrRunDaoFree(mapBarcodeToVessel, mapBarcodeToLibraryBean,
-                        LabMetric.MetricType.VIIA_QPCR, userId ,messageCollection, qpcrRunBean);
+                        LabMetric.MetricType.VIIA_QPCR, userId, messageCollection, qpcrRunBean);
                 if (messageCollection.hasErrors()) {
                     ejbContext.setRollbackOnly();
                 } else {
@@ -918,7 +943,7 @@ public class VesselEjb {
                                              Long decidingUser, MessageCollection messageCollection,
                                              QpcrRunBean qpcrRunBean) {
         LabMetricRun labMetricRun = new LabMetricRun(qpcrRunBean.getRunName(), qpcrRunBean.getRunDate(), metricType);
-        for (Map.Entry<String, LibraryBeansType> barcodeAndQuant: mapBarcodeToLibraryBean.entrySet()) {
+        for (Map.Entry<String, LibraryBeansType> barcodeAndQuant : mapBarcodeToLibraryBean.entrySet()) {
             String vesselLabel = barcodeAndQuant.getKey();
             LibraryBeansType libraryBeans = barcodeAndQuant.getValue();
             LabVessel labVessel = mapBarcodeToVessel.get(vesselLabel);
@@ -944,5 +969,85 @@ public class VesselEjb {
             labMetric.setLabMetricDecision(labMetricDecision);
         }
         return labMetricRun;
+    }
+
+    /**
+     * Forwards any non-clinical quants to BSP.
+     *
+     * @param quantStream the Varioskan spreadsheet input stream.
+     */
+    public void nonClinicalsToBsp(InputStream quantStream, String tubeFormationLabel, String bspUsername,
+                                  String filename, MessageCollection messages) throws Exception {
+        // Finds the positions of clinical samples from the tube formation.
+        if (StringUtils.isBlank(tubeFormationLabel)) {
+            messages.addError("Tube formation label is blank");
+            return;
+        }
+        TubeFormation tubeFormation = OrmUtil.proxySafeCast(labVesselDao.findByIdentifier(tubeFormationLabel),
+                TubeFormation.class);
+        if (tubeFormation == null) {
+            messages.addError("No tube formation found for label " + tubeFormationLabel);
+            throw new Exception("No tube formation found for label " + tubeFormationLabel);
+        }
+
+        Set<VesselPosition> clinicalPositions = new HashSet<>();
+        Map<String, String> nonClinicalPositionToTube = new HashMap<>();
+        nextPosition:
+        for (Map.Entry<VesselPosition, BarcodedTube> positionAndTube :
+                tubeFormation.getContainerRole().getMapPositionToVessel().entrySet()) {
+            for (MercurySample mercurySample : positionAndTube.getValue().getMercurySamples()) {
+                if (mercurySample.canSampleBeUsedForClinical()) {
+                    clinicalPositions.add(positionAndTube.getKey());
+                    continue nextPosition;
+                }
+            }
+            nonClinicalPositionToTube.put(positionAndTube.getKey().name(), positionAndTube.getValue().getLabel());
+        }
+        if (nonClinicalPositionToTube.size() > 0) {
+            InputStream filteredQuantStream = null;
+            try {
+                filteredQuantStream = filterOutRows(quantStream, clinicalPositions);
+            } catch (Exception e) {
+                messages.addError("Cannot process spreadsheet: " + e.toString());
+                throw e;
+            }
+            try {
+                bspRestSender.postToBsp(bspUsername, filename, nonClinicalPositionToTube, filteredQuantStream,
+                        BSPRestSender.BSP_UPLOAD_QUANT_URL);
+            } catch (Exception e) {
+                messages.addError("Cannot send research quants to BSP: " + e.toString());
+                throw e;
+            }
+        }
+    }
+
+    /**
+     * Parses the spreadsheet stream and removes rows containing specified cell names.
+     * @return a stream of the filtered spreadsheet
+     */
+    public InputStream filterOutRows(InputStream quantStream, Set<VesselPosition> excludedPositions)
+            throws Exception {
+        Workbook workbook = WorkbookFactory.create(quantStream);
+        List<Row> toBeRemoved = new ArrayList<>();
+        Sheet curveSheet = workbook.getSheet(VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB);
+        if (curveSheet == null) {
+            throw new Exception("Missing spreadsheet page " + VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB);
+        }
+        final int COLUMN_CONTAINING_VESSEL_POSITION = 1;
+        for (int i = 1; i <= curveSheet.getLastRowNum(); i++) {
+            Row row = curveSheet.getRow(i);
+            String well = (row != null && row.getCell(COLUMN_CONTAINING_VESSEL_POSITION) != null) ?
+                    row.getCell(COLUMN_CONTAINING_VESSEL_POSITION).getStringCellValue().trim() : null;
+            if (StringUtils.isNotBlank(well) && excludedPositions.contains(VesselPosition.getByName(well))) {
+                toBeRemoved.add(row);
+            }
+        }
+        for (Row row : toBeRemoved) {
+            curveSheet.removeRow(row);
+        }
+
+        File tempFile = File.createTempFile("FilteredVarioskan", ".xls");
+        workbook.write(new FileOutputStream(tempFile));
+        return new FileInputStream(tempFile);
     }
 }

@@ -11,11 +11,13 @@ import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationErrors;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
@@ -30,9 +32,13 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric_;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.sample.PicoDispositionActionBean;
+import org.springframework.util.Assert;
 
 import javax.inject.Inject;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -41,6 +47,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported.ExternalSystem.Mercury;
 
 @UrlBinding(value = "/view/uploadQuants.action")
 public class UploadQuantsActionBean extends CoreActionBean {
@@ -132,16 +140,16 @@ public class UploadQuantsActionBean extends CoreActionBean {
 
     @ValidationMethod(on = UPLOAD_QUANT)
     public void validateNoExistingQuants(ValidationErrors errors) {
-
         InputStream quantStream = null;
-
         try {
             quantStream = quantSpreadsheet.getInputStream();
+
             switch (quantFormat) {
             case VARIOSKAN: {
                 MessageCollection messageCollection = new MessageCollection();
-                Pair<LabMetricRun, String> pair = vesselEjb.createVarioskanRun(quantStream, getQuantType(),
-                        userBean.getBspUser().getUserId(), messageCollection, acceptRePico);
+
+                Pair<LabMetricRun, String> pair = spreadsheetToMercuryAndBsp(vesselEjb, messageCollection,
+                        quantStream, getQuantType(), userBean, acceptRePico);
                 if (pair != null) {
                     labMetricRun = pair.getLeft();
                     tubeFormationLabel = pair.getRight();
@@ -190,9 +198,10 @@ public class UploadQuantsActionBean extends CoreActionBean {
             }
             errorBuilder.append("</ul>");
             errors.add("quantSpreadsheet", new SimpleError(errorBuilder.toString()));
+        } catch (Exception e) {
+            errors.add("quantSpreadsheet", new SimpleError("Exception while parsing upload. " + e.getMessage()));
         } finally {
             IOUtils.closeQuietly(quantStream);
-
             try {
                 quantSpreadsheet.delete();
             } catch (IOException ignored) {
@@ -230,6 +239,29 @@ public class UploadQuantsActionBean extends CoreActionBean {
         labMetricRun = labMetricRunDao.findById(LabMetricRun.class, labMetricRunId);
         buildColumns();
         return new ForwardResolution(VIEW_PAGE);
+    }
+
+    /**
+     * Persists the spreadsheet as a lab metrics run in Mercury and sends a filtered version of the spreadsheet
+     * containing only the research sample quants to BSP.
+     */
+    public static Pair<LabMetricRun, String> spreadsheetToMercuryAndBsp(
+            VesselEjb labVesselEjb, MessageCollection messageCollection, InputStream quantStream,
+            LabMetric.MetricType quantType, UserBean userBean, boolean acceptRedoPico) throws Exception {
+
+        byte[] quantStreamBytes = IOUtils.toByteArray(quantStream);
+
+        Pair<LabMetricRun, String> runAndRackOfTubes = labVesselEjb.createVarioskanRun(
+                new ByteArrayInputStream(quantStreamBytes), quantType, userBean.getBspUser().getUserId(),
+                messageCollection, acceptRedoPico);
+
+        if (quantType == LabMetric.MetricType.INITIAL_PICO) {
+            String filename = "SonicRack" + runAndRackOfTubes.getRight() + ".xls";
+            labVesselEjb.nonClinicalsToBsp(new ByteArrayInputStream(quantStreamBytes), runAndRackOfTubes.getRight(),
+                    userBean.getBspUser().getUsername(), filename, messageCollection);
+        }
+
+        return runAndRackOfTubes;
     }
 
     private void buildColumns() {

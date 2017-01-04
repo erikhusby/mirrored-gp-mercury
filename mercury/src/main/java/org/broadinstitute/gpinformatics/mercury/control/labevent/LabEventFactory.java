@@ -40,7 +40,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormation
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.EventHandlerSelector;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.GapHandler;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.SamplesDaughterPlateHandler;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.BSPRestSender;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -178,7 +178,7 @@ public class LabEventFactory implements Serializable {
     private EventHandlerSelector eventHandlerSelector;
 
     @Inject
-    private SamplesDaughterPlateHandler samplesDaughterPlateHandler;
+    private BSPRestSender BSPRestSender;
 
     @Inject
     private GapHandler gapHandler;
@@ -462,8 +462,8 @@ public class LabEventFactory implements Serializable {
             LabEventType.ForwardMessage forwardMessage = labEvent.getLabEventType().getForwardMessage();
             switch (forwardMessage) {
                 case BSP:
-                    samplesDaughterPlateHandler.postToBsp(bettaLIMSMessage,
-                            SamplesDaughterPlateHandler.BSP_TRANSFER_REST_URL);
+                    BSPRestSender.postToBsp(bettaLIMSMessage,
+                            BSPRestSender.BSP_TRANSFER_REST_URL);
                     break;
                 case GAP:
                     String forwardToGap = null;

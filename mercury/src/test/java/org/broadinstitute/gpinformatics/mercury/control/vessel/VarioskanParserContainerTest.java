@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
@@ -26,6 +28,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -191,7 +194,24 @@ public class VarioskanParserContainerTest extends Arquillian {
                                                         boolean persistVessels)
             throws Exception {
 
-        Workbook workbook = WorkbookFactory.create(VarioskanParserTest.getSpreadsheet(VarioskanParserTest.VARIOSKAN_OUTPUT));
+        BufferedInputStream quantStream = makeVarioskanSpreadsheet(plate1Barcode, plate2Barcode, namePrefix);
+
+        Map<String, StaticPlate> mapBarcodeToPlate = new HashMap<>();
+        Map<VesselPosition, BarcodedTube> mapPositionToTube = VarioskanParserTest.buildPicoTubesAndTransfers(
+                mapBarcodeToPlate, plate1Barcode, plate2Barcode, namePrefix);
+        if (persistVessels) {
+            labVesselDao.persistAll(mapBarcodeToPlate.values());
+            labVesselDao.persistAll(mapPositionToTube.values());
+        }
+        return vesselEjb.createVarioskanRun(quantStream, LabMetric.MetricType.INITIAL_PICO,
+                BSPManagerFactoryStub.QA_DUDE_USER_ID, messageCollection, acceptRePico);
+    }
+
+    public BufferedInputStream makeVarioskanSpreadsheet(String plate1Barcode, String plate2Barcode, String namePrefix)
+            throws Exception {
+
+        Workbook workbook = WorkbookFactory.create(VarioskanParserTest.getSpreadsheet(
+                VarioskanParserTest.VARIOSKAN_OUTPUT));
         Sheet curveSheet = workbook.getSheet(VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB);
         for (int i = 0; i < curveSheet.getLastRowNum(); i++) {
             Row row = curveSheet.getRow(i);
@@ -229,14 +249,6 @@ public class VarioskanParserContainerTest extends Arquillian {
 
         File tempFile = File.createTempFile("Varioskan", ".xls");
         workbook.write(new FileOutputStream(tempFile));
-        Map<String, StaticPlate> mapBarcodeToPlate = new HashMap<>();
-        Map<VesselPosition, BarcodedTube> mapPositionToTube = VarioskanParserTest.buildPicoTubesAndTransfers(
-                mapBarcodeToPlate, plate1Barcode, plate2Barcode, namePrefix);
-        if (persistVessels) {
-            labVesselDao.persistAll(mapBarcodeToPlate.values());
-            labVesselDao.persistAll(mapPositionToTube.values());
-        }
-        return vesselEjb.createVarioskanRun(new FileInputStream(tempFile), LabMetric.MetricType.INITIAL_PICO,
-                BSPManagerFactoryStub.QA_DUDE_USER_ID, messageCollection, acceptRePico);
+        return new BufferedInputStream(FileUtils.openInputStream(tempFile));
     }
 }

@@ -26,7 +26,7 @@ import java.util.Set;
 public class SonicAliquotHandler extends AbstractEventHandler {
 
     @Inject
-    private SamplesDaughterPlateHandler samplesDaughterPlateHandler;
+    private BSPRestSender BSPRestSender;
 
     @Override
     public void handleEvent(LabEvent targetEvent, StationEventType stationEvent) {
@@ -107,6 +107,6 @@ public class SonicAliquotHandler extends AbstractEventHandler {
         // Forward to BSP
         BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
         bettaLIMSMessage.getPlateCherryPickEvent().add(plateCherryPickEvent);
-        samplesDaughterPlateHandler.postToBsp(bettaLIMSMessage, SamplesDaughterPlateHandler.BSP_TRANSFER_REST_URL);
+        BSPRestSender.postToBsp(bettaLIMSMessage, BSPRestSender.BSP_TRANSFER_REST_URL);
     }
 }
