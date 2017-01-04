@@ -1,3 +1,29 @@
+-- --------------------------------
+-- https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-3614
+-- SAP Integration
+-- --------------------------------
+
+ALTER TABLE IM_PRODUCT_ORDER ADD SAP_ORDER_NUMBER VARCHAR2(255);
+
+ALTER TABLE IM_PRODUCT ADD (
+  EXTERNAL_ONLY_PRODUCT CHAR(1),
+  SAVED_IN_SAP CHAR(1) );
+
+ALTER TABLE PRODUCT_ORDER ADD SAP_ORDER_NUMBER VARCHAR2(255);
+
+ALTER TABLE PRODUCT ADD (
+  EXTERNAL_ONLY_PRODUCT CHAR(1),
+  SAVED_IN_SAP CHAR(1) );
+
+-- After run:
+-- Execute merge_import.sql
+-- Copy product.ctl and product_order.ctl files to /seq/lims/datawh/prod/control 664 permission
+-- Backfill product and product_order tables
+
+-- --------------------------------
+-- https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-4378
+-- Infinium array data mart
+-- --------------------------------
 --drop table array_process_flow;
 
 create table array_process_flow (
