@@ -170,7 +170,7 @@ public class SubmissionDto implements Serializable {
             rpid = bassDTO.getRpid();
             fileName = bassDTO.getFileName();
             filePath = bassDTO.getPath();
-            bassTupleString = bassDTO.getTuple().jsonString();
+            bassTupleString = bassDTO.getTuple().toString();
         }
         if (aggregation != null) {
             String datatype = bassDTO.getDatatype();
