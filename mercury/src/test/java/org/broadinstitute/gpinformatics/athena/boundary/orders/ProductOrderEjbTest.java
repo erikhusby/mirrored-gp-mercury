@@ -55,6 +55,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -347,6 +348,63 @@ public class ProductOrderEjbTest {
 
         productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, false);
         Assert.assertEquals(conversionPdo.getSapReferenceOrders().size(), 3);
+
+        Mockito.when(productOrderDaoMock.findByBusinessKey(jiraTicketKey)).thenReturn(conversionPdo);
+
+        productOrderEjb.abandon(jiraTicketKey, "testing");
+
+        Mockito.verify(mockEmailSender, Mockito.times(3)).sendHtmlEmail(Mockito.eq(mockAppConfig),
+                Mockito.anyString(),
+                Mockito.<String>anyList(),
+                Mockito.anyString(),
+                Mockito.anyString(),
+                Mockito.anyBoolean());
+
+    }
+
+
+
+    public void testAbandonOrderWithNoServiceNowTicket() throws Exception {
+
+        Mockito.when(mockUserBean.getBspUser()).thenReturn(new BSPUserList.QADudeUser("PM", 2423L));
+
+        Quote testSingleSourceQuote;
+        String testUser = "Scott.G.MATThEws@GMail.CoM";
+        Funding fundingDefined = new Funding(Funding.PURCHASE_ORDER,null, null);
+        fundingDefined.setPurchaseOrderContact(testUser);
+        fundingDefined.setPurchaseOrderNumber("PO00Id8923");
+        FundingLevel fundingLevel = new FundingLevel("100",fundingDefined);
+
+        QuoteFunding quoteFunding = new QuoteFunding(Collections.singleton(fundingLevel));
+
+        testSingleSourceQuote = new Quote(SapIntegrationServiceImplDBFreeTest.SINGLE_SOURCE_PO_QUOTE_ID, quoteFunding, ApprovalStatus.FUNDED);
+
+        Mockito.when(mockQuoteService.getQuoteByAlphaId(testSingleSourceQuote.getAlphanumericId())).thenReturn(testSingleSourceQuote);
+
+        String jiraTicketKey= "PDO-SAP-test";
+        ProductOrder conversionPdo = ProductOrderTestFactory.createDummyProductOrder(1, jiraTicketKey);
+        conversionPdo.setQuoteId(testSingleSourceQuote.getAlphanumericId() );
+        conversionPdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+
+        Mockito.when(productOrderDaoMock.findByBusinessKey(jiraTicketKey)).thenReturn(conversionPdo);
+
+        productOrderEjb.abandon(jiraTicketKey, "testing");
+
+        Mockito.verify(mockEmailSender, Mockito.times(0)).sendHtmlEmail(Mockito.eq(mockAppConfig),
+                Mockito.anyString(),
+                Mockito.<String>anyList(),
+                Mockito.anyString(),
+                Mockito.anyString(),
+                Mockito.anyBoolean());
+
+        productOrderEjb.updateOrderStatus(jiraTicketKey, MessageReporter.UNUSED);
+        Mockito.verify(mockEmailSender, Mockito.times(0)).sendHtmlEmail(Mockito.eq(mockAppConfig),
+                Mockito.anyString(),
+                Mockito.<String>anyList(),
+                Mockito.anyString(),
+                Mockito.anyString(),
+                Mockito.anyBoolean());
+
 
     }
 }
