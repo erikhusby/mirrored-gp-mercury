@@ -983,10 +983,10 @@ public class ProductOrderEjb {
             transitionIssueToSameOrderStatus(order);
             // The status was changed, let the user know.
             reporter.addMessage("The order status of ''{0}'' is now {1}.", jiraTicketKey, order.getOrderStatus());
-            if(order.isSavedInSAP() && (order.getOrderStatus() == OrderStatus.Completed &&
+            if(order.isSavedInSAP() && ((order.getOrderStatus() == OrderStatus.Completed &&
                 order.getNonAbandonedCount() < order.latestSapOrderDetail().getPrimaryQuantity()
                )
-               || order.getOrderStatus() == OrderStatus.Abandoned) {
+               || order.getOrderStatus() == OrderStatus.Abandoned)) {
 
                 sendSapOrderShortCloseRequest(
                         "The SAP order " + order.getSapOrderNumber() + " for PDO "+order.getBusinessKey()+
@@ -996,7 +996,7 @@ public class ProductOrderEjb {
         }
     }
 
-    private void sendSapOrderShortCloseRequest(String body) {
+    void sendSapOrderShortCloseRequest(String body) {
             Collection<String> ccAddresses = Collections.singletonList(userBean.getBspUser().getEmail());
         final boolean isProduction = deployment.equals(Deployment.PROD);
         emailSender.sendHtmlEmail(appConfig,
@@ -1074,10 +1074,10 @@ public class ProductOrderEjb {
         // with the JIRA ticket.
         transitionJiraTicket(jiraTicketKey, JiraResolution.CANCELLED, JiraTransition.CANCEL, abandonComments);
 
-        if(productOrder.isSavedInSAP() && (productOrder.getOrderStatus() == OrderStatus.Completed &&
+        if(productOrder.isSavedInSAP() && ((productOrder.getOrderStatus() == OrderStatus.Completed &&
             productOrder.getNonAbandonedCount() < productOrder.latestSapOrderDetail().getPrimaryQuantity()
            )
-           || productOrder.getOrderStatus() == OrderStatus.Abandoned) {
+           || productOrder.getOrderStatus() == OrderStatus.Abandoned)) {
 
             sendSapOrderShortCloseRequest(
                     "The SAP order " + productOrder.getSapOrderNumber() + " for PDO "+productOrder.getBusinessKey()+
