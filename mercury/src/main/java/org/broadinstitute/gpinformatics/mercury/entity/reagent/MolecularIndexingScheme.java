@@ -410,4 +410,5 @@ public class MolecularIndexingScheme {
 
         return builder.toString();
     }
+
 }

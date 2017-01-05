@@ -124,7 +124,7 @@ public class JiraIssue implements Serializable {
         for (int index = 0; index < fields.size(); index++)
         {
             Map<String, Object> id = (Map<String, Object>)fields.get(index);
-            idList.add(id.get("id").toString());
+            idList.add(id.get("key").toString());
         }
         return idList;
     }
