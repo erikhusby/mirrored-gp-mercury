@@ -1231,4 +1231,12 @@ public class LabBatchFixUpTest extends Arquillian {
         labBatchDao.persist(new FixupCommentary("GPLIM-4491 add Jira links from LCSET to FCT"));
         labBatchDao.flush();
     }
+
+    @Test(enabled = false)
+    public void fixupSupport2414() throws Exception{
+        List<String> tubeBarcodes = Arrays.asList(
+                "0209156339");
+
+        changeBucketEntriesToAliquots(tubeBarcodes, 1797814L, "LCSET-10218", "SUPPORT-2414");
+    }
 }
