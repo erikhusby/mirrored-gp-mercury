@@ -166,10 +166,6 @@ public class MercurySample extends AbstractSample {
     @ManyToMany(mappedBy = "mercurySamples", cascade = CascadeType.PERSIST)
     protected Set<LabVessel> labVessel = new HashSet<>();
 
-    @OneToMany(mappedBy = "mercurySample", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
-    @BatchSize(size = 100)
-    private Set<SampleInstanceEntity> sampleInstanceEntities = new HashSet<>();
-
     /**
      * For JPA
      */
