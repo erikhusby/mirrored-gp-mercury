@@ -12,6 +12,7 @@ import javax.enterprise.context.RequestScoped;
 @RequestScoped
 public class SampleInstanceEntityDao extends GenericDao {
 
+    
     public SampleInstanceEntity findByName(String sampleLibraryName) {
         return findSingle(SampleInstanceEntity.class, SampleInstanceEntity_.sampleLibraryName, sampleLibraryName );
     }
