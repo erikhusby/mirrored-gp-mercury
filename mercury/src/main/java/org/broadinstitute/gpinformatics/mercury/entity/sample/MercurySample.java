@@ -41,7 +41,6 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.ArrayList;
 
 /**
  * Represents Mercury's view of a sample.  Sample information is held in another system (initially Athena),
