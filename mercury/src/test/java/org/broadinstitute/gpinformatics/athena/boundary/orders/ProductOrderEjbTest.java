@@ -349,6 +349,17 @@ public class ProductOrderEjbTest {
         productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, false);
         Assert.assertEquals(conversionPdo.getSapReferenceOrders().size(), 3);
 
+        Mockito.when(productOrderDaoMock.findByBusinessKey(jiraTicketKey)).thenReturn(conversionPdo);
+
+        productOrderEjb.abandon(jiraTicketKey, "testing");
+
+        Mockito.verify(mockEmailSender, Mockito.times(3)).sendHtmlEmail(Mockito.eq(mockAppConfig),
+                Mockito.anyString(),
+                Mockito.<String>anyList(),
+                Mockito.anyString(),
+                Mockito.anyString(),
+                Mockito.anyBoolean());
+
     }
 
 
@@ -393,6 +404,7 @@ public class ProductOrderEjbTest {
                 Mockito.anyString(),
                 Mockito.anyString(),
                 Mockito.anyBoolean());
+
 
     }
 }
