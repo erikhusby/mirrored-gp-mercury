@@ -89,12 +89,12 @@ public class ArraysSummaryFactory {
         // Preamble todo jmt
         // Header Group
         printStream.println("PED Data\t\tCall Rate\tSample\t\t\t\t\t\tFingerprint\tGender\t\t\t\tTrio\t" +
-                "BEADSTUDIO\t\t\t\t\tZCALL\t\tScan\t\t\t\t\tPlate\t\t\t");
+                "BEADSTUDIO\t\t\t\tZCALL\t\tScan\t\t\t\t\tPlate\t\t\t");
         // Headers
         printStream.println("Family ID\tIndividual ID\tBEADSTUDIO\tAliquot\tRoot Sample\tStock Sample\tParticipant\t" +
                 "Collaborator Sample\tCollaborator Participant\tCalled Infinium SNPs\tReported Gender\tFldm FP Gender\t" +
-                "Beadstudio Gender\tAlgorithm Gender Concordance\tFamily\tCall Rate\tHet %\tHap Map Concordance\t" +
-                "Version\tLast Cluster File\tRun\tVersion\tChip\tScan Date\tAmp Date\tScanner\tGenotyping Run\t" +
+                "Beadstudio Gender\tAlgorithm Gender Concordance\tFamily\tHet %\tHap Map Concordance\t" +
+                "Version\tLast Cluster File\tRun\tVersion\tChip\tScan Date\tAmp Date\tScanner\tChip Well Barcode\t" +
                 "DNA Plate\tDNA Plate Well");
         for (int i = 0; i < vesselPositionPairs.size(); i++) {
             Pair<LabVessel, VesselPosition> vesselPositionPair = vesselPositionPairs.get(i);
@@ -144,16 +144,14 @@ public class ArraysSummaryFactory {
             printStream.print(arraysQc.getGenderConcordancePf() + "\t");
             // Family
             printStream.print(sampleData.getCollaboratorFamilyId() + "\t");
-            // Call Rate
-            printStream.print(arraysQc.getCallRatePct() + "\t");
             // Het %
             printStream.print(arraysQc.getHetPct100() + "\t");
             // Hap Map Concordance
             if (arraysQc.getArraysQcGtConcordances() != null) {
                 for (ArraysQcGtConcordance arraysQcGtConcordance: arraysQc.getArraysQcGtConcordances()) {
                     if (arraysQcGtConcordance.getVariantType().equals("SNP")) {
-                        printStream.print(ColumnValueType.TWO_PLACE_DECIMAL.format(
-                                arraysQcGtConcordance.getGenotypeConcordance().multiply(BigDecimal.valueOf(100)), ""));
+                        printStream.print(ColumnValueType.THREE_PLACE_DECIMAL.format(
+                                arraysQcGtConcordance.getGenotypeConcordance().multiply(BigDecimal.valueOf(100L)), ""));
                     }
                 }
             }
@@ -198,7 +196,7 @@ public class ArraysSummaryFactory {
                     scannerName = InfiniumRunProcessor.findScannerName(chip.getLabel(), vesselPosition.name(),
                             infiniumStarterConfig);
                 }
-                printStream.print(scannerName);
+                printStream.print(scannerName == null ? "" : scannerName);
             }
             printStream.print("\t");
             // Genotyping Run

@@ -134,7 +134,7 @@ public class ArraysReportActionBean extends CoreActionBean {
                                     " not found");
                         }
                         vesselPositionPairs.add(new ImmutablePair<>(labVessel, vesselPosition));
-                        if (firstProductOrder == null) {
+                        if (firstProductOrder == null && !hasErrors()) {
                             Set<SampleInstanceV2> sampleInstances =
                                     labVessel.getContainerRole().getSampleInstancesAtPositionV2(vesselPosition);
                             ProductOrderSample productOrderSample =
@@ -147,7 +147,10 @@ public class ArraysReportActionBean extends CoreActionBean {
                 }
             }
         }
-        if (firstProductOrder == null) {
+        if (vesselPositionPairs.isEmpty()) {
+            addGlobalValidationError("No chips found.");
+        }
+        if (firstProductOrder == null && !hasErrors()) {
             addGlobalValidationError("No product orders found.");
         }
 
