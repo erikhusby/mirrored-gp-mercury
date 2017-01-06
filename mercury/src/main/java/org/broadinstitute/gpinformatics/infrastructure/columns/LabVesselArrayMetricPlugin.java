@@ -116,11 +116,11 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
 
             ConfigurableList.Row row = new ConfigurableList.Row( labVessel.getLabel() );
 
-            String value = ColumnValueType.TWO_PLACE_DECIMAL.format(
+            String value = ColumnValueType.THREE_PLACE_DECIMAL.format(
                     arraysQc.getCallRate().multiply(BigDecimal.valueOf(100)), "");
             row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.CALL_RATE.getResultHeader(), value, value));
 
-            value = ColumnValueType.TWO_PLACE_DECIMAL.format(arraysQc.getHetPct().multiply(BigDecimal.valueOf(100)), "");
+            value = ColumnValueType.THREE_PLACE_DECIMAL.format(arraysQc.getHetPct().multiply(BigDecimal.valueOf(100)), "");
             row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.HET_PCT.getResultHeader(),
                     value, value));
 
@@ -156,7 +156,7 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
             if (arraysQcFingerprint == null) {
                 value = null;
             } else {
-                value = ColumnValueType.TWO_PLACE_DECIMAL.format(arraysQcFingerprint.getLodExpectedSample(), "");
+                value = ColumnValueType.THREE_PLACE_DECIMAL.format(arraysQcFingerprint.getLodExpectedSample(), "");
             }
             row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.FINGERPRINT_CONCORDANCE.getResultHeader(),
                     value, value));
@@ -172,7 +172,7 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
 
             for (ArraysQcGtConcordance arraysQcGtConcordance: arraysQc.getArraysQcGtConcordances()) {
                 if (arraysQcGtConcordance.getVariantType().equals("SNP")) {
-                    value = ColumnValueType.TWO_PLACE_DECIMAL.format(
+                    value = ColumnValueType.THREE_PLACE_DECIMAL.format(
                             arraysQcGtConcordance.getGenotypeConcordance().multiply(BigDecimal.valueOf(100)), "");
                 }
             }
