@@ -42,4 +42,13 @@ public class MathUtils {
         }
         return input.setScale(2, BigDecimal.ROUND_HALF_UP);
     }
+    /**
+     * Arrays call rates are scaled to 3 decimal places.
+     */
+    public static BigDecimal scaleThreeDecimalPlaces( BigDecimal input ) {
+        if( input == null ) {
+            return null;
+        }
+        return input.setScale(3, BigDecimal.ROUND_HALF_UP);
+    }
 }
