@@ -170,6 +170,7 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
             row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.HAPLOTYPE_DIFF.getResultHeader(),
                     value, value));
 
+            value = null;
             for (ArraysQcGtConcordance arraysQcGtConcordance: arraysQc.getArraysQcGtConcordances()) {
                 if (arraysQcGtConcordance.getVariantType().equals("SNP")) {
                     value = ColumnValueType.THREE_PLACE_DECIMAL.format(
