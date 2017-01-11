@@ -205,7 +205,6 @@ public class BucketEjbTest extends StubbyContainerTest {
         howieTest = hrafalUserName;
     }
 
-    @Override
     @AfterMethod
     public void tearDown() throws Exception {
         // Skip if no injections, meaning we're not running in container

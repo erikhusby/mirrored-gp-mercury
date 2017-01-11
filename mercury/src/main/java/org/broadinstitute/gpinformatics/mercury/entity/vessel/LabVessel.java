@@ -27,6 +27,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.TubeTransferException;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -179,6 +180,10 @@ public abstract class LabVessel implements Serializable {
     @OneToMany(mappedBy = "labVessel", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @BatchSize(size = 20)
     private Set<AbandonVessel> abandonVessels = new HashSet<>();
+
+    @OneToMany(mappedBy = "labVessel", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @BatchSize(size = 100)
+    private Set<SampleInstanceEntity> sampleInstanceEntities = new HashSet<>();
 
     @OneToMany // todo jmt should this have mappedBy?
     @JoinTable(schema = "mercury", name = "LAB_VESSEL_NOTES"
@@ -957,6 +962,10 @@ public abstract class LabVessel implements Serializable {
 
     public Set<AbandonVessel> getAbandonVessels() {
         return abandonVessels;
+    }
+
+    public Set<SampleInstanceEntity> getSampleInstanceEntities() {
+        return sampleInstanceEntities;
     }
 
     /**

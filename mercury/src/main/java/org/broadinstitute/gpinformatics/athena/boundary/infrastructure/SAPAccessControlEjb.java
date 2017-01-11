@@ -6,12 +6,15 @@ import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessCo
 
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.inject.Inject;
 import java.util.Collections;
 import java.util.Set;
 
 @Singleton
 @Startup
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class SAPAccessControlEjb {
     private SAPAccessControlDao accessControlDao;
 
@@ -32,6 +35,7 @@ public class SAPAccessControlEjb {
         return accessControl;
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public SAPAccessControl resetControlDefinitions() {
         SAPAccessControl control = getCurrentControlDefinitions();
         control.setAccessStatus(AccessStatus.ENABLED);
@@ -40,6 +44,7 @@ public class SAPAccessControlEjb {
         return control;
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public SAPAccessControl setDefinitions(AccessStatus status, Set<String> restrictions) {
 
         SAPAccessControl accessController = getCurrentControlDefinitions();

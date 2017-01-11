@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 
+import javax.annotation.Nonnull;
 import javax.enterprise.inject.Alternative;
 import java.math.BigDecimal;
 
@@ -50,6 +51,12 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
 
     @Override
     public SapIntegrationClientImpl.SAPCompanyConfiguration determineCompanyCode(ProductOrder companyProductOrder) {
+        return SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
+    }
+
+    @Nonnull
+    @Override
+    public SapIntegrationClientImpl.SAPCompanyConfiguration getSapCompanyConfigurationForProduct(Product product) {
         return SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
     }
 }

@@ -217,7 +217,8 @@ public class InfiniumRunResource {
                     startDate = labEvent.getEventDate();
                 }
             }
-            String scannerName = findScannerName(chip.getLabel(), vesselPosition.name());
+            String scannerName = InfiniumRunProcessor.findScannerName(chip.getLabel(), vesselPosition.name(),
+                    infiniumStarterConfig);
 
             String batchName = null;
             if (sampleInstanceV2.getSingleBatch() != null) {
@@ -310,31 +311,6 @@ public class InfiniumRunResource {
             }
         }
         return chip;
-    }
-
-    private String findScannerName(String chipBarcode, String vesselPosition) {
-        try {
-            if (infiniumStarterConfig != null) {
-                String redXml = String.format("%s_%s_1_Red.xml", chipBarcode, vesselPosition);
-                File chipDir = new File(infiniumStarterConfig.getDataPath(), chipBarcode);
-                File redXmlFile = new File(chipDir, redXml);
-                if (redXmlFile.exists()) {
-                    DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
-                    DocumentBuilder documentBuilder = builderFactory.newDocumentBuilder();
-                    Document document = documentBuilder.parse(new FileInputStream(redXmlFile));
-                    XPath xPath = XPathFactory.newInstance().newXPath();
-                    XPathExpression lcsetKeyExpr = xPath.compile("ImageHeader/ScannerID");
-                    NodeList scannerIdNodeList = (NodeList) lcsetKeyExpr.evaluate(document,
-                            XPathConstants.NODESET);
-                    Node elemNode = scannerIdNodeList.item(0);
-                    String scannerId = elemNode.getFirstChild().getNodeValue();
-                    return mapSerialNumberToMachineName.get(scannerId);
-                }
-            }
-        } catch (Exception e) {
-            log.error("Failed to find scanner name from filesystem for " + chipBarcode);
-        }
-        return null;
     }
 
     // Must be public, to allow calling from test

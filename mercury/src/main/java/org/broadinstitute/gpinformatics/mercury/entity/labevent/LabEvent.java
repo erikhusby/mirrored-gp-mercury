@@ -102,7 +102,7 @@ public class LabEvent {
         @Override
         public int compare(LabEvent o1, LabEvent o2) {
             int dateComparison = o1.getEventDate().compareTo(o2.getEventDate());
-            if (dateComparison == 0) {
+            if (dateComparison == 0 && o1.getEventLocation() != null && o2.getEventLocation() != null ) {
                 dateComparison = o1.getEventLocation().compareTo(o2.getEventLocation());
             }
             if (dateComparison == 0) {

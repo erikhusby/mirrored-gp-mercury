@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.infrastructure.analytics;
 
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc_;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.CriteriaInClauseCreator;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.JPASplitter;
 
 import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
@@ -10,11 +12,15 @@ import javax.enterprise.context.RequestScoped;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceContextType;
+import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RequestScoped
 @Stateful
@@ -26,14 +32,28 @@ public class ArraysQcDao {
 
     public List<ArraysQc> findByBarcodes(List<String> chipWellBarcodes) {
         if( chipWellBarcodes == null || chipWellBarcodes.isEmpty() ) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<ArraysQc> criteria = cb.createQuery(ArraysQc.class);
-        Root<ArraysQc> root = criteria.from(ArraysQc.class);
-        criteria.select(root).where(cb.and(
-                root.get(ArraysQc_.chipWellBarcode).in(chipWellBarcodes)),
-                cb.equal(root.get(ArraysQc_.isLatest), 1));
-        return entityManager.createQuery(criteria).getResultList();
+        return JPASplitter.runCriteriaQuery(chipWellBarcodes, new CriteriaInClauseCreator<String>() {
+            @Override
+            public Query createCriteriaInQuery(Collection<String> parameterList) {
+                CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+                CriteriaQuery<ArraysQc> criteria = cb.createQuery(ArraysQc.class);
+                Root<ArraysQc> root = criteria.from(ArraysQc.class);
+                criteria.select(root).where(cb.and(
+                        root.get(ArraysQc_.chipWellBarcode).in(parameterList)),
+                        cb.equal(root.get(ArraysQc_.isLatest), 1));
+                return entityManager.createQuery(criteria);
+            }
+        });
+    }
+
+    public Map<String, ArraysQc> findMapByBarcodes(List<String> chipWellBarcodes) {
+        List<ArraysQc> arraysQcList = findByBarcodes(chipWellBarcodes);
+        Map<String, ArraysQc> mapWellBarcodeToMetric = new HashMap<>();
+        for (ArraysQc arraysQc : arraysQcList) {
+            mapWellBarcodeToMetric.put(arraysQc.getChipWellBarcode(), arraysQc);
+        }
+        return mapWellBarcodeToMetric;
     }
 }

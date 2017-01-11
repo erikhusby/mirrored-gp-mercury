@@ -114,41 +114,50 @@ public class LibraryConstructionEntityBuilder {
                 pondType
         ).invoke();
 
-        // EndRepair
-        LabEventTest.validateWorkflow("EndRepair", shearingCleanupPlate);
-        LabEvent endRepairEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
-                libraryConstructionJaxbBuilder.getEndRepairJaxb(), shearingCleanupPlate);
-        labEventHandler.processEvent(endRepairEntity);
+        if (pondType == LibraryConstructionJaxbBuilder.PondType.PCR_PLUS_HYPER_PREP ||
+            pondType == LibraryConstructionJaxbBuilder.PondType.PCR_FREE_HYPER_PREP ||
+            pondType == LibraryConstructionJaxbBuilder.PondType.CELL_FREE) {
+            LabEventTest.validateWorkflow("EndRepair_ABase", shearingCleanupPlate);
+            LabEvent endRepairAbaseEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                    libraryConstructionJaxbBuilder.getEndRepairAbaseJaxb(), shearingCleanupPlate);
+            labEventHandler.processEvent(endRepairAbaseEntity);
+        } else {
+            // EndRepair
+            LabEventTest.validateWorkflow("EndRepair", shearingCleanupPlate);
+            LabEvent endRepairEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                    libraryConstructionJaxbBuilder.getEndRepairJaxb(), shearingCleanupPlate);
+            labEventHandler.processEvent(endRepairEntity);
 
-        // PostEndRepairThermoCyclerLoaded
-        LabEventTest.validateWorkflow("PostEndRepairThermoCyclerLoaded", shearingCleanupPlate);
-        LabEvent postEndRepairThermoCyclerLoadedEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
-                libraryConstructionJaxbBuilder.getEndRepairJaxb(), shearingCleanupPlate);
-        labEventHandler.processEvent(postEndRepairThermoCyclerLoadedEntity);
+            // PostEndRepairThermoCyclerLoaded
+            LabEventTest.validateWorkflow("PostEndRepairThermoCyclerLoaded", shearingCleanupPlate);
+            LabEvent postEndRepairThermoCyclerLoadedEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                    libraryConstructionJaxbBuilder.getEndRepairJaxb(), shearingCleanupPlate);
+            labEventHandler.processEvent(postEndRepairThermoCyclerLoadedEntity);
 
-        // EndRepairCleanup
-        LabEventTest.validateWorkflow("EndRepairCleanup", shearingCleanupPlate);
-        LabEvent endRepairCleanupEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
-                libraryConstructionJaxbBuilder.getEndRepairCleanupJaxb(), shearingCleanupPlate);
-        labEventHandler.processEvent(endRepairCleanupEntity);
+            // EndRepairCleanup
+            LabEventTest.validateWorkflow("EndRepairCleanup", shearingCleanupPlate);
+            LabEvent endRepairCleanupEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                    libraryConstructionJaxbBuilder.getEndRepairCleanupJaxb(), shearingCleanupPlate);
+            labEventHandler.processEvent(endRepairCleanupEntity);
 
-        // ABase
-        LabEventTest.validateWorkflow("ABase", shearingCleanupPlate);
-        LabEvent aBaseEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
-                libraryConstructionJaxbBuilder.getaBaseJaxb(), shearingCleanupPlate);
-        labEventHandler.processEvent(aBaseEntity);
+            // ABase
+            LabEventTest.validateWorkflow("ABase", shearingCleanupPlate);
+            LabEvent aBaseEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                    libraryConstructionJaxbBuilder.getaBaseJaxb(), shearingCleanupPlate);
+            labEventHandler.processEvent(aBaseEntity);
 
-        // PostABaseThermoCyclerLoaded
-        LabEventTest.validateWorkflow("PostAbaseThermoCyclerLoaded", shearingCleanupPlate);
-        LabEvent postABaseThermoCyclerLoadedEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
-                libraryConstructionJaxbBuilder.getPostABaseThermoCyclerLoadedJaxb(), shearingCleanupPlate);
-        labEventHandler.processEvent(postABaseThermoCyclerLoadedEntity);
+            // PostABaseThermoCyclerLoaded
+            LabEventTest.validateWorkflow("PostAbaseThermoCyclerLoaded", shearingCleanupPlate);
+            LabEvent postABaseThermoCyclerLoadedEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                    libraryConstructionJaxbBuilder.getPostABaseThermoCyclerLoadedJaxb(), shearingCleanupPlate);
+            labEventHandler.processEvent(postABaseThermoCyclerLoadedEntity);
 
-        // ABaseCleanup
-        LabEventTest.validateWorkflow("ABaseCleanup", shearingCleanupPlate);
-        LabEvent aBaseCleanupEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
-                libraryConstructionJaxbBuilder.getaBaseCleanupJaxb(), shearingCleanupPlate);
-        labEventHandler.processEvent(aBaseCleanupEntity);
+            // ABaseCleanup
+            LabEventTest.validateWorkflow("ABaseCleanup", shearingCleanupPlate);
+            LabEvent aBaseCleanupEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                    libraryConstructionJaxbBuilder.getaBaseCleanupJaxb(), shearingCleanupPlate);
+            labEventHandler.processEvent(aBaseCleanupEntity);
+        }
 
         // IndexedAdapterLigation
         LabEventTest.validateWorkflow("IndexedAdapterLigation", shearingCleanupPlate);
@@ -237,14 +246,29 @@ public class LibraryConstructionEntityBuilder {
                 libraryConstructionJaxbBuilder.getPostPondEnrichmentThermoCyclerLoadedJaxb(), ligationCleanupPlate);
         labEventHandler.processEvent(postPondEnrichmentThermoCyclerLoadedEntity);
 
-        // HybSelPondEnrichmentCleanup
-        LabEventTest.validateWorkflow("HybSelPondEnrichmentCleanup", ligationCleanupPlate);
-        mapBarcodeToVessel.clear();
-        mapBarcodeToVessel.put(ligationCleanupPlate.getLabel(), ligationCleanupPlate);
-        LabEvent pondCleanupEntity = labEventFactory.buildFromBettaLims(
-                libraryConstructionJaxbBuilder.getPondCleanupJaxb(), mapBarcodeToVessel);
-        labEventHandler.processEvent(pondCleanupEntity);
-        StaticPlate pondCleanupPlate = (StaticPlate) pondCleanupEntity.getTargetLabVessels().iterator().next();
+        // HyperPrep skips the plate to plate cleanups
+        StaticPlate pondCleanupPlate = ligationCleanupPlate;
+        if (pondType != LibraryConstructionJaxbBuilder.PondType.PCR_FREE_HYPER_PREP) {
+            if (pondType == LibraryConstructionJaxbBuilder.PondType.PCR_PLUS_HYPER_PREP) {
+                LabEventTest.validateWorkflow("WGSPCRCleanup", ligationCleanupPlate);
+                LabEvent wgsPcrCleanupEvent = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                        libraryConstructionJaxbBuilder.getWgsPCRCleanupJaxb(), ligationCleanupPlate);
+                labEventHandler.processEvent(wgsPcrCleanupEvent);
+            } else if (pondType == LibraryConstructionJaxbBuilder.PondType.CELL_FREE) {
+                LabEventTest.validateWorkflow("CFDnaPCRSetup", ligationCleanupPlate);
+                LabEvent wgsPcrCleanupEvent = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                        libraryConstructionJaxbBuilder.getCellFreePCRCleanupJaxb(), ligationCleanupPlate);
+                labEventHandler.processEvent(wgsPcrCleanupEvent);
+            } else {
+                LabEventTest.validateWorkflow("HybSelPondEnrichmentCleanup", ligationCleanupPlate);
+                mapBarcodeToVessel.clear();
+                mapBarcodeToVessel.put(ligationCleanupPlate.getLabel(), ligationCleanupPlate);
+                LabEvent pondCleanupEntity = labEventFactory.buildFromBettaLims(
+                        libraryConstructionJaxbBuilder.getPondCleanupJaxb(), mapBarcodeToVessel);
+                labEventHandler.processEvent(pondCleanupEntity);
+                pondCleanupPlate = (StaticPlate) pondCleanupEntity.getTargetLabVessels().iterator().next();
+            }
+        }
 
         // PondRegistration
         LabEventTest.validateWorkflow(pondType.getEventType(), pondCleanupPlate);

@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.billing;
 
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
@@ -19,8 +20,6 @@ import org.testng.annotations.Test;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Set;
 
@@ -48,7 +47,7 @@ public class LedgerEntryDaoTest extends StubbyContainerTest {
     @Inject
     private UserTransaction utx;
 
-    private static final DateFormat formatter = new SimpleDateFormat("MM/dd/yy");
+    private static final FastDateFormat formatter = FastDateFormat.getInstance("MM/dd/yy");
     private final ProductOrder[] orders = new ProductOrder[1];
     private final ProductOrder[] dupeOrders = new ProductOrder[1];
 

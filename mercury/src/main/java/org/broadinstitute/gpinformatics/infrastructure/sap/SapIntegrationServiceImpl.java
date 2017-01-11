@@ -305,10 +305,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     @Override
     public SapIntegrationClientImpl.SAPCompanyConfiguration determineCompanyCode(ProductOrder companyProductOrder)
             throws SAPIntegrationException {
-        SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
-        if (companyProductOrder.getProduct().isExternalProduct()) {
-            companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES;
-        }
+        SapIntegrationClientImpl.SAPCompanyConfiguration companyCode =
+                getSapCompanyConfigurationForProduct(companyProductOrder.getProduct());
 
         final SapOrderDetail latestSapOrderDetail = companyProductOrder.latestSapOrderDetail();
         if(latestSapOrderDetail != null && latestSapOrderDetail.getCompanyCode()!= null
@@ -318,6 +316,16 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                                               + "company code to which this order will be associated.");
         }
 
+        return companyCode;
+    }
+
+    @Override
+    @NotNull
+    public SapIntegrationClientImpl.SAPCompanyConfiguration getSapCompanyConfigurationForProduct(Product product) {
+        SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
+        if (product.isExternalProduct()) {
+            companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES;
+        }
         return companyCode;
     }
 

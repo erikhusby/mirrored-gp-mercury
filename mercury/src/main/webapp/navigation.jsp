@@ -197,8 +197,13 @@
                         </li>
                         <li>
                             <stripes:link id="sampleSheet"
-                                    beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.SampleSheetActionBean"
-                                    event="view">Arrays Sample Sheet</stripes:link>
+                                    beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.ArraysReportActionBean"
+                                    event="view">Arrays Reports</stripes:link>
+                        </li>
+                        <li>
+                            <stripes:link id="pooledTubeUpload"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.PooledTubeUploadActionBean"
+                                          event="view">Pooled Tube Upload</stripes:link>
                         </li>
                     </ul>
                 </li>

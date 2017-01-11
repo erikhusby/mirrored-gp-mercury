@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.entity.zims;
 
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.codehaus.jackson.annotate.JsonProperty;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -31,7 +31,7 @@ public class ZimsIlluminaChamber {
     @JsonProperty("actualReadStructure")
     private String actualReadStructure;
 
-    private static SimpleDateFormat creationTimeDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+    private static FastDateFormat creationTimeDateFormat = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss");
 
     public ZimsIlluminaChamber() {}
 
