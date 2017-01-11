@@ -9,7 +9,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
@@ -38,7 +37,7 @@ import java.util.Set;
  */
 public class WorkflowDiagrammer implements Serializable {
     private static Log logger = LogFactory.getLog(WorkflowDiagrammer.class);
-    private static WorkflowLoader workflowLoader;
+    private WorkflowConfig workflowConfig;
     static final String DOT_EXTENSION = ".dot";
     public static final String DIAGRAM_FILE_EXTENSION = ".png";
     public static final String DIAGRAM_DIRECTORY = System.getProperty("java.io.tmpdir") + File.separator +
@@ -48,8 +47,8 @@ public class WorkflowDiagrammer implements Serializable {
     }
 
     @Inject
-    public void setWorkflowLoader(WorkflowLoader workflowLoader) {
-        this.workflowLoader = workflowLoader;
+    public void setWorkflowConfig(WorkflowConfig workflowConfig) {
+        this.workflowConfig = workflowConfig;
     }
 
     @Nonnull
@@ -68,8 +67,6 @@ public class WorkflowDiagrammer implements Serializable {
      * @return List of workflow graphs ordered as found in WorkflowConfig.
      */
     List<Graph> createGraphs() throws Exception {
-        WorkflowConfig workflowConfig = workflowLoader.load();
-
         List<Graph> graphs = new ArrayList<>();
         if (workflowConfig == null) {
             return graphs;

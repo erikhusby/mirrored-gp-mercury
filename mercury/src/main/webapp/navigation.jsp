@@ -197,8 +197,8 @@
                         </li>
                         <li>
                             <stripes:link id="sampleSheet"
-                                    beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.SampleSheetActionBean"
-                                    event="view">Arrays Sample Sheet</stripes:link>
+                                    beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.ArraysReportActionBean"
+                                    event="view">Arrays Reports</stripes:link>
                         </li>
                     </ul>
                 </li>

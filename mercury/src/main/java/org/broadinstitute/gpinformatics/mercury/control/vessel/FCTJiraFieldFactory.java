@@ -18,7 +18,6 @@ import java.util.Map;
 import java.util.Set;
 
 public class FCTJiraFieldFactory extends AbstractBatchJiraFieldFactory {
-
     public FCTJiraFieldFactory(@Nonnull LabBatch batch) {
         super(batch, CreateFields.ProjectType.FCT_PROJECT);
     }

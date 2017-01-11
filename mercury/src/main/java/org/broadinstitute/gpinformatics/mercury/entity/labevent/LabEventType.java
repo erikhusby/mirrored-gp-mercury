@@ -704,6 +704,16 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
 
+    //Globin Depletion
+    GLOBIN_BINDING("GlobinBinding",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    GLOBIN_DEPLETION("GlobinDepletion",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+
     //Ribo Zero
     RIBO_ZERO_TRANSFER("RiboZeroTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
@@ -1264,6 +1274,26 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.PCR_PLUS_NORMALIZED_POND),
 
+    // HyperPrep PCRFree
+    END_REPAIR_ABASE("EndRepair_ABase",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    WGS_PCR_CLEANUP("WGSPCRCleanup",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.PCR_PLUS_POND),
+
+    // Cell Free
+    CF_DNA_PCR_SETUP("CFDnaPCRSetup",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    CF_DNA_POND_REGISTRATION("CFDnaPondRegistration",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.PCR, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.CF_POND),
+
     /**
      * TODO SGM  the following names are place holders.  They will be re-evaluated as development of
      */
@@ -1435,6 +1465,42 @@ public enum LabEventType {
     //Infinium
     INFINIUM_BUCKET("InfiniumBucket",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    INFINIUM_METHYLATION_ZYMO_TRANSFER("InfiniumMethylationZymoTransferElution",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    INFINIUM_METHYLATION_BUFFER_ADDITION_1("InfiniumMethylationBufferAddition1",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    INFINIUM_METHYLATION_BUFFER_ADDITION_2("InfiniumMethylationBufferAddition2",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    INFINIUM_METHYLATION_FILTER_PLATE_TRANSFER("InfiniumMethylationFilterPlateTransfer",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    INFINIUM_METHYLATION_WASH_1("InfiniumMethylationWash1",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    INFINIUM_METHYLATION_DESULPHONATION("InfiniumMethylationDesulphonation",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    INFINIUM_METHYLATION_WASH_2("InfiniumMethylationWash2",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    INFINIUM_METHYLATION_WASH_3("InfiniumMethylationWash3",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    INFINIUM_METHYLATION_ELUTION("InfiniumMethylationElution",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
     INFINIUM_AMPLIFICATION("InfiniumAmplification",
@@ -1726,6 +1792,7 @@ public enum LabEventType {
         ENRICHED_POND("Enriched Pond", "Pond"),
         PCR_FREE_POND("PCR-Free Pond", "Pond"),
         PCR_PLUS_POND("PCR-Plus Pond", "Pond"),
+        CF_POND("CF Pond", "Pond"),
         PCR_PLUS_NORMALIZED_POND("PCR-Plus Norm Pond", "Norm Pond"),
         HYBRID_SELECTION_AGILENT_CATCH("Enriched Catch", "Catch"),
         HYBRID_SELECTION_ICE_ENRICHED_CATCH("Enriched Catch", "Catch"),
@@ -1794,6 +1861,9 @@ public enum LabEventType {
         /** If true, display error message when target does not exist.  */
         private boolean targetExpectedToExist = false;
 
+        /** If false, display error message when target has transfers.  */
+        private boolean targetExpectedEmpty = true;
+
         /** How many reagent fields for each entry in reagentNames. */
         private int[] reagentFieldCounts;
     
@@ -1845,6 +1915,7 @@ public enum LabEventType {
             repeatedWorkflowQualifier = builder.repeatedWorkflowQualifier;
             buttonValue = builder.buttonValue;
             targetExpectedToExist = builder.targetExpectedToExist;
+            targetExpectedEmpty = builder.targetExpectedEmpty;
         }
 
         public static class Builder {
@@ -1864,6 +1935,7 @@ public enum LabEventType {
             private String repeatedWorkflowQualifier;
             private String buttonValue = "Transfer";
             private boolean targetExpectedToExist = false;
+            private boolean targetExpectedEmpty = true;
 
             public Builder(MessageType messageType, VesselTypeGeometry sourceVesselTypeGeometry,
                     VesselTypeGeometry targetVesselTypeGeometry) {
@@ -1932,6 +2004,11 @@ public enum LabEventType {
                 return this;
             }
 
+            public Builder targetExpectedEmpty(boolean targetExpectedEmpty) {
+                this.targetExpectedEmpty = targetExpectedEmpty;
+                return this;
+            }
+
             public ManualTransferDetails build() {
                 return new ManualTransferDetails(this);
             }
@@ -1984,6 +2061,10 @@ public enum LabEventType {
 
         public boolean isTargetExpectedToExist() {
             return targetExpectedToExist;
+        }
+
+        public boolean isTargetExpectedEmpty() {
+            return targetExpectedEmpty;
         }
 
         public String[] getReagentNames() {

@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.columns;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
@@ -45,6 +46,7 @@ public class VesselMetricDetailsPlugin implements ListPlugin {
 
     // Plugin instance is cached for a search, flag indicates all metric data for vessel list is populated
     private boolean isDataInitialized = false;
+
     // All cached metrics for the lab vessels mapped by vessel barcode
     private Map<String,Map<LabMetric.MetricType, Set<LabMetric>>> cachedMetricData;
 
@@ -77,7 +79,8 @@ public class VesselMetricDetailsPlugin implements ListPlugin {
 
         // Populate rows with any available metrics data.
         for( LabVessel labVessel : labVesselList ) {
-            ConfigurableList.Row row = buildMetricsRow( labVessel, metricType, quantHeaders );
+            ConfigurableList.Row row = buildMetricsRow( labVessel, metricType, quantHeaders
+                    , context );
             metricRows.add(row);
         }
 
@@ -123,9 +126,16 @@ public class VesselMetricDetailsPlugin implements ListPlugin {
      * @param quantHeaders The result header list to dynamically add columns to for each metric run and value
      * @return A row populated with any available metrics data for the vessel and type specified
      */
-    private ConfigurableList.Row buildMetricsRow(LabVessel labVessel, LabMetric.MetricType metricType, Map<String,ConfigurableList.Header> quantHeaders ) {
+    private ConfigurableList.Row buildMetricsRow(LabVessel labVessel, LabMetric.MetricType metricType, Map<String,ConfigurableList.Header> quantHeaders, SearchContext context ) {
 
         ConfigurableList.Row row = new ConfigurableList.Row( labVessel.getLabel() );
+        ConfigurableList.Cell resultCell;
+        String mainHeaderName;
+        String fullHeaderName;
+        String barcode;
+        String position;
+        String metricValue;
+        String metricDate;
 
         Map<LabMetric.MetricType, Set<LabMetric>> metricGroups = cachedMetricData.get(labVessel.getLabel());
         Set<LabMetric> metrics = metricGroups.get(metricType);
@@ -151,47 +161,119 @@ public class VesselMetricDetailsPlugin implements ListPlugin {
         // Sort oldest to newest so they display right to left
         Collections.sort( metricList );
 
+        // Create a map of each run and the associated metrics because ancestor/descendant metrics
+        // can have more than a single metric, for example starting with a pond pico vessel
+        // and showing the 8 catch pico metrics in a downstream pool
+        // Need to get to cell if more than a single vessel metric is related to an ancestor
+        Map<String,List<LabMetric>> metricRunMap = new LinkedHashMap<>();
+
         for( LabMetric labMetric : metricList ) {
 
-            String mainHeaderName;
-            if( labMetric.getLabMetricRun() == null ) {
-                mainHeaderName = metricType.getDisplayName();
+            if (labMetric.getLabMetricRun() == null) {
+                // Concoct a (hopefully) unique header for metrics with no associated run
+                // (TODO: Always create run per GPLIM-4339)
+                mainHeaderName = metricType.getDisplayName() + " - "
+                        + ColumnValueType.DATE.format(labMetric.getCreatedDate(), "");
             } else {
                 mainHeaderName = labMetric.getLabMetricRun().getRunName();
             }
 
-            // Add column headers for this run name, but avoid hammering the hash lookup if headers are there already
-            String fullHeaderName = mainHeaderName + " " + MetricColumn.BARCODE.getDisplayName();
-            if( !quantHeaders.containsKey(fullHeaderName) ) {
+            List<LabMetric> multiMetricList = metricRunMap.get(mainHeaderName);
+            if( multiMetricList == null ) {
+                multiMetricList = new ArrayList<>();
+                metricRunMap.put(mainHeaderName, multiMetricList);
+            }
+            multiMetricList.add(labMetric);
+
+            // Add all column headers for this run name, but avoid hammering the hash lookup if headers are there already
+            fullHeaderName = mainHeaderName + " " + MetricColumn.BARCODE.getDisplayName();
+            if (!quantHeaders.containsKey(fullHeaderName)) {
                 // Cells shown in order of enum: Barcode - Position - Value - Date
-                for( MetricColumn metricColumn : MetricColumn.values() ) {
+                for (MetricColumn metricColumn : MetricColumn.values()) {
                     fullHeaderName = mainHeaderName + " " + metricColumn.getDisplayName();
-                    quantHeaders.put(fullHeaderName, new ConfigurableList.Header(fullHeaderName, mainHeaderName, metricColumn.getDisplayName()));
+                    ConfigurableList.Header header
+                            = new ConfigurableList.Header(fullHeaderName, mainHeaderName, metricColumn.getDisplayName());
+                    quantHeaders.put(fullHeaderName, header);
                 }
             }
+        }
 
-            ConfigurableList.Cell resultCell;
-            String barcode = labMetric.getLabVessel().getLabel();
-            fullHeaderName = mainHeaderName + " " + MetricColumn.BARCODE.getDisplayName();
+        // Metrics are aggregated and headers are created, build out cells
+        for( Map.Entry<String,List<LabMetric>> metricEntry : metricRunMap.entrySet() ) {
+
+            if( metricEntry.getValue() == null || metricEntry.getValue().isEmpty() ) {
+                continue;
+            } else if ( metricEntry.getValue().size() == 1 ) {
+                LabMetric labMetric = metricEntry.getValue().get(0);
+                barcode = labMetric.getLabVessel().getLabel();
+                position = labMetric.getVesselPosition();
+                metricValue = ColumnValueType.TWO_PLACE_DECIMAL.format( labMetric.getValue(), "" )
+                        + " " + labMetric.getUnits().getDisplayName();
+                metricDate = ColumnValueType.DATE_TIME.format( labMetric.getCreatedDate(), "" );
+            } else {
+                if( context.getResultCellTargetPlatform() == SearchContext.ResultCellTargetPlatform.WEB ) {
+                    // Use a link to metrics drill down when ancestor or descendant has multiple vessel metrics
+                    HashMap<String,String[]> terms = new HashMap<>();
+                    List<String> barcodes = new ArrayList<>();
+                    // This group will always be associated with a single run (or a null run)
+                    String metricRunId = null;
+                    for( LabMetric metric : metricEntry.getValue() ){
+                        barcodes.add(metric.getLabVessel().getLabel());
+                        // If no run, this term will be ignored when value is empty
+                        metricRunId = metric.getLabMetricRun() == null ? ""
+                                : metric.getLabMetricRun().getLabMetricRunId().toString();
+                    }
+                    terms.put("Barcode", barcodes.toArray(new String[0]));
+                    terms.put("Metric Run ID", new String[]{metricRunId});
+                    barcode = SearchDefinitionFactory.buildDrillDownLink("(Multiple Vessel Metrics)"
+                            , ColumnEntity.LAB_METRIC
+                            , "GLOBAL|GLOBAL_LAB_METRIC_SEARCH_INSTANCES|Metrics by Barcode and Run"
+                            , terms, context );
+                    position = metricValue = metricDate = "---";
+                } else {
+                    // Text for Excel export
+                    StringBuilder barcodeAppend = new StringBuilder();
+                    StringBuilder positionAppend = new StringBuilder();
+                    StringBuilder valueAppend = new StringBuilder();
+                    metricDate = null;
+
+
+                    for( LabMetric labMetric : metricEntry.getValue() ) {
+                        barcodeAppend.append(labMetric.getLabVessel().getLabel())
+                                .append("\n");
+                        positionAppend.append(labMetric.getVesselPosition())
+                                .append("\n");
+                        valueAppend.append(ColumnValueType.TWO_PLACE_DECIMAL.format( labMetric.getValue(), "" ) + " "
+                            + labMetric.getUnits().getDisplayName())
+                                .append("\n");
+                        // All should be same date
+                        metricDate = ColumnValueType.DATE_TIME.format( labMetric.getCreatedDate(), "" );
+                    }
+
+                    barcode = barcodeAppend.toString().trim();
+                    position = positionAppend.toString().trim();
+                    metricValue = valueAppend.toString().trim();
+                }
+
+            }
+
+            fullHeaderName = metricEntry.getKey() + " " + MetricColumn.BARCODE.getDisplayName();
             resultCell = new ConfigurableList.Cell(quantHeaders.get(fullHeaderName), barcode, barcode);
             row.addCell(resultCell);
 
-            String position = labMetric.getVesselPosition();
-            fullHeaderName = mainHeaderName + " " + MetricColumn.POSITION.getDisplayName();
+            fullHeaderName = metricEntry.getKey() + " " + MetricColumn.POSITION.getDisplayName();
             resultCell = new ConfigurableList.Cell(quantHeaders.get(fullHeaderName), position, position);
             row.addCell(resultCell);
 
-            String metricValue = ColumnValueType.TWO_PLACE_DECIMAL.format( labMetric.getValue(), "" ) + " " + labMetric.getUnits().getDisplayName();
-            fullHeaderName = mainHeaderName + " " + MetricColumn.VALUE.getDisplayName();
+            fullHeaderName = metricEntry.getKey() + " " + MetricColumn.VALUE.getDisplayName();
             resultCell = new ConfigurableList.Cell(quantHeaders.get(fullHeaderName), metricValue, metricValue);
             row.addCell(resultCell);
 
-            String metricDate = ColumnValueType.DATE_TIME.format( labMetric.getCreatedDate(), "" );
-            fullHeaderName = mainHeaderName + " " + MetricColumn.DATE.getDisplayName();
+            fullHeaderName = metricEntry.getKey() + " " + MetricColumn.DATE.getDisplayName();
             resultCell = new ConfigurableList.Cell(quantHeaders.get(fullHeaderName), metricDate, metricDate);
             row.addCell(resultCell);
-
         }
+
         return row;
     }
 

@@ -11,8 +11,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.ArraysSummaryFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.SampleSheetFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -31,15 +31,21 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Stripes action bean that allows user to download as samplesheet.csv file for arrays.
+ * Stripes action bean that allows user to download a Samplesheet.csv or Summary.txt file for arrays.
  */
-@UrlBinding(value = "/vessel/SampleSheet.action")
-public class SampleSheetActionBean extends CoreActionBean {
-    private static final String CREATE_PAGE = "/vessel/sample_sheet.jsp";
+@UrlBinding(value = "/vessel/ArraysReport.action")
+public class ArraysReportActionBean extends CoreActionBean {
+    private static final String CREATE_PAGE = "/vessel/arrays_report.jsp";
     private static final String DOWNLOAD_ACTION = "download";
 
     /** Extract barcode and position from e.g. 3999595020_R12C02 */
     private static final Pattern BARCODE_PATTERN = Pattern.compile("(\\d*)_(R\\d*C\\d*)");
+
+    /** POSTed from form. */
+    private ArraysReportActionBean.Report report;
+
+    /** POSTed from form. */
+    private boolean includeScannerName;
 
     /** POSTed from form. */
     private String pdoBusinessKeys;
@@ -49,6 +55,9 @@ public class SampleSheetActionBean extends CoreActionBean {
 
     @Inject
     private SampleSheetFactory sampleSheetFactory;
+
+    @Inject
+    private ArraysSummaryFactory arraysSummaryFactory;
 
     @Inject
     private ProductOrderDao productOrderDao;
@@ -61,18 +70,33 @@ public class SampleSheetActionBean extends CoreActionBean {
         return new ForwardResolution(CREATE_PAGE);
     }
 
+    public enum Report {
+        SAMPLE_SHEET("Samplesheet.csv"),
+        SUMMARY("Summary.txt");
+
+        private final String displayName;
+
+        Report(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+    }
+
     @HandlesEvent(DOWNLOAD_ACTION)
     public Resolution download() {
         final List<Pair<LabVessel, VesselPosition>> vesselPositionPairs = new ArrayList<>();
 
-        ResearchProject researchProject = null;
+        ProductOrder firstProductOrder = null;
         if (pdoBusinessKeys != null) {
             String[] pdoKeys = pdoBusinessKeys.trim().split("\\s+");
             for (String pdoKey : pdoKeys) {
                 ProductOrder productOrder = productOrderDao.findByBusinessKey(pdoKey);
-                vesselPositionPairs.addAll(sampleSheetFactory.loadByPdo(productOrder));
-                if (researchProject == null) {
-                    researchProject = productOrder.getResearchProject();
+                vesselPositionPairs.addAll(SampleSheetFactory.loadByPdo(productOrder));
+                if (firstProductOrder == null) {
+                    firstProductOrder = productOrder;
                 }
             }
         }
@@ -80,7 +104,7 @@ public class SampleSheetActionBean extends CoreActionBean {
         if (chipWellBarcodes != null) {
             String[] chipWellBarcodeArray = chipWellBarcodes.trim().split("\\s+");
             if (chipWellBarcodeArray.length > 0) {
-                ArrayList<String> barcodes = new ArrayList<>();
+                List<String> barcodes = new ArrayList<>();
                 for (String chipWellBarcode : chipWellBarcodeArray) {
                     Matcher matcher = BARCODE_PATTERN.matcher(chipWellBarcode);
                     if (matcher.matches()) {
@@ -110,34 +134,47 @@ public class SampleSheetActionBean extends CoreActionBean {
                                     " not found");
                         }
                         vesselPositionPairs.add(new ImmutablePair<>(labVessel, vesselPosition));
-                        if (researchProject == null) {
+                        if (firstProductOrder == null && !hasErrors()) {
                             Set<SampleInstanceV2> sampleInstances =
                                     labVessel.getContainerRole().getSampleInstancesAtPositionV2(vesselPosition);
                             ProductOrderSample productOrderSample =
                                     sampleInstances.iterator().next().getProductOrderSampleForSingleBucket();
                             if (productOrderSample != null) {
-                                researchProject = productOrderSample.getProductOrder().getResearchProject();
+                                firstProductOrder = productOrderSample.getProductOrder();
                             }
                         }
                     }
                 }
             }
         }
-        if (researchProject == null) {
-            addGlobalValidationError("No research projects found.");
+        if (vesselPositionPairs.isEmpty()) {
+            addGlobalValidationError("No chips found.");
+        }
+        if (firstProductOrder == null && !hasErrors()) {
+            addGlobalValidationError("No product orders found.");
         }
 
         if (hasErrors()) {
             return new ForwardResolution(CREATE_PAGE);
         } else {
-            final ResearchProject finalResearchProject = researchProject;
+            final ProductOrder finalFirstProductOrder = firstProductOrder;
             return new StreamingResolution("text/plain") {
                 @Override
                 public void stream(HttpServletResponse response) throws Exception {
                     ServletOutputStream out = response.getOutputStream();
-                    sampleSheetFactory.write(new PrintStream(out), vesselPositionPairs, finalResearchProject);
+                    switch (report) {
+                        case SAMPLE_SHEET:
+                            sampleSheetFactory.write(new PrintStream(out), vesselPositionPairs, finalFirstProductOrder);
+                            break;
+                        case SUMMARY:
+                            arraysSummaryFactory.write(new PrintStream(out), vesselPositionPairs,
+                                    finalFirstProductOrder, includeScannerName);
+                            break;
+                        default:
+                            throw new RuntimeException("Unexpected report " + report);
+                    }
                 }
-            }.setFilename("Samplesheet.csv");
+            }.setFilename(report.getDisplayName());
         }
     }
 
@@ -159,5 +196,18 @@ public class SampleSheetActionBean extends CoreActionBean {
     @SuppressWarnings("unused")
     public void setChipWellBarcodes(String chipWellBarcodes) {
         this.chipWellBarcodes = chipWellBarcodes;
+    }
+
+    public ArraysReportActionBean.Report getReport() {
+        return report;
+    }
+
+    public void setReport(ArraysReportActionBean.Report report) {
+        this.report = report;
+    }
+
+    @SuppressWarnings("unused")
+    public void setIncludeScannerName(boolean includeScannerName) {
+        this.includeScannerName = includeScannerName;
     }
 }

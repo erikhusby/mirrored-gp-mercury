@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -1714,6 +1715,65 @@ public class LabEventFixupTest extends Arquillian {
         labEventDao.persist(fixupCommentary);
         labEventDao.flush();
 
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport2330() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        long[] ids = {1740607L};
+
+        Reagent undesired = reagentDao.findByReagentNameLotExpiration("HS buffer", "RG-8262", null);
+        Reagent desired = reagentDao.findByReagentNameLotExpiration("HS buffer", "RG-3111", null);
+        Assert.assertNotNull(undesired);
+
+        if (desired == null) {
+            desired = new GenericReagent("HS buffer", "RG-3111", null);
+        }
+
+        for (long id: ids) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, id);
+            if (labEvent == null || labEvent.getLabEventType() != LabEventType.RIBO_DILUTION_TRANSFER) {
+                throw new RuntimeException("cannot find " + id + " or is not RiboDilutionTransfer");
+            }
+            for (LabEventReagent labEventReagent: labEvent.getLabEventReagents()) {
+                if (labEventReagent.getReagent().equals(undesired)) {
+                    System.out.println("Removing " + undesired.getName() + " on event " + labEvent.getLabEventId());
+                    labEvent.getLabEventReagents().remove(labEventReagent);
+                    genericReagentDao.remove(labEventReagent);
+                }
+            }
+            System.out.println("Adding " + desired.getName() + " on event " + labEvent.getLabEventId());
+            labEvent.addReagent(desired);
+        }
+
+        FixupCommentary fixupCommentary = new FixupCommentary(
+                "SUPPORT-2330 - Removing expired reagent for new one");
+        labEventDao.persist(fixupCommentary);
+        labEventDao.flush();
+
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim4508() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        long[] ids = {1727870L, 1727867L, 1727881L};
+        for (long wrongEventId : ids) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, wrongEventId);
+            if (labEvent == null || labEvent.getLabEventType() != LabEventType.EXTRACT_BLOOD_MICRO_TO_SPIN) {
+                throw new RuntimeException("cannot find " + wrongEventId + " or is not EXTRACT_BLOOD_MICRO_TO_SPIN");
+            }
+            System.out.println("LabEvent " + wrongEventId + " type " + labEvent.getLabEventType());
+            labEvent.setLabEventType(LabEventType.EXTRACT_FRESH_TISSUE_MICRO_TO_SPIN);
+            System.out.println("   updated to " + labEvent.getLabEventType());
+        }
+
+        labEventDao.persist(new FixupCommentary("GPLIM-4508 change event type to ExtractFreshTissueMicroToSpin"));
+        labEventDao.flush();
         utx.commit();
     }
 

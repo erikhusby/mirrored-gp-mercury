@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -22,6 +23,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBeanContext;
+import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.InfiniumEntityBuilder;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -33,7 +35,6 @@ import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.mercury.test.LabEventTest.buildSamplePlates;
-import static org.mockito.Matchers.anyCollection;
 import static org.mockito.Matchers.anyList;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -78,6 +79,7 @@ public class MetricsViewActionBeanTest {
         LabEventHandler labEventHandler = new LabEventHandler();
 
         int numSamples = 94;
+        BaseEventTest.expectedRouting = SystemRouter.System.SQUID;
         ProductOrder productOrder = ProductOrderTestFactory.buildInfiniumProductOrder(numSamples);
         List<StaticPlate> sourcePlates = buildSamplePlates(productOrder, "AmpPlate");
         StaticPlate sourcePlate = sourcePlates.get(0);

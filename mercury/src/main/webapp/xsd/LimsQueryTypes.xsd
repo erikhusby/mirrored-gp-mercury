@@ -162,4 +162,18 @@
             <xsd:element name="weightUnits" type="xsd:string"/>
         </xsd:sequence>
     </xsd:complexType>
+
+    <xsd:complexType name="worklowValidationErrorType">
+        <xsd:sequence>
+            <xsd:element name="hasErrors" type="xsd:boolean"/>
+            <xsd:element name="validationErrors" type="validationErrorType" maxOccurs="unbounded"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="validationErrorType">
+        <xsd:sequence>
+            <xsd:element name="message" type="xsd:string"/>
+            <xsd:element name="actualEventTypes" type="xsd:string" maxOccurs="unbounded"/>
+            <xsd:element name="expectedEventTypes" type="xsd:string" maxOccurs="unbounded"/>
+        </xsd:sequence>
+    </xsd:complexType>
 </xsd:schema>

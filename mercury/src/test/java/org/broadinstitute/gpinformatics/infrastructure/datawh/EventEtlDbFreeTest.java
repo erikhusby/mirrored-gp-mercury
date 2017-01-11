@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -114,7 +115,7 @@ public class EventEtlDbFreeTest {
         mercurySamples.clear();
         mercurySamples.add(sample);
 
-        tst = new LabEventEtl(wfLookup, dao, sequencingSampleFactEtl);
+        tst = new LabEventEtl(wfLookup, dao, sequencingSampleFactEtl, new WorkflowLoader().load());
         tst.setAuditReaderDao(auditReader);
     }
 

@@ -18,6 +18,7 @@ import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
     private static final Log log = LogFactory.getLog(SubmissionsServiceImpl.class);
     private static final long serialVersionUID = -1724342423871535677L;
     public static final int EPSILON_9_MAX_URL_LENGTH = 2048;
+    private static final Map<String, List<String>> NO_PARAMETERS = Collections.<String, List<String>>emptyMap();
 
     private final SubmissionConfig submissionsConfig;
     public static final String ACCESSION_PARAMETER = "accession";
@@ -53,9 +55,8 @@ public class SubmissionsServiceImpl implements SubmissionsService {
         String baseUrl = submissionsConfig.getWSUrl(SubmissionConfig.SUBMISSIONS_STATUS_URI);
         QueryStringSplitter splitter = new QueryStringSplitter(baseUrl.length(), EPSILON_9_MAX_URL_LENGTH);
         for (Map<String, List<String>> parameters : splitter.split("uuid", Arrays.asList(submissionIdentifiers))) {
-            ClientResponse response = JerseyUtils.getWebResource(baseUrl, MediaType.APPLICATION_JSON_TYPE, parameters)
-                    .accept(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
-            validateResponseStatus("querying submission status", response);
+            ClientResponse response = clientResponseGet(SubmissionConfig.SUBMISSIONS_STATUS_URI, parameters);
+            validateResponseStatus("querying submission status",response);
             SubmissionStatusResultBean result = response.getEntity(SubmissionStatusResultBean.class);
             allResults.addAll(result.getSubmissionStatuses());
         }
@@ -105,13 +106,10 @@ public class SubmissionsServiceImpl implements SubmissionsService {
      */
     @Override
     public Collection<BioProject> getAllBioProjects() {
-        ClientResponse response = JerseyUtils
-                .getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.LIST_BIOPROJECTS_ACTION),
-                        MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
-
-        validateResponseStatus("querying submission status", response);
-
+        ClientResponse response =
+                clientResponseGet(SubmissionConfig.LIST_BIOPROJECTS_ACTION, NO_PARAMETERS);
         BioProjects bioProjects = response.getEntity(BioProjects.class);
+        validateResponseStatus("querying submission status", response);
         return bioProjects.getBioprojects();
     }
 
@@ -127,7 +125,6 @@ public class SubmissionsServiceImpl implements SubmissionsService {
                         MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).entity(submissions)
                            .post(ClientResponse.class);
         validateResponseStatus("posting submissions", response);
-
         return response.getEntity(SubmissionStatusResultBean.class).getSubmissionStatuses();
     }
 
@@ -135,32 +132,31 @@ public class SubmissionsServiceImpl implements SubmissionsService {
     public Collection<String> getSubmissionSamples(BioProject bioProject) {
         Map<String, List<String>> parameterMap = new HashMap<>();
         parameterMap.put(ACCESSION_PARAMETER, Arrays.asList(bioProject.getAccession()));
+
         ClientResponse response =
-                JerseyUtils.getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.SUBMISSION_SAMPLES_ACTION),
-                        MediaType.APPLICATION_JSON_TYPE, parameterMap).get(ClientResponse.class);
-
+                clientResponseGet(SubmissionConfig.SUBMISSION_SAMPLES_ACTION, parameterMap);
         validateResponseStatus("receiving submission samples list", response);
-
         return response.getEntity(SubmissionSampleResultBean.class).getSubmittedSampleIds();
     }
 
     @Override
     public List<SubmissionRepository> getSubmissionRepositories() {
-        ClientResponse response =
-                JerseyUtils.getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.ALL_SUBMISSION_SITES), MediaType.APPLICATION_JSON_TYPE)
-                        .get(ClientResponse.class);
+        ClientResponse response = clientResponseGet(SubmissionConfig.ALL_SUBMISSION_SITES, NO_PARAMETERS);
         validateResponseStatus("receiving Submission Repositories", response);
-
         return response.getEntity(SubmissionRepositories.class).getSubmissionRepositories();
     }
 
     @Override
     public List<SubmissionLibraryDescriptor> getSubmissionLibraryDescriptors() {
-        ClientResponse response =
-                       JerseyUtils.getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.SUBMISSION_TYPES),
-                               MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
-        validateResponseStatus("receiving Submission Library Descriptors", response);
+        ClientResponse response = clientResponseGet(SubmissionConfig.SUBMISSION_TYPES, NO_PARAMETERS);
+        validateResponseStatus("receiving Submission Library Descriptors",response);
         return response.getEntity(SubmissionLibraryDescriptors.class).getSubmissionLibraryDescriptors();
+    }
+
+    private ClientResponse clientResponseGet(String servicePath, Map<String, List<String>> parameters) {
+        ClientResponse response = JerseyUtils.getWebResource(submissionsConfig.getWSUrl(servicePath),
+                MediaType.APPLICATION_JSON_TYPE, parameters).get(ClientResponse.class);
+        return response;
     }
 
 

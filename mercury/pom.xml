@@ -8,7 +8,7 @@
     file as well until such a time that we reconfigure the mercury structure to have a dependant project or something
      that can inherit this version setting. -->
 
-    <version>1.76.2</version>
+    <version>1.77</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
@@ -1265,7 +1265,12 @@ nodePrinter.print(webapp)
             <version>6.9.8</version>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+             <groupId>org.mock-server</groupId>
+             <artifactId>mockserver-netty</artifactId>
+             <version>3.10.4</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-all</artifactId>

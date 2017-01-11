@@ -215,7 +215,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Column(name = "sap_order_number")
     private String sapOrderNumber;
 
-    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "referenceProductOrder", orphanRemoval = true)
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "referenceProductOrder", orphanRemoval = true)
     private List<SapOrderDetail> sapReferenceOrders = new ArrayList<>();
 
     @OneToMany(mappedBy = "parentOrder", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)

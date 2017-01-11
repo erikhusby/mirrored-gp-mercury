@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.entity.billing;
 
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.meanbean.test.BeanTester;
 import org.meanbean.test.EqualsMethodTester;
@@ -11,8 +11,6 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -21,7 +19,7 @@ import java.util.Map;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class LedgerEntryTest {
 
-    private static final DateFormat formatter = new SimpleDateFormat("MM/dd/yy");
+    private static final FastDateFormat formatter = FastDateFormat.getInstance("MM/dd/yy");
 
     private static final Map<String, ProductOrderSample> sampleMap = new HashMap<>();
 

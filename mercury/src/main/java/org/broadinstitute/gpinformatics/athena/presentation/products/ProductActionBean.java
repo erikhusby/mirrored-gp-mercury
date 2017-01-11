@@ -43,6 +43,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchety
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.sap.services.SAPIntegrationException;
@@ -111,6 +112,9 @@ public class ProductActionBean extends CoreActionBean {
 
     @Inject
     private ResearchProjectDao researchProjectDao;
+
+    @Inject
+    private WorkflowConfig workflowConfig;
 
     // Data needed for displaying the view.
     private List<ProductFamily> productFamilies;
@@ -678,7 +682,7 @@ public class ProductActionBean extends CoreActionBean {
      */
     public Set<Workflow> getAvailableWorkflows() {
         Set<Workflow> workflows = new TreeSet<>(Workflow.BY_NAME);
-        List<ProductWorkflowDef> productWorkflowDefs = new WorkflowLoader().load().getProductWorkflowDefs();
+        List<ProductWorkflowDef> productWorkflowDefs = workflowConfig.getProductWorkflowDefs();
         for (ProductWorkflowDef productWorkflowDef : productWorkflowDefs) {
             workflows.add(Workflow.findByName(productWorkflowDef.getName()));
         }

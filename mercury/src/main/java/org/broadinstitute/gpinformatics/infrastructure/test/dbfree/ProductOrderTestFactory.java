@@ -152,6 +152,18 @@ public class ProductOrderTestFactory {
         return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.PCR_PLUS);
     }
 
+    public static ProductOrder buildPcrPlusHyperPrepProductOrder(int maxSamples) {
+        return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.PCR_PLUS_HYPER_PREP);
+    }
+
+    public static ProductOrder buildPcrFreeHyperPrepProductOrder(int maxSamples) {
+        return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.PCR_FREE_HYPER_PREP);
+    }
+
+    public static ProductOrder buildCellFreeHyperPrepProductOrder(int maxSamples) {
+        return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.CELL_FREE_HYPER_PREP);
+    }
+
     public static ProductOrder buildSampleInitiationProductOrder(int maxSamples) {
 
         ProductOrder sampleInitiationProductOrder = createDummyProductOrder(maxSamples, JIRA_KEY, Workflow.NONE,
@@ -171,11 +183,6 @@ public class ProductOrderTestFactory {
                 "Test RP", rpSynopsis, ResearchProject.IRB_ENGAGED, "P-FPtest-1232", SAMPLE_SUFFIX, "ExExQuoteId");
     }
 
-    public static ProductOrder buildInfiniumProductOrder(int maxSamples) {
-        return createDummyProductOrder(maxSamples, "PDO-1INF", Workflow.NONE, 101,
-                "Test RP", rpSynopsis, ResearchProject.IRB_ENGAGED, "P-INFtest-1232", SAMPLE_SUFFIX, "ExExQuoteId");
-    }
-
     public static ProductOrder buildArrayPlatingProductOrder(int maxSamples) {
         return createDummyProductOrder(maxSamples, "PDO-1ARR", Workflow.NONE, 101,
                 "Test RP", rpSynopsis, ResearchProject.IRB_ENGAGED, "P-ARRtest-1232", SAMPLE_SUFFIX, "ExExQuoteId");
@@ -184,6 +191,14 @@ public class ProductOrderTestFactory {
     public static ProductOrder buildTruSeqStrandSpecificProductOrder(int maxSamples) {
         return createDummyProductOrder(maxSamples, "PDO-1TRUSS", Workflow.NONE, 101,
                 "Test RP", rpSynopsis, ResearchProject.IRB_ENGAGED, "P-TRUSStest-1232", SAMPLE_SUFFIX, "ExExQuoteId");
+    }
+
+    public static ProductOrder buildInfiniumMethylationProductOrder(int maxSamples) {
+        return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.INFINIUM_METHYLATION);
+    }
+
+    public static ProductOrder buildInfiniumProductOrder(int maxSamples) {
+        return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.INFINIUM);
     }
 
 
