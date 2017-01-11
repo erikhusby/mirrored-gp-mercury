@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.workflow;
 
+import clover.org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -35,6 +36,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -86,10 +89,17 @@ public class WorkflowValidator {
                         BettaLimsMessageUtils.getBarcodesForCherryPick(plateCherryPickEvent)));
             }
 
-            for (PlateEventType plateEventType : bettaLIMSMessage.getPlateEvent()) {
-                validateWorkflow(plateEventType, new ArrayList<>(
-                        BettaLimsMessageUtils.getBarcodesForPlateEvent(plateEventType)));
+            if (bettaLIMSMessage.getPlateEvent().size() > 1) {
+                Map<String, Set<StationEventType>> barcodeToEventTypes =
+                        BettaLimsMessageUtils.getBarcodesForPlateEvent(bettaLIMSMessage.getPlateEvent());
+                for (Map.Entry<String, Set<StationEventType>> entrySet: barcodeToEventTypes.entrySet()) {
+                    validateWorkflow(entrySet.getKey(), entrySet.getValue());
+                }
             }
+//            for (PlateEventType plateEventType : bettaLIMSMessage.getPlateEvent()) {
+//                validateWorkflow(plateEventType, new ArrayList<>(
+//                        BettaLimsMessageUtils.getBarcodesForPlateEvent(plateEventType)));
+//            }
 
             for (PlateTransferEventType plateTransferEventType : bettaLIMSMessage.getPlateTransferEvent()) {
                 validateWorkflow(plateTransferEventType, new ArrayList<>(
@@ -110,6 +120,64 @@ public class WorkflowValidator {
             // convert runtime exceptions to checked, so the transaction is not rolled back
             log.error("Workflow exception", e);
             throw new WorkflowException(e);
+        }
+    }
+
+    private void validateWorkflow(String barcode, Set<StationEventType> stationEventTypes) {
+        LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
+        validateWorkflow(labVessel, stationEventTypes);
+    }
+
+    private void validateWorkflow(LabVessel labVessel, Set<StationEventType> eventTypes) {
+        List<WorkflowValidationError> validationErrors = new ArrayList<>();
+
+        Set<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
+        Set<String> eventNames = new LinkedHashSet<>();
+        for (StationEventType stationEventType: eventTypes) {
+            eventNames.add(stationEventType.getEventType());
+        }
+        for (SampleInstanceV2 sampleInstance : sampleInstances) {
+            String workflowName = sampleInstance.getWorkflowName();
+            LabBatch effectiveBatch = sampleInstance.getSingleBatch();
+
+                /*
+                    Not necessarily an ideal solution but validation should not necessarily cause a Null pointer which
+                    is what will happen if the batch is not found (Sample exists in multiple batches)
+                 */
+            if (workflowName != null && effectiveBatch != null) {
+                ProductWorkflowDefVersion workflowVersion = workflowConfig.getWorkflowVersionByName(
+                        workflowName, effectiveBatch.getCreatedOn());
+                if (workflowVersion != null) {
+                    List<ProductWorkflowDefVersion.ValidationError> errors =
+                            workflowVersion.validate(labVessel, eventNames);
+                    if (!errors.isEmpty()) {
+                        ProductOrder productOrder = null;
+                        if (sampleInstance.getSingleBucketEntry() != null) {
+                            productOrder = sampleInstance.getSingleBucketEntry().getProductOrder();
+                        }
+                        //if this is a rework and we are at the first step of the process it was reworked from ignore the error
+                        boolean ignoreErrors = false;
+                        for (LabBatch batch : labVessel.getReworkLabBatches()) {
+                            if (batch.getReworks().contains(labVessel)) {
+                                ignoreErrors = true;
+                            }
+                        }
+                        if (!ignoreErrors) {
+                            validationErrors.add(new WorkflowValidationError(sampleInstance, errors, productOrder,
+                                    appConfig));
+                        }
+
+                    }
+                }
+            }
+        }
+
+        if (!validationErrors.isEmpty()) {
+            String eventsString = StringUtils.join(eventNames, ",");
+            String operator = eventTypes.iterator().next().getOperator();
+            String body = renderTemplate(labVessel.getLabel(), eventsString, operator, validationErrors);
+            emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), Collections.<String>emptyList(),
+                    "Workflow validation failure for " + eventsString, body, false);
         }
     }
 
@@ -212,6 +280,23 @@ public class WorkflowValidator {
     }
 
     /**
+     * Uses a template to render validation errors into an HTML email body.
+     */
+    public String renderTemplate(String vesselLabel, String eventTypes, String operator,
+                                 List<WorkflowValidationError> validationErrors) {
+        Map<String, Object> rootMap = new HashMap<>();
+        String linkToPlastic = appConfig.getUrl() + VesselSearchActionBean.ACTIONBEAN_URL_BINDING + "?" +
+                               VesselSearchActionBean.VESSEL_SEARCH + "=&searchKey=" + vesselLabel;
+        rootMap.put("linkToPlastic", linkToPlastic);
+        rootMap.put("stationEvent", eventTypes);
+        rootMap.put("bspUser", bspUserList.getByUsername(operator));
+        rootMap.put("validationErrors", validationErrors);
+        StringWriter stringWriter = new StringWriter();
+        templateEngine.processTemplate("WorkflowValidation.ftl", rootMap, stringWriter);
+        return stringWriter.toString();
+    }
+
+    /**
      * Validate the next action for a collection of lab vessels.
      *
      * @param labVessels entities
@@ -284,5 +369,9 @@ public class WorkflowValidator {
     @Inject
     public void setWorkflowConfig(WorkflowConfig workflowConfig) {
         this.workflowConfig = workflowConfig;
+    }
+
+    public void setEmailSender(EmailSender emailSender) {
+        this.emailSender = emailSender;
     }
 }

@@ -9,9 +9,16 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEv
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -82,6 +89,33 @@ public class BettaLimsMessageUtils {
             break;
         }
         return barcodes;
+    }
+
+    public static Map<String, Set<StationEventType>> getBarcodesForPlateEvent(List<PlateEventType> plateEventTypes) {
+        Collections.sort(plateEventTypes, new Comparator<PlateEventType>() {
+            @Override
+            public int compare(PlateEventType event1, PlateEventType event2) {
+                return event1.getDisambiguator().compareTo(event2.getDisambiguator());
+            }
+        });
+        Map<String, Set<StationEventType>> barcodeToPlateEvents = new HashMap<>();
+        for (PlateEventType plateEventType: plateEventTypes) {
+            switch (LabEventType.getByName(plateEventType.getEventType()).getPlasticToValidate()) {
+            case SOURCE:
+                String barcode = plateEventType.getPlate().getBarcode();
+                Set<StationEventType> uniqueEventTypes;
+                if (barcodeToPlateEvents.containsKey(barcode)) {
+                    uniqueEventTypes = barcodeToPlateEvents.get(barcode);
+                } else {
+                    uniqueEventTypes = new LinkedHashSet<>();
+                    barcodeToPlateEvents.put(barcode, uniqueEventTypes);
+                }
+                uniqueEventTypes.add(plateEventType);
+                break;
+            }
+        }
+
+        return barcodeToPlateEvents;
     }
 
     /**
