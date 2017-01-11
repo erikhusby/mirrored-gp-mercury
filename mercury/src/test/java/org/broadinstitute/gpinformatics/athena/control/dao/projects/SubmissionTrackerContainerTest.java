@@ -3,24 +3,26 @@ package org.broadinstitute.gpinformatics.athena.control.dao.projects;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
-import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
-import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRepository;
-import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-// was: @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+
 @Test(groups = TestGroups.STANDARD)
-public class SubmissionTrackerContainerTest extends StubbyContainerTest {
+public class SubmissionTrackerContainerTest extends Arquillian {
+
     @Inject
     ResearchProjectDao researchProjectDao;
 
@@ -29,6 +31,11 @@ public class SubmissionTrackerContainerTest extends StubbyContainerTest {
     private static final BassFileType testFileType = BassFileType.BAM;
     private static final String testVersion = "v1";
     private ResearchProject testProject;
+
+    @Deployment
+    public static WebArchive buildMercuryWar() {
+        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
+    }
 
     @BeforeMethod
     public void setUp() throws Exception {
