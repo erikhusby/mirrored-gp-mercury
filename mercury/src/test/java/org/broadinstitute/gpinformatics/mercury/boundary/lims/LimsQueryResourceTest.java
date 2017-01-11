@@ -579,5 +579,15 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(getResponseContent(caught),
                 startsWith(
                         "Failed to find lab vessels with barcodes: [IamAnUnknownBarcode]"));
+
+        resource = makeWebResource(baseUrl, "validateWorkflow")
+                .queryParam("nextEventTypeName", "PondRegistration")
+                .queryParam("q", "000006893901");
+
+        caught = getWithError(resource);
+        assertThat(caught.getResponse().getStatus(), equalTo(500));
+        assertThat(getResponseContent(caught),
+                startsWith(
+                        "Incompatible vessel types: [000006893901]"));
     }
 }

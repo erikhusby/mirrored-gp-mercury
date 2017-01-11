@@ -14,12 +14,14 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReage
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceResponseFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ConcentrationAndVolumeAndWeightType;
@@ -546,13 +548,19 @@ public class LimsQueryResource {
         }
         Map<String, LabVessel> mapBarcodetoVessel = labVesselDao.findByBarcodes(vesselBarcodes);
         Set<String> unknownLabVesselBarcodes = new HashSet<>();
+        Set<String> unacceptableLabVesselBarcodes = new HashSet<>();
         for (Map.Entry<String, LabVessel> entry: mapBarcodetoVessel.entrySet()) {
             if (entry.getValue() == null) {
                 unknownLabVesselBarcodes.add(entry.getKey());
+            } else if (OrmUtil.proxySafeIsInstance(entry.getValue(), RackOfTubes.class)) {
+                unacceptableLabVesselBarcodes.add(entry.getKey());
             }
         }
         if (!unknownLabVesselBarcodes.isEmpty()) {
             throw new RuntimeException("Failed to find lab vessels with barcodes: " + unknownLabVesselBarcodes);
+        }
+        if (!unacceptableLabVesselBarcodes.isEmpty()) {
+            throw new RuntimeException("Incompatible vessel types: " + unacceptableLabVesselBarcodes);
         }
         List<WorkflowValidator.WorkflowValidationError> workflowValidationErrors =
                 workflowValidator.validateWorkflow(mapBarcodetoVessel.values(), nextEventTypeName);
@@ -565,6 +573,7 @@ public class LimsQueryResource {
                     validationErrorType.setMessage(validationError.getMessage());
                     validationErrorType.getActualEventTypes().addAll(validationError.getActualEventNames());
                     validationErrorType.getExpectedEventTypes().addAll(validationError.getExpectedEventNames());
+                    errorType.getValidationErrors().add(validationErrorType);
                 }
             }
 
