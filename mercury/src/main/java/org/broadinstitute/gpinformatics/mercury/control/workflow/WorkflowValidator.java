@@ -89,17 +89,9 @@ public class WorkflowValidator {
                         BettaLimsMessageUtils.getBarcodesForCherryPick(plateCherryPickEvent)));
             }
 
-            if (bettaLIMSMessage.getPlateEvent().size() > 1) {
-                Map<String, Set<StationEventType>> barcodeToEventTypes =
-                        BettaLimsMessageUtils.getBarcodesForPlateEvent(bettaLIMSMessage.getPlateEvent());
-                for (Map.Entry<String, Set<StationEventType>> entrySet: barcodeToEventTypes.entrySet()) {
-                    validateWorkflow(entrySet.getKey(), entrySet.getValue());
-                }
+            if (bettaLIMSMessage.getPlateEvent().size() > 0) {
+                validateWorkflow(BettaLimsMessageUtils.getBarcodesForPlateEvent(bettaLIMSMessage.getPlateEvent()));
             }
-//            for (PlateEventType plateEventType : bettaLIMSMessage.getPlateEvent()) {
-//                validateWorkflow(plateEventType, new ArrayList<>(
-//                        BettaLimsMessageUtils.getBarcodesForPlateEvent(plateEventType)));
-//            }
 
             for (PlateTransferEventType plateTransferEventType : bettaLIMSMessage.getPlateTransferEvent()) {
                 validateWorkflow(plateTransferEventType, new ArrayList<>(
@@ -129,13 +121,27 @@ public class WorkflowValidator {
     }
 
     private void validateWorkflow(LabVessel labVessel, Set<StationEventType> eventTypes) {
-        List<WorkflowValidationError> validationErrors = new ArrayList<>();
-
         Set<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
         Set<String> eventNames = new LinkedHashSet<>();
         for (StationEventType stationEventType: eventTypes) {
             eventNames.add(stationEventType.getEventType());
         }
+        List<WorkflowValidationError> validationErrors = validateSampleInstances(
+                labVessel, sampleInstances, eventNames);
+
+        if (!validationErrors.isEmpty()) {
+            String eventsString = StringUtils.join(eventNames, ",");
+            String operator = eventTypes.iterator().next().getOperator();
+            String body = renderTemplate(labVessel.getLabel(), eventsString, operator, validationErrors);
+            emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), Collections.<String>emptyList(),
+                    "Workflow validation failure for " + eventsString, body, false);
+        }
+    }
+
+    private List<WorkflowValidationError> validateSampleInstances(LabVessel labVessel,
+                                                                  Set<SampleInstanceV2> sampleInstances,
+                                                                  Set<String> eventNames) {
+        List<WorkflowValidationError> validationErrors = new ArrayList<>();
         for (SampleInstanceV2 sampleInstance : sampleInstances) {
             String workflowName = sampleInstance.getWorkflowName();
             LabBatch effectiveBatch = sampleInstance.getSingleBatch();
@@ -170,15 +176,22 @@ public class WorkflowValidator {
                     }
                 }
             }
+            /*
+                    TO re-evaluate the usage later.
+             */
+/*
+                else {
+                    List<ProductWorkflowDefVersion.ValidationError> errors =
+                            Collections.singletonList(new ProductWorkflowDefVersion.ValidationError(
+                                    "Either the lab batch is missing or the Workflow is missing"));
+                    validationErrors.add(new WorkflowValidationError(sampleInstance, errors,
+                            athenaClientService.retrieveProductOrderDetails(
+                                    sampleInstance.getProductOrderKey()), appConfig));
+                }
+*/
         }
 
-        if (!validationErrors.isEmpty()) {
-            String eventsString = StringUtils.join(eventNames, ",");
-            String operator = eventTypes.iterator().next().getOperator();
-            String body = renderTemplate(labVessel.getLabel(), eventsString, operator, validationErrors);
-            emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), Collections.<String>emptyList(),
-                    "Workflow validation failure for " + eventsString, body, false);
-        }
+        return validationErrors;
     }
 
     /**
@@ -190,6 +203,21 @@ public class WorkflowValidator {
     private void validateWorkflow(StationEventType stationEventType, List<String> barcodes) {
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
         validateWorkflow(mapBarcodeToVessel.values(), stationEventType);
+    }
+
+    /**
+     * Validate workflow for barcodes in an event.
+     *
+     * @param barcodeToEventTypes plastic to set of associated JAXB events from the deck
+     */
+    private void validateWorkflow(Map<String, Set<StationEventType>> barcodeToEventTypes) {
+        Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(
+                new ArrayList<>(barcodeToEventTypes.keySet()));
+        for (Map.Entry<String, LabVessel> entry: mapBarcodeToVessel.entrySet()) {
+            if (entry.getValue() != null) {
+                validateWorkflow(entry.getValue(), barcodeToEventTypes.get(entry.getKey()));
+            }
+        }
     }
 
     /**
@@ -309,54 +337,8 @@ public class WorkflowValidator {
 
         for (LabVessel labVessel : labVessels) { // todo jmt can this be null?
             Set<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
-            for (SampleInstanceV2 sampleInstance : sampleInstances) {
-                String workflowName = sampleInstance.getWorkflowName();
-                LabBatch effectiveBatch = sampleInstance.getSingleBatch();
-
-                /*
-                    Not necessarily an ideal solution but validation should not necessarily cause a Null pointer which
-                    is what will happen if the batch is not found (Sample exists in multiple batches)
-                 */
-                if (workflowName != null && effectiveBatch != null) {
-                    ProductWorkflowDefVersion workflowVersion = workflowConfig.getWorkflowVersionByName(
-                            workflowName, effectiveBatch.getCreatedOn());
-                    if (workflowVersion != null) {
-                        List<ProductWorkflowDefVersion.ValidationError> errors =
-                                workflowVersion.validate(labVessel, eventType);
-                        if (!errors.isEmpty()) {
-                            ProductOrder productOrder = null;
-                            if (sampleInstance.getSingleBucketEntry() != null) {
-                                productOrder = sampleInstance.getSingleBucketEntry().getProductOrder();
-                            }
-                            //if this is a rework and we are at the first step of the process it was reworked from ignore the error
-                            boolean ignoreErrors = false;
-                            for (LabBatch batch : labVessel.getReworkLabBatches()) {
-                                if (batch.getReworks().contains(labVessel)) {
-                                    ignoreErrors = true;
-                                }
-                            }
-                            if (!ignoreErrors) {
-                                validationErrors.add(new WorkflowValidationError(sampleInstance, errors, productOrder,
-                                                                                 appConfig));
-                            }
-
-                        }
-                    }
-                }
-                /*
-                    TO re-evaluate the usage later.
-                 */
-/*
-                else {
-                    List<ProductWorkflowDefVersion.ValidationError> errors =
-                            Collections.singletonList(new ProductWorkflowDefVersion.ValidationError(
-                                    "Either the lab batch is missing or the Workflow is missing"));
-                    validationErrors.add(new WorkflowValidationError(sampleInstance, errors,
-                            athenaClientService.retrieveProductOrderDetails(
-                                    sampleInstance.getProductOrderKey()), appConfig));
-                }
-*/
-            }
+            validationErrors.addAll(
+                    validateSampleInstances(labVessel, sampleInstances, Collections.singleton(eventType)));
         }
         return validationErrors;
     }

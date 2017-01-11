@@ -486,61 +486,8 @@ public class ProductWorkflowDefVersion implements Serializable {
     /**
      * Determine whether the given next event is valid for the given lab vessel.
      *
-     * @param labVessel         vessel, typically with event history
-     * @param nextEventTypeName the event that the lab intends to do next
-     *
-     * @return list of errors, empty if event is valid
-     */
-    public List<ValidationError> validate(LabVessel labVessel, String nextEventTypeName) {
-        List<ValidationError> errors = new ArrayList<>();
-
-        Collection<LabEventNode> labEventNodes = findStepsByEventType(nextEventTypeName);
-        if (labEventNodes.isEmpty()) {
-            errors.add(new ValidationError("Failed to find " + nextEventTypeName + " in " +
-                                           productWorkflowDef.getName() + " version " + getVersion()));
-        } else {
-            Set<String> actualEventNames = new HashSet<>();
-
-            boolean found = false;
-            Set<String> validPredecessorEventNames = null;
-            boolean start = false;
-            for (LabEventNode labEventNode : labEventNodes) {
-                validPredecessorEventNames = new HashSet<>();
-                start = recurseToNonOptional(validPredecessorEventNames, labEventNode);
-
-                found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, actualEventNames,
-                        found, labVessel.getTransfersFrom(), labEventNode);
-
-                if (!found) {
-                    found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, actualEventNames,
-                            found, labVessel.getTransfersToWithReArrays(), labEventNode);
-                }
-                if (!found) {
-                    found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, actualEventNames,
-                            found, labVessel.getInPlaceEventsWithContainers(), labEventNode);
-                }
-                if (!found) {
-                    // e.g. PicoBufferAddition after PicoTransfer
-                    for (LabEvent labEvent : labVessel.getTransfersFrom()) {
-                        for (LabVessel vessel : labEvent.getTargetLabVessels()) {
-                            found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, actualEventNames,
-                                    found, vessel.getInPlaceLabEvents(), labEventNode);
-                        }
-                    }
-                }
-            }
-            if (!found && !start) {
-                errors.add(new ValidationError("", actualEventNames, validPredecessorEventNames));
-            }
-        }
-        return errors;
-    }
-
-    /**
-     * Determine whether the given next event is valid for the given lab vessel.
-     *
-     * @param labVessel         vessel, typically with event history
-     * @param nextEventTypeName the event that the lab intends to do next
+     * @param labVessel         vessel, typically with event history.
+     * @param nextEventTypeNames ordered set of events the lab intends to do next.
      *
      * @return list of errors, empty if event is valid
      */
@@ -594,7 +541,7 @@ public class ProductWorkflowDefVersion implements Serializable {
             if (!found && !start) {
                 errors.add(new ValidationError("", actualEventNames, validPredecessorEventNames));
             } else {
-                // If event with lowest disambiguator event is found, then walk up the rest of the nodes successor
+                // Walk up workflow successor list to check
                 List<LabEventNode> successors = foundLabEvent.getSuccessors();
                 while(nextEventIterator.hasNext()) {
                     nextEventTypeName = nextEventIterator.next();
