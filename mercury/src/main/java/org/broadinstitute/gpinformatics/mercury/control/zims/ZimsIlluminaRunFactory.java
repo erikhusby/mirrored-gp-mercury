@@ -353,7 +353,7 @@ public class ZimsIlluminaRunFactory {
             if(sampleInstanceDto.getSampleId().equals("SM-4S9V6")) {
                 me = "";
             }
-            libraryBeans.add(createLibraryBean(sampleInstanceDto.getLabVessel(), productOrder, sampleData, lcSet,
+            libraryBeans.add(createLibraryBean(sampleInstanceDto, productOrder, sampleData, lcSet,
                     baitName, indexingSchemeEntity, catNames, sampleInstanceDto.getSampleInstance().getWorkflowName(),
                     indexingSchemeDto, mapNameToControl, sampleInstanceDto.getPdoSampleName(),
                     sampleInstanceDto.isCrspLane(), sampleInstanceDto.getMetadataSourceForPipelineAPI(), analysisTypes,
@@ -368,10 +368,12 @@ public class ZimsIlluminaRunFactory {
         SortedSet<String> previouslySeenSampleAndMis = new TreeSet<>();
         for (Iterator<LibraryBean> iter = libraryBeans.iterator(); iter.hasNext(); ) {
             LibraryBean libraryBean = iter.next();
-            String consolidationKey =
-                    makeConsolidationKey(libraryBean.getSampleId(), libraryBean.getMolecularIndexingScheme().getName());
-            if (!previouslySeenSampleAndMis.add(consolidationKey)) {
-                iter.remove();
+            if(libraryBean.getMolecularIndexingScheme() != null) {
+                String consolidationKey =
+                        makeConsolidationKey(libraryBean.getSampleId(), libraryBean.getMolecularIndexingScheme().getName());
+                if (!previouslySeenSampleAndMis.add(consolidationKey)) {
+                    iter.remove();
+                }
             }
         }
         return libraryBeans;
@@ -382,7 +384,7 @@ public class ZimsIlluminaRunFactory {
     }
 
     private LibraryBean createLibraryBean(
-            LabVessel labVessel, ProductOrder productOrder, SampleData sampleData, String lcSet, String baitName,
+            SampleInstanceDto sampleInstanceDto, ProductOrder productOrder, SampleData sampleData, String lcSet, String baitName,
             MolecularIndexingScheme indexingSchemeEntity, List<String> catNames, String labWorkflow,
             edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme indexingSchemeDto,
             Map<String, Control> mapNameToControl, String pdoSampleName,
@@ -392,8 +394,20 @@ public class ZimsIlluminaRunFactory {
 
         Format dateFormat = FastDateFormat.getInstance(ZimsIlluminaRun.DATE_FORMAT);
 
-        String library =
-                labVessel.getLabel() + (indexingSchemeEntity == null ? "" : "_" + indexingSchemeEntity.getName());
+        String label = "";
+        String libraryCreationDate = "";
+
+        //If this is a pooled tube manual upload the lab vessel will be null.
+        if(sampleInstanceDto.getLabVessel() != null) {
+            label = sampleInstanceDto.labVessel.getLabel();
+            libraryCreationDate = dateFormat.format(sampleInstanceDto.labVessel.getCreatedOn());
+        }
+        else {
+            label = sampleInstanceDto.getSampleInstance().getLibraryName();
+            libraryCreationDate = dateFormat.format(sampleInstanceDto.getSampleInstance().getLibraryCreationDate());
+        }
+
+        String library = label + (indexingSchemeEntity == null ? "" : "_" + indexingSchemeEntity.getName());
         String initiative = null;
         Long workRequest = null;
         Boolean hasIndexingRead = null;
@@ -472,7 +486,7 @@ public class ZimsIlluminaRunFactory {
                 referenceSequenceVersion = referenceSequenceValues[1];
             }
         }
-        String libraryCreationDate = dateFormat.format(labVessel.getCreatedOn());
+
 
         LibraryBean libraryBean = new LibraryBean(
                 library, initiative, workRequest, indexingSchemeDto, hasIndexingRead, expectedInsertSize,

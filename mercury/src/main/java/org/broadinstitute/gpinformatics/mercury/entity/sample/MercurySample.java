@@ -41,7 +41,6 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.ArrayList;
 
 /**
  * Represents Mercury's view of a sample.  Sample information is held in another system (initially Athena),
@@ -165,10 +164,6 @@ public class MercurySample extends AbstractSample {
     // TODO: jms Shouldn't this be plural?
     @ManyToMany(mappedBy = "mercurySamples", cascade = CascadeType.PERSIST)
     protected Set<LabVessel> labVessel = new HashSet<>();
-
-    @OneToMany(mappedBy = "mercurySample", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
-    @BatchSize(size = 100)
-    private Set<SampleInstanceEntity> sampleInstanceEntities = new HashSet<>();
 
     /**
      * For JPA

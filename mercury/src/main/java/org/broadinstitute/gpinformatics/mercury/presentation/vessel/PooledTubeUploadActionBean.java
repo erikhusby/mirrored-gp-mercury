@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
+package org.broadinstitute.gpinformatics.mercury.presentation.vessel;
 
 import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.validation.Validate;

@@ -986,19 +986,6 @@ public abstract class LabVessel implements Serializable {
     }
 
     /**
-     * Returns the single sample instance library name.
-     *
-     */
-    public String getMolecularIndexingScheme() {
-        if(sampleInstanceEntities.size() > 0) {
-            return  new ArrayList<>(sampleInstanceEntities).get(0).getMolecularIndexingScheme().getName();
-        }
-        else {
-            return null;
-        }
-    }
-
-    /**
      *
      * Returns the reason that a vessel was abandoned. If the vessel has multiple position, it concatenates them
      * into a single string for screen display and user-defined search.

@@ -820,7 +820,4 @@
         <createSequence schemaName="mercury" sequenceName="seq_sample_instance_entity_tsk" incrementBy="50"/>
     </changeSet>
 
-
-
-
 </databaseChangeLog>

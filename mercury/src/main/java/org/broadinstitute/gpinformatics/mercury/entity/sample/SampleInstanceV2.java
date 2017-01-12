@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Date;
 
 /**
  * A transient class returned by LabVessel.getSampleInstances.  It accumulates information encountered
@@ -577,6 +578,14 @@ public class SampleInstanceV2 {
         devConditions.addAll(subTasks);
         tzDevExperimentData = new TZDevExperimentData(experimentName,subTasks);
 
+    }
+
+    public String getLibraryName() {
+        return getSingleBucketEntry().getLabVessel().getLabel();
+    }
+
+    public Date getLibraryCreationDate() {
+        return getSingleBucketEntry().getLabVessel().getCreatedOn();
     }
 
     public TZDevExperimentData getTzDevExperimentData() {

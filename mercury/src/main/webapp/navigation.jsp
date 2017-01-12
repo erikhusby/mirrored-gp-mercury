@@ -202,7 +202,7 @@
                         </li>
                         <li>
                             <stripes:link id="pooledTubeUpload"
-                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.PooledTubeUploadActionBean"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.PooledTubeUploadActionBean"
                                           event="view">Pooled Tube Upload</stripes:link>
                         </li>
                     </ul>
