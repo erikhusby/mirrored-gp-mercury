@@ -4,9 +4,14 @@ import org.broadinstitute.gpinformatics.athena.control.dao.preference.Preference
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
+import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
+import org.broadinstitute.gpinformatics.infrastructure.jmx.ExternalDataCacheControl;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Default;
+import javax.enterprise.inject.Produces;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.xml.bind.JAXBContext;
@@ -15,10 +20,15 @@ import javax.xml.bind.Unmarshaller;
 import java.io.Serializable;
 
 /**
- * Loads a workflow configuration from the file system if outside a container (DBFree tests)
- *  or from preference table if called from within a container (Deployed app and Arquillian tests)
+ * This class is responsible for loading and refreshing the WorkflowConfiguration from the database. For database-free
+ * tests, the configuration is read from the filesystem. As WorkflowLoader extends AbstractCache, the cached
+ * WorkflowConfig is periodically refreshed.
+ *
+ * @see ExternalDataCacheControl#invalidateCache()
  */
-public class WorkflowLoader implements Serializable {
+@ApplicationScoped
+public class WorkflowLoader extends AbstractCache implements Serializable {
+    private final Object lock = new Object();
 
     // Use file based configuration access for DBFree testing
     private static boolean IS_STANDALONE = false;
@@ -38,19 +48,32 @@ public class WorkflowLoader implements Serializable {
         }
     }
 
+    private WorkflowConfig workflowConfig;
+
     public WorkflowLoader(){}
 
+    @Produces
+    @Default
     public WorkflowConfig load() {
-        if( IS_STANDALONE ) {
-            return loadFromFile();
-        } else {
-            return loadFromPrefs();
+        if (workflowConfig==null){
+            refreshCache();
+        }
+        return workflowConfig;
+    }
+
+    @Override
+    public void refreshCache() {
+        synchronized (lock) {
+            if (IS_STANDALONE) {
+                workflowConfig = loadFromFile();
+            } else {
+                workflowConfig = loadFromPrefs();
+            }
         }
     }
 
     /**
      * Pull workflow configuration from preferences when running in container
-     * TODO JMS This is an expensive reload for rarely changing data.  A 30 minute cache would be nice...
      * @return
      */
     private WorkflowConfig loadFromPrefs() {
@@ -94,4 +117,5 @@ public class WorkflowLoader implements Serializable {
         }
         return workflowConfigFromFile;
     }
+
 }

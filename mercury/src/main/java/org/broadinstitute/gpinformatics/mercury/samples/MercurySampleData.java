@@ -309,6 +309,11 @@ public class MercurySampleData implements SampleData {
     }
 
     @Override
+    public String getCollaboratorFamilyId() {
+        return "";
+    }
+
+    @Override
     public String getMaterialType() {
         if (StringUtils.isBlank(materialType)) {
             return "";

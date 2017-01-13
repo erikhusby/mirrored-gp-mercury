@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerHeader;
@@ -8,6 +10,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao
 import org.broadinstitute.gpinformatics.athena.control.dao.work.WorkCompleteMessageDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.billing.ProductLedgerIndex;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
@@ -22,6 +25,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.tableau.TableauConfig;
 
+import javax.annotation.Nullable;
 import java.awt.Color;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -305,7 +309,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
 
         // The ledger amounts.
         Map<PriceItem, ProductOrderSample.LedgerQuantities> billCounts = sample.getLedgerQuantities();
-
         // Write out the price item columns.
         for (PriceItem priceItem : historicalPriceItems) {
             writeCountForHistoricalPriceItem(billCounts, priceItem);
@@ -340,6 +343,18 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
             writer.setRowStyle(getAbandonedStyle());
         }
     }
+
+//    public static Map<PriceItem, ProductLedgerIndex> getPriceItemProductLedgerIndexMap(
+//            Map<ProductLedgerIndex, ProductOrderSample.LedgerQuantities> billCounts) {
+//        return Maps.uniqueIndex(billCounts.keySet(),
+//                    new Function<ProductLedgerIndex, PriceItem>() {
+//                        @Override
+//                        public PriceItem apply(@Nullable ProductLedgerIndex productLedgerIndex) {
+//
+//                            return productLedgerIndex.getPriceItem();
+//                        }
+//                    });
+//    }
 
     @SuppressWarnings("MagicNumber")
     private static final XSSFColor HISTORICAL_PRICE_ITEM_COLOR = new XSSFColor(new Color(204, 204, 204));
@@ -396,7 +411,8 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
      * @param billCounts All the counts for this PDO sample.
      * @param item The price item to look up.
      */
-    private void writeCountsForPriceItems(Map<PriceItem, ProductOrderSample.LedgerQuantities> billCounts, PriceItem item) {
+    private void writeCountsForPriceItems(Map<PriceItem, ProductOrderSample.LedgerQuantities> billCounts,
+                                          PriceItem item) {
         ProductOrderSample.LedgerQuantities quantities = billCounts.get(item);
         if (quantities != null) {
             if (quantities.getBilled() == 0.0) {

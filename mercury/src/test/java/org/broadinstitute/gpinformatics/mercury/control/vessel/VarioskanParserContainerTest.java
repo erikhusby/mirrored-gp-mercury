@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -40,7 +41,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  */
 @Test(groups = TestGroups.STANDARD)
 public class VarioskanParserContainerTest extends Arquillian {
-    private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyyMMddHHmmss");
+    private static final FastDateFormat SIMPLE_DATE_FORMAT = FastDateFormat.getInstance("yyyyMMddHHmmss");
 
     @Inject
     private VesselEjb vesselEjb;

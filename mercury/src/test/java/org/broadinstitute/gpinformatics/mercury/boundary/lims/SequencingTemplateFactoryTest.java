@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
@@ -98,6 +99,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
 
         super.setUp();
         factory = new SequencingTemplateFactory();
+        factory.setWorkflowConfig(new WorkflowLoader().load());
 
         // Method calls on factory will always use our list of flowcell designations.
         factory.setFlowcellDesignationEjb(new FlowcellDesignationEjb(){
@@ -422,10 +424,13 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
 
         for (SequencingTemplateLaneType lane : template.getLanes()) {
             LabBatch.VesselToLanesInfo laneInfo = null;
+            BigDecimal loadingConcentration = null;
             if(vesselToLanesInfo.getLabVessel().getLabel().equals(lane.getDerivedVesselLabel())) {
                 laneInfo = vesselToLanesInfo;
+                loadingConcentration = new BigDecimal("16.22");
             } else if(vesselToLanesInfo2.getLabVessel().getLabel().equals(lane.getDerivedVesselLabel())) {
                 laneInfo = vesselToLanesInfo2;
+                loadingConcentration = new BigDecimal("12.33");
             }
             assertThat(laneInfo, not(nullValue()));
             boolean foundVesselPosition = false;
@@ -438,6 +443,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
             }
             assertThat(foundVesselPosition, is(true));
             assertThat(lane.getLoadingVesselLabel(), equalTo(""));
+            assertThat(lane.getLoadingConcentration(), is(loadingConcentration));
         }
         for(int i = 1; i <= 8; i++) {
             assertThat(allLanes, hasItem("LANE" + i));

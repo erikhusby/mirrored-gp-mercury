@@ -27,6 +27,7 @@ import javax.inject.Inject;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -90,8 +91,10 @@ public class InfiniumRunFinder implements Serializable {
                     utx.rollback();
                     log.error("Failed to process chip " + labVessel.getLabel(), e);
                     emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
+                            Collections.<String>emptyList(),
                             "[Mercury] Failed to process infinium chip", "For " + labVessel.getLabel() +
-                                                                         " with error: " + e.getMessage());
+                                                                                     " with error: " + e.getMessage(),
+                            false);
                 }
             }
         } finally {

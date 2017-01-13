@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions targetNamespace="urn:sap-com:document:sap:soap:functions:mc-style" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:wsoap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:tns="urn:sap-com:document:sap:soap:functions:mc-style" xmlns:n1="urn:sap-com:document:sap:rfc:functions">
+  <wsdl:documentation>
+    <sidl:sidl xmlns:sidl="http://www.sap.com/2007/03/sidl"/>
+  </wsdl:documentation>
+  <wsdl:types>
+    <xsd:schema attributeFormDefault="qualified" targetNamespace="urn:sap-com:document:sap:rfc:functions">
+      <xsd:simpleType name="char100">
+        <xsd:restriction base="xsd:string">
+          <xsd:maxLength value="100"/>
+        </xsd:restriction>
+      </xsd:simpleType>
+      <xsd:simpleType name="numeric10">
+        <xsd:restriction base="xsd:string">
+          <xsd:maxLength value="10"/>
+          <xsd:pattern value="\d*"/>
+        </xsd:restriction>
+      </xsd:simpleType>
+    </xsd:schema>
+    <xsd:schema attributeFormDefault="qualified" targetNamespace="urn:sap-com:document:sap:soap:functions:mc-style" xmlns:n0="urn:sap-com:document:sap:rfc:functions">
+      <xsd:import namespace="urn:sap-com:document:sap:rfc:functions"/>
+      <xsd:element name="Zuwebrfctry2">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="Age" type="n0:numeric10" minOccurs="0"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="Zuwebrfctry2Response">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="Result" type="n0:char100"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="Zuwebrfctry2">
+    <wsdl:part name="parameters" element="tns:Zuwebrfctry2"/>
+  </wsdl:message>
+  <wsdl:message name="Zuwebrfctry2Response">
+    <wsdl:part name="parameter" element="tns:Zuwebrfctry2Response"/>
+  </wsdl:message>
+  <wsdl:portType name="ZTRY2">
+    <wsdl:operation name="Zuwebrfctry2">
+      <wsdl:input message="tns:Zuwebrfctry2"/>
+      <wsdl:output message="tns:Zuwebrfctry2Response"/>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="ZTRY2" type="tns:ZTRY2">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" style="document"/>
+    <wsdl:operation name="Zuwebrfctry2">
+      <soap:operation soapAction="urn:sap-com:document:sap:soap:functions:mc-style:ZTRY2:Zuwebrfctry2Request" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="ZTRY2">
+    <wsdl:port name="ZTRY2" binding="tns:ZTRY2">
+      <soap:address location="http://darwin:8000/sap/bc/srt/rfc/sap/ztry2/100/ztry2/ztry2"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

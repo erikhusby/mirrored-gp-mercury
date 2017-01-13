@@ -49,6 +49,10 @@ public class Funding implements Displayable {
 
     private String purchaseOrderNumber;
 
+    private String purchaseOrderContact;
+
+    private String fundsReservationNumber;
+
     public Funding() {}
 
     public Funding(String fundingType, String grantDescription, String costObject) {
@@ -171,6 +175,20 @@ public class Funding implements Displayable {
 
     public void setPurchaseOrderNumber(String purchaseOrderNumber) {
         this.purchaseOrderNumber = purchaseOrderNumber;
+    }
+
+    @XmlAttribute(name = "purchaseOrderContact")
+    public String getPurchaseOrderContact() { return purchaseOrderContact;}
+
+    public void setPurchaseOrderContact(String purchaseOrderContact) {
+        this.purchaseOrderContact = purchaseOrderContact;
+    }
+
+    @XmlAttribute(name = "fundsReservationNumber")
+    public String getFundsReservationNumber() {return fundsReservationNumber;}
+
+    public void setFundsReservationNumber(String fundsReservationNumber) {
+        this.fundsReservationNumber = fundsReservationNumber;
     }
 
     @Override

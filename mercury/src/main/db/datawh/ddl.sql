@@ -100,6 +100,7 @@ CREATE TABLE product_order (
   owner                  VARCHAR2(40),
   placed_date            DATE,
   skip_regulatory_reason VARCHAR2(255),
+  sap_order_number VARCHAR2(255),
   etl_date               DATE           NOT NULL
 );
 
@@ -336,7 +337,9 @@ CREATE TABLE im_product (
   workflow_name             VARCHAR2(255),
   product_family_name       VARCHAR2(255),
   primary_price_item_id     NUMERIC(19, 0),
-  aggregation_data_type	    VARCHAR2(255)
+  aggregation_data_type	    VARCHAR2(255),
+  external_only_product     CHAR(1),
+  saved_in_sap              CHAR(1)
 );
 
 CREATE TABLE im_price_item (
@@ -433,6 +436,7 @@ CREATE TABLE im_product_order (
   owner                  VARCHAR2(40),
   placed_date            DATE,
   skip_regulatory_reason VARCHAR2(255),
+  sap_order_number VARCHAR2(255),
   reg_info_ids           VARCHAR2(255)
 );
 

@@ -24,7 +24,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowc
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.MiSeqReagentKitDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
@@ -70,6 +69,8 @@ public class SequencingTemplateFactory {
 
     @Inject
     private FlowcellDesignationEjb flowcellDesignationEjb;
+
+    private WorkflowConfig workflowConfig;
 
     /** Defines the type of entity to query. */
     public static enum QueryVesselType {
@@ -177,7 +178,9 @@ public class SequencingTemplateFactory {
         boolean isPoolTest = poolTestDefault;
         Boolean isPairedEnd = null;
         List<FlowcellDesignation> designations = flowcellDesignationEjb.getFlowcellDesignations(fctBatch);
+        boolean fetchFromDesignation = false;
         if (fctBatch != null && !designations.isEmpty()) {
+            fetchFromDesignation = true;
             FlowcellDesignation designation = designations.get(0);
             readLength = designation.getReadLength();
             loadingConcentration = designation.getLoadingConc();
@@ -194,18 +197,21 @@ public class SequencingTemplateFactory {
         Set<String> molecularIndexReadStructures = new HashSet<>();
 
         for (LabBatchStartingVessel startingVessel : startingFCTVessels) {
-            if (loadingConcentration == null) {
-                loadingConcentration = startingVessel.getConcentration();
-            }
             extractInfo(startingVessel.getLabVessel().getSampleInstancesV2(), regulatoryDesignations, products,
                     productReadLengths, productPairedEnds, molecularIndexReadStructures);
 
             if (startingVessel.getVesselPosition() != null) {
+                if (!fetchFromDesignation) {
+                    loadingConcentration = startingVessel.getConcentration();
+                }
                 SequencingTemplateLaneType lane = LimsQueryObjectFactory.createSequencingTemplateLaneType(
                         startingVessel.getVesselPosition().name(), loadingConcentration, "",
                         startingVessel.getLabVessel().getLabel());
                 lanes.add(lane);
             } else {
+                if (loadingConcentration == null) {
+                    loadingConcentration = startingVessel.getConcentration();
+                }
                 if (startingFCTVessels.size() != 1) {
                     throw new InformaticsServiceException(
                             String.format("More than one starting denature tube for FCT ticket %s",
@@ -497,9 +503,7 @@ public class SequencingTemplateFactory {
         return strandCode + indexCode + (isPairedEnd  ? strandCode : "");
     }
 
-    private static SequencingConfigDef getSequencingConfig(boolean isPoolTest) {
-        WorkflowLoader workflowLoader = new WorkflowLoader();
-        WorkflowConfig workflowConfig = workflowLoader.load();
+    private SequencingConfigDef getSequencingConfig(boolean isPoolTest) {
         if (isPoolTest) {
             return workflowConfig.getSequencingConfigByName("Resequencing-Pool-Default");
         } else {
@@ -511,4 +515,10 @@ public class SequencingTemplateFactory {
     public void setFlowcellDesignationEjb(FlowcellDesignationEjb testEjb) {
         flowcellDesignationEjb = testEjb;
     }
+
+    @Inject
+    public void setWorkflowConfig(WorkflowConfig workflowConfig) {
+        this.workflowConfig = workflowConfig;
+    }
+
 }

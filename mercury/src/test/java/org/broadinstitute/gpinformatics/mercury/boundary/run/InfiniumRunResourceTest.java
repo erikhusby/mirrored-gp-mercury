@@ -37,6 +37,26 @@ public class InfiniumRunResourceTest extends RestServiceContainerTest {
                 type(MediaType.APPLICATION_JSON_TYPE).
                 accept(MediaType.APPLICATION_JSON_TYPE).
                 get(InfiniumRunBean.class);
+        Assert.assertEquals(response1.getSampleId(), "SM-ATJSM");
+        Assert.assertEquals(response1.getCollaboratorSampleId(), "TREDAP123");
+        Assert.assertEquals(response1.getCollaboratorParticipantId(), "TREDAP123");
+        Assert.assertEquals(response1.getSampleLsid(), "broadinstitute.org:bsp.prod.sample:ATJSM");
+        Assert.assertFalse(response1.isPositiveControl());
+        Assert.assertFalse(response1.isNegativeControl());
+        validateRunBean(response1);
+
+        // Test a control
+        InfiniumRunBean response2 = resource.queryParam("chipWellBarcode", "3999582166_R05C01").
+                type(MediaType.APPLICATION_JSON_TYPE).
+                accept(MediaType.APPLICATION_JSON_TYPE).
+                get(InfiniumRunBean.class);
+        Assert.assertEquals(response2.getCollaboratorSampleId(), "NA12878");
+        Assert.assertTrue(response2.isPositiveControl());
+        Assert.assertFalse(response2.isNegativeControl());
+        validateRunBean(response2);
+    }
+
+    private void validateRunBean(InfiniumRunBean response1) {
         Assert.assertTrue(response1.getRedIDatPath().startsWith("/humgen/illumina_data"));
         Assert.assertTrue(response1.getGreenIDatPath().startsWith("/humgen/illumina_data"));
         Assert.assertEquals(response1.getChipManifestPath(),
@@ -49,36 +69,11 @@ public class InfiniumRunResourceTest extends RestServiceContainerTest {
                 "/gap/illumina/beadstudio/Autocall/ChipInfo/Broad_GWAS_supplemental/Broad_GWAS_supplemental_15061359_A1.egt");
         Assert.assertEquals(response1.getzCallThresholdsPath(),
                 "/gap/illumina/beadstudio/Autocall/ChipInfo/Broad_GWAS_supplemental/thresholds.7.txt");
-        Assert.assertEquals(response1.getSampleId(), "SM-ATJSM");
-        Assert.assertEquals(response1.getCollaboratorSampleId(), "TREDAP123");
-        Assert.assertEquals(response1.getSampleLsid(), "broadinstitute.org:bsp.prod.sample:ATJSM");
-        Assert.assertFalse(response1.isPositiveControl());
-        Assert.assertFalse(response1.isNegativeControl());
         Assert.assertEquals(response1.getResearchProjectId(), "RP-313");
         Assert.assertEquals(response1.getProductPartNumber(), "P-EX-0017");
         Assert.assertEquals(response1.getProductFamily(), "Exome");
         Assert.assertEquals(response1.getProductName(), "G4L WES + Array v2");
         Assert.assertEquals(response1.getProductOrderId(), "PDO-7783");
-        Assert.assertEquals(response1.getCollaboratorParticipantId(), "TREDAP123");
-
-        // Test a control
-        InfiniumRunBean response2 = resource.queryParam("chipWellBarcode", "3999582166_R05C01").
-                type(MediaType.APPLICATION_JSON_TYPE).
-                accept(MediaType.APPLICATION_JSON_TYPE).
-                get(InfiniumRunBean.class);
-        Assert.assertEquals(response2.getChipManifestPath(), response1.getChipManifestPath());
-        Assert.assertEquals(response2.getBeadPoolManifestPath(), response1.getBeadPoolManifestPath());
-        Assert.assertEquals(response2.getClusterFilePath(), response1.getClusterFilePath());
-        Assert.assertEquals(response2.getzCallThresholdsPath(), response1.getzCallThresholdsPath());
-        Assert.assertEquals(response2.getCollaboratorSampleId(), "NA12878");
-        Assert.assertTrue(response2.isPositiveControl());
-        Assert.assertFalse(response2.isNegativeControl());
-        Assert.assertNull(response2.getResearchProjectId());
-        Assert.assertEquals(response2.getCollaboratorParticipantId(), "NA12878");
-        Assert.assertNull(response2.getProductPartNumber());
-        Assert.assertNull(response2.getProductFamily());
-        Assert.assertNull(response2.getProductName());
-        Assert.assertNull(response2.getProductOrderId());
     }
 
     @Override
