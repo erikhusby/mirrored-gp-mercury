@@ -71,6 +71,41 @@ public class LabVesselTest {
         assertThat(destinationVessel.isDNA(), is(true));
     }
 
+    public void testLabVesselCanFindSampleData() {
+        Assert.fail("TODO: implement");
+//        ProductOrderTestFactory
+        BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
+        BSPSetVolumeConcentration bspSetVolumeConcentration = BSPSetVolumeConcentrationProducer.stubInstance();
+        LabEventFactory labEventFactory = new LabEventFactory(testUserList, bspSetVolumeConcentration);
+        BarcodedTube sourceVessel = new BarcodedTube("A_SOURCE_VESSEL", BarcodedTube.BarcodedTubeType.MatrixTube075);
+        MaterialType startingMaterialType = MaterialType.FRESH_BLOOD;
+        MercurySample mercurySample = SampleDataTestFactory.getTestMercurySample(startingMaterialType,
+                MercurySample.MetadataSource.MERCURY);
+        mercurySample.addLabVessel(sourceVessel);
+
+
+
+        int transferCount = 0;
+        BarcodedTube destinationVessel = new BarcodedTube("Just So Intellij Doesn't Think I'm Null!");
+        EnumSet<LabEventType> transferEventTypes =
+                EnumSet.of(LabEventType.EXTRACT_BLOOD_TO_MICRO, LabEventType.EXTRACT_BLOOD_MICRO_TO_SPIN,
+                        LabEventType.EXTRACT_BLOOD_SPIN_TO_MATRIX);
+        for (LabEventType labEventType : transferEventTypes) {
+            destinationVessel = new BarcodedTube(String.format("TRANSFER_TUBE_%d", transferCount++),
+                    BarcodedTube.BarcodedTubeType.MatrixTube075);
+
+            LabVesselTest.doVesselToVesselTransfer(sourceVessel, destinationVessel,
+                    startingMaterialType, labEventType, MercurySample.MetadataSource.MERCURY, labEventFactory);
+            startingMaterialType = labEventType.getResultingMaterialType();
+            sourceVessel=destinationVessel;
+        }
+
+        TransferTraverserCriteria.NearestMaterialTypeTraverserCriteria traverserCriteria =
+                destinationVessel.evaluateMaterialTypeTraverserCriteria();
+        assertThat(traverserCriteria.getMaterialType(), is(MaterialType.DNA));
+        assertThat(destinationVessel.isDNA(), is(true));
+    }
+
     public void testFindVesselsForLabEventTypes() {
         Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
         BarcodedTube sourceTube1 = new BarcodedTube("ST1", BarcodedTube.BarcodedTubeType.MatrixTube);
