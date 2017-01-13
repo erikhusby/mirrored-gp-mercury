@@ -228,6 +228,9 @@ public abstract class LabVessel implements Serializable {
     @Transient
     private MaterialType latestMaterialType = null;
 
+    @Transient
+    private List<String> materialTypes;
+
     protected LabVessel(String label) {
         createdOn = new Date();
         if (label == null || label.isEmpty() || label.equals("0")) {
@@ -278,11 +281,13 @@ public abstract class LabVessel implements Serializable {
     }
 
     public List<String> getMaterialTypes() {
-        List<String> materialTypes = new ArrayList<>();
-        for (SampleInstanceV2 si : getSampleInstancesV2()) {
-            String materialType = si.getRootOrEarliestMercurySample().getSampleData().getMaterialType();
-            if (StringUtils.isNotBlank(materialType)) {
-                materialTypes.add(materialType);
+        if (materialTypes==null) {
+            materialTypes = new ArrayList<>();
+            for (SampleInstanceV2 si : getSampleInstancesV2()) {
+                String materialType = si.getRootOrEarliestMercurySample().getSampleData().getMaterialType();
+                if (StringUtils.isNotBlank(materialType)) {
+                    materialTypes.add(materialType);
+                }
             }
         }
         return materialTypes;
