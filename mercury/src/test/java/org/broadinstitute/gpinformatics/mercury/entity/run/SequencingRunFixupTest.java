@@ -290,4 +290,14 @@ public class SequencingRunFixupTest extends Arquillian {
 
         illuminaSequencingRunDao.persist(new FixupCommentary("GPLIM-3996 updating run directory for non-CRSP run"));
     }
+
+    @Test(enabled = false)
+    public void support2463MoveRunFolder() {
+        userBean.loginOSUser();
+
+        updateRunDirectory("170112_SL-HDJ_0843_AH5CL2BCXY", "/seq/illumina/proc/SL-HDJ/170112_SL-HDJ_0843_AH5CL2BCXY",
+                "/crsp/illumina2/proc/SL-HDJ/170112_SL-HDJ_0843_AH5CL2BCXY");
+
+        illuminaSequencingRunDao.persist(new FixupCommentary("SUPPORT-2463 moving run folder to crsp folder"));
+    }
 }
