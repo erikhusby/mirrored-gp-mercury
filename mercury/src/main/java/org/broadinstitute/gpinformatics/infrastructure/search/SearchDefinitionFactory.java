@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.ConfigurableSearchActionBean;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -273,26 +274,36 @@ public class SearchDefinitionFactory {
                     }
                     return results;
                 }
-            } else {
+            } else if (entity instanceof MercurySample){
                 // Sample from MercurySample search
                 MercurySample sample = (MercurySample) entity;
-                Set<String> results = new HashSet<>();
-
-                // Material type comes from event
-                if( metaName.equals(Metadata.Key.MATERIAL_TYPE.getDisplayName())
-                        && sample.getLabVessel().iterator().hasNext()) {
-                    // If data from event is available, use it by default, otherwise, continue
-                    if( results.addAll(getMetadataFromVessel( sample.getLabVessel().iterator().next(), metaName ))) {
-                        return results;
-                    }
-                }
-
-                String value = getSampleMetadataForDisplay(sample, metaName);
-                if( value != null && !value.isEmpty() ) {
-                    results.add(value);
-                }
-                return results;
+                return getMetadataForSample(metaName, sample);
+            } else if (entity instanceof SampleInstanceV2){
+                SampleInstanceV2 sampleInstance = (SampleInstanceV2) entity;
+                return getMetadataForSample(metaName, sampleInstance.getRootOrEarliestMercurySample());
+            } else {
+                throw new RuntimeException("Unexpected class " + entity.getClass());
             }
+        }
+
+        @NotNull
+        private Set<String> getMetadataForSample(String metaName, MercurySample sample) {
+            Set<String> results = new HashSet<>();
+
+            // Material type comes from event
+            if( metaName.equals(Metadata.Key.MATERIAL_TYPE.getDisplayName())
+                    && sample.getLabVessel().iterator().hasNext()) {
+                // If data from event is available, use it by default, otherwise, continue
+                if( results.addAll(getMetadataFromVessel( sample.getLabVessel().iterator().next(), metaName ))) {
+                    return results;
+                }
+            }
+
+            String value = getSampleMetadataForDisplay(sample, metaName);
+            if( value != null && !value.isEmpty() ) {
+                results.add(value);
+            }
+            return results;
         }
 
         private String getSampleMetadataForDisplay( MercurySample sample, String metaName ){

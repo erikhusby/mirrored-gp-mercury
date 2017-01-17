@@ -11,6 +11,7 @@ package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
+import org.broadinstitute.gpinformatics.infrastructure.columns.DisplayExpression;
 
 import javax.annotation.Nullable;
 import java.io.Serializable;
@@ -237,6 +238,8 @@ public class SearchTerm implements Serializable, ColumnTabulation {
      */
     private Evaluator<Object> displayValueExpression;
 
+    private DisplayExpression displayExpression;
+
     /**
      * Optional expression to enhance UI presentation of result column value
      */
@@ -458,6 +461,14 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     public Evaluator<Object> getDisplayValueExpression() {
         return displayValueExpression;
+    }
+
+    public DisplayExpression getDisplayExpression() {
+        return displayExpression;
+    }
+
+    public void setDisplayExpression(DisplayExpression displayExpression) {
+        this.displayExpression = displayExpression;
     }
 
     /**

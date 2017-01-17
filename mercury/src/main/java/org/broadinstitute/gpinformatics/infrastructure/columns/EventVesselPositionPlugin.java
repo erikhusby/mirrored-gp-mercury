@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
@@ -7,10 +9,12 @@ import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.ImmutableLabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -18,7 +22,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Builds a dynamically sized table of barcodes based upon lab vessel container geometry
@@ -28,8 +31,8 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
 
     private VesselGeometry geometry;
 
-    // Position-value map
-    protected Map<VesselPosition,String> positionLabelMap;
+    /** Holds nested table for each position in the layout */
+    private Map<VesselPosition, Pair<String, ConfigurableList.ResultList>> positionTableMap;
 
     // Matrix of positions
     private VesselPosition[][] resultMatrix;
@@ -41,11 +44,11 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
      * @param headerGroup list of headers; the plugin must re-use any existing headers
      *                    that are passed in (each cell has a reference to a header), and may add
      *                    new ones
-     * @return
+     * @return list of rows
      */
     @Override
     public List<ConfigurableList.Row> getData(List<?> entityList, ConfigurableList.HeaderGroup headerGroup
-            , SearchContext context) {
+            , @NotNull SearchContext context) {
         return null;
     }
 
@@ -54,7 +57,7 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
      * Builds a nested table with rows and columns dynamically configured based upon lab event vessel geometry
      * @param entity  A single lab event passed in from parent row
      * @param columnTabulation Nested table column definition
-     * @return
+     * @return nested table
      */
     @Override
     public abstract ConfigurableList.ResultList getNestedTableData(Object entity, ColumnTabulation columnTabulation
@@ -62,27 +65,20 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
 
 
     /**
-     * Gets position/barcode matrix of event target vessels
-     * @param labEvent
-     * @param context
-     * @return
+     * Gets position/barcode matrix of event target vessels.
      */
     protected ConfigurableList.ResultList getTargetNestedTableData(LabEvent labEvent
             , @Nonnull SearchContext context) {
-        VesselContainer containerVessel = findEventTargetContainer(labEvent);
+        VesselContainer<?> containerVessel = findEventTargetContainer(labEvent);
         if( containerVessel == null ) {
             return null;
         }
         populatePositionLabelMaps( containerVessel, context );
-        ConfigurableList.ResultList resultList = buildResultList();
-        return resultList;
+        return buildResultList();
     }
 
     /**
-     * Gets position/barcode matrix of event source vessels
-     * @param labEvent
-     * @param context
-     * @return
+     * Gets position/barcode matrix of event source vessels.
      */
     protected ConfigurableList.ResultList getSourceNestedTableData(LabEvent labEvent
             , @Nonnull SearchContext context) {
@@ -96,20 +92,18 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
             }
         }
 
-        VesselContainer containerVessel = findEventSourceContainer(labEvent);
+        VesselContainer<?> containerVessel = findEventSourceContainer(labEvent);
         if( containerVessel == null || containerVessel.getMapPositionToVessel().isEmpty() ) {
             return null;
         }
         populatePositionLabelMaps( containerVessel, context );
-        ConfigurableList.ResultList resultList = buildResultList();
-        return resultList;
+        return buildResultList();
     }
 
     /**
-     * Builds the nested table presentation data structure
-     * @return
+     * Builds the nested table presentation data structure.
      */
-    private ConfigurableList.ResultList buildResultList() {
+    ConfigurableList.ResultList buildResultList() {
 
         // Build headers (blank at first column, column names from geometry)
         List<ConfigurableList.Header> headers = new ArrayList<>();
@@ -123,22 +117,26 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
         for( int i = 0; i < geometry.getRowCount(); i++ ) {
             List<String> cells = new ArrayList<>();
             cells.add(geometry.getRowNames()[i]);
-            for( int j = 0; j < geometry.getColumnCount(); j++ ) {
-                cells.add( positionLabelMap.get( resultMatrix[i][j] ) );
+            List<ConfigurableList.ResultList> nestedTables = new ArrayList<>();
+            // Empty nested table for row name
+            nestedTables.add(null);
+
+            for(int j = 0; j < geometry.getColumnCount(); j++ ) {
+                cells.add(positionTableMap.get( resultMatrix[i][j] ).getLeft());
+                nestedTables.add(positionTableMap.get( resultMatrix[i][j] ).getRight());
             }
             ConfigurableList.ResultRow resultRow = new ConfigurableList.ResultRow(null,cells,String.valueOf(i));
+            resultRow.setCellNestedTables(nestedTables);
             resultRows.add(resultRow);
         }
-        ConfigurableList.ResultList resultList = new ConfigurableList.ResultList( resultRows, headers, 0, "ASC");
 
-        return resultList;
+        return new ConfigurableList.ResultList( resultRows, headers, 0, "ASC");
     }
 
     /**
-     * Builds and populates the data structures for the container positions
-     * @param containerVessel
+     * Builds and populates the data structures for the container positions.
      */
-    private void populatePositionLabelMaps(VesselContainer containerVessel, SearchContext context) {
+    void populatePositionLabelMaps(VesselContainer<?> containerVessel, SearchContext context) {
 
         // Hold previously set context values
         SearchTerm originalTerm = context.getSearchTerm();
@@ -147,14 +145,12 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
 
         List<SearchTerm> parentTermsToDisplay = getParentTermsToDisplay( context );
 
-        positionLabelMap = new HashMap<>();
+        positionTableMap = new HashMap<>();
         geometry = containerVessel.getEmbedder().getVesselGeometry();
-        StringBuilder valueHolder = new StringBuilder();
 
         for (VesselPosition vesselPosition : geometry.getVesselPositions()) {
-            valueHolder.setLength(0);
-            appendDataForParentTerms(containerVessel, vesselPosition, valueHolder, parentTermsToDisplay, context);
-            positionLabelMap.put(vesselPosition, valueHolder.toString());
+            positionTableMap.put(vesselPosition, appendDataForParentTerms(containerVessel, vesselPosition,
+                    parentTermsToDisplay, context));
         }
 
         // Restore previously set context values
@@ -175,17 +171,13 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
     }
 
     /**
-     * User can select terms which are also displayed in the vessel position cells
-     * @param context
-     * @return
+     * User can select terms which are also displayed in the vessel position cells.
      */
     private List<SearchTerm> getParentTermsToDisplay( SearchContext context ) {
         // Logic is tied to context values ...
         SearchInstance searchInstance = context.getSearchInstance();
         ColumnEntity columnEntity = context.getColumnEntityType();
         SearchTerm thisSearchTerm = context.getSearchTerm();
-
-        List<SearchTerm> parentTermsToDisplay = new ArrayList<>();
 
         // Build a list of user selected columns
         List<String> displayColumnNames = new ArrayList<>();
@@ -202,6 +194,7 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
         ConfigurableSearchDefinition configurableSearchDefinition = SearchDefinitionFactory.getForEntity( columnEntity.getEntityName() );
 
         // Find the parent terms this plugin handles
+        List<SearchTerm> parentTermsToDisplay = new ArrayList<>();
         for( String columnName : displayColumnNames ){
             SearchTerm selectedParentSearchTerm = configurableSearchDefinition.getSearchTerm(columnName);
             if( thisSearchTerm.isParentTermHandledByChild(selectedParentSearchTerm)){
@@ -216,82 +209,62 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
      * Appends parent data handled in nested table to displayed position cell.
      * @param containerVessel Extract vessel/sample data from positions
      * @param vesselPosition The position in the container
-     * @param valueHolder Holds cell data accumulated for the vessel position
      * @param parentTermsToDisplay Collection of parent search result columns which can be displayed in nested table
      * @param context Values passed along call stack
      */
-    private void appendDataForParentTerms(VesselContainer containerVessel, VesselPosition vesselPosition,
-                                          StringBuilder valueHolder,
-                                          List<SearchTerm> parentTermsToDisplay, SearchContext context) {
+    private Pair<String, ConfigurableList.ResultList> appendDataForParentTerms(VesselContainer<?> containerVessel,
+            VesselPosition vesselPosition, List<SearchTerm> parentTermsToDisplay, SearchContext context) {
 
-        Object displayValue;
+        List<ConfigurableList.Header> headers = new ArrayList<>();
+        List<ConfigurableList.ResultRow> resultRows = new ArrayList<>();
+        String cell = null;
+        ConfigurableList.ResultList resultList = new ConfigurableList.ResultList(resultRows, headers, 0, "ASC");
 
         LabVessel labVessel = containerVessel.getVesselAtPosition(vesselPosition);
-        Set<SampleInstanceV2> samples = null;
 
         // Vessel barcodes are always displayed
         if( labVessel != null ) {
-            valueHolder.append("Vessel Barcode: ")
-                    .append(labVessel.getLabel());
-        } else {
-            // Don't bother digging up samples unless some are selected
-            if( !parentTermsToDisplay.isEmpty() ) {
-                samples = containerVessel.getSampleInstancesAtPositionV2(vesselPosition);
-            }
+            cell = labVessel.getLabel();
         }
 
+        List<Comparable<?>> emptySortableCells = new ArrayList<>();
         for( SearchTerm parentTerm : parentTermsToDisplay ) {
-            // Need if sample metadata is included in selection
-            context.setSearchTerm(parentTerm);
+            headers.add(new ConfigurableList.Header(parentTerm.getName(), null, null));
+        }
 
-            displayValue = null;
-
-            if( labVessel != null ) {
-                displayValue = parentTerm.getDisplayValueExpression().evaluate(labVessel, context );
-            } else {
-                Collection<String> sampleValues = new ArrayList<>();
-                for( SampleInstanceV2 sample : samples ) {
-                    sampleValues.addAll( (Collection<String>) parentTerm.getDisplayValueExpression().evaluate(sample.getRootOrEarliestMercurySample(), context ) );
-                }
-                displayValue = sampleValues;
-            }
-
-            if(valueHolder.length() > 0 ) {
-                valueHolder.append("\n");
-            }
-            valueHolder.append(parentTerm.getName())
-                    .append(": ");
-            if( displayValue instanceof Collection ){
-                Collection multiVal = (Collection)displayValue;
-                if( multiVal.isEmpty() ) {
-                    valueHolder.append("[No Data]");
-                } else {
-                    valueHolder.append("[")
-                            .append(parentTerm.evalPlainTextOutputExpression(multiVal, context))
-                            .append("]");
-                }
-            } else {
-                if (displayValue == null || displayValue.toString().isEmpty()) {
-                    valueHolder.append("[No Data]");
-                } else {
-                    valueHolder.append("[")
-                            .append(parentTerm.evalPlainTextOutputExpression(displayValue, context))
-                            .append("]");
+    // todo jmt need to rationalize this, so expressions don't have to deal with events, vessels, or samples
+    // if parent expression takes a vessel, how to get access to components of a pool
+        if( labVessel != null ) {
+//            displayValue = parentTerm.getDisplayValueExpression().evaluate(labVessel, context );
+        } else {
+            if( !parentTermsToDisplay.isEmpty() ) {
+                Collection<SampleInstanceV2> sampleInstances = (Collection<SampleInstanceV2>) ExpressionClass.xToY(
+                        new ImmutableLabVessel(containerVessel, vesselPosition),
+                        ExpressionClass.LAB_VESSEL,
+                        parentTermsToDisplay.iterator().next().getDisplayExpression().getExpressionClass());
+                for( SampleInstanceV2 sample : sampleInstances ) {
+                    List<String> cells = new ArrayList<>();
+                    resultRows.add(new ConfigurableList.ResultRow(emptySortableCells, cells, null));
+                    for( SearchTerm parentTerm : parentTermsToDisplay ) {
+                        // todo jmt why sample?  Should be SampleInstance, or LabVessel flyweight
+                        // Need if sample metadata is included in selection
+                        context.setSearchTerm(parentTerm);
+                        cells.add(((Collection<String>) parentTerm.getDisplayValueExpression().evaluate(sample, context)).iterator().next());
+                    }
                 }
             }
         }
 
+        return new ImmutablePair<>(cell, resultList);
     }
 
 
     /**
-     * Gets target container for the lab event
-     * @param labEvent
-     * @return
+     * Gets target container for the lab event.
      */
-    private VesselContainer findEventTargetContainer( LabEvent labEvent ) {
+    private VesselContainer<?> findEventTargetContainer( LabEvent labEvent ) {
 
-        VesselContainer vesselContainer = null;
+        VesselContainer<?> vesselContainer = null;
 
         // In place vessel is a container where event has no transfers
         LabVessel vessel = labEvent.getInPlaceLabVessel();
@@ -312,13 +285,11 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
 
 
     /**
-     * Gets source container for the lab event
-     * @param labEvent
-     * @return
+     * Gets source container for the lab event.
      */
-    private VesselContainer findEventSourceContainer( LabEvent labEvent ) {
+    private VesselContainer<?> findEventSourceContainer( LabEvent labEvent ) {
 
-        VesselContainer vesselContainer = null;
+        VesselContainer<?> vesselContainer = null;
 
         // In place vessel is a container where event has no transfers
         LabVessel vessel = labEvent.getInPlaceLabVessel();

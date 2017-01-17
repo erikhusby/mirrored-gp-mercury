@@ -8,10 +8,12 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.BspSampleSearchAd
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
+import org.broadinstitute.gpinformatics.infrastructure.columns.DisplayExpression;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselArrayMetricPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselLatestEventPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetadataPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetricPlugin;
+import org.broadinstitute.gpinformatics.infrastructure.columns.VesselLayoutPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.VesselMetricDetailsPlugin;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -58,6 +60,7 @@ import java.util.Set;
 /**
  * Builds ConfigurableSearchDefinition for lab vessel user defined search logic
  */
+@SuppressWarnings("ReuseOfLocalVariable")
 public class LabVesselSearchDefinition {
 
     // This singleton is used to determine if search is related specifically to Infinium arrays
@@ -102,6 +105,11 @@ public class LabVesselSearchDefinition {
         // One or more option groups have mouseover popup help text
         Map<String,String> mapGroupHelpText = new HashMap<>();
 
+        SearchTerm layoutTerm = new SearchTerm();
+        layoutTerm.setName("Layout");
+        layoutTerm.setIsNestedParent(Boolean.TRUE);
+        layoutTerm.setPluginClass(VesselLayoutPlugin.class);
+
         List<SearchTerm> searchTerms = srchDef.buildLabVesselIds();
         mapGroupSearchTerms.put("IDs", searchTerms);
 
@@ -113,7 +121,7 @@ public class LabVesselSearchDefinition {
         searchTerms = srchDef.buildLabVesselBsp();
         mapGroupSearchTerms.put("BSP", searchTerms);
 
-        searchTerms = srchDef.buildLabVesselMetadata();
+        searchTerms = srchDef.buildLabVesselMetadata(layoutTerm);
         mapGroupSearchTerms.put("Mercury Metadata", searchTerms);
 
         searchTerms = srchDef.buildLabVesselBuckets();
@@ -138,6 +146,8 @@ public class LabVesselSearchDefinition {
 
         searchTerms = srchDef.buildLabVesselMultiCols();
         mapGroupSearchTerms.put("Multi-Columns", searchTerms);
+
+        mapGroupSearchTerms.put("Nested Data", Collections.singletonList(layoutTerm));
 
         // Raising volume to 65ul - sample annotation?
         // Billing Risk - from PDO
@@ -472,7 +482,14 @@ public class LabVesselSearchDefinition {
             public List<String> evaluate(Object entity, SearchContext context) {
                 LabVessel labVessel = (LabVessel) entity;
                 List<String> results = null;
-                Collection<MercurySample> mercurySamples = labVessel.getMercurySamples();
+                List<MercurySample> mercurySamples = new ArrayList<>();
+                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                    MercurySample mercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
+                    if (mercurySample != null) {
+                        mercurySamples.add(mercurySample);
+                    }
+                }
+
                 if (!mercurySamples.isEmpty()) {
                     BspSampleSearchAddRowsListener bspColumns =
                             (BspSampleSearchAddRowsListener) context.getRowsListener(BspSampleSearchAddRowsListener.class.getSimpleName());
@@ -1204,7 +1221,7 @@ public class LabVesselSearchDefinition {
      * Build sample metadata search terms for lab vessels.
      * @return List of search terms/column definitions for lab vessel sample metadata
      */
-    private List<SearchTerm> buildLabVesselMetadata() {
+    private List<SearchTerm> buildLabVesselMetadata(SearchTerm nestedTableTerm) {
         List<SearchTerm> searchTerms = new ArrayList<>();
 
         SearchTerm searchTerm = new SearchTerm();
@@ -1225,13 +1242,22 @@ public class LabVesselSearchDefinition {
             @Override
             public List<String> evaluate(Object entity, SearchContext context) {
                 List<String> values = new ArrayList<>();
-                LabVessel labVessel = (LabVessel) entity;
-                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                if (OrmUtil.proxySafeIsInstance(entity, LabVessel.class)) {
+                    LabVessel labVessel = OrmUtil.proxySafeCast (entity, LabVessel.class);
+                    for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                        values.add(sampleInstanceV2.getNearestMercurySampleName());
+                    }
+                } else if (entity instanceof SampleInstanceV2) {
+                    SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
                     values.add(sampleInstanceV2.getNearestMercurySampleName());
+                } else {
+                    throw new RuntimeException("Unexpected class " + entity.getClass());
                 }
                 return values;
             }
         });
+        searchTerm.setDisplayExpression(DisplayExpression.NEAREST_SAMPLE_ID);
+        nestedTableTerm.addParentTermHandledByChild(searchTerm);
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -1240,13 +1266,22 @@ public class LabVesselSearchDefinition {
             @Override
             public List<String> evaluate(Object entity, SearchContext context) {
                 List<String> values = new ArrayList<>();
-                LabVessel labVessel = (LabVessel) entity;
-                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                if (OrmUtil.proxySafeIsInstance(entity, LabVessel.class)) {
+                    LabVessel labVessel = OrmUtil.proxySafeCast(entity, LabVessel.class);
+                    for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                        values.add(sampleInstanceV2.getRootOrEarliestMercurySampleName());
+                    }
+                } else if (entity instanceof SampleInstanceV2) {
+                    SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
                     values.add(sampleInstanceV2.getRootOrEarliestMercurySampleName());
+                } else {
+                    throw new RuntimeException("Unexpected class " + entity.getClass());
                 }
                 return values;
             }
         });
+        searchTerm.setDisplayExpression(DisplayExpression.ROOT_SAMPLE_ID);
+        nestedTableTerm.addParentTermHandledByChild(searchTerm);
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -1444,6 +1479,9 @@ public class LabVesselSearchDefinition {
         });
         searchTerms.add(searchTerm);
         return searchTerms;
+
+        // todo jmt need molecular index
+        // todo jmt break some of these "metadata" terms into their own group
     }
 
     /**
