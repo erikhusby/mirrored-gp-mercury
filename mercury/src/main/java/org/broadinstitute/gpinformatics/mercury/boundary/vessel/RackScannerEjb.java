@@ -4,6 +4,7 @@ import org.broadinstitute.bsp.client.rackscan.NetworkRackScanner;
 import org.broadinstitute.bsp.client.rackscan.RackScan;
 import org.broadinstitute.bsp.client.rackscan.RackScanner;
 import org.broadinstitute.bsp.client.rackscan.RackScannerConfig;
+import org.broadinstitute.bsp.client.rackscan.RackScannerType;
 import org.broadinstitute.bsp.client.rackscan.ScannerException;
 import org.broadinstitute.bsp.client.rackscan.SimulatorRackScanner;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
@@ -68,6 +69,29 @@ public class RackScannerEjb {
         NetworkRackScanner networkRackScanner = NetworkRackScanner.createNetworkRackScanner(config);
         if (networkRackScanner instanceof SimulatorRackScanner) {
             ((SimulatorRackScanner)networkRackScanner).setSimulationContent(simulationContent);
+        }
+        RackScan scanData = networkRackScanner.readRackScan();
+        if( includeRackBarcode ) {
+            scanData.getPositionData().put("rack", scanData.getLinearBarcode());
+        }
+        return scanData.getPositionData();
+    }
+
+    /**
+     * Scans a rack from the server on the computer of logged in user by using the ip address found in the request.
+     *
+     * @param rackScanner RackScanner to connect to and run.
+     * @param ipAddress For a rack scan simulation, gets positions and barcodes from this reader.
+     * @param includeRackBarcode Optionally include rack barcode in result map, key = "rack"
+     * @return Linked HashMap of position to scanned barcode.
+     * @throws ScannerException
+     */
+    public LinkedHashMap<String, String> runRackScanner(RackScanner rackScanner, String ipAddress, boolean includeRackBarcode )
+            throws ScannerException {
+        RackScannerConfig config = rackScanner.getRackScannerConfig();
+        NetworkRackScanner networkRackScanner = NetworkRackScanner.createNetworkRackScanner(config);
+        if (config.getScannerType() != RackScannerType.ZIATH_LOCALHOST) {
+            throw new RuntimeException("");
         }
         RackScan scanData = networkRackScanner.readRackScan();
         if( includeRackBarcode ) {
