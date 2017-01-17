@@ -99,8 +99,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     private static final String LIBRARY_DESCRIPTOR_PARAMETER = "selectedSubmissionLibraryDescriptor";
     private static final String REPOSITORY_PARAMETER = "selectedSubmissionRepository";
     public static final String SUBMISSION_TUPLES_PARAMETER = "selectedSubmissionTuples";
-    public static final String RESEARCH_PROJECT_DEFAULT_TAB = "0";
-    public static final String RESEARCH_PROJECT_SUBMISSIONS_TAB = "1";
+    public static final int RESEARCH_PROJECT_SUBMISSIONS_TAB = 2;
 
     private static final String PROJECT = "Research Project";
     public static final String CREATE_PROJECT = CoreActionBean.CREATE + PROJECT;
@@ -214,7 +213,8 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
      */
     private Map<String, Long> projectOrderCounts;
 
-    private List<String> selectedSubmissionTuples;
+    @Validate(converter = SubmissionTupleTypeConverter.class)
+    private List<SubmissionTuple> selectedSubmissionTuples=new ArrayList<>();
 
     @Inject
     private AlignerDao alignerDao;
@@ -279,7 +279,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
 
     private boolean validCollaborationPortal;
 
-    private String rpSelectedTab;
+    private int rpSelectedTab = 1;
 
     @Inject
     private BioProjectList bioProjectList;
@@ -942,8 +942,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         }
 
         Map<SubmissionTuple, String> tupleToSampleMap=new HashMap<>();
-        for (String selectedSubmissionTuple : selectedSubmissionTuples) {
-            SubmissionTuple submissionTuple = SubmissionTuple.fromJson(selectedSubmissionTuple);
+        for (SubmissionTuple submissionTuple : selectedSubmissionTuples) {
             if (submissionTuple!=null) {
                 tupleToSampleMap.put(submissionTuple, submissionTuple.getSampleName());
             }
@@ -994,7 +993,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
                 log.error("Error accessing cache", e);
             }
         }
-        return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION)
+        return new ForwardResolution(ResearchProjectActionBean.class, VIEW_ACTION)
                 .addParameter(RESEARCH_PROJECT_PARAMETER, researchProject)
                 .addParameter(BIOPROJECT_PARAMETER, bioProjectTokenInput.getListOfKeys())
                 .addParameter(LIBRARY_DESCRIPTOR_PARAMETER, selectedSubmissionLibraryDescriptor)
@@ -1262,19 +1261,19 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         this.bioProjectTokenInput = bioProjectTokenInput;
     }
 
-    public List<String> getSelectedSubmissionTuples() {
+    public List<SubmissionTuple> getSelectedSubmissionTuples() {
         return selectedSubmissionTuples;
     }
 
-    public void setSelectedSubmissionTuples(List<String> selectedSubmissionTuples) {
+    public void setSelectedSubmissionTuples(List<SubmissionTuple> selectedSubmissionTuples) {
         this.selectedSubmissionTuples = selectedSubmissionTuples;
     }
 
-    public String getRpSelectedTab() {
+    public int getRpSelectedTab() {
         return rpSelectedTab;
     }
 
-    public void setRpSelectedTab(String rpSelectedTab) {
+    public void setRpSelectedTab(int rpSelectedTab) {
         this.rpSelectedTab = rpSelectedTab;
     }
 
@@ -1403,4 +1402,5 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     public void setSupressValidationErrors(boolean supressValidationErrors) {
         this.supressValidationErrors = supressValidationErrors;
     }
+
 }
