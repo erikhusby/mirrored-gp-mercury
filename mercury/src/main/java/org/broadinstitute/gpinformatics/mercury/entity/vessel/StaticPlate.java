@@ -240,6 +240,8 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
     public static class HasRackContentByWellCriteria extends TransferTraverserCriteria {
 
         private Map<VesselPosition, Boolean> result = new HashMap<>();
+        private Map<VesselPosition, Pair<TubeFormation, VesselPosition>> wellPositionToFormationAndTubePosition =
+                new HashMap<>();
 
         /**
          * The current position in the query plate for which we are trying to determine sample containment.  This
@@ -279,8 +281,11 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
                 }
             } else if( contextVessel != null && contextVesselContainer != null ) {
                 if (OrmUtil.proxySafeIsInstance(contextVesselContainer.getEmbedder(), TubeFormation.class)) {
-                        result.put(contextVesselPosition, true);
-                        return TraversalControl.StopTraversing;
+                    result.put(contextVesselPosition, true);
+                    wellPositionToFormationAndTubePosition.put(queryVesselPosition, Pair.of(
+                            OrmUtil.proxySafeCast(contextVesselContainer.getEmbedder(), TubeFormation.class),
+                            contextVesselPosition));
+                    return TraversalControl.StopTraversing;
                 }
             }
             return TraversalControl.ContinueTraversing;
@@ -291,6 +296,10 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
 
         public Map<VesselPosition, Boolean> getResult() {
             return result;
+        }
+
+        public Map<VesselPosition, Pair<TubeFormation, VesselPosition>> getWellPositionToFormationAndTubePosition() {
+            return wellPositionToFormationAndTubePosition;
         }
     }
 
@@ -304,6 +313,16 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         HasRackContentByWellCriteria criteria = new HasRackContentByWellCriteria();
         vesselContainer.applyCriteriaToAllPositions(criteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
         return criteria.getResult();
+    }
+
+    /**
+     * Finds nearest ancestor rack and tube position for each well.
+     * @return Map of well position to tube formation and tube's position.
+     */
+    public Map<VesselPosition, Pair<TubeFormation, VesselPosition>> nearestFormationAndTubePositionByWell() {
+        HasRackContentByWellCriteria criteria = new HasRackContentByWellCriteria();
+        vesselContainer.applyCriteriaToAllPositions(criteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+        return criteria.getWellPositionToFormationAndTubePosition();
     }
 
     /**

@@ -57,8 +57,7 @@ public class BSPRestSender implements Serializable {
      * @param inputStream the content
      * @param bspRestUrl the relative url of the BSP web service to post to
      */
-    public void postToBsp(String bspUsername, String filename, Map<String, String> positionToTube,
-                          InputStream inputStream, String bspRestUrl) {
+    public void postToBsp(String bspUsername, String filename, InputStream inputStream, String bspRestUrl) {
         String urlString = bspRestClient.getUrl(bspRestUrl);
         WebResource webResource = bspRestClient.getWebResource(urlString).
                 queryParam("username", bspUsername).
