@@ -78,29 +78,6 @@ public class RackScannerEjb {
     }
 
     /**
-     * Scans a rack from the server on the computer of logged in user by using the ip address found in the request.
-     *
-     * @param rackScanner RackScanner to connect to and run.
-     * @param ipAddress For a rack scan simulation, gets positions and barcodes from this reader.
-     * @param includeRackBarcode Optionally include rack barcode in result map, key = "rack"
-     * @return Linked HashMap of position to scanned barcode.
-     * @throws ScannerException
-     */
-    public LinkedHashMap<String, String> runRackScanner(RackScanner rackScanner, String ipAddress, boolean includeRackBarcode )
-            throws ScannerException {
-        RackScannerConfig config = rackScanner.getRackScannerConfig();
-        NetworkRackScanner networkRackScanner = NetworkRackScanner.createNetworkRackScanner(config);
-        if (config.getScannerType() != RackScannerType.ZIATH_LOCALHOST) {
-            throw new RuntimeException("");
-        }
-        RackScan scanData = networkRackScanner.readRackScan();
-        if( includeRackBarcode ) {
-            scanData.getPositionData().put("rack", scanData.getLinearBarcode());
-        }
-        return scanData.getPositionData();
-    }
-
-    /**
      * Takes the received rack scan and obtains the BSP sample Ids.
      *
      * @param rackScan Rack scan to obtain the sample ids from.

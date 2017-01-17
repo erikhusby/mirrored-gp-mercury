@@ -125,10 +125,10 @@ public abstract class RackScanActionBean extends CoreActionBean {
                     if (ipAddress == null) {
                         ipAddress = getContext().getRequest().getRemoteAddr();
                     }
-                    rackScan = rackScannerEjb.runRackScanner(rackScanner, ipAddress, includeRackBarcode);
-                } else {
-                    rackScan = rackScannerEjb.runRackScanner(rackScanner, null, includeRackBarcode);
+                    ipAddress = ipAddress.replaceAll(":", ".");
+                    rackScanner.getRackScannerConfig().setIpAddress(ipAddress);
                 }
+                rackScan = rackScannerEjb.runRackScanner(rackScanner, null, includeRackBarcode);
             } else {
                 reader = simulatedScanCsv.getReader();
                 rackScan = rackScannerEjb.runRackScanner(rackScanner, reader, includeRackBarcode);
