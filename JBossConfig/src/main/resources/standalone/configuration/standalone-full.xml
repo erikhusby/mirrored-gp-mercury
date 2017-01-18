@@ -52,11 +52,6 @@
                 </authorization>
             </security-realm>
             <security-realm name="ApplicationRealm">
-                <server-identities>
-                    <ssl>
-                        <keystore path="application.keystore" relative-to="jboss.server.config.dir" keystore-password="password" alias="server" key-password="password" generate-self-signed-certificate-host="localhost"/>
-                    </ssl>
-                </server-identities>
                 <authentication>
                     <local default-user="$local" allowed-users="*" skip-group-loading="true"/>
                     <properties path="application-users.properties" relative-to="jboss.server.config.dir"/>
@@ -68,7 +63,9 @@
             <security-realm name="SslRealm">
                 <server-identities>
                     <ssl>
-                        <keystore path="mercuryssl.jks" relative-to="jboss.server.config.dir" keystore-password="changeit" alias="mercury_ssl"/>
+<!-- Needs the correct alias for the local machine -->
+		      <keystore path=".keystore" relative-to="jboss.server.config.dir"  keystore-password="changeit" alias="vmercurydev" key-password="changeit"/>
+
                     </ssl>
                 </server-identities>
             </security-realm>
@@ -547,7 +544,7 @@
         <socket-binding name="iiop-ssl" interface="unsecure" port="3529"/>
         <socket-binding name="txn-recovery-environment" port="4712"/>
         <socket-binding name="txn-status-manager" port="4713"/>
-        <socket-binding name="netty" interface="unsecure" port="5445"/>
+        <socket-binding name="netty" interface="public" port="5445"/>
         <outbound-socket-binding name="mail-smtp">
             <remote-destination host="localhost" port="25"/>
         </outbound-socket-binding>
