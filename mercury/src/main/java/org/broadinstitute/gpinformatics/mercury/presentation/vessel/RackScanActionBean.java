@@ -120,7 +120,7 @@ public abstract class RackScanActionBean extends CoreActionBean {
         Reader reader = null;
         try {
             if (simulatedScanCsv == null) {
-                if (rackScanner.getRackScannerConfig().getScannerType() == RackScannerType.ZIATH_LOCALHOST) {
+                if (rackScanner.getRackScannerLab() == RackScanner.RackScannerLab.LOCALHOST) {
                     String ipAddress = getContext().getRequest().getHeader("X-FORWARDED-FOR");
                     if (ipAddress == null) {
                         ipAddress = getContext().getRequest().getRemoteAddr();
