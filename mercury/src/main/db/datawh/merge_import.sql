@@ -1747,13 +1747,13 @@ AS
             WHEN 'InfiniumAutocallSomeStarted' THEN
             UPDATE array_process_flow
             SET autocall_event_id = new.lab_event_id
-              --, scanner = new.station_name
+              , scanner = NVL(new.station_name, scanner)
               , autocall_started = new.event_date
             WHERE ROWID = V_THE_ROWID;
             WHEN  'InfiniumAutoCallAllStarted' THEN
             UPDATE array_process_flow
             SET autocall_event_id = new.lab_event_id
-              --, scanner = new.station_name
+              , scanner = NVL(new.station_name, scanner)
               , autocall_started = new.event_date
             WHERE ROWID = V_THE_ROWID
                   AND ( autocall_event_id IS NULL
