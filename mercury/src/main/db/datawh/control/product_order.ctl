@@ -20,5 +20,6 @@ TRAILING NULLCOLS
  placed_date DATE "YYYYMMDDHH24MISS",
  skip_regulatory_reason,
  sap_order_number,
+ array_chip_type,
  reg_info_ids
 )

@@ -102,7 +102,6 @@
 
         <link rel="Shortcut Icon" type="image/x-icon" href="${ctxpath}/favicon.ico"/>
 
-        <link rel="stylesheet"  href="https://fonts.googleapis.com/css?family=Carrois+Gothic+SC"/>
         <link rel="stylesheet"  href="${ctxpath}/resources/css/bootstrap.css"/>
         <link rel="stylesheet"  href="${ctxpath}/resources/css/token-input.css"/>
         <link rel="stylesheet"  href="${ctxpath}/resources/css/jquery-ui-1.9.2.custom.min.css"/>

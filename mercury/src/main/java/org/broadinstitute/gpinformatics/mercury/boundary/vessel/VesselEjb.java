@@ -49,6 +49,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.presentation.vessel.UploadQuantsActionBean;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Resource;
@@ -448,15 +449,27 @@ public class VesselEjb {
                                                       MessageCollection messageCollection, boolean acceptRePico) {
         try {
             Workbook workbook = WorkbookFactory.create(wallacSpreadsheet);
+            String resultsSheetName = null;
+            for (int i = 0; i < workbook.getNumberOfSheets(); i++)
+            {
+                Sheet sheet = workbook.getSheetAt(i);
+                if (sheet.getSheetName().contains("Results Table")) {
+                    resultsSheetName = sheet.getSheetName();
+                    break;
+                }
+            }
+            if (resultsSheetName == null) {
+                messageCollection.addError("Failed to find Results Table sheet in workbook.");
+                return null;
+            }
             WallacRowParser wallacRowParser = new WallacRowParser(workbook);
             Map<WallacRowParser.NameValue, String> mapNameValueToValue = wallacRowParser.getValues();
 
             String plateBarcode1 = mapNameValueToValue.get(WallacRowParser.NameValue.PLATE_BARCODE_1);
             String plateBarcode2 = mapNameValueToValue.get(WallacRowParser.NameValue.PLATE_BARCODE_2);
-            WallacPlateProcessor wallacPlateProcessor =
-                    new WallacPlateProcessor(WallacRowParser.RESULTS_TABLE_TAB, plateBarcode1, plateBarcode2);
+            WallacPlateProcessor wallacPlateProcessor = new WallacPlateProcessor(resultsSheetName, plateBarcode1, plateBarcode2);
             PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.<String, TableProcessor>emptyMap());
-            parser.processRows(workbook.getSheet(WallacRowParser.RESULTS_TABLE_TAB), wallacPlateProcessor);
+            parser.processRows(workbook.getSheet(resultsSheetName), wallacPlateProcessor);
 
             // Fetch the plates
             Map<String, StaticPlate> mapBarcodeToPlate = new HashMap<>();
@@ -514,7 +527,8 @@ public class VesselEjb {
                                                            StringUtils.join(previousQuantedTubes, ", "));
                             } else {
                                 pair = createWallacRunDaoFree(mapNameValueToValue, metricType, wallacPlateProcessor,
-                                        mapBarcodeToPlate, decidingUser, messageCollection, runName);
+                                        mapBarcodeToPlate, decidingUser, messageCollection, runName,
+                                        UploadQuantsActionBean.QuantFormat.WALLAC);
                                 if (messageCollection.hasErrors()) {
                                     ejbContext.setRollbackOnly();
                                 } else {
@@ -537,7 +551,7 @@ public class VesselEjb {
             Map<WallacRowParser.NameValue, String> mapNameValueToValue,
             LabMetric.MetricType metricType, WallacPlateProcessor wallacPlateProcessor,
             Map<String, StaticPlate> mapBarcodeToPlate, Long decidingUser,
-            MessageCollection messageCollection, String runName) {
+            MessageCollection messageCollection, String runName, UploadQuantsActionBean.QuantFormat quantFormat) {
         SimpleDateFormat simpleDateFormat =
                 new SimpleDateFormat(WallacRowParser.NameValue.RUN_STARTED.getDateFormat());
         Date runStarted = parseRunDate(
@@ -550,7 +564,7 @@ public class VesselEjb {
         // Store raw values against plate wells
         List<VarioskanPlateProcessor.PlateWellResult> plateWellResults = wallacPlateProcessor.getPlateWellResults();
         String tubeFormationLabel = addPlateWellResults(labMetricRun, mapBarcodeToPlate, plateWellResults, false,
-                runStarted, metricType, decidingUser, messageCollection);
+                runStarted, metricType, decidingUser, messageCollection, quantFormat);
 
         return Pair.of(labMetricRun, tubeFormationLabel);
     }
@@ -559,7 +573,9 @@ public class VesselEjb {
                                        List<VarioskanPlateProcessor.PlateWellResult> plateWellResults,
                                        boolean runFailed,
                                        Date runStarted, LabMetric.MetricType metricType, long decidingUser,
-                                       MessageCollection messageCollection) {
+                                       MessageCollection messageCollection,
+                                       UploadQuantsActionBean.QuantFormat quantFormat) {
+
         Map<LabVessel, List<BigDecimal>> mapTubeToListValues = new HashMap<>();
         Map<LabVessel, VesselPosition> mapTubeToPosition = new HashMap<>();
         String tubeFormationLabel = null;
@@ -605,6 +621,9 @@ public class VesselEjb {
                 // RIBO includes the curve samples in the destination plate, but they are not in the sections involved
                 // in the transfers from the source tubes, so they should be ignored.
                 if (metricType == LabMetric.MetricType.PLATING_RIBO && !inSection) {
+                    continue;
+                } else if (quantFormat == UploadQuantsActionBean.QuantFormat.WALLAC) {
+                    // Wallacs always produce scores for a full plate map even if its partial so ignore.
                     continue;
                 }
                 messageCollection.addError("Failed to find source tube for " + plateWellResult.getPlateBarcode() +
