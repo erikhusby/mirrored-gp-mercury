@@ -23,6 +23,7 @@
         <ssl.keystore.password>changeit</ssl.keystore.password>
         <ssl.truststore.password>changeit</ssl.truststore.password>
         <crsp.enable>false</crsp.enable>
+	<ssl.keystore.alias>vmercurydev</ssl.keystore.alias>
     </properties>
 
     <repositories>
@@ -175,13 +176,20 @@
                                 <property environment="env"/>
                                 <fail unless="env.JBOSS_HOME"
                                       message="Please define the environment variable JBOSS_HOME to point at Wildfly installation."/>
+<!--
+				<fail message="Please define the ssl.keystore.alias as the keystore alias.">
+				  <condition>
+				    <isfalse value="${ssl.keystore.alias}"/>
+				  </condition>
+				</fail>
+-->
                                 <!-- Copy the modules -->
                                 <echo message="Copying modules"/>
                                 <copy todir="${env.JBOSS_HOME}/modules" overwrite="true" verbose="true">
                                     <fileset dir="${project.build.directory}/modules"/>
                                 </copy>
                                 <echo message="Updating standalone configuration"/>
-                                <copy todir="${env.JBOSS_HOME}/standalone" overwrite="true" verbose="true">
+                                <copy todir="${env.JBOSS_HOME}/standalone" overwrite="true" verbose="true" filtering="true">
                                     <fileset dir="${project.build.directory}/standalone"/>
                                 </copy>
                                 <copy todir="${env.JBOSS_HOME}" overwrite="true" verbose="true"
@@ -205,8 +213,6 @@
                                     Edit ${env.JBOSS_HOME}/bin/standalone.conf (or
                                     ${env.JBOSS_HOME}/bin/standalone.conf.bat )
                                     * Change the value of JAVA_OPTS for memory.
-                                    * Add the contents of src/main/resources/keystore/keystoreOptions.conf (or
-                                    keystoreOptions.conf.bat ) to enable use of the GPInfo keystore.
 
                                     If you use the ${env.JBOSS_HOME}/bin/standalone.sh procedure to start the server, you must
                                     include the "-c standalone-full.xml" command line option.

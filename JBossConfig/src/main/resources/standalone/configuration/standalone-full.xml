@@ -64,7 +64,7 @@
                 <server-identities>
                     <ssl>
 <!-- Needs the correct alias for the local machine -->
-		      <keystore path=".keystore" relative-to="jboss.server.config.dir"  keystore-password="changeit" alias="vmercurydev" key-password="changeit"/>
+		      <keystore path=".keystore" relative-to="jboss.server.config.dir"  keystore-password="changeit" alias="@ssl.keystore.alias@" key-password="changeit"/>
 
                     </ssl>
                 </server-identities>
