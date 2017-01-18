@@ -508,7 +508,9 @@ public class LabBatch {
         SEQUENCING_STATION("Sequencing Station", true),
         CLUSTER_STATION("Cluster Station", true),
         MATERIAL_TYPE("BATCH_TYPE", true),
-        LANE_INFO("Lane Info", true);
+        LANE_INFO("Lane Info", true),
+        SAMPLES_ON_RISK("Samples On Risk", true),
+        RISK_CATEGORIZED_SAMPLES("Risk Categorized Samples", true);
 
 
         private final String fieldName;
