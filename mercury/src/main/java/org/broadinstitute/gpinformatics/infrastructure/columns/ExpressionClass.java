@@ -1,8 +1,14 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Enumerates classes to which DisplayExpressions can be applied.
@@ -29,12 +35,32 @@ public enum ExpressionClass {
     REAGENT,
     // REAGENT_TYPE, REAGENT_LOT, REAGENT_EXPIRATION,
     METADATA,
-    SAMPLE_DATA; // or BSP?
+    SAMPLE_DATA; // or BSP?  Mercury sampledata is searchable, BSP is not, so the search terms have to be system specific,
+    // but perhaps the display expressions could be off SAMPLE_DATA
 
-    static Collection<?> xToY(Object x, ExpressionClass xClass, ExpressionClass yClass) {
+    public static Collection<?> xToY(Object x, ExpressionClass xClass, ExpressionClass yClass, SearchContext context) {
         if (xClass == LAB_VESSEL && yClass == SAMPLE_INSTANCE) {
             LabVessel labVessel = (LabVessel) x;
             return labVessel.getSampleInstancesV2();
+        } else if (xClass == LAB_VESSEL && yClass == SAMPLE_DATA) {
+            LabVessel labVessel = (LabVessel) x;
+            List<MercurySample> mercurySamples = new ArrayList<>();
+            for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                MercurySample mercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
+                if (mercurySample != null) {
+                    mercurySamples.add(mercurySample);
+                }
+            }
+
+            List<SampleData> results = new ArrayList<>();
+            if (!mercurySamples.isEmpty()) {
+                BspSampleSearchAddRowsListener bspColumns =
+                        (BspSampleSearchAddRowsListener) context.getRowsListener(BspSampleSearchAddRowsListener.class.getSimpleName());
+                for( MercurySample mercurySample : mercurySamples) {
+                    results.add(bspColumns.getSampleData(mercurySample.getSampleKey()));
+                }
+            }
+            return results;
         } else {
             throw new RuntimeException("Unexpected combination " + xClass + " to " + yClass);
         }

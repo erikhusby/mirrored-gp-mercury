@@ -145,6 +145,18 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
+    @Nullable
+    public T getImmutableVesselAtPosition(VesselPosition position) {
+        LabVessel labVessel = mapPositionToVessel.get(position);
+        if (labVessel == null) {
+            //noinspection unchecked
+            return (T) new ImmutableLabVessel(this, position);
+        }
+        //noinspection unchecked
+        return (T) labVessel;
+    }
+
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Set<LabEvent> getTransfersFrom() {
         Set<LabEvent> transfersFrom = new HashSet<>();
         for (SectionTransfer sectionTransfer : sectionTransfersFrom) {

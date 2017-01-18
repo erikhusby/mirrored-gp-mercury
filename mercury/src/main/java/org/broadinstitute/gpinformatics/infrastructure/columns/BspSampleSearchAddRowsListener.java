@@ -1,7 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
@@ -20,11 +21,11 @@ import java.util.Map;
  */
 public class BspSampleSearchAddRowsListener implements ConfigurableList.AddRowsListener {
 
-    private List<BSPSampleSearchColumn> bspSampleSearchColumns = new ArrayList<>();
+    private final List<BSPSampleSearchColumn> bspSampleSearchColumns = new ArrayList<>();
 
     private boolean columnsInitialized;
 
-    private final Map<String, Map<BSPSampleSearchColumn, String>> mapSampleIdToColumns = new HashMap<>();
+    private Map<String, SampleData> mapIdToSampleData = new HashMap<>();
 
     public BspSampleSearchAddRowsListener() {
     }
@@ -32,13 +33,13 @@ public class BspSampleSearchAddRowsListener implements ConfigurableList.AddRowsL
     @Override
     public void addRows(List<?> entityList, SearchContext context, List<ColumnTabulation> nonPluginTabulations) {
 
-        List<String> sampleIDs = new ArrayList<>();
+        List<MercurySample> samples = new ArrayList<>();
         for (Object entity : entityList) {
             LabVessel labVessel = (LabVessel) entity;
             for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
                 MercurySample mercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
                 if (mercurySample != null) {
-                    sampleIDs.add(mercurySample.getSampleKey());
+                    samples.add(mercurySample);
                 }
             }
         }
@@ -61,23 +62,17 @@ public class BspSampleSearchAddRowsListener implements ConfigurableList.AddRowsL
             columnsInitialized = true;
         }
 
-        List<Map<BSPSampleSearchColumn, String>> listMapColumnToValue;
 
         // Skip BSP call if no sample IDs or no BSP column data requested
-        if( sampleIDs.isEmpty() || bspSampleSearchColumns.isEmpty() ) {
-            listMapColumnToValue = new ArrayList<>();
-        } else {
+        if (!samples.isEmpty() && !bspSampleSearchColumns.isEmpty()) {
 
             // Do lookup instead of CDI annotation.
-            BSPSampleSearchService bspSampleSearchService = ServiceAccessUtility.getBean(BSPSampleSearchService.class);
+            SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
 
             // Needs sample ID in first position
             bspSampleSearchColumns.add( 0, BSPSampleSearchColumn.SAMPLE_ID );
-            listMapColumnToValue = bspSampleSearchService.runSampleSearch(
-                    sampleIDs, bspSampleSearchColumns.toArray(new BSPSampleSearchColumn[bspSampleSearchColumns.size()]));
-        }
-        for (Map<BSPSampleSearchColumn, String> mapColumnToValue : listMapColumnToValue) {
-            mapSampleIdToColumns.put(mapColumnToValue.get(BSPSampleSearchColumn.SAMPLE_ID), mapColumnToValue);
+            mapIdToSampleData = sampleDataFetcher.fetchSampleDataForSamples(samples,
+                    bspSampleSearchColumns.toArray(new BSPSampleSearchColumn[bspSampleSearchColumns.size()]));
         }
     }
 
@@ -85,15 +80,10 @@ public class BspSampleSearchAddRowsListener implements ConfigurableList.AddRowsL
     public void reset() {
         columnsInitialized = false;
         bspSampleSearchColumns.clear();
-        mapSampleIdToColumns.clear();
+        mapIdToSampleData.clear();
     }
 
-    public String getColumn(String sampleKey, BSPSampleSearchColumn bspSampleSearchColumn) {
-        Map<BSPSampleSearchColumn,String> bspSampleSearchColumnStringMap = mapSampleIdToColumns.get(sampleKey);
-        if( bspSampleSearchColumnStringMap == null ) {
-            return "";
-        } else {
-            return mapSampleIdToColumns.get(sampleKey).get(bspSampleSearchColumn);
-        }
+    public SampleData getSampleData(String sampleKey) {
+        return mapIdToSampleData.get(sampleKey);
     }
 }
