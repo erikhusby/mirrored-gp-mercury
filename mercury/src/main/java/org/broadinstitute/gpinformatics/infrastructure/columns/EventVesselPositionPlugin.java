@@ -197,7 +197,7 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
         List<SearchTerm> parentTermsToDisplay = new ArrayList<>();
         for( String columnName : displayColumnNames ){
             SearchTerm selectedParentSearchTerm = configurableSearchDefinition.getSearchTerm(columnName);
-            if( thisSearchTerm.isParentTermHandledByChild(selectedParentSearchTerm)){
+            if( selectedParentSearchTerm.getDisplayExpression() != null){
                 parentTermsToDisplay.add(selectedParentSearchTerm);
             }
         }
@@ -217,41 +217,40 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
 
         List<ConfigurableList.Header> headers = new ArrayList<>();
         List<ConfigurableList.ResultRow> resultRows = new ArrayList<>();
-        String cell = null;
         ConfigurableList.ResultList resultList = new ConfigurableList.ResultList(resultRows, headers, 0, "ASC");
 
-        LabVessel labVessel = containerVessel.getVesselAtPosition(vesselPosition);
+        LabVessel labVessel = containerVessel.getImmutableVesselAtPosition(vesselPosition);
 
         // Vessel barcodes are always displayed
-        if( labVessel != null ) {
-            cell = labVessel.getLabel();
-        }
+        // todo jmt only display label for tubes
+//        if( labVessel != null ) {
+        String cell = labVessel.getLabel();
+//        }
 
         List<Comparable<?>> emptySortableCells = new ArrayList<>();
         for( SearchTerm parentTerm : parentTermsToDisplay ) {
             headers.add(new ConfigurableList.Header(parentTerm.getName(), null, null));
         }
 
-    // todo jmt need to rationalize this, so expressions don't have to deal with events, vessels, or samples
-    // if parent expression takes a vessel, how to get access to components of a pool
-        if( labVessel != null ) {
-//            displayValue = parentTerm.getDisplayValueExpression().evaluate(labVessel, context );
-        } else {
-            if( !parentTermsToDisplay.isEmpty() ) {
-                Collection<SampleInstanceV2> sampleInstances = (Collection<SampleInstanceV2>) ExpressionClass.xToY(
-                        new ImmutableLabVessel(containerVessel, vesselPosition),
+        if( !parentTermsToDisplay.isEmpty() ) {
+            int cellIndex = 0;
+            for( SearchTerm parentTerm : parentTermsToDisplay ) {
+                context.setSearchTerm(parentTerm);
+                Collection<?> objects = ExpressionClass.xToY(
+                        labVessel,
                         ExpressionClass.LAB_VESSEL,
-                        parentTermsToDisplay.iterator().next().getDisplayExpression().getExpressionClass());
-                for( SampleInstanceV2 sample : sampleInstances ) {
-                    List<String> cells = new ArrayList<>();
-                    resultRows.add(new ConfigurableList.ResultRow(emptySortableCells, cells, null));
-                    for( SearchTerm parentTerm : parentTermsToDisplay ) {
-                        // todo jmt why sample?  Should be SampleInstance, or LabVessel flyweight
-                        // Need if sample metadata is included in selection
-                        context.setSearchTerm(parentTerm);
-                        cells.add(((Collection<String>) parentTerm.getDisplayValueExpression().evaluate(sample, context)).iterator().next());
+                        parentTerm.getDisplayExpression().getExpressionClass(),
+                        context);
+                int rowIndex = 0;
+                for (Object object : objects) {
+                    if (cellIndex == 0) {
+                        resultRows.add(new ConfigurableList.ResultRow(emptySortableCells, new ArrayList<String>(), null));
                     }
+                    resultRows.get(rowIndex).getRenderableCells().add(parentTerm.evalPlainTextOutputExpression(
+                            parentTerm.getDisplayExpression().getDisplayExpression().evaluate(object, context), context));
+                    rowIndex++;
                 }
+                cellIndex++;
             }
         }
 

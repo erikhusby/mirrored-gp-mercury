@@ -12,6 +12,7 @@ package org.broadinstitute.gpinformatics.infrastructure.search;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.infrastructure.columns.DisplayExpression;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ExpressionClass;
 
 import javax.annotation.Nullable;
 import java.io.Serializable;
@@ -708,6 +709,18 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     @Override
     public Object evalValueExpression(Object entity, SearchContext context) {
         context = addTermToContext(context);
+        if (getDisplayValueExpression() == null) {
+            Collection<?> objects = ExpressionClass.xToY(
+                    entity,
+                    // todo jmt generalize
+                    ExpressionClass.LAB_VESSEL,
+                    getDisplayExpression().getExpressionClass(),
+                    context);
+            for (Object object : objects) {
+                // todo jmt accumulate
+                return getDisplayExpression().getDisplayExpression().evaluate(object, context);
+            }
+        }
         return getDisplayValueExpression().evaluate(entity, context);
     }
 

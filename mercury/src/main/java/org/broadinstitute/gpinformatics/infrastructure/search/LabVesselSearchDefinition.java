@@ -450,12 +450,36 @@ public class LabVesselSearchDefinition {
     private List<SearchTerm> buildLabVesselBsp() {
         List<SearchTerm> searchTerms = new ArrayList<>();
         // Non-searchable data from BSP
-        searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.STOCK_SAMPLE, "Stock Sample ID"));
-        searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID));
-        searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID ));
-        searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.SAMPLE_TYPE, "Tumor / Normal"));
-        searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.COLLECTION));
-        searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.ORIGINAL_MATERIAL_TYPE));
+        {
+            SearchTerm searchTerm = buildLabVesselBspTerm(BSPSampleSearchColumn.STOCK_SAMPLE, "Stock Sample ID");
+            searchTerm.setDisplayExpression(DisplayExpression.STOCK_SAMPLE);
+            searchTerms.add(searchTerm);
+        }
+        {
+            SearchTerm searchTerm = buildLabVesselBspTerm(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID);
+            searchTerm.setDisplayExpression(DisplayExpression.COLLABORATOR_SAMPLE_ID);
+            searchTerms.add(searchTerm);
+        }
+        {
+            SearchTerm searchTerm = buildLabVesselBspTerm(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID);
+            searchTerm.setDisplayExpression(DisplayExpression.COLLABORATOR_PARTICIPANT_ID);
+            searchTerms.add(searchTerm);
+        }
+        {
+            SearchTerm searchTerm = buildLabVesselBspTerm(BSPSampleSearchColumn.SAMPLE_TYPE, "Tumor / Normal");
+            searchTerm.setDisplayExpression(DisplayExpression.SAMPLE_TYPE);
+            searchTerms.add(searchTerm);
+        }
+        {
+            SearchTerm searchTerm = buildLabVesselBspTerm(BSPSampleSearchColumn.COLLECTION);
+            searchTerm.setDisplayExpression(DisplayExpression.COLLECTION);
+            searchTerms.add(searchTerm);
+        }
+        {
+            SearchTerm searchTerm = buildLabVesselBspTerm(BSPSampleSearchColumn.ORIGINAL_MATERIAL_TYPE);
+            searchTerm.setDisplayExpression(DisplayExpression.ORIGINAL_MATERIAL_TYPE);
+            searchTerms.add(searchTerm);
+        }
         return searchTerms;
     }
 
@@ -470,37 +494,10 @@ public class LabVesselSearchDefinition {
 
     /**
      * Builds BSP term with user specified display name
-     * @param bspSampleSearchColumn
-     * @param name
-     * @return
      */
     private SearchTerm buildLabVesselBspTerm(final BSPSampleSearchColumn bspSampleSearchColumn, String name) {
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName(name);
-        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public List<String> evaluate(Object entity, SearchContext context) {
-                LabVessel labVessel = (LabVessel) entity;
-                List<String> results = null;
-                List<MercurySample> mercurySamples = new ArrayList<>();
-                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                    MercurySample mercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
-                    if (mercurySample != null) {
-                        mercurySamples.add(mercurySample);
-                    }
-                }
-
-                if (!mercurySamples.isEmpty()) {
-                    BspSampleSearchAddRowsListener bspColumns =
-                            (BspSampleSearchAddRowsListener) context.getRowsListener(BspSampleSearchAddRowsListener.class.getSimpleName());
-                    results = new ArrayList<>();
-                    for( MercurySample mercurySample : mercurySamples) {
-                        results.add(bspColumns.getColumn(mercurySample.getSampleKey(), bspSampleSearchColumn));
-                    }
-                }
-                return results;
-            }
-        });
         searchTerm.setAddRowsListenerHelper(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, SearchContext context) {
