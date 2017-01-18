@@ -606,8 +606,7 @@ public class SampleInstanceV2 {
             throw new RuntimeException("Could not determine metadata source");
         }
         if (metadataSources.size() > 1) {
-            return "MERCURY";
-            //throw new RuntimeException(String.format("Found %s metadata sources",metadataSources.size()));
+            throw new RuntimeException(String.format("Found %s metadata sources",metadataSources.size()));
         }
         return metadataSources.iterator().next();
     }

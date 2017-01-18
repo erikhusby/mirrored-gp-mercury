@@ -349,10 +349,6 @@ public class ZimsIlluminaRunFactory {
             SampleData sampleData = mapSampleIdToDto.get(sampleInstanceDto.getSampleId());
             TZDevExperimentData devExperimentData = sampleInstance.getTzDevExperimentData();
 
-            String me;
-            if(sampleInstanceDto.getSampleId().equals("SM-4S9V6")) {
-                me = "";
-            }
             libraryBeans.add(createLibraryBean(sampleInstanceDto, productOrder, sampleData, lcSet,
                     baitName, indexingSchemeEntity, catNames, sampleInstanceDto.getSampleInstance().getWorkflowName(),
                     indexingSchemeDto, mapNameToControl, sampleInstanceDto.getPdoSampleName(),
