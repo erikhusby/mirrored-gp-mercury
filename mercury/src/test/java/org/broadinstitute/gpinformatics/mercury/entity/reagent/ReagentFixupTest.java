@@ -1185,4 +1185,38 @@ public class ReagentFixupTest extends Arquillian {
         utx.commit();
     }
 
+    @Test(enabled = false)
+    public void support2453CrspSeqReagentFixup() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        Reagent box1Incorrect = genericReagentDao.findByReagentNameLotExpiration("TruSeq Rapid SBS Kit",
+                "16J13A0023", new GregorianCalendar(2017, Calendar.AUGUST, 11).getTime());
+        Assert.assertNotNull(box1Incorrect);
+
+        Reagent box2Incorrect = genericReagentDao.findByReagentNameLotExpiration("TruSeq Rapid SBS Kit Box 2 of 2",
+                "16J13A0024", new GregorianCalendar(2017, Calendar.JULY, 31).getTime());
+        Assert.assertNotNull(box2Incorrect);
+
+        // Correct reagents already exist since used on other flowcells
+        Reagent box1Actual = genericReagentDao.findByReagentNameLotExpiration("TruSeq Rapid SBS Kit",
+                "16J13A0024", new GregorianCalendar(2017, Calendar.JULY, 31).getTime());
+        Assert.assertNotNull(box1Actual);
+
+        Reagent box2Actual = genericReagentDao.findByReagentNameLotExpiration("TruSeq Rapid SBS Kit Box 2 of 2",
+                "16J13A0023", new GregorianCalendar(2017, Calendar.AUGUST, 11).getTime());
+        Assert.assertNotNull(box2Actual);
+
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 1811530L);
+        Assert.assertEquals(labEvent.getLabEventType(), LabEventType.DILUTION_TO_FLOWCELL_TRANSFER);
+        Assert.assertNotNull(labEvent.removeLabEventReagent(box1Incorrect));
+        Assert.assertNotNull(labEvent.removeLabEventReagent(box2Incorrect));
+        labEvent.addReagent(box1Actual);
+        labEvent.addReagent(box2Actual);
+
+        genericReagentDao.persist(new FixupCommentary("SUPPORT-2453 change to correct lots."));
+        genericReagentDao.flush();
+        utx.commit();
+    }
+
 }
