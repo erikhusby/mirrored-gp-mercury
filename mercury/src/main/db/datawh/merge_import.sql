@@ -943,6 +943,7 @@ AS
               placed_date = new.placed_date,
               skip_regulatory_reason = new.skip_regulatory_reason,
               sap_order_number = new.sap_order_number,
+              array_chip_type = new.array_chip_type,
               etl_date = new.etl_date
             WHERE product_order_id = new.product_order_id;
 
@@ -963,6 +964,7 @@ AS
               placed_date,
               skip_regulatory_reason,
               sap_order_number,
+              array_chip_type,
               etl_date
             ) VALUES (
               new.product_order_id,
@@ -978,6 +980,7 @@ AS
               new.placed_date,
               new.skip_regulatory_reason,
               new.sap_order_number,
+              new.array_chip_type,
               new.etl_date );
 
             V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
