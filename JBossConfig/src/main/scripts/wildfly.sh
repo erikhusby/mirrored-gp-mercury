@@ -94,7 +94,14 @@ stop() {
         echo "Wildfly is running, pid=`cat $SERVER_PIDFILE`, sending shutdown"
         $JBOSS_HOME/bin/jboss-cli.sh --connect --controller=$HOSTIP command=:shutdown
    fi
-    rm -f $SERVER_PIDFILE
+    sleep 10
+    isRunning
+    if [ $? -eq 0 ]
+    then
+	rm -f $SERVER_PIDFILE
+    else
+	echo "Wildfly did not stop, pid=`cat $SERVER_PIDFILE`"
+    fi
 }
 
 #
@@ -166,7 +173,7 @@ else
     else
 	    if [ "Darwin" == `uname` ]
 	    then
-	        HOSTIP=`ifconfig | grep "inet " | grep -v 127.0.0.1 | awk '{print $2}'`
+	        HOSTIP=`ifconfig | grep "inet " | grep -v 127.0.0.1 | awk 'NR==1 {print $2}'`
 	    else
 	        HOSTIP=`hostname -I`
 	    fi
