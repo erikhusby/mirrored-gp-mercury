@@ -163,7 +163,7 @@
 
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-antrun-plugin</artifactId>
-                <version>1.7</version>
+                <version>1.8</version>
                 <executions>
                     <execution>
                         <id>Update JBoss</id>
@@ -192,7 +192,7 @@
                                 <copy todir="${env.JBOSS_HOME}/standalone" overwrite="true" verbose="true" filtering="true">
                                     <fileset dir="${project.build.directory}/standalone"/>
                                 </copy>
-                                <copy todir="${env.JBOSS_HOME}" overwrite="true" verbose="true"
+                                <copy todir="${env.JBOSS_HOME}/standalone/configuration" overwrite="true" verbose="true"
                                       file="src/main/resources/keystore/.keystore"/>
 
                                 <copy todir="${env.JBOSS_HOME}" overwrite="true" verbose="true">
@@ -208,7 +208,7 @@
                                     Your Wildfly 10 has been updated with the Mercury configurations.
 
                                     It is recommended that you increase the memory settings. For example:
-                                    JAVA_OPTS="-Xms64m -Xmx4096M -XMetaspace=4G"
+                                    JAVA_OPTS="-Xms64m -Xmx4096M -XXMetaspace=4G"
 
                                     Edit ${env.JBOSS_HOME}/bin/standalone.conf (or
                                     ${env.JBOSS_HOME}/bin/standalone.conf.bat )
