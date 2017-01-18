@@ -229,7 +229,7 @@ public class LibraryBean {
             TZDevExperimentData devExperimentData, Collection<String> gssrBarcodes, String gssrSampleType,
             Boolean doAggregation, Collection<String> customAmpliconSetNames, ProductOrder productOrder,
             String lcSet, SampleData sampleData, String labWorkflow, String libraryCreationDate,
-            String productOrderSample, String metadataSource, String aggregationDataType) {
+            String productOrderSample, String metadataSource, String aggregationDataType /*only for controls*/) {
 
         // project was always null in the calls here, so don't send it through. Can add back later.
         this(library, null, initiative, workRequest, indexingScheme, hasIndexingRead, expectedInsertSize,
