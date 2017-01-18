@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -44,7 +45,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 public class WallacParserContainerTest extends Arquillian {
     public static final String WALLAC_OUTPUT = "Wallac96WellOutput.xls";
 
-    private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyyMMddHHmmss");
+    private static final FastDateFormat SIMPLE_DATE_FORMAT = FastDateFormat.getInstance("yyyyMMddHHmmss");
     public static final String PLATE_1_BARCODE = "2408120";
     public static final String PLATE_2_BARCODE = "2408020";
 

@@ -22,6 +22,8 @@ import org.hibernate.type.StandardBasicTypes;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.EntityManager;
 import javax.persistence.LockModeType;
@@ -49,6 +51,7 @@ import java.util.Set;
 
 @Stateful
 @RequestScoped
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class ProductOrderDao extends GenericDao {
 
     /**

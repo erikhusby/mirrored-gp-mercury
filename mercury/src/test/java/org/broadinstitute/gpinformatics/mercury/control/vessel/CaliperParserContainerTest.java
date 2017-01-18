@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.control.vessel;
 import com.google.common.base.Joiner;
 import com.opencsv.CSVReader;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
@@ -44,7 +45,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 @RequestScoped
 public class CaliperParserContainerTest extends Arquillian {
 
-    private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyyMMddHHmmss");
+    private static final FastDateFormat SIMPLE_DATE_FORMAT = FastDateFormat.getInstance("yyyyMMddHHmmss");
 
     @Inject
     private VesselEjb vesselEjb;

@@ -1,65 +1,67 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.projects;
 
-import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
-import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
-import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRepository;
-import org.broadinstitute.gpinformatics.infrastructure.test.StubbyContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-@RequestScoped
-public class SubmissionTrackerContainerTest extends StubbyContainerTest {
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+
+@Test(groups = TestGroups.STANDARD)
+public class SubmissionTrackerContainerTest extends Arquillian {
 
     @Inject
     ResearchProjectDao researchProjectDao;
 
-    private static String testAccessionID = "SA-2342";
-    private static String testProjectId = "P123";
-    private static BassFileType testFileType = BassFileType.BAM;
-    private static String testVersion = "v1";
+    private String jiraTicketId;
+    private String testAccessionID;
+    private static final BassFileType testFileType = BassFileType.BAM;
+    private static final String testVersion = "v1";
+    private ResearchProject testProject;
 
-    public static SubmissionRepository
-            testRepository=new SubmissionRepository(SubmissionRepository.DEFAULT_REPOSITORY_NAME, "description");
-    public static SubmissionLibraryDescriptor testLibraryDescriptor= ProductFamily.defaultLibraryDescriptor();
+    @Deployment
+    public static WebArchive buildMercuryWar() {
+        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
+    }
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod
     public void setUp() throws Exception {
         // Skip if no injections, meaning we're not running in container
         if (researchProjectDao == null) {
             return;
         }
+        String testId = String.valueOf(System.currentTimeMillis());
+        testAccessionID  = "SA-"+testId;
+        jiraTicketId = "RP" + testId;
+        testProject = ResearchProjectTestFactory.createTestResearchProject(jiraTicketId);
 
     }
 
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @AfterMethod
     public void tearDown() throws Exception {
         // Skip if no injections, meaning we're not running in container
         if (researchProjectDao == null) {
             return;
         }
-
+        researchProjectDao.remove(testProject);
     }
 
     public void testTrackerConfiguration() throws Exception {
-        ResearchProject testProject = ResearchProjectTestFactory.createTestResearchProject();
-        testProject.setJiraTicketKey("RP-testRP");
-        SubmissionTracker tracker = new SubmissionTracker(testProjectId, testAccessionID, testVersion, testFileType);
-
+        SubmissionTracker tracker = new SubmissionTracker(jiraTicketId, testAccessionID, testVersion, testFileType);
         testProject.addSubmissionTracker(tracker);
-
         researchProjectDao.persist(testProject);
 
         Assert.assertNotNull(tracker.createSubmissionIdentifier());
@@ -70,5 +72,4 @@ public class SubmissionTrackerContainerTest extends StubbyContainerTest {
                 tracker.createSubmissionIdentifier()
                         .substring(SubmissionTracker.MERCURY_SUBMISSION_ID_PREFIX.length() + dateLength));
     }
-
 }

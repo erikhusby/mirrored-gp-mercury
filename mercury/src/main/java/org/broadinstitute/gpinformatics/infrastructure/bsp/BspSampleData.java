@@ -330,6 +330,11 @@ public class BspSampleData implements SampleData {
     }
 
     @Override
+    public String getCollaboratorFamilyId() {
+        return getValue(BSPSampleSearchColumn.COLLABORATOR_FAMILY_ID);
+    }
+
+    @Override
     public String getMaterialType() {
         return getValue(BSPSampleSearchColumn.MATERIAL_TYPE);
     }

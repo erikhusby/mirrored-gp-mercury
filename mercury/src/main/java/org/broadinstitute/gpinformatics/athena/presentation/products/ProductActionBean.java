@@ -114,9 +114,6 @@ public class ProductActionBean extends CoreActionBean {
     private ResearchProjectDao researchProjectDao;
 
     @Inject
-    private SapIntegrationService sapService;
-
-    @Inject
     private WorkflowConfig workflowConfig;
 
     // Data needed for displaying the view.
@@ -431,7 +428,7 @@ public class ProductActionBean extends CoreActionBean {
         addMessage("Product \"" + editProduct.getProductName() + "\" has been saved");
         if(editProduct.isSavedInSAP()) {
             try {
-                sapService.changeProductInSAP(editProduct);
+                productEjb.publishProductToSAP(editProduct);
             } catch (SAPIntegrationException e) {
                 addGlobalValidationError("Unable to update the product in SAP. " + e.getMessage());
             }

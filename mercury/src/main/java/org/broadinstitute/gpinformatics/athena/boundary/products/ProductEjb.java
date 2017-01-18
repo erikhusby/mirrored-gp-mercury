@@ -5,7 +5,9 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
+import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingChipMapping;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
@@ -20,6 +22,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -42,27 +46,31 @@ import java.util.TreeSet;
 /**
  * Transactional manager for {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder}s.
  */
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class ProductEjb {
-    private final ProductDao productDao;
+    private ProductDao productDao;
 
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
     public ProductEjb() {
-        this(null);
     }
 
-    @Inject
     private AttributeArchetypeDao attributeArchetypeDao;
 
-    @Inject
     private AuditReaderDao auditReaderDao;
 
-    @Inject
     private SapIntegrationService sapService;
 
+    private SAPAccessControlEjb accessController;
+
     @Inject
-    public ProductEjb(ProductDao productDao) {
+    public ProductEjb(ProductDao productDao, SapIntegrationService sapService, AuditReaderDao auditReaderDao,
+                      AttributeArchetypeDao attributeArchetypeDao, SAPAccessControlEjb accessController) {
         this.productDao = productDao;
+        this.attributeArchetypeDao = attributeArchetypeDao;
+        this.auditReaderDao = auditReaderDao;
+        this.sapService = sapService;
+        this.accessController = accessController;
     }
 
     /**
@@ -77,6 +85,7 @@ public class ProductEjb {
      * @param values              The values
      * @param genotypingChipInfo  Genotyping chips for this product
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void saveProduct(
             Product product, ProductTokenInput addOnTokenInput, PriceItemTokenInput priceItemTokenInput,
             boolean allLengthsMatch, String[] criteria, String[] operators, String[] values,
@@ -214,6 +223,7 @@ public class ProductEjb {
      * @param productPartNumber  the product part number to be mapped
      * @param genotypingChipInfo (Chip family, chip name, PDO name substring) to be mapped
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void persistGenotypingChipMappings(String productPartNumber,
                                               List<Triple<String, String, String>> genotypingChipInfo) {
         final Date now = new Date();
@@ -295,6 +305,7 @@ public class ProductEjb {
      * @param productToPublish A product which needs to have its information either created or updated in SAP
      * @throws SAPIntegrationException
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void publishProductToSAP(Product productToPublish) throws SAPIntegrationException {
         publishProductsToSAP(Collections.singleton(productToPublish));
     }
@@ -305,19 +316,28 @@ public class ProductEjb {
      *                          updated in SAP
      * @throws SAPIntegrationException
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void publishProductsToSAP(Collection<Product> productsToPublish) throws SAPIntegrationException {
         Set<String> errorMessages = new HashSet<>();
+        SAPAccessControl control = accessController.getCurrentControlDefinitions();
         for (Product productToPublish : productsToPublish) {
-            try {
-                if (productToPublish.isSavedInSAP()) {
-                    sapService.changeProductInSAP(productToPublish);
-                } else {
-                    sapService.createProductInSAP(productToPublish);
-                }
-                productToPublish.setSavedInSAP(true);
+            if(!CollectionUtils.containsAll(control.getDisabledFeatures(),
+                                            Collections.singleton(productToPublish.getPrimaryPriceItem().getName()))
+                    && control.isEnabled()) {
+                try {
+                    if (productToPublish.isSavedInSAP()) {
+                        sapService.changeProductInSAP(productToPublish);
+                    } else {
+                        sapService.createProductInSAP(productToPublish);
+                    }
+                    productToPublish.setSavedInSAP(true);
 
-            } catch (SAPIntegrationException e) {
-                errorMessages.add(e.getMessage());
+                } catch (SAPIntegrationException e) {
+                    errorMessages.add(e.getMessage());
+                }
+            } else {
+                errorMessages.add(productToPublish.getName() +
+                                  " has a price item that makes it ineligible to be reflected in SAP.");
             }
         }
         if (CollectionUtils.isNotEmpty(errorMessages)) {

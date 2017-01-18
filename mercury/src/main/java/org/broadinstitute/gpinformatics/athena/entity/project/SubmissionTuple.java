@@ -78,22 +78,6 @@ public class SubmissionTuple implements Serializable {
     }
 
     /**
-     * JSON Representation of this SubmissionTuple.
-     *
-     * @return JSON Representation of this SubmissionTuple.
-     */
-    public String jsonString() {
-        ObjectMapper objectMapper = new ObjectMapper();
-        String stringValue = null;
-        try {
-            stringValue = objectMapper.writeValueAsString(this);
-        } catch (IOException e) {
-            log.info("SubmissionTracker could not be converted to JSON String.", e);
-        }
-        return stringValue;
-    }
-
-    /**
      * @return SubmissionTuple object from given jsonString
      */
     public static SubmissionTuple fromJson(String jsonString) {
@@ -109,8 +93,14 @@ public class SubmissionTuple implements Serializable {
 
     @Override
     public String toString() {
-        return String.format("{project = %s; sampleName = %s; version = %s; fileType = %s}",
-                project, sampleName, version, fileType);
+        ObjectMapper objectMapper = new ObjectMapper();
+        String stringValue = null;
+        try {
+            stringValue = objectMapper.writeValueAsString(this);
+        } catch (IOException e) {
+            log.info("SubmissionTracker could not be converted to JSON String.", e);
+        }
+        return stringValue;
     }
 
     @Override

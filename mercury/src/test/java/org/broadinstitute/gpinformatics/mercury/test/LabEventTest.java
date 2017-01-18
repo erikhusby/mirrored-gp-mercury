@@ -1872,6 +1872,85 @@ public class LabEventTest extends BaseEventTest {
         verifyEventSequence(labEventNames, expectedEventNames);
     }
 
+    public void testCellFreeHyperPrep() {
+//        Controller.startCPURecording(true);
+        expectedRouting = SystemRouter.System.MERCURY;
+
+        ProductOrder productOrder = ProductOrderTestFactory.buildCellFreeHyperPrepProductOrder(NUM_POSITIONS_IN_RACK);
+        productOrder.getResearchProject().setJiraTicketKey("RP-123");
+
+        String[] expectedEventNames = {
+                "SamplesDaughterPlateCreation",
+                "SamplesNormalizationTransfer",
+                "PicoPlatingPostNorm",
+                "ShearingTransfer",
+                "PostShearingTransferCleanup",
+                "ShearingQC",
+                "AdapterLigationCleanup",
+                "CFDnaPondRegistration",
+                "PoolingTransfer",
+                "EcoTransfer",
+                "NormalizationTransfer",
+                "DenatureTransfer",
+                "StripTubeBTransfer",
+                "FlowcellTransfer",
+        };
+        testGenomeWorkflow(productOrder, LibraryConstructionJaxbBuilder.PondType.CELL_FREE, expectedEventNames,
+                Workflow.CELL_FREE_HYPER_PREP);
+    }
+
+    public void testPcrPlusHyperPrep() {
+        expectedRouting = SystemRouter.System.MERCURY;
+
+        ProductOrder productOrder = ProductOrderTestFactory.buildPcrPlusHyperPrepProductOrder(NUM_POSITIONS_IN_RACK);
+        productOrder.getResearchProject().setJiraTicketKey("RP-123");
+        String[] expectedEventNames = {
+                "SamplesDaughterPlateCreation",
+                "SamplesNormalizationTransfer",
+                "PicoPlatingPostNorm",
+                "ShearingTransfer",
+                "PostShearingTransferCleanup",
+                "ShearingQC",
+                "AdapterLigationCleanup",
+                "PCRPlusPondRegistration",
+                "PoolingTransfer",
+                "EcoTransfer",
+                "NormalizationTransfer",
+                "DenatureTransfer",
+                "StripTubeBTransfer",
+                "FlowcellTransfer",
+        };
+        testGenomeWorkflow(productOrder, LibraryConstructionJaxbBuilder.PondType.PCR_PLUS_HYPER_PREP, expectedEventNames,
+                Workflow.PCR_PLUS_HYPER_PREP);
+    }
+
+    public void testPcrFreeHyperPrep() {
+//        Controller.startCPURecording(true);
+        expectedRouting = SystemRouter.System.MERCURY;
+
+        ProductOrder productOrder = ProductOrderTestFactory.buildPcrFreeHyperPrepProductOrder(NUM_POSITIONS_IN_RACK);
+        productOrder.getResearchProject().setJiraTicketKey("RP-123");
+
+        String[] expectedEventNames = {
+                "SamplesDaughterPlateCreation",
+                "SamplesNormalizationTransfer",
+                "PicoPlatingPostNorm",
+                "ShearingTransfer",
+                "PostShearingTransferCleanup",
+                "ShearingQC",
+                "AdapterLigationCleanup",
+                "PCRFreePondRegistration",
+                "PoolingTransfer",
+                "EcoTransfer",
+                "NormalizationTransfer",
+                "DenatureTransfer",
+                "StripTubeBTransfer",
+                "FlowcellTransfer",
+        };
+        testGenomeWorkflow(productOrder, LibraryConstructionJaxbBuilder.PondType.PCR_FREE_HYPER_PREP, expectedEventNames,
+                Workflow.PCR_FREE_HYPER_PREP);
+    }
+
     public void testPcrFree() {
 //        Controller.startCPURecording(true);
         expectedRouting = SystemRouter.System.MERCURY;
@@ -1879,59 +1958,6 @@ public class LabEventTest extends BaseEventTest {
         ProductOrder productOrder = ProductOrderTestFactory.buildPcrFreeProductOrder(NUM_POSITIONS_IN_RACK);
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
 
-        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
-
-        LabBatch workflowBatch = new LabBatch("whole Genome Batch",
-                new HashSet<LabVessel>(mapBarcodeToTube.values()),
-                LabBatch.LabBatchType.WORKFLOW);
-        workflowBatch.setWorkflow(Workflow.PCR_FREE);
-
-        String lcsetSuffix = "1";
-        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, lcsetSuffix);
-
-        TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube, workflowBatch);
-        Map<String, BarcodedTube> mapBarcodeToDaughterTube = new HashMap<>();
-        for (BarcodedTube barcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {
-            mapBarcodeToDaughterTube.put(barcodedTube.getLabel(), barcodedTube);
-        }
-
-        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToDaughterTube,
-                "P", lcsetSuffix, true);
-        ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
-                runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
-                        picoPlatingEntityBuilder.getNormTubeFormation(),
-                        picoPlatingEntityBuilder.getNormalizationBarcode(), lcsetSuffix);
-        LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = runLibraryConstructionProcess(
-                exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
-                exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(),
-                exomeExpressShearingEntityBuilder.getShearingPlate(),
-                lcsetSuffix,
-                NUM_POSITIONS_IN_RACK,
-                LibraryConstructionJaxbBuilder.PondType.PCR_FREE);
-
-        QtpEntityBuilder qtpEntityBuilder = runQtpProcess(libraryConstructionEntityBuilder.getPondRegRack(),
-                libraryConstructionEntityBuilder.getPondRegTubeBarcodes(),
-                libraryConstructionEntityBuilder.getMapBarcodeToPondRegTubes(), "1");
-
-        LabVessel denatureSource =
-                qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
-        LabBatch fctBatch = new LabBatch(FCT_TICKET, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
-        HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder = runHiSeq2500FlowcellProcess(
-                qtpEntityBuilder.getDenatureRack(), "1", FCT_TICKET,
-                ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "Squid Designation",
-                Workflow.PCR_FREE);
-
-        IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
-        Set<SampleInstanceV2> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPositionV2(
-                VesselPosition.LANE1);
-        Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 1,
-                "Wrong number of reagents");
-
-        Map.Entry<String, BarcodedTube> stringBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
-        ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
-        stringBarcodedTubeEntry.getValue().evaluateCriteria(transferTraverserCriteria,
-                TransferTraverserCriteria.TraversalDirection.Descendants);
-        List<String> labEventNames = transferTraverserCriteria.getAllEventNamesPerHop();
         String[] expectedEventNames = {
                 "SamplesDaughterPlateCreation",
                 "SamplesNormalizationTransfer",
@@ -1949,8 +1975,8 @@ public class LabEventTest extends BaseEventTest {
                 "StripTubeBTransfer",
                 "FlowcellTransfer",
         };
-        verifyEventSequence(labEventNames, expectedEventNames);
-
+        testGenomeWorkflow(productOrder, LibraryConstructionJaxbBuilder.PondType.PCR_FREE, expectedEventNames,
+                Workflow.PCR_FREE);
 //        Controller.stopCPURecording();
     }
 
@@ -1961,61 +1987,6 @@ public class LabEventTest extends BaseEventTest {
         ProductOrder productOrder = ProductOrderTestFactory.buildPcrPlusProductOrder(NUM_POSITIONS_IN_RACK);
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
 
-        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
-
-        LabBatch workflowBatch = new LabBatch("whole Genome Batch",
-                new HashSet<LabVessel>(mapBarcodeToTube.values()),
-                LabBatch.LabBatchType.WORKFLOW);
-        workflowBatch.setWorkflow(Workflow.PCR_PLUS);
-
-        String lcsetSuffix = "1";
-        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, lcsetSuffix);
-
-        TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube, workflowBatch);
-        Map<String, BarcodedTube> mapBarcodeToDaughterTube = new HashMap<>();
-        for (BarcodedTube barcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {
-            mapBarcodeToDaughterTube.put(barcodedTube.getLabel(), barcodedTube);
-        }
-
-        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToDaughterTube,
-                "P", lcsetSuffix, true);
-        ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
-                runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
-                        picoPlatingEntityBuilder.getNormTubeFormation(),
-                        picoPlatingEntityBuilder.getNormalizationBarcode(), lcsetSuffix);
-        LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = runLibraryConstructionProcess(
-                exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
-                exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(),
-                exomeExpressShearingEntityBuilder.getShearingPlate(),
-                lcsetSuffix,
-                NUM_POSITIONS_IN_RACK,
-                LibraryConstructionJaxbBuilder.PondType.PCR_PLUS);
-
-        QtpEntityBuilder qtpEntityBuilder = runQtpProcess(libraryConstructionEntityBuilder.getPondNormRack(),
-                libraryConstructionEntityBuilder.getPondNormTubeBarcodes(),
-                libraryConstructionEntityBuilder.getMapBarcodeToPondNormTubes(), "1");
-
-        LabVessel denatureSource =
-                qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
-        LabBatch fctBatch = new LabBatch(FCT_TICKET, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
-        HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder = runHiSeq2500FlowcellProcess(
-                qtpEntityBuilder.getDenatureRack(), "1", FCT_TICKET,
-                ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "Squid Designation",
-                Workflow.PCR_PLUS);
-
-        IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
-        Set<SampleInstanceV2> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPositionV2(
-                VesselPosition.LANE1);
-        Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 1,
-                "Wrong number of reagents");
-
-        Map.Entry<String, BarcodedTube> stringBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
-        ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
-        BarcodedTube barcodedTube = stringBarcodedTubeEntry.getValue();
-        barcodedTube.evaluateCriteria(transferTraverserCriteria,
-                TransferTraverserCriteria.TraversalDirection.Descendants);
-        runTransferVisualizer(barcodedTube);
-        List<String> labEventNames = transferTraverserCriteria.getAllEventNamesPerHop();
         String[] expectedEventNames = {
                 "SamplesDaughterPlateCreation",
                 "SamplesNormalizationTransfer",
@@ -2034,9 +2005,69 @@ public class LabEventTest extends BaseEventTest {
                 "StripTubeBTransfer",
                 "FlowcellTransfer",
         };
-        verifyEventSequence(labEventNames, expectedEventNames);
-
+        testGenomeWorkflow(productOrder, LibraryConstructionJaxbBuilder.PondType.PCR_PLUS, expectedEventNames,
+                Workflow.PCR_PLUS);
 //        Controller.stopCPURecording();
+    }
+
+    private void testGenomeWorkflow(ProductOrder productOrder, LibraryConstructionJaxbBuilder.PondType pondType,
+                                    String[] expectedEventNames, Workflow workflow) {
+        expectedRouting = SystemRouter.System.MERCURY;
+
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+
+        LabBatch workflowBatch = new LabBatch("whole Genome Batch",
+                new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setWorkflow(workflow);
+
+        String lcsetSuffix = "1";
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, lcsetSuffix);
+
+        TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube, workflowBatch);
+        Map<String, BarcodedTube> mapBarcodeToDaughterTube = new HashMap<>();
+        for (BarcodedTube barcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {
+            mapBarcodeToDaughterTube.put(barcodedTube.getLabel(), barcodedTube);
+        }
+
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToDaughterTube,
+                "P", lcsetSuffix, true);
+        ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
+                runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
+                        picoPlatingEntityBuilder.getNormTubeFormation(),
+                        picoPlatingEntityBuilder.getNormalizationBarcode(), lcsetSuffix);
+        LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = runLibraryConstructionProcess(
+                exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
+                exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(),
+                exomeExpressShearingEntityBuilder.getShearingPlate(),
+                lcsetSuffix,
+                NUM_POSITIONS_IN_RACK,
+                pondType);
+
+        QtpEntityBuilder qtpEntityBuilder = runQtpProcess(libraryConstructionEntityBuilder.getPondRegRack(),
+                libraryConstructionEntityBuilder.getPondRegTubeBarcodes(),
+                libraryConstructionEntityBuilder.getMapBarcodeToPondRegTubes(), "1");
+
+        LabVessel denatureSource =
+                qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
+        LabBatch fctBatch = new LabBatch(FCT_TICKET, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
+        HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder = runHiSeq2500FlowcellProcess(
+                qtpEntityBuilder.getDenatureRack(), "1", FCT_TICKET,
+                ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "Squid Designation",
+                workflow);
+
+        IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
+        Set<SampleInstanceV2> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPositionV2(
+                VesselPosition.LANE1);
+        Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 1,
+                "Wrong number of reagents");
+
+        Map.Entry<String, BarcodedTube> stringBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
+        ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
+        stringBarcodedTubeEntry.getValue().evaluateCriteria(transferTraverserCriteria,
+                TransferTraverserCriteria.TraversalDirection.Descendants);
+        List<String> labEventNames = transferTraverserCriteria.getAllEventNamesPerHop();
+        verifyEventSequence(labEventNames, expectedEventNames);
     }
 
     private void verifyEventSequence(List<String> labEventNames, String[] expectedEventNames) {

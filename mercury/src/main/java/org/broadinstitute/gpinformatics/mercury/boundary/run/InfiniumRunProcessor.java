@@ -23,7 +23,6 @@ import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -70,7 +69,7 @@ public class InfiniumRunProcessor {
                         isChipCompleted = false;
                     }
                     if (scannerName == null) {
-                        scannerName = findScannerName(chipBarcode, vesselPosition.name());
+                        scannerName = findScannerName(chipBarcode, vesselPosition.name(), infiniumStarterConfig);
                     }
                 }
             }
@@ -106,7 +105,8 @@ public class InfiniumRunProcessor {
         return new File(rootDir, chipBarcode);
     }
 
-    private String findScannerName(String chipBarcode, String vesselPosition) {
+    public static String findScannerName(String chipBarcode, String vesselPosition,
+            InfiniumStarterConfig infiniumStarterConfig) {
         try {
             if (infiniumStarterConfig != null) {
                 String redXml = String.format("%s_%s_1_Red.xml", chipBarcode, vesselPosition);

@@ -19,6 +19,8 @@ import org.broadinstitute.gpinformatics.athena.entity.infrastructure.PublicMessa
 import javax.annotation.Nonnull;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.inject.Inject;
 
 /**
@@ -27,6 +29,7 @@ import javax.inject.Inject;
  */
 @Singleton
 @Startup
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class PublicMessageEjb {
     private static final Log log = LogFactory.getLog(PublicMessageEjb.class);
 
@@ -51,6 +54,7 @@ public class PublicMessageEjb {
         return message;
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void setPublicMessage(@Nonnull PublicMessage publicMessage) {
         clearPublicMessage();
         message = publicMessage;
@@ -62,10 +66,12 @@ public class PublicMessageEjb {
 
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void setPublicMessage(@Nonnull String publicMessageText) {
         setPublicMessage(new PublicMessage(publicMessageText));
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void clearPublicMessage() {
         message = null;
         try {

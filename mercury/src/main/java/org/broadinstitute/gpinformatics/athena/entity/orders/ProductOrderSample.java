@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.orders.BillingLedger
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProject;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
@@ -158,9 +159,9 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         if(getProductOrder().getProduct().getPrimaryPriceItem().equals(priceItem)) {
             result = getProductOrder().getProduct();
         } else {
-            for(Product addOn:getProductOrder().getProduct().getAddOns()) {
-                if(addOn.getPrimaryPriceItem().equals(priceItem)) {
-                    result = addOn;
+            for(ProductOrderAddOn addOn:getProductOrder().getAddOns()) {
+                if(addOn.getAddOn().getPrimaryPriceItem().equals(priceItem)) {
+                    result = addOn.getAddOn();
                     break;
                 }
             }
@@ -196,6 +197,17 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
     @Transient
     private MercurySample.MetadataSource metadataSource;
+
+    @Transient
+    private List<OrspProject> orspProjects = new ArrayList<>();
+
+    public List<OrspProject> getOrspProjects() {
+        return orspProjects;
+    }
+
+    public void addOrspProject(OrspProject orspProject) {
+        orspProjects.add(orspProject);
+    }
 
     /**
      * Convert a list of ProductOrderSamples into a list of sample names.
