@@ -176,15 +176,13 @@
                      the "T" from the sDom string.
                 'sDom': "<'row-fluid'<'span6'f><'span4'<'#dtButtonHolder'>><'span2'T>r>t<'row-fluid'<'span6'i><'span6'p>>",
                 --%>
-                'sDom': "<'row-fluid'<'span6'f><'span4'<'#dtButtonHolder'>><'span2'><'.processing'r>>t<'row-fluid'<'span4'i><'span4'<'.autowidth' l>><'span4'p>>",
+                'sDom': "<'row-fluid'<'span6'f><'span4'<'#dtButtonHolder'>><'span2'i><'.processing'r>>t<'row-fluid'<'span6'<'.autowidth' l>><'span6'p>>",
                 /*
                  * It's not useful to save filter state for this UI. Also, hSpinner widgets will not be initialized if
                  * they are filtered out of the DOM when the page loads
                  */
                 'bStateSave': false,
                 'aaSorting': [[2, 'asc']],
-                "bDeferRender": true,
-                "bProcessing": true,
                 'aoColumns': [
                     {'bSortable': false},                                                   // 0: checkbox
                     {'bVisible': false},                                                    // 1: search text
