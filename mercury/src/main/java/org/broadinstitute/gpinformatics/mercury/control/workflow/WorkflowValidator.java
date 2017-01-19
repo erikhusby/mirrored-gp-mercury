@@ -35,6 +35,7 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -115,11 +116,6 @@ public class WorkflowValidator {
         }
     }
 
-    private void validateWorkflow(String barcode, Set<StationEventType> stationEventTypes) {
-        LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
-        validateWorkflow(labVessel, stationEventTypes);
-    }
-
     private void validateWorkflow(LabVessel labVessel, Set<StationEventType> eventTypes) {
         Set<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
         Set<String> eventNames = new LinkedHashSet<>();
@@ -130,11 +126,13 @@ public class WorkflowValidator {
                 labVessel, sampleInstances, eventNames);
 
         if (!validationErrors.isEmpty()) {
-            String eventsString = StringUtils.join(eventNames, ",");
-            String operator = eventTypes.iterator().next().getOperator();
-            String body = renderTemplate(labVessel.getLabel(), eventsString, operator, validationErrors);
+            StationEventType eventType = eventTypes.iterator().next();
+            String operator = eventType.getOperator();
+            Date startTime = eventType.getStart();
+            String station = eventType.getStation();
+            String body = renderTemplate(labVessel.getLabel(), eventNames, startTime, operator, station,  validationErrors);
             emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), Collections.<String>emptyList(),
-                    "Workflow validation failure for " + eventsString, body, false);
+                    "Workflow validation failure for " + eventTypes, body, false);
         }
     }
 
@@ -283,7 +281,12 @@ public class WorkflowValidator {
         List<WorkflowValidationError> validationErrors = validateWorkflow(labVessels, stationEventType.getEventType());
 
         if (!validationErrors.isEmpty()) {
-            String body = renderTemplate(labVessels, stationEventType, validationErrors);
+            String operator = stationEventType.getOperator();
+            Date startTime = stationEventType.getStart();
+            String station = stationEventType.getStation();
+            Set<String> eventTypeName = Collections.singleton(stationEventType.getEventType());
+            String body = renderTemplate(labVessels.iterator().next().getLabel(), eventTypeName, startTime, operator,
+                    station, validationErrors);
             emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), Collections.<String>emptyList(),
                     "Workflow validation failure for " + stationEventType.getEventType(), body, false);
         }
@@ -292,33 +295,18 @@ public class WorkflowValidator {
     /**
      * Uses a template to render validation errors into an HTML email body.
      */
-    public String renderTemplate(Collection<LabVessel> labVessels, StationEventType stationEventType,
-            List<WorkflowValidationError> validationErrors) {
+    public String renderTemplate(String vesselLabel, Set<String> eventNames, Date startTime, String operator,
+                                 String station, List<WorkflowValidationError> validationErrors) {
         Map<String, Object> rootMap = new HashMap<>();
-        String linkToPlastic = appConfig.getUrl() + VesselSearchActionBean.ACTIONBEAN_URL_BINDING + "?" +
-                               VesselSearchActionBean.VESSEL_SEARCH + "=&searchKey=" + labVessels.iterator().next()
-                                                                                                 .getLabel();
-        rootMap.put("linkToPlastic", linkToPlastic);
-        rootMap.put("stationEvent", stationEventType);
-        rootMap.put("bspUser", bspUserList.getByUsername(stationEventType.getOperator()));
-        rootMap.put("validationErrors", validationErrors);
-        StringWriter stringWriter = new StringWriter();
-        templateEngine.processTemplate("WorkflowValidation.ftl", rootMap, stringWriter);
-        return stringWriter.toString();
-    }
-
-    /**
-     * Uses a template to render validation errors into an HTML email body.
-     */
-    public String renderTemplate(String vesselLabel, String eventTypes, String operator,
-                                 List<WorkflowValidationError> validationErrors) {
-        Map<String, Object> rootMap = new HashMap<>();
+        String stationEventNames = StringUtils.join(eventNames, ",");
         String linkToPlastic = appConfig.getUrl() + VesselSearchActionBean.ACTIONBEAN_URL_BINDING + "?" +
                                VesselSearchActionBean.VESSEL_SEARCH + "=&searchKey=" + vesselLabel;
         rootMap.put("linkToPlastic", linkToPlastic);
-        rootMap.put("stationEvent", eventTypes);
+        rootMap.put("stationEventNames", stationEventNames);
         rootMap.put("bspUser", bspUserList.getByUsername(operator));
         rootMap.put("validationErrors", validationErrors);
+        rootMap.put("start", startTime);
+        rootMap.put("station", station);
         StringWriter stringWriter = new StringWriter();
         templateEngine.processTemplate("WorkflowValidation.ftl", rootMap, stringWriter);
         return stringWriter.toString();
