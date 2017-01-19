@@ -1,8 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
+import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -70,7 +73,7 @@ public class LCSetJiraFieldFactoryTest {
         MockitoAnnotations.initMocks(this);
         testOrderKey = "PDO-999";
         testProductOrder =
-                ProductOrderTestFactory.createDummyProductOrder(7,testOrderKey);
+                ProductOrderTestFactory.createDummyProductOrder(5,testOrderKey);
         singleSampleOrder = ProductOrderTestFactory.createDummyProductOrder(singleSampleTestOrder);
 
         Mockito.when(productOrderDao.findByBusinessKey(Mockito.anyString())).thenAnswer(new Answer<Object>() {
@@ -93,24 +96,29 @@ public class LCSetJiraFieldFactoryTest {
         workflow = Workflow.AGILENT_EXOME_EXPRESS;
         mapBarcodeToTube = new LinkedHashMap<>();
 
-        List<String> vesselSampleList = new ArrayList<>(6);
+        List<ProductOrderSample> vesselSampleList = new ArrayList<>();
 
-        Collections.addAll(vesselSampleList, "SM-423", "SM-243", "SM-765", "SM-143", "SM-9243", "SM-118");
+        final List<ProductOrderSample> testProductOrderSamples = testProductOrder.getSamples();
+        CollectionUtils.addAll(vesselSampleList, testProductOrderSamples);
+        CollectionUtils.addAll(vesselSampleList, singleSampleOrder.getSamples());
         Bucket bucket = new Bucket("Pico/Plating Bucket");
         // starting rack
         for (int sampleIndex = 1; sampleIndex <= vesselSampleList.size(); sampleIndex++) {
             ProductOrder productOrder = sampleIndex == 1 ? singleSampleOrder : testProductOrder;
-            List<ProductOrderSample> samples = productOrder.getSamples();
             String barcode = "R" + sampleIndex + sampleIndex + sampleIndex + sampleIndex + sampleIndex + sampleIndex;
-            String bspStock = vesselSampleList.get(sampleIndex - 1);
+            String bspStock = vesselSampleList.get(sampleIndex - 1).getName();
             BarcodedTube bspAliquot = new BarcodedTube(barcode);
             MercurySample mercurySample = new MercurySample(bspStock, MercurySample.MetadataSource.BSP);
-            mercurySample.addProductOrderSample(samples.get(0));
+            mercurySample.addProductOrderSample(vesselSampleList.get(sampleIndex - 1));
             bspAliquot.addSample(mercurySample);
             bucket.addEntry(productOrder, bspAliquot, BucketEntry.BucketEntryType.PDO_ENTRY,
                     Workflow.AGILENT_EXOME_EXPRESS);
             mapBarcodeToTube.put(barcode, bspAliquot);
         }
+
+        testProductOrderSamples.get(testProductOrderSamples.size()-1)
+                .setManualOnRisk(new RiskCriterion(RiskCriterion.RiskCriteriaType.FFPE, Operator.IS, "true"),
+                        "Test risk on the final sample to ensure proper display");
 
         jiraFieldDefs = JiraServiceProducer.stubInstance().getCustomFields();
 
@@ -169,7 +177,7 @@ public class LCSetJiraFieldFactoryTest {
                 Assert.assertEquals(((CustomField.SelectOption) field.getValue()).getId(), "-1");
             }
             if (fieldDefinitionName.equals(LabBatch.TicketFields.NUMBER_OF_SAMPLES.getName())) {
-                Assert.assertEquals(numSamples, field.getValue());
+                Assert.assertEquals(field.getValue(), numSamples);
             }
             if (fieldDefinitionName.equals(LabBatch.TicketFields.PROGRESS_STATUS.getName())) {
                 Assert.assertEquals(LCSetJiraFieldFactory.PROGRESS_STATUS,
@@ -183,7 +191,16 @@ public class LCSetJiraFieldFactoryTest {
                 Assert.assertEquals(
                         workflowDef.getName() + ":" + workflowDef.getEffectiveVersion(testBatch.getCreatedOn())
                                                                  .getVersion(), field.getValue());
+            }
+            if (fieldDefinitionName.equals(LabBatch.TicketFields.SAMPLES_ON_RISK.getName())) {
+                Assert.assertEquals(field.getValue(),
+                        testProductOrder.getSamples().get(testProductOrder.getSamples().size()-1).getName());
+            }
+            if (fieldDefinitionName.equals(LabBatch.TicketFields.RISK_CATEGORIZED_SAMPLES.getName())) {
 
+                Assert.assertEquals(field.getValue(),
+                        "*"+testProductOrder.getSamples().get(testProductOrder.getSamples().size()-1).getRiskItems().iterator().next().getRiskCriterion().getCalculationString()+"*\n"
+                        +testProductOrder.getSamples().get(testProductOrder.getSamples().size()-1).getName()+"\n\n");
             }
         }
     }
