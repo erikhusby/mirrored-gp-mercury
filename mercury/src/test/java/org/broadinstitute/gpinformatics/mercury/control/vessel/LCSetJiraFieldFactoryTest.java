@@ -67,6 +67,7 @@ public class LCSetJiraFieldFactoryTest {
     private ProductOrder singleSampleOrder;
     private String testOrderKey;
     private String singleSampleTestOrder = "PDO-7";
+    public Bucket bucket;
 
     @BeforeMethod
     public void startUp() throws IOException {
@@ -99,22 +100,29 @@ public class LCSetJiraFieldFactoryTest {
         List<ProductOrderSample> vesselSampleList = new ArrayList<>();
 
         final List<ProductOrderSample> testProductOrderSamples = testProductOrder.getSamples();
-        CollectionUtils.addAll(vesselSampleList, testProductOrderSamples);
         CollectionUtils.addAll(vesselSampleList, singleSampleOrder.getSamples());
-        Bucket bucket = new Bucket("Pico/Plating Bucket");
+        CollectionUtils.addAll(vesselSampleList, testProductOrderSamples);
+        bucket = new Bucket("Pico/Plating Bucket");
         // starting rack
         for (int sampleIndex = 1; sampleIndex <= vesselSampleList.size(); sampleIndex++) {
-            ProductOrder productOrder = sampleIndex == 1 ? singleSampleOrder : testProductOrder;
+//            ProductOrder productOrder = sampleIndex == 1 ? singleSampleOrder : testProductOrder;
             String barcode = "R" + sampleIndex + sampleIndex + sampleIndex + sampleIndex + sampleIndex + sampleIndex;
-            String bspStock = vesselSampleList.get(sampleIndex - 1).getName();
+            ProductOrderSample currentProductOrderSample = vesselSampleList.get(sampleIndex - 1);
+
+            String bspStock = currentProductOrderSample.getName();
+
             BarcodedTube bspAliquot = new BarcodedTube(barcode);
             MercurySample mercurySample = new MercurySample(bspStock, MercurySample.MetadataSource.BSP);
-            mercurySample.addProductOrderSample(vesselSampleList.get(sampleIndex - 1));
-            bspAliquot.addSample(mercurySample);
-            bucket.addEntry(productOrder, bspAliquot, BucketEntry.BucketEntryType.PDO_ENTRY,
-                    Workflow.AGILENT_EXOME_EXPRESS);
+            mercurySample.addProductOrderSample(currentProductOrderSample);
+            mercurySample.addLabVessel(bspAliquot);
+            bucket.addEntry(currentProductOrderSample.getProductOrder(), bspAliquot,
+                    BucketEntry.BucketEntryType.PDO_ENTRY, Workflow.AGILENT_EXOME_EXPRESS);
             mapBarcodeToTube.put(barcode, bspAliquot);
         }
+
+        testProductOrderSamples.get(testProductOrderSamples.size()-2)
+                .setManualOnRisk(new RiskCriterion(RiskCriterion.RiskCriteriaType.CONCENTRATION, Operator.GREATER_THAN, "20"),
+                        "Test risk on the second to last sample to ensure proper display");
 
         testProductOrderSamples.get(testProductOrderSamples.size()-1)
                 .setManualOnRisk(new RiskCriterion(RiskCriterion.RiskCriteriaType.FFPE, Operator.IS, "true"),
@@ -133,13 +141,17 @@ public class LCSetJiraFieldFactoryTest {
         LabBatch testBatch = new LabBatch(LabBatch.generateBatchName(workflow, pdoNames),
                                           new HashSet<LabVessel>(mapBarcodeToTube.values()),
                                           LabBatch.LabBatchType.WORKFLOW);
+        for (BucketEntry bucketEntry : bucket.getBucketEntries()) {
+            testBatch.addBucketEntry(bucketEntry);
+        }
+
         testBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
         testBatch.setBatchDescription("Batch Test Description");
         WorkflowConfig workflowConfig = new WorkflowLoader().load();
 
         Set<LabVessel> reworks = new HashSet<>();
-        reworks.add(new BarcodedTube("Rework1"));
-        reworks.add(new BarcodedTube("Rework2"));
+        reworks.add(testProductOrder.getSamples().get(testProductOrder.getSamples().size()-3).getMercurySample().getLabVessel().iterator().next());
+        reworks.add(testProductOrder.getSamples().get(testProductOrder.getSamples().size()-4).getMercurySample().getLabVessel().iterator().next());
         testBatch.addReworks(reworks);
 
         int numSamples = testBatch.getStartingBatchLabVessels().size();
@@ -147,12 +159,12 @@ public class LCSetJiraFieldFactoryTest {
         AbstractBatchJiraFieldFactory testBuilder = AbstractBatchJiraFieldFactory.getInstance(
                 CreateFields.ProjectType.LCSET_PROJECT, testBatch, productOrderDao, workflowConfig);
 
-        Assert.assertEquals("1 sample with material types [] from MyResearchProject PDO-7\n5 samples with material types [] from MyResearchProject PDO-999\n",
-                            testBuilder.generateDescription());
+        Assert.assertEquals(testBuilder.generateDescription(),
+                "1 sample with material types [] from MyResearchProject PDO-7\n5 samples with material types [] from MyResearchProject PDO-999\n");
 
         Collection<CustomField> generatedFields = testBuilder.getCustomFields(jiraFieldDefs);
 
-        Assert.assertEquals(7, generatedFields.size());
+        Assert.assertEquals(generatedFields.size(), 9);
 
         for (CustomField field : generatedFields) {
 
@@ -194,13 +206,18 @@ public class LCSetJiraFieldFactoryTest {
             }
             if (fieldDefinitionName.equals(LabBatch.TicketFields.SAMPLES_ON_RISK.getName())) {
                 Assert.assertEquals(field.getValue(),
-                        testProductOrder.getSamples().get(testProductOrder.getSamples().size()-1).getName());
+                        testProductOrder.getSamples().get(testProductOrder.getSamples().size()-1).getName()
+                        + "\n"
+                        + testProductOrder.getSamples().get(testProductOrder.getSamples().size()-2).getName()
+                );
             }
             if (fieldDefinitionName.equals(LabBatch.TicketFields.RISK_CATEGORIZED_SAMPLES.getName())) {
 
                 Assert.assertEquals(field.getValue(),
-                        "*"+testProductOrder.getSamples().get(testProductOrder.getSamples().size()-1).getRiskItems().iterator().next().getRiskCriterion().getCalculationString()+"*\n"
-                        +testProductOrder.getSamples().get(testProductOrder.getSamples().size()-1).getName()+"\n\n");
+                        "*"+testProductOrder.getSamples().get(testProductOrder.getSamples().size()-2).getRiskItems().iterator().next().getRiskCriterion().getCalculationString()+"*\n"
+                        +testProductOrder.getSamples().get(testProductOrder.getSamples().size()-2).getName()+"\n"
+                        +"*"+testProductOrder.getSamples().get(testProductOrder.getSamples().size()-1).getRiskItems().iterator().next().getRiskCriterion().getCalculationString()+"*\n"
+                        +testProductOrder.getSamples().get(testProductOrder.getSamples().size()-1).getName()+"\n");
             }
         }
     }

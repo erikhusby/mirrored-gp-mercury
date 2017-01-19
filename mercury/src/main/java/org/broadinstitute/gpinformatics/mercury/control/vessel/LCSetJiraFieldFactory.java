@@ -70,7 +70,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
             }
             for (LabVessel rework : batch.getReworks()) {
                 for (SampleInstanceV2 sampleInstance : rework.getSampleInstancesV2()) {
-                    String pdoKey = sampleInstance.getSingleProductOrderSample().getBusinessKey();
+                    String pdoKey = sampleInstance.getSingleProductOrderSample().getProductOrder().getBusinessKey();
                     if (!pdoToVesselMap.containsKey(pdoKey)) {
                         pdoToVesselMap.put(pdoKey, new HashSet<LabVessel>());
                     }
@@ -164,7 +164,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
             }
             riskSampleSet.addAll(riskSampleEntry.getValue());
             riskByCriteria.append("*").append(riskSampleEntry.getKey()).append("*").append("\n")
-                    .append(StringUtils.join(riskSampleEntry, "\n")).append("\n");
+                    .append(StringUtils.join(riskSampleEntry.getValue(), "\n")).append("\n");
 
         }
 
