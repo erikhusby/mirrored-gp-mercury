@@ -8,8 +8,6 @@ import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFa
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.ImmutableLabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
@@ -238,7 +236,6 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
                 context.setSearchTerm(parentTerm);
                 Collection<?> objects = ExpressionClass.xToY(
                         labVessel,
-                        ExpressionClass.LAB_VESSEL,
                         parentTerm.getDisplayExpression().getExpressionClass(),
                         context);
                 int rowIndex = 0;

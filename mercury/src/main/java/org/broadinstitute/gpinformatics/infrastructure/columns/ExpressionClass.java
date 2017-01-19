@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.columns;
 
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -38,11 +39,11 @@ public enum ExpressionClass {
     SAMPLE_DATA; // or BSP?  Mercury sampledata is searchable, BSP is not, so the search terms have to be system specific,
     // but perhaps the display expressions could be off SAMPLE_DATA
 
-    public static Collection<?> xToY(Object x, ExpressionClass xClass, ExpressionClass yClass, SearchContext context) {
-        if (xClass == LAB_VESSEL && yClass == SAMPLE_INSTANCE) {
+    public static <Y> Collection<Y> xToY(Object x, Class<Y> yClass, SearchContext context) {
+        if (OrmUtil.proxySafeIsInstance(x, LabVessel.class) && yClass.isAssignableFrom(SampleInstanceV2.class)) {
             LabVessel labVessel = (LabVessel) x;
-            return labVessel.getSampleInstancesV2();
-        } else if (xClass == LAB_VESSEL && yClass == SAMPLE_DATA) {
+            return (Collection<Y>) labVessel.getSampleInstancesV2();
+        } else if (OrmUtil.proxySafeIsInstance(x, LabVessel.class) && yClass.isAssignableFrom(SampleData.class)) {
             LabVessel labVessel = (LabVessel) x;
             List<MercurySample> mercurySamples = new ArrayList<>();
             for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
@@ -60,9 +61,9 @@ public enum ExpressionClass {
                     results.add(bspColumns.getSampleData(mercurySample.getSampleKey()));
                 }
             }
-            return results;
+            return (Collection<Y>) results;
         } else {
-            throw new RuntimeException("Unexpected combination " + xClass + " to " + yClass);
+            throw new RuntimeException("Unexpected combination " + x.getClass() + " to " + yClass);
         }
     }
 }
