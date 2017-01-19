@@ -63,15 +63,14 @@ public class LCSetJiraFieldFactoryTest {
     private ProductOrderDao productOrderDao;
     private ProductOrder singleSampleOrder;
     private String testOrderKey;
-    private String singleSampleTestOrder;
+    private String singleSampleTestOrder = "PDO-7";
 
     @BeforeMethod
     public void startUp() throws IOException {
         MockitoAnnotations.initMocks(this);
         testOrderKey = "PDO-999";
         testProductOrder =
-                ProductOrderTestFactory.createDummyProductOrder(testOrderKey);
-        singleSampleTestOrder = "PDO-7";
+                ProductOrderTestFactory.createDummyProductOrder(7,testOrderKey);
         singleSampleOrder = ProductOrderTestFactory.createDummyProductOrder(singleSampleTestOrder);
 
         Mockito.when(productOrderDao.findByBusinessKey(Mockito.anyString())).thenAnswer(new Answer<Object>() {

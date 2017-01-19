@@ -42,7 +42,7 @@ public abstract class AbstractBatchJiraFieldFactory {
     /**
      * Returns the unique list of sample names referenced by the given collection of vessels.
      */
-    private static Set<String> getUniqueSampleNames(Collection<LabVessel> labVessels) {
+    protected static Set<String> getUniqueSampleNames(Collection<LabVessel> labVessels) {
         Set<String> sampleNames = new HashSet<>();
         for (LabVessel labVessel : labVessels) {
             Collection<String> sampleNamesForVessel = labVessel.getSampleNames();

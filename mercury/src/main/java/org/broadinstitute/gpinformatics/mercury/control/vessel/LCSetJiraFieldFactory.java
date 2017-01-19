@@ -1,10 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
@@ -149,6 +152,32 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
             customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.PROTOCOL, "N/A"));
         }
 
+
+        Map<String, Collection<String>> riskSamplesByCriterion = getRiskSamplesByCriterion();
+        StringBuilder riskByCriteria = null;
+
+        Set<String> riskSampleSet = new HashSet<>();
+
+        for(Map.Entry<String, Collection<String>> riskSampleEntry:riskSamplesByCriterion.entrySet()) {
+            if(riskByCriteria == null) {
+                riskByCriteria = new StringBuilder();
+            }
+            riskSampleSet.addAll(riskSampleEntry.getValue());
+            riskByCriteria.append("*").append(riskSampleEntry.getKey()).append("*").append("\n")
+                    .append(StringUtils.join(riskSampleEntry, "\n")).append("\n");
+
+        }
+
+        if(CollectionUtils.isNotEmpty(riskSampleSet)) {
+            customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.SAMPLES_ON_RISK,
+                    StringUtils.join(riskSampleSet, "\n")));
+        }
+
+        if(riskByCriteria != null) {
+            customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.RISK_CATEGORIZED_SAMPLES,
+                    riskByCriteria.toString()));
+        }
+
         return customFields;
 
     }
@@ -200,5 +229,31 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
         }
 
         return summary.toString();
+    }
+
+    private Map<String, Collection<String>> getRiskSamplesByCriterion() {
+
+        Map<String, Collection<String>> riskResults = new HashMap<>();
+        Set<String> newSamples = new HashSet<>();
+        Set<String> reworkSamples = new HashSet<>();
+        newSamples.addAll(getUniqueSampleNames(batch.getNonReworkStartingLabVessels()));
+        reworkSamples.addAll(getUniqueSampleNames(batch.getReworks()));
+        for (BucketEntry bucketEntry : this.batch.getBucketEntries()) {
+            for (ProductOrderSample productOrderSample : bucketEntry.getProductOrder().getSamples()) {
+
+                if(newSamples.contains(productOrderSample.getName()) || reworkSamples.contains(productOrderSample.getName()) ) {
+                    if (productOrderSample.isOnRisk()) {
+                        for (RiskItem riskItem : productOrderSample.getRiskItems()) {
+                            if(riskResults.get(riskItem.getRiskCriterion().getCalculationString()) == null) {
+                                riskResults.put(riskItem.getRiskCriterion().getCalculationString(), new HashSet<String>());
+                            }
+                            riskResults.get(riskItem.getRiskCriterion().getCalculationString()).add(productOrderSample.getName());
+                        }
+                    }
+                }
+            }
+        }
+
+        return riskResults;
     }
 }
