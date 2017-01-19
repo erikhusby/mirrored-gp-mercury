@@ -712,8 +712,6 @@ public class SearchTerm implements Serializable, ColumnTabulation {
         if (getDisplayValueExpression() == null) {
             Collection<?> objects = ExpressionClass.xToY(
                     entity,
-                    // todo jmt generalize
-                    ExpressionClass.LAB_VESSEL,
                     getDisplayExpression().getExpressionClass(),
                     context);
             for (Object object : objects) {
