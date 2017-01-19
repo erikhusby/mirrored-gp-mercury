@@ -119,7 +119,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
         int sampleCount = batch.getStartingBatchLabVessels().size();
 
         customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.GSSR_IDS,
-                buildSamplesListString(batch, null)));
+                buildSamplesListString(batch)));
 
         customFields.add(new CustomField(
                 submissionFields.get(LabBatch.TicketFields.NUMBER_OF_SAMPLES.getName()), sampleCount));
@@ -176,6 +176,11 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
         if(riskByCriteria != null) {
             customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.RISK_CATEGORIZED_SAMPLES,
                     riskByCriteria.toString()));
+        }
+
+        if(CollectionUtils.isNotEmpty(batch.getReworks())) {
+            customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.REWORK_SAMPLES,
+                    StringUtils.join(getUniqueSampleNames(batch.getReworks()),"\n")));
         }
 
         return customFields;

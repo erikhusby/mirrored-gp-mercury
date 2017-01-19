@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -164,7 +165,7 @@ public class LCSetJiraFieldFactoryTest {
 
         Collection<CustomField> generatedFields = testBuilder.getCustomFields(jiraFieldDefs);
 
-        Assert.assertEquals(generatedFields.size(), 9);
+        Assert.assertEquals(generatedFields.size(), 10);
 
         for (CustomField field : generatedFields) {
 
@@ -219,12 +220,21 @@ public class LCSetJiraFieldFactoryTest {
                         +"*"+testProductOrder.getSamples().get(testProductOrder.getSamples().size()-1).getRiskItems().iterator().next().getRiskCriterion().getCalculationString()+"*\n"
                         +testProductOrder.getSamples().get(testProductOrder.getSamples().size()-1).getName()+"\n");
             }
+
+            if (fieldDefinitionName.equals(LabBatch.TicketFields.REWORK_SAMPLES.getName())) {
+                for (LabVessel rework : reworks) {
+                    for(SampleInstanceV2 sampleInstance : rework.getSampleInstancesV2()) {
+
+                        Assert.assertTrue(((String) field.getValue()).contains(sampleInstance.getSingleProductOrderSample().getName()));
+                    }
+                }
+            }
         }
     }
 
     @Test
     public void test_sample_field_text_with_reworks() {
-        String expectedText = "SM-1\n\nSM-2 (rework)";
+        String expectedText = "SM-1\nSM-2";
 
         Set<LabVessel> newTubes = new HashSet<>();
         Set<LabVessel> reworks = new HashSet<>();
@@ -239,7 +249,7 @@ public class LCSetJiraFieldFactoryTest {
 
         batch.addReworks(reworks);
 
-        String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch, null);
+        String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch);
 
         assertThat(actualText.trim(), equalTo(expectedText.trim()));
     }
@@ -255,14 +265,14 @@ public class LCSetJiraFieldFactoryTest {
 
         LabBatch batch = new LabBatch("test", newTubes, LabBatch.LabBatchType.WORKFLOW);
 
-        String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch, null);
+        String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch);
 
         assertThat(actualText.trim(), equalTo(sampleKey.trim()));
     }
 
     @Test
     public void test_sample_field_text_with_reworks_and_multiple_samples_per_tube() {
-        String expectedText = "SM-1\nSM-3\n\nSM-2 (rework)\nSM-4 (rework)";
+        String expectedText = "SM-1\nSM-3\nSM-2\nSM-4";
 
         Set<LabVessel> newTubes = new HashSet<>();
         Set<LabVessel> reworks = new HashSet<>();
@@ -293,7 +303,7 @@ public class LCSetJiraFieldFactoryTest {
 
         batch.addReworks(reworks);
 
-        String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch, null);
+        String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch);
 
         assertThat(actualText.trim(), equalTo(expectedText.trim()));
     }
@@ -318,7 +328,7 @@ public class LCSetJiraFieldFactoryTest {
 
         LabBatch batch = new LabBatch("test", newTubes, LabBatch.LabBatchType.WORKFLOW);
 
-        String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch, null);
+        String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch);
 
         assertThat(actualText.trim(), equalTo(expectedText.trim()));
     }

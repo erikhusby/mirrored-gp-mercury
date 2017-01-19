@@ -52,7 +52,8 @@ public class JiraCustomFieldsUtil {
                     LabBatch.TicketFields.BATCH_TYPE.getName(),
                     LabBatch.TicketFields.LANE_INFO.getName(),
                     LabBatch.TicketFields.SAMPLES_ON_RISK.getName(),
-                    LabBatch.TicketFields.RISK_CATEGORIZED_SAMPLES.getName()
+                    LabBatch.TicketFields.RISK_CATEGORIZED_SAMPLES.getName(),
+                    LabBatch.TicketFields.REWORK_SAMPLES.getName()
             };
 
     /**

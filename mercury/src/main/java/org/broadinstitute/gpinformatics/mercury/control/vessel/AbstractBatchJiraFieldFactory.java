@@ -5,11 +5,9 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
-import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
 import java.util.Collection;
@@ -60,7 +58,7 @@ public abstract class AbstractBatchJiraFieldFactory {
      *
      * @return sample list
      */
-    public static String buildSamplesListString(LabBatch labBatch, @Nullable Bucket bucket) {
+    public static String buildSamplesListString(LabBatch labBatch) {
         StringBuilder samplesText = new StringBuilder();
         Set<String> newSamples = new TreeSet<>();
         Set<String> reworkSamples = new TreeSet<>();
@@ -71,16 +69,8 @@ public abstract class AbstractBatchJiraFieldFactory {
         samplesText.append("\n");
 
         if (!reworkSamples.isEmpty()) {
+            samplesText.append(StringUtils.join(reworkSamples, "\n"));
             samplesText.append("\n");
-            for (String reworkSample : reworkSamples) {
-                if (bucket == null) {
-                    samplesText.append(reworkSample).append(" (rework)\n");
-                } else {
-                    samplesText.append(reworkSample).append(" (rework from ").append(bucket.getBucketDefinitionName())
-                            .append(
-                                    ")\n");
-                }
-            }
         }
         return samplesText.toString();
     }

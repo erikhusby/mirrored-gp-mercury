@@ -510,7 +510,8 @@ public class LabBatch {
         MATERIAL_TYPE("BATCH_TYPE", true),
         LANE_INFO("Lane Info", true),
         SAMPLES_ON_RISK("Samples On Risk", true),
-        RISK_CATEGORIZED_SAMPLES("Risk Categorized Samples", true);
+        RISK_CATEGORIZED_SAMPLES("Risk Categorized Samples", true),
+        REWORK_SAMPLES("Rework Samples",true);
 
 
         private final String fieldName;
