@@ -4,7 +4,6 @@ import org.broadinstitute.bsp.client.rackscan.NetworkRackScanner;
 import org.broadinstitute.bsp.client.rackscan.RackScan;
 import org.broadinstitute.bsp.client.rackscan.RackScanner;
 import org.broadinstitute.bsp.client.rackscan.RackScannerConfig;
-import org.broadinstitute.bsp.client.rackscan.RackScannerType;
 import org.broadinstitute.bsp.client.rackscan.ScannerException;
 import org.broadinstitute.bsp.client.rackscan.SimulatorRackScanner;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
