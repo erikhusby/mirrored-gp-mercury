@@ -137,6 +137,13 @@
         .ledgerQuantity.pending, .unbilledStatus.pending {
             font-weight: bold;
         }
+
+        .autowidth select {
+            width: auto;
+        }
+        .processing {
+            z-index: 200;
+        }
     </style>
 
 <%-- ================ Page-specific JavaScript ================ --%>
@@ -162,19 +169,22 @@
             /*
              * Configure ledger datatable.
              */
+            enableDefaultPagingOptions();
             var ledgerTable = $j('#ledger').dataTable({
                 <%-- copy/csv/print buttons don't work very will with the hidden columns and text inputs. Buttons need
                      to be overridden with custom mColumns and fnCellRender. Disabling this feature for now by removing
                      the "T" from the sDom string.
                 'sDom': "<'row-fluid'<'span6'f><'span4'<'#dtButtonHolder'>><'span2'T>r>t<'row-fluid'<'span6'i><'span6'p>>",
                 --%>
-                'sDom': "<'row-fluid'<'span6'f><'span4'<'#dtButtonHolder'>><'span2'>r>t<'row-fluid'<'span6'i><'span6'p>>",
+                'sDom': "<'row-fluid'<'span6'f><'span4'<'#dtButtonHolder'>><'span2'><'.processing'r>>t<'row-fluid'<'span4'i><'span4'<'.autowidth' l>><'span4'p>>",
                 /*
                  * It's not useful to save filter state for this UI. Also, hSpinner widgets will not be initialized if
                  * they are filtered out of the DOM when the page loads
                  */
                 'bStateSave': false,
                 'aaSorting': [[2, 'asc']],
+                "bDeferRender": true,
+                "bProcessing": true,
                 'aoColumns': [
                     {'bSortable': false},                                                   // 0: checkbox
                     {'bVisible': false},                                                    // 1: search text
@@ -348,19 +358,30 @@
                 autoFill();
             });
 
-            $j('#ledgerForm').submit(function() {
-                var hiddenInputs = $j(ledgerTable.fnGetHiddenNodes()).find('input');
-                var hiddenInputContainer = $j('#hiddenRowInputs');
-                hiddenInputs.appendTo(hiddenInputContainer);
-                var disabledInputs = $j('#ledgerForm').find('input:disabled');
-                for (var i = 0; i < disabledInputs.length; i++) {
-                    var disabledInput = disabledInputs.eq(i);
-                    hiddenInputContainer.append($j('<input/>', {
-                        type: 'hidden',
-                        name: disabledInput.attr('name'),
-                        value: disabledInput.val()
+            $j('#ledgerForm').submit(function (event) {
+                var changedInputs=[];
+                $j(document.body).css({'cursor' : 'wait'});
+                try {
+                    changedInputs.push($j(ledgerTable.fnGetNodes()).filter(function () {
+                        return $j(this).find("input.changed").length > 0
+                    }).find('input').prop('disabled', false));
+                    changedInputs.push($j(ledgerTable.fnGetHiddenNodes()).filter(function () {
+                        return $j(this).find("input.changed").length > 0
+                    }).find('input').prop('disabled', false));
+                } catch (e) {
+                    var errorMessage = "Error collecting ledger entries: '" + e + "'";
+                    console.log(errorMessage);
+                    var errorBlock = $j("<div>", {'class': "modal alert alert-block"});
+                    errorBlock.append($j("<p>", {
+                        text: errorMessage,
+                        'class': 'text-error',
+                        css: 'font-weight: bold; margin-left: 50px'
                     }));
+                    changedInputs.prop('disabled', true);
+                    errorBlock.appendTo(document.body);
+                    event.preventDefault();
                 }
+                $j(document.body).css({'cursor' : 'default'});
             });
 
             $j('#helpButton').click(function() {
@@ -814,7 +835,9 @@
                     </td>
                     <td>
                         ${info.sample.name}
-                        <stripes:hidden name="ledgerData[${info.sample.samplePosition}].sampleName" value="${info.sample.name}"/>
+                        <input type="hidden" disabled="disabled"
+                               name="ledgerData[${info.sample.samplePosition}].sampleName"
+                               value="${info.sample.name}"/>
                     </td>
                     <td>
                         ${info.sample.sampleData.collaboratorsSampleName}
@@ -837,7 +860,7 @@
                                value="${actionBean.ledgerData[info.sample.samplePosition].completeDateFormatted}"/>
                         <c:set var="currentValue"
                                value="${submittedCompleteDate != null ? submittedCompleteDate : info.dateCompleteFormatted}"/>
-                        <input name="ledgerData[${info.sample.samplePosition}].workCompleteDate"
+                        <input name="ledgerData[${info.sample.samplePosition}].workCompleteDate" disabled="disabled"
                                value="${currentValue}"
                                originalValue="${info.dateCompleteFormatted}"
                                class="dateComplete ${currentValue != info.dateCompleteFormatted ? 'changed' : ''}">
@@ -848,7 +871,7 @@
                                 ${info.getTotalForPriceItem(priceItem)}
                         </td>
                         <td style="text-align: center">
-                            <input type="hidden"
+                            <input type="hidden" disabled="disabled"
                                    name="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].originalQuantity"
                                    value="${info.getTotalForPriceItem(priceItem)}"/>
                             <c:set var="submittedQuantity" value="${actionBean.ledgerData[info.sample.samplePosition].quantities[priceItem.priceItemId].submittedQuantity}"/>
