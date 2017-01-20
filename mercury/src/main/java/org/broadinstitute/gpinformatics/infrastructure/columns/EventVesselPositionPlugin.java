@@ -232,12 +232,20 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
 
         if( !parentTermsToDisplay.isEmpty() ) {
             int cellIndex = 0;
+            // Cache and reuse traversals, to ensure same ordering
+            // todo jmt what about difference in ordering between SampleInstanceV2 and SampleData?
+            Map<Class<?>, Collection<?>> mapClassToResults = new HashMap<>();
             for( SearchTerm parentTerm : parentTermsToDisplay ) {
                 context.setSearchTerm(parentTerm);
-                Collection<?> objects = ExpressionClass.xToY(
-                        labVessel,
-                        parentTerm.getDisplayExpression().getExpressionClass(),
-                        context);
+                Class<?> expressionClass = parentTerm.getDisplayExpression().getExpressionClass();
+                Collection<?> objects = mapClassToResults.get(expressionClass);
+                if (objects == null) {
+                    objects = ExpressionClass.xToY(
+                            labVessel,
+                            expressionClass,
+                            context);
+                    mapClassToResults.put(expressionClass, objects);
+                }
                 int rowIndex = 0;
                 for (Object object : objects) {
                     if (cellIndex == 0) {
@@ -250,6 +258,7 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
                 cellIndex++;
             }
         }
+        // todo jmt sort by first column?
 
         return new ImmutablePair<>(cell, resultList);
     }

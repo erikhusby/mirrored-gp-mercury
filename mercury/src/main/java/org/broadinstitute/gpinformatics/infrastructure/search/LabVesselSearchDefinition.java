@@ -250,6 +250,7 @@ public class LabVesselSearchDefinition {
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("LCSET");
         searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getLcsetInputConverter());
+        // todo jmt replace?
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
@@ -292,6 +293,7 @@ public class LabVesselSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("XTR");
+        // todo jmt replace?
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
@@ -561,6 +563,7 @@ public class LabVesselSearchDefinition {
         criteriaPaths.add(criteriaPath);
 
         searchTerm.setCriteriaPaths(criteriaPaths);
+        // todo jmt replace?
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
@@ -603,6 +606,7 @@ public class LabVesselSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Research Project");
+        // todo jmt replace?
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
@@ -625,6 +629,7 @@ public class LabVesselSearchDefinition {
         // Product
         searchTerm = new SearchTerm();
         searchTerm.setName("Product");
+        // todo jmt replace?
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
@@ -1235,54 +1240,22 @@ public class LabVesselSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Nearest Sample ID");
-        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public List<String> evaluate(Object entity, SearchContext context) {
-                List<String> values = new ArrayList<>();
-                if (OrmUtil.proxySafeIsInstance(entity, LabVessel.class)) {
-                    LabVessel labVessel = OrmUtil.proxySafeCast (entity, LabVessel.class);
-                    for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                        values.add(sampleInstanceV2.getNearestMercurySampleName());
-                    }
-                } else if (entity instanceof SampleInstanceV2) {
-                    SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
-                    values.add(sampleInstanceV2.getNearestMercurySampleName());
-                } else {
-                    throw new RuntimeException("Unexpected class " + entity.getClass());
-                }
-                return values;
-            }
-        });
         searchTerm.setDisplayExpression(DisplayExpression.NEAREST_SAMPLE_ID);
-        nestedTableTerm.addParentTermHandledByChild(searchTerm);
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Root Sample ID");
-        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public List<String> evaluate(Object entity, SearchContext context) {
-                List<String> values = new ArrayList<>();
-                if (OrmUtil.proxySafeIsInstance(entity, LabVessel.class)) {
-                    LabVessel labVessel = OrmUtil.proxySafeCast(entity, LabVessel.class);
-                    for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                        values.add(sampleInstanceV2.getRootOrEarliestMercurySampleName());
-                    }
-                } else if (entity instanceof SampleInstanceV2) {
-                    SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
-                    values.add(sampleInstanceV2.getRootOrEarliestMercurySampleName());
-                } else {
-                    throw new RuntimeException("Unexpected class " + entity.getClass());
-                }
-                return values;
-            }
-        });
         searchTerm.setDisplayExpression(DisplayExpression.ROOT_SAMPLE_ID);
-        nestedTableTerm.addParentTermHandledByChild(searchTerm);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Molecular Index");
+        searchTerm.setDisplayExpression(DisplayExpression.MOLECULAR_INDEX);
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Mercury Sample Tube Barcode");
+        // todo jmt replace?
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public List<String> evaluate(Object entity, SearchContext context) {
@@ -1477,7 +1450,6 @@ public class LabVesselSearchDefinition {
         searchTerms.add(searchTerm);
         return searchTerms;
 
-        // todo jmt need molecular index
         // todo jmt break some of these "metadata" terms into their own group
     }
 
@@ -1979,6 +1951,7 @@ public class LabVesselSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Proceed if OOS");
+        // todo jmt replace?
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
