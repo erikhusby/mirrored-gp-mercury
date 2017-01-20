@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
@@ -20,14 +22,16 @@ import java.util.Date;
 @Dependent
 public class ProductOrderEtl extends GenericEntityAndStatusEtl<ProductOrder, ProductOrder> {
     private BSPUserList userList;
+    private ProductEjb productEjb;
 
     public ProductOrderEtl() {
     }
 
     @Inject
-    public ProductOrderEtl(ProductOrderDao dao, BSPUserList userList) {
+    public ProductOrderEtl(ProductOrderDao dao, BSPUserList userList, ProductEjb productEjb) {
         super(ProductOrder.class, "product_order", "product_order_status", "athena.product_order_aud", "product_order_id", dao);
         this.userList = userList;
+        this.productEjb = productEjb;
     }
 
     @Override
@@ -68,6 +72,10 @@ public class ProductOrderEtl extends GenericEntityAndStatusEtl<ProductOrder, Pro
             regInfoData = getRegInfoData(entity);
         }
 
+        String arrayChipType;
+        Pair<String,String> chipData = productEjb.getGenotypingChip(entity, entity.getCreatedDate());
+        arrayChipType = chipData == null?"":chipData.getRight();
+
         return genericRecord(etlDateStr, isDelete,
                 entity.getProductOrderId(),
                 format(entity.getResearchProject() != null ? entity.getResearchProject().getResearchProjectId() : null),
@@ -82,6 +90,7 @@ public class ProductOrderEtl extends GenericEntityAndStatusEtl<ProductOrder, Pro
                 format(entity.getPlacedDate()),
                 format(entity.getSkipRegulatoryReason()),
                 format(entity.getSapOrderNumber()),
+                format(arrayChipType),
                 format(regInfoData)
         );
     }
