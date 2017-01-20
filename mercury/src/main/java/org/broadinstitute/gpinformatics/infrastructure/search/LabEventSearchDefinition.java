@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
+import org.broadinstitute.gpinformatics.infrastructure.columns.DisplayExpression;
 import org.broadinstitute.gpinformatics.infrastructure.columns.EventVesselSourcePositionPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.EventVesselTargetPositionPlugin;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -34,6 +35,7 @@ import java.util.Set;
 /**
  * Builds ConfigurableSearchDefinition for lab event user defined search logic
  */
+@SuppressWarnings("ReuseOfLocalVariable")
 public class LabEventSearchDefinition {
 
     /**
@@ -476,58 +478,10 @@ public class LabEventSearchDefinition {
         List<SearchTerm> searchTerms = new ArrayList<>();
 
         SearchTerm searchTerm = new SearchTerm();
+        // todo jmt rename to Root Tube Barcode?
         searchTerm.setName("Sample Tube Barcode");
         searchTerm.setHelpText("Value(s) will appear in both the result row and source and/or destination layout positions.");
-        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public Set<String> evaluate(Object entity, SearchContext context) {
-                // Has to handle LabEvent from parent term and LabVessel from nested table
-                LabVessel labVessel;
-                LabEvent labEvent;
-
-                Set<String> results = new HashSet<>();
-
-                // todo jmt improve
-                if( OrmUtil.proxySafeIsInstance( entity, LabEvent.class ) ) {
-                    labEvent = OrmUtil.proxySafeCast(entity, LabEvent.class);
-                    labVessel = labEvent.getInPlaceLabVessel();
-                    if (labVessel == null) {
-                        for( LabVessel srcVessel : labEvent.getSourceLabVessels() ) {
-                            addSampleLabelsFromVessel( srcVessel, results );
-                        }
-                        return results;
-                    }
-                } else if( OrmUtil.proxySafeIsInstance( entity, LabVessel.class ) ) {
-                    labVessel = OrmUtil.proxySafeCast(entity, LabVessel.class);
-                } else {
-                    throw new RuntimeException("Unhandled display value type for 'Sample Tube Barcode': "
-                                               + OrmUtil.getProxyObjectClass(entity).getSimpleName());
-                }
-
-                if (labVessel != null) {
-                    addSampleLabelsFromVessel( labVessel, results );
-                }
-
-                return results;
-            }
-
-            private void addSampleLabelsFromVessel( LabVessel labVessel, Set<String> results ){
-                if (labVessel != null) {
-                    for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                        if(sampleInstanceV2.getRootOrEarliestMercurySample() != null){
-                            for (LabVessel rootSampleVessel : sampleInstanceV2.getRootOrEarliestMercurySample()
-                                    .getLabVessel()) {
-                                results.add(rootSampleVessel.getLabel());
-                            }
-                        }
-                    }
-                }
-            }
-        });
-        // Sample Tube Barcode also handled by source/destination layout nested table cell display
-        for( SearchTerm nestedTableTerm : nestedTableTerms ) {
-            nestedTableTerm.addParentTermHandledByChild(searchTerm);
-        }
+        searchTerm.setDisplayExpression(DisplayExpression.ROOT_TUBE_BARCODE);
         searchTerms.add(searchTerm);
 
         SearchDefinitionFactory.SampleMetadataDisplayExpression sampleMetadataDisplayExpression = new SearchDefinitionFactory.SampleMetadataDisplayExpression();
@@ -539,6 +493,7 @@ public class LabEventSearchDefinition {
                 searchTerm.setDisplayValueExpression(sampleMetadataDisplayExpression);
                 // These also handled by source/destination layout nested table cell display
                 for( SearchTerm nestedTableTerm : nestedTableTerms ) {
+                    // todo jmt fix
                     nestedTableTerm.addParentTermHandledByChild(searchTerm);
                 }
                 searchTerms.add(searchTerm);
@@ -593,47 +548,7 @@ public class LabEventSearchDefinition {
         // Product
         searchTerm = new SearchTerm();
         searchTerm.setName("Product");
-        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public Set<String> evaluate(Object entity, SearchContext context) {
-                Set<String> results = new HashSet<>();
-                // todo jmt improve
-                if( OrmUtil.proxySafeIsInstance( entity, LabEvent.class ) ) { 
-                    LabEvent labEvent = OrmUtil.proxySafeCast(entity, LabEvent.class);
-
-                    Set<LabVessel> eventVessels = labEvent.getTargetLabVessels();
-                    if (labEvent.getInPlaceLabVessel() != null) {
-                        eventVessels.add(labEvent.getInPlaceLabVessel());
-                    }
-
-                    for (LabVessel labVessel : eventVessels) {
-                        results = getProduct(results, labVessel);
-                    }
-                } else if( OrmUtil.proxySafeIsInstance( entity, LabVessel.class ) ) {
-                    LabVessel labVessel = OrmUtil.proxySafeCast(entity, LabVessel.class);
-                    results = getProduct(results, labVessel);
-                } else {
-                    throw new RuntimeException("Unhandled display value type for 'Product': "
-                            + OrmUtil.getProxyObjectClass(entity).getSimpleName());
-                }
-
-                return results;
-            }
-
-            private Set<String> getProduct(Set<String> results, LabVessel labVessel) {
-                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                    for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
-                        if (productOrderSample.getProductOrder().getProduct() != null) {
-                            results.add(productOrderSample.getProductOrder().getProduct().getDisplayName());
-                        }
-                    }
-                }
-                return results;
-            }
-        });
-        for( SearchTerm nestedTableTerm : nestedTableTerms ) {
-            nestedTableTerm.addParentTermHandledByChild(searchTerm);
-        }
+        searchTerm.setDisplayExpression(DisplayExpression.PRODUCT_NAME);
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -695,151 +610,17 @@ public class LabEventSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Nearest Sample ID");
-        for( SearchTerm nestedTableTerm : nestedTableTerms ) {
-            nestedTableTerm.addParentTermHandledByChild(searchTerm);
-        }
-        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public Set<String> evaluate(Object entity, SearchContext context) {
-                Set<String> results = new HashSet<>();
-                LabVessel labVessel;
-                // Has to handle LabEvent from parent term, LabVessel from nested table,
-                //  and sample data from nested table.
-
-                // Handle possible null (e.g. MercurySample from vessel position plugin)
-                if( entity == null ) {
-                    return results;
-                }
-                // todo jmt improve
-                if( OrmUtil.proxySafeIsInstance( entity, LabEvent.class ) ) {
-                    LabEvent labEvent = OrmUtil.proxySafeCast(entity, LabEvent.class);
-                    labVessel = labEvent.getInPlaceLabVessel();
-                    if (labVessel == null) {
-                        for( LabVessel srcVessel : labEvent.getSourceLabVessels() ) {
-                            for( SampleInstanceV2 sample : srcVessel.getSampleInstancesV2()) {
-                                results.add(sample.getNearestMercurySampleName());
-                            }
-                        }
-                        return results;
-                    }
-                } else if( entity instanceof SampleInstanceV2) {
-                    results.add(((SampleInstanceV2) entity).getRootOrEarliestMercurySample().getSampleKey());
-                    return results;
-                } else if( OrmUtil.proxySafeIsInstance( entity, LabVessel.class ) ) {
-                    labVessel = OrmUtil.proxySafeCast(entity, LabVessel.class);
-                } else {
-                    throw new RuntimeException("Unhandled display value type for 'Mercury Sample ID': "
-                            + OrmUtil.getProxyObjectClass(entity).getSimpleName());
-                }
-                // Shared for event in place vessel and lab vessel entity logic
-                if( labVessel != null ) {
-                    for( SampleInstanceV2 sample : labVessel.getSampleInstancesV2()) {
-                        results.add(sample.getNearestMercurySampleName());
-                    }
-                }
-                return results;
-            }
-        });
+        searchTerm.setDisplayExpression(DisplayExpression.NEAREST_SAMPLE_ID);
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Root Sample ID");
-        for( SearchTerm nestedTableTerm : nestedTableTerms ) {
-            nestedTableTerm.addParentTermHandledByChild(searchTerm);
-        }
-        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public Set<String> evaluate(Object entity, SearchContext context) {
-                Set<String> results = new HashSet<>();
-                LabVessel labVessel;
-                // Has to handle LabEvent from parent term, LabVessel from nested table,
-                //  and sample data from nested table.
-
-                // Handle possible null (e.g. MercurySample from vessel position plugin)
-                if( entity == null ) {
-                    return results;
-                }
-                // todo jmt improve
-                if( OrmUtil.proxySafeIsInstance( entity, LabEvent.class ) ) {
-                    LabEvent labEvent = OrmUtil.proxySafeCast(entity, LabEvent.class);
-                    labVessel = labEvent.getInPlaceLabVessel();
-                    if (labVessel == null) {
-                        for( LabVessel srcVessel : labEvent.getSourceLabVessels() ) {
-                            for( SampleInstanceV2 sample : srcVessel.getSampleInstancesV2()) {
-                                results.add(sample.getRootOrEarliestMercurySampleName());
-                            }
-                        }
-                        return results;
-                    }
-                } else if( entity instanceof SampleInstanceV2) {
-                    MercurySample mercurySample = ((SampleInstanceV2)entity).getRootOrEarliestMercurySample();
-                    results.add(mercurySample.getSampleKey());
-                    // May have another sample in ancestry...
-                    for( LabVessel sampleVessel : mercurySample.getLabVessel() ) {
-                        for( SampleInstanceV2 sample : sampleVessel.getSampleInstancesV2()) {
-                            results.add(sample.getRootOrEarliestMercurySampleName());
-                        }
-                    }
-                    return results;
-                } else if( OrmUtil.proxySafeIsInstance( entity, LabVessel.class ) ) {
-                    labVessel = OrmUtil.proxySafeCast(entity, LabVessel.class);
-                } else {
-                    throw new RuntimeException("Unhandled display value type for 'Mercury Sample ID': "
-                            + OrmUtil.getProxyObjectClass(entity).getSimpleName());
-                }
-                // Shared for event in place vessel and lab vessel entity logic
-                if( labVessel != null ) {
-                    for( SampleInstanceV2 sample : labVessel.getSampleInstancesV2()) {
-                        results.add(sample.getRootOrEarliestMercurySampleName());
-                    }
-                }
-                return results;
-            }
-        });
+        searchTerm.setDisplayExpression(DisplayExpression.ROOT_SAMPLE_ID);
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Molecular Index");
-        for( SearchTerm nestedTableTerm : nestedTableTerms ) {
-            nestedTableTerm.addParentTermHandledByChild(searchTerm);
-        }
-        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public List<String> evaluate(Object entity, SearchContext context) {
-                List<String> results = null;
-                // todo jmt improve
-                if (OrmUtil.proxySafeIsInstance(entity, LabEvent.class)) {
-                    LabEvent labEvent = OrmUtil.proxySafeCast(entity, LabEvent.class);
-                    results = new ArrayList<>();
-
-                    LabVessel labVessel = labEvent.getInPlaceLabVessel();
-                    if (labVessel == null) {
-                        for (LabVessel srcVessel : labEvent.getSourceLabVessels()) {
-                            for (SampleInstanceV2 sample : srcVessel.getSampleInstancesV2()) {
-                                if (sample.getMolecularIndexingScheme() != null) {
-                                    results.add(sample.getMolecularIndexingScheme().getName());
-                                }
-                            }
-                        }
-                    } else {
-                        for (SampleInstanceV2 sample : labVessel.getSampleInstancesV2()) {
-                            if (sample.getMolecularIndexingScheme() != null) {
-                                results.add(sample.getMolecularIndexingScheme().getName());
-                            }
-                        }
-                    }
-                } else if (entity instanceof SampleInstanceV2) {
-                    SampleInstanceV2 sampleInstance = (SampleInstanceV2) entity;
-                    if (sampleInstance.getMolecularIndexingScheme() != null) {
-                        results.add(sampleInstance.getMolecularIndexingScheme().getName());
-                    }
-                } else {
-                    throw new RuntimeException("Unexpected class " + entity);
-                }
-
-                return results;
-            }
-        });
+        searchTerm.setDisplayExpression(DisplayExpression.MOLECULAR_INDEX);
         searchTerms.add(searchTerm);
 
         return searchTerms;
