@@ -359,20 +359,18 @@
 
             $j('#ledgerForm').submit(function (event) {
                 var changedInputs;
-                $j(document.body).css({'cursor' : 'wait'});
+                var originalState;
+                var hiddenInputContainer = $j('#hiddenRowInputs');
                 try {
+                    originalState = $j(ledgerTable.fnGetNodes()).find('input').not(":disabled").prop("disabled",true);
+                    $j(ledgerTable.fnGetNodes()).find('input').prop('disabled', true);
+
                     // Find and enable (un-disable?) table rows that have changed inputs.
-                    changedInputs = $j(ledgerTable.fnGetHiddenNodes()).filter(function () {
-                        return $j(this).find("input.changed [name$='sampleName']").length > 0 &&
-                            $j(this).find("[name*='sampleName']").text()!==""
+                    changedInputs = $j(ledgerTable.fnGetNodes()).filter(function(){
+                        return $j(this).find("input.changed").length > 0;
                     }).find('input').prop('disabled', false);
 
-                    Array.prototype.push.apply(changedInputs, $j(ledgerTable.fnGetNodes()).filter(function () {
-                        return $j(this).find("input.changed").length > 0
-                    }).find('input').prop('disabled', false));
-
-                    var hiddenInputContainer = $j('#hiddenRowInputs');
-                    changedInputs.appendTo(hiddenInputContainer);
+                    hiddenInputContainer.append(changedInputs);
                 } catch (e) {
                     var errorMessage = "Error collecting ledger entries: '" + e + "'";
                     console.log(errorMessage);
@@ -382,11 +380,12 @@
                         'class': 'text-error',
                         css: 'font-weight: bold; margin-left: 50px'
                     }));
+                    originalState.prop('disabled', false);
                     changedInputs.prop('disabled', true);
+                    hiddenInputContainer.empty();
                     errorBlock.appendTo(document.body);
                     event.preventDefault();
                 }
-                $j(document.body).css({'cursor' : 'default'});
             });
 
             $j('#helpButton').click(function() {
@@ -840,7 +839,7 @@
                     </td>
                     <td>
                         ${info.sample.name}
-                        <input type="hidden" disabled="disabled"
+                        <input type="hidden"
                                name="ledgerData[${info.sample.samplePosition}].sampleName"
                                value="${info.sample.name}"/>
                     </td>
@@ -865,7 +864,7 @@
                                value="${actionBean.ledgerData[info.sample.samplePosition].completeDateFormatted}"/>
                         <c:set var="currentValue"
                                value="${submittedCompleteDate != null ? submittedCompleteDate : info.dateCompleteFormatted}"/>
-                        <input name="ledgerData[${info.sample.samplePosition}].workCompleteDate" disabled="disabled"
+                        <input name="ledgerData[${info.sample.samplePosition}].workCompleteDate"
                                value="${currentValue}"
                                originalValue="${info.dateCompleteFormatted}"
                                class="dateComplete ${currentValue != info.dateCompleteFormatted ? 'changed' : ''}">
@@ -876,7 +875,7 @@
                                 ${info.getTotalForPriceItem(priceItem)}
                         </td>
                         <td style="text-align: center">
-                            <input type="hidden" disabled="disabled"
+                            <input type="hidden"
                                    name="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].originalQuantity"
                                    value="${info.getTotalForPriceItem(priceItem)}"/>
                             <c:set var="submittedQuantity" value="${actionBean.ledgerData[info.sample.samplePosition].quantities[priceItem.priceItemId].submittedQuantity}"/>
