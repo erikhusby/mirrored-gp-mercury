@@ -154,14 +154,11 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
 
         Map<String, Collection<String>> riskSamplesByCriterion = getRiskSamplesByCriterion();
-        StringBuilder riskByCriteria = null;
+        StringBuilder riskByCriteria = new StringBuilder();
 
         Set<String> riskSampleSet = new HashSet<>();
 
         for(Map.Entry<String, Collection<String>> riskSampleEntry:riskSamplesByCriterion.entrySet()) {
-            if(riskByCriteria == null) {
-                riskByCriteria = new StringBuilder();
-            }
             riskSampleSet.addAll(riskSampleEntry.getValue());
             riskByCriteria.append("*").append(riskSampleEntry.getKey()).append("*").append("\n")
                     .append(StringUtils.join(riskSampleEntry.getValue(), "\n")).append("\n");
@@ -173,7 +170,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
                     StringUtils.join(riskSampleSet, "\n")));
         }
 
-        if(riskByCriteria != null) {
+        if(riskByCriteria.length() > 0) {
             customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.RISK_CATEGORIZED_SAMPLES,
                     riskByCriteria.toString()));
         }
@@ -218,26 +215,21 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
         return ticketDescription.toString();
     }
 
-
     @Override
     public String getSummary() {
 
         StringBuilder summary = new StringBuilder();
         if (StringUtils.isBlank(batch.getBatchName())) {
-
             for (ResearchProject currProj : foundResearchProjectList.values()) {
                 summary.append(currProj.getTitle()).append("; ");
             }
-
         } else {
             summary.append(batch.getBatchName());
         }
-
         return summary.toString();
     }
 
     private Map<String, Collection<String>> getRiskSamplesByCriterion() {
-
         Map<String, Collection<String>> riskResults = new HashMap<>();
         Set<String> newSamples = new HashSet<>();
         Set<String> reworkSamples = new HashSet<>();

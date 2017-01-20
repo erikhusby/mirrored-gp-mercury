@@ -106,7 +106,6 @@ public class LCSetJiraFieldFactoryTest {
         bucket = new Bucket("Pico/Plating Bucket");
         // starting rack
         for (int sampleIndex = 1; sampleIndex <= vesselSampleList.size(); sampleIndex++) {
-//            ProductOrder productOrder = sampleIndex == 1 ? singleSampleOrder : testProductOrder;
             String barcode = "R" + sampleIndex + sampleIndex + sampleIndex + sampleIndex + sampleIndex + sampleIndex;
             ProductOrderSample currentProductOrderSample = vesselSampleList.get(sampleIndex - 1);
 
