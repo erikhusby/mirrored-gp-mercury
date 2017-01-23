@@ -1239,4 +1239,14 @@ public class LabBatchFixUpTest extends Arquillian {
 
         changeBucketEntriesToAliquots(tubeBarcodes, 1716867L, "LCSET-10218", "SUPPORT-2414");
     }
+
+    @Test(enabled = false)
+    public void fixupSupport2461() throws Exception{
+        List<String> tubeBarcodes = Arrays.asList(
+                "1147584526",
+                "1147584542",
+                "1147584541");
+
+        changeBucketEntriesToAliquots(tubeBarcodes, 1716867L, "LCSET-10218", "SUPPORT-2461");
+    }
 }
