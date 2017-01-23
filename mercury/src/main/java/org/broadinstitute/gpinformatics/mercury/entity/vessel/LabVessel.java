@@ -1605,7 +1605,7 @@ public abstract class LabVessel implements Serializable {
 
     public Set<SampleInstanceV2> getSampleInstancesV2() {
         if (sampleInstances == null) {
-            sampleInstances = new LinkedHashSet<>();
+            sampleInstances = new TreeSet<>();
             if (getContainerRole() == null) {
                 List<VesselEvent> ancestorEvents = getAncestors();
                 if (ancestorEvents.isEmpty()) {

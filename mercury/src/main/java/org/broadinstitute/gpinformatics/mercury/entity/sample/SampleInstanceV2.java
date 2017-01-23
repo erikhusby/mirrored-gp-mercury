@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -32,7 +33,7 @@ import java.util.Set;
  * A transient class returned by LabVessel.getSampleInstances.  It accumulates information encountered
  * in a bottom-up traversal of LabEvents, from that LabVessel.
  */
-public class SampleInstanceV2 {
+public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
 
     /**
      * Allows LabEvent.computeLcSets to choose the nearest match if there are multiple.
@@ -559,6 +560,7 @@ public class SampleInstanceV2 {
         return metadataSources.iterator().next();
     }
 
+    // todo should this methods use nearest sample?
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -590,4 +592,13 @@ public class SampleInstanceV2 {
         return result;
     }
 
+    @Override
+    public int compareTo(@NotNull SampleInstanceV2 o) {
+        int compare = ObjectUtils.compare(getEarliestMercurySampleName(), o.getEarliestMercurySampleName());
+        if (compare != 0) {
+            return compare;
+        }
+        return ObjectUtils.compare(molecularIndexingScheme == null ? null : molecularIndexingScheme.getName(),
+                o.getMolecularIndexingScheme() == null ? null : o.getMolecularIndexingScheme().getName());
+    }
 }

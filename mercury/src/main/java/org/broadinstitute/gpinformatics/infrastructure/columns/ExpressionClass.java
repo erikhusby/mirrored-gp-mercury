@@ -39,10 +39,10 @@ public enum ExpressionClass {
     SAMPLE_DATA; // or BSP?  Mercury sampledata is searchable, BSP is not, so the search terms have to be system specific,
     // but perhaps the display expressions could be off SAMPLE_DATA
 
-    public static <Y> Collection<Y> xToY(Object x, Class<Y> yClass, SearchContext context) {
+    public static <Y> List<Y> xToY(Object x, Class<Y> yClass, SearchContext context) {
         if (OrmUtil.proxySafeIsInstance(x, LabVessel.class) && yClass.isAssignableFrom(SampleInstanceV2.class)) {
             LabVessel labVessel = (LabVessel) x;
-            return (Collection<Y>) labVessel.getSampleInstancesV2();
+            return (List<Y>) new ArrayList<>(labVessel.getSampleInstancesV2());
         } else if (OrmUtil.proxySafeIsInstance(x, LabVessel.class) && yClass.isAssignableFrom(SampleData.class)) {
             LabVessel labVessel = (LabVessel) x;
             List<MercurySample> mercurySamples = new ArrayList<>();
@@ -61,7 +61,7 @@ public enum ExpressionClass {
                     results.add(bspColumns.getSampleData(mercurySample.getSampleKey()));
                 }
             }
-            return (Collection<Y>) results;
+            return (List<Y>) results;
         } else {
             throw new RuntimeException("Unexpected combination " + x.getClass() + " to " + yClass);
         }
