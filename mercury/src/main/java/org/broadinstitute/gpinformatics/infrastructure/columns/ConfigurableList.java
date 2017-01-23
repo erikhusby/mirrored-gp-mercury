@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
+import org.apache.commons.lang3.tuple.MutablePair;
 import org.broadinstitute.gpinformatics.athena.entity.preference.ColumnSetsPreference;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
@@ -732,30 +733,22 @@ public class ConfigurableList {
          */
         public Object[][] getAsArray() {
 
-            // Calculate how many rows and columns required using nested tables
-            // Default for no nested tables
-            int rowCount = getResultRows().size() + 2;
-            int colCount = getHeaders().size();
+            MutablePair<Integer, Integer> rowColPair = new MutablePair<>();
+            rowColPair.setLeft(0);
+            rowColPair.setRight(0);
+            calcRowColumnCount(getResultRows(), rowColPair, getHeaders());
 
-            // Some rows have 1 or more nested tables, some don't.
-            // Adjust array size as required
-            for (ConfigurableList.ResultRow resultRow : getResultRows()) {
-                for( ResultList nestedTable: resultRow.getNestedTables().values() ){
-                    rowCount += nestedTable.getResultRows().size() + 2;
-                    int nestCols = nestedTable.getHeaders().size() + 1;
-                    if( nestCols > colCount ) {
-                        colCount = nestCols;
-                    }
-                }
-            }
+            Object[][] rowObjects = new Object[rowColPair.getLeft()][rowColPair.getRight()];
+            buildArray(rowObjects, getResultRows(), getHeaders());
+            return rowObjects;
+        }
 
-            Object[][] rowObjects = new Object[rowCount][colCount];
-
+        private void buildArray(Object[][] rowObjects, List<ResultRow> resultRows, List<Header> headers) {
             // Set the first (name) and second (units, metadata) headers.
             int columnNumber;
             boolean headerRow2Present = false;
-            for (columnNumber = 0; columnNumber < getHeaders().size(); columnNumber++) {
-                ConfigurableList.Header header = getHeaders().get(columnNumber);
+            for (columnNumber = 0; columnNumber < headers.size(); columnNumber++) {
+                Header header = headers.get(columnNumber);
                 rowObjects[0][columnNumber] = new SpreadsheetCreator.ExcelHeader(header.getDownloadHeader1());
                 String header2Name = header.getDownloadHeader2();
                 if (header2Name != null && !header2Name.isEmpty()) {
@@ -765,7 +758,7 @@ public class ConfigurableList {
             }
             // Set the data
             int rowNumber = headerRow2Present ? 2 : 1;
-            for (ConfigurableList.ResultRow resultRow : getResultRows()) {
+            for (ResultRow resultRow : resultRows) {
                 columnNumber = 0;
                 for (String value : resultRow.getRenderableCells()) {
                     rowObjects[rowNumber][columnNumber] = value;
@@ -779,9 +772,38 @@ public class ConfigurableList {
                     rowNumber++;
                     rowNumber = appendNestedRows(rowNumber, 1, nestedTable.getValue(), rowObjects);
                 }
-
+                for (ResultList resultList : resultRow.getCellNestedTables()) {
+                    if (resultList != null) {
+                        rowNumber = appendNestedRows(rowNumber, 1, resultList, rowObjects);
+                    }
+                }
             }
-            return rowObjects;
+        }
+
+        private void calcRowColumnCount(List<ResultRow> resultRows,
+                MutablePair<Integer, Integer> rowColPair, List<Header> headers) {
+            // Calculate how many rows and columns required using nested tables
+            // Default for no nested tables
+            rowColPair.setLeft(rowColPair.getLeft() + resultRows.size() + 2);
+            rowColPair.setRight(Math.max(rowColPair.getRight() , headers.size()));
+
+            // Some rows have 1 or more nested tables, some don't.
+            // Adjust array size as required
+            for (ResultRow resultRow : resultRows) {
+                for( ResultList nestedTable: resultRow.getNestedTables().values() ){
+                    rowColPair.setLeft(rowColPair.getLeft() + nestedTable.getResultRows().size() + 2);
+                    int nestCols = nestedTable.getHeaders().size() + 1;
+                    if( nestCols > rowColPair.getRight() ) {
+                        rowColPair.setRight(nestCols);
+                    }
+                    calcRowColumnCount(nestedTable.getResultRows(), rowColPair, nestedTable.getHeaders());
+                }
+                for (ResultList resultList : resultRow.getCellNestedTables()) {
+                    if (resultList != null) {
+                        calcRowColumnCount(resultList.getResultRows(), rowColPair, resultList.getHeaders());
+                    }
+                }
+            }
         }
 
         /**
