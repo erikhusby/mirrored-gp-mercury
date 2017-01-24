@@ -1223,7 +1223,7 @@
                     <div id="addOnCheckboxes" class="controls controls-text"> </div>
                 </div>
 
-                <div id="numberOfLanesDiv" class="control-group" style="display: ${actionBean.editOrder.product.supportsNumberOfLanes ? 'block' : 'none'};">
+                <div id="numberOfLanesDiv" class="control-group" style="display: ${actionBean.editOrder.requiresLaneCount() ? 'block' : 'none'};">
                     <stripes:label for="numberOfLanes" class="control-label">
                         Number of Lanes Per Sample
                     </stripes:label>

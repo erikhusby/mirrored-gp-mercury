@@ -326,7 +326,7 @@ public class ProductOrderEjb {
                         oldNumber =orderToPublish.getSapOrderNumber();
                     }
                     orderToPublish.addSapOrderDetail(new SapOrderDetail(sapOrderIdentifier,
-                            SapIntegrationServiceImpl.getSampleCount(orderToPublish),
+                            SapIntegrationServiceImpl.getSampleCount(orderToPublish, orderToPublish.getProduct()),
                             orderToPublish.getQuoteId(),
                             sapService.determineCompanyCode(orderToPublish).getCompanyCode()));
 
@@ -339,11 +339,11 @@ public class ProductOrderEjb {
                     messageCollection.addInfo("Order "+orderToPublish.getJiraTicketKey() +
                                               " has been successfully created in SAP");
                 } else if(orderToPublish.isSavedInSAP()){
-                    if (SapIntegrationServiceImpl.getSampleCount(orderToPublish) > 0) {
+                    if (SapIntegrationServiceImpl.getSampleCount(orderToPublish, orderToPublish.getProduct()) > 0) {
                         sapService.updateOrder(orderToPublish);
                         orderToPublish.latestSapOrderDetail()
-                                .setPrimaryQuantity(SapIntegrationServiceImpl.getSampleCount(orderToPublish
-                                ));
+                                .setPrimaryQuantity(SapIntegrationServiceImpl.getSampleCount(orderToPublish,
+                                        orderToPublish.getProduct()));
                         messageCollection.addInfo("Order "+orderToPublish.getJiraTicketKey() +
                                                   " has been successfully updated in SAP");
                     }
@@ -386,9 +386,13 @@ public class ProductOrderEjb {
         if(orderQuote != null && accessControl.isEnabled()) {
 
             eligibilityResult = orderQuote.isEligibleForSAP() &&
+                                editedProductOrder.getProduct()
+                                        .getPrimaryPriceItem() != null &&
+                                priceListCache.getPriceItem for product is valid
                                 !CollectionUtils.containsAll(accessControl.getDisabledFeatures(),
                                         Collections.singleton(editedProductOrder.getProduct()
-                                                                                .getPrimaryPriceItem().getName()));
+                                                                                .getPrimaryPriceItem().getName())) ;
+
 
         }
         return eligibilityResult;

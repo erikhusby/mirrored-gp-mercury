@@ -828,11 +828,13 @@ public class ProductOrderActionBean extends CoreActionBean {
         double value = 0d;
         if(testOrder.getProduct() != null) {
             final Product product = testOrder.getProduct();
-            double productValue = getProductValue(sampleCount, product);
+            double productValue =
+                    getProductValue((product.getSupportsNumberOfLanes())?testOrder.getLaneCount():sampleCount, product);
             value += productValue;
             for (ProductOrderAddOn testOrderAddon : testOrder.getAddOns()) {
                 final Product addOn = testOrderAddon.getAddOn();
-                double addOnValue = getProductValue(sampleCount, addOn);
+                double addOnValue =
+                        getProductValue((addOn.getSupportsNumberOfLanes())?testOrder.getLaneCount():sampleCount, addOn);
                 value += addOnValue;
             }
         }

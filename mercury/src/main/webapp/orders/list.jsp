@@ -333,7 +333,7 @@
                             </td>
                             <td>${actionBean.progressFetcher.getNumberOfSamples(order.businessKey)}</td>
                             <td>
-                                <c:if test="${order.product.supportsNumberOfLanes}">
+                                <c:if test="${order.requiresLaneCount()}">
                                     ${order.laneCount}
                                 </c:if>
                             </td>
