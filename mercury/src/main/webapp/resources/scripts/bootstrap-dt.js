@@ -36,7 +36,7 @@ function enableDefaultPagingOptions(){
  *  Set the defaults for DataTables initialization
  */
 $j.extend(true, $j.fn.dataTable.defaults, {
-    'sDom': "<'row-fluid'<'span6'f><'span4'B><'span2'ir>>t<'row-fluid'<'span6'l><'span6'p>>",
+    "sDom": "<'row-fluid'<'span8'f><'span4'B>r>t<'row-fluid'<'span6'i><'span6'p>>",
     "bAutoWidth": false,
     "bInfo": false,
     "bStateSave": true,
@@ -50,7 +50,7 @@ $j.extend(true, $j.fn.dataTable.defaults, {
 });
 if (isLegacyDataTables()) {
     $j.extend(true, $j.fn.dataTable.defaults, {
-        'sDom': "<'row-fluid'<'span6'f><'span4'T><'span2'ir>>t<'row-fluid'<'span6'l><'span6'p>>",
+        'sDom': "<'row-fluid'<'span6'f><'span4'T><'span2'ir>>t<'row-fluid'<'span6'l><'span6'p>>"
     });
 }
 
@@ -258,7 +258,7 @@ $j.extend( $j.fn.dataTableExt.oPagination, {
                     $j('li:first', an[i]).removeClass('disabled');
                 }
 
-                if ( oPaging.iPage === oPaging.iTotalPages-1 || oPaging.iTotalPages === 0 ) {
+                if ( oPaging.iPage === oPaging.iTotalPages-1 || oPaging.iTotalPages <= 0 ) {
                     $j('li:last', an[i]).addClass('disabled');
                 } else {
                     $j('li:last', an[i]).removeClass('disabled');
