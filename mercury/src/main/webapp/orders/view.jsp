@@ -20,12 +20,7 @@ $j(document).ready(function () {
     updateFundsRemaining();
     setupDialogs();
 
-    $j.ajax({
-        url: "${ctxpath}/orders/order.action?getSummary=&productOrder=${actionBean.editOrder.businessKey}",
-        dataType: 'json',
-        success: showSummary
-    });
-
+    showSummary(${actionBean.summary})
     // Only show the fill kit detail information for sample initiation PDOs. With the collaboration portal, there
     // can be kit definitions but since that is all automated, we do not want to show that. It is fairly irrelevant
     // after the work request happens. Adding a work request id field to the UI when there is a work request with
@@ -45,6 +40,7 @@ $j(document).ready(function () {
     enableDefaultPagingOptions();
     var oTable = $j('#sampleData').dataTable({
         "oTableTools": ttExportDefines,
+        "iDisplayLength": 50,
         "aaSorting": [
             [1, 'asc']
         ],
@@ -85,6 +81,7 @@ $j(document).ready(function () {
     includeAdvancedFilter(oTable, "#sampleData");
 
     $j('#orderList').dataTable({
+        "bPaginate": false,
         "oTableTools": ttExportDefines
     });
 
@@ -1501,7 +1498,7 @@ function formatInput(item) {
                     <td>
                             ${sample.samplePosition + 1}
                     </td>
-                    <td id="sampleId-${sample.productOrderSampleId}" class="sampleName">
+                    <td class="sampleName">
                             <%--@elvariable id="sampleLink" type="org.broadinstitute.gpinformatics.infrastructure.presentation.SampleLink"--%>
                         <c:set var="sampleLink" value="${actionBean.getSampleLink(sample)}"/>
                         <c:choose>
@@ -1516,37 +1513,37 @@ function formatInput(item) {
                             </c:otherwise>
                         </c:choose>
                     </td>
-                    <td id="collab-sample-${sample.productOrderSampleId}">${sample.sampleData.collaboratorsSampleName}</td>
-                    <td id="patient-${sample.productOrderSampleId}">${sample.sampleData.patientId}</td>
-                    <td id="collab-patient-${sample.productOrderSampleId}">${sample.sampleData.collaboratorParticipantId}</td>
+                    <td>${sample.sampleData.collaboratorsSampleName}</td>
+                    <td>${sample.sampleData.patientId}</td>
+                    <td>${sample.sampleData.collaboratorParticipantId}</td>
 
-                    <td id="package-date-${sample.productOrderSampleId}">
+                    <td>
                             ${sample.labEventSampleDTO.samplePackagedDate}
                     </td>
-                    <td id="receipt-date-${sample.productOrderSampleId}">
+                    <td>
                             ${sample.formattedReceiptDate}
                     </td>
 
-                    <td id="sample-type-${sample.productOrderSampleId}">${sample.sampleData.sampleType}</td>
-                    <td id="material-type-${sample.productOrderSampleId}">${sample.latestMaterialType}</td>
-                    <td id="volume-${sample.productOrderSampleId}">${sample.sampleData.volume}</td>
-                    <td id="concentration-${sample.productOrderSampleId}">${sample.sampleData.concentration}</td>
+                    <td>${sample.sampleData.sampleType}</td>
+                    <td>${sample.latestMaterialType}</td>
+                    <td>${sample.sampleData.volume}</td>
+                    <td>${sample.sampleData.concentration}</td>
 
                     <c:if test="${actionBean.supportsRin}">
-                        <td id="rin-${sample.productOrderSampleId}">${sample.sampleData.rawRin}</td>
-                        <td id="rqs-${sample.productOrderSampleId}">${sample.sampleData.rqs}</td>
-                        <td id="dv200-${sample.productOrderSampleId}">${sample.sampleData.dv200}</td>
+                        <td>${sample.sampleData.rawRin}</td>
+                        <td>${sample.sampleData.rqs}</td>
+                        <td>${sample.sampleData.dv200}</td>
                     </c:if>
 
                     <c:if test="${actionBean.supportsPico}">
                         <td>
-                            <div class="picoRunDate" id="picoDate-${sample.productOrderSampleId}" style="width:auto">
+                            <div class="picoRunDate" style="width:auto">
                             </div>
                         </td>
                     </c:if>
 
-                    <td id="total-${sample.productOrderSampleId}">${sample.sampleData.total}</td>
-                    <td id="sampleKitUploadRackscanMismatch-${sample.productOrderSampleId}"
+                    <td>${sample.sampleData.total}</td>
+                    <td
                         style="text-align: center">${sample.sampleData.hasSampleKitUploadRackscanMismatch} </td>
                     <td style="text-align: center">
                         <c:if test="${sample.onRisk}">
@@ -1555,10 +1552,10 @@ function formatInput(item) {
                             </div>
                         </c:if>
                     </td>
-                    <td id="onRiskDetails-${sample.productOrderSampleId}" style="display:none;">${sample.riskString}</td>
+                    <td style="display:none;">${sample.riskString}</td>
                     <td>${sample.proceedIfOutOfSpec.displayName}</td>
                     <td>${sample.deliveryStatus.displayName}</td>
-                    <td id="completelyBilled-${sample.productOrderSampleId}" style="text-align: center">${sample.completelyBilled}</td>
+                    <td style="text-align: center">${sample.completelyBilled}</td>
                     <td>${sample.sampleComment}</td>
                 </tr>
             </c:forEach>
