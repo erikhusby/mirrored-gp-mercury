@@ -221,26 +221,26 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
 
         // Vessel barcodes are always displayed
         // todo jmt only display label for tubes
-//        if( labVessel != null ) {
-        String cell = labVessel.getLabel();
-//        }
+        String cell = null;
+        if( labVessel != null ) {
+            cell = labVessel.getLabel();
+        }
 
         List<Comparable<?>> emptySortableCells = new ArrayList<>();
         for( SearchTerm parentTerm : parentTermsToDisplay ) {
             headers.add(new ConfigurableList.Header(parentTerm.getName(), null, null));
         }
 
-        if( !parentTermsToDisplay.isEmpty() ) {
+        if( !parentTermsToDisplay.isEmpty() && labVessel != null) {
             int cellIndex = 0;
             // Cache and reuse traversals, to ensure same ordering
-            // todo jmt what about difference in ordering between SampleInstanceV2 and SampleData?
             Map<Class<?>, Collection<?>> mapClassToResults = new HashMap<>();
             for( SearchTerm parentTerm : parentTermsToDisplay ) {
                 context.setSearchTerm(parentTerm);
                 Class<?> expressionClass = parentTerm.getDisplayExpression().getExpressionClass();
                 Collection<?> objects = mapClassToResults.get(expressionClass);
                 if (objects == null) {
-                    objects = ExpressionClass.xToY(
+                    objects = ExpressionClass.rowObjectToExpressionObject(
                             labVessel,
                             expressionClass,
                             context);

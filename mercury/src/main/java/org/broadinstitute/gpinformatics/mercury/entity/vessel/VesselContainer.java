@@ -149,8 +149,12 @@ public class VesselContainer<T extends LabVessel> {
     public T getImmutableVesselAtPosition(VesselPosition position) {
         LabVessel labVessel = mapPositionToVessel.get(position);
         if (labVessel == null) {
-            //noinspection unchecked
-            return (T) new ImmutableLabVessel(this, position);
+            if (mapPositionToVessel.isEmpty()) {
+                //noinspection unchecked
+                return (T) new ImmutableLabVessel(this, position);
+            } else {
+                return null;
+            }
         }
         //noinspection unchecked
         return (T) labVessel;
