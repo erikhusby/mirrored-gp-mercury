@@ -710,7 +710,7 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     public Object evalValueExpression(Object entity, SearchContext context) {
         context = addTermToContext(context);
         if (getDisplayValueExpression() == null) {
-            Collection<?> objects = ExpressionClass.xToY(
+            Collection<?> objects = ExpressionClass.rowObjectToExpressionObject(
                     entity,
                     getDisplayExpression().getExpressionClass(),
                     context);

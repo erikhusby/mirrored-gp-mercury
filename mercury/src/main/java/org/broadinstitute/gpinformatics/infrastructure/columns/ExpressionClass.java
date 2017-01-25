@@ -3,13 +3,17 @@ package org.broadinstitute.gpinformatics.infrastructure.columns;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Enumerates classes to which DisplayExpressions can be applied.
@@ -39,12 +43,21 @@ public enum ExpressionClass {
     SAMPLE_DATA; // or BSP?  Mercury sampledata is searchable, BSP is not, so the search terms have to be system specific,
     // but perhaps the display expressions could be off SAMPLE_DATA
 
-    public static <Y> List<Y> xToY(Object x, Class<Y> yClass, SearchContext context) {
-        if (OrmUtil.proxySafeIsInstance(x, LabVessel.class) && yClass.isAssignableFrom(SampleInstanceV2.class)) {
-            LabVessel labVessel = (LabVessel) x;
-            return (List<Y>) new ArrayList<>(labVessel.getSampleInstancesV2());
-        } else if (OrmUtil.proxySafeIsInstance(x, LabVessel.class) && yClass.isAssignableFrom(SampleData.class)) {
-            LabVessel labVessel = (LabVessel) x;
+    /**
+     * The list returned from this must be deterministic.
+     * @param rowObject object from result row
+     * @param expressionClass class against which expression will be evaluated
+     * @param context search parameters
+     * @param <T> expression class
+     * @return list of T classes, must be in same order for repeated calls
+     */
+    public static <T> List<T> rowObjectToExpressionObject(@Nonnull Object rowObject, Class<T> expressionClass,
+            SearchContext context) {
+        if (OrmUtil.proxySafeIsInstance(rowObject, LabVessel.class) && expressionClass.isAssignableFrom(SampleInstanceV2.class)) {
+            LabVessel labVessel = (LabVessel) rowObject;
+            return (List<T>) new ArrayList<>(labVessel.getSampleInstancesV2());
+        } else if (OrmUtil.proxySafeIsInstance(rowObject, LabVessel.class) && expressionClass.isAssignableFrom(SampleData.class)) {
+            LabVessel labVessel = (LabVessel) rowObject;
             List<MercurySample> mercurySamples = new ArrayList<>();
             for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
                 MercurySample mercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
@@ -61,9 +74,35 @@ public enum ExpressionClass {
                     results.add(bspColumns.getSampleData(mercurySample.getSampleKey()));
                 }
             }
-            return (List<Y>) results;
+            return (List<T>) results;
+        } else if (OrmUtil.proxySafeIsInstance(rowObject, LabEvent.class) && expressionClass.isAssignableFrom(SampleInstanceV2.class)) {
+            LabEvent labEvent = (LabEvent) rowObject;
+            LabVessel labVessel = labEvent.getInPlaceLabVessel();
+            if (labVessel == null) {
+                Set<LabVessel> labVessels;
+                LabEventType.PlasticToValidate plasticToValidate = labEvent.getLabEventType().getPlasticToValidate();
+                switch (plasticToValidate) {
+                    case BOTH:
+                    case SOURCE:
+                        labVessels = labEvent.getSourceLabVessels();
+                        break;
+                    case TARGET:
+                        labVessels = labEvent.getTargetLabVessels();
+                        break;
+                    default:
+                        throw new RuntimeException("Unexpected enum " + plasticToValidate);
+                }
+                // todo jmt sort lab vessels?
+                Set<SampleInstanceV2> sampleInstances = new TreeSet<>();
+                for (LabVessel vessel : labVessels) {
+                    sampleInstances.addAll(vessel.getSampleInstancesV2());
+                }
+                return (List<T>) new ArrayList<>(sampleInstances);
+            } else {
+                return (List<T>) new ArrayList<>(labVessel.getSampleInstancesV2());
+            }
         } else {
-            throw new RuntimeException("Unexpected combination " + x.getClass() + " to " + yClass);
+            throw new RuntimeException("Unexpected combination " + rowObject.getClass() + " to " + expressionClass);
         }
     }
 }
