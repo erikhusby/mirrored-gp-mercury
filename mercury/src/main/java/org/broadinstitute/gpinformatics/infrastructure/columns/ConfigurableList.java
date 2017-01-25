@@ -807,8 +807,7 @@ public class ConfigurableList {
         }
 
         /**
-         * Append nested table rows to 2 dimensional Excel output data array
-         * (Assume no deeper than 1 layer)
+         * Append nested table rows to 2 dimensional Excel output data array.
          */
         private int appendNestedRows( int rowIndex, int startColumn, ResultList resultList, Object[][] rowObjects ){
 
@@ -825,6 +824,11 @@ public class ConfigurableList {
                 for (String val : resultRow.getRenderableCells()) {
                     rowObjects[rowIndex][col] = val;
                     col++;
+                }
+                for (ResultList nestedList : resultRow.getCellNestedTables()) {
+                    if (nestedList != null) {
+                        rowIndex = appendNestedRows(rowIndex, startColumn, nestedList, rowObjects);
+                    }
                 }
                 rowIndex++;
             }
