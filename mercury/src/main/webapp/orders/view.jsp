@@ -42,25 +42,53 @@ $j(document).ready(function () {
     if (kitDefinitionIndex == 0) {
         showKitDetail();
     }
+    enableDefaultPagingOptions();
+    var oTable = $j('#sampleData').dataTable({
+        "oTableTools": ttExportDefines,
+        "aaSorting": [
+            [1, 'asc']
+        ],
+        "aoColumns": [
+            {"bSortable": false},                           // Checkbox
+            {"bSortable": true, "sType": "numeric"},        // Position
+            {"bSortable": true, "sType": "html"},           // ID
+            {"bSortable": true},                            // Collaborator Sample ID
+            {"bSortable": true},                            // Participant ID
+            {"bSortable": true},                            // Collaborator Participant ID
+            {"bSortable": true, "sType": "numeric"},        // Shipped Date
+            {"bSortable": true, "sType": "numeric"},        // Received Date
+            {"bSortable": true},                            // Sample Type
+            {"bSortable": true},                            // Material Type
+            {"bSortable": true, "sType": "numeric"},        // Volume
+            {"bSortable": true, "sType": "numeric"},        // Concentration
+
+            <c:if test="${actionBean.supportsRin}">
+            {"bSortable": true, "sType": "numeric"},        // RIN
+            {"bSortable": true, "sType": "numeric"},        // RQS
+            {"bSortable": true, "sType": "numeric"},        // DV200
+            </c:if>
+
+            <c:if test="${actionBean.supportsPico}">
+            {"bSortable": true, "sType": "title-us-date"},  // Pico Run Date
+            </c:if>
+            {"bSortable": true, "sType": "numeric"},        // Yield Amount
+            {"bSortable": true},                            // sample kit upload/rackscan mismatch
+            {"bSortable": true},                            // On Risk
+            {"bSortable": false},                           // On Risk Details
+            {"bSortable": true},                            // Proceed OOS
+            {"bSortable": true},                            // Status
+            {"bSortable": true, "sType": "title-string"},   // is billed
+            {"bSortable": true}                             // Comment
+        ]
+    });
+
+    includeAdvancedFilter(oTable, "#sampleData");
+
     $j('#orderList').dataTable({
         "oTableTools": ttExportDefines
     });
 
     bspDataCount = $j(".sampleName").length;
-
-    var sampleNameFields = $j(".sampleName");
-
-    var CHUNK_SIZE = 100;
-
-    // If there are samples, kick off AJAX requests to load the sample data from BSP, CHUNK_SIZE samples at a time.
-    if (sampleNameFields.length > 0) {
-        var i, j, tempArray;
-        for (i = 0, j = sampleNameFields.length; i < j; i += CHUNK_SIZE) {
-            tempArray = sampleNameFields.slice(i, i + CHUNK_SIZE);
-
-            updateBspInformation(tempArray);
-        }
-    }
 
     $j('div.onRisk').popover();
 });
@@ -311,91 +339,40 @@ function setupDialogs() {
     });
 }
 
-function updateBspInformation(chunkOfSamples) {
-    var sampleIdString = "";
-    $j(chunkOfSamples).each(function (index, sampleIdCell) {
-        sampleIdString += "&sampleIdsForGetBspData=" + $j(sampleIdCell).attr('id').split("-")[1];
-    });
-
-    $j.ajax({
-        url: "${ctxpath}/orders/order.action?getBspData=&productOrder=${actionBean.editOrder.businessKey}&" + sampleIdString,
-        dataType: 'json',
-        success: showSamples
-    });
-}
-
+showSamples();
 function showSamples(sampleData) {
-    for (var x = 0; x < sampleData.length; x++) {
+    <%--for (var x = 0; x < sampleData.length; x++) {--%>
 
-        var sampleId = sampleData[x].sampleId;
+        <%--var sampleId = sampleData[x].sampleId;--%>
 
-        $j('#collab-sample-' + sampleId).text(sampleData[x].collaboratorSampleId);
-        $j('#patient-' + sampleId).text(sampleData[x].patientId);
-        $j('#collab-patient-' + sampleId).text(sampleData[x].collaboratorParticipantId);
-        $j('#volume-' + sampleId).text(sampleData[x].volume);
-        $j('#sample-type-' + sampleId).text(sampleData[x].sampleType);
-        $j('#material-type-' + sampleId).text(sampleData[x].materialType);
-        $j('#concentration-' + sampleId).text(sampleData[x].concentration);
-        $j('#rin-' + sampleId).text(sampleData[x].rin);
-        $j('#rqs-' + sampleId).text(sampleData[x].rqs);
-        $j('#dv200-' + sampleId).text(sampleData[x].dv200);
-        $j('#total-' + sampleId).text(sampleData[x].total);
-        $j('#picoDate-' + sampleId).text(sampleData[x].picoDate);
-        $j('#picoDate-' + sampleId).attr("title", sampleData[x].picoDate);
+        <%--$j('#collab-sample-' + sampleId).text(sampleData[x].collaboratorSampleId);--%>
+        <%--$j('#patient-' + sampleId).text(sampleData[x].patientId);--%>
+        <%--$j('#collab-patient-' + sampleId).text(sampleData[x].collaboratorParticipantId);--%>
+        <%--$j('#volume-' + sampleId).text(sampleData[x].volume);--%>
+        <%--$j('#sample-type-' + sampleId).text(sampleData[x].sampleType);--%>
+        <%--$j('#material-type-' + sampleId).text(sampleData[x].materialType);--%>
+        <%--$j('#concentration-' + sampleId).text(sampleData[x].concentration);--%>
+        <%--$j('#rin-' + sampleId).text(sampleData[x].rin);--%>
+        <%--$j('#rqs-' + sampleId).text(sampleData[x].rqs);--%>
+        <%--$j('#dv200-' + sampleId).text(sampleData[x].dv200);--%>
+        <%--$j('#total-' + sampleId).text(sampleData[x].total);--%>
+        <%--$j('#picoDate-' + sampleId).text(sampleData[x].picoDate);--%>
+        <%--$j('#picoDate-' + sampleId).attr("title", sampleData[x].picoDate);--%>
 
 
-        if (sampleData[x].hasSampleKitUploadRackscanMismatch) {
-            $j('#sampleKitUploadRackscanMismatch-' + sampleId).html('<img src="${ctxpath}/images/error.png" title="Yes"/>');
-        }
+        <%--if (sampleData[x].hasSampleKitUploadRackscanMismatch) {--%>
+            <%--$j('#sampleKitUploadRackscanMismatch-' + sampleId).html('<img src="${ctxpath}/images/error.png" title="Yes"/>');--%>
+        <%--}--%>
 
-        if (sampleData[x].completelyBilled) {
-            $j('#completelyBilled-' + sampleId).html('<img src="${ctxpath}/images/check.png" title="Yes"/>');
-        }
+        <%--if (sampleData[x].completelyBilled) {--%>
+            <%--$j('#completelyBilled-' + sampleId).html('<img src="${ctxpath}/images/check.png" title="Yes"/>');--%>
+        <%--}--%>
 
-        bspDataCount--;
-    }
+        <%--bspDataCount--;--%>
+    <%--}--%>
 
     if (bspDataCount < 1) {
-        var oTable = $j('#sampleData').dataTable({
-            "oTableTools": ttExportDefines,
-            "aaSorting": [
-                [1, 'asc']
-            ],
-            "aoColumns": [
-                {"bSortable": false},                           // Checkbox
-                {"bSortable": true, "sType": "numeric"},        // Position
-                {"bSortable": true, "sType": "html"},           // ID
-                {"bSortable": true},                            // Collaborator Sample ID
-                {"bSortable": true},                            // Participant ID
-                {"bSortable": true},                            // Collaborator Participant ID
-                {"bSortable": true, "sType": "numeric"},        // Shipped Date
-                {"bSortable": true, "sType": "numeric"},        // Received Date
-                {"bSortable": true},                            // Sample Type
-                {"bSortable": true},                            // Material Type
-                {"bSortable": true, "sType": "numeric"},        // Volume
-                {"bSortable": true, "sType": "numeric"},        // Concentration
 
-                <c:if test="${actionBean.supportsRin}">
-                {"bSortable": true, "sType": "numeric"},        // RIN
-                {"bSortable": true, "sType": "numeric"},        // RQS
-                {"bSortable": true, "sType": "numeric"},        // DV200
-                </c:if>
-
-                <c:if test="${actionBean.supportsPico}">
-                {"bSortable": true, "sType": "title-us-date"},  // Pico Run Date
-                </c:if>
-                {"bSortable": true, "sType": "numeric"},        // Yield Amount
-                {"bSortable": true},                            // sample kit upload/rackscan mismatch
-                {"bSortable": true},                            // On Risk
-                {"bSortable": false},                           // On Risk Details
-                {"bSortable": true},                            // Proceed OOS
-                {"bSortable": true},                            // Status
-                {"bSortable": true, "sType": "title-string"},   // is billed
-                {"bSortable": true}                             // Comment
-            ]
-        });
-
-        includeAdvancedFilter(oTable, "#sampleData");
         $j('.dataTables_filter input').clearable();
 
         oneYearAgo = new Date();
@@ -1502,7 +1479,7 @@ function formatInput(item) {
                     <th width="70">Last Pico Run Date</th>
                 </c:if>
                 <th width="40">Yield Amount</th>
-                <th width="60"><abbr title="Sample Kit Upload/Rackscan Mismatch">Rackscan Mismatch</abbr></th>
+                <th width="60"><abbr title="Sample Kit Uploa d/Rackscan Mismatch">Rackscan Mismatch</abbr></th>
                 <th>On Risk</th>
                 <th style="display:none;">On Risk Details</th>
                 <th>Proceed OOS</th>
@@ -1537,9 +1514,9 @@ function formatInput(item) {
                             </c:otherwise>
                         </c:choose>
                     </td>
-                    <td id="collab-sample-${sample.productOrderSampleId}"></td>
-                    <td id="patient-${sample.productOrderSampleId}"></td>
-                    <td id="collab-patient-${sample.productOrderSampleId}"></td>
+                    <td id="collab-sample-${sample.productOrderSampleId}">${sample.sampleData.collaboratorsSampleName}</td>
+                    <td id="patient-${sample.productOrderSampleId}">${sample.sampleData.patientId}</td>
+                    <td id="collab-patient-${sample.productOrderSampleId}">${sample.sampleData.collaboratorParticipantId}</td>
 
                     <td id="package-date-${sample.productOrderSampleId}">
                             ${sample.labEventSampleDTO.samplePackagedDate}
@@ -1548,15 +1525,15 @@ function formatInput(item) {
                             ${sample.formattedReceiptDate}
                     </td>
 
-                    <td id="sample-type-${sample.productOrderSampleId}"></td>
-                    <td id="material-type-${sample.productOrderSampleId}"></td>
-                    <td id="volume-${sample.productOrderSampleId}"></td>
-                    <td id="concentration-${sample.productOrderSampleId}"></td>
+                    <td id="sample-type-${sample.productOrderSampleId}">${sample.sampleData.sampleType}</td>
+                    <td id="material-type-${sample.productOrderSampleId}">${sample.latestMaterialType}</td>
+                    <td id="volume-${sample.productOrderSampleId}">${sample.sampleData.volume}</td>
+                    <td id="concentration-${sample.productOrderSampleId}">${sample.sampleData.concentration}</td>
 
                     <c:if test="${actionBean.supportsRin}">
-                        <td id="rin-${sample.productOrderSampleId}"></td>
-                        <td id="rqs-${sample.productOrderSampleId}"></td>
-                        <td id="dv200-${sample.productOrderSampleId}"></td>
+                        <td id="rin-${sample.productOrderSampleId}">${sample.sampleData.rawRin}</td>
+                        <td id="rqs-${sample.productOrderSampleId}">${sample.sampleData.rqs}</td>
+                        <td id="dv200-${sample.productOrderSampleId}">${sample.sampleData.dv200}</td>
                     </c:if>
 
                     <c:if test="${actionBean.supportsPico}">
@@ -1566,9 +1543,9 @@ function formatInput(item) {
                         </td>
                     </c:if>
 
-                    <td id="total-${sample.productOrderSampleId}"></td>
-                    <td id="sampleKitUploadRackscanMismatch-${sample.productOrderSampleId}" style="text-align: center">
-                    </td>
+                    <td id="total-${sample.productOrderSampleId}">${sample.sampleData.total}</td>
+                    <td id="sampleKitUploadRackscanMismatch-${sample.productOrderSampleId}"
+                        style="text-align: center">${sample.sampleData.hasSampleKitUploadRackscanMismatch} </td>
                     <td style="text-align: center">
                         <c:if test="${sample.onRisk}">
                             <div class="onRisk" title="On Risk Details for ${sample.name}" rel="popover" data-trigger="hover" data-placement="left" data-html="true" data-content="<div style='text-align: left'>${sample.riskString}</div>">
@@ -1579,7 +1556,7 @@ function formatInput(item) {
                     <td id="onRiskDetails-${sample.productOrderSampleId}" style="display:none;">${sample.riskString}</td>
                     <td>${sample.proceedIfOutOfSpec.displayName}</td>
                     <td>${sample.deliveryStatus.displayName}</td>
-                    <td id="completelyBilled-${sample.productOrderSampleId}" style="text-align: center"></td>
+                    <td id="completelyBilled-${sample.productOrderSampleId}" style="text-align: center">${sample.completelyBilled}</td>
                     <td>${sample.sampleComment}</td>
                 </tr>
             </c:forEach>
