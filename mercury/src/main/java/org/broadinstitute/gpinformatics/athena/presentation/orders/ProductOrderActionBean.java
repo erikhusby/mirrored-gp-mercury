@@ -54,7 +54,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryIn
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
-import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderCompletionStatus;
@@ -122,9 +121,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeDefinition;
 import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
-import org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.hibernate.Hibernate;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -149,8 +146,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver.SAVE_SEARCH_DATA;
 
 /**
  * This handles all the needed interface processing elements.
@@ -198,19 +193,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String KIT_DEFINITION_INDEX = "kitDefinitionQueryIndex";
     private static final String COULD_NOT_LOAD_SAMPLE_DATA = "Could not load sample data";
     private String sampleSummary;
-    private List<String> sampleColumns = Arrays.asList(
-            BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID.columnName(),
-            BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID.columnName(),
-            BSPSampleSearchColumn.PARTICIPANT_ID.columnName(),
-            BSPSampleSearchColumn.VOLUME.columnName(),
-            BSPSampleSearchColumn.RECEIPT_DATE.columnName(),
-            BSPSampleSearchColumn.PICO_RUN_DATE.columnName(),
-            BSPSampleSearchColumn.TOTAL_DNA.columnName(),
-            BSPSampleSearchColumn.CONCENTRATION.columnName(),
-            BSPSampleSearchColumn.MATERIAL_TYPE.columnName(), BSPSampleSearchColumn.RACKSCAN_MISMATCH.columnName(),
-            "On Risk",
-            "Proceed OOS",
-            "Yield Amount");
 
     public ProductOrderActionBean() {
         super(CREATE_ORDER, EDIT_ORDER, PRODUCT_ORDER_PARAMETER);
@@ -416,9 +398,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     // Search uses product family list.
     private List<ProductFamily> productFamilies;
 
-    @Inject
-    DatatablesStateSaver preferenceSaver;
-    String tableState="";
 
     @Inject
     private LabVesselDao labVesselDao;
@@ -514,11 +493,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             projectRegulatoryMap.put(project.getTitle(), project.getRegulatoryInfos());
         }
         return projectRegulatoryMap;
-    }
-
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, SAVE_SEARCH_DATA})
-    public void initPreferenceSaver(){
-        preferenceSaver.setPreferenceType(PreferenceType.PRODUCT_ORDER_PREFERENCES);
     }
 
     /**
@@ -730,10 +704,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                     final int numDaysBetween =
                             DateUtils.getNumDaysBetween(new Date(), funding.getGrantEndDate());
                     if(numDaysBetween > 0 && numDaysBetween < 45) {
-                        addMessage("The Funding Source "+funding.getDisplayName()+" on " +
-                                   quote.getAlphanumericId() + "  Quote expires in " + numDaysBetween +
-                                   " days. If it is likely this work will not be completed by then, please work on "
-                                   + "updating the Funding Source so Billing Errors can be avoided.");
+                        addMessage("The grant " + funding.getDisplayName() + " for " + quote.getAlphanumericId() +
+                                   " expires in " + numDaysBetween + " days");
                     }
                 }
             }
@@ -746,8 +718,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         } catch (QuoteNotFoundException e) {
             addGlobalValidationError("The quote ''{2}'' was not found ", quoteId);
         } catch (InvalidProductException e) {
-            addGlobalValidationError("Unable to determine the existing value of open orders for " +
-                                     quote.getAlphanumericId() +": " +e.getMessage());
+            addGlobalValidationError(e.getMessage());
         }
 
         if (editOrder != null) {
@@ -898,22 +869,17 @@ public class ProductOrderActionBean extends CoreActionBean {
     double getOrderValue(ProductOrder testOrder, int sampleCount, Quote quote) throws InvalidProductException {
         double value = 0d;
         if(testOrder.getProduct() != null) {
-            try {
-                final Product product = testOrder.getProduct();
-                double productValue =
-                        getProductValue((product.getSupportsNumberOfLanes())?testOrder.getLaneCount():sampleCount, product,
+            final Product product = testOrder.getProduct();
+            double productValue =
+                    getProductValue((product.getSupportsNumberOfLanes())?testOrder.getLaneCount():sampleCount, product,
+                            quote);
+            value += productValue;
+            for (ProductOrderAddOn testOrderAddon : testOrder.getAddOns()) {
+                final Product addOn = testOrderAddon.getAddOn();
+                double addOnValue =
+                        getProductValue((addOn.getSupportsNumberOfLanes())?testOrder.getLaneCount():sampleCount, addOn,
                                 quote);
-                value += productValue;
-                for (ProductOrderAddOn testOrderAddon : testOrder.getAddOns()) {
-                    final Product addOn = testOrderAddon.getAddOn();
-                    double addOnValue =
-                            getProductValue((addOn.getSupportsNumberOfLanes())?testOrder.getLaneCount():sampleCount, addOn,
-                                    quote);
-                    value += addOnValue;
-                }
-            } catch (InvalidProductException e) {
-                throw new InvalidProductException("For " + testOrder.getBusinessKey() + ": " + testOrder.getName() +
-                " " + e.getMessage(), e);
+                value += addOnValue;
             }
         }
         return value;
@@ -1560,8 +1526,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
         } catch (QuoteNotFoundException e) {
             addGlobalValidationError("The quote ''{2}'' was not found ", editOrder.getQuoteId());
-        } catch (InvalidProductException ipe) {
-            addGlobalValidationError("Unable to determine the existing value of open orders for " + editOrder.getQuoteId() +": " +ipe.getMessage());
         }
         if (chipDefaults != null && attributes != null) {
             if (!chipDefaults.equals(attributes)) {
@@ -2197,23 +2161,10 @@ public class ProductOrderActionBean extends CoreActionBean {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
         } catch (QuoteNotFoundException e) {
             addGlobalValidationError("The quote ''{2}'' was not found ", editOrder.getQuoteId());
-        } catch (InvalidProductException e) {
-            addGlobalValidationError("Unable to determine the existing value of open orders for " + editOrder.getQuoteId() +": " +e.getMessage());
         }
     }
 
-    private void testForPriceItemValidity(ProductOrder editOrder) {
-        if(productOrderEjb.arePriceItemsValid(editOrder, new HashSet<AccessItem>())) {
-            final String errorMessage = "One of the price items on this orders products is invalid";
-            if(editOrder.isSavedInSAP()) {
-                addGlobalValidationError(errorMessage);
-            } else {
-                addMessage(errorMessage);
-            }
-        }
-    }
-
-    @HandlesEvent(ADD_SAMPLES_ACTION)
+        @HandlesEvent(ADD_SAMPLES_ACTION)
     public Resolution addSamples() throws Exception {
         List<ProductOrderSample> samplesToAdd = stringToSampleList(addSamplesText);
         try {
@@ -3134,22 +3085,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.replacementSampleList = replacementSampleList;
     }
 
-    public DatatablesStateSaver getPreferenceSaver() {
-        return preferenceSaver;
-    }
-
-    public void setPreferenceSaver(DatatablesStateSaver preferenceSaver) {
-        this.preferenceSaver = preferenceSaver;
-    }
-
-    public String getTableState() {
-        return tableState;
-    }
-
-    public void setTableState(String tableState) {
-        this.tableState = tableState;
-    }
-
     public static JSONObject buildOrspJsonObject(JSONObject orspProject, Set<String> samples,
                                                  Set<String> sampleCollections) throws JSONException
     {
@@ -3164,18 +3099,4 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void setPriceListCache(PriceListCache priceListCache) {
         this.priceListCache = priceListCache;
     }
-
-
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-
-    @HandlesEvent(SAVE_SEARCH_DATA)
-    public Resolution saveSearchData() throws Exception {
-        preferenceSaver.saveTableData(tableState);
-        return new StreamingResolution("application/json", preferenceSaver.getTableStateJson());
-    }
-
-    public boolean showColumn(String columnName) {
-        return preferenceSaver.showColumn(columnName);
-    }
-
 }
