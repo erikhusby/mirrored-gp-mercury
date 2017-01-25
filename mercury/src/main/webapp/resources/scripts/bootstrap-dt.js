@@ -51,7 +51,7 @@ $j.extend(true, $j.fn.dataTable.defaults, {
 });
 if (isLegacyDataTables()) {
     $j.extend(true, $j.fn.dataTable.defaults, {
-        'sDom': "<'row-fluid'<'span6'f><'span4'T><'span2'ir>>t<'row-fluid'<'span6'l><'span6'p>>"
+        'sDom': "<'row-fluid'<'span6'f><'span4'T><'span2'ir>>t<'row-fluid'<'span6'l><'span6'p>>",
     });
 }
 
