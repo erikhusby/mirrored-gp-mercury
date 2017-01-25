@@ -191,7 +191,7 @@
                 <c:set var="nestedTable" value="${resultRow.nestedTables[tableName]}"/>
                 <tr ${status.index%2==0 ? "class=\"even\"" : "class=\"odd\""}>
                     <td>&nbsp;</td>
-                    <td style="padding-left: 6px;" colspan="${nestedTable.headers.size() + 1}">
+                    <td style="padding-left: 6px;" colspan="${resultList.headers.size()}">
                         <c:set var="nestedTable" value="${nestedTable}" scope="request"/>
                         <jsp:include page="nested_table.jsp"/>
                      </td>
