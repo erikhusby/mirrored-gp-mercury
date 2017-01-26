@@ -1185,4 +1185,51 @@ public class ReagentFixupTest extends Arquillian {
         utx.commit();
     }
 
+    @Test(enabled = false)
+    public void support2453CrspSeqReagentFixup() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        Reagent peKitIncorrect = genericReagentDao.findByReagentNameLotExpiration("TruSeq Rapid PE Cluster Kit",
+                "RGT8269110", new GregorianCalendar(2017, Calendar.JULY, 11).getTime());
+        Assert.assertNotNull(peKitIncorrect);
+
+        Reagent peKitActual = genericReagentDao.findByReagentNameLotExpiration("TruSeq Rapid PE Cluster Kit",
+                "16J13A0022", new GregorianCalendar(2017, Calendar.JULY, 11).getTime());
+        Assert.assertNotNull(peKitActual);
+
+        Reagent sbsKit1Incorrect = genericReagentDao.findByReagentNameLotExpiration("TruSeq Rapid SBS Kit",
+                "RGT8133446", new GregorianCalendar(2017, Calendar.JULY, 31).getTime());
+        Assert.assertNotNull(sbsKit1Incorrect);
+
+        Reagent sbsKit1Actual = genericReagentDao.findByReagentNameLotExpiration("TruSeq Rapid SBS Kit",
+                "16J13A0024", new GregorianCalendar(2017, Calendar.JULY, 31).getTime());
+        Assert.assertNotNull(sbsKit1Actual);
+
+        Reagent sbsKit2Incorrect = genericReagentDao.findByReagentNameLotExpiration("TruSeq Rapid SBS Kit Box 2 of 2",
+                "RGT8229077", new GregorianCalendar(2017, Calendar.AUGUST, 11).getTime());
+        Assert.assertNotNull(sbsKit2Incorrect);
+
+        Reagent sbsKit2Actual = genericReagentDao.findByReagentNameLotExpiration("TruSeq Rapid SBS Kit Box 2 of 2",
+                "16J13A0023", new GregorianCalendar(2017, Calendar.AUGUST, 11).getTime());
+        Assert.assertNotNull(sbsKit2Actual);
+
+
+        List<Long> labEventIds = Arrays.asList(1831151L, 1831152L);
+        for (Long labEventId: labEventIds) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, labEventId);
+            Assert.assertEquals(labEvent.getLabEventType(), LabEventType.DILUTION_TO_FLOWCELL_TRANSFER);
+            Assert.assertNotNull(labEvent.removeLabEventReagent(peKitIncorrect));
+            Assert.assertNotNull(labEvent.removeLabEventReagent(sbsKit1Incorrect));
+            Assert.assertNotNull(labEvent.removeLabEventReagent(sbsKit2Incorrect));
+            labEvent.addReagent(peKitActual);
+            labEvent.addReagent(sbsKit1Actual);
+            labEvent.addReagent(sbsKit2Actual);
+        }
+
+        genericReagentDao.persist(new FixupCommentary("SUPPORT-2496 change to correct lots."));
+        genericReagentDao.flush();
+        utx.commit();
+    }
+
 }
