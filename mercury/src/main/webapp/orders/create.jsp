@@ -1253,6 +1253,17 @@
                 </div>
 
                 <c:if test="${actionBean.infinium}">
+                    <div class="control-group">
+                        <stripes:label for="pipelineLocation" class="control-label">Pipeline Location</stripes:label>
+                        <div class="controls">
+                            <stripes:select name="editOrder.pipelineLocation">
+                                <stripes:options-enumeration
+                                        enum="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.PipelineLocation"
+                                        label="displayName"/>
+                            </stripes:select>
+                        </div>
+                    </div>
+
                     <c:forEach items="${actionBean.attributes}" var="item">
                         <div class="control-group">
                             <stripes:label for="attributes[${item.key}]" class="control-label">

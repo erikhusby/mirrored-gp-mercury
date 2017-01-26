@@ -225,6 +225,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @JoinColumn(name="PARENT_PRODUCT_ORDER")
     private ProductOrder parentOrder;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "PIPELINE_LOCATION", nullable = true)
+    private PipelineLocation pipelineLocation;
+
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.
      */
@@ -1391,6 +1395,22 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
     }
 
+    public enum PipelineLocation implements StatusType {
+        US_CLOUD("US Cloud"),
+        ON_PREMISES("On Premises");
+
+        private String displayName;
+
+        PipelineLocation(String displayName) {
+            this.displayName = displayName;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return displayName;
+        }
+    }
+
     public static class JiraOrId {
         @Nullable
         public final String jiraTicketKey;
@@ -1914,5 +1934,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         this.sapReferenceOrders.add(orderDetail);
         orderDetail.setReferenceProductOrder(this);
 
+    }
+
+    public PipelineLocation getPipelineLocation() {
+        return pipelineLocation;
+    }
+
+    public void setPipelineLocation(
+            PipelineLocation pipelineLocation) {
+        this.pipelineLocation = pipelineLocation;
     }
 }
