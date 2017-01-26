@@ -258,7 +258,7 @@ $j.extend( $j.fn.dataTableExt.oPagination, {
                     $j('li:first', an[i]).removeClass('disabled');
                 }
 
-                if ( oPaging.iPage === oPaging.iTotalPages-1 || oPaging.iTotalPages <= 0 ) {
+                if ( oPaging.iPage === oPaging.iTotalPages-1 || oPaging.iTotalPages === 0 ) {
                     $j('li:last', an[i]).addClass('disabled');
                 } else {
                     $j('li:last', an[i]).removeClass('disabled');
