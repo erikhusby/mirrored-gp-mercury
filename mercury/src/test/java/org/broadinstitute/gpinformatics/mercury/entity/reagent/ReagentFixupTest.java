@@ -1186,7 +1186,7 @@ public class ReagentFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
-    public void support2453CrspSeqReagentFixup() throws Exception {
+    public void support2496FixupWrongSeqReagents() throws Exception {
         userBean.loginOSUser();
         utx.begin();
 
