@@ -10,9 +10,15 @@
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"/>
 
 <stripes:layout-render name="/layout.jsp" pageTitle="View Product Order: ${actionBean.editOrder.title}"
-                       dataTablesVersion="1.10" sectionTitle="View Product Order: ${actionBean.editOrder.title}"
+                       dataTablesVersion="1.10" withColVis="true"
+                       sectionTitle="View Product Order: ${actionBean.editOrder.title}"
                        businessKeyValue="${actionBean.editOrder.businessKey}">
 <stripes:layout-component name="extraHead">
+    <style type="text/css">
+        .toggleSampleData {
+
+        }
+    </style>
 <script type="text/javascript">
 var kitDefinitionIndex = 0;
 $j(document).ready(function () {
@@ -38,36 +44,50 @@ $j(document).ready(function () {
         showKitDetail();
     }
     enableDefaultPagingOptions();
+    sampleColumns = {
+        'text': 'Toggle Sample Data',
+        'extend': 'colvisGroup',
+        'columns':  '.sampleData',
+        action: function (e, dt, button, conf) {
+            showHide = dt.columns(conf.columns).visible().lastIndexOf(true) < 0;
+            conf.text = showHide ? "Hide Sample Data" : "Show Sample Data";
+            $j(button).prop('text', conf.text);
+            dt.columns(conf.columns).visible(showHide,false);
+            dt.columns.adjust();
+        }
+    };
     var oTable = $j('#sampleData').dataTable({
+        'sDom': "<'row-fluid'<'span9'f><'span3'irB>>t<'row-fluid'<'span6'l><'span6'p>>",
         'iDisplayLength': 25,
         "bDeferRender": true,
         "aaSorting": [
             [1, 'asc']
         ],
+        buttons: [sampleColumns, "copy", "csv", "print"],
         "aoColumns": [
             {"bSortable": false},                           // Checkbox
-            {"bSortable": true, "sType": "numeric"},        // Position
+            {"bSortable": true},        // Position
             {"bSortable": true, "sType": "html"},           // ID
             {"bSortable": true},                            // Collaborator Sample ID
             {"bSortable": true},                            // Participant ID
             {"bSortable": true},                            // Collaborator Participant ID
-            {"bSortable": true, "sType": "numeric"},        // Shipped Date
-            {"bSortable": true, "sType": "numeric"},        // Received Date
+            {"bSortable": true},        // Shipped Date
+            {"bSortable": true},        // Received Date
             {"bSortable": true},                            // Sample Type
             {"bSortable": true},                            // Material Type
-            {"bSortable": true, "sType": "numeric"},        // Volume
-            {"bSortable": true, "sType": "numeric"},        // Concentration
+            {"bSortable": true},        // Volume
+            {"bSortable": true},        // Concentration
 
             <c:if test="${actionBean.supportsRin}">
-            {"bSortable": true, "sType": "numeric"},        // RIN
-            {"bSortable": true, "sType": "numeric"},        // RQS
-            {"bSortable": true, "sType": "numeric"},        // DV200
+            {"bSortable": true},        // RIN
+            {"bSortable": true},        // RQS
+            {"bSortable": true},        // DV200
             </c:if>
 
             <c:if test="${actionBean.supportsPico}">
             {"bSortable": true, "sType": "title-us-date"},  // Pico Run Date
             </c:if>
-            {"bSortable": true, "sType": "numeric"},        // Yield Amount
+            {"bSortable": true},        // Yield Amount
             {"bSortable": true},                            // sample kit upload/rackscan mismatch
             {"bSortable": true},                            // On Risk
             {"bSortable": false},                           // On Risk Details
@@ -81,12 +101,12 @@ $j(document).ready(function () {
             var $api = $j.fn.dataTable.Api(settings);
 
             // If the sampleData columns are hidden, then check the hideSampleData checkbox.
-            $j("#hideSampleData").prop('checked', $j('.sampleData').length == 0);
+//            $j("#hideSampleData").prop('checked', $j('.sampleData').length == 0);
 
             // Add event handler on checkbox to show or hide sample data when clicked.
-            $j("#hideSampleData").on('click', function () {
-                $api.columns('.sampleData').visible(!$j(this).is(":checked"));
-            });
+//            $j("#hideSampleData").on('click', function () {
+//                $api.columns('.sampleData').visible(!$j(this).is(":checked"));
+//            });
             function imageForBoolean(selector, image) {
                 var nodes = $api.column(selector).nodes();
                 for (i = 0; i < nodes.length; i++) {
@@ -1402,9 +1422,6 @@ function formatInput(item) {
     <div id="summaryId" class="fourcolumn" style="margin-bottom:5px;">
         <img src="${ctxpath}/images/spinner.gif" alt="spinner"/>
     </div>
-    <label for="hideSampleData"><input type="checkbox" id="hideSampleData" style="font-weight: bold; margin-left:7px;">Hide
-        Sample Data</label>
-
 
     <c:if test="${not empty actionBean.editOrder.samples}">
         <table id="sampleData" class="table simple">
