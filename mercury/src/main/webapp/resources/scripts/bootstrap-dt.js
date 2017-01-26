@@ -30,13 +30,13 @@ function enableDefaultPagingOptions(){
         "bLengthChange": true,
         "sPaginationType": 'bootstrap',
     });
-    $j.fn.dataTable.defaults.aLengthMenu = [[50, 100, 200, 400, -1], [50, 100, 200, 400, "All"]];
+    $j.fn.dataTable.defaults.aLengthMenu = [[25, 50, 100, 200, 400, -1], [25, 50, 100, 200, 400, "All"]];
 }
 /**
  *  Set the defaults for DataTables initialization
  */
 $j.extend(true, $j.fn.dataTable.defaults, {
-    'sDom': "<'row-fluid'<'span6'f><'span4'B><'span2'ir>>t<'row-fluid'<'span6'l><'span6'p>>",
+    'sDom': "<'row-fluid'<'span10'f><'span2'irB>>t<'row-fluid'<'span6'l><'span6'p>>",
     "bAutoWidth": false,
     "bInfo": false,
     "bStateSave": true,
@@ -152,6 +152,10 @@ $j.fn.dataTableExt.oApi.fnPagingInfo = function ( oSettings ) {
 $j.extend( $j.fn.dataTableExt.oPagination, {
     "bootstrap": {
         "fnInit": function( oSettings, nPaging, fnDraw ) {
+            var oPaging = oSettings.oInstance.fnPagingInfo();
+            if (oPaging.iTotalPages < 0) {
+                return;
+            }
             var oLang = oSettings.oLanguage.oPaginate;
             var fnClickHandler = function ( e ) {
                 e.preventDefault();
@@ -172,8 +176,11 @@ $j.extend( $j.fn.dataTableExt.oPagination, {
         },
 
         "fnUpdate": function ( oSettings, fnDraw ) {
-            var iListLength = 5;
             var oPaging = oSettings.oInstance.fnPagingInfo();
+            if (oPaging.iTotalPages < 0){
+                return;
+            }
+            var iListLength = 5;
             var an = oSettings.aanFeatures.p;
             var i, j, sClass, iStart, iEnd, iHalf=Math.floor(iListLength/2);
 
@@ -194,12 +201,12 @@ $j.extend( $j.fn.dataTableExt.oPagination, {
 
             for ( i=0, iLen=an.length ; i<iLen ; i++ ) {
                 // Remove the middle elements
-                $('li:gt(0)', an[i]).filter(':not(:last)').remove();
+                $j('li:gt(0)', an[i]).not(':last').remove();
 
                 // Add the new list items and their event handlers
                 for ( j=iStart ; j<=iEnd ; j++ ) {
                     sClass = (j==oPaging.iPage+1) ? 'class="active"' : '';
-                    $('<li '+sClass+'><a href="#">'+j+'</a></li>')
+                    $j('<li '+sClass+'><a href="#">'+j+'</a></li>')
                         .insertBefore( $('li:last', an[i])[0] )
                         .bind('click', function (e) {
                             e.preventDefault();
@@ -215,7 +222,7 @@ $j.extend( $j.fn.dataTableExt.oPagination, {
                     $j('li:first', an[i]).removeClass('disabled');
                 }
 
-                if ( oPaging.iPage === oPaging.iTotalPages-1 || oPaging.iTotalPages === 0 ) {
+                if ( oPaging.iPage === oPaging.iTotalPages-1 || oPaging.iTotalPages <= 0 ) {
                     $j('li:last', an[i]).addClass('disabled');
                 } else {
                     $j('li:last', an[i]).removeClass('disabled');

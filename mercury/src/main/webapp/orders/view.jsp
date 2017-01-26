@@ -10,7 +10,7 @@
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"/>
 
 <stripes:layout-render name="/layout.jsp" pageTitle="View Product Order: ${actionBean.editOrder.title}"
-                       sectionTitle="View Product Order: ${actionBean.editOrder.title}"
+                       dataTablesVersion="1.10" sectionTitle="View Product Order: ${actionBean.editOrder.title}"
                        businessKeyValue="${actionBean.editOrder.businessKey}">
 <stripes:layout-component name="extraHead">
 <script type="text/javascript">
@@ -20,7 +20,7 @@ $j(document).ready(function () {
     updateFundsRemaining();
     setupDialogs();
 
-    showSummary(${actionBean.summary})
+    showSummary();
     // Only show the fill kit detail information for sample initiation PDOs. With the collaboration portal, there
     // can be kit definitions but since that is all automated, we do not want to show that. It is fairly irrelevant
     // after the work request happens. Adding a work request id field to the UI when there is a work request with
@@ -39,8 +39,8 @@ $j(document).ready(function () {
     }
     enableDefaultPagingOptions();
     var oTable = $j('#sampleData').dataTable({
-        "oTableTools": ttExportDefines,
-        "iDisplayLength": 50,
+        'iDisplayLength': 25,
+        "bDeferRender": true,
         "aaSorting": [
             [1, 'asc']
         ],
@@ -75,14 +75,40 @@ $j(document).ready(function () {
             {"bSortable": true},                            // Status
             {"bSortable": true, "sType": "title-string"},   // is billed
             {"bSortable": true}                             // Comment
-        ]
+        ],
+        "preDrawCallback": function (settings) {
+            let i;
+            var $api = $j.fn.dataTable.Api(settings);
+
+            // If the sampleData columns are hidden, then check the hideSampleData checkbox.
+            $j("#hideSampleData").prop('checked', $j('.sampleData').length == 0);
+
+            // Add event handler on checkbox to show or hide sample data when clicked.
+            $j("#hideSampleData").on('click', function () {
+                $api.columns('.sampleData').visible(!$j(this).is(":checked"));
+            });
+            function imageForBoolean(selector, image) {
+                var nodes = $api.column(selector).nodes();
+                for (i = 0; i < nodes.length; i++) {
+                    var $cell = $j(nodes[i]);
+                    if ($cell.text().trim() === 'true') {
+                        $cell.html('<img src="'+image+'" title="Yes"/>');
+                    }else{
+                        $cell.empty();
+                    }
+                }
+                return nodes;
+            }
+
+            imageForBoolean(".rackscanMismatch", "${ctxpath}/images/error.png");
+            imageForBoolean(".completelyBilled", "${ctxpath}/images/check.png");
+        }
     });
 
     includeAdvancedFilter(oTable, "#sampleData");
 
     $j('#orderList').dataTable({
         "bPaginate": false,
-        "oTableTools": ttExportDefines
     });
 
     bspDataCount = $j(".sampleName").length;
@@ -338,46 +364,12 @@ function setupDialogs() {
 
 showSamples();
 function showSamples(sampleData) {
-    <%--for (var x = 0; x < sampleData.length; x++) {--%>
-
-        <%--var sampleId = sampleData[x].sampleId;--%>
-
-        <%--$j('#collab-sample-' + sampleId).text(sampleData[x].collaboratorSampleId);--%>
-        <%--$j('#patient-' + sampleId).text(sampleData[x].patientId);--%>
-        <%--$j('#collab-patient-' + sampleId).text(sampleData[x].collaboratorParticipantId);--%>
-        <%--$j('#volume-' + sampleId).text(sampleData[x].volume);--%>
-        <%--$j('#sample-type-' + sampleId).text(sampleData[x].sampleType);--%>
-        <%--$j('#material-type-' + sampleId).text(sampleData[x].materialType);--%>
-        <%--$j('#concentration-' + sampleId).text(sampleData[x].concentration);--%>
-        <%--$j('#rin-' + sampleId).text(sampleData[x].rin);--%>
-        <%--$j('#rqs-' + sampleId).text(sampleData[x].rqs);--%>
-        <%--$j('#dv200-' + sampleId).text(sampleData[x].dv200);--%>
-        <%--$j('#total-' + sampleId).text(sampleData[x].total);--%>
-        <%--$j('#picoDate-' + sampleId).text(sampleData[x].picoDate);--%>
-        <%--$j('#picoDate-' + sampleId).attr("title", sampleData[x].picoDate);--%>
-
-
-        <%--if (sampleData[x].hasSampleKitUploadRackscanMismatch) {--%>
-            <%--$j('#sampleKitUploadRackscanMismatch-' + sampleId).html('<img src="${ctxpath}/images/error.png" title="Yes"/>');--%>
-        <%--}--%>
-
-        <%--if (sampleData[x].completelyBilled) {--%>
-            <%--$j('#completelyBilled-' + sampleId).html('<img src="${ctxpath}/images/check.png" title="Yes"/>');--%>
-        <%--}--%>
-
-        <%--bspDataCount--;--%>
-    <%--}--%>
-
     if (bspDataCount < 1) {
-
         $j('.dataTables_filter input').clearable();
-
         oneYearAgo = new Date();
         oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-
         almostOneYearAgo = new Date(oneYearAgo);
         almostOneYearAgo.setMonth(oneYearAgo.getMonth() + 1);
-
         $j('.picoRunDate').each(getHighlightClass);
     }
 }
@@ -424,7 +416,8 @@ function updateFunds(data) {
     }
 }
 
-function showSummary(data) {
+function showSummary() {
+    var data = ${actionBean.summary};
     var dataList = '<ul>';
     data.map(function (item) {
         dataList += '<li>' + item.comment + '</li>'
@@ -1396,12 +1389,14 @@ function formatInput(item) {
             <stripes:button name="setProceedOos" value="Set Proceed OOS" class="btn"
                     style="margin-left:5px;" onclick="showProceedOosDialog()"/>
         </security:authorizeBlock>
-
     </div>
 
     <div id="summaryId" class="fourcolumn" style="margin-bottom:5px;">
         <img src="${ctxpath}/images/spinner.gif" alt="spinner"/>
     </div>
+    <label for="hideSampleData"><input type="checkbox" id="hideSampleData" style="font-weight: bold; margin-left:7px;">Hide
+        Sample Data</label>
+
 
     <c:if test="${not empty actionBean.editOrder.samples}">
         <table id="sampleData" class="table simple">
@@ -1416,29 +1411,30 @@ function formatInput(item) {
                 <th width="110">Collaborator Sample ID</th>
                 <th width="60">Participant ID</th>
                 <th width="110">Collaborator Participant ID</th>
-                <th width="40">Shipped Date</th>
-                <th width="40">Received Date</th>
-                <th width="40">Sample Type</th>
-                <th width="40">Material Type</th>
-                <th width="40">Volume</th>
-                <th width="40">Concentration</th>
+                <th class="sampleData" width="40">Shipped Date</th>
+                <th class="sampleData" width="40">Received Date</th>
+                <th class="sampleData" width="40">Sample Type</th>
+                <th class="sampleData" width="40">Material Type</th>
+                <th class="sampleData" width="40">Volume</th>
+                <th class="sampleData" width="40">Concentration</th>
 
                 <c:if test="${actionBean.supportsRin}">
-                    <th width="40">RIN</th>
-                    <th width="40">RQS</th>
-                    <th width="40">DV200</th>
+                    <th class="sampleData" width="40">RIN</th>
+                    <th class="sampleData" width="40">RQS</th>
+                    <th class="sampleData" width="40">DV200</th>
                 </c:if>
 
                 <c:if test="${actionBean.supportsPico}">
-                    <th width="70">Last Pico Run Date</th>
+                    <th class="sampleData" width="70">Last Pico Run Date</th>
                 </c:if>
-                <th width="40">Yield Amount</th>
-                <th width="60"><abbr title="Sample Kit Uploa d/Rackscan Mismatch">Rackscan Mismatch</abbr></th>
-                <th>On Risk</th>
-                <th style="display:none;">On Risk Details</th>
-                <th>Proceed OOS</th>
+                <th class="sampleData" width="40">Yield Amount</th>
+                <th class="sampleData rackscanMismatch" width="60"><abbr title="Sample Kit Upload/Rackscan Mismatch">Rackscan
+                    Mismatch</abbr></th>
+                <th class="sampleData">On Risk</th>
+                <th class="sampleData" style="display:none;">On Risk Details</th>
+                <th class="sampleData">Proceed OOS</th>
                 <th width="40">Status</th>
-                <th width="40">Billed</th>
+                <th class="completelyBilled" width="40">Billed</th>
                 <th width="200">Comment</th>
             </tr>
             </thead>
