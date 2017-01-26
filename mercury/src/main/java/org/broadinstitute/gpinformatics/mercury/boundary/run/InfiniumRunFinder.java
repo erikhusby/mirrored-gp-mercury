@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.run;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
@@ -107,6 +108,11 @@ public class InfiniumRunFinder implements Serializable {
         if (!chipWellResults.isHasRunStarted() || chipWellResults.getScannerName() == null) {
             return;
         }
+        if (checkForInvalidPipelineLocation(staticPlate)) {
+            log.debug("Won't forward plate where its Pipeline location not set to US Cloud: " + staticPlate.getLabel());
+            createEvent(staticPlate, LabEventType.INFINIUM_AUTOCALL_ALL_STARTED, chipWellResults.getScannerName());
+            return;
+        }
         log.debug("Processing chip: " + staticPlate.getLabel());
         LabEvent someStartedEvent = findOrCreateSomeStartedEvent(staticPlate, chipWellResults.getScannerName());
         Set<LabEventMetadata> labEventMetadata = someStartedEvent.getLabEventMetadatas();
@@ -167,6 +173,25 @@ public class InfiniumRunFinder implements Serializable {
         if (allComplete && starterCalledOnAllWells) {
             createEvent(staticPlate, LabEventType.INFINIUM_AUTOCALL_ALL_STARTED, someStartedEvent.getEventLocation());
         }
+    }
+
+    /**
+     * Only want to send starter events for chips that are in US Cloud to prevent some samples like Danish Blood Spots
+     * to be sent to the cloud
+     * @return true if the pipeline location for any sample is not set to US Cloud or null
+     */
+    public boolean checkForInvalidPipelineLocation(StaticPlate staticPlate) {
+        for (SampleInstanceV2 sampleInstanceV2: staticPlate.getSampleInstancesV2()) {
+            // Ignore the controls assuming that some non-control sample will be present
+            if (sampleInstanceV2.getSingleBucketEntry() != null) {
+                ProductOrder productOrder = sampleInstanceV2.getSingleBucketEntry().getProductOrder();
+                if (productOrder.getPipelineLocation() == null ||
+                    productOrder.getPipelineLocation() != ProductOrder.PipelineLocation.US_CLOUD) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private boolean callStarterOnWell(StaticPlate staticPlate, VesselPosition vesselPosition) {
