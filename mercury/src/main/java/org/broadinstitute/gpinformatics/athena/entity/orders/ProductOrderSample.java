@@ -401,7 +401,9 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     @Override
     public void setSampleData(@Nonnull SampleData sampleData) {
         super.setSampleData(sampleData);
-        mercurySample.setSampleData(sampleData);
+        if (mercurySample != null) {
+            mercurySample.setSampleData(sampleData);
+        }
     }
 
     @Override
