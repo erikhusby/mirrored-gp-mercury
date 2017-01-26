@@ -72,68 +72,31 @@ $j(document).ready(function () {
         showKitDetail();
     }
     enableDefaultPagingOptions();
+    var oTable = $j('#sampleData').dataTable({
+        "oTableTools": ttExportDefines,
+        "iDisplayLength": 50,
+        "aaSorting": [
+            [1, 'asc']
+        ],
+        "aoColumns": [
+            {"bSortable": false},                           // Checkbox
+            {"bSortable": true, "sType": "numeric"},        // Position
+            {"bSortable": true, "sType": "html"},           // ID
+            {"bSortable": true},                            // Collaborator Sample ID
+            {"bSortable": true},                            // Participant ID
+            {"bSortable": true},                            // Collaborator Participant ID
+            {"bSortable": true, "sType": "numeric"},        // Shipped Date
+            {"bSortable": true, "sType": "numeric"},        // Received Date
+            {"bSortable": true},                            // Sample Type
+            {"bSortable": true},                            // Material Type
+            {"bSortable": true, "sType": "numeric"},        // Volume
+            {"bSortable": true, "sType": "numeric"},        // Concentration
 
-    function renderPico(data, type, row, meta) {
-        if (type === 'display') {
-            var $data = $j(data);
-            if (sampleData[x].hasSampleKitUploadRackscanMismatch) {
-                $j('#sampleKitUploadRackscanMismatch-' + sampleId).html('<img src="${ctxpath}/images/error.png" title="Yes"/>');
-            }
-        }
-        return data
-    }
-
-    function renderBilled(data, type, row, meta) {
-        if (type === 'display') {
-            if (data) {
-                return $j("<img/>", {src: "${ctxpath}/images/check.png", title: "Yes"})
-            }
-        }
-        return data;
-        <%--if (sampleData[x].completelyBilled) {--%>
-        <%--$j('#completelyBilled-' + sampleId).html('<img src="${ctxpath}/images/check.png" title="Yes"/>');--%>
-        <%--}--%>
-    }
-    var localStorageKey = 'DT_productOrderView';
-
-    if ($j("#sampleData tbody>tr").length > 0) {
-        var oTable = $j('#sampleData').dataTable({
-            'paging':true,
-            "scrollX": "940px",
-              "scrollCollapse": true,
-            "deferLoading": true,
-            'colReorder': true,
-            "stateSave": true,
-            "pageLength": 25,
-            'buttons': [{
-                'extend': 'colvis',
-                'text': "Show or Hide Columns",
-                'columns': ':gt(1)',
-                'prefixButtons': [{
-                    'extend': 'colvis', 'text': 'Show All',
-                    action: function (event, dt, node, config) {
-                        dt.columns(config.columns).visible(true);
-                    }
-                }],
-            }, standardButtons()],
-            "columns": [
-                {"orderable": false, 'class': 'no-min-width'},      // Checkbox
-                {"orderable": true, 'class': 'no-min-width'},       // Position
-                {"title": "${columnHeaderSampleId}", "orderable": true, "sType": "html"},
-                {"title": "${columnHeaderCollaboratorSampleId}", "orderable": true},
-                {"title": "${columnHeaderParticipantId}", "orderable": true},
-                {"title": "${columnHeaderCollaboratorParticipantId}", "orderable": true},
-                {"title": "${columnHeaderShippedDate}", "orderable": true},
-                {"title": "${columnHeaderReceivedDate}", "orderable": true},
-                {"title": "${columnHeaderSampleType}", "orderable": true},
-                {"title": "${columnHeaderMaterialType}", "orderable": true},
-                {"title": "${columnHeaderVolume}", "orderable": true},
-                {"title": "${columnHeaderConcentration}", "orderable": true},
-                <c:if test="${actionBean.supportsRin}">
-                {"title": "${columnHeaderRin}", "orderable": true},
-                {"title": "${columnHeaderRqs}", "orderable": true},
-                {"title": "${columnHeaderDv2000}", "orderable": true},
-                </c:if>
+            <c:if test="${actionBean.supportsRin}">
+            {"bSortable": true, "sType": "numeric"},        // RIN
+            {"bSortable": true, "sType": "numeric"},        // RQS
+            {"bSortable": true, "sType": "numeric"},        // DV200
+            </c:if>
 
                 <c:if test="${actionBean.supportsPico}"> {
                     "title": "${columnHeaderPicoRunDate}",
