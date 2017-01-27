@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import net.sourceforge.stripes.action.After;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
@@ -163,7 +162,7 @@ public class BucketViewActionBean extends CoreActionBean {
     }
     private Map<String, Boolean> headerVisibilityMap = new HashMap<>();
 
-    @After(stages = LifecycleStage.BindingAndValidation, on = VIEW_BUCKET_ACTION)
+    @Before(stages = LifecycleStage.BindingAndValidation, on = VIEW_BUCKET_ACTION)
     public void loadTableState() {
         try {
             NameValueDefinitionValue nameValueDefinitionValue = loadSearchData();

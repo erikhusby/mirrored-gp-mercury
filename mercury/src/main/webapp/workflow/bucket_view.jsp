@@ -184,8 +184,6 @@
                 $j(oTable.rows().nodes()).hide();
                 oTable.draw();
             }
-            $j('#bucketForm').append('<input type="hidden" name="viewBucket"  />');
-            $j('#bucketForm').submit();
         }
 
         function isBucketEmpty() {
@@ -389,7 +387,7 @@
                 $j(document.body).on("click", ".dt-button-background", function () {
                     var sessionVisibility = !undefined && $j("body").data(columnVisibilityKey) || false;
                     if (sessionVisibility) {
-                        submitBucket();
+                        $j("#bucketForm").submit();
                     }
                 });
             }
@@ -586,6 +584,7 @@
                     $j("#bucketEntryView").find("input[name='selectedEntryIds']:lt(" + batchSize + ")").click();
                 }
             })
+            $j("#bucketForm").on('submit', submitBucket)
         });
     </script>
 </stripes:layout-component>
@@ -596,8 +595,7 @@
                 <div class="control-group">
                     <stripes:label for="bucketselect" name="Select Bucket" class="control-label"/>
                     <div class="controls">
-                        <stripes:select id="bucketSelect" name="selectedBucket" onchange="submitBucket()">
-                            <stripes:param name="viewBucket"/>
+                        <stripes:select id="bucketSelect" name="selectedBucket" onchange="this.form.submit()">
                             <stripes:option value="">Select a Bucket</stripes:option>
                             <c:forEach items="${actionBean.mapBucketToBucketEntryCount.keySet()}" var="bucketName">
                             <c:set var="bucketCount" value="${actionBean.mapBucketToBucketEntryCount.get(bucketName)}"/>
@@ -686,7 +684,7 @@
                 <stripes:submit name="addToBatch" value="Add to Batch" class="btn bucket-control" disabled="true"/>
                 <stripes:submit name="removeFromBucket" value="Remove From Bucket" class="btn bucket-control"
                                 disabled="true"/>
-                <a href="#" id="cancel" onClick="submitBucket()" style="display: none;">Cancel</a>
+                <a href="#" id="cancel" onClick="$j('#bucketForm').submit()" style="display: none;">Cancel</a>
                 <div id="chooseNext" class="table-control">Select Next <input value="${actionBean.selectNextSize}"
                                                                         style="width: 3em;" id="batchSize" title="Batch Size"/>&nbsp;
                     <input type="button" id="chooseNbutton" value="Select" class="btn"/>
