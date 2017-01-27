@@ -1437,6 +1437,10 @@ public class ProductOrderActionBean extends CoreActionBean {
         try {
             productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails,
                     saveOrderMessageCollection);
+            if (isInfinium() && editOrder.getPipelineLocation() == null) {
+                editOrder.setPipelineLocation(ProductOrder.PipelineLocation.US_CLOUD);
+                productOrderDao.persist(editOrder);
+            }
             addMessages(saveOrderMessageCollection);
             addMessage("Product Order \"{0}\" has been saved.", editOrder.getTitle());
         } catch (SAPInterfaceException e) {
