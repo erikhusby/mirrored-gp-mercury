@@ -2,9 +2,9 @@ package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
 import org.broadinstitute.gpinformatics.infrastructure.columns.EventVesselSourcePositionPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.EventVesselTargetPositionPlugin;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
@@ -17,7 +17,7 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -30,6 +30,9 @@ public class EventVesselPluginTest extends Arquillian {
     @Inject
     private LabEventDao labEventDao;
 
+    @Inject
+    private ConfigurableListFactory configurableListFactory;
+
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
@@ -37,7 +40,7 @@ public class EventVesselPluginTest extends Arquillian {
 
     public void testNestedTablePlugin() {
 
-        LabEvent labEvent = labEventDao.findById(LabEvent.class, new Long(617246));
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 617246L);
 
         EventVesselSourcePositionPlugin eventVesselSourcePositionPlugin;
         try {
@@ -113,4 +116,31 @@ public class EventVesselPluginTest extends Arquillian {
 
     }
 
+
+    @Test
+    public void testVesselLayout() {
+//        Controller.startCPURecording(true);
+        SearchInstance searchInstance = new SearchInstance();
+        String entity = ColumnEntity.LAB_VESSEL.getEntityName();
+        ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entity);
+
+        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("Barcode", configurableSearchDef);
+        searchValue.setOperator(SearchInstance.Operator.EQUALS);
+        searchValue.setValues(Collections.singletonList("HG7MCBBXX"));
+
+        searchInstance.getPredefinedViewColumns().add("Layout");
+        searchInstance.getPredefinedViewColumns().add("Nearest Sample ID");
+        searchInstance.getPredefinedViewColumns().add("Molecular Index");
+        searchInstance.getPredefinedViewColumns().add("Collaborator Sample ID");
+        searchInstance.establishRelationships(configurableSearchDef);
+
+        ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
+                searchInstance, configurableSearchDef, null, 0, null, "ASC", entity);
+        List<ConfigurableList.ResultRow> resultRows = firstPageResults.getResultList().getResultRows();
+        Assert.assertEquals(resultRows.size(), 38);
+////        Controller.stopCPURecording();
+//        Assert.assertEquals(resultRows.get(0).getRenderableCells().get(0), "CO-15138260");
+//        Assert.assertEquals(resultRows.get(1).getRenderableCells().get(0), "CO-18828951");
+//        Assert.assertEquals(resultRows.get(1).getRenderableCells().get(1), "000016825709");
+    }
 }
