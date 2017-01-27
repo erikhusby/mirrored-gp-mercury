@@ -175,7 +175,6 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
         // Logic is tied to context values ...
         SearchInstance searchInstance = context.getSearchInstance();
         ColumnEntity columnEntity = context.getColumnEntityType();
-        SearchTerm thisSearchTerm = context.getSearchTerm();
 
         // Build a list of user selected columns
         List<String> displayColumnNames = new ArrayList<>();
