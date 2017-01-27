@@ -1435,11 +1435,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
         Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
         try {
-            if (editOrder.getPipelineLocation() == null) {
-                editOrder.setPipelineLocation(ProductOrder.PipelineLocation.US_CLOUD);
-            }
             productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails,
                     saveOrderMessageCollection);
+            if (isInfinium() && editOrder.getPipelineLocation() == null) {
+                editOrder.setPipelineLocation(ProductOrder.PipelineLocation.US_CLOUD);
+                productOrderDao.persist(editOrder);
+            }
             addMessages(saveOrderMessageCollection);
             addMessage("Product Order \"{0}\" has been saved.", editOrder.getTitle());
         } catch (SAPInterfaceException e) {
