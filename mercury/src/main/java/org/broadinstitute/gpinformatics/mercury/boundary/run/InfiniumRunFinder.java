@@ -181,17 +181,19 @@ public class InfiniumRunFinder implements Serializable {
      * @return true if the pipeline location for any sample is not set to US Cloud or null
      */
     public boolean checkForInvalidPipelineLocation(StaticPlate staticPlate) {
+        int usCloudCounter = 0;
         for (SampleInstanceV2 sampleInstanceV2: staticPlate.getSampleInstancesV2()) {
             // Ignore the controls assuming that some non-control sample will be present
             if (sampleInstanceV2.getSingleBucketEntry() != null) {
                 ProductOrder productOrder = sampleInstanceV2.getSingleBucketEntry().getProductOrder();
-                if (productOrder.getPipelineLocation() == null ||
-                    productOrder.getPipelineLocation() != ProductOrder.PipelineLocation.US_CLOUD) {
+                if (productOrder.getPipelineLocation() != ProductOrder.PipelineLocation.US_CLOUD) {
                     return true;
+                } else {
+                    usCloudCounter++;
                 }
             }
         }
-        return false;
+        return usCloudCounter == 0;
     }
 
     private boolean callStarterOnWell(StaticPlate staticPlate, VesselPosition vesselPosition) {
