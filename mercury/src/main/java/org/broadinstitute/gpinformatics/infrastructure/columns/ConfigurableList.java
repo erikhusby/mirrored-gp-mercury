@@ -825,12 +825,12 @@ public class ConfigurableList {
                     rowObjects[rowIndex][col] = val;
                     col++;
                 }
+                rowIndex++;
                 for (ResultList nestedList : resultRow.getCellNestedTables()) {
                     if (nestedList != null) {
                         rowIndex = appendNestedRows(rowIndex, startColumn, nestedList, rowObjects);
                     }
                 }
-                rowIndex++;
             }
 
             return rowIndex;

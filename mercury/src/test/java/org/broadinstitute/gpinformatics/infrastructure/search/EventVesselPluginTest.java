@@ -128,19 +128,30 @@ public class EventVesselPluginTest extends Arquillian {
         searchValue.setOperator(SearchInstance.Operator.EQUALS);
         searchValue.setValues(Collections.singletonList("HG7MCBBXX"));
 
-        searchInstance.getPredefinedViewColumns().add("Layout");
+        searchInstance.getPredefinedViewColumns().add("Barcode");
         searchInstance.getPredefinedViewColumns().add("Nearest Sample ID");
         searchInstance.getPredefinedViewColumns().add("Molecular Index");
         searchInstance.getPredefinedViewColumns().add("Collaborator Sample ID");
+        searchInstance.getPredefinedViewColumns().add("Layout");
         searchInstance.establishRelationships(configurableSearchDef);
 
         ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
                 searchInstance, configurableSearchDef, null, 0, null, "ASC", entity);
         List<ConfigurableList.ResultRow> resultRows = firstPageResults.getResultList().getResultRows();
-        Assert.assertEquals(resultRows.size(), 38);
-////        Controller.stopCPURecording();
-//        Assert.assertEquals(resultRows.get(0).getRenderableCells().get(0), "CO-15138260");
-//        Assert.assertEquals(resultRows.get(1).getRenderableCells().get(0), "CO-18828951");
-//        Assert.assertEquals(resultRows.get(1).getRenderableCells().get(1), "000016825709");
+        Assert.assertEquals(resultRows.size(), 1);
+//        Controller.stopCPURecording();
+        ConfigurableList.ResultRow resultRow = resultRows.get(0);
+        Assert.assertEquals(resultRow.getRenderableCells().get(0), "HG7MCBBXX");
+        ConfigurableList.ResultList nestedTable = resultRow.getNestedTables().values().iterator().next();
+        Assert.assertEquals(nestedTable.getResultRows().size(), 8);
+        List<ConfigurableList.ResultList> cellNestedTables = nestedTable.getResultRows().get(0).getCellNestedTables();
+        List<ConfigurableList.ResultRow> cellNestedRows = cellNestedTables.get(1).getResultRows();
+        Assert.assertEquals(cellNestedRows.size(), 36);
+        Assert.assertEquals(cellNestedRows.get(0).getRenderableCells().get(0), "SM-DIZPT");
+        Assert.assertEquals(cellNestedRows.get(0).getRenderableCells().get(1), "Illumina_P5-Feney_P7-Biwid");
+        Assert.assertEquals(cellNestedRows.get(0).getRenderableCells().get(2), "GCLL-0315-T-01");
+
+        Object[][] data = firstPageResults.getResultList().getAsArray();
+        Assert.assertEquals(data.length, 327);
     }
 }

@@ -251,7 +251,7 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
                         resultRows.add(new ConfigurableList.ResultRow(emptySortableCells, new ArrayList<String>(), null));
                     }
                     resultRows.get(rowIndex).getRenderableCells().add(parentTerm.evalPlainTextOutputExpression(
-                            parentTerm.getDisplayExpression().getDisplayExpression().evaluate(object, context), context));
+                            parentTerm.getDisplayExpression().getEvaluator().evaluate(object, context), context));
                     rowIndex++;
                 }
                 cellIndex++;

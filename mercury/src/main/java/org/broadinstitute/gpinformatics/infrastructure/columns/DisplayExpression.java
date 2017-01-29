@@ -113,18 +113,18 @@ public enum DisplayExpression {
     ;
 
     private final Class<?> expressionClass;
-    private final SearchTerm.Evaluator<?> displayExpression;
+    private final SearchTerm.Evaluator<?> evaluator;
 
-    DisplayExpression(Class<?> expressionClass, SearchTerm.Evaluator<?> displayExpression) {
+    DisplayExpression(Class<?> expressionClass, SearchTerm.Evaluator<?> evaluator) {
         this.expressionClass = expressionClass;
-        this.displayExpression = displayExpression;
+        this.evaluator = evaluator;
     }
 
     public Class<?> getExpressionClass() {
         return expressionClass;
     }
 
-    public SearchTerm.Evaluator<?> getDisplayExpression() {
-        return displayExpression;
+    public SearchTerm.Evaluator<?> getEvaluator() {
+        return evaluator;
     }
 }
