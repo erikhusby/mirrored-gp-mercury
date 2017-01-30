@@ -321,14 +321,6 @@ public class SearchTerm implements Serializable, ColumnTabulation {
      */
     private Boolean isNestedParent = Boolean.FALSE;
 
-    // todo jmt delete
-    /**
-     * Handles cases where a display result column can be selected by user
-     *   , but can only be displayed in a nested child table plugin.
-     * This list holds columns that, if selected by user, will be handled by the child plugin display
-     */
-    private Set<String> parentTermsHandledByChild;
-
     /**
      * Flag this for search criteria only, do not display as column option.
      * (Don't want parent term to show up in columns list)
@@ -500,14 +492,6 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     @Override
     public void setIsNestedParent(Boolean isNestedParent) {
         this.isNestedParent = isNestedParent;
-    }
-
-    // todo jmt delete
-    public void addParentTermHandledByChild( SearchTerm parentTermHandledByChild){
-        if( parentTermsHandledByChild == null ) {
-            parentTermsHandledByChild = new HashSet<>();
-        }
-        parentTermsHandledByChild.add(parentTermHandledByChild.getName());
     }
 
     /**
