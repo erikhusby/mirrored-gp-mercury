@@ -484,18 +484,12 @@ public class LabEventSearchDefinition {
         searchTerm.setDisplayExpression(DisplayExpression.ROOT_TUBE_BARCODE);
         searchTerms.add(searchTerm);
 
-        SearchDefinitionFactory.SampleMetadataDisplayExpression sampleMetadataDisplayExpression = new SearchDefinitionFactory.SampleMetadataDisplayExpression();
         for (Metadata.Key meta : Metadata.Key.values()) {
             if (meta.getCategory() == Metadata.Category.SAMPLE) {
                 searchTerm = new SearchTerm();
                 searchTerm.setName(meta.getDisplayName());
                 searchTerm.setHelpText("Value(s) will appear in both the result row and source and/or destination layout positions.");
-                searchTerm.setDisplayValueExpression(sampleMetadataDisplayExpression);
-                // These also handled by source/destination layout nested table cell display
-                for( SearchTerm nestedTableTerm : nestedTableTerms ) {
-                    // todo jmt fix
-                    nestedTableTerm.addParentTermHandledByChild(searchTerm);
-                }
+                searchTerm.setDisplayExpression(DisplayExpression.METADATA);
                 searchTerms.add(searchTerm);
             }
         }

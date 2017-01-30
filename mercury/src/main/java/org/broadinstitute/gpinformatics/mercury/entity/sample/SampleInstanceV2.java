@@ -560,7 +560,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
         return metadataSources.iterator().next();
     }
 
-    // todo should this methods use nearest sample?
+    // todo should these methods use nearest sample?
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {

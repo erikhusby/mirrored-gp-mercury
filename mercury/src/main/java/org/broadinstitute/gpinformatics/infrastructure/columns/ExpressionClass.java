@@ -54,10 +54,12 @@ public enum ExpressionClass {
     public static <T> List<T> rowObjectToExpressionObject(@Nonnull Object rowObject, Class<T> expressionClass,
             SearchContext context) {
         if (OrmUtil.proxySafeIsInstance(rowObject, LabVessel.class) && expressionClass.isAssignableFrom(SampleInstanceV2.class)) {
+            // LabVessel to SampleInstance
             LabVessel labVessel = (LabVessel) rowObject;
             return (List<T>) new ArrayList<>(labVessel.getSampleInstancesV2());
 
         } else if (OrmUtil.proxySafeIsInstance(rowObject, LabVessel.class) && expressionClass.isAssignableFrom(SampleData.class)) {
+            // LabVessel to SampleData
             LabVessel labVessel = (LabVessel) rowObject;
             List<MercurySample> mercurySamples = new ArrayList<>();
             for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
@@ -69,8 +71,8 @@ public enum ExpressionClass {
 
             List<SampleData> results = new ArrayList<>();
             if (!mercurySamples.isEmpty()) {
-                BspSampleSearchAddRowsListener bspColumns =
-                        (BspSampleSearchAddRowsListener) context.getRowsListener(BspSampleSearchAddRowsListener.class.getSimpleName());
+                BspSampleSearchAddRowsListener bspColumns = (BspSampleSearchAddRowsListener) context.getRowsListener(
+                        BspSampleSearchAddRowsListener.class.getSimpleName());
                 for( MercurySample mercurySample : mercurySamples) {
                     results.add(bspColumns.getSampleData(mercurySample.getSampleKey()));
                 }
@@ -78,6 +80,7 @@ public enum ExpressionClass {
             return (List<T>) results;
 
         } else if (OrmUtil.proxySafeIsInstance(rowObject, LabEvent.class) && expressionClass.isAssignableFrom(SampleInstanceV2.class)) {
+            // LabEvent to SampleInstance
             LabEvent labEvent = (LabEvent) rowObject;
             LabVessel labVessel = labEvent.getInPlaceLabVessel();
             if (labVessel == null) {
@@ -102,6 +105,16 @@ public enum ExpressionClass {
             } else {
                 return (List<T>) new ArrayList<>(labVessel.getSampleInstancesV2());
             }
+
+        } else if (OrmUtil.proxySafeIsInstance(rowObject, MercurySample.class) && expressionClass.isAssignableFrom(SampleInstanceV2.class)) {
+            // MercurySample to SampleInstance
+            MercurySample mercurySample = (MercurySample) rowObject;
+            Set<SampleInstanceV2> sampleInstances = new TreeSet<>();
+            for (LabVessel labVessel : mercurySample.getLabVessel()) {
+                sampleInstances.addAll(labVessel.getSampleInstancesV2());
+            }
+            return (List<T>) new ArrayList<>(sampleInstances);
+
         } else {
             throw new RuntimeException("Unexpected combination " + rowObject.getClass() + " to " + expressionClass);
         }
