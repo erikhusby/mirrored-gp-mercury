@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.columns.BspSampleSearchAddRowsListener;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
@@ -123,7 +122,7 @@ public class LabVesselSearchDefinition {
         searchTerms = srchDef.buildLabVesselBsp();
         mapGroupSearchTerms.put("BSP", searchTerms);
 
-        searchTerms = srchDef.buildLabVesselMetadata(layoutTerm);
+        searchTerms = srchDef.buildLabVesselMetadata();
         mapGroupSearchTerms.put("Mercury Metadata", searchTerms);
 
         searchTerms = srchDef.buildLabVesselBuckets();
@@ -252,23 +251,7 @@ public class LabVesselSearchDefinition {
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("LCSET");
         searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getLcsetInputConverter());
-        // todo jmt replace?
-        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public Set<String> evaluate(Object entity, SearchContext context) {
-                Set<String> results = new HashSet<>();
-                LabVessel labVessel = (LabVessel) entity;
-                // Navigate back to sample(s)
-                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                    for( LabBatch labBatch : sampleInstanceV2.getAllWorkflowBatches() ) {
-                        if( labBatch.getBatchName().startsWith("LCSET")) {
-                            results.add(labBatch.getBatchName());
-                        }
-                    }
-                }
-                return results;
-            }
-        });
+        searchTerm.setDisplayExpression(DisplayExpression.LCSET);
 
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
         // Non-reworks
@@ -295,24 +278,7 @@ public class LabVesselSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("XTR");
-        // todo jmt replace?
-        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public Set<String> evaluate(Object entity, SearchContext context) {
-                Set<String> results = null;
-                LabVessel labVessel = (LabVessel) entity;
-                // Navigate back to sample(s)
-                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                    for( LabBatch labBatch : sampleInstanceV2.getAllWorkflowBatches() ) {
-                        if( labBatch.getBatchName().startsWith("XTR")) {
-                            (results==null?results = new HashSet<>():results)
-                                    .add(labBatch.getBatchName());
-                        }
-                    }
-                }
-                return results;
-            }
-        });
+        searchTerm.setDisplayExpression(DisplayExpression.XTR);
 
         criteriaPaths = new ArrayList<>();
         // Non-reworks
@@ -489,10 +455,8 @@ public class LabVesselSearchDefinition {
 
     /**
      * Builds BSP term with default display name
-     * @param bspSampleSearchColumn
-     * @return
      */
-    private SearchTerm buildLabVesselBspTerm(final BSPSampleSearchColumn bspSampleSearchColumn) {
+    private SearchTerm buildLabVesselBspTerm(BSPSampleSearchColumn bspSampleSearchColumn) {
         return buildLabVesselBspTerm(bspSampleSearchColumn, bspSampleSearchColumn.columnName());
     }
 
@@ -565,21 +529,7 @@ public class LabVesselSearchDefinition {
         criteriaPaths.add(criteriaPath);
 
         searchTerm.setCriteriaPaths(criteriaPaths);
-        // todo jmt replace?
-        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public Set<String> evaluate(Object entity, SearchContext context) {
-                Set<String> results = null;
-                LabVessel labVessel = (LabVessel) entity;
-                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                    for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples() ) {
-                        (results==null?results = new HashSet<>():results)
-                                .add(productOrderSample.getProductOrder().getJiraTicketKey());
-                    }
-                }
-                return results;
-            }
-        });
+        searchTerm.setDisplayExpression(DisplayExpression.PDO);
         searchTerms.add(searchTerm);
 
         // Count of buckets this vessel belongs to
@@ -608,46 +558,13 @@ public class LabVesselSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Research Project");
-        // todo jmt replace?
-        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public Set<String> evaluate(Object entity, SearchContext context) {
-                Set<String> results = null;
-                LabVessel labVessel = (LabVessel) entity;
-                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                    for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples() ) {
-                        if( productOrderSample.getProductOrder().getResearchProject() != null
-                                && productOrderSample.getProductOrder().getResearchProject().getName() != null) {
-                            (results==null?results = new HashSet<>():results)
-                                    .add(productOrderSample.getProductOrder().getResearchProject().getName());
-                        }
-                    }
-                }
-                return results;
-            }
-        });
+        searchTerm.setDisplayExpression(DisplayExpression.RESEARCH_PROJECT);
         searchTerms.add(searchTerm);
 
         // Product
         searchTerm = new SearchTerm();
         searchTerm.setName("Product");
-        // todo jmt replace?
-        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public Set<String> evaluate(Object entity, SearchContext context) {
-                Set<String> results = null;
-                LabVessel labVessel = (LabVessel) entity;
-                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                    for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples() ) {
-                        if( productOrderSample.getProductOrder().getProduct() != null ) {
-                            (results == null ? results = new HashSet<>() : results)
-                                    .add(productOrderSample.getProductOrder().getProduct().getDisplayName());
-                        }
-                    }
-                }
-                return results;
-            }
-        });
+        searchTerm.setDisplayExpression(DisplayExpression.PRODUCT_NAME);
         searchTerms.add(searchTerm);
 
         return searchTerms;
@@ -1223,7 +1140,7 @@ public class LabVesselSearchDefinition {
      * Build sample metadata search terms for lab vessels.
      * @return List of search terms/column definitions for lab vessel sample metadata
      */
-    private List<SearchTerm> buildLabVesselMetadata(SearchTerm nestedTableTerm) {
+    private List<SearchTerm> buildLabVesselMetadata() {
         List<SearchTerm> searchTerms = new ArrayList<>();
 
         SearchTerm searchTerm = new SearchTerm();
@@ -1576,8 +1493,6 @@ public class LabVesselSearchDefinition {
         blankCriteriaPath.setCriteria(new ArrayList<String>());
         blankCriteriaPaths.add(blankCriteriaPath);
 
-        final List<LabEventType> platingEventTypes
-                = Collections.singletonList(LabEventType.ARRAY_PLATING_DILUTION);
         final List<LabEventType> ampPlateEventTypes
                 = Collections.singletonList(LabEventType.INFINIUM_AMPLIFICATION);
 
@@ -1861,7 +1776,6 @@ public class LabVesselSearchDefinition {
      * Build an alternate search definition to query for array related lab vessels.
      * In the end, use programmatic logic to populate the lab vessel list with downstream Infinium vessels for a PDO
      * search or DNA plate well entities for Infinium vessel barcodes
-     * @return
      */
     private ConfigurableSearchDefinition buildArraysAlternateSearchDefinition() {
         Map<String, List<SearchTerm>> mapGroupSearchTerms = new LinkedHashMap<>();
@@ -1950,26 +1864,7 @@ public class LabVesselSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Proceed if OOS");
-        // todo jmt replace?
-        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public Set<String> evaluate(Object entity, SearchContext context) {
-                Set<String> results = new HashSet<>();
-                LabVessel labVessel = (LabVessel)entity;
-
-                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                    for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
-                        ProductOrderSample.ProceedIfOutOfSpec proceedIfOutOfSpec =
-                                productOrderSample.getProceedIfOutOfSpec();
-                        if (proceedIfOutOfSpec == null) {
-                            proceedIfOutOfSpec = ProductOrderSample.ProceedIfOutOfSpec.NO;
-                        }
-                        results.add(proceedIfOutOfSpec.getDisplayName());
-                    }
-                }
-                return results;
-            }
-        });
+        searchTerm.setDisplayExpression(DisplayExpression.PROCEED_IF_OOS);
         searchTerms.add(searchTerm);
 
         return searchTerms;
@@ -2006,7 +1901,7 @@ public class LabVesselSearchDefinition {
      */
     private List<SearchTerm> buildVesselMetricDetailCols() {
         List<SearchTerm> searchTerms = new ArrayList<>();
-        SearchTerm searchTerm = null;
+        SearchTerm searchTerm;
 
         for( LabMetric.MetricType metricType : LabMetric.MetricType.values() ) {
             // Only interested in concentration metrics

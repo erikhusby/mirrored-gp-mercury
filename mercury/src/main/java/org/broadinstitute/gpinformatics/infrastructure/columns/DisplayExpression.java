@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -55,6 +56,78 @@ public enum DisplayExpression {
             return sampleInstanceV2.getNearestMercurySampleName();
         }
     }),
+    LCSET(SampleInstanceV2.class, new SearchTerm.Evaluator<List<String>>() {
+        @Override
+        public List<String> evaluate(Object entity, SearchContext context) {
+            SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
+            List<String> results = new ArrayList<>();
+            // todo jmt try getSingleBatch first
+            for( LabBatch labBatch : sampleInstanceV2.getAllWorkflowBatches() ) {
+                if( labBatch.getBatchName().startsWith("LCSET")) {
+                    results.add(labBatch.getBatchName());
+                }
+            }
+            return results;
+        }
+    }),
+    XTR(SampleInstanceV2.class, new SearchTerm.Evaluator<List<String>>() {
+        @Override
+        public List<String> evaluate(Object entity, SearchContext context) {
+            SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
+            List<String> results = new ArrayList<>();
+            // todo jmt try getSingleBatch first
+            for( LabBatch labBatch : sampleInstanceV2.getAllWorkflowBatches() ) {
+                if( labBatch.getBatchName().startsWith("XTR")) {
+                    results.add(labBatch.getBatchName());
+                }
+            }
+            return results;
+        }
+    }),
+    PDO(SampleInstanceV2.class, new SearchTerm.Evaluator<List<String>>() {
+        @Override
+        public List<String> evaluate(Object entity, SearchContext context) {
+            SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
+            List<String> results = new ArrayList<>();
+            // todo jmt try getSingleProductOrderSample first
+            for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples() ) {
+                results.add(productOrderSample.getProductOrder().getJiraTicketKey());
+            }
+            return results;
+        }
+    }),
+    PROCEED_IF_OOS(SampleInstanceV2.class, new SearchTerm.Evaluator<List<String>>() {
+        @Override
+        public List<String> evaluate(Object entity, SearchContext context) {
+            SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
+            List<String> results = new ArrayList<>();
+            // todo jmt try getSingleProductOrderSample first
+            for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
+                ProductOrderSample.ProceedIfOutOfSpec proceedIfOutOfSpec =
+                        productOrderSample.getProceedIfOutOfSpec();
+                if (proceedIfOutOfSpec == null) {
+                    proceedIfOutOfSpec = ProductOrderSample.ProceedIfOutOfSpec.NO;
+                }
+                results.add(proceedIfOutOfSpec.getDisplayName());
+            }
+            return results;
+        }
+    }),
+    RESEARCH_PROJECT(SampleInstanceV2.class, new SearchTerm.Evaluator<List<String>>() {
+        @Override
+        public List<String> evaluate(Object entity, SearchContext context) {
+            SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
+            List<String> results = new ArrayList<>();
+            // todo jmt try getSingleProductOrderSample first
+            for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples() ) {
+                if( productOrderSample.getProductOrder().getResearchProject() != null
+                        && productOrderSample.getProductOrder().getResearchProject().getName() != null) {
+                    results.add(productOrderSample.getProductOrder().getResearchProject().getName());
+                }
+            }
+            return results;
+        }
+    }),
     PRODUCT_NAME(SampleInstanceV2.class, new SearchTerm.Evaluator<List<String>>() {
         @Override
         public List<String> evaluate(Object entity, SearchContext context) {
@@ -91,12 +164,9 @@ public enum DisplayExpression {
 
             MercurySample mercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
             if (mercurySample != null) {
-                Set<Metadata> metadata = mercurySample.getMetadata();
-                if( metadata != null && !metadata.isEmpty() ) {
-                    for( Metadata meta : metadata){
-                        if( meta.getKey() == key ) {
-                            return meta.getValue();
-                        }
+                for( Metadata meta : mercurySample.getMetadata()){
+                    if( meta.getKey() == key ) {
+                        return meta.getValue();
                     }
                 }
             }
