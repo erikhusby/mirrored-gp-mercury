@@ -37,11 +37,7 @@ public class AbandonVesselActionBean  extends RackScanActionBean {
     public static final String RACK_SCAN_EVENT = "rackScan";
     private Set<LabVessel> foundVessels = new HashSet<>();
     private static final String SESSION_LIST_PAGE = "/workflow/abandon_vessel.jsp";
-    private static String chipReason = "Vessel Position(s)";
     public static final String PAGE_TITLE = "Abandon Vessel";
-    /** POSTed from the form, for rack scan. */
-    private Integer scanIndex;
-    /** POSTed from the form, for rack scan. */
     private String resultSummaryString;
     private boolean resultsAvailable = false;
     private boolean isSearchDone = false;
@@ -49,7 +45,7 @@ public class AbandonVesselActionBean  extends RackScanActionBean {
     private String unAbandonComment;
     private String vesselBarcode;
     private String vesselLabel;
-    public String barcode;
+    private String barcode;
     private VesselGeometry vesselGeometry;
     private String vesselPosition;
     private String vesselPositionReason;
@@ -61,7 +57,6 @@ public class AbandonVesselActionBean  extends RackScanActionBean {
 
     @Inject
     private LabVesselDao labVesselDao;
-
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -148,7 +143,7 @@ public class AbandonVesselActionBean  extends RackScanActionBean {
 
     /**
      *
-     * If this is a rack scan the add it to the list of found lab vessels.
+     * If this is a rack scan then add it to the list of found lab vessels.
      *
      */
     private void isRackScan(String vesselPosition)
@@ -211,7 +206,7 @@ public class AbandonVesselActionBean  extends RackScanActionBean {
             }
         }
         labVesselDao.flush();
-        messageCollection.addInfo("All Positions Successfully Abandoned.. " );
+        messageCollection.addInfo("All Positions Successfully Abandoned." );
         addMessages(messageCollection);
         return vesselSearch();
     }
