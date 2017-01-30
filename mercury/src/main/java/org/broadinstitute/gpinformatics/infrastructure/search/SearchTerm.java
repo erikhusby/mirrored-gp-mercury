@@ -12,16 +12,13 @@ package org.broadinstitute.gpinformatics.infrastructure.search;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.infrastructure.columns.DisplayExpression;
-import org.broadinstitute.gpinformatics.infrastructure.columns.ExpressionClass;
 
 import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Represents the definition of a term in a user-defined search. Intended to be XStreamed.
@@ -698,7 +695,7 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 */
 
             List resultObjects = new ArrayList<>();
-            Collection<?> expressionObjects = ExpressionClass.rowObjectToExpressionObject(
+            Collection<?> expressionObjects = DisplayExpression.rowObjectToExpressionObject(
                     entity,
                     getDisplayExpression().getExpressionClass(),
                     context);

@@ -239,7 +239,7 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
                 Class<?> expressionClass = parentTerm.getDisplayExpression().getExpressionClass();
                 Collection<?> objects = mapClassToResults.get(expressionClass);
                 if (objects == null) {
-                    objects = ExpressionClass.rowObjectToExpressionObject(
+                    objects = DisplayExpression.rowObjectToExpressionObject(
                             labVessel,
                             expressionClass,
                             context);
