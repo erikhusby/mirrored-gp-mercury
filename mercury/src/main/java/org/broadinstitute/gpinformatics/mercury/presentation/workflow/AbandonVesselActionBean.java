@@ -138,9 +138,9 @@ public class AbandonVesselActionBean  extends RackScanActionBean {
                  abandonVessel.addAbandonVesselPosition(abandonVesselPosition);
                  vessel.addAbandonedVessel(abandonVessel);
                  responseLabel = vessel.getLabel();
-                 labVesselDao.flush();
              }
        }
+        labVesselDao.flush();
         messageCollection.addInfo("Position: " + vesselPosition +  " For Vessel: " + responseLabel + " Successfully Abandoned. " );
         addMessages(messageCollection);
         return vesselSearch();
@@ -192,7 +192,6 @@ public class AbandonVesselActionBean  extends RackScanActionBean {
                     abandonVesselPosition.setPosition(position.toString());
                     abandonVessel.addAbandonVesselPosition(abandonVesselPosition);
                     vessel.addAbandonedVessel(abandonVessel);
-                    labVesselDao.flush();
                 }
             }
         }
@@ -209,10 +208,9 @@ public class AbandonVesselActionBean  extends RackScanActionBean {
                     abandonVessel.addAbandonVesselPosition(abandonVesselPosition);
                 }
                 vessel.addAbandonedVessel(abandonVessel);
-                labVesselDao.flush();
             }
         }
-
+        labVesselDao.flush();
         messageCollection.addInfo("All Positions Successfully Abandoned.. " );
         addMessages(messageCollection);
         return vesselSearch();
@@ -240,7 +238,6 @@ public class AbandonVesselActionBean  extends RackScanActionBean {
                             if (vessel.getParentAbandonVessel().getAbandonedVesselPosition().size() == 0) {
                                 vessel.removeAbandonedVessel(vessel.getAbandonVessels());
                             }
-                            labVesselDao.flush();
                             messageCollection.addInfo("Position Successfully Unabandoned. ");
                             addMessages(messageCollection);
                             return vesselSearch();
@@ -249,6 +246,7 @@ public class AbandonVesselActionBean  extends RackScanActionBean {
                 }
             }
         }
+        labVesselDao.flush();
         return vesselSearch();
     }
 
@@ -275,9 +273,9 @@ public class AbandonVesselActionBean  extends RackScanActionBean {
                 abandonVessel.setReason(AbandonVessel.Reason.valueOf(abandonComment));
                 abandonVessel.setAbandonedOn(true);
                 vessel.addAbandonedVessel(abandonVessel);
-                labVesselDao.flush();
             }
         }
+        labVesselDao.flush();
         messageCollection.addInfo("Vessel: " + vesselBarcode + " Successfully Abandoned. " );
         addMessages(messageCollection);
         return vesselSearch();
