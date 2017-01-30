@@ -277,6 +277,9 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
                     queryVesselPosition = contextVesselPosition;
                     if (!result.containsKey(queryVesselPosition)) {
                         result.put(queryVesselPosition, false);
+                        // When starting from a new well, may need to revisit an upstream plate well
+                        // that was previously traversed such as when Rack to Epp96 to Epp384.
+                        resetAllTraversed();
                     }
                 }
             } else if( contextVessel != null && contextVesselContainer != null ) {

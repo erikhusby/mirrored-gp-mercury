@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -40,6 +41,8 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric.MetricType.INITIAL_PICO;
+import static org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition.A01;
 
 /**
  * Test the Varioskan upload with persistence.
@@ -47,6 +50,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 @Test(groups = TestGroups.STANDARD)
 public class VarioskanParserContainerTest extends Arquillian {
     private static final FastDateFormat SIMPLE_DATE_FORMAT = FastDateFormat.getInstance("yyyyMMddHHmmss");
+    private static final float A01_384_VALUE = 44.229f; // From Varioskan384Output.xls
 
     @Inject
     private VesselEjb vesselEjb;
@@ -220,7 +224,7 @@ public class VarioskanParserContainerTest extends Arquillian {
             labVesselDao.persistAll(mapBarcodeToPlate.values());
             labVesselDao.persistAll(mapPositionToTube.values());
         }
-        return vesselEjb.createVarioskanRun(quantStream, LabMetric.MetricType.INITIAL_PICO,
+        return vesselEjb.createVarioskanRun(quantStream, INITIAL_PICO,
                 BSPManagerFactoryStub.QA_DUDE_USER_ID, messageCollection, acceptRePico);
     }
 
@@ -236,7 +240,7 @@ public class VarioskanParserContainerTest extends Arquillian {
         }
         BufferedInputStream inputStream = makeVarioskanSpreadsheet(new String[]{plateBarcode},
                 VarioskanParserTest.VARIOSKAN_384_OUTPUT, namePrefix);
-        return vesselEjb.createVarioskanRun(inputStream, LabMetric.MetricType.INITIAL_PICO,
+        return vesselEjb.createVarioskanRun(inputStream, INITIAL_PICO,
                 BSPManagerFactoryStub.QA_DUDE_USER_ID, messageCollection, acceptRePico);
     }
 
@@ -253,7 +257,7 @@ public class VarioskanParserContainerTest extends Arquillian {
         }
         BufferedInputStream inputStream = makeVarioskanSpreadsheet(new String[]{microfluorBarcode},
                 VarioskanParserTest.VARIOSKAN_384_OUTPUT, namePrefix);
-        return vesselEjb.createVarioskanRun(inputStream, LabMetric.MetricType.INITIAL_PICO,
+        return vesselEjb.createVarioskanRun(inputStream, INITIAL_PICO,
                 BSPManagerFactoryStub.QA_DUDE_USER_ID, messageCollection, acceptRePico);
     }
 

@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
@@ -10,13 +9,21 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceImpl;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentration;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentrationImpl;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
+import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.MetadataType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ChildVesselBean;
@@ -26,6 +33,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
@@ -43,7 +51,6 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -57,7 +64,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -66,32 +72,85 @@ import java.util.TreeMap;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata.LabEventMetadataType.DilutionFactor;
+import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata.LabEventMetadataType.SensitivityFactor;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection.ALL384;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection.ALL96;
+import static org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection.P384_96TIP_1INTERVAL_A1;
+import static org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection.P384_96TIP_1INTERVAL_A2;
+import static org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection.P384_96TIP_1INTERVAL_B1;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection.P384_96TIP_1INTERVAL_B2;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate.PlateType.Eppendorf384;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate.PlateType.Eppendorf96;
 
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class PicoToBspContainerTest extends Arquillian {
-    private static final Log logger = LogFactory.getLog(PicoToBspContainerTest.class);
     private static final String RACK_ROWS = "ABCDEFGH";
     private static final int RACK_COLUMNS = 12;
-    private static Multimap<VesselPosition, VesselPosition> map96to384 = HashMultimap.create();
+    private static final Log log = LogFactory.getLog(PicoToBspContainerTest.class);
+    private static final boolean PRINT_QUANT_VALUES = false;
 
-    static {
-        // Makes a static map of 96 rack positions to their corresponding 384 well positions.
-        for (int i = 0; i < 96; ++i) {
-            VesselPosition key = ALL96.getWells().get(i);
-            map96to384.put(key, SBSSection.P384_96TIP_1INTERVAL_A1.getWells().get(i));
-            map96to384.put(key, SBSSection.P384_96TIP_1INTERVAL_A2.getWells().get(i));
-            map96to384.put(key, SBSSection.P384_96TIP_1INTERVAL_B1.getWells().get(i));
-            map96to384.put(key, P384_96TIP_1INTERVAL_B2.getWells().get(i));
-        }
+    @Inject
+    private VesselEjb vesselEjb;
+
+    @Inject
+    private LabVesselDao labVesselDao;
+
+    @Inject
+    private LabEventFactory labEventFactory;
+
+    @Inject
+    private VarioskanParserContainerTest varioskanParserContainerTest;
+
+    @Inject
+    private LabVesselFactory labVesselFactory;
+
+    @Inject
+    private UserBean userBean;
+
+    @Deployment
+    public static WebArchive buildMercuryWar() {
+        return DeploymentBuilder.buildMercuryWar(DEV);
     }
 
+    private Multimap<VesselPosition, VesselPosition> map96to384 = HashMultimap.create();
+    private BSPConfig bspConfig = BSPConfig.produce(DEV);
+    private BSPSampleSearchService bspSampleSearchService = new BSPSampleSearchServiceImpl(bspConfig);
+    private BSPSampleDataFetcher dataFetcher = new BSPSampleDataFetcher(bspSampleSearchService, bspConfig);
+    private BSPSetVolumeConcentrationImpl bspSetVolumeConcentration = new BSPSetVolumeConcentrationImpl(bspConfig);
+    private BettaLimsMessageTestFactory bettalimsFactory = new BettaLimsMessageTestFactory(true);
+    private long testTimestamp = System.currentTimeMillis() / 1000;
+    private MessageCollection messageCollection;
+
+    // Each test case is a row in this array. The fields are:
+    // #researchTubes, #crspTubes, quantType, #dilutionWells, #microfluorWells, sensitivityFactor, dilutionFactor
+    private int[][] testCases = {
+            // Duplicate pico, Rack -> 1st blackPlate(96 well) and rack -> 2nd blackPlate(96 well).
+            {41, 54, 2, 0, 96, 1, 1},
+            {96, 0, 2, 0, 96, 1, 1},
+            {0, 1, 2, 0, 96, 1, 1},
+            {40, 55, 2, 0, 96, 1, 1},
+            {1, 0, 2, 0, 96, 2, 1},
+            // Triplicate pico, rack -> blackPlate(384 well) e.g. CO-20552814.
+            {96, 0, 3, 0, 384, 1, 1},
+            {0, 96, 3, 0, 384, 1, 1},
+            {50, 46, 3, 0, 384, 1, 1},
+            {4, 4, 3, 0, 384, 2, 1},
+            // Triplicate pico, rack -> dilutionPlate(96) -> blackPlate(384).
+            {47, 47, 3, 96, 384, 1, 1},
+            {96, 0, 3, 96, 384, 1, 10},
+            // Triplicate pico, rack -> dilutionPlate(384) -> blackPlate(384).
+            {24, 24, 3, 384, 384, 1, 1},
+            {6, 0, 3, 384, 384, 2, 10},
+            {96, 0, 3, 384, 384, 1, 10},
+            // Single pico (typically a retest of a triplicate pico), rack -> dilutionPlate(96) -> blackPlate(96).
+            {40, 55, 1, 96, 96, 1, 1},
+            {4, 5, 1, 96, 96, 2, 1},
+            {96, 0, 1, 96, 96, 1, 10}
+    };
+
     // Research tubes, i.e. currently existing BSP genomic DNA tubes and their sample names.
-    private final SortedMap<String, String> BSP_TUBES = new TreeMap<String, String>(){{
+    private SortedMap<String, String> bspTubeMap = new TreeMap<String, String>() {{
         put("1140117899", "SM-D7G11");
         put("1140145281", "SM-DBQFT");
         put("1140145341", "SM-DBQHS");
@@ -190,227 +249,171 @@ public class PicoToBspContainerTest extends Arquillian {
         put("1140145332", "SM-DBQHA");
     }};
 
-    private BettaLimsMessageTestFactory bettalimsFactory = new BettaLimsMessageTestFactory(true);
-    private long testStartInSec = System.currentTimeMillis() / 1000;
-    private int tubeCounter = 1;
-    private MessageCollection messageCollection;
+    private List<BarcodedTube> mercuryTubes = new ArrayList<>();
+    private List<BarcodedTube> bspTubes = new ArrayList<>();
 
-    @Inject
-    private VesselEjb vesselEjb;
+    private void oneTimeInit() {
+        // Makes the 96 crsp tubes that are used for all tests.
+        for (int i = 0; i < 96; ++i) {
+            String tubeBarcode = String.format("%011d%03d", testTimestamp, i);
+            BarcodedTube tube = new BarcodedTube(tubeBarcode, BarcodedTube.BarcodedTubeType.MatrixTube075);
+            tube.setVolume(new BigDecimal("60"));
+            labVesselDao.persist(tube);
 
-    @Inject
-    private LabVesselDao labVesselDao;
+            String materialName = MaterialType.DNA_DNA_GENOMIC.getDisplayName();
+            MercurySample mercurySample = new MercurySample("SM-" + tubeBarcode,
+                    ImmutableSet.of(new Metadata(Metadata.Key.MATERIAL_TYPE, materialName)));
+            mercurySample.addLabVessel(tube);
+            labVesselDao.persist(mercurySample);
 
-    @Inject
-    private LabEventFactory labEventFactory;
+            mercuryTubes.add(tube);
+        }
 
-    @Inject
-    private VarioskanParserContainerTest varioskanParserContainerTest;
+        // Looks up the 96 research tubes that are used for all tests.
+        for (Map.Entry<String, String> entry : bspTubeMap.entrySet()) {
+            BarcodedTube tube = OrmUtil.proxySafeCast(labVesselDao.findByIdentifier(entry.getKey()),
+                    BarcodedTube.class);
+            bspTubes.add(tube);
+        }
 
-    @Inject
-    private LabVesselFactory labVesselFactory;
-
-    @Inject
-    private UserBean userBean;
-
-    @Deployment
-    public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(DEV);
+        // Makes a map of 96 rack positions to their corresponding 384 well positions.
+        for (int i = 0; i < 96; ++i) {
+            VesselPosition key = ALL96.getWells().get(i);
+            map96to384.put(key, P384_96TIP_1INTERVAL_A1.getWells().get(i));
+            map96to384.put(key, P384_96TIP_1INTERVAL_A2.getWells().get(i));
+            map96to384.put(key, P384_96TIP_1INTERVAL_B1.getWells().get(i));
+        }
     }
 
-   @BeforeMethod
-    public void beforeMethod() {
+    private void testCaseInit() {
+        // Ensures each test case makes unique rack/plate barcodes.
+        testTimestamp += 10;
         messageCollection = new MessageCollection();
+
+        // Zeros the value BSP has for concentration on our test samples.
+        for (String smId : bspTubeMap.values()) {
+            String result = bspSetVolumeConcentration.setVolumeAndConcentration(smId, null, BigDecimal.ZERO, null);
+            Assert.assertEquals(result, BSPSetVolumeConcentration.RESULT_OK);
+        }
     }
 
-    /** Duplicate pico. Transfers are: rack96 -> 1st blackPlate96 and rack96 -> 2nd blackPlate96 */
+    @Test(groups = EXTERNAL_INTEGRATION, enabled = false)
+    public void testInitialZero() {
+        Map<String, BspSampleData> bspSampleDataMap = dataFetcher.fetchSampleData(bspTubeMap.values(),
+                BSPSampleSearchColumn.CONCENTRATION);
+        for (String smId : bspTubeMap.values()) {
+            Assert.assertEquals(bspSampleDataMap.get(smId).getConcentration(), 0d);
+        }
+    }
+
+    /** Runs all the test cases. */
     @Test(groups = EXTERNAL_INTEGRATION, enabled = true)
-    public void testDuplicateQuants() throws Exception {
-        int research = 2;
-        int crsp = 3;
-        int quantCardinality = 2;
+    public void testCases() throws Exception {
+        oneTimeInit();
+        int caseIdx = 0;
+        while (caseIdx < testCases.length) {
+            testCaseInit();
+            // Parses the testCase array into test parameters, then runs the quant import test.
+            int tokenIdx = 0;
+            int research = testCases[caseIdx][tokenIdx++];
+            int crsp = testCases[caseIdx][tokenIdx++];
+            int quantCardinality = testCases[caseIdx][tokenIdx++];
+            int dilutionWells = testCases[caseIdx][tokenIdx++];
+            int microfluorWells = testCases[caseIdx][tokenIdx++];
+            int sensitivityFactor = testCases[caseIdx][tokenIdx++];
+            int dilutionFactor = testCases[caseIdx][tokenIdx++];
+            caseIdx++;
 
-        Dto dto = makeVessels(quantCardinality, research, crsp, null, Eppendorf96);
-        sendMessages(quantCardinality, dto);
-        sendSpreadsheet(dto);
+            Assert.assertTrue(research + crsp <= Eppendorf96.getVesselGeometry().getCapacity());
+            Assert.assertTrue(quantCardinality > 0 && quantCardinality < 4);
 
-        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), " \n "));
-        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getErrors(), " \n "));
-        examineMetrics(dto);
-        Assert.assertEquals(dto.getRunAndFormation().getLeft().getLabMetrics().size(),
-                (research + crsp) * (quantCardinality + 1));
-        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), " \n "));
-        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getErrors(), " \n "));
+            StaticPlate.PlateType dilutionPlate = dilutionWells == 96 ? Eppendorf96 :
+                    dilutionWells == 384 ? Eppendorf384 : null;
+            StaticPlate.PlateType microfluorPlate = microfluorWells == 96 ? Eppendorf96 :
+                    microfluorWells == 384 ? Eppendorf384 : null;
+            Assert.assertTrue(dilutionWells == 0 || dilutionPlate != null, "No support for " + dilutionWells);
+            Assert.assertNotNull(microfluorPlate, "No support for " + microfluorWells);
+
+            log.info("Testing " +
+                    (quantCardinality == 1 ? "single" : quantCardinality == 2 ? "duplicate" : "triplicate") +
+                     " quant, " + (dilutionPlate == null ? "no" : dilutionWells) + " dilution, " +
+                    research + " research + " +  crsp + " clinical, " +
+                    " sensitivity=" + sensitivityFactor + ", dilution=" + dilutionFactor);
+
+            Dto dto = new Dto(quantCardinality, research, crsp, dilutionPlate, microfluorPlate,
+                    sensitivityFactor, dilutionFactor);
+
+            makeVessels(dto);
+            makeTransferEvents(dto);
+            sendSpreadsheet(dto);
+            Assert.assertEquals(dto.getRunAndFormation().getLeft().getLabMetrics().size(),
+                    (research + crsp) * (quantCardinality + 1));
+            extractResearchTubeQuantFromMercury(dto);
+            checkMissingMetrics(dto);
+            validateBspMetrics(dto);
+        }
     }
 
-    /** Duplicate quant with only research tubes. */
-    @Test(groups = EXTERNAL_INTEGRATION, enabled = true)
-    public void testDuplicateResearchOnly() throws Exception {
-        int research = 12;
-        int crsp = 0;
-        int quantCardinality = 2;
+    /** Validates BSP sample concentration with Mercury's lab metric. */
+    private void validateBspMetrics(Dto dto) {
+        // Fetches sample concentrations from BSP.
+        Map<String, BspSampleData> bspSampleDataMap = dataFetcher.fetchSampleData(bspTubeMap.values(),
+                BSPSampleSearchColumn.CONCENTRATION);
+        for (Map.Entry<String, String> entry : bspTubeMap.entrySet()) {
+            String barcode = entry.getKey();
+            String smId = bspTubeMap.get(barcode);
+            double bspConc = bspSampleDataMap.get(smId).getConcentration();
 
-        Dto dto = makeVessels(quantCardinality, research, crsp, null, Eppendorf96);
-        sendMessages(quantCardinality, dto);
-        sendSpreadsheet(dto);
-
-        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), " \n "));
-        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getErrors(), " \n "));
-        examineMetrics(dto);
-        Assert.assertEquals(dto.getRunAndFormation().getLeft().getLabMetrics().size(),
-                (research + crsp) * (quantCardinality + 1));
-        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), " \n "));
-        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getErrors(), " \n "));
+            if (dto.getTubeToPosition().containsKey(barcode)) {
+                String rackPosition = dto.getTubeToPosition().get(barcode);
+                double mercury = dto.getSmIdQuant().get(smId);
+                boolean miscompare = Math.abs(bspConc - mercury) > 0.05;
+                if (PRINT_QUANT_VALUES) {
+                    log.info(String.format("At %s %s  bsp: %-10s mercury: %-6s %s",
+                            rackPosition, smId, String.valueOf(bspSampleDataMap.get(smId).getConcentration()),
+                            String.valueOf(dto.getSmIdQuant().get(smId)), (miscompare ?
+                                    ("MISCOMPARE (wells " + StringUtils.join(map96to384.get(
+                                            VesselPosition.valueOf(rackPosition)), " ") + ")") : "")));
+                } else {
+                    Assert.assertFalse(miscompare,
+                            rackPosition + " " + smId + " bsp has " + bspConc + " mercury has " + mercury);
+                }
+            } else {
+                // Verify that BSP conc was not set for an unused tube.
+                Assert.assertTrue(MathUtils.isSame(bspConc, 0d),
+                        "Unused tube " + smId + " should be 0.0 and bsp has " + bspConc);
+            }
+        }
     }
 
-    /** Duplicate quant with only crsp tubes. */
-    @Test(groups = EXTERNAL_INTEGRATION, enabled = true)
-    public void testDuplicateCrspOnly() throws Exception {
-        int research = 0;
-        int crsp = 1;
-        int quantCardinality = 2;
+    private void extractResearchTubeQuantFromMercury(Dto dto) {
+        for (LabMetric labMetric : dto.getRunAndFormation().getLeft().getLabMetrics()) {
+            if (labMetric.getName() == LabMetric.MetricType.INITIAL_PICO &&
+                    OrmUtil.proxySafeIsInstance(labMetric.getLabVessel(), BarcodedTube.class)) {
 
-        Dto dto = makeVessels(quantCardinality, research, crsp, null, Eppendorf96);
-        sendMessages(quantCardinality, dto);
-        sendSpreadsheet(dto);
-
-        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), " \n "));
-        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getErrors(), " \n "));
-        examineMetrics(dto);
-        Assert.assertEquals(dto.getRunAndFormation().getLeft().getLabMetrics().size(),
-                (research + crsp) * (quantCardinality + 1));
-        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), " \n "));
-        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getErrors(), " \n "));
+                LabVessel labVessel = labMetric.getLabVessel();
+                MercurySample mercurySample = labVessel.getMercurySamples().iterator().next();
+                if (mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
+                    dto.getSmIdQuant().put(mercurySample.getSampleKey(), labMetric.getValue().doubleValue());
+                }
+            }
+        }
     }
 
-    /**  Triplicate pico. Transfers are: rack96 -> blackPlate384 in 3 checkerboard sections (e.g. CO-20552814) */
-    @Test(groups = EXTERNAL_INTEGRATION, enabled = true)
-    public void testTriplicateNoDilutionAllResearch() throws Exception {
-        int research = 96;
-        int crsp = 0;
-        int quantCardinality = 3;
-
-        Dto dto = makeVessels(quantCardinality, research, crsp, null, Eppendorf384);
-        sendMessages(quantCardinality, dto);
-        sendSpreadsheet(dto);
-
-        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), " \n "));
-        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getErrors(), " \n "));
-        examineMetrics(dto);
-        Assert.assertEquals(dto.getRunAndFormation().getLeft().getLabMetrics().size(),
-                (research + crsp) * (quantCardinality + 1));
-        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), " \n "));
-        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getErrors(), " \n "));
-    }
-
-    /**  Triplicate pico. Transfers are: rack96 -> blackPlate384 in 3 checkerboard sections (e.g. CO-20552814) */
-    @Test(groups = EXTERNAL_INTEGRATION, enabled = true)
-    public void testTriplicateNoDilutionAllCrsp() throws Exception {
-        int research = 0;
-        int crsp = 96;
-        int quantCardinality = 3;
-
-        Dto dto = makeVessels(quantCardinality, research, crsp, null, Eppendorf384);
-        sendMessages(quantCardinality, dto);
-        sendSpreadsheet(dto);
-
-        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), " \n "));
-        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getErrors(), " \n "));
-        examineMetrics(dto);
-        Assert.assertEquals(dto.getRunAndFormation().getLeft().getLabMetrics().size(),
-                (research + crsp) * (quantCardinality + 1));
-        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), " \n "));
-        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getErrors(), " \n "));
-    }
-
-    /**  Triplicate pico. Transfers are: rack96 -> blackPlate384 in 3 checkerboard sections (e.g. CO-20552814) */
-    @Test(groups = EXTERNAL_INTEGRATION, enabled = true)
-    public void testTriplicateNoDilution() throws Exception {
-        int research = 50;
-        int crsp = 46;
-        int quantCardinality = 3;
-
-        Dto dto = makeVessels(quantCardinality, research, crsp, null, Eppendorf384);
-        sendMessages(quantCardinality, dto);
-        sendSpreadsheet(dto);
-
-        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), " \n "));
-        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getErrors(), " \n "));
-        examineMetrics(dto);
-        Assert.assertEquals(dto.getRunAndFormation().getLeft().getLabMetrics().size(),
-                (research + crsp) * (quantCardinality + 1));
-        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), " \n "));
-        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getErrors(), " \n "));
-    }
-
-    /**  Triplicate pico. Transfers are: rack96 -> dilutionPlate96 -> blackPlate384 in 3 checkerboard sections */
-    @Test(groups = EXTERNAL_INTEGRATION, enabled = true)
-    public void testTriplicateDilution96() throws Exception {
-        int research = 48;
-        int crsp = 48;
-        int quantCardinality = 3;
-
-        Dto dto = makeVessels(quantCardinality, research, crsp, Eppendorf96, Eppendorf384);
-        sendMessages(quantCardinality, dto);
-        sendSpreadsheet(dto);
-
-        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), " \n "));
-        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getErrors(), " \n "));
-        examineMetrics(dto);
-        Assert.assertEquals(dto.getRunAndFormation().getLeft().getLabMetrics().size(),
-                (research + crsp) * (quantCardinality + 1));
-        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), " \n "));
-        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getErrors(), " \n "));
-    }
-
-    /** Triplicate pico. Transfers are: rack96 -> dilutionPlate384 in 3 checkerboard sections -> blackPlate384 */
-    @Test(groups = EXTERNAL_INTEGRATION, enabled = true)
-    public void testTriplicateDilution384() throws Exception {
-        int research = 48;
-        int crsp = 48;
-        int quantCardinality = 3;
-
-        Dto dto = makeVessels(quantCardinality, research, crsp, Eppendorf384, Eppendorf384);
-        sendMessages(quantCardinality, dto);
-        sendSpreadsheet(dto);
-
-        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), " \n "));
-        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getErrors(), " \n "));
-        examineMetrics(dto);
-        Assert.assertEquals(dto.getRunAndFormation().getLeft().getLabMetrics().size(),
-                (research + crsp) * (quantCardinality + 1));
-        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), " \n "));
-        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getErrors(), " \n "));
-    }
-
-    /** Single pico (as a retest of a triplicate pico). Transfers are: rack96 -> dilutionPlate96 -> blackPlate96 */
-    @Test(groups = EXTERNAL_INTEGRATION, enabled = true)
-    public void testSingle() throws Exception {
-        int research = 40;
-        int crsp = 56;
-        int quantCardinality = 1;
-
-        Dto dto = makeVessels(quantCardinality, research, crsp, Eppendorf96, Eppendorf96);
-        sendMessages(quantCardinality, dto);
-        sendSpreadsheet(dto);
-
-        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), " \n "));
-        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getErrors(), " \n "));
-        examineMetrics(dto);
-        Assert.assertEquals(dto.getRunAndFormation().getLeft().getLabMetrics().size(),
-                (research + crsp) * (quantCardinality + 1));
-        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), " \n "));
-        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getErrors(), " \n "));
-    }
-
-    private void examineMetrics(Dto dto) {
+    private void checkMissingMetrics(Dto dto) {
         List<String> actualBarcodes = new ArrayList<>();
         List<String> actualPositions = new ArrayList<>();
         for (LabMetric labMetric : dto.getRunAndFormation().getLeft().getLabMetrics()) {
-            actualBarcodes.add(labMetric.getLabVessel().getLabel());
+            LabVessel labVessel = labMetric.getLabVessel();
+            actualBarcodes.add(labVessel.getLabel());
             actualPositions.add(labMetric.getVesselPosition());
+            if (OrmUtil.proxySafeIsInstance(labVessel, BarcodedTube.class)) {
+                MercurySample mercurySample = labVessel.getMercurySamples().iterator().next();
+                if (mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
+                    dto.getSmIdQuant().put(mercurySample.getSampleKey(), labMetric.getValue().doubleValue());
+                }
+            }
         }
-
         Collection<String> test = CollectionUtils.subtract(dto.getTubeToPosition().keySet(), actualBarcodes);
         if (!test.isEmpty()) {
             List<String> list = new ArrayList<>(test);
@@ -425,181 +428,184 @@ public class PicoToBspContainerTest extends Arquillian {
         }
     }
 
-    private Dto makeVessels(int quantCardinality, int numberResearchTubes, int numberCrspTubes,
-                            StaticPlate.PlateType dilutionPlateType, StaticPlate.PlateType microfluorPlateType)
-            throws Exception {
+    /** Returns a position in a 96 tube rack for the given tube counter. */
+    private String positionFor(int i) {
+        return String.format("%s%02d", RACK_ROWS.charAt(i / RACK_COLUMNS), (i % RACK_COLUMNS) + 1);
+    }
 
+    private void makeVessels(Dto dto) throws Exception {
         // Generates the rack and plate barcodes.
-        int numberMicrofluorPlates = microfluorPlateType == Eppendorf384 ? 1 : quantCardinality;
-        int barcodeEnding = 0;
-        String rackBarcode = String.format("%011d%d", testStartInSec, barcodeEnding++);
-        String dilutionPlateBarcode = (dilutionPlateType != null) ?
-                String.format("%011d%d", testStartInSec, barcodeEnding++) : null;
+        int numberMicrofluorPlates = dto.getMicrofluorPlateType() == Eppendorf384 ? 1 : dto.getQuantCardinality();
+        String rackBarcode = String.format("%011d%1d", testTimestamp, 0);
+        String dilutionPlateBarcode = (dto.getDilutionPlateType() != null) ?
+                String.format("%011d%1d", testTimestamp, 1) : null;
         String[] blackPlateBarcodes = new String[numberMicrofluorPlates];
         for (int i = 0; i < numberMicrofluorPlates; ++i) {
-            blackPlateBarcodes[i] = String.format("%011d%d", testStartInSec, barcodeEnding++);
+            blackPlateBarcodes[i] = String.format("%011d%1d", testTimestamp, i + 2);
         }
-
-        // Creates new CRISP tubes (and MercurySamples), and reuses existing research tubes known to BSP.
+        // Makes the tube mix.
         List<ChildVesselBean> tubeBeans = new ArrayList<>();
         Map<String, String> mapTubeToPosition = new HashMap<>();
 
-        Iterator<String> bspTubeIterator = BSP_TUBES.keySet().iterator();
-        for (int i = 0; i < (numberCrspTubes + numberResearchTubes); ++i) {
-            boolean isBspTube = i < numberResearchTubes; // research tubes are put first
-
-            Assert.assertTrue(!isBspTube || bspTubeIterator.hasNext());
-            String tubeBarcode = isBspTube ? bspTubeIterator.next() :
-                    String.format("%d%03d", testStartInSec, tubeCounter++);
-            String well = String.format("%s%02d", RACK_ROWS.charAt(i / RACK_COLUMNS), (i % RACK_COLUMNS) + 1);
-            mapTubeToPosition.put(tubeBarcode, well);
-
-            BarcodedTube tube = OrmUtil.proxySafeCast(labVesselDao.findByIdentifier(tubeBarcode), BarcodedTube.class);
-            if (tube == null) {
-                Assert.assertFalse(isBspTube);
-                tube = new BarcodedTube(tubeBarcode, BarcodedTube.BarcodedTubeType.MatrixTube075);
-                labVesselDao.persist(tube);
-            } else {
-                Assert.assertTrue(isBspTube);
-            }
-            tube.setVolume(new BigDecimal("60"));
-
-            if (CollectionUtils.isEmpty(tube.getMercurySamples())) {
-                String materialName = MaterialType.DNA_DNA_GENOMIC.getDisplayName();
-                MercurySample mercurySample = isBspTube ?
-                        new MercurySample(BSP_TUBES.get(tubeBarcode),
-                                new BspSampleData(ImmutableMap.of(BSPSampleSearchColumn.MATERIAL_TYPE, materialName))) :
-                        new MercurySample("SM-" + tubeBarcode,
-                                ImmutableSet.of(new Metadata(Metadata.Key.MATERIAL_TYPE, materialName)));
-                Assert.assertTrue((mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) == isBspTube);
-                mercurySample.addLabVessel(tube);
-                labVesselDao.persist(mercurySample);
-            }
-
-            tubeBeans.add(new ChildVesselBean(tubeBarcode, tube.getMercurySamples().iterator().next().getSampleKey(),
-                    tube.getTubeType().getAutomationName(), well));
+        for (int i = 0; i < dto.getTotalTubeCount(); ++i) {
+            BarcodedTube tube = (i < dto.getResearchTubeCount() ? bspTubes : mercuryTubes).get(i);
+            String barcode = tube.getLabel();
+            String position = positionFor(i);
+            mapTubeToPosition.put(barcode, position);
+            Assert.assertTrue(CollectionUtils.isNotEmpty(tube.getMercurySamples()), "barcode " + barcode);
+            tubeBeans.add(new ChildVesselBean(barcode, tube.getMercurySamples().iterator().next().getSampleKey(),
+                    tube.getTubeType().getAutomationName(), position));
         }
-
-        // Makes a rack containing the above tubes.
-        List<ParentVesselBean> parentVessels = Arrays.asList(new ParentVesselBean(rackBarcode, rackBarcode,
-                RackOfTubes.RackType.Matrix96.getDisplayName(), tubeBeans));
-        List<LabVessel> labVessels = labVesselFactory.buildLabVessels(parentVessels, "epolk", new Date(), null,
-                MercurySample.MetadataSource.MERCURY);
+        // Builds the racks and plates.
+        List<LabVessel> labVessels = labVesselFactory.buildLabVessels(Arrays.asList(new ParentVesselBean(
+                        rackBarcode, rackBarcode, RackOfTubes.RackType.Matrix96.getDisplayName(), tubeBeans)),
+                "epolk", new Date(), null, MercurySample.MetadataSource.MERCURY);
         labVesselDao.persistAll(labVessels);
         labVesselDao.flush();
 
-        return new Dto(rackBarcode, mapTubeToPosition, blackPlateBarcodes, dilutionPlateBarcode,
-                dilutionPlateType, microfluorPlateType);
+        dto.setRackBarcode(rackBarcode);
+        dto.setTubeToPosition(mapTubeToPosition);
+        dto.setBlackPlateBarcodes(blackPlateBarcodes);
+        dto.setDilutionPlateBarcode(dilutionPlateBarcode);
     }
 
 
-    private void sendMessages(int quantCardinality, Dto dto) {
+    private void makeTransferEvents(Dto dto) {
+        Assert.assertTrue(dto.getDilutionFactor() == 1 || dto.getDilutionPlateType() != null,
+                "No support for dilution factor without a dilution plate");
 
-        if (quantCardinality == 1 || quantCardinality == 2) {
+        if (dto.getQuantCardinality() == 1 || dto.getQuantCardinality() == 2) {
+            Assert.assertEquals(dto.getMicrofluorPlateType(), Eppendorf96);
+            Assert.assertEquals(dto.getBlackPlateBarcodes().length, dto.getQuantCardinality());
 
-            BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
+            if (dto.getDilutionPlateType() != null) {
+                Assert.assertTrue(dto.getDilutionPlateType() == Eppendorf96);
+
+                BettaLIMSMessage dilutionMessage = new BettaLIMSMessage();
+                PlateTransferEventType dilutionTransfer = bettalimsFactory.buildRackToPlate(
+                        LabEventType.PICO_DILUTION_TRANSFER.getName(), dto.getRackBarcode(),
+                        dto.getTubeToPosition(), dto.getDilutionPlateBarcode());
+
+                dilutionTransfer.getPlate().setPhysType(dto.getDilutionPlateType().getAutomationName());
+                if (dto.getDilutionFactor() != 1) {
+                    setFactor(dilutionTransfer, dto.getDilutionFactor(), DilutionFactor);
+                }
+                dilutionMessage.getPlateTransferEvent().add(dilutionTransfer);
+                bettalimsFactory.advanceTime();
+                labEventFactory.buildFromBettaLims(dilutionMessage);
+            }
+
+            // Either Rack to microfluor plate, or Dilution plate to microfluor plate.
+            BettaLIMSMessage microfluorMessage = new BettaLIMSMessage();
             for (String blackPlateBarcode : dto.getBlackPlateBarcodes()) {
-                PlateTransferEventType picoTransfer = bettalimsFactory.buildRackToPlate(
-                        LabEventType.PICO_TRANSFER.getName(), dto.getRackBarcode(), dto.getTubeToPosition(),
-                        blackPlateBarcode);
-                picoTransfer.getPlate().setPhysType(dto.getMicrofluorPlateType().getAutomationName());
-                bettaLIMSMessage.getPlateTransferEvent().add(picoTransfer);
+                PlateTransferEventType microfluorTransfer;
+
+                if (dto.getDilutionPlateType() == null) {
+                    microfluorTransfer = bettalimsFactory.buildRackToPlate(
+                            LabEventType.PICO_TRANSFER.getName(),
+                            dto.getRackBarcode(), dto.getTubeToPosition(), blackPlateBarcode);
+                } else {
+                    microfluorTransfer = bettalimsFactory.buildPlateToPlate(
+                            LabEventType.PICO_MICROFLUOR_TRANSFER.getName(),
+                            dto.getDilutionPlateBarcode(), blackPlateBarcode);
+                    microfluorTransfer.getSourcePlate().setPhysType(dto.getDilutionPlateType().getAutomationName());
+                    microfluorTransfer.getSourcePlate().setSection(ALL96.getSectionName());
+                }
+
+                microfluorTransfer.getPlate().setPhysType(dto.getMicrofluorPlateType().getAutomationName());
+                microfluorTransfer.getPlate().setSection(ALL96.getSectionName());
+                if (dto.getSensitivityFactor() != 1) {
+                    setFactor(microfluorTransfer, dto.getSensitivityFactor(), SensitivityFactor);
+                }
+                microfluorMessage.getPlateTransferEvent().add(microfluorTransfer);
                 bettalimsFactory.advanceTime();
             }
-            labEventFactory.buildFromBettaLims(bettaLIMSMessage);
+            labEventFactory.buildFromBettaLims(microfluorMessage);
 
-        } else if (quantCardinality == 3) {
+        } else if (dto.getQuantCardinality() == 3) {
             Assert.assertEquals(dto.getMicrofluorPlateType(), Eppendorf384);
             Assert.assertEquals(dto.getBlackPlateBarcodes().length, 1);
 
-            // The 96 to 384 transfer has 3 events and is either rack to dilution, or dilution to microfluor.
-            int dilutionTransferCount = (dto.getDilutionPlateType() == null) ? 0 :
-                    (dto.getDilutionPlateType() == Eppendorf384) ? 3 : 1;
-            int microfluorTransferCount = (dto.getDilutionPlateType() == null) ? 3 :
-                    (dto.getDilutionPlateType() == Eppendorf384) ? 1 : 3;
+
 
             if (dto.getDilutionPlateType() != null) {
                 Assert.assertTrue(dto.getDilutionPlateType() == Eppendorf96 ||
-                                  dto.getDilutionPlateType() == Eppendorf384);
+                        dto.getDilutionPlateType() == Eppendorf384);
 
                 BettaLIMSMessage dilutionMessage = new BettaLIMSMessage();
-                for (long i = 0; i < dilutionTransferCount; ++i) {
+                // Either the dilution or the microfluor transfer needs to be 96 to 384.
+                int dilutionTransferCount = (dto.getDilutionPlateType() == Eppendorf384) ? 3 : 1;
+                for (int i = 0; i < dilutionTransferCount; ++i) {
                     PlateTransferEventType dilutionTransfer = bettalimsFactory.buildRackToPlate(
                             LabEventType.PICO_DILUTION_TRANSFER.getName(), dto.getRackBarcode(),
                             dto.getTubeToPosition(), dto.getDilutionPlateBarcode());
 
                     dilutionTransfer.getPlate().setPhysType(dto.getDilutionPlateType().getAutomationName());
-                    dilutionTransfer.getPlate().setSection((dilutionTransferCount == 1 ? ALL96 :
-                            i == 0 ? SBSSection.P384_96TIP_1INTERVAL_A1 :
-                                    i == 1 ? SBSSection.P384_96TIP_1INTERVAL_A2 :
-                                            i == 2 ? SBSSection.P384_96TIP_1INTERVAL_B1 :
-                                                    P384_96TIP_1INTERVAL_B2).getSectionName());
-
-                    // Sets <metadata value="10" name="DilutionFactor"/>
-                    MetadataType metadata = new MetadataType();
-                    metadata.setName("DilutionFactor");
-                    metadata.setValue("10");
-                    dilutionTransfer.getMetadata().add(metadata);
-
+                    dilutionTransfer.getPlate().setSection((dilutionTransferCount == 1 ?
+                            ALL96 : sectionType(i)).getSectionName());
+                    if (dto.getDilutionFactor() != 1) {
+                        setFactor(dilutionTransfer, dto.getDilutionFactor(), DilutionFactor);
+                    }
                     // Sets <reagent kitType="HS buffer" barcode="RG-10095"/>
                     ReagentType reagent = new ReagentType();
                     reagent.setBarcode("RG-12126");
                     reagent.setKitType("HS buffer");
                     dilutionTransfer.getReagent().add(reagent);
-                    dilutionTransfer.setDisambiguator(i);
+                    dilutionTransfer.setDisambiguator(1L + i);
                     dilutionMessage.getPlateTransferEvent().add(dilutionTransfer);
                 }
                 bettalimsFactory.advanceTime();
                 labEventFactory.buildFromBettaLims(dilutionMessage);
+            }
 
-                BettaLIMSMessage microfluorMessage = new BettaLIMSMessage();
-                for (long i = 0; i < microfluorTransferCount; ++i) {
-                    PlateTransferEventType microfluorTransfer = bettalimsFactory.buildPlateToPlate(
-                            LabEventType.PICO_MICROFLUOR_TRANSFER.getName(), dto.getDilutionPlateBarcode(),
-                            dto.getBlackPlateBarcodes()[0]);
+            // Either Rack to microfluor plate, or Dilution plate to microfluor plate.
+            // The microfluor transfer needs to be a 96 to 384 if the dilution wasn't.
+            BettaLIMSMessage microfluorMessage = new BettaLIMSMessage();
+            int microfluorTransferCount = (dto.getDilutionPlateType() == null) ? 3 :
+                    (dto.getDilutionPlateType() == Eppendorf384) ? 1 : 3;
+            for (int i = 0; i < microfluorTransferCount; ++i) {
+                PlateTransferEventType microfluorTransfer;
 
+                if (dto.getDilutionPlateType() == null) {
+                    microfluorTransfer = bettalimsFactory.buildRackToPlate(
+                            LabEventType.PICO_MICROFLUOR_TRANSFER.getName(),
+                            dto.getRackBarcode(), dto.getTubeToPosition(), dto.getBlackPlateBarcodes()[0]);
+                } else {
+                    microfluorTransfer = bettalimsFactory.buildPlateToPlate(
+                            LabEventType.PICO_MICROFLUOR_TRANSFER.getName(),
+                            dto.getDilutionPlateBarcode(), dto.getBlackPlateBarcodes()[0]);
                     microfluorTransfer.getSourcePlate().setPhysType(dto.getDilutionPlateType().getAutomationName());
                     microfluorTransfer.getSourcePlate().setSection(
                             (dto.getDilutionPlateType() == Eppendorf384 ? ALL384 : ALL96).getSectionName());
-
-                    microfluorTransfer.getPlate().setPhysType(dto.getMicrofluorPlateType().getAutomationName());
-                    microfluorTransfer.getPlate().setSection((microfluorTransferCount == 1 ? ALL384 :
-                            i == 0 ? SBSSection.P384_96TIP_1INTERVAL_A1 :
-                                    i == 1 ? SBSSection.P384_96TIP_1INTERVAL_A2 :
-                                            i == 2 ? SBSSection.P384_96TIP_1INTERVAL_B1 :
-                                                    P384_96TIP_1INTERVAL_B2).getSectionName());
-
-                    microfluorTransfer.setDisambiguator(i);
-                    microfluorMessage.getPlateTransferEvent().add(microfluorTransfer);
                 }
-                bettalimsFactory.advanceTime();
-                labEventFactory.buildFromBettaLims(microfluorMessage);
 
-            } else {
-                // Rack to microfluor with no dilution.
+                microfluorTransfer.getPlate().setPhysType(dto.getMicrofluorPlateType().getAutomationName());
+                microfluorTransfer.getPlate().setSection((microfluorTransferCount == 1 ?
+                        ALL384 : sectionType(i)).getSectionName());
 
-                BettaLIMSMessage microfluorMessage = new BettaLIMSMessage();
-                for (long i = 0; i < microfluorTransferCount; ++i) {
-                    PlateTransferEventType microfluorTransfer = bettalimsFactory.buildRackToPlate(
-                            LabEventType.PICO_MICROFLUOR_TRANSFER.getName(), dto.getRackBarcode(),
-                            dto.getTubeToPosition(), dto.getBlackPlateBarcodes()[0]);
-
-                    microfluorTransfer.getPlate().setPhysType(dto.getMicrofluorPlateType().getAutomationName());
-                    microfluorTransfer.getPlate().setSection((microfluorTransferCount == 1 ? ALL384 :
-                            i == 0 ? SBSSection.P384_96TIP_1INTERVAL_A1 :
-                                    i == 1 ? SBSSection.P384_96TIP_1INTERVAL_A2 :
-                                            i == 2 ? SBSSection.P384_96TIP_1INTERVAL_B1 :
-                                                    P384_96TIP_1INTERVAL_B2).getSectionName());
-
-                    microfluorTransfer.setDisambiguator(i);
-                    microfluorMessage.getPlateTransferEvent().add(microfluorTransfer);
+                microfluorTransfer.setDisambiguator(1L + i);
+                if (dto.getSensitivityFactor() != 1) {
+                    setFactor(microfluorTransfer, dto.getSensitivityFactor(), SensitivityFactor);
                 }
-                bettalimsFactory.advanceTime();
-                labEventFactory.buildFromBettaLims(microfluorMessage);
+                microfluorMessage.getPlateTransferEvent().add(microfluorTransfer);
             }
-        } else {
-            Assert.fail("No support for quant cardinality of " + quantCardinality);
+            bettalimsFactory.advanceTime();
+            labEventFactory.buildFromBettaLims(microfluorMessage);
         }
+    }
+
+    private SBSSection sectionType(int quadrant) {
+        return quadrant == 0 ? P384_96TIP_1INTERVAL_A1 :
+                quadrant == 1 ? P384_96TIP_1INTERVAL_A2 :
+                        quadrant == 2 ? P384_96TIP_1INTERVAL_B1 : P384_96TIP_1INTERVAL_B2;
+    }
+
+    /** Adds metadata to the event, such as   <metadata value="2" name="SensitivityFactor"/> */
+    private void setFactor(PlateEventType event, int factor, LabEventMetadata.LabEventMetadataType type) {
+        MetadataType metadata = new MetadataType();
+        metadata.setName(type.getDisplayName());
+        metadata.setValue(String.valueOf(factor));
+        event.getMetadata().add(metadata);
     }
 
     private Dto sendSpreadsheet(Dto dto) throws Exception {
@@ -612,6 +618,9 @@ public class PicoToBspContainerTest extends Arquillian {
         userBean.loginTestUser();
         dto.setRunAndFormation(UploadQuantsActionBean.spreadsheetToMercuryAndBsp(vesselEjb,
                 messageCollection, quantStream, LabMetric.MetricType.INITIAL_PICO, userBean, true));
+
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), " \n "));
+        Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getErrors(), " \n "));
         return dto;
     }
 
@@ -621,7 +630,7 @@ public class PicoToBspContainerTest extends Arquillian {
         BufferedInputStream quantStream = varioskanParserContainerTest.makeVarioskanSpreadsheet(
                 dto.getBlackPlateBarcodes(), dto.getMicrofluorPlateType() == Eppendorf384 ?
                         VarioskanParserTest.VARIOSKAN_384_OUTPUT : VarioskanParserTest.VARIOSKAN_OUTPUT,
-                String.valueOf(testStartInSec));
+                String.valueOf(testTimestamp));
 
         // Finds the tube-derived microfluor positions that don't have a source tube transfer into them.
         Set<VesselPosition> positionsWithoutTube = new HashSet<>(dto.getMicrofluorPlateType() == Eppendorf96 ?
@@ -641,26 +650,47 @@ public class PicoToBspContainerTest extends Arquillian {
         return vesselEjb.filterOutRows(quantStream, positionsWithoutTube);
     }
 
-
     private class Dto {
+        private final int quantCardinality;
+        private final int sensitivityFactor;
+        private final int dilutionFactor;
         private String rackBarcode;
         private Map<String, String> tubeToPosition;
         private String[] blackPlateBarcodes;
         private String dilutionPlateBarcode;
-        private StaticPlate.PlateType dilutionPlateType;
-        private StaticPlate.PlateType microfluorPlateType;
+        private final StaticPlate.PlateType dilutionPlateType;
+        private final StaticPlate.PlateType microfluorPlateType;
         private Pair<LabMetricRun, String> runAndFormation;
+        private final Map<String, Double> smIdQuant = new HashMap<>();
+        private final int numberResearchTubes;
+        private final int numberCrspTubes;
 
-        public Dto(String rackBarcode, Map<String, String> tubeToPosition, String[] blackPlateBarcodes,
-                   String dilutionPlateBarcode,
-                   StaticPlate.PlateType dilutionPlateType,
-                   StaticPlate.PlateType microfluorPlateType) {
-            this.rackBarcode = rackBarcode;
-            this.tubeToPosition = tubeToPosition;
-            this.blackPlateBarcodes = blackPlateBarcodes;
-            this.dilutionPlateBarcode = dilutionPlateBarcode;
+        public Dto(int quantCardinality, int numberResearchTubes, int numberCrspTubes,
+                StaticPlate.PlateType dilutionPlateType, StaticPlate.PlateType microfluorPlateType,
+                int sensitivityFactor, int dilutionFactor) {
             this.dilutionPlateType = dilutionPlateType;
             this.microfluorPlateType = microfluorPlateType;
+            this.sensitivityFactor = sensitivityFactor;
+            this.dilutionFactor = dilutionFactor;
+            this.quantCardinality = quantCardinality;
+            this.numberResearchTubes = numberResearchTubes;
+            this.numberCrspTubes = numberCrspTubes;
+        }
+
+        public void setRackBarcode(String rackBarcode) {
+            this.rackBarcode = rackBarcode;
+        }
+
+        public void setTubeToPosition(Map<String, String> tubeToPosition) {
+            this.tubeToPosition = tubeToPosition;
+        }
+
+        public void setBlackPlateBarcodes(String[] blackPlateBarcodes) {
+            this.blackPlateBarcodes = blackPlateBarcodes;
+        }
+
+        public void setDilutionPlateBarcode(String dilutionPlateBarcode) {
+            this.dilutionPlateBarcode = dilutionPlateBarcode;
         }
 
         public String getRackBarcode() {
@@ -691,9 +721,32 @@ public class PicoToBspContainerTest extends Arquillian {
             return runAndFormation;
         }
 
-        public void setRunAndFormation(
-                Pair<LabMetricRun, String> runAndFormation) {
+        public void setRunAndFormation(Pair<LabMetricRun, String> runAndFormation) {
             this.runAndFormation = runAndFormation;
+        }
+
+        public Map<String, Double> getSmIdQuant() {
+            return smIdQuant;
+        }
+
+        public int getQuantCardinality() {
+            return quantCardinality;
+        }
+
+        public int getSensitivityFactor() {
+            return sensitivityFactor;
+        }
+
+        public int getDilutionFactor() {
+            return dilutionFactor;
+        }
+
+        public int getTotalTubeCount() {
+            return numberResearchTubes + numberCrspTubes;
+        }
+
+        public int getResearchTubeCount() {
+            return numberResearchTubes;
         }
     }
 }

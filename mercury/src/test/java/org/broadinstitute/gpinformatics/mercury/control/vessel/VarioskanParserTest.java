@@ -5,11 +5,13 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
@@ -29,6 +31,7 @@ import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -142,17 +145,19 @@ public class VarioskanParserTest {
             VarioskanRowParser varioskanRowParser = new VarioskanRowParser(workbook);
             Map<VarioskanRowParser.NameValue, String> mapNameValueToValue = varioskanRowParser.getValues();
             MessageCollection messageCollection = new MessageCollection();
+            Set<LabEventMetadata> metadata = new HashSet<>();
             LabMetricRun labMetricRun = vesselEjb.createVarioskanRunDaoFree(mapNameValueToValue,
                     LabMetric.MetricType.INITIAL_PICO, varioskanPlateProcessor, mapBarcodeToPlate, 101L,
-                    messageCollection);
+                    messageCollection, metadata);
             Assert.assertFalse(messageCollection.hasErrors());
+            Assert.assertTrue(metadata.isEmpty());
             Assert.assertEquals(labMetricRun.getLabMetrics().size(), 3 * VARIOSKAN_SAMPLE_COUNT);
             Assert.assertEquals(mapPositionToTube.get(VesselPosition.A01).getMetrics().iterator().next().getValue(),
                     new BigDecimal("3.34"));
             Assert.assertEquals(mapPositionToTube.get(VesselPosition.A02).getMetrics().iterator().next().getValue(),
                     new BigDecimal("0.87"));
             Assert.assertEquals(mapPositionToTube.get(VesselPosition.A03).getMetrics().iterator().next().getValue(),
-                    new BigDecimal("1.37"));
+                    new BigDecimal("1.36"));
         } catch (IOException | InvalidFormatException | ValidationException e) {
             throw new RuntimeException(e);
         }
@@ -213,13 +218,15 @@ public class VarioskanParserTest {
             VarioskanRowParser varioskanRowParser = new VarioskanRowParser(workbook);
             Map<VarioskanRowParser.NameValue, String> mapNameValueToValue = varioskanRowParser.getValues();
             MessageCollection messageCollection = new MessageCollection();
+            Set<LabEventMetadata> metadata = new HashSet<>();
             LabMetricRun labMetricRun = vesselEjb.createVarioskanRunDaoFree(mapNameValueToValue,
                     LabMetric.MetricType.PLATING_RIBO, varioskanPlateProcessor, mapBarcodeToPlate, 101L,
-                    messageCollection);
+                    messageCollection, metadata);
             Assert.assertFalse(messageCollection.hasErrors());
+            Assert.assertTrue(metadata.isEmpty());
             Assert.assertEquals(labMetricRun.getLabMetrics().size(), 3 * VARIOSKAN_RIBO_SAMPLE_COUNT);
             Assert.assertEquals(mapPositionToTube.get(VesselPosition.A02).getMetrics().iterator().next().getValue(),
-                    new BigDecimal("3.39"));
+                    new BigDecimal("3.38"));
             Assert.assertEquals(mapPositionToTube.get(VesselPosition.A03).getMetrics().iterator().next().getValue(),
                     new BigDecimal("3.28"));
             Assert.assertEquals(mapPositionToTube.get(VesselPosition.A04).getMetrics().iterator().next().getValue(),
