@@ -45,7 +45,6 @@ public class AbandonVesselActionBean  extends RackScanActionBean {
     private String resultSummaryString;
     private boolean resultsAvailable = false;
     private boolean isSearchDone = false;
-    private int numSearchTerms;
     private String abandonComment;
     private String unAbandonComment;
     private String vesselBarcode;
