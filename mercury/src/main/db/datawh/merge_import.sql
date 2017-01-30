@@ -485,7 +485,7 @@ AS
               product_family_name = new.product_family_name,
               primary_price_item_id = new.primary_price_item_id,
               aggregation_data_type = new.aggregation_data_type,
-              external_only_product = new.eexternal_only_product,
+              external_only_product = new.external_only_product,
               saved_in_sap = new.saved_in_sap,
               etl_date = new.etl_date
             WHERE product_id = new.product_id;
@@ -942,7 +942,8 @@ AS
               owner = new.owner,
               placed_date = new.placed_date,
               skip_regulatory_reason = new.skip_regulatory_reason,
-              sap_order_number = new.sap_order_number
+              sap_order_number = new.sap_order_number,
+              array_chip_type = new.array_chip_type,
               etl_date = new.etl_date
             WHERE product_order_id = new.product_order_id;
 
@@ -962,6 +963,8 @@ AS
               owner,
               placed_date,
               skip_regulatory_reason,
+              sap_order_number,
+              array_chip_type,
               etl_date
             ) VALUES (
               new.product_order_id,
@@ -977,6 +980,7 @@ AS
               new.placed_date,
               new.skip_regulatory_reason,
               new.sap_order_number,
+              new.array_chip_type,
               new.etl_date );
 
             V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
@@ -1743,13 +1747,13 @@ AS
             WHEN 'InfiniumAutocallSomeStarted' THEN
             UPDATE array_process_flow
             SET autocall_event_id = new.lab_event_id
-              --, scanner = new.station_name
+              , scanner = NVL(new.station_name, scanner)
               , autocall_started = new.event_date
             WHERE ROWID = V_THE_ROWID;
             WHEN  'InfiniumAutoCallAllStarted' THEN
             UPDATE array_process_flow
             SET autocall_event_id = new.lab_event_id
-              --, scanner = new.station_name
+              , scanner = NVL(new.station_name, scanner)
               , autocall_started = new.event_date
             WHERE ROWID = V_THE_ROWID
                   AND ( autocall_event_id IS NULL

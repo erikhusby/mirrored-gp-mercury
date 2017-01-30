@@ -23,10 +23,19 @@ if (isLegacyDataTables()) {
 }
 var sDomNoTableToolsButtons = "lfrtip";
 
+function enableDefaultPagingOptions(){
+    $j.extend( true, $j.fn.dataTable.defaults, {
+        "bPaginate": true,
+        "iDisplayLength": 100,
+        "bLengthChange": true,
+        "sPaginationType": 'bootstrap',
+    });
+    $j.fn.dataTable.defaults.aLengthMenu = [[50, 100, 200, 400, -1], [50, 100, 200, 400, "All"]];
+}
 /**
  *  Set the defaults for DataTables initialization
  */
-$j.extend( true, $j.fn.dataTable.defaults, {
+$j.extend(true, $j.fn.dataTable.defaults, {
     "sDom": "<'row-fluid'<'span8'f><'span4'B>r>t<'row-fluid'<'span6'i><'span6'p>>",
     "bAutoWidth": false,
     "bInfo": false,
@@ -37,7 +46,7 @@ $j.extend( true, $j.fn.dataTable.defaults, {
     "bLengthChange": false,
     "oLanguage": {
         "sLengthMenu": "_MENU_ records per page"
-        }
+    }
 });
 if (isLegacyDataTables()) {
     $j.extend(true, $j.fn.dataTable.defaults, {

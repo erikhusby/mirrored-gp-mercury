@@ -31,6 +31,7 @@ public class OrspProject {
      * enumerating.
      */
     private static final List<String> USABLE_STATUSES = Arrays.asList("Approved", "Completed");
+    public static final String CONSENT_GROUP_PREFIX = "CG-";
 
     @Id
     private String projectKey;
@@ -96,7 +97,7 @@ public class OrspProject {
      * @return the short name/description of this ORSP project (extracted from {@link #rawLabel})
      */
     public String getName() {
-        Matcher matcher = Pattern.compile("^ORSP-\\d+ \\((.*)\\)$").matcher(rawLabel);
+        Matcher matcher = Pattern.compile("^"+ projectKey +" \\((.*)\\)$").matcher(rawLabel);
         if (matcher.matches()) {
             return matcher.group(1).trim();
         } else {
@@ -136,6 +137,10 @@ public class OrspProject {
      */
     public boolean isUsable() {
         return USABLE_STATUSES.contains(status);
+    }
+
+    public boolean isConsentGroup() {
+        return projectKey.startsWith(CONSENT_GROUP_PREFIX);
     }
 
     /**
