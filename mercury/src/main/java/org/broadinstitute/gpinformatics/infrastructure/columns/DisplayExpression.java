@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexing
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -71,34 +72,30 @@ public enum DisplayExpression {
             return molecularIndexingScheme == null ? null : molecularIndexingScheme.getName();
         }
     }),
-    METADATA(SampleInstanceV2.class, new SearchTerm.Evaluator<Set<String>>() {
+    METADATA(SampleInstanceV2.class, new SearchTerm.Evaluator<String>() {
         @Override
-        public Set<String> evaluate(Object entity, SearchContext context) {
+        public String evaluate(Object entity, SearchContext context) {
             SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
-            Set<String> results = new HashSet<>();
-
             SearchTerm searchTerm = context.getSearchTerm();
             String metaName = searchTerm.getName();
+            Metadata.Key key = Metadata.Key.fromDisplayName(metaName);
+            if (key == Metadata.Key.MATERIAL_TYPE) {
+                MaterialType materialType = sampleInstanceV2.getMaterialType();
+                return materialType == null ? null : materialType.getDisplayName();
+            }
+
             MercurySample mercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
             if (mercurySample != null) {
-                String value = null;
                 Set<Metadata> metadata = mercurySample.getMetadata();
-                // todo jmt Material type from events
                 if( metadata != null && !metadata.isEmpty() ) {
-                    Metadata.Key key = Metadata.Key.fromDisplayName(metaName);
                     for( Metadata meta : metadata){
                         if( meta.getKey() == key ) {
-                            value = meta.getValue();
-                            // Assume only one metadata type (e.g. Gender, Sample ID) per sample.
-                            break;
+                            return meta.getValue();
                         }
                     }
                 }
-                if (value != null) {
-                    results.add(value);
-                }
             }
-            return results;
+            return null;
         }
     }),
 

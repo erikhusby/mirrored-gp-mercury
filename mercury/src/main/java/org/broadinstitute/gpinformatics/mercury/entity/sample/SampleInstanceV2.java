@@ -6,6 +6,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -15,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexRea
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
@@ -94,6 +96,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
     private LabVessel currentLabVessel;
     private MolecularIndexingScheme molecularIndexingScheme;
     private LabVessel firstPcrVessel;
+    private MaterialType materialType;
 
     private int depth;
 
@@ -117,6 +120,17 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
             message += " from " + labVessel.getLabel();
             log.info(message);
         }
+        for (MercurySample rootMercurySample : rootMercurySamples) {
+            for (Metadata metadata : rootMercurySample.getMetadata()) {
+                if (metadata.getKey() == Metadata.Key.MATERIAL_TYPE) {
+                    MaterialType metadataMaterialType = MaterialType.fromDisplayName(metadata.getValue());
+                    if (metadataMaterialType != MaterialType.NONE) {
+                        materialType = metadataMaterialType;
+                    }
+                }
+            }
+        }
+
         depth = 0;
         applyVesselChanges(labVessel);
     }
@@ -145,6 +159,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
         molecularIndexingScheme = other.molecularIndexingScheme;
         initialLabVessel = other.initialLabVessel;
         firstPcrVessel = other.firstPcrVessel;
+        materialType = other.materialType;
         depth = other.depth + 1;
     }
 
@@ -491,11 +506,17 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
      * Applies a LabEvent, specifically computed LCSets.
      */
     public void applyEvent(LabEvent labEvent, LabVessel labVessel) {
-        if (labEvent.getLabEventType().getPipelineTransformation() == LabEventType.PipelineTransformation.PCR) {
+        LabEventType labEventType = labEvent.getLabEventType();
+        if (labEventType.getPipelineTransformation() == LabEventType.PipelineTransformation.PCR) {
             if (firstPcrVessel == null && labVessel != null) {
                 firstPcrVessel = labVessel;
             }
         }
+        MaterialType resultingMaterialType = labEventType.getResultingMaterialType();
+        if (resultingMaterialType != null) {
+            materialType = resultingMaterialType;
+        }
+
         // Multiple workflow batches need help.
         // Avoid overwriting a singleWorkflowBatch set by applyVesselChanges.
         if (singleWorkflowBatch == null) {
@@ -524,7 +545,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
                         if (LabVessel.DIAGNOSTICS) {
                             log.info("Setting singleBucketEntry to " +
                                     singleBucketEntry.getLabBatch().getBatchName() + " in " +
-                                    labEvent.getLabEventType().getName());
+                                    labEventType.getName());
                         }
                         break;
                     }
@@ -539,6 +560,11 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
 
     public LabVessel getFirstPcrVessel() {
         return firstPcrVessel;
+    }
+
+    @Nullable
+    public MaterialType getMaterialType() {
+        return materialType;
     }
 
     /**
