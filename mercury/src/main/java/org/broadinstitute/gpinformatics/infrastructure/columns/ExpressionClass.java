@@ -56,6 +56,7 @@ public enum ExpressionClass {
         if (OrmUtil.proxySafeIsInstance(rowObject, LabVessel.class) && expressionClass.isAssignableFrom(SampleInstanceV2.class)) {
             LabVessel labVessel = (LabVessel) rowObject;
             return (List<T>) new ArrayList<>(labVessel.getSampleInstancesV2());
+
         } else if (OrmUtil.proxySafeIsInstance(rowObject, LabVessel.class) && expressionClass.isAssignableFrom(SampleData.class)) {
             LabVessel labVessel = (LabVessel) rowObject;
             List<MercurySample> mercurySamples = new ArrayList<>();
@@ -75,6 +76,7 @@ public enum ExpressionClass {
                 }
             }
             return (List<T>) results;
+
         } else if (OrmUtil.proxySafeIsInstance(rowObject, LabEvent.class) && expressionClass.isAssignableFrom(SampleInstanceV2.class)) {
             LabEvent labEvent = (LabEvent) rowObject;
             LabVessel labVessel = labEvent.getInPlaceLabVessel();
@@ -92,7 +94,6 @@ public enum ExpressionClass {
                     default:
                         throw new RuntimeException("Unexpected enum " + plasticToValidate);
                 }
-                // todo jmt sort lab vessels?
                 Set<SampleInstanceV2> sampleInstances = new TreeSet<>();
                 for (LabVessel vessel : labVessels) {
                     sampleInstances.addAll(vessel.getSampleInstancesV2());
