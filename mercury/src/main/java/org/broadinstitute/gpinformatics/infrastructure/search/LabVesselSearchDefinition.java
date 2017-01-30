@@ -119,7 +119,7 @@ public class LabVesselSearchDefinition {
         // XX version - from workflow? 3.2 doesn't seem to be in XML
         // Start date - LabBatch.createdOn? usually 1 day before "scheduled to start"
         // Due date - LabBatch.dueDate is transient!
-        searchTerms = srchDef.buildLabVesselBsp();
+        searchTerms = buildBsp();
         mapGroupSearchTerms.put("BSP", searchTerms);
 
         searchTerms = srchDef.buildLabVesselMetadata();
@@ -417,7 +417,8 @@ public class LabVesselSearchDefinition {
         return searchTerms;
     }
 
-    private List<SearchTerm> buildLabVesselBsp() {
+    // todo jmt rename
+    static List<SearchTerm> buildBsp() {
         List<SearchTerm> searchTerms = new ArrayList<>();
         // Non-searchable data from BSP
         {
@@ -456,14 +457,14 @@ public class LabVesselSearchDefinition {
     /**
      * Builds BSP term with default display name
      */
-    private SearchTerm buildLabVesselBspTerm(BSPSampleSearchColumn bspSampleSearchColumn) {
+    private static SearchTerm buildLabVesselBspTerm(BSPSampleSearchColumn bspSampleSearchColumn) {
         return buildLabVesselBspTerm(bspSampleSearchColumn, bspSampleSearchColumn.columnName());
     }
 
     /**
      * Builds BSP term with user specified display name
      */
-    private SearchTerm buildLabVesselBspTerm(final BSPSampleSearchColumn bspSampleSearchColumn, String name) {
+    private static SearchTerm buildLabVesselBspTerm(final BSPSampleSearchColumn bspSampleSearchColumn, String name) {
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName(name);
         searchTerm.setAddRowsListenerHelper(new SearchTerm.Evaluator<Object>() {

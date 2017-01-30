@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -261,42 +262,27 @@ public enum DisplayExpression {
                 }
             }
 
-            List<SampleData> results = new ArrayList<>();
-            if (!mercurySamples.isEmpty()) {
-                BspSampleSearchAddRowsListener bspColumns = (BspSampleSearchAddRowsListener) context.getRowsListener(
-                        BspSampleSearchAddRowsListener.class.getSimpleName());
-                for( MercurySample mercurySample : mercurySamples) {
-                    results.add(bspColumns.getSampleData(mercurySample.getSampleKey()));
-                }
-            }
+            List<SampleData> results = mercurySampleToSampleData(context, mercurySamples);
             return (List<T>) results;
 
         } else if (OrmUtil.proxySafeIsInstance(rowObject, LabEvent.class) && expressionClass.isAssignableFrom(SampleInstanceV2.class)) {
             // LabEvent to SampleInstance
             LabEvent labEvent = (LabEvent) rowObject;
-            LabVessel labVessel = labEvent.getInPlaceLabVessel();
-            if (labVessel == null) {
-                Set<LabVessel> labVessels;
-                LabEventType.PlasticToValidate plasticToValidate = labEvent.getLabEventType().getPlasticToValidate();
-                switch (plasticToValidate) {
-                    case BOTH:
-                    case SOURCE:
-                        labVessels = labEvent.getSourceLabVessels();
-                        break;
-                    case TARGET:
-                        labVessels = labEvent.getTargetLabVessels();
-                        break;
-                    default:
-                        throw new RuntimeException("Unexpected enum " + plasticToValidate);
+            return (List<T>) new ArrayList<>(labEventToSampleInstances(labEvent));
+
+        } else if (OrmUtil.proxySafeIsInstance(rowObject, LabEvent.class) && expressionClass.isAssignableFrom(SampleData.class)) {
+            // LabEvent to SampleData
+            LabEvent labEvent = (LabEvent) rowObject;
+            Set<SampleInstanceV2> sampleInstances = labEventToSampleInstances(labEvent);
+
+            List<MercurySample> mercurySamples = new ArrayList<>();
+            for (SampleInstanceV2 sampleInstance : sampleInstances) {
+                MercurySample mercurySample = sampleInstance.getRootOrEarliestMercurySample();
+                if (mercurySample != null) {
+                    mercurySamples.add(mercurySample);
                 }
-                Set<SampleInstanceV2> sampleInstances = new TreeSet<>();
-                for (LabVessel vessel : labVessels) {
-                    sampleInstances.addAll(vessel.getSampleInstancesV2());
-                }
-                return (List<T>) new ArrayList<>(sampleInstances);
-            } else {
-                return (List<T>) new ArrayList<>(labVessel.getSampleInstancesV2());
             }
+            return (List<T>) mercurySampleToSampleData(context, mercurySamples);
 
         } else if (OrmUtil.proxySafeIsInstance(rowObject, MercurySample.class) && expressionClass.isAssignableFrom(SampleInstanceV2.class)) {
             // MercurySample to SampleInstance
@@ -309,6 +295,47 @@ public enum DisplayExpression {
 
         } else {
             throw new RuntimeException("Unexpected combination " + rowObject.getClass() + " to " + expressionClass);
+        }
+    }
+
+
+    @NotNull
+    private static List<SampleData> mercurySampleToSampleData(SearchContext context, List<MercurySample> mercurySamples) {
+        List<SampleData> results = new ArrayList<>();
+        if (!mercurySamples.isEmpty()) {
+            BspSampleSearchAddRowsListener bspColumns = (BspSampleSearchAddRowsListener) context.getRowsListener(
+                    BspSampleSearchAddRowsListener.class.getSimpleName());
+            for( MercurySample mercurySample : mercurySamples) {
+                results.add(bspColumns.getSampleData(mercurySample.getSampleKey()));
+            }
+        }
+        return results;
+    }
+
+    @NotNull
+    private static <T> Set<SampleInstanceV2> labEventToSampleInstances(LabEvent labEvent) {
+        LabVessel labVessel = labEvent.getInPlaceLabVessel();
+        if (labVessel == null) {
+            Set<LabVessel> labVessels;
+            LabEventType.PlasticToValidate plasticToValidate = labEvent.getLabEventType().getPlasticToValidate();
+            switch (plasticToValidate) {
+                case BOTH:
+                case SOURCE:
+                    labVessels = labEvent.getSourceLabVessels();
+                    break;
+                case TARGET:
+                    labVessels = labEvent.getTargetLabVessels();
+                    break;
+                default:
+                    throw new RuntimeException("Unexpected enum " + plasticToValidate);
+            }
+            Set<SampleInstanceV2> sampleInstances = new TreeSet<>();
+            for (LabVessel vessel : labVessels) {
+                sampleInstances.addAll(vessel.getSampleInstancesV2());
+            }
+            return sampleInstances;
+        } else {
+            return labVessel.getSampleInstancesV2();
         }
     }
 }
