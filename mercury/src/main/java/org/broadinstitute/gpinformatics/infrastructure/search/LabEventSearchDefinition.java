@@ -3,8 +3,10 @@ package org.broadinstitute.gpinformatics.infrastructure.search;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.columns.BspSampleSearchAddRowsListener;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.DisplayExpression;
 import org.broadinstitute.gpinformatics.infrastructure.columns.EventVesselSourcePositionPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.EventVesselTargetPositionPlugin;
@@ -119,6 +121,9 @@ public class LabEventSearchDefinition {
         searchTerms = buildLabEventReagents();
         mapGroupSearchTerms.put("Reagents", searchTerms);
 
+        searchTerms = LabVesselSearchDefinition.buildBsp();
+        mapGroupSearchTerms.put("BSP", searchTerms);
+
         searchTerms = buildEventSampleOptions( sourceLayoutTerm, destinationLayoutTerm );
         mapGroupSearchTerms.put("Sample Metadata", searchTerms);
 
@@ -142,6 +147,16 @@ public class LabEventSearchDefinition {
                 , new LabEventTraversalEvaluator.AncestorTraversalEvaluator());
         configurableSearchDefinition.addTraversalEvaluator(TraversalEvaluatorName.DESCENDANTS.getId()
                 , new LabEventTraversalEvaluator.DescendantTraversalEvaluator());
+
+        configurableSearchDefinition.setAddRowsListenerFactory(
+                new ConfigurableSearchDefinition.AddRowsListenerFactory() {
+                    @Override
+                    public Map<String, ConfigurableList.AddRowsListener> getAddRowsListeners() {
+                        Map<String, ConfigurableList.AddRowsListener> listeners = new HashMap<>();
+                        listeners.put(BspSampleSearchAddRowsListener.class.getSimpleName(), new BspSampleSearchAddRowsListener());
+                        return listeners;
+                    }
+                });
 
         return configurableSearchDefinition;
     }

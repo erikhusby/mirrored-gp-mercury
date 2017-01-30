@@ -36,6 +36,7 @@ public class BspSampleSearchAddRowsListener implements ConfigurableList.AddRowsL
         List<MercurySample> samples = new ArrayList<>();
         for (Object entity : entityList) {
             LabVessel labVessel = (LabVessel) entity;
+            // todo jmt handle LabEvent
             for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
                 MercurySample mercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
                 if (mercurySample != null) {
