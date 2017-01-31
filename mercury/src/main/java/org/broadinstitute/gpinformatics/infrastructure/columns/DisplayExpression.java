@@ -14,7 +14,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -300,7 +299,6 @@ public enum DisplayExpression {
     }
 
 
-    @NotNull
     private static List<SampleData> mercurySampleToSampleData(SearchContext context, List<MercurySample> mercurySamples) {
         List<SampleData> results = new ArrayList<>();
         if (!mercurySamples.isEmpty()) {
@@ -313,7 +311,6 @@ public enum DisplayExpression {
         return results;
     }
 
-    @NotNull
     private static <T> Set<SampleInstanceV2> labEventToSampleInstances(LabEvent labEvent) {
         LabVessel labVessel = labEvent.getInPlaceLabVessel();
         if (labVessel == null) {
