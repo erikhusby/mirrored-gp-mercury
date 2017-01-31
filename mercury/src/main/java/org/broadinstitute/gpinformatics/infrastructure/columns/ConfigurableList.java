@@ -739,11 +739,50 @@ public class ConfigurableList {
             calcRowColumnCount(getResultRows(), rowColPair, getHeaders());
 
             Object[][] rowObjects = new Object[rowColPair.getLeft()][rowColPair.getRight()];
-            buildArray(rowObjects, getResultRows(), getHeaders());
+            fillArray(rowObjects, getResultRows(), getHeaders());
             return rowObjects;
         }
 
-        private void buildArray(Object[][] rowObjects, List<ResultRow> resultRows, List<Header> headers) {
+        /**
+         * Calculate the number of spreadsheet rows and columns necessary to hold all cells in a ResultList, including
+         * nested tables.
+         * @param resultRows the table for which to calculate
+         * @param rowColPair pair of integers, row and column, updated by this method and recursive calls
+         * @param headers headers for which to calculate
+         */
+        private void calcRowColumnCount(List<ResultRow> resultRows,
+                MutablePair<Integer, Integer> rowColPair, List<Header> headers) {
+            // Calculate how many rows and columns required using nested tables
+            // Default for no nested tables
+            rowColPair.setLeft(rowColPair.getLeft() + resultRows.size() + 2);
+            rowColPair.setRight(Math.max(rowColPair.getRight() , headers.size()));
+
+            // Some rows have 1 or more nested tables, some don't.
+            // Adjust array size as required
+            for (ResultRow resultRow : resultRows) {
+                for( ResultList nestedTable: resultRow.getNestedTables().values() ){
+                    rowColPair.setLeft(rowColPair.getLeft() + nestedTable.getResultRows().size() + 2);
+                    int nestCols = nestedTable.getHeaders().size() + 1;
+                    if( nestCols > rowColPair.getRight() ) {
+                        rowColPair.setRight(nestCols);
+                    }
+                    calcRowColumnCount(nestedTable.getResultRows(), rowColPair, nestedTable.getHeaders());
+                }
+                for (ResultList resultList : resultRow.getCellNestedTables()) {
+                    if (resultList != null) {
+                        calcRowColumnCount(resultList.getResultRows(), rowColPair, resultList.getHeaders());
+                    }
+                }
+            }
+        }
+
+        /**
+         * Fill an array of cells from a ResultList, including nested tables.
+         * @param rowObjects array to be filled in
+         * @param resultRows rows from which to fill array
+         * @param headers headers from which to fill array
+         */
+        private void fillArray(Object[][] rowObjects, List<ResultRow> resultRows, List<Header> headers) {
             // Set the first (name) and second (units, metadata) headers.
             int columnNumber;
             boolean headerRow2Present = false;
@@ -775,32 +814,6 @@ public class ConfigurableList {
                 for (ResultList resultList : resultRow.getCellNestedTables()) {
                     if (resultList != null) {
                         rowNumber = appendNestedRows(rowNumber, 1, resultList, rowObjects);
-                    }
-                }
-            }
-        }
-
-        private void calcRowColumnCount(List<ResultRow> resultRows,
-                MutablePair<Integer, Integer> rowColPair, List<Header> headers) {
-            // Calculate how many rows and columns required using nested tables
-            // Default for no nested tables
-            rowColPair.setLeft(rowColPair.getLeft() + resultRows.size() + 2);
-            rowColPair.setRight(Math.max(rowColPair.getRight() , headers.size()));
-
-            // Some rows have 1 or more nested tables, some don't.
-            // Adjust array size as required
-            for (ResultRow resultRow : resultRows) {
-                for( ResultList nestedTable: resultRow.getNestedTables().values() ){
-                    rowColPair.setLeft(rowColPair.getLeft() + nestedTable.getResultRows().size() + 2);
-                    int nestCols = nestedTable.getHeaders().size() + 1;
-                    if( nestCols > rowColPair.getRight() ) {
-                        rowColPair.setRight(nestCols);
-                    }
-                    calcRowColumnCount(nestedTable.getResultRows(), rowColPair, nestedTable.getHeaders());
-                }
-                for (ResultList resultList : resultRow.getCellNestedTables()) {
-                    if (resultList != null) {
-                        calcRowColumnCount(resultList.getResultRows(), rowColPair, resultList.getHeaders());
                     }
                 }
             }

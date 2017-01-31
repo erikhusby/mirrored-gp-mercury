@@ -237,7 +237,8 @@ public enum DisplayExpression {
     }
 
     /**
-     * The list returned from this must be deterministic.
+     * Navigates from an entity in a row to the entity on which to evaulate an expression.  The list returned from
+     * this must be ordered deterministically.
      * @param rowObject object from result row
      * @param expressionClass class against which expression will be evaluated
      * @param context search parameters
