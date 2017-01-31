@@ -236,6 +236,9 @@ public class SearchTerm implements Serializable, ColumnTabulation {
      */
     private Evaluator<Object> displayValueExpression;
 
+    /**
+     * Expression from enum (can be shared across entities)
+     */
     private DisplayExpression displayExpression;
 
     /**

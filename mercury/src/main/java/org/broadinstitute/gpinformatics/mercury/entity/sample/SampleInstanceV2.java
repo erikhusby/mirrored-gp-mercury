@@ -126,6 +126,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
                     MaterialType metadataMaterialType = MaterialType.fromDisplayName(metadata.getValue());
                     if (metadataMaterialType != MaterialType.NONE) {
                         materialType = metadataMaterialType;
+                        break;
                     }
                 }
             }
@@ -586,7 +587,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
         return metadataSources.iterator().next();
     }
 
-    // todo should these methods use nearest sample?
+    // todo jmt should these methods use nearest sample?
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {

@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 
@@ -19,8 +20,7 @@ public class VesselLayoutPlugin extends EventVesselPositionPlugin {
     @Override
     public ConfigurableList.ResultList getNestedTableData(Object entity, ColumnTabulation columnTabulation,
             @Nonnull SearchContext context) {
-        // todo jmt OrmUtil?
-        LabVessel labVessel = (LabVessel) entity;
+        LabVessel labVessel = OrmUtil.proxySafeCast(entity, LabVessel.class);
         VesselContainer<?> containerVessel = labVessel.getContainerRole();
         if( containerVessel == null ) {
             return null;
