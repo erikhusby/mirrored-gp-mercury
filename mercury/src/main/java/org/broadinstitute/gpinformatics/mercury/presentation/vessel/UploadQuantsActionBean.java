@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.vessel;
 
-import com.google.common.collect.Multimap;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.FileBean;
 import net.sourceforge.stripes.action.ForwardResolution;
@@ -27,13 +26,11 @@ import org.broadinstitute.gpinformatics.mercury.boundary.sample.QuantificationEJ
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunDao;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.sample.PicoDispositionActionBean;

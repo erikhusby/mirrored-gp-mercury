@@ -23,7 +23,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.InputStream;
 import java.io.Serializable;
-import java.util.Map;
 
 /**
  * Passes info to BSP via a BSP REST service.

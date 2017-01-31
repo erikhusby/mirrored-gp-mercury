@@ -19,7 +19,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -42,7 +41,6 @@ import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric.MetricType.INITIAL_PICO;
-import static org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition.A01;
 
 /**
  * Test the Varioskan upload with persistence.
