@@ -411,5 +411,6 @@ mercury:
       collaborate: PROD
       bass:     PROD
       submission: PROD
+      infiniumStarter: PROD
       sap:  PROD
 
