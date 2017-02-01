@@ -467,14 +467,7 @@ public class LabEventFactory implements Serializable {
                     break;
                 case GAP:
                     String forwardToGap = null;
-                    Set<LabVessel> labVessels = labEvent.getSourceLabVessels();
-                    if (labVessels.isEmpty()) {
-                        LabVessel inPlaceLabVessel = labEvent.getInPlaceLabVessel();
-                        if (inPlaceLabVessel != null) {
-                            labVessels.add(inPlaceLabVessel);
-                        }
-                    }
-                    for (LabVessel labVessel : labVessels) {
+                    for (LabVessel labVessel : labEvent.getSourceLabVessels()) {
                         for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
                             ProductOrderSample productOrderSample =
                                     sampleInstanceV2.getProductOrderSampleForSingleBucket();
