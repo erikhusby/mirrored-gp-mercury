@@ -1109,4 +1109,27 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderDao.persist(new FixupCommentary("GPLIM-4595 Updated pipeline location for arrays PDOs to On Prem"));
         commitTransaction();
     }
+
+    @Test(enabled = false)
+    public void gplim4615CloseOutBillingSession() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+        BillingSession billingSession = billingSessionDao.findByBusinessKey("BILL-8923");
+        ProductOrder testOrder = productOrderDao.findByBusinessKey("PDO-11006");
+
+        for (LedgerEntry ledgerEntry : billingSession.getLedgerEntryItems()) {
+            ledgerEntry.setQuoteId(testOrder.getQuoteId());
+            ledgerEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
+            ledgerEntry.setBillingMessage(BillingSession.SUCCESS);
+            ledgerEntry.setWorkItem("222529");
+//            ledgerEntry.setSapDeliveryDocumentId("200000036");
+        }
+
+        billingEjb.endSession(billingSession);
+        productOrderEjb.updateOrderStatusNoRollback(testOrder.getJiraTicketKey());
+        productOrderDao.persist(new FixupCommentary("GPLIM-4615 Helping to resolve closing this PDO due to issues with price item disparities"));
+        commitTransaction();
+    }
+
+
 }
