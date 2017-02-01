@@ -194,10 +194,16 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                 // chosen.on("nothing", function (event, what) {
                 if (what) {
                     var eventAction = Object.keys(what)[0]; // ['selected','deselected']
-                    var filterText=what[eventAction];
-                    if (eventAction==='deselected'){
-                        filterText = "";
+                    var currentlySelected = $j(this).find(":selected").map(function () {
+                        return this.text
+                    }).get();
+                    if (eventAction === 'deselected') {
+                        var index = currentlySelected.indexOf(what['deselected']);
+                        if (index>-1) {
+                            currentlySelected.splice(index, 1);
+                        }
                     }
+                    var filterText = currentlySelected.join(", ");
                     updateFilterInfo(column, cleanTitle, headerLabel, filterText);
                 }
             });
@@ -223,7 +229,7 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
             });
         }
         api.on('init.dt', function (event, settings) {
-                updateFilterInfo(column, cleanTitle, headerLabel, savedFilterValue);
+                updateFilterInfo(column, cleanTitle, headerLabel, savedFilterValue.replace(/\|/g,', '));
         });
     });
 
