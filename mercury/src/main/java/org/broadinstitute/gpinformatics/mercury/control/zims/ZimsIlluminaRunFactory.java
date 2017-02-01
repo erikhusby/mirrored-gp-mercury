@@ -23,6 +23,8 @@ import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignation
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.analysis.Aligner;
+import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
@@ -424,6 +426,10 @@ public class ZimsIlluminaRunFactory {
                         String[] referenceSequenceValues = referenceSequenceKeys.iterator().next().split("\\|");
                         referenceSequence = referenceSequenceValues[0];
                         referenceSequenceVersion = referenceSequenceValues[1];
+                        if (ReferenceSequence.NO_REFERENCE_SEQUENCE.equals(referenceSequence)) {
+                            referenceSequence = null;
+                            referenceSequenceVersion = null;
+                        }
                         aggregationDataType = aggregationDataTypes.iterator().next();
                         if (positiveControlProjects.size() == 1) {
                             positiveControlProject = positiveControlProjects.iterator().next();
@@ -461,12 +467,18 @@ public class ZimsIlluminaRunFactory {
             // Project stuff.
             ResearchProject project = productOrder.getResearchProject();
             aligner = project.getSequenceAlignerKey();
-
+            if (Aligner.UNALIGNED.equals(aligner)) {
+                aligner = null;
+            }
             // If there is a reference sequence value on the project, then populate the name and version.
             if (!StringUtils.isBlank(project.getReferenceSequenceKey())) {
                 String[] referenceSequenceValues = project.getReferenceSequenceKey().split("\\|");
                 referenceSequence = referenceSequenceValues[0];
                 referenceSequenceVersion = referenceSequenceValues[1];
+            }
+            if (ReferenceSequence.NO_REFERENCE_SEQUENCE.equals(referenceSequence)) {
+                referenceSequence = null;
+                referenceSequenceVersion = null;
             }
         }
         String libraryCreationDate = dateFormat.format(labVessel.getCreatedOn());
