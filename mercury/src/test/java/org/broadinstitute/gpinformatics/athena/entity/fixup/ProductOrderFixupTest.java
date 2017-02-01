@@ -1114,7 +1114,7 @@ public class ProductOrderFixupTest extends Arquillian {
     public void gplim4615CloseOutBillingSession() throws Exception {
         userBean.loginOSUser();
         beginTransaction();
-        BillingSession billingSession = billingSessionDao.findByBusinessKey("BILL-8923");
+        BillingSession billingSession = billingSessionDao.findByBusinessKey("BILL-9032");
         ProductOrder testOrder = productOrderDao.findByBusinessKey("PDO-11006");
 
         for (LedgerEntry ledgerEntry : billingSession.getLedgerEntryItems()) {
