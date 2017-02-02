@@ -858,10 +858,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             StringUtils.isNotBlank(primaryPriceItem.getPrice())) {
             Double productPrice = Double.valueOf(primaryPriceItem.getPrice());
 
-            if (productPrice != null) {
-                productValue = productPrice * (unbilledCount);
-            }
-
+            productValue = productPrice * (unbilledCount);
         }
         return productValue;
     }
