@@ -645,15 +645,15 @@ public class BucketViewActionBean extends CoreActionBean {
         this.searchKey = searchKey;
     }
 
-    public Map<String, Boolean> getHeaderVisibilityMap() {
-        return headerVisibilityMap;
-    }
-
     public List<String> bucketWorkflowNames(BucketEntry bucketEntry) {
         List<String> workflowNames = new ArrayList<>();
         for (Workflow workflow : bucketEntry.getWorkflows(workflowConfig)) {
             workflowNames.add(workflow.getWorkflowName());
         }
         return workflowNames;
+    }
+
+    public boolean showHeader(String columnName) {
+        return headerVisibilityMap.isEmpty() || headerVisibilityMap.get(columnName);
     }
 }

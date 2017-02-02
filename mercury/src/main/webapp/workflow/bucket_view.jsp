@@ -725,8 +725,6 @@
                 </thead>
                 <tbody>
 
-                <c:set var="headerVisibilityMap" value="${actionBean.headerVisibilityMap}"/>
-
                 <c:forEach items="${actionBean.collectiveEntries}" var="entry">
                     <tr id="${entry.bucketEntryId}" data-vessel-label="${entry.labVessel.label}">
                         <td class="bucket-control">
@@ -734,12 +732,12 @@
                                               value="${entry.bucketEntryId}"/>
                         </td>
                         <td>
-                            <c:if test="${headerVisibilityMap['Vessel Name']}">
+                            <c:if test="${actionBean.showHeader('Vessel Name')}">
                                 <a href="${ctxpath}/search/vessel.action?vesselSearch=&searchKey=${entry.labVessel.label}">
                                         ${entry.labVessel.label}
                                 </a>
                             </c:if></td>
-                        <td><c:if test="${headerVisibilityMap['Sample Name']}">
+                        <td><c:if test="${actionBean.showHeader('Sample Name')}">
                             <c:forEach items="${entry.labVessel.mercurySamples}" var="mercurySample" varStatus="stat">
                                 <a href="${ctxpath}/search/sample.action?sampleSearch=&searchKey=${mercurySample.sampleKey}">
                                         ${mercurySample.sampleKey}</a>
@@ -747,38 +745,38 @@
                             </c:forEach>
                         </c:if></td>
                         <td class="ellipsis">
-                            <c:if test="${headerVisibilityMap['Material Type']}">
+                            <c:if test="${actionBean.showHeader('Material Type')}">
                                 ${entry.labVessel.latestMaterialType.displayName}
                             </c:if>
                         </td>
-                        <td><c:if test="${headerVisibilityMap['PDO']}">
+                        <td><c:if test="${actionBean.showHeader('PDO')}">
                             <span class="ellipsis editable"> ${entry.productOrder.businessKey} </span>
                             <span style="display: none;" class="icon-pencil"></span>
                         </c:if>
                         </td>
                         <td>
-                            <c:if test="${headerVisibilityMap['PDO Name']}">
+                            <c:if test="${actionBean.showHeader('PDO Name')}">
                                 <div class="ellipsis" style="width: 300px"> ${entry.productOrder.title} </div>
                             </c:if>
                         </td>
                         <td class="ellipsis">
-                            <c:if test="${headerVisibilityMap['PDO Owner']}">
+                            <c:if test="${actionBean.showHeader('PDO Owner')}">
                                 ${actionBean.getUserFullName(entry.productOrder.createdBy)}</c:if>
                         </td>
                         <td>
-                            <c:if test="${headerVisibilityMap['Batch Name']}">
+                            <c:if test="${actionBean.showHeader('Batch Name')}">
                             <c:forEach items="${entry.labVessel.nearestWorkflowLabBatches}" var="batch" varStatus="stat">
                             ${actionBean.getLink(batch.businessKey)} <c:if test="${!stat.last}">&nbsp;</c:if></c:forEach></c:if>
                         </td>
                         <td>
                             <div class="ellipsis" style="max-width: 250px;">
-                                <c:if test="${headerVisibilityMap['Workflow']}">
+                                <c:if test="${actionBean.showHeader('Workflow')}">
                                     ${mercuryStatic:join(actionBean.bucketWorkflowNames(entry), "<br/>")}
                                 </c:if>
                             </div>
                         </td>
                         <td>
-                            <c:if test="${headerVisibilityMap['Product']}">
+                            <c:if test="${actionBean.showHeader('Product')}">
                             <div class="ellipsis" style="max-width: 250px;">${entry.productOrder.product.name}</div></c:if>
                         </td>
                         <td>
@@ -788,30 +786,30 @@
                                 </div>
                             </c:if></td>
                         <td class="ellipsis">
-                        <c:if test="${headerVisibilityMap['Receipt Date']}"><c:forEach items="${entry.labVessel.mercurySamples}" var="mercurySample" varStatus="stat">
+                        <c:if test="${actionBean.showHeader('Receipt Date')}"><c:forEach items="${entry.labVessel.mercurySamples}" var="mercurySample" varStatus="stat">
                                 <fmt:formatDate value="${mercurySample.receivedDate}" pattern="MM/dd/yyyy HH:mm"/>
                                 <c:if test="${!stat.last}">&nbsp;</c:if>
                             </c:forEach></c:if>
                         </td>
                         <td class="ellipsis">
-                        <c:if test="${headerVisibilityMap['Created Date']}"><fmt:formatDate value="${entry.createdDate}" pattern="MM/dd/yyyy HH:mm"/></c:if>
+                        <c:if test="${actionBean.showHeader('Created Date')}"><fmt:formatDate value="${entry.createdDate}" pattern="MM/dd/yyyy HH:mm"/></c:if>
                         </td>
                         <td>
-                            <c:if test="${headerVisibilityMap['Bucket Entry Type']}">${entry.entryType.name}</c:if>
+                            <c:if test="${actionBean.showHeader('Bucket Entry Type')}">${entry.entryType.name}</c:if>
                         </td>
                         <td>
-                            <c:if test="${headerVisibilityMap['Rework Reason']}">${entry.reworkDetail.reason.reason}</c:if>
+                            <c:if test="${actionBean.showHeader('Rework Reason')}">${entry.reworkDetail.reason.reason}</c:if>
                         </td>
                         <td>
-                        <c:if test="${headerVisibilityMap['Rework Comment']}"><div class="ellipsis">${entry.reworkDetail.comment}</div></c:if>
+                        <c:if test="${actionBean.showHeader('Rework Comment')}"><div class="ellipsis">${entry.reworkDetail.comment}</div></c:if>
                         </td>
                         <td>
-                            <c:if test="${entry.reworkDetail != null && headerVisibilityMap['Rework User']}">
+                            <c:if test="${entry.reworkDetail != null && actionBean.showHeader('Rework User')}">
                                 ${actionBean.getUserFullName(entry.reworkDetail.addToReworkBucketEvent.eventOperator)}
                             </c:if>
                         </td>
                         <td>
-                        <c:if test="${headerVisibilityMap['Rework Date']}"><fmt:formatDate value="${entry.reworkDetail.addToReworkBucketEvent.eventDate}"
+                        <c:if test="${actionBean.showHeader('Rework Date')}"><fmt:formatDate value="${entry.reworkDetail.addToReworkBucketEvent.eventDate}"
                                     pattern="MM/dd/yyyy HH:mm:ss"/></c:if>
                         </td>
                     </tr>
