@@ -13,6 +13,7 @@ import net.sourceforge.stripes.mock.MockRoundtrip;
 import net.sourceforge.stripes.mock.MockServletContext;
 import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjbTest;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -20,6 +21,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
@@ -34,6 +36,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
@@ -88,12 +91,16 @@ public class ProductOrderActionBeanTest {
     public static final long BSP_INFORMATICS_TEST_SITE_ID = 1l;
     public static final long HOMO_SAPIENS = 1l;
     public static final long TEST_COLLECTION = 1062L;
+    private PriceListCache mockPriceListCache;
 
 
     @BeforeMethod
     private void setUp() {
         actionBean = new ProductOrderActionBean();
         actionBean.setContext(new CoreActionBeanContext());
+        mockPriceListCache = Mockito.mock(PriceListCache.class);
+        actionBean.setPriceListCache(mockPriceListCache);
+
         jsonObject = new JSONObject();
         pdo = newPdo();
     }
@@ -709,6 +716,64 @@ public class ProductOrderActionBeanTest {
 
         assertThat(pdo.getRegulatoryInfos(), empty());
         assertThat(pdo.getSkipRegulatoryReason(), not(isEmptyOrNullString()));
+    }
+
+    public void testValueOfOrder() {
+
+        Product primaryProduct = new Product();
+        primaryProduct.setPartNumber("P-Test_primary");
+        primaryProduct.setPrimaryPriceItem(new PriceItem("primary", "Genomics Platform", "Primary testing size",
+                "Thousand dollar Genome price"));
+        primaryProduct.setProductFamily(new ProductFamily(ProductFamily.ProductFamilyInfo.WHOLE_GENOME.getFamilyName()));
+
+
+        ProductOrder testOrder = new ProductOrder();
+        testOrder.setJiraTicketKey("PDO-TESTPDOValue");
+        testOrder.setProduct(primaryProduct);
+
+        ProductOrderEjbTest.addToMockPriceListCache(testOrder.getProduct(), mockPriceListCache, "1000");
+
+        Product addonNonSeqProduct = new Product();
+        addonNonSeqProduct.setPartNumber("ADD-NON-SEQ");
+        addonNonSeqProduct.setPrimaryPriceItem(new PriceItem("Secondary", "Genomics Platform",
+                "secondary testing size", "Extraction price"));
+        addonNonSeqProduct.setProductFamily(new ProductFamily(ProductFamily.ProductFamilyInfo.ALTERNATE_LIBRARY_PREP_DEVELOPMENT.getFamilyName()));
+
+        ProductOrderEjbTest.addToMockPriceListCache(addonNonSeqProduct, mockPriceListCache, "573");
+        testOrder.updateAddOnProducts(Collections.singletonList(addonNonSeqProduct));
+
+        List<ProductOrderSample> sampleList = new ArrayList<>();
+
+        for (int i = 0; i < 75;i++) {
+            sampleList.add(new ProductOrderSample("SM-Test"+i));
+        }
+
+        testOrder.setSamples(sampleList);
+        testOrder.setLaneCount(5);
+
+
+        Product seqProduct = new Product();
+        seqProduct.setPartNumber("ADD-SEQ");
+        seqProduct.setPrimaryPriceItem(new PriceItem("Third", "Genomics Platform", "Seq Testing Size",
+                "Put it on the sequencer"));
+        seqProduct.setProductFamily(new ProductFamily(ProductFamily.ProductFamilyInfo.SEQUENCE_ONLY.getFamilyName()));
+
+        ProductOrderEjbTest.addToMockPriceListCache(seqProduct, mockPriceListCache, "2500");
+
+        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder)),
+                Double.valueOf(573 * testOrder.getSamples().size() + 1000 * testOrder.getSamples().size()));
+
+        testOrder.updateAddOnProducts(Arrays.asList(addonNonSeqProduct, seqProduct));
+
+        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder)),
+                Double.valueOf(573 * testOrder.getSamples().size() + 1000 * testOrder.getSamples().size() + 2500 * testOrder.getLaneCount()));
+
+        testOrder.setProduct(seqProduct);
+
+        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder)),
+                Double.valueOf(573 * testOrder.getSamples().size() + 2500 * testOrder.getLaneCount() + 2500 * testOrder.getLaneCount()));
+
+
     }
 
     /**

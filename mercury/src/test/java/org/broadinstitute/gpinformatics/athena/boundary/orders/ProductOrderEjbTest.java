@@ -26,7 +26,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
-import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFunding;
@@ -331,10 +330,10 @@ public class ProductOrderEjbTest {
         conversionPdo.setQuoteId(testSingleSourceQuote.getAlphanumericId() );
         conversionPdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
-        addToMockPriceListCache(conversionPdo.getProduct());
+        addToMockPriceListCache(conversionPdo.getProduct(), mockPriceListCache, "5");
 
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
-            addToMockPriceListCache(productOrderAddOn.getAddOn());
+            addToMockPriceListCache(productOrderAddOn.getAddOn(), mockPriceListCache, "5");
         }
 
         MessageCollection messageCollection = new MessageCollection();
@@ -371,16 +370,18 @@ public class ProductOrderEjbTest {
 
     }
 
-    private void addToMockPriceListCache(Product productForCache) {
+    public static void addToMockPriceListCache(Product productForCache, PriceListCache mockPriceListCache, String price) {
         final QuotePriceItem testQuotePriceItem =
                 new QuotePriceItem(productForCache.getPrimaryPriceItem().getCategory(),
                         productForCache.getPrimaryPriceItem().getName(),
-                        productForCache.getPrimaryPriceItem().getName(), "5", "test",
+                        productForCache.getPrimaryPriceItem().getName(), price, "test",
                         productForCache.getPrimaryPriceItem().getPlatform());
 
         Mockito.when(mockPriceListCache.findByKeyFields(productForCache.getPrimaryPriceItem().getPlatform(),
                 productForCache.getPrimaryPriceItem().getCategory(),
                 productForCache.getPrimaryPriceItem().getName())).thenReturn(testQuotePriceItem);
+
+        Mockito.when(mockPriceListCache.findByKeyFields(productForCache.getPrimaryPriceItem())).thenReturn(testQuotePriceItem);
     }
 
     public void testAbandonOrderWithNoServiceNowTicket() throws Exception {
