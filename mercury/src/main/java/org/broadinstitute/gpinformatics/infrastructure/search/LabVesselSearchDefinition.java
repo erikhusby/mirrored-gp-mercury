@@ -214,6 +214,13 @@ public class LabVesselSearchDefinition {
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
                 ColumnEntity.LAB_VESSEL, criteriaProjections, mapGroupSearchTerms);
 
+        configurableSearchDefinition.addTraversalEvaluator(
+                LabEventSearchDefinition.TraversalEvaluatorName.ANCESTORS.getId(),
+                new LabVesselTraversalEvaluator.AncestorTraversalEvaluator());
+        configurableSearchDefinition.addTraversalEvaluator(
+                LabEventSearchDefinition.TraversalEvaluatorName.DESCENDANTS.getId(),
+                new LabVesselTraversalEvaluator.DescendantTraversalEvaluator());
+
         configurableSearchDefinition.setAddRowsListenerFactory(
                 new ConfigurableSearchDefinition.AddRowsListenerFactory() {
                     @Override
@@ -414,6 +421,36 @@ public class LabVesselSearchDefinition {
             }
         });
         searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Starting Barcode");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                LabVessel labVessel = (LabVessel) entity;
+                LabVessel startingVessel = labVessel.getStartingVessel();
+                return startingVessel == null ? null : startingVessel.getLabel();
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Library Type");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                LabVessel labVessel = (LabVessel) entity;
+                for (LabEvent labEvent : labVessel.getTransfersTo()) {
+                    LabEventType.LibraryType libraryType = labEvent.getLabEventType().getLibraryType();
+                    if (libraryType != LabEventType.LibraryType.NONE_ASSIGNED) {
+                        return libraryType.getMercuryDisplayName();
+                    }
+                }
+                return null;
+            }
+        });
+        searchTerms.add(searchTerm);
+
         return searchTerms;
     }
 
