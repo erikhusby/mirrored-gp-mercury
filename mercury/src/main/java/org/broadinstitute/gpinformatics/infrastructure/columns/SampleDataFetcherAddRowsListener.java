@@ -16,9 +16,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A listener for the ConfigurableList addRows method.  Fetches columns from BSP.
+ * A listener for the ConfigurableList addRows method.  Fetches columns from BSP, or from database if CRSP.
  */
-public class BspSampleSearchAddRowsListener implements ConfigurableList.AddRowsListener {
+public class SampleDataFetcherAddRowsListener implements ConfigurableList.AddRowsListener {
 
     private final List<BSPSampleSearchColumn> bspSampleSearchColumns = new ArrayList<>();
 
@@ -26,7 +26,7 @@ public class BspSampleSearchAddRowsListener implements ConfigurableList.AddRowsL
 
     private Map<String, SampleData> mapIdToSampleData = new HashMap<>();
 
-    public BspSampleSearchAddRowsListener() {
+    public SampleDataFetcherAddRowsListener() {
     }
 
     @Override
@@ -35,7 +35,7 @@ public class BspSampleSearchAddRowsListener implements ConfigurableList.AddRowsL
         List<MercurySample> samples = new ArrayList<>();
         for (Object entity : entityList) {
             List<SampleInstanceV2> sampleInstances = DisplayExpression.rowObjectToExpressionObject(entity,
-                    SampleInstanceV2.class, null);
+                    SampleInstanceV2.class, context);
             for (SampleInstanceV2 sampleInstanceV2 : sampleInstances) {
                 MercurySample mercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
                 if (mercurySample != null) {
