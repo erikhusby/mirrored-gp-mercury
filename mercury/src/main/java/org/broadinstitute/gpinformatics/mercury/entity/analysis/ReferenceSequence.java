@@ -35,6 +35,9 @@ public class ReferenceSequence implements BusinessObject {
 
     public static final char SEPARATOR = '|';
 
+    // NO_REFERENCE_SEQUENCE puts a null value in the pipeline query.
+    public static final String NO_REFERENCE_SEQUENCE = "No_Reference_Sequence";
+
     public ReferenceSequence() {
     }
 
