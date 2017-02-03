@@ -302,8 +302,8 @@ public enum DisplayExpression {
     private static List<SampleData> mercurySampleToSampleData(SearchContext context, List<MercurySample> mercurySamples) {
         List<SampleData> results = new ArrayList<>();
         if (!mercurySamples.isEmpty()) {
-            BspSampleSearchAddRowsListener bspColumns = (BspSampleSearchAddRowsListener) context.getRowsListener(
-                    BspSampleSearchAddRowsListener.class.getSimpleName());
+            SampleDataFetcherAddRowsListener bspColumns = (SampleDataFetcherAddRowsListener) context.getRowsListener(
+                    SampleDataFetcherAddRowsListener.class.getSimpleName());
             for( MercurySample mercurySample : mercurySamples) {
                 results.add(bspColumns.getSampleData(mercurySample.getSampleKey()));
             }
