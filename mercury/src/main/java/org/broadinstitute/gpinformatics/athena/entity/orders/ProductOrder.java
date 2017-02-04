@@ -506,7 +506,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public boolean requiresLaneCount() {
-        boolean laneCountNeeded = product.getProductFamily().isSupportsNumberOfLanes();
+        boolean laneCountNeeded = product!=null && product.getProductFamily()!=null
+                                  && product.getProductFamily().isSupportsNumberOfLanes();
 
         if(!laneCountNeeded) {
             for (ProductOrderAddOn addOn : addOns) {
