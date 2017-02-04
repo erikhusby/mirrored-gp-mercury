@@ -68,6 +68,12 @@ public class LabVesselSearchDefinition {
     private static ConfigurableSearchDefinition ARRAYS_ALT_SRCH_DEFINITION;
     public static final List<LabEventType> CHIP_EVENT_TYPES = Collections.singletonList(
             LabEventType.INFINIUM_HYBRIDIZATION);
+    private static final List<LabEventType> FLOWCELL_LAB_EVENT_TYPES = new ArrayList<>();
+    static {
+        FLOWCELL_LAB_EVENT_TYPES.add(LabEventType.FLOWCELL_TRANSFER);
+        FLOWCELL_LAB_EVENT_TYPES.add(LabEventType.DENATURE_TO_FLOWCELL_TRANSFER);
+        FLOWCELL_LAB_EVENT_TYPES.add(LabEventType.DILUTION_TO_FLOWCELL_TRANSFER);
+    }
 
     // These search term and/or result column names need to be referenced multiple places during processing.
     // Use an enum rather than having to reference via String values of term names
@@ -428,25 +434,7 @@ public class LabVesselSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 LabVessel labVessel = (LabVessel) entity;
-                LabVessel startingVessel = labVessel.getStartingVessel();
-                return startingVessel == null ? null : startingVessel.getLabel();
-            }
-        });
-        searchTerms.add(searchTerm);
-
-        searchTerm = new SearchTerm();
-        searchTerm.setName("Library Type");
-        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public String evaluate(Object entity, SearchContext context) {
-                LabVessel labVessel = (LabVessel) entity;
-                for (LabEvent labEvent : labVessel.getTransfersTo()) {
-                    LabEventType.LibraryType libraryType = labEvent.getLabEventType().getLibraryType();
-                    if (libraryType != LabEventType.LibraryType.NONE_ASSIGNED) {
-                        return libraryType.getMercuryDisplayName();
-                    }
-                }
-                return null;
+                return (String) context.getPagination().getIdExtraInfo().get(labVessel.getLabel());
             }
         });
         searchTerms.add(searchTerm);
@@ -902,16 +890,11 @@ public class LabVesselSearchDefinition {
                     return barcodes;
                 }
 
-                List<LabEventType> labEventTypes = new ArrayList<>();
-                labEventTypes.add(LabEventType.FLOWCELL_TRANSFER);
-                labEventTypes.add(LabEventType.DENATURE_TO_FLOWCELL_TRANSFER);
-                labEventTypes.add(LabEventType.DILUTION_TO_FLOWCELL_TRANSFER);
-
-                VesselsForEventTraverserCriteria eval
-                        = new VesselsForEventTraverserCriteria( labEventTypes );
+                VesselsForEventTraverserCriteria eval = new VesselsForEventTraverserCriteria(FLOWCELL_LAB_EVENT_TYPES);
 
                 if( labVessel.getContainerRole() != null ) {
-                    labVessel.getContainerRole().applyCriteriaToAllPositions(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+                    labVessel.getContainerRole().applyCriteriaToAllPositions(eval,
+                            TransferTraverserCriteria.TraversalDirection.Descendants);
                 } else {
                     labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
                 }
@@ -922,6 +905,27 @@ public class LabVesselSearchDefinition {
                             .add(labVesselAndPositions.getKey().getLabel());
                 }
                 return barcodes;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Number of Lanes");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Integer evaluate(Object entity, SearchContext context) {
+
+                LabVessel labVessel = (LabVessel) entity;
+                VesselsForEventTraverserCriteria eval = new VesselsForEventTraverserCriteria(FLOWCELL_LAB_EVENT_TYPES);
+
+                if( labVessel.getContainerRole() != null ) {
+                    labVessel.getContainerRole().applyCriteriaToAllPositions(eval,
+                            TransferTraverserCriteria.TraversalDirection.Descendants);
+                } else {
+                    labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+                }
+
+                return eval.getPositions().values().size();
             }
         });
         searchTerms.add(searchTerm);
@@ -1171,6 +1175,38 @@ public class LabVesselSearchDefinition {
         });
         searchTerms.add(searchTerm);
 
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Library Type");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                LabVessel labVessel = (LabVessel) entity;
+                for (LabEvent labEvent : labVessel.getTransfersTo()) {
+                    LabEventType.LibraryType libraryType = labEvent.getLabEventType().getLibraryType();
+                    if (libraryType != LabEventType.LibraryType.NONE_ASSIGNED) {
+                        return libraryType.getMercuryDisplayName();
+                    }
+                }
+                return null;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Transfers To");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                Set<String> events = new HashSet<>();
+                LabVessel labVessel = (LabVessel) entity;
+                for (LabEvent labEvent : labVessel.getTransfersTo()) {
+                    events.add(labEvent.getLabEventType().getName());
+                }
+                return events;
+            }
+        });
+        searchTerms.add(searchTerm);
+
         return searchTerms;
     }
 
@@ -1201,6 +1237,17 @@ public class LabVesselSearchDefinition {
         searchTerm = new SearchTerm();
         searchTerm.setName("Root Sample ID");
         searchTerm.setDisplayExpression(DisplayExpression.ROOT_SAMPLE_ID);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Sample Count");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Integer evaluate(Object entity, SearchContext context) {
+                LabVessel labVessel = (LabVessel) entity;
+                return labVessel.getSampleInstancesV2().size();
+            }
+        });
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -1926,6 +1973,7 @@ public class LabVesselSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
+        // todo jmt rename to Latest Descendant Event
         searchTerm.setName("Vessel Latest Event");
         searchTerm.setPluginClass(LabVesselLatestEventPlugin.class);
         searchTerms.add(searchTerm);
