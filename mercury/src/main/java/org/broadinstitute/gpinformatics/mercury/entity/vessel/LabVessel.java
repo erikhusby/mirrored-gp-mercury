@@ -226,9 +226,6 @@ public abstract class LabVessel implements Serializable {
 
     @Transient
     private MaterialType latestMaterialType = null;
-    /** Used by search. */
-    @Transient
-    private LabVessel startingVessel;
 
     protected LabVessel(String label) {
         createdOn = new Date();
@@ -774,14 +771,6 @@ public abstract class LabVessel implements Serializable {
                 new LabEvent(LabEventType.SAMPLE_RECEIPT, receivedDate, eventLocation,
                         disambiguator, user.getUserId(), LabEvent.UI_PROGRAM_NAME);
         addInPlaceEvent(receiptEvent);
-    }
-
-    public LabVessel getStartingVessel() {
-        return startingVessel;
-    }
-
-    public void setStartingVessel(LabVessel startingVessel) {
-        this.startingVessel = startingVessel;
     }
 
     public enum ContainerType {

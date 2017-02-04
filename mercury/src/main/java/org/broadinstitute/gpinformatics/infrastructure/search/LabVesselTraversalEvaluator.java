@@ -72,7 +72,8 @@ public class LabVesselTraversalEvaluator extends TraversalEvaluator {
             startingLabVessel.evaluateCriteria(transferTraverserCriteria, traversalDirection);
             Collection<LabVessel> labVessels = transferTraverserCriteria.getLabVessels();
             for (LabVessel labVessel : labVessels) {
-                labVessel.setStartingVessel(startingLabVessel);
+                searchInstance.getEvalContext().getPagination().addExtraIdInfo(labVessel.getLabel(),
+                        startingLabVessel.getLabel());
             }
 
             resultLabVessels.addAll(labVessels);
@@ -96,7 +97,7 @@ public class LabVesselTraversalEvaluator extends TraversalEvaluator {
     public static class AncestorTraversalEvaluator extends LabVesselTraversalEvaluator{
         // ID = "ancestorOptionEnabled"
         public AncestorTraversalEvaluator() {
-            setHelpNote("Lab Events leading up to a primary Lab Event (ancestors)");
+            setHelpNote("Lab Vessels that precede the starting Lab Vessel in the chain of transfers (ancestors)");
             setLabel("Traverse Ancestors");
             traversalDirection = TransferTraverserCriteria.TraversalDirection.Ancestors;
         }
@@ -108,7 +109,7 @@ public class LabVesselTraversalEvaluator extends TraversalEvaluator {
     public static class DescendantTraversalEvaluator extends LabVesselTraversalEvaluator{
         // ID = "descendantOptionEnabled"
         public DescendantTraversalEvaluator() {
-            setHelpNote("Lab Events following a primary Lab Event (descendants)");
+            setHelpNote("Lab Vessels that follow the starting Lab Vessel in the chain of transfers (descendants)");
             setLabel("Traverse Descendants");
             traversalDirection = TransferTraverserCriteria.TraversalDirection.Descendants;
         }
