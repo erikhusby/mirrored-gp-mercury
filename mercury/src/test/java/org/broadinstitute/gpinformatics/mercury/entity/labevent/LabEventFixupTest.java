@@ -1787,4 +1787,27 @@ public class LabEventFixupTest extends Arquillian {
         labEventDao.flush();
     }
 
+    @Test(enabled = false)
+    public void fixupSupport2485() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        long[] ids = {1831499L, 1831501L};
+        for (long labEventId : ids) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, labEventId);
+            if (labEvent == null || labEvent.getLabEventType() != LabEventType.DILUTION_TO_FLOWCELL_TRANSFER) {
+                throw new RuntimeException("cannot find " + labEventId + " or is not DILUTION_TO_FLOWCELL_TRANSFER");
+            }
+            else if (!labEvent.getEventLocation().equals("SL-HDE")) {
+                throw new RuntimeException("Did not find expected station of SL-HDE");
+            } else {
+                System.out.println("LabEvent " + labEventId + " station " + labEvent.getEventLocation());
+                labEvent.setEventLocation("SL-HDD");
+                System.out.println("   updated to " + labEvent.getEventLocation());
+            }
+        }
+        labEventDao.persist(new FixupCommentary("SUPPORT-2485 change lab event location to SL-HDD"));
+        labEventDao.flush();
+        utx.commit();
+    }
+
 }

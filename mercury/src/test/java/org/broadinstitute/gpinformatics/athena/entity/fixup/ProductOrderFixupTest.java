@@ -4,12 +4,15 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
+import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -34,6 +37,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -78,6 +82,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
@@ -128,6 +133,12 @@ public class ProductOrderFixupTest extends Arquillian {
 
     @Inject
     private SapIntegrationService sapIntegrationService;
+
+    @Inject
+    private BillingSessionDao billingSessionDao;
+
+    @Inject
+    private BillingEjb billingEjb;
 
     // When you run this on prod, change to PROD and prod.
     @Deployment
@@ -1032,6 +1043,38 @@ public class ProductOrderFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
+    public void addSapOrderDetail() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+        ProductOrder testOrder = productOrderDao.findByBusinessKey("PDO-10901");
+        testOrder.addSapOrderDetail(new SapOrderDetail("0210000019",159, "MMMIEE",
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode()));
+        productOrderDao.persist(new FixupCommentary("GPLIM-4583 Test alternate Solution"));
+        commitTransaction();
+    }
+
+    @Test(enabled = false)
+    public void gplim4583CloseOutBillingSession() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+        BillingSession billingSession = billingSessionDao.findByBusinessKey("BILL-8923");
+        ProductOrder testOrder = productOrderDao.findByBusinessKey("PDO-10809");
+
+        for (LedgerEntry ledgerEntry : billingSession.getLedgerEntryItems()) {
+            ledgerEntry.setQuoteId(testOrder.getQuoteId());
+            ledgerEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
+            ledgerEntry.setBillingMessage(BillingSession.SUCCESS);
+            ledgerEntry.setWorkItem("219406");
+            ledgerEntry.setSapDeliveryDocumentId("200000008");
+        }
+
+        billingEjb.endSession(billingSession);
+        productOrderEjb.updateOrderStatusNoRollback(testOrder.getJiraTicketKey());
+        productOrderDao.persist(new FixupCommentary("GPLIM-4583 Helping to resolve closing this PDO due to issues with price item disparities and SAP restriction complications"));
+        commitTransaction();
+    }
+
+    @Test(enabled = false)
     public void gplim4595BackfillInfiniumPdosToOnPremises() throws Exception {
         userBean.loginOSUser();
         beginTransaction();
@@ -1059,6 +1102,65 @@ public class ProductOrderFixupTest extends Arquillian {
                         productOrder.setPipelineLocation(ProductOrder.PipelineLocation.ON_PREMISES);
                         System.out.println("Updated " + productOrder.getJiraTicketKey() + " Pipeline Location to " +
                                            productOrder.getPipelineLocation());
+                    }
+                }
+            }
+        }
+        productOrderDao.persist(new FixupCommentary("GPLIM-4595 Updated pipeline location for arrays PDOs to On Prem"));
+        commitTransaction();
+    }
+
+    @Test(enabled = false)
+    public void gplim4615CloseOutBillingSession() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+        BillingSession billingSession = billingSessionDao.findByBusinessKey("BILL-9032");
+        ProductOrder testOrder = productOrderDao.findByBusinessKey("PDO-11006");
+
+        for (LedgerEntry ledgerEntry : billingSession.getLedgerEntryItems()) {
+            ledgerEntry.setQuoteId(testOrder.getQuoteId());
+            ledgerEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
+            ledgerEntry.setBillingMessage(BillingSession.SUCCESS);
+            ledgerEntry.setWorkItem("222529");
+//            ledgerEntry.setSapDeliveryDocumentId("200000036");
+        }
+
+        billingEjb.endSession(billingSession);
+        productOrderEjb.updateOrderStatusNoRollback(testOrder.getJiraTicketKey());
+        productOrderDao.persist(new FixupCommentary("GPLIM-4615 Helping to resolve closing this PDO due to issues with price item disparities"));
+        commitTransaction();
+    }
+
+
+
+    @Test(enabled = false)
+    public void gplim4595BackfillInfiniumPdosToOnPremises() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+        List<String> arraysPartNumbers = Arrays.asList(
+                "P-WG-0053",
+                "P-WG-0055",
+                "P-WG-0056",
+                "P-EX-0021",
+                "P-WG-0058",
+                "P-WG-0023",
+                "P-WG-0028",
+                "P-WG-0066",
+                "XTNL-GEN-011003",
+                "P-WG-0059",
+                "XTNL-WES-010210",
+                "XTNL-WES-010211",
+                "XTNL-GEN-011004",
+                "XTNL-GEN-011005",
+                "XTNL-WES-010212");
+        List<ProductOrder> allProductOrders = productOrderDao.findAll();
+        for (ProductOrder productOrder: allProductOrders) {
+            if (productOrder.getProduct() != null) {
+                if (productOrder.getProduct().getPartNumber() != null) {
+                    if (arraysPartNumbers.contains(productOrder.getProduct().getPartNumber())) {
+                        productOrder.setPipelineLocation(ProductOrder.PipelineLocation.ON_PREMISES);
+                        System.out.println("Updated " + productOrder.getJiraTicketKey() + " Pipeline Location to " +
+                                productOrder.getPipelineLocation());
                     }
                 }
             }

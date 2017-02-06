@@ -1232,6 +1232,25 @@ public class LabBatchFixUpTest extends Arquillian {
         labBatchDao.flush();
     }
 
+    @Test(enabled = false)
+    public void fixupSupport2414() throws Exception{
+        List<String> tubeBarcodes = Arrays.asList(
+                "0209156339");
+
+        changeBucketEntriesToAliquots(tubeBarcodes, 1716867L, "LCSET-10218", "SUPPORT-2414");
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport2461() throws Exception{
+        List<String> tubeBarcodes = Arrays.asList(
+                "1147584526",
+                "1147584542",
+                "1147584541");
+
+        changeBucketEntriesToAliquots(tubeBarcodes, 1716867L, "LCSET-10218", "SUPPORT-2461");
+    }
+
+
     /**
      * Likely that user scanned same rack for two different LCSETs, so one control was associated with 2 LCSETs,
      * and another control with none.

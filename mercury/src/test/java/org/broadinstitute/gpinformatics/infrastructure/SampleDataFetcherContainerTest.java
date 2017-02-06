@@ -34,6 +34,7 @@ public class SampleDataFetcherContainerTest extends ContainerTest {
 
         for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
             assertThat(productOrderSample.isHasBspSampleDataBeenInitialized(), is(true));
+            assertThat(productOrderSample.getMercurySample().isHasBspSampleDataBeenInitialized(), is(true));
         }
 
     }

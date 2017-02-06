@@ -19,14 +19,7 @@
             }
         </style>
         <script type="text/javascript">
-            function getParameterByName(name) {
-                name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
-                var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
-                    results = regex.exec(location.search);
-                return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
-            }
-            var paramterValue = getParameterByName("rpSelectedTab");
-            var activeTab = parseInt(paramterValue == undefined ? 0 : paramterValue) + 1;
+            var activeTab = ${actionBean.rpSelectedTab}
 
             $j(document).ready(function () {
                 $j("#tabs").tabs({

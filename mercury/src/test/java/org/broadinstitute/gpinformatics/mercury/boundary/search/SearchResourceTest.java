@@ -69,8 +69,8 @@ public class SearchResourceTest extends RestServiceContainerTest {
                 accept(MediaType.APPLICATION_XML_TYPE).entity(manifestSearchRequestBean).
                 post(SearchResponseBean.class);
         Assert.assertEquals(manifestResponse.getHeaders().size(), 10);
-        // One was not transferred, because of bad molecular index well
-        Assert.assertEquals(manifestResponse.getSearchRowBeans().size(), 93);
+        // One was initially not transferred, because of bad molecular index well, but it was included in a later batch.
+        Assert.assertEquals(manifestResponse.getSearchRowBeans().size(), 94);
     }
 
     @Override

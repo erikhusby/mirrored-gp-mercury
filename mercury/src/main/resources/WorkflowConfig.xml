@@ -157,6 +157,13 @@
                 <deadEndBranch>true</deadEndBranch>
             </workflowStepDefs>
             <workflowStepDefs>
+                <name>Spike In</name>
+                <labEventTypes>SPIKE_IN</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
                 <name>Fingerprinting Aliquot</name>
                 <labEventTypes>FINGERPRINTING_ALIQUOT</labEventTypes>
                 <optional>true</optional>
@@ -368,6 +375,13 @@
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
             <workflowStepDefs>
+                <name>BeadResuspension</name>
+                <labEventTypes>BEAD_RESUSPENSION</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
                 <name>EndRepairCleanup</name>
                 <labEventTypes>END_REPAIR_CLEANUP</labEventTypes>
                 <optional>false</optional>
@@ -384,6 +398,13 @@
             <workflowStepDefs>
                 <name>PostABaseThermoCyclerLoaded</name>
                 <labEventTypes>POST_ABASE_THERMO_CYCLER_LOADED</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>BeadResuspension</name>
+                <labEventTypes>BEAD_RESUSPENSION</labEventTypes>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
