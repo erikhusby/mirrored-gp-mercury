@@ -52,6 +52,7 @@ public class InfiniumPipelineClient {
             Message message = session.createMessage();
             message.setStringProperty("chipWellBarcode", chipWellBarcode);
 
+            log.info("Sending arrays starter message for " + chipWellBarcode);
             producer.send(message);
 
             return true;
