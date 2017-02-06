@@ -284,8 +284,7 @@ public class BucketViewActionBean extends CoreActionBean {
     public Resolution saveSearchData() throws Exception {
         JSONObject jsonObject = new JSONObject(tableState);
         saveSearchData(objectMapper.readValue(tableState, State.class));
-        String tableStateData = jsonObject.toString();
-        return new StreamingResolution("application/json", tableStateData);
+        return new StreamingResolution("application/json", jsonObject.toString());
     }
 
     private void saveSearchData(State state) throws Exception {
