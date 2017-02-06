@@ -284,7 +284,7 @@ public class BucketViewActionBean extends CoreActionBean {
     public Resolution saveSearchData() throws Exception {
         JSONObject jsonObject = new JSONObject(tableState);
         saveSearchData(objectMapper.readValue(tableState, State.class));
-        return new StreamingResolution("text", jsonObject.toString());
+        return new StreamingResolution("application/json", jsonObject.toString());
     }
 
     private void saveSearchData(State state) throws Exception {
@@ -645,15 +645,15 @@ public class BucketViewActionBean extends CoreActionBean {
         this.searchKey = searchKey;
     }
 
-    public Map<String, Boolean> getHeaderVisibilityMap() {
-        return headerVisibilityMap;
-    }
-
     public List<String> bucketWorkflowNames(BucketEntry bucketEntry) {
         List<String> workflowNames = new ArrayList<>();
         for (Workflow workflow : bucketEntry.getWorkflows(workflowConfig)) {
             workflowNames.add(workflow.getWorkflowName());
         }
         return workflowNames;
+    }
+
+    public boolean showHeader(String columnName) {
+        return headerVisibilityMap.isEmpty() || headerVisibilityMap.get(columnName);
     }
 }
