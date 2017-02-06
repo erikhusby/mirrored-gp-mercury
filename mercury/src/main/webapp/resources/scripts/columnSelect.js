@@ -240,21 +240,14 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
     function buildHeaderFilterOptions(header, columns) {
         var select = $j(header).find("select");
         var htmlExpression = /<(?:.|\n)*?>/gi;
-
-        function clearHtml(htmlString) {
-            return htmlString.replace(htmlExpression, '').trim();
-        }
-
         var uniqueValues = [];
-        columns.each(function (row) {
-            var cell=row;
-            if (htmlExpression.test(row)) {
-                cell = clearHtml($j(row).text());
-            }
+        for (var i = 0; i < columns.length; i++) {
+            var cell = columns[i].trim();
+            cell = cell.replace(/<(?:.|\n)*?>/gi, '');
             if (cell !== '' && uniqueValues.indexOf(cell) < 0) {
                 uniqueValues.push(cell);
             }
-        });
+        }
         var maxWidth=0;
         uniqueValues.sort().forEach(function (thisOption) {
             var items = $j("<option></option>", {value: thisOption, text: thisOption});
