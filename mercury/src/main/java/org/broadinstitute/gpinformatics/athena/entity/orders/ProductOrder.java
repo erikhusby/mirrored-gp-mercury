@@ -230,6 +230,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Column(name = "PIPELINE_LOCATION", nullable = true)
     private PipelineLocation pipelineLocation;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "PIPELINE_LOCATION", nullable = true)
+    private PipelineLocation pipelineLocation;
+
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.
      */
