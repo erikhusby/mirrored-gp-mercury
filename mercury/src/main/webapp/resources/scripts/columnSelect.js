@@ -171,7 +171,7 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
             // select.find("option[value='" + savedFilterValue + "']").attr('selected', 'selected');
             if (savedFilterValue!=='') {
                 select.find("option").filter(function () {
-                    return this.value.match(savedFilterValue);
+                    return this.value.trim().match(savedFilterValue);
                 }).attr('selected', 'selected');
             }
             var width = Math.ceil(.6*$j(select).attr('width'))+"em";
@@ -198,12 +198,19 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                         return this.text
                     }).get();
                     if (eventAction === 'deselected') {
-                        var index = currentlySelected.indexOf(what['deselected']);
-                        if (index>-1) {
-                            currentlySelected.splice(index, 1);
+                        var deselectedItems = what['deselected'].trim();
+                        if (deselectedItems.length === 0) {
+                            $j(this).find(":selected").prop('selected',false);
+                            currentlySelected = [];
+                        } else {
+                            var index = currentlySelected.indexOf(deselectedItems);
+                            if (index)
+                                if (index == -1) {
+                                    currentlySelected.splice(index, 1);
+                                }
                         }
                     }
-                    var filterText = currentlySelected.join(", ");
+                    var filterText = currentlySelected.join("|");
                     updateFilterInfo(column, cleanTitle, headerLabel, filterText);
                 }
             });
@@ -217,19 +224,18 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                 return false;
             });
 
-            // $j('.filter-input').hide();
             $j(select).on('change blur', function () {
                 // api.off('click');
                 var values = [];
                 $j(this).find("option:selected").each(function () {
-                    values.push(this.value);
+                    values.push(this.value.trim());
                 });
-                updateFilter(column, values.join(','));
+                updateFilter(column, values.join('|'));
                 // api.off(this);
             });
         }
         api.on('init.dt', function (event, settings) {
-                updateFilterInfo(column, cleanTitle, headerLabel, savedFilterValue.replace(/\|/g,', '));
+            updateFilterInfo(column, cleanTitle, headerLabel, savedFilterValue.replace(/\|$/, ''));
         });
     });
 
@@ -240,21 +246,14 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
     function buildHeaderFilterOptions(header, columns) {
         var select = $j(header).find("select");
         var htmlExpression = /<(?:.|\n)*?>/gi;
-
-        function clearHtml(htmlString) {
-            return htmlString.replace(htmlExpression, '').trim();
-        }
-
         var uniqueValues = [];
-        columns.each(function (row) {
-            var cell=row;
-            if (htmlExpression.test(row)) {
-                cell = clearHtml($j(row).text());
-            }
+        for (var i = 0; i < columns.length; i++) {
+            var cell = columns[i].trim();
+            cell = cell.replace(/<(?:.|\n)*?>/gi, '');
             if (cell !== '' && uniqueValues.indexOf(cell) < 0) {
                 uniqueValues.push(cell);
             }
-        });
+        }
         var maxWidth=0;
         uniqueValues.sort().forEach(function (thisOption) {
             var items = $j("<option></option>", {value: thisOption, text: thisOption});

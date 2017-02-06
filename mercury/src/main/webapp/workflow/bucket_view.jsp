@@ -749,8 +749,9 @@
                                 ${entry.labVessel.latestMaterialType.displayName}
                             </c:if>
                         </td>
-                        <td><c:if test="${actionBean.showHeader('PDO')}">
-                            <span class="ellipsis editable"> ${entry.productOrder.businessKey} </span>
+                        <td class="ellipsis editable">
+                        <c:if test="${actionBean.showHeader('PDO')}">
+                            ${entry.productOrder.businessKey}
                             <span style="display: none;" class="icon-pencil"></span>
                         </c:if>
                         </td>
