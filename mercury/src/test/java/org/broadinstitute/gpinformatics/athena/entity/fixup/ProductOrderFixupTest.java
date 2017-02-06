@@ -1131,41 +1131,4 @@ public class ProductOrderFixupTest extends Arquillian {
         commitTransaction();
     }
 
-
-
-    @Test(enabled = false)
-    public void gplim4595BackfillInfiniumPdosToOnPremises() throws Exception {
-        userBean.loginOSUser();
-        beginTransaction();
-        List<String> arraysPartNumbers = Arrays.asList(
-                "P-WG-0053",
-                "P-WG-0055",
-                "P-WG-0056",
-                "P-EX-0021",
-                "P-WG-0058",
-                "P-WG-0023",
-                "P-WG-0028",
-                "P-WG-0066",
-                "XTNL-GEN-011003",
-                "P-WG-0059",
-                "XTNL-WES-010210",
-                "XTNL-WES-010211",
-                "XTNL-GEN-011004",
-                "XTNL-GEN-011005",
-                "XTNL-WES-010212");
-        List<ProductOrder> allProductOrders = productOrderDao.findAll();
-        for (ProductOrder productOrder: allProductOrders) {
-            if (productOrder.getProduct() != null) {
-                if (productOrder.getProduct().getPartNumber() != null) {
-                    if (arraysPartNumbers.contains(productOrder.getProduct().getPartNumber())) {
-                        productOrder.setPipelineLocation(ProductOrder.PipelineLocation.ON_PREMISES);
-                        System.out.println("Updated " + productOrder.getJiraTicketKey() + " Pipeline Location to " +
-                                productOrder.getPipelineLocation());
-                    }
-                }
-            }
-        }
-        productOrderDao.persist(new FixupCommentary("GPLIM-4595 Updated pipeline location for arrays PDOs to On Prem"));
-        commitTransaction();
-    }
 }
