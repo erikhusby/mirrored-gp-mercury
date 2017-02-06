@@ -1043,38 +1043,6 @@ public class ProductOrderFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
-    public void addSapOrderDetail() throws Exception {
-        userBean.loginOSUser();
-        beginTransaction();
-        ProductOrder testOrder = productOrderDao.findByBusinessKey("PDO-10901");
-        testOrder.addSapOrderDetail(new SapOrderDetail("0210000019",159, "MMMIEE",
-                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode()));
-        productOrderDao.persist(new FixupCommentary("GPLIM-4583 Test alternate Solution"));
-        commitTransaction();
-    }
-
-    @Test(enabled = false)
-    public void gplim4583CloseOutBillingSession() throws Exception {
-        userBean.loginOSUser();
-        beginTransaction();
-        BillingSession billingSession = billingSessionDao.findByBusinessKey("BILL-8923");
-        ProductOrder testOrder = productOrderDao.findByBusinessKey("PDO-10809");
-
-        for (LedgerEntry ledgerEntry : billingSession.getLedgerEntryItems()) {
-            ledgerEntry.setQuoteId(testOrder.getQuoteId());
-            ledgerEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
-            ledgerEntry.setBillingMessage(BillingSession.SUCCESS);
-            ledgerEntry.setWorkItem("219406");
-            ledgerEntry.setSapDeliveryDocumentId("200000008");
-        }
-
-        billingEjb.endSession(billingSession);
-        productOrderEjb.updateOrderStatusNoRollback(testOrder.getJiraTicketKey());
-        productOrderDao.persist(new FixupCommentary("GPLIM-4583 Helping to resolve closing this PDO due to issues with price item disparities and SAP restriction complications"));
-        commitTransaction();
-    }
-
-    @Test(enabled = false)
     public void gplim4595BackfillInfiniumPdosToOnPremises() throws Exception {
         userBean.loginOSUser();
         beginTransaction();
