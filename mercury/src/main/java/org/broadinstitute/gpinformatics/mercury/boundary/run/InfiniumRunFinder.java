@@ -69,7 +69,7 @@ public class InfiniumRunFinder implements Serializable {
     @Resource
     private EJBContext ejbContext;
 
-    private AtomicBoolean busy = new AtomicBoolean(false);
+    private static final AtomicBoolean busy = new AtomicBoolean(false);
 
     public void find() throws SystemException {
         if (!busy.compareAndSet(false, true)) {
@@ -86,6 +86,8 @@ public class InfiniumRunFinder implements Serializable {
                         StaticPlate staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
                         utx.begin();
                         processChip(staticPlate);
+                        // The commit doesn't cause a flush (not clear why), so we must do it explicitly.
+                        labEventDao.flush();
                         utx.commit();
                     }
                 } catch (Exception e) {
@@ -226,7 +228,6 @@ public class InfiniumRunFinder implements Serializable {
                 new LabEvent(eventType, start, eventLocation, 1L, operator, LabEvent.UI_PROGRAM_NAME);
         staticPlate.addInPlaceEvent(labEvent);
         labEventDao.persist(labEvent);
-        labEventDao.flush();
         return labEvent;
     }
 
