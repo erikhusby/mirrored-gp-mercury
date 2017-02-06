@@ -104,9 +104,11 @@ public class InfiniumRunStarter {
      * @return true if it's an environment where the Infinium Starter should be run
      */
     private boolean isEnabled() {
+        boolean useRunFinder = Boolean.getBoolean("useInfiniumRunFinder");
         // Can't use @Inject for this object or we'll run into VFS protocol errors.
         InfiniumStarterConfig infiniumStarterConfig = (InfiniumStarterConfig) MercuryConfiguration.getInstance().
                 getConfig(InfiniumStarterConfig.class, deployment);
-        return AbstractConfig.isSupported(infiniumStarterConfig);
+        return useRunFinder && AbstractConfig.isSupported(infiniumStarterConfig);
+
     }
 }
