@@ -32,17 +32,6 @@ public class SampleDataFetcherAddRowsListener implements ConfigurableList.AddRow
     @Override
     public void addRows(List<?> entityList, SearchContext context, List<ColumnTabulation> nonPluginTabulations) {
 
-        List<MercurySample> samples = new ArrayList<>();
-        for (Object entity : entityList) {
-            List<SampleInstanceV2> sampleInstances = DisplayExpression.rowObjectToExpressionObject(entity,
-                    SampleInstanceV2.class, context);
-            for (SampleInstanceV2 sampleInstanceV2 : sampleInstances) {
-                MercurySample mercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
-                if (mercurySample != null) {
-                    samples.add(mercurySample);
-                }
-            }
-        }
         if (!columnsInitialized) {
            for (ColumnTabulation nonPluginTabulation : nonPluginTabulations) {
                 // todo jmt avoid all this casting
@@ -62,6 +51,19 @@ public class SampleDataFetcherAddRowsListener implements ConfigurableList.AddRow
             columnsInitialized = true;
         }
 
+        List<MercurySample> samples = new ArrayList<>();
+        if (!bspSampleSearchColumns.isEmpty()) {
+            for (Object entity : entityList) {
+                List<SampleInstanceV2> sampleInstances = DisplayExpression.rowObjectToExpressionObject(entity,
+                        SampleInstanceV2.class, context);
+                for (SampleInstanceV2 sampleInstanceV2 : sampleInstances) {
+                    MercurySample mercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
+                    if (mercurySample != null) {
+                        samples.add(mercurySample);
+                    }
+                }
+            }
+        }
 
         // Skip BSP call if no sample IDs or no BSP column data requested
         if (!samples.isEmpty() && !bspSampleSearchColumns.isEmpty()) {
