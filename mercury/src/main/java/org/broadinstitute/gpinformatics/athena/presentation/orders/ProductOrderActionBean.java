@@ -331,6 +331,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private String quoteIdentifier;
 
     private String product;
+    private String selectedAddOns;
 
     /*
      * Used for Ajax call to retrieve post receive Options for a particular material info
@@ -1878,10 +1879,22 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent("getSupportsNumberOfLanes")
     public Resolution getSupportsNumberOfLanes() throws Exception {
         boolean supportsNumberOfLanes = false;
+        List<String> selectedOrderAddons = null;
+        if(selectedAddOns != null) {
+            selectedOrderAddons = Arrays.asList(StringUtils.split(selectedAddOns, "|@|"));
+        }
         JSONObject item = new JSONObject();
 
         if (product != null) {
             supportsNumberOfLanes = productDao.findByBusinessKey(product).getSupportsNumberOfLanes();
+            if(selectedOrderAddons != null)
+            for (String selectedOrderAddon : selectedOrderAddons) {
+                if(!supportsNumberOfLanes) {
+                    supportsNumberOfLanes = productDao.findByBusinessKey(selectedOrderAddon).getSupportsNumberOfLanes();
+                } else {
+                    break;
+                }
+            }
         }
 
         item.put(BspSampleData.SUPPORTS_NUMBER_OF_LANES, supportsNumberOfLanes);
@@ -2170,6 +2183,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setProduct(String product) {
         this.product = product;
+    }
+
+    public String getSelectedAddOns() {
+        return selectedAddOns;
+    }
+
+    public void setSelectedAddOns(String selectedAddOns) {
+        this.selectedAddOns = selectedAddOns;
     }
 
     public String getMaterialInfo() {
