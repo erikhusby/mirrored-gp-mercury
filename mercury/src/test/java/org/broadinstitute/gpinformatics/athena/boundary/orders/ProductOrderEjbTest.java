@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDeta
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.ProductTestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
@@ -29,7 +30,6 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFunding;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
@@ -330,10 +330,10 @@ public class ProductOrderEjbTest {
         conversionPdo.setQuoteId(testSingleSourceQuote.getAlphanumericId() );
         conversionPdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
-        addToMockPriceListCache(conversionPdo.getProduct(), mockPriceListCache, "5");
+        ProductTestUtils.addToMockPriceListCache(conversionPdo.getProduct(), mockPriceListCache, "5");
 
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
-            addToMockPriceListCache(productOrderAddOn.getAddOn(), mockPriceListCache, "5");
+            ProductTestUtils.addToMockPriceListCache(productOrderAddOn.getAddOn(), mockPriceListCache, "5");
         }
 
         MessageCollection messageCollection = new MessageCollection();
@@ -368,20 +368,6 @@ public class ProductOrderEjbTest {
                 Mockito.anyString(),
                 Mockito.anyBoolean());
 
-    }
-
-    public static void addToMockPriceListCache(Product productForCache, PriceListCache mockPriceListCache, String price) {
-        final QuotePriceItem testQuotePriceItem =
-                new QuotePriceItem(productForCache.getPrimaryPriceItem().getCategory(),
-                        productForCache.getPrimaryPriceItem().getName(),
-                        productForCache.getPrimaryPriceItem().getName(), price, "test",
-                        productForCache.getPrimaryPriceItem().getPlatform());
-
-        Mockito.when(mockPriceListCache.findByKeyFields(productForCache.getPrimaryPriceItem().getPlatform(),
-                productForCache.getPrimaryPriceItem().getCategory(),
-                productForCache.getPrimaryPriceItem().getName())).thenReturn(testQuotePriceItem);
-
-        Mockito.when(mockPriceListCache.findByKeyFields(productForCache.getPrimaryPriceItem())).thenReturn(testQuotePriceItem);
     }
 
     public void testAbandonOrderWithNoServiceNowTicket() throws Exception {

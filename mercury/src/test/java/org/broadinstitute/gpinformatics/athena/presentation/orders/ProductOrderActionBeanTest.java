@@ -13,7 +13,6 @@ import net.sourceforge.stripes.mock.MockRoundtrip;
 import net.sourceforge.stripes.mock.MockServletContext;
 import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
-import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjbTest;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -24,6 +23,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
+import org.broadinstitute.gpinformatics.athena.entity.products.ProductTestUtils;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo_;
@@ -731,7 +731,7 @@ public class ProductOrderActionBeanTest {
         testOrder.setJiraTicketKey("PDO-TESTPDOValue");
         testOrder.setProduct(primaryProduct);
 
-        ProductOrderEjbTest.addToMockPriceListCache(testOrder.getProduct(), mockPriceListCache, "1000");
+        ProductTestUtils.addToMockPriceListCache(testOrder.getProduct(), mockPriceListCache, "1000");
 
         Product addonNonSeqProduct = new Product();
         addonNonSeqProduct.setPartNumber("ADD-NON-SEQ");
@@ -739,7 +739,7 @@ public class ProductOrderActionBeanTest {
                 "secondary testing size", "Extraction price"));
         addonNonSeqProduct.setProductFamily(new ProductFamily(ProductFamily.ProductFamilyInfo.ALTERNATE_LIBRARY_PREP_DEVELOPMENT.getFamilyName()));
 
-        ProductOrderEjbTest.addToMockPriceListCache(addonNonSeqProduct, mockPriceListCache, "573");
+        ProductTestUtils.addToMockPriceListCache(addonNonSeqProduct, mockPriceListCache, "573");
         testOrder.updateAddOnProducts(Collections.singletonList(addonNonSeqProduct));
 
         List<ProductOrderSample> sampleList = new ArrayList<>();
@@ -758,7 +758,7 @@ public class ProductOrderActionBeanTest {
                 "Put it on the sequencer"));
         seqProduct.setProductFamily(new ProductFamily(ProductFamily.ProductFamilyInfo.SEQUENCE_ONLY.getFamilyName()));
 
-        ProductOrderEjbTest.addToMockPriceListCache(seqProduct, mockPriceListCache, "2500");
+        ProductTestUtils.addToMockPriceListCache(seqProduct, mockPriceListCache, "2500");
 
         Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder)),
                 Double.valueOf(573 * testOrder.getSamples().size() + 1000 * testOrder.getSamples().size()));
