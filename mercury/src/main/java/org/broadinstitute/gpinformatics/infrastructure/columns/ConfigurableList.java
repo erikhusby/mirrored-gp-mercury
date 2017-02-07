@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.MutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.entity.preference.ColumnSetsPreference;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
@@ -738,9 +740,60 @@ public class ConfigurableList {
             rowColPair.setRight(0);
             calcRowColumnCount(getResultRows(), rowColPair, getHeaders());
 
-            Object[][] rowObjects = new Object[rowColPair.getLeft()][rowColPair.getRight()];
-            fillArray(rowObjects, getResultRows(), getHeaders());
+//            Object[][] rowObjects = new Object[rowColPair.getLeft()][rowColPair.getRight()];
+            Object[][] rowObjects = new Object[1000][1000];
+            fillArrayV2(rowObjects, this, 0, 0);
+//            fillArray(rowObjects, getResultRows(), getHeaders());
             return rowObjects;
+        }
+
+        private Pair<Integer, Integer> fillArrayV2(Object[][] rowObjects, ResultList resultList, int startRow,
+                int startColumn) {
+            int currentRow = startRow;
+            int currentColumn = startColumn;
+            int returnRow = 0;
+            int returnColumn = 0;
+            // Skip headers
+            currentRow += 2;
+            int headerWidth = 1;
+            for (ResultRow resultRow : resultList.resultRows) {
+
+                // Render nested tables that are the width of the table
+                for (Map.Entry<String, ResultList> stringResultListEntry : resultRow.nestedTables.entrySet()) {
+                    Pair<Integer, Integer> nestedRowCol = fillArrayV2(rowObjects, stringResultListEntry.getValue(),
+                            currentRow + 1, currentColumn);
+                    returnRow = Math.max(returnRow, nestedRowCol.getLeft());
+                    returnColumn = Math.max(nestedRowCol.getRight(), returnColumn);
+                }
+                List<String> renderableCells = resultRow.renderableCells;
+                for (int i = 0; i < renderableCells.size(); i++) {
+                    rowObjects[currentRow][currentColumn] = renderableCells.get(i);
+
+                    // Render nested tables that are inside each cell
+                    Pair<Integer, Integer> cellNestedRowCol = fillArrayV2(rowObjects, resultRow.cellNestedTables.get(i),
+                            currentRow, currentColumn);
+                    returnRow = Math.max(returnRow, cellNestedRowCol.getLeft());
+                    returnColumn =+ cellNestedRowCol.getRight();
+
+                    currentColumn += cellNestedRowCol.getRight();
+                    headerWidth = cellNestedRowCol.getRight();
+                }
+                currentRow += returnRow;
+                currentColumn = startColumn;
+            }
+
+            // Render headers (after we know how wide the nested tables are)
+            currentColumn = startColumn;
+            for (Header header : resultList.headers) {
+                rowObjects[startRow][currentColumn] = new SpreadsheetCreator.ExcelHeader(header.getDownloadHeader1());
+                String header2Name = header.getDownloadHeader2();
+                if (header2Name != null && !header2Name.isEmpty()) {
+                    rowObjects[startRow + 1][currentColumn] = new SpreadsheetCreator.ExcelHeader(header2Name);
+//                    headerRow2Present = true;
+                }
+                currentColumn += headerWidth;
+            }
+            return new ImmutablePair<>(returnRow,  returnColumn);
         }
 
         /**
@@ -830,7 +883,9 @@ public class ConfigurableList {
                 rowObjects[rowIndex][col] = new SpreadsheetCreator.ExcelHeader(header.getViewHeader());
                 col++;
             }
-            rowIndex++;
+            if (! resultList.getHeaders().isEmpty()) {
+                rowIndex++;
+            }
 
             for ( ConfigurableList.ResultRow resultRow : resultList.resultRows ) {
                 col = startColumn;
@@ -839,10 +894,13 @@ public class ConfigurableList {
                     col++;
                 }
                 rowIndex++;
+                col = startColumn;
                 for (ResultList nestedList : resultRow.getCellNestedTables()) {
+                    int nestedRowIndex = rowIndex;
                     if (nestedList != null) {
-                        rowIndex = appendNestedRows(rowIndex, startColumn, nestedList, rowObjects);
+                        rowIndex = Math.max(rowIndex, appendNestedRows(nestedRowIndex, col, nestedList, rowObjects));
                     }
+                    col++;
                 }
             }
 
