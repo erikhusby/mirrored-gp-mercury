@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
-import org.apache.commons.lang3.tuple.MutablePair;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.entity.preference.ColumnSetsPreference;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
@@ -732,121 +733,101 @@ public class ConfigurableList {
          * @return 2d array of cells
          */
         public Object[][] getAsArray() {
-
-            MutablePair<Integer, Integer> rowColPair = new MutablePair<>();
-            rowColPair.setLeft(0);
-            rowColPair.setRight(0);
-            calcRowColumnCount(getResultRows(), rowColPair, getHeaders());
-
+            Pair<Integer, Integer> rowColPair = fillArray(null, this, 0, 0, false);
             Object[][] rowObjects = new Object[rowColPair.getLeft()][rowColPair.getRight()];
-            fillArray(rowObjects, getResultRows(), getHeaders());
+            fillArray(rowObjects, this, 0, 0, true);
             return rowObjects;
         }
 
         /**
-         * Calculate the number of spreadsheet rows and columns necessary to hold all cells in a ResultList, including
-         * nested tables.
-         * @param resultRows the table for which to calculate
-         * @param rowColPair pair of integers, row and column, updated by this method and recursive calls
-         * @param headers headers for which to calculate
+         * Recursively renders a resultList, and any nested resultLists, into a 2D array.  First call with
+         * render = false, to get size information, then allocate array, then call with render = true.
+         * @param rowObjects array of cells to render into
+         * @param resultList source to render
+         * @param startRow offsets for nested tables, start with 0
+         * @param startColumn offsets for nested tables, start with 0
+         * @param render true to fill rowObjects, false to only caculate size
+         * @return pair of row count, column count
          */
-        private void calcRowColumnCount(List<ResultRow> resultRows,
-                MutablePair<Integer, Integer> rowColPair, List<Header> headers) {
-            // Calculate how many rows and columns required using nested tables
-            // Default for no nested tables
-            rowColPair.setLeft(rowColPair.getLeft() + resultRows.size() + 2);
-            rowColPair.setRight(Math.max(rowColPair.getRight() , headers.size()));
+        private Pair<Integer, Integer> fillArray(Object[][] rowObjects, ResultList resultList, int startRow,
+                int startColumn, boolean render) {
+            // Skip headers
+            int currentRow = startRow + 2;
+            List<Integer> headerWidths = new ArrayList<>();
+            boolean firstRow = true;
+            int currentColumn = startColumn;
+            int returnRow = 0;
+            int returnColumn = 0;
+            for (ResultRow resultRow : resultList.getResultRows()) {
 
-            // Some rows have 1 or more nested tables, some don't.
-            // Adjust array size as required
-            for (ResultRow resultRow : resultRows) {
-                for( ResultList nestedTable: resultRow.getNestedTables().values() ){
-                    rowColPair.setLeft(rowColPair.getLeft() + nestedTable.getResultRows().size() + 2);
-                    int nestCols = nestedTable.getHeaders().size() + 1;
-                    if( nestCols > rowColPair.getRight() ) {
-                        rowColPair.setRight(nestCols);
+                // Render nested tables that are the width of the table
+                for (Map.Entry<String, ResultList> stringResultListEntry : resultRow.getNestedTables().entrySet()) {
+                    Pair<Integer, Integer> nestedRowCol = fillArray(rowObjects, stringResultListEntry.getValue(),
+                            currentRow + 1, currentColumn, render);
+                    returnRow += nestedRowCol.getLeft();
+                    returnColumn = Math.max(nestedRowCol.getRight(), returnColumn);
+                }
+
+                // Render cells
+                List<String> renderableCells = resultRow.getRenderableCells();
+                returnRow++;
+                int maxNestedRow = 0;
+                boolean atLeastOneNested = false;
+                for (int i = 0; i < renderableCells.size(); i++) {
+                    if (render) {
+                        rowObjects[currentRow][currentColumn] = renderableCells.get(i);
                     }
-                    calcRowColumnCount(nestedTable.getResultRows(), rowColPair, nestedTable.getHeaders());
-                }
-                for (ResultList resultList : resultRow.getCellNestedTables()) {
-                    if (resultList != null) {
-                        calcRowColumnCount(resultList.getResultRows(), rowColPair, resultList.getHeaders());
+
+                    // Render nested tables that are inside each cell
+                    if (resultRow.getCellNestedTables().isEmpty() || resultRow.getCellNestedTables().get(i) == null ||
+                            resultRow.getCellNestedTables().get(i).getHeaders().isEmpty()) {
+                        if (firstRow) {
+                            headerWidths.add(1);
+                            returnColumn++;
+                        }
+                        currentColumn++;
+                        continue;
                     }
-                }
-            }
-        }
+                    atLeastOneNested = true;
+                    Pair<Integer, Integer> cellNestedRowCol = fillArray(rowObjects,
+                            resultRow.getCellNestedTables().get(i), currentRow + 1, currentColumn, render);
+                    maxNestedRow = Math.max(maxNestedRow, cellNestedRowCol.getLeft());
 
-        /**
-         * Fill an array of cells from a ResultList, including nested tables.
-         * @param rowObjects array to be filled in
-         * @param resultRows rows from which to fill array
-         * @param headers headers from which to fill array
-         */
-        private void fillArray(Object[][] rowObjects, List<ResultRow> resultRows, List<Header> headers) {
-            // Set the first (name) and second (units, metadata) headers.
-            int columnNumber;
-            boolean headerRow2Present = false;
-            for (columnNumber = 0; columnNumber < headers.size(); columnNumber++) {
-                Header header = headers.get(columnNumber);
-                rowObjects[0][columnNumber] = new SpreadsheetCreator.ExcelHeader(header.getDownloadHeader1());
-                String header2Name = header.getDownloadHeader2();
-                if (header2Name != null && !header2Name.isEmpty()) {
-                    rowObjects[1][columnNumber] = new SpreadsheetCreator.ExcelHeader(header2Name);
-                    headerRow2Present = true;
-                }
-            }
-            // Set the data
-            int rowNumber = headerRow2Present ? 2 : 1;
-            for (ResultRow resultRow : resultRows) {
-                columnNumber = 0;
-                for (String value : resultRow.getRenderableCells()) {
-                    rowObjects[rowNumber][columnNumber] = value;
-                    columnNumber++;
-                }
-                rowNumber++;
-
-                // Nested tables
-                for( Map.Entry<String,ResultList> nestedTable : resultRow.getNestedTables().entrySet() ) {
-                    rowObjects[rowNumber][1] = new SpreadsheetCreator.ExcelHeader(nestedTable.getKey());
-                    rowNumber++;
-                    rowNumber = appendNestedRows(rowNumber, 1, nestedTable.getValue(), rowObjects);
-                }
-                for (ResultList resultList : resultRow.getCellNestedTables()) {
-                    if (resultList != null) {
-                        rowNumber = appendNestedRows(rowNumber, 1, resultList, rowObjects);
+                    currentColumn += cellNestedRowCol.getRight();
+                    if (firstRow) {
+                        headerWidths.add(cellNestedRowCol.getRight());
+                        returnColumn += cellNestedRowCol.getRight();
                     }
                 }
-            }
-        }
-
-        /**
-         * Append nested table rows to 2 dimensional Excel output data array.
-         */
-        private int appendNestedRows( int rowIndex, int startColumn, ResultList resultList, Object[][] rowObjects ){
-
-            int col = startColumn;
-
-            for( Header header : resultList.getHeaders() ) {
-                rowObjects[rowIndex][col] = new SpreadsheetCreator.ExcelHeader(header.getViewHeader());
-                col++;
-            }
-            rowIndex++;
-
-            for ( ConfigurableList.ResultRow resultRow : resultList.resultRows ) {
-                col = startColumn;
-                for (String val : resultRow.getRenderableCells()) {
-                    rowObjects[rowIndex][col] = val;
-                    col++;
+                if (resultRow.getCellNestedTables().isEmpty() || !atLeastOneNested) {
+                    currentRow++;
+                    returnRow += maxNestedRow;
+                } else {
+                    currentRow += maxNestedRow + 2;
+                    returnRow += maxNestedRow + 2;
                 }
-                rowIndex++;
-                for (ResultList nestedList : resultRow.getCellNestedTables()) {
-                    if (nestedList != null) {
-                        rowIndex = appendNestedRows(rowIndex, startColumn, nestedList, rowObjects);
+                currentColumn = startColumn;
+                firstRow = false;
+            }
+
+            // Render headers (after we know how wide the nested tables are)
+            currentColumn = startColumn;
+            if (render) {
+                List<Header> headers1 = resultList.getHeaders();
+                for (int i = 0; i < headers1.size(); i++) {
+                    Header header = headers1.get(i);
+                    rowObjects[startRow][currentColumn] = new SpreadsheetCreator.ExcelHeader(
+                            header.getDownloadHeader1());
+                    String header2Name = header.getDownloadHeader2();
+                    if (header2Name != null && !header2Name.isEmpty()) {
+                        rowObjects[startRow + 1][currentColumn] = new SpreadsheetCreator.ExcelHeader(header2Name);
                     }
+                    currentColumn += (header.getDownloadHeader1() == null ? 1 :
+                            headerWidths.isEmpty() ? 1 : headerWidths.get(i));
                 }
             }
-
-            return rowIndex;
+            return new ImmutablePair<>(returnRow + 2,
+                    returnColumn == 0 ? resultList.getHeaders().size() : returnColumn);
         }
 
         public List<ResultRow> getResultRows() {

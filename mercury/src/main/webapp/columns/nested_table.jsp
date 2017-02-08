@@ -14,7 +14,7 @@
     <c:forEach items="${nestedTable.resultRows}" var="nestRow">
         <tr>
             <c:forEach items="${nestRow.renderableCells}" var="nestCell" varStatus="nestRowStatus">
-                <td><div>${nestCell}</div>
+                <td style="vertical-align: top"><div>${nestCell}</div>
                     <c:if test="${not empty nestRow.cellNestedTables[nestRowStatus.index]}">
                         <c:set var="nestedTable" value="${nestRow.cellNestedTables[nestRowStatus.index]}" scope="request"/>
                         <jsp:include page="nested_table.jsp"/>
