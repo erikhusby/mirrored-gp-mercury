@@ -9,7 +9,7 @@ TRAILING NULLCOLS
  is_delete,
  abandon_id,
  abandon_type,
- abandon_vessel,
+ abandon_vessel_id,
  vessel_position,
  reason,
  abandoned_on DATE "YYYYMMDDHH24MISS"

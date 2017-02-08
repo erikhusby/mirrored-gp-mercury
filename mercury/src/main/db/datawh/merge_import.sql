@@ -624,7 +624,7 @@ AS
                     etl_date,
                     abandon_id,
                     abandon_type,
-                    abandon_vessel,
+                    abandon_vessel_id,
                     CAST(NULL AS VARCHAR2(24) ) AS vessel_position,
                     reason,
                     abandoned_on
@@ -635,7 +635,7 @@ AS
                     etl_date,
                     abandon_id,
                     abandon_type,
-                    abandon_vessel,
+                    abandon_vessel_id,
                     vessel_position,
                     reason,
                     abandoned_on
@@ -651,7 +651,7 @@ AS
           -- Do an update only if this ETL date greater than what's in DB already
           IF new.etl_date > V_LATEST_ETL_DATE THEN
             UPDATE abandon_vessel
-            SET abandon_vessel = new.abandon_vessel,
+            SET abandon_vessel_id = new.abandon_vessel_id,
               vessel_position = new.vessel_position,
               reason = new.reason,
               abandoned_on = new.abandoned_on,
@@ -666,7 +666,7 @@ AS
             INSERT INTO abandon_vessel (
               abandon_type,
               abandon_id,
-              abandon_vessel,
+              abandon_vessel_id,
               vessel_position,
               reason,
               abandoned_on,
@@ -674,7 +674,7 @@ AS
             ) VALUES (
               new.abandon_type,
               new.abandon_id,
-              new.abandon_vessel,
+              new.abandon_vessel_id,
               new.vessel_position,
               new.reason,
               new.abandoned_on,
