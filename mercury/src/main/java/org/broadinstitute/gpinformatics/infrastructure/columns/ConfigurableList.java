@@ -735,14 +735,14 @@ public class ConfigurableList {
          */
         public Object[][] getAsArray() {
 
-            MutablePair<Integer, Integer> rowColPair = new MutablePair<>();
-            rowColPair.setLeft(0);
-            rowColPair.setRight(0);
-            calcRowColumnCount(getResultRows(), rowColPair, getHeaders());
+//            MutablePair<Integer, Integer> rowColPair = new MutablePair<>();
+//            rowColPair.setLeft(0);
+//            rowColPair.setRight(0);
+//            calcRowColumnCount(getResultRows(), rowColPair, getHeaders());
 
 //            Object[][] rowObjects = new Object[rowColPair.getLeft()][rowColPair.getRight()];
-            Object[][] rowObjects = new Object[1000][1000];
-            fillArrayV2(rowObjects, this, 0, 0);
+            Object[][] rowObjects = new Object[1000][256];
+            Pair<Integer, Integer> rowColPair = fillArrayV2(rowObjects, this, 0, 0);
 //            fillArray(rowObjects, getResultRows(), getHeaders());
             return rowObjects;
         }
@@ -770,15 +770,28 @@ public class ConfigurableList {
                     rowObjects[currentRow][currentColumn] = renderableCells.get(i);
 
                     // Render nested tables that are inside each cell
-                    Pair<Integer, Integer> cellNestedRowCol = fillArrayV2(rowObjects, resultRow.cellNestedTables.get(i),
-                            currentRow, currentColumn);
+                    if (resultRow.cellNestedTables.isEmpty()) {
+                        currentColumn++;
+                        continue;
+                    }
+                    ResultList nestedResultList = resultRow.cellNestedTables.get(i);
+                    if (nestedResultList == null) {
+                        currentColumn++;
+                        continue;
+                    }
+                    Pair<Integer, Integer> cellNestedRowCol = fillArrayV2(rowObjects, nestedResultList,
+                            currentRow + 1, currentColumn);
                     returnRow = Math.max(returnRow, cellNestedRowCol.getLeft());
                     returnColumn =+ cellNestedRowCol.getRight();
 
                     currentColumn += cellNestedRowCol.getRight();
                     headerWidth = cellNestedRowCol.getRight();
                 }
-                currentRow += returnRow;
+                if (resultRow.cellNestedTables.isEmpty()) {
+                    currentRow++;
+                } else {
+                    currentRow += returnRow;
+                }
                 currentColumn = startColumn;
             }
 
@@ -793,7 +806,8 @@ public class ConfigurableList {
                 }
                 currentColumn += headerWidth;
             }
-            return new ImmutablePair<>(returnRow,  returnColumn);
+            return new ImmutablePair<>(returnRow == 0 ? resultList.resultRows.size() : returnRow,
+                    returnColumn == 0 ? resultList.headers.size() : returnColumn);
         }
 
         /**
