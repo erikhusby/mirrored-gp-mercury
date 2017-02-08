@@ -106,7 +106,7 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
         List<ConfigurableList.Header> headers = new ArrayList<>();
         headers.add(new ConfigurableList.Header( "", null, null ) );
         for( String val : geometry.getColumnNames() ) {
-            headers.add(new ConfigurableList.Header( val, null, null ) );
+            headers.add(new ConfigurableList.Header( val, val, null ) );
         }
 
         // Build rows (first cell is row name from geometry
@@ -225,9 +225,6 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
         }
 
         List<Comparable<?>> emptySortableCells = new ArrayList<>();
-        for( SearchTerm parentTerm : parentTermsToDisplay ) {
-            headers.add(new ConfigurableList.Header(parentTerm.getName(), null, null));
-        }
 
         if( !parentTermsToDisplay.isEmpty() && labVessel != null) {
             int cellIndex = 0;
@@ -254,6 +251,9 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
                     rowIndex++;
                 }
                 cellIndex++;
+            }
+            for( SearchTerm parentTerm : parentTermsToDisplay ) {
+                headers.add(new ConfigurableList.Header(parentTerm.getName(), parentTerm.getName(), null));
             }
         }
         // todo jmt sort by first column?
