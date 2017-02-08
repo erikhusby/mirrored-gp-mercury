@@ -26,11 +26,18 @@ import org.broadinstitute.gpinformatics.mercury.boundary.sample.QuantificationEJ
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.BSPRestSender;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate.TubeFormationByWellCriteria.Result;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.sample.PicoDispositionActionBean;
@@ -42,6 +49,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -84,6 +92,10 @@ public class UploadQuantsActionBean extends CoreActionBean {
     private ConfigurableListFactory configurableListFactory;
     @Inject
     private BSPUserList bspUserList;
+    @Inject
+    private BSPRestSender bspRestSender;
+    @Inject
+    private TubeFormationDao tubeFormationDao;
 
     @Validate(required = true, on = UPLOAD_QUANT)
     private FileBean quantSpreadsheet;
@@ -144,7 +156,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
             case VARIOSKAN: {
                 MessageCollection messageCollection = new MessageCollection();
 
-                Pair<LabMetricRun, String> pair = spreadsheetToMercuryAndBsp(vesselEjb, messageCollection,
+                Pair<LabMetricRun, String> pair = spreadsheetToMercuryAndBsp(messageCollection,
                         quantStream, getQuantType(), userBean, acceptRePico);
                 if (pair != null) {
                     labMetricRun = pair.getLeft();
@@ -241,23 +253,64 @@ public class UploadQuantsActionBean extends CoreActionBean {
      * Persists the spreadsheet as a lab metrics run in Mercury and sends a filtered version of the spreadsheet
      * containing only the research sample quants to BSP.
      */
-    public static Pair<LabMetricRun, String> spreadsheetToMercuryAndBsp(VesselEjb labVesselEjb,
-            MessageCollection messageCollection, InputStream quantStream, LabMetric.MetricType quantType,
-            UserBean userBean, boolean acceptRedoPico) throws Exception {
+    public Pair<LabMetricRun, String> spreadsheetToMercuryAndBsp(MessageCollection messageCollection,
+            InputStream quantStream, LabMetric.MetricType quantType, UserBean userBean, boolean acceptRedoPico)
+            throws Exception {
 
         byte[] quantStreamBytes = IOUtils.toByteArray(quantStream);
 
-        Triple<LabMetricRun, String, Set<StaticPlate>> runAndRackOfTubes = labVesselEjb.createVarioskanRun(
+        Triple<LabMetricRun, Result, Set<StaticPlate>> runAndRackOfTubes = vesselEjb.createVarioskanRun(
                 new ByteArrayInputStream(quantStreamBytes), quantType, userBean.getBspUser().getUserId(),
                 messageCollection, acceptRedoPico);
-
+        Result traverserResult = runAndRackOfTubes.getMiddle();
         if (quantType == LabMetric.MetricType.INITIAL_PICO) {
-            String filename = "SonicRack" + runAndRackOfTubes.getRight() + ".xls";
-            labVesselEjb.nonClinicalsToBsp(new ByteArrayInputStream(quantStreamBytes), runAndRackOfTubes.getMiddle(),
-                    runAndRackOfTubes.getRight(), userBean.getBspUser().getUsername(), filename, messageCollection);
-        }
 
-        return Pair.of(runAndRackOfTubes.getLeft(), runAndRackOfTubes.getMiddle());
+            Set<VesselPosition> clinicalTubePositions = new HashSet<>();
+            // Must re-fetch to avoid lazy evaluation exception on tube.getSampleInstanceV2()
+            TubeFormation tubeFormation = tubeFormationDao.findByDigest(traverserResult.getTubeFormation().getDigest());
+            for (Map.Entry<VesselPosition, BarcodedTube> entry :
+                    tubeFormation.getContainerRole().getMapPositionToVessel().entrySet()) {
+                VesselPosition tubePosition = entry.getKey();
+                BarcodedTube tube = entry.getValue();
+                for (SampleInstanceV2 sampleInstance : tube.getSampleInstancesV2()) {
+                    if (sampleInstance.getRootOrEarliestMercurySample().canSampleBeUsedForClinical()) {
+                        clinicalTubePositions.add(tubePosition);
+                        break;
+                    }
+                }
+            }
+
+            Set<VesselPosition> clinicalWellPositions = new HashSet<>();
+            int nonClinicalWellCount = 0;
+            for (VesselPosition wellPosition : traverserResult.getWellToTubePosition().keySet()) {
+                VesselPosition tubePosition = traverserResult.getWellToTubePosition().get(wellPosition);
+                if (clinicalTubePositions.contains(tubePosition)) {
+                    clinicalWellPositions.add(wellPosition);
+                } else {
+                    nonClinicalWellCount++;
+                }
+            }
+
+            if (nonClinicalWellCount > 0) {
+                InputStream filteredQuantStream;
+                try {
+                    filteredQuantStream = VesselEjb.filterOutRows(new ByteArrayInputStream(quantStreamBytes),
+                            clinicalWellPositions);
+                } catch (Exception e) {
+                    messageCollection.addError("Cannot process spreadsheet: " + e.toString());
+                    throw e;
+                }
+                try {
+                    String filename = "SonicRack" + traverserResult.getTubeFormation().getLabel() + ".xls";
+                    bspRestSender.postToBsp(userBean.getBspUser().getUsername(),
+                            filename, filteredQuantStream, BSPRestSender.BSP_UPLOAD_QUANT_URL);
+                } catch (Exception e) {
+                    messageCollection.addError("Cannot send research quants to BSP: " + e.toString());
+                    throw e;
+                }
+            }
+        }
+        return Pair.of(runAndRackOfTubes.getLeft(), traverserResult.getTubeFormation().getLabel());
     }
 
     private void buildColumns() {

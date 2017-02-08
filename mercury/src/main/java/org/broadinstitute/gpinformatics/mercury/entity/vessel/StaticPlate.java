@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.hibernate.envers.Audited;
 
@@ -13,11 +14,14 @@ import javax.persistence.Enumerated;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static javax.swing.UIManager.put;
+import static org.broadinstitute.gpinformatics.mercury.entity.OrmUtil.proxySafeCast;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.ContainerType.STATIC_PLATE;
 
 /**
@@ -230,7 +234,7 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         for (LabEvent event : getTransfersTo()) {
             for (LabVessel source : event.getSourceLabVessels()) {
                 if (source.getType() == STATIC_PLATE) {
-                    parents.add(OrmUtil.proxySafeCast(source, StaticPlate.class));
+                    parents.add(proxySafeCast(source, StaticPlate.class));
                 }
             }
         }
@@ -240,8 +244,6 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
     public static class HasRackContentByWellCriteria extends TransferTraverserCriteria {
 
         private Map<VesselPosition, Boolean> result = new HashMap<>();
-        private Map<VesselPosition, Pair<TubeFormation, VesselPosition>> wellPositionToFormationAndTubePosition =
-                new HashMap<>();
 
         /**
          * The current position in the query plate for which we are trying to determine sample containment.  This
@@ -277,18 +279,12 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
                     queryVesselPosition = contextVesselPosition;
                     if (!result.containsKey(queryVesselPosition)) {
                         result.put(queryVesselPosition, false);
-                        // When starting from a new well, may need to revisit an upstream plate well
-                        // that was previously traversed such as when Rack to Epp96 to Epp384.
-                        resetAllTraversed();
                     }
                 }
             } else if( contextVessel != null && contextVesselContainer != null ) {
                 if (OrmUtil.proxySafeIsInstance(contextVesselContainer.getEmbedder(), TubeFormation.class)) {
-                    result.put(contextVesselPosition, true);
-                    wellPositionToFormationAndTubePosition.put(queryVesselPosition, Pair.of(
-                            OrmUtil.proxySafeCast(contextVesselContainer.getEmbedder(), TubeFormation.class),
-                            contextVesselPosition));
-                    return TraversalControl.StopTraversing;
+                        result.put(contextVesselPosition, true);
+                        return TraversalControl.StopTraversing;
                 }
             }
             return TraversalControl.ContinueTraversing;
@@ -300,10 +296,88 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         public Map<VesselPosition, Boolean> getResult() {
             return result;
         }
+    }
 
-        public Map<VesselPosition, Pair<TubeFormation, VesselPosition>> getWellPositionToFormationAndTubePosition() {
-            return wellPositionToFormationAndTubePosition;
+    /**
+     * Traverses plate well ancestors to find the nearest tube formation, and the corresponding
+     * tube position. Also collects LabEventMetadata along the way. Throws if more than one
+     * tube formations feed into the plate.
+     */
+    public static class TubeFormationByWellCriteria extends TransferTraverserCriteria {
+
+        /** The well position we are starting from. */
+        private VesselPosition queryVesselPosition;
+
+        /** Dto that holds the result of the traversal. */
+        public class Result {
+            /** A sparsely populated map that only has entries for existing tubes. */
+            private Map<VesselPosition, VesselPosition> wellToTubePosition = new HashMap<>();
+            private TubeFormation tubeFormation = null;
+            private Set<LabEventMetadata> labEventMetadata = new HashSet<>();
+
+            public void setTubeFormation(TubeFormation tubeFormation) {
+                this.tubeFormation = tubeFormation;
+            }
+
+            public TubeFormation getTubeFormation() {
+                return tubeFormation;
+            }
+
+            public Map<VesselPosition, VesselPosition> getWellToTubePosition() {
+                return wellToTubePosition;
+            }
+
+            public Set<LabEventMetadata> getLabEventMetadata() {
+                return labEventMetadata;
+            }
         }
+
+        private Result result = new Result();
+
+        public Result getResult() {
+            return result;
+        }
+
+        @Override
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            Pair<LabVessel,VesselPosition> vesselPositionPair = context.getContextVesselAndPosition();
+            VesselPosition contextVesselPosition = vesselPositionPair.getRight();
+            VesselContainer contextVesselContainer = context.getContextVesselContainer();
+
+            if (contextVesselPosition != null && context.getHopCount() == 0) {
+                // Saves the new starting well position. The traversal history is cleared each time
+                // since an upstream plate well may be split out to multiple downstream plate wells,
+                // such as when a pico rack goes to Epp96 dilution and then to Epp384 microfluor.
+                queryVesselPosition = contextVesselPosition;
+                resetAllTraversed();
+            }
+
+            if (contextVesselContainer != null) {
+                if (OrmUtil.proxySafeIsInstance(contextVesselContainer.getEmbedder(), TubeFormation.class)) {
+                    TubeFormation tubeFormation = OrmUtil.proxySafeCast(contextVesselContainer.getEmbedder(),
+                            TubeFormation.class);
+                    if (result.getTubeFormation() == null) {
+                        result.setTubeFormation(tubeFormation);
+                    } else if (result.getTubeFormation() != tubeFormation) {
+                        throw new RuntimeException("Expected one tube formation but found " +
+                                result.getTubeFormation().getLabel() + " and " + tubeFormation.getLabel());
+                    }
+                    if (tubeFormation.getContainerRole().getMapPositionToVessel().containsKey(contextVesselPosition)) {
+                        result.getWellToTubePosition().put(queryVesselPosition, contextVesselPosition);
+                    }
+                    return TraversalControl.StopTraversing;
+                } else {
+                    // Collects lab event metadata on the plates that are traversed, including the starting plate.
+                    for (LabEvent labEvent : contextVesselContainer.getEmbedder().getEvents()) {
+                        result.getLabEventMetadata().addAll(labEvent.getLabEventMetadatas());
+                    }
+                }
+            }
+            return TraversalControl.ContinueTraversing;
+        }
+
+        @Override
+        public void evaluateVesselPostOrder(Context context) {}
     }
 
     /**
@@ -318,14 +392,11 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         return criteria.getResult();
     }
 
-    /**
-     * Finds nearest ancestor rack and tube position for each well.
-     * @return Map of well position to tube formation and tube's position.
-     */
-    public Map<VesselPosition, Pair<TubeFormation, VesselPosition>> nearestFormationAndTubePositionByWell() {
-        HasRackContentByWellCriteria criteria = new HasRackContentByWellCriteria();
+    /** Returns nearest ancestor rack and tube position for each well, and lab event metadata. */
+    public TubeFormationByWellCriteria.Result nearestFormationAndTubePositionByWell() {
+        TubeFormationByWellCriteria criteria = new TubeFormationByWellCriteria();
         vesselContainer.applyCriteriaToAllPositions(criteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
-        return criteria.getWellPositionToFormationAndTubePosition();
+        return criteria.getResult();
     }
 
     /**

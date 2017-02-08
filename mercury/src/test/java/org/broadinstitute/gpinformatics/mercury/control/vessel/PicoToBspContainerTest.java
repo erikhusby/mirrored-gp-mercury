@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -21,6 +22,7 @@ import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory.ReagentDto;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.MetadataType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
@@ -89,6 +91,10 @@ public class PicoToBspContainerTest extends Arquillian {
     private static final int RACK_COLUMNS = 12;
     private static final Log log = LogFactory.getLog(PicoToBspContainerTest.class);
     private static final boolean PRINT_QUANT_VALUES = false;
+    private static final BigDecimal BIG_DECIMAL_60 = new BigDecimal("60");
+    private static final List<ReagentDto> REAGENT_DTOS = new ArrayList<ReagentDto>() {{
+        add(new ReagentDto("HS buffer", "RG-12134", DateUtils.addYears(new Date(), 1)));
+    }};
 
     @Inject
     private VesselEjb vesselEjb;
@@ -108,6 +114,9 @@ public class PicoToBspContainerTest extends Arquillian {
     @Inject
     private UserBean userBean;
 
+    @Inject
+    private UploadQuantsActionBean uploadQuantsActionBean;
+
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV);
@@ -123,30 +132,29 @@ public class PicoToBspContainerTest extends Arquillian {
     private MessageCollection messageCollection;
 
     // Each test case is a row in this array. The fields are:
-    // #researchTubes, #crspTubes, quantType, #dilutionWells, #microfluorWells, sensitivityFactor, dilutionFactor
-    private int[][] testCases = {
+    // #research, #crsp, quantType, #dilutionWells, #microfluorWells, sensitivityFactor, dilutionFactor, bsp quant
+    private Object[][] testCases = {
             // Duplicate pico, Rack -> 1st blackPlate(96 well) and rack -> 2nd blackPlate(96 well).
-            {41, 54, 2, 0, 96, 1, 1},
-            {96, 0, 2, 0, 96, 1, 1},
-            {0, 1, 2, 0, 96, 1, 1},
-            {40, 55, 2, 0, 96, 1, 1},
-            {1, 0, 2, 0, 96, 2, 1},
+            {41, 54, 2, 0, 96, 1, 1, 3.3348},
+            {96,  0, 2, 0, 96, 1, 1, 3.3348},
+            {0,   1, 2, 0, 96, 1, 1, 3.3348},
+            {40, 55, 2, 0, 96, 2, 1, 1.6674},
             // Triplicate pico, rack -> blackPlate(384 well) e.g. CO-20552814.
-            {96, 0, 3, 0, 384, 1, 1},
-            {0, 96, 3, 0, 384, 1, 1},
-            {50, 46, 3, 0, 384, 1, 1},
-            {4, 4, 3, 0, 384, 2, 1},
+            {96,  0, 3, 0, 384, 1, 1, 53.745},
+            {0,  96, 3, 0, 384, 1, 1, 53.745},
+            {50, 46, 3, 0, 384, 1, 1, 53.745},
+            {4,   4, 3, 0, 384, 2, 1, 26.872},
             // Triplicate pico, rack -> dilutionPlate(96) -> blackPlate(384).
-            {47, 47, 3, 96, 384, 1, 1},
-            {96, 0, 3, 96, 384, 1, 10},
+            {47, 47, 3, 96, 384, 1,  1, 53.745},
+            {96,  0, 3, 96, 384, 1, 10, 537.45},
             // Triplicate pico, rack -> dilutionPlate(384) -> blackPlate(384).
-            {24, 24, 3, 384, 384, 1, 1},
-            {6, 0, 3, 384, 384, 2, 10},
-            {96, 0, 3, 384, 384, 1, 10},
+            {24, 24, 3, 384, 384, 1,  1, 53.745},
+            {6,   0, 3, 384, 384, 2, 10, 268.72},
+            {96,  0, 3, 384, 384, 1, 10, 537.45},
             // Single pico (typically a retest of a triplicate pico), rack -> dilutionPlate(96) -> blackPlate(96).
-            {40, 55, 1, 96, 96, 1, 1},
-            {4, 5, 1, 96, 96, 2, 1},
-            {96, 0, 1, 96, 96, 1, 10}
+            {40, 55, 1, 96, 96, 1,  1, 3.3779},
+            {4,   5, 1, 96, 96, 2,  1, 1.6889},
+            {96,  0, 1, 96, 96, 1, 10, 33.779},
     };
 
     // Research tubes, i.e. currently existing BSP genomic DNA tubes and their sample names.
@@ -257,7 +265,7 @@ public class PicoToBspContainerTest extends Arquillian {
         for (int i = 0; i < 96; ++i) {
             String tubeBarcode = String.format("%011d%03d", testTimestamp, i);
             BarcodedTube tube = new BarcodedTube(tubeBarcode, BarcodedTube.BarcodedTubeType.MatrixTube075);
-            tube.setVolume(new BigDecimal("60"));
+            tube.setVolume(BIG_DECIMAL_60);
             labVesselDao.persist(tube);
 
             String materialName = MaterialType.DNA_DNA_GENOMIC.getDisplayName();
@@ -273,6 +281,7 @@ public class PicoToBspContainerTest extends Arquillian {
         for (Map.Entry<String, String> entry : bspTubeMap.entrySet()) {
             BarcodedTube tube = OrmUtil.proxySafeCast(labVesselDao.findByIdentifier(entry.getKey()),
                     BarcodedTube.class);
+            tube.setVolume(BIG_DECIMAL_60);
             bspTubes.add(tube);
         }
 
@@ -292,13 +301,11 @@ public class PicoToBspContainerTest extends Arquillian {
 
         // Zeros the value BSP has for concentration on our test samples.
         for (String smId : bspTubeMap.values()) {
-            String result = bspSetVolumeConcentration.setVolumeAndConcentration(smId, null, BigDecimal.ZERO, null);
+            String result = bspSetVolumeConcentration.setVolumeAndConcentration(smId, BIG_DECIMAL_60,
+                    BigDecimal.ZERO, null);
             Assert.assertEquals(result, BSPSetVolumeConcentration.RESULT_OK);
         }
-    }
-
-    @Test(groups = EXTERNAL_INTEGRATION, enabled = false)
-    public void testInitialZero() {
+        // Verifies zero.
         Map<String, BspSampleData> bspSampleDataMap = dataFetcher.fetchSampleData(bspTubeMap.values(),
                 BSPSampleSearchColumn.CONCENTRATION);
         for (String smId : bspTubeMap.values()) {
@@ -315,13 +322,14 @@ public class PicoToBspContainerTest extends Arquillian {
             testCaseInit();
             // Parses the testCase array into test parameters, then runs the quant import test.
             int tokenIdx = 0;
-            int research = testCases[caseIdx][tokenIdx++];
-            int crsp = testCases[caseIdx][tokenIdx++];
-            int quantCardinality = testCases[caseIdx][tokenIdx++];
-            int dilutionWells = testCases[caseIdx][tokenIdx++];
-            int microfluorWells = testCases[caseIdx][tokenIdx++];
-            int sensitivityFactor = testCases[caseIdx][tokenIdx++];
-            int dilutionFactor = testCases[caseIdx][tokenIdx++];
+            int research = (Integer)testCases[caseIdx][tokenIdx++];
+            int crsp = (Integer)testCases[caseIdx][tokenIdx++];
+            int quantCardinality = (Integer)testCases[caseIdx][tokenIdx++];
+            int dilutionWells = (Integer)testCases[caseIdx][tokenIdx++];
+            int microfluorWells = (Integer)testCases[caseIdx][tokenIdx++];
+            int sensitivityFactor = (Integer)testCases[caseIdx][tokenIdx++];
+            int dilutionFactor = (Integer)testCases[caseIdx][tokenIdx++];
+            double bspA01Quant = (Double)testCases[caseIdx][tokenIdx++];
             caseIdx++;
 
             Assert.assertTrue(research + crsp <= Eppendorf96.getVesselGeometry().getCapacity());
@@ -350,12 +358,12 @@ public class PicoToBspContainerTest extends Arquillian {
                     (research + crsp) * (quantCardinality + 1));
             extractResearchTubeQuantFromMercury(dto);
             checkMissingMetrics(dto);
-            validateBspMetrics(dto);
+            validateBspMetrics(dto, bspA01Quant);
         }
     }
 
     /** Validates BSP sample concentration with Mercury's lab metric. */
-    private void validateBspMetrics(Dto dto) {
+    private void validateBspMetrics(Dto dto, double bspA01Quant) {
         // Fetches sample concentrations from BSP.
         Map<String, BspSampleData> bspSampleDataMap = dataFetcher.fetchSampleData(bspTubeMap.values(),
                 BSPSampleSearchColumn.CONCENTRATION);
@@ -377,6 +385,12 @@ public class PicoToBspContainerTest extends Arquillian {
                 } else {
                     Assert.assertFalse(miscompare,
                             rackPosition + " " + smId + " bsp has " + bspConc + " mercury has " + mercury);
+
+                    // Tests the expected bsp quant for position A01.
+                    if (rackPosition.equals("A01")) {
+                        Assert.assertTrue(Math.abs(bspConc - bspA01Quant) < 0.01,
+                                rackPosition + " " + smId + " bsp has " + bspConc + " expected " + bspA01Quant);
+                    }
                 }
             } else {
                 // Verify that BSP conc was not set for an unused tube.
@@ -514,19 +528,28 @@ public class PicoToBspContainerTest extends Arquillian {
 
                 microfluorTransfer.getPlate().setPhysType(dto.getMicrofluorPlateType().getAutomationName());
                 microfluorTransfer.getPlate().setSection(ALL96.getSectionName());
-                if (dto.getSensitivityFactor() != 1) {
-                    setFactor(microfluorTransfer, dto.getSensitivityFactor(), SensitivityFactor);
-                }
                 microfluorMessage.getPlateTransferEvent().add(microfluorTransfer);
                 bettalimsFactory.advanceTime();
             }
             labEventFactory.buildFromBettaLims(microfluorMessage);
 
+            if (dto.getSensitivityFactor() != 1) {
+                BettaLIMSMessage bufferAdditionMessage = new BettaLIMSMessage();
+                for (String blackPlateBarcode : dto.getBlackPlateBarcodes()) {
+                    PlateEventType bufferAddition = bettalimsFactory.buildPlateEvent("PicoBufferAddition",
+                            blackPlateBarcode, REAGENT_DTOS);
+                    bufferAddition.getPlate().setPhysType(dto.getMicrofluorPlateType().getAutomationName());
+                    bufferAddition.getPlate().setSection(ALL96.getSectionName());
+                    setFactor(bufferAddition, dto.getSensitivityFactor(), SensitivityFactor);
+                    bufferAdditionMessage.getPlateEvent().add(bufferAddition);
+                    bettalimsFactory.advanceTime();
+                }
+                labEventFactory.buildFromBettaLims(bufferAdditionMessage);
+            }
+
         } else if (dto.getQuantCardinality() == 3) {
             Assert.assertEquals(dto.getMicrofluorPlateType(), Eppendorf384);
             Assert.assertEquals(dto.getBlackPlateBarcodes().length, 1);
-
-
 
             if (dto.getDilutionPlateType() != null) {
                 Assert.assertTrue(dto.getDilutionPlateType() == Eppendorf96 ||
@@ -584,13 +607,27 @@ public class PicoToBspContainerTest extends Arquillian {
                         ALL384 : sectionType(i)).getSectionName());
 
                 microfluorTransfer.setDisambiguator(1L + i);
-                if (dto.getSensitivityFactor() != 1) {
-                    setFactor(microfluorTransfer, dto.getSensitivityFactor(), SensitivityFactor);
-                }
                 microfluorMessage.getPlateTransferEvent().add(microfluorTransfer);
+
             }
             bettalimsFactory.advanceTime();
             labEventFactory.buildFromBettaLims(microfluorMessage);
+
+            if (dto.getSensitivityFactor() != 1) {
+                BettaLIMSMessage bufferAdditionMessage = new BettaLIMSMessage();
+                for (int i = 0; i < microfluorTransferCount; ++i) {
+                    PlateEventType bufferAddition = bettalimsFactory.buildPlateEvent("PicoBufferAddition",
+                            dto.getBlackPlateBarcodes()[0], REAGENT_DTOS);
+                    bufferAddition.getPlate().setPhysType(dto.getMicrofluorPlateType().getAutomationName());
+                    bufferAddition.getPlate().setSection((microfluorTransferCount == 1 ?
+                            ALL384 : sectionType(i)).getSectionName());
+                    bufferAddition.setDisambiguator(1L + i);
+                    setFactor(bufferAddition, dto.getSensitivityFactor(), SensitivityFactor);
+                    bufferAdditionMessage.getPlateEvent().add(bufferAddition);
+                    bettalimsFactory.advanceTime();
+                }
+                labEventFactory.buildFromBettaLims(bufferAdditionMessage);
+            }
         }
     }
 
@@ -616,8 +653,8 @@ public class PicoToBspContainerTest extends Arquillian {
         // Calls UploadQuantsActionBean to send the spreadsheet to Mercury and a
         // filtered spreadsheet containing only the research sample quants to BSP.
         userBean.loginTestUser();
-        dto.setRunAndFormation(UploadQuantsActionBean.spreadsheetToMercuryAndBsp(vesselEjb,
-                messageCollection, quantStream, LabMetric.MetricType.INITIAL_PICO, userBean, true));
+        dto.setRunAndFormation(uploadQuantsActionBean.spreadsheetToMercuryAndBsp(messageCollection,
+                quantStream, LabMetric.MetricType.INITIAL_PICO, userBean, true));
 
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), " \n "));
         Assert.assertFalse(messageCollection.hasWarnings(), StringUtils.join(messageCollection.getErrors(), " \n "));
@@ -628,7 +665,8 @@ public class PicoToBspContainerTest extends Arquillian {
     private InputStream makeVarioskanTestFile(Dto dto) throws Exception {
 
         BufferedInputStream quantStream = varioskanParserContainerTest.makeVarioskanSpreadsheet(
-                dto.getBlackPlateBarcodes(), dto.getMicrofluorPlateType() == Eppendorf384 ?
+                dto.getBlackPlateBarcodes(),
+                dto.getMicrofluorPlateType() == Eppendorf384 ?
                         VarioskanParserTest.VARIOSKAN_384_OUTPUT : VarioskanParserTest.VARIOSKAN_OUTPUT,
                 String.valueOf(testTimestamp));
 
@@ -647,7 +685,7 @@ public class PicoToBspContainerTest extends Arquillian {
         }
         // Trims rows from spreadsheet if their wells were not present in the microfluor
         // transfer. This is not where crisp samples get filtered out.
-        return vesselEjb.filterOutRows(quantStream, positionsWithoutTube);
+        return VesselEjb.filterOutRows(quantStream, positionsWithoutTube);
     }
 
     private class Dto {

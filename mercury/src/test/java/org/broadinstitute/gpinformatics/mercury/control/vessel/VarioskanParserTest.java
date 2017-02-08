@@ -10,7 +10,6 @@ import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadshee
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
@@ -30,9 +29,7 @@ import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Test parsing of Varioskan file.
@@ -144,12 +141,14 @@ public class VarioskanParserTest {
             VarioskanRowParser varioskanRowParser = new VarioskanRowParser(workbook);
             Map<VarioskanRowParser.NameValue, String> mapNameValueToValue = varioskanRowParser.getValues();
             MessageCollection messageCollection = new MessageCollection();
-            Set<LabEventMetadata> metadata = new HashSet<>();
+            StaticPlate.TubeFormationByWellCriteria.Result result =
+                    mapBarcodeToPlate.values().iterator().next().nearestFormationAndTubePositionByWell();
             LabMetricRun labMetricRun = vesselEjb.createVarioskanRunDaoFree(mapNameValueToValue,
                     LabMetric.MetricType.INITIAL_PICO, varioskanPlateProcessor, mapBarcodeToPlate, 101L,
-                    messageCollection, metadata);
+                    messageCollection, result);
             Assert.assertFalse(messageCollection.hasErrors());
-            Assert.assertTrue(metadata.isEmpty());
+            Assert.assertFalse(result.getWellToTubePosition().isEmpty());
+            Assert.assertTrue(result.getLabEventMetadata().isEmpty());
             Assert.assertEquals(labMetricRun.getLabMetrics().size(), 3 * VARIOSKAN_SAMPLE_COUNT);
             Assert.assertEquals(mapPositionToTube.get(VesselPosition.A01).getMetrics().iterator().next().getValue(),
                     new BigDecimal("3.34"));
@@ -217,12 +216,14 @@ public class VarioskanParserTest {
             VarioskanRowParser varioskanRowParser = new VarioskanRowParser(workbook);
             Map<VarioskanRowParser.NameValue, String> mapNameValueToValue = varioskanRowParser.getValues();
             MessageCollection messageCollection = new MessageCollection();
-            Set<LabEventMetadata> metadata = new HashSet<>();
+            StaticPlate.TubeFormationByWellCriteria.Result result =
+                    mapBarcodeToPlate.values().iterator().next().nearestFormationAndTubePositionByWell();
             LabMetricRun labMetricRun = vesselEjb.createVarioskanRunDaoFree(mapNameValueToValue,
                     LabMetric.MetricType.PLATING_RIBO, varioskanPlateProcessor, mapBarcodeToPlate, 101L,
-                    messageCollection, metadata);
+                    messageCollection, result);
             Assert.assertFalse(messageCollection.hasErrors());
-            Assert.assertTrue(metadata.isEmpty());
+            Assert.assertFalse(result.getWellToTubePosition().isEmpty());
+            Assert.assertTrue(result.getLabEventMetadata().isEmpty());
             Assert.assertEquals(labMetricRun.getLabMetrics().size(), 3 * VARIOSKAN_RIBO_SAMPLE_COUNT);
             Assert.assertEquals(mapPositionToTube.get(VesselPosition.A02).getMetrics().iterator().next().getValue(),
                     new BigDecimal("3.38"));

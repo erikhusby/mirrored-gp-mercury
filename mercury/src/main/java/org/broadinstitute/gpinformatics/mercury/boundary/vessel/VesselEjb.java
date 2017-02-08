@@ -27,7 +27,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeD
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.BSPRestSender;
 import org.broadinstitute.gpinformatics.mercury.control.sample.SampleVesselProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.CaliperPlateProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
@@ -36,8 +35,6 @@ import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanRowParse
 import org.broadinstitute.gpinformatics.mercury.control.vessel.WallacPlateProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.WallacRowParser;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -48,7 +45,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate.TubeFormationByWellCriteria.Result;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.vessel.UploadQuantsActionBean;
@@ -79,7 +76,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static java.math.RoundingMode.HALF_EVEN;
-import static org.broadinstitute.gpinformatics.mercury.entity.OrmUtil.proxySafeCast;
 import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata.LabEventMetadataType.DilutionFactor;
 import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata.LabEventMetadataType.SensitivityFactor;
 
@@ -110,9 +106,6 @@ public class VesselEjb {
 
     @Resource
     private EJBContext ejbContext;
-
-    @Inject
-    private BSPRestSender bspRestSender;
 
     /**
      * Registers {@code BarcodedTube}s for all specified {@param tubeBarcodes} as well as
@@ -232,11 +225,10 @@ public class VesselEjb {
      *
      * @param acceptRePico indicates when previous quants should be ignored and new quants processed.
      *
-     * @return Triple of LabMetricRun, the label of the tubeFormation that sourced the plates listed in the upload,
-     * and set of the microfluor plates. Returns null in case of error.
-     * In case of a duplicate upload the returned LabMetricRun is the previously uploaded one.
+     * @return Triple of LabMetricRun, the traverser result, and set of the microfluor plates. Returns null
+     * in case of error. In case of a duplicate upload the returned LabMetricRun is the previously uploaded one.
      */
-    public Triple<LabMetricRun, String, Set<StaticPlate>> createVarioskanRun(InputStream varioskanSpreadsheet,
+    public Triple<LabMetricRun, Result, Set<StaticPlate>> createVarioskanRun(InputStream varioskanSpreadsheet,
             LabMetric.MetricType metricType, Long decidingUser, MessageCollection messageCollection,
             boolean acceptRePico) {
         try {
@@ -252,7 +244,7 @@ public class VesselEjb {
 
             // Fetch the plates
             Map<String, StaticPlate> mapBarcodeToPlate = new HashMap<>();
-            Triple<LabMetricRun, String, Set<StaticPlate>> triple = null;
+            Triple<LabMetricRun, Result, Set<StaticPlate>> triple = null;
 
             if (varioskanPlateProcessor.getPlateWellResults().isEmpty()) {
                 messageCollection.addError("Didn't find any plate barcodes in the spreadsheet.");
@@ -270,32 +262,31 @@ public class VesselEjb {
                     }
                 }
                 Set<StaticPlate> microfluorPlates = new HashSet<>(mapBarcodeToPlate.values());
-                Set<LabEventMetadata> metadata = new HashSet<>();
-                TubeFormation tubeFormation = getNearestTubeFormation(mapBarcodeToPlate.values(), metadata);
-                if (tubeFormation == null) {
-                    throw new RuntimeException("Cannot find the tube formation upstream of plate " +
-                                               mapBarcodeToPlate.values().iterator().next().getLabel());
+                Result traverserResult = microfluorPlates.iterator().next().nearestFormationAndTubePositionByWell();
+                if (traverserResult.getTubeFormation() == null) {
+                    messageCollection.addError("Cannot find source tubes for plate " +
+                            microfluorPlates.iterator().next().getLabel());
                 } else {
                     // Run name must be unique.
                     String runName = mapNameValueToValue.get(VarioskanRowParser.NameValue.RUN_NAME);
                     LabMetricRun labMetricRun = labMetricRunDao.findByName(runName);
                     if (labMetricRun != null) {
                         messageCollection.addError("This run has been uploaded previously.");
-                        triple = Triple.of(labMetricRun, tubeFormation.getLabel(), microfluorPlates);
+                        triple = Triple.of(labMetricRun, traverserResult, microfluorPlates);
                     } else {
                         // Run date must be unique so that a search can reveal the latest quant.
                         List<LabMetricRun> sameDateRuns = labMetricRunDao.findSameDateRuns(
                                 parseRunDate(mapNameValueToValue));
                         if (CollectionUtils.isNotEmpty(sameDateRuns)) {
                             messageCollection.addError("A previous upload has the same Run Started timestamp.");
-                            triple = Triple.of(sameDateRuns.iterator().next(), tubeFormation.getLabel(),
-                                    microfluorPlates);
+                            triple = Triple.of(sameDateRuns.iterator().next(), traverserResult, microfluorPlates);
                         } else {
                             // It's an error if previous quants exist, unless told to accept the rePico.
                             List<String> previousQuantedTubes = null;
                             if (!acceptRePico) {
                                 previousQuantedTubes = new ArrayList<>();
-                                for (BarcodedTube tube : tubeFormation.getContainerRole().getContainedVessels()) {
+                                for (BarcodedTube tube :
+                                        traverserResult.getTubeFormation().getContainerRole().getContainedVessels()) {
                                     if (tube.findMostRecentLabMetric(metricType) != null) {
                                         previousQuantedTubes.add(tube.getLabel());
                                     }
@@ -308,8 +299,8 @@ public class VesselEjb {
                             } else {
                                 LabMetricRun run = createVarioskanRunDaoFree(mapNameValueToValue, metricType,
                                         varioskanPlateProcessor, mapBarcodeToPlate, decidingUser, messageCollection,
-                                        metadata);
-                                triple = Triple.of(run, tubeFormation.getLabel(), microfluorPlates);
+                                        traverserResult);
+                                triple = Triple.of(run, traverserResult, microfluorPlates);
                                 if (messageCollection.hasErrors()) {
                                     ejbContext.setRollbackOnly();
                                 } else {
@@ -335,7 +326,7 @@ public class VesselEjb {
     public LabMetricRun createVarioskanRunDaoFree(
             Map<VarioskanRowParser.NameValue, String> mapNameValueToValue, LabMetric.MetricType metricType,
             VarioskanPlateProcessor varioskanPlateProcessor, Map<String, StaticPlate> mapBarcodeToPlate,
-            Long decidingUser, MessageCollection messageCollection, Set<LabEventMetadata> metadata) {
+            Long decidingUser, MessageCollection messageCollection, Result traverserResult) {
 
         Map<LabVessel, List<BigDecimal>> mapTubeToListValues = new HashMap<>();
         Map<LabVessel, VesselPosition> mapTubeToPosition = new HashMap<>();
@@ -358,15 +349,10 @@ public class VesselEjb {
                 mapNameValueToValue.get(VarioskanRowParser.NameValue.INSTRUMENT_SERIAL_NUMBER)));
 
         // Determines the sensitivity and dilution factors.
-        Float factor = extractFactor(metadata, SensitivityFactor);
+        Float factor = extractFactor(traverserResult.getLabEventMetadata(), SensitivityFactor);
         BigDecimal sensitivityFactor = (factor != null) ? new BigDecimal(factor) : BigDecimal.ONE;
-        factor = extractFactor(metadata, DilutionFactor);
+        factor = extractFactor(traverserResult.getLabEventMetadata(), DilutionFactor);
         BigDecimal dilutionFactor = (factor != null) ? new BigDecimal(factor) : BigDecimal.ONE;
-
-
-        // The source tube formation and tube position for each position in each microfluor plate.
-        Map<StaticPlate, Map<VesselPosition, Pair<TubeFormation, VesselPosition>>> plateWellTubePosition =
-                new HashMap<>();
 
         for (VarioskanPlateProcessor.PlateWellResult plateWellResult : varioskanPlateProcessor.getPlateWellResults()) {
             // Puts unaveraged concentration values in the lab metric run.
@@ -388,29 +374,22 @@ public class VesselEjb {
             plateWell.addMetric(labMetric);
 
             // Collects unaveraged concentration values for each source tube.
-            Map<VesselPosition, Pair<TubeFormation, VesselPosition>> wellTubePosition =
-                    plateWellTubePosition.get(staticPlate);
-            if (wellTubePosition == null) {
-                wellTubePosition = staticPlate.nearestFormationAndTubePositionByWell();
-                plateWellTubePosition.put(staticPlate, wellTubePosition);
-            }
-            if (wellTubePosition.containsKey(plateWellResult.getVesselPosition())) {
-                TubeFormation tubeFormation = wellTubePosition.get(plateWellResult.getVesselPosition()).getLeft();
-                VesselPosition tubePosition = wellTubePosition.get(plateWellResult.getVesselPosition()).getRight();
-                LabVessel sourceTube = tubeFormation.getContainerRole().getVesselAtPosition(tubePosition);
+            VesselPosition wellPosition = plateWellResult.getVesselPosition();
+            VesselPosition tubePosition = traverserResult.getWellToTubePosition().get(wellPosition);
+            LabVessel sourceTube = traverserResult.getTubeFormation().getContainerRole().
+                    getVesselAtPosition(tubePosition);
 
-                if (sourceTube != null) {
-                    mapTubeToPosition.put(sourceTube, tubePosition);
-                    List<BigDecimal> valuesList = mapTubeToListValues.get(sourceTube);
-                    if (valuesList == null) {
-                        valuesList = new ArrayList<>();
-                        mapTubeToListValues.put(sourceTube, valuesList);
-                    }
-                    valuesList.add(concValue);
-                } else {
-                    messageCollection.addError("Failed to find source tube for " + plateWellResult.getPlateBarcode() +
-                                               " " + plateWellResult.getVesselPosition());
+            if (sourceTube != null) {
+                mapTubeToPosition.put(sourceTube, tubePosition);
+                List<BigDecimal> valuesList = mapTubeToListValues.get(sourceTube);
+                if (valuesList == null) {
+                    valuesList = new ArrayList<>();
+                    mapTubeToListValues.put(sourceTube, valuesList);
                 }
+                valuesList.add(concValue);
+            } else {
+                messageCollection.addError("Failed to find source tube for " + plateWellResult.getPlateBarcode() +
+                        " " + plateWellResult.getVesselPosition());
             }
         }
 
@@ -494,7 +473,6 @@ public class VesselEjb {
             if (wallacPlateProcessor.getPlateWellResults().isEmpty()) {
                 messageCollection.addError("Didn't find any plate barcodes in the spreadsheet.");
             } else {
-
                 for (VarioskanPlateProcessor.PlateWellResult plateWellResult :
                         wallacPlateProcessor.getPlateWellResults()) {
                     StaticPlate staticPlate = mapBarcodeToPlate.get(plateWellResult.getPlateBarcode());
@@ -507,16 +485,15 @@ public class VesselEjb {
                         }
                     }
                 }
-                Set<LabEventMetadata> metadata = new HashSet<>();
-                TubeFormation tubeFormation = getNearestTubeFormation(mapBarcodeToPlate.values(), metadata);
-                if (tubeFormation == null) {
-                    throw new RuntimeException("Cannot find the tube formation upstream of plate " +
-                                               mapBarcodeToPlate.values().iterator().next().getLabel());
+                StaticPlate firstPlate = mapBarcodeToPlate.values().iterator().next();
+                Result traverserResult = firstPlate.nearestFormationAndTubePositionByWell();
+                if (traverserResult.getTubeFormation() == null) {
+                    messageCollection.addError("Cannot find source tubes for plate " + firstPlate.getLabel());
                 } else {
                     LabMetricRun labMetricRun = labMetricRunDao.findByName(runName);
                     if (labMetricRun != null) {
                         messageCollection.addError("This run has been uploaded previously.");
-                        pair = Pair.of(labMetricRun, tubeFormation.getLabel());
+                        pair = Pair.of(labMetricRun, traverserResult.getTubeFormation().getLabel());
                     } else {
                         // Run date must be unique so that a search can reveal the latest quant.
                         SimpleDateFormat simpleDateFormat =
@@ -526,13 +503,15 @@ public class VesselEjb {
                         List<LabMetricRun> sameDateRuns = labMetricRunDao.findSameDateRuns(runDate);
                         if (CollectionUtils.isNotEmpty(sameDateRuns)) {
                             messageCollection.addError("A previous upload has the same Run Started timestamp.");
-                            pair = Pair.of(sameDateRuns.iterator().next(), tubeFormation.getLabel());
+                            pair = Pair.of(sameDateRuns.iterator().next(),
+                                    traverserResult.getTubeFormation().getLabel());
                         } else {
                             // It's an error if previous quants exist, unless told to accept the rePico.
                             List<String> previousQuantedTubes = null;
                             if (!acceptRePico) {
                                 previousQuantedTubes = new ArrayList<>();
-                                for (BarcodedTube tube : tubeFormation.getContainerRole().getContainedVessels()) {
+                                for (BarcodedTube tube :
+                                        traverserResult.getTubeFormation().getContainerRole().getContainedVessels()) {
                                     if (tube.findMostRecentLabMetric(metricType) != null) {
                                         previousQuantedTubes.add(tube.getLabel());
                                     }
@@ -545,7 +524,8 @@ public class VesselEjb {
                             } else {
                                 pair = createWallacRunDaoFree(mapNameValueToValue, metricType, wallacPlateProcessor,
                                         mapBarcodeToPlate, decidingUser, messageCollection, runName,
-                                        UploadQuantsActionBean.QuantFormat.WALLAC, metadata);
+                                        UploadQuantsActionBean.QuantFormat.WALLAC,
+                                        traverserResult.getLabEventMetadata());
                                 if (messageCollection.hasErrors()) {
                                     ejbContext.setRollbackOnly();
                                 } else {
@@ -596,7 +576,7 @@ public class VesselEjb {
         Map<LabVessel, VesselPosition> mapTubeToPosition = new HashMap<>();
         String tubeFormationLabel = null;
 
-        // Determines the sensitivity and dilution factors.
+        // Determines the sensitivity and dilution factors from lab event metadata.
         Float factor = extractFactor(metadata, SensitivityFactor);
         BigDecimal sensitivityFactor = (factor != null) ? new BigDecimal(factor) : BigDecimal.ONE;
         factor = extractFactor(metadata, DilutionFactor);
@@ -709,46 +689,6 @@ public class VesselEjb {
     }
 
     /**
-     * Returns the nearest upstream tube formation for the given collection of Pico plates. Expects
-     * only section transfers (possibly more than one) between the tube formation and the plate.
-     * Also returns lab event metadata found on the plate events (such as DilutionFactor on the
-     * PicoDilutionTransfer, and SensitivityFactor on the PicoBufferAddition).
-     *
-     * @param metadata Used for returning any metadata found on the plates and racks.
-     */
-    private TubeFormation getNearestTubeFormation(Collection<StaticPlate> plates, Set<LabEventMetadata> metadata) {
-        Set<LabVessel> sources = new HashSet<>();
-        for (StaticPlate plate : plates) {
-            for (SectionTransfer sectionTransfer : plate.getContainerRole().getSectionTransfersTo()) {
-                VesselContainer<?> vesselContainer = sectionTransfer.getSourceVesselContainer();
-                sources.add(vesselContainer.getEmbedder());
-            }
-            // Collects lab event metadata found on the microfluor plates.
-            for (LabEvent labEvent : plate.getEvents()) {
-                metadata.addAll(labEvent.getLabEventMetadatas());
-            }
-        }
-        if (sources.isEmpty()) {
-            return null;
-        }
-        TubeFormation tubeFormation = null;
-        Set<StaticPlate> sourcePlates = new HashSet<>();
-        for (LabVessel source : sources) {
-            if (source.getType() == LabVessel.ContainerType.TUBE_FORMATION) {
-                if (tubeFormation == null) {
-                    tubeFormation = OrmUtil.proxySafeCast(source, TubeFormation.class);
-                } else if (tubeFormation != OrmUtil.proxySafeCast(source, TubeFormation.class)) {
-                    throw new RuntimeException("Found multiple tube formations " + tubeFormation.getLabel() +
-                                               ", " + source.getLabel());
-                }
-            } else if (source.getType() == LabVessel.ContainerType.STATIC_PLATE) {
-                sourcePlates.add(proxySafeCast(source, StaticPlate.class));
-            }
-        }
-        return (tubeFormation != null) ? tubeFormation : getNearestTubeFormation(sourcePlates, metadata);
-    }
-
-    /**
      * Create a LabMetricRun from a Caliper csv.  This method assumes that a rack of tubes was
      * transferred into one plate, and the plates are in the csv.
      *
@@ -785,30 +725,31 @@ public class VesselEjb {
                         }
                     }
                 }
-                Set<LabEventMetadata> metadata = new HashSet<>();
-                TubeFormation tubeFormation = getNearestTubeFormation(mapBarcodeToPlate.values(), metadata);
-                if (tubeFormation == null) {
-                    throw new RuntimeException("Cannot find the tube formation upstream of plate " +
-                                               mapBarcodeToPlate.values().iterator().next().getLabel());
+                StaticPlate firstPlate = mapBarcodeToPlate.values().iterator().next();
+                Result traverserResult = firstPlate.nearestFormationAndTubePositionByWell();
+                if (traverserResult.getTubeFormation() == null) {
+                    messageCollection.addError("Cannot find source tubes for plate " + firstPlate.getLabel());
                 } else {
                     // Run name must be unique.
                     String runName = caliperRun.getRunName();
                     LabMetricRun labMetricRun = labMetricRunDao.findByName(runName);
                     if (labMetricRun != null) {
                         messageCollection.addError("This run has been uploaded previously.");
-                        pair = Pair.of(labMetricRun, tubeFormation.getLabel());
+                        pair = Pair.of(labMetricRun, traverserResult.getTubeFormation().getLabel());
                     } else {
                         // Run date must be unique so that a search can reveal the latest quant.
                         List<LabMetricRun> sameDateRuns = labMetricRunDao.findSameDateRuns(caliperRun.getRunDate());
                         if (CollectionUtils.isNotEmpty(sameDateRuns)) {
                             messageCollection.addError("A previous upload has the same Run Started timestamp.");
-                            pair = Pair.of(sameDateRuns.iterator().next(), tubeFormation.getLabel());
+                            pair = Pair.of(sameDateRuns.iterator().next(),
+                                    traverserResult.getTubeFormation().getLabel());
                         } else {
                             // It's an error if previous quants exist, unless told to accept the reCaliper.
                             List<String> previousQuantedTubes = null;
                             if (!acceptReCaliper) {
                                 previousQuantedTubes = new ArrayList<>();
-                                for (BarcodedTube tube : tubeFormation.getContainerRole().getContainedVessels()) {
+                                for (BarcodedTube tube :
+                                        traverserResult.getTubeFormation().getContainerRole().getContainedVessels()) {
                                     if (tube.findMostRecentLabMetric(metricType) != null) {
                                         previousQuantedTubes.add(tube.getLabel());
                                     }
@@ -820,7 +761,7 @@ public class VesselEjb {
                                                            StringUtils.join(previousQuantedTubes, ", "));
                             } else {
                                 pair = createRNACaliperRunDaoFree(metricType, caliperRun, mapBarcodeToPlate,
-                                        decidingUser, messageCollection, metadata);
+                                        decidingUser, messageCollection, traverserResult.getLabEventMetadata());
                                 if (messageCollection.hasErrors()) {
                                     ejbContext.setRollbackOnly();
                                 } else {
@@ -1064,66 +1005,10 @@ public class VesselEjb {
     }
 
     /**
-     * Forwards any non-clinical quants to BSP. This is done by removing rows from the quant spreadsheet
-     * when the microfluor wells were derived from a tube containing a clinical sample.
-     */
-    public void nonClinicalsToBsp(InputStream quantStream, String tubeFormationLabel,
-            Set<StaticPlate> microfluorPlates, String bspUsername, String filename, MessageCollection messages)
-            throws Exception {
-
-        // Finds the positions of clinical samples from the tube formation.
-        if (StringUtils.isBlank(tubeFormationLabel)) {
-            messages.addError("Tube formation label is blank");
-            return;
-        }
-        TubeFormation tubeFormation = proxySafeCast(labVesselDao.findByIdentifier(tubeFormationLabel),
-                TubeFormation.class);
-        if (tubeFormation == null) {
-            messages.addError("No tube formation found for label " + tubeFormationLabel);
-            throw new Exception("No tube formation found for label " + tubeFormationLabel);
-        }
-
-        Set<VesselPosition> clinicalWellPositions = new HashSet<>();
-        boolean hasNonClinicalPositionToTube = false;
-        nextPosition:
-        for (BarcodedTube tube : tubeFormation.getContainerRole().getMapPositionToVessel().values()) {
-            for (MercurySample mercurySample : tube.getMercurySamples()) {
-                if (mercurySample.canSampleBeUsedForClinical()) {
-                    for (LabVessel descendent : tube.getDescendantVessels()) {
-                        if (OrmUtil.proxySafeIsInstance(descendent, PlateWell.class)) {
-                            PlateWell plateWell = OrmUtil.proxySafeCast(descendent, PlateWell.class);
-                            if (microfluorPlates.contains(plateWell.getPlate())) {
-                                clinicalWellPositions.add(plateWell.getVesselPosition());
-                            }
-                        }
-                    }
-                    continue nextPosition;
-                }
-            }
-            hasNonClinicalPositionToTube = true;
-        }
-        if (hasNonClinicalPositionToTube) {
-            InputStream filteredQuantStream;
-            try {
-                filteredQuantStream = filterOutRows(quantStream, clinicalWellPositions);
-            } catch (Exception e) {
-                messages.addError("Cannot process spreadsheet: " + e.toString());
-                throw e;
-            }
-            try {
-                bspRestSender.postToBsp(bspUsername, filename, filteredQuantStream, BSPRestSender.BSP_UPLOAD_QUANT_URL);
-            } catch (Exception e) {
-                messages.addError("Cannot send research quants to BSP: " + e.toString());
-                throw e;
-            }
-        }
-    }
-
-    /**
      * Parses the spreadsheet stream and removes rows containing specified cell names.
      * @return a stream of the filtered spreadsheet
      */
-    public InputStream filterOutRows(InputStream quantStream, Set<VesselPosition> excludedPositions)
+    public static InputStream filterOutRows(InputStream quantStream, Set<VesselPosition> excludedPositions)
             throws Exception {
         Workbook workbook = WorkbookFactory.create(quantStream);
         List<Row> toBeRemoved = new ArrayList<>();
