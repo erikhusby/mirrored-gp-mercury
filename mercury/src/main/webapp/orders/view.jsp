@@ -1109,7 +1109,7 @@ function formatInput(item) {
     </div>
 </div>
 
-<c:if test="${actionBean.editOrder.product.productFamily.supportsNumberOfLanes}">
+<c:if test="${actionBean.editOrder.requiresLaneCount()}">
     <div class="view-control-group control-group">
         <label class="control-label label-form">Number of Lanes Per Sample</label>
 

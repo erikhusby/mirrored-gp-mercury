@@ -273,7 +273,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private QuoteService quoteService;
 
-    @Inject
     private PriceListCache priceListCache;
 
     @Inject
@@ -336,6 +335,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private String quoteIdentifier;
 
     private String product;
+    private String selectedAddOns;
 
     /*
      * Used for Ajax call to retrieve post receive Options for a particular material info
@@ -797,7 +797,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @param quoteId Common quote id to be used to determine which open orders will be found
      * @return total dollar amount of the monitary value of orders associated with the given quote
      */
-    private double estimateOutstandingOrders(String quoteId) {
+    double estimateOutstandingOrders(String quoteId) {
 
         List<ProductOrder> ordersWithCommonQuote = productOrderDao.findOrdersWithCommonQuote(quoteId);
 
@@ -810,7 +810,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @param ordersWithCommonQuote Subset of orders for which the monitary value is to be determined
      * @return Total dollar amount which equates to the monitary value of all orders given
      */
-    private double getValueOfOpenOrders(List<ProductOrder> ordersWithCommonQuote) {
+    double getValueOfOpenOrders(List<ProductOrder> ordersWithCommonQuote) {
         double value = 0d;
 
         for (ProductOrder testOrder : ordersWithCommonQuote) {
@@ -828,15 +828,17 @@ public class ProductOrderActionBean extends CoreActionBean {
      *                    that will potentially be on the order.
      * @return Total monitary value of the order
      */
-    private double getOrderValue(ProductOrder testOrder, int sampleCount) {
+    double getOrderValue(ProductOrder testOrder, int sampleCount) {
         double value = 0d;
         if(testOrder.getProduct() != null) {
             final Product product = testOrder.getProduct();
-            double productValue = getProductValue(sampleCount, product);
+            double productValue =
+                    getProductValue((product.getSupportsNumberOfLanes())?testOrder.getLaneCount():sampleCount, product);
             value += productValue;
             for (ProductOrderAddOn testOrderAddon : testOrder.getAddOns()) {
                 final Product addOn = testOrderAddon.getAddOn();
-                double addOnValue = getProductValue(sampleCount, addOn);
+                double addOnValue =
+                        getProductValue((addOn.getSupportsNumberOfLanes())?testOrder.getLaneCount():sampleCount, addOn);
                 value += addOnValue;
             }
         }
@@ -851,7 +853,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @param product Product from which the price can be determined
      * @return Derived value of the Product price multiplied by the number of unbilled samples
      */
-    private double getProductValue(int unbilledCount, Product product) {
+    double getProductValue(int unbilledCount, Product product) {
         double productValue = 0d;
         QuotePriceItem primaryPriceItem =
                 priceListCache.findByKeyFields(product.getPrimaryPriceItem());
@@ -860,10 +862,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             StringUtils.isNotBlank(primaryPriceItem.getPrice())) {
             Double productPrice = Double.valueOf(primaryPriceItem.getPrice());
 
-            if (productPrice != null) {
-                productValue = productPrice * (unbilledCount);
-            }
-
+            productValue = productPrice * (unbilledCount);
         }
         return productValue;
     }
@@ -1888,10 +1887,22 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent("getSupportsNumberOfLanes")
     public Resolution getSupportsNumberOfLanes() throws Exception {
         boolean supportsNumberOfLanes = false;
+        List<String> selectedOrderAddons = null;
+        if(selectedAddOns != null) {
+            selectedOrderAddons = Arrays.asList(StringUtils.split(selectedAddOns, "|@|"));
+        }
         JSONObject item = new JSONObject();
 
         if (product != null) {
             supportsNumberOfLanes = productDao.findByBusinessKey(product).getSupportsNumberOfLanes();
+            if(selectedOrderAddons != null)
+            for (String selectedOrderAddon : selectedOrderAddons) {
+                if(!supportsNumberOfLanes) {
+                    supportsNumberOfLanes = productDao.findByBusinessKey(selectedOrderAddon).getSupportsNumberOfLanes();
+                } else {
+                    break;
+                }
+            }
         }
 
         item.put(BspSampleData.SUPPORTS_NUMBER_OF_LANES, supportsNumberOfLanes);
@@ -2180,6 +2191,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setProduct(String product) {
         this.product = product;
+    }
+
+    public String getSelectedAddOns() {
+        return selectedAddOns;
+    }
+
+    public void setSelectedAddOns(String selectedAddOns) {
+        this.selectedAddOns = selectedAddOns;
     }
 
     public String getMaterialInfo() {
@@ -3020,7 +3039,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public static JSONObject buildOrspJsonObject(JSONObject orspProject, Set<String> samples,
-                                                 Set<String> sampleCollections) throws JSONException {
+                                                 Set<String> sampleCollections) throws JSONException
+    {
         JSONObject result = new JSONObject();
         result.put("orspProject", orspProject);
         result.put("samples", samples);
@@ -3028,4 +3048,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         return result;
     }
 
+    @Inject
+    public void setPriceListCache(PriceListCache priceListCache) {
+        this.priceListCache = priceListCache;
+    }
 }
