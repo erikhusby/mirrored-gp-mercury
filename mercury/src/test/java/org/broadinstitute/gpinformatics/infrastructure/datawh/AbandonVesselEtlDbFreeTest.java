@@ -124,7 +124,7 @@ public class AbandonVesselEtlDbFreeTest {
         EasyMock.expect(dao.findById(AbandonVesselPosition.class, abandonVesselPositionEntityId)).andReturn(abandonVesselPosition);
 
         EasyMock.expect(abandonVesselPosition.getAbandonVesselPositionId()).andReturn(abandonVesselPositionEntityId);
-        EasyMock.expect(abandonVesselPosition.getLabVessel()).andReturn(abandonVessel);
+        EasyMock.expect(abandonVesselPosition.getLabVessel()).andReturn(abandonVessel).times(2);
         EasyMock.expect(abandonVessel.getLabVessel()).andReturn(abandonedLabVessel);
         EasyMock.expect(abandonedLabVessel.getLabVesselId()).andReturn(abandonedPositionLabVesselID);
         EasyMock.expect(abandonVesselPosition.getPosition()).andReturn(abandonPosition.toString());
