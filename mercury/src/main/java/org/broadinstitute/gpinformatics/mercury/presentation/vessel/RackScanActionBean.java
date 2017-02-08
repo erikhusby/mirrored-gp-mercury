@@ -12,6 +12,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.rackscan.RackScanner;
+import org.broadinstitute.bsp.client.rackscan.RackScannerType;
 import org.broadinstitute.bsp.client.rackscan.ScannerException;
 import org.broadinstitute.bsp.client.rackscan.geometry.Dimension;
 import org.broadinstitute.bsp.client.rackscan.geometry.Geometry;
@@ -119,6 +120,14 @@ public abstract class RackScanActionBean extends CoreActionBean {
         Reader reader = null;
         try {
             if (simulatedScanCsv == null) {
+                if (rackScanner.getRackScannerLab() == RackScanner.RackScannerLab.LOCALHOST) {
+                    String ipAddress = getContext().getRequest().getHeader("X-FORWARDED-FOR");
+                    if (ipAddress == null) {
+                        ipAddress = getContext().getRequest().getRemoteAddr();
+                    }
+                    ipAddress = ipAddress.replaceAll(":", ".");
+                    rackScanner.getRackScannerConfig().setIpAddress(ipAddress);
+                }
                 rackScan = rackScannerEjb.runRackScanner(rackScanner, null, includeRackBarcode);
             } else {
                 reader = simulatedScanCsv.getReader();

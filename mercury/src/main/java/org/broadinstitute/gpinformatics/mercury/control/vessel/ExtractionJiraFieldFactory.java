@@ -136,7 +136,7 @@ public class ExtractionJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
         if (CollectionUtils.isNotEmpty(batch.getStartingBatchLabVessels())) {
             customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.SAMPLE_IDS,
-                    buildSamplesListString(batch, null)));
+                    buildSamplesListString(batch)));
         }
 
         try {

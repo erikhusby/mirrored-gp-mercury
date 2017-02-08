@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.run;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
@@ -68,7 +69,7 @@ public class InfiniumRunFinder implements Serializable {
     @Resource
     private EJBContext ejbContext;
 
-    private AtomicBoolean busy = new AtomicBoolean(false);
+    private static final AtomicBoolean busy = new AtomicBoolean(false);
 
     public void find() throws SystemException {
         if (!busy.compareAndSet(false, true)) {
@@ -85,6 +86,8 @@ public class InfiniumRunFinder implements Serializable {
                         StaticPlate staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
                         utx.begin();
                         processChip(staticPlate);
+                        // The commit doesn't cause a flush (not clear why), so we must do it explicitly.
+                        labEventDao.flush();
                         utx.commit();
                     }
                 } catch (Exception e) {
@@ -105,6 +108,11 @@ public class InfiniumRunFinder implements Serializable {
     private void processChip(StaticPlate staticPlate) throws Exception {
         InfiniumRunProcessor.ChipWellResults chipWellResults = infiniumRunProcessor.process(staticPlate);
         if (!chipWellResults.isHasRunStarted() || chipWellResults.getScannerName() == null) {
+            return;
+        }
+        if (checkForInvalidPipelineLocation(staticPlate)) {
+            log.debug("Won't forward plate where its Pipeline location not set to US Cloud: " + staticPlate.getLabel());
+            createEvent(staticPlate, LabEventType.INFINIUM_AUTOCALL_ALL_STARTED, chipWellResults.getScannerName());
             return;
         }
         log.debug("Processing chip: " + staticPlate.getLabel());
@@ -169,6 +177,27 @@ public class InfiniumRunFinder implements Serializable {
         }
     }
 
+    /**
+     * Only want to send starter events for chips that are in US Cloud to prevent some samples like Danish Blood Spots
+     * to be sent to the cloud
+     * @return true if the pipeline location for any sample is not set to US Cloud or null
+     */
+    public boolean checkForInvalidPipelineLocation(StaticPlate staticPlate) {
+        int usCloudCounter = 0;
+        for (SampleInstanceV2 sampleInstanceV2: staticPlate.getSampleInstancesV2()) {
+            // Ignore the controls assuming that some non-control sample will be present
+            if (sampleInstanceV2.getSingleBucketEntry() != null) {
+                ProductOrder productOrder = sampleInstanceV2.getSingleBucketEntry().getProductOrder();
+                if (productOrder.getPipelineLocation() != ProductOrder.PipelineLocation.US_CLOUD) {
+                    return true;
+                } else {
+                    usCloudCounter++;
+                }
+            }
+        }
+        return usCloudCounter == 0;
+    }
+
     private boolean callStarterOnWell(StaticPlate staticPlate, VesselPosition vesselPosition) {
         return infiniumPipelineClient.callStarterOnWell(staticPlate, vesselPosition);
     }
@@ -199,7 +228,6 @@ public class InfiniumRunFinder implements Serializable {
                 new LabEvent(eventType, start, eventLocation, 1L, operator, LabEvent.UI_PROGRAM_NAME);
         staticPlate.addInPlaceEvent(labEvent);
         labEventDao.persist(labEvent);
-        labEventDao.flush();
         return labEvent;
     }
 

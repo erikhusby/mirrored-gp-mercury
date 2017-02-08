@@ -125,6 +125,7 @@ public class ProductOrderTest {
                 .ignoreProperty("sapReferenceOrders")
                 .ignoreProperty("childOrders")
                 .ignoreProperty("parentOrder")
+                .ignoreProperty("pipelineLocation")
                 .build();
         tester.testBean(ProductOrder.class, configuration);
 

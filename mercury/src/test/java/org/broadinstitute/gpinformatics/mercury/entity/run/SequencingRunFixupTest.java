@@ -300,4 +300,17 @@ public class SequencingRunFixupTest extends Arquillian {
 
         illuminaSequencingRunDao.persist(new FixupCommentary("SUPPORT-2463 moving run folder to crsp folder"));
     }
+
+    @Test(enabled = false)
+    public void support2469MoveCrspRunFolders() {
+        userBean.loginOSUser();
+
+        updateRunDirectory("170117_SL-HDE_0829_AH5CKTBCXY", "/seq/illumina/proc/SL-HDE/170117_SL-HDE_0829_AH5CKTBCXY",
+                "/crsp/illumina2/proc/SL-HDE/170117_SL-HDE_0829_AH5CKTBCXY");
+
+        updateRunDirectory("170117_SL-HDE_0830_BH5TV3BCXY", "/seq/illumina/proc/SL-HDE/170117_SL-HDE_0830_BH5TV3BCXY",
+                "/crsp/illumina2/proc/SL-HDE/170117_SL-HDE_0830_BH5TV3BCXY");
+
+        illuminaSequencingRunDao.persist(new FixupCommentary("SUPPORT-2469 updating run directory to crsp directories"));
+    }
 }

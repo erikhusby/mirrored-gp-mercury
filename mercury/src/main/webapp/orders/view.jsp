@@ -1209,6 +1209,14 @@ function formatInput(item) {
     </div>
 </div>
 <c:if test="${actionBean.infinium}">
+    <div class="view-control-group control-group">
+        <label class="control-label label-form">Pipeline Location</label>
+
+        <div class="controls">
+            <div class="form-value">${actionBean.editOrder.pipelineLocation.displayName}</div>
+        </div>
+    </div>
+
     <c:forEach items="${actionBean.attributes}" var="item">
         <div class="view-control-group control-group">
             <stripes:label for="attributes[${item.key}]" class="control-label label-form">
