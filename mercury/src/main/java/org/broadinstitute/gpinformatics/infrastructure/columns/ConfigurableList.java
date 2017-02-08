@@ -749,65 +749,72 @@ public class ConfigurableList {
 
         private Pair<Integer, Integer> fillArrayV2(Object[][] rowObjects, ResultList resultList, int startRow,
                 int startColumn) {
-            int currentRow = startRow;
-            int currentColumn = startColumn;
-            int returnRow = 0;
-            int returnColumn = 0;
             // Skip headers
-            currentRow += 2;
-            int headerWidth = 1;
-            for (ResultRow resultRow : resultList.resultRows) {
+            int currentRow = startRow + 2;
+            List<Integer> headerWidths = new ArrayList<>();
+            boolean firstRow = true;
+            int returnRow = 0;
+            int currentColumn = startColumn;
+            int returnColumn = 0;
+            for (ResultRow resultRow : resultList.getResultRows()) {
 
                 // Render nested tables that are the width of the table
-                for (Map.Entry<String, ResultList> stringResultListEntry : resultRow.nestedTables.entrySet()) {
+                for (Map.Entry<String, ResultList> stringResultListEntry : resultRow.getNestedTables().entrySet()) {
                     Pair<Integer, Integer> nestedRowCol = fillArrayV2(rowObjects, stringResultListEntry.getValue(),
                             currentRow + 1, currentColumn);
                     returnRow = Math.max(returnRow, nestedRowCol.getLeft());
                     returnColumn = Math.max(nestedRowCol.getRight(), returnColumn);
                 }
-                List<String> renderableCells = resultRow.renderableCells;
+                List<String> renderableCells = resultRow.getRenderableCells();
+                boolean atLeastOneNested = false;
                 for (int i = 0; i < renderableCells.size(); i++) {
                     rowObjects[currentRow][currentColumn] = renderableCells.get(i);
 
                     // Render nested tables that are inside each cell
-                    if (resultRow.cellNestedTables.isEmpty()) {
+                    if (resultRow.getCellNestedTables().isEmpty() || resultRow.getCellNestedTables().get(i) == null ||
+                            resultRow.getCellNestedTables().get(i).getHeaders().isEmpty()) {
+                        if (firstRow) {
+                            headerWidths.add(1);
+                        }
                         currentColumn++;
                         continue;
                     }
-                    ResultList nestedResultList = resultRow.cellNestedTables.get(i);
-                    if (nestedResultList == null) {
-                        currentColumn++;
-                        continue;
-                    }
-                    Pair<Integer, Integer> cellNestedRowCol = fillArrayV2(rowObjects, nestedResultList,
-                            currentRow + 1, currentColumn);
+                    atLeastOneNested = true;
+                    Pair<Integer, Integer> cellNestedRowCol = fillArrayV2(rowObjects,
+                            resultRow.getCellNestedTables().get(i), currentRow + 1, currentColumn);
                     returnRow = Math.max(returnRow, cellNestedRowCol.getLeft());
                     returnColumn =+ cellNestedRowCol.getRight();
 
                     currentColumn += cellNestedRowCol.getRight();
-                    headerWidth = cellNestedRowCol.getRight();
+                    if (firstRow) {
+                        headerWidths.add(cellNestedRowCol.getRight());
+                    }
                 }
-                if (resultRow.cellNestedTables.isEmpty()) {
+                if (resultRow.getCellNestedTables().isEmpty() || !atLeastOneNested) {
                     currentRow++;
                 } else {
-                    currentRow += returnRow;
+                    currentRow += returnRow + 2;
                 }
                 currentColumn = startColumn;
+                firstRow = false;
             }
 
             // Render headers (after we know how wide the nested tables are)
             currentColumn = startColumn;
-            for (Header header : resultList.headers) {
+            List<Header> headers1 = resultList.getHeaders();
+            for (int i = 0; i < headers1.size(); i++) {
+                Header header = headers1.get(i);
                 rowObjects[startRow][currentColumn] = new SpreadsheetCreator.ExcelHeader(header.getDownloadHeader1());
                 String header2Name = header.getDownloadHeader2();
                 if (header2Name != null && !header2Name.isEmpty()) {
                     rowObjects[startRow + 1][currentColumn] = new SpreadsheetCreator.ExcelHeader(header2Name);
 //                    headerRow2Present = true;
                 }
-                currentColumn += headerWidth;
+                currentColumn += (header.getDownloadHeader1() == null ? 1 :
+                        headerWidths.isEmpty() ? 1 : headerWidths.get(i));
             }
-            return new ImmutablePair<>(returnRow == 0 ? resultList.resultRows.size() : returnRow,
-                    returnColumn == 0 ? resultList.headers.size() : returnColumn);
+            return new ImmutablePair<>(returnRow == 0 ? resultList.getResultRows().size() + 2 : returnRow,
+                    returnColumn == 0 ? resultList.getHeaders().size() : returnColumn);
         }
 
         /**
