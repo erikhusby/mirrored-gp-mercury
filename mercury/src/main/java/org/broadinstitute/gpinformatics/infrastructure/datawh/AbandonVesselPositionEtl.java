@@ -44,7 +44,7 @@ public class AbandonVesselPositionEtl extends GenericEntityEtl<AbandonVesselPosi
         return genericRecord(etlDateStr, isDelete,
                 entity.getAbandonVesselPositionId(),
                 "AbandonVesselPosition",
-                format(entity.getLabVessel().getLabVessel().getLabVesselId()),
+                format(entity.getLabVessel() == null?null:entity.getLabVessel().getLabVessel().getLabVesselId()),
                 format(entity.getPosition()),
                 format(entity.getReason().toString()),
                 format(entity.getAbandonedOn())
