@@ -193,6 +193,7 @@
                     <td>&nbsp;</td>
                     <td style="padding-left: 6px;" colspan="${resultList.headers.size()}">
                         <c:set var="nestedTable" value="${nestedTable}" scope="request"/>
+                        <c:set var="tableName" value="${tableName}" scope="request"/>
                         <jsp:include page="nested_table.jsp"/>
                      </td>
                 </tr>
