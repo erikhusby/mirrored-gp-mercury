@@ -760,14 +760,6 @@ public class ConfigurableList {
             int returnColumn = 0;
             for (ResultRow resultRow : resultList.getResultRows()) {
 
-                // Render nested tables that are the width of the table
-                for (Map.Entry<String, ResultList> stringResultListEntry : resultRow.getNestedTables().entrySet()) {
-                    Pair<Integer, Integer> nestedRowCol = fillArray(rowObjects, stringResultListEntry.getValue(),
-                            currentRow + 1, currentColumn, render);
-                    returnRow += nestedRowCol.getLeft();
-                    returnColumn = Math.max(nestedRowCol.getRight(), returnColumn);
-                }
-
                 // Render cells
                 List<String> renderableCells = resultRow.getRenderableCells();
                 returnRow++;
@@ -807,6 +799,19 @@ public class ConfigurableList {
                     returnRow += maxNestedRow + 2;
                 }
                 currentColumn = startColumn;
+
+                // Render nested tables that are the width of the table
+                for (Map.Entry<String, ResultList> stringResultListEntry : resultRow.getNestedTables().entrySet()) {
+                    if (render) {
+                        rowObjects[currentRow][currentColumn] = stringResultListEntry.getKey();
+                    }
+                    Pair<Integer, Integer> nestedRowCol = fillArray(rowObjects, stringResultListEntry.getValue(),
+                            currentRow + 1, currentColumn, render);
+                    returnRow += nestedRowCol.getLeft() + 1;
+                    currentRow += nestedRowCol.getLeft() + 1;
+                    returnColumn = Math.max(nestedRowCol.getRight(), returnColumn);
+                }
+
                 firstRow = false;
             }
 
