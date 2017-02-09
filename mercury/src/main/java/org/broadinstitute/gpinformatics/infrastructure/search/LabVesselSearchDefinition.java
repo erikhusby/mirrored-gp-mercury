@@ -916,6 +916,10 @@ public class LabVesselSearchDefinition {
             public Integer evaluate(Object entity, SearchContext context) {
 
                 LabVessel labVessel = (LabVessel) entity;
+                // Handle the case where the vessel itself is a flowcell
+                if( OrmUtil.proxySafeIsInstance(labVessel, RunCartridge.class) ) {
+                    return labVessel.getContainerRole().getPositions().size();
+                }
                 VesselsForEventTraverserCriteria eval = new VesselsForEventTraverserCriteria(FLOWCELL_LAB_EVENT_TYPES);
 
                 if( labVessel.getContainerRole() != null ) {
@@ -955,13 +959,7 @@ public class LabVesselSearchDefinition {
                     return seqRunNames;
                 }
 
-                List<LabEventType> labEventTypes = new ArrayList<>();
-                labEventTypes.add(LabEventType.FLOWCELL_TRANSFER);
-                labEventTypes.add(LabEventType.DENATURE_TO_FLOWCELL_TRANSFER);
-                labEventTypes.add(LabEventType.DILUTION_TO_FLOWCELL_TRANSFER);
-
-                VesselsForEventTraverserCriteria eval
-                        = new VesselsForEventTraverserCriteria( labEventTypes );
+                VesselsForEventTraverserCriteria eval = new VesselsForEventTraverserCriteria(FLOWCELL_LAB_EVENT_TYPES);
 
                 if( labVessel.getContainerRole() != null ) {
                     labVessel.getContainerRole().applyCriteriaToAllPositions(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
