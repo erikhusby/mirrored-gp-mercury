@@ -248,6 +248,22 @@ AS
         WHERE is_delete = 'T' );
       DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' lab_vessel rows' );
 
+      DELETE FROM abandon_vessel
+      WHERE abandon_type = 'AbandonVessel'
+        AND abandon_id IN (
+        SELECT abandon_id
+        FROM im_abandon_vessel
+        WHERE is_delete = 'T' );
+      DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' abandon_vessel rows' );
+
+      DELETE FROM abandon_vessel
+      WHERE abandon_type = 'AbandonVesselPosition'
+        AND abandon_id IN (
+        SELECT abandon_id
+        FROM im_abandon_vessel_position
+        WHERE is_delete = 'T' );
+      DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' abandon_vessel (position) rows' );
+
       DELETE FROM lab_metric
       WHERE lab_metric_id IN (
         SELECT lab_metric_id
@@ -598,6 +614,91 @@ AS
       END LOOP;
       SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'lab_vessel' );
     END MERGE_LAB_VESSEL;
+
+  PROCEDURE MERGE_ABANDON_VESSEL
+  IS
+    V_INS_COUNT PLS_INTEGER;
+    V_UPD_COUNT PLS_INTEGER;
+    V_LATEST_ETL_DATE DATE;
+    BEGIN
+      V_INS_COUNT := 0;
+      V_UPD_COUNT := 0;
+      FOR new IN (SELECT line_number,
+                    etl_date,
+                    abandon_id,
+                    abandon_type,
+                    abandon_vessel_id,
+                    CAST(NULL AS VARCHAR2(24) ) AS vessel_position,
+                    reason,
+                    abandoned_on
+                  FROM im_abandon_vessel
+                  WHERE is_delete = 'F'
+                  UNION ALL
+                  SELECT line_number,
+                    etl_date,
+                    abandon_id,
+                    abandon_type,
+                    abandon_vessel_id,
+                    vessel_position,
+                    reason,
+                    abandoned_on
+                  FROM im_abandon_vessel_position
+                  WHERE is_delete = 'F') LOOP
+        BEGIN
+          SELECT MAX(etl_date)
+          INTO V_LATEST_ETL_DATE
+          FROM abandon_vessel
+          WHERE abandon_id = new.abandon_id
+            AND abandon_type = new.abandon_type;
+
+          -- Do an update only if this ETL date greater than what's in DB already
+          IF new.etl_date > V_LATEST_ETL_DATE THEN
+            UPDATE abandon_vessel
+            SET abandon_vessel_id = new.abandon_vessel_id,
+              vessel_position = new.vessel_position,
+              reason = new.reason,
+              abandoned_on = new.abandoned_on,
+              etl_date = new.etl_date
+            WHERE abandon_id = new.abandon_id
+              AND abandon_type = new.abandon_type;
+
+            V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
+
+          ELSIF V_LATEST_ETL_DATE IS NULL THEN
+
+            INSERT INTO abandon_vessel (
+              abandon_type,
+              abandon_id,
+              abandon_vessel_id,
+              vessel_position,
+              reason,
+              abandoned_on,
+              etl_date
+            ) VALUES (
+              new.abandon_type,
+              new.abandon_id,
+              new.abandon_vessel_id,
+              new.vessel_position,
+              new.reason,
+              new.abandoned_on,
+              new.etl_date );
+
+            V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
+          END IF;
+          EXCEPTION WHEN OTHERS THEN
+          errmsg := SQLERRM;
+          IF new.abandon_type = 'AbandonVessel' THEN
+            DBMS_OUTPUT.PUT_LINE(
+                TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_abandon_vessel.dat line ' || new.line_number || '  ' || errmsg);
+          ELSE
+            DBMS_OUTPUT.PUT_LINE(
+                TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_abandon_vessel_position.dat line ' || new.line_number || '  ' || errmsg);
+          END IF;
+          CONTINUE;
+        END;
+      END LOOP;
+      SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'abandon_vessel' );
+    END MERGE_ABANDON_VESSEL;
 
   PROCEDURE MERGE_LAB_METRIC
   IS
@@ -2338,6 +2439,7 @@ AS
       MERGE_PRICE_ITEM();
       MERGE_PRODUCT();
       MERGE_LAB_VESSEL();
+      MERGE_ABANDON_VESSEL();
       MERGE_WORKFLOW();
       MERGE_WORKFLOW_PROCESS();
       MERGE_SEQUENCING_RUN();
