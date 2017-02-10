@@ -202,22 +202,22 @@ public class ConfigurableSearchTest extends Arquillian {
         Assert.assertEquals(data[0][0].toString(), "LabEventId" );
         Assert.assertEquals(data[1][0].toString(), "268634" );
         // Matrix 96 layout nested table
-        Assert.assertEquals(data[2][1].toString(), "Source Layout" );
-        Assert.assertEquals(data[3][2].toString(), "01");
-        Assert.assertEquals(data[3][13].toString(), "12" );
-        Assert.assertTrue(data[5][2].toString().indexOf("0154862184") >= 0);
+        Assert.assertEquals(data[2][0].toString(), "Source Layout" );
+        Assert.assertEquals(data[3][1].toString(), "01");
+        Assert.assertEquals(data[3][12].toString(), "12" );
+        Assert.assertEquals(data[7][1].toString(), "0154862184");
         // Parent term handled by child
-        Assert.assertTrue(data[5][2].toString().indexOf("SM-4CRI7") >= 0);
-        Assert.assertEquals(data[11][1].toString(), "H");
+        Assert.assertEquals(data[9][1].toString(), "SM-4CRI7");
+        Assert.assertEquals(data[25][0].toString(), "H");
         // Matrix 96 layout nested table
-        Assert.assertEquals(data[12][1].toString(), "Destination Layout");
-        Assert.assertEquals(data[13][2].toString(), "01" );
-        Assert.assertEquals(data[13][13].toString(), "12" );
-        Assert.assertEquals(data[14][1].toString(), "A" );
-        Assert.assertTrue(data[14][2].toString().indexOf("0116400397") >= 0);
+        Assert.assertEquals(data[28][0].toString(), "Destination Layout");
+        Assert.assertEquals(data[29][1].toString(), "01" );
+        Assert.assertEquals(data[29][12].toString(), "12" );
+        Assert.assertEquals(data[30][0].toString(), "A" );
+        Assert.assertEquals(data[30][1].toString(), "0116400397");
         // Parent term handled by child
-        Assert.assertTrue(data[14][2].toString().indexOf("SM-4CRI7") >= 0);
-        Assert.assertEquals(data[21][1].toString(), "H");
+        Assert.assertEquals(data[59][1].toString(), "SM-4CRI7");
+        Assert.assertEquals(data[121][0].toString(), "H");
 
     }
 
