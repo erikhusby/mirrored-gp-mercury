@@ -27,3 +27,13 @@ SELECT SCANNER, COUNT(*)
 FROM ARRAY_PROCESS_FLOW
 GROUP BY SCANNER;
 
+-- --------------------------------
+-- https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-4605
+-- Add modification timestamp to DW ETL of array process
+-- --------------------------------
+ALTER TABLE ARRAY_PROCESS_FLOW
+  ADD ETL_MOD_TIMESTAMP DATE DEFAULT SYSDATE NOT NULL;
+
+CREATE INDEX IDX_ARRAY_PROCESS_MOD_TS ON ARRAY_PROCESS_FLOW (ETL_MOD_TIMESTAMP);
+
+

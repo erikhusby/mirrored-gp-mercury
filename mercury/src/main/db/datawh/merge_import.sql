@@ -18,6 +18,9 @@ AS
   TYPE PK_ARR_TY IS TABLE OF NUMBER(19) INDEX BY BINARY_INTEGER;
   V_PK_ARR PK_ARR_TY;
 
+  -- Use same modification timestamp for all ETL methods in call to DO_ETL()
+  V_ETL_MOD_TIMESTAMP DATE;
+
   /* *****************************
    * Utility function to mimic typical (e.g. Java) split() functionality
    * Splits String output of java.util.Arrays.toString output into array of NUMBER(19)
@@ -1643,8 +1646,8 @@ AS
           IF V_IS_INSERT = 'Y' THEN
             -- Have to create initial base row data
             INSERT INTO array_process_flow (
-              product_order_id, batch_name, lcset_sample_name, sample_name )
-            VALUES( new.product_order_id, new.batch_name, new.lcset_sample_name, new.sample_name )
+              product_order_id, batch_name, lcset_sample_name, sample_name, etl_mod_timestamp )
+            VALUES( new.product_order_id, new.batch_name, new.lcset_sample_name, new.sample_name, V_ETL_MOD_TIMESTAMP )
             RETURNING ROWID INTO V_THE_ROWID;
           END IF;
 
@@ -1659,6 +1662,7 @@ AS
               , plating_dilution_date = new.event_date
               -- Strip position suffix from label to get plate barcode
               , dna_plate = ( SELECT REGEXP_REPLACE( LABEL, new.position || '$', '' ) FROM LAB_VESSEL WHERE LAB_VESSEL_ID = new.LAB_VESSEL_ID )
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
             WHERE ROWID = V_THE_ROWID
             RETURNING dna_plate INTO V_LABEL ;
 
@@ -1675,6 +1679,7 @@ AS
               , hyb_date = new.event_date
               -- Append underscore and position suffix to chip barcode to get chip well pseudo-barcode
               , ( chip, chip_well_barcode ) = ( SELECT LABEL, LABEL || '_' || new.position FROM LAB_VESSEL WHERE LAB_VESSEL_ID = new.LAB_VESSEL_ID )
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
             WHERE ROWID = V_THE_ROWID;
             WHEN 'InfiniumAmplification' THEN
             UPDATE array_process_flow
@@ -1683,78 +1688,91 @@ AS
               , amp_plate_position = new.position
               , amp_date = new.event_date
               , amp_plate = ( SELECT LABEL FROM LAB_VESSEL WHERE LAB_VESSEL_ID = new.LAB_VESSEL_ID )
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
             WHERE ROWID = V_THE_ROWID;
             WHEN 'InfiniumPostFragmentationHybOvenLoaded' THEN
             UPDATE array_process_flow
             SET post_frag_event_id = new.lab_event_id
               , post_frag_hyb_oven = new.station_name
               , post_frag_hyb_oven_date = new.event_date
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
             WHERE ROWID = V_THE_ROWID;
             WHEN 'InfiniumFragmentation' THEN
             UPDATE array_process_flow
             SET frag_event_id = new.lab_event_id
               , frag_station = new.station_name
               , frag_date = new.event_date
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
             WHERE ROWID = V_THE_ROWID;
             WHEN 'InfiniumPrecipitation' THEN
             UPDATE array_process_flow
             SET precip_event_id = new.lab_event_id
               , precip_station = new.station_name
               , precip_date = new.event_date
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
             WHERE ROWID = V_THE_ROWID;
             WHEN 'InfiniumPostPrecipitationHeatBlockLoaded' THEN
             UPDATE array_process_flow
             SET post_precip_event_id = new.lab_event_id
               , post_precip_hyb_oven = new.station_name
               , post_precip_hyb_oven_date = new.event_date
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
             WHERE ROWID = V_THE_ROWID;
             WHEN 'InfiniumPrecipitationIsopropanolAddition' THEN
             UPDATE array_process_flow
             SET precip_ipa_event_id = new.lab_event_id
               , precip_ipa_station = new.station_name
               , precip_ipa_date = new.event_date
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
             WHERE ROWID = V_THE_ROWID;
             WHEN 'InfiniumResuspension' THEN
             UPDATE array_process_flow
             SET resuspension_event_id = new.lab_event_id
               , resuspension_station = new.station_name
               , resuspension_date = new.event_date
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
             WHERE ROWID = V_THE_ROWID;
             WHEN 'InfiniumPostResuspensionHybOven' THEN
             UPDATE array_process_flow
             SET postresusphyboven_event_id = new.lab_event_id
               , postresusphyboven_station = new.station_name
               , postresusphyboven_date = new.event_date
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
             WHERE ROWID = V_THE_ROWID;
             WHEN 'InfiniumPostHybridizationHybOvenLoaded' THEN
             UPDATE array_process_flow
             SET posthybhybovenloaded_event_id = new.lab_event_id
               , posthybhybovenloaded_station = new.station_name
               , posthybhybovenloaded_date = new.event_date
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
             WHERE ROWID = V_THE_ROWID;
             WHEN 'InfiniumHybChamberLoaded' THEN
             UPDATE array_process_flow
             SET hybchamberloaded_event_id = new.lab_event_id
               , hybchamberloaded = new.station_name
               , hybchamberloaded_date = new.event_date
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
             WHERE ROWID = V_THE_ROWID;
             WHEN 'InfiniumXStain' THEN
             UPDATE array_process_flow
             SET xstain_event_id = new.lab_event_id
               , xstain = new.station_name
               , xstain_date = new.event_date
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
             WHERE ROWID = V_THE_ROWID;
             WHEN 'InfiniumAutocallSomeStarted' THEN
             UPDATE array_process_flow
             SET autocall_event_id = new.lab_event_id
               , scanner = NVL(new.station_name, scanner)
               , autocall_started = new.event_date
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
             WHERE ROWID = V_THE_ROWID;
             WHEN  'InfiniumAutoCallAllStarted' THEN
             UPDATE array_process_flow
             SET autocall_event_id = new.lab_event_id
               , scanner = NVL(new.station_name, scanner)
               , autocall_started = new.event_date
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
             WHERE ROWID = V_THE_ROWID
                   AND ( autocall_event_id IS NULL
                         OR
@@ -2308,6 +2326,9 @@ AS
   PROCEDURE DO_ETL
   AS
     BEGIN
+
+      V_ETL_MOD_TIMESTAMP := SYSDATE;
+
       -- Remove any deleted records from data warehouse
       DO_DELETES();
 
