@@ -74,7 +74,7 @@ public class EventVesselPluginTest extends Arquillian {
 
         // Array conversion for spreadsheet export
         Object[][] arrayOutput = resultList.getAsArray();
-        Assert.assertEquals( arrayOutput.length, 10, "Raw data array should have 10 discrete rows" );
+        Assert.assertEquals( arrayOutput.length, 25, "Raw data array should have 10 discrete rows" );
         Assert.assertEquals( arrayOutput[0].length, 13, "Raw data array should have 13 discrete columns" );
 
         // Data
@@ -86,7 +86,10 @@ public class EventVesselPluginTest extends Arquillian {
         Assert.assertEquals( resultList.getHeaders().get(12).getViewHeader(), "12");
         Assert.assertEquals( resultList.getResultRows().get(0).getRenderableCells().get(0), "A");
         Assert.assertEquals( resultList.getResultRows().get(7).getRenderableCells().get(0), "H");
-        Assert.assertEquals( resultList.getResultRows().get(0).getRenderableCells().get(2), "Vessel Barcode: 0173524221\nGender: [No Data]");
+        Assert.assertEquals( resultList.getResultRows().get(0).getRenderableCells().get(2), "0173524221");
+        ConfigurableList.ResultList nestedResultList = resultList.getResultRows().get(0).getCellNestedTables().get(2);
+        Assert.assertEquals(nestedResultList.getHeaders().get(0).getDownloadHeader1(), "Gender");
+        Assert.assertEquals(nestedResultList.getResultRows().get(0).getRenderableCells().get(0), "");
 
         EventVesselTargetPositionPlugin eventVesselTargetPositionPlugin;
         try {
@@ -112,7 +115,10 @@ public class EventVesselPluginTest extends Arquillian {
         Assert.assertEquals( resultList.getHeaders().get(12).getViewHeader(), "12");
         Assert.assertEquals( resultList.getResultRows().get(0).getRenderableCells().get(0), "A");
         Assert.assertEquals( resultList.getResultRows().get(7).getRenderableCells().get(0), "H");
-        Assert.assertEquals( resultList.getResultRows().get(0).getRenderableCells().get(1), "Vessel Barcode: 0116404353\nGender: [No Data]");
+        Assert.assertEquals( resultList.getResultRows().get(0).getRenderableCells().get(1), "0116404353");
+        nestedResultList = resultList.getResultRows().get(0).getCellNestedTables().get(1);
+        Assert.assertEquals(nestedResultList.getHeaders().get(0).getDownloadHeader1(), "Gender");
+        Assert.assertEquals(nestedResultList.getResultRows().get(0).getRenderableCells().get(0), "");
 
     }
 
@@ -152,6 +158,6 @@ public class EventVesselPluginTest extends Arquillian {
         Assert.assertEquals(cellNestedRows.get(0).getRenderableCells().get(2), "GCLL-0315-T-01");
 
         Object[][] data = firstPageResults.getResultList().getAsArray();
-        Assert.assertEquals(data.length, 327);
+        Assert.assertEquals(data.length, 308);
     }
 }
