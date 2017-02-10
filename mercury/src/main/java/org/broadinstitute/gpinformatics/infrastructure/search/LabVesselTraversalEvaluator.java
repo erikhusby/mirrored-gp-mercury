@@ -92,7 +92,7 @@ public class LabVesselTraversalEvaluator extends TraversalEvaluator {
     }
 
     /**
-     * Implementation of the Lab Event ancestor traversal evaluator
+     * Implementation of the Lab Vessel ancestor traversal evaluator
      */
     public static class AncestorTraversalEvaluator extends LabVesselTraversalEvaluator{
         // ID = "ancestorOptionEnabled"
@@ -104,7 +104,7 @@ public class LabVesselTraversalEvaluator extends TraversalEvaluator {
     }
 
     /**
-     * Implementation of the Lab Event descendant traversal evaluator
+     * Implementation of the Lab Vessel descendant traversal evaluator
      */
     public static class DescendantTraversalEvaluator extends LabVesselTraversalEvaluator{
         // ID = "descendantOptionEnabled"
