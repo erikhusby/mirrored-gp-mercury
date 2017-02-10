@@ -751,8 +751,18 @@ public class ConfigurableList {
          */
         private Pair<Integer, Integer> fillArray(Object[][] rowObjects, ResultList resultList, int startRow,
                 int startColumn, boolean render) {
-            // Skip headers
-            int currentRow = startRow + 2;
+
+            // Determine whether headers are one row or two.
+            boolean headerRow2Present = false;
+            for (Header header : resultList.getHeaders()) {
+                String header2Name = header.getDownloadHeader2();
+                if (header2Name != null && !header2Name.isEmpty()) {
+                    headerRow2Present = true;
+                    break;
+                }
+            }
+
+            int currentRow = startRow + (headerRow2Present ? 2 : 1);
             List<Integer> headerWidths = new ArrayList<>();
             boolean firstRow = true;
             int currentColumn = startColumn;
@@ -795,8 +805,8 @@ public class ConfigurableList {
                     currentRow++;
                     returnRow += maxNestedRow;
                 } else {
-                    currentRow += maxNestedRow + 2;
-                    returnRow += maxNestedRow + 2;
+                    currentRow += maxNestedRow + 1;
+                    returnRow += maxNestedRow;
                 }
                 currentColumn = startColumn;
 
@@ -831,7 +841,7 @@ public class ConfigurableList {
                             headerWidths.isEmpty() ? 1 : headerWidths.get(i));
                 }
             }
-            return new ImmutablePair<>(returnRow + 2,
+            return new ImmutablePair<>(returnRow + (headerRow2Present ? 2 : 1),
                     returnColumn == 0 ? resultList.getHeaders().size() : returnColumn);
         }
 
