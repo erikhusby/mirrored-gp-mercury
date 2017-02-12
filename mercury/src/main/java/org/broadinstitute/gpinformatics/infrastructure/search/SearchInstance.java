@@ -1000,7 +1000,8 @@ public class SearchInstance implements Serializable {
                                                List<SearchValue> displaySearchValues) {
         for (SearchValue searchValue : valuesToSearch) {
             if (searchValue.getIncludeInResults() != null && searchValue.getIncludeInResults()
-                && searchValue.getSearchTerm().getDisplayValueExpression() != null) {
+                    && (searchValue.getSearchTerm().getDisplayValueExpression() != null ||
+                    searchValue.getSearchTerm().getDisplayExpression() != null)) {
                 displaySearchValues.add(searchValue);
             }
             recurseForDisplaySearchValues(searchValue.getChildren(), displaySearchValues);
@@ -1033,7 +1034,8 @@ public class SearchInstance implements Serializable {
             List<SearchValue> valuesToSearch, List<ColumnTabulation> columnTabulations, int depth) {
         for (SearchValue searchValue : valuesToSearch) {
             if (searchValue.getIncludeInResults() != null && searchValue.getIncludeInResults()
-                && searchValue.getSearchTerm().getDisplayValueExpression() != null) {
+                    && (searchValue.getSearchTerm().getDisplayValueExpression() != null ||
+                    searchValue.getSearchTerm().getDisplayExpression() != null)) {
                 columnTabulations.add(searchValue);
                 if (depth > 1) {
                     return;
