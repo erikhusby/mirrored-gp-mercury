@@ -1032,6 +1032,7 @@ public abstract class LabVessel implements Serializable {
     }
 
     public Set<BucketEntry> getBucketEntries() {
+        // todo jmt check bucketEntriesCount?
         return bucketEntries;
     }
 
