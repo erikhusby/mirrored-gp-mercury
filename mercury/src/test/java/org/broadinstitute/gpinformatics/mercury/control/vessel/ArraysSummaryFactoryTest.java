@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
+//import com.jprofiler.api.agent.Controller;
+
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -39,6 +41,8 @@ public class ArraysSummaryFactoryTest extends Arquillian {
 
     @Test
     public void testBasics() {
+//        Controller.startCPURecording(true);
+//        Controller.startProbeRecording(Controller.PROBE_NAME_JDBC, true);
         ProductOrder productOrder = productOrderDao.findByBusinessKey("PDO-9246");
         List<Pair<LabVessel, VesselPosition>> vesselPositionPairs = SampleSheetFactory.loadByPdo(
                 productOrder);
@@ -47,5 +51,7 @@ public class ArraysSummaryFactoryTest extends Arquillian {
         arraysSummaryFactory.write(new PrintStream(byteArrayOutputStream), vesselPositionPairs, productOrder, true);
         System.out.println(byteArrayOutputStream);
         // todo jmt asserts
+//        Controller.stopProbeRecording(Controller.PROBE_NAME_JDBC);
+//        Controller.stopCPURecording();
     }
 }
