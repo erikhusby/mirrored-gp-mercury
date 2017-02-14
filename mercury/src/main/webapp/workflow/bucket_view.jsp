@@ -697,7 +697,7 @@
                     <input type="button" id="chooseNbutton" value="Select" class="btn"/>
                 </div>
             </div>
-            <table id="bucketEntryView" class="bucket-checkbox table simple dt-responsive">
+            <table id="bucketEntryView" class="bucket-checkbox table simple compact">
                 <thead>
                 <tr>
                     <th width="10" class="bucket-control title">
