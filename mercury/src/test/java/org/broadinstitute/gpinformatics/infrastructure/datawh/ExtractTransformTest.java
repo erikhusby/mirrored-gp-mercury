@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
@@ -50,7 +51,10 @@ import java.io.Reader;
 import java.util.Date;
 import java.util.List;
 
+import static javax.swing.text.html.HTML.Attribute.REV;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.hibernate.id.PersistentIdentifierGenerator.PK;
+import static org.osgi.util.measurement.Unit.m2;
 
 /**
  * Container test of ExtractTransform.
@@ -380,4 +384,45 @@ public class ExtractTransformTest extends Arquillian {
         return false;
     }
 
+    /**
+     * Every audit table must index rev as the primary column.
+     */
+    @Test(enabled = true, groups = TestGroups.ALTERNATIVES)
+    public void testAudIndexes() throws Exception {
+        Query query = auditReaderDao.getEntityManager().createNativeQuery(
+                "select table_name from all_tables " +
+                        "where table_name like '%_AUD' " +
+                        "and not exists (select 1 from all_ind_columns " +
+                        "where table_name = all_tables.table_name " +
+                        "and column_name = 'REV' " +
+                        "and column_position = 1)");
+        String missing = StringUtils.join(query.getResultList(), ", ");
+        Assert.assertTrue(StringUtils.isBlank(missing),
+                missing + " must have an index with REV in the first position.");
+    }
+
+    /**
+     * Every non-empty audit table should index the entity id as the primary column.
+     * E.g. if LAB_EVENT_AUD has PK on (REV, LAB_EVENT_ID) there should be an index on (LAB_EVENT_ID).
+     */
+    @Test(enabled = true, groups = TestGroups.ALTERNATIVES)
+    public void testAudEntityIndexes() throws Exception {
+        Query query = auditReaderDao.getEntityManager().createNativeQuery(
+                "select m1.table_name||'('||m1.column_name||')' " +
+                        "from all_ind_columns m1 " +
+                        "join all_ind_columns m2 on m2.index_name = m1.index_name " +
+                        "  and m2.column_name = 'REV' " +
+                        "  and m2.column_position = 1 " +
+                        "where m1.table_name like '%_AUD' " +
+                        "and m1.column_position = 2 " +
+                        "and not exists (select 1 from all_ind_columns s1 " +
+                        "  where s1.table_name = m1.table_name " +
+                        "  and s1.column_name = m1.column_name " +
+                        "  and s1.column_position = 1) " +
+                        "and exists (select 1 from all_tables ss1 " +
+                        "  where ss1.table_name = m1.table_name " +
+                        "  and ss1.num_rows > 0)");
+        String missing = StringUtils.join(query.getResultList(), ", ");
+        Assert.assertTrue(StringUtils.isBlank(missing), "Indexes should exist on " + missing + ".");
+    }
 }

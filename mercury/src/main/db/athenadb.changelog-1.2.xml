@@ -685,5 +685,18 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-4602-7" author="epolk">
+        <createIndex tableName="SAP_ORDER_DETAIL_AUD" indexName="IX_SAP_ORDER_DETAIL_AUD">
+            <column name="REV"/>
+            <column name="SAP_ORDER_DETAIL_ID"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-4602-2" author="epolk">
+        <createIndex tableName="SUBMISSION_TRACKER_AUD" indexName="IX_SUBMISSION_TRACKER_AUD">
+            <column name="SUBMISSION_TRACKER_ID"/>
+        </createIndex>
+    </changeSet>
+
 
 </databaseChangeLog>
