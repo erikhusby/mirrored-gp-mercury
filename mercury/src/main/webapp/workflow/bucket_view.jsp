@@ -419,6 +419,8 @@
                     {sortable: false},
                     {sortable: true, "sClass": "nowrap"},
                     {sortable: true, "sClass": "nowrap"},
+                    {sortable: true, "sClass": "nowrap"},
+                    {sortable: true, "sClass": "nowrap"},
                     {sortable: true},
                     {sortable: true},
                     {sortable: true},
@@ -485,6 +487,8 @@
                 "initComplete": function (settings) {
                     initColumnSelect(settings, [
                         {"Vessel Name": 'text'},
+                        {"Nearest Sample": 'text'},
+                        {"Root Sample": 'text'},
                         {"Sample Name": 'text'},
                         {"PDO": 'select'},
                         {"PDO Name": 'text'},
@@ -705,6 +709,8 @@
                         <span id="count" class="bucket-checkedCount"></span>
                     </th>
                     <th width="60"><span class="title">Vessel Name</span></th>
+                    <th width="60"><span class="title">Nearest Sample</span></th>
+                    <th width="60"><span class="title">Root Sample</span></th>
                     <th width="50"><span class="title">Sample Name</span></th>
                     <th><span class="title ">Material Type</span></th>
                     <th><span class="title">PDO</span></th>
@@ -736,6 +742,19 @@
                                 <a href="${ctxpath}/search/vessel.action?vesselSearch=&searchKey=${entry.labVessel.label}">
                                         ${entry.labVessel.label}
                                 </a>
+                            </c:if></td>
+                        <td>
+                            <c:if test="${actionBean.showHeader('Nearest Sample')}">
+                                <c:forEach items="${entry.labVessel.sampleInstancesV2}" var="sampleInstance">
+                                    ${sampleInstance.nearestMercurySampleName}
+                                </c:forEach>
+                            </c:if>
+                        </td>
+                        <td>
+                            <c:if test="${actionBean.showHeader('Root Sample')}">
+                                <c:forEach items="${entry.labVessel.sampleInstancesV2}" var="sampleInstance">
+                                    ${sampleInstance.rootOrEarliestMercurySample.sampleKey}
+                                </c:forEach>
                             </c:if></td>
                         <td><c:if test="${actionBean.showHeader('Sample Name')}">
                             <c:forEach items="${entry.labVessel.mercurySamples}" var="mercurySample" varStatus="stat">
