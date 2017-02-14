@@ -746,14 +746,16 @@
                         <td>
                             <c:if test="${actionBean.showHeader('Nearest Sample')}">
                                 <c:forEach items="${entry.labVessel.sampleInstancesV2}" var="sampleInstance">
-                                    ${sampleInstance.nearestMercurySampleName}
+                                    <a href="${ctxpath}/search/sample.action?sampleSearch=&searchKey=${sampleInstance.nearestMercurySampleName}">
+                                            ${sampleInstance.nearestMercurySampleName}</a>
                                 </c:forEach>
                             </c:if>
                         </td>
                         <td>
                             <c:if test="${actionBean.showHeader('Root Sample')}">
                                 <c:forEach items="${entry.labVessel.sampleInstancesV2}" var="sampleInstance">
-                                    ${sampleInstance.rootOrEarliestMercurySample.sampleKey}
+                                    <a href="${ctxpath}/search/sample.action?sampleSearch=&searchKey=${sampleInstance.rootOrEarliestMercurySample.sampleKey}">
+                                            ${sampleInstance.rootOrEarliestMercurySample.sampleKey}</a>
                                 </c:forEach>
                             </c:if></td>
                         <td><c:if test="${actionBean.showHeader('Sample Name')}">
