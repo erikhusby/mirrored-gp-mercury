@@ -183,6 +183,7 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                 disable_search_threshold: 10,
                 display_selected_options: false,
                 display_disabled_options: false,
+                search_contains: true,
                 width: width,
                 inherit_select_classes: true,
                 placeholder_text_single: "Select a " + headerLabel,
