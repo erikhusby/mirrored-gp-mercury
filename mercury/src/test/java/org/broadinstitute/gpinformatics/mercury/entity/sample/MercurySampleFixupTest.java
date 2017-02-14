@@ -113,7 +113,7 @@ public class MercurySampleFixupTest extends Arquillian {
                 "GPLIM-4381: Delete BSP Samples from Mercury which were not created in BSP due to an exception."));
     }
 
-    @Test(groups = TestGroups.FIXUP, enabled = true)
+    @Test(groups = TestGroups.FIXUP, enabled = false)
     public void gplim4631DeleteOrphanedSamples() throws Exception {
         List<String> sampleKeys = Arrays.asList("SM-D3J5K","SM-D3J59","SM-D3J5N","SM-D3J3I","SM-D3J3D");
         List<MercurySample> mercurySamples = mercurySampleDao.findBySampleKeys(sampleKeys);
