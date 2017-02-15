@@ -1494,16 +1494,33 @@ public class LabVesselFixupTest extends Arquillian {
             put("1140121296", "1140121322");
         }};
 
+        String tempSuffix = "_TEMP";
+        List<String> tempBarcodes = new ArrayList<>();
         List<LabVessel> labVessels = labVesselDao.findByListIdentifiers(new ArrayList<>(oldBarcodeToNewBarcode.keySet()));
         for (LabVessel labVessel: labVessels) {
             String oldBarcode = labVessel.getLabel();
+            String newBarcode = oldBarcode + tempSuffix;
+            tempBarcodes.add(newBarcode);
+            labVessel.setLabel(newBarcode);
+            System.out.println(
+                    "Changing tube " + labVessel.getLabVesselId() + " label from " + oldBarcode + " to " + newBarcode);
+        }
+
+        FixupCommentary fixupCommentary =
+                new FixupCommentary("BSP-3119 Change tube labels to temp to avoid unique constaint.");
+        labBatchDao.persist(fixupCommentary);
+        labBatchDao.flush();
+
+        labVessels = labVesselDao.findByListIdentifiers(tempBarcodes);
+        for (LabVessel labVessel: labVessels) {
+            String oldBarcode = labVessel.getLabel().replaceAll(tempSuffix, "");
             String newBarcode = oldBarcodeToNewBarcode.get(oldBarcode);
             labVessel.setLabel(newBarcode);
             System.out.println(
                     "Changing tube " + labVessel.getLabVesselId() + " label from " + oldBarcode + " to " + newBarcode);
         }
 
-        FixupCommentary fixupCommentary = new FixupCommentary("BSP-3119 Change tube labels");
+        fixupCommentary = new FixupCommentary("BSP-3119 Change tube labels to correct name.");
         labBatchDao.persist(fixupCommentary);
         labBatchDao.flush();
 
