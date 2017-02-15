@@ -213,18 +213,6 @@ public class ReworkDbFreeTest extends BaseEventTest {
                 shearingEntityBuilder2.getShearingPlate(),
                 "2");
 
-        VesselContainer<BarcodedTube> reworkContainer = lcEntityBuilder2.getPondRegRack().getContainerRole();
-
-        /* shows the vessel transfers, for debug
-            TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();
-            transferVisualizerFrame.renderVessel(reworkRackMap.values().iterator().next());
-            try {
-                Thread.sleep(500000L);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        */
-
         // Rework tube should be in two lcsets.
         Assert.assertEquals(reworkTube.getAllLabBatches().size(), 2);
     }

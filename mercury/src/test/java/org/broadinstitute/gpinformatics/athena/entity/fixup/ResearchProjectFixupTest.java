@@ -247,4 +247,19 @@ public class ResearchProjectFixupTest extends Arquillian {
         utx.commit();
     }
 
+    @Test(enabled = false)
+    public void fixupSupport2534() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        ResearchProject researchProject = rpDao.findByBusinessKey("RP-1375");
+        Assert.assertNotNull(researchProject);
+        researchProject.setReferenceSequenceKey(null);
+        researchProject.setSequenceAlignerKey(null);
+        System.out.println("Setting " + researchProject.getBusinessKey() +
+                " reference sequence to " + researchProject.getReferenceSequenceKey() +
+                ", aligner to " + researchProject.getSequenceAlignerKey());
+        rpDao.persist(new FixupCommentary("SUPPORT-2534 fix RP-1375 for pipeline query"));
+        utx.commit();
+    }
+
 }

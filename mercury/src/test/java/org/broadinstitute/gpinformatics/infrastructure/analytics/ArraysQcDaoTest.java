@@ -34,7 +34,7 @@ public class ArraysQcDaoTest extends Arquillian {
     @Test
     public void testFindByBarcodes() {
         List<ArraysQc> arraysQcList = arraysQcDao.findByBarcodes(Arrays.asList(
-                "101342370027_R02C01", "101342370134_R12C02"));
+                "200584330132_R12C01", "200584330041_R07C02"));
         Assert.assertEquals(arraysQcList.size(), 2);
         // The data is currently in flux, so just check that there are no exceptions in the mapping
         for (ArraysQc arraysQc : arraysQcList) {

@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowD
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -121,6 +122,7 @@ public class BucketEntry {
      */
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     @JoinColumn(name = "LAB_BATCH")
+    @BatchSize(size = 500)
     private LabBatch labBatch;
 
     @Column(name = "ENTRY_TYPE", nullable = false)

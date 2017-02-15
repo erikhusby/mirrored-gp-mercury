@@ -98,13 +98,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @JoinColumn(name = "product_order", nullable = false)
     @OrderColumn(name = "SAMPLE_POSITION", nullable = false)
     @AuditJoinTable(name = "product_order_sample_join_aud")
-    @BatchSize(size = 100)
+    @BatchSize(size = 500)
     private final List<ProductOrderSample> samples = new ArrayList<>();
 
     @Transient
     private final SampleCounts sampleCounts = new SampleCounts();
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "productOrder", orphanRemoval = true)
+    @BatchSize(size = 100)
     private final Set<ProductOrderAddOn> addOns = new HashSet<>();
 
     @Id
@@ -229,6 +230,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @ManyToOne(cascade = {CascadeType.PERSIST}, fetch = FetchType.EAGER)
     @JoinColumn(name="PARENT_PRODUCT_ORDER")
     private ProductOrder parentOrder;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "PIPELINE_LOCATION", nullable = true)
+    private PipelineLocation pipelineLocation;
 
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.
@@ -508,6 +513,22 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public void setLaneCount(int laneCount) {
         this.laneCount = laneCount;
+    }
+
+    public boolean requiresLaneCount() {
+        boolean laneCountNeeded = product!=null && product.getProductFamily()!=null
+                                  && product.getProductFamily().isSupportsNumberOfLanes();
+
+        if(!laneCountNeeded) {
+            for (ProductOrderAddOn addOn : addOns) {
+                laneCountNeeded = addOn.getAddOn().getProductFamily().isSupportsNumberOfLanes();
+                if(laneCountNeeded) {
+                    break;
+                }
+            }
+        }
+
+        return laneCountNeeded;
     }
 
     public void updateData(ResearchProject researchProject, Product product, List<Product> addOnProducts,
@@ -1396,6 +1417,22 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
     }
 
+    public enum PipelineLocation implements StatusType {
+        US_CLOUD("US Cloud"),
+        ON_PREMISES("On Premises");
+
+        private String displayName;
+
+        PipelineLocation(String displayName) {
+            this.displayName = displayName;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return displayName;
+        }
+    }
+
     public static class JiraOrId {
         @Nullable
         public final String jiraTicketKey;
@@ -1919,5 +1956,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         this.sapReferenceOrders.add(orderDetail);
         orderDetail.setReferenceProductOrder(this);
 
+    }
+
+    public PipelineLocation getPipelineLocation() {
+        return pipelineLocation;
+    }
+
+    public void setPipelineLocation(
+            PipelineLocation pipelineLocation) {
+        this.pipelineLocation = pipelineLocation;
     }
 }

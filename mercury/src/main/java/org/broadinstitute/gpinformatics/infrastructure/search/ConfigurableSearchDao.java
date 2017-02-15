@@ -282,6 +282,7 @@ public class ConfigurableSearchDao extends GenericDao {
         } else {
             pagination.setResultEntity(configurableSearchDef.getResultEntity());
         }
+        searchInstance.getEvalContext().setPagination(pagination);
 
         // Determine if we need to expand the core entity list via a user selectable traversal option
         Map<String,Boolean> traversalEvaluatorValues = searchInstance.getTraversalEvaluatorValues();

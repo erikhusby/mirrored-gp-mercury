@@ -25,6 +25,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventRefDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -117,6 +118,7 @@ public class ZimsIlluminaRunFactoryTest {
     private Map<String, Control> controlMap;
     private Product testProduct;
     private ResearchProject testResearchProject;
+    private ResearchProject noRefSeqResearchProject;
     private FlowcellDesignationEjb flowcellDesignationEjb;
     private void setupCrsp() {
         CrspControlsTestUtils crspControlsTestUtils = new CrspControlsTestUtils();
@@ -166,7 +168,14 @@ public class ZimsIlluminaRunFactoryTest {
         testResearchProject = new ResearchProject(101L, "Test Project", "ZimsIlluminaRunFactoryTest project", true,
                 REGULATORY_DESIGNATION);
         testResearchProject.setJiraTicketKey("TestRP-1");
-        testResearchProject.setReferenceSequenceKey("Homo_sapiens_assembly19|1");
+        testResearchProject.setReferenceSequenceKey("Homo_sapiens_assembly19" + ReferenceSequence.SEPARATOR + "1");
+        testResearchProject.setSequenceAlignerKey("bwa");
+
+        noRefSeqResearchProject = new ResearchProject(102L, "Test Project2", "Test project 2", true,
+                REGULATORY_DESIGNATION);
+        noRefSeqResearchProject.setJiraTicketKey("TestRP-2");
+        noRefSeqResearchProject.setReferenceSequenceKey("No_Reference_Sequence" + ReferenceSequence.SEPARATOR + "1");
+        noRefSeqResearchProject.setSequenceAlignerKey("Unaligned");
 
         // Create a test product order
         List<ProductOrderSample> pdoSamples = new ArrayList<>();
@@ -597,6 +606,9 @@ public class ZimsIlluminaRunFactoryTest {
                 assertThat("The pipeline API expects enum names for regulatory designations",libraryBean.getRegulatoryDesignation(),equalTo(REGULATORY_DESIGNATION.name()));
                 assertThat(libraryBean.getMetadataSource(),equalTo(MercurySample.BSP_METADATA_SOURCE));
                 assertThat(libraryBean.getSampleType(), equalTo("Tumor"));
+                Assert.assertEquals(libraryBean.getReferenceSequence(), "Homo_sapiens_assembly19");
+                Assert.assertEquals(libraryBean.getReferenceSequenceVersion(), "1");
+                Assert.assertEquals(libraryBean.getAligner(), "bwa");
             }
             else {
                 numPositiveControls++;
@@ -604,6 +616,27 @@ public class ZimsIlluminaRunFactoryTest {
         }
         Assert.assertEquals(numPositiveControls,1);
         Assert.assertTrue(foundNonControlSamples);
+    }
+
+    public void testUnalignedLibraryBean() {
+        testProductOrder.setResearchProject(noRefSeqResearchProject);
+
+        List<ZimsIlluminaRunFactory.SampleInstanceDto> instanceDtoList =
+                createSampleInstanceDto(false, LabBatch.LabBatchType.WORKFLOW, LabBatch.LabBatchType.BSP);
+        List<LibraryBean>  zimsIlluminaRuns = zimsIlluminaRunFactory.makeLibraryBeans(
+                instanceDtoList, mapSampleIdToDto, mapKeyToProductOrder, Collections.EMPTY_MAP);
+
+        boolean found = false;
+        for (LibraryBean libraryBean : zimsIlluminaRuns) {
+            if (!isPositiveControl(libraryBean.getSampleId())) {
+                found = true;
+                assertThat(libraryBean.getResearchProjectName(), equalTo(noRefSeqResearchProject.getName()));
+                Assert.assertNull(libraryBean.getAligner());
+                Assert.assertNull(libraryBean.getReferenceSequence());
+                Assert.assertNull(libraryBean.getReferenceSequenceVersion());
+            }
+        }
+        Assert.assertTrue(found);
     }
 
     private void setupPositiveControlMap() {
@@ -644,6 +677,22 @@ public class ZimsIlluminaRunFactoryTest {
             }
         }
         Assert.assertTrue(hasPositiveControl);
+    }
+
+    public void testUnalignedPositiveControl() {
+        testProductOrder.setResearchProject(noRefSeqResearchProject);
+
+        List<ZimsIlluminaRunFactory.SampleInstanceDto> instanceDtoList =
+                createSampleInstanceDto(true, LabBatch.LabBatchType.WORKFLOW);
+
+        List<LibraryBean> libraryBeans = zimsIlluminaRunFactory.makeLibraryBeans(
+                instanceDtoList, mapSampleIdToDto, mapKeyToProductOrder, controlMap);
+
+        for (LibraryBean libraryBean : libraryBeans) {
+            Assert.assertNull(libraryBean.getAligner());
+            Assert.assertNull(libraryBean.getReferenceSequence());
+            Assert.assertNull(libraryBean.getReferenceSequenceVersion());
+        }
     }
 
     /**

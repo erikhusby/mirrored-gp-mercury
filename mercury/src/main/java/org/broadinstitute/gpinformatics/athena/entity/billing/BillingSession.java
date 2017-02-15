@@ -47,6 +47,8 @@ public class BillingSession implements Serializable {
 
     public static final String ID_PREFIX = "BILL-";
     public static final String SUCCESS = "Billed Successfully";
+    public static final String BILLED_FOR_SAP = "Partially billed For SAP";
+    public static final String BILLED_FOR_QUOTES = "Partially billed for Quotes Server";
 
     @Id
     @SequenceGenerator(name = "SEQ_BILLING_SESSION", schema = "athena", sequenceName = "SEQ_BILLING_SESSION",

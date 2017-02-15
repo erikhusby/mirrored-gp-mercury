@@ -93,7 +93,7 @@ public class BatchToJiraTest extends Arquillian {
 
     @Test(enabled = true)
     public void testJiraCreationFromBatch() throws Exception {
-        String expectedGssrText = "SM-01\n\nSM-02 (rework)";
+        String expectedGssrText = "SM-01\nSM-02";
         Set<LabVessel> startingVessels = new HashSet<>();
         String tube1Label = "Starter01";
         String tube2Label = "Rework01";

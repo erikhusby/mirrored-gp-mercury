@@ -34,6 +34,7 @@ public class SampleDataFetcherContainerTest extends StubbyContainerTest {
 
         for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
             assertThat(productOrderSample.isHasBspSampleDataBeenInitialized(), is(true));
+            assertThat(productOrderSample.getMercurySample().isHasBspSampleDataBeenInitialized(), is(true));
         }
 
     }

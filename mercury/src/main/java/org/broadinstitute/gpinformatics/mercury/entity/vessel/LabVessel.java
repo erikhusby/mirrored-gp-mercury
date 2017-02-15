@@ -9,9 +9,9 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.SampleData;
-import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -64,7 +64,6 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -303,7 +302,7 @@ public abstract class LabVessel implements Serializable {
      * @param labVessels
      */
     public static void loadSampleDataForBuckets(Collection<LabVessel> labVessels) {
-        SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
+        BSPSampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
         Map<String, MercurySample> samplesBySampleKey = new HashMap<>();
         for (LabVessel labVessel : labVessels) {
             for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
@@ -311,9 +310,10 @@ public abstract class LabVessel implements Serializable {
                 samplesBySampleKey.put(mercurySample.getSampleKey(), mercurySample);
             }
         }
-        Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleDataForSamples(samplesBySampleKey.values(),
+
+        Map<String, BspSampleData> sampleDataMap = sampleDataFetcher.fetchSampleData(samplesBySampleKey.keySet(),
                 BSPSampleSearchColumn.BUCKET_PAGE_COLUMNS);
-        for (Map.Entry<String, SampleData> sampleDataEntry : sampleDataMap.entrySet()) {
+        for (Map.Entry<String, BspSampleData> sampleDataEntry : sampleDataMap.entrySet()) {
             samplesBySampleKey.get(sampleDataEntry.getKey()).setSampleData(sampleDataEntry.getValue());
         }
     }
@@ -1623,7 +1623,7 @@ public abstract class LabVessel implements Serializable {
 
     public Set<SampleInstanceV2> getSampleInstancesV2() {
         if (sampleInstances == null) {
-            sampleInstances = new LinkedHashSet<>();
+            sampleInstances = new TreeSet<>();
             if (getContainerRole() == null) {
                 List<VesselEvent> ancestorEvents = getAncestors();
                 if (ancestorEvents.isEmpty()) {
