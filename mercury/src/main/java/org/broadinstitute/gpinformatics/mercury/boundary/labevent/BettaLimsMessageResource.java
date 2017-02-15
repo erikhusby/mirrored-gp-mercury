@@ -35,6 +35,7 @@ import org.xml.sax.helpers.XMLFilterImpl;
 import org.xml.sax.helpers.XMLReaderFactory;
 
 import javax.annotation.PostConstruct;
+import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
@@ -68,6 +69,7 @@ import java.util.Set;
  */
 @Path("/bettalimsmessage")
 @RequestScoped
+@Stateful
 public class BettaLimsMessageResource {
 
     /**

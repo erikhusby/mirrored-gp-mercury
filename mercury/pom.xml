@@ -107,16 +107,6 @@
             </snapshots>
         </repository>
 
-        <!-- For Arquillian-JRebel -->
-        <!--
-                <repository>
-                    <id>Arquillian-JRebel snapshots</id>
-                    <name>libs-snapshot</name>
-                    <url>http://artifactory.it-crowd.com.pl/libs-snapshot</url>
-                    <snapshots />
-                </repository>
-        -->
-
         <!-- Maven central -->
         <repository>
             <id>MavenCentral</id>
@@ -757,14 +747,6 @@
                     <version>2.0.0.Final</version>
                     <scope>test</scope>
                 </dependency>
-                <!--
-                <dependency>
-                    <groupId>org.wildfly.arquillian</groupId>
-                    <artifactId>wildfly-arquillian-testng-integration</artifactId>
-                    <version>2.0.0.Final</version>
-                    <scope>test</scope>
-                </dependency>
-                -->
             </dependencies>
             <build>
                 <plugins>
@@ -1632,16 +1614,6 @@ nodePrinter.print(webapp)
             <!--<scope>test</scope>-->
         </dependency>
 
-        <!-- Application uses javax ws API
-           - See jboss-deployment-structure.xml
-        <dependency>
-            <groupId>com.sun.xml.ws</groupId>
-            <artifactId>jaxws-rt</artifactId>
-            <version>2.2.6</version>
-            <scope>provided</scope>
-        </dependency>
-        -->
-
         <!-- Support client ws testing, WildFly app uses module "javax.ws.rs.api" which references this
            - See jboss-deployment-structure.xml  -->
         <dependency>
@@ -1799,7 +1771,7 @@ nodePrinter.print(webapp)
             <scope>test</scope>
         </dependency>
 
-        <!--
+        <!-- Uncomment to deploy jprofiler libraries for performance troubleshooting
                 <dependency>
                     <groupId>com.jprofiler</groupId>
                     <artifactId>jprofiler</artifactId>
@@ -1818,14 +1790,6 @@ nodePrinter.print(webapp)
             <artifactId>jboss-vfs</artifactId>
             <version>3.2.2.Final</version>
         </dependency>
-
-        <!--
-        <dependency>
-            <groupId>org.jboss.aerogear.test.arquillian</groupId>
-            <artifactId>arquillian-smart-url</artifactId>
-            <version>0.2.0</version>
-        </dependency>
-        -->
 
         <dependency>
             <groupId>org.broadinstitute.sapservices</groupId>
@@ -1858,14 +1822,12 @@ nodePrinter.print(webapp)
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <!--                    <version>2.3.2</version> -->
                     <version>3.1</version>
                 </plugin>
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <!--<version>2.13-SNAPSHOT</version>-->
                     <version>2.17</version>
                 </plugin>
 
@@ -1950,33 +1912,6 @@ nodePrinter.print(webapp)
                      <artifactId>jgitflow-maven-plugin</artifactId>
                      <version>1.0-m5.1</version>
                  </plugin>
-
-                <!--
-                                <plugin>
-                                    <artifactId>maven-dependency-plugin</artifactId>
-                                    <executions>
-                                        <execution>
-                                            <id>unpack</id>
-                                            <phase>process-test-classes</phase>
-                                            <goals>
-                                                <goal>unpack</goal>
-                                            </goals>
-                                            <configuration>
-                                                <artifactItems>
-                                                    <artifactItem>
-                                                        <groupId>org.jboss.as</groupId>
-                                                        <artifactId>jboss-as-dist</artifactId>
-                                                        <version>7.0.2.Final</version>
-                                                        <type>zip</type>
-                                                        <overWrite>false</overWrite>
-                                                        <outputDirectory>target</outputDirectory>
-                                                    </artifactItem>
-                                                </artifactItems>
-                                            </configuration>
-                                        </execution>
-                                    </executions>
-                                </plugin>
-                -->
 
             </plugins>
 
@@ -2128,7 +2063,7 @@ nodePrinter.print(webapp)
             </plugin>
 
 <!--
-todo jmt revisit this
+todo jmt revisit Hibernate schemagen in WildFly 10+
             <plugin>
                 <groupId>org.bsc.maven</groupId>
                 <artifactId>maven-processor-plugin</artifactId>
@@ -2256,7 +2191,7 @@ todo jmt revisit this
             </plugin>
 
 <!--
-todo jmt revisit
+todo jmt revisit Hibernate schemagen in WildFly 10+
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>

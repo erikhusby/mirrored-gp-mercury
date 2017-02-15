@@ -12,6 +12,7 @@ public class EnversSchemaExport {
         System.exit(0);
     }
 
+    // TODO JMS Resolve JPA schemagen in WildFly
     public static void execute(String persistenceUnitName, String destination) {
         System.out.println("Generating DDL create script to : " + destination);
 

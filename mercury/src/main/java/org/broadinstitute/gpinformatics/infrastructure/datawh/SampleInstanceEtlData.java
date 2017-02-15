@@ -38,45 +38,67 @@ public class SampleInstanceEtlData {
      */
     public static SampleInstanceEtlData buildFromSampleInstance(
             SampleInstanceV2 si, Date contextDate, boolean includeNearestSample) {
+
         SampleInstanceEtlData sampleInstanceData = new SampleInstanceEtlData();
         sampleInstanceData.includeNearestSample = includeNearestSample;
-
-        // Best source of lab batch and PDO is from single bucket entry
-        boolean foundSingleBucket = false;
-        BucketEntry singleBucketentry = si.getSingleBucketEntry();
-        if( singleBucketentry != null ) {
-            foundSingleBucket = true;
-            sampleInstanceData.labBatch = singleBucketentry.getLabBatch();
-            sampleInstanceData.pdo = singleBucketentry.getProductOrder();
-            ProductOrderSample pdoSample   = si.getProductOrderSampleForSingleBucket();
-            sampleInstanceData.pdoSample   = pdoSample;
-            if( pdoSample != null ) {
-                sampleInstanceData.pdoSampleId = pdoSample.getMercurySample().getSampleKey();
-            }
-        } else {
-            sampleInstanceData.labBatch = si.getSingleBatch();
-        }
 
         if( includeNearestSample ){
             // This will capture controls
             sampleInstanceData.nearestSampleID = si.getNearestMercurySampleName();
         }
 
-        // Missing single bucket entry or PDO Sample not bucketed
-        if( sampleInstanceData.pdoSample == null ) {
-            // Get latest PDO and the sample which matches it (the PDO and sample must match)
-            for (ProductOrderSample pdoSample : si.getAllProductOrderSamples()) {
-                // Get a valid PDO if none found from singleBucketEntry
-                if( !foundSingleBucket ) {
+        // Best source of lab batch is from nearest event vessel
+        LabBatch labBatch = si.getSingleBatch();
+        sampleInstanceData.labBatch = labBatch;
+
+        // PDO from single product order sample
+        ProductOrderSample pdoSample = si.getSingleProductOrderSample();
+        if( pdoSample != null ) {
+            sampleInstanceData.pdoSample   = pdoSample;
+            sampleInstanceData.pdoSampleId = pdoSample.getMercurySample().getSampleKey();
+            sampleInstanceData.pdo = pdoSample.getProductOrder();
+        }
+
+        sampleInstanceData.molecularIndexingSchemeName = si.getMolecularIndexingScheme() != null ?
+                si.getMolecularIndexingScheme().getName() : null;
+
+        // ********* No need for further logic if lab batch and PDO sample found
+        if( labBatch != null && pdoSample != null ) {
+            return sampleInstanceData;
+        }
+
+        // ******** lab batch and/or PDO sample NOT found, try from single bucket entry ********
+        BucketEntry singleBucketentry = si.getSingleBucketEntry();
+        if( singleBucketentry != null ) {
+            if( labBatch == null ) {
+                labBatch = singleBucketentry.getLabBatch();
+                sampleInstanceData.labBatch = labBatch;
+            }
+            if( pdoSample == null ) {
+                pdoSample = si.getProductOrderSampleForSingleBucket();
+                if (pdoSample != null) {
                     sampleInstanceData.pdo = pdoSample.getProductOrder();
-                }
-                if (pdoSample.getMercurySample() != null) {
-                    // And associate a sample with it if available
                     sampleInstanceData.pdoSample = pdoSample;
                     sampleInstanceData.pdoSampleId = pdoSample.getMercurySample().getSampleKey();
+                }
+            }
+        }
+
+        // Missing single bucket entry or PDO Sample not bucketed
+        if( pdoSample == null ) {
+            // Get latest PDO and the sample which matches it (the PDO and sample must match)
+            for (ProductOrderSample pdoSampleIter : si.getAllProductOrderSamples()) {
+                // Get a valid PDO if none found from singleBucketEntry
+                if( singleBucketentry == null ) {
+                    sampleInstanceData.pdo = pdoSampleIter.getProductOrder();
+                }
+                if (pdoSampleIter.getMercurySample() != null) {
+                    // And associate a sample with it if available
+                    sampleInstanceData.pdoSample = pdoSampleIter;
+                    sampleInstanceData.pdoSampleId = pdoSampleIter.getMercurySample().getSampleKey();
                     // getAllProductOrderSamples() sorts by closest first
                     // We've got the correct PDO data on the first PDO created before context date
-                    if (pdoSample.getProductOrder().getCreatedDate().compareTo(contextDate) < 1) {
+                    if (pdoSampleIter.getProductOrder().getCreatedDate().compareTo(contextDate) < 1) {
                         break;
                     }
                 }
@@ -105,9 +127,6 @@ public class SampleInstanceEtlData {
                 }
             }
         }
-
-        sampleInstanceData.molecularIndexingSchemeName = si.getMolecularIndexingScheme() != null ?
-                si.getMolecularIndexingScheme().getName() : null;
 
         return sampleInstanceData;
     }
