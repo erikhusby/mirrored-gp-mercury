@@ -290,6 +290,16 @@
             });
         }
 
+        function findCellColumnIndex(headerName){
+            var index=-1;
+            $j("#bucketEntryView .title").each(function () {
+                if ($j(this).text() == headerName){
+                    index = $j(this).closest("th").index();
+                }
+            });
+            return index;
+        }
+
         $j(document).ready(function () {
             setupBucketEvents();
 
@@ -309,32 +319,30 @@
             var editablePdo = function () {
                 if (columnsEditable) {
                     var oTable = $j('#bucketEntryView').DataTable();
+                    var pdoOwnerIndex = findCellColumnIndex("PDO Owner");
+                    var pdoTitleIndex = findCellColumnIndex("PDO Name");
+
                     $j("td.editable").editable('${ctxpath}/workflow/bucketView.action?changePdo', {
                         'loadurl': '${ctxpath}/workflow/bucketView.action?findPdo',
-                        'callback': function (sValue, y) {
-                            var jsonValues = $j.parseJSON(sValue);
-                            var pdoKeyCellValue='<span class="ellipsis">'+jsonValues.jiraKey+'</span><span style="display: none;" class="icon-pencil"></span>';
-
-                            var aPos = oTable.fnGetPosition(this);
-                            oTable.fnUpdate(pdoKeyCellValue, aPos[0] /*row*/, aPos[1]/*column*/);
-
-                            var pdoTitleCellValue = '<div class="ellipsis" style="width: 300px">'+jsonValues.pdoTitle+'</div>';
-                            oTable.fnUpdate(pdoTitleCellValue, aPos[0] /*row*/, aPos[1]+1/*column*/);
-
-                            var pdoCreatorCellValue = jsonValues.pdoOwner;
-                            oTable.fnUpdate(pdoCreatorCellValue, aPos[0] /*row*/, aPos[1]+2/*column*/);
+                        'callback': function (value, settings) {
+                            var jsonValues = $j.parseJSON(value);
+                            $j(this).text(jsonValues.jiraKey);
+                            $j(this).append($j("<span></span>", {'style': 'display:none;', 'class': 'icon-pencil'}));
+                            var pdoTitleTd = $j(this).closest("tr").find("td:nth("+pdoTitleIndex+")");
+                            pdoTitleTd.html($j("<div></div>", {'class': 'ellipsis', 'style': 'width: 300px','text':jsonValues.pdoTitle}));
+                            $j(this).closest("tr").find("td:nth("+pdoOwnerIndex+")").text(jsonValues.pdoOwner);
+                            oTable.row(this).invalidate('dom').draw();
                         },
                         'submitdata': function (value, settings) {
-                            return {
-                                "selectedEntryIds": this.parentNode.getAttribute('id'),
-                                "column": oTable.fnGetPosition(this)[2],
-                                "newPdoValue": $j(this).find(':selected').text()
-                            };
+                                return {
+                                    "selectedEntryIds": $j(this).closest('tr').attr('id'),
+                                    "newPdoValue": $j(this).find(':selected').text()
+                                };
                         },
                         'loaddata': function (value, settings) {
-                            return {
-                                "selectedEntryIds": this.parentNode.getAttribute('id')
-                            };
+                                return {
+                                    "selectedEntryIds": $j(this).closest('tr').attr('id')
+                                };
                         },
 //                        If you need to debug the generated html you need to ignore onblur events
 //                        "onblur" : "ignore",
