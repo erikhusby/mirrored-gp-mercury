@@ -487,6 +487,7 @@ public class LabEventSearchDefinition {
 
                 Set<String> results = new HashSet<>();
 
+                // todo jmt improve
                 if( OrmUtil.proxySafeIsInstance( entity, LabEvent.class ) ) {
                     labEvent = OrmUtil.proxySafeCast(entity, LabEvent.class);
                     labVessel = labEvent.getInPlaceLabVessel();
@@ -596,6 +597,7 @@ public class LabEventSearchDefinition {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
                 Set<String> results = new HashSet<>();
+                // todo jmt improve
                 if( OrmUtil.proxySafeIsInstance( entity, LabEvent.class ) ) { 
                     LabEvent labEvent = OrmUtil.proxySafeCast(entity, LabEvent.class);
 
@@ -708,6 +710,7 @@ public class LabEventSearchDefinition {
                 if( entity == null ) {
                     return results;
                 }
+                // todo jmt improve
                 if( OrmUtil.proxySafeIsInstance( entity, LabEvent.class ) ) {
                     LabEvent labEvent = OrmUtil.proxySafeCast(entity, LabEvent.class);
                     labVessel = labEvent.getInPlaceLabVessel();
@@ -719,9 +722,8 @@ public class LabEventSearchDefinition {
                         }
                         return results;
                     }
-                } else if( OrmUtil.proxySafeIsInstance( entity, MercurySample.class ) ) {
-                    MercurySample mercurySample = OrmUtil.proxySafeCast(entity, MercurySample.class);
-                    results.add(mercurySample.getSampleKey());
+                } else if( entity instanceof SampleInstanceV2) {
+                    results.add(((SampleInstanceV2) entity).getRootOrEarliestMercurySample().getSampleKey());
                     return results;
                 } else if( OrmUtil.proxySafeIsInstance( entity, LabVessel.class ) ) {
                     labVessel = OrmUtil.proxySafeCast(entity, LabVessel.class);
@@ -757,6 +759,7 @@ public class LabEventSearchDefinition {
                 if( entity == null ) {
                     return results;
                 }
+                // todo jmt improve
                 if( OrmUtil.proxySafeIsInstance( entity, LabEvent.class ) ) {
                     LabEvent labEvent = OrmUtil.proxySafeCast(entity, LabEvent.class);
                     labVessel = labEvent.getInPlaceLabVessel();
@@ -768,8 +771,8 @@ public class LabEventSearchDefinition {
                         }
                         return results;
                     }
-                } else if( OrmUtil.proxySafeIsInstance( entity, MercurySample.class ) ) {
-                    MercurySample mercurySample = OrmUtil.proxySafeCast(entity, MercurySample.class);
+                } else if( entity instanceof SampleInstanceV2) {
+                    MercurySample mercurySample = ((SampleInstanceV2)entity).getRootOrEarliestMercurySample();
                     results.add(mercurySample.getSampleKey());
                     // May have another sample in ancestry...
                     for( LabVessel sampleVessel : mercurySample.getLabVessel() ) {
@@ -797,31 +800,41 @@ public class LabEventSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Molecular Index");
-//        TODO: JMS Implement this in position plugin.  Gets messy because plugin built for tubes and samples
-//        for( SearchTerm nestedTableTerm : nestedTableTerms ) {
-//            nestedTableTerm.addParentTermHandledByChild(searchTerm);
-//        }
+        for( SearchTerm nestedTableTerm : nestedTableTerms ) {
+            nestedTableTerm.addParentTermHandledByChild(searchTerm);
+        }
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public List<String> evaluate(Object entity, SearchContext context) {
-                LabEvent labEvent = (LabEvent) entity;
-                List<String> results = new ArrayList<>();
+                List<String> results = null;
+                // todo jmt improve
+                if (OrmUtil.proxySafeIsInstance(entity, LabEvent.class)) {
+                    LabEvent labEvent = OrmUtil.proxySafeCast(entity, LabEvent.class);
+                    results = new ArrayList<>();
 
-                LabVessel labVessel = labEvent.getInPlaceLabVessel();
-                if (labVessel == null) {
-                    for (LabVessel srcVessel : labEvent.getSourceLabVessels()) {
-                        for (SampleInstanceV2 sample : srcVessel.getSampleInstancesV2()) {
+                    LabVessel labVessel = labEvent.getInPlaceLabVessel();
+                    if (labVessel == null) {
+                        for (LabVessel srcVessel : labEvent.getSourceLabVessels()) {
+                            for (SampleInstanceV2 sample : srcVessel.getSampleInstancesV2()) {
+                                if (sample.getMolecularIndexingScheme() != null) {
+                                    results.add(sample.getMolecularIndexingScheme().getName());
+                                }
+                            }
+                        }
+                    } else {
+                        for (SampleInstanceV2 sample : labVessel.getSampleInstancesV2()) {
                             if (sample.getMolecularIndexingScheme() != null) {
                                 results.add(sample.getMolecularIndexingScheme().getName());
                             }
                         }
                     }
-                } else {
-                    for (SampleInstanceV2 sample : labVessel.getSampleInstancesV2()) {
-                        if (sample.getMolecularIndexingScheme() != null) {
-                            results.add(sample.getMolecularIndexingScheme().getName());
-                        }
+                } else if (entity instanceof SampleInstanceV2) {
+                    SampleInstanceV2 sampleInstance = (SampleInstanceV2) entity;
+                    if (sampleInstance.getMolecularIndexingScheme() != null) {
+                        results.add(sampleInstance.getMolecularIndexingScheme().getName());
                     }
+                } else {
+                    throw new RuntimeException("Unexpected class " + entity);
                 }
 
                 return results;

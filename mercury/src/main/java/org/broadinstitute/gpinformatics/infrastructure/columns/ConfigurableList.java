@@ -868,6 +868,10 @@ public class ConfigurableList {
          * Each row may have a nested table
          */
         private Map<String, ResultList> nestedTables = new HashMap<>();
+        /**
+         * Each cell may have a nested table.
+         */
+        private List<ResultList> cellNestedTables = new ArrayList<>();
 
         ResultRow(List<Comparable<?>> sortableCells, List<String> renderableCells, String resultId) {
             this.sortableCells = sortableCells;
@@ -946,6 +950,14 @@ public class ConfigurableList {
          */
         public void addNestedTable(String name, ResultList nestedTable) {
             nestedTables.put(name, nestedTable);
+        }
+
+        public void setCellNestedTables(List<ResultList> cellNestedTables) {
+            this.cellNestedTables = cellNestedTables;
+        }
+
+        public List<ResultList> getCellNestedTables() {
+            return cellNestedTables;
         }
     }
 

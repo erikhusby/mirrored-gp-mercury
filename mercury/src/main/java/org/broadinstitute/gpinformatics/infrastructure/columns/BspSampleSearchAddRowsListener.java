@@ -7,10 +7,10 @@ import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,8 +35,11 @@ public class BspSampleSearchAddRowsListener implements ConfigurableList.AddRowsL
         List<String> sampleIDs = new ArrayList<>();
         for (Object entity : entityList) {
             LabVessel labVessel = (LabVessel) entity;
-            for( MercurySample mercurySample : labVessel.getMercurySamples() ) {
-                sampleIDs.add(mercurySample.getSampleKey());
+            for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                MercurySample mercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
+                if (mercurySample != null) {
+                    sampleIDs.add(mercurySample.getSampleKey());
+                }
             }
         }
         if (!columnsInitialized) {
