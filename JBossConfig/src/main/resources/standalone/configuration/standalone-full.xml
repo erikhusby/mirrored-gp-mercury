@@ -36,7 +36,6 @@
 
     <system-properties>
         <property name="MERCURY_DEPLOYMENT" value="DEV"/>
-        <property name="CRSP" value="false"/>
     </system-properties>
 
 

@@ -176,13 +176,7 @@
                                 <property environment="env"/>
                                 <fail unless="env.JBOSS_HOME"
                                       message="Please define the environment variable JBOSS_HOME to point at Wildfly installation."/>
-<!--
-				<fail message="Please define the ssl.keystore.alias as the keystore alias.">
-				  <condition>
-				    <isfalse value="${ssl.keystore.alias}"/>
-				  </condition>
-				</fail>
--->
+
                                 <!-- Copy the modules -->
                                 <echo message="Copying modules"/>
                                 <copy todir="${env.JBOSS_HOME}/modules" overwrite="true" verbose="true">

@@ -66,6 +66,9 @@ fi
 
 pushd mercury/JBossConfig
 echo "*** Building and deploying WildFly configuration..."
+echo "*********************************"
+echo "********** git checkout develop instead of GPLIM-3937_Java8 after go-live **********"
+echo "*********************************"
 git checkout GPLIM-3937_Java8
 mvn install
 popd
