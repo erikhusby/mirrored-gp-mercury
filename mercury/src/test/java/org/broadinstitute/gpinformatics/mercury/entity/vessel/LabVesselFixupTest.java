@@ -1478,5 +1478,37 @@ public class LabVesselFixupTest extends Arquillian {
         utx.commit();
     }
 
+    @Test(enabled = false)
+    public void fixupBsp3119FiupTubeLabels() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        Map<String, String> oldBarcodeToNewBarcode = new HashMap<String, String>() {{
+            put("1140121300", "1140121258");
+            put("1140121306", "1140121296");
+            put("1140121320", "1140121300");
+            put("1140121321", "1140121306");
+            put("1140121280", "1140121320");
+            put("1140121322", "1140121321");
+            put("1140121258", "1140121280");
+            put("1140121296", "1140121322");
+        }};
+
+        List<LabVessel> labVessels = labVesselDao.findByListIdentifiers(new ArrayList<>(oldBarcodeToNewBarcode.keySet()));
+        for (LabVessel labVessel: labVessels) {
+            String oldBarcode = labVessel.getLabel();
+            String newBarcode = oldBarcodeToNewBarcode.get(oldBarcode);
+            labVessel.setLabel(newBarcode);
+            System.out.println(
+                    "Changing tube " + labVessel.getLabVesselId() + " label from " + oldBarcode + " to " + newBarcode);
+        }
+
+        FixupCommentary fixupCommentary = new FixupCommentary("BSP-3119 Change tube labels");
+        labBatchDao.persist(fixupCommentary);
+        labBatchDao.flush();
+
+        utx.commit();
+    }
+
 
 }
