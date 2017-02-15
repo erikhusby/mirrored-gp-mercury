@@ -85,6 +85,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
     public static final String PAGE_TITLE = "Manual Transfers";
     public static final String RACK_SCAN_EVENT = "rackScan";
     public static final String PARSE_LIMS_FILE_ACTION = "parseLimsFile";
+    public static final String SKIP_LIMS_FILE_ACTION = "skipLimsFile";
 
     /** Parameter from batch workflow page. */
     private String workflowProcessName;
@@ -119,6 +120,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
     private FileBean limsUploadFile;
 
     private LimsFileType limsFileType;
+
+    private boolean isParseLimsFile;
 
     @Inject
     private BettaLimsMessageResource bettaLimsMessageResource;
@@ -332,6 +335,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
             }
             stationEventIndex++;
         }
+        isParseLimsFile = manualTransferDetails.isLimsFile();
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }
 
@@ -375,22 +379,25 @@ public class ManualTransferActionBean extends RackScanActionBean {
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }
 
+    @HandlesEvent(SKIP_LIMS_FILE_ACTION)
+    public Resolution skipLimsFile() {
+        chooseLabEventType();
+        isParseLimsFile = false;
+        return new ForwardResolution(MANUAL_TRANSFER_PAGE);
+    }
+
     @HandlesEvent(PARSE_LIMS_FILE_ACTION)
     public Resolution parseLimsFile() {
+        chooseLabEventType();
         InputStream limsFileStream = null;
         MessageCollection messageCollection = new MessageCollection();
         try {
             limsFileStream = limsUploadFile.getInputStream();
             switch (limsFileType) {
             case QIAGEN_BLOOD_BIOPSY_24:
-                StationEventType stationEventType = stationEvents.get(0);
-                PlateCherryPickEvent plateCherryPickEvent = (PlateCherryPickEvent) stationEventType;
-                if (plateCherryPickEvent.getPositionMap().isEmpty()) {
-                    messageCollection.addError("Destination rack should be scanned before uploading file.");
-                    break;
-                }
                 QiagenRackFileParser qiagenRackFileParser = new QiagenRackFileParser();
-                qiagenRackFileParser.parse(null, limsFileStream, messageCollection);
+                List<StationEventType> parsedEvents = qiagenRackFileParser.parse(null, limsFileStream, messageCollection);
+                stationEvents.set(0, parsedEvents.get(0));
                 break;
             }
         } catch (IOException e) {
@@ -407,6 +414,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
         }
 
         addMessages(messageCollection);
+        isParseLimsFile = false;
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }
 
@@ -1166,5 +1174,13 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
     public void setLimsFileType(LimsFileType limsFileType) {
         this.limsFileType = limsFileType;
+    }
+
+    public boolean isParseLimsFile() {
+        return isParseLimsFile;
+    }
+
+    public void setParseLimsFile(boolean parseLimsFile) {
+        isParseLimsFile = parseLimsFile;
     }
 }

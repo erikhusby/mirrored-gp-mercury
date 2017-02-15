@@ -90,17 +90,17 @@ public class QiagenRackFileParser {
                 String destinationWell = rackPosition.getPositionName().getValue().replaceAll(":", "");
                 ReceptacleType destinationReceptacleType = new ReceptacleType();
                 destinationReceptacleType.setPosition(destinationWell);
-                if (!positionBarcodeMap.containsKey(destinationWell)) {
-                    messageCollection.addError("Missing well in rack scan " + destinationWell);
-                } else {
-                    destinationReceptacleType.setBarcode(positionBarcodeMap.get(destinationWell));
-                    destinationPositionMap.getReceptacle().add(destinationReceptacleType);
+//                if (positionBarcodeMap != null && !positionBarcodeMap.containsKey(destinationWell)) {
+//                    messageCollection.addError("Missing well in rack scan " + destinationWell);
+//                } else {
+//                    destinationReceptacleType.setBarcode(positionBarcodeMap.get(destinationWell));
+//                    destinationPositionMap.getReceptacle().add(destinationReceptacleType);
                     CherryPickSourceType cherryPickSourceType = new CherryPickSourceType();
                     cherryPickSourceType.setBarcode(sourceBarcode);
                     cherryPickSourceType.setWell(sourcePosition);
                     cherryPickSourceType.setDestinationWell(destinationWell);
                     plateCherryPickEvent.getSource().add(cherryPickSourceType);
-                }
+//                }
             }
             plateCherryPickEvent.getSourcePlate().add(plateType);
             plateCherryPickEvent.getSourcePositionMap().add(positionMapType);
