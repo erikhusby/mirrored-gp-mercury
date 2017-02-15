@@ -652,7 +652,8 @@ public class PicoToBspContainerTest extends Arquillian {
 
         // Calls UploadQuantsActionBean to send the spreadsheet to Mercury and a
         // filtered spreadsheet containing only the research sample quants to BSP.
-        userBean.loginTestUser();
+        userBean.login("bspuser");
+        userBean.ensureUserValid();
         dto.setRunAndFormation(uploadQuantsActionBean.spreadsheetToMercuryAndBsp(messageCollection,
                 quantStream, LabMetric.MetricType.INITIAL_PICO, userBean, true));
 
