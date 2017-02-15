@@ -51,6 +51,11 @@ public class ManualTransferActionBeanTest {
         Assert.assertEquals(plateEventType.getReagent().size(), numReagentFields);
     }
 
+    public void testQiagen() {
+        String eventType = "BloodBiopsyExtraction";
+        ManualTransferActionBean actionBean = chooseEvent(eventType);
+    }
+
     /**
      * Simulate choosing an event, and return the resulting action bean.
      */

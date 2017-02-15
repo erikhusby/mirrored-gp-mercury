@@ -570,6 +570,15 @@ public enum LabEventType {
             LibraryType.NONE_ASSIGNED),
 
     //Cryovial Blood and Saliva Extraction
+    BLOOD_BIOPSY_EXTRACTION("BloodBiopsyExtraction",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT,
+                    RackOfTubes.RackType.QiasymphonyCarrier24,
+                    RackOfTubes.RackType.Matrix96).
+                    limsFile(true).
+                    reagentNames(new String[]{"Proteinase K"}).build(),
+            LibraryType.NONE_ASSIGNED),
     BLOOD_CRYOVIAL_EXTRACTION("BloodCryovialExtraction",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
@@ -1902,6 +1911,9 @@ public enum LabEventType {
         /** What to display in the button that sends the message. */
         private String buttonValue = "Transfer";
 
+        /** If transfer can be filled from a generated LIMs file from automation. */
+        private boolean limsFile = false;
+
         /** For JAXB */
         public ManualTransferDetails() {
         }
@@ -1924,6 +1936,7 @@ public enum LabEventType {
             buttonValue = builder.buttonValue;
             targetExpectedToExist = builder.targetExpectedToExist;
             targetExpectedEmpty = builder.targetExpectedEmpty;
+            limsFile = builder.limsFile;
         }
 
         public static class Builder {
@@ -1944,6 +1957,7 @@ public enum LabEventType {
             private String buttonValue = "Transfer";
             private boolean targetExpectedToExist = false;
             private boolean targetExpectedEmpty = true;
+            private boolean limsFile = false;
 
             public Builder(MessageType messageType, VesselTypeGeometry sourceVesselTypeGeometry,
                     VesselTypeGeometry targetVesselTypeGeometry) {
@@ -2014,6 +2028,11 @@ public enum LabEventType {
 
             public Builder targetExpectedEmpty(boolean targetExpectedEmpty) {
                 this.targetExpectedEmpty = targetExpectedEmpty;
+                return this;
+            }
+
+            public Builder limsFile(boolean limsFile) {
+                this.limsFile = limsFile;
                 return this;
             }
 
@@ -2123,6 +2142,10 @@ public enum LabEventType {
 
         public String getButtonValue() {
             return buttonValue;
+        }
+
+        public boolean isLimsFile() {
+            return limsFile;
         }
     }
 

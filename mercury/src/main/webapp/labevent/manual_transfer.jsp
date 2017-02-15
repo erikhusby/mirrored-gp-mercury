@@ -53,6 +53,35 @@
                 }, "* Duplicate");
                 $j.validator.classRuleSettings.unique = { unique: true };
                 $j("#transferForm").validate();
+
+                $("#ajaxLimsFileForm").submit(function (e) {
+                    e.preventDefault();
+                    console.log("Stopped ajax lims file form from committing");
+
+                    $j.ajax({
+                        url: "${ctxpath}/search/ConfigurableSearch.action",
+                        type: 'POST',
+                        data: formData,
+                        async: true,
+                        success: function (results) {
+                            $j("#doScanBtn").removeAttr("disabled");
+                            if( results.startsWith("Failure")) {
+                                $j("#rackScanError").text(results);
+                            } else {
+                                $j("#rack_scan_overlay").data("results", results);
+                                rackScanComplete();
+                            }
+                        },
+                        error: function(results){
+                            $j("#doScanBtn").removeAttr("disabled");
+                            $j("#rackScanError").text("A server error occurred");
+                        },
+                        cache: false,
+                        datatype: "text",
+                        processData: false,
+                        contentType: false
+                    });
+                });
             });
 
             // Some scanners send carriage return, we don't want this to submit the form
@@ -252,6 +281,29 @@
                         </c:when> <%-- end ReceptacleEventType --%>
                     </c:choose>
                 </c:forEach>
+
+                <c:if test="${actionBean.manualTransferDetails.limsFile}">
+                    <stripes:form method="post" id="ajaxLimsFileForm" beanclass="org.broadinstitute.gpinformatics.mercury.presentation.labevent.ManualTransferActionBean">
+                        <h5>LIMS File!!!</h5>
+                        <div class="controls">
+                            <stripes:select name="limsFileType">
+                                <stripes:options-enumeration
+                                        enum="org.broadinstitute.gpinformatics.mercury.control.vessel.LimsFileType"
+                                        label="displayName"/>
+                            </stripes:select>
+                        </div>
+                        <div class="control-group">
+                            <div class="controls">
+                                <stripes:file name="limsUploadFile" id="limsUploadFile"/>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <div class="controls">
+                                <stripes:submit name="parseLimsFile" value="Parse File" class="btn btn-primary"/>
+                            </div>
+                        </div>
+                    </stripes:form>
+                </c:if>
 
                 <c:if test="${stationEvent.class.simpleName.equals('PlateCherryPickEvent')}">
                     <input type="button" value="Add Cherry Picks" id="PreviewButton" name="PreviewButton" class="btn btn-primary" >
