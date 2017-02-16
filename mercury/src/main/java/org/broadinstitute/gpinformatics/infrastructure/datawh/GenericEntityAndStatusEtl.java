@@ -66,7 +66,7 @@ public abstract class GenericEntityAndStatusEtl<AUDITED_ENTITY_CLASS, ETL_DATA_S
                                Collection<Long> modifiedEntityIds,
                                Collection<Long> addedEntityIds,
                                Collection<RevInfoPair<AUDITED_ENTITY_CLASS>> revInfoPairs,
-                               String etlDateStr) {
+                               String etlDateStr) throws Exception {
 
         // Creates the wrapped Writer to the sqlLoader data file.
         DataFile dataFile = new DataFile(dataFilename(etlDateStr, baseFilename));
@@ -112,7 +112,7 @@ public abstract class GenericEntityAndStatusEtl<AUDITED_ENTITY_CLASS, ETL_DATA_S
 
         } catch (IOException e) {
             logger.error("Error while writing " + dataFile.getFilename() + " or " + statusFile.getFilename(), e);
-            return dataFile.getRecordCount() + statusFile.getRecordCount();
+            throw e;
 
         } finally {
             dataFile.close();
@@ -123,7 +123,7 @@ public abstract class GenericEntityAndStatusEtl<AUDITED_ENTITY_CLASS, ETL_DATA_S
 
     @Override
     protected int writeRecords(Collection<ETL_DATA_SOURCE_CLASS> entities, Collection<Long> deletedEntityIds,
-                               String etlDateStr) {
+                               String etlDateStr) throws Exception {
 
         Date statusDate;
         try {
@@ -163,7 +163,7 @@ public abstract class GenericEntityAndStatusEtl<AUDITED_ENTITY_CLASS, ETL_DATA_S
 
         } catch (IOException e) {
             logger.error("Error while writing " + dataFile.getFilename() + " or " + statusFile.getFilename(), e);
-            return dataFile.getRecordCount() + statusFile.getRecordCount();
+            throw e;
 
         } finally {
             dataFile.close();

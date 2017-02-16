@@ -275,7 +275,7 @@ public class ExtractTransformDbFreeTest {
         verify(mocks);
     }
 
-    public void testOnDemandBackfill() {
+    public void testOnDemandBackfill() throws Exception {
         Class testClass = LabBatch.class;
         expect(productEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
         expect(priceItemEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
@@ -305,7 +305,7 @@ public class ExtractTransformDbFreeTest {
         verify(mocks);
     }
 
-    public void testBackfillDefaultEnd() {
+    public void testBackfillDefaultEnd() throws Exception {
         long startEtl = System.currentTimeMillis();
         Class testClass = Product.class;
         expect(productEtl.doEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(1);
@@ -359,7 +359,7 @@ public class ExtractTransformDbFreeTest {
         verify(mocks);
     }
 
-    public void testOnDemandIncremental() {
+    public void testOnDemandIncremental() throws Exception {
         final long startEtlSec = 1360000000L;
         SortedMap<Long, Date> revs = new TreeMap<>();
         revs.put(1L, new Date(startEtlSec));

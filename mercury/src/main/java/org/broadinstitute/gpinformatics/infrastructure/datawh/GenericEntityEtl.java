@@ -10,9 +10,11 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.EnversAudit;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo;
+import org.hibernate.JDBCException;
 import org.hibernate.SQLQuery;
 import org.hibernate.type.LongType;
 
+import javax.ejb.EJBException;
 import javax.inject.Inject;
 import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
@@ -171,7 +173,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
      *
      * @return the number of records created in the data file (deletes, modifies, and adds).
      */
-    public int doEtl(Set<Long> revIds, String etlDateStr) {
+    public int doEtl(Set<Long> revIds, String etlDateStr) throws Exception {
         try {
             // Retrieves the Envers-formatted list of entity changes in the given revision range.
             // Subclass may add additional entity ids based on custom rev query.
@@ -189,9 +191,10 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
             auditReaderDao.clear();
 
             return count;
-        } catch (RuntimeException e) {
+
+        } catch (Exception e) {
             logger.error(getClass().getSimpleName() + " ETL failed", e);
-            return 0;
+            throw e;
         }
     }
 
@@ -199,7 +202,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
                          Collection<Long> modifiedEntityIds,
                          Collection<Long> addedEntityIds,
                          Collection<RevInfoPair<AUDITED_ENTITY_CLASS>> revInfoPairs,
-                         String etlDateStr) {
+                         String etlDateStr) throws Exception {
         try {
             processFixups(deletedEntityIds, modifiedEntityIds, etlDateStr);
             return writeRecords(deletedEntityIds, modifiedEntityIds, addedEntityIds, revInfoPairs, etlDateStr);
@@ -213,7 +216,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
      */
     protected void processFixups(Collection<Long> deletedEntityIds,
                                  Collection<Long> modifiedEntityIds,
-                                 String etlDateStr) {
+                                 String etlDateStr) throws Exception {
     }
 
     /**
@@ -226,7 +229,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
      *
      * @return the number of records created in the data file (deletes, modifies, adds).
      */
-    public int doEtl(Class<?> requestedClass, long startId, long endId, String etlDateStr) {
+    public int doEtl(Class<?> requestedClass, long startId, long endId, String etlDateStr) throws Exception {
 
         // No-op unless the implementing class is the requested entity class.  Not an error.
         if (!entityClass.equals(requestedClass)) {
@@ -255,9 +258,10 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
             auditReaderDao.clear();
             return count;
 
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             logger.error(getClass().getSimpleName() + " ETL failed", e);
-            return 0;
+            throw e;
+
         } finally {
             postEtlLogging();
         }
@@ -379,7 +383,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
                                Collection<Long> modifiedEntityIds,
                                Collection<Long> addedEntityIds,
                                Collection<RevInfoPair<AUDITED_ENTITY_CLASS>> revInfoPairs,
-                               String etlDateStr) {
+                               String etlDateStr) throws Exception {
 
         // Creates the wrapped Writer to the sqlLoader data file.
         DataFile dataFile = new DataFile(dataFilename(etlDateStr, baseFilename));
@@ -401,22 +405,27 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
                     for (String record : records) {
                         dataFile.write(record);
                     }
+
                 } catch (Exception e) {
-                    // Continues ETL and logs data-specific Mercury exceptions.  Re-throws systemic exceptions
-                    // such as when BSP is down in order to stop this run of ETL.
-                    if (e.getCause() == null || e.getCause().getClass().getName().contains("broadinstitute")) {
+                    // For data-specific Mercury exceptions on one entity, log it and continue, since
+                    // these are permanent. For systemic exceptions such as when BSP is down, re-throw
+                    // the exception in order to stop this run of ETL and allow a retry in a few minutes.
+                    if (!(e instanceof EJBException) && !(e instanceof JDBCException) &&
+                            (e.getCause() == null ||
+                                    e.getCause().getClass().getName().contains("broadinstitute"))) {
                         if (errorException == null) {
                             errorException = e;
                         }
                         errorIds.add(entityId);
                     } else {
-                        throw new RuntimeException(e);
+                        throw e;
                     }
                 }
             }
 
         } catch (IOException e) {
-            throw new RuntimeException("Error while writing " + dataFile.getFilename(), e);
+            logger.error("Error while writing " + dataFile.getFilename(), e);
+            throw e;
 
         } finally {
             dataFile.close();
@@ -430,7 +439,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
     @DaoFree
     protected int writeRecords(Collection<ETL_DATA_SOURCE_CLASS> entities,
                                Collection<Long>deletedEntityIds,
-                               String etlDateStr) {
+                               String etlDateStr) throws Exception {
 
         // Creates the wrapped Writer to the sqlLoader data file.
         DataFile dataFile = new DataFile(dataFilename(etlDateStr, baseFilename));
@@ -449,22 +458,26 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
                             dataFile.write(record);
                         }
                     } catch (Exception e) {
-                        // Continues ETL and logs data-specific Mercury exceptions.  Re-throws systemic exceptions
-                        // such as when BSP is down in order to stop this run of ETL.
-                        if (e.getCause() == null || e.getCause().getClass().getName().contains("broadinstitute")) {
+                        // For data-specific Mercury exceptions on one entity, log it and continue, since
+                        // these are permanent. For systemic exceptions such as when BSP is down, re-throw
+                        // the exception in order to stop this run of ETL and allow a retry in a few minutes.
+                        if (!(e instanceof EJBException) && !(e instanceof JDBCException) &&
+                                (e.getCause() == null ||
+                                        e.getCause().getClass().getName().contains("broadinstitute"))) {
                             if (errorException == null) {
                                 errorException = e;
                             }
                             errorIds.add(dataSourceEntityId(entity));
                         } else {
-                            throw new RuntimeException(e);
+                            throw e;
                         }
                     }
                 }
             }
 
         } catch (IOException e) {
-            throw new RuntimeException("Error while writing " + dataFile.getFilename(), e);
+            logger.error("Error while writing " + dataFile.getFilename(), e);
+            throw e;
 
         } finally {
             dataFile.close();

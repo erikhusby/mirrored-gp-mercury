@@ -233,7 +233,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     @Override
     protected void processFixups(Collection<Long> deletedEntityIds,
                                  Collection<Long> modifiedEntityIds,
-                                 String etlDateStr) {
+                                 String etlDateStr) throws Exception {
 
 
         Set<Long> fixupEventIds = new HashSet<>(deletedEntityIds);

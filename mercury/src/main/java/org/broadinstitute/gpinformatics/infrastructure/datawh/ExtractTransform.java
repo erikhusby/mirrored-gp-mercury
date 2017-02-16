@@ -4,6 +4,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.MutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.common.SessionContextUtility;
@@ -13,8 +15,6 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
@@ -278,8 +278,8 @@ public class ExtractTransform implements Serializable {
             long startTimeSec;
             if (isZero(requestedStart)) {
                 startTimeSec = readLastEtlRun();
-                if (startTimeSec == 0L) {
-                    log.warn("Cannot start ETL because the run time of the last incremental ETL can't be read");
+                if (!loggedConfigError && startTimeSec == 0L) {
+                    log.warn("Skipping periodic ETL because the file with the last ETL run time can't be read");
                     return -1;
                 }
             } else {
@@ -294,24 +294,24 @@ public class ExtractTransform implements Serializable {
             }
 
             if (startTimeSec < endTimeSec) {
-                ImmutablePair<Integer, String> countAndDate = incrementalEtl(startTimeSec, endTimeSec);
-                if (countAndDate == null) {
+                Pair<Integer, String> countAndDate = incrementalEtl(startTimeSec, endTimeSec);
+                if (countAndDate == null || countAndDate.getLeft() == null || countAndDate.getRight() == null) {
                     return -1;
                 }
 
                 // Updates the lastEtlRun file with the actual end of etl, but only when doing etl ending now,
                 // which is the case for timer-driven incremental etl.
                 if (isZero(requestedEnd)) {
-                    writeLastEtlRun(parseTimestamp(countAndDate.right).getTime() / MSEC_IN_SEC);
+                    writeLastEtlRun(parseTimestamp(countAndDate.getRight()).getTime() / MSEC_IN_SEC);
                 }
 
-                if (countAndDate.left > 0) {
-                    writeIsReadyFile(countAndDate.right);
-                    log.debug("Incremental ETL created " + countAndDate.left + " data records in " +
+                if (countAndDate.getLeft() > 0) {
+                    writeIsReadyFile(countAndDate.getRight());
+                    log.debug("Incremental ETL created " + countAndDate.getLeft() + " data records in " +
                             minutesSince(incrementalRunStartTime) + " minutes");
                 }
 
-                return countAndDate.left;
+                return countAndDate.getLeft();
             }
 
         } catch (ParseException e) {
@@ -322,8 +322,7 @@ public class ExtractTransform implements Serializable {
 
     // Returns the record count and the date of the actual end of etl interval for this run, which will
     // be on a whole second boundary.
-    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    private ImmutablePair<Integer, String> incrementalEtl(final long startTimeSec, final long endTimeSec) {
+    private Pair<Integer, String> incrementalEtl(final long startTimeSec, final long endTimeSec) {
         // If previous run is still busy it is unusual but not an error.  Only one incrementalEtl
         // may run at a time.  Does not queue a new job if busy, to avoid snowball effect if system is
         // busy for a long time, for whatever reason.
@@ -336,40 +335,47 @@ public class ExtractTransform implements Serializable {
         }
         
         log.trace("Starting incremental ETL");
-        final List<Integer> count = new ArrayList<>(1);
-        final List<String> date = new ArrayList<>(1);
-
+        final MutablePair<Integer, String> countAndDate = MutablePair.of(null, null);
         try {
             incrementalRunStartTime = System.currentTimeMillis();
             sessionContextUtility.executeInContext(new SessionContextUtility.Function() {
                 @Override
                 public void apply() {
-                    // Gets the audit revisions for the given interval.
-                    SortedMap<Long, Date> revs = auditReaderDao.fetchAuditIds(startTimeSec, endTimeSec);
+                    try {
+                        // Gets the audit revisions for the given interval.
+                        SortedMap<Long, Date> revs = auditReaderDao.fetchAuditIds(startTimeSec, endTimeSec);
 
-                    // Limits batch size and sets end date accordingly.
-                    ImmutablePair<SortedMap<Long, Date>, Long> revsAndDate = limitBatchSize(revs, endTimeSec);
+                        // Limits batch size and sets end date accordingly.
+                        ImmutablePair<SortedMap<Long, Date>, Long> revsAndDate = limitBatchSize(revs, endTimeSec);
 
-                    if (revsAndDate.left.size() < revs.size()) {
-                        log.debug("ETL run will only process " + revsAndDate.left.size() + " of the "
-                                  + revs.size() + " changes");
-                    } else {
-                        log.debug("Incremental ETL found " + revs.size() + " changes");
-                    }
-
-                    String actualEtlDateStr = formatTimestamp(new Date(revsAndDate.right * MSEC_IN_SEC));
-
-                    int recordCount = 0;
-                    if (!revsAndDate.left.isEmpty()) {
-                        // The order of ETL is not significant since import tables have no referential integrity.
-                        for (GenericEntityEtl<?, ?> etlInstance : etlInstances) {
-                            recordCount += etlInstance.doEtl(revsAndDate.left.keySet(), actualEtlDateStr);
+                        if (revsAndDate.left.size() < revs.size()) {
+                            log.debug("ETL run will only process " + revsAndDate.left.size() + " of the "
+                                    + revs.size() + " changes");
+                        } else {
+                            log.debug("Incremental ETL found " + revs.size() + " changes");
                         }
+
+                        String actualEtlDateStr = formatTimestamp(new Date(revsAndDate.right * MSEC_IN_SEC));
+
+                        int recordCount = 0;
+                        if (!revsAndDate.left.isEmpty()) {
+                            // The order of ETL is not significant since import tables have no referential integrity.
+                            for (GenericEntityEtl<?, ?> etlInstance : etlInstances) {
+                                recordCount += etlInstance.doEtl(revsAndDate.left.keySet(), actualEtlDateStr);
+                            }
+                        }
+                        countAndDate.setLeft(recordCount);
+                        countAndDate.setRight(actualEtlDateStr);
+
+                    } catch (Exception e) {
+                        countAndDate.setLeft(null);
+                        countAndDate.setRight(null);
+                        log.error("Error during ETL: ", e);
+
+                    } finally {
+                        // Reset state of all Hibernate entities (the ETL process is read-only)
+                        auditReaderDao.clear();
                     }
-                    count.add(0, recordCount);
-                    date.add(0, actualEtlDateStr);
-                    // Reset state of all Hibernate entities (the ETL process is read-only)
-                    auditReaderDao.clear();
                 }
             });
 
@@ -379,7 +385,7 @@ public class ExtractTransform implements Serializable {
             mutex.release();
         }
 
-        return (!count.isEmpty() && !date.isEmpty()) ? new ImmutablePair<>(count.get(0), date.get(0)) : null;
+        return countAndDate;
     }
 
     // Limits batch size and adjusts end time accordingly.
@@ -425,7 +431,6 @@ public class ExtractTransform implements Serializable {
      * @param startId         First entity id of a range of ids to backfill.  Optional query param that defaults to min id.
      * @param endId           Last entity id of a range of ids to backfill.  Optional query param that defaults to max id.
      */
-    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public Response backfillEtl(String entityClassname, final long startId, long endId) {
         String dataDir = getDatafileDir();
         if (StringUtils.isBlank(dataDir)) {
