@@ -18,10 +18,10 @@ public class SAPAccessControlTest {
 
         SAPAccessControl control = new SAPAccessControl();
 
-        Set<String> featureSet = new HashSet<>() ;
-        featureSet.add("feature1");
-        featureSet.add("feature2");
-        featureSet.add("feature3");
+        Set<AccessItem> featureSet = new HashSet<>() ;
+        featureSet.add(new AccessItem("feature1"));
+        featureSet.add(new AccessItem("feature2"));
+        featureSet.add(new AccessItem("feature3"));
 
 
 
@@ -29,7 +29,7 @@ public class SAPAccessControlTest {
         control.setAccessStatus(AccessStatus.DISABLED);
         assertThat(control.getAccessStatus(), is(control.getAccessStatus()));
 
-        assertThat(control.getDisabledFeatures(), is(Matchers.<String>empty()));
+        assertThat(control.getDisabledFeatures(), is(Matchers.<AccessItem>empty()));
 
         control.setDisabledFeatures(featureSet);
 

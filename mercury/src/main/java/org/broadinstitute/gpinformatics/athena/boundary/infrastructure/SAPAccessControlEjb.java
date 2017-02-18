@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.infrastructure;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.infrastructure.SAPAccessControlDao;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessStatus;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 
@@ -10,6 +11,7 @@ import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.inject.Inject;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 @Singleton
@@ -39,7 +41,7 @@ public class SAPAccessControlEjb {
     public SAPAccessControl resetControlDefinitions() {
         SAPAccessControl control = getCurrentControlDefinitions();
         control.setAccessStatus(AccessStatus.ENABLED);
-        control.setDisabledFeatures(Collections.<String>emptySet());
+        control.setDisabledFeatures(Collections.<AccessItem>emptySet());
 
         return control;
     }
@@ -49,8 +51,15 @@ public class SAPAccessControlEjb {
 
         SAPAccessControl accessController = getCurrentControlDefinitions();
 
+        Set<AccessItem> newItems = new HashSet<>();
+
+        for (String restriction : restrictions) {
+            newItems.add(new AccessItem(restriction));
+        }
+
+
         accessController.setAccessStatus(status);
-        accessController.setDisabledFeatures(restrictions);
+        accessController.setDisabledFeatures(newItems);
 
         return accessController;
     }

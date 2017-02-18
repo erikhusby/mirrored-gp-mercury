@@ -685,5 +685,17 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-4652-1" author="scottmat">
+        <createTable tableName="ACCESS_ITEM">
+            <column name="id" type="number(19,0)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="item_value" type="varchar(255)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+        <createSequence sequenceName="SEQ_ACCESS_CONTROL_ITEM" schemaName="athena" startValue="1" incrementBy="50" />
+    </changeSet>
+
 
 </databaseChangeLog>

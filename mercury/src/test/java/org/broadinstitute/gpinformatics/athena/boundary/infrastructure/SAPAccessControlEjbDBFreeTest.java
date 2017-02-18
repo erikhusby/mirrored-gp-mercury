@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.infrastructure;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.infrastructure.SAPAccessControlDao;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessStatus;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.mockito.Mockito;
@@ -28,7 +29,7 @@ public class SAPAccessControlEjbDBFreeTest {
 
         SAPAccessControl accessControl = new SAPAccessControl();
         accessControl.setAccessStatus(AccessStatus.ENABLED);
-        accessControl.setDisabledFeatures(new HashSet<String>(Arrays.<String>asList("Materials", "Other Materials")));
+        accessControl.setDisabledFeatures(new HashSet<AccessItem>(Arrays.<AccessItem>asList(new AccessItem("Materials"), new AccessItem("Other Materials"))));
 
         Mockito.when(accessControlDao.getAccessControl()).thenReturn(accessControl);
     }
@@ -41,7 +42,7 @@ public class SAPAccessControlEjbDBFreeTest {
         assertThat(accessControl, is(notNullValue()));
         assertThat(accessControl.getAccessStatus(), is(AccessStatus.ENABLED));
         assertThat(accessControl.getDisabledFeatures().size(), is(equalTo(2)));
-        assertThat(accessControl.getDisabledFeatures(),containsInAnyOrder("Other Materials","Materials"));
+        assertThat(accessControl.getDisabledFeatures(),containsInAnyOrder(new AccessItem("Other Materials"),new AccessItem("Materials")));
     }
 
     @Test
@@ -50,7 +51,7 @@ public class SAPAccessControlEjbDBFreeTest {
 
         SAPAccessControl accessControl = new SAPAccessControl();
         accessControl.setAccessStatus(AccessStatus.DISABLED);
-        accessControl.setDisabledFeatures(new HashSet<String>(Arrays.<String>asList("Test Materials", "Other Stuff")));
+        accessControl.setDisabledFeatures(new HashSet<AccessItem>(Arrays.<AccessItem>asList(new AccessItem("Test Materials"), new AccessItem("Other Stuff"))));
 
         Mockito.when(accessControlDao.getAccessControl()).thenReturn(accessControl);
 
@@ -59,13 +60,13 @@ public class SAPAccessControlEjbDBFreeTest {
         assertThat(control, is(notNullValue()));
         assertThat(control.getAccessStatus(), is(AccessStatus.DISABLED));
         assertThat(control.getDisabledFeatures().size(), is(equalTo(2)));
-        assertThat(control.getDisabledFeatures(),containsInAnyOrder("Test Materials","Other Stuff"));
+        assertThat(control.getDisabledFeatures(),containsInAnyOrder(new AccessItem("Test Materials"),new AccessItem("Other Stuff")));
 
         control = accessControlEjb.resetControlDefinitions();
 
         assertThat(control, is(notNullValue()));
         assertThat(control.getAccessStatus(), is(AccessStatus.ENABLED));
-        assertThat(control.getDisabledFeatures(), is(emptyCollectionOf(String.class)));
+        assertThat(control.getDisabledFeatures(), is(emptyCollectionOf(AccessItem.class)));
 
     }
 }

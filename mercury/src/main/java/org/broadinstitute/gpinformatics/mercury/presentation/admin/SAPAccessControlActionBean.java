@@ -13,6 +13,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessControl;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessStatus;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
@@ -53,8 +54,8 @@ public class SAPAccessControlActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void initValues() {
         accessController = accessControlEjb.getCurrentControlDefinitions();
-        for (String selectedFeature : accessController.getDisabledFeatures()) {
-            selectedPriceItems.add(selectedFeature);
+        for (AccessItem selectedFeature : accessController.getDisabledFeatures()) {
+            selectedPriceItems.add(selectedFeature.getItemValue());
         }
         enabledAccess = accessController.getAccessStatus().name();
         for (QuotePriceItem quotePriceItem : priceListCache.getQuotePriceItems()) {
