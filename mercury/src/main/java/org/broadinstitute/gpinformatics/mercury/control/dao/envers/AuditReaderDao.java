@@ -23,6 +23,8 @@ import org.hibernate.type.LongType;
 import org.hibernate.type.StringType;
 import org.hibernate.type.TimestampType;
 
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
@@ -48,6 +50,7 @@ import java.util.TreeMap;
  */
 @Stateful
 @RequestScoped
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class AuditReaderDao extends GenericDao {
     private final long MSEC_IN_SEC = 1000L;
     private static final Log logger = LogFactory.getLog(ExtractTransform.class);
@@ -88,6 +91,7 @@ public class AuditReaderDao extends GenericDao {
      * @return Map of rev info id and the rev's timestamp.
      * @throws IllegalArgumentException if params are not whole second values.
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public SortedMap<Long, Date> fetchAuditIds(long startTimeSec, long endTimeSec) {
         SortedMap<Long, Date> revs = new TreeMap<>();
         for (AuditedRevDto auditedRevDto : fetchAuditIds(startTimeSec, endTimeSec, IS_ANY_USER, null)) {
@@ -176,6 +180,7 @@ public class AuditReaderDao extends GenericDao {
      * @param entityClassName the class name of the entity.
      * @return list of EnversAudit objects, unordered.
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public List<EnversAudit> fetchEnversAudits(Set<Long> revIds, Class entityClassName) {
         List<EnversAudit> enversAudits = new ArrayList<>();
         // Does the AuditReader query and converts each object array into EnversAudit.

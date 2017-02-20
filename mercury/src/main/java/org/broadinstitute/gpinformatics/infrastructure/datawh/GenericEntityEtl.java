@@ -15,12 +15,15 @@ import org.hibernate.SQLQuery;
 import org.hibernate.type.LongType;
 
 import javax.ejb.EJBException;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.inject.Inject;
 import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
+import javax.transaction.UserTransaction;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -44,6 +47,7 @@ import java.util.Set;
  */
 public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLASS> {
     public static final String IN_CLAUSE_PLACEHOLDER = "__IN_CLAUSE__";
+    private static final int ONE_HOUR = 3600;
 
     /** The quote character for ETL values. */
     private static final String QUOTE = "\"";
@@ -75,6 +79,10 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
     public void setAuditReaderDao(AuditReaderDao auditReaderDao) {
         this.auditReaderDao = auditReaderDao;
     }
+
+    /** This class uses Bean Managed Transactions in order to set a longer session timeout. */
+    @Inject
+    private UserTransaction utx;
 
     protected GenericEntityEtl() {
         this(null, null, null, null, null);
@@ -173,8 +181,13 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
      *
      * @return the number of records created in the data file (deletes, modifies, and adds).
      */
-    public int doEtl(Set<Long> revIds, String etlDateStr) throws Exception {
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public int doIncrementalEtl(Set<Long> revIds, String etlDateStr) throws Exception {
         try {
+            if (utx != null) {
+                utx.begin();
+                utx.setTransactionTimeout(ONE_HOUR);
+            }
             // Retrieves the Envers-formatted list of entity changes in the given revision range.
             // Subclass may add additional entity ids based on custom rev query.
             List<EnversAudit> auditEntities = auditReaderDao.fetchEnversAudits(revIds, entityClass);
@@ -193,8 +206,12 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
             return count;
 
         } catch (Exception e) {
-            logger.error(getClass().getSimpleName() + " ETL failed", e);
+            logger.error(getClass().getSimpleName() + " incremental ETL failed", e);
             throw e;
+        } finally {
+            if (utx != null) {
+                utx.rollback();
+            }
         }
     }
 
@@ -229,13 +246,18 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
      *
      * @return the number of records created in the data file (deletes, modifies, adds).
      */
-    public int doEtl(Class<?> requestedClass, long startId, long endId, String etlDateStr) throws Exception {
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public int doBackfillEtl(Class<?> requestedClass, long startId, long endId, String etlDateStr) throws Exception {
 
         // No-op unless the implementing class is the requested entity class.  Not an error.
         if (!entityClass.equals(requestedClass)) {
             return 0;
         }
         try {
+            if (utx != null) {
+                utx.begin();
+                utx.setTransactionTimeout(2 * ONE_HOUR);
+            }
             Collection<Long> auditClassDeletedIds = fetchDeletedEntityIds(startId, endId);
 
             Collection<AUDITED_ENTITY_CLASS> auditEntities = entitiesInRange(startId, endId);
@@ -259,10 +281,13 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
             return count;
 
         } catch (Exception e) {
-            logger.error(getClass().getSimpleName() + " ETL failed", e);
+            logger.error(getClass().getSimpleName() + " backfill ETL failed", e);
             throw e;
 
         } finally {
+            if (utx != null) {
+                utx.rollback();
+            }
             postEtlLogging();
         }
     }
@@ -378,7 +403,6 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
     /**
      * Writes the sqlLoader data file records for the given entity changes.
      */
-    @DaoFree
     protected int writeRecords(Collection<Long> deletedEntityIds,
                                Collection<Long> modifiedEntityIds,
                                Collection<Long> addedEntityIds,
@@ -405,7 +429,6 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
                     for (String record : records) {
                         dataFile.write(record);
                     }
-
                 } catch (Exception e) {
                     // For data-specific Mercury exceptions on one entity, log it and continue, since
                     // these are permanent. For systemic exceptions such as when BSP is down, re-throw
