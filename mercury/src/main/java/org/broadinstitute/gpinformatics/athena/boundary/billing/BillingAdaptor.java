@@ -177,8 +177,8 @@ public class BillingAdaptor implements Serializable {
                     }
 
                     if(StringUtils.isBlank(workId)) {
-                        if (quote.isEligibleForSAP() && StringUtils
-                                .isNotBlank(item.getProductOrder().getSapOrderNumber())) {
+                        if (productOrderEjb.isOrderEligibleForSAP(item.getProductOrder())
+                            && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
                             workId = quoteService
                                     .registerNewSAPWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
                                             item.getWorkCompleteDate(), item.getQuantity(),
