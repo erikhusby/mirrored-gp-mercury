@@ -290,6 +290,16 @@
             });
         }
 
+        function findCellColumnIndex(headerName){
+            var index=-1;
+            $j("#bucketEntryView .title").each(function () {
+                if ($j(this).text() == headerName){
+                    index = $j(this).closest("th").index();
+                }
+            });
+            return index;
+        }
+
         $j(document).ready(function () {
             setupBucketEvents();
 
@@ -309,32 +319,30 @@
             var editablePdo = function () {
                 if (columnsEditable) {
                     var oTable = $j('#bucketEntryView').DataTable();
+                    var pdoOwnerIndex = findCellColumnIndex("PDO Owner");
+                    var pdoTitleIndex = findCellColumnIndex("PDO Name");
+
                     $j("td.editable").editable('${ctxpath}/workflow/bucketView.action?changePdo', {
                         'loadurl': '${ctxpath}/workflow/bucketView.action?findPdo',
-                        'callback': function (sValue, y) {
-                            var jsonValues = $j.parseJSON(sValue);
-                            var pdoKeyCellValue='<span class="ellipsis">'+jsonValues.jiraKey+'</span><span style="display: none;" class="icon-pencil"></span>';
-
-                            var aPos = oTable.fnGetPosition(this);
-                            oTable.fnUpdate(pdoKeyCellValue, aPos[0] /*row*/, aPos[1]/*column*/);
-
-                            var pdoTitleCellValue = '<div class="ellipsis" style="width: 300px">'+jsonValues.pdoTitle+'</div>';
-                            oTable.fnUpdate(pdoTitleCellValue, aPos[0] /*row*/, aPos[1]+1/*column*/);
-
-                            var pdoCreatorCellValue = jsonValues.pdoOwner;
-                            oTable.fnUpdate(pdoCreatorCellValue, aPos[0] /*row*/, aPos[1]+2/*column*/);
+                        'callback': function (value, settings) {
+                            var jsonValues = $j.parseJSON(value);
+                            $j(this).text(jsonValues.jiraKey);
+                            $j(this).append($j("<span></span>", {'style': 'display:none;', 'class': 'icon-pencil'}));
+                            var pdoTitleTd = $j(this).closest("tr").find("td:nth("+pdoTitleIndex+")");
+                            pdoTitleTd.html($j("<div></div>", {'class': 'ellipsis', 'style': 'width: 300px','text':jsonValues.pdoTitle}));
+                            $j(this).closest("tr").find("td:nth("+pdoOwnerIndex+")").text(jsonValues.pdoOwner);
+                            oTable.row(this).invalidate('dom').draw();
                         },
                         'submitdata': function (value, settings) {
-                            return {
-                                "selectedEntryIds": this.parentNode.getAttribute('id'),
-                                "column": oTable.fnGetPosition(this)[2],
-                                "newPdoValue": $j(this).find(':selected').text()
-                            };
+                                return {
+                                    "selectedEntryIds": $j(this).closest('tr').attr('id'),
+                                    "newPdoValue": $j(this).find(':selected').text()
+                                };
                         },
                         'loaddata': function (value, settings) {
-                            return {
-                                "selectedEntryIds": this.parentNode.getAttribute('id')
-                            };
+                                return {
+                                    "selectedEntryIds": $j(this).closest('tr').attr('id')
+                                };
                         },
 //                        If you need to debug the generated html you need to ignore onblur events
 //                        "onblur" : "ignore",
@@ -419,6 +427,8 @@
                     {sortable: false},
                     {sortable: true, "sClass": "nowrap"},
                     {sortable: true, "sClass": "nowrap"},
+                    {sortable: true, "sClass": "nowrap"},
+                    {sortable: true, "sClass": "nowrap"},
                     {sortable: true},
                     {sortable: true},
                     {sortable: true},
@@ -485,6 +495,8 @@
                 "initComplete": function (settings) {
                     initColumnSelect(settings, [
                         {"Vessel Name": 'text'},
+                        {"Nearest Sample": 'text'},
+                        {"Root Sample": 'text'},
                         {"Sample Name": 'text'},
                         {"PDO": 'select'},
                         {"PDO Name": 'text'},
@@ -697,7 +709,7 @@
                     <input type="button" id="chooseNbutton" value="Select" class="btn"/>
                 </div>
             </div>
-            <table id="bucketEntryView" class="bucket-checkbox table simple dt-responsive">
+            <table id="bucketEntryView" class="bucket-checkbox table simple compact">
                 <thead>
                 <tr>
                     <th width="10" class="bucket-control title">
@@ -705,6 +717,8 @@
                         <span id="count" class="bucket-checkedCount"></span>
                     </th>
                     <th width="60"><span class="title">Vessel Name</span></th>
+                    <th width="60"><span class="title">Nearest Sample</span></th>
+                    <th width="60"><span class="title">Root Sample</span></th>
                     <th width="50"><span class="title">Sample Name</span></th>
                     <th><span class="title ">Material Type</span></th>
                     <th><span class="title">PDO</span></th>
@@ -736,6 +750,21 @@
                                 <a href="${ctxpath}/search/vessel.action?vesselSearch=&searchKey=${entry.labVessel.label}">
                                         ${entry.labVessel.label}
                                 </a>
+                            </c:if></td>
+                        <td>
+                            <c:if test="${actionBean.showHeader('Nearest Sample')}">
+                                <c:forEach items="${entry.labVessel.sampleInstancesV2}" var="sampleInstance">
+                                    <a href="${ctxpath}/search/sample.action?sampleSearch=&searchKey=${sampleInstance.nearestMercurySampleName}">
+                                            ${sampleInstance.nearestMercurySampleName}</a>
+                                </c:forEach>
+                            </c:if>
+                        </td>
+                        <td>
+                            <c:if test="${actionBean.showHeader('Root Sample')}">
+                                <c:forEach items="${entry.labVessel.sampleInstancesV2}" var="sampleInstance">
+                                    <a href="${ctxpath}/search/sample.action?sampleSearch=&searchKey=${sampleInstance.rootOrEarliestMercurySample.sampleKey}">
+                                            ${sampleInstance.rootOrEarliestMercurySample.sampleKey}</a>
+                                </c:forEach>
                             </c:if></td>
                         <td><c:if test="${actionBean.showHeader('Sample Name')}">
                             <c:forEach items="${entry.labVessel.mercurySamples}" var="mercurySample" varStatus="stat">

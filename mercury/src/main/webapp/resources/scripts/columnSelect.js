@@ -174,12 +174,16 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                     return this.value.trim().match(savedFilterValue);
                 }).attr('selected', 'selected');
             }
-            var width = Math.ceil(.6*$j(select).attr('width'))+"em";
-            // $j(select).css("width", width);
+            var width = $j(select).attr('width');
+            if (width<=10){
+                width=10;
+            }
+            width = Math.ceil(.8*width)+"em";
             var chosen = select.chosen({
                 disable_search_threshold: 10,
                 display_selected_options: false,
                 display_disabled_options: false,
+                search_contains: true,
                 width: width,
                 inherit_select_classes: true,
                 placeholder_text_single: "Select a " + headerLabel,
@@ -249,9 +253,9 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
         var uniqueValues = [];
         for (var i = 0; i < columns.length; i++) {
             var cell = columns[i].trim();
-            cell = cell.replace(/<(?:.|\n)*?>/gi, '');
+            cell = cell.replace(/<(?:.|\n)*?>/gi, '').trim();
             if (cell !== '' && uniqueValues.indexOf(cell) < 0) {
-                uniqueValues.push(cell);
+                uniqueValues.push(cell.trim());
             }
         }
         var maxWidth=0;
