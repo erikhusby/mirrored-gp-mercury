@@ -1092,6 +1092,6 @@ public class ProductOrderFixupTest extends Arquillian {
 
     private void removeSapAccessFromOrder(String productOrderKey) {
         ProductOrder currentProductOrder = productOrderDao.findByBusinessKey(productOrderKey);
-        currentProductOrder.setSapReferenceOrders(Collections.<SapOrderDetail>emptyList());
+        currentProductOrder.getSapReferenceOrders().clear();
     }
 }
