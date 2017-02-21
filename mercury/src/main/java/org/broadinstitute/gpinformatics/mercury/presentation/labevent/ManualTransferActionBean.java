@@ -389,6 +389,10 @@ public class ManualTransferActionBean extends RackScanActionBean {
     @HandlesEvent(PARSE_LIMS_FILE_ACTION)
     public Resolution parseLimsFile() {
         chooseLabEventType();
+        if (limsUploadFile == null) {
+            addGlobalValidationError("File not selected.");
+            return new ForwardResolution(MANUAL_TRANSFER_PAGE);
+        }
         InputStream limsFileStream = null;
         MessageCollection messageCollection = new MessageCollection();
         try {
@@ -396,9 +400,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
             switch (limsFileType) {
             case QIAGEN_BLOOD_BIOPSY_24:
                 QiagenRackFileParser qiagenRackFileParser = new QiagenRackFileParser();
-                List<StationEventType> parsedEvents = qiagenRackFileParser.parse(null, limsFileStream, messageCollection);
-                stationEvents.set(0, parsedEvents.get(0));
-                break;
+                qiagenRackFileParser.attachSourcePlateData((PlateTransferEventType) stationEvents.get(0), limsFileStream,
+                        messageCollection);
             }
         } catch (IOException e) {
             log.error("IO Exception when parsing LIMS File", e);
@@ -414,7 +417,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
         }
 
         addMessages(messageCollection);
-        isParseLimsFile = false;
+        isParseLimsFile = messageCollection.hasErrors();
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }
 

@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.qiagen.generated.Rack;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.qiagen.generated.RackPosition;
@@ -39,14 +39,11 @@ public class QiagenRackFileParserTest {
             }
             MessageCollection messageCollection = new MessageCollection();
             QiagenRackFileParser parser = new QiagenRackFileParser();
-            List<StationEventType> events = parser.parse(wellToBarcode, inputStream, messageCollection);
-            PlateCherryPickEvent plateCherryPickEvent = (PlateCherryPickEvent) events.get(0);
-            assertNotNull(plateCherryPickEvent);
+            PlateTransferEventType plateTransferEventType = new PlateTransferEventType();
+            parser.attachSourcePlateData(plateTransferEventType, inputStream, messageCollection);
+            assertNotNull(plateTransferEventType);
             assertEquals(messageCollection.hasErrors(), false);
-            assertEquals(plateCherryPickEvent.getSourcePlate().size(), 3);
-            assertEquals(plateCherryPickEvent.getPlate().size(), 1);
-            assertEquals(plateCherryPickEvent.getSource().size(), 22);
-            assertEquals(plateCherryPickEvent.getPlate().get(0).getBarcode(), "1013740015402336601842");
+            assertEquals(plateTransferEventType.getPlate().getBarcode(), "1013740015402336601842");
         } catch (JAXBException e) {
             e.printStackTrace();
         } finally {

@@ -5,14 +5,19 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.qiagen.generated.Rack;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.qiagen.generated.RackPosition;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.xml.bind.JAXBContext;
@@ -35,169 +40,69 @@ import java.util.Map;
 public class QiagenRackFileParser {
     private static final Log logger = LogFactory.getLog(QiagenRackFileParser.class);
 
-    public List<StationEventType> parse(Map<String, String> positionBarcodeMap, InputStream inputStream,
-                                        MessageCollection messageCollection) {
+    public void attachSourcePlateData(PlateTransferEventType plateTransferEventType, InputStream inputStream,
+                                      MessageCollection messageCollection) {
         Rack rack = null;
         try {
             rack = unmarshal(inputStream);
         } catch (JAXBException e) {
             logger.error("Failed to unmarshal XML file", e);
             messageCollection.addError("Failed to unmarshal XML file");
-            return null;
+            return;
         }
-        PlateCherryPickEvent plateCherryPickEvent = new PlateCherryPickEvent();
 
-        //Generate four random source plate barcodes
+        if (plateTransferEventType.getSourcePlate() == null || plateTransferEventType.getPlate() == null ||
+            plateTransferEventType.getSourcePositionMap() == null || plateTransferEventType.getPositionMap() == null) {
+            messageCollection.addError("PlateTransferEvent not initialized before calling Qiagen Rack File Parser");
+            return;
+        }
+
+        //TODO for test null
+        RackOfTubes.RackType rackType = RackOfTubes.RackType.getByName(
+                plateTransferEventType.getSourcePlate().getPhysType());
+        if (rackType == null) {
+            messageCollection.addError("Unknown rack type: " + plateTransferEventType.getSourcePlate().getPhysType());
+            return;
+        }
+        VesselPosition[] vesselPositions = rackType.getVesselGeometry().getVesselPositions();
+
+        //Generate new source plate barcode since Qiasymphony doesn't supply one.
         String platePrefix = "QiagenSampleCarrier24";
         String sdf = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
         String sourcePlateBarcode = platePrefix + "_" + sdf;
-        Map<String, List<RackPosition>> sourceContainerToRackPosition = new HashMap<>();
+        PlateType sourcePlate = plateTransferEventType.getSourcePlate();
+        PositionMapType sourcePositionMap = plateTransferEventType.getSourcePositionMap();
+        sourcePlate.setBarcode(sourcePlateBarcode);
+        sourcePositionMap.setBarcode(sourcePlateBarcode);
+
+        PlateType destinationPlate = plateTransferEventType.getPlate();
+        destinationPlate.setBarcode(rack.getRackId().getValue());
+        PositionMapType destinationPositionMap = plateTransferEventType.getPositionMap();
+        destinationPositionMap.setBarcode(rack.getRackId().getValue());
+        plateTransferEventType.setPlate(destinationPlate);
+
         for (RackPosition rackPosition: rack.getRackPosition()) {
             if (rackPosition.getSampleId().getValue() != null && !rackPosition.getSampleId().getValue().isEmpty()) {
-                if (!sourceContainerToRackPosition.containsKey(sourcePlateBarcode)){
-                    sourceContainerToRackPosition.put(sourcePlateBarcode, new ArrayList<RackPosition>());
-                }
-                sourceContainerToRackPosition.get(sourcePlateBarcode).add(rackPosition);
-            }
-        }
-
-        PlateType destinationPlate = new PlateType();
-        destinationPlate.setPhysType("TubeRack");
-        destinationPlate.setBarcode(rack.getRackId().getValue());
-        PositionMapType destinationPositionMap = new PositionMapType();
-        destinationPositionMap.setBarcode(rack.getRackId().getValue());
-        plateCherryPickEvent.getPlate().add(destinationPlate);
-        plateCherryPickEvent.getPositionMap().add(destinationPositionMap);
-
-        for (Map.Entry<String, List<RackPosition>> entry: sourceContainerToRackPosition.entrySet()) {
-            String sourceBarcode = entry.getKey();
-            PlateType plateType = new PlateType();
-            plateType.setBarcode(sourceBarcode);
-            plateType.setPhysType(RackOfTubes.RackType.QiasymphonyCarrier24.getDisplayName());
-            PositionMapType positionMapType = new PositionMapType();
-            positionMapType.setBarcode(sourceBarcode);
-            VesselPosition[] vesselPositions =
-                    RackOfTubes.RackType.QiasymphonyCarrier24.getVesselGeometry().getVesselPositions();
-            for (RackPosition rackPosition: entry.getValue()) {
                 ReceptacleType sourceReceptacleType = new ReceptacleType();
                 sourceReceptacleType.setBarcode(rackPosition.getSampleId().getValue());
                 int posIdx = rackPosition.getPositionIndex().getValue();
                 String sourcePosition = vesselPositions[posIdx].name();
                 sourceReceptacleType.setPosition(sourcePosition);
-                sourceReceptacleType.setVolume(new BigDecimal(rackPosition.getTotalVolumeInUl().getValue()));
-                positionMapType.getReceptacle().add(sourceReceptacleType);
+                plateTransferEventType.getSourcePositionMap().getReceptacle().add(sourceReceptacleType);
 
                 String destinationWell = rackPosition.getPositionName().getValue().replaceAll(":", "");
+                VesselPosition vesselPosition = VesselPosition.getByName(destinationWell);
+                if (vesselPosition == null) {
+                    messageCollection.addError("Failed to find position name " + destinationWell);
+                    continue;
+                }
                 ReceptacleType destinationReceptacleType = new ReceptacleType();
-                destinationReceptacleType.setPosition(destinationWell);
-//                if (positionBarcodeMap != null && !positionBarcodeMap.containsKey(destinationWell)) {
-//                    messageCollection.addError("Missing well in rack scan " + destinationWell);
-//                } else {
-//                    destinationReceptacleType.setBarcode(positionBarcodeMap.get(destinationWell));
-//                    destinationPositionMap.getReceptacle().add(destinationReceptacleType);
-                    CherryPickSourceType cherryPickSourceType = new CherryPickSourceType();
-                    cherryPickSourceType.setBarcode(sourceBarcode);
-                    cherryPickSourceType.setWell(sourcePosition);
-                    cherryPickSourceType.setDestinationWell(destinationWell);
-                    plateCherryPickEvent.getSource().add(cherryPickSourceType);
-//                }
+                destinationReceptacleType.setPosition(vesselPosition.name());
+                destinationReceptacleType.setVolume(new BigDecimal(rackPosition.getTotalVolumeInUl().getValue()));
+                destinationPositionMap.getReceptacle().add(destinationReceptacleType);
             }
-            plateCherryPickEvent.getSourcePlate().add(plateType);
-            plateCherryPickEvent.getSourcePositionMap().add(positionMapType);
         }
-
-        List<StationEventType> events = new ArrayList<>();
-        events.add(plateCherryPickEvent);
-
-        return events;
     }
-
-//    @Override
-//    public List<StationEventType> parse(InputStream inputStream, MessageCollection messageCollection) {
-//        Rack rack = null;
-//        try {
-//            rack = unmarshal(inputStream);
-//        } catch (JAXBException e) {
-//            logger.error("Failed to unmarshal XML file", e);
-//            messageCollection.addError("Failed to unmarshal XML file");
-//            return null;
-//        }
-//        PlateCherryPickEvent plateCherryPickEvent = new PlateCherryPickEvent();
-//
-//        //Generate four random source plate barcodes
-//        String platePrefix = "QiagenSampleCarrier24";
-//        String sdf = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
-//        List<String> sourcePlateBarcodes = Arrays.asList(
-//                platePrefix + "_1_" + sdf,
-//                platePrefix + "_2_" + sdf,
-//                platePrefix + "_3_" + sdf,
-//                platePrefix + "_4_" + sdf
-//        );
-//
-//        Map<String, List<RackPosition>> sourceContainerToRackPosition = new HashMap<>();
-//        for (RackPosition rackPosition: rack.getRackPosition()) {
-//            if (rackPosition.getSampleId().getValue() != null && !rackPosition.getSampleId().getValue().isEmpty()) {
-//                int posIndex = rackPosition.getPositionIndex().getValue();
-//                int sourcePlateBarcodeIndex = posIndex / 32;
-//                String sourcePlateBarcode = sourcePlateBarcodes.get(sourcePlateBarcodeIndex);
-//                if (!sourceContainerToRackPosition.containsKey(sourcePlateBarcode)){
-//                    sourceContainerToRackPosition.put(sourcePlateBarcode, new ArrayList<RackPosition>());
-//                }
-//                sourceContainerToRackPosition.get(sourcePlateBarcode).add(rackPosition);
-//            }
-//        }
-//
-//        PlateType destinationPlate = new PlateType();
-//        destinationPlate.setPhysType("TubeRack");
-//        destinationPlate.setBarcode(rack.getRackId().getValue());
-//        PositionMapType destinationPositionMap = new PositionMapType();
-//        destinationPositionMap.setBarcode(rack.getRackId().getValue());
-//        plateCherryPickEvent.getPlate().add(destinationPlate);
-//        plateCherryPickEvent.getPositionMap().add(destinationPositionMap);
-//
-//        //Build Sources
-//        //TODO replace with carrier details
-//        for (Map.Entry<String, List<RackPosition>> entry: sourceContainerToRackPosition.entrySet()) {
-//            String sourcePlateBarcode = entry.getKey();
-//            PlateType plateType = new PlateType();
-//            plateType.setBarcode(sourcePlateBarcode);
-//            plateType.setPhysType(RackOfTubes.RackType.HamiltonSampleCarrier32.getDisplayName());
-//            PositionMapType positionMapType = new PositionMapType();
-//            positionMapType.setBarcode(sourcePlateBarcode);
-//            VesselPosition[] vesselPositions =
-//                    RackOfTubes.RackType.HamiltonSampleCarrier24.getVesselGeometry().getVesselPositions();
-//            for (RackPosition rackPosition: entry.getValue()) {
-//                ReceptacleType sourceReceptacleType = new ReceptacleType();
-//                sourceReceptacleType.setBarcode(rackPosition.getSampleId().getValue());
-//                int posIdx = rackPosition.getPositionIndex().getValue() % 24;
-//                String sourcePosition = vesselPositions[posIdx].name();
-//                sourceReceptacleType.setPosition(sourcePosition);
-//                sourceReceptacleType.setVolume(new BigDecimal(rackPosition.getTotalVolumeInUl().getValue()));
-//                positionMapType.getReceptacle().add(sourceReceptacleType);
-//
-//                String destinationWell = rackPosition.getPositionName().getValue().replaceAll(":", "");
-//                ReceptacleType destinationReceptacleType = new ReceptacleType();
-//                destinationReceptacleType.setPosition(destinationWell);
-//                if (!positionBarcodeMap.containsKey(destinationWell)) {
-//                    messageCollection.addError("Missing well in rack scan " + destinationWell);
-//                } else {
-//                    destinationReceptacleType.setBarcode(positionBarcodeMap.get(destinationWell));
-//                    destinationPositionMap.getReceptacle().add(destinationReceptacleType);
-//                    CherryPickSourceType cherryPickSourceType = new CherryPickSourceType();
-//                    cherryPickSourceType.setBarcode(sourcePlateBarcode);
-//                    cherryPickSourceType.setWell(sourcePosition);
-//                    cherryPickSourceType.setDestinationWell(destinationWell);
-//                    plateCherryPickEvent.getSource().add(cherryPickSourceType);
-//                }
-//            }
-//            plateCherryPickEvent.getSourcePlate().add(plateType);
-//            plateCherryPickEvent.getSourcePositionMap().add(positionMapType);
-//        }
-//
-//        List<StationEventType> events = new ArrayList<>();
-//        events.add(plateCherryPickEvent);
-//        return events;
-//    }
 
     public Rack unmarshal(InputStream inputStream) throws JAXBException {
         JAXBContext jaxbUnmarshaller = JAXBContext.newInstance(Rack.class);

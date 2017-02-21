@@ -572,10 +572,12 @@ public enum LabEventType {
     //Cryovial Blood and Saliva Extraction
     BLOOD_BIOPSY_EXTRACTION("BloodBiopsyExtraction",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
-            new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
                     RackOfTubes.RackType.QiasymphonyCarrier24,
                     RackOfTubes.RackType.Matrix96).
+                    sourceSection(SBSSection.P96_4ROWSOF24_COLWISE_8TIP).
+                    targetSection(SBSSection.ALL96).
                     limsFile(true).
                     reagentNames(new String[]{"Proteinase K"}).build(),
             LibraryType.NONE_ASSIGNED),

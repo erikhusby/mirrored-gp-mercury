@@ -51,9 +51,13 @@ public class ManualTransferActionBeanTest {
         Assert.assertEquals(plateEventType.getReagent().size(), numReagentFields);
     }
 
+    /**
+     * Verify that choosing BloodBiopsyExtraction will ask for a lims file
+     */
     public void testQiagen() {
         String eventType = "BloodBiopsyExtraction";
         ManualTransferActionBean actionBean = chooseEvent(eventType);
+        Assert.assertEquals(actionBean.isParseLimsFile(), true);
     }
 
     /**
