@@ -1077,4 +1077,21 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderDao.persist(new FixupCommentary("GPLIM-4595 Updated pipeline location for arrays PDOs to On Prem"));
         commitTransaction();
     }
+
+    @Test(enabled = true)
+    public void gplim4656RemoveSapAccess() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+
+        String productOrderKey = "PDO-11669";
+
+        removeSapAccessFromOrder(productOrderKey);
+        productOrderDao.persist(new FixupCommentary("GPLIM-4656 removing knowledge of this SAP Order"));
+        commitTransaction();
+    }
+
+    private void removeSapAccessFromOrder(String productOrderKey) {
+        ProductOrder currentProductOrder = productOrderDao.findByBusinessKey(productOrderKey);
+        currentProductOrder.setSapReferenceOrders(Collections.<SapOrderDetail>emptyList());
+    }
 }
