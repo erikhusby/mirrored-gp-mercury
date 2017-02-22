@@ -41,13 +41,34 @@ public class SAPAccessControlEjb {
     public SAPAccessControl resetControlDefinitions() {
         SAPAccessControl control = getCurrentControlDefinitions();
         control.setAccessStatus(AccessStatus.ENABLED);
-        control.setDisabledFeatures(Collections.<AccessItem>emptySet());
+        control.setDisabledItems(Collections.<AccessItem>emptySet());
 
         return control;
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @Deprecated
     public SAPAccessControl setDefinitions(AccessStatus status, Set<String> restrictions) {
+
+        SAPAccessControl accessController = getCurrentControlDefinitions();
+
+        accessController.setAccessStatus(status);
+        accessController.setDisabledFeatures(restrictions);
+
+        return accessController;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public SAPAccessControl resetControlDefinitionItems() {
+        SAPAccessControl control = getCurrentControlDefinitions();
+        control.setAccessStatus(AccessStatus.ENABLED);
+        control.setDisabledItems(Collections.<AccessItem>emptySet());
+
+        return control;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public SAPAccessControl setDefinitionItems(AccessStatus status, Set<String> restrictions) {
 
         SAPAccessControl accessController = getCurrentControlDefinitions();
 
@@ -59,7 +80,7 @@ public class SAPAccessControlEjb {
 
 
         accessController.setAccessStatus(status);
-        accessController.setDisabledFeatures(newItems);
+        accessController.setDisabledItems(newItems);
 
         return accessController;
     }

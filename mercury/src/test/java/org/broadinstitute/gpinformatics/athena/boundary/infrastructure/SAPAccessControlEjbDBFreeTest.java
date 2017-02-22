@@ -29,7 +29,7 @@ public class SAPAccessControlEjbDBFreeTest {
 
         SAPAccessControl accessControl = new SAPAccessControl();
         accessControl.setAccessStatus(AccessStatus.ENABLED);
-        accessControl.setDisabledFeatures(new HashSet<AccessItem>(Arrays.<AccessItem>asList(new AccessItem("Materials"), new AccessItem("Other Materials"))));
+        accessControl.setDisabledItems(new HashSet<AccessItem>(Arrays.<AccessItem>asList(new AccessItem("Materials"), new AccessItem("Other Materials"))));
 
         Mockito.when(accessControlDao.getAccessControl()).thenReturn(accessControl);
     }
@@ -41,8 +41,8 @@ public class SAPAccessControlEjbDBFreeTest {
 
         assertThat(accessControl, is(notNullValue()));
         assertThat(accessControl.getAccessStatus(), is(AccessStatus.ENABLED));
-        assertThat(accessControl.getDisabledFeatures().size(), is(equalTo(2)));
-        assertThat(accessControl.getDisabledFeatures(),containsInAnyOrder(new AccessItem("Other Materials"),new AccessItem("Materials")));
+        assertThat(accessControl.getDisabledItems().size(), is(equalTo(2)));
+        assertThat(accessControl.getDisabledItems(),containsInAnyOrder(new AccessItem("Other Materials"),new AccessItem("Materials")));
     }
 
     @Test
@@ -51,7 +51,7 @@ public class SAPAccessControlEjbDBFreeTest {
 
         SAPAccessControl accessControl = new SAPAccessControl();
         accessControl.setAccessStatus(AccessStatus.DISABLED);
-        accessControl.setDisabledFeatures(new HashSet<AccessItem>(Arrays.<AccessItem>asList(new AccessItem("Test Materials"), new AccessItem("Other Stuff"))));
+        accessControl.setDisabledItems(new HashSet<AccessItem>(Arrays.<AccessItem>asList(new AccessItem("Test Materials"), new AccessItem("Other Stuff"))));
 
         Mockito.when(accessControlDao.getAccessControl()).thenReturn(accessControl);
 
@@ -59,14 +59,14 @@ public class SAPAccessControlEjbDBFreeTest {
 
         assertThat(control, is(notNullValue()));
         assertThat(control.getAccessStatus(), is(AccessStatus.DISABLED));
-        assertThat(control.getDisabledFeatures().size(), is(equalTo(2)));
-        assertThat(control.getDisabledFeatures(),containsInAnyOrder(new AccessItem("Test Materials"),new AccessItem("Other Stuff")));
+        assertThat(control.getDisabledItems().size(), is(equalTo(2)));
+        assertThat(control.getDisabledItems(),containsInAnyOrder(new AccessItem("Test Materials"),new AccessItem("Other Stuff")));
 
         control = accessControlEjb.resetControlDefinitions();
 
         assertThat(control, is(notNullValue()));
         assertThat(control.getAccessStatus(), is(AccessStatus.ENABLED));
-        assertThat(control.getDisabledFeatures(), is(emptyCollectionOf(AccessItem.class)));
+        assertThat(control.getDisabledItems(), is(emptyCollectionOf(AccessItem.class)));
 
     }
 }

@@ -36,7 +36,7 @@ public class ProductEjbDBFreeTest {
 
         SAPAccessControl noControl = new SAPAccessControl();
         SAPAccessControl blockControl = new SAPAccessControl();
-        blockControl.setDisabledFeatures(Collections.singleton(new AccessItem("blockThisItem")));
+        blockControl.setDisabledItems(Collections.singleton(new AccessItem("blockThisItem")));
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(blockControl);
         Product testProduct = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "SGM-TEST-SAP");

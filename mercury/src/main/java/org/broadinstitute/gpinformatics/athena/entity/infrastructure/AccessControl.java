@@ -67,11 +67,36 @@ public abstract class AccessControl implements Serializable{
         this.accessStatus = accessStatus;
     }
 
-    public Set<AccessItem> getDisabledFeatures() {
+    public Set<String> getDisabledFeatures() {
+        final HashSet<String> featureSet = new HashSet<>();
+
+        if (StringUtils.isNotBlank(disabledFeatures)) {
+            featureSet.addAll(Arrays.asList(StringUtils.split(disabledFeatures, CONTROLLER_SEPARATOR_CHARS)));
+        }
+        return featureSet;
+    }
+
+    public void setDisabledFeatures(Set<String> disabledFeatures) {
+        this.disabledFeatures = StringUtils.join(disabledFeatures, CONTROLLER_SEPARATOR_CHARS);
+    }
+
+    public void addDisabledFeatures(String feature) {
+
+        Set<String> currentFeatures = new HashSet<>(getDisabledFeatures());
+
+        if(!currentFeatures.contains(feature)) {
+            currentFeatures.add(feature);
+        }
+
+        setDisabledFeatures(currentFeatures);
+    }
+
+
+    public Set<AccessItem> getDisabledItems() {
         return Collections.unmodifiableSet(disabledItems);
     }
 
-    public void setDisabledFeatures(Set<AccessItem> disabledFeatures) {
+    public void setDisabledItems(Set<AccessItem> disabledFeatures) {
         if (!(disabledFeatures.size() == disabledItems.size()) &&
             !CollectionUtils.containsAll(disabledItems, disabledFeatures)) {
             disabledItems.clear();
@@ -79,12 +104,12 @@ public abstract class AccessControl implements Serializable{
         this.disabledItems = disabledFeatures;
     }
 
-    public void addDisabledFeatures(String feature) {
+    public void addDisabledItem(String feature) {
 
-        addDisabledFeature(new AccessItem(feature));
+        addDisabledItem(new AccessItem(feature));
     }
 
-    public void addDisabledFeature(AccessItem feature) {
+    public void addDisabledItem(AccessItem feature) {
 
         if(!disabledItems.contains(feature)) {
             disabledItems.add(feature);
