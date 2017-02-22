@@ -57,7 +57,6 @@ public class QiagenRackFileParser {
             return;
         }
 
-        //TODO for test null
         RackOfTubes.RackType rackType = RackOfTubes.RackType.getByName(
                 plateTransferEventType.getSourcePlate().getPhysType());
         if (rackType == null) {
