@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -1229,6 +1230,48 @@ public class LabBatchFixUpTest extends Arquillian {
         }
         // There is no database change except for the fixup commentary.
         labBatchDao.persist(new FixupCommentary("GPLIM-4491 add Jira links from LCSET to FCT"));
+        labBatchDao.flush();
+    }
+
+    /**
+     * This test is driven by a file of the following format: the LCSET has the routing error, the first tube
+     * barcode is in two LCSETs, the second tube barcode is in none.
+     * SUPPORT-2545
+     * LCSET-10646
+     * 1147649332
+     * 1147649319
+     */
+    @Test(enabled = false)
+    public void fixupSupport2603() {
+        try {
+            List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("MoveControlDiffLcset.txt"));
+            moveControlToDiffLcset(lines.get(0), lines.get(1), lines.get(2), lines.get(3));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * User somehow scanned same rack for two different LCSETs, so one control was associated with 2 LCSETs,
+     * and another control with none.
+     * @param supportTicketId the ID of the ticket in which the problem was reported
+     * @param lcsetRoutingError the ID of the LCSET that has the routing error
+     * @param barcodeInTwoLcsets the barcode of the tube that is in two LCSETs
+     * @param barcodeInNoLcset the barcode of the tube in the message
+     */
+    private void moveControlToDiffLcset(String supportTicketId, String lcsetRoutingError, String barcodeInTwoLcsets, String barcodeInNoLcset) {
+        userBean.loginOSUser();
+        LabVessel labVessel = labVesselDao.findByIdentifier(barcodeInTwoLcsets);
+        LabVessel labVessel2 = labVesselDao.findByIdentifier(barcodeInNoLcset);
+        for (LabBatchStartingVessel labBatchStartingVessel : labVessel.getLabBatchStartingVessels()) {
+            if (labBatchStartingVessel.getLabBatch().getBatchName().equals(lcsetRoutingError)) {
+                System.out.println("Changing LabBatchStartingVessel " +
+                        labBatchStartingVessel.getBatchStartingVesselId() + " from " + labVessel.getLabel() + " to " +
+                        labVessel2.getLabel());
+                labBatchStartingVessel.setLabVessel(labVessel2);
+            }
+        }
+        labBatchDao.persist(new FixupCommentary(supportTicketId + " change batch membership"));
         labBatchDao.flush();
     }
 }
