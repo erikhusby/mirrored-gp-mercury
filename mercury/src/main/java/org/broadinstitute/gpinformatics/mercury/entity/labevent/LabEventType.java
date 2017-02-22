@@ -579,7 +579,7 @@ public enum LabEventType {
                     sourceSection(SBSSection.P96_4ROWSOF24_COLWISE_8TIP).
                     targetSection(SBSSection.ALL96).
                     limsFile(true).
-                    reagentNames(new String[]{"Proteinase K"}).build(),
+                    reagentNames(new String[]{"QIASymphony Kit"}).build(),
             LibraryType.NONE_ASSIGNED),
     BLOOD_CRYOVIAL_EXTRACTION("BloodCryovialExtraction",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
