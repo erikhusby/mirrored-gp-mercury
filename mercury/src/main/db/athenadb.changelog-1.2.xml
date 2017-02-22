@@ -686,28 +686,18 @@
     </changeSet>
 
     <changeSet id="GPLIM-4652-1" author="scottmat">
-        <createTable tableName="ACCESS_ITEM">
+        <createTable tableName="ACCESS_ITEM" schemaName="ATHENA">
             <column name="id" type="number(19,0)">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
             <column name="item_value" type="varchar(255)">
                 <constraints nullable="false" />
             </column>
-        </createTable>
-        <createSequence sequenceName="SEQ_ACCESS_CONTROL_ITEM" schemaName="athena" startValue="1" incrementBy="50" />
-    </changeSet>
-
-    <changeSet id="GPLIM-4652-2" author="scottmat">
-        <createTable tableName="ACCESS_CONTROL_DISABLED_ITEMS">
             <column name="access_control" type="number(19,0)">
                 <constraints nullable="false" />
             </column>
-            <column name="disabled_items" type="number(19,0)">
-                <constraints nullable="false" />
-            </column>
         </createTable>
-        <addPrimaryKey schemaName="athena" tableName="ACCESS_CONTROL_DISABLED_ITEMS" columnNames="access_control,disabled_items" />
-        <addUniqueConstraint tableName="ACCESS_CONTROL_DISABLED_ITEMS" columnNames="disabled_items" schemaName="athena" constraintName="UK_DISABLED_ITEM" />
+        <createSequence sequenceName="SEQ_ACCESS_CONTROL_ITEM" schemaName="athena" startValue="1" incrementBy="50" />
     </changeSet>
 
 </databaseChangeLog>

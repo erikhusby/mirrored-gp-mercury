@@ -7,6 +7,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
@@ -21,6 +22,9 @@ public class AccessItem {
 
     private String itemValue;
 
+    @ManyToOne
+    private AccessControl accessControl;
+
     public AccessItem() {
     }
 
@@ -30,6 +34,19 @@ public class AccessItem {
 
     public String getItemValue() {
         return itemValue;
+    }
+
+    public AccessControl getAccessControl() {
+        return accessControl;
+    }
+
+    public void setAccessControl(
+            AccessControl accessControl) {
+        this.accessControl = accessControl;
+    }
+
+    void remove() {
+        accessControl = null;
     }
 
     @Override

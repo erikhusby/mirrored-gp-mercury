@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.infrastructure;
 
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.hamcrest.Matchers;
 import org.testng.annotations.Test;
 
@@ -11,6 +12,7 @@ import static org.hamcrest.Matchers.is;
 import static org.testng.Assert.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+@Test(groups = TestGroups.DATABASE_FREE)
 public class SAPAccessControlTest {
 
     @Test
@@ -23,13 +25,6 @@ public class SAPAccessControlTest {
         featureSet.add(new AccessItem("feature2"));
         featureSet.add(new AccessItem("feature3"));
 
-        Set<String> featureSetValues = new HashSet<>() ;
-        featureSetValues.add("feature1");
-        featureSetValues.add("feature2");
-        featureSetValues.add("feature3");
-
-
-
         assertThat(control.getAccessStatus(), is(AccessStatus.ENABLED));
         control.setAccessStatus(AccessStatus.DISABLED);
         assertThat(control.getAccessStatus(), is(control.getAccessStatus()));
@@ -39,10 +34,10 @@ public class SAPAccessControlTest {
         control.setDisabledItems(featureSet);
 
         assertThat(control.getDisabledItems(), is(equalTo(featureSet)));
-        control.addDisabledFeatures("feature3");
+        control.addDisabledItem(new AccessItem("feature3"));
         assertThat(control.getDisabledItems(), is(equalTo(featureSet)));
-        control.addDisabledFeatures("feature4");
-        assertThat(control.getDisabledFeatures().size(), is(equalTo(4)));
+        control.addDisabledItem(new AccessItem("feature4"));
+        assertThat(control.getDisabledItems().size(), is(equalTo(4)));
 
     }
 }

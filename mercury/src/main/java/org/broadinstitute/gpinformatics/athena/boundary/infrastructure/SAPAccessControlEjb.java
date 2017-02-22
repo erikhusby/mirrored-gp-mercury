@@ -38,27 +38,6 @@ public class SAPAccessControlEjb {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    public SAPAccessControl resetControlDefinitions() {
-        SAPAccessControl control = getCurrentControlDefinitions();
-        control.setAccessStatus(AccessStatus.ENABLED);
-        control.setDisabledItems(Collections.<AccessItem>emptySet());
-
-        return control;
-    }
-
-    @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    @Deprecated
-    public SAPAccessControl setDefinitions(AccessStatus status, Set<String> restrictions) {
-
-        SAPAccessControl accessController = getCurrentControlDefinitions();
-
-        accessController.setAccessStatus(status);
-        accessController.setDisabledFeatures(restrictions);
-
-        return accessController;
-    }
-
-    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public SAPAccessControl resetControlDefinitionItems() {
         SAPAccessControl control = getCurrentControlDefinitions();
         control.setAccessStatus(AccessStatus.ENABLED);
@@ -77,7 +56,6 @@ public class SAPAccessControlEjb {
         for (String restriction : restrictions) {
             newItems.add(new AccessItem(restriction));
         }
-
 
         accessController.setAccessStatus(status);
         accessController.setDisabledItems(newItems);

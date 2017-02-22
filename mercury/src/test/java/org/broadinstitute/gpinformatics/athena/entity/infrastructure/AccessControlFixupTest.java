@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccess
 import org.broadinstitute.gpinformatics.athena.control.dao.infrastructure.SAPAccessControlDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -52,7 +53,7 @@ public class AccessControlFixupTest extends Arquillian {
 
         controller.setDefinitionItems(accessControl.getAccessStatus(), currentRestrictions);
 
-        accessControlDao.persist("GPLIM-4652 moving old access restrictions to a new structure");
+        accessControlDao.persist(new FixupCommentary("GPLIM-4652 moving old access restrictions to a new structure"));
 
     }
 }

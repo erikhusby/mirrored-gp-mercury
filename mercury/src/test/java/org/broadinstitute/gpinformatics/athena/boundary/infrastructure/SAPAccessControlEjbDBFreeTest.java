@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.infrastructure.SAPAcc
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessStatus;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.mockito.Mockito;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -19,6 +20,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
+@Test(groups = TestGroups.DATABASE_FREE)
 public class SAPAccessControlEjbDBFreeTest {
 
     private SAPAccessControlDao accessControlDao = Mockito.mock(SAPAccessControlDao.class);
@@ -62,7 +64,7 @@ public class SAPAccessControlEjbDBFreeTest {
         assertThat(control.getDisabledItems().size(), is(equalTo(2)));
         assertThat(control.getDisabledItems(),containsInAnyOrder(new AccessItem("Test Materials"),new AccessItem("Other Stuff")));
 
-        control = accessControlEjb.resetControlDefinitions();
+        control = accessControlEjb.resetControlDefinitionItems();
 
         assertThat(control, is(notNullValue()));
         assertThat(control.getAccessStatus(), is(AccessStatus.ENABLED));

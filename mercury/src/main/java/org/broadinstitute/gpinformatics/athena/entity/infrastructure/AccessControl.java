@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.infrastructure;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -52,8 +53,8 @@ public abstract class AccessControl implements Serializable{
     @Column
     private String disabledFeatures;
 
-    @OneToMany
-    private Set<AccessItem> disabledItems;
+    @OneToMany(mappedBy = "accessControl", orphanRemoval = true, cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    private Set<AccessItem> disabledItems = new HashSet<>();
 
     public Long getId() {
         return id;
@@ -67,6 +68,7 @@ public abstract class AccessControl implements Serializable{
         this.accessStatus = accessStatus;
     }
 
+    @Deprecated
     public Set<String> getDisabledFeatures() {
         final HashSet<String> featureSet = new HashSet<>();
 
@@ -76,32 +78,31 @@ public abstract class AccessControl implements Serializable{
         return featureSet;
     }
 
-    public void setDisabledFeatures(Set<String> disabledFeatures) {
-        this.disabledFeatures = StringUtils.join(disabledFeatures, CONTROLLER_SEPARATOR_CHARS);
-    }
-
-    public void addDisabledFeatures(String feature) {
-
-        Set<String> currentFeatures = new HashSet<>(getDisabledFeatures());
-
-        if(!currentFeatures.contains(feature)) {
-            currentFeatures.add(feature);
-        }
-
-        setDisabledFeatures(currentFeatures);
-    }
-
-
     public Set<AccessItem> getDisabledItems() {
         return Collections.unmodifiableSet(disabledItems);
     }
 
     public void setDisabledItems(Set<AccessItem> disabledFeatures) {
         if (!(disabledFeatures.size() == disabledItems.size()) &&
-            !CollectionUtils.containsAll(disabledItems, disabledFeatures)) {
-            disabledItems.clear();
+            !CollectionUtils.isEqualCollection(disabledItems, disabledFeatures)) {
+
+             Set<AccessItem> toRemove = new HashSet<>();
+
+            for (AccessItem currentDisabledItem : disabledItems) {
+                if(!disabledFeatures.contains(currentDisabledItem)) {
+                    currentDisabledItem.remove();
+                    toRemove.add(currentDisabledItem);
+                }
+            }
+
+            disabledItems.removeAll(toRemove);
+
+            for (AccessItem disabledFeature : disabledFeatures) {
+                if(!disabledItems.contains(disabledFeature)) {
+                    addDisabledItem(disabledFeature);
+                }
+            }
         }
-        this.disabledItems = disabledFeatures;
     }
 
     public void addDisabledItem(String feature) {
@@ -112,6 +113,7 @@ public abstract class AccessControl implements Serializable{
     public void addDisabledItem(AccessItem feature) {
 
         if(!disabledItems.contains(feature)) {
+            feature.setAccessControl(this);
             disabledItems.add(feature);
         }
     }
