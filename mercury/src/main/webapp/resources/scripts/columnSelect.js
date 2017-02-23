@@ -52,12 +52,19 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
     }
 
     var updateFilter = $j.fn.dataTable.util.throttle(
-         function (column, filterValue) {
-             searchString = filterValue.replace(/[,|\s]+/g, '|');
-             var searchInstance = column.search(filterValue ?  searchString : '', true, false, true);
-             triggerChosenUpdate(column);
-             searchInstance.draw();
-         }, 500);
+        function updateFilter(column, filterValue) {
+            var searchString = "";
+            if (Array.isArray(filterValue)) {
+                filterValue.forEach(function (value) {
+                    searchString += $j.fn.dataTable.util.escapeRegex(value) + "|";
+                });
+                searchString = searchString.replace(/\|$/, '');
+            } else {
+                searchString = $j.fn.dataTable.util.escapeRegex(filterValue);
+            }
+            column.search(searchString, true, false, true).draw();
+            triggerChosenUpdate(column);
+        }, 500);
 
     function updateFilterInfo(column, title, filterLabel, filterValue) {
         var filteredItemsHeader = $j(".filtered-items-header");
@@ -68,7 +75,7 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
         var filteredItem = $j("<li></li>", {id: filterItemTitle, class: "list"});
         var columnContainer = $j("#filtered-items");
 
-        if (filterValue === "") {
+        if (filterValue.length === 0) {
             filteredItemsHeader.find(filterHeader).remove();
             columnContainer.find(filteredItem).remove();
         } else {
@@ -83,33 +90,47 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                 $j(this).css("cursor", "pointer");
             });
             filteredItemLabel.prepend(filteredItedBullet);
-            var filteredItemValue = getElement("<span></span>", {class: 'filtering-text', text: filterValue});// DNA
+            var filterText;
+            if (Array.isArray(filterValue)) {
+                filterText = filterValue.join(", ");
+            } else {
+                filterText = filterValue.replace('|', ', ');
+            }
+            filterValue = filterText.replace(/\\/g, '');
+            var filteredItemValue = getElement("<span></span>", {
+                class: 'filtering-text',
+                text: filterText
+            });// DNA
+
             filteredItemsHeader.append(filterHeader);
             filteredItem.append(filteredItemLabel);
             filteredItemLabel.after(filteredItemValue);
             columnContainer.append(filteredItem);
 
             filteredItem.on("click",function(){
-                $j("th").filter(function () {
-                    var columnTitle = $j(this).find(".title").text().trim();
-                    return columnTitle === filterLabel;
-                }).each(function () {
-                    var textArea = $j(this).find("input[type='textarea']");
-                    if (textArea.length > 0) {
-                        textArea.val('');
-                        textArea.trigger("change");
-                    } else {
-                        var select = $j(this).find("select");
-                        if (select.length>0){
-                            var optionSelector = "option[value='OPTION_VALUE']".replace("OPTION_VALUE",filterValue);
-                            $j(this).find(optionSelector).removeAttr('selected');
-                            var eventWhat = {'deselected': ''};
-                            select.trigger("chosen:updated", eventWhat);
+                // wrapped in closure since this is created in a loop
+                (function (filterLabel, filterValue) {
+                    $j("th").filter(function () {
+                        var columnTitle = $j(this).find(".title").text().trim();
+                        return columnTitle === filterLabel;
+                    }).each(function () {
+                        var textArea = $j(this).find("input[type='textarea']");
+                        if (textArea.length > 0) {
+                            textArea.val('');
+                            textArea.trigger("change");
+                        } else {
+                            var select = $j(this).find("select");
+                            if (select.length > 0) {
+                                var optionSelector = "option[value='OPTION_VALUE']".replace("OPTION_VALUE", filterValue);
+                                $j(this).find(optionSelector).removeAttr('selected');
+                                var eventWhat = {'deselected': ''};
+                                select.trigger("chosen:updated", eventWhat);
+                            }
                         }
-                    }
-                    updateFilter(column, '');
-                });
-                $j(this).remove();
+                        updateFilter(column, '');
+                    });
+                    $j(this).remove();
+                })(filterLabel, filterValue);
             });
         }
         if (filterStatusContainer.find("li").length==0){
@@ -144,7 +165,7 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                 type: 'textarea',
                 css: 'height:1',
                 class: columnFilterClass,
-                value: savedFilterValue,
+                value: savedFilterValue.replace('|', ' '),
                 placeholder: "Filter " + headerLabel
             });
             header.append(textInput);
@@ -153,8 +174,9 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
             });
 
             $j(textInput).on('input blur change', function () {
-                updateFilter(column, $j(this).val().trim());
-                updateFilterInfo(column, cleanTitle, headerLabel, $j(this).val().trim());
+                var searchInput = $j(this).val().trim();
+                updateFilter(column, searchInput.split(/\s+/));
+                updateFilterInfo(column, cleanTitle, headerLabel, searchInput);
             });
         }
         if (selectType === 'select' && filterColumn) {
@@ -183,7 +205,7 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                 disable_search_threshold: 10,
                 display_selected_options: false,
                 display_disabled_options: false,
-                search_contains: true,
+                search_contains: false,
                 width: width,
                 inherit_select_classes: true,
                 placeholder_text_single: "Select a " + headerLabel,
@@ -207,39 +229,40 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                             $j(this).find(":selected").prop('selected',false);
                             currentlySelected = [];
                         } else {
-                            var index = currentlySelected.indexOf(deselectedItems);
-                            if (index)
-                                if (index == -1) {
-                                    currentlySelected.splice(index, 1);
+                            var selectedIndex = currentlySelected.indexOf(deselectedItems);
+                            if (selectedIndex)
+                                if (selectedIndex == -1) {
+                                    currentlySelected.splice(selectedIndex, 1);
                                 }
                         }
                     }
-                    var filterText = currentlySelected.join("|");
-                    updateFilterInfo(column, cleanTitle, headerLabel, filterText);
+                    updateFilterInfo(column, cleanTitle, headerLabel, currentlySelected);
                 }
             });
             column.on("column-sizing.dt", function () {
                 chosen.trigger("chosen:updated");
             });
 
-            // select.trigger("chosen:updated");
             // stop event propagation so clicking the text area won't cause the column to sort.
             $j('.filter-select ul').on('click', function () {
                 return false;
             });
 
-            $j(select).on('change blur', function () {
-                // api.off('click');
-                var values = [];
-                $j(this).find("option:selected").each(function () {
-                    values.push(this.value.trim());
-                });
-                updateFilter(column, values.join('|'));
-                // api.off(this);
+            $j(select).on('change', function () {
+                // wrapped in closure since this is created in a loop
+                (function (dtColumn, select) {
+                    // api.off('click');
+                    var values = [];
+                    $j(select).find("option:selected").each(function () {
+                        values.push(this.value.trim());
+                    });
+                    updateFilter(dtColumn, values);
+                    // api.off(this);
+                })(column, this);
             });
         }
         api.on('init.dt', function (event, settings) {
-            updateFilterInfo(column, cleanTitle, headerLabel, savedFilterValue.replace(/\|$/, ''));
+            updateFilterInfo(column, cleanTitle, headerLabel, savedFilterValue);
         });
     });
 
