@@ -95,6 +95,10 @@ public class ArrayProcessFlowEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
         List<ArrayDto> arrayFlowDtos = null;
 
+        if( entity == null ) {
+            return (List<String>)Collections.EMPTY_LIST;
+        }
+
         // Supports overrides but not deletes
         if( isDelete ) {
             loggingDeletedEventIds.add(entity.getLabEventId());
