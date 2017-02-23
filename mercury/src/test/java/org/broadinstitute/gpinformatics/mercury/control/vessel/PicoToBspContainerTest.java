@@ -68,6 +68,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -128,8 +129,8 @@ public class PicoToBspContainerTest extends Arquillian {
     private BSPSampleDataFetcher dataFetcher = new BSPSampleDataFetcher(bspSampleSearchService, bspConfig);
     private BSPSetVolumeConcentrationImpl bspSetVolumeConcentration = new BSPSetVolumeConcentrationImpl(bspConfig);
     private BettaLimsMessageTestFactory bettalimsFactory = new BettaLimsMessageTestFactory(true);
-    private long testTimestamp = System.currentTimeMillis() / 1000;
     private MessageCollection messageCollection;
+    private final int minMsecBetweenTests = 30 * 1000;
 
     // Each test case is a row in this array. The fields are:
     // #research, #crsp, quantType, #dilutionWells, #microfluorWells, sensitivityFactor, dilutionFactor, bsp quant
@@ -259,11 +260,12 @@ public class PicoToBspContainerTest extends Arquillian {
 
     private List<BarcodedTube> mercuryTubes = new ArrayList<>();
     private List<BarcodedTube> bspTubes = new ArrayList<>();
+    private final static Random RANDOM = new Random(System.currentTimeMillis());
 
     private void oneTimeInit() {
         // Makes the 96 crsp tubes that are used for all tests.
         for (int i = 0; i < 96; ++i) {
-            String tubeBarcode = String.format("%011d%03d", testTimestamp, i);
+            String tubeBarcode = String.format("%010d", RANDOM.nextInt(999999999));
             BarcodedTube tube = new BarcodedTube(tubeBarcode, BarcodedTube.BarcodedTubeType.MatrixTube075);
             tube.setVolume(BIG_DECIMAL_60);
             labVesselDao.persist(tube);
@@ -294,18 +296,13 @@ public class PicoToBspContainerTest extends Arquillian {
         }
     }
 
-    private void testCaseInit() {
-        // Ensures each test case makes unique rack/plate barcodes.
-        testTimestamp += 10;
-        messageCollection = new MessageCollection();
-
-        // Zeros the value BSP has for concentration on our test samples.
+    /** Zeros the value BSP has for concentration on our test samples and verifies the zero. */
+    private void bspConcInit() {
         for (String smId : bspTubeMap.values()) {
             String result = bspSetVolumeConcentration.setVolumeAndConcentration(smId, BIG_DECIMAL_60,
                     BigDecimal.ZERO, null);
             Assert.assertEquals(result, BSPSetVolumeConcentration.RESULT_OK);
         }
-        // Verifies zero.
         Map<String, BspSampleData> bspSampleDataMap = dataFetcher.fetchSampleData(bspTubeMap.values(),
                 BSPSampleSearchColumn.CONCENTRATION);
         for (String smId : bspTubeMap.values()) {
@@ -318,8 +315,13 @@ public class PicoToBspContainerTest extends Arquillian {
     public void testCases() throws Exception {
         oneTimeInit();
         int caseIdx = 0;
+        long time = 0;
         while (caseIdx < testCases.length) {
-            testCaseInit();
+            // Waits for previous BSP deferred action (a CMS write) to complete.
+            Thread.sleep(Math.max(1, time + minMsecBetweenTests - System.currentTimeMillis()));
+            time = System.currentTimeMillis();
+            messageCollection = new MessageCollection();
+
             // Parses the testCase array into test parameters, then runs the quant import test.
             int tokenIdx = 0;
             int research = (Integer)testCases[caseIdx][tokenIdx++];
@@ -353,6 +355,7 @@ public class PicoToBspContainerTest extends Arquillian {
 
             makeVessels(dto);
             makeTransferEvents(dto);
+            bspConcInit();
             sendSpreadsheet(dto);
             Assert.assertEquals(dto.getRunAndFormation().getLeft().getLabMetrics().size(),
                     (research + crsp) * (quantCardinality + 1));
@@ -450,12 +453,12 @@ public class PicoToBspContainerTest extends Arquillian {
     private void makeVessels(Dto dto) throws Exception {
         // Generates the rack and plate barcodes.
         int numberMicrofluorPlates = dto.getMicrofluorPlateType() == Eppendorf384 ? 1 : dto.getQuantCardinality();
-        String rackBarcode = String.format("%011d%1d", testTimestamp, 0);
+        String rackBarcode =  String.format("%012d", RANDOM.nextInt(999999999));
         String dilutionPlateBarcode = (dto.getDilutionPlateType() != null) ?
-                String.format("%011d%1d", testTimestamp, 1) : null;
+                String.format("%012d", RANDOM.nextInt(999999999)) : null;
         String[] blackPlateBarcodes = new String[numberMicrofluorPlates];
         for (int i = 0; i < numberMicrofluorPlates; ++i) {
-            blackPlateBarcodes[i] = String.format("%011d%1d", testTimestamp, i + 2);
+            blackPlateBarcodes[i] = String.format("%012d", RANDOM.nextInt(999999999));
         }
         // Makes the tube mix.
         List<ChildVesselBean> tubeBeans = new ArrayList<>();
@@ -653,7 +656,9 @@ public class PicoToBspContainerTest extends Arquillian {
         // Calls UploadQuantsActionBean to send the spreadsheet to Mercury and a
         // filtered spreadsheet containing only the research sample quants to BSP.
         userBean.login("bspuser");
-        userBean.ensureUserValid();
+        if (!userBean.ensureUserValid() || !userBean.isValidBspUser() || !userBean.isValidJiraUser()) {
+            throw new Exception("BSP or JIRA is unavailable");
+        }
         dto.setRunAndFormation(uploadQuantsActionBean.spreadsheetToMercuryAndBsp(messageCollection,
                 quantStream, LabMetric.MetricType.INITIAL_PICO, userBean, true));
 
@@ -669,7 +674,7 @@ public class PicoToBspContainerTest extends Arquillian {
                 dto.getBlackPlateBarcodes(),
                 dto.getMicrofluorPlateType() == Eppendorf384 ?
                         VarioskanParserTest.VARIOSKAN_384_OUTPUT : VarioskanParserTest.VARIOSKAN_OUTPUT,
-                String.valueOf(testTimestamp));
+                String.valueOf(System.currentTimeMillis()));
 
         // Finds the tube-derived microfluor positions that don't have a source tube transfer into them.
         Set<VesselPosition> positionsWithoutTube = new HashSet<>(dto.getMicrofluorPlateType() == Eppendorf96 ?

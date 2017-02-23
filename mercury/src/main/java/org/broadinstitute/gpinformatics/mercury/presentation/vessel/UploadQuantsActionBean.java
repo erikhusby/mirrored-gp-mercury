@@ -262,6 +262,9 @@ public class UploadQuantsActionBean extends CoreActionBean {
         Triple<LabMetricRun, Result, Set<StaticPlate>> runAndRackOfTubes = vesselEjb.createVarioskanRun(
                 new ByteArrayInputStream(quantStreamBytes), quantType, userBean.getBspUser().getUserId(),
                 messageCollection, acceptRedoPico);
+        if (messageCollection.hasErrors()) {
+            return null;
+        }
         Result traverserResult = runAndRackOfTubes.getMiddle();
         if (quantType == LabMetric.MetricType.INITIAL_PICO) {
 
