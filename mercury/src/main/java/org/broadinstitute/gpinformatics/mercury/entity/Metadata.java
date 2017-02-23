@@ -311,6 +311,7 @@ public class Metadata {
 
         public static Key fromDisplayName(String displayName) {
 
+            // todo jmt improve
             Key foundKey = null;
 
             for (Key key : values()) {

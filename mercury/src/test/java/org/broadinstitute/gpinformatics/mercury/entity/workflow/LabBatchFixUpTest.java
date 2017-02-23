@@ -1249,4 +1249,26 @@ public class LabBatchFixUpTest extends Arquillian {
 
         changeBucketEntriesToAliquots(tubeBarcodes, 1716867L, "LCSET-10218", "SUPPORT-2461");
     }
+
+
+    /**
+     * Likely that user scanned same rack for two different LCSETs, so one control was associated with 2 LCSETs,
+     * and another control with none.
+     */
+    @Test(enabled = false)
+    public void fixupSupport2545() {
+        userBean.loginOSUser();
+        LabVessel labVessel = labVesselDao.findByIdentifier("1147649282");
+        LabVessel labVessel2 = labVesselDao.findByIdentifier("1147649297");
+        for (LabBatchStartingVessel labBatchStartingVessel : labVessel.getLabBatchStartingVessels()) {
+            if (labBatchStartingVessel.getLabBatch().getBatchName().equals("LCSET-10566")) {
+                System.out.println("Changing LabBatchStartingVessel " +
+                        labBatchStartingVessel.getBatchStartingVesselId() + " from " + labVessel.getLabel() + " to " +
+                        labVessel2.getLabel());
+                labBatchStartingVessel.setLabVessel(labVessel2);
+            }
+        }
+        labBatchDao.persist(new FixupCommentary("SUPPORT-2545 change batch membership"));
+        labBatchDao.flush();
+    }
 }

@@ -685,5 +685,14 @@
         </addColumn>
     </changeSet>
 
-
+    <changeSet id="GPLIM-4656-1" author="scottmat">
+        <dropNotNullConstraint tableName="SAP_ORDER_DETAIL_AUD" columnName="SAP_ORDER_NUMBER" columnDataType="varchar (255)" schemaName="ATHENA" />
+        <dropNotNullConstraint tableName="SAP_ORDER_DETAIL_AUD" columnName="created_by" columnDataType="numeric(15, 0)" schemaName="ATHENA" />
+        <dropNotNullConstraint tableName="SAP_ORDER_DETAIL_AUD" columnName="modified_by" columnDataType="numeric(15, 0)" schemaName="ATHENA" />
+        <dropNotNullConstraint tableName="SAP_ORDER_DETAIL_AUD" columnName="created_date" columnDataType="timestamp(6)" schemaName="ATHENA" />
+        <dropNotNullConstraint tableName="SAP_ORDER_DETAIL_AUD" columnName="modified_date" columnDataType="timestamp(6)" schemaName="ATHENA" />
+        <dropNotNullConstraint tableName="SAP_ORDER_DETAIL_AUD" columnName="primary_quantity" columnDataType="number(10,0)" schemaName="ATHENA" />
+        <dropNotNullConstraint tableName="SAP_ORDER_DETAIL_AUD" columnName="REFERENCE_PRODUCT_ORDER" columnDataType="number(19,0)" schemaName="ATHENA" />
+    </changeSet>
+    
 </databaseChangeLog>

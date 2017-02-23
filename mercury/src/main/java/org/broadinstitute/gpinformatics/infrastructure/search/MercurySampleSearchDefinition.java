@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
+import org.broadinstitute.gpinformatics.infrastructure.columns.DisplayExpression;
 import org.broadinstitute.gpinformatics.infrastructure.columns.SampleMetadataPlugin;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -24,6 +25,7 @@ import java.util.TreeSet;
 /**
  * Builds ConfigurableSearchDefinition for mercury sample user defined search logic
  */
+@SuppressWarnings("ReuseOfLocalVariable")
 public class MercurySampleSearchDefinition {
 
     public ConfigurableSearchDefinition buildSearchDefinition() {
@@ -330,12 +332,11 @@ public class MercurySampleSearchDefinition {
         searchTerms.add(searchTerm);
 
         // ******** Allow individual selectable result columns for each sample metadata value *******
-        SearchDefinitionFactory.SampleMetadataDisplayExpression sampleMetadataDisplayExpression = new SearchDefinitionFactory.SampleMetadataDisplayExpression();
         for (Metadata.Key meta : Metadata.Key.values()) {
             if (meta.getCategory() == Metadata.Category.SAMPLE) {
                 searchTerm = new SearchTerm();
                 searchTerm.setName(meta.getDisplayName());
-                searchTerm.setDisplayValueExpression(sampleMetadataDisplayExpression);
+                searchTerm.setDisplayExpression(DisplayExpression.METADATA);
                 searchTerms.add(searchTerm);
             }
         }
