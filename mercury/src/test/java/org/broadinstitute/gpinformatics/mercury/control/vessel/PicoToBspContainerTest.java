@@ -18,7 +18,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServic
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentration;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentrationImpl;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
-import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
@@ -66,6 +65,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -90,6 +90,7 @@ import static org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate
 public class PicoToBspContainerTest extends Arquillian {
     private static final String RACK_ROWS = "ABCDEFGH";
     private static final int RACK_COLUMNS = 12;
+    private static final int NINES = 999999999;
     private static final Log log = LogFactory.getLog(PicoToBspContainerTest.class);
     private static final boolean PRINT_QUANT_VALUES = false;
     private static final BigDecimal BIG_DECIMAL_60 = new BigDecimal("60");
@@ -130,64 +131,24 @@ public class PicoToBspContainerTest extends Arquillian {
     private BSPSetVolumeConcentrationImpl bspSetVolumeConcentration = new BSPSetVolumeConcentrationImpl(bspConfig);
     private BettaLimsMessageTestFactory bettalimsFactory = new BettaLimsMessageTestFactory(true);
     private MessageCollection messageCollection;
-    private final int minMsecBetweenTests = 30 * 1000;
 
     // Each test case is a row in this array. The fields are:
     // #research, #crsp, quantType, #dilutionWells, #microfluorWells, sensitivityFactor, dilutionFactor, bsp quant
     private Object[][] testCases = {
             // Duplicate pico, Rack -> 1st blackPlate(96 well) and rack -> 2nd blackPlate(96 well).
-            {41, 54, 2, 0, 96, 1, 1, 3.3348},
-            {96,  0, 2, 0, 96, 1, 1, 3.3348},
-            {0,   1, 2, 0, 96, 1, 1, 3.3348},
-            {40, 55, 2, 0, 96, 2, 1, 1.6674},
+            {2, 2, 2, 0, 96, 1, 1, 3.3348},
             // Triplicate pico, rack -> blackPlate(384 well) e.g. CO-20552814.
-            {96,  0, 3, 0, 384, 1, 1, 53.745},
-            {0,  96, 3, 0, 384, 1, 1, 53.745},
-            {50, 46, 3, 0, 384, 1, 1, 53.745},
-            {4,   4, 3, 0, 384, 2, 1, 26.872},
+            {2, 0, 3, 0, 384, 1, 1, 53.745},
             // Triplicate pico, rack -> dilutionPlate(96) -> blackPlate(384).
-            {47, 47, 3, 96, 384, 1,  1, 53.745},
-            {96,  0, 3, 96, 384, 1, 10, 537.45},
+            {2, 2, 3, 96, 384, 1, 10, 537.45},
             // Triplicate pico, rack -> dilutionPlate(384) -> blackPlate(384).
-            {24, 24, 3, 384, 384, 1,  1, 53.745},
-            {6,   0, 3, 384, 384, 2, 10, 268.72},
-            {96,  0, 3, 384, 384, 1, 10, 537.45},
+            {2, 3, 3, 384, 384, 2, 10, 268.72},
             // Single pico (typically a retest of a triplicate pico), rack -> dilutionPlate(96) -> blackPlate(96).
-            {40, 55, 1, 96, 96, 1,  1, 3.3779},
-            {4,   5, 1, 96, 96, 2,  1, 1.6889},
-            {96,  0, 1, 96, 96, 1, 10, 33.779},
+            {2, 1, 1, 96, 96, 1,  1, 3.3779},
     };
 
     // Research tubes, i.e. currently existing BSP genomic DNA tubes and their sample names.
     private SortedMap<String, String> bspTubeMap = new TreeMap<String, String>() {{
-        put("1140117899", "SM-D7G11");
-        put("1140145281", "SM-DBQFT");
-        put("1140145341", "SM-DBQHS");
-        put("1140145283", "SM-DBQFV");
-        put("1140145313", "SM-DBQGQ");
-        put("1140145285", "SM-DBQFX");
-        put("1140145286", "SM-DBQFY");
-        put("1140141779", "SM-DBQFZ");
-        put("1140141772", "SM-DBQG1");
-        put("1140145289", "SM-DBQG2");
-        put("1140145356", "SM-DBQHY");
-        put("1140145291", "SM-DBQG4");
-        put("1140145303", "SM-DBQG5");
-        put("1140145302", "SM-DBQG6");
-        put("1140145301", "SM-DBQG7");
-        put("1140145300", "SM-DBQG8");
-        put("1140145330", "SM-DBQH8");
-        put("1140145290", "SM-DBQG3");
-        put("1140141803", "SM-DBQGB");
-        put("1140145296", "SM-DBQGC");
-        put("1140145306", "SM-DBQGJ");
-        put("1140145294", "SM-DBQGE");
-        put("1140145293", "SM-DBQGF");
-        put("1140145354", "SM-DBQHW");
-        put("1140145304", "SM-DBQGH");
-        put("1140145305", "SM-DBQGI");
-        put("1140145284", "SM-DBQFW");
-        put("1140145312", "SM-DBQGP");
         put("1140145328", "SM-DBQH6");
         put("1140145309", "SM-DBQGM");
         put("1140145310", "SM-DBQGN");
@@ -198,74 +159,18 @@ public class PicoToBspContainerTest extends Arquillian {
         put("1140145315", "SM-DBQGS");
         put("1140145327", "SM-DBQGT");
         put("1140145342", "SM-DBQHR");
-        put("1140145370", "SM-DBQIC");
-        put("1140145324", "SM-DBQGW");
-        put("1140145331", "SM-DBQH9");
-        put("1140145322", "SM-DBQGY");
-        put("1140145321", "SM-DBQGZ");
-        put("1140145338", "SM-DBQHG");
-        put("1140145323", "SM-DBQGX");
-        put("1140145292", "SM-DBQGG");
-        put("1140145317", "SM-DBQH4");
-        put("1140145316", "SM-DBQH5");
-        put("1140145362", "SM-DBQI5");
-        put("1140145329", "SM-DBQH7");
-        put("1140145280", "SM-DBQFS");
-        put("1140145307", "SM-DBQGK");
-        put("1140145319", "SM-DBQH2");
-        put("1140145352", "SM-DBQHU");
-        put("1140145334", "SM-DBQHC");
-        put("1140145335", "SM-DBQHD");
-        put("1140145336", "SM-DBQHE");
-        put("1140145373", "SM-DBQI9");
-        put("1140145345", "SM-DBQHO");
-        put("1140145339", "SM-DBQHH");
-        put("1140145351", "SM-DBQHI");
-        put("1140145350", "SM-DBQHJ");
-        put("1140145349", "SM-DBQHK");
-        put("1140145346", "SM-DBQHN");
-        put("1140145359", "SM-DBQI2");
-        put("1140145299", "SM-DBQG9");
-        put("1140145358", "SM-DBQI1");
-        put("1140145344", "SM-DBQHP");
-        put("1140145357", "SM-DBQHZ");
-        put("1140145348", "SM-DBQHL");
-        put("1140145372", "SM-DBQIA");
-        put("1140145340", "SM-DBQHT");
-        put("1140145343", "SM-DBQHQ");
-        put("1140145360", "SM-DBQI3");
-        put("1140145308", "SM-DBQGL");
-        put("1140145355", "SM-DBQHX");
-        put("1140145353", "SM-DBQHV");
-        put("1140145326", "SM-DBQGU");
-        put("1140145298", "SM-DBQGA");
-        put("1140145325", "SM-DBQGV");
-        put("1140145337", "SM-DBQHF");
-        put("1140145361", "SM-DBQI4");
-        put("1140145347", "SM-DBQHM");
-        put("1140145363", "SM-DBQI6");
-        put("1140145375", "SM-DBQI7");
-        put("1140145374", "SM-DBQI8");
-        put("1140145318", "SM-DBQH3");
-        put("1140145282", "SM-DBQFU");
-        put("1140145371", "SM-DBQIB");
-        put("1140145333", "SM-DBQHB");
-        put("1140145369", "SM-DBQID");
-        put("1140145368", "SM-DBQIE");
-        put("1140145367", "SM-DBQIF");
-        put("1140145366", "SM-DBQIG");
-        put("1140145365", "SM-DBQIH");
-        put("1140145332", "SM-DBQHA");
     }};
 
     private List<BarcodedTube> mercuryTubes = new ArrayList<>();
     private List<BarcodedTube> bspTubes = new ArrayList<>();
+    private Iterator<BarcodedTube> bspTubeIterator;
+    private Iterator<BarcodedTube> mercuryTubeIterator;
     private final static Random RANDOM = new Random(System.currentTimeMillis());
 
     private void oneTimeInit() {
-        // Makes the 96 crsp tubes that are used for all tests.
-        for (int i = 0; i < 96; ++i) {
-            String tubeBarcode = String.format("%010d", RANDOM.nextInt(999999999));
+        // Makes the crsp tubes that are used for all tests.
+        for (int i = 0; i < bspTubeMap.size(); ++i) {
+            String tubeBarcode = String.format("%010d", RANDOM.nextInt(NINES));
             BarcodedTube tube = new BarcodedTube(tubeBarcode, BarcodedTube.BarcodedTubeType.MatrixTube075);
             tube.setVolume(BIG_DECIMAL_60);
             labVesselDao.persist(tube);
@@ -278,14 +183,18 @@ public class PicoToBspContainerTest extends Arquillian {
 
             mercuryTubes.add(tube);
         }
+        mercuryTubeIterator = mercuryTubes.iterator();
+        Assert.assertTrue(mercuryTubeIterator.hasNext());
 
-        // Looks up the 96 research tubes that are used for all tests.
+        // Looks up the research tubes that are used for all tests.
         for (Map.Entry<String, String> entry : bspTubeMap.entrySet()) {
             BarcodedTube tube = OrmUtil.proxySafeCast(labVesselDao.findByIdentifier(entry.getKey()),
                     BarcodedTube.class);
             tube.setVolume(BIG_DECIMAL_60);
             bspTubes.add(tube);
         }
+        bspTubeIterator = bspTubes.iterator();
+        Assert.assertTrue(bspTubeIterator.hasNext());
 
         // Makes a map of 96 rack positions to their corresponding 384 well positions.
         for (int i = 0; i < 96; ++i) {
@@ -294,10 +203,8 @@ public class PicoToBspContainerTest extends Arquillian {
             map96to384.put(key, P384_96TIP_1INTERVAL_A2.getWells().get(i));
             map96to384.put(key, P384_96TIP_1INTERVAL_B1.getWells().get(i));
         }
-    }
 
-    /** Zeros the value BSP has for concentration on our test samples and verifies the zero. */
-    private void bspConcInit() {
+        // Zeros the value BSP has for concentration on our test samples and verifies the zero.
         for (String smId : bspTubeMap.values()) {
             String result = bspSetVolumeConcentration.setVolumeAndConcentration(smId, BIG_DECIMAL_60,
                     BigDecimal.ZERO, null);
@@ -315,11 +222,7 @@ public class PicoToBspContainerTest extends Arquillian {
     public void testCases() throws Exception {
         oneTimeInit();
         int caseIdx = 0;
-        long time = 0;
         while (caseIdx < testCases.length) {
-            // Waits for previous BSP deferred action (a CMS write) to complete.
-            Thread.sleep(Math.max(1, time + minMsecBetweenTests - System.currentTimeMillis()));
-            time = System.currentTimeMillis();
             messageCollection = new MessageCollection();
 
             // Parses the testCase array into test parameters, then runs the quant import test.
@@ -355,7 +258,6 @@ public class PicoToBspContainerTest extends Arquillian {
 
             makeVessels(dto);
             makeTransferEvents(dto);
-            bspConcInit();
             sendSpreadsheet(dto);
             Assert.assertEquals(dto.getRunAndFormation().getLeft().getLabMetrics().size(),
                     (research + crsp) * (quantCardinality + 1));
@@ -395,10 +297,6 @@ public class PicoToBspContainerTest extends Arquillian {
                                 rackPosition + " " + smId + " bsp has " + bspConc + " expected " + bspA01Quant);
                     }
                 }
-            } else {
-                // Verify that BSP conc was not set for an unused tube.
-                Assert.assertTrue(MathUtils.isSame(bspConc, 0d),
-                        "Unused tube " + smId + " should be 0.0 and bsp has " + bspConc);
             }
         }
     }
@@ -453,19 +351,19 @@ public class PicoToBspContainerTest extends Arquillian {
     private void makeVessels(Dto dto) throws Exception {
         // Generates the rack and plate barcodes.
         int numberMicrofluorPlates = dto.getMicrofluorPlateType() == Eppendorf384 ? 1 : dto.getQuantCardinality();
-        String rackBarcode =  String.format("%012d", RANDOM.nextInt(999999999));
+        String rackBarcode =  String.format("%012d", RANDOM.nextInt(NINES));
         String dilutionPlateBarcode = (dto.getDilutionPlateType() != null) ?
-                String.format("%012d", RANDOM.nextInt(999999999)) : null;
+                String.format("%012d", RANDOM.nextInt(NINES)) : null;
         String[] blackPlateBarcodes = new String[numberMicrofluorPlates];
         for (int i = 0; i < numberMicrofluorPlates; ++i) {
-            blackPlateBarcodes[i] = String.format("%012d", RANDOM.nextInt(999999999));
+            blackPlateBarcodes[i] = String.format("%012d", RANDOM.nextInt(NINES));
         }
         // Makes the tube mix.
         List<ChildVesselBean> tubeBeans = new ArrayList<>();
         Map<String, String> mapTubeToPosition = new HashMap<>();
 
         for (int i = 0; i < dto.getTotalTubeCount(); ++i) {
-            BarcodedTube tube = (i < dto.getResearchTubeCount() ? bspTubes : mercuryTubes).get(i);
+            BarcodedTube tube = (i < dto.getResearchTubeCount() ? bspTubeIterator : mercuryTubeIterator).next();
             String barcode = tube.getLabel();
             String position = positionFor(i);
             mapTubeToPosition.put(barcode, position);
