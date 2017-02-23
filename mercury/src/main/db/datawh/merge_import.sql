@@ -1708,27 +1708,8 @@ AS
 
       FOR new IN (
       SELECT *
-      FROM im_event_fact
-      WHERE is_delete = 'F'
-            AND product_order_id  IS NOT NULL
-            AND lcset_sample_name IS NOT NULL
-            AND NVL(batch_name, 'NONE') <> 'NONE'
-            AND lab_event_type IN (
-        'ArrayPlatingDilution',
-        'InfiniumHybridization',
-        'InfiniumAmplification',
-        'InfiniumPostFragmentationHybOvenLoaded',
-        'InfiniumFragmentation',
-        'InfiniumPrecipitation',
-        'InfiniumPostPrecipitationHeatBlockLoaded',
-        'InfiniumPrecipitationIsopropanolAddition',
-        'InfiniumResuspension',
-        'InfiniumPostResuspensionHybOven',
-        'InfiniumPostHybridizationHybOvenLoaded',
-        'InfiniumHybChamberLoaded',
-        'InfiniumXStain',
-        'InfiniumAutocallSomeStarted',
-        'InfiniumAutoCallAllStarted' ) )
+      FROM im_array_process
+      WHERE is_delete = 'F' )
       LOOP
         -- Find initial base row
         BEGIN
@@ -1762,14 +1743,9 @@ AS
               , dna_plate_position = new.position
               , plating_dilution_date = new.event_date
               -- Strip position suffix from label to get plate barcode
-              , dna_plate = ( SELECT REGEXP_REPLACE( LABEL, new.position || '$', '' ) FROM LAB_VESSEL WHERE LAB_VESSEL_ID = new.LAB_VESSEL_ID )
+              , dna_plate = REGEXP_REPLACE( new.vessel_label, new.position || '$', '' )
+              , dna_plate_name = new.vessel_name
               , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
-            WHERE ROWID = V_THE_ROWID
-            RETURNING dna_plate INTO V_LABEL ;
-
-            -- DNA plate name is associated with plate, not plate well
-            UPDATE array_process_flow
-            SET dna_plate_name = ( SELECT NAME FROM LAB_VESSEL WHERE LABEL = V_LABEL )
             WHERE ROWID = V_THE_ROWID;
 
             WHEN 'InfiniumHybridization' THEN
@@ -1778,8 +1754,9 @@ AS
               , hyb_station = new.station_name
               , hyb_position = new.position
               , hyb_date = new.event_date
+              , chip = new.vessel_label
               -- Append underscore and position suffix to chip barcode to get chip well pseudo-barcode
-              , ( chip, chip_well_barcode ) = ( SELECT LABEL, LABEL || '_' || new.position FROM LAB_VESSEL WHERE LAB_VESSEL_ID = new.LAB_VESSEL_ID )
+              , chip_well_barcode = new.vessel_label || '_' || new.position
               , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
             WHERE ROWID = V_THE_ROWID;
             WHEN 'InfiniumAmplification' THEN
@@ -1788,7 +1765,7 @@ AS
               , amp_station = new.station_name
               , amp_plate_position = new.position
               , amp_date = new.event_date
-              , amp_plate = ( SELECT LABEL FROM LAB_VESSEL WHERE LAB_VESSEL_ID = new.LAB_VESSEL_ID )
+              , amp_plate = new.vessel_label
               , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
             WHERE ROWID = V_THE_ROWID;
             WHEN 'InfiniumPostFragmentationHybOvenLoaded' THEN

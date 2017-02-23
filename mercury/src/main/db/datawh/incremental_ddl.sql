@@ -87,3 +87,22 @@ CREATE TABLE IM_ABANDON_VESSEL_POSITION (
   REASON VARCHAR2(255),
   ABANDONED_ON TIMESTAMP(6)
 );
+
+-- ***************************
+--  GPLIM-4378 Make DW ETL of infinium array process flow determinstic on PDO-LCSET-Sample combination
+CREATE TABLE im_array_process (
+  LINE_NUMBER NUMBER(9) NOT NULL,
+  ETL_DATE DATE NOT NULL,
+  IS_DELETE CHAR NOT NULL,
+  product_order_id NUMBER(19) NOT NULL,
+  batch_name VARCHAR2(40),
+  lcset_sample_name VARCHAR2(40),
+  sample_name VARCHAR2(40),
+  lab_event_id NUMBER(19),
+  lab_event_type VARCHAR2(64),
+  station_name VARCHAR2(255),
+  event_date DATE,
+  vessel_label VARCHAR2(40),
+  vessel_name VARCHAR2(255),
+  position VARCHAR2(32) );
+
