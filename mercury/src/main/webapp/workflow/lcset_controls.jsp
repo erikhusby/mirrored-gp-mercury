@@ -15,9 +15,9 @@
         <stripes:form beanclass="${actionBean.class.name}" id="selectionForm" class="form-horizontal">
             <div class="form-horizontal">
                 <div class="control-group">
-                    <stripes:label for="lcsetText" name="LCSet Name" class="control-label"/>
+                    <label for="lcsetText" class="control-label">LCSet Name</label>
                     <div class="controls">
-                        <stripes:text id="lcsetText" name="lcsetName"/>
+                        <input type="text" id="lcsetText" name="lcsetName" value="${actionBean.lcsetName}"/>
                     </div>
                 </div>
                 <!-- Adds the dropdowns for lab and scanner, and possibly a file chooser. -->
@@ -54,7 +54,7 @@
                 <c:forEach items="${actionBean.controlBarcodes}" var="controlBarcode" varStatus="loop">
                     <div>
                     ${controlBarcode}
-                    <stripes:hidden name="controlBarcodes[${loop.index}]" value="${controlBarcode}"/>
+                    <input type="hidden" name="controlBarcodes[${loop.index}]" value="${controlBarcode}"/>
                     </div>
                 </c:forEach>
                 <div class="controls">
