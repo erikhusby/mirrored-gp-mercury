@@ -14,9 +14,7 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
     if (tableEmpty(settings)){
         return;
     }
-
     var filterStatusContainer = $j(filterStatusSelector); // MaterialType-filters
-
     filterStatusContainer.append($j("<ul></ul>", {
         class: "filtered-items-header list",
     }));
@@ -142,12 +140,16 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
         if (selectType === 'text' && filterColumn) {
             var textInput = $j("<input/>", {
                 type: 'textarea',
-                css: 'height:1',
+                css: 'height:1, display: inline-block',
                 class: columnFilterClass,
                 value: savedFilterValue,
                 placeholder: "Filter " + headerLabel
             });
-            header.append(textInput);
+            $j(textInput).prop("title","Enter text to filter on "+ header.text());
+            // textInput.css('width', 'inherit');
+            var inputContainer=$j("<span></span>", {'class': 'search-field'});
+            inputContainer.append(textInput);
+            header.append(inputContainer);
             $j(textInput).on('click', function () {
                 return false;
             });
@@ -162,10 +164,11 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
             var select = $j("<select></select>", {
                 id: selectFilterId,
                 multiple: true,
-                class: columnFilterClass,
-                style: 'display: none',
+                title: "click to select a " + headerLabel,
+                class: columnFilterClass
             });
 
+            $j(select).prop("title","Click to filter " + header.text());
             header.append(select);
             buildHeaderFilterOptions(header, filteredRows);
             // select.find("option[value='" + savedFilterValue + "']").attr('selected', 'selected');
@@ -174,17 +177,13 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                     return this.value.trim().match(savedFilterValue);
                 }).attr('selected', 'selected');
             }
-            var width = $j(select).attr('width');
-            if (width<=10){
-                width=10;
-            }
-            width = Math.ceil(.8*width)+"em";
+
             var chosen = select.chosen({
                 disable_search_threshold: 10,
                 display_selected_options: false,
                 display_disabled_options: false,
                 search_contains: true,
-                width: width,
+                width: 'auto',
                 inherit_select_classes: true,
                 placeholder_text_single: "Select a " + headerLabel,
                 placeholder_text_multiple: "Select a " + headerLabel
@@ -222,7 +221,6 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                 chosen.trigger("chosen:updated");
             });
 
-            // select.trigger("chosen:updated");
             // stop event propagation so clicking the text area won't cause the column to sort.
             $j('.filter-select ul').on('click', function () {
                 return false;
@@ -253,20 +251,15 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
         var uniqueValues = [];
         for (var i = 0; i < columns.length; i++) {
             var cell = columns[i].trim();
-            cell = cell.replace(/<(?:.|\n)*?>/gi, '');
+            cell = cell.replace(/<(?:.|\n)*?>/gi, '').trim();
             if (cell !== '' && uniqueValues.indexOf(cell) < 0) {
                 uniqueValues.push(cell.trim());
             }
         }
-        var maxWidth=0;
         uniqueValues.sort().forEach(function (thisOption) {
             var items = $j("<option></option>", {value: thisOption, text: thisOption});
-            maxWidth = thisOption.length > maxWidth?thisOption.length:maxWidth;
             $j(select).append(items);
         });
-
-        $j(select).attr('width',maxWidth);
-
         return $j(select);
     }
     function tableEmpty(settings){
@@ -292,4 +285,13 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
             $j(".dtFilters").html("<b>Search text matches</b>: " + textJQuery[0].outerHTML);
         }
     }
+
+    $j(document).ready(function () {
+        var style = $j("<style></style>", {'type': 'text/css'});
+        $j('.chosen-drop, .chosen-container').css('width', 'auto');
+        $j('.chosen-drop, .chosen-container').css('min-width', '6em');
+        $j('.chosen-drop,.chosen-results li, li.search-choice').css("white-space", "nowrap");
+        $j(".search-field input").css("width", "100%");
+        $j(".search-field input").css("font-size", "smaller");
+    });
 }
