@@ -493,7 +493,7 @@
                         // if bad data was stored in the preferences it will cause problems here, so wrap
                         // it around an exception.
                         try {
-                            data = JSON.parse(storedJson);
+                            data = JSON.parse(storedJson.replace(/\\/g,'\\\\'));
                             useLocalData = false;
                         } catch (e) { /* Nothing to do here */ }
                     }

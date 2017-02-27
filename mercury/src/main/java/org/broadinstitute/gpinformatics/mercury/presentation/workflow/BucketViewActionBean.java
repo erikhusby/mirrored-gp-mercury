@@ -654,6 +654,7 @@ public class BucketViewActionBean extends CoreActionBean {
     }
 
     public boolean showHeader(String columnName) {
-        return headerVisibilityMap.isEmpty() || headerVisibilityMap.get(columnName);
+        return headerVisibilityMap.isEmpty() || (headerVisibilityMap.get(columnName) != null && headerVisibilityMap
+                .get(columnName));
     }
 }
