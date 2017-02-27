@@ -48,9 +48,11 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Dependent
@@ -180,6 +182,11 @@ public class SequencingTemplateFactory {
         boolean isPoolTest = poolTestDefault;
         Boolean isPairedEnd = null;
         List<FlowcellDesignation> designations = flowcellDesignationEjb.getFlowcellDesignations(fctBatch);
+        Map<String, FlowcellDesignation> barcodeToFlowcellDesignation = new HashMap<>();
+        for (FlowcellDesignation flowcellDesignation: designations) {
+            String tubeBarcode = flowcellDesignation.getLoadingTube().getLabel();
+            barcodeToFlowcellDesignation.put(tubeBarcode, flowcellDesignation);
+        }
         boolean fetchFromDesignation = false;
         if (fctBatch != null && !designations.isEmpty()) {
             fetchFromDesignation = true;
@@ -205,6 +212,10 @@ public class SequencingTemplateFactory {
             if (startingVessel.getVesselPosition() != null) {
                 if (!fetchFromDesignation) {
                     loadingConcentration = startingVessel.getConcentration();
+                } else if (barcodeToFlowcellDesignation.containsKey(startingVessel.getLabVessel().getLabel())) {
+                    FlowcellDesignation flowcellDesignation =
+                            barcodeToFlowcellDesignation.get(startingVessel.getLabVessel().getLabel());
+                    loadingConcentration = flowcellDesignation.getLoadingConc();
                 }
                 SequencingTemplateLaneType lane = LimsQueryObjectFactory.createSequencingTemplateLaneType(
                         startingVessel.getVesselPosition().name(), loadingConcentration, "",

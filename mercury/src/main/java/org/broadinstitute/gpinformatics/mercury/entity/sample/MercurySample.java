@@ -165,6 +165,7 @@ public class MercurySample extends AbstractSample {
     @JoinTable(schema = "MERCURY"
             , joinColumns = {@JoinColumn(name = "MERCURY_SAMPLE")}
             ,inverseJoinColumns = {@JoinColumn(name = "METADATA")})
+    @BatchSize(size = 100)
     private Set<Metadata> metadata = new HashSet<>();
 
     // TODO: jms Shouldn't this be plural?

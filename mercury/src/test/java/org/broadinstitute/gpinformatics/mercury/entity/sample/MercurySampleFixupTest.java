@@ -113,6 +113,22 @@ public class MercurySampleFixupTest extends Arquillian {
                 "GPLIM-4381: Delete BSP Samples from Mercury which were not created in BSP due to an exception."));
     }
 
+    @Test(groups = TestGroups.FIXUP, enabled = false)
+    public void gplim4631DeleteOrphanedSamples() throws Exception {
+        List<String> sampleKeys = Arrays.asList("SM-D3J5K","SM-D3J59","SM-D3J5N","SM-D3J3I","SM-D3J3D");
+        List<MercurySample> mercurySamples = mercurySampleDao.findBySampleKeys(sampleKeys);
+        userBean.loginOSUser();
+        for (MercurySample mercurySample : mercurySamples) {
+            Set<LabVessel> labVessels = mercurySample.getLabVessel();
+            for (LabVessel labVessel : labVessels) {
+                labVessel.getMercurySamples().remove(mercurySample);
+            }
+            mercurySampleDao.remove(mercurySample);
+        }
+        mercurySampleDao.persist(new FixupCommentary(
+                "GPLIM-4631: Delete BSP Samples from Mercury which were not created in BSP due to an exception."));
+    }
+
     /**
      * This fixup will remove duplicate samples from the system and reset their existing labVessel relationships to
      * converge to the one remaining sample of which they are a duplicate.
