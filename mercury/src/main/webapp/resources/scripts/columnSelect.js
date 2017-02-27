@@ -104,7 +104,6 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
             filteredItem.append(filteredItemLabel);
             filteredItemLabel.after(filteredItemValue);
             columnContainer.append(filteredItem);
-
             filteredItem.on("click",function(){
                 // wrapped in closure since this is created in a loop
                 (function (filterLabel, filterValue) {
@@ -217,24 +216,19 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                 // chosen.on("nothing", function (event, what) {
                 if (what) {
                     var eventAction = Object.keys(what)[0]; // ['selected','deselected']
-                    var currentlySelected = $j(this).find(":selected").map(function () {
-                        return this.text
-                    }).get();
                     if (eventAction === 'deselected') {
                         var deselectedItems = what['deselected'].trim();
                         if (deselectedItems.length === 0) {
                             $j(this).find(":selected").prop('selected',false);
-                            currentlySelected = [];
-                        } else {
-                            var selectedIndex = currentlySelected.indexOf(deselectedItems);
-                            if (selectedIndex)
-                                if (selectedIndex == -1) {
-                                    currentlySelected.splice(selectedIndex, 1);
-                                }
                         }
                     }
-                    updateFilterInfo(column, cleanTitle, headerLabel, currentlySelected);
+                    var currentSelection = $j(this).find(":selected").map(function () {
+                        return this.text
+                    }).get();
+                    updateFilterInfo(column, cleanTitle, headerLabel, currentSelection);
                 }
+                $j('.chosen-drop,.chosen-results li, li.search-choice span').css("white-space", "nowrap");
+
             });
             column.on("column-sizing.dt", function () {
                 chosen.trigger("chosen:updated");
@@ -312,8 +306,8 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
         var style = $j("<style></style>", {'type': 'text/css'});
         $j('.chosen-drop, .chosen-container').css('width', 'auto');
         $j('.chosen-drop, .chosen-container').css('min-width', '6em');
-        $j('.chosen-drop,.chosen-results li, li.search-choice').css("white-space", "nowrap");
         $j(".search-field input").css("width", "100%");
         $j(".search-field input").css("font-size", "smaller");
+        $j('.chosen-drop,.chosen-results li, li.search-choice span').css("white-space", "nowrap");
     });
 }
