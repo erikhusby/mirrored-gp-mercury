@@ -145,8 +145,7 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                 value: savedFilterValue,
                 placeholder: "Filter " + headerLabel
             });
-            $j(textInput).prop("title","Enter text to filter on "+ header.text());
-            // textInput.css('width', 'inherit');
+            $j(textInput).prop("title","Enter text to filter on " + header.text());
             var inputContainer=$j("<span></span>", {'class': 'search-field'});
             inputContainer.append(textInput);
             header.append(inputContainer);
