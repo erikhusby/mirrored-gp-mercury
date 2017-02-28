@@ -71,7 +71,7 @@ public class DeploymentBuilder {
         /*
          *** Capture contents of war to troubleshoot dependencies
         try {
-            war.writeTo(new FileOutputStream("/temp/Mercury-Arquillian.war.files.txt"), Formatters.VERBOSE);
+            war.writeTo(new FileOutputStream("target/Mercury-Arquillian.war.files.txt"), Formatters.VERBOSE);
         } catch (Exception e) {
             e.printStackTrace();
         }*/

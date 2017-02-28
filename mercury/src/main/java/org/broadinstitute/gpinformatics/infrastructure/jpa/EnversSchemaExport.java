@@ -12,7 +12,10 @@ public class EnversSchemaExport {
         System.exit(0);
     }
 
-    // TODO JMS Resolve JPA schemagen in WildFly
+    /**
+     * See persistence.xml commented out settings to generate DDL using the JPA 2.1 standard for all providers
+     *
+     */
     public static void execute(String persistenceUnitName, String destination) {
         System.out.println("Generating DDL create script to : " + destination);
 
@@ -22,10 +25,6 @@ public class EnversSchemaExport {
         persistenceProperties.setProperty(org.hibernate.cfg.AvailableSettings.HBM2DDL_AUTO, "");
         persistenceProperties.setProperty(AvailableSettings.SCHEMA_GEN_DATABASE_ACTION, "none");
 
-//        System.setProperty("hibernate.connection.provider_class",
-//                "org.hibernate.service.jdbc.connections.internal.UserSuppliedConnectionProviderImpl");
-        // XXX force persistence properties : define create script target from metadata to destination
-        // persistenceProperties.setProperty(AvailableSettings.SCHEMA_GEN_CREATE_SCHEMAS, "true");
         persistenceProperties.setProperty(AvailableSettings.SCHEMA_GEN_SCRIPTS_ACTION, "create");
         persistenceProperties.setProperty(AvailableSettings.SCHEMA_GEN_CREATE_SOURCE, "metadata");
         persistenceProperties.setProperty(AvailableSettings.SCHEMA_GEN_SCRIPTS_CREATE_TARGET, destination);

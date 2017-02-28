@@ -222,7 +222,7 @@ bettaLimsServer:
 datawhEtl:
 
     DEV:
-        datawhEtlDirRoot: /seq/lims/datawh/dev
+        datawhEtlDirRoot: C:\projects\IdeaProjects\mercury\datawh
 
     QA:
         datawhEtlDirRoot: /seq/lims/datawh/qa
@@ -310,7 +310,7 @@ mercury:
       collaborate: DEV
       bass: PROD
       submission: DEV
-      infiniumStarter: DEV
+#      infiniumStarter: DEV
       sap:  QA
 
 

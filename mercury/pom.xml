@@ -542,10 +542,6 @@
                                 </property>
                             </systemProperties>
                             <argLine>${surefire.argLine}</argLine>
-<!--                            <forkCount>2</forkCount> -->
-<!--                            <reuseForks>true</reuseForks> -->
-                            <!--<parallel>methods</parallel>-->
-                            <!--<threadCount>10</threadCount>-->
                         </configuration>
                     </plugin>
                 </plugins>
@@ -568,10 +564,6 @@
                                 </property>
                             </systemProperties>
                             <argLine>${surefire.argLine}</argLine>
-                            <!--                            <forkCount>2</forkCount> -->
-                            <!--                            <reuseForks>true</reuseForks> -->
-                            <!--<parallel>methods</parallel>-->
-                            <!--<threadCount>10</threadCount>-->
                         </configuration>
                     </plugin>
                 </plugins>
@@ -900,16 +892,11 @@
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
                 <database.url>jdbc:oracle:thin:@gpinfqa:1521:gpinfqa</database.url>
                 <passwords.properties>src/test/resources/mercury-qa-passwords.properties</passwords.properties>
-                <!--<database.url>jdbc:oracle:thin:@mercuryrc.cloud.broad:1521:gpinfprd</database.url>-->
-                <!--<database.url>jdbc:oracle:thin:${mercury.rc.ip}:1521:gpinfprd</database.url>-->
-                <!--<mercury.password>guest</mercury.password>-->
-                <!--<athena.password>guest</athena.password>-->
             </properties>
             <build>
                 <testResources>
                     <testResource>
                         <directory>src/test/resources-rc</directory>
-                        <!--<filtering>true</filtering>-->
                     </testResource>
                 </testResources>
             </build>
@@ -930,10 +917,8 @@
         <profile>
             <id>PROD</id>
             <!-- This is for PRODUCTION ONLY.  If you need to debug against production, use one of the
-  other profiles and the -prod-ds.xml files.  This profile pulls from production JMS queues, so using
-   it for a debug server may cause message loss.
-
-  -->
+                 other profiles and the -prod-ds.xml files.  This profile pulls from production JMS queues, so using
+                 it for a debug server may cause message loss.  -->
             <properties>
                 <!-- Oracle Dev -->
                 <database>oracle</database>
@@ -1249,7 +1234,7 @@ nodePrinter.print(webapp)
              * For WildFly, use org.jboss.spec:jboss-javaee-7.0 in lieu of javax:javaee-api.
              * See: https://community.jboss.org/wiki/WhatsTheCauseOfThisExceptionJavalangClassFormatErrorAbsentCode
              *** -->
-        <dependency> <!-- WildFly patched to CDI 1.2 -->
+        <dependency> <!-- WildFly 10.1 patched to CDI 1.2 API -->
             <groupId>javax.enterprise</groupId>
             <artifactId>cdi-api</artifactId>
             <version>1.2</version>
@@ -2057,42 +2042,13 @@ nodePrinter.print(webapp)
                     <source>1.8</source>
                     <target>1.8</target>
                     <compilerArguments>
-                        <processor>org.hibernate.jpamodelgen.JPAMetaModelEntityProcessor</processor>
+                        <!-- todo jmt Revisit JPA 2.1 Hibernate schemagen in WildFly 10+
+                             JPA standard is to use settings in persistence.xml -->
+                        <!-- <processor>org.hibernate.jpamodelgen.JPAMetaModelEntityProcessor</processor> -->
                     </compilerArguments>
                 </configuration>
             </plugin>
 
-<!--
-todo jmt revisit Hibernate schemagen in WildFly 10+
-            <plugin>
-                <groupId>org.bsc.maven</groupId>
-                <artifactId>maven-processor-plugin</artifactId>
-                <version>2.0.5</version>
-                <executions>
-                    <execution>
-                        <id>process</id>
-                        <goals>
-                            <goal>process</goal>
-                        </goals>
-                        <phase>generate-sources</phase>
-                        <configuration>
-                            <processors>
-                                <processor>org.hibernate.jpamodelgen.JPAMetaModelEntityProcessor</processor>
-                            </processors>
-                            &lt;!&ndash; source output directory &ndash;&gt;
-                            <outputDirectory>target/generated-sources/annotations</outputDirectory>
-                        </configuration>
-                    </execution>
-                </executions>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.hibernate</groupId>
-                        <artifactId>hibernate-jpamodelgen</artifactId>
-                        <version>5.0.0.Final</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
--->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
@@ -2190,44 +2146,6 @@ todo jmt revisit Hibernate schemagen in WildFly 10+
                 </configuration>
             </plugin>
 
-<!--
-todo jmt revisit Hibernate schemagen in WildFly 10+
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>1.1.1</version>
-                <executions>
-                    <execution>
-                        <id>generate-create-schema-ddl</id>
-                        <phase>process-classes</phase>
-                        <goals>
-                            <goal>java</goal>
-                        </goals>
-                        <configuration>
-                            <mainClass>org.broadinstitute.gpinformatics.infrastructure.jpa.EnversSchemaExport
-                            </mainClass>
-                            <arguments>
-                                <argument>mercury_pu_no_db</argument>
-                                <argument>${project.basedir}/target/generated-sources/ddl/generated_schema.sql</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                </executions>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.hibernate</groupId>
-                        <artifactId>hibernate-entitymanager</artifactId>
-                        <version>5.0.0.Final</version>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.hibernate</groupId>
-                        <artifactId>hibernate-core</artifactId>
-                        <version>5.0.0.Final</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
--->
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -2279,7 +2197,6 @@ todo jmt revisit Hibernate schemagen in WildFly 10+
                         </configuration>
                     </execution>
                 </executions>
-
 
                 <!-- if you want to use a specific version of JAX-WS, you can do so like this -->
                 <dependencies>
@@ -2355,47 +2272,8 @@ todo jmt revisit Hibernate schemagen in WildFly 10+
                 <version>2.2</version>
                 <configuration>
                     <webappDirectory>${project.build.directory}/${project.artifactId}.war</webappDirectory>
-                    <!-- We'll keep mercury-config-local.yaml in src/main/resources for now. We can add a local directory later if needed.
-                                        <webResources>
-                                            <resource>
-                                                <directory>${project.basedir}/local</directory>
-                                                <includes>
-                                                    <include>mercury-config-local.yaml</include>
-                                                    <include>target/version.properties</include>
-                                                </includes>
-                                                <targetPath>WEB-INF/classes</targetPath>
-                                            </resource>
-                                        </webResources>
-                    -->
-                    <!--
-                                        <packagingExcludes>WEB-INF/classes/META-INF/persistence.xml</packagingExcludes>
-                    -->
                 </configuration>
             </plugin>
-
-<!--
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>Update Version property file for use by Bamboo</id>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <configuration>
-                            <target>
-                                <propertyfile file="${pom.basedir}/target/classes/build.properties">
-                                    <entry key="build.resultKey" type="string" value="${build.resultKey}" operation="=" />
-                                    <entry key="build.buildTimeStamp" type="string" value="${build.buildTimeStamp}" operation="=" />
-                                </propertyfile>
-                            </target>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
--->
 
             <plugin>
                 <groupId>external.atlassian.jgitflow</groupId>
@@ -2422,14 +2300,6 @@ todo jmt revisit Hibernate schemagen in WildFly 10+
                     <noHotfixBuild>true</noHotfixBuild>
                 </configuration>
             </plugin>
-
-            <!-- Was org.jboss
-            <plugin>
-                <groupId>org.wildfly.plugins</groupId>
-                <artifactId>wildfly-maven-plugin</artifactId>
-                <version>1.0.2.Final</version>
-            </plugin>
-            -->
 
         </plugins>
 

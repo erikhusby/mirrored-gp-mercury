@@ -51,6 +51,7 @@ public class SessionContextUtility implements Serializable {
             // If this bug is not fixed, we must manually end the Request context.
             // (Bug appears fixed in WildFly 10)
 
+            // Meanwhile, clear the session context
             sessionContext.invalidate();
             sessionContext.deactivate();
         }
