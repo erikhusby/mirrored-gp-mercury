@@ -122,14 +122,6 @@
                 <suffix value=".yyyy-MM-dd"/>
                 <append value="true"/>
             </periodic-rotating-file-handler>
-            <periodic-rotating-file-handler name="JPA_DDL">
-                <formatter>
-                    <pattern-formatter pattern="(%t) %s%E%n"/>
-                </formatter>
-                <file relative-to="jboss.server.log.dir" path="jpa_ddl.log"/>
-                <suffix value=".yyyy-MM-dd"/>
-                <append value="true"/>
-            </periodic-rotating-file-handler>
             <size-rotating-file-handler name="ETL">
                 <formatter>
                     <pattern-formatter pattern="%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%E%n"/>
@@ -149,15 +141,9 @@
                 <append value="true"/>
             </size-rotating-file-handler>
             <logger category="org.broadinstitute.gpinformatics.infrastructure.datawh" use-parent-handlers="false">
-                <level name="DEBUG"/>
+                <level name="WARN"/>
                 <handlers>
                     <handler name="ETL"/>
-                </handlers>
-            </logger>
-            <logger category="org.broadinstitute.gpinformatics.infrastructure.jpa" use-parent-handlers="false">
-                <level name="DEBUG"/>
-                <handlers>
-                    <handler name="JPA_DDL"/>
                 </handlers>
             </logger>
             <logger category="org.broadinstitute.gpinformatics.athena.boundary.billing" use-parent-handlers="false">
@@ -173,7 +159,7 @@
                 </handlers>
             </logger>
             <logger category="com.atlassian.crowd">
-                <level name="DEBUG"/>
+                <level name="WARN"/>
                 <handlers>
                     <handler name="CROWD"/>
                 </handlers>
@@ -182,7 +168,7 @@
                 <level name="WARN"/>
             </logger>
             <logger category="org.jboss.as.config">
-                <level name="DEBUG"/>
+                <level name="WARN"/>
             </logger>
             <logger category="sun.rmi">
                 <level name="WARN"/>
@@ -468,9 +454,9 @@
                             <module-option name="ignorePasswordCase" value="true"/>
                         </login-module>
                         <login-module code="com.atlassian.crowd.application.jaas.CrowdLoginModule" flag="sufficient" module="com.atlassian.crowd">
-                            <module-option name="application.name" value="mercury"/>
-                            <module-option name="application.password" value="vx2hUJP4xB"/>
-                            <module-option name="crowd.server.url" value="https://crowd.broadinstitute.org:8443/crowd"/>
+                            <module-option name="application.name" value="${crowd.application.name}"/>
+                            <module-option name="application.password" value="${crowd.application.password}"/>
+                            <module-option name="crowd.server.url" value="${crowd.server.url}"/>
                             <module-option name="flatRoles" value="false"/>
                         </login-module>
                     </authentication>
