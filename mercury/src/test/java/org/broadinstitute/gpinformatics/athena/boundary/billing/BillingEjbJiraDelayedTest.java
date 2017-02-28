@@ -39,7 +39,6 @@ import org.testng.annotations.Test;
 import javax.ejb.EJBTransactionRolledbackException;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.Dependent;
-import javax.enterprise.context.RequestScoped;
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 import java.io.IOException;
@@ -55,7 +54,6 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Test(groups = TestGroups.ALTERNATIVES)
-@RequestScoped
 public class BillingEjbJiraDelayedTest extends Arquillian {
     private static boolean failQuoteCall = false;
     private static boolean inContainer = true;

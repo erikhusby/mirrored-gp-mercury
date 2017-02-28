@@ -23,7 +23,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.enterprise.context.RequestScoped;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
@@ -32,7 +31,6 @@ import java.util.Set;
  * Integration tests for {@link BSPKitRequestService}.
  */
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-@RequestScoped
 public class BSPKitRequestServiceIntegrationTest {
 
     private static final Log log = LogFactory.getLog(BSPKitRequestServiceIntegrationTest.class);

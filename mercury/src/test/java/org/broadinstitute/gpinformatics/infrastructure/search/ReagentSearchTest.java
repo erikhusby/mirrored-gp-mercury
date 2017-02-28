@@ -59,11 +59,8 @@ public class ReagentSearchTest extends Arquillian {
                             searchInstance, configurableSearchDefinition, null, 1, null, "ASC", "LabEvent" );
         } catch ( InformaticsServiceException ex ) {
             // Do this manually because testng 6.10 doesn't ignore expectedExceptionsMessageRegExp
-            if( ex.getMessage().contains( " exclusive ") ) {
-                return;
-            } else {
-                throw ex;
-            }
+            Assert.assertTrue(ex.getMessage().contains( " exclusive "), "Expected an exception refererencing exclusive search term mis-use.");
+            return;
         }
 
         Assert.fail( "Expected exclusive search term exception is not thrown.");

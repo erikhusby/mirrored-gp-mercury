@@ -63,6 +63,8 @@ public class BucketEntryDaoTest extends StubbyContainerTest {
             return;
         }
 
+        utx.begin();
+
 
         testBucket = bucketDao.findByName(BucketDaoTest.EXTRACTION_BUCKET_NAME);
         if(testBucket == null) {
@@ -99,6 +101,8 @@ public class BucketEntryDaoTest extends StubbyContainerTest {
         if (utx == null) {
             return;
         }
+
+        utx.rollback();
     }
 
     @Test

@@ -21,7 +21,6 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,7 +32,6 @@ import java.util.Map;
 import java.util.Set;
 
 @Test(groups = TestGroups.STUBBY, enabled = true)
-@RequestScoped
 public class ProductOrderListEntryDaoTest extends StubbyContainerTest {
 
     @Inject

@@ -151,23 +151,6 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
     }
 
     private Connection getConnection() throws JMSException {
-        /* ***
-         * A use-case where a message is sent from an EJB to an in-container JMS server
-         * should use jndi for ConnectionFactory lookup (and use an in-vm connection)
-         * JNDI method confirmed to work in Wildfly 10
-        ConnectionFactory cf = null;
-        try {
-            Context ctx = new InitialContext();
-            cf = (ConnectionFactory) ctx.lookup("java:/ConnectionFactory");
-        } catch (NamingException ne) {
-            throw new RuntimeException("Fail to obtain ActiveMQConnectionFactory from JNDI", ne );
-        }
-        // Parameters should not be set by client?
-        // cf.setClientFailureCheckPeriod(Long.MAX_VALUE);
-        // cf.setConnectionTTL(-1);
-        // This connection is never closed, which is probably Bad but it doesn't seem to break anything.
-        return cf.createConnection();
-         */
 
         // Use network JMS connectivity
         ActiveMQConnectionFactory cf = ActiveMQJMSClient.createConnectionFactoryWithoutHA(JMSFactoryType.CF,

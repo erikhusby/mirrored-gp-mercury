@@ -23,7 +23,6 @@ import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
-import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.Collection;
 import java.util.Collections;
@@ -41,7 +40,6 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 
 @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
-@RequestScoped
 public class BillingEjbJiraDownTest extends Arquillian {
 
     @Inject

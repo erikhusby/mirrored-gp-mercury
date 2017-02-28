@@ -22,7 +22,6 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -42,7 +41,6 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  * Test the Caliper upload with persistence.
  */
 @Test(groups = TestGroups.STANDARD, singleThreaded = true)
-@RequestScoped
 public class CaliperParserContainerTest extends Arquillian {
 
     private static final FastDateFormat SIMPLE_DATE_FORMAT = FastDateFormat.getInstance("yyyyMMddHHmmss");
