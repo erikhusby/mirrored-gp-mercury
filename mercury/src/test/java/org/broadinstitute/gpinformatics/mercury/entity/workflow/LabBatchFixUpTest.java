@@ -132,6 +132,20 @@ public class LabBatchFixUpTest extends Arquillian {
         labBatchDao.persist(new FixupCommentary("GPLIM-4393: Remove samples from LCSET-9978"));
     }
 
+    @Test(enabled = false)
+    public void gplim4676removeSamplesFromLcset() throws Exception {
+        userBean.loginOSUser();
+
+        LabBatch labBatch = labBatchDao.findByName("LCSET-10661");
+        Assert.assertNotNull(labBatch);
+
+        List<String> samplesToRemove = Arrays.asList("SM-9H8HL", "SM-9H8PN", "SM-9HB99", "SM-9HBLH", "SM-9J7M8");
+
+        removeSamples(samplesToRemove, labBatch);
+
+        labBatchDao.persist(new FixupCommentary("GPLIM-4393: Remove samples from LCSET-9978"));
+    }
+
     private List<LabBatchStartingVessel> removeSamples(List<String> sampleNames, LabBatch labBatch) {
         List<LabBatchStartingVessel> vesselsToRemove = new ArrayList<>();
         for (LabBatchStartingVessel startingVessel : labBatch.getLabBatchStartingVessels()) {
