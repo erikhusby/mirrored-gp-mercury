@@ -298,6 +298,7 @@ public class SequencingRunFixupTest extends Arquillian {
         // the unwanted one
         IlluminaSequencingRun illuminaSequencingRun =
                 illuminaSequencingRunDao.findByRunName("170222_SL-HXH_0551_AFCHFYL5ALXX");
+        System.out.println("Prepending x to duplicate run barcode " + illuminaSequencingRun.getRunBarcode());
         illuminaSequencingRun.setRunBarcode("x" + illuminaSequencingRun.getRunBarcode());
         illuminaSequencingRunDao.persist(new FixupCommentary("PO-7897 add x to duplicate run barcode"));
     }
