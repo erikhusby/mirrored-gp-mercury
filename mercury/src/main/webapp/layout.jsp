@@ -35,6 +35,14 @@
 
         <script src="${ctxpath}/resources/scripts/jquery-1.10.1.min.js"></script>
         <script type="text/javascript"> var $j = jQuery.noConflict(); </script>
+        <script src="${ctxpath}/resources/scripts/jquery-ui-1.9.2.custom.min.js"></script>
+
+        <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-dropdown.js"></script>
+        <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-tooltip.js"></script>
+        <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-popover.js"></script>
+        <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-alert.js"></script>
+
+        <script src="${ctxpath}/resources/scripts/jquery.dateRangeSelector.js"></script>
 
         <c:choose>
             <c:when test="${dataTablesVersion == '1.10'}">
@@ -76,14 +84,6 @@
             </c:otherwise>
         </c:choose>
 
-        <script src="${ctxpath}/resources/scripts/jquery-ui-1.9.2.custom.min.js"></script>
-        <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-dropdown.js"></script>
-        <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-tooltip.js"></script>
-        <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-popover.js"></script>
-        <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-alert.js"></script>
-
-        <script src="${ctxpath}/resources/scripts/jquery.dateRangeSelector.js"></script>
-
         <c:if test="${withColVis}">
             <script src="${ctxpath}/resources/scripts/DataTablesPlugins-1.10/Buttons-1.2.2/js/buttons.colVis.min.js"></script>
         </c:if>
@@ -102,7 +102,6 @@
 
         <link rel="Shortcut Icon" type="image/x-icon" href="${ctxpath}/favicon.ico"/>
 
-        <link rel="stylesheet"  href="https://fonts.googleapis.com/css?family=Carrois+Gothic+SC"/>
         <link rel="stylesheet"  href="${ctxpath}/resources/css/bootstrap.css"/>
         <link rel="stylesheet"  href="${ctxpath}/resources/css/token-input.css"/>
         <link rel="stylesheet"  href="${ctxpath}/resources/css/jquery-ui-1.9.2.custom.min.css"/>

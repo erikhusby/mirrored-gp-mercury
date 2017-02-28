@@ -4,12 +4,15 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
+import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -34,6 +37,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -78,6 +82,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
@@ -128,6 +133,12 @@ public class ProductOrderFixupTest extends Arquillian {
 
     @Inject
     private SapIntegrationService sapIntegrationService;
+
+    @Inject
+    private BillingSessionDao billingSessionDao;
+
+    @Inject
+    private BillingEjb billingEjb;
 
     // When you run this on prod, change to PROD and prod.
     @Deployment
@@ -1006,7 +1017,7 @@ public class ProductOrderFixupTest extends Arquillian {
         for(ProductOrder orderWithSap:listWithWildcard) {
             if(CollectionUtils.isEmpty(orderWithSap.getSapReferenceOrders())) {
                 SapOrderDetail newDetail = new SapOrderDetail(orderWithSap.getSapOrderNumber(),
-                        SapIntegrationServiceImpl.getSampleCount(orderWithSap),
+                        SapIntegrationServiceImpl.getSampleCount(orderWithSap, orderWithSap.getProduct()),
                         orderWithSap.getQuoteId(), sapIntegrationService.determineCompanyCode(orderWithSap).getCompanyCode());
                 orderWithSap.addSapOrderDetail(newDetail);
             } else {

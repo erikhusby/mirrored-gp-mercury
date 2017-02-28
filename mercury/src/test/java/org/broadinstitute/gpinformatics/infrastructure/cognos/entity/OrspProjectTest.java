@@ -11,12 +11,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class OrspProjectTest {
 
     public void testGetNameParsesOutOrspNumber() {
-        OrspProject project = new OrspProject(null, "ORSP-123 (Test project)", null, null, null, null);
+        OrspProject project = new OrspProject("ORSP-123", "ORSP-123 (Test project)", null, null, null, null);
         assertThat(project.getName(), equalTo("Test project"));
     }
 
     public void testGetNameTrimsWhitespace() {
-        OrspProject project = new OrspProject(null, "ORSP-123 ( Test project )", null, null, null, null);
+        OrspProject project = new OrspProject("ORSP-123", "ORSP-123 ( Test project )", null, null, null, null);
         assertThat(project.getName(), equalTo("Test project"));
     }
 

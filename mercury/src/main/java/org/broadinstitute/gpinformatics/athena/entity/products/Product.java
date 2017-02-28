@@ -627,7 +627,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     }
 
     public boolean getSupportsNumberOfLanes() {
-        return getProductFamily().isSupportsNumberOfLanes();
+        return getProductFamily().isSupportsNumberOfLanes() ;
     }
 
     public boolean isSampleInitiationProduct() {

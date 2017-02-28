@@ -84,6 +84,7 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
         for (LedgerEntry ledgerEntry : billingSession.getLedgerEntryItems()) {
             ledgerEntry.setBillingMessage("test flameout");
             billingSession.setBilledDate(null);
+            ledgerEntry.setWorkItem(null);
             Assert.assertFalse(ledgerEntry.isBilled(),
                     "If ledger entry is considered billed, this test will not try to bill it, which means we may be at risk of double billing.");
         }

@@ -53,6 +53,8 @@ public class PaginationUtil {
 
         private List<?> idList;
 
+        private Map<Object, Object> idExtraInfo = new HashMap<>();
+
         private List<String> joinFetchPaths = new ArrayList<>();
 
         private ColumnEntity resultColumnEntity;
@@ -100,6 +102,13 @@ public class PaginationUtil {
             return resultColumnEntity.getEntityIdProperty();
         }
 
+        public void addExtraIdInfo(Object id, Object info) {
+            idExtraInfo.put(id, info);
+        }
+
+        public Map<Object, Object> getIdExtraInfo() {
+            return idExtraInfo;
+        }
     }
 
     /**

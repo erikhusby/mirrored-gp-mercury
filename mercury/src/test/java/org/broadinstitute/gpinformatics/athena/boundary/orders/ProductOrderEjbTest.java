@@ -12,11 +12,13 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSa
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.ProductTestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
@@ -25,6 +27,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFunding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl;
@@ -46,7 +49,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.hamcrest.Matchers;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -55,7 +57,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -81,10 +82,11 @@ public class ProductOrderEjbTest {
     public final AppConfig mockAppConfig = Mockito.mock(AppConfig.class);
     public final EmailSender mockEmailSender = Mockito.mock(EmailSender.class);
     public final SAPAccessControlEjb mockAccessController = Mockito.mock(SAPAccessControlEjb.class);
+    public final PriceListCache mockPriceListCache = Mockito.mock(PriceListCache.class);
     ProductOrderEjb productOrderEjb = new ProductOrderEjb(productOrderDaoMock, null, mockQuoteService,
             JiraServiceProducer.stubInstance(), mockUserBean, null, null, null, mockMercurySampleDao,
             new ProductOrderJiraUtil(JiraServiceProducer.stubInstance(), mockUserBean),
-            mockSapService);
+            mockSapService, mockPriceListCache);
 
     private static final String[] sampleNames = {"SM-1234", "SM-5678", "SM-9101", "SM-1112"};
     ProductOrder productOrder = null;
@@ -328,6 +330,12 @@ public class ProductOrderEjbTest {
         conversionPdo.setQuoteId(testSingleSourceQuote.getAlphanumericId() );
         conversionPdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
+        ProductTestUtils.addToMockPriceListCache(conversionPdo.getProduct(), mockPriceListCache, "5");
+
+        for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
+            ProductTestUtils.addToMockPriceListCache(productOrderAddOn.getAddOn(), mockPriceListCache, "5");
+        }
+
         MessageCollection messageCollection = new MessageCollection();
         productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, true);
 
@@ -361,8 +369,6 @@ public class ProductOrderEjbTest {
                 Mockito.anyBoolean());
 
     }
-
-
 
     public void testAbandonOrderWithNoServiceNowTicket() throws Exception {
 
