@@ -520,10 +520,12 @@
                     var api = new $j.fn.dataTable.Api(settings);
 
                     // attach event handler so preferences are saved when select next field is changed.
-                    $j("input#batchSize").on("change blur input increment decrement", function () {
+                    function saveState() {
                         api.state.save();
-                    });
-                    api.state.save();
+                    }
+
+                    $j("input#batchSize").on("change blur input incremented decremented", saveState);
+                    $j("#chooseNext").on("click", "button", saveState);
                 }
             });
             // set up the "Show or Hide" buttons
