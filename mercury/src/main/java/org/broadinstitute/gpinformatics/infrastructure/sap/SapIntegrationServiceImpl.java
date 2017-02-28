@@ -179,14 +179,12 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     protected SAPOrderItem getOrderItem(ProductOrder placedOrder, Product product) {
         return new SAPOrderItem(product.getPartNumber(),
                 priceListCache.findByKeyFields(product.getPrimaryPriceItem()).getPrice(),
-                getSampleCount(placedOrder));
+                getSampleCount(placedOrder, product));
     }
 
-    public static int getSampleCount(ProductOrder placedOrder) {
-        return (placedOrder.getProduct().getProductFamily().getName().equals(ProductFamily.ProductFamilyInfo.SEQUENCE_ONLY.getFamilyName()) &&
-        placedOrder.getLaneCount()>0)
-                ?placedOrder.getNonAbandonedCount()*placedOrder.getLaneCount()
-                :placedOrder.getNonAbandonedCount();
+    public static int getSampleCount(ProductOrder placedOrder, Product product) {
+        return (product.getSupportsNumberOfLanes() && placedOrder.getLaneCount()>0)
+                ?placedOrder.getLaneCount():placedOrder.getNonAbandonedCount();
     }
 
     @Override

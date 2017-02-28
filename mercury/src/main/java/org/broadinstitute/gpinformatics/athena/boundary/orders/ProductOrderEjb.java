@@ -42,8 +42,10 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.IssueFieldsRes
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BadBusinessKeyException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
@@ -133,6 +135,8 @@ public class ProductOrderEjb {
 
     private Deployment deployment;
 
+    private PriceListCache priceListCache;
+
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
     public ProductOrderEjb() {
@@ -149,7 +153,7 @@ public class ProductOrderEjb {
                            SquidConnector squidConnector,
                            MercurySampleDao mercurySampleDao,
                            ProductOrderJiraUtil productOrderJiraUtil,
-                           SapIntegrationService sapService) {
+                           SapIntegrationService sapService, PriceListCache priceListCache) {
         this.productOrderDao = productOrderDao;
         this.productDao = productDao;
         this.quoteService = quoteService;
@@ -161,6 +165,7 @@ public class ProductOrderEjb {
         this.mercurySampleDao = mercurySampleDao;
         this.productOrderJiraUtil = productOrderJiraUtil;
         this.sapService = sapService;
+        this.priceListCache = priceListCache;
     }
 
     private final Log log = LogFactory.getLog(ProductOrderEjb.class);
@@ -326,7 +331,7 @@ public class ProductOrderEjb {
                         oldNumber =orderToPublish.getSapOrderNumber();
                     }
                     orderToPublish.addSapOrderDetail(new SapOrderDetail(sapOrderIdentifier,
-                            SapIntegrationServiceImpl.getSampleCount(orderToPublish),
+                            SapIntegrationServiceImpl.getSampleCount(orderToPublish, orderToPublish.getProduct()),
                             orderToPublish.getQuoteId(),
                             sapService.determineCompanyCode(orderToPublish).getCompanyCode()));
 
@@ -339,11 +344,11 @@ public class ProductOrderEjb {
                     messageCollection.addInfo("Order "+orderToPublish.getJiraTicketKey() +
                                               " has been successfully created in SAP");
                 } else if(orderToPublish.isSavedInSAP()){
-                    if (SapIntegrationServiceImpl.getSampleCount(orderToPublish) > 0) {
+                    if (SapIntegrationServiceImpl.getSampleCount(orderToPublish, orderToPublish.getProduct()) > 0) {
                         sapService.updateOrder(orderToPublish);
                         orderToPublish.latestSapOrderDetail()
-                                .setPrimaryQuantity(SapIntegrationServiceImpl.getSampleCount(orderToPublish
-                                ));
+                                .setPrimaryQuantity(SapIntegrationServiceImpl.getSampleCount(orderToPublish,
+                                        orderToPublish.getProduct()));
                         messageCollection.addInfo("Order "+orderToPublish.getJiraTicketKey() +
                                                   " has been successfully updated in SAP");
                     }
@@ -383,15 +388,48 @@ public class ProductOrderEjb {
         Quote orderQuote = quoteService.getQuoteByAlphaId(editedProductOrder.getQuoteId());
         SAPAccessControl accessControl = accessController.getCurrentControlDefinitions();
         boolean eligibilityResult = false;
+
+        Set<Product> productListFromOrder = new HashSet<>();
+        Set<String> priceItemNameList = new HashSet<>();
+
+        productListFromOrder.add(editedProductOrder.getProduct());
+        priceItemNameList.add(editedProductOrder.getProduct().getPrimaryPriceItem().getName());
+        for (ProductOrderAddOn productOrderAddOn : editedProductOrder.getAddOns()) {
+            productListFromOrder.add(productOrderAddOn.getAddOn());
+            priceItemNameList.add(productOrderAddOn.getAddOn().getName());
+        }
+
         if(orderQuote != null && accessControl.isEnabled()) {
 
             eligibilityResult = orderQuote.isEligibleForSAP() &&
-                                !CollectionUtils.containsAll(accessControl.getDisabledFeatures(),
-                                        Collections.singleton(editedProductOrder.getProduct()
-                                                                                .getPrimaryPriceItem().getName()));
-
+                                editedProductOrder.getProduct()
+                                        .getPrimaryPriceItem() != null &&
+                                determinePriceItemValidity(productListFromOrder) &&
+                                !CollectionUtils.containsAll(accessControl.getDisabledFeatures(), priceItemNameList) ;
         }
         return eligibilityResult;
+    }
+
+    public boolean determinePriceItemValidity(Collection<Product> productsToConsider) {
+        boolean allItemsValid = true;
+        QuotePriceItem primaryPriceItem;
+        try {
+            for (Product product: productsToConsider) {
+               primaryPriceItem =
+                        priceListCache.findByKeyFields(product.getPrimaryPriceItem().getPlatform(),
+                                product.getPrimaryPriceItem().getCategory(),
+                                product.getPrimaryPriceItem().getName());
+                if(primaryPriceItem == null) {
+                    allItemsValid = false;
+                    break;
+                }
+            }
+
+        } catch (Exception e) {
+            allItemsValid = false;
+        }
+
+        return allItemsValid;
     }
 
     /**

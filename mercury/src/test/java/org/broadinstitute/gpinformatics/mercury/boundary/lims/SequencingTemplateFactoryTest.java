@@ -33,6 +33,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.hamcrest.core.AnyOf;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -424,10 +425,13 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
 
         for (SequencingTemplateLaneType lane : template.getLanes()) {
             LabBatch.VesselToLanesInfo laneInfo = null;
+            BigDecimal loadingConcentration = null;
             if(vesselToLanesInfo.getLabVessel().getLabel().equals(lane.getDerivedVesselLabel())) {
                 laneInfo = vesselToLanesInfo;
+                loadingConcentration = new BigDecimal("16.22");
             } else if(vesselToLanesInfo2.getLabVessel().getLabel().equals(lane.getDerivedVesselLabel())) {
                 laneInfo = vesselToLanesInfo2;
+                loadingConcentration = new BigDecimal("12.33");
             }
             assertThat(laneInfo, not(nullValue()));
             boolean foundVesselPosition = false;
@@ -440,6 +444,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
             }
             assertThat(foundVesselPosition, is(true));
             assertThat(lane.getLoadingVesselLabel(), equalTo(""));
+            assertThat(lane.getLoadingConcentration(), is(loadingConcentration));
         }
         for(int i = 1; i <= 8; i++) {
             assertThat(allLanes, hasItem("LANE" + i));
@@ -588,6 +593,37 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
             assertThat(template.getLanes().get(0).getDerivedVesselLabel(), is(denatureTube2500.getLabel()));
             assertThat(template.getLanes().get(0).getLoadingConcentration(), is(BIG_DECIMAL_7_77));
             assertThat(template.getConcentration(), Matchers.nullValue());
+        }
+    }
+
+    public void testMultipleDesignations() {
+        BigDecimal denature4000Conc = new BigDecimal("8.88");
+        BigDecimal denature2500Conc = new BigDecimal("13.33");
+        FlowcellDesignation designation = new FlowcellDesignation(denatureTube4000, fctBatchHiSeq4000,
+                denatureTube4000.getLatestEvent(), FlowcellDesignation.IndexType.DUAL, false,
+                IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, 4, 99, denature4000Conc, true,
+                FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL);
+
+        FlowcellDesignation designation2 = new FlowcellDesignation(denatureTube2500, fctBatchHiSeq4000,
+                denatureTube2500.getLatestEvent(), FlowcellDesignation.IndexType.DUAL, false,
+                IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, 4, 99, denature2500Conc, true,
+                FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL);
+
+        flowcellDesignations.clear();
+        flowcellDesignations.add(designation);
+        flowcellDesignations.add(designation2);
+
+        template = factory.getSequencingTemplate(fctBatchHiSeq4000, false);
+        for (SequencingTemplateLaneType laneType: template.getLanes()) {
+            if (laneType.getDerivedVesselLabel().equals(denatureTube2500.getLabel())) {
+                assertThat(laneType.getLoadingConcentration(), is(denature2500Conc));
+            } else if (laneType.getDerivedVesselLabel().equals(denatureTube4000.getLabel())) {
+                assertThat(laneType.getLoadingConcentration(), is(denature4000Conc));
+            } else {
+                String failMsg = String.format("Expected to only find tubes %s and %s but found %s",
+                        denatureTube2500.getLabel(), denatureTube4000.getLabel(), laneType.getDerivedVesselLabel());
+                Assert.fail(failMsg);
+            }
         }
     }
 

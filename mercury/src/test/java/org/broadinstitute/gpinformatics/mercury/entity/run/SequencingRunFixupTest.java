@@ -292,6 +292,29 @@ public class SequencingRunFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
+    public void support2463MoveRunFolder() {
+        userBean.loginOSUser();
+
+        updateRunDirectory("170112_SL-HDJ_0843_AH5CL2BCXY", "/seq/illumina/proc/SL-HDJ/170112_SL-HDJ_0843_AH5CL2BCXY",
+                "/crsp/illumina2/proc/SL-HDJ/170112_SL-HDJ_0843_AH5CL2BCXY");
+
+        illuminaSequencingRunDao.persist(new FixupCommentary("SUPPORT-2463 moving run folder to crsp folder"));
+    }
+
+    @Test(enabled = false)
+    public void support2469MoveCrspRunFolders() {
+        userBean.loginOSUser();
+
+        updateRunDirectory("170117_SL-HDE_0829_AH5CKTBCXY", "/seq/illumina/proc/SL-HDE/170117_SL-HDE_0829_AH5CKTBCXY",
+                "/crsp/illumina2/proc/SL-HDE/170117_SL-HDE_0829_AH5CKTBCXY");
+
+        updateRunDirectory("170117_SL-HDE_0830_BH5TV3BCXY", "/seq/illumina/proc/SL-HDE/170117_SL-HDE_0830_BH5TV3BCXY",
+                "/crsp/illumina2/proc/SL-HDE/170117_SL-HDE_0830_BH5TV3BCXY");
+
+        illuminaSequencingRunDao.persist(new FixupCommentary("SUPPORT-2469 updating run directory to crsp directories"));
+    }
+
+    @Test(enabled = false)
     public void fixupPo7897() {
         userBean.loginOSUser();
         // storeRunReadStructure is supplying run barcode, but there are two runs with same barcode, so change
