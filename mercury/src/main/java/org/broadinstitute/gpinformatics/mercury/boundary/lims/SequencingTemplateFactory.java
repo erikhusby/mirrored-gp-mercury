@@ -47,9 +47,11 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class SequencingTemplateFactory {
@@ -178,7 +180,14 @@ public class SequencingTemplateFactory {
         boolean isPoolTest = poolTestDefault;
         Boolean isPairedEnd = null;
         List<FlowcellDesignation> designations = flowcellDesignationEjb.getFlowcellDesignations(fctBatch);
+        Map<String, FlowcellDesignation> barcodeToFlowcellDesignation = new HashMap<>();
+        for (FlowcellDesignation flowcellDesignation: designations) {
+            String tubeBarcode = flowcellDesignation.getLoadingTube().getLabel();
+            barcodeToFlowcellDesignation.put(tubeBarcode, flowcellDesignation);
+        }
+        boolean fetchFromDesignation = false;
         if (fctBatch != null && !designations.isEmpty()) {
+            fetchFromDesignation = true;
             FlowcellDesignation designation = designations.get(0);
             readLength = designation.getReadLength();
             loadingConcentration = designation.getLoadingConc();
@@ -195,18 +204,25 @@ public class SequencingTemplateFactory {
         Set<String> molecularIndexReadStructures = new HashSet<>();
 
         for (LabBatchStartingVessel startingVessel : startingFCTVessels) {
-            if (loadingConcentration == null) {
-                loadingConcentration = startingVessel.getConcentration();
-            }
             extractInfo(startingVessel.getLabVessel().getSampleInstancesV2(), regulatoryDesignations, products,
                     productReadLengths, productPairedEnds, molecularIndexReadStructures);
 
             if (startingVessel.getVesselPosition() != null) {
+                if (!fetchFromDesignation) {
+                    loadingConcentration = startingVessel.getConcentration();
+                } else if (barcodeToFlowcellDesignation.containsKey(startingVessel.getLabVessel().getLabel())) {
+                    FlowcellDesignation flowcellDesignation =
+                            barcodeToFlowcellDesignation.get(startingVessel.getLabVessel().getLabel());
+                    loadingConcentration = flowcellDesignation.getLoadingConc();
+                }
                 SequencingTemplateLaneType lane = LimsQueryObjectFactory.createSequencingTemplateLaneType(
                         startingVessel.getVesselPosition().name(), loadingConcentration, "",
                         startingVessel.getLabVessel().getLabel());
                 lanes.add(lane);
             } else {
+                if (loadingConcentration == null) {
+                    loadingConcentration = startingVessel.getConcentration();
+                }
                 if (startingFCTVessels.size() != 1) {
                     throw new InformaticsServiceException(
                             String.format("More than one starting denature tube for FCT ticket %s",

@@ -208,7 +208,9 @@ public class SampleDataFetcher implements Serializable {
         Set<String> bspSourceSampleNames = new HashSet<>(samples.size());
         Map<String, ProductOrderSample> mapMercuryQuantIdToPdoSample = new HashMap<>();
         for (AbstractSample sample : samples) {
-            if (!sample.isHasBspSampleDataBeenInitialized()) {
+            if (sample.isHasBspSampleDataBeenInitialized()) {
+                sampleData.put(sample.getSampleKey(), sample.getSampleData());
+            } else {
                 MercurySample mercurySample;
                 String sampleName;
                 Product product = null;
