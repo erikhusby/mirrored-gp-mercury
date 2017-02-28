@@ -12,6 +12,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
@@ -32,12 +33,15 @@ public class SampleInstanceEntity {
 
     @Nonnull
     @ManyToOne
+    @JoinColumn(name = "LAB_VESSEL")
     private LabVessel labVessel;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "MERCURY_SAMPLE")
     private MercurySample mercurySample;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "ROOT_SAMPLE")
     private MercurySample rootSample;
 
 
@@ -46,9 +50,11 @@ public class SampleInstanceEntity {
     private Set<SampleInstanceEntityTsk> sampleInstanceEntityTsks = new HashSet<>();
 
     @ManyToOne
+    @JoinColumn(name = "REAGENT_DESIGN")
     private ReagentDesign reagentDesign;
 
     @ManyToOne
+    @JoinColumn(name = "MOLECULAR_INDEXING_SCHEME")
     private MolecularIndexingScheme molecularIndexingScheme;
 
     private String sampleLibraryName;
