@@ -31,7 +31,6 @@
         <extension module="org.wildfly.extension.request-controller"/>
         <extension module="org.wildfly.extension.security.manager"/>
         <extension module="org.wildfly.extension.undertow"/>
-        <extension module="org.wildfly.iiop-openjdk"/>
     </extensions>
 
     <system-properties>
@@ -140,6 +139,15 @@
                 <max-backup-index value="10"/>
                 <append value="true"/>
             </size-rotating-file-handler>
+            <size-rotating-file-handler name="ORM">
+                <formatter>
+                    <pattern-formatter pattern="%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%E%n"/>
+                </formatter>
+                <file relative-to="jboss.server.log.dir" path="hibernate.log"/>
+                <rotate-size value="10m"/>
+                <max-backup-index value="20"/>
+                <append value="true"/>
+            </size-rotating-file-handler>
             <logger category="org.broadinstitute.gpinformatics.infrastructure.datawh" use-parent-handlers="false">
                 <level name="WARN"/>
                 <handlers>
@@ -173,8 +181,11 @@
             <logger category="sun.rmi">
                 <level name="WARN"/>
             </logger>
-            <logger category="org.hibernate.engine.StatefulPersistenceContext">
-                <level name="ERROR"/>
+            <logger category="org.hibernate.SQL">
+                <level name="OFF"/>
+                <handlers>
+                    <handler name="ORM"/>
+                </handlers>
             </logger>
             <root-logger>
                 <level name="INFO"/>
@@ -324,10 +335,6 @@
                 </local-cache>
                 <local-cache name="timestamps"/>
             </cache-container>
-        </subsystem>
-        <subsystem xmlns="urn:jboss:domain:iiop-openjdk:1.0">
-            <orb socket-binding="iiop" ssl-socket-binding="iiop-ssl"/>
-            <initializers security="identity" transactions="spec"/>
         </subsystem>
         <subsystem xmlns="urn:jboss:domain:jaxrs:1.0"/>
         <subsystem xmlns="urn:jboss:domain:jca:4.0">
@@ -525,8 +532,6 @@
         <socket-binding name="ajp" port="${jboss.ajp.port:8009}"/>
         <socket-binding name="http" port="${jboss.http.port:8080}"/>
         <socket-binding name="https" port="${jboss.https.port:8443}"/>
-        <socket-binding name="iiop" interface="unsecure" port="3528"/>
-        <socket-binding name="iiop-ssl" interface="unsecure" port="3529"/>
         <socket-binding name="txn-recovery-environment" port="4712"/>
         <socket-binding name="txn-status-manager" port="4713"/>
         <socket-binding name="netty" interface="public" port="5445"/>
