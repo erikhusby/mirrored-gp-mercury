@@ -143,7 +143,7 @@ public class LabBatchFixUpTest extends Arquillian {
 
         removeSamples(samplesToRemove, labBatch);
 
-        labBatchDao.persist(new FixupCommentary("GPLIM-4393: Remove samples from LCSET-9978"));
+        labBatchDao.persist(new FixupCommentary("GPLIM-4676: Remove samples from LCSET-10661"));
     }
 
     private List<LabBatchStartingVessel> removeSamples(List<String> sampleNames, LabBatch labBatch) {
