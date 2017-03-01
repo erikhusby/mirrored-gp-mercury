@@ -479,7 +479,7 @@
                         // if bad data was stored in the preferences it will cause problems here, so wrap
                         // it around an exception.
                         try {
-                            data = JSON.parse(storedJson);
+                            data = JSON.parse(storedJson.replace(/\\/g,'\\\\'));
                             useLocalData = false;
                         } catch (e) { /* Nothing to do here */ }
                     }
@@ -720,7 +720,7 @@
                     <th width="60"><span class="title">Nearest Sample</span></th>
                     <th width="60"><span class="title">Root Sample</span></th>
                     <th width="50"><span class="title">Sample Name</span></th>
-                    <th><span class="title ">Material Type</span></th>
+                    <th><span class="title">Material Type</span></th>
                     <th><span class="title">PDO</span></th>
                     <th><span class="title">PDO Name</span></th>
                     <th><span class="title">PDO Owner</span></th>
@@ -728,7 +728,7 @@
                     <th><span class="title ">Workflow</span></th>
                     <th><span class="title">Product</span></th>
                     <th><span class="title">Add-ons</span></th>
-                    <th width="100"><span class="title ">Receipt Date</span></th>
+                    <th width="100"><span class="title">Receipt Date</span></th>
                     <th width="100"><span class="title">Created Date</span></th>
                     <th><span class="title">Bucket Entry Type</span></th>
                     <th><span class="title">Rework Reason</span></th>
