@@ -14,9 +14,7 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
     if (tableEmpty(settings)){
         return;
     }
-
     var filterStatusContainer = $j(filterStatusSelector); // MaterialType-filters
-
     filterStatusContainer.append($j("<ul></ul>", {
         class: "filtered-items-header list",
     }));
@@ -106,13 +104,12 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
             filteredItem.append(filteredItemLabel);
             filteredItemLabel.after(filteredItemValue);
             columnContainer.append(filteredItem);
-
             filteredItem.on("click",function(){
                 // wrapped in closure since this is created in a loop
-                (function (filterLabel, filterValue) {
+                (function (label, value) {
                     $j("th").filter(function () {
                         var columnTitle = $j(this).find(".title").text().trim();
-                        return columnTitle === filterLabel;
+                        return columnTitle === label;
                     }).each(function () {
                         var textArea = $j(this).find("input[type='textarea']");
                         if (textArea.length > 0) {
@@ -121,7 +118,7 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                         } else {
                             var select = $j(this).find("select");
                             if (select.length > 0) {
-                                var optionSelector = "option[value='OPTION_VALUE']".replace("OPTION_VALUE", filterValue);
+                                var optionSelector = "option[value='OPTION_VALUE']".replace("OPTION_VALUE", value);
                                 $j(this).find(optionSelector).removeAttr('selected');
                                 var eventWhat = {'deselected': ''};
                                 select.trigger("chosen:updated", eventWhat);
@@ -163,12 +160,15 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
         if (selectType === 'text' && filterColumn) {
             var textInput = $j("<input/>", {
                 type: 'textarea',
-                css: 'height:1',
+                css: 'height:1, display: inline-block',
                 class: columnFilterClass,
                 value: savedFilterValue.replace('|', ' '),
                 placeholder: "Filter " + headerLabel
             });
-            header.append(textInput);
+            $j(textInput).prop("title","Enter text to filter on " + header.text());
+            var inputContainer=$j("<span></span>", {'class': 'search-field'});
+            inputContainer.append(textInput);
+            header.append(inputContainer);
             $j(textInput).on('click', function () {
                 return false;
             });
@@ -184,8 +184,8 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
             var select = $j("<select></select>", {
                 id: selectFilterId,
                 multiple: true,
-                class: columnFilterClass,
-                style: 'display: none',
+                title: "click to select a " + headerLabel,
+                class: columnFilterClass
             });
 
             header.append(select);
@@ -196,17 +196,13 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                     return this.value.trim().match(savedFilterValue);
                 }).attr('selected', 'selected');
             }
-            var width = $j(select).attr('width');
-            if (width<=10){
-                width=10;
-            }
-            width = Math.ceil(.8*width)+"em";
+
             var chosen = select.chosen({
                 disable_search_threshold: 10,
                 display_selected_options: false,
                 display_disabled_options: false,
-                search_contains: false,
-                width: width,
+                search_contains: true,
+                width: 'auto',
                 inherit_select_classes: true,
                 placeholder_text_single: "Select a " + headerLabel,
                 placeholder_text_multiple: "Select a " + headerLabel
@@ -220,24 +216,19 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                 // chosen.on("nothing", function (event, what) {
                 if (what) {
                     var eventAction = Object.keys(what)[0]; // ['selected','deselected']
-                    var currentlySelected = $j(this).find(":selected").map(function () {
-                        return this.text
-                    }).get();
                     if (eventAction === 'deselected') {
                         var deselectedItems = what['deselected'].trim();
                         if (deselectedItems.length === 0) {
                             $j(this).find(":selected").prop('selected',false);
-                            currentlySelected = [];
-                        } else {
-                            var selectedIndex = currentlySelected.indexOf(deselectedItems);
-                            if (selectedIndex)
-                                if (selectedIndex == -1) {
-                                    currentlySelected.splice(selectedIndex, 1);
-                                }
                         }
                     }
-                    updateFilterInfo(column, cleanTitle, headerLabel, currentlySelected);
+                    var currentSelection = $j(this).find(":selected").map(function () {
+                        return this.text
+                    }).get();
+                    updateFilterInfo(column, cleanTitle, headerLabel, currentSelection);
                 }
+                $j('.chosen-drop,.chosen-results li, li.search-choice span').css("white-space", "nowrap");
+
             });
             column.on("column-sizing.dt", function () {
                 chosen.trigger("chosen:updated");
@@ -281,15 +272,10 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                 uniqueValues.push(cell.trim());
             }
         }
-        var maxWidth=0;
         uniqueValues.sort().forEach(function (thisOption) {
             var items = $j("<option></option>", {value: thisOption, text: thisOption});
-            maxWidth = thisOption.length > maxWidth?thisOption.length:maxWidth;
             $j(select).append(items);
         });
-
-        $j(select).attr('width',maxWidth);
-
         return $j(select);
     }
     function tableEmpty(settings){
@@ -315,4 +301,13 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
             $j(".dtFilters").html("<b>Search text matches</b>: " + textJQuery[0].outerHTML);
         }
     }
+
+    $j(document).ready(function () {
+        var style = $j("<style></style>", {'type': 'text/css'});
+        $j('.chosen-drop, .chosen-container').css('width', 'auto');
+        $j('.chosen-drop, .chosen-container').css('min-width', '6em');
+        $j(".search-field input").css("width", "100%");
+        $j(".search-field input").css("font-size", "smaller");
+        $j('.chosen-drop,.chosen-results li, li.search-choice span').css("white-space", "nowrap");
+    });
 }

@@ -163,11 +163,25 @@
             background-repeat: no-repeat;
             background-position: right 5px center;
         }
+        #bucketEntryView th {
+            vertical-align: top;
+        }
+        /* min width for columns excluding the checkbox column */
+        #bucketEntryView th:nth-child(n+2) {
+            width:auto;
+            min-width: 5em;
+        }
+        #bucketEntryView td,span.title {
+            white-space: nowrap;
+        }
+        .ellipsis {
+            max-width: 250px;
+        }
 
         /* add a line break after the header */
         .title:after {
             content: '\A';
-            white-space: pre;
+            white-space: pre-wrap;
         }
     </style>
 
@@ -716,20 +730,20 @@
                         <input type="checkbox" class="bucket-checkAll" title="Check All"/>
                         <span id="count" class="bucket-checkedCount"></span>
                     </th>
-                    <th width="60"><span class="title">Vessel Name</span></th>
-                    <th width="60"><span class="title">Nearest Sample</span></th>
-                    <th width="60"><span class="title">Root Sample</span></th>
-                    <th width="50"><span class="title">Sample Name</span></th>
-                    <th><span class="title">Material Type</span></th>
+                    <th><span class="title">Vessel Name</span></th>
+                    <th><span class="title">Nearest Sample</span></th>
+                    <th><span class="title">Root Sample</span></th>
+                    <th><span class="title">Sample Name</span></th>
+                    <th><span class="title ">Material Type</span></th>
                     <th><span class="title">PDO</span></th>
                     <th><span class="title">PDO Name</span></th>
                     <th><span class="title">PDO Owner</span></th>
-                    <th style="min-width: 50px" class=""><span class="title">Batch Name</span></th>
+                    <th><span class="title">Batch Name</span></th>
                     <th><span class="title ">Workflow</span></th>
                     <th><span class="title">Product</span></th>
                     <th><span class="title">Add-ons</span></th>
-                    <th width="100"><span class="title">Receipt Date</span></th>
-                    <th width="100"><span class="title">Created Date</span></th>
+                    <th><span class="title ">Receipt Date</span></th>
+                    <th><span class="title">Created Date</span></th>
                     <th><span class="title">Bucket Entry Type</span></th>
                     <th><span class="title">Rework Reason</span></th>
                     <th><span class="title">Rework Comment</span></th>
@@ -773,12 +787,12 @@
                                 <c:if test="${!stat.last}">&nbsp;</c:if>
                             </c:forEach>
                         </c:if></td>
-                        <td class="ellipsis">
+                        <td>
                             <c:if test="${actionBean.showHeader('Material Type')}">
                                 ${entry.labVessel.latestMaterialType.displayName}
                             </c:if>
                         </td>
-                        <td class="ellipsis editable">
+                        <td class="editable">
                         <c:if test="${actionBean.showHeader('PDO')}">
                             ${entry.productOrder.businessKey}
                             <span style="display: none;" class="icon-pencil"></span>
@@ -786,10 +800,10 @@
                         </td>
                         <td>
                             <c:if test="${actionBean.showHeader('PDO Name')}">
-                                <div class="ellipsis" style="width: 300px"> ${entry.productOrder.title} </div>
+                                <div class="ellipsis" title="${entry.productOrder.title}">${entry.productOrder.title}</div>
                             </c:if>
                         </td>
-                        <td class="ellipsis">
+                        <td>
                             <c:if test="${actionBean.showHeader('PDO Owner')}">
                                 ${actionBean.getUserFullName(entry.productOrder.createdBy)}</c:if>
                         </td>
@@ -799,29 +813,29 @@
                             ${actionBean.getLink(batch.businessKey)} <c:if test="${!stat.last}">&nbsp;</c:if></c:forEach></c:if>
                         </td>
                         <td>
-                            <div class="ellipsis" style="max-width: 250px;">
-                                <c:if test="${actionBean.showHeader('Workflow')}">
-                                    ${mercuryStatic:join(actionBean.bucketWorkflowNames(entry), "<br/>")}
-                                </c:if>
-                            </div>
+                            <c:if test="${actionBean.showHeader('Workflow')}">
+                                <c:set var="workflows"
+                                       value="${mercuryStatic:join(actionBean.bucketWorkflowNames(entry), '<br/>')}"/>
+                                <div class="ellipsis" title="${workflows}">${workflows}</div>
+                            </c:if>
                         </td>
                         <td>
                             <c:if test="${actionBean.showHeader('Product')}">
-                            <div class="ellipsis" style="max-width: 250px;">${entry.productOrder.product.name}</div></c:if>
+                            <div class="ellipsis" title="${entry.productOrder.product.name}">${entry.productOrder.product.name}</div></c:if>
                         </td>
                         <td>
                             <c:if test="${headerVisibilityMap['Add-ons']}">
-                                <div class="ellipsis" style="max-width: 250px;">
+                                <div class="ellipsis" title="entry.productOrder.getAddOnList("<br/>")">
                                         ${entry.productOrder.getAddOnList("<br/>")}
                                 </div>
                             </c:if></td>
-                        <td class="ellipsis">
+                        <td>
                         <c:if test="${actionBean.showHeader('Receipt Date')}"><c:forEach items="${entry.labVessel.mercurySamples}" var="mercurySample" varStatus="stat">
                                 <fmt:formatDate value="${mercurySample.receivedDate}" pattern="MM/dd/yyyy HH:mm"/>
                                 <c:if test="${!stat.last}">&nbsp;</c:if>
                             </c:forEach></c:if>
                         </td>
-                        <td class="ellipsis">
+                        <td>
                         <c:if test="${actionBean.showHeader('Created Date')}"><fmt:formatDate value="${entry.createdDate}" pattern="MM/dd/yyyy HH:mm"/></c:if>
                         </td>
                         <td>
@@ -831,7 +845,9 @@
                             <c:if test="${actionBean.showHeader('Rework Reason')}">${entry.reworkDetail.reason.reason}</c:if>
                         </td>
                         <td>
-                        <c:if test="${actionBean.showHeader('Rework Comment')}"><div class="ellipsis">${entry.reworkDetail.comment}</div></c:if>
+                            <c:if test="${actionBean.showHeader('Rework Comment')}">
+                                <div class="ellipsis">${entry.reworkDetail.comment}</div>
+                            </c:if>
                         </td>
                         <td>
                             <c:if test="${entry.reworkDetail != null && actionBean.showHeader('Rework User')}">
