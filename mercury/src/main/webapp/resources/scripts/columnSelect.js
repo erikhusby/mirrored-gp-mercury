@@ -191,8 +191,8 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
             });
 
             chosenColumns.push(chosen);
-            $j("div." + columnFilterClass).on("click", function () {
-                return false;
+            $j("div." + columnFilterClass).one("click", function (event) {
+                event.preventDefault();
             });
             chosen.on("change chosen:updated", function (event, what) {
                 // chosen.on("nothing", function (event, what) {
