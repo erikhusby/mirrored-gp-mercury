@@ -42,6 +42,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
@@ -143,6 +144,7 @@ public class ManifestSessionContainerTest extends Arquillian {
     private ResearchProjectEjb researchProjectEjb;
 
     @Alternative
+    @Dependent
     public static class BSPCohortListProducer {
         @Produces
         @Alternative
