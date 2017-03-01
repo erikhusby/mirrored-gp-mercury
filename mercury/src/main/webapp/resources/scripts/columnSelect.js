@@ -106,10 +106,10 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
             columnContainer.append(filteredItem);
             filteredItem.on("click",function(){
                 // wrapped in closure since this is created in a loop
-                (function (filterLabel, filterValue) {
+                (function (label, value) {
                     $j("th").filter(function () {
                         var columnTitle = $j(this).find(".title").text().trim();
-                        return columnTitle === filterLabel;
+                        return columnTitle === label;
                     }).each(function () {
                         var textArea = $j(this).find("input[type='textarea']");
                         if (textArea.length > 0) {
@@ -118,7 +118,7 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                         } else {
                             var select = $j(this).find("select");
                             if (select.length > 0) {
-                                var optionSelector = "option[value='OPTION_VALUE']".replace("OPTION_VALUE", filterValue);
+                                var optionSelector = "option[value='OPTION_VALUE']".replace("OPTION_VALUE", value);
                                 $j(this).find(optionSelector).removeAttr('selected');
                                 var eventWhat = {'deselected': ''};
                                 select.trigger("chosen:updated", eventWhat);
