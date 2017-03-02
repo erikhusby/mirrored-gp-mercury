@@ -1,8 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.entity.run;
 
+import org.apache.commons.io.IOUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -290,4 +292,23 @@ public class SequencingRunFixupTest extends Arquillian {
 
         illuminaSequencingRunDao.persist(new FixupCommentary("GPLIM-3996 updating run directory for non-CRSP run"));
     }
-}
+
+
+    /**
+     * storeRunReadStructure is supplying run barcode, but there are two runs with same barcode, so change
+     * the unwanted one.
+     * This fixup takes input from a file of the following format (ticket ID, run name):
+     * PO-7948
+     * 170222_SL-HXE_0674_BFCHFVYWALXX
+     */
+    @Test(enabled = false)
+    public void fixupPo7948() throws IOException {
+        userBean.loginOSUser();
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("FixupRunBarcode.txt"));
+        String jiraTicket = lines.get(0);
+        String runName = lines.get(1);
+        IlluminaSequencingRun illuminaSequencingRun = illuminaSequencingRunDao.findByRunName(runName);
+        System.out.println("Prepending x to duplicate run barcode " + illuminaSequencingRun.getRunBarcode());
+        illuminaSequencingRun.setRunBarcode("x" + illuminaSequencingRun.getRunBarcode());
+        illuminaSequencingRunDao.persist(new FixupCommentary(jiraTicket + " add x to duplicate run barcode"));
+    }}
