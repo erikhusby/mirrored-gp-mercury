@@ -171,8 +171,9 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
             var inputContainer=$j("<span></span>", {'class': 'search-field'});
             inputContainer.append(textInput);
             header.append(inputContainer);
-            $j(textInput).on('click', stopPropagation);
 
+            // do not sort column when input field is clicked.
+            $j(textInput).on('click', stopPropagation);
             $j(textInput).on('input change', function () {
                 var searchInput = $j(this).val().trim();
                 updateFilter(column, searchInput.split(/\s+/));
@@ -250,6 +251,7 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
         });
     });
 
+    // do not sort column when input field is clicked.
     api.on('init.dt', function (event, settings) {
         $j(".chosen-container").on("click", ".chosen-choices, .chosen-results", stopPropagation);
     });
