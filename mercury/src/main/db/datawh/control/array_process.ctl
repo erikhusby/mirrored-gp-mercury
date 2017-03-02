@@ -15,7 +15,6 @@ TRAILING NULLCOLS
  lab_event_type,
  station_name,
  event_date DATE "YYYYMMDDHH24MISS",
- vessel_label,
- vessel_name,
+ lab_vessel_id,
  position
 )

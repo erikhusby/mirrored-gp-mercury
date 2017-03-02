@@ -89,12 +89,12 @@ CREATE TABLE IM_ABANDON_VESSEL_POSITION (
 );
 
 -- ***************************
---  GPLIM-4378 Make DW ETL of infinium array process flow determinstic on PDO-LCSET-Sample combination
+--  GPLIM-4378 Make DW ETL of Infinium array process flow deterministic on PDO-LCSET-Sample combination
 CREATE TABLE im_array_process (
   LINE_NUMBER NUMBER(9) NOT NULL,
   ETL_DATE DATE NOT NULL,
   IS_DELETE CHAR NOT NULL,
-  product_order_id NUMBER(19) NOT NULL,
+  product_order_id NUMBER(19),
   batch_name VARCHAR2(40),
   lcset_sample_name VARCHAR2(40),
   sample_name VARCHAR2(40),
@@ -102,7 +102,6 @@ CREATE TABLE im_array_process (
   lab_event_type VARCHAR2(64),
   station_name VARCHAR2(255),
   event_date DATE,
-  vessel_label VARCHAR2(40),
-  vessel_name VARCHAR2(255),
+  lab_vessel_id NUMBER(19),
   position VARCHAR2(32) );
 

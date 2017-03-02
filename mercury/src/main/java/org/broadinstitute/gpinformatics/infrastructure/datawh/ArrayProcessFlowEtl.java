@@ -3,11 +3,9 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
@@ -38,30 +36,6 @@ public class ArrayProcessFlowEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     private final List<String> logErrors = new ArrayList<>();
     private final Set<Long> loggingDeletedEventIds = new HashSet<>();
 
-    // This group captures events which take place on the amplification plate
-    private static final Set<LabEventType> AMP_EVENT_TYPES = new HashSet<>();
-    static {
-        AMP_EVENT_TYPES.add( LabEventType.INFINIUM_AMPLIFICATION );
-        AMP_EVENT_TYPES.add( LabEventType.INFINIUM_FRAGMENTATION);
-        AMP_EVENT_TYPES.add( LabEventType.INFINIUM_POST_FRAGMENTATION_HYB_OVEN_LOADED);
-        AMP_EVENT_TYPES.add( LabEventType.INFINIUM_PRECIPITATION);
-        AMP_EVENT_TYPES.add( LabEventType.INFINIUM_POST_PRECIPITATION_HEAT_BLOCK_LOADED);
-        AMP_EVENT_TYPES.add( LabEventType.INFINIUM_PRECIPITATION_ISOPROPANOL_ADDITION);
-        AMP_EVENT_TYPES.add( LabEventType.INFINIUM_RESUSPENSION);
-        AMP_EVENT_TYPES.add( LabEventType.INFINIUM_POST_RESUSPENSION_HYB_OVEN);
-    }
-
-    // This group captures events which take place on the Infinium chip
-    private static final Set<LabEventType> CHIP_EVENT_TYPES = new HashSet<>();
-    static {
-        CHIP_EVENT_TYPES.add( LabEventType.INFINIUM_HYBRIDIZATION);
-        CHIP_EVENT_TYPES.add( LabEventType.INFINIUM_POST_HYBRIDIZATION_HYB_OVEN_LOADED);
-        CHIP_EVENT_TYPES.add( LabEventType.INFINIUM_HYB_CHAMBER_LOADED);
-        CHIP_EVENT_TYPES.add( LabEventType.INFINIUM_XSTAIN);
-        CHIP_EVENT_TYPES.add( LabEventType.INFINIUM_AUTOCALL_SOME_STARTED);
-        CHIP_EVENT_TYPES.add( LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
-    }
-    
     public ArrayProcessFlowEtl() {
     }
 
@@ -111,10 +85,6 @@ public class ArrayProcessFlowEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             if (eventType == LabEventType.INFINIUM_BUCKET ) {
                 // An ARRAY LCSET has been created: LCSET and PDO values are available so get all associated events
                 arrayFlowDtos = makeDtosFromBucketEvent(entity);
-            } else if( AMP_EVENT_TYPES.contains(eventType)) {
-                arrayFlowDtos = makeDtosFromAmpPlate(entity);
-            } else if( CHIP_EVENT_TYPES.contains(eventType)) {
-                arrayFlowDtos = makeDtosFromChip(entity);
             } else {
                 return (List<String>)Collections.EMPTY_LIST;
             }
@@ -177,14 +147,13 @@ public class ArrayProcessFlowEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             // Don't die here, continue looking for downstream events
         }
 
-        LabVessel dnaPlate = dnaPlateWell.getPlate();
         VesselPosition dnaPlatePosition = dnaPlateWell.getVesselPosition();
         // All downstream Infinium events share samples of DNA plate well (should only ever be 1)
         dnaWellSampleInstances = dnaPlateWell.getSampleInstancesV2();
 
         for( SampleInstanceV2 si : dnaWellSampleInstances) {
             if( si.getSingleBucketEntry() != null ) {
-                arrayFlowDtos.add(new ArrayDto(platingEvent, dnaPlateWell, dnaPlatePosition, dnaPlate,
+                arrayFlowDtos.add(new ArrayDto(platingEvent, dnaPlateWell, dnaPlatePosition,
                         si.getSingleBucketEntry().getProductOrder().getProductOrderId(),
                         si.getSingleBatch().getBatchName(),
                         si.getNearestMercurySampleName(),
@@ -195,169 +164,8 @@ public class ArrayProcessFlowEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             }
         }
 
-        // Is there some sort of race condition between DNA plate, bucket, and amp plate?
-        // Find any downstream events and add them to process ETL
-        // An amp plate is 1:1 section transfer from DNA plate
-        LabEvent ampEvent = null;
-        for( LabEvent event : dnaPlateWell.getTransfersFrom() ) {
-            // Should pick up InfiniumAmplification
-            if( AMP_EVENT_TYPES.contains( event.getLabEventType() ) ) {
-                ampEvent = event;
-                break;
-            }
-        }
-
-        LabVessel ampPlate = null;
-        if( ampEvent != null ) {
-            // Amp plate is always a single target vessel
-            ampPlate = ampEvent.getTargetLabVessels().iterator().next();
-            // Amp plate is a 1:1 section transfer from DNA plate, use DNA plate well sample instance
-            for( SampleInstanceV2 si : dnaWellSampleInstances ) {
-                if( si.getSingleBucketEntry() != null ) {
-                    arrayFlowDtos.add(new ArrayDto(ampEvent, ampPlate, dnaPlatePosition, ampPlate,
-                            si.getSingleBucketEntry().getProductOrder().getProductOrderId(),
-                            si.getSingleBatch().getBatchName(),
-                            si.getNearestMercurySampleName(),
-                            si.getEarliestMercurySampleName())
-                    );
-                    // Capture in place events of interest on amp plate and use same DNA plate well sample instance
-                    for( LabEvent inPlaceEvent : ampPlate.getInPlaceLabEvents() ) {
-                        if( AMP_EVENT_TYPES.contains(inPlaceEvent.getLabEventType() )) {
-                            arrayFlowDtos.add(new ArrayDto(inPlaceEvent, ampPlate, dnaPlatePosition, ampPlate,
-                                    si.getSingleBucketEntry().getProductOrder().getProductOrderId(),
-                                    si.getSingleBatch().getBatchName(),
-                                    si.getNearestMercurySampleName(),
-                                    si.getEarliestMercurySampleName())
-                            );
-                        }
-                    }
-                }
-            }
-        } else {
-            // Nothing downstream, quit
-            return arrayFlowDtos;
-        }
-
-        // Chip plates are all cherry pick transfers from 96 amp plate positions
-        LabEvent chipEvent = null;
-        LabVessel chip = null;
-        VesselPosition chipPosition = null;
-        for( LabEvent event : ampPlate.getTransfersFrom() ) {
-            if( CHIP_EVENT_TYPES.contains(event.getLabEventType() )) {
-                for (CherryPickTransfer chipXfer : event.getCherryPickTransfers()) {
-                    // Use DNA plate -> amp plate position
-                    if (chipXfer.getSourcePosition() == dnaPlatePosition) {
-                        chipEvent = event;
-                        chip = event.getTargetLabVessels().iterator().next();
-                        chipPosition = chipXfer.getTargetPosition();
-                        break;
-                    }
-                }
-            }
-        }
-
-        if( chipEvent != null ) {
-            for ( SampleInstanceV2 si : dnaWellSampleInstances ) {
-                if (si.getSingleBucketEntry() != null) {
-                    // Use DNA plate well sample instance and chip vesssel data
-                    arrayFlowDtos.add(new ArrayDto(chipEvent, chip, chipPosition, chip,
-                            si.getSingleBucketEntry().getProductOrder().getProductOrderId(),
-                            si.getSingleBatch().getBatchName(),
-                            si.getNearestMercurySampleName(),
-                            si.getEarliestMercurySampleName())
-                    );
-                    // Capture in place events of interest on chip
-                    for (LabEvent inPlaceEvent : chip.getInPlaceLabEvents()) {
-                        if (CHIP_EVENT_TYPES.contains(inPlaceEvent.getLabEventType())) {
-                            arrayFlowDtos.add(new ArrayDto(inPlaceEvent, chip, chipPosition, chip,
-                                    si.getSingleBucketEntry().getProductOrder().getProductOrderId(),
-                                    si.getSingleBatch().getBatchName(),
-                                    si.getNearestMercurySampleName(),
-                                    si.getEarliestMercurySampleName())
-                            );
-                        }
-                    }
-                }
-            }
-        }
-
         return arrayFlowDtos;
 
-    }
-
-    private List<ArrayDto> makeDtosFromInPlaceVessel(LabEvent plateEvent, LabVessel eventVessel) {
-        List<ArrayDto> arrayFlowDtos = new ArrayList<>();
-
-        for (SampleInstanceV2 si : eventVessel.getSampleInstancesV2()) {
-            if (si.getSingleBucketEntry() != null) {
-                // In-place events don't use positions or containers in array process ETL
-                // Make rows for each PDO-LCSET-Sample combination on the plate
-                arrayFlowDtos.add(new ArrayDto(plateEvent, eventVessel, null, eventVessel,
-                        si.getSingleBucketEntry().getProductOrder().getProductOrderId(),
-                        si.getSingleBatch().getBatchName(),
-                        si.getNearestMercurySampleName(),
-                        si.getEarliestMercurySampleName())
-                );
-            }
-        }
-
-        return arrayFlowDtos;
-    }
-
-    private List<ArrayDto> makeDtosFromAmpPlate(LabEvent plateEvent) {
-        List<ArrayDto> arrayFlowDtos = new ArrayList<>();
-
-        LabVessel eventVessel = plateEvent.getInPlaceLabVessel();
-        if (eventVessel != null) {
-            return makeDtosFromInPlaceVessel(plateEvent, eventVessel);
-        } else {
-            // Positions required, amp plate is a section transfer
-            for (SectionTransfer sectionXfer : plateEvent.getSectionTransfers()) {
-                LabVessel plate = sectionXfer.getTargetVesselContainer().getEmbedder();
-                for (VesselPosition position : sectionXfer.getTargetSection().getWells()) {
-                    for (SampleInstanceV2 si : sectionXfer.getTargetVesselContainer().getSampleInstancesAtPositionV2(position)) {
-                        if (si.getSingleBucketEntry() != null) {
-                            // Make rows for each PDO-LCSET-Sample combination on the plate
-                            arrayFlowDtos.add(new ArrayDto(plateEvent, plate, position, plate,
-                                    si.getSingleBucketEntry().getProductOrder().getProductOrderId(),
-                                    si.getSingleBatch().getBatchName(),
-                                    si.getNearestMercurySampleName(),
-                                    si.getEarliestMercurySampleName())
-                            );
-                        }
-                    }
-                }
-            }
-        }
-
-        return arrayFlowDtos;
-    }
-
-    private List<ArrayDto> makeDtosFromChip(LabEvent plateEvent) {
-        List<ArrayDto> arrayFlowDtos = new ArrayList<>();
-
-        LabVessel eventVessel = plateEvent.getInPlaceLabVessel();
-        if (eventVessel != null) {
-            return makeDtosFromInPlaceVessel(plateEvent, eventVessel);
-        } else {
-            // Positions required, chip plate are cherry pick transfers
-            for (CherryPickTransfer xfer : plateEvent.getCherryPickTransfers()) {
-                LabVessel chip = xfer.getTargetVesselContainer().getEmbedder();
-                VesselPosition position = xfer.getTargetPosition();
-                for (SampleInstanceV2 si : xfer.getTargetVesselContainer().getSampleInstancesAtPositionV2(position)) {
-                    if (si.getSingleBucketEntry() != null) {
-                        // Make rows for each PDO-LCSET-Sample combination on the chip
-                        arrayFlowDtos.add(new ArrayDto(plateEvent, chip, position, chip,
-                                si.getSingleBucketEntry().getProductOrder().getProductOrderId(),
-                                si.getSingleBatch().getBatchName(),
-                                si.getNearestMercurySampleName(),
-                                si.getEarliestMercurySampleName())
-                        );
-                    }
-                }
-            }
-        }
-        return arrayFlowDtos;
     }
 
     @Override
@@ -387,7 +195,6 @@ public class ArrayProcessFlowEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     public static class ArrayDto {
         private LabEvent labEvent;
         private LabVessel labVessel;
-        private LabVessel container;
         private VesselPosition vesselPosition;
         private Long productOrderId;
         private String batchName;
@@ -398,11 +205,10 @@ public class ArrayProcessFlowEtl extends GenericEntityEtl<LabEvent, LabEvent> {
          * Encapsulates a single event in the array process flow <br/>
          * The flow is tracked by mandatory fields: PDO, LCSET, and LCSET sample name
          **/
-        ArrayDto( LabEvent labEvent, LabVessel labVessel, VesselPosition vesselPosition, LabVessel container,
+        ArrayDto( LabEvent labEvent, LabVessel labVessel, VesselPosition vesselPosition,
                   Long productOrderId, String batchName, String lcsetSampleName, String sampleName) {
             this.labEvent = labEvent;
             this.labVessel = labVessel;
-            this.container = container;
             this.vesselPosition = vesselPosition;
             this.productOrderId = productOrderId;
             this.batchName = batchName;
@@ -420,8 +226,7 @@ public class ArrayProcessFlowEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                     format(labEvent.getLabEventType().getName()),
                     format(labEvent.getEventLocation()),
                     format(labEvent.getEventDate()),
-                    format(labVessel.getLabel()),
-                    format(container == null ? "" : container.getName()),
+                    format(labVessel.getLabVesselId()),
                     format(vesselPosition==null?"":vesselPosition.toString())
             );
         }
