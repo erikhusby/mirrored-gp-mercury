@@ -119,6 +119,20 @@
                 <numberOfRepeats>1</numberOfRepeats>
                 <deadEndBranch>true</deadEndBranch>
             </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Automated Daughter Plate Creation</name>
+                <labEventTypes>AUTO_DAUGHTER_PLATE_CREATION</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <numberOfRepeats>1</numberOfRepeats>
+                <deadEndBranch>false</deadEndBranch>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>Start Plating</statusTransition>
+                    <endStatus>In Plating</endStatus>
+                </jiraTransition>
+            </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
     <workflowProcessDefs>

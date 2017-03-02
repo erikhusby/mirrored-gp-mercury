@@ -16,15 +16,22 @@ import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.JiraTransitionType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.VesselSearchActionBean;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -40,11 +47,18 @@ public class JiraCommentUtil {
 
     private final BSPUserList bspUserList;
 
+    private WorkflowConfig workflowConfig;
+
+    private UserBean userBean;
+
     @Inject
-    public JiraCommentUtil(JiraService jiraService, AppConfig appConfig, BSPUserList bspUserList) {
+    public JiraCommentUtil(JiraService jiraService, AppConfig appConfig, BSPUserList bspUserList,
+                           WorkflowConfig workflowConfig, UserBean userBean) {
         this.jiraService = jiraService;
         this.appConfig = appConfig;
         this.bspUserList = bspUserList;
+        this.workflowConfig = workflowConfig;
+        this.userBean = userBean;
     }
 
     /**
@@ -109,39 +123,57 @@ public class JiraCommentUtil {
      */
     public void postUpdate(String message, Collection<LabVessel> vessels, @Nullable LabEvent labEvent) {
         Set<JiraTicket> tickets = new HashSet<>();
+        Set<JiraTransitionType> transitions = new HashSet<>();
         for (LabVessel vessel : vessels) {
             // For cherry picks, update JIRA only for the tubes that are sources for transfers, not the entire rack.
             if (vessel.getContainerRole() != null && !vessel.getContainerRole().getContainedVessels().isEmpty() &&
                     labEvent != null && !labEvent.getCherryPickTransfers().isEmpty()) {
                 for (CherryPickTransfer cherryPickTransfer : labEvent.getCherryPickTransfers()) {
                     if (cherryPickTransfer.getSourceVesselContainer().equals(vessel.getContainerRole())) {
-                        accumulateTickets(tickets,
-                                vessel.getContainerRole().getVesselAtPosition(cherryPickTransfer.getSourcePosition()));
+                        accumulateTickets(tickets, transitions,
+                                vessel.getContainerRole().getVesselAtPosition(cherryPickTransfer.getSourcePosition()),
+                                labEvent);
                     }
                 }
             } else {
-                accumulateTickets(tickets, vessel);
+                accumulateTickets(tickets, transitions, vessel, labEvent);
             }
         }
 
+        List<JiraIssue> jiraIssues = new ArrayList<>();
         for (JiraTicket ticket : tickets) {
             try {
-                if (!ticket.getTicketName().startsWith("LCSET")) {
-                    continue;
-                }
                 JiraIssue jiraIssue = ticket.getJiraDetails();
-                Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
-                String fieldValue = (String) jiraIssue.getFieldValue(submissionFields.get(
-                        LabBatch.TicketFields.LIMS_ACTIVITY_STREAM.getName()).getJiraCustomFieldId());
-                if (fieldValue == null) {
-                    fieldValue = "";
+                jiraIssues.add(jiraIssue);
+                if (ticket.getTicketName().startsWith("LCSET")) {
+                    Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
+                    String fieldValue = (String) jiraIssue.getFieldValue(submissionFields.get(
+                            LabBatch.TicketFields.LIMS_ACTIVITY_STREAM.getName()).getJiraCustomFieldId());
+                    if (fieldValue == null) {
+                        fieldValue = "";
+                    }
+                    fieldValue = fieldValue + "{html}" + message + "<br/>{html}";
+
+                    CustomField mercuryUrlField = new CustomField(
+                            submissionFields, LabBatch.TicketFields.LIMS_ACTIVITY_STREAM, fieldValue);
+
+                    jiraIssue.updateIssue(Collections.singleton(mercuryUrlField));
                 }
-                fieldValue = fieldValue + "{html}" + message + "<br/>{html}";
 
-                CustomField mercuryUrlField = new CustomField(
-                        submissionFields, LabBatch.TicketFields.LIMS_ACTIVITY_STREAM, fieldValue);
-
-                jiraIssue.updateIssue(Collections.singleton(mercuryUrlField));
+                if (jiraIssue != null && jiraIssue.getKey() != null) {
+                    String currentStatus = jiraIssue.getStatus();
+                    //TODO Check for null?
+                    String project = jiraIssue.getKey().split("-")[0];
+                    for (JiraTransitionType transitionType : transitions) {
+                        if (transitionType.getProject().equals(project)) {
+                            if (currentStatus != null && transitionType.getEndStatus() != null &&
+                                   !currentStatus.equals(transitionType.getEndStatus())) {
+                                jiraIssue.postTransition(transitionType.getStatusTransition(),
+                                        getUserName() + " transitioned to " + transitionType.getStatusTransition());
+                            }
+                        }
+                    }
+                }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -152,11 +184,25 @@ public class JiraCommentUtil {
     /**
      * Accumulate JIRA tickets for vessels.
      */
-    private void accumulateTickets(Set<JiraTicket> tickets, LabVessel vessel) {
+    private void accumulateTickets(Set<JiraTicket> tickets, Set<JiraTransitionType> jiraTransitionTypes,
+                                   LabVessel vessel, LabEvent labEvent) {
         for (SampleInstanceV2 sampleInstance : vessel.getSampleInstancesV2()) {
             LabBatch batch = sampleInstance.getSingleBatch();
+            String workflowName = sampleInstance.getWorkflowName();
             if (batch != null && batch.getJiraTicket() != null) {
                 tickets.add(batch.getJiraTicket());
+                if (workflowName != null) {
+                    ProductWorkflowDefVersion workflowVersion = workflowConfig.getWorkflowVersionByName(
+                            workflowName, batch.getCreatedOn());
+                    ProductWorkflowDefVersion.LabEventNode labEventNode =
+                            workflowVersion.findStepByEventType(labEvent.getLabEventType().getName());
+                    if (labEventNode != null) {
+                        WorkflowStepDef workflowStepDef = labEventNode.getStepDef();
+                        if (workflowStepDef != null && !workflowStepDef.getJiraTransition().isEmpty()) {
+                            jiraTransitionTypes.addAll(workflowStepDef.getJiraTransition());
+                        }
+                    }
+                }
             }
         }
     }
@@ -179,5 +225,13 @@ public class JiraCommentUtil {
      */
     public void postUpdate(String message, LabVessel vessel) {
         postUpdate(message, Collections.singleton(vessel), null);
+    }
+
+    /**
+     * @return The name of the currently logged-in user or 'Mercury' if no logged in user (e.g. in a fixup test context).
+     */
+    private String getUserName() {
+        String user = userBean.getLoginUserName();
+        return user == null ? "Mercury" : user;
     }
 }
