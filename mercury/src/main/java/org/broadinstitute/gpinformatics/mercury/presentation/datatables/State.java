@@ -16,6 +16,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -24,13 +25,13 @@ public class State implements Serializable {
     private static final long serialVersionUID = 2016092701L;
 
     private long time;
-    private Integer start;
-    private Integer length;
-    private List<Map<Integer, Direction>> orderList;
+    private int start;
+    private int length;
+    private List<Map<Integer, Direction>> orderList = new ArrayList<>();
 
-    private Search search;
+    private Search search=new Search();
 
-    private List<Column> columns;
+    private List<Column> columns=new ArrayList<>();
 
     public State() {
     }
