@@ -14,7 +14,9 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
     if (tableEmpty(settings)){
         return;
     }
+
     var filterStatusContainer = $j(filterStatusSelector); // MaterialType-filters
+
     filterStatusContainer.append($j("<ul></ul>", {
         class: "filtered-items-header list",
     }));
