@@ -87,3 +87,19 @@ CREATE TABLE IM_ABANDON_VESSEL_POSITION (
   REASON VARCHAR2(255),
   ABANDONED_ON TIMESTAMP(6)
 );
+
+
+
+-- --------------------------------
+-- https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-4644
+-- Add created_on to LabVessel DW ETL process and use for library_lcset_sample library creation date
+-- --------------------------------
+ALTER TABLE im_lab_vessel add created_on date;
+ALTER TABLE lab_vessel add created_on date;
+
+-- Post-deploy required backfill of lab_vessel data
+-- Execute the following AFTER backfill:
+UPDATE LIBRARY_LCSET_SAMPLE_BASE LC
+   SET LC.LIBRARY_CREATION_DATE = NVL((SELECT LV.CREATED_ON FROM LAB_VESSEL LV WHERE LV.LAB_VESSEL_ID = LC.LIBRARY_ID ), LC.LIBRARY_CREATION_DATE);
+COMMIT;
+
