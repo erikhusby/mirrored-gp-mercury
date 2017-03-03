@@ -407,6 +407,7 @@
                 // If a column that was previously hidden but becomes visible the page
                 // must be reloaded since there is no data in that column.
                 $j(document.body).on("click", ".dt-button-background", function () {
+                    oTable.state.save();
                     var sessionVisibility = !undefined && $j("body").data(columnVisibilityKey) || false;
                     if (sessionVisibility) {
                         $j("#bucketForm").submit();
@@ -470,26 +471,24 @@
                         }
                     }
 
-                    if (bucketName !== '') {
-                        var batchSize = $j("input#batchSize").val();
-                        var stateData = {
-                            "<%= BucketViewActionBean.TABLE_STATE_KEY %>": JSON.stringify(data),
-                            "<%= BucketViewActionBean.SELECTED_BUCKET_KEY %>": bucketName,
-                            "<%= BucketViewActionBean.SELECT_NEXT_SIZE %>": batchSize
-                        };
-                        localStorage.setItem(localStorageKey, JSON.stringify(stateData));
-                        $j.ajax({
-                            'url': "${ctxpath}/workflow/bucketView.action?<%= BucketViewActionBean.SAVE_SEARCH_DATA %>=",
-                            'data': stateData,
-                            dataType: 'json',
-                            type: 'POST'
-                        });
-                    }
+                    var batchSize = $j("input#batchSize").val();
+                    var stateData = {
+                        "<%= BucketViewActionBean.TABLE_STATE_KEY %>": JSON.stringify(data),
+                        "<%= BucketViewActionBean.SELECTED_BUCKET_KEY %>": bucketName,
+                        "<%= BucketViewActionBean.SELECT_NEXT_SIZE %>": batchSize
+                    };
+                    localStorage.setItem(localStorageKey, JSON.stringify(stateData));
+                    $j.ajax({
+                        'url': "${ctxpath}/workflow/bucketView.action?<%= BucketViewActionBean.SAVE_SEARCH_DATA %>=",
+                        'data': stateData,
+                        dataType: 'json',
+                        type: 'POST'
+                    });
                 },
                 "stateLoadCallback": function (settings, data) {
                     var storedJson = '${actionBean.tableState}';
                     var useLocalData = true;
-                    if (storedJson) {
+                    if (storedJson && storedJson !== '{}') {
                         // if bad data was stored in the preferences it will cause problems here, so wrap
                         // it around an exception.
                         try {

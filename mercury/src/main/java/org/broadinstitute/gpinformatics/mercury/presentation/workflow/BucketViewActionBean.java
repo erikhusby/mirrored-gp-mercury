@@ -169,16 +169,16 @@ public class BucketViewActionBean extends CoreActionBean {
             List<String> selectedBucketPreferenceValue = nameValueDefinitionValue.getDataMap().get(SELECTED_BUCKET_KEY);
             if (CollectionUtils.isNotEmpty(selectedBucketPreferenceValue)) {
                 selectedBucket = selectedBucketPreferenceValue.iterator().next();
-                List<String> tableStatePreferenceValue = nameValueDefinitionValue.getDataMap().get(TABLE_STATE_KEY);
-                if (CollectionUtils.isNotEmpty(tableStatePreferenceValue)) {
-                    tableState = tableStatePreferenceValue.iterator().next();
-                    State state = objectMapper.readValue(tableState, State.class);
-                    buildHeaderVisibilityMap(state);
-                }
-                List<String> selectNextPreferenceValue = nameValueDefinitionValue.getDataMap().get(SELECT_NEXT_SIZE);
-                if (CollectionUtils.isNotEmpty(selectNextPreferenceValue)) {
-                    selectNextSize = Integer.parseInt(selectNextPreferenceValue.iterator().next());
-                }
+            }
+            List<String> tableStatePreferenceValue = nameValueDefinitionValue.getDataMap().get(TABLE_STATE_KEY);
+            if (CollectionUtils.isNotEmpty(tableStatePreferenceValue)) {
+                tableState = tableStatePreferenceValue.iterator().next();
+                State state = objectMapper.readValue(tableState, State.class);
+                buildHeaderVisibilityMap(state);
+            }
+            List<String> selectNextPreferenceValue = nameValueDefinitionValue.getDataMap().get(SELECT_NEXT_SIZE);
+            if (CollectionUtils.isNotEmpty(selectNextPreferenceValue)) {
+                selectNextSize = Integer.parseInt(selectNextPreferenceValue.iterator().next());
             }
         } catch (Exception e) {
             log.error("Load table state preference", e);
@@ -283,7 +283,11 @@ public class BucketViewActionBean extends CoreActionBean {
     @HandlesEvent(SAVE_SEARCH_DATA)
     public Resolution saveSearchData() throws Exception {
         JSONObject jsonObject = new JSONObject(tableState);
-        saveSearchData(objectMapper.readValue(tableState, State.class));
+        State state = objectMapper.readValue(tableState, State.class);
+        if (state.getColumns() == null) {
+            state = new State();
+        }
+        saveSearchData(state);
         return new StreamingResolution("application/json", jsonObject.toString());
     }
 
