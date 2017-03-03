@@ -14,7 +14,9 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
     if (tableEmpty(settings)){
         return;
     }
+
     var filterStatusContainer = $j(filterStatusSelector); // MaterialType-filters
+
     filterStatusContainer.append($j("<ul></ul>", {
         class: "filtered-items-header list",
     }));
@@ -169,11 +171,10 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
             var inputContainer=$j("<span></span>", {'class': 'search-field'});
             inputContainer.append(textInput);
             header.append(inputContainer);
-            $j(textInput).on('click', function () {
-                return false;
-            });
 
-            $j(textInput).on('input blur change', function () {
+            // do not sort column when input field is clicked.
+            $j(textInput).on('click', stopPropagation);
+            $j(textInput).on('input change', function () {
                 var searchInput = $j(this).val().trim();
                 updateFilter(column, searchInput.split(/\s+/));
                 updateFilterInfo(column, cleanTitle, headerLabel, searchInput);
@@ -209,9 +210,7 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
             });
 
             chosenColumns.push(chosen);
-            $j("div." + columnFilterClass).on("click", function () {
-                return false;
-            });
+
             chosen.on("change chosen:updated", function (event, what) {
                 // chosen.on("nothing", function (event, what) {
                 if (what) {
@@ -234,11 +233,6 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                 chosen.trigger("chosen:updated");
             });
 
-            // stop event propagation so clicking the text area won't cause the column to sort.
-            $j('.filter-select ul').on('click', function () {
-                return false;
-            });
-
             $j(select).on('change', function () {
                 // wrapped in closure since this is created in a loop
                 (function (dtColumn, select) {
@@ -255,6 +249,11 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
         api.on('init.dt', function (event, settings) {
             updateFilterInfo(column, cleanTitle, headerLabel, savedFilterValue);
         });
+    });
+
+    // do not sort column when input field is clicked.
+    api.on('init.dt', function (event, settings) {
+        $j(".chosen-container").on("click", ".chosen-choices, .chosen-results", stopPropagation);
     });
 
     api.on('search.dt', function (event, settings) {
@@ -281,6 +280,15 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
     function tableEmpty(settings){
         var api = $j.fn.dataTable.Api(settings);
         return api.data().length===0;
+    }
+
+    function stopPropagation(evt) {
+        console.log(evt.target);
+        if (evt.stopPropagation !== undefined) {
+            evt.stopPropagation();
+        } else {
+            evt.cancelBubble = true;
+        }
     }
 
     function updateSearchText(settings) {
