@@ -488,7 +488,7 @@
                 "stateLoadCallback": function (settings, data) {
                     var storedJson = '${actionBean.tableState}';
                     var useLocalData = true;
-                    if (storedJson) {
+                    if (storedJson && storedJson !== '{}') {
                         // if bad data was stored in the preferences it will cause problems here, so wrap
                         // it around an exception.
                         try {
