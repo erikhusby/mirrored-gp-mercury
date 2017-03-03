@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers;
 
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 
 import javax.inject.Inject;
 
@@ -20,16 +19,18 @@ public class EventHandlerSelector {
     private DenatureToDilutionTubeHandler denatureToDilutionTubeHandler;
     private FlowcellMessageHandler flowcellMessageHandler;
     private FlowcellLoadedHandler flowcellLoadedHandler;
+    private AutoDaughterHandler autoDaughterHandler;
 
     @Inject
     public EventHandlerSelector(SonicAliquotHandler sonicAliquotHandler,
             DenatureToDilutionTubeHandler denatureToDilutionTubeHandler,
             FlowcellMessageHandler flowcellMessageHandler,
-            FlowcellLoadedHandler flowcellLoadedHandler) {
+            FlowcellLoadedHandler flowcellLoadedHandler, AutoDaughterHandler autoDaughterHandler) {
         this.sonicAliquotHandler = sonicAliquotHandler;
         this.denatureToDilutionTubeHandler = denatureToDilutionTubeHandler;
         this.flowcellMessageHandler = flowcellMessageHandler;
         this.flowcellLoadedHandler = flowcellLoadedHandler;
+        this.autoDaughterHandler = autoDaughterHandler;
     }
 
     /**
@@ -59,7 +60,7 @@ public class EventHandlerSelector {
             break;
 
         case AUTO_DAUGHTER_PLATE_CREATION:
-            stationEvent.setEventType(LabEventType.SAMPLES_DAUGHTER_PLATE_CREATION.getName());
+            autoDaughterHandler.handleEvent(targetEvent, stationEvent);
             break;
         case FLOWCELL_LOADED:
             flowcellLoadedHandler.handleEvent(targetEvent, stationEvent);

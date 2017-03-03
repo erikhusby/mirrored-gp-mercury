@@ -29,6 +29,7 @@ import java.io.Serializable;
  */
 public class BSPRestSender implements Serializable {
     public static final String BSP_TRANSFER_REST_URL = "plate/transfer";
+    public static final String BSP_PLATE_EXISTS_URL = "plate/exists";
     public static final String BSP_UPLOAD_QUANT_URL = "quant/upload";
     private static final Log logger = LogFactory.getLog(BSPRestSender.class);
 
@@ -62,19 +63,31 @@ public class BSPRestSender implements Serializable {
                 queryParam("username", bspUsername).
                 queryParam("filename", filename);
 
-//        MultiPart multipartEntity = new FormDataMultiPart()
-//                .field("meta", playWithDadMetaJson, MediaType.APPLICATION_JSON_TYPE)
-//                .bodyPart(filePart);
-//
-//        ClientResponse response = webResource
-//                .type(MediaType.MULTIPART_FORM_DATA_TYPE)
-//                .post(ClientResponse.class, multipartEntity);
-
         ClientResponse response = webResource.post(ClientResponse.class, inputStream);
 
         // Handles errors by throwing RuntimeException.
         if (response.getClientResponseStatus().getFamily() != Response.Status.Family.SUCCESSFUL) {
             String msg = "POST to " + urlString + " returned: " + response.getEntity(String.class);
+            logger.error(msg);
+            throw new RuntimeException(msg);
+        }
+    }
+
+    /**
+     * Determines if the lab vessel exists in BSP.
+     */
+    public boolean vesselExists(String barcode) {
+        String urlString = bspRestClient.getUrl(BSP_PLATE_EXISTS_URL);
+        WebResource webResource = bspRestClient.getWebResource(urlString).path(barcode);
+        ClientResponse response = webResource.get(ClientResponse.class);
+        switch (response.getClientResponseStatus()) {
+        case OK:
+            return true;
+        case NOT_FOUND:
+            return false;
+        default:
+            String msg = "GET " + urlString + " barcode '" + barcode + "' returned " +
+                    response.getClientResponseStatus().getReasonPhrase() + ": " + response.getEntity(String.class);
             logger.error(msg);
             throw new RuntimeException(msg);
         }
