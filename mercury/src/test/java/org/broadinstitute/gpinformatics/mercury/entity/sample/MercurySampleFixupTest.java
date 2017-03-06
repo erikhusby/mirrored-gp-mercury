@@ -139,6 +139,14 @@ public class MercurySampleFixupTest extends Arquillian {
                 "GPLIM-4692: Delete BSP Samples from Mercury which were not created in BSP due to an exception.");
     }
 
+    @Test(groups = TestGroups.FIXUP, enabled = false)
+    public void gplim4692DeleteMoreOrphanedSamples() throws Exception {
+        List<String> sampleKeys = Arrays.asList("SM-DNXK2","SM-DNXK1","SM-DNXKH","SM-DNXKG","SM-DNXKA","SM-DNXKO",
+                "SM-DNXKB","SM-DNXKR","SM-DNXKQ","SM-DNXKP","SM-DNXKW");
+        removeOrphanedSamplesHelper(sampleKeys,
+                "GPLIM-4692: Delete more BSP Samples from Mercury which were not created in BSP due to an exception and looks funny with sample key name.");
+    }
+
     private void removeOrphanedSamplesHelper(List<String> sampleKeys, String fixupReason) {
         List<MercurySample> mercurySamples = mercurySampleDao.findBySampleKeys(sampleKeys);
         userBean.loginOSUser();
