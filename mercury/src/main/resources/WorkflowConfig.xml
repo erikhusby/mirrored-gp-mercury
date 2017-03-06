@@ -291,6 +291,11 @@
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In Shearing</statusTransition>
+                    <endStatus>In Shearing</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Covaris Loaded</name>
@@ -341,6 +346,11 @@
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In Shearing</statusTransition>
+                    <endStatus>In Shearing</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Covaris Loaded</name>
@@ -380,6 +390,11 @@
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In LC</statusTransition>
+                    <endStatus>In LC</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>PostEndRepairThermoCyclerLoaded</name>
@@ -492,6 +507,11 @@
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In LC</statusTransition>
+                    <endStatus>In LC</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>PostEndRepairThermoCyclerLoaded</name>
@@ -819,6 +839,11 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <ancestryEtlFlag>false</ancestryEtlFlag>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In Plex Pooling</statusTransition>
+                    <endStatus>In Plex Pooling</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <!-- next two are alternatives -->
             <workflowStepDefs>
@@ -1030,6 +1055,11 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <ancestryEtlFlag>true</ancestryEtlFlag>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In Sequencing Prep</statusTransition>
+                    <endStatus>In Sequencing Prep</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>EcoTransfer</name>
@@ -2320,6 +2350,11 @@
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In LC</statusTransition>
+                    <endStatus>In LC</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>PostEndRepairThermoCyclerLoaded</name>

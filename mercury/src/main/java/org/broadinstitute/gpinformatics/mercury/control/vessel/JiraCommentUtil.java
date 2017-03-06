@@ -157,7 +157,8 @@ public class JiraCommentUtil {
                     CustomField mercuryUrlField = new CustomField(
                             submissionFields, LabBatch.TicketFields.LIMS_ACTIVITY_STREAM, fieldValue);
 
-                    jiraIssue.updateIssue(Collections.singleton(mercuryUrlField));
+                    //TODO Comment out so as not to fill up the stupid tign for now
+                    //jiraIssue.updateIssue(Collections.singleton(mercuryUrlField));
                 }
 
                 if (jiraIssue != null && jiraIssue.getKey() != null) {
