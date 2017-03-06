@@ -397,9 +397,9 @@ public class MetricsViewActionBean extends CoreActionBean {
                 addOption("Fail", "-3", RED).
                 addOption("Not Comparable", String.valueOf(Integer.MIN_VALUE), YELLOW).build();
 
-        List<Options> hapMapConcordanceOptions = new OptionsBuilder().addOption(">= 90", "90", RED).
+        List<Options> hapMapConcordanceOptions = new OptionsBuilder().addOption(">= 90", "90", GREEN).
                 addOption(">= 85", "85", YELLOW).
-                addOption("Fail", "0", GREEN).build();
+                addOption("Fail", "0", RED).build();
 
         List<Options> emptyOptions = new OptionsBuilder().build();
 

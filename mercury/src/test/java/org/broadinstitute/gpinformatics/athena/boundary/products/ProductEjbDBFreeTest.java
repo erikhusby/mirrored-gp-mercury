@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.products;
 
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -35,7 +36,7 @@ public class ProductEjbDBFreeTest {
 
         SAPAccessControl noControl = new SAPAccessControl();
         SAPAccessControl blockControl = new SAPAccessControl();
-        blockControl.setDisabledFeatures(Collections.singleton("blockThisItem"));
+        blockControl.setDisabledItems(Collections.singleton(new AccessItem("blockThisItem")));
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(blockControl);
         Product testProduct = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "SGM-TEST-SAP");
