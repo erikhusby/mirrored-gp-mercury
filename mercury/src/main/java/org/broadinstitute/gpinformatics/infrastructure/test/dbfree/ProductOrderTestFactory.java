@@ -165,6 +165,10 @@ public class ProductOrderTestFactory {
         return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.CELL_FREE_HYPER_PREP);
     }
 
+    public static ProductOrder buildICEHyperPrepProductOrder(int maxSamples) {
+        return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.ICE_EXOME_EXPRESS_HYPER_PREP);
+    }
+
     public static ProductOrder buildSampleInitiationProductOrder(int maxSamples) {
 
         ProductOrder sampleInitiationProductOrder = createDummyProductOrder(maxSamples, JIRA_KEY, Workflow.NONE,

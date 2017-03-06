@@ -223,6 +223,7 @@ public class HiSeq2500FlowcellEntityBuilder {
             reagentsSize = 2;
             break;
         case ICE_EXOME_EXPRESS:
+        case ICE_EXOME_EXPRESS_HYPER_PREP:
         case ICE:
             reagentsSize = 3;
         }
