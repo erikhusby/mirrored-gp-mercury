@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -46,6 +47,8 @@ public class WorkflowTransitionTest extends Arquillian {
 
     // For In Consolidation - AutomatedDaughter event
     private String bspTubeBarocde = "1124883373";
+
+    private String shearingTubeBarcode = "0209086751";
 
     // For In LC - EndRepair event
     private String endRepairPlate = "000009167473";
@@ -121,19 +124,16 @@ public class WorkflowTransitionTest extends Arquillian {
 
     @Test
     public void testShearingTransferTransitionsToInShearing() throws IOException {
-        //TODO NEEDs a transition from
         Assert.assertEquals(genomeIssue.getStatus(), "On Hold");
-        genomeIssue.postTransition("Plating Complete", null);
+        genomeIssue.postTransition("Ready for Booking", null);
 
-        String sourceRackBarcode = "InPlatingSource" + timestampFormat.format(new Date());
-        String destRackBarcode = "InPlatingDest" + timestampFormat.format(new Date());
-        String destTube = "InPlatingDestTube" + timestampFormat.format(new Date());
+        String sourceRackBarcode = "ShearingRackSource" + timestampFormat.format(new Date());
+        String destPlateBarcode = "CovarisRackPlateBarcode" + timestampFormat.format(new Date());
 
-        List<String> sourceTubeBarcodes = Arrays.asList(bspTubeBarocde);
-        List<String> destTubeBarcodes = Arrays.asList(destTube);
-        PlateTransferEventType plateTransferEventType = bettaLimsMessageTestFactory.buildRackToRack(
-                LabEventType.AUTO_DAUGHTER_PLATE_CREATION.getName(), sourceRackBarcode, sourceTubeBarcodes,
-                destRackBarcode, destTubeBarcodes);
+        List<String> sourceTubeBarcodes = Arrays.asList(shearingTubeBarcode);
+        PlateTransferEventType plateTransferEventType = bettaLimsMessageTestFactory
+                .buildRackToPlate(LabEventType.SHEARING_TRANSFER.getName(), sourceRackBarcode,
+                        sourceTubeBarcodes, destPlateBarcode);
 
         BettaLIMSMessage message = new BettaLIMSMessage();
         message.getPlateTransferEvent().add(plateTransferEventType);
@@ -141,7 +141,7 @@ public class WorkflowTransitionTest extends Arquillian {
         LabEvent labEvent = labEvents.get(0);
         jiraCommentUtil.postUpdate(labEvent);
         genomeIssue = jiraService.getIssue(genomeJiraTicket);
-        Assert.assertEquals(genomeIssue.getStatus(), "In Plating");
+        Assert.assertEquals(genomeIssue.getStatus(), "In Shearing");
     }
 
     @Test
@@ -162,8 +162,30 @@ public class WorkflowTransitionTest extends Arquillian {
     }
 
     @Test
-    public void testInPlexPooling() throws IOException {
-        //TODO The issue here is that JiraCommentUtil is grabbing the wrong LCSET
+    public void testPoolCorrectionTransitionsToSeq() throws IOException {
+        Assert.assertEquals(genomeIssue.getStatus(), "On Hold");
+        genomeIssue.postTransition("Return to Ready For Sequencing", null);
+        genomeIssue.postTransition("Pool Correction", null);
+        genomeIssue = jiraService.getIssue(genomeJiraTicket);
+        Assert.assertEquals(genomeIssue.getStatus(), "Pool Correction");
+
+        String poolCorrectionTube = "0203813597";
+        String rackPlateBarcode = "PoolCorrectionRackBarcode_" + timestampFormat.format(new Date());
+        PlateEventType poolCorrectionEvent =
+                bettaLimsMessageTestFactory.buildRackEvent(LabEventType.POOL_CORRECTION.getName(), rackPlateBarcode,
+                        Collections.singletonList(poolCorrectionTube));
+
+        BettaLIMSMessage message = new BettaLIMSMessage();
+        message.getPlateEvent().add(poolCorrectionEvent);
+        List<LabEvent> labEvents = labEventFactory.buildFromBettaLims(message);
+        LabEvent labEvent = labEvents.get(0);
+        jiraCommentUtil.postUpdate(labEvent);
+        genomeIssue = jiraService.getIssue(genomeJiraTicket);
+        Assert.assertEquals(genomeIssue.getStatus(), "Ready for Sequencing");
+    }
+
+    @Test
+    public void testInLCToInPlexPooling() throws IOException {
         Assert.assertEquals(crspIssue.getStatus(), "On Hold");
         crspIssue.postTransition("In Library Construction", null);
         crspIssue = jiraService.getIssue(crspJiraTicket);
@@ -194,6 +216,40 @@ public class WorkflowTransitionTest extends Arquillian {
         jiraCommentUtil.postUpdate(labEvent);
         crspIssue = jiraService.getIssue(crspJiraTicket);
         Assert.assertEquals(crspIssue.getStatus(), "In Plex Pooling");
+    }
+
+    @Test
+    public void testInPlexPoolingToPostLC() throws IOException {
+        Assert.assertEquals(exexIssue.getStatus(), "On Hold");
+        exexIssue.postTransition("In Plex Pooling", null);
+        exexIssue = jiraService.getIssue(exexJiraTicket);
+        Assert.assertEquals(exexIssue.getStatus(), "In Plex Pooling");
+
+        String sourceRackBarcode = "Ice96PlexSpriConcentrationSource" + timestampFormat.format(new Date());
+        String targetRackBarcode = "Ice96PlexSpriConcentrationDest" + timestampFormat.format(new Date());
+        String targetTubeBarcode = "Ice96PlexSpriTransitionTestDest" + timestampFormat.format(new Date());
+
+        List<List<String>> sourceTubeBarcodes = new ArrayList<>();
+        sourceTubeBarcodes.add(Arrays.asList("AB56984661"));
+
+        List<List<String>> targetTubeBarcodes = new ArrayList<>();
+        targetTubeBarcodes.add(Arrays.asList(targetTubeBarcode));
+
+
+        BettaLimsMessageTestFactory.CherryPick cherryPick = new BettaLimsMessageTestFactory.CherryPick(sourceRackBarcode,
+                "A01", targetRackBarcode, "A01");
+        PlateCherryPickEvent plateCherryPickEvent =
+                bettaLimsMessageTestFactory.buildCherryPick(LabEventType.ICE_96_PLEX_SPRI_CONCENTRATION.getName(),
+                        Arrays.asList(sourceRackBarcode), sourceTubeBarcodes, Arrays.asList(targetRackBarcode),
+                        targetTubeBarcodes, Arrays.asList(cherryPick));
+
+        BettaLIMSMessage message = new BettaLIMSMessage();
+        message.getPlateCherryPickEvent().add(plateCherryPickEvent);
+        List<LabEvent> labEvents = labEventFactory.buildFromBettaLims(message);
+        LabEvent labEvent = labEvents.get(0);
+        jiraCommentUtil.postUpdate(labEvent);
+        exexIssue = jiraService.getIssue(exexJiraTicket);
+        Assert.assertEquals(exexIssue.getStatus(), "In Post LC");
     }
 
     @Test
@@ -231,7 +287,7 @@ public class WorkflowTransitionTest extends Arquillian {
     @Test
     public void testDilutionToFlowcell() throws IOException {
         Assert.assertEquals(exexIssue.getStatus(), "On Hold");
-        exexIssue.postTransition("In Sequencing Prep", null);
+        exexIssue.postTransition("Norm and Pool", null);
 
         String targetFlowcellBarcode = "FlowcellBarcodeFromInSeqPrep" + timestampFormat.format(new Date());
 

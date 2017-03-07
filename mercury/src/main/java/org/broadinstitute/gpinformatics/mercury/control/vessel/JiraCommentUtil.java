@@ -9,6 +9,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -157,20 +159,34 @@ public class JiraCommentUtil {
                     CustomField mercuryUrlField = new CustomField(
                             submissionFields, LabBatch.TicketFields.LIMS_ACTIVITY_STREAM, fieldValue);
 
-                    //TODO Comment out so as not to fill up the stupid tign for now
-                    //jiraIssue.updateIssue(Collections.singleton(mercuryUrlField));
+                    jiraIssue.updateIssue(Collections.singleton(mercuryUrlField));
                 }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
+        // Check workflow to see if issue should be transitioned.
+        for (JiraIssue jiraIssue: jiraIssues) {
+            try {
                 if (jiraIssue != null && jiraIssue.getKey() != null) {
                     String currentStatus = jiraIssue.getStatus();
-                    //TODO Check for null?
                     String project = jiraIssue.getKey().split("-")[0];
                     for (JiraTransitionType transitionType : transitions) {
                         if (transitionType.getProject().equals(project)) {
-                            if (currentStatus != null && transitionType.getEndStatus() != null &&
-                                   !currentStatus.equals(transitionType.getEndStatus())) {
-                                jiraIssue.postTransition(transitionType.getStatusTransition(),
-                                        getUserName() + " transitioned to " + transitionType.getStatusTransition());
+                            if (currentStatus != null && !transitionType.getEndStatus().isEmpty() &&
+                                !transitionType.getEndStatus().contains(currentStatus)) {
+                                Transition availableTransitionByName = jiraService
+                                        .findAvailableTransitionByName(jiraIssue.getKey(),
+                                                transitionType.getStatusTransition());
+                                if (availableTransitionByName == null) {
+                                    throw new NoJiraTransitionException(transitionType.getStatusTransition(),
+                                            jiraIssue.getKey());
+                                }
+                                if (transitionType.getEndStatus()
+                                        .contains(availableTransitionByName.getTo().getName())) {
+                                    jiraService.postNewTransition(jiraIssue.getKey(), availableTransitionByName, null);
+                                }
                             }
                         }
                     }

@@ -859,6 +859,11 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In Post LC</statusTransition>
+                    <endStatus>In Post LC</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>IcePoolTest</name>
@@ -1057,8 +1062,21 @@
                 <ancestryEtlFlag>true</ancestryEtlFlag>
                 <jiraTransition>
                     <project>LCSET</project>
-                    <statusTransition>In Sequencing Prep</statusTransition>
+                    <statusTransition>Norm and Pool</statusTransition>
                     <endStatus>In Sequencing Prep</endStatus>
+                </jiraTransition>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Pool Correction</name>
+                <labEventTypes>POOL_CORRECTION</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <ancestryEtlFlag>true</ancestryEtlFlag>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>Ready for Sequencing</statusTransition>
+                    <endStatus>Ready for Sequencing</endStatus>
                 </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1130,8 +1148,9 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <jiraTransition>
-                    <project>FCT</project>
-                    <statusTransition>Strip Tube Created (or Registered)</statusTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In Sequencing</statusTransition>
+                    <endStatus>In Sequencing</endStatus>
                 </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1224,11 +1243,8 @@
                 <reEntryPoint>false</reEntryPoint>
                 <jiraTransition>
                     <project>LCSET</project>
-                    <statusTransition>Closed</statusTransition>
-                </jiraTransition>
-                <jiraTransition>
-                    <project>FCT</project>
-                    <statusTransition>Flowcell Registered</statusTransition>
+                    <statusTransition>In Sequencing</statusTransition>
+                    <endStatus>In Sequencing</endStatus>
                 </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -2399,7 +2415,8 @@
                 <reEntryPoint>false</reEntryPoint>
                 <jiraTransition>
                     <project>LCSET</project>
-                    <statusTransition>In Hyb Sel</statusTransition>
+                    <statusTransition>Norm And Pool</statusTransition>
+                    <endStatus>Norm And Pool</endStatus>
                 </jiraTransition>
                 <ancestryEtlFlag>true</ancestryEtlFlag>
             </workflowStepDefs>
