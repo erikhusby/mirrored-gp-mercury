@@ -229,32 +229,6 @@
                             updateSubmitButton();
                         }
                     });
-                    /**
-                     * When rows are selected and one "date complete" is changed, change all selected rows.
-                     */
-                    $j('#ledger').on('change', '.dateComplete', function(event) {
-                        var $selectedRows = getSelectedRows();
-                        var $input = $j(event.target);
-                        var value = $input.val();
-                        if ($selectedRows.length > 0) {
-                            var inputName = $input.attr('name');
-                            var $selectedInputs = $selectedRows.find('input.dateComplete:enabled');
-                            for (var i = 0; i < $selectedInputs.length; i++) {
-                                var $selectedInput = $selectedInputs.eq(i);
-                                if ($selectedInput.attr('name') != inputName) {
-                                    $selectedInput.val(value);
-                                    var changed = value != $selectedInput.attr('originalValue');
-                                    $selectedInput.toggleClass('changed', changed);
-                                    updateDateCompleteValidation($selectedInput);
-                                }
-                            }
-                        }
-                        var changed = value != $input.attr('originalValue');
-                        $input.toggleClass('changed', changed);
-                        updateDateCompleteValidation($input);
-
-                        updateSubmitButton();
-                    });
                 }
             });
             // Reuse the existing filter input, but unbind its usual behavior and replace it with our own.
@@ -309,6 +283,33 @@
              * Set up date pickers for date complete.
              */
             $j('.dateComplete').datepicker({ dateFormat: 'M d, yy', maxDate: 0 }).datepicker('refresh');
+
+            /**
+             * When rows are selected and one "date complete" is changed, change all selected rows.
+             */
+            $j('.dateComplete').change(function(event) {
+                var $selectedRows = getSelectedRows();
+                var $input = $j(event.target);
+                var value = $input.val();
+                if ($selectedRows.length > 0) {
+                    var inputName = $input.attr('name');
+                    var $selectedInputs = $selectedRows.find('input.dateComplete:enabled');
+                    for (var i = 0; i < $selectedInputs.length; i++) {
+                        var $selectedInput = $selectedInputs.eq(i);
+                        if ($selectedInput.attr('name') != inputName) {
+                            $selectedInput.val(value);
+                            var changed = value != $selectedInput.attr('originalValue');
+                            $selectedInput.toggleClass('changed', changed);
+                            updateDateCompleteValidation($selectedInput);
+                        }
+                    }
+                }
+                var changed = value != $input.attr('originalValue');
+                $input.toggleClass('changed', changed);
+                updateDateCompleteValidation($input);
+
+                updateSubmitButton();
+            });
 
             // Update display styles for all date complete inputs when the page loads.
             var dateCompleteInputs = $j('.dateComplete');
