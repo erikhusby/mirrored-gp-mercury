@@ -274,6 +274,7 @@ public class AbandonVesselActionBean  extends RackScanActionBean {
                             if (vessel.getParentAbandonVessel().getAbandonedVesselPosition().size() == 0) {
                                 vessel.removeAbandonedVessel(vessel.getAbandonVessels());
                             }
+                            labVesselDao.flush();
                             messageCollection.addInfo("Position Successfully Unabandoned. ");
                             addMessages(messageCollection);
                             return vesselSearch();
