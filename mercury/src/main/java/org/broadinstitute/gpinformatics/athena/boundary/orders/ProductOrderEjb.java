@@ -396,7 +396,7 @@ public class ProductOrderEjb {
         priceItemNameList.add(editedProductOrder.getProduct().getPrimaryPriceItem().getName());
         for (ProductOrderAddOn productOrderAddOn : editedProductOrder.getAddOns()) {
             productListFromOrder.add(productOrderAddOn.getAddOn());
-            priceItemNameList.add(productOrderAddOn.getAddOn().getName());
+            priceItemNameList.add(productOrderAddOn.getAddOn().getPrimaryPriceItem().getName());
         }
 
         if(orderQuote != null && accessControl.isEnabled()) {
@@ -405,7 +405,7 @@ public class ProductOrderEjb {
                                 editedProductOrder.getProduct()
                                         .getPrimaryPriceItem() != null &&
                                 determinePriceItemValidity(productListFromOrder) &&
-                                !CollectionUtils.containsAll(accessControl.getDisabledFeatures(), priceItemNameList) ;
+                                !CollectionUtils.containsAny(accessControl.getDisabledFeatures(), priceItemNameList) ;
         }
         return eligibilityResult;
     }
