@@ -15,6 +15,13 @@
     <stripes:layout-component name="extraHead">
         <%@ include file="/vessel/rack_scanner_list_with_sim_part1.jsp" %>
         <style>
+            .select_class {
+                width:82px;
+                direction: ltr;
+                text-align:left;
+                text-overflow: ellipsis;
+            }
+
             .btn {
                 background-image:none;
             }
@@ -38,11 +45,10 @@
             }
 
             .ddl-xs{
-                width:75px;
-                padding: 0.5px 2px;
-                font-size: 8px;
-                text-align: right;
-                background-image:none;
+                width:82px;
+                direction: ltr;
+                text-align:left;
+                text-overflow: ellipsis;
             }
 
             fieldset{
