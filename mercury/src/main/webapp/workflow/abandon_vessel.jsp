@@ -170,7 +170,7 @@
             <div id="searchInput">
                     <label for="vesselBarcode">Vessel Barcode</label>
                     <input type="text" id="searchKey" name="searchKey">
-                    <input type="submit" id="vesselSearch" name="vesselSearch" value="Find">
+                    <input type="submit" id="vesselBarcodeSearch" name="vesselBarcodeSearch" value="Find">
                     </br>
                     <div align="left">
                         <div class="panel panel-default">
@@ -178,7 +178,7 @@
                             <div>
                                 <stripes:layout-render name="/vessel/rack_scanner_list_with_sim_part2.jsp" bean="${actionBean}"/>
                                 </br>
-                                <stripes:submit value="Scan" id="vesselSearch" class="btn btn-primary"
+                                <stripes:submit value="Scan" id="vesselBarcodeSearch" class="btn btn-primary"
                                                 name="<%= AbandonVesselActionBean.RACK_SCAN_EVENT %>"/>
                             </div>
                         </div>

@@ -28,7 +28,7 @@ import java.util.LinkedHashMap;
 @UrlBinding(value = "/workflow/AbandonVessel.action")
 public class AbandonVesselActionBean  extends RackScanActionBean {
     public static final String ACTIONBEAN_URL_BINDING = "/search/vessel.action";
-    public static final String VESSEL_SEARCH = "vesselSearch";
+    public static final String VESSEL_SEARCH = "vesselBarcodeSearch";
     public static final String ABANDON_POSITION = "abandonPosition";
     public static final String UN_ABANDON_POSITION = "unAbandonPosition";
     public static final String UN_ABANDON_VESSEL = "unAbandonVessel";
@@ -65,14 +65,25 @@ public class AbandonVesselActionBean  extends RackScanActionBean {
     }
 
     @HandlesEvent(VESSEL_SEARCH)
-    public Resolution vesselSearch() throws Exception {
+    public Resolution vesselBarcodeSearch() throws Exception {
         doSearch();
         orderResults();
+        if(searchKey == null) {
+            setSearchDone(false);
+            messageCollection.addError("Please provide a barcode");
+            addMessages(messageCollection);
+        }
         if(!getResultsAvailable()) {
             setSearchDone(false);
             messageCollection.addError("No results found for: " + getSearchKey());
             addMessages(messageCollection);
         }
+        return new ForwardResolution(SESSION_LIST_PAGE);
+    }
+
+    public Resolution vesselSearch() throws Exception {
+        doSearch();
+        orderResults();
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
 
@@ -86,20 +97,50 @@ public class AbandonVesselActionBean  extends RackScanActionBean {
         scan();
         setRackScanGeometry();
         if(getRackScan() != null) {
-            setRackScanGeometry();
-            resultsAvailable = true;
-            isSearchDone = true;
-            isMultiplePositions = true;
+            if(!verifyRackUpload())  {
+                messageCollection.addError("Unable to parse simulator file");
+                addMessages(messageCollection);
+            }
+            else {
+                setRackScanGeometry();
+                resultsAvailable = true;
+                isSearchDone = true;
+                isMultiplePositions = true;
+            }
         }
 
-        if(!getResultsAvailable()) {
-            messageCollection.addError("No results found for: " + getSearchKey());
-            addMessages(messageCollection);
-        }
         return new ForwardResolution(SESSION_LIST_PAGE);
 
     }
 
+    /**
+     *
+     * Verify basic format of uploaded rack.
+     *
+     */
+
+    public boolean verifyRackUpload()
+    {
+        if(rackScan.size() == 0)
+            return false;
+
+        for (Map.Entry<String, String> entry : rackScan.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
+            if(!key.equals("rack"))  {
+                if(key.length() != 3 ) {
+                    return false;
+                }
+                if(key.length() == 3 ) {
+                    boolean isChar = key.substring(0,1).matches("[a-zA-z]{1}");
+                    if(!isChar) {
+                        return isChar;
+                    }
+                }
+            }
+        }
+        return true;
+    }
     /**
      *
      * Abandon a specific vessel position.
