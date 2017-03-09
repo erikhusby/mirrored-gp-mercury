@@ -31,7 +31,7 @@ public class JiraCommentUtilTest {
     private AppConfig appConfig = AppConfig.produce(DEV);
     private BSPUserList bspUserList = new BSPUserList(BSPManagerFactoryProducer.testInstance());
     private WorkflowConfig workflowConfig = new WorkflowLoader().load();
-    private JiraCommentUtil jiraCommentUtil=new JiraCommentUtil(jiraService, appConfig, bspUserList, workflowConfig, null);
+    private JiraCommentUtil jiraCommentUtil=new JiraCommentUtil(jiraService, appConfig, bspUserList, workflowConfig);
 
     @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testMessaging() {

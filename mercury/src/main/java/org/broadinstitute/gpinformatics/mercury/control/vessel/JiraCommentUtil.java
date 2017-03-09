@@ -23,7 +23,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
-import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.VesselSearchActionBean;
 
 import javax.annotation.Nullable;
@@ -51,16 +50,13 @@ public class JiraCommentUtil {
 
     private WorkflowConfig workflowConfig;
 
-    private UserBean userBean;
-
     @Inject
     public JiraCommentUtil(JiraService jiraService, AppConfig appConfig, BSPUserList bspUserList,
-                           WorkflowConfig workflowConfig, UserBean userBean) {
+                           WorkflowConfig workflowConfig) {
         this.jiraService = jiraService;
         this.appConfig = appConfig;
         this.bspUserList = bspUserList;
         this.workflowConfig = workflowConfig;
-        this.userBean = userBean;
     }
 
     /**
