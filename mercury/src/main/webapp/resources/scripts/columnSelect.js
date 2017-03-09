@@ -283,7 +283,6 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
     }
 
     function stopPropagation(evt) {
-        console.log(evt.target);
         if (evt.stopPropagation !== undefined) {
             evt.stopPropagation();
         } else {

@@ -512,7 +512,7 @@
                         {"Root Sample": 'text'},
                         {"Sample Name": 'text'},
                         {"PDO": 'select'},
-                        {"PDO Name": 'text'},
+                        {"PDO Name": 'select'},
                         {"PDO Owner": 'select'},
                         {"Batch Name": 'text'},
                         {"Product": 'select'},
