@@ -152,9 +152,16 @@ public abstract class GenericEntityAndStatusEtl<AUDITED_ENTITY_CLASS, ETL_DATA_S
                         }
                         String record = statusRecord(etlDateStr, false, entity, statusDate);
                         statusFile.write(record);
-                    } catch (RuntimeException e) {
-                        logger.info("Error in ETL for " + entity.getClass().getSimpleName() +
+                    } catch (Exception e) {
+                        // For data-specific Mercury exceptions on one entity, log it and continue, since
+                        // these are permanent. For systemic exceptions such as when BSP is down, re-throw
+                        // the exception in order to stop this run of ETL and allow a retry in a few minutes.
+                        if (isSystemException(e)) {
+                            throw e;
+                        } else {
+                            logger.info("Error in ETL for " + entity.getClass().getSimpleName() +
                                     " id " + dataSourceEntityId(entity), e);
+                        }
                     }
                 }
             }

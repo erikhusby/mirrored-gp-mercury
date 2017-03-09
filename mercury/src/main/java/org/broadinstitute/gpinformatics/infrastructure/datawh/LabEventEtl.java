@@ -84,6 +84,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         Collection<String> eventFactRecords = new ArrayList<>();
         try {
             for (EventFactDto fact : makeEventFacts(entity)) {
+
                 if (fact.canEtl()) {
                     eventFactRecords.add(
                         genericRecord(etlDateStr, isDelete,
@@ -171,7 +172,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                     } catch (Exception e) {
                         // Continues ETL and logs data-specific Mercury exceptions.  Re-throws systemic exceptions
                         // such as when BSP is down in order to stop this run of ETL.
-                        if (e.getCause() == null || e.getCause().getClass().getName().contains("broadinstitute")) {
+                        if (!isSystemException(e)) {
                             if (errorException == null) {
                                 errorException = e;
                             }
@@ -286,7 +287,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
         if (descendantSequencingRunIds.size() > 0) {
             // Creates a sequencingSampleFact .dat file that contains the possibly modified sequencing runs.
-            sequencingSampleFactEtl.writeEtlDataFile(
+            sequencingSampleFactEtl.writeEtlDataFileWrapper(
                     Collections.<Long>emptyList(),
                     descendantSequencingRunIds,
                     Collections.<Long>emptyList(),

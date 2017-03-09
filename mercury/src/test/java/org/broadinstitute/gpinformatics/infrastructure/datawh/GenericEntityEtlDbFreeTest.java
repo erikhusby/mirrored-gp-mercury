@@ -95,6 +95,7 @@ public class GenericEntityEtlDbFreeTest {
         expect(obj.getLabel()).andReturn(label);
         expect(obj.getType()).andReturn(type);
         expect(obj.getName()).andReturn(vesselName);
+        expect(obj.getCreatedOn()).andReturn(new Date());
 
         auditReader.clear();
 
@@ -157,6 +158,7 @@ public class GenericEntityEtlDbFreeTest {
         expect(obj.getLabel()).andReturn(label).times(2);
         expect(obj.getType()).andReturn(type).times(2);
         expect(obj.getName()).andReturn(vesselName).times(2);
+        expect(obj.getCreatedOn()).andReturn(new Date()).times(2);
         replay(mocks);
 
         tst.setAuditReaderDao(auditReader);

@@ -91,7 +91,6 @@ public class AuditReaderDao extends GenericDao {
      * @return Map of rev info id and the rev's timestamp.
      * @throws IllegalArgumentException if params are not whole second values.
      */
-    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public SortedMap<Long, Date> fetchAuditIds(long startTimeSec, long endTimeSec) {
         SortedMap<Long, Date> revs = new TreeMap<>();
         for (AuditedRevDto auditedRevDto : fetchAuditIds(startTimeSec, endTimeSec, IS_ANY_USER, null)) {
@@ -180,7 +179,6 @@ public class AuditReaderDao extends GenericDao {
      * @param entityClassName the class name of the entity.
      * @return list of EnversAudit objects, unordered.
      */
-    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public List<EnversAudit> fetchEnversAudits(Set<Long> revIds, Class entityClassName) {
         List<EnversAudit> enversAudits = new ArrayList<>();
         // Does the AuditReader query and converts each object array into EnversAudit.
