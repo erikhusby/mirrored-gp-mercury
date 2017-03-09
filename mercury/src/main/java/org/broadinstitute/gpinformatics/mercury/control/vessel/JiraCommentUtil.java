@@ -243,12 +243,4 @@ public class JiraCommentUtil {
     public void postUpdate(String message, LabVessel vessel) {
         postUpdate(message, Collections.singleton(vessel), null);
     }
-
-    /**
-     * @return The name of the currently logged-in user or 'Mercury' if no logged in user (e.g. in a fixup test context).
-     */
-    private String getUserName() {
-        String user = userBean.getLoginUserName();
-        return user == null ? "Mercury" : user;
-    }
 }
