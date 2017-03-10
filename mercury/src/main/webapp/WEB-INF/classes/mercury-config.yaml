@@ -248,7 +248,7 @@ infiniumStarter:
 
     PROD:
         dataPath: /humgen/illumina_data
-        minimumIdatFileLength: 4000000
+        minimumIdatFileLength: 2000000
         jmsHost: vpicard03
         jmsPort: 61616
         jmsQueue: broad.arrays.enqueue
