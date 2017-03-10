@@ -133,7 +133,7 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                         var textArea = $j(this).find("input[type='textarea']");
                         if (textArea.length > 0) {
                             textArea.val('');
-                            textArea.trigger("change");
+                            textArea.trigger("input");
                         } else {
                             var select = $j(this).find("select");
                             if (select.length > 0) {
@@ -195,7 +195,7 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
 
             // do not sort column when input field is clicked.
             $j(textInput).on('click', stopPropagation);
-            $j(textInput).on('input change', function () {
+            $j(textInput).on('input', function () {
                 var searchInput = $j(this).val().trim();
                 updateFilter(column, searchInput.split(/\s+/));
                 updateFilterInfo(column, cleanTitle, headerLabel, searchInput);
