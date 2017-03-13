@@ -125,6 +125,7 @@ public class WorkflowStepDef implements Serializable {
     private String batchJiraIssueType;
     /** Configuration for the Manual Transfers page. */
     private LabEventType.ManualTransferDetails manualTransferDetails;
+    private List<JiraTransitionType> jiraTransition = new ArrayList<>();
 
     private boolean ancestryEtlFlag = false;
 
@@ -242,4 +243,12 @@ public class WorkflowStepDef implements Serializable {
         return manualTransferDetails;
     }
 
+    public List<JiraTransitionType> getJiraTransition() {
+        return jiraTransition;
+    }
+
+    public void setJiraTransition(
+            List<JiraTransitionType> jiraTransition) {
+        this.jiraTransition = jiraTransition;
+    }
 }
