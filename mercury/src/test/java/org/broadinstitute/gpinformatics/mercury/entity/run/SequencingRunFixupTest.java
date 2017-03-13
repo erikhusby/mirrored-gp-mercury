@@ -290,4 +290,16 @@ public class SequencingRunFixupTest extends Arquillian {
 
         illuminaSequencingRunDao.persist(new FixupCommentary("GPLIM-3996 updating run directory for non-CRSP run"));
     }
+
+    @Test(enabled = false)
+    public void fixupPo8033() {
+        userBean.loginOSUser();
+        // storeRunReadStructure is supplying run barcode, but there are two runs with same barcode, so change
+        // the unwanted one
+        IlluminaSequencingRun illuminaSequencingRun =
+                illuminaSequencingRunDao.findByRunName("170307_SL-HXJ_0555_BFCHFY2JALXX");
+        System.out.println("Prepending x to duplicate run barcode " + illuminaSequencingRun.getRunBarcode());
+        illuminaSequencingRun.setRunBarcode("x" + illuminaSequencingRun.getRunBarcode());
+        illuminaSequencingRunDao.persist(new FixupCommentary("PO-8033 add x to duplicate run barcode"));
+    }
 }
