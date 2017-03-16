@@ -25,6 +25,7 @@ public enum Workflow {
     PCR_FREE_HYPER_PREP("Whole Genome PCR Free HyperPrep"),
     PCR_PLUS_HYPER_PREP("Whole Genome PCR Plus HyperPrep"),
     CELL_FREE_HYPER_PREP("Cell Free HyperPrep"),
+    ICE_EXOME_EXPRESS_HYPER_PREP("Hyper Prep ICE Exome Express"),
     ICE("ICE"),
     ICE_CRSP("ICE CRSP"),
     CLINICAL_WHOLE_BLOOD_EXTRACTION("Clinical Whole Blood Extraction"),

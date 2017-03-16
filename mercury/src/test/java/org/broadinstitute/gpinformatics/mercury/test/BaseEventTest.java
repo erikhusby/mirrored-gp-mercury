@@ -91,6 +91,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuil
 import org.broadinstitute.gpinformatics.mercury.test.builders.StoolTNAEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.TenXEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.TruSeqStrandSpecificEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.TruSeqStrandSpecificJaxbBuilder;
 import org.easymock.EasyMock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;

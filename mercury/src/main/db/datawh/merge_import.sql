@@ -584,6 +584,7 @@ AS
               label = new.label,
               lab_vessel_type = new.lab_vessel_type,
               name = new.name,
+              created_on = new.created_on,
               etl_date = new.etl_date
             WHERE lab_vessel_id = new.lab_vessel_id;
 
@@ -595,12 +596,14 @@ AS
               label,
               lab_vessel_type,
               name,
+              created_on,
               etl_date
             ) VALUES (
               new.lab_vessel_id,
               new.label,
               new.lab_vessel_type,
               new.name,
+              new.created_on,
               new.etl_date );
 
             V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
@@ -1655,6 +1658,10 @@ AS
     V_LIBRARY_INS_COUNT PLS_INTEGER;
     -- Nothing ever updated
     V_UPD_COUNT CONSTANT PLS_INTEGER := 0;
+
+    V_LIBRARY_LABEL LAB_VESSEL.LABEL%TYPE;
+    V_LIBRARY_DATE LAB_VESSEL.CREATED_ON%TYPE;
+
     BEGIN
       V_LIBRARY_INS_COUNT := 0;
       FOR new IN (SELECT lab_vessel_id as library_id
@@ -1669,14 +1676,15 @@ AS
                   GROUP BY lab_vessel_id, lab_event_id, library_name, event_date, etl_date
       ) LOOP
         BEGIN
+
           -- Rows for libraries - we've already deleted any rows related to libraries
           INSERT INTO LIBRARY_LCSET_SAMPLE_BASE (
             LIBRARY_LABEL, LIBRARY_ID,
             LIBRARY_TYPE, LIBRARY_CREATION_DATE, LIBRARY_EVENT_ID )
-          VALUES(
-            ( SELECT label FROM lab_vessel where lab_vessel_id = new.library_id ),
-            new.library_id,
-            new.library_type, new.library_creation, new.event_id );
+          ( SELECT label, lab_vessel_id, new.library_type
+                 , created_on, new.event_id
+              FROM lab_vessel
+             WHERE lab_vessel_id = new.library_id );
 
           V_LIBRARY_INS_COUNT := V_LIBRARY_INS_COUNT + SQL%ROWCOUNT;
 

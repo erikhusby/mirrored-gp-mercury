@@ -79,6 +79,9 @@ plate / rack.
                             <input type="hidden"
                                     name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap' : 'positionMap'}.receptacle[${receptacleIndex}].position"
                                     value="${geometry.vesselPositions[receptacleIndex]}"/>
+                            <input type="hidden"
+                                   name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap' : 'positionMap'}.receptacle[${receptacleIndex}].volume"
+                                   value="${actionBean.findReceptacleAtPosition(positionMap, geometry.vesselPositions[receptacleIndex]).volume}"/>
                         </td>
                     </c:forEach>
                 </tr>

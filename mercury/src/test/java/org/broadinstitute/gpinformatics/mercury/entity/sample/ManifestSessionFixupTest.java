@@ -3,10 +3,13 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -55,6 +58,28 @@ public class ManifestSessionFixupTest extends Arquillian {
             }
 
         }
+        manifestSessionDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupCrsp468() {
+        userBean.loginOSUser();
+        boolean found = false;
+        for (ManifestSession manifestSession : manifestSessionDao.findOpenSessions()) {
+            if (manifestSession.getSessionName().startsWith("ORDER-11159")) {
+                for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
+                    if (manifestRecord.getSampleId().equals("SM-DPE87")) {
+                        System.out.println("Updating manifest record " + manifestRecord.getManifestRecordId());
+                        manifestRecord.getMetadataByKey(Metadata.Key.BROAD_SAMPLE_ID).setStringValue("SM-DPE8Z");
+                        found = true;
+                        break;
+                    }
+                }
+            }
+        }
+        Assert.assertTrue(found);
+
+        manifestSessionDao.persist(new FixupCommentary("CRSP-468 change sample ID"));
         manifestSessionDao.flush();
     }
 }
