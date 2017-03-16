@@ -55,7 +55,10 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
     function buildSearchTerm(filterValue, wordBoundry) {
         var searchTerm = filterValue;
         if (searchTerm!=="") {
-            searchTerm = wordBoundry + $j.fn.dataTable.util.escapeRegex(filterValue) + wordBoundry;
+            // match values beginning with either word boundry or beginning of input
+            // match values ending with either word boundry or end of input
+            // (?:x) means it is a non-capture group
+            searchTerm = "(?:"+ wordBoundry + "|^)" + $j.fn.dataTable.util.escapeRegex(filterValue) + "(?:$|" + wordBoundry + ")";
         }
         return searchTerm;
     }
