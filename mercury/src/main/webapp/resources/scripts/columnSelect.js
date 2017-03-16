@@ -230,7 +230,7 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                 display_selected_options: false,
                 display_disabled_options: false,
                 enable_split_word_search: false,
-                search_contains: false,
+                search_contains: true,
                 width: 'auto',
                 inherit_select_classes: true,
                 placeholder_text_single: "Select a " + headerLabel,
