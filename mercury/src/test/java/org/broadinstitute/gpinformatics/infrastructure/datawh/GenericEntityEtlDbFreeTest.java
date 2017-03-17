@@ -104,7 +104,7 @@ public class GenericEntityEtlDbFreeTest {
 
         tst.setAuditReaderDao(auditReader);
 
-        int recordCount = tst.doEtl(revIds, etlDateStr);
+        int recordCount = tst.doIncrementalEtl(revIds, etlDateStr);
 
         assertEquals(recordCount, 1);
 
@@ -134,7 +134,7 @@ public class GenericEntityEtlDbFreeTest {
 
         tst.setAuditReaderDao(auditReader);
 
-        int recordCount = tst.doEtl(revIds, etlDateStr);
+        int recordCount = tst.doIncrementalEtl(revIds, etlDateStr);
         assertEquals(recordCount, 1);
 
         String dataFilename = etlDateStr + "_" + tst.baseFilename + ".dat";
