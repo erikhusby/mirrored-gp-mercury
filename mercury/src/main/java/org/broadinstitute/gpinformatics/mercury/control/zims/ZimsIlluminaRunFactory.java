@@ -96,6 +96,23 @@ public class ZimsIlluminaRunFactory {
         this.flowcellDesignationEjb = flowcellDesignationEjb;
     }
 
+    private LabVessel getContextVessel(SampleInstanceV2 sampleInstance) {
+        if(sampleInstance.getFirstPcrVessel() == null) {
+            LabVessel contextVessel = sampleInstance.getInitialLabVessel();
+            if (contextVessel != null) {
+                if (contextVessel.getTransfersTo().isEmpty()) {
+                    if (contextVessel.getLabBatches().size() == 0)
+                        return contextVessel;
+                    for (LabBatch labBatch : contextVessel.getLabBatches()) {
+                        if (labBatch.getStartingBatchLabVessels().contains(contextVessel)) {
+                            return contextVessel;
+                        }
+                    }
+                }
+            }
+        }
+        return sampleInstance.getFirstPcrVessel();
+    }
     public ZimsIlluminaRun makeZimsIlluminaRun(IlluminaSequencingRun illuminaRun) {
         RunCartridge flowcell = illuminaRun.getSampleCartridge();
         FlowcellDesignation flowcellDesignation = null;
@@ -169,8 +186,8 @@ public class ZimsIlluminaRunFactory {
 
                     String libraryName = libraryVessel.getLabel();
                     String metadataSource = laneSampleInstance.getMetadataSourceForPipelineAPI();
-
-                    sampleInstanceDtos.add(new SampleInstanceDto(laneNum, laneSampleInstance.getFirstPcrVessel(),
+                    LabVessel contextVessel = getContextVessel(laneSampleInstance);
+                    sampleInstanceDtos.add(new SampleInstanceDto(laneNum, contextVessel,
                             laneSampleInstance, sampleId, productOrderKey, libraryName, libraryVessel.getCreatedOn(),
                             pdoSampleName, isCrspLane, metadataSource));
 
@@ -361,15 +378,22 @@ public class ZimsIlluminaRunFactory {
         Collections.sort(libraryBeans, LibraryBean.BY_SAMPLE_ID_LIBRARY);
 
         // Consolidates beans that have the same consolidation key.
+        MolecularIndexingScheme molecularIndexingScheme = new MolecularIndexingScheme();
+
         SortedSet<String> previouslySeenSampleAndMis = new TreeSet<>();
         for (Iterator<LibraryBean> iter = libraryBeans.iterator(); iter.hasNext(); ) {
             LibraryBean libraryBean = iter.next();
+
+            //In certain cases no moleclular indexing scheme will be preset.
+            String molIndexSecheme = "";
             if(libraryBean.getMolecularIndexingScheme() != null) {
-                String consolidationKey =
-                        makeConsolidationKey(libraryBean.getSampleId(), libraryBean.getMolecularIndexingScheme().getName());
-                if (!previouslySeenSampleAndMis.add(consolidationKey)) {
-                    iter.remove();
-                }
+                molIndexSecheme = libraryBean.getMolecularIndexingScheme().getName();
+            }
+
+            String consolidationKey =
+                    makeConsolidationKey(libraryBean.getSampleId(), molIndexSecheme);
+            if (!previouslySeenSampleAndMis.add(consolidationKey)) {
+                iter.remove();
             }
         }
         return libraryBeans;

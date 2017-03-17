@@ -559,7 +559,8 @@ public class SampleInstanceV2 {
 
     public void mergeRootSamples(MercurySample mercurySample)
     {
-        this.rootMercurySamples.add(mercurySample);
+        if(mercurySample != null)
+         this.rootMercurySamples.add(mercurySample);
     }
 
 
