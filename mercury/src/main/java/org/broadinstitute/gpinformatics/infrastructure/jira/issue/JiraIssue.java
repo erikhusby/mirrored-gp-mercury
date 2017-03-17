@@ -192,6 +192,8 @@ public class JiraIssue implements Serializable {
         dueDate = tempIssue.getDueDate();
         created = tempIssue.getCreated();
         reporter = tempIssue.getReporter();
+        subTasks = tempIssue.getSubTasks();
+        conditions = tempIssue.conditions;
     }
 
     public <TV> void addFieldValue(String filedName, TV value) {
