@@ -129,6 +129,38 @@ public class MercurySampleFixupTest extends Arquillian {
                 "GPLIM-4631: Delete BSP Samples from Mercury which were not created in BSP due to an exception."));
     }
 
+    @Test(groups = TestGroups.FIXUP, enabled = false)
+    public void gplim4692DeleteOrphanedSamples() throws Exception {
+        List<String> sampleKeys = Arrays.asList("SM-DNXJW","SM-DNXJX","SM-DNXJY","SM-DNXJZ","SM-DNXK3","SM-DNXK4",
+                "SM-DNXK5","SM-DNXK6","SM-DNXK7","SM-DNXK8","SM-DNXK9","SM-DNXKC","SM-DNXKD","SM-DNXKE","SM-DNXKF",
+                "SM-DNXKI","SM-DNXKJ","SM-DNXKK","SM-DNXKL","SM-DNXKM","SM-DNXKN","SM-DNXKS","SM-DNXKT","SM-DNXKU",
+                "SM-DNXKV","SM-DNXKX","SM-DNXKY");
+        removeOrphanedSamplesHelper(sampleKeys,
+                "GPLIM-4692: Delete BSP Samples from Mercury which were not created in BSP due to an exception.");
+    }
+
+    @Test(groups = TestGroups.FIXUP, enabled = false)
+    public void gplim4692DeleteMoreOrphanedSamples() throws Exception {
+        List<String> sampleKeys = Arrays.asList("SM-DNXK2","SM-DNXK1","SM-DNXKH","SM-DNXKG","SM-DNXKA","SM-DNXKO",
+                "SM-DNXKB","SM-DNXKR","SM-DNXKQ","SM-DNXKP","SM-DNXKW");
+        removeOrphanedSamplesHelper(sampleKeys,
+                "GPLIM-4692: Delete more BSP Samples from Mercury which were not created in BSP due to an exception and looks funny with sample key name.");
+    }
+
+    private void removeOrphanedSamplesHelper(List<String> sampleKeys, String fixupReason) {
+        List<MercurySample> mercurySamples = mercurySampleDao.findBySampleKeys(sampleKeys);
+        userBean.loginOSUser();
+        for (MercurySample mercurySample : mercurySamples) {
+            Set<LabVessel> labVessels = mercurySample.getLabVessel();
+            for (LabVessel labVessel : labVessels) {
+                labVessel.getMercurySamples().remove(mercurySample);
+            }
+            mercurySampleDao.remove(mercurySample);
+        }
+        mercurySampleDao.persist(new FixupCommentary(
+                fixupReason));
+    }
+
     /**
      * This fixup will remove duplicate samples from the system and reset their existing labVessel relationships to
      * converge to the one remaining sample of which they are a duplicate.
