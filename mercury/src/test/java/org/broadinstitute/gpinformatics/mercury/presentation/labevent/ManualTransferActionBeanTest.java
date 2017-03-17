@@ -52,6 +52,15 @@ public class ManualTransferActionBeanTest {
     }
 
     /**
+     * Verify that choosing BloodBiopsyExtraction will ask for a lims file
+     */
+    public void testQiagen() {
+        String eventType = "BloodBiopsyExtraction";
+        ManualTransferActionBean actionBean = chooseEvent(eventType);
+        Assert.assertEquals(actionBean.isParseLimsFile(), true);
+    }
+
+    /**
      * Simulate choosing an event, and return the resulting action bean.
      */
     private ManualTransferActionBean chooseEvent(String eventType) {

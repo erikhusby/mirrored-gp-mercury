@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
@@ -390,13 +391,13 @@ public class ProductOrderEjb {
         boolean eligibilityResult = false;
 
         Set<Product> productListFromOrder = new HashSet<>();
-        Set<String> priceItemNameList = new HashSet<>();
+        Set<AccessItem> priceItemNameList = new HashSet<>();
 
         productListFromOrder.add(editedProductOrder.getProduct());
-        priceItemNameList.add(editedProductOrder.getProduct().getPrimaryPriceItem().getName());
+        priceItemNameList.add(new AccessItem(editedProductOrder.getProduct().getPrimaryPriceItem().getName()));
         for (ProductOrderAddOn productOrderAddOn : editedProductOrder.getAddOns()) {
             productListFromOrder.add(productOrderAddOn.getAddOn());
-            priceItemNameList.add(productOrderAddOn.getAddOn().getName());
+            priceItemNameList.add(new AccessItem(productOrderAddOn.getAddOn().getName()));
         }
 
         if(orderQuote != null && accessControl.isEnabled()) {
@@ -405,7 +406,7 @@ public class ProductOrderEjb {
                                 editedProductOrder.getProduct()
                                         .getPrimaryPriceItem() != null &&
                                 determinePriceItemValidity(productListFromOrder) &&
-                                !CollectionUtils.containsAll(accessControl.getDisabledFeatures(), priceItemNameList) ;
+                                !CollectionUtils.containsAll(accessControl.getDisabledItems(), priceItemNameList) ;
         }
         return eligibilityResult;
     }
