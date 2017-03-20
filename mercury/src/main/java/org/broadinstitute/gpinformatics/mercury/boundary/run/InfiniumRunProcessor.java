@@ -110,22 +110,27 @@ public class InfiniumRunProcessor {
                 String redXml = String.format("%s_%s_1_Red.xml", chipBarcode, vesselPosition);
                 File chipDir = new File(infiniumStarterConfig.getDataPath(), chipBarcode);
                 File redXmlFile = new File(chipDir, redXml);
-                if (redXmlFile.exists()) {
-                    DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
-                    DocumentBuilder documentBuilder = builderFactory.newDocumentBuilder();
-                    Document document = documentBuilder.parse(new FileInputStream(redXmlFile));
-                    XPath xPath = XPathFactory.newInstance().newXPath();
-                    XPathExpression lcsetKeyExpr = xPath.compile("ImageHeader/ScannerID");
-                    NodeList scannerIdNodeList = (NodeList) lcsetKeyExpr.evaluate(document,
-                            XPathConstants.NODESET);
-                    Node elemNode = scannerIdNodeList.item(0);
-                    String scannerId = elemNode.getFirstChild().getNodeValue();
-                    String scannerName = InfiniumRunResource.mapSerialNumberToMachineName.get(scannerId);
-                    if (scannerName == null) {
-                        scannerName = "Unknown";
+                if (!redXmlFile.exists()) {
+                    redXml = String.format("%s_%s_01_Red.xml", chipBarcode, vesselPosition);
+                    redXmlFile = new File(chipDir, redXml);
+                    if (!redXmlFile.exists()) {
+                        return null;
                     }
-                    return scannerName;
                 }
+                DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+                DocumentBuilder documentBuilder = builderFactory.newDocumentBuilder();
+                Document document = documentBuilder.parse(new FileInputStream(redXmlFile));
+                XPath xPath = XPathFactory.newInstance().newXPath();
+                XPathExpression lcsetKeyExpr = xPath.compile("ImageHeader/ScannerID");
+                NodeList scannerIdNodeList = (NodeList) lcsetKeyExpr.evaluate(document,
+                        XPathConstants.NODESET);
+                Node elemNode = scannerIdNodeList.item(0);
+                String scannerId = elemNode.getFirstChild().getNodeValue();
+                String scannerName = InfiniumRunResource.mapSerialNumberToMachineName.get(scannerId);
+                if (scannerName == null) {
+                    scannerName = "Unknown";
+                }
+                return scannerName;
             }
         } catch (Exception e) {
             log.error("Failed to find scanner name from filesystem for " + chipBarcode);
