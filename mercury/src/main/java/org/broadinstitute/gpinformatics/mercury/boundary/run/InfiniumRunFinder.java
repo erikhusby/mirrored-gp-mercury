@@ -107,12 +107,20 @@ public class InfiniumRunFinder implements Serializable {
 
     private void processChip(StaticPlate staticPlate) throws Exception {
         InfiniumRunProcessor.ChipWellResults chipWellResults = infiniumRunProcessor.process(staticPlate);
-        if (!chipWellResults.isHasRunStarted() || chipWellResults.getScannerName() == null) {
+        if (!chipWellResults.isHasRunStarted()) {
             return;
+        }
+        boolean failedToFindScannerName = chipWellResults.getScannerName() == null;
+        if (failedToFindScannerName) {
+            log.warn("Failed to find scanner name from filesystem, setting to Mercury");
+            chipWellResults.setScannerName(LabEvent.UI_PROGRAM_NAME);
         }
         if (checkForInvalidPipelineLocation(staticPlate)) {
             log.debug("Won't forward plate where its Pipeline location not set to US Cloud: " + staticPlate.getLabel());
             createEvent(staticPlate, LabEventType.INFINIUM_AUTOCALL_ALL_STARTED, chipWellResults.getScannerName());
+            if (failedToFindScannerName) {
+                sendFailedToFindScannerNameEmail(staticPlate);
+            }
             return;
         }
         log.debug("Processing chip: " + staticPlate.getLabel());
@@ -174,7 +182,19 @@ public class InfiniumRunFinder implements Serializable {
 
         if (allComplete && starterCalledOnAllWells) {
             createEvent(staticPlate, LabEventType.INFINIUM_AUTOCALL_ALL_STARTED, someStartedEvent.getEventLocation());
+            if (failedToFindScannerName) {
+                sendFailedToFindScannerNameEmail(staticPlate);
+            }
         }
+    }
+
+    private void sendFailedToFindScannerNameEmail(StaticPlate staticPlate) {
+        String subject = "[Mercury] Failed to find scanner name for infinium chip " + staticPlate.getLabel();
+        String body = "Defaulted scanner name to be " + staticPlate.getLabel() + " for starter events";
+        emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
+                Collections.<String>emptyList(),
+                subject, body,
+                false);
     }
 
     /**
