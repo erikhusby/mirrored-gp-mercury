@@ -86,6 +86,7 @@
 
         <c:if test="${withColVis}">
             <script src="${ctxpath}/resources/scripts/DataTablesPlugins-1.10/Buttons-1.2.2/js/buttons.colVis.min.js"></script>
+            <link rel="stylesheet"  href="${ctxpath}/resources/css/mercury-datatables-colvis.css"/>
         </c:if>
 
         <c:if test="${withColReorder}">

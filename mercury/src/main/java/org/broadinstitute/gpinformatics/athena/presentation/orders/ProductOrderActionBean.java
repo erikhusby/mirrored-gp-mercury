@@ -116,7 +116,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeDefinition;
 import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.hibernate.Hibernate;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -188,6 +190,22 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String KIT_DEFINITION_INDEX = "kitDefinitionQueryIndex";
     private static final String COULD_NOT_LOAD_SAMPLE_DATA = "Could not load sample data";
     private String sampleSummary;
+    private List<String> sampleColumns = new ArrayList<>();
+
+//    Arrays.asList(
+//            BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID.columnName(),
+//            BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID.columnName(),
+//            BSPSampleSearchColumn.PARTICIPANT_ID.columnName(),
+//            BSPSampleSearchColumn.VOLUME.columnName(),
+//            BSPSampleSearchColumn.RECEIPT_DATE.columnName(),
+//            BSPSampleSearchColumn.PICO_RUN_DATE.columnName(),
+//            BSPSampleSearchColumn.TOTAL_DNA.columnName(),
+//            BSPSampleSearchColumn.CONCENTRATION.columnName(),
+//            BSPSampleSearchColumn.MATERIAL_TYPE.columnName(), BSPSampleSearchColumn.RACKSCAN_MISMATCH.columnName(),
+//            "On Risk",
+//            "Proceed OOS",
+//            "Yield Amount");
+
 
     public ProductOrderActionBean() {
         super(CREATE_ORDER, EDIT_ORDER, PRODUCT_ORDER_PARAMETER);
@@ -393,6 +411,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     // Search uses product family list.
     private List<ProductFamily> productFamilies;
 
+    private DatatablesStateSaver preferenceSaver;
 
     @Inject
     private LabVesselDao labVesselDao;
@@ -411,7 +430,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private String kitDefinitionQueryIndex;
     private String prePopulatedOrganismId;
     private String prepopulatePostReceiveOptions;
-
+    private String tableState = "{}";
     /**
      * @return the required confirmation message for IRB attestation.
      */
@@ -466,7 +485,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     @Before(stages = LifecycleStage.BindingAndValidation,
             on = {"!" + LIST_ACTION, "!getQuoteFunding", "!" + VIEW_ACTION})
-    public void init() {
+    public void init() throws Exception {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
         if (!StringUtils.isBlank(productOrder)) {
             editOrder = productOrderDao.findByBusinessKey(productOrder);
@@ -478,6 +497,16 @@ public class ProductOrderActionBean extends CoreActionBean {
             // If this was a create with research project specified, find that.
             // This is only used for save, when creating a new product order.
             editOrder = new ProductOrder();
+        }
+    }
+
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, DatatablesStateSaver.SAVE_SEARCH_DATA})
+    public void initTableState(){
+        preferenceSaver = new DatatablesStateSaver(PreferenceType.PRODUCT_ORDER_PREFERENCES, userBean, preferenceDao,
+                preferenceEjb);
+        try {
+        } catch (Exception e) {
+            logger.error("Could not load table state from preferences.", e);
         }
     }
 
@@ -3028,5 +3057,22 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     public void setPriceListCache(PriceListCache priceListCache) {
         this.priceListCache = priceListCache;
+    }
+
+
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
+    @HandlesEvent(DatatablesStateSaver.SAVE_SEARCH_DATA)
+    public Resolution saveSearchData() throws Exception {
+        preferenceSaver.saveTableData(tableState);
+        return new StreamingResolution("application/json", preferenceSaver.getTableStateJson());
+    }
+
+    public void setTableState(String tableState) {
+        this.tableState = tableState;
+    }
+
+    public DatatablesStateSaver getPreferenceSaver() {
+        return preferenceSaver;
     }
 }

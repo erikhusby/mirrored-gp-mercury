@@ -14,8 +14,10 @@ package org.broadinstitute.gpinformatics.mercury.presentation.datatables;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -24,26 +26,31 @@ public class State implements Serializable {
     private static final long serialVersionUID = 2016092701L;
 
     private long time;
-    private Integer start;
-    private Integer length;
-    private List<Map<Integer, Direction>> orderList;
+    private int start;
+    private int length;
+    private List<Map<Integer, Direction>> order = new ArrayList<>();
 
-    private Search search;
+    private Search search = new Search();
 
-    private List<Column> columns;
+    private List<Column> columns = new ArrayList<>();
+
+    private List<ColReorder> colReorder;
+
 
     public State() {
     }
 
     public enum Direction {asc, desc}
 
-    public State(long time, Integer start, Integer length, List<Map<Integer, Direction>> orderList, Search search, List<Column> columns) {
+    public State(long time, int start, int length, List<Map<Integer, Direction>> order, Search search,
+                 List<Column> columns, List<ColReorder> colReorder) {
         this.time = time;
         this.start = start;
         this.length = length;
-        this.orderList = orderList;
+        this.order = order;
         this.search = search;
         this.columns = columns;
+        this.colReorder = colReorder;
     }
 
     public long getTime() {
@@ -67,11 +74,11 @@ public class State implements Serializable {
     }
 
     public List<Map<Integer, Direction>> getOrderList() {
-        return orderList;
+        return order;
     }
 
-    public void setOrderList(List<Map<Integer, Direction>> orderList) {
-        this.orderList = orderList;
+    public void setOrderList(List<Map<Integer, Direction>> order) {
+        this.order = order;
     }
 
     public Search getSearch() {
@@ -94,6 +101,15 @@ public class State implements Serializable {
         this.start = start;
     }
 
+    public List<ColReorder> getColReorder() {
+        return colReorder;
+    }
+
+    @JsonProperty("ColReorder")
+    public void setColReorder(List<ColReorder> colReorder) {
+        this.colReorder = colReorder;
+    }
+
     @Override
      public boolean equals(Object o) {
          if (this == o) {
@@ -113,6 +129,7 @@ public class State implements Serializable {
                  .append(getOrderList(), state.getOrderList())
                  .append(getSearch(), state.getSearch())
                  .append(getColumns(), state.getColumns())
+                 .append(getColReorder(), state.getColReorder())
                  .isEquals();
      }
 
@@ -125,6 +142,8 @@ public class State implements Serializable {
                  .append(getOrderList())
                  .append(getSearch())
                  .append(getColumns())
+                 .append(getColReorder())
                  .toHashCode();
      }
+
 }

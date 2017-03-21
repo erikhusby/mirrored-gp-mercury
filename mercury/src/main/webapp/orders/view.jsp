@@ -4,13 +4,14 @@
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
+<%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="View Product Order: ${actionBean.editOrder.title}"
-                       dataTablesVersion="1.10" withColVis="true"
+<stripes:layout-render name="/layout.jsp" dataTablesVersion="1.10" withColVis="true" withColReorder="true"
+                       pageTitle="View Product Order: ${actionBean.editOrder.title}"
                        sectionTitle="View Product Order: ${actionBean.editOrder.title}"
                        businessKeyValue="${actionBean.editOrder.businessKey}">
 <stripes:layout-component name="extraHead">
@@ -44,44 +45,43 @@ $j(document).ready(function () {
         showKitDetail();
     }
     enableDefaultPagingOptions();
-    sampleColumns = {
-        'text': 'Toggle Sample Data',
-        'extend': 'colvisGroup',
-        'columns':  '.sampleData',
-        action: function (e, dt, button, conf) {
-            showHide = dt.columns(conf.columns).visible().lastIndexOf(true) < 0;
-            conf.text = showHide ? "Hide Sample Data" : "Show Sample Data";
-            $j(button).prop('text', conf.text);
-            dt.columns(conf.columns).visible(showHide,false);
-            dt.columns.adjust();
-        }
-    };
+
+    var localStorageKey = 'DT_productOrderView';
+
     var oTable = $j('#sampleData').dataTable({
-        'sDom': "<'row-fluid'<'span9'f><'span3'irB>>t<'row-fluid'<'span6'l><'span6'p>>",
-        'iDisplayLength': 25,
-        "bDeferRender": true,
-        "aaSorting": [
+        'dom': "<'row-fluid'<'span9'f><'span3'irB>>t<'row-fluid'<'span6'l><'span6'p>>",
+        'pageLength': 25,
+        "deferLoading": true,
+        colReorder: true,
+        "stateSave": true,
+        "order": [
             [1, 'asc']
         ],
-        buttons: [sampleColumns, "copy", "csv", "print"],
-        "aoColumns": [
-            {"bSortable": false},                           // Checkbox
-            {"bSortable": true},        // Position
-            {"bSortable": true, "sType": "html"},           // ID
-            {"bSortable": true},                            // Collaborator Sample ID
-            {"bSortable": true},                            // Participant ID
-            {"bSortable": true},                            // Collaborator Participant ID
-            {"bSortable": true},        // Shipped Date
-            {"bSortable": true},        // Received Date
-            {"bSortable": true},                            // Sample Type
-            {"bSortable": true},                            // Material Type
-            {"bSortable": true},        // Volume
-            {"bSortable": true},        // Concentration
+        buttons: [
+            {
+                extend: 'colvis',
+                className: 'show-or-hide',
+                text: "Show or Hide Columns",
+                columns: ':gt(1)'
+            }, standardButtons()],
+        "columns": [
+            {"orderable": false},                           // Checkbox
+            {"orderable": true},        // Position
+            {"orderable": true, "sType": "html"},           // ID
+            {"orderable": true},                            // Collaborator Sample ID
+            {"orderable": true},                            // Participant ID
+            {"orderable": true},                            // Collaborator Participant ID
+            {"orderable": true},        // Shipped Date
+            {"orderable": true},        // Received Date
+            {"orderable": true},                            // Sample Type
+            {"orderable": true},                            // Material Type
+            {"orderable": true},        // Volume
+            {"orderable": true},        // Concentration
 
             <c:if test="${actionBean.supportsRin}">
-            {"bSortable": true},        // RIN
-            {"bSortable": true},        // RQS
-            {"bSortable": true},        // DV200
+            {"orderable": true},        // RIN
+            {"orderable": true},        // RQS
+            {"orderable": true},        // DV200
             </c:if>
 
             <c:if test="${actionBean.supportsPico}">
@@ -116,19 +116,68 @@ $j(document).ready(function () {
                     }else{
                         $cell.empty();
                     }
+                    ``
                 }
                 return nodes;
             }
 
             imageForBoolean(".rackscanMismatch", "${ctxpath}/images/error.png");
             imageForBoolean(".completelyBilled", "${ctxpath}/images/check.png");
+        },
+        stateSaveCallback: function (settings, data) {
+            var api = new $j.fn.dataTable.Api(settings);
+            for (var index = 0; index < data.columns.length; index++) {
+                var item = data.columns[index];
+                var header = $j(api.column(index).header()).text();
+                if (header) {
+                    item.headerName = header.escapeJson();
+                }
+            }
+            var tableData;
+            try {
+                tableData = JSON.stringify(data).escapeJson();
+            } catch (e) {
+                console.log("data could not be jsonized", e);
+
+            }
+            localStorage.setItem(localStorageKey, tableData);
+            var stateData = {
+                "<%= DatatablesStateSaver.TABLE_STATE_KEY %>": tableData
+            };
+            $j.ajax({
+                'url': "${ctxpath}/orders/order.action?<%= DatatablesStateSaver.SAVE_SEARCH_DATA %>=",
+                'data': stateData,
+                dataType: 'json',
+                type: 'POST'
+            });
+        },
+        "stateLoadCallback": function (settings, data) {
+            var storedJson = '${actionBean.preferenceSaver.tableStateJson}';
+            var useLocalData = true;
+            if (storedJson && storedJson !== '{}') {
+                // if bad data was stored in the preferences it will cause problems here, so wrap
+                // it around an exception.
+                try {
+                    data = JSON.parse(storedJson.escapeJson());
+                    useLocalData = false;
+                } catch (e) {
+                    console.log("data could not be rebigulated", e);
+                }
+            }
+            if (useLocalData) {
+                storedJson = localStorage.getItem(localStorageKey);
+                if (storedJson) {
+                    data = JSON.parse(storedJson);
+                }
+            }
+            return data;
         }
     });
 
     includeAdvancedFilter(oTable, "#sampleData");
 
     $j('#orderList').dataTable({
-        "bPaginate": false,
+        "paging": false,
     });
 
     bspDataCount = $j(".sampleName").length;
@@ -1475,6 +1524,7 @@ function formatInput(item) {
                             ${sample.samplePosition + 1}
                     </td>
                     <td class="sampleName">
+                        <c:if test="${actionBean.preferenceSaver.showColumn('ID')}">${sample.name}
                             <%--@elvariable id="sampleLink" type="org.broadinstitute.gpinformatics.infrastructure.presentation.SampleLink"--%>
                         <c:set var="sampleLink" value="${actionBean.getSampleLink(sample)}"/>
                         <c:choose>
@@ -1488,48 +1538,60 @@ function formatInput(item) {
                                 ${sample.name}
                             </c:otherwise>
                         </c:choose>
+                        </c:if>
                     </td>
-                    <td>${sample.sampleData.collaboratorsSampleName}</td>
-                    <td>${sample.sampleData.patientId}</td>
-                    <td>${sample.sampleData.collaboratorParticipantId}</td>
+                    <td><c:if
+                            test="${actionBean.preferenceSaver.showColumn('Collaborator Sample ID')}">${sample.sampleData.collaboratorsSampleName}</c:if>
+                    </td>
+                    <td><c:if
+                            test="${actionBean.preferenceSaver.showColumn('Participant ID')}">${sample.sampleData.patientId}</c:if
+                    ></td>
+                    <td><c:if
+                            test="${actionBean.preferenceSaver.showColumn('Collaborator Participant ID')}">${sample.sampleData.collaboratorParticipantId}
+                    </c:if></td>
 
                     <td>
-                            ${sample.labEventSampleDTO.samplePackagedDate}
+                        <c:if test="${actionBean.preferenceSaver.showColumn('Shipped Date')}">${sample.labEventSampleDTO.samplePackagedDate}</c:if>
                     </td>
                     <td>
-                            ${sample.formattedReceiptDate}
+                        <c:if test="${actionBean.preferenceSaver.showColumn('Received Date')}">${sample.formattedReceiptDate}</c:if>
                     </td>
 
-                    <td>${sample.sampleData.sampleType}</td>
-                    <td>${sample.latestMaterialType}</td>
-                    <td>${sample.sampleData.volume}</td>
-                    <td>${sample.sampleData.concentration}</td>
+                    <td><c:if test="${actionBean.preferenceSaver.showColumn('Sample Type')}">${sample.sampleData.sampleType}</c:if></td>
+                    <td><c:if test="${actionBean.preferenceSaver.showColumn('Material Type')}">${sample.latestMaterialType}</c:if></td>
+                    <td><c:if test="${actionBean.preferenceSaver.showColumn('Volume')}">${sample.sampleData.volume}</c:if></td>
+                    <td><c:if
+                            test="${actionBean.preferenceSaver.showColumn('Concentration')}">${sample.sampleData.concentration}</c:if></td>
 
                     <c:if test="${actionBean.supportsRin}">
-                        <td>${sample.sampleData.rawRin}</td>
-                        <td>${sample.sampleData.rqs}</td>
-                        <td>${sample.sampleData.dv200}</td>
+                        <td><c:if test="${actionBean.preferenceSaver.showColumn('RIN')}">${sample.sampleData.rawRin}</c:if></td>
+                        <td><c:if test="${actionBean.preferenceSaver.showColumn('RQS')}">${sample.sampleData.rqs}</c:if></td>
+                        <td><c:if test="${actionBean.preferenceSaver.showColumn('DV200')}">${sample.sampleData.dv200}</c:if></td>
                     </c:if>
 
                     <c:if test="${actionBean.supportsPico}">
                         <td>
-                            <div class="picoRunDate" style="width:auto">
-                            </div>
+                            <c:if test="${actionBean.preferenceSaver.showColumn('Last Pico Run Date')}">
+                                <div class="picoRunDate" style="width:auto">
+                                </div>
+                            </c:if>
                         </td>
                     </c:if>
 
-                    <td>${sample.sampleData.total}</td>
-                    <td
-                        style="text-align: center">${sample.sampleData.hasSampleKitUploadRackscanMismatch} </td>
+                    <td><c:if test="${actionBean.preferenceSaver.showColumn('Yield')}">${sample.sampleData.total}</c:if></td>
+                    <td style="text-align: center"><c:if
+                            test="${actionBean.preferenceSaver.showColumn('Rackscan Mismatch')}">${sample.sampleData.hasSampleKitUploadRackscanMismatch}</c:if></td>
                     <td style="text-align: center">
-                        <c:if test="${sample.onRisk}">
+                        <c:if test="${sample.onRisk && actionBean.preferenceSaver.showColumn('On Risk')}">
                             <div class="onRisk" title="On Risk Details for ${sample.name}" rel="popover" data-trigger="hover" data-placement="left" data-html="true" data-content="<div style='text-align: left'>${sample.riskString}</div>">
                                 <img src="${ctxpath}/images/check.png"> ...
                             </div>
                         </c:if>
                     </td>
-                    <td style="display:none;">${sample.riskString}</td>
-                    <td>${sample.proceedIfOutOfSpec.displayName}</td>
+                    <td style="display:none;"><c:if
+                            test="${actionBean.preferenceSaver.showColumn('On Risk')}">${sample.riskString}</c:if></td>
+                    <td><c:if
+                            test="${actionBean.preferenceSaver.showColumn('Proceed OOS')}">${sample.proceedIfOutOfSpec.displayName}</c:if></td>
                     <td>${sample.deliveryStatus.displayName}</td>
                     <td style="text-align: center">${sample.completelyBilled}</td>
                     <td>${sample.sampleComment}</td>

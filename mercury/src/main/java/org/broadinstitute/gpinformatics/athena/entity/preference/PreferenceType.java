@@ -76,6 +76,8 @@ public enum PreferenceType {
             new WorkflowConfig.WorkflowConfigPreferenceDefinitionCreator()),
     BUCKET_PREFERENCES("Bucket PagePreference", PreferenceScope.USER, 1,
             new NameValueDefinitionValue.NameValuePreferenceDefinitionCreator()),
+    PRODUCT_ORDER_PREFERENCES("ProductOrder PagePreference", PreferenceScope.USER, 1,
+            new NameValueDefinitionValue.NameValuePreferenceDefinitionCreator()),
     ;
 
     private final String preferenceTypeName;
