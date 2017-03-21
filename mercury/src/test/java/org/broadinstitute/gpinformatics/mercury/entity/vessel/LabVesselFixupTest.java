@@ -1478,5 +1478,36 @@ public class LabVesselFixupTest extends Arquillian {
         utx.commit();
     }
 
+    @Test(enabled = false)
+    public void fixupSupport2709() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<BarcodedTube> tubes = barcodedTubeDao.findListByBarcodes(Arrays.asList(
+                "1125668423",
+                "1125668470",
+                "1125668491",
+                "1125668483",
+                "1125664356",
+                "1125665028",
+                "1125664990",
+                "1125665004",
+                "1125665161",
+                "1125665157",
+                "1125665166",
+                "1125665212"));
+
+        for (LabVessel labVessel : tubes) {
+            labVessel.setReceptacleWeight(new BigDecimal(".62"));
+            System.out.println("Setting tube initial tare weight: " + labVessel.getLabel() + " to .62");
+        }
+
+        FixupCommentary fixupCommentary = new FixupCommentary("SUPPORT-2709 - Assign missing tare values to default");
+        barcodedTubeDao.persist(fixupCommentary);
+        barcodedTubeDao.flush();
+
+        utx.commit();
+    }
+
 
 }
