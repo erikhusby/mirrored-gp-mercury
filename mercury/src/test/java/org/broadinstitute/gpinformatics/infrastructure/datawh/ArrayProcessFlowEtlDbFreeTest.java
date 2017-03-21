@@ -2,83 +2,61 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
+import org.broadinstitute.gpinformatics.mercury.test.builders.ArrayPlatingEntityBuilder;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.lang.reflect.Field;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Set;
+import java.util.Map;
 
 /**
  * dbfree unit test of AbandonVessel and AbandonVesselPosition etl.
  */
 
 @Test(groups = TestGroups.DATABASE_FREE)
-public class ArrayProcessFlowEtlDbFreeTest {
+public class ArrayProcessFlowEtlDbFreeTest extends BaseEventTest {
 
     private String etlDateStr;
-    private Date[] eventDates = new Date[6];
     private Long pdoId = 999L;
-    private String batchName = "ARRAY-1";
-    private String lcsetSampleName = "SM-ALIQUOT";
-    private String sampleName = "SM-STOCK";
-    private Long labVesselId = 666L;
-    private Set<SampleInstanceV2> sampleInstances = new HashSet<>();
+    private String batchName = "LCSET1";
 
 
     private ArrayProcessFlowEtl arrayProcessFlowEtl;
 
     private final LabEventDao dao = EasyMock.createMock(LabEventDao.class);
 
-    // Set up sample instance and internal dependencies
-    private SampleInstanceV2 sampleInstance = EasyMock.createMock(SampleInstanceV2.class);
-    private BucketEntry bucketEntry = EasyMock.createMock(BucketEntry.class);
-    private ProductOrder pdo = EasyMock.createMock(ProductOrder.class);
-    private LabBatch labBatch = EasyMock.createMock(LabBatch.class);
-    // Set up the DNA plate
-    private StaticPlate dnaPlate = new StaticPlate("dna_barcode", StaticPlate.PlateType.Plate96Well200PCR, "dna_name");
-    private PlateWell dnaWell = EasyMock.createMockBuilder(PlateWell.class).withConstructor(StaticPlate.class,VesselPosition.class).withArgs(dnaPlate,VesselPosition.A01).addMockedMethods("getTransfersTo","getTransfersFrom","getVesselPosition","getSampleInstancesV2", "getLabVesselId").createMock();
-
-    private final Object[] mocks = new Object[]{dao, sampleInstance, bucketEntry, pdo, labBatch, dnaWell };
+    private final Object[] mocks = new Object[]{ dao };
 
     public ArrayProcessFlowEtlDbFreeTest(){
         Calendar calendar = Calendar.getInstance();
         etlDateStr = ExtractTransform.formatTimestamp(calendar.getTime());
-        // Some dates in ascending order for mock events
-        for( int i = eventDates.length - 1; i >= 0; i-- ) {
-            calendar.add(Calendar.MINUTE, -2);
-            eventDates[i] = calendar.getTime();
-        }
+
     }
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void beforeMethod() {
         EasyMock.reset(mocks);
-        sampleInstances.clear();
-
-        EasyMock.expect(bucketEntry.getProductOrder()).andReturn(pdo).anyTimes();
-        EasyMock.expect(pdo.getProductOrderId()).andReturn( pdoId ).anyTimes();
-        EasyMock.expect(sampleInstance.getSingleBucketEntry()).andReturn(bucketEntry).anyTimes();
-        EasyMock.expect(labBatch.getBatchName()).andReturn(batchName).anyTimes();
-        EasyMock.expect(sampleInstance.getSingleBatch()).andReturn(labBatch).anyTimes();
-        EasyMock.expect(sampleInstance.getNearestMercurySampleName()).andReturn(lcsetSampleName).anyTimes();
-        EasyMock.expect(sampleInstance.getEarliestMercurySampleName()).andReturn(sampleName).anyTimes();
-        sampleInstances.add(sampleInstance);
-
         arrayProcessFlowEtl = new ArrayProcessFlowEtl(dao);
     }
 
@@ -91,7 +69,7 @@ public class ArrayProcessFlowEtlDbFreeTest {
     }
 
     public void testNotAnInfiniumEvent() throws Exception {
-        LabEvent notAnInfiniumEvent = new LabEvent(LabEventType.A_BASE, eventDates[0], "OZ", 1l, 1L, "Python Deck");
+        LabEvent notAnInfiniumEvent = new LabEvent(LabEventType.A_BASE, new Date(), "OZ", 1l, 1L, "Python Deck");
         EasyMock.expect(dao.findById(LabEvent.class, 1L)).andReturn(notAnInfiniumEvent);
         EasyMock.replay(mocks);
 
@@ -104,17 +82,42 @@ public class ArrayProcessFlowEtlDbFreeTest {
      **/
     public void testBucketEvent() throws Exception {
 
-        // Event #1: Plating
-        LabEvent dilutionEvent = new LabEvent(LabEventType.ARRAY_PLATING_DILUTION, eventDates[0], "Plating Station", 1L, 1L, "Plating Program");
-        Set<LabEvent> dilutionEvents = new HashSet<>();
-        dilutionEvents.add(dilutionEvent);
-        EasyMock.expect(dnaWell.getTransfersTo()).andReturn(dilutionEvents).anyTimes();
-        LabEvent bucketEvent = new LabEvent(LabEventType.INFINIUM_BUCKET, eventDates[1], "BSP", 1L, 1L, "BSP");
-        bucketEvent.setInPlaceLabVessel(dnaWell);
+        int numSamples = NUM_POSITIONS_IN_RACK - 2;
+        ProductOrder pdo = ProductOrderTestFactory.buildInfiniumProductOrder(numSamples);
 
-        EasyMock.expect(dnaWell.getVesselPosition()).andReturn(VesselPosition.A01).anyTimes();
-        EasyMock.expect(dnaWell.getSampleInstancesV2()).andReturn( sampleInstances ).anyTimes();
-        EasyMock.expect(dnaWell.getLabVesselId()).andReturn( labVesselId ).anyTimes();
+        Field pdoIdField = ProductOrder.class.getDeclaredField("productOrderId");
+        pdoIdField.setAccessible(true);
+        pdoIdField.set(pdo, pdoId );
+
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(pdo, "R");
+
+        LabBatch workflowBatch = new LabBatch("Infinium Batch",
+                new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setWorkflow(Workflow.INFINIUM);
+
+        bucketBatchAndDrain(mapBarcodeToTube, pdo, workflowBatch, "1");
+
+        TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube, workflowBatch);
+
+        Map<String, BarcodedTube> mapBarcodeToDaughterTube = new HashMap<>();
+        for (BarcodedTube barcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {
+            mapBarcodeToDaughterTube.put(barcodedTube.getLabel(), barcodedTube);
+        }
+
+        ArrayPlatingEntityBuilder arrayPlatingEntityBuilder =
+                runArrayPlatingProcess(mapBarcodeToDaughterTube, "Infinium");
+
+        // Don't need follow events  beyond ArrayPlatingDilution
+        //InfiniumEntityBuilder infiniumEntityBuilder = runInfiniumProcess(
+        //        arrayPlatingEntityBuilder.getArrayPlatingPlate(), "Infinium");
+
+        arrayPlatingEntityBuilder.bucketPlateWells(pdo);
+
+        StaticPlate dnaPlate = arrayPlatingEntityBuilder.getArrayPlatingPlate();
+
+        PlateWell wellA01 = dnaPlate.getContainerRole().getMapPositionToVessel().get(VesselPosition.A01);
+        LabEvent bucketEvent = wellA01.getInPlaceLabEvents().iterator().next();
 
         EasyMock.expect(dao.findById(LabEvent.class, 1L)).andReturn(bucketEvent);
         EasyMock.replay(mocks);
@@ -131,13 +134,13 @@ public class ArrayProcessFlowEtlDbFreeTest {
         Assert.assertEquals( parts[1], "F");
         Assert.assertEquals( parts[2], pdoId.toString());
         Assert.assertEquals( parts[3], batchName);
-        Assert.assertEquals( parts[4], lcsetSampleName);
-        Assert.assertEquals( parts[5], sampleName);
+        Assert.assertFalse(parts[4].isEmpty(), "A value is expected for sample name.");
+        Assert.assertEquals( parts[4],  parts[5]);
         // Ignore event ID
         Assert.assertEquals( parts[7], LabEventType.ARRAY_PLATING_DILUTION.getName());
-        Assert.assertEquals( parts[8], "Plating Station");
+        // Ignore event location
         // Ignore event date
-        Assert.assertEquals( parts[10], labVesselId.toString());
+        // Ignore labVesselId
         Assert.assertEquals( parts[11], VesselPosition.A01.toString());
 
         EasyMock.verify(mocks);
