@@ -231,7 +231,7 @@ public class ExtractTransformTest extends Arquillian {
         return new Long[]{(Long)obj[0], (Long)obj[1], (Long)obj[2]};
     }
 
-    @Test(enabled = true, groups = TestGroups.ALTERNATIVES)
+    @Test(enabled = false, groups = TestGroups.ALTERNATIVES)
     public void testLongRunningLabEventBackfillEtl() throws Exception {
         // Tests lab event etl which has more complex processing.
         long startRun = System.currentTimeMillis();
@@ -242,7 +242,7 @@ public class ExtractTransformTest extends Arquillian {
         Assert.assertTrue(searchEtlFile(datafileDir, "_event_fact.dat", "F", longLabEventIds[0]));
     }
 
-    @Test(enabled = true, groups = TestGroups.ALTERNATIVES)
+    @Test(enabled = false, groups = TestGroups.ALTERNATIVES)
     public void testLongRunningLabEventIncrementalEtl() throws Exception {
         // Tests lab event etl which has more complex processing.
         RevInfo revInfo = auditReaderDao.findById(RevInfo.class, longLabEventIds[2]);
@@ -257,7 +257,7 @@ public class ExtractTransformTest extends Arquillian {
         Assert.assertTrue(searchEtlFile(datafileDir, "_event_fact.dat", "F", longLabEventIds[0]));
     }
 
-    @Test(enabled = true, groups = TestGroups.ALTERNATIVES)
+    @Test(enabled = false, groups = TestGroups.ALTERNATIVES)
     public void testLongRunningPdoSampleBackfillEtl() throws Exception {
         long startRun = System.currentTimeMillis();
         Response response = extractTransform.backfillEtl(ProductOrderSample.class.getName(),
@@ -267,7 +267,7 @@ public class ExtractTransformTest extends Arquillian {
         Assert.assertTrue(searchEtlFile(datafileDir, "_product_order_sample.dat", "F", longBackfillPdoSampleIds[1]));
     }
 
-    @Test(enabled = true, groups = TestGroups.ALTERNATIVES)
+    @Test(enabled = false, groups = TestGroups.ALTERNATIVES)
     public void testLongRunningPdoSampleIncrementalEtl() throws Exception {
         RevInfo revInfo = auditReaderDao.findById(RevInfo.class, longPdoSampleIds[2]);
         // Brackets the change with interval on whole second boundaries.
