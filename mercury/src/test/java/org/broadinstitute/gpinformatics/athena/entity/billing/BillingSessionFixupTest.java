@@ -6,11 +6,14 @@ package org.broadinstitute.gpinformatics.athena.entity.billing;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -34,7 +37,13 @@ public class BillingSessionFixupTest extends Arquillian {
     private LedgerEntryDao ledgerEntryDao;
 
     @Inject
+    private BillingEjb billingEjb;
+
+    @Inject
     private BSPUserList userList;
+
+    @Inject
+    private UserBean userBean;
 
     // Use (RC, "rc"), (PROD, "prod") to push the backfill to RC and production respectively.
     @Deployment
@@ -93,5 +102,18 @@ public class BillingSessionFixupTest extends Arquillian {
         billingSessionDao.persistAll(Collections.emptyList());
 
         logger.info("Registered Manual billing");
+    }
+
+    @Test(enabled = false)
+    public void alterQuoteInSessionSupport2695() {
+        userBean.loginOSUser();
+
+        BillingSession session = billingSessionDao.findByBusinessKey("BILL-9361");
+
+        for (LedgerEntry ledgerEntry : session.getLedgerEntryItems()) {
+            ledgerEntry.setQuoteId("MMMJLI");
+        }
+
+        billingSessionDao.persist(new FixupCommentary("SUPPORT-2695: Changed the Quote for PDO-11232 on ledger entries to allow billing to proceed in Mercury"));
     }
 }
