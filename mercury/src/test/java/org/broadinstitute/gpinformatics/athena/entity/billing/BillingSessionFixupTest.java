@@ -114,6 +114,6 @@ public class BillingSessionFixupTest extends Arquillian {
             ledgerEntry.setQuoteId("MMMJLI");
         }
 
-        billingSessionDao.persist(new FixupCommentary("Changed the Quote for PDO-11232 on ledger entries to allow billing to proceed in Mercury"));
+        billingSessionDao.persist(new FixupCommentary("SUPPORT-2695: Changed the Quote for PDO-11232 on ledger entries to allow billing to proceed in Mercury"));
     }
 }
