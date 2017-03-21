@@ -221,6 +221,12 @@
 
                                     <div class="control-group">
                                     <h5>Source</h5>
+                                        <c:if test="${not empty actionBean.manualTransferDetails.sourceVesselTypeGeometry}">
+                                            <stripes:label for="station">Machine </stripes:label>
+                                            <stripes:select name="stationEvents[0].station" id="station">
+                                                <stripes:options-collection collection="${actionBean.manualTransferDetails.machineNames}"/>
+                                            </stripes:select>
+                                        </c:if>
                                     <label>Type</label>
                                     ${receptacleTransfer.sourceReceptacle.receptacleType}
                                     <input type="hidden" name="stationEvents[${stationEventStatus.index}].sourceReceptacle.receptacleType"

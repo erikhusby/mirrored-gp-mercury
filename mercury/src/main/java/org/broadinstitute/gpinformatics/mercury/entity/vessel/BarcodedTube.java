@@ -43,6 +43,8 @@ public class BarcodedTube extends LabVessel {
         Flask_T25("Flask_T25", "Flask T25"),
         Flask_T75("Flask_T75", "Flask T75"),
         Flask_T150("Flask_T150", "Flask T150"),
+        FluidX_10mL("FluidX_10mL", "Fluid X [10mL]"),
+        FluidX_6mL("FluidX_6mL", "Fluid X [6mL]"),
         MatrixTube("Tube", "Matrix Tube [0.75mL]"),
         MatrixTubeSC05("MatrixTubeSC05", "Matrix Tube Screw cap [0.5mL]"),
         MatrixTubeSC14("MatrixTubeSC14", "Matrix Tube Screw cap [1.4mL]"),

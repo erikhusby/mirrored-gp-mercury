@@ -584,6 +584,28 @@ public enum LabEventType {
     BLOOD_PLASMA_TRANSFER("BloodPlasmaTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.RECEPTACLE_TRANSFER_EVENT, null, null).
+                    sourceVesselTypeGeometries(
+                            new VesselTypeGeometry[] { BarcodedTube.BarcodedTubeType.VacutainerBloodTube3,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTube6,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTube10,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeBlueTigerTop8,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeEDTA_3,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeEDTA_4,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeEDTA_7,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeEDTA_10,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeGreenTigerTop8,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeGreenTop10,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubePaxgene,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeRedTigerTopSST10,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeRedTopClot10,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeYellowTop10,
+                                    BarcodedTube.BarcodedTubeType.VacutainerCPTTube4,
+                                    BarcodedTube.BarcodedTubeType.VacutainerCPTTube8,
+                                }).
+                    targetVesselTypeGeometries(
+                            new VesselTypeGeometry[] { BarcodedTube.BarcodedTubeType.FluidX_10mL,
+                                    BarcodedTube.BarcodedTubeType.FluidX_6mL}).build(),
             LibraryType.NONE_ASSIGNED),
     BLOOD_PLASMA_SECOND_TRANSFER("BloodPlasmaSecondTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
@@ -1925,6 +1947,12 @@ public enum LabEventType {
         /** Prompts user with a list of machines. */
         private String[] machineNames = {};
 
+        /** Prompts user with a list of source vessel geometry types. */
+        private VesselTypeGeometry[] sourceVesselTypeGeometries = {};
+
+        /** Prompts user with a list of target vessel geometry types. */
+        private VesselTypeGeometry[] targetVesselTypeGeometries = {};
+
         /** Allows a transfer from one source to two destinations */
         private LabEventType secondaryEvent;
 
@@ -1962,6 +1990,8 @@ public enum LabEventType {
             buttonValue = builder.buttonValue;
             targetExpectedToExist = builder.targetExpectedToExist;
             targetExpectedEmpty = builder.targetExpectedEmpty;
+            sourceVesselTypeGeometries = builder.sourceVesselTypeGeometries;
+            targetVesselTypeGeometries = builder.targetVesselTypeGeometries;
             limsFile = builder.limsFile;
         }
 
@@ -1977,6 +2007,8 @@ public enum LabEventType {
             private boolean expirationDateIncluded = true;
             private int numEvents = 1;
             private String[] machineNames = {};
+            private VesselTypeGeometry[] sourceVesselTypeGeometries = {};
+            private VesselTypeGeometry[] targetVesselTypeGeometries = {};
             private LabEventType secondaryEvent;
             private LabEventType repeatedEvent;
             private String repeatedWorkflowQualifier;
@@ -2024,6 +2056,16 @@ public enum LabEventType {
 
             public Builder machineNames(String[] machineNames) {
                 this.machineNames = machineNames;
+                return this;
+            }
+
+            public Builder sourceVesselTypeGeometries(VesselTypeGeometry[] sourceVesselTypeGeometries) {
+                this.sourceVesselTypeGeometries = sourceVesselTypeGeometries;
+                return this;
+            }
+
+            public Builder targetVesselTypeGeometries(VesselTypeGeometry[] sourceVesselTypeGeometries) {
+                this.sourceVesselTypeGeometries = sourceVesselTypeGeometries;
                 return this;
             }
 
@@ -2130,6 +2172,14 @@ public enum LabEventType {
 
         public String[] getMachineNames() {
             return machineNames;
+        }
+
+        public VesselTypeGeometry[] getSourceVesselTypeGeometries() {
+            return sourceVesselTypeGeometries;
+        }
+
+        public VesselTypeGeometry[] getTargetVesselTypeGeometries() {
+            return targetVesselTypeGeometries;
         }
 
         public int[] getReagentFieldCounts() {
