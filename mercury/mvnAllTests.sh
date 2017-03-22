@@ -9,6 +9,7 @@ then
     use Maven-3.1
     #    use Java-1.8
     echo "Setting Java-1.8"
+    unuse Java-1.7
     use -v .java-jdk-1.8.0_112-x86-64
     which java
     echo $JAVA_HOME
