@@ -1871,6 +1871,7 @@ public class LabVesselSearchDefinition {
 
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
+        // todo jmt should be through bucket entry
         criteriaPath.setCriteria(
                 Arrays.asList("mercurySample", "mercurySamples", "productOrderSamples", "productOrder"));
         criteriaPath.setPropertyName("jiraTicketKey");

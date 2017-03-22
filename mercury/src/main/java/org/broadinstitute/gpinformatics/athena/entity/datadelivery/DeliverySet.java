@@ -18,4 +18,5 @@ public class DeliverySet {
     private Set<DeliveryItem> deliveryItems = new HashSet<>();
     // Caching to improve performance?
     // In transfer visualizer, visiting events and vessels is fast; why are sample instances slow?  Profile and diff
+    // Is bucket a property of Set or Item?
 }

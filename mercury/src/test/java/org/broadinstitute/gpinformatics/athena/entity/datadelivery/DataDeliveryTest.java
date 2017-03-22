@@ -1,17 +1,39 @@
 package org.broadinstitute.gpinformatics.athena.entity.datadelivery;
 
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
+import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
+import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.hibernate.Criteria;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.inject.Inject;
 import java.util.Collections;
+import java.util.List;
+
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
 /**
  * Prototype entities for Data Delivery
  */
-public class DataDeliveryTest {
+@Test(groups = TestGroups.STANDARD)
+public class DataDeliveryTest extends Arquillian {
+
+    @Inject
+    private ConfigurableSearchDao configurableSearchDao;
+
+    @Deployment
+    public static WebArchive buildMercuryWar() {
+        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
+    }
 
     @Test
     public void testX() {
@@ -23,15 +45,51 @@ public class DataDeliveryTest {
         String entity = ColumnEntity.LAB_VESSEL.getEntityName();
         ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entity);
 
-        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("Data Delivery PDO", configurableSearchDef);
+        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("PDO", configurableSearchDef);
         searchValue.setOperator(SearchInstance.Operator.EQUALS);
         searchValue.setValues(Collections.singletonList("PDO-9246")); // PDO term alone will give bucket entries, need traverser
+        Criteria criteria = configurableSearchDao.buildCriteria(configurableSearchDef, searchInstance);
+        List<LabEvent> list = criteria.list();
+        Assert.assertEquals(list.size(), 13);
+
+        // search yields lab vessels (not metrics?), but these are mapped to DeliveryItems for persistence
+        // If there are multiple versions, create all DeliveryItems, and default to not deliver?
+        //
         // Yield chip wells and ponds (or specify products in advance?)
+        // Need to return placeholder for entries that haven't been analyzed yet
         // Filter duplicates
-        // Fetch metrics
-        // Sort?
+        // Add to analysis set
+        // Fetch metrics (different UDS)
+        // Sort? - How to sort duplicates?  Seems most useful to sort them together, but how does that work with paging?
+        // Access denormalized data warehouse?
         // Page
         // Choose / exclude from delivery (some may not have metrics yet)
         // Refresh to reflect new duplicates / metrics / versions?
+
+        // Can't search / sort by columns that are in BSP / Metrics.  Could cache / refresh, this is the end of the process.
+        // Volume, concentration
+
+        // Traversal + multiple schemas adds huge increase in complexity.
+        // Would be much easier to operate on denormalized data, but that's a huge change in philosophy.
+        // Set caching / refreshing (or read-only Google Sheet) is a hybrid approach, but there's some risk of delivering incorrect data!
+        //   Not clear how to sort duplicates even with Google Sheet!
+        // Need to show everything already delivered, and show new versions that could be delivered to same workspace!
+
+        // Difference between creating set, updating set for new vessels (arrays rework), updating set for new verions (topoffs)?
+/*
+    Dimensions:
+        starting point (RP, PDO, sample, vessel)
+        metrics point (pond, chip well) more metrics points could appear over time (particularly for arrays)
+        versions ()
+ */
+/*
+    Create set
+    Persist Search (how to version search?  future release?)
+    Traverse to vessels (filter duplicates) (placeholder if no metrics yet) (if filtering duplicates, how to replace an earlier vessel (only if not delivered) that is now filtered?)
+    Fetch versions (if any)
+    Add new to the set, including placeholder if no metrics yet
+    Deselect with reason
+    Specify bucket at set or item?
+ */
     }
 }
