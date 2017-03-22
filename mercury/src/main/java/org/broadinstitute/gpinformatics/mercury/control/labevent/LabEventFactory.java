@@ -1592,4 +1592,9 @@ public class LabEventFactory implements Serializable {
     public void setGapHandler(GapHandler gapHandler) {
         this.gapHandler = gapHandler;
     }
+
+    public void setSamplesDaughterPlateHandler(
+            SamplesDaughterPlateHandler samplesDaughterPlateHandler) {
+        this.samplesDaughterPlateHandler = samplesDaughterPlateHandler;
+    }
 }

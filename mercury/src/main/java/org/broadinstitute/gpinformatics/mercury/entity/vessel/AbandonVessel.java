@@ -82,7 +82,7 @@ public class AbandonVessel {
     }
 
     public enum Reason implements Displayable {
-        SELECT("--Select--"),
+        SELECT("-Select-"),
         FAILED_QC("Failed QC"),
         LAB_INCIDENT("Lab incident"),
         EQUIPMENT_FAILURE("Equipment failure"),
