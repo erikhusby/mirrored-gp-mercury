@@ -111,11 +111,11 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
         // Populate rows with any available metrics data.
         for( LabVessel labVessel : labVesselList ) {
             ArraysQc arraysQc = mapWellBarcodeToMetric.get(mapSourceToTargetBarcodes.get(labVessel.getLabel()));
+            ConfigurableList.Row row = new ConfigurableList.Row( labVessel.getLabel() );
+            metricRows.add(row);
             if (arraysQc == null) {
                 continue;
             }
-
-            ConfigurableList.Row row = new ConfigurableList.Row( labVessel.getLabel() );
 
             String value = ColumnValueType.THREE_PLACE_DECIMAL.format(
                     arraysQc.getCallRate().multiply(BigDecimal.valueOf(100)), "");
@@ -184,8 +184,6 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
             }
             row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.HAPMAP_CONCORDANCE.getResultHeader(),
                     value, value));
-
-            metricRows.add(row);
         }
 
         return metricRows;
