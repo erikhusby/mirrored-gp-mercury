@@ -7,7 +7,12 @@ then
     source /broad/tools/scripts/useuse
     use Maven-3.1
     #    use Java-1.8
-    use .java-jdk-1.8.0_112-x86-64
+    echo "Setting Java-1.8"
+    use -v .java-jdk-1.8.0_112-x86-64
+else
+    echo "Unable to set Java-1.8"
+    ls -l /broad/tools/scripts/useuse
+    exit 1
 fi
 
 if [ "x$JBOSS_HOME" == "x" ]
