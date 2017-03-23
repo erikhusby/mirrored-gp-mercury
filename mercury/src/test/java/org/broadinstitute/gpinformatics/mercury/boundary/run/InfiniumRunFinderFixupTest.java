@@ -50,7 +50,7 @@ public class InfiniumRunFinderFixupTest {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
-    @Test
+    @Test(enabled = false)
     public void testSupport2710() {
         try {
             userBean.loginOSUser();
