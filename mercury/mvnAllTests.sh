@@ -11,6 +11,7 @@ Where:
 	-t <test>	Specifies a particular test profile to be run. Defaults to the standard set.
 	-b <build>	Specifices a particular build profile to be used. Defaults to BUILD.
 	-j <jboss>	Specifieds a particular JBoss or Wildfly installation.
+	-c 		Runs tests with Clover.
 
 The standard set of test profiles includes:
     Tests.ArqSuite.Standard Tests.ArqSuite.Stubby Tests.Multithreaded Tests.DatabaseFree Tests.ExternalIntegration Tests.Alternatives
@@ -25,12 +26,14 @@ EOF
 }
 TESTS="Tests.ArqSuite.Standard Tests.ArqSuite.Stubby Tests.Multithreaded Tests.DatabaseFree Tests.ExternalIntegration Tests.Alternatives"
 BUILD=
-while getopts "ht:b:j:" OPTION; do
+CLOVER=0
+while getopts "hct:b:j:" OPTION; do
     case $OPTION in
 	h) usage; exit 1;;
 	t) TESTS=$OPTARG;;
 	b) BUILD=$OPTARG;;
 	j) JBOSS_HOME=$OPTARG;;
+	c) CLOVER=1;;
 	[?]) usage; exit 1;;
     esac
 done
@@ -67,8 +70,6 @@ then
     BUILD_PROFILE="BUILD"
 fi
 
-OPTIONS="-PArquillian-JBossAS7-Remote,$BUILD_PROFILE -Djava.awt.headless=true --batch-mode -Dmaven.download.meter=silent "
-
 
 EXIT_STATUS=0
 
@@ -76,6 +77,18 @@ if [ -f "tests.log" ]
 then
     rm tests.log
 fi
+
+if [[ $CLOVER -eq 0 ]]
+then
+    GOALS="clean test"
+else
+    GOALS="clean clover:setup verify"
+    rm -rf clover/
+    mkdir clover
+    BUILD_PROFILE="$BUILD_PROFILE,Clover.All -Dmaven.clover.licenseLocation=/prodinfolocal/BambooHome/clover.license"
+fi
+
+OPTIONS="-PArquillian-JBossAS7-Remote,$BUILD_PROFILE -Djava.awt.headless=true --batch-mode -Dmaven.download.meter=silent "
 
 for TEST in $TESTS
 do
@@ -90,7 +103,7 @@ OPTIONS=$OPTIONS
 >>>> Executing test profile $TEST
 
 EOF
-    mvn $OPTIONS -P$TEST clean test | tee -a tests.log
+    mvn $OPTIONS -P$TEST $GOALS | tee -a tests.log
     if [ ${PIPESTATUS[0]} -ne 0 ]
     then
         EXIT_STATUS=${PIPESTATUS[0]}
@@ -105,7 +118,25 @@ EOF
         fi
         mv target/surefire-reports surefire-reports-$TEST
     fi
+    if [ -e "target/clover/surefire-reports" ]
+    then
+        if [ -e "clover/surefire-reports-$TEST" ]
+        then
+            rm -rf clover/surefire-reports-$TEST
+        fi
+        mv target/clover/surefire-reports clover/surefire-reports-$PROFILE
+    fi
+
 done
+
+if [[ $CLOVER -eq 1 ]]
+then
+    mvn $OPTIONS clover:aggregate clover:clover | tee -a tests.log
+    if [ ${PIPESTATUS[0]} -ne 0 ]
+    then
+	EXIT_STATUS=${PIPESTATUS[0]}
+    fi
+fi
 
 exit $EXIT_STATUS
 
