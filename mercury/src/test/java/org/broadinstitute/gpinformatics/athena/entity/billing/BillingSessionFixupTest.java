@@ -116,4 +116,17 @@ public class BillingSessionFixupTest extends Arquillian {
 
         billingSessionDao.persist(new FixupCommentary("SUPPORT-2695: Changed the Quote for PDO-11232 on ledger entries to allow billing to proceed in Mercury"));
     }
+
+    @Test(enabled = false)
+    public void alterQuoteInSessionGplim4730() {
+        userBean.loginOSUser();
+
+        BillingSession session = billingSessionDao.findByBusinessKey("BILL-9373");
+
+        for (LedgerEntry ledgerEntry : session.getLedgerEntryItems()) {
+            ledgerEntry.setQuoteId("GPIFX");
+        }
+
+        billingSessionDao.persist(new FixupCommentary("GPLIM-4730: Changed the Quote for PDO-11370 on ledger entries to allow billing to proceed in Mercury"));
+    }
 }
