@@ -270,7 +270,7 @@ public enum LabEventType {
                             "ST-009", "ST-010", "ST-011", "ST-012", "ST-013", "ST-014", "ST-015", "ST-016", "ST-017",
                             "ST-018", "ST-019", "ST-020", "ST-021", "ST-022", "ST-023", "ST-024", "ST-025", "ST-026",
                             "ST-027", "ST-028", "ST-029", "ST-030", "ST-031", "ST-032", "ST-033", "ST-034", "ST-035",
-                            "ST-036"}).build(),
+                            "ST-036", "ST-037"}).build(),
             LibraryType.NONE_ASSIGNED),
     FLOWCELL_LOADED("FlowcellLoaded",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.FALSE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
