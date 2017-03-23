@@ -80,6 +80,9 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
         }
 
         if( !LabVesselSearchDefinition.isInfiniumSearch( context ) ) {
+            for (LabVessel labVessel : labVesselList) {
+                metricRows.add(new ConfigurableList.Row(labVessel.getLabel()));
+            }
             return metricRows;
         }
 
