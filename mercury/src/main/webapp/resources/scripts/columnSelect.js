@@ -83,7 +83,7 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
     }
 
     function stripRegex(inputText) {
-        return inputText.replace(/^\w\s\W/gi,'').replace(/\^|\$/gi,'');
+        return inputText.replace(/[^\w\s\W]|\^|\$|\\/gi, '');
     }
 
     function updateFilterInfo(column, title, filterLabel, filterValue) {
