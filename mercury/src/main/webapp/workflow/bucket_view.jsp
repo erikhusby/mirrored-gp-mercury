@@ -330,8 +330,8 @@
             columnsEditable = true;
             </security:authorizeBlock>
 
-            // initialize data-search attribute before datatables loads the table
-            // Note putting this in a 'preInit.dt' event callback should work but doesn't
+            // Initialize data-search attribute before datatables loads the table.
+            // Note: Putting this in a 'preInit.dt' event callback should work but doesn't.
             $j('#bucketEntryView').find("td").each(function () {
                 $td = $j(this);
                 $td.attr('data-search', $td.text().trim());
