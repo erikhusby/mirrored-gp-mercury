@@ -124,7 +124,7 @@ EOF
         then
             rm -rf clover/surefire-reports-$TEST
         fi
-        mv target/clover/surefire-reports clover/surefire-reports-$PROFILE
+        mv target/clover/surefire-reports clover/surefire-reports-$TEST
     fi
 
 done
