@@ -46,7 +46,7 @@ public class AbandonVesselPositionEtl extends GenericEntityEtl<AbandonVesselPosi
                 "AbandonVesselPosition",
                 format(entity.getLabVessel() == null?null:entity.getLabVessel().getLabVessel().getLabVesselId()),
                 format(entity.getPosition()),
-                format(entity.getReason().toString()),
+                format(entity.getReason()==null?"":entity.getReason().toString()),
                 format(entity.getAbandonedOn())
         );
     }
