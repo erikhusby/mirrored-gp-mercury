@@ -52,38 +52,39 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
         return $j(selector).length ? $j(selector) : $j(html, map);
     }
 
-    function buildSearchTerm(filterValue, wordBoundry) {
+    function buildSearchTerm(filterValue, selectType) {
         var searchTerm = filterValue;
         if (searchTerm!=="") {
-            // match values beginning with either word boundry or beginning of input
-            // match values ending with either word boundry or end of input
-            // (?:x) means it is a non-capture group
-            searchTerm = "(?:"+ wordBoundry + "|^)" + $j.fn.dataTable.util.escapeRegex(filterValue) + "(?:$|" + wordBoundry + ")";
+            if (selectType === "select") {
+                searchTerm = "^" + $j.fn.dataTable.util.escapeRegex(filterValue) + "$";
+            } else {
+                searchTerm = filterValue;
+            }
         }
         return searchTerm;
     }
 
-    var updateFilter = $j.fn.dataTable.util.throttle(
-        function(column, filterValue, selectType = 'text') {
-            var wordBoundry = "";
-            var searchString = '';
-            if (selectType === "select") {
-                wordBoundry = "\\b";
-            }
-
-            if (Array.isArray(filterValue)) {
-                filterValue.forEach(function (value, index) {
-                    searchString += buildSearchTerm(value, wordBoundry);
-                    if (index !== filterValue.length - 1) {
-                        searchString += "|";
-                    }
-                });
-            } else {
-                searchString = buildSearchTerm(filterValue, wordBoundry);
-            }
-            column.search(searchString, true, false, true).draw();
+    function updateFilter(column, filterValue, selectType = 'text') {
+        var searchString = '';
+        if (Array.isArray(filterValue)) {
+            filterValue.forEach(function (value, index) {
+                searchString += buildSearchTerm(value, selectType);
+                if (index !== filterValue.length - 1) {
+                    searchString += "|";
+                }
+            });
+        } else {
+            searchString = buildSearchTerm(filterValue, selectType);
+        }
+        column.search(searchString, true, false, true).draw();
+        if (selectType === 'select') {
             triggerChosenUpdate(column);
-        }, 500);
+        }
+    }
+
+    function stripRegex(inputText) {
+        return inputText.replace(/^\w\s\W/gi,'').replace(/\^|\$/gi,'');
+    }
 
     function updateFilterInfo(column, title, filterLabel, filterValue) {
         var filteredItemsHeader = $j(".filtered-items-header");
@@ -116,7 +117,7 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                 filterText = filterValue.replace('|', ', ');
             }
             filterValue = filterText;
-            filterText = filterText.replace(/\\b|\\/g, '');
+            filterText = stripRegex(filterText);
             var filteredItemValue = getElement("<span></span>", {
                 class: 'filtering-text',
                 text: filterText
@@ -183,12 +184,13 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
         });
 
         if (selectType === 'text' && filterColumn) {
+            savedFilterValue = savedFilterValue.replace(/\|/g,' ');
             var textInput = $j("<input/>", {
                 type: 'textarea',
                 css: 'height:1, display: inline-block',
                 class: columnFilterClass,
                 tabindex: tabIndex,
-                value: savedFilterValue.replace('|', ' ').replace(/\\|\\b/g, ''),
+                value: stripRegex(savedFilterValue),
                 placeholder: "Filter " + headerLabel
             });
             $j(textInput).prop("title","Enter text to filter on " + header.text());
@@ -216,7 +218,7 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
 
             header.append(select);
             buildHeaderFilterOptions(header, filteredRows);
-            // select.find("option[value='" + savedFilterValue + "']").attr('selected', 'selected');
+
             if (savedFilterValue!=='') {
                 select.find("option").filter(function () {
                     return this.value.trim().match(savedFilterValue);
@@ -287,7 +289,6 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
 
     function buildHeaderFilterOptions(header, columns) {
         var select = $j(header).find("select");
-        var htmlExpression = /<(?:.|\n)*?>/gi;
         var uniqueValues = [];
         for (var i = 0; i < columns.length; i++) {
             var cell = columns[i].trim();

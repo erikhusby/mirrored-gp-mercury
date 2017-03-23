@@ -330,6 +330,11 @@
             columnsEditable = true;
             </security:authorizeBlock>
 
+            $j('#bucketEntryView').find("td").each(function () {
+                 $td=$j(this);
+                 $td.attr('data-search', $td.text().trim());
+             });
+
             var editablePdo = function () {
                 if (columnsEditable) {
                     var oTable = $j('#bucketEntryView').DataTable();
