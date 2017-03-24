@@ -477,6 +477,10 @@ public class ConfigurableList {
             if( !columnTabulation.isNestedParent() ) {
                 List<Row> pluginRows =
                         listPlugin.getData(entityList, headerGroupMap.get(columnTabulation.getName()), context);
+                if (pluginRows.size() != entityList.size()) {
+                    throw new RuntimeException("Plugin returned " + pluginRows.size() +
+                            " rows, but entityList size is " + entityList.size());
+                }
                 int rowIndex = pageStartingRow;
                 for (Row row : pluginRows) {
                     // TODO jmt rows might be empty, if columns are all plugins

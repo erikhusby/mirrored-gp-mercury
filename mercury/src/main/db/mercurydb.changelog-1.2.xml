@@ -820,4 +820,22 @@
         <createSequence schemaName="mercury" sequenceName="seq_sample_instance_entity_tsk" incrementBy="50"/>
     </changeSet>
 
+    <changeSet id="GPLIM-4602-6" author="epolk">
+        <createIndex tableName="LAB_EVENT_REAGENTS_AUD" indexName="IX2_LAB_EVENT_REAGENTS_AUD">
+            <column name="LAB_EVENT_REAGENT_ID"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-4602-4" author="epolk">
+        <createIndex tableName="LAB_VESSEL_TICKETS_CREATED_AUD" indexName="IX_LAB_VSL_TKTS_CRTD_AUD">
+            <column name="LAB_VESSEL"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-4602-5" author="epolk">
+        <createIndex tableName="LE_REAGENT_METADATA_AUD" indexName="IX_LE_REAGENT_METADATA_AUD">
+            <column name="LAB_EVENT_REAGENT_ID"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>
