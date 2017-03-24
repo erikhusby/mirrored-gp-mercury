@@ -50,6 +50,11 @@ public class InfiniumRunFinderFixupTest {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
+    /**
+     * This test reads its parameters from a file, testdata/ResubmitInfiniumRuns.txt.  Example contents of the file are:
+     * 201299370054 R07C01
+     * 200834530003 R07C01
+     */
     @Test(enabled = false)
     public void testSupport2710() {
         try {
