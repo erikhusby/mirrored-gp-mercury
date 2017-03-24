@@ -178,7 +178,7 @@ public class LabEventFactory implements Serializable {
     private EventHandlerSelector eventHandlerSelector;
 
     @Inject
-    private BSPRestSender BSPRestSender;
+    private BSPRestSender bspRestSender;
 
     @Inject
     private GapHandler gapHandler;
@@ -462,8 +462,8 @@ public class LabEventFactory implements Serializable {
             LabEventType.ForwardMessage forwardMessage = labEvent.getLabEventType().getForwardMessage();
             switch (forwardMessage) {
                 case BSP:
-                    BSPRestSender.postToBsp(bettaLIMSMessage,
-                            BSPRestSender.BSP_TRANSFER_REST_URL);
+                    bspRestSender.postToBsp(bettaLIMSMessage,
+                            bspRestSender.BSP_TRANSFER_REST_URL);
                     break;
                 case GAP:
                     String forwardToGap = null;
@@ -1588,8 +1588,7 @@ public class LabEventFactory implements Serializable {
         this.gapHandler = gapHandler;
     }
 
-    public void setSamplesDaughterPlateHandler(
-            SamplesDaughterPlateHandler samplesDaughterPlateHandler) {
-        this.samplesDaughterPlateHandler = samplesDaughterPlateHandler;
+    public void setBspRestSender(BSPRestSender bspRestSender) {
+        this.bspRestSender = bspRestSender;
     }
 }

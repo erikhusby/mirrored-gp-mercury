@@ -538,6 +538,9 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
             if (computedLcsets.size() == 1) {
                 LabBatch workflowBatch = computedLcsets.iterator().next();
                 singleWorkflowBatch = workflowBatch;
+                if (!allWorkflowBatches.contains(singleWorkflowBatch)) {
+                    allWorkflowBatches.add(singleWorkflowBatch);
+                }
                 for (BucketEntry bucketEntry : allBucketEntries) {
                     // If there's a bucket entry that matches the computed LCSET, use it.
                     if (bucketEntry.getLabBatch() != null &&

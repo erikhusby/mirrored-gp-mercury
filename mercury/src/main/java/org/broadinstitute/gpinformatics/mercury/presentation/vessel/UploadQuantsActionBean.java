@@ -258,7 +258,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
             throws Exception {
 
         byte[] quantStreamBytes = IOUtils.toByteArray(quantStream);
-
+        // Also updates BSP Sample Data with the uploaded quants.
         Triple<LabMetricRun, Result, Set<StaticPlate>> runAndRackOfTubes = vesselEjb.createVarioskanRun(
                 new ByteArrayInputStream(quantStreamBytes), quantType, userBean.getBspUser().getUserId(),
                 messageCollection, acceptRedoPico);

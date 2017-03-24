@@ -58,13 +58,10 @@ public class EventHandlerSelector {
         case REAGENT_KIT_TO_FLOWCELL_TRANSFER:
             flowcellMessageHandler.handleEvent(targetEvent, stationEvent);
             break;
-
-        case AUTO_DAUGHTER_PLATE_CREATION:
-            autoDaughterHandler.handleEvent(targetEvent, stationEvent);
-            break;
         case FLOWCELL_LOADED:
             flowcellLoadedHandler.handleEvent(targetEvent, stationEvent);
             break;
+        case AUTO_DAUGHTER_PLATE_CREATION:
         case SONIC_DAUGHTER_PLATE_CREATION:
             sonicAliquotHandler.handleEvent(targetEvent, stationEvent);
             break;
