@@ -21,8 +21,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -72,11 +72,15 @@ public class LabBatchResource {
     @Inject
     private BucketEjb bucketEjb;
 
+    @Inject
+    private UserBean userBean;
+
     public LabBatchResource() {
     }
 
     @POST
     public String createLabBatch(LabBatchBean labBatchBean) {
+        userBean.login(labBatchBean.getUsername());
         LabBatch labBatch;
         if (labBatchBean.getParentVesselBean() != null) {
             labBatch = createLabBatchByParentVessel(labBatchBean);
@@ -98,9 +102,11 @@ public class LabBatchResource {
         }
 
         if (!labBatchBean.getBatchId().startsWith(BSP_BATCH_PREFIX)) {
-            JiraTicket jiraTicket = new JiraTicket(jiraService, labBatchBean.getBatchId());
-            labBatch.setJiraTicket(jiraTicket);
-            jiraTicket.setLabBatch(labBatch);
+            if (labBatch.getJiraTicket() == null) {
+                JiraTicket jiraTicket = new JiraTicket(jiraService, labBatchBean.getBatchId());
+                labBatch.setJiraTicket(jiraTicket);
+                jiraTicket.setLabBatch(labBatch);
+            }
         }
         labBatchDao.persist(labBatch);
         labBatchDao.flush();
@@ -143,17 +149,37 @@ public class LabBatchResource {
         if (labVesselSet.isEmpty()) {
             labVesselSet.addAll(labVessels);
         }
-        LabBatch labBatch = new LabBatch(labBatchBean.getBatchId(), labVesselSet,
-                labBatchBean.getBatchId().startsWith(BSP_BATCH_PREFIX) ?
-                        LabBatch.LabBatchType.BSP : LabBatch.LabBatchType.WORKFLOW);
+
+        LabBatch labBatch = labBatchDao.findByBusinessKey(labBatchBean.getBatchId());
+        if (labBatch == null) {
+            labBatch = new LabBatch(labBatchBean.getBatchId(), labVesselSet,
+                    labBatchBean.getBatchId().startsWith(BSP_BATCH_PREFIX) ?
+                            LabBatch.LabBatchType.BSP : LabBatch.LabBatchType.WORKFLOW);
+        }
 
         // Create bucket entries (if any) and add to batch
         if (!mapIdToPdo.isEmpty()) {
             LabVessel.loadSampleDataForBuckets(labVesselSet);
         }
         for (Map.Entry<String, ProductOrder> stringProductOrderEntry : mapIdToPdo.entrySet()) {
+            // Remove vessels that have already been bucketed for this PDO
+            List<LabVessel> vessels = mapPdoToVessels.get(stringProductOrderEntry.getKey());
+            List<LabVessel> noBucketEntryVessels = new ArrayList<>();
+            for (LabVessel vessel : vessels) {
+                boolean found = false;
+                for (BucketEntry bucketEntry : vessel.getBucketEntries()) {
+                    if (bucketEntry.getProductOrder().equals(stringProductOrderEntry.getValue())) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    noBucketEntryVessels.add(vessel);
+                }
+            }
+
             Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair =
-                    bucketEjb.applyBucketCriteria(mapPdoToVessels.get(stringProductOrderEntry.getKey()),
+                    bucketEjb.applyBucketCriteria(noBucketEntryVessels,
                             stringProductOrderEntry.getValue(), labBatchBean.getUsername(),
                             ProductWorkflowDefVersion.BucketingSource.LAB_BATCH_WS);
             ProductWorkflowDefVersion productWorkflowDefVersion = workflowBucketEntriesPair.getLeft();
@@ -161,6 +187,7 @@ public class LabBatchResource {
                 throw new RuntimeException("No workflow for " + stringProductOrderEntry.getValue().getJiraTicketKey());
             }
             labBatch.setWorkflowName(productWorkflowDefVersion.getProductWorkflowDef().getName());
+            // todo jmt check that bucket entries count matches lab vessel count?
             bucketEjb.moveFromBucketToBatch(workflowBucketEntriesPair.getRight(), labBatch);
         }
 

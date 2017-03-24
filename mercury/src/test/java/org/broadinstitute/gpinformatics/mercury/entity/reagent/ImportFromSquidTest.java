@@ -201,12 +201,9 @@ public class ImportFromSquidTest extends Arquillian {
             if (!plateBarcode.equals(previousPlateBarcode)) {
                 previousPlateBarcode = plateBarcode;
                 if (staticPlate != null) {
-                    if (mapBarcodeToVessel.get(staticPlate.getLabel()) == null) {
-                        plates.add(staticPlate);
-                    }
                     // Persist periodically, rather than all at the end, to avoid out of memory errors
                     if (plates.size() >= 100) {
-                        System.out.println("Persisting plates");
+                        System.out.println("Persisting " + plates.size() + " plates");
                         staticPlateDao.persistAll(plates);
                         plates.clear();
                         mapNameToScheme.clear();
@@ -214,6 +211,9 @@ public class ImportFromSquidTest extends Arquillian {
                     }
                 }
                 staticPlate = new StaticPlate(plateBarcode, StaticPlate.PlateType.IndexedAdapterPlate96);
+                if (mapBarcodeToVessel.get(staticPlate.getLabel()) == null) {
+                    plates.add(staticPlate);
+                }
             }
             VesselPosition vesselPosition = VesselPosition.getByName(wellName);
             PlateWell plateWell = new PlateWell(staticPlate, vesselPosition);
@@ -231,6 +231,7 @@ public class ImportFromSquidTest extends Arquillian {
             assert staticPlate != null;
             staticPlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
         }
+        System.out.println("Persisting " + plates.size() + " plates");
         staticPlateDao.persistAll(plates);
         staticPlateDao.clear();
     }

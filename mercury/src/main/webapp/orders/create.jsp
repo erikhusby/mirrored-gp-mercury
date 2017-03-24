@@ -531,6 +531,29 @@
 
         }
 
+        function registerChangeForAddon () {
+            var productKey = $j("#product").val();
+
+            detectNumberOfLanesVisibility();
+        }
+
+        function detectNumberOfLanesVisibility() {
+            var productKey = $j("#product").val();
+            var selectedAddonProducts = "";
+
+            $j('#createForm').find('input:checkbox[name="addOnKeys"]:checked').each(function () {
+                if (selectedAddonProducts != "") {
+                    selectedAddonProducts += "|@|";
+                }
+                selectedAddonProducts += $(this).val();
+            });
+
+            $j.ajax({
+                url: "${ctxpath}/orders/order.action?getSupportsNumberOfLanes=&product=" + productKey + "&selectedAddOns=" + selectedAddonProducts,
+                dataType: 'json',
+                success: updateNumberOfLanesVisibility
+            });
+        }
         function updateUIForProductChoice() {
 
             var productKey = $j("#product").val();
@@ -554,14 +577,13 @@
                 $j.ajax({
                     url: "${ctxpath}/orders/order.action?getAddOns=&product=" + productKey,
                     dataType: 'json',
-                    success: setupAddonCheckboxes
+                    success: setupAddonCheckboxes,
+                    complete: detectNumberOfLanesVisibility
                 });
 
-                $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getSupportsNumberOfLanes=&product=" + productKey,
-                    dataType: 'json',
-                    success: updateNumberOfLanesVisibility
-                });
+                // Moving the check for number of lanes visibility to the 'complete' (like finally in a try catch)
+                // setting for the ajax call for getting addons.  This way the addons that are set can be input for
+                // determining visibility of the number of lanes field
 
                 $j.ajax({
                     url: "${ctxpath}/orders/order.action?getSupportsSkippingQuote=&product=" + productKey,
@@ -752,7 +774,7 @@
                 }
 
                 var addOnId = "addOnCheckbox-" + index;
-                checkboxText += '  <input id="' + addOnId + '" type="checkbox"' + checked + ' name="addOnKeys" value="' + val.key + '"/>';
+                checkboxText += '  <input id="' + addOnId + '" type="checkbox"' + checked + ' name="addOnKeys" value="' + val.key + '" onchange="registerChangeForAddon()" />';
                 checkboxText += '  <label style="font-size: x-small;" for="' + addOnId + '">' + val.value + ' [' + val.key + ']</label>';
                 checkboxText += '  <br>';
             });
@@ -1223,7 +1245,7 @@
                     <div id="addOnCheckboxes" class="controls controls-text"> </div>
                 </div>
 
-                <div id="numberOfLanesDiv" class="control-group" style="display: ${actionBean.editOrder.product.supportsNumberOfLanes ? 'block' : 'none'};">
+                <div id="numberOfLanesDiv" class="control-group" style="display: ${actionBean.editOrder.requiresLaneCount() ? 'block' : 'none'};">
                     <stripes:label for="numberOfLanes" class="control-label">
                         Number of Lanes Per Sample
                     </stripes:label>

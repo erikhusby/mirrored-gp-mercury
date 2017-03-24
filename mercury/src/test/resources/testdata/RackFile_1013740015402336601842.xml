@@ -1,0 +1,979 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Rack Type="Object" Class ="Rack">
+ <SerializeVersion Type="Int">2</SerializeVersion>
+ <RackId Type="String">1013740015402336601842</RackId>
+ <RackLabware Type="String">QIA#19588 *EMTR</RackLabware>
+ <CreationTimestamp Type="DateTime">20150923 15:26:06.091</CreationTimestamp>
+ <RackUsageType Type="String">Eluate</RackUsageType>
+ <CSVConverted Type="Bool">0</CSVConverted>
+ <RackLockType Type="String">NoLock</RackLockType>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String">1</SampleId>
+  <PositionName Type="String">A:1</PositionName>
+  <PositionIndex Type="UInt">0</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">60</TotalVolumeInUl>
+  <InternalControlName Type="String">Proteinase K</InternalControlName>
+  <State Type="String">valid</State>
+  <SampleType Type="String">Sample</SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String">2</SampleId>
+  <PositionName Type="String">B:1</PositionName>
+  <PositionIndex Type="UInt">1</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">60</TotalVolumeInUl>
+  <InternalControlName Type="String">Proteinase K</InternalControlName>
+  <State Type="String">valid</State>
+  <SampleType Type="String">Sample</SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String">3</SampleId>
+  <PositionName Type="String">C:1</PositionName>
+  <PositionIndex Type="UInt">2</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">60</TotalVolumeInUl>
+  <InternalControlName Type="String">Proteinase K</InternalControlName>
+  <State Type="String">valid</State>
+  <SampleType Type="String">Sample</SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String">4</SampleId>
+  <PositionName Type="String">D:1</PositionName>
+  <PositionIndex Type="UInt">3</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">60</TotalVolumeInUl>
+  <InternalControlName Type="String">Proteinase K</InternalControlName>
+  <State Type="String">valid</State>
+  <SampleType Type="String">Sample</SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String">5</SampleId>
+  <PositionName Type="String">E:1</PositionName>
+  <PositionIndex Type="UInt">4</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">60</TotalVolumeInUl>
+  <InternalControlName Type="String">Proteinase K</InternalControlName>
+  <State Type="String">valid</State>
+  <SampleType Type="String">Sample</SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String">6</SampleId>
+  <PositionName Type="String">F:1</PositionName>
+  <PositionIndex Type="UInt">5</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">60</TotalVolumeInUl>
+  <InternalControlName Type="String">Proteinase K</InternalControlName>
+  <State Type="String">valid</State>
+  <SampleType Type="String">Sample</SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String">7</SampleId>
+  <PositionName Type="String">G:1</PositionName>
+  <PositionIndex Type="UInt">6</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">60</TotalVolumeInUl>
+  <InternalControlName Type="String">Proteinase K</InternalControlName>
+  <State Type="String">valid</State>
+  <SampleType Type="String">Sample</SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String">8</SampleId>
+  <PositionName Type="String">H:1</PositionName>
+  <PositionIndex Type="UInt">7</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">60</TotalVolumeInUl>
+  <InternalControlName Type="String">Proteinase K</InternalControlName>
+  <State Type="String">valid</State>
+  <SampleType Type="String">Sample</SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String">9</SampleId>
+  <PositionName Type="String">A:2</PositionName>
+  <PositionIndex Type="UInt">8</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">60</TotalVolumeInUl>
+  <InternalControlName Type="String">Proteinase K</InternalControlName>
+  <State Type="String">valid</State>
+  <SampleType Type="String">Sample</SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String">10</SampleId>
+  <PositionName Type="String">B:2</PositionName>
+  <PositionIndex Type="UInt">9</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">60</TotalVolumeInUl>
+  <InternalControlName Type="String">Proteinase K</InternalControlName>
+  <State Type="String">valid</State>
+  <SampleType Type="String">Sample</SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String">11</SampleId>
+  <PositionName Type="String">C:2</PositionName>
+  <PositionIndex Type="UInt">10</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">60</TotalVolumeInUl>
+  <InternalControlName Type="String">Proteinase K</InternalControlName>
+  <State Type="String">valid</State>
+  <SampleType Type="String">Sample</SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String">12</SampleId>
+  <PositionName Type="String">D:2</PositionName>
+  <PositionIndex Type="UInt">11</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">60</TotalVolumeInUl>
+  <InternalControlName Type="String">Proteinase K</InternalControlName>
+  <State Type="String">valid</State>
+  <SampleType Type="String">Sample</SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String">13</SampleId>
+  <PositionName Type="String">E:2</PositionName>
+  <PositionIndex Type="UInt">12</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">60</TotalVolumeInUl>
+  <InternalControlName Type="String">Proteinase K</InternalControlName>
+  <State Type="String">valid</State>
+  <SampleType Type="String">Sample</SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String">14</SampleId>
+  <PositionName Type="String">F:2</PositionName>
+  <PositionIndex Type="UInt">13</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">60</TotalVolumeInUl>
+  <InternalControlName Type="String">Proteinase K</InternalControlName>
+  <State Type="String">valid</State>
+  <SampleType Type="String">Sample</SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String">15</SampleId>
+  <PositionName Type="String">G:2</PositionName>
+  <PositionIndex Type="UInt">14</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">60</TotalVolumeInUl>
+  <InternalControlName Type="String">Proteinase K</InternalControlName>
+  <State Type="String">valid</State>
+  <SampleType Type="String">Sample</SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String">16</SampleId>
+  <PositionName Type="String">H:2</PositionName>
+  <PositionIndex Type="UInt">15</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">60</TotalVolumeInUl>
+  <InternalControlName Type="String">Proteinase K</InternalControlName>
+  <State Type="String">valid</State>
+  <SampleType Type="String">Sample</SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String">17</SampleId>
+  <PositionName Type="String">A:3</PositionName>
+  <PositionIndex Type="UInt">16</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">60</TotalVolumeInUl>
+  <InternalControlName Type="String">Proteinase K</InternalControlName>
+  <State Type="String">valid</State>
+  <SampleType Type="String">Sample</SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String">18</SampleId>
+  <PositionName Type="String">B:3</PositionName>
+  <PositionIndex Type="UInt">17</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">60</TotalVolumeInUl>
+  <InternalControlName Type="String">Proteinase K</InternalControlName>
+  <State Type="String">valid</State>
+  <SampleType Type="String">Sample</SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String">19</SampleId>
+  <PositionName Type="String">C:3</PositionName>
+  <PositionIndex Type="UInt">18</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">60</TotalVolumeInUl>
+  <InternalControlName Type="String">Proteinase K</InternalControlName>
+  <State Type="String">valid</State>
+  <SampleType Type="String">Sample</SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String">20</SampleId>
+  <PositionName Type="String">D:3</PositionName>
+  <PositionIndex Type="UInt">19</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">60</TotalVolumeInUl>
+  <InternalControlName Type="String">Proteinase K</InternalControlName>
+  <State Type="String">valid</State>
+  <SampleType Type="String">Sample</SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String">21</SampleId>
+  <PositionName Type="String">E:3</PositionName>
+  <PositionIndex Type="UInt">20</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">60</TotalVolumeInUl>
+  <InternalControlName Type="String">Proteinase K</InternalControlName>
+  <State Type="String">valid</State>
+  <SampleType Type="String">Sample</SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String">22</SampleId>
+  <PositionName Type="String">F:3</PositionName>
+  <PositionIndex Type="UInt">21</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">60</TotalVolumeInUl>
+  <InternalControlName Type="String">Proteinase K</InternalControlName>
+  <State Type="String">valid</State>
+  <SampleType Type="String">Sample</SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String">23</SampleId>
+  <PositionName Type="String">G:3</PositionName>
+  <PositionIndex Type="UInt">22</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">60</TotalVolumeInUl>
+  <InternalControlName Type="String">Proteinase K</InternalControlName>
+  <State Type="String">valid</State>
+  <SampleType Type="String">Sample</SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String">24</SampleId>
+  <PositionName Type="String">H:3</PositionName>
+  <PositionIndex Type="UInt">23</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">60</TotalVolumeInUl>
+  <InternalControlName Type="String">Proteinase K</InternalControlName>
+  <State Type="String">valid</State>
+  <SampleType Type="String">Sample</SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">A:4</PositionName>
+  <PositionIndex Type="UInt">24</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">B:4</PositionName>
+  <PositionIndex Type="UInt">25</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">C:4</PositionName>
+  <PositionIndex Type="UInt">26</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">D:4</PositionName>
+  <PositionIndex Type="UInt">27</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">E:4</PositionName>
+  <PositionIndex Type="UInt">28</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">F:4</PositionName>
+  <PositionIndex Type="UInt">29</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">G:4</PositionName>
+  <PositionIndex Type="UInt">30</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">H:4</PositionName>
+  <PositionIndex Type="UInt">31</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">A:5</PositionName>
+  <PositionIndex Type="UInt">32</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">B:5</PositionName>
+  <PositionIndex Type="UInt">33</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">C:5</PositionName>
+  <PositionIndex Type="UInt">34</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">D:5</PositionName>
+  <PositionIndex Type="UInt">35</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">E:5</PositionName>
+  <PositionIndex Type="UInt">36</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">F:5</PositionName>
+  <PositionIndex Type="UInt">37</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">G:5</PositionName>
+  <PositionIndex Type="UInt">38</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">H:5</PositionName>
+  <PositionIndex Type="UInt">39</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">A:6</PositionName>
+  <PositionIndex Type="UInt">40</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">B:6</PositionName>
+  <PositionIndex Type="UInt">41</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">C:6</PositionName>
+  <PositionIndex Type="UInt">42</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">D:6</PositionName>
+  <PositionIndex Type="UInt">43</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">E:6</PositionName>
+  <PositionIndex Type="UInt">44</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">F:6</PositionName>
+  <PositionIndex Type="UInt">45</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">G:6</PositionName>
+  <PositionIndex Type="UInt">46</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">H:6</PositionName>
+  <PositionIndex Type="UInt">47</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">A:7</PositionName>
+  <PositionIndex Type="UInt">48</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">B:7</PositionName>
+  <PositionIndex Type="UInt">49</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">C:7</PositionName>
+  <PositionIndex Type="UInt">50</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">D:7</PositionName>
+  <PositionIndex Type="UInt">51</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">E:7</PositionName>
+  <PositionIndex Type="UInt">52</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">F:7</PositionName>
+  <PositionIndex Type="UInt">53</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">G:7</PositionName>
+  <PositionIndex Type="UInt">54</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">H:7</PositionName>
+  <PositionIndex Type="UInt">55</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">A:8</PositionName>
+  <PositionIndex Type="UInt">56</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">B:8</PositionName>
+  <PositionIndex Type="UInt">57</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">C:8</PositionName>
+  <PositionIndex Type="UInt">58</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">D:8</PositionName>
+  <PositionIndex Type="UInt">59</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">E:8</PositionName>
+  <PositionIndex Type="UInt">60</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">F:8</PositionName>
+  <PositionIndex Type="UInt">61</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">G:8</PositionName>
+  <PositionIndex Type="UInt">62</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">H:8</PositionName>
+  <PositionIndex Type="UInt">63</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">A:9</PositionName>
+  <PositionIndex Type="UInt">64</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">B:9</PositionName>
+  <PositionIndex Type="UInt">65</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">C:9</PositionName>
+  <PositionIndex Type="UInt">66</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">D:9</PositionName>
+  <PositionIndex Type="UInt">67</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">E:9</PositionName>
+  <PositionIndex Type="UInt">68</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">F:9</PositionName>
+  <PositionIndex Type="UInt">69</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">G:9</PositionName>
+  <PositionIndex Type="UInt">70</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">H:9</PositionName>
+  <PositionIndex Type="UInt">71</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">A:10</PositionName>
+  <PositionIndex Type="UInt">72</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">B:10</PositionName>
+  <PositionIndex Type="UInt">73</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">C:10</PositionName>
+  <PositionIndex Type="UInt">74</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">D:10</PositionName>
+  <PositionIndex Type="UInt">75</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">E:10</PositionName>
+  <PositionIndex Type="UInt">76</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">F:10</PositionName>
+  <PositionIndex Type="UInt">77</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">G:10</PositionName>
+  <PositionIndex Type="UInt">78</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">H:10</PositionName>
+  <PositionIndex Type="UInt">79</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">A:11</PositionName>
+  <PositionIndex Type="UInt">80</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">B:11</PositionName>
+  <PositionIndex Type="UInt">81</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">C:11</PositionName>
+  <PositionIndex Type="UInt">82</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">D:11</PositionName>
+  <PositionIndex Type="UInt">83</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">E:11</PositionName>
+  <PositionIndex Type="UInt">84</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">F:11</PositionName>
+  <PositionIndex Type="UInt">85</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">G:11</PositionName>
+  <PositionIndex Type="UInt">86</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">H:11</PositionName>
+  <PositionIndex Type="UInt">87</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">A:12</PositionName>
+  <PositionIndex Type="UInt">88</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">B:12</PositionName>
+  <PositionIndex Type="UInt">89</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">C:12</PositionName>
+  <PositionIndex Type="UInt">90</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">D:12</PositionName>
+  <PositionIndex Type="UInt">91</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">E:12</PositionName>
+  <PositionIndex Type="UInt">92</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">F:12</PositionName>
+  <PositionIndex Type="UInt">93</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">G:12</PositionName>
+  <PositionIndex Type="UInt">94</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <RackPosition Type="Object" Class ="RackPosition">
+  <SampleId Type="String"></SampleId>
+  <PositionName Type="String">H:12</PositionName>
+  <PositionIndex Type="UInt">95</PositionIndex>
+  <Labware Type="String">QIA#19588 *EMTR</Labware>
+  <TotalVolumeInUl Type="Int">0</TotalVolumeInUl>
+  <InternalControlName Type="String"></InternalControlName>
+  <State Type="String">empty</State>
+  <SampleType Type="String"></SampleType>
+ </RackPosition>
+ <ModificationRecord Type="Object" Class ="ModificationRecord">
+  <Timestamp Type="DateTime">20150923 15:26:06.091</Timestamp>
+  <BatchID Type="UInt">2000015</BatchID>
+  <Instrument Type="String">qssp34099</Instrument>
+  <Comment Type="String">eluate transfer</Comment>
+  <InstrumentType Type="String">SamplePreparation</InstrumentType>
+ </ModificationRecord>
+</Rack>
+
+<!-- QIAsymphony_CHECKSUM 9wLSNWdU7trjTPDsvXAz/XdiQfixPWc1bdiir7FsKJE=-->

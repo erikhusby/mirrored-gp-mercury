@@ -85,8 +85,8 @@
 
     </style>
     <script src="${ctxpath}/resources/scripts/jquery.pasteSelect.js" type="text/javascript"></script>
-    <link rel="stylesheet" href="${ctxpath}/resources/scripts/chosen_v1.5.1/chosen.min.css">
-    <script type="text/javascript" src="${ctxpath}/resources/scripts/chosen_v1.5.1/chosen.jquery.min.js"></script>
+    <link rel="stylesheet" href="${ctxpath}/resources/scripts/chosen_v1.6.2/chosen.min.css">
+    <script type="text/javascript" src="${ctxpath}/resources/scripts/chosen_v1.6.2/chosen.jquery.min.js"></script>
     <script type="text/javascript" src="${ctxpath}/resources/scripts/dataTables-filterColumn.js"></script>
     <script type="text/javascript">
         function formatInput(item) {
@@ -145,36 +145,36 @@
 
                 if (oTable == undefined) {
                     function renderCheckbox(data, type, row) {
-                    if (type === 'display') {
-                        var status = row.<%=SubmissionField.SUBMITTED_STATUS %>;
-                        var tagAttributes = {};
-                        if (status.length === 0) {
-                            tagAttributes = {
-                                "name": "<%=ResearchProjectActionBean.SUBMISSION_TUPLES_PARAMETER%>",
-                                "value": data,
-                                "type": "checkbox",
-                                "class": "shiftCheckbox"
-                            };
-                        } else {
-                            tagAttributes = {
-                                "value": data,
-                                "type": "hidden"
-                            };
-                        }
+                        if (type === 'display') {
+                            var status = row.<%=SubmissionField.SUBMITTED_STATUS %>;
+                            var tagAttributes = {};
+                            if (status.length === 0) {
+                                tagAttributes = {
+                                    "name": "<%=ResearchProjectActionBean.SUBMISSION_TUPLES_PARAMETER%>",
+                                    "value": data,
+                                    "type": "checkbox",
+                                    "class": "shiftCheckbox"
+                                };
+                            } else {
+                                tagAttributes = {
+                                    "value": data,
+                                    "type": "hidden"
+                                };
+                            }
                         return jQuery("<input/>", tagAttributes)[0].outerHTML;
-                    }
-                    if (type === 'sort') {
-                        if (data === undefined || data === "") {
-                            return 1;
                         }
-                        var selector = 'input[type="checkbox"][value="data"]'.replace("data", data);
-                        var result = $j(selector).prop("checked");
-                        if (result === undefined) {
-                            result = 1;
+                        if (type === 'sort') {
+                            if (data === undefined || data === "") {
+                                return 1;
+                            }
+                            var selector = 'input[type="checkbox"][value="data"]'.replace("data", data);
+                            var result = $j(selector).prop("checked");
+                            if (result === undefined) {
+                                result = 1;
+                            }
+                            return result;
                         }
-                        return result;
-                    }
-                    return data;
+                        return data;
                 }
 
                     function displayPdoList(data, type, row) {

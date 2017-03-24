@@ -18,6 +18,9 @@ AS
   TYPE PK_ARR_TY IS TABLE OF NUMBER(19) INDEX BY BINARY_INTEGER;
   V_PK_ARR PK_ARR_TY;
 
+  -- Use same modification timestamp for all ETL methods in call to DO_ETL()
+  V_ETL_MOD_TIMESTAMP DATE;
+
   /* *****************************
    * Utility function to mimic typical (e.g. Java) split() functionality
    * Splits String output of java.util.Arrays.toString output into array of NUMBER(19)
@@ -244,6 +247,22 @@ AS
         FROM im_lab_vessel
         WHERE is_delete = 'T' );
       DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' lab_vessel rows' );
+
+      DELETE FROM abandon_vessel
+      WHERE abandon_type = 'AbandonVessel'
+        AND abandon_id IN (
+        SELECT abandon_id
+        FROM im_abandon_vessel
+        WHERE is_delete = 'T' );
+      DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' abandon_vessel rows' );
+
+      DELETE FROM abandon_vessel
+      WHERE abandon_type = 'AbandonVesselPosition'
+        AND abandon_id IN (
+        SELECT abandon_id
+        FROM im_abandon_vessel_position
+        WHERE is_delete = 'T' );
+      DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' abandon_vessel (position) rows' );
 
       DELETE FROM lab_metric
       WHERE lab_metric_id IN (
@@ -485,7 +504,7 @@ AS
               product_family_name = new.product_family_name,
               primary_price_item_id = new.primary_price_item_id,
               aggregation_data_type = new.aggregation_data_type,
-              external_only_product = new.eexternal_only_product,
+              external_only_product = new.external_only_product,
               saved_in_sap = new.saved_in_sap,
               etl_date = new.etl_date
             WHERE product_id = new.product_id;
@@ -565,6 +584,7 @@ AS
               label = new.label,
               lab_vessel_type = new.lab_vessel_type,
               name = new.name,
+              created_on = new.created_on,
               etl_date = new.etl_date
             WHERE lab_vessel_id = new.lab_vessel_id;
 
@@ -576,12 +596,14 @@ AS
               label,
               lab_vessel_type,
               name,
+              created_on,
               etl_date
             ) VALUES (
               new.lab_vessel_id,
               new.label,
               new.lab_vessel_type,
               new.name,
+              new.created_on,
               new.etl_date );
 
             V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
@@ -595,6 +617,91 @@ AS
       END LOOP;
       SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'lab_vessel' );
     END MERGE_LAB_VESSEL;
+
+  PROCEDURE MERGE_ABANDON_VESSEL
+  IS
+    V_INS_COUNT PLS_INTEGER;
+    V_UPD_COUNT PLS_INTEGER;
+    V_LATEST_ETL_DATE DATE;
+    BEGIN
+      V_INS_COUNT := 0;
+      V_UPD_COUNT := 0;
+      FOR new IN (SELECT line_number,
+                    etl_date,
+                    abandon_id,
+                    abandon_type,
+                    abandon_vessel_id,
+                    CAST(NULL AS VARCHAR2(24) ) AS vessel_position,
+                    reason,
+                    abandoned_on
+                  FROM im_abandon_vessel
+                  WHERE is_delete = 'F'
+                  UNION ALL
+                  SELECT line_number,
+                    etl_date,
+                    abandon_id,
+                    abandon_type,
+                    abandon_vessel_id,
+                    vessel_position,
+                    reason,
+                    abandoned_on
+                  FROM im_abandon_vessel_position
+                  WHERE is_delete = 'F') LOOP
+        BEGIN
+          SELECT MAX(etl_date)
+          INTO V_LATEST_ETL_DATE
+          FROM abandon_vessel
+          WHERE abandon_id = new.abandon_id
+            AND abandon_type = new.abandon_type;
+
+          -- Do an update only if this ETL date greater than what's in DB already
+          IF new.etl_date > V_LATEST_ETL_DATE THEN
+            UPDATE abandon_vessel
+            SET abandon_vessel_id = new.abandon_vessel_id,
+              vessel_position = new.vessel_position,
+              reason = new.reason,
+              abandoned_on = new.abandoned_on,
+              etl_date = new.etl_date
+            WHERE abandon_id = new.abandon_id
+              AND abandon_type = new.abandon_type;
+
+            V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
+
+          ELSIF V_LATEST_ETL_DATE IS NULL THEN
+
+            INSERT INTO abandon_vessel (
+              abandon_type,
+              abandon_id,
+              abandon_vessel_id,
+              vessel_position,
+              reason,
+              abandoned_on,
+              etl_date
+            ) VALUES (
+              new.abandon_type,
+              new.abandon_id,
+              new.abandon_vessel_id,
+              new.vessel_position,
+              new.reason,
+              new.abandoned_on,
+              new.etl_date );
+
+            V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
+          END IF;
+          EXCEPTION WHEN OTHERS THEN
+          errmsg := SQLERRM;
+          IF new.abandon_type = 'AbandonVessel' THEN
+            DBMS_OUTPUT.PUT_LINE(
+                TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_abandon_vessel.dat line ' || new.line_number || '  ' || errmsg);
+          ELSE
+            DBMS_OUTPUT.PUT_LINE(
+                TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_abandon_vessel_position.dat line ' || new.line_number || '  ' || errmsg);
+          END IF;
+          CONTINUE;
+        END;
+      END LOOP;
+      SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'abandon_vessel' );
+    END MERGE_ABANDON_VESSEL;
 
   PROCEDURE MERGE_LAB_METRIC
   IS
@@ -942,7 +1049,8 @@ AS
               owner = new.owner,
               placed_date = new.placed_date,
               skip_regulatory_reason = new.skip_regulatory_reason,
-              sap_order_number = new.sap_order_number
+              sap_order_number = new.sap_order_number,
+              array_chip_type = new.array_chip_type,
               etl_date = new.etl_date
             WHERE product_order_id = new.product_order_id;
 
@@ -962,6 +1070,8 @@ AS
               owner,
               placed_date,
               skip_regulatory_reason,
+              sap_order_number,
+              array_chip_type,
               etl_date
             ) VALUES (
               new.product_order_id,
@@ -977,6 +1087,7 @@ AS
               new.placed_date,
               new.skip_regulatory_reason,
               new.sap_order_number,
+              new.array_chip_type,
               new.etl_date );
 
             V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
@@ -1547,6 +1658,10 @@ AS
     V_LIBRARY_INS_COUNT PLS_INTEGER;
     -- Nothing ever updated
     V_UPD_COUNT CONSTANT PLS_INTEGER := 0;
+
+    V_LIBRARY_LABEL LAB_VESSEL.LABEL%TYPE;
+    V_LIBRARY_DATE LAB_VESSEL.CREATED_ON%TYPE;
+
     BEGIN
       V_LIBRARY_INS_COUNT := 0;
       FOR new IN (SELECT lab_vessel_id as library_id
@@ -1561,14 +1676,15 @@ AS
                   GROUP BY lab_vessel_id, lab_event_id, library_name, event_date, etl_date
       ) LOOP
         BEGIN
+
           -- Rows for libraries - we've already deleted any rows related to libraries
           INSERT INTO LIBRARY_LCSET_SAMPLE_BASE (
             LIBRARY_LABEL, LIBRARY_ID,
             LIBRARY_TYPE, LIBRARY_CREATION_DATE, LIBRARY_EVENT_ID )
-          VALUES(
-            ( SELECT label FROM lab_vessel where lab_vessel_id = new.library_id ),
-            new.library_id,
-            new.library_type, new.library_creation, new.event_id );
+          ( SELECT label, lab_vessel_id, new.library_type
+                 , created_on, new.event_id
+              FROM lab_vessel
+             WHERE lab_vessel_id = new.library_id );
 
           V_LIBRARY_INS_COUNT := V_LIBRARY_INS_COUNT + SQL%ROWCOUNT;
 
@@ -1639,8 +1755,8 @@ AS
           IF V_IS_INSERT = 'Y' THEN
             -- Have to create initial base row data
             INSERT INTO array_process_flow (
-              product_order_id, batch_name, lcset_sample_name, sample_name )
-            VALUES( new.product_order_id, new.batch_name, new.lcset_sample_name, new.sample_name )
+              product_order_id, batch_name, lcset_sample_name, sample_name, etl_mod_timestamp )
+            VALUES( new.product_order_id, new.batch_name, new.lcset_sample_name, new.sample_name, V_ETL_MOD_TIMESTAMP )
             RETURNING ROWID INTO V_THE_ROWID;
           END IF;
 
@@ -1655,6 +1771,7 @@ AS
               , plating_dilution_date = new.event_date
               -- Strip position suffix from label to get plate barcode
               , dna_plate = ( SELECT REGEXP_REPLACE( LABEL, new.position || '$', '' ) FROM LAB_VESSEL WHERE LAB_VESSEL_ID = new.LAB_VESSEL_ID )
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
             WHERE ROWID = V_THE_ROWID
             RETURNING dna_plate INTO V_LABEL ;
 
@@ -1671,6 +1788,7 @@ AS
               , hyb_date = new.event_date
               -- Append underscore and position suffix to chip barcode to get chip well pseudo-barcode
               , ( chip, chip_well_barcode ) = ( SELECT LABEL, LABEL || '_' || new.position FROM LAB_VESSEL WHERE LAB_VESSEL_ID = new.LAB_VESSEL_ID )
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
             WHERE ROWID = V_THE_ROWID;
             WHEN 'InfiniumAmplification' THEN
             UPDATE array_process_flow
@@ -1679,78 +1797,91 @@ AS
               , amp_plate_position = new.position
               , amp_date = new.event_date
               , amp_plate = ( SELECT LABEL FROM LAB_VESSEL WHERE LAB_VESSEL_ID = new.LAB_VESSEL_ID )
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
             WHERE ROWID = V_THE_ROWID;
             WHEN 'InfiniumPostFragmentationHybOvenLoaded' THEN
             UPDATE array_process_flow
             SET post_frag_event_id = new.lab_event_id
               , post_frag_hyb_oven = new.station_name
               , post_frag_hyb_oven_date = new.event_date
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
             WHERE ROWID = V_THE_ROWID;
             WHEN 'InfiniumFragmentation' THEN
             UPDATE array_process_flow
             SET frag_event_id = new.lab_event_id
               , frag_station = new.station_name
               , frag_date = new.event_date
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
             WHERE ROWID = V_THE_ROWID;
             WHEN 'InfiniumPrecipitation' THEN
             UPDATE array_process_flow
             SET precip_event_id = new.lab_event_id
               , precip_station = new.station_name
               , precip_date = new.event_date
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
             WHERE ROWID = V_THE_ROWID;
             WHEN 'InfiniumPostPrecipitationHeatBlockLoaded' THEN
             UPDATE array_process_flow
             SET post_precip_event_id = new.lab_event_id
               , post_precip_hyb_oven = new.station_name
               , post_precip_hyb_oven_date = new.event_date
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
             WHERE ROWID = V_THE_ROWID;
             WHEN 'InfiniumPrecipitationIsopropanolAddition' THEN
             UPDATE array_process_flow
             SET precip_ipa_event_id = new.lab_event_id
               , precip_ipa_station = new.station_name
               , precip_ipa_date = new.event_date
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
             WHERE ROWID = V_THE_ROWID;
             WHEN 'InfiniumResuspension' THEN
             UPDATE array_process_flow
             SET resuspension_event_id = new.lab_event_id
               , resuspension_station = new.station_name
               , resuspension_date = new.event_date
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
             WHERE ROWID = V_THE_ROWID;
             WHEN 'InfiniumPostResuspensionHybOven' THEN
             UPDATE array_process_flow
             SET postresusphyboven_event_id = new.lab_event_id
               , postresusphyboven_station = new.station_name
               , postresusphyboven_date = new.event_date
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
             WHERE ROWID = V_THE_ROWID;
             WHEN 'InfiniumPostHybridizationHybOvenLoaded' THEN
             UPDATE array_process_flow
             SET posthybhybovenloaded_event_id = new.lab_event_id
               , posthybhybovenloaded_station = new.station_name
               , posthybhybovenloaded_date = new.event_date
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
             WHERE ROWID = V_THE_ROWID;
             WHEN 'InfiniumHybChamberLoaded' THEN
             UPDATE array_process_flow
             SET hybchamberloaded_event_id = new.lab_event_id
               , hybchamberloaded = new.station_name
               , hybchamberloaded_date = new.event_date
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
             WHERE ROWID = V_THE_ROWID;
             WHEN 'InfiniumXStain' THEN
             UPDATE array_process_flow
             SET xstain_event_id = new.lab_event_id
               , xstain = new.station_name
               , xstain_date = new.event_date
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
             WHERE ROWID = V_THE_ROWID;
             WHEN 'InfiniumAutocallSomeStarted' THEN
             UPDATE array_process_flow
             SET autocall_event_id = new.lab_event_id
-              --, scanner = new.station_name
+              , scanner = NVL(new.station_name, scanner)
               , autocall_started = new.event_date
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
             WHERE ROWID = V_THE_ROWID;
             WHEN  'InfiniumAutoCallAllStarted' THEN
             UPDATE array_process_flow
             SET autocall_event_id = new.lab_event_id
-              --, scanner = new.station_name
+              , scanner = NVL(new.station_name, scanner)
               , autocall_started = new.event_date
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
             WHERE ROWID = V_THE_ROWID
                   AND ( autocall_event_id IS NULL
                         OR
@@ -2304,6 +2435,9 @@ AS
   PROCEDURE DO_ETL
   AS
     BEGIN
+
+      V_ETL_MOD_TIMESTAMP := SYSDATE;
+
       -- Remove any deleted records from data warehouse
       DO_DELETES();
 
@@ -2313,6 +2447,7 @@ AS
       MERGE_PRICE_ITEM();
       MERGE_PRODUCT();
       MERGE_LAB_VESSEL();
+      MERGE_ABANDON_VESSEL();
       MERGE_WORKFLOW();
       MERGE_WORKFLOW_PROCESS();
       MERGE_SEQUENCING_RUN();

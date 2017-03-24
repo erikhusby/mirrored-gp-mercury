@@ -60,7 +60,7 @@ public class BucketEntryFixupTest extends Arquillian {
          * If the need comes to utilize this fixup in production, change the buildMercuryWar parameters accordingly
          */
         return DeploymentBuilder.buildMercuryWar(
-                org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD, "prod");
+                org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV, "dev");
     }
 
     @BeforeMethod(groups = TestGroups.FIXUP)

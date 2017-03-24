@@ -1719,6 +1719,42 @@ public class LabEventFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
+    public void fixupSupport2319() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        long[] ids = {1732578L,1732576L,1732580L,1732599L,1732608L,1732611L,1732616L,1732622L,1732627L,1732684L,
+                1732686L,1732688L,1732715L,1732759L};
+
+        Reagent undesired = reagentDao.findByReagentNameLotExpiration("HS buffer", "RG-10095", null);
+        Reagent desired = reagentDao.findByReagentNameLotExpiration("HS buffer", "RG-12126", null);
+        Assert.assertNotNull(undesired);
+        Assert.assertNotNull(desired);
+
+        for (long id: ids) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, id);
+            if (labEvent == null || labEvent.getLabEventType() != LabEventType.PICO_DILUTION_TRANSFER) {
+                throw new RuntimeException("cannot find " + id + " or is not PICO_DILUTION_TRANSFER");
+            }
+            for (LabEventReagent labEventReagent: labEvent.getLabEventReagents()) {
+                if (labEventReagent.getReagent().equals(undesired)) {
+                    System.out.println("Removing " + undesired.getName() + " on event " + labEvent.getLabEventId());
+                    labEvent.getLabEventReagents().remove(labEventReagent);
+                    genericReagentDao.remove(labEventReagent);
+                }
+            }
+            System.out.println("Adding " + desired.getName() + " on event " + labEvent.getLabEventId());
+            labEvent.addReagent(desired);
+        }
+
+        FixupCommentary fixupCommentary = new FixupCommentary(
+                "SUPPORT-2319 - Removing expired reagent for new one");
+        labEventDao.persist(fixupCommentary);
+        labEventDao.flush();
+
+        utx.commit();
+    }
+
+    @Test(enabled = false)
     public void fixupSupport2330() throws Exception {
         userBean.loginOSUser();
         utx.begin();
@@ -1785,6 +1821,57 @@ public class LabEventFixupTest extends Arquillian {
 
         labEventDao.persist(new FixupCommentary("GPLIM-4422 fixup extraction transfer"));
         labEventDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport2485() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        long[] ids = {1831499L, 1831501L};
+        for (long labEventId : ids) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, labEventId);
+            if (labEvent == null || labEvent.getLabEventType() != LabEventType.DILUTION_TO_FLOWCELL_TRANSFER) {
+                throw new RuntimeException("cannot find " + labEventId + " or is not DILUTION_TO_FLOWCELL_TRANSFER");
+            }
+            else if (!labEvent.getEventLocation().equals("SL-HDE")) {
+                throw new RuntimeException("Did not find expected station of SL-HDE");
+            } else {
+                System.out.println("LabEvent " + labEventId + " station " + labEvent.getEventLocation());
+                labEvent.setEventLocation("SL-HDD");
+                System.out.println("   updated to " + labEvent.getEventLocation());
+            }
+        }
+        labEventDao.persist(new FixupCommentary("SUPPORT-2485 change lab event location to SL-HDD"));
+        labEventDao.flush();
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport2691() throws Exception {
+        // Deletes shearing transfer in order to resend a corrected bettalims message with a tube in a new position.
+        userBean.loginOSUser();
+        utx.begin();
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 1934498L);
+        Assert.assertEquals(labEvent.getLabEventType(), LabEventType.SHEARING_TRANSFER);
+        for (LabEventReagent labEventReagent : labEvent.getLabEventReagents()) {
+            System.out.println("Removing labEventReagent " + labEventReagent.getLabEvent().getLabEventId() +
+                    ", " + labEventReagent.getReagent().getName());
+            labEventDao.remove(labEventReagent);
+        }
+        labEvent.getLabEventReagents().clear();
+        Assert.assertTrue(CollectionUtils.isEmpty(labEvent.getCherryPickTransfers()));
+        for (SectionTransfer sectionTransfer : labEvent.getSectionTransfers()) {
+            System.out.println("Removing sectionTransfer " + sectionTransfer.getVesselTransferId());
+            labEventDao.remove(sectionTransfer);
+        }
+        labEvent.getSectionTransfers().clear();
+        Assert.assertTrue(CollectionUtils.isEmpty(labEvent.getVesselToSectionTransfers()));
+        Assert.assertTrue(CollectionUtils.isEmpty(labEvent.getVesselToVesselTransfers()));
+        System.out.println("Removing " + labEvent.getLabEventType() + " " + labEvent.getLabEventId());
+        labEventDao.remove(labEvent);
+        labEventDao.persist(new FixupCommentary("SUPPORT-2691 delete shearing transfer event."));
+        labEventDao.flush();
+        utx.commit();
     }
 
 }

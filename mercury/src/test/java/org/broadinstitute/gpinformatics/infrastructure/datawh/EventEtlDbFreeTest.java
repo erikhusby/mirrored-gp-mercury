@@ -573,7 +573,7 @@ public class EventEtlDbFreeTest {
         EasyMock.verify(mocks);
     }
 
-    public void testNoFixups() {
+    public void testNoFixups() throws Exception {
         Collection<Long> deletedEntityIds = new ArrayList<>();
         Collection<Long> modifiedEntityIds = new ArrayList<>();
         Collection<Long> addedEntityIds = new ArrayList<>();
@@ -583,7 +583,7 @@ public class EventEtlDbFreeTest {
     }
 
     @Test(groups = TestGroups.DATABASE_FREE, enabled = true)
-    public void testFixups() {
+    public void testFixups() throws Exception {
         Long modEventId = 9L;
         Long seqRunId = 8L;
         Long cartridgeEventId = 7L;

@@ -6,12 +6,22 @@
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
 <%@ page import="org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList" %>
+<%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean" %>
 <stripes:useActionBean var="actionBean" beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.AbandonVesselActionBean"/>
 <c:set var="reasonCodes" value="${actionBean.reasonCodes}"/>
 <stripes:layout-render name="/layout.jsp" pageTitle="Abandon Vessel" sectionTitle="Abandon Vessel">
 
+    <link rel="stylesheet" type="text/css" href="/Mercury/resources/css/bootstrap.css">
     <stripes:layout-component name="extraHead">
+        <%@ include file="/vessel/rack_scanner_list_with_sim_part1.jsp" %>
         <style>
+            .select_class {
+                width:82px;
+                direction: ltr;
+                text-align:left;
+                text-overflow: ellipsis;
+            }
+
             .btn {
                 background-image:none;
             }
@@ -35,13 +45,16 @@
             }
 
             .ddl-xs{
-                width:75px;
-                padding: 0.5px 2px;
-                font-size: 8px;
-                text-align: right;
-                background-image:none;
+                width:82px;
+                direction: ltr;
+                text-align:left;
+                text-overflow: ellipsis;
             }
 
+            fieldset{
+                border: solid 1px black;
+                float:left;
+            }
 
         </style>
         <script src="${ctxpath}/resources/scripts/jsPlumb-2.1.4.js"></script>
@@ -83,6 +96,13 @@
 
             $j(document).ready(function () {
 
+                //Hide & Show page elemts based on results of searchs
+                $(".control-group").removeClass("control-group");
+                $(".control-label").removeClass("control-label");
+                $(".controls").removeClass("controls");
+                $j("#accordion").accordion({  collapsible:true, active:false, heightStyle:"content", autoHeight:false});
+
+
                 $j("#vesselBarcode").attr("value", $("#vesselLabel").val());
 
                 $j("#abandonDialog").dialog({
@@ -109,7 +129,12 @@
                 });
 
                 $j("#accordion").accordion({  collapsible:true, active:false, heightStyle:"content", autoHeight:false});
-                $j("#accordion").show();
+
+                if($j("#rackMap").val().length > 1)
+                    $j("#accordion").hide();
+                else
+                    $j("#accordion").show();
+
                 if(${fn:length(actionBean.foundVessels) == 1}){
                     $j("#accordion").accordion({active: 0})
                 }
@@ -141,7 +166,7 @@
     </stripes:layout-component>
     <stripes:layout-component name="content">
         <stripes:form action="/workflow/AbandonVessel.action" id="orderForm" class="form-horizontal">
-
+            <input type="hidden" id="rackMap" name="rackMap" value="${actionBean.rackMap}">
             <stripes:hidden id="abandonComment" name="abandonComment" value=''/>
             <stripes:hidden id="unAbandonComment" name="unAbandonComment" value=''/>
             <stripes:hidden id="vesselBarcode" name="vesselBarcode" value=''/>
@@ -151,12 +176,24 @@
             <div id="searchInput">
                     <label for="vesselBarcode">Vessel Barcode</label>
                     <input type="text" id="searchKey" name="searchKey">
-                    <input type="submit" id="vesselSearch" name="vesselSearch" value="Find">
+                    <input type="submit" id="vesselBarcodeSearch" name="vesselBarcodeSearch" value="Find">
+                    </br>
+                    <div align="left">
+                        <div class="panel panel-default">
+                            <div><h4>Rack Scan</h4></div>
+                            <div>
+                                <stripes:layout-render name="/vessel/rack_scanner_list_with_sim_part2.jsp" bean="${actionBean}"/>
+                                </br>
+                                <stripes:submit value="Scan" id="vesselBarcodeSearch" class="btn btn-primary"
+                                                name="<%= AbandonVesselActionBean.RACK_SCAN_EVENT %>"/>
+                            </div>
+                        </div>
+                    </div>
             </div>
-            <div id="searchResults">
 
+            <div id="searchResults">
             <c:if test="${not actionBean.resultsAvailable}"> ${actionBean.resultSummaryString} </c:if>
-            <c:if test="${not empty actionBean.foundVessels}">
+            <c:if test="${actionBean.resultsAvailable}">
                 <div id="resultSummary">${actionBean.resultSummaryString} </div>
 
                 <div id="accordion" style="display:none;" class="accordion">

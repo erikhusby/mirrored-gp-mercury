@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 
 import javax.annotation.Nonnull;
@@ -164,6 +165,10 @@ public class ProductOrderTestFactory {
         return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.CELL_FREE_HYPER_PREP);
     }
 
+    public static ProductOrder buildICEHyperPrepProductOrder(int maxSamples) {
+        return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.ICE_EXOME_EXPRESS_HYPER_PREP);
+    }
+
     public static ProductOrder buildSampleInitiationProductOrder(int maxSamples) {
 
         ProductOrder sampleInitiationProductOrder = createDummyProductOrder(maxSamples, JIRA_KEY, Workflow.NONE,
@@ -223,7 +228,10 @@ public class ProductOrderTestFactory {
 
         List<ProductOrderSample> productOrderSamples = new ArrayList<>();
         for (String sampleName : sampleNames) {
-            productOrderSamples.add(new ProductOrderSample(sampleName));
+            MercurySample mercurySample = new MercurySample(sampleName, MercurySample.MetadataSource.BSP);
+            ProductOrderSample productOrderSample = new ProductOrderSample(sampleName);
+            mercurySample.addProductOrderSample(productOrderSample);
+            productOrderSamples.add(productOrderSample);
         }
 
         PriceItem priceItem = new PriceItem(uuid.toString(), "Genomics Platform", "Testing Category", "PriceItem Name " + uuid);
