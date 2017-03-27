@@ -23,7 +23,8 @@ public class  InfiniumPlateSourceEvaluator extends TraversalEvaluator {
 
     // All Infinium array search logic is based upon a DNA plate/DNA plate well as the source located by the target of
     // ancestor event type
-    List<LabEventType> infiniumRootEventTypes = Collections.singletonList(LabEventType.ARRAY_PLATING_DILUTION);
+    private static final List<LabEventType> infiniumRootEventTypes = Collections.singletonList(
+            LabEventType.ARRAY_PLATING_DILUTION);
 
     public InfiniumPlateSourceEvaluator(){}
 
@@ -52,7 +53,7 @@ public class  InfiniumPlateSourceEvaluator extends TraversalEvaluator {
      * @param rootEntities Vessels associated with Infinium PDOs (sample tubes)
      * @return
      */
-    private Set<LabVessel> getAllInfiniumVessels(List<? extends Object> rootEntities) {
+    public static Set<LabVessel> getAllInfiniumVessels(List<? extends Object> rootEntities) {
         Set<LabVessel> infiniumVessels = new HashSet<>();
 
         // Get the Infinium vessels by traversing descendant events of current PDO sample tubes
@@ -112,7 +113,7 @@ public class  InfiniumPlateSourceEvaluator extends TraversalEvaluator {
      * @param rootEntities Downstream Infinium vessels (DNA Plates, AMP Plates, and Infinium Chips)
      * @return DNA plate wells
      */
-    private Set<LabVessel> getAllDnaPlateWells(List<? extends Object> rootEntities) {
+    public static Set<LabVessel> getAllDnaPlateWells(List<? extends Object> rootEntities) {
         Set<LabVessel> infiniumVessels = new HashSet<>();
 
         // Get the Infinium vessels by traversing ancestor events of current entities
@@ -124,7 +125,8 @@ public class  InfiniumPlateSourceEvaluator extends TraversalEvaluator {
                 vessel.getContainerRole().applyCriteriaToAllPositions(eventTypeCriteria,
                         TransferTraverserCriteria.TraversalDirection.Ancestors);
             } else {
-                vessel.evaluateCriteria(eventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+                // todo jmt, why was this ancestors?
+                vessel.evaluateCriteria(eventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
             }
         }
 

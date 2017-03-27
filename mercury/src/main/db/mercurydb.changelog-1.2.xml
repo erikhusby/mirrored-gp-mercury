@@ -820,4 +820,16 @@
         <createSequence schemaName="mercury" sequenceName="seq_sample_instance_entity_tsk" incrementBy="50"/>
     </changeSet>
 
+    <changeSet id="GPLIM-4637" author="thompson">
+        <createTable schemaName="mercury" tableName="delivery_item">
+            <column name="delivery_item_id" type="number(19,0)">
+                <constraints primaryKey="true" primaryKeyName="PK_delivery_item"/>
+            </column>
+            <column name="metrics_id" type="number(19,0)"/>
+            <column name="metrics_type" type="varchar2(255)"/>
+            <column name="vessel_position" type="varchar2(255)"/>
+            <column name="delivery_set" type="number(19,0)"/>
+            <column name="lab_vessel" type="number(19,0)"/>
+        </createTable>
+    </changeSet>
 </databaseChangeLog>

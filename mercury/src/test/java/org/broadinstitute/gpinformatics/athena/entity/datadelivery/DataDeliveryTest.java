@@ -3,11 +3,13 @@ package org.broadinstitute.gpinformatics.athena.entity.datadelivery;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.search.InfiniumPlateSourceEvaluator;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
+import org.broadinstitute.gpinformatics.infrastructure.search.TraversalEvaluator;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.Criteria;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -17,7 +19,9 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -35,6 +39,19 @@ public class DataDeliveryTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
+    public class X extends TraversalEvaluator {
+
+        @Override
+        public Set<Object> evaluate(List<? extends Object> rootEntities, SearchInstance searchInstance) {
+            return new HashSet<Object>(InfiniumPlateSourceEvaluator.getAllDnaPlateWells(rootEntities));
+        }
+
+        @Override
+        public List<Object> buildEntityIdList(Set<? extends Object> entities) {
+            return null;
+        }
+    }
+
     @Test
     public void testX() {
         // Create initial set
@@ -49,8 +66,14 @@ public class DataDeliveryTest extends Arquillian {
         searchValue.setOperator(SearchInstance.Operator.EQUALS);
         searchValue.setValues(Collections.singletonList("PDO-9246")); // PDO term alone will give bucket entries, need traverser
         Criteria criteria = configurableSearchDao.buildCriteria(configurableSearchDef, searchInstance);
-        List<LabEvent> list = criteria.list();
-        Assert.assertEquals(list.size(), 13);
+        List<LabVessel> labVessels = criteria.list();
+        Assert.assertEquals(labVessels.size(), 3202);
+
+        X x = new X();
+        Set<Object> objectSet = x.evaluate(labVessels, searchInstance);
+        Assert.assertEquals(objectSet.size(), 3268); // should be 3302?
+
+        // traverser may need access to PDO or lab batch, but has only lab vessel
 
         // search yields lab vessels (not metrics?), but these are mapped to DeliveryItems for persistence
         // If there are multiple versions, create all DeliveryItems, and default to not deliver?
