@@ -90,8 +90,8 @@ public class SubmissionDtoFetcher {
         Map<SubmissionTuple, Aggregation> aggregationMap = fetchAggregationDtos(bassDTOMap.values());
 
         List<SubmissionDto> results = new ArrayList<>();
-        buildSubmissionDtosFromResults(results, sampleNameToPdos, sampleSubmissionMap, bassDTOMap, aggregationMap,
-                researchProject);
+            buildSubmissionDtosFromResults(results, sampleNameToPdos, sampleSubmissionMap, bassDTOMap, aggregationMap,
+                    researchProject, messageReporter);
         return results;
     }
 
@@ -190,13 +190,14 @@ public class SubmissionDtoFetcher {
                                                Map<String, SubmissionStatusDetailBean> sampleSubmissionMap,
                                                Map<SubmissionTuple, BassDTO> bassDTOMap,
                                                Map<SubmissionTuple, Aggregation> aggregationMap,
-                                               ResearchProject researchProject) {
+                                               ResearchProject researchProject, MessageReporter messageReporter) {
+        List<String> errors = new ArrayList<>();
         for (Map.Entry<SubmissionTuple, BassDTO> bassDTOEntry : bassDTOMap.entrySet()) {
             SubmissionTuple tuple = bassDTOEntry.getKey();
             BassDTO bassDTO = bassDTOEntry.getValue();
             Aggregation aggregation = aggregationMap.get(tuple);
             if (aggregation == null) {
-                throw new RuntimeException("Could not find metrics for: " + tuple);
+                errors.add(String.format("%s v%s", tuple.getSampleName(), tuple.getVersion()));
             }
             SubmissionTracker submissionTracker = researchProject.getSubmissionTracker(tuple);
             SubmissionStatusDetailBean statusDetailBean = null;
@@ -205,6 +206,9 @@ public class SubmissionDtoFetcher {
             }
             results.add(new SubmissionDto(bassDTO, aggregation, sampleNameToPdos.get(tuple.getSampleName()),
                     statusDetailBean));
+        }
+        if (!errors.isEmpty()) {
+            messageReporter.addMessage("Picard data not found for samples<ul><li>{0}</ul>", errors);
         }
     }
 

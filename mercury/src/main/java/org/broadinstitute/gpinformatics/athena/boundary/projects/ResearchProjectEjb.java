@@ -345,7 +345,6 @@ public class ResearchProjectEjb {
      *     <li>Have bassDTOs with distinct tuples </li>
      *     <li>Have distinct tuples compared to previous Submissions</li>
      * </ul>
-     * @param researchProjectKey
      * @param submissionDtos
      * @throws ValidationException
      */
@@ -379,7 +378,7 @@ public class ResearchProjectEjb {
         List<SubmissionTracker> submissionTrackers = submissionTrackerDao.findSubmissionTrackers(submissionDtos);
 
         for (SubmissionTracker submissionTracker : submissionTrackers) {
-            errors.add(submissionTracker.getTuple().toString());
+            errors.add(submissionTracker.getTuple().getSampleName());
         }
         if (!errors.isEmpty()) {
             throw new ValidationException(String.format("Some samples have already been submitted: %s", errors));

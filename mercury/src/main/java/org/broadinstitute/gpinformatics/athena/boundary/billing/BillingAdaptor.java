@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import com.google.common.collect.HashMultimap;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
@@ -27,6 +28,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -44,6 +46,7 @@ public class BillingAdaptor implements Serializable {
     private static final long serialVersionUID = 8829737083883106155L;
 
     private static final Log log = LogFactory.getLog(BillingAdaptor.class);
+    public static final String NOT_ELIGIBLE_FOR_SAP_INDICATOR = "NotEligible";
 
     private BillingEjb billingEjb;
 
@@ -140,43 +143,27 @@ public class BillingAdaptor implements Serializable {
                 results.add(result);
 
                 Quote quote = null;
+                String sapBillingId = null;
+                String workId = null;
                 try {
                     quote = quoteService.getQuoteByAlphaId(item.getQuoteId());
                     quote.setAlphanumericId(item.getQuoteId());
+
+                    workId = CollectionUtils.isEmpty(item.getWorkItems())?null:item.getWorkItems().toArray(new String[item.getWorkItems().size()])[0];
+                    sapBillingId = quote.isEligibleForSAP()? item.getSapItems(): NOT_ELIGIBLE_FOR_SAP_INDICATOR;
 
                     // The price item that we are billing.
                     QuotePriceItem priceItemBeingBilled = QuotePriceItem.convertMercuryPriceItem(item.getPriceItem());
 
                     // Get the quote PriceItem that this is replacing, if it is a replacement.
                     QuotePriceItem primaryPriceItemIfReplacement = item.getPrimaryForReplacement(priceListCache);
-
-                    BigDecimal replacementMultiplier = null;
-                    if(primaryPriceItemIfReplacement != null) {
-                        BigDecimal primaryPrice = new BigDecimal(primaryPriceItemIfReplacement.getPrice());
-                        BigDecimal replacementPrice  = new BigDecimal(priceItemBeingBilled.getPrice());
-
-                        replacementMultiplier = (replacementPrice.divide(primaryPrice, 3, BigDecimal.ROUND_DOWN)).multiply(BigDecimal.valueOf(item.getQuantityForSAP())).setScale(3, BigDecimal.ROUND_DOWN);
-                    }
+                    QuotePriceItem primaryPriceItemIfReplacementForSAP =item.getPrimaryForReplacement(priceListCache);
 
                     // Get the quote items on the quote, adding to the quote item cache, if not there.
                     Collection<String> quoteItemNames = getQuoteItems(quoteItemsByQuote, item.getQuoteId());
 
-                    String sapBillingId = quote.isEligibleForSAP()? item.getSapItems():"NotEligible";
-
-                    String workId = null;
-
-                    if( productOrderEjb.isOrderEligibleForSAP(item.getProductOrder() )
-                        && !item.getProductOrder().getOrderStatus().canPlace()
-                        && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
-                        && StringUtils.isBlank(item.getSapItems()))
-                    {
-                        if(item.getQuantityForSAP() != 0) {
-                            sapBillingId = sapService.billOrder(item, replacementMultiplier);
-                        }
-                        result.setSAPBillingId(sapBillingId);
-                        billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacement, workId, sapBillingId, null);
-                    }
-
+                    //Using the first item in the set of work items because, even though it's a set all ledger items
+                    // in this quote item should have the same work item
                     // If this is a replacement, the primary is not on the quote and the replacement IS on the quote,
                     // set the primary to null so it will be billed as if it is a primary.
                     if (primaryPriceItemIfReplacement != null) {
@@ -189,15 +176,46 @@ public class BillingAdaptor implements Serializable {
                         }
                     }
 
-                    if(quote.isEligibleForSAP() && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
-                        workId = quoteService.registerNewSAPWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
-                                item.getWorkCompleteDate(), item.getQuantity(),
-                                pageUrl, "billingSession", sessionKey);
-                    } else {
-                        workId = quoteService.registerNewWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
-                                item.getWorkCompleteDate(), item.getQuantity(),
-                                pageUrl, "billingSession", sessionKey);
+                    if(StringUtils.isBlank(workId)) {
+                        if (productOrderEjb.isOrderEligibleForSAP(item.getProductOrder())
+                            && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
+                            workId = quoteService
+                                    .registerNewSAPWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
+                                            item.getWorkCompleteDate(), item.getQuantity(),
+                                            pageUrl, "billingSession", sessionKey);
+                        } else {
+                            workId = quoteService
+                                    .registerNewWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
+                                            item.getWorkCompleteDate(), item.getQuantity(),
+                                            pageUrl, "billingSession", sessionKey);
+                        }
+
+                        billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacement, workId, sapBillingId,
+                                BillingSession.BILLED_FOR_QUOTES);
                     }
+
+
+                    BigDecimal replacementMultiplier = null;
+                    if(primaryPriceItemIfReplacementForSAP != null) {
+                        BigDecimal primaryPrice = new BigDecimal(primaryPriceItemIfReplacementForSAP.getPrice());
+                        BigDecimal replacementPrice  = new BigDecimal(priceItemBeingBilled.getPrice());
+
+                        replacementMultiplier = (replacementPrice.divide(primaryPrice, 3, BigDecimal.ROUND_DOWN)).multiply(BigDecimal.valueOf(item.getQuantityForSAP())).setScale(3, BigDecimal.ROUND_DOWN);
+                    }
+
+                    if( productOrderEjb.isOrderEligibleForSAP(item.getProductOrder() )
+                        && !item.getProductOrder().getOrderStatus().canPlace()
+                        && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
+                        && StringUtils.isBlank(item.getSapItems()))
+                    {
+                        if(item.getQuantityForSAP() != 0) {
+                            sapBillingId = sapService.billOrder(item, replacementMultiplier);
+                        }
+                        result.setSAPBillingId(sapBillingId);
+                        billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacementForSAP, workId, sapBillingId,
+                                BillingSession.BILLED_FOR_SAP + BillingSession.BILLED_FOR_QUOTES);
+                    }
+
                     Set<String> billedPdoKeys = getBilledPdoKeys(result);
 
                     // Not sure I see the point of the next two lines!!!!
@@ -208,20 +226,25 @@ public class BillingAdaptor implements Serializable {
                 } catch (Exception ex) {
 
                     StringBuilder errorMessage = new StringBuilder();
-                    if (StringUtils.isBlank(result.getSAPBillingId()) && quote != null &&
-                        quote.isEligibleForSAP() && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
-                        errorMessage.append("A problem occured attempting to post to SAP for ")
-                                .append(billingSession.getBusinessKey()).append(".");
-                    }
-                    else if (StringUtils.isBlank(result.getWorkId())) {
-                        //How do we handle
+                    if (StringUtils.isBlank(result.getWorkId()) && StringUtils.isBlank(workId)) {
+
+
                         errorMessage.append("A problem occurred attempting to post to the quote server for ")
                                 .append(billingSession.getBusinessKey()).append(".");
-                    } else {
+
+                    } else if (StringUtils.isBlank(result.getSAPBillingId()) && quote != null
+                               && quote.isEligibleForSAP()
+                               && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
+
+                        errorMessage.append("A problem occured attempting to post to SAP for ")
+                                .append(billingSession.getBusinessKey()).append(".");
+
+                    }
+                    else {
                         errorMessage.append("A problem occurred saving the ledger entries for ")
-                        .append(billingSession.getBusinessKey()).append(" with an SAP ID of ")
-                                .append(result.getSAPBillingId()).append(",")
-                                .append(" with work id of ").append(result.getWorkId())
+                                .append(billingSession.getBusinessKey()).append(" with an SAP ID of ")
+                                .append(StringUtils.isNotBlank(result.getSAPBillingId())?result.getSAPBillingId():sapBillingId).append(",")
+                                .append(" with work id of ").append(StringUtils.isNotBlank(result.getWorkId())?result.getWorkId():workId)
                                 .append(".  ")
                                 .append("The quote for this item may have been successfully sent to the quote server");
                     }

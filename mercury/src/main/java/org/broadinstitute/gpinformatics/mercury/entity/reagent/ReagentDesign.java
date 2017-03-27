@@ -107,4 +107,5 @@ public class ReagentDesign implements BusinessObject {
     public void addDesignedReagent(DesignedReagent designedReagent) {
         this.designedReagents.add(designedReagent);
     }
+
 }

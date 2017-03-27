@@ -76,6 +76,7 @@
                     <materialTypes>DNA</materialTypes>
                     <materialTypes>DNA_DNA_GENOMIC</materialTypes>
                     <materialTypes>DNA_DNA_SOMATIC</materialTypes>
+                    <materialTypes>DNA_DNA_CELL_FREE</materialTypes>
                 </bucketEntryEvaluator>
                 </workflowStepDefs>
             <workflowStepDefs>
@@ -155,6 +156,13 @@
                 <quantType>PICO</quantType>
                 <numberOfRepeats>2</numberOfRepeats>
                 <deadEndBranch>true</deadEndBranch>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Spike In</name>
+                <labEventTypes>SPIKE_IN</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Fingerprinting Aliquot</name>
@@ -312,6 +320,7 @@
                     <materialTypes>DNA</materialTypes>
                     <materialTypes>DNA_DNA_GENOMIC</materialTypes>
                     <materialTypes>DNA_DNA_SOMATIC</materialTypes>
+                    <materialTypes>DNA_DNA_CELL_FREE</materialTypes>
                 </bucketEntryEvaluator>
                 </workflowStepDefs>
             <workflowStepDefs>
@@ -368,6 +377,13 @@
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
             <workflowStepDefs>
+                <name>BeadResuspension</name>
+                <labEventTypes>BEAD_RESUSPENSION</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
                 <name>EndRepairCleanup</name>
                 <labEventTypes>END_REPAIR_CLEANUP</labEventTypes>
                 <optional>false</optional>
@@ -384,6 +400,13 @@
             <workflowStepDefs>
                 <name>PostABaseThermoCyclerLoaded</name>
                 <labEventTypes>POST_ABASE_THERMO_CYCLER_LOADED</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>BeadResuspension</name>
+                <labEventTypes>BEAD_RESUSPENSION</labEventTypes>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -986,6 +1009,7 @@
                     <materialTypes>DNA</materialTypes>
                     <materialTypes>DNA_DNA_GENOMIC</materialTypes>
                     <materialTypes>DNA_DNA_SOMATIC</materialTypes>
+                    <materialTypes>DNA_DNA_CELL_FREE</materialTypes>
                 </bucketEntryEvaluator>
                 </workflowStepDefs>
             <workflowStepDefs>
@@ -2022,6 +2046,13 @@
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
             <workflowStepDefs>
+                <name>ERCCSpikeIn</name>
+                <labEventTypes>ERCC_SPIKE_IN</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
                 <name>PolyASelectionTS</name>
                 <labEventTypes>POLY_A_SELECTION_TS</labEventTypes>
                 <optional>false</optional>
@@ -2404,6 +2435,8 @@
                     <materialTypes>DNA</materialTypes>
                     <materialTypes>DNA_DNA_GENOMIC</materialTypes>
                     <materialTypes>DNA_DNA_SOMATIC</materialTypes>
+                    <materialTypes>DNA_DNA_WGA_QIAGEN</materialTypes>
+                    <materialTypes>DNA_DNA_WGA_CLEANED</materialTypes>
                 </bucketEntryEvaluator>
                 <autoBucketFromPdoSubmission>false</autoBucketFromPdoSubmission>
                 <!-- No JIRA setup, because BSP creates ARRAY tickets -->
@@ -2468,6 +2501,8 @@
                     <materialTypes>DNA</materialTypes>
                     <materialTypes>DNA_DNA_GENOMIC</materialTypes>
                     <materialTypes>DNA_DNA_SOMATIC</materialTypes>
+                    <materialTypes>DNA_DNA_WGA_QIAGEN</materialTypes>
+                    <materialTypes>DNA_DNA_WGA_CLEANED</materialTypes>
                 </bucketEntryEvaluator>
                 <autoBucketFromPdoSubmission>false</autoBucketFromPdoSubmission>
                 <!-- No JIRA setup, because BSP creates ARRAY tickets -->

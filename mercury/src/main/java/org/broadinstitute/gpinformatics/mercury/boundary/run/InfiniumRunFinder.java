@@ -69,7 +69,7 @@ public class InfiniumRunFinder implements Serializable {
     @Resource
     private EJBContext ejbContext;
 
-    private AtomicBoolean busy = new AtomicBoolean(false);
+    private static final AtomicBoolean busy = new AtomicBoolean(false);
 
     public void find() throws SystemException {
         if (!busy.compareAndSet(false, true)) {

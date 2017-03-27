@@ -378,8 +378,11 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 hybridSelectionJaxbBuilder.getGsWash1Jaxb().getPlate().getBarcode());
         List<WorkflowValidator.WorkflowValidationError> validationErrors = workflowValidator.validateWorkflow(
                 Collections.<LabVessel>singleton(staticPlate), "EndRepair");
-        String renderTemplate = workflowValidator.renderTemplate(Collections.<LabVessel>singleton(staticPlate),
-                hybridSelectionJaxbBuilder.getGsWash1Jaxb(), validationErrors);
+        String renderTemplate = workflowValidator.renderTemplate(staticPlate.getLabel(),
+                Collections.singleton(hybridSelectionJaxbBuilder.getGsWash1Jaxb().getEventType()),
+                hybridSelectionJaxbBuilder.getGsWash1Jaxb().getStart(),
+                hybridSelectionJaxbBuilder.getGsWash1Jaxb().getOperator(),
+                hybridSelectionJaxbBuilder.getGsWash1Jaxb().getStation(), validationErrors);
         Assert.assertTrue(renderTemplate.contains("has failed validation"));
 
         QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,

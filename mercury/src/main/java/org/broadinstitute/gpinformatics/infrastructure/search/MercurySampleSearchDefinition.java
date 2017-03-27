@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.infrastructure.columns.DisplayExpression;
@@ -19,6 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Builds ConfigurableSearchDefinition for mercury sample user defined search logic
@@ -128,6 +130,30 @@ public class MercurySampleSearchDefinition {
                     result += sampleVessel.getBucketEntriesCount();
                 }
                 return new Long(result);
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Research Project");
+        searchTerm.setDisplayValueExpression(new SamplePdoDisplayExpression() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                MercurySample sample = (MercurySample) entity;
+
+                Set<ProductOrderSample> productOrderSamples = findPdoSamples(sample);
+
+                Set<String> rpValues = new TreeSet<>();
+                ResearchProject rp;
+
+                for( ProductOrderSample productOrderSample : productOrderSamples ) {
+                    rp = productOrderSample.getProductOrder().getResearchProject();
+                    if( rp != null ) {
+                        rpValues.add( rp.getName() + "[" + rp.getBusinessKey() + "]");
+                    }
+                }
+
+                return rpValues;
             }
         });
         searchTerms.add(searchTerm);
@@ -340,46 +366,47 @@ public class MercurySampleSearchDefinition {
             this.includeSampleStatus = includeSampleStatus;
         }
 
+        public SamplePdoDisplayExpression(){}
+
         @Override
-        public List<String> evaluate(Object entity, SearchContext context) {
+        public Set<String> evaluate(Object entity, SearchContext context) {
             MercurySample sample = (MercurySample) entity;
-            List<String> results = new ArrayList<>();
+
+            Set<ProductOrderSample> productOrderSamples = findPdoSamples(sample);
+
+            Set<String> results = new TreeSet<>();
             String jiraTicketKey;
             String sampleDeliveryStatus;
 
-            // Try for PDO sample directly from mercury sample
+            for( ProductOrderSample productOrderSample : productOrderSamples ) {
+                jiraTicketKey = productOrderSample.getProductOrder().getJiraTicketKey();
+                sampleDeliveryStatus = productOrderSample.getDeliveryStatus().getDisplayName();
+                if( includeSampleStatus && !sampleDeliveryStatus.isEmpty()) {
+                    results.add(jiraTicketKey + "->(" + sampleDeliveryStatus + ")");
+                } else {
+                    results.add( jiraTicketKey );
+                }
+            }
+
+            return results;
+        }
+
+        protected Set<ProductOrderSample> findPdoSamples(MercurySample sample){
+
+            // If sample is directly associated with a PDO, only use the direct association
             Set<ProductOrderSample> productOrderSamples = sample.getProductOrderSamples();
             if (!productOrderSamples.isEmpty()) {
-                for( ProductOrderSample productOrderSample : productOrderSamples ) {
-                    jiraTicketKey = productOrderSample.getProductOrder().getJiraTicketKey();
-                    sampleDeliveryStatus = productOrderSample.getDeliveryStatus().getDisplayName();
-                    if( includeSampleStatus && !sampleDeliveryStatus.isEmpty()) {
-                        results.add(jiraTicketKey + "->(" + sampleDeliveryStatus + ")");
-                    } else {
-                        results.add( jiraTicketKey );
-                    }
-                }
+                return productOrderSamples;
             } else {
-                // PDO sample needs to be found via SampleInstanceV2 ancestry
+                // Otherwise, use all PDO samples found via SampleInstanceV2 ancestry
                 Set<LabVessel> sampleVessels = sample.getLabVessel();
                 for( LabVessel sampleVessel : sampleVessels ) {
                     for( SampleInstanceV2 sampleInstanceV2 : sampleVessel.getSampleInstancesV2() ) {
-                        for( ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples() ) {
-                            jiraTicketKey = productOrderSample.getProductOrder().getJiraTicketKey();
-                            sampleDeliveryStatus = productOrderSample.getDeliveryStatus().getDisplayName();
-                            if( includeSampleStatus && !sampleDeliveryStatus.isEmpty()) {
-                                results.add(jiraTicketKey + "->(" + sampleDeliveryStatus + ")");
-                            } else {
-                                results.add( jiraTicketKey );
-                            }
-                        }
+                        productOrderSamples.addAll( sampleInstanceV2.getAllProductOrderSamples() );
                     }
                 }
             }
-            if( results.size() > 1 ) {
-                Collections.sort(results);
-            }
-            return results;
+            return productOrderSamples;
         }
     }
 }
