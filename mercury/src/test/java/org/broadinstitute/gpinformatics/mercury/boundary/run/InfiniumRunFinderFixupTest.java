@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
@@ -31,7 +32,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  * "Test" to resubmit Infinium starter messages.
  */
 @Test(groups = TestGroups.FIXUP)
-public class InfiniumRunFinderFixupTest {
+public class InfiniumRunFinderFixupTest extends Arquillian {
 
     @Inject
     private InfiniumRunFinder infiniumRunFinder;
