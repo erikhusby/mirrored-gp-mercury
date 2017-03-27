@@ -14,6 +14,7 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
     if (tableEmpty(settings)){
         return;
     }
+    var tabIndex=0;
 
     var filterStatusContainer = $j(filterStatusSelector); // MaterialType-filters
 
@@ -51,13 +52,39 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
         return $j(selector).length ? $j(selector) : $j(html, map);
     }
 
-    var updateFilter = $j.fn.dataTable.util.throttle(
-         function (column, filterValue) {
-             searchString = filterValue.replace(/[,|\s]+/g, '|');
-             var searchInstance = column.search(filterValue ?  searchString : '', true, false, true);
-             triggerChosenUpdate(column);
-             searchInstance.draw();
-         }, 500);
+    function buildSearchTerm(filterValue, selectType) {
+        var searchTerm = filterValue;
+        if (searchTerm!=="") {
+            if (selectType === "select") {
+                searchTerm = "^" + $j.fn.dataTable.util.escapeRegex(filterValue) + "$";
+            } else {
+                searchTerm = filterValue;
+            }
+        }
+        return searchTerm;
+    }
+
+    function updateFilter(column, filterValue, selectType = 'text') {
+        var searchString = '';
+        if (Array.isArray(filterValue)) {
+            filterValue.forEach(function (value, index) {
+                searchString += buildSearchTerm(value, selectType);
+                if (index !== filterValue.length - 1) {
+                    searchString += "|";
+                }
+            });
+        } else {
+            searchString = buildSearchTerm(filterValue, selectType);
+        }
+        column.search(searchString, true, false, true).draw();
+        if (selectType === 'select') {
+            triggerChosenUpdate(column);
+        }
+    }
+
+    function stripRegex(inputText) {
+        return inputText.replace(/[^\w\s\W]|\^|\$|\\/gi, '');
+    }
 
     function updateFilterInfo(column, title, filterLabel, filterValue) {
         var filteredItemsHeader = $j(".filtered-items-header");
@@ -68,7 +95,7 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
         var filteredItem = $j("<li></li>", {id: filterItemTitle, class: "list"});
         var columnContainer = $j("#filtered-items");
 
-        if (filterValue === "") {
+        if (filterValue.length === 0) {
             filteredItemsHeader.find(filterHeader).remove();
             columnContainer.find(filteredItem).remove();
         } else {
@@ -83,33 +110,47 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                 $j(this).css("cursor", "pointer");
             });
             filteredItemLabel.prepend(filteredItedBullet);
-            var filteredItemValue = getElement("<span></span>", {class: 'filtering-text', text: filterValue});// DNA
+            var filterText;
+            if (Array.isArray(filterValue)) {
+                filterText = filterValue.join(", ");
+            } else {
+                filterText = filterValue.replace('|', ', ');
+            }
+            filterValue = filterText;
+            filterText = stripRegex(filterText);
+            var filteredItemValue = getElement("<span></span>", {
+                class: 'filtering-text',
+                text: filterText
+            });// DNA
+
             filteredItemsHeader.append(filterHeader);
             filteredItem.append(filteredItemLabel);
             filteredItemLabel.after(filteredItemValue);
             columnContainer.append(filteredItem);
-
             filteredItem.on("click",function(){
-                $j("th").filter(function () {
-                    var columnTitle = $j(this).find(".title").text().trim();
-                    return columnTitle === filterLabel;
-                }).each(function () {
-                    var textArea = $j(this).find("input[type='textarea']");
-                    if (textArea.length > 0) {
-                        textArea.val('');
-                        textArea.trigger("change");
-                    } else {
-                        var select = $j(this).find("select");
-                        if (select.length>0){
-                            var optionSelector = "option[value='OPTION_VALUE']".replace("OPTION_VALUE",filterValue);
-                            $j(this).find(optionSelector).removeAttr('selected');
-                            var eventWhat = {'deselected': ''};
-                            select.trigger("chosen:updated", eventWhat);
+                // wrapped in closure since this is created in a loop
+                (function (label, value) {
+                    $j("th").filter(function () {
+                        var columnTitle = $j(this).find(".title").text().trim();
+                        return columnTitle === label;
+                    }).each(function () {
+                        var textArea = $j(this).find("input[type='textarea']");
+                        if (textArea.length > 0) {
+                            textArea.val('');
+                            textArea.trigger("input");
+                        } else {
+                            var select = $j(this).find("select");
+                            if (select.length > 0) {
+                                var optionSelector = "option[value='OPTION_VALUE']".replace("OPTION_VALUE", value);
+                                $j(this).find(optionSelector).removeAttr('selected');
+                                var eventWhat = {'deselected': ''};
+                                select.trigger("chosen:updated", eventWhat);
+                            }
                         }
-                    }
-                    updateFilter(column, '');
-                });
-                $j(this).remove();
+                        updateFilter(column, '', 'select');
+                    });
+                    $j(this).remove();
+                })(filterLabel, filterValue);
             });
         }
         if (filterStatusContainer.find("li").length==0){
@@ -126,7 +167,10 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
 
         var header = $j(column.header());
         var headerLabel = header.text().trim();
-        var cleanTitle = headerLabel.replace(/\s+/, '');
+        var cleanTitle = headerLabel.replace(/\s+/g, '');
+        if (cleanTitle!==''){
+            tabIndex++;
+        }
         var selectType = "select";
         var filterColumn = false;
         columnNames.forEach(function (col) {
@@ -140,21 +184,26 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
         });
 
         if (selectType === 'text' && filterColumn) {
+            savedFilterValue = savedFilterValue.replace(/\|/g,' ');
             var textInput = $j("<input/>", {
                 type: 'textarea',
-                css: 'height:1',
+                css: 'height:1, display: inline-block',
                 class: columnFilterClass,
-                value: savedFilterValue,
+                tabindex: tabIndex,
+                value: stripRegex(savedFilterValue),
                 placeholder: "Filter " + headerLabel
             });
-            header.append(textInput);
-            $j(textInput).on('click', function () {
-                return false;
-            });
+            $j(textInput).prop("title","Enter text to filter on " + header.text());
+            var inputContainer=$j("<span></span>", {'class': 'search-field'});
+            inputContainer.append(textInput);
+            header.append(inputContainer);
 
-            $j(textInput).on('input blur change', function () {
-                updateFilter(column, $j(this).val().trim());
-                updateFilterInfo(column, cleanTitle, headerLabel, $j(this).val().trim());
+            // do not sort column when input field is clicked.
+            $j(textInput).on('click', stopPropagation);
+            $j(textInput).on('input', function () {
+                var searchInput = $j(this).val().trim();
+                updateFilter(column, searchInput.split(/\s+/));
+                updateFilterInfo(column, cleanTitle, headerLabel, searchInput);
             });
         }
         if (selectType === 'select' && filterColumn) {
@@ -162,85 +211,76 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
             var select = $j("<select></select>", {
                 id: selectFilterId,
                 multiple: true,
-                class: columnFilterClass,
-                style: 'display: none',
+                title: "click to select a " + headerLabel,
+                tabindex: tabIndex,
+                class: columnFilterClass
             });
 
             header.append(select);
             buildHeaderFilterOptions(header, filteredRows);
-            // select.find("option[value='" + savedFilterValue + "']").attr('selected', 'selected');
+
             if (savedFilterValue!=='') {
                 select.find("option").filter(function () {
                     return this.value.trim().match(savedFilterValue);
                 }).attr('selected', 'selected');
             }
-            var width = $j(select).attr('width');
-            if (width<=10){
-                width=10;
-            }
-            width = Math.ceil(.8*width)+"em";
+
+            $j("#" + selectFilterId).on("chosen:ready", refreshStyling);
+
             var chosen = select.chosen({
                 disable_search_threshold: 10,
                 display_selected_options: false,
                 display_disabled_options: false,
+                enable_split_word_search: false,
                 search_contains: true,
-                width: width,
+                width: 'auto',
                 inherit_select_classes: true,
                 placeholder_text_single: "Select a " + headerLabel,
                 placeholder_text_multiple: "Select a " + headerLabel
             });
 
             chosenColumns.push(chosen);
-            $j("div." + columnFilterClass).on("click", function () {
-                return false;
-            });
+
             chosen.on("change chosen:updated", function (event, what) {
                 // chosen.on("nothing", function (event, what) {
                 if (what) {
                     var eventAction = Object.keys(what)[0]; // ['selected','deselected']
-                    var currentlySelected = $j(this).find(":selected").map(function () {
-                        return this.text
-                    }).get();
                     if (eventAction === 'deselected') {
                         var deselectedItems = what['deselected'].trim();
                         if (deselectedItems.length === 0) {
                             $j(this).find(":selected").prop('selected',false);
-                            currentlySelected = [];
-                        } else {
-                            var index = currentlySelected.indexOf(deselectedItems);
-                            if (index)
-                                if (index == -1) {
-                                    currentlySelected.splice(index, 1);
-                                }
                         }
                     }
-                    var filterText = currentlySelected.join("|");
-                    updateFilterInfo(column, cleanTitle, headerLabel, filterText);
+                    var currentSelection = $j(this).find(":selected").map(function () {
+                        return this.text
+                    }).get();
+                    updateFilterInfo(column, cleanTitle, headerLabel, currentSelection);
                 }
             });
             column.on("column-sizing.dt", function () {
                 chosen.trigger("chosen:updated");
             });
 
-            // select.trigger("chosen:updated");
-            // stop event propagation so clicking the text area won't cause the column to sort.
-            $j('.filter-select ul').on('click', function () {
-                return false;
-            });
-
-            $j(select).on('change blur', function () {
-                // api.off('click');
-                var values = [];
-                $j(this).find("option:selected").each(function () {
-                    values.push(this.value.trim());
-                });
-                updateFilter(column, values.join('|'));
-                // api.off(this);
+            $j(select).on('change', function () {
+                // wrapped in closure since this is created in a loop
+                (function (dtColumn, select) {
+                    var values = [];
+                    $j(select).find("option:selected").each(function () {
+                        values.push(this.value.trim());
+                    });
+                    updateFilter(dtColumn, values, selectType);
+                    refreshStyling();
+                })(column, this);
             });
         }
         api.on('init.dt', function (event, settings) {
-            updateFilterInfo(column, cleanTitle, headerLabel, savedFilterValue.replace(/\|$/, ''));
+            updateFilterInfo(column, cleanTitle, headerLabel, savedFilterValue);
         });
+    });
+
+    // do not sort column when input field is clicked.
+    api.on('init.dt', function (event, settings) {
+        $j(".chosen-container").on("click", ".chosen-choices, .chosen-results", stopPropagation);
     });
 
     api.on('search.dt', function (event, settings) {
@@ -249,7 +289,6 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
 
     function buildHeaderFilterOptions(header, columns) {
         var select = $j(header).find("select");
-        var htmlExpression = /<(?:.|\n)*?>/gi;
         var uniqueValues = [];
         for (var i = 0; i < columns.length; i++) {
             var cell = columns[i].trim();
@@ -258,20 +297,23 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                 uniqueValues.push(cell.trim());
             }
         }
-        var maxWidth=0;
         uniqueValues.sort().forEach(function (thisOption) {
             var items = $j("<option></option>", {value: thisOption, text: thisOption});
-            maxWidth = thisOption.length > maxWidth?thisOption.length:maxWidth;
             $j(select).append(items);
         });
-
-        $j(select).attr('width',maxWidth);
-
         return $j(select);
     }
     function tableEmpty(settings){
         var api = $j.fn.dataTable.Api(settings);
         return api.data().length===0;
+    }
+
+    function stopPropagation(evt) {
+        if (evt.stopPropagation !== undefined) {
+            evt.stopPropagation();
+        } else {
+            evt.cancelBubble = true;
+        }
     }
 
     function updateSearchText(settings) {
@@ -292,4 +334,12 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
             $j(".dtFilters").html("<b>Search text matches</b>: " + textJQuery[0].outerHTML);
         }
     }
+
+    function refreshStyling() {
+        $j('.chosen-drop, .chosen-container, .search-field input').css('width', 'auto');
+        $j('.chosen-choices, .search-choice').addClass('ellipsis');
+        $j('.chosen-drop, .chosen-container').css('min-width', '6em');
+        $j(".search-field input").css("font-size", "smaller");
+        $j('.chosen-drop,.chosen-results li, li.search-choice span').css("white-space", "nowrap");
+    };
 }

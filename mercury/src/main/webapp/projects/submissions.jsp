@@ -139,7 +139,7 @@
                         });
                         $j("#submissionSamples_wrapper").prepend(outerDiv);
                         $j("#submissionSamples_processing").hide();
-                        stripesMessage.set(responseText.stripesMessages, responseText.messageType, "#stripesMessageOuter");
+                        stripesMessage.set(responseText.stripesMessages.join("<br/>"), responseText.messageType, "#stripesMessageOuter");
                     }
                 }
 
