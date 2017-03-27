@@ -221,10 +221,21 @@
 
                                     <div class="control-group">
                                     <h5>Source</h5>
-                                    <label>Type</label>
-                                    ${receptacleTransfer.sourceReceptacle.receptacleType}
-                                    <input type="hidden" name="stationEvents[${stationEventStatus.index}].sourceReceptacle.receptacleType"
-                                            value="${receptacleTransfer.sourceReceptacle.receptacleType}"/>
+                                        <c:choose>
+                                            <c:when test="${not empty actionBean.manualTransferDetails.sourceVesselTypeGeometriesString}">
+                                                <stripes:label for="sourceReceptacleType">Type </stripes:label>
+                                                <stripes:select name="stationEvents[${stationEventStatus.index}].sourceReceptacle.receptacleType"
+                                                                id="sourceReceptacleType">
+                                                    <stripes:options-collection collection="${actionBean.manualTransferDetails.sourceVesselTypeGeometriesString}"/>
+                                                </stripes:select>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <label>Type</label>
+                                                ${receptacleTransfer.sourceReceptacle.receptacleType}
+                                                <input type="hidden" name="stationEvents[${stationEventStatus.index}].sourceReceptacle.receptacleType"
+                                                       value="${receptacleTransfer.sourceReceptacle.receptacleType}"/>
+                                            </c:otherwise>
+                                        </c:choose>
                                     <label for="srcRcpBcd${stationEventStatus.index}">Barcode</label>
                                     <input type="text" id="srcRcpBcd${stationEventStatus.index}" autocomplete="off"
                                             name="stationEvents[${stationEventStatus.index}].sourceReceptacle.barcode"
@@ -237,10 +248,21 @@
                                     </div>
                                     <div class="control-group">
                                         <h5>Destination</h5>
-                                        <label>Type</label>
-                                        ${receptacleTransfer.receptacle.receptacleType}
-                                        <input type="hidden" name="stationEvents[${stationEventStatus.index}].receptacle.receptacleType"
-                                                value="${receptacleTransfer.receptacle.receptacleType}"/>
+                                        <c:choose>
+                                            <c:when test="${not empty actionBean.manualTransferDetails.targetVesselTypeGeometriesString}">
+                                                <stripes:label for="targetReceptacleType">Type </stripes:label>
+                                                <stripes:select name="stationEvents[${stationEventStatus.index}].receptacle.receptacleType"
+                                                                id="targetReceptacleType">
+                                                    <stripes:options-collection collection="${actionBean.manualTransferDetails.targetVesselTypeGeometriesString}"/>
+                                                </stripes:select>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <label>Type</label>
+                                                ${receptacleTransfer.receptacle.receptacleType}
+                                                <input type="hidden" name="stationEvents[${stationEventStatus.index}].receptacle.receptacleType"
+                                                       value="${receptacleTransfer.receptacle.receptacleType}"/>
+                                            </c:otherwise>
+                                        </c:choose>
                                         <label for="destRcpBcd${stationEventStatus.index}">Barcode</label>
                                         <input type="text" id="destRcpBcd${stationEventStatus.index}" autocomplete="off"
                                                 name="stationEvents[${stationEventStatus.index}].receptacle.barcode"

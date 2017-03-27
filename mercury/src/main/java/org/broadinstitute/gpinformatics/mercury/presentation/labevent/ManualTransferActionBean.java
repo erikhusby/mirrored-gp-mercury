@@ -321,13 +321,23 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 case RECEPTACLE_TRANSFER_EVENT:
                     ReceptacleTransferEventType receptacleTransferEventType = (ReceptacleTransferEventType) stationEvent;
                     ReceptacleType sourceReceptacle = new ReceptacleType();
-                    sourceReceptacle.setReceptacleType(
-                            manualTransferDetails.getSourceVesselTypeGeometry().getDisplayName());
+                    if (manualTransferDetails.getSourceVesselTypeGeometry() != null) {
+                        sourceReceptacle.setReceptacleType(
+                                manualTransferDetails.getSourceVesselTypeGeometry().getDisplayName());
+                    } else if (manualTransferDetails.getSourceVesselTypeGeometries() == null ||
+                               manualTransferDetails.getSourceVesselTypeGeometries().length == 0) {
+                        throw new RuntimeException("Source VesselTypeGeometry isn't set for this event");
+                    }
                     receptacleTransferEventType.setSourceReceptacle(sourceReceptacle);
 
                     ReceptacleType destinationReceptacle = new ReceptacleType();
-                    destinationReceptacle.setReceptacleType(
-                            manualTransferDetails.getTargetVesselTypeGeometry().getDisplayName());
+                    if (manualTransferDetails.getTargetVesselTypeGeometry() != null) {
+                        destinationReceptacle.setReceptacleType(
+                                manualTransferDetails.getTargetVesselTypeGeometry().getDisplayName());
+                    } else if (manualTransferDetails.getTargetVesselTypeGeometries() == null ||
+                               manualTransferDetails.getTargetVesselTypeGeometries().length == 0) {
+                        throw new RuntimeException("Target VesselTypeGeometry isn't set for this event");
+                    }
                     receptacleTransferEventType.setReceptacle(destinationReceptacle);
                     break;
                 default:
