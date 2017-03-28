@@ -820,7 +820,7 @@
         <createSequence schemaName="mercury" sequenceName="seq_sample_instance_entity_tsk" incrementBy="50"/>
     </changeSet>
 
-    <changeSet id="GPLIM-4637" author="thompson">
+    <changeSet id="GPLIM-4637-1" author="thompson">
         <createTable schemaName="mercury" tableName="delivery_item">
             <column name="delivery_item_id" type="number(19,0)">
                 <constraints primaryKey="true" primaryKeyName="PK_delivery_item"/>
@@ -832,4 +832,48 @@
             <column name="lab_vessel" type="number(19,0)"/>
         </createTable>
     </changeSet>
+    <changeSet id="GPLIM-4637-2" author="thompson">
+        <createTable schemaName="mercury" tableName="delivery_item_aud">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="delivery_item_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)"/>
+            <column name="metrics_id" type="number(19,0)"/>
+            <column name="metrics_type" type="varchar2(255)"/>
+            <column name="vessel_position" type="varchar2(255)"/>
+            <column name="delivery_set" type="number(19,0)"/>
+            <column name="lab_vessel" type="number(19,0)"/>
+            <addPrimaryKey constraintName="pk_delivery_item_aud" tableName="delivery_item_aud"
+                    columnNames="rev, delivery_item_id"/>
+        </createTable>
+    </changeSet>
+    <!-- todo alternate index -->
+    <changeSet id="GPLIM-4637-3" author="thompson">
+        <createTable schemaName="mercury" tableName="delivery_set">
+            <column name="delivery_set_id" type="number(19,0)">
+                <constraints primaryKey="true" primaryKeyName="pk_delivery_set"/>
+            </column>
+            <column name="name" type="varchar2(255)"/>
+            <column name="location" type="varchar2(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="GPLIM-4637-3" author="thompson">
+        <createTable schemaName="mercury" tableName="delivery_set_aud">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="delivery_set_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)"/>
+            <column name="name" type="varchar2(255)"/>
+            <column name="location" type="varchar2(255)"/>
+            <addPrimaryKey constraintName="pk_delivery_set_aud" tableName="delivery_set_aud"
+                    columnNames="rev, delivery_set_id"/>
+        </createTable>
+    </changeSet>
+    <!-- todo sequence numbers -->
 </databaseChangeLog>

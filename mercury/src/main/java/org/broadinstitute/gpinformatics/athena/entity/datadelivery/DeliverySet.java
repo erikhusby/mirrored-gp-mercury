@@ -33,5 +33,5 @@ public class DeliverySet {
     // In transfer visualizer, visiting events and vessels is fast; why are sample instances slow?  Profile and diff
 
     // Is bucket a property of Set or Item?
-    private String bucketName;
+    private String location;
 }
