@@ -20,6 +20,8 @@ import org.testng.annotations.Test;
 import java.util.Collections;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 
 @Test(groups = TestGroups.DATABASE_FREE)
@@ -96,5 +98,19 @@ public class ProductEjbDBFreeTest {
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockSapService, Mockito.times(1)).createProductInSAP(testProduct);
         Mockito.verify(mockSapService, Mockito.times(3)).changeProductInSAP(testProduct);
+
+
+        Product testProduct2 = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "P-CLIATEST-SAP");
+        testProduct.setPrimaryPriceItem(new PriceItem("qsID", "testPlatform", "testCategory", "blockThisItem"));
+        testProduct2.setExternalOnlyProduct(true);
+        Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(noControl);
+
+        try {
+            testEjb.publishProductToSAP(testProduct);
+            Assert.fail();
+        } catch (SAPIntegrationException e) {
+            assertThat(e.getMessage(), containsString("Cannot be published to SAP since it is either a Clinical or Commercial product"));
+        }
+
     }
 }
