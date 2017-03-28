@@ -106,6 +106,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerExceptio
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
@@ -647,11 +648,17 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     void validateRinScores(Collection<ProductOrderSample> pdoSamples) {
         for (ProductOrderSample pdoSample : pdoSamples) {
-            if (pdoSample.isInBspFormat() && !pdoSample.canRinScoreBeUsedForOnRiskCalculation()) {
+            try {
+                if (pdoSample.isInBspFormat() && !pdoSample.canRinScoreBeUsedForOnRiskCalculation()) {
+                    addGlobalValidationError(
+                            "RIN '" + pdoSample.getSampleData().getRawRin() + "' for " + pdoSample.getName() +
+                            " isn't a number." + "  Please correct this by going to BSP -> Utilities -> Upload Sample " +
+                            "Annotation and updating the 'RIN Number' annotation for this sample.");
+                }
+            } catch (BSPLookupException e) {
                 addGlobalValidationError(
-                        "RIN '" + pdoSample.getSampleData().getRawRin() + "' for " + pdoSample.getName() +
-                        " isn't a number." + "  Please correct this by going to BSP -> Utilities -> Upload Sample " +
-                        "Annotation and updating the 'RIN Number' annotation for this sample.");
+                        pdoSample.getName() + " isn't a sample that is found in BSP.  For this reason the RIN score "
+                        + "cannot be validated at this time");
             }
         }
     }
@@ -764,9 +771,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         double outstandingEstimate = estimateOutstandingOrders(quote.getAlphanumericId());
         double valueOfCurrentOrder = 0;
         if(countCurrentUnPlacedOrder) {
-            valueOfCurrentOrder = getValueOfOpenOrders(Collections.singletonList(editOrder));
+            valueOfCurrentOrder = getValueOfOpenOrders(Collections.singletonList((editOrder.isChildOrder())?editOrder.getParentOrder():editOrder));
         } else if(additionalSampleCount > 0) {
-            valueOfCurrentOrder = getOrderValue(editOrder, additionalSampleCount);
+            valueOfCurrentOrder = getOrderValue((editOrder.isChildOrder())?editOrder.getParentOrder():editOrder, additionalSampleCount);
         }
 
         if (fundsRemaining <= 0d ||
@@ -810,10 +817,19 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @param ordersWithCommonQuote Subset of orders for which the monitary value is to be determined
      * @return Total dollar amount which equates to the monitary value of all orders given
      */
-    double getValueOfOpenOrders(List<ProductOrder> ordersWithCommonQuote) {
+    double getValueOfOpenOrders(Collection<ProductOrder> ordersWithCommonQuote) {
         double value = 0d;
 
-        for (ProductOrder testOrder : ordersWithCommonQuote) {
+        Set<ProductOrder> justParents = new HashSet<>();
+        for (ProductOrder order : ordersWithCommonQuote) {
+            if(order.isChildOrder()) {
+                justParents.add(order.getParentOrder());
+            } else {
+                justParents.add(order);
+            }
+        }
+
+        for (ProductOrder testOrder : justParents) {
             value += getOrderValue(testOrder, testOrder.getUnbilledSampleCount());
         }
         return value;
@@ -1507,7 +1523,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         final List<ProductOrderSample> replacementSamples = stringToSampleList(replacementSampleList);
 
         if(editOrder.isSavedInSAP() && editOrder.hasAtLeastOneBilledLedgerEntry() &&
-           (editOrder.getNonAbandonedCount() < editOrder.latestSapOrderDetail().getPrimaryQuantity()) ) {
+           (editOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL) < editOrder.latestSapOrderDetail().getPrimaryQuantity()) ) {
             shareSapOrder = true;
         }
         ProductOrder.SaveType saveType = ProductOrder.SaveType.CREATING;
@@ -1543,7 +1559,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         Product tokenProduct = productTokenInput.getTokenObject();
         Product product = tokenProduct != null ? productDao.findByPartNumber(tokenProduct.getPartNumber()) : null;
 
-        if(editOrder.isSavedInSAP() && !editOrder.latestSapOrderDetail().getCompanyCode().equals(sapService.getSapCompanyConfigurationForProduct(product).getCompanyCode())) {
+        if(editOrder.isSavedInSAP() && !editOrder.latestSapOrderDetail().getCompanyCode().equals(
+                SapIntegrationServiceImpl.getSapCompanyConfigurationForProduct(product).getCompanyCode())) {
             addGlobalValidationError("Unable to update the order in SAP.  This combination of Product and Order is "
                                      + "attempting to change the company code to which this order will be associated.");
         }
@@ -1700,7 +1717,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         JSONArray jsonResults = new JSONArray();
 
         // Access sample list directly in order to suggest based on possibly not-yet-saved sample IDs.
-        if (!getSampleList().isEmpty()) {
+        if (!getSampleList().isEmpty() && !editOrder.isChildOrder()) {
             List<ProductOrderSample> productOrderSamples = stringToSampleListExisting(getSampleList());
             // Bulk-fetch collection IDs for all samples to avoid having them fetched individually on demand.
             ProductOrder.loadSampleData(productOrderSamples, BSPSampleSearchColumn.BSP_COLLECTION_BARCODE,
@@ -1894,7 +1911,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         JSONObject item = new JSONObject();
 
         if (product != null) {
-            supportsNumberOfLanes = productDao.findByBusinessKey(product).getSupportsNumberOfLanes();
+            final Product productToFind = productDao.findByBusinessKey(product);
+            supportsNumberOfLanes = productToFind.getSupportsNumberOfLanes();
             if(selectedOrderAddons != null)
             for (String selectedOrderAddon : selectedOrderAddons) {
                 if(!supportsNumberOfLanes) {
@@ -2739,7 +2757,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                     "its regulatory requirements met or a reason for bypassing the regulatory requirements",
                     action);
             if (!editOrder.orderPredatesRegulatoryRequirement()) {
-                requireField(editOrder.getAttestationConfirmed().booleanValue(),
+                requireField(editOrder.isAttestationConfirmed().booleanValue(),
                         "the checkbox checked which attests that you are aware of the regulatory requirements for this project",
                         action);
             }

@@ -18,10 +18,13 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Going forward Product Orders will be reflected in SAP as orders.  There are certain restrictions on what can change
@@ -73,9 +76,9 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
 
     private String companyCode;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinColumn(name="REFERENCE_PRODUCT_ORDER")
-    private ProductOrder referenceProductOrder;
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE}, mappedBy = "sapReferenceOrders")
+//    @JoinColumn(name="REFERENCE_PRODUCT_ORDER")
+    private Set<ProductOrder> referenceProductOrder = new HashSet<>();
 
     public SapOrderDetail() {
     }
@@ -99,9 +102,9 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
         this.primaryQuantity = primaryQuantity;
     }
 
-    public void setReferenceProductOrder(
+    public void addReferenceProductOrder(
             ProductOrder referenceProductOrder) {
-        this.referenceProductOrder = referenceProductOrder;
+        this.referenceProductOrder.add(referenceProductOrder);
     }
 
     public String getQuoteId() {

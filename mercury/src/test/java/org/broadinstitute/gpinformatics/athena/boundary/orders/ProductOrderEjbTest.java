@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
+import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductTestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -33,6 +34,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFunding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImplDBFreeTest;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
@@ -70,6 +72,7 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.notNullValue;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderEjbTest {
@@ -95,6 +98,7 @@ public class ProductOrderEjbTest {
     @BeforeMethod
     public void setUp() throws Exception {
 
+        Mockito.reset(mockEmailSender);
         Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenReturn(new SAPAccessControl());
 
         productOrderEjb.setAppConfig(mockAppConfig);
@@ -319,8 +323,6 @@ public class ProductOrderEjbTest {
         testSingleSourceQuote3 = new Quote(SapIntegrationServiceImplDBFreeTest.SINGLE_SOURCE_PO_QUOTE_ID+"3", quoteFunding, ApprovalStatus.FUNDED);
 
         Mockito.when(mockSapService.createOrder(Mockito.any(ProductOrder.class))).thenReturn(SapIntegrationServiceStub.TEST_SAP_NUMBER);
-        Mockito.when(mockSapService.determineCompanyCode(Mockito.any(ProductOrder.class))).thenReturn(
-                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         Mockito.when(mockQuoteService.getQuoteByAlphaId(testSingleSourceQuote.getAlphanumericId())).thenReturn(testSingleSourceQuote);
         Mockito.when(mockQuoteService.getQuoteByAlphaId(testSingleSourceQuote2.getAlphanumericId())).thenReturn(testSingleSourceQuote2);
         Mockito.when(mockQuoteService.getQuoteByAlphaId(testSingleSourceQuote3.getAlphanumericId())).thenReturn(testSingleSourceQuote3);
@@ -367,7 +369,6 @@ public class ProductOrderEjbTest {
                 Mockito.anyString(),
                 Mockito.anyString(),
                 Mockito.anyBoolean());
-
     }
 
     public void testAbandonOrderWithNoServiceNowTicket() throws Exception {
@@ -410,7 +411,121 @@ public class ProductOrderEjbTest {
                 Mockito.anyString(),
                 Mockito.anyString(),
                 Mockito.anyBoolean());
+    }
+
+    public void testTransitionOrderWithServiceNowTicket() throws Exception {
+        String jiraTicketKey= "PDO-SAP-test";
+        String childOneJiraTicketKey = "PDO-SAP-Childone";
+        String childtwoJiraTicketKey = "PDO-SAP-Childtwo";
+
+        ProductOrder conversionPdo = ProductOrderTestFactory.createDummyProductOrder(10, jiraTicketKey);
+
+        Mockito.when(mockUserBean.getBspUser()).thenReturn(new BSPUserList.QADudeUser("PM", 2423L));
+        Mockito.when(mockSapService.createOrder(Mockito.any(ProductOrder.class))).thenReturn(SapIntegrationServiceStub.TEST_SAP_NUMBER);
+
+        String testUser = "Scott.G.MATThEws@GMail.CoM";
+        Funding fundingDefined = new Funding(Funding.PURCHASE_ORDER,null, null);
+        fundingDefined.setPurchaseOrderContact(testUser);
+        fundingDefined.setPurchaseOrderNumber("PO00Id8923");
+        FundingLevel fundingLevel = new FundingLevel("100",fundingDefined);
+        QuoteFunding quoteFunding = new QuoteFunding(Collections.singleton(fundingLevel));
+        Quote testSingleSourceQuote = new Quote(SapIntegrationServiceImplDBFreeTest.SINGLE_SOURCE_PO_QUOTE_ID, quoteFunding, ApprovalStatus.FUNDED);
+
+        Mockito.when(mockQuoteService.getQuoteByAlphaId(testSingleSourceQuote.getAlphanumericId())).thenReturn(testSingleSourceQuote);
+
+        ProductTestUtils.addToMockPriceListCache(conversionPdo.getProduct(), mockPriceListCache, "5");
+        for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
+            ProductTestUtils.addToMockPriceListCache(productOrderAddOn.getAddOn(), mockPriceListCache, "5");
+        }
+
+        conversionPdo.setQuoteId(testSingleSourceQuote.getAlphanumericId() );
+        conversionPdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+
+        MessageCollection messageCollection = new MessageCollection();
+        productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, true);
+        assertThat(conversionPdo.getSapOrderNumber(), is(notNullValue()));
+
+        int sampleCount = 0;
+        for (ProductOrderSample productOrderSample : conversionPdo.getSamples()) {
+            if(sampleCount >=2) {
+                break;
+            }
+            productOrderSample.setDeliveryStatus(ProductOrderSample.DeliveryStatus.ABANDONED);
+
+            sampleCount++;
+        }
+
+        ProductOrder childPdoOne = ProductOrder.cloneProductOrder(conversionPdo, true);
+        childPdoOne.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+        childPdoOne.setSamples(ProductOrderSampleTestFactory.createSampleListWithMercurySamples("SM-3URTST"));
+        childPdoOne.setJiraTicketKey(childOneJiraTicketKey);
+        productOrderEjb.publishProductOrderToSAP(childPdoOne, messageCollection, true);
+
+        ProductOrder childPdoTwo = ProductOrder.cloneProductOrder(conversionPdo, false);
+
+        Mockito.when(mockSapService.createOrder(Mockito.any(ProductOrder.class))).thenReturn("Child_sap_test");
+        childPdoTwo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+        childPdoTwo.setSamples(ProductOrderSampleTestFactory.createSampleListWithMercurySamples("SM-3BRTST"));
+        childPdoTwo.setJiraTicketKey(childtwoJiraTicketKey);
+        productOrderEjb.publishProductOrderToSAP(childPdoTwo, messageCollection, true);
 
 
+        Mockito.when(productOrderDaoMock.findByBusinessKey(jiraTicketKey)).thenReturn(conversionPdo);
+        Mockito.when(productOrderDaoMock.findByBusinessKey(childOneJiraTicketKey)).thenReturn(childPdoOne);
+        Mockito.when(productOrderDaoMock.findByBusinessKey(childtwoJiraTicketKey)).thenReturn(childPdoTwo);
+
+        assertThat(childPdoOne.getOrderStatus(), equalTo(ProductOrder.OrderStatus.Submitted));
+        for (ProductOrderSample childOneSample : childPdoOne.getSamples()) {
+            ProductOrderSampleTestFactory.markAsBilled(childOneSample);
+        }
+        productOrderEjb.updateOrderStatus(childPdoOne.getBusinessKey(), MessageReporter.UNUSED);
+        assertThat(childPdoOne.getOrderStatus(), equalTo(ProductOrder.OrderStatus.Completed));
+
+
+        for (ProductOrderSample child2Sample : childPdoTwo.getSamples()) {
+            ProductOrderSampleTestFactory.markAsBilled(child2Sample);
+        }
+
+        assertThat(childPdoTwo.getOrderStatus(), equalTo(ProductOrder.OrderStatus.Submitted));
+        productOrderEjb.updateOrderStatus(childPdoTwo.getBusinessKey(), MessageReporter.UNUSED);
+        assertThat(childPdoTwo.getOrderStatus(), equalTo(ProductOrder.OrderStatus.Completed));
+
+
+        assertThat(conversionPdo.getOrderStatus(), equalTo(ProductOrder.OrderStatus.Submitted));
+
+        int abandonSampleCount = 1;
+        for (ProductOrderSample productOrderSample : conversionPdo.getSamples()) {
+            if(abandonSampleCount == 0) {
+                break;
+            }
+            if(!productOrderSample.getDeliveryStatus().isAbandoned()) {
+                productOrderSample.setDeliveryStatus(ProductOrderSample.DeliveryStatus.ABANDONED);
+                abandonSampleCount--;
+            }
+        }
+
+
+        for (ProductOrderSample productOrderSample : conversionPdo.getSamples()) {
+            if(!productOrderSample.getDeliveryStatus().isAbandoned()) {
+                ProductOrderSampleTestFactory.markAsBilled(productOrderSample);
+            }
+        }
+
+        Mockito.verify(mockEmailSender, Mockito.times(0)).sendHtmlEmail(Mockito.eq(mockAppConfig),
+                Mockito.anyString(),
+                Mockito.<String>anyList(),
+                Mockito.anyString(),
+                Mockito.anyString(),
+                Mockito.anyBoolean());
+        productOrderEjb.updateOrderStatus(conversionPdo.getBusinessKey(), MessageReporter.UNUSED);
+        assertThat(conversionPdo.getOrderStatus(), equalTo(ProductOrder.OrderStatus.Completed));
+
+
+        Mockito.verify(mockEmailSender, Mockito.times(1)).sendHtmlEmail(Mockito.eq(mockAppConfig),
+                Mockito.anyString(),
+                Mockito.<String>anyList(),
+                Mockito.anyString(),
+                Mockito.anyString(),
+                Mockito.anyBoolean());
     }
 }

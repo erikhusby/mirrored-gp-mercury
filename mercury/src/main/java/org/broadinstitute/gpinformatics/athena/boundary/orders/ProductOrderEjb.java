@@ -258,10 +258,17 @@ public class ProductOrderEjb {
             }
         } else {
             updateJiraIssue(editedProductOrder);
-
+            for (ProductOrder childProductOrder : editedProductOrder.getChildOrders()) {
+                if(!childProductOrder.getOrderStatus().canPlace()) {
+                    updateJiraIssue(childProductOrder);
+                }
+            }
             publishProductOrderToSAP(editedProductOrder, messageCollection, false);
         }
         attachMercurySamples(editedProductOrder.getSamples());
+        for (ProductOrder childProductOrder : editedProductOrder.getChildOrders()) {
+            attachMercurySamples(childProductOrder.getSamples());
+        }
 
         productOrderDao.persist(editedProductOrder);
     }
@@ -325,33 +332,29 @@ public class ProductOrderEjb {
                                               !orderToPublish.getQuoteId()
                                                       .equals(orderToPublish.latestSapOrderDetail().getQuoteId());
                 if ((!orderToPublish.isSavedInSAP() && allowCreateOrder) || quoteIdChange) {
-                    String sapOrderIdentifier = sapService.createOrder(orderToPublish);
 
-                    String oldNumber = null;
-                    if(StringUtils.isNotBlank(orderToPublish.getSapOrderNumber())) {
-                        oldNumber =orderToPublish.getSapOrderNumber();
-                    }
-                    orderToPublish.addSapOrderDetail(new SapOrderDetail(sapOrderIdentifier,
-                            SapIntegrationServiceImpl.getSampleCount(orderToPublish, orderToPublish.getProduct()),
-                            orderToPublish.getQuoteId(),
-                            sapService.determineCompanyCode(orderToPublish).getCompanyCode()));
+                    final String newSapOrderNumber = createOrderInSAP(orderToPublish, quoteIdChange, messageCollection);
 
-                    if(quoteIdChange) {
-                        String body = "The SAP order " + oldNumber + " for PDO "+ orderToPublish.getBusinessKey()+
-                                      " is being associated with a new quote by "+
-                                      userBean.getBspUser().getFullName() +" and needs" + " to be short closed.";
-                        sendSapOrderShortCloseRequest(body);
+                    // Create orders for any Child orders that does not share
+                    for (ProductOrder childOrder : orderToPublish.getChildOrders()) {
+                        if(!ProductOrder.sharesSAPOrderWithParent(childOrder, newSapOrderNumber)) {
+                            createOrderInSAP(childOrder, quoteIdChange, messageCollection);
+                        }
                     }
-                    messageCollection.addInfo("Order "+orderToPublish.getJiraTicketKey() +
-                                              " has been successfully created in SAP");
+
                 } else if(orderToPublish.isSavedInSAP()){
                     if (SapIntegrationServiceImpl.getSampleCount(orderToPublish, orderToPublish.getProduct()) > 0) {
-                        sapService.updateOrder(orderToPublish);
-                        orderToPublish.latestSapOrderDetail()
-                                .setPrimaryQuantity(SapIntegrationServiceImpl.getSampleCount(orderToPublish,
-                                        orderToPublish.getProduct()));
-                        messageCollection.addInfo("Order "+orderToPublish.getJiraTicketKey() +
-                                                  " has been successfully updated in SAP");
+                        updateOrderInSap(orderToPublish, messageCollection);
+
+                        for (ProductOrder childProductOrder : orderToPublish.getChildOrders()) {
+
+                            if (childProductOrder.isSubmitted() &&
+                                !StringUtils.equals(childProductOrder.getSapOrderNumber(),
+                                        orderToPublish.getSapOrderNumber())) {
+
+                                updateOrderInSap(childProductOrder, messageCollection);
+                            }
+                        }
                     }
                 }
                 productOrderDao.persist(orderToPublish);
@@ -373,6 +376,64 @@ public class ProductOrderEjb {
                 throw new SAPInterfaceException(errorMessage.toString(), e);
             }
         }
+    }
+
+    /**
+     * Encapsulates the series of calls to make when updating an order in SAP.  This is created to support updating
+     * the child orders of a product order for which abandoned samples have been replaced.
+     *
+     * @param orderToUpdate     A product order from which an SAP order is to be updated
+     * @param messageCollection To collect any errors or success messages that may occur during the process
+     * @throws SAPIntegrationException
+     */
+    private void updateOrderInSap(ProductOrder orderToUpdate, MessageCollection messageCollection)
+            throws SAPIntegrationException {
+        sapService.updateOrder(orderToUpdate);
+        orderToUpdate.latestSapOrderDetail()
+                .setPrimaryQuantity(SapIntegrationServiceImpl.getSampleCount(orderToUpdate,
+                        orderToUpdate.getProduct()));
+        messageCollection.addInfo("Order "+orderToUpdate.getJiraTicketKey() +
+                                  " has been successfully updated in SAP");
+
+    }
+
+    /**
+     * This method contains the specific logic surrounding the creation and persistence of an SAP order
+     * @param orderToPublish  The Product Order from which a new SAP order will be created
+     * @param quoteIdChange   Indicates that creating the SAP order is as a result of the Quote being changed
+     * @return  The order ID of the newly created SAP Order
+     * @throws SAPIntegrationException
+     */
+    private String createOrderInSAP(ProductOrder orderToPublish, boolean quoteIdChange,
+                                    MessageCollection messageCollection)
+            throws SAPIntegrationException {
+        String sapOrderIdentifier = sapService.createOrder(orderToPublish);
+
+        String oldNumber = null;
+        if(StringUtils.isNotBlank(orderToPublish.getSapOrderNumber())) {
+            oldNumber = orderToPublish.getSapOrderNumber();
+        }
+        orderToPublish.addSapOrderDetail(new SapOrderDetail(sapOrderIdentifier,
+                SapIntegrationServiceImpl.getSampleCount(orderToPublish, orderToPublish.getProduct()),
+                orderToPublish.getQuoteId(),
+                SapIntegrationServiceImpl.determineCompanyCode(orderToPublish).getCompanyCode()));
+
+        if(quoteIdChange) {
+            String body = "The SAP order " + oldNumber + " for PDO "+ orderToPublish.getBusinessKey()+
+                          " is being associated with a new quote by "+
+                          userBean.getBspUser().getFullName() +" and needs" + " to be short closed.";
+            for (ProductOrder childOrder : orderToPublish.getChildOrders()) {
+                if(ProductOrder.sharesSAPOrderWithParent(childOrder, oldNumber)) {
+                    childOrder.addSapOrderDetail(orderToPublish.latestSapOrderDetail());
+                }
+            }
+
+            sendSapOrderShortCloseRequest(body);
+        }
+        messageCollection.addInfo("Order "+orderToPublish.getJiraTicketKey() +
+                                  " has been successfully created in SAP");
+
+        return sapOrderIdentifier;
     }
 
     /**
@@ -1022,27 +1083,28 @@ public class ProductOrderEjb {
             transitionIssueToSameOrderStatus(order);
             // The status was changed, let the user know.
             reporter.addMessage("The order status of ''{0}'' is now {1}.", jiraTicketKey, order.getOrderStatus());
-            if(order.isSavedInSAP() && ((order.getOrderStatus() == OrderStatus.Completed &&
-                order.getNonAbandonedCount() < order.latestSapOrderDetail().getPrimaryQuantity()
-               )
-               || order.getOrderStatus() == OrderStatus.Abandoned)) {
-
-                sendSapOrderShortCloseRequest(
-                        "The SAP order " + order.getSapOrderNumber() + " for PDO "+order.getBusinessKey()+
-                        " has been marked as completed in Mercury by " +
-                        userBean.getBspUser().getFullName() + " and may need to be short closed.");
-            }
+            conditionallyShortCloseOrder(order);
         }
     }
 
+    /**
+     * Encapsulates the call necessary to request that SAP short close an order.  The logic here will also send to
+     * test users in a non Production environment
+     *
+     * @param body The body of the short close request email
+     */
     void sendSapOrderShortCloseRequest(String body) {
-            Collection<String> ccAddresses = Collections.singletonList(userBean.getBspUser().getEmail());
+            Collection<String> currentUserForCC = Collections.singletonList(userBean.getBspUser().getEmail());
         final boolean isProduction = deployment.equals(Deployment.PROD);
-        emailSender.sendHtmlEmail(appConfig,
-                isProduction ?"BUSSYS@broadinstitute.org":"zsearle@broadinstitute.org",
-                isProduction ?ccAddresses:Arrays.asList("scottmat@broadinstitute.org", "smcdonou@broadinstitute.org"),
-                ((!isProduction) ? "Test" : "") + "SAP Order: Short Close Request", body,
-                !isProduction);
+
+        final String toAddress = isProduction ? "BUSSYS@broadinstitute.org" : "zsearle@broadinstitute.org";
+
+        final Collection<String> ccAddrdesses = isProduction ? currentUserForCC :
+                Arrays.asList("scottmat@broadinstitute.org", "smcdonou@broadinstitute.org");
+
+        final String subject = ((!isProduction) ? "Test" : "") + "SAP Order: Short Close Request";
+
+        emailSender.sendHtmlEmail(appConfig, toAddress, ccAddrdesses, subject, body, !isProduction);
     }
 
     /**
@@ -1113,15 +1175,22 @@ public class ProductOrderEjb {
         // with the JIRA ticket.
         transitionJiraTicket(jiraTicketKey, JiraResolution.CANCELLED, JiraTransition.CANCEL, abandonComments);
 
-        if(productOrder.isSavedInSAP() && ((productOrder.getOrderStatus() == OrderStatus.Completed &&
-            productOrder.getNonAbandonedCount() < productOrder.latestSapOrderDetail().getPrimaryQuantity()
-           )
-           || productOrder.getOrderStatus() == OrderStatus.Abandoned)) {
+        conditionallyShortCloseOrder(productOrder);
+    }
+
+    private void conditionallyShortCloseOrder(ProductOrder productOrder) {
+
+        ProductOrder targetSapPdo = ProductOrder.getTargetSAPProductOrder(productOrder);
+
+        if(targetSapPdo.isSavedInSAP() &&
+           ((targetSapPdo.allOrdersAreComplete() &&
+             targetSapPdo.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY) < targetSapPdo.latestSapOrderDetail().getPrimaryQuantity()
+           ) || targetSapPdo.getOrderStatus() == OrderStatus.Abandoned)) {
+
 
             sendSapOrderShortCloseRequest(
-                    "The SAP order " + productOrder.getSapOrderNumber() + " for PDO "+productOrder.getBusinessKey()+
-                    " has been marked as completed in Mercury by "
-                    +
+                    "The SAP order " + productOrder.getSapOrderNumber() + " for PDO "+productOrder.getBusinessKey() +
+                    " has been marked as completed in Mercury by " +
                     userBean.getBspUser().getFullName() + " and may need to be short closed.");
         }
     }
