@@ -12,7 +12,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSa
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -37,7 +36,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
-import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -82,7 +80,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
@@ -859,6 +856,29 @@ public class ProductOrderFixupTest extends Arquillian {
 
         productOrderDao.persist(
                 new FixupCommentary("SUPPORT-1573 Updating reg info for PDO-8181 as requested by Kristina Tracy"));
+    }
+
+    @Test(enabled = false)
+    public void gplim4755RemoveDuplicateRegulatoryInfo() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+        List<RegulatoryInfo> regulatoryInfos = regulatoryInfoDao.findByIdentifier("ORSP-750");
+        assertThat(regulatoryInfos, hasSize(1));
+        RegulatoryInfo orsp750 = regulatoryInfos.get(0);
+
+        ProductOrder pdo = productOrderDao.findByBusinessKey("PDO-6148");
+        assertThat(pdo.getRegulatoryInfos(), hasSize(2));
+
+        Set<RegulatoryInfo> distinctRegulatoryInfos = new HashSet<>(pdo.getRegulatoryInfos());
+        assertThat(distinctRegulatoryInfos, hasSize(1));
+        assertThat(orsp750, equalTo(distinctRegulatoryInfos.iterator().next()));
+
+        pdo.getRegulatoryInfos().clear();
+        productOrderDao.flush();
+        pdo.addRegulatoryInfo(distinctRegulatoryInfos.iterator().next());
+
+        productOrderDao.persist(new FixupCommentary("https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-4755"));
+        commitTransaction();
     }
 
     @Test(enabled = false)
