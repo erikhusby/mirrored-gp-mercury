@@ -994,7 +994,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     /**
-     * This enum helps to
+     * This enum helps to identfy how to aggregate the count totals across a PDO and its child orders
      */
     public enum CountAggregation{ ALL, BILL_READY, SHARE_SAP_ORDER, SHARE_SAP_ORDER_AND_BILL_READY}
 
@@ -2071,8 +2071,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     /**
      * Encapsulates the conditional logic to determine if a given product order not only has a parent order but also if
      * that parent order shares an sap order with the given product order
-     * @param childOrder            target order to determine if
-     * @param parentSAPOrderNumber
+     * @param childOrder            target order to determine if its parent shares the same sap number
+     * @param parentSAPOrderNumber  SAP number to compare between PDOs
      * @return
      */
     public static boolean sharesSAPOrderWithParent(ProductOrder childOrder, String parentSAPOrderNumber) {
