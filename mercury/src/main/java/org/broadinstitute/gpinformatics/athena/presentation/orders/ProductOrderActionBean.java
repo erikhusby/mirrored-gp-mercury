@@ -98,6 +98,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
+import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
@@ -1165,6 +1167,12 @@ public class ProductOrderActionBean extends CoreActionBean {
                 double outstandingOrdersValue = estimateOutstandingOrders(quoteIdentifier);
                 item.put("outstandingEstimate",  NumberFormat.getCurrencyInstance().format(
                         outstandingOrdersValue));
+                for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel()) {
+                    if(fundingLevel.getFunding().getFundingType().equals(Funding.FUNDS_RESERVATION)) {
+                        item.put("grantInfo", fundingLevel.getFunding().getDisplayName() + " " + )
+                    }
+                }
+
             }
 
         } catch (Exception ex) {
