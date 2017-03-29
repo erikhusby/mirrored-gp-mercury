@@ -1094,17 +1094,15 @@ public class ProductOrderEjb {
      * @param body The body of the short close request email
      */
     void sendSapOrderShortCloseRequest(String body) {
-            Collection<String> currentUserForCC = Collections.singletonList(userBean.getBspUser().getEmail());
+
+        Collection<String> currentUserForCC = Collections.singletonList(userBean.getBspUser().getEmail());
+
         final boolean isProduction = deployment.equals(Deployment.PROD);
-
-        final String toAddress = isProduction ? "BUSSYS@broadinstitute.org" : "zsearle@broadinstitute.org";
-
         final Collection<String> ccAddrdesses = isProduction ? currentUserForCC :
                 Arrays.asList("scottmat@broadinstitute.org", "smcdonou@broadinstitute.org");
 
-        final String subject = ((!isProduction) ? "Test" : "") + "SAP Order: Short Close Request";
-
-        emailSender.sendHtmlEmail(appConfig, toAddress, ccAddrdesses, subject, body, !isProduction);
+        emailSender.sendHtmlEmail(appConfig, appConfig.getSapShortCloseRecipientEmail(), ccAddrdesses,
+                appConfig.getSapShortCloseEmailSubject(), body, !isProduction);
     }
 
     /**

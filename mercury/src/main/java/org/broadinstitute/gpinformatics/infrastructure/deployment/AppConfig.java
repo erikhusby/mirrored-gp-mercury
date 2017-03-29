@@ -34,6 +34,10 @@ public class AppConfig extends AbstractConfig implements Serializable {
 
     private String workflowValidationEmail;
 
+    private String sapShortCloseRecipientEmail;
+
+    private String sapShortCloseEmailSubject;
+
     public String getUrl() {
         return "https://" + host + ":" + port + "/Mercury/";
     }
@@ -83,5 +87,19 @@ public class AppConfig extends AbstractConfig implements Serializable {
         return produce(AppConfig.class, deployment);
     }
 
+    public String getSapShortCloseRecipientEmail() {
+        return sapShortCloseRecipientEmail;
+    }
 
+    public void setSapShortCloseRecipientEmail(String sapShortCloseRecipientEmail) {
+        this.sapShortCloseRecipientEmail = sapShortCloseRecipientEmail;
+    }
+
+    public String getSapShortCloseEmailSubject() {
+        return sapShortCloseEmailSubject;
+    }
+
+    public void setSapShortCloseEmailSubject(String sapShortCloseEmailSubject) {
+        this.sapShortCloseEmailSubject = sapShortCloseEmailSubject;
+    }
 }

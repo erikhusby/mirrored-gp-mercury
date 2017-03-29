@@ -77,7 +77,6 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
     private String companyCode;
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE}, mappedBy = "sapReferenceOrders")
-//    @JoinColumn(name="REFERENCE_PRODUCT_ORDER")
     private Set<ProductOrder> referenceProductOrder = new HashSet<>();
 
     public SapOrderDetail() {
