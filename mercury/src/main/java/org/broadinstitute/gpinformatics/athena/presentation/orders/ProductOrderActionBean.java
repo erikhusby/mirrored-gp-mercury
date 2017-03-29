@@ -196,6 +196,21 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String KIT_DEFINITION_INDEX = "kitDefinitionQueryIndex";
     private static final String COULD_NOT_LOAD_SAMPLE_DATA = "Could not load sample data";
     private String sampleSummary;
+    private List<String> sampleColumns = Arrays.asList(
+            BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID.columnName(),
+            BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID.columnName(),
+            BSPSampleSearchColumn.PARTICIPANT_ID.columnName(),
+            BSPSampleSearchColumn.VOLUME.columnName(),
+            BSPSampleSearchColumn.RECEIPT_DATE.columnName(),
+            BSPSampleSearchColumn.PICO_RUN_DATE.columnName(),
+            BSPSampleSearchColumn.TOTAL_DNA.columnName(),
+            BSPSampleSearchColumn.CONCENTRATION.columnName(),
+            BSPSampleSearchColumn.MATERIAL_TYPE.columnName(), BSPSampleSearchColumn.RACKSCAN_MISMATCH.columnName(),
+            "On Risk",
+            "Proceed OOS",
+            "Yield Amount");
+
+    private Map<String, Boolean> headerVisibilityMap = new HashMap<>();
 
     public ProductOrderActionBean() {
         super(CREATE_ORDER, EDIT_ORDER, PRODUCT_ORDER_PARAMETER);
@@ -400,11 +415,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     // Search uses product family list.
     private List<ProductFamily> productFamilies;
-
     @Inject
     DatatablesStateSaver preferenceSaver;
-    String tableState="";
-
     @Inject
     private LabVesselDao labVesselDao;
 
@@ -490,6 +502,9 @@ public class ProductOrderActionBean extends CoreActionBean {
             // This is only used for save, when creating a new product order.
             editOrder = new ProductOrder();
         }
+
+        preferenceSaver = new DatatablesStateSaver(PreferenceType.PRODUCT_ORDER_PREFERENCES);
+        buildHeaderVisibilityMap();
     }
 
     protected Map<String, Collection<RegulatoryInfo>> setupRegulatoryInformation(ResearchProject researchProject) {
@@ -3121,18 +3136,4 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void setPriceListCache(PriceListCache priceListCache) {
         this.priceListCache = priceListCache;
     }
-
-
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-
-    @HandlesEvent(SAVE_SEARCH_DATA)
-    public Resolution saveSearchData() throws Exception {
-        preferenceSaver.saveTableData(tableState);
-        return new StreamingResolution("application/json", preferenceSaver.getTableStateJson());
-    }
-
-    public boolean showColumn(String columnName) {
-        return preferenceSaver.showColumn(columnName);
-    }
-
 }
