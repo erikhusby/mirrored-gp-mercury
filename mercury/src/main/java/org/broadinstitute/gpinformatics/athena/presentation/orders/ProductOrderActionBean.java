@@ -198,6 +198,21 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String KIT_DEFINITION_INDEX = "kitDefinitionQueryIndex";
     private static final String COULD_NOT_LOAD_SAMPLE_DATA = "Could not load sample data";
     private String sampleSummary;
+    private List<String> sampleColumns = Arrays.asList(
+            BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID.columnName(),
+            BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID.columnName(),
+            BSPSampleSearchColumn.PARTICIPANT_ID.columnName(),
+            BSPSampleSearchColumn.VOLUME.columnName(),
+            BSPSampleSearchColumn.RECEIPT_DATE.columnName(),
+            BSPSampleSearchColumn.PICO_RUN_DATE.columnName(),
+            BSPSampleSearchColumn.TOTAL_DNA.columnName(),
+            BSPSampleSearchColumn.CONCENTRATION.columnName(),
+            BSPSampleSearchColumn.MATERIAL_TYPE.columnName(), BSPSampleSearchColumn.RACKSCAN_MISMATCH.columnName(),
+            "On Risk",
+            "Proceed OOS",
+            "Yield Amount");
+
+    private Map<String, Boolean> headerVisibilityMap = new HashMap<>();
 
     public ProductOrderActionBean() {
         super(CREATE_ORDER, EDIT_ORDER, PRODUCT_ORDER_PARAMETER);
