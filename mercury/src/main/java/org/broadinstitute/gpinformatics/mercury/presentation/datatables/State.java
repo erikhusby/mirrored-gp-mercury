@@ -14,7 +14,9 @@ package org.broadinstitute.gpinformatics.mercury.presentation.datatables;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+import org.json.JSONObject;
 
+import javax.xml.bind.annotation.XmlList;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,14 +26,16 @@ import java.util.Map;
 public class State implements Serializable {
     private static final long serialVersionUID = 2016092701L;
 
-    private long time;
-    private int start;
-    private int length;
+    private Long time;
+    private Integer start;
+    private Integer length;
     private List<Map<Integer, Direction>> orderList = new ArrayList<>();
 
-    private Search search=new Search();
+    private Search search = new Search();
 
-    private List<Column> columns=new ArrayList<>();
+    private List<Column> columns = new ArrayList<>();
+
+    private List<Integer> colReorder;
 
     public State() {
     }
@@ -45,6 +49,11 @@ public class State implements Serializable {
         this.orderList = orderList;
         this.search = search;
         this.columns = columns;
+        this.colReorder = colReorder;
+    }
+
+    public State(List<Integer> colReorder) {
+        this.colReorder = colReorder;
     }
 
     public long getTime() {
@@ -94,6 +103,20 @@ public class State implements Serializable {
     public void setStart(Integer start) {
         this.start = start;
     }
+    
+    public List<Integer> getColReorder() {
+        return colReorder;
+    }
+
+    @XmlList
+    public void setColReorder(List<Integer> colReorder) {
+        this.colReorder = colReorder;
+    }
+
+    @Override
+    public String toString() {
+        return new JSONObject(this).toString();
+    }
 
     @Override
      public boolean equals(Object o) {
@@ -114,6 +137,7 @@ public class State implements Serializable {
                  .append(getOrderList(), state.getOrderList())
                  .append(getSearch(), state.getSearch())
                  .append(getColumns(), state.getColumns())
+                 .append(getColReorder(), state.getColReorder())
                  .isEquals();
      }
 
@@ -126,6 +150,7 @@ public class State implements Serializable {
                  .append(getOrderList())
                  .append(getSearch())
                  .append(getColumns())
+                 .append(getColReorder())
                  .toHashCode();
      }
 }
