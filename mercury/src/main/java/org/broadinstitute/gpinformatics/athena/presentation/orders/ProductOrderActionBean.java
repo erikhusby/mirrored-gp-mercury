@@ -124,7 +124,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.hibernate.Hibernate;
 import org.json.JSONArray;
 import org.json.JSONException;
