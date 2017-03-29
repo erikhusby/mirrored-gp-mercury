@@ -14,6 +14,7 @@ package org.broadinstitute.gpinformatics.mercury.presentation.datatables;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+import org.json.JSONObject;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Column {
@@ -80,5 +81,10 @@ public class Column {
                 .append(getSearch())
                 .append(getHeaderName())
                 .toHashCode();
+    }
+
+    @Override
+    public String toString() {
+        return new JSONObject(this).toString();
     }
 }
