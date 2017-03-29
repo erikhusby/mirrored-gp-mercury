@@ -7,6 +7,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingChipMapping;
@@ -321,8 +322,8 @@ public class ProductEjb {
         Set<String> errorMessages = new HashSet<>();
         SAPAccessControl control = accessController.getCurrentControlDefinitions();
         for (Product productToPublish : productsToPublish) {
-            if(!CollectionUtils.containsAll(control.getDisabledFeatures(),
-                                            Collections.singleton(productToPublish.getPrimaryPriceItem().getName()))
+            if(!CollectionUtils.containsAll(control.getDisabledItems(),
+                                            Collections.singleton(new AccessItem(productToPublish.getPrimaryPriceItem().getName())))
                     && control.isEnabled()) {
                 try {
                     if (productToPublish.isSavedInSAP()) {
