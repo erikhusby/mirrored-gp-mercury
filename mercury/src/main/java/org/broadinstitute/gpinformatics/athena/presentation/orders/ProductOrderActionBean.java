@@ -122,7 +122,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeDefinition;
 import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.datatables.Column;
+import org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver;
+import org.broadinstitute.gpinformatics.mercury.presentation.datatables.State;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.hibernate.Hibernate;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -194,6 +198,21 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String KIT_DEFINITION_INDEX = "kitDefinitionQueryIndex";
     private static final String COULD_NOT_LOAD_SAMPLE_DATA = "Could not load sample data";
     private String sampleSummary;
+    private List<String> sampleColumns = Arrays.asList(
+            BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID.columnName(),
+            BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID.columnName(),
+            BSPSampleSearchColumn.PARTICIPANT_ID.columnName(),
+            BSPSampleSearchColumn.VOLUME.columnName(),
+            BSPSampleSearchColumn.RECEIPT_DATE.columnName(),
+            BSPSampleSearchColumn.PICO_RUN_DATE.columnName(),
+            BSPSampleSearchColumn.TOTAL_DNA.columnName(),
+            BSPSampleSearchColumn.CONCENTRATION.columnName(),
+            BSPSampleSearchColumn.MATERIAL_TYPE.columnName(), BSPSampleSearchColumn.RACKSCAN_MISMATCH.columnName(),
+            "On Risk",
+            "Proceed OOS",
+            "Yield Amount");
+
+    private Map<String, Boolean> headerVisibilityMap = new HashMap<>();
 
     public ProductOrderActionBean() {
         super(CREATE_ORDER, EDIT_ORDER, PRODUCT_ORDER_PARAMETER);
@@ -398,8 +417,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     // Search uses product family list.
     private List<ProductFamily> productFamilies;
-
-
+    @Inject
+    DatatablesStateSaver preferenceSaver;
     @Inject
     private LabVesselDao labVesselDao;
 
@@ -485,6 +504,9 @@ public class ProductOrderActionBean extends CoreActionBean {
             // This is only used for save, when creating a new product order.
             editOrder = new ProductOrder();
         }
+
+        preferenceSaver = new DatatablesStateSaver(PreferenceType.PRODUCT_ORDER_PREFERENCES);
+        buildHeaderVisibilityMap();
     }
 
     protected Map<String, Collection<RegulatoryInfo>> setupRegulatoryInformation(ResearchProject researchProject) {
@@ -3121,4 +3143,36 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void setPriceListCache(PriceListCache priceListCache) {
         this.priceListCache = priceListCache;
     }
+
+
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
+    @HandlesEvent(DatatablesStateSaver.SAVE_SEARCH_DATA)
+    public Resolution saveSearchData(String tableState) throws Exception {
+        preferenceSaver.saveTableData(tableState);
+        return new StreamingResolution("application/json", preferenceSaver.getTableStateJson());
+    }
+
+    private void buildHeaderVisibilityMap() {
+        State tableState = preferenceSaver.getTableState();
+        if (tableState!=null) {
+            for (Column column : tableState.getColumns()) {
+                boolean visible = true;
+                if (column!=null){
+                    visible = column.isVisible();
+                }
+                String headerName = column.getHeaderName();
+                if (StringUtils.isNotBlank(headerName)) {
+                    headerVisibilityMap.put(headerName, visible);
+                }
+            }
+        }
+    }
+
+
+    public boolean showHeader(String columnName) {
+        return headerVisibilityMap.isEmpty() || (headerVisibilityMap.get(columnName) != null && headerVisibilityMap
+                .get(columnName));
+    }
+
 }
