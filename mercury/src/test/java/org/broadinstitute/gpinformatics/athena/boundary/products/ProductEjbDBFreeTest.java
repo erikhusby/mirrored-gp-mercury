@@ -101,12 +101,12 @@ public class ProductEjbDBFreeTest {
 
 
         Product testProduct2 = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "P-CLIATEST-SAP");
-        testProduct.setPrimaryPriceItem(new PriceItem("qsID", "testPlatform", "testCategory", "blockThisItem"));
+        testProduct2.setPrimaryPriceItem(new PriceItem("qsID", "testPlatform", "testCategory", "blockThisItem"));
         testProduct2.setExternalOnlyProduct(true);
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(noControl);
 
         try {
-            testEjb.publishProductToSAP(testProduct);
+            testEjb.publishProductToSAP(testProduct2);
             Assert.fail();
         } catch (SAPIntegrationException e) {
             assertThat(e.getMessage(), containsString("Cannot be published to SAP since it is either a Clinical or Commercial product"));
