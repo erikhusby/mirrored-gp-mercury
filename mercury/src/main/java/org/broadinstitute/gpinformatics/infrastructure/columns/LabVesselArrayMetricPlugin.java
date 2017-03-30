@@ -5,7 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcFingerprint;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcGtConcordance;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
-import org.broadinstitute.gpinformatics.infrastructure.search.LabVesselSearchDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.search.InfiniumVesselTraversalEvaluator;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -78,7 +78,7 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
             headerGroup.addHeader(valueColumnType.getResultHeader());
         }
 
-        if( !LabVesselSearchDefinition.isInfiniumSearch( context ) ) {
+        if( !InfiniumVesselTraversalEvaluator.isInfiniumSearch( context ) ) {
             for (LabVessel labVessel : labVesselList) {
                 metricRows.add(new ConfigurableList.Row(labVessel.getLabel()));
             }
@@ -94,7 +94,7 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
                 continue;
             }
             for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions :
-                    LabVesselSearchDefinition.getChipDetailsForDnaWell(labVessel, CHIP_EVENT_TYPES, context).asMap().entrySet()) {
+                    InfiniumVesselTraversalEvaluator.getChipDetailsForDnaWell(labVessel, CHIP_EVENT_TYPES, context).asMap().entrySet()) {
                 String label = labVesselAndPositions.getKey().getLabel() + "_" +
                         labVesselAndPositions.getValue().iterator().next();
                 chipWellBarcodes.add(label);
