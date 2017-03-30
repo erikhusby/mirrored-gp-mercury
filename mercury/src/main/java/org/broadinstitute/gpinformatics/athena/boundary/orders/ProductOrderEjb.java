@@ -50,6 +50,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapConfig;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
@@ -129,6 +130,7 @@ public class ProductOrderEjb {
     private SapIntegrationService sapService;
 
     private AppConfig appConfig;
+    private SapConfig sapConfig;
 
     private EmailSender emailSender;
 
@@ -1101,8 +1103,8 @@ public class ProductOrderEjb {
         final Collection<String> ccAddrdesses = isProduction ? currentUserForCC :
                 Arrays.asList("scottmat@broadinstitute.org", "smcdonou@broadinstitute.org");
 
-        emailSender.sendHtmlEmail(appConfig, appConfig.getSapShortCloseRecipientEmail(), ccAddrdesses,
-                appConfig.getSapShortCloseEmailSubject(), body, !isProduction);
+        emailSender.sendHtmlEmail(appConfig, sapConfig.getSapShortCloseRecipientEmail(), ccAddrdesses,
+                sapConfig.getSapShortCloseEmailSubject(), body, !isProduction);
     }
 
     /**

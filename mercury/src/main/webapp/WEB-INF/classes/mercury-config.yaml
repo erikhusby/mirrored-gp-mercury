@@ -8,8 +8,6 @@ app:
       port:     8443
       jmsPort:  5445
       workflowValidationEmail:
-      sapShortCloseRecipientEmail: zsearle@broadinstitute.org
-      sapShortCloseEmailSubject: TEST SAP Order: Short Close Request
 
 
     AUTO_BUILD:
@@ -17,40 +15,30 @@ app:
       port:     8444
       jmsPort:  5446
       workflowValidationEmail:
-      sapShortCloseRecipientEmail: zsearle@broadinstitute.org
-      sapShortCloseEmailSubject: TEST SAP Order: Short Close Request
 
     TEST:
       host:     mercurydev.broadinstitute.org
       port:     8443
       jmsPort:  5445
       workflowValidationEmail:
-      sapShortCloseRecipientEmail: zsearle@broadinstitute.org
-      sapShortCloseEmailSubject: TEST SAP Order: Short Close Request
 
     QA:
       host:     mercuryqa.broadinstitute.org
       port:     8443
       jmsPort:  5445
       workflowValidationEmail:
-      sapShortCloseRecipientEmail: zsearle@broadinstitute.org
-      sapShortCloseEmailSubject: TEST SAP Order: Short Close Request
 
     RC:
       host:     mercuryrc.broadinstitute.org
       port:     8443
       jmsPort:  5445
       workflowValidationEmail:
-      sapShortCloseRecipientEmail: zsearle@broadinstitute.org
-      sapShortCloseEmailSubject: TEST SAP Order: Short Close Request
 
     PROD:
       host:     mercury.broadinstitute.org
       port:     8443
       jmsPort:  5445
       workflowValidationEmail: mercury-dev@broadinstitute.org
-      sapShortCloseRecipientEmail: BUSSYS@broadinstitute.org
-      sapShortCloseEmailSubject: SAP Order: Short Close Request
       #limsworkflowvalidation@broadinstitute.org
 
 bsp:
@@ -297,12 +285,18 @@ sap:
     DEV:
       login:      GPCOMU
       password:   SAPERD300!
+      sapShortCloseRecipientEmail: zsearle@broadinstitute.org
+      sapShortCloseEmailSubject: TEST SAP Order: Short Close Request
     QA:
       login:      GPCOMU
       password:   SAPERQ300!
+      sapShortCloseRecipientEmail: zsearle@broadinstitute.org
+      sapShortCloseEmailSubject: TEST SAP Order: Short Close Request
     PROD:
       login:      GPCOMU
       password:   SAPERP300!
+      sapShortCloseRecipientEmail: BUSSYS@broadinstitute.org
+      sapShortCloseEmailSubject: SAP Order: Short Close Request
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 mercury:
 
