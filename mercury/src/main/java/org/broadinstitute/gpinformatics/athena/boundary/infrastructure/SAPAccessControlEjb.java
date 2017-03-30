@@ -1,4 +1,4 @@
-`package org.broadinstitute.gpinformatics.athena.boundary.infrastructure;
+package org.broadinstitute.gpinformatics.athena.boundary.infrastructure;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.infrastructure.SAPAccessControlDao;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
