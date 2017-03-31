@@ -348,16 +348,11 @@ public class ConfigurableSearchDao extends GenericDao {
                     }
                 }
 
-                // Add/remove initial vessels to/from custom traversal results if selected
+                // Add initial vessels to custom traversal results if selected
+                // The custom traverser logic is responsible for adding initial vessels as required if exclude is checked
                 if( isCustomTraversal ) {
-                    if (searchInstance.getExcludeInitialEntitiesFromResults()) {
-                        // Explicitly remove initial entities
-                        for( Object entity : pagination.getIdList() ) {
-                            traversalEntities.remove(entity);
-                        }
-                    } else {
-                        // Shouldn't depend on the implementation to not add initial entities to results
-                        // Therefore, put all the initial entities back into the result Set
+                    if (!searchInstance.getExcludeInitialEntitiesFromResults()) {
+                        // Put all the initial entities back into the result Set
                         traversalEntities.addAll(pagination.getIdList());
                     }
                 }

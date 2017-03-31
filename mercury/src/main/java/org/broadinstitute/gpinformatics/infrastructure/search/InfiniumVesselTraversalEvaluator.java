@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import java.util.ArrayList;
@@ -14,6 +15,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -64,30 +66,52 @@ public class InfiniumVesselTraversalEvaluator extends CustomTraversalEvaluator {
         TransferTraverserCriteria.VesselForEventTypeCriteria eventTypeCriteria
                 = new TransferTraverserCriteria.VesselForEventTypeCriteria(infiniumRootEventTypes, true);
 
-        for( LabVessel vessel : (List<LabVessel>) rootEntities ) {
-            if( vessel.getContainerRole() != null ) {
-                vessel.getContainerRole().applyCriteriaToAllPositions(eventTypeCriteria, traversalDirection);
+        for( LabVessel startingVessel : (List<LabVessel>) rootEntities ) {
+
+            // If starting vessel is DNA plate or well, add plate and/or well(s) and continue
+            Set<LabVessel> dnaVessels = testForStartingOnDnaPlateOrWell(startingVessel);
+            if( dnaVessels.size() > 0 ) {
+                infiniumVessels.addAll(dnaVessels);
+                continue;
+            }
+
+            boolean found = false;
+            VesselContainer<?> vesselContainer = startingVessel.getContainerRole();
+            if( vesselContainer != null ) {
+                // Rarely if ever will someone come in with daughter plate, just do the traverse
+                startingVessel.getContainerRole().applyCriteriaToAllPositions(eventTypeCriteria, traversalDirection);
             } else {
+
                 // In cases where the PDO tube is plated directly, we don't need to traverse.
-                boolean found = false;
-                for (LabVessel labVessel : vessel.getContainers()) {
-                    for (SectionTransfer sectionTransfer : labVessel.getContainerRole().getSectionTransfersFrom()) {
+                for (LabVessel rack : startingVessel.getContainers()) {
+                    VesselPosition sourcePosition = rack.getContainerRole().getPositionOfVessel(startingVessel);
+                    for (SectionTransfer sectionTransfer : rack.getContainerRole().getSectionTransfersFrom()) {
                         if (sectionTransfer.getLabEvent().getLabEventType() == LabEventType.ARRAY_PLATING_DILUTION) {
-                            Set<LabVessel> labVessels = eventTypeCriteria.getVesselsForLabEventType().get(
-                                    sectionTransfer.getLabEvent());
-                            if (labVessels == null) {
-                                labVessels = new HashSet<>();
-                                eventTypeCriteria.getVesselsForLabEventType().put(sectionTransfer.getLabEvent(),
-                                        labVessels);
+                            VesselContainer<?> dnaPlate = sectionTransfer.getTargetVesselContainer();
+                            infiniumVessels.add(dnaPlate.getEmbedder());
+                            // Sections will never be flipped (source position = target position)
+                            LabVessel dnaWell = dnaPlate.getVesselAtPosition(sourcePosition);
+                            if( dnaWell != null ) {
+                                infiniumVessels.add(dnaWell);
                             }
-                            labVessels.add(sectionTransfer.getTargetVesselContainer().getEmbedder());
+
                             found = true;
                         }
                     }
                 }
                 if (!found) {
-                    vessel.evaluateCriteria(eventTypeCriteria, traversalDirection);
+                    startingVessel.evaluateCriteria(eventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
                 }
+            }
+        }
+
+        // Filter types out of any initial DNA plate vessels found
+        for(Iterator iter = infiniumVessels.iterator(); iter.hasNext(); ) {
+            LabVessel eventVessel = (LabVessel)iter.next();
+            if( eventVessel.getType() == LabVessel.ContainerType.PLATE_WELL && !shouldProduceWells ) {
+                iter.remove();
+            } else if( eventVessel.getType() == LabVessel.ContainerType.STATIC_PLATE && !shouldProducePlates ) {
+                iter.remove();
             }
         }
 
@@ -222,7 +246,6 @@ public class InfiniumVesselTraversalEvaluator extends CustomTraversalEvaluator {
         return result;
     }
 
-
     /**
      * Given a LabVessel representing a DNA plate well, get details of the associated Infinium plate and position
      * @param dnaPlateWell The DNA plate well to get the downstream Infinium chip details for.
@@ -245,5 +268,41 @@ public class InfiniumVesselTraversalEvaluator extends CustomTraversalEvaluator {
         }
 
         return infiniumDescendantCriteria.getPositions();
+    }
+
+    /**
+     * Determine if search starting vessel is a DNA plate or well and add all applicable vessels to set
+     */
+    private Set<LabVessel> testForStartingOnDnaPlateOrWell(LabVessel startingVessel ) {
+
+        if( startingVessel.getType() != LabVessel.ContainerType.PLATE_WELL
+                && startingVessel.getType() != LabVessel.ContainerType.STATIC_PLATE ) {
+            return Collections.EMPTY_SET;
+        }
+
+
+        if( startingVessel.getType() == LabVessel.ContainerType.STATIC_PLATE ) {
+            VesselContainer<?> vesselContainer = startingVessel.getContainerRole();
+            for (SectionTransfer sectionTransfer : vesselContainer.getSectionTransfersTo()) {
+                if (sectionTransfer.getLabEvent().getLabEventType() == LabEventType.ARRAY_PLATING_DILUTION) {
+                    Set<LabVessel> infiniumVessels = new HashSet<>();
+                    infiniumVessels.add(vesselContainer.getEmbedder());
+                    infiniumVessels.addAll(vesselContainer.getContainedVessels());
+                    return infiniumVessels;
+                }
+            }
+        } else {
+            VesselContainer<?> vesselContainer = ((PlateWell)startingVessel).getPlate().getContainerRole();
+            for (SectionTransfer sectionTransfer : vesselContainer.getSectionTransfersTo()) {
+                if (sectionTransfer.getLabEvent().getLabEventType() == LabEventType.ARRAY_PLATING_DILUTION) {
+                    Set<LabVessel> infiniumVessels = new HashSet<>();
+                    infiniumVessels.add(vesselContainer.getEmbedder());
+                    infiniumVessels.add(startingVessel);
+                    return infiniumVessels;
+                }
+            }
+        }
+
+        return Collections.EMPTY_SET;
     }
 }
