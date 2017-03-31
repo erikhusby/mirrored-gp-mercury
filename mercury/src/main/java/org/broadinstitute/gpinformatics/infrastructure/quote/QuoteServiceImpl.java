@@ -300,6 +300,16 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
             throw new RuntimeException("URL encoding not supported: '" + ENCODING + "'", e);
         }
 
+//        for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel()) {
+//            if(fundingLevel.getFunding().getFundingType().equals(Funding.FUNDS_RESERVATION)) {
+//                if(fundingLevel.getFunding().getGrantEndDate() != null &&
+//                   !fundingLevel.getFunding().getGrantEndDate().after(new Date())) {
+//                    throw new RuntimeException("The funding source "+ fundingLevel.getFunding().getGrantNumber() +
+//                                               " has expired making this quote currently unfunded.");
+//                }
+//            }
+//        }
+
         return quote;
     }
 

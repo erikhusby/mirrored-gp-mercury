@@ -442,11 +442,35 @@ function updateFundsRemaining() {
 }
 
 function updateFunds(data) {
+
+    var quoteWarning = false;
+
     if (data.fundsRemaining) {
-        $j("#fundsRemaining").text('Status: ' + data.status + ' - Funds Remaining: ' + data.fundsRemaining +
-                ' with ' + data.outstandingEstimate + ' unbilled across existing open orders');
+        var fundsRemainingNotification = 'Status: ' + data.status + ' - Funds Remaining: ' + data.fundsRemaining +
+                ' with ' + data.outstandingEstimate + ' unbilled across existing open orders';
+        var fundingDetails = data.fundingDetails;
+
+        if(data.status != "Funded" || data.outstandingEstimate > data.fundsRemaining) {
+            quoteWarning = true;
+        }
+
+        for(var detailIndex in fundingDetails) {
+            fundsRemainingNotification += '\n'+fundingDetails[detailIndex].grantTitle;
+            if(fundingDetails[detailIndex].activeGrant) {
+                fundsRemainingNotification += ' -- Expires ' + fundingDetails[detailIndex].grantEndDate;
+            } else {
+                fundsRemainingNotification += ' -- Has Expired ' + fundingDetails[detailIndex].grantEndDate;
+                quoteWarning = true;
+            }
+        }
+        $j("#fundsRemaining").text(fundsRemainingNotification);
     } else {
         $j("#fundsRemaining").text('Error: ' + data.error);
+        quoteWarning = true;
+    }
+
+    if(quoteWarning) {
+        $j("#fundsRemaining").addClass("alert alert-error");
     }
 }
 

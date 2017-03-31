@@ -22,6 +22,7 @@ import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.CharEncoding;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -1167,12 +1168,22 @@ public class ProductOrderActionBean extends CoreActionBean {
                 double outstandingOrdersValue = estimateOutstandingOrders(quoteIdentifier);
                 item.put("outstandingEstimate",  NumberFormat.getCurrencyInstance().format(
                         outstandingOrdersValue));
+                JSONArray fundingDetails = new JSONArray();
+                final FastDateFormat dateFormater = FastDateFormat.getInstance("MM/dd/yyyy");
+
                 for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel()) {
                     if(fundingLevel.getFunding().getFundingType().equals(Funding.FUNDS_RESERVATION)) {
-                        item.put("grantInfo", fundingLevel.getFunding().getDisplayName() + " " + )
+                        JSONObject fundingInfo = new JSONObject();
+                        fundingInfo.put("grantTitle", fundingLevel.getFunding().getDisplayName());
+                        fundingInfo.put("grantEndDate",
+                                dateFormater.format(fundingLevel.getFunding().getGrantEndDate()));
+                        fundingInfo.put("grantNumber", fundingLevel.getFunding().getGrantNumber());
+                        fundingInfo.put("grantStatus", fundingLevel.getFunding().getGrantStatus());
+                        fundingInfo.put("activeGrant", (fundingLevel.getFunding().getGrantEndDate() != null && fundingLevel.getFunding().getGrantEndDate().after(new Date())));
+                        fundingDetails.put(fundingInfo);
                     }
                 }
-
+                item.put("fundingDetails", fundingDetails);
             }
 
         } catch (Exception ex) {
