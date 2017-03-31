@@ -1576,11 +1576,11 @@ public class LabVesselSearchDefinition {
         List<SearchTerm> searchTerms = new ArrayList<>();
         SearchTerm searchTerm;
 
-        // Need a non-functional criteria path to make terms with alternate definitions visible in selection list
-        List<SearchTerm.CriteriaPath> blankCriteriaPaths = new ArrayList<>();
-        SearchTerm.CriteriaPath blankCriteriaPath = new SearchTerm.CriteriaPath();
-        blankCriteriaPath.setCriteria(new ArrayList<String>());
-        blankCriteriaPaths.add(blankCriteriaPath);
+        // Criteria paths all use label
+        List<SearchTerm.CriteriaPath> labelCriteriaPaths = new ArrayList<>();
+        SearchTerm.CriteriaPath labelCriteriaPath = new SearchTerm.CriteriaPath();
+        labelCriteriaPath.setPropertyName("label");
+        labelCriteriaPaths.add(labelCriteriaPath);
 
         final List<LabEventType> ampPlateEventTypes
                 = Collections.singletonList(LabEventType.INFINIUM_AMPLIFICATION);
@@ -1605,6 +1605,7 @@ public class LabVesselSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName(MultiRefTerm.INFINIUM_DNA_PLATE.getTermRefName());
+        searchTerm.setCriteriaPaths(labelCriteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public String evaluate(Object entity, SearchContext context) {
@@ -1644,6 +1645,7 @@ public class LabVesselSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName(MultiRefTerm.INFINIUM_AMP_PLATE.getTermRefName());
+        searchTerm.setCriteriaPaths(labelCriteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public String evaluate(Object entity, SearchContext context) {
@@ -1679,6 +1681,7 @@ public class LabVesselSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName(MultiRefTerm.INFINIUM_CHIP.getTermRefName());
+        searchTerm.setCriteriaPaths(labelCriteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public String evaluate(Object entity, SearchContext context) {
