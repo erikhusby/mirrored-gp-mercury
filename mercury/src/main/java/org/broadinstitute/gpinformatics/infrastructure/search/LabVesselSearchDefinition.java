@@ -1660,6 +1660,11 @@ public class LabVesselSearchDefinition {
                 String result = null;
                 LabVessel vessel = (LabVessel)entity;
 
+                // Ignore for all but Infinium DNA Plate wells as source vessel
+                if(!InfiniumVesselTraversalEvaluator.isInfiniumSearch(context) || vessel.getType() != LabVessel.ContainerType.PLATE_WELL) {
+                    return null;
+                }
+
                 // DNA plate well event/vessel looks to descendant for chip well (1:1)
                 for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
                         : InfiniumVesselTraversalEvaluator.getChipDetailsForDnaWell(vessel, CHIP_EVENT_TYPES, context).asMap().entrySet()) {
