@@ -174,7 +174,6 @@ public class PriceListCache extends AbstractCache implements Serializable {
         return null;
     }
 
-
     public QuotePriceItem findByKeyFields(PriceItem priceItem) {
         return findByKeyFields(priceItem.getPlatform(), priceItem.getCategory(), priceItem.getName());
     }
@@ -201,10 +200,12 @@ public class PriceListCache extends AbstractCache implements Serializable {
         final QuotePriceItem cachedPriceItem = findByKeyFields(primaryPriceItem);
         String price = cachedPriceItem.getPrice();
         final Quote orderQuote = quoteService.getQuoteByAlphaId(quoteId);
-        for (QuoteItem quoteItem : orderQuote.getQuoteItems()) {
-            if (cachedPriceItem.sameAsQuoteItem(quoteItem)) {
-                if (new BigDecimal(quoteItem.getPrice()).compareTo(new BigDecimal(cachedPriceItem.getPrice())) < 0) {
-                    price = quoteItem.getPrice();
+        if (orderQuote.getQuoteItems() != null) {
+            for (QuoteItem quoteItem : orderQuote.getQuoteItems()) {
+                if (cachedPriceItem.sameAsQuoteItem(quoteItem)) {
+                    if (new BigDecimal(quoteItem.getPrice()).compareTo(new BigDecimal(cachedPriceItem.getPrice())) < 0) {
+                        price = quoteItem.getPrice();
+                    }
                 }
             }
         }

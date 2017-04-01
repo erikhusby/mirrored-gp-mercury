@@ -32,6 +32,7 @@ public class QuoteItem {
         this.price = price;
         this.unit = unit;
         this.platformName = platformName;
+        this.categoryName = categoryName;
     }
 
     @XmlAttribute(name = "quoteId")
