@@ -61,10 +61,4 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
     public SapIntegrationClientImpl.SAPCompanyConfiguration getSapCompanyConfigurationForProduct(Product product) {
         return SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
     }
-
-    @Override
-    public String getEffectivePrice(ProductOrder placedOrder, Product product)
-            throws QuoteServerException, QuoteNotFoundException {
-        return "20";
-    }
 }

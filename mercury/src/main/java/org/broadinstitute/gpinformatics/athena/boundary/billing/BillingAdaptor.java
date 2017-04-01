@@ -198,7 +198,8 @@ public class BillingAdaptor implements Serializable {
                     BigDecimal replacementMultiplier = null;
                     if(primaryPriceItemIfReplacementForSAP != null) {
                         BigDecimal primaryPrice = new BigDecimal(primaryPriceItemIfReplacementForSAP.getPrice());
-                        BigDecimal replacementPrice  = new BigDecimal(priceItemBeingBilled.getPrice());
+                        String price = priceListCache.getEffectivePrice(item.getQuoteId(), item.getPriceItem());
+                        BigDecimal replacementPrice  = new BigDecimal(price);
 
                         replacementMultiplier = (replacementPrice.divide(primaryPrice, 3, BigDecimal.ROUND_DOWN)).multiply(BigDecimal.valueOf(item.getQuantityForSAP())).setScale(3, BigDecimal.ROUND_DOWN);
                     }

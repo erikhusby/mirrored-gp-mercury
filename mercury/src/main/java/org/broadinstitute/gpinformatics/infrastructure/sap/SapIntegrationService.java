@@ -41,9 +41,6 @@ public interface SapIntegrationService {
      */
     void updateOrder(ProductOrder placedOrder) throws SAPIntegrationException;
 
-    String getEffectivePrice(ProductOrder placedOrder, Product product)
-            throws QuoteServerException, QuoteNotFoundException;
-
     /**
      * For Phase 1 of the SAP/GP integration, Orders placed in SAP need to have reference to the customer number found
      * in SAP of the contact person on a purchase order.  This method will give Mercury the ability to search for that

@@ -10,6 +10,7 @@ import javax.annotation.Nonnull;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -193,4 +194,21 @@ public class PriceListCache extends AbstractCache implements Serializable {
         }
 
     }
+
+    public String getEffectivePrice(String quoteId, PriceItem primaryPriceItem)
+            throws QuoteServerException, QuoteNotFoundException {
+
+        final QuotePriceItem cachedPriceItem = findByKeyFields(primaryPriceItem);
+        String price = cachedPriceItem.getPrice();
+        final Quote orderQuote = quoteService.getQuoteByAlphaId(quoteId);
+        for (QuoteItem quoteItem : orderQuote.getQuoteItems()) {
+            if (cachedPriceItem.sameAsQuoteItem(quoteItem)) {
+                if (new BigDecimal(quoteItem.getPrice()).compareTo(new BigDecimal(cachedPriceItem.getPrice())) < 0) {
+                    price = quoteItem.getPrice();
+                }
+            }
+        }
+        return price;
+    }
+
 }

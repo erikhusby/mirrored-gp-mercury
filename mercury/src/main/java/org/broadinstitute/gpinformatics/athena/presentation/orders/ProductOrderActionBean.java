@@ -101,7 +101,6 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
@@ -863,7 +862,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     double getProductValue(int unbilledCount, Product product, ProductOrder order)
             throws QuoteNotFoundException, QuoteServerException {
         double productValue = 0d;
-        String foundPrice = sapService.getEffectivePrice(order, product);
+        String foundPrice = priceListCache.getEffectivePrice(order.getQuoteId(), product.getPrimaryPriceItem());
 
         if (StringUtils.isNotBlank(foundPrice)) {
             Double productPrice = Double.valueOf(foundPrice);
