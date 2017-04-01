@@ -297,7 +297,7 @@ public class QuotePriceItem {
 
     public boolean sameAsQuoteItem(QuoteItem quoteItem) {
         return quoteItem.getCategoryName().equals(getCategoryName()) &&
-               quoteItem.getCategoryName().equals(getName()) &&
+               quoteItem.getName().equals(getName()) &&
                quoteItem.getPlatformName().equals(getPlatformName());
     }
 }
