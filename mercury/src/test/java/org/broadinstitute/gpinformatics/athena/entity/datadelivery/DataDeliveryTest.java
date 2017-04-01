@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.datadelivery;
 
+//import com.jprofiler.api.agent.Controller;
+
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
@@ -54,6 +56,8 @@ public class DataDeliveryTest extends Arquillian {
 
     @Test
     public void testX() {
+//        Controller.startCPURecording(true);
+//        Controller.startProbeRecording(Controller.PROBE_NAME_JDBC, true);
         // Create initial set
         // Search with PDO (UDS? would be valuable to save search values, but traverser would likely be heavily customized ; perhaps not, because of multiple schemas)
         // What are the entities for UDS?  LabVessel?  What if the PDO has just been placed?  What about chip wells, which don't have a LabVessel (only a position)
@@ -114,5 +118,7 @@ public class DataDeliveryTest extends Arquillian {
     Deselect with reason
     Specify bucket at set or item?
  */
+//        Controller.stopProbeRecording(Controller.PROBE_NAME_JDBC);
+//        Controller.stopCPURecording();
     }
 }
