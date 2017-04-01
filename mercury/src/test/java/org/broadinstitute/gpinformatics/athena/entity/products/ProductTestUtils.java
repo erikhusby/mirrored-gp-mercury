@@ -20,6 +20,5 @@ public class ProductTestUtils {
                 productForCache.getPrimaryPriceItem().getName())).thenReturn(testQuotePriceItem);
 
         Mockito.when(mockPriceListCache.findByKeyFields(productForCache.getPrimaryPriceItem())).thenReturn(testQuotePriceItem);
-        Mockito.when(mockPriceListCache.getEffectivePrice(quoteId, productForCache.getPrimaryPriceItem())).thenReturn(price);
     }
 }

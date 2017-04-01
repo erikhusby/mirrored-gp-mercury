@@ -158,10 +158,10 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         newOrder.setResearchProjectNumber(placedOrder.getResearchProject().getJiraTicketKey());
 
         Product primaryProduct = placedOrder.getProduct();
-        newOrder.addOrderItem(getOrderItem(placedOrder, primaryProduct));
+        newOrder.addOrderItem(getOrderItem(placedOrder, primaryProduct, foundQuote));
 
         for (ProductOrderAddOn addon : placedOrder.getAddOns()) {
-            newOrder.addOrderItem(getOrderItem(placedOrder, addon.getAddOn()));
+            newOrder.addOrderItem(getOrderItem(placedOrder, addon.getAddOn(), foundQuote));
         }
 
         return newOrder;
@@ -172,12 +172,13 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      * is expected to be charged
      * @param placedOrder Order from which the quantities are defined
      * @param product Product that is to be eventually charged when work on the product order is completed
+     * @param quote
      * @return JAXB sub element of the SAP order to represent the Product that will be charged and the quantity that
      * is expected of it.
      */
-    protected SAPOrderItem getOrderItem(ProductOrder placedOrder, Product product) throws SAPIntegrationException {
+    protected SAPOrderItem getOrderItem(ProductOrder placedOrder, Product product, Quote quote) throws SAPIntegrationException {
         try {
-            String price = priceListCache.getEffectivePrice(placedOrder.getQuoteId(), product.getPrimaryPriceItem());
+            String price = priceListCache.getEffectivePrice(product.getPrimaryPriceItem(), quote);
 
             return new SAPOrderItem(product.getPartNumber(),
                     price,

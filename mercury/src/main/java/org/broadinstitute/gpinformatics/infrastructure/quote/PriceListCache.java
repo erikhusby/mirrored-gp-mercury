@@ -194,12 +194,11 @@ public class PriceListCache extends AbstractCache implements Serializable {
 
     }
 
-    public String getEffectivePrice(String quoteId, PriceItem primaryPriceItem)
+    public String getEffectivePrice(PriceItem primaryPriceItem, Quote orderQuote)
             throws QuoteServerException, QuoteNotFoundException {
 
         final QuotePriceItem cachedPriceItem = findByKeyFields(primaryPriceItem);
         String price = cachedPriceItem.getPrice();
-        final Quote orderQuote = quoteService.getQuoteByAlphaId(quoteId);
         if (orderQuote.getQuoteItems() != null) {
             for (QuoteItem quoteItem : orderQuote.getQuoteItems()) {
                 if (cachedPriceItem.sameAsQuoteItem(quoteItem)) {

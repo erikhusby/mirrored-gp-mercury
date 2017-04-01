@@ -765,9 +765,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         double outstandingEstimate = estimateOutstandingOrders(quote.getAlphanumericId());
         double valueOfCurrentOrder = 0;
         if(countCurrentUnPlacedOrder) {
-            valueOfCurrentOrder = getValueOfOpenOrders(Collections.singletonList(editOrder));
+            valueOfCurrentOrder = getValueOfOpenOrders(Collections.singletonList(editOrder), quote);
         } else if(additionalSampleCount > 0) {
-            valueOfCurrentOrder = getOrderValue(editOrder, additionalSampleCount);
+            valueOfCurrentOrder = getOrderValue(editOrder, additionalSampleCount, quote);
         }
 
         if (fundsRemaining <= 0d ||
@@ -802,21 +802,24 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         List<ProductOrder> ordersWithCommonQuote = productOrderDao.findOrdersWithCommonQuote(quoteId);
 
-        return getValueOfOpenOrders(ordersWithCommonQuote);
+        return getValueOfOpenOrders(ordersWithCommonQuote,
+                quoteService.getQuoteByAlphaId(quoteId));
     }
 
     /**
      * Determines the total monitary value of all unbilled samples on a given list of orders
      *
      * @param ordersWithCommonQuote Subset of orders for which the monitary value is to be determined
+     * @param quote
      * @return Total dollar amount which equates to the monitary value of all orders given
      */
-    double getValueOfOpenOrders(List<ProductOrder> ordersWithCommonQuote)
+    double getValueOfOpenOrders(List<ProductOrder> ordersWithCommonQuote, Quote quote)
             throws QuoteNotFoundException, QuoteServerException {
         double value = 0d;
 
         for (ProductOrder testOrder : ordersWithCommonQuote) {
-            value += getOrderValue(testOrder, testOrder.getUnbilledSampleCount());
+            value += getOrderValue(testOrder, testOrder.getUnbilledSampleCount(),
+                    quote);
         }
         return value;
     }
@@ -828,22 +831,23 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @param sampleCount unbilled sample count to use for determining the order value.  Passed in separately to account
      *                    for the scenario when we do not want to use the sample count on the order but a sample count
      *                    that will potentially be on the order.
+     * @param quote
      * @return Total monitary value of the order
      */
-    double getOrderValue(ProductOrder testOrder, int sampleCount)
+    double getOrderValue(ProductOrder testOrder, int sampleCount, Quote quote)
             throws QuoteNotFoundException, QuoteServerException {
         double value = 0d;
         if(testOrder.getProduct() != null) {
             final Product product = testOrder.getProduct();
             double productValue =
                     getProductValue((product.getSupportsNumberOfLanes())?testOrder.getLaneCount():sampleCount, product,
-                            testOrder);
+                            quote);
             value += productValue;
             for (ProductOrderAddOn testOrderAddon : testOrder.getAddOns()) {
                 final Product addOn = testOrderAddon.getAddOn();
                 double addOnValue =
                         getProductValue((addOn.getSupportsNumberOfLanes())?testOrder.getLaneCount():sampleCount, addOn,
-                                testOrder);
+                                quote);
                 value += addOnValue;
             }
         }
@@ -856,13 +860,13 @@ public class ProductOrderActionBean extends CoreActionBean {
      *
      * @param unbilledCount count of samples that have not yet been billed
      * @param product Product from which the price can be determined
-     * @param order
+     * @param quote
      * @return Derived value of the Product price multiplied by the number of unbilled samples
      */
-    double getProductValue(int unbilledCount, Product product, ProductOrder order)
+    double getProductValue(int unbilledCount, Product product, Quote quote)
             throws QuoteNotFoundException, QuoteServerException {
         double productValue = 0d;
-        String foundPrice = priceListCache.getEffectivePrice(order.getQuoteId(), product.getPrimaryPriceItem());
+        String foundPrice = priceListCache.getEffectivePrice(product.getPrimaryPriceItem(), quote);
 
         if (StringUtils.isNotBlank(foundPrice)) {
             Double productPrice = Double.valueOf(foundPrice);

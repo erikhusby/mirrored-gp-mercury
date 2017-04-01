@@ -27,9 +27,12 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFunding;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
@@ -57,6 +60,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -82,11 +86,11 @@ public class ProductOrderEjbTest {
     public final AppConfig mockAppConfig = Mockito.mock(AppConfig.class);
     public final EmailSender mockEmailSender = Mockito.mock(EmailSender.class);
     public final SAPAccessControlEjb mockAccessController = Mockito.mock(SAPAccessControlEjb.class);
-    public final PriceListCache mockPriceListCache = Mockito.mock(PriceListCache.class);
+    public final PriceListCache priceListCache = new PriceListCache(mockQuoteService);
     ProductOrderEjb productOrderEjb = new ProductOrderEjb(productOrderDaoMock, null, mockQuoteService,
             JiraServiceProducer.stubInstance(), mockUserBean, null, null, null, mockMercurySampleDao,
             new ProductOrderJiraUtil(JiraServiceProducer.stubInstance(), mockUserBean),
-            mockSapService, mockPriceListCache);
+            mockSapService, priceListCache);
 
     private static final String[] sampleNames = {"SM-1234", "SM-5678", "SM-9101", "SM-1112"};
     ProductOrder productOrder = null;
@@ -297,6 +301,9 @@ public class ProductOrderEjbTest {
 
     public void testCreateOrderInSap() throws Exception {
 
+        PriceList priceList = new PriceList();
+        Collection<QuoteItem> quoteItems = new HashSet<>();
+
         Mockito.when(mockUserBean.getBspUser()).thenReturn(new BSPUserList.QADudeUser("PM", 2423L));
 
         Quote testSingleSourceQuote;
@@ -330,11 +337,48 @@ public class ProductOrderEjbTest {
         conversionPdo.setQuoteId(testSingleSourceQuote.getAlphanumericId() );
         conversionPdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
-        ProductTestUtils.addToMockPriceListCache(conversionPdo.getProduct(), mockPriceListCache, "5", conversionPdo.getQuoteId());
 
+        //GPLIM-4693 TODO Sgm implement non mock price list solution in ProductOrderActionBeanTest
+        priceList.add(new QuotePriceItem(conversionPdo.getProduct().getPrimaryPriceItem().getCategory(),
+                conversionPdo.getProduct().getPrimaryPriceItem().getName(),
+                conversionPdo.getProduct().getPrimaryPriceItem().getName(), "5", "test",
+                conversionPdo.getProduct().getPrimaryPriceItem().getPlatform()));
+        quoteItems.add(new QuoteItem(testSingleSourceQuote.getAlphanumericId(),conversionPdo.getProduct().getPrimaryPriceItem().getName(),
+                conversionPdo.getProduct().getPrimaryPriceItem().getName(),"2000", "5","each",
+                conversionPdo.getProduct().getPrimaryPriceItem().getPlatform(),
+                conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
+        quoteItems.add(new QuoteItem(testSingleSourceQuote2.getAlphanumericId(),conversionPdo.getProduct().getPrimaryPriceItem().getName(),
+                conversionPdo.getProduct().getPrimaryPriceItem().getName(),"2000", "5","each",
+                conversionPdo.getProduct().getPrimaryPriceItem().getPlatform(),
+                conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
+        quoteItems.add(new QuoteItem(testSingleSourceQuote3.getAlphanumericId(),conversionPdo.getProduct().getPrimaryPriceItem().getName(),
+                conversionPdo.getProduct().getPrimaryPriceItem().getName(),"2000", "5","each",
+                conversionPdo.getProduct().getPrimaryPriceItem().getPlatform(),
+                conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
-            ProductTestUtils.addToMockPriceListCache(productOrderAddOn.getAddOn(), mockPriceListCache, "5", conversionPdo.getQuoteId());
+            priceList.add(new QuotePriceItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory(),
+                    productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),
+                    productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(), "5", "test",
+                    productOrderAddOn.getAddOn().getPrimaryPriceItem().getPlatform()));
+            quoteItems.add(new QuoteItem(testSingleSourceQuote.getAlphanumericId(),productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),
+                    productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),"2000", "5","each",
+                    productOrderAddOn.getAddOn().getPrimaryPriceItem().getPlatform(),
+                    productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory()));
+            quoteItems.add(new QuoteItem(testSingleSourceQuote2.getAlphanumericId(),productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),
+                    productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),"2000", "5","each",
+                    productOrderAddOn.getAddOn().getPrimaryPriceItem().getPlatform(),
+                    productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory()));
+            quoteItems.add(new QuoteItem(testSingleSourceQuote3.getAlphanumericId(),productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),
+                    productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),"2000", "5","each",
+                    productOrderAddOn.getAddOn().getPrimaryPriceItem().getPlatform(),
+                    productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory()));
         }
+
+        testSingleSourceQuote.setQuoteItems(quoteItems);
+        testSingleSourceQuote2.setQuoteItems(quoteItems);
+        testSingleSourceQuote3.setQuoteItems(quoteItems);
+
+        Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
 
         MessageCollection messageCollection = new MessageCollection();
         productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, true);

@@ -23,7 +23,6 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
-import org.broadinstitute.gpinformatics.athena.entity.products.ProductTestUtils;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo_;
@@ -814,21 +813,21 @@ public class ProductOrderActionBeanTest {
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
         Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuoteIdentifier)).thenReturn(testQuote);
 
-        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder)),
+        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote),
                 Double.valueOf(1573 * testOrder.getSamples().size() + 2000 * testOrder.getSamples().size()));
         testQuote.setQuoteItems(quoteItems);
 
-        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder)),
+        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote),
                 Double.valueOf(573 * testOrder.getSamples().size() + 1000 * testOrder.getSamples().size()));
 
         testOrder.updateAddOnProducts(Arrays.asList(addonNonSeqProduct, seqProduct));
 
-        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder)),
+        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote),
                 Double.valueOf(573 * testOrder.getSamples().size() + 1000 * testOrder.getSamples().size() + 2500 * testOrder.getLaneCount()));
 
         testOrder.setProduct(seqProduct);
 
-        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder)),
+        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote),
                 Double.valueOf(573 * testOrder.getSamples().size() + 2500 * testOrder.getLaneCount() + 2500 * testOrder.getLaneCount()));
     }
 
