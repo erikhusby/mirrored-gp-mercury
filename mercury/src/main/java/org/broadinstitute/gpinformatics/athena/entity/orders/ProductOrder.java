@@ -26,6 +26,10 @@ import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtili
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
+import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -1960,5 +1964,18 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     public void setPipelineLocation(
             PipelineLocation pipelineLocation) {
         this.pipelineLocation = pipelineLocation;
+    }
+
+    public static void checkQuoteValidity(ProductOrder productOrder, Quote quote) throws QuoteServerException {
+        for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel()) {
+            if(fundingLevel.getFunding().getFundingType().equals(Funding.FUNDS_RESERVATION)) {
+                if(fundingLevel.getFunding().getGrantEndDate() != null &&
+                   !fundingLevel.getFunding().getGrantEndDate().after(new Date())) {
+                    throw new QuoteServerException("The funding source " + fundingLevel.getFunding().getGrantNumber() +
+                                                   " has expired making this quote currently unfunded.");
+                }
+            }
+        }
+
     }
 }

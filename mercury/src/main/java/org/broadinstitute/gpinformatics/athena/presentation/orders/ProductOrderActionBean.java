@@ -690,6 +690,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         String quoteId = editOrder.getQuoteId();
         Quote quote = validateQuoteId(quoteId);
         try {
+            ProductOrder.checkQuoteValidity(editOrder, quote);
             if(productOrderEjb.isOrderEligibleForSAP(editOrder)) {
                 validateQuoteDetails(quote, ErrorLevel.ERROR, !editOrder.hasJiraTicketKey(), 0);
             }
@@ -737,9 +738,10 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @param additionalSamplesCount Number of extra samples to be considered which are not currently
      */
     private void validateQuoteDetailsWithAddedSamples(String quoteId, final ErrorLevel errorLevel,
-                                                      boolean countOpenOrders, int additionalSamplesCount) {
+                                                      boolean countOpenOrders, int additionalSamplesCount)
+            throws QuoteServerException, QuoteNotFoundException {
         Quote quote = validateQuoteId(quoteId);
-
+        ProductOrder.checkQuoteValidity(editOrder, quote);
         if (quote != null) {
             validateQuoteDetails(quote, errorLevel, countOpenOrders, additionalSamplesCount);
         }
