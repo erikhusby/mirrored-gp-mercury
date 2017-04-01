@@ -19,6 +19,7 @@ public class QuoteItem {
     private String unit;
     private ReplacementItems replacementItems;
     private String quantityComplete;
+    private String platformName;
 
     public QuoteItem() {}
 
@@ -30,6 +31,7 @@ public class QuoteItem {
         this.quantity = quantity;
         this.price = price;
         this.unit = unit;
+        this.platformName = platformName;
     }
 
     @XmlAttribute(name = "quoteId")
@@ -111,6 +113,15 @@ public class QuoteItem {
 
     public void setQuantityComplete(String quantityComplete) {
         this.quantityComplete = quantityComplete;
+    }
+
+    @XmlElement(name = "platform")
+    public String getPlatformName() {
+        return platformName;
+    }
+
+    public void setPlatformName(String platformName) {
+        this.platformName = platformName;
     }
 
     @Override

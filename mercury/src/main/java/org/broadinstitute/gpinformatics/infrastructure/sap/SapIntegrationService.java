@@ -4,6 +4,8 @@ import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 
@@ -38,6 +40,9 @@ public interface SapIntegrationService {
      * @throws SAPIntegrationException
      */
     void updateOrder(ProductOrder placedOrder) throws SAPIntegrationException;
+
+    String getEffectivePrice(ProductOrder placedOrder, Product product)
+            throws QuoteServerException, QuoteNotFoundException;
 
     /**
      * For Phase 1 of the SAP/GP integration, Orders placed in SAP need to have reference to the customer number found

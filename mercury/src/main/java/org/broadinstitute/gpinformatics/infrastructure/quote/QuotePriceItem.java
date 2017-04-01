@@ -294,4 +294,10 @@ public class QuotePriceItem {
             return builder.build();
         }
     };
+
+    public boolean sameAsQuoteItem(QuoteItem quoteItem) {
+        return quoteItem.getCategoryName().equals(getCategoryName()) &&
+               quoteItem.getCategoryName().equals(getName()) &&
+               quoteItem.getPlatformName().equals(getPlatformName());
+    }
 }

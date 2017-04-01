@@ -711,7 +711,8 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @param countOpenOrders indicator for if the current order should be added.  Typically used if it is Draft or
      *                        Pending
      */
-    private void validateQuoteDetails(String quoteId, final ErrorLevel errorLevel, boolean countOpenOrders) {
+    private void validateQuoteDetails(String quoteId, final ErrorLevel errorLevel, boolean countOpenOrders)
+            throws QuoteNotFoundException, QuoteServerException {
         Quote quote = validateQuoteId(quoteId);
 
         if (quote != null) {
@@ -734,7 +735,8 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @param additionalSamplesCount Number of extra samples to be considered which are not currently
      */
     private void validateQuoteDetailsWithAddedSamples(String quoteId, final ErrorLevel errorLevel,
-                                                      boolean countOpenOrders, int additionalSamplesCount) {
+                                                      boolean countOpenOrders, int additionalSamplesCount)
+            throws QuoteNotFoundException, QuoteServerException {
         Quote quote = validateQuoteId(quoteId);
 
         if (quote != null) {
@@ -754,7 +756,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @param additionalSampleCount
      */
     private void validateQuoteDetails(Quote quote, ErrorLevel errorLevel, boolean countCurrentUnPlacedOrder,
-                                      int additionalSampleCount) {
+                                      int additionalSampleCount) throws QuoteNotFoundException, QuoteServerException {
         if (!quote.getApprovalStatus().equals(ApprovalStatus.FUNDED)) {
             String unFundedMessage = "A quote should be funded in order to be used for a product order.";
             addMessageBasedOnErrorLevel(errorLevel, unFundedMessage);
@@ -797,7 +799,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @param quoteId Common quote id to be used to determine which open orders will be found
      * @return total dollar amount of the monitary value of orders associated with the given quote
      */
-    double estimateOutstandingOrders(String quoteId) {
+    double estimateOutstandingOrders(String quoteId) throws QuoteNotFoundException, QuoteServerException {
 
         List<ProductOrder> ordersWithCommonQuote = productOrderDao.findOrdersWithCommonQuote(quoteId);
 
@@ -810,7 +812,8 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @param ordersWithCommonQuote Subset of orders for which the monitary value is to be determined
      * @return Total dollar amount which equates to the monitary value of all orders given
      */
-    double getValueOfOpenOrders(List<ProductOrder> ordersWithCommonQuote) {
+    double getValueOfOpenOrders(List<ProductOrder> ordersWithCommonQuote)
+            throws QuoteNotFoundException, QuoteServerException {
         double value = 0d;
 
         for (ProductOrder testOrder : ordersWithCommonQuote) {
@@ -828,17 +831,20 @@ public class ProductOrderActionBean extends CoreActionBean {
      *                    that will potentially be on the order.
      * @return Total monitary value of the order
      */
-    double getOrderValue(ProductOrder testOrder, int sampleCount) {
+    double getOrderValue(ProductOrder testOrder, int sampleCount)
+            throws QuoteNotFoundException, QuoteServerException {
         double value = 0d;
         if(testOrder.getProduct() != null) {
             final Product product = testOrder.getProduct();
             double productValue =
-                    getProductValue((product.getSupportsNumberOfLanes())?testOrder.getLaneCount():sampleCount, product);
+                    getProductValue((product.getSupportsNumberOfLanes())?testOrder.getLaneCount():sampleCount, product,
+                            testOrder);
             value += productValue;
             for (ProductOrderAddOn testOrderAddon : testOrder.getAddOns()) {
                 final Product addOn = testOrderAddon.getAddOn();
                 double addOnValue =
-                        getProductValue((addOn.getSupportsNumberOfLanes())?testOrder.getLaneCount():sampleCount, addOn);
+                        getProductValue((addOn.getSupportsNumberOfLanes())?testOrder.getLaneCount():sampleCount, addOn,
+                                testOrder);
                 value += addOnValue;
             }
         }
@@ -851,16 +857,16 @@ public class ProductOrderActionBean extends CoreActionBean {
      *
      * @param unbilledCount count of samples that have not yet been billed
      * @param product Product from which the price can be determined
+     * @param order
      * @return Derived value of the Product price multiplied by the number of unbilled samples
      */
-    double getProductValue(int unbilledCount, Product product) {
+    double getProductValue(int unbilledCount, Product product, ProductOrder order)
+            throws QuoteNotFoundException, QuoteServerException {
         double productValue = 0d;
-        QuotePriceItem primaryPriceItem =
-                priceListCache.findByKeyFields(product.getPrimaryPriceItem());
+        String foundPrice = sapService.getEffectivePrice(order, product);
 
-        if (primaryPriceItem != null &&
-            StringUtils.isNotBlank(primaryPriceItem.getPrice())) {
-            Double productPrice = Double.valueOf(primaryPriceItem.getPrice());
+        if (StringUtils.isNotBlank(foundPrice)) {
+            Double productPrice = Double.valueOf(foundPrice);
 
             productValue = productPrice * (unbilledCount);
         }

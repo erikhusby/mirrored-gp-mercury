@@ -14,7 +14,9 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.sap.entity.SAPDeliveryDocument;
@@ -176,10 +178,35 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      * @return JAXB sub element of the SAP order to represent the Product that will be charged and the quantity that
      * is expected of it.
      */
-    protected SAPOrderItem getOrderItem(ProductOrder placedOrder, Product product) {
-        return new SAPOrderItem(product.getPartNumber(),
-                priceListCache.findByKeyFields(product.getPrimaryPriceItem()).getPrice(),
-                getSampleCount(placedOrder, product));
+    protected SAPOrderItem getOrderItem(ProductOrder placedOrder, Product product) throws SAPIntegrationException {
+        try {
+            String price = getEffectivePrice(placedOrder, product);
+
+            return new SAPOrderItem(product.getPartNumber(),
+                    price,
+                    getSampleCount(placedOrder, product));
+        } catch (QuoteServerException e) {
+            throw new SAPIntegrationException("Unable to find Quote", e);
+        } catch (QuoteNotFoundException e) {
+            throw new SAPIntegrationException("Unable to find Quote", e);
+        }
+    }
+
+    @Override
+    public String getEffectivePrice(ProductOrder placedOrder, Product product)
+            throws QuoteServerException, QuoteNotFoundException {
+
+        final QuotePriceItem cachedPriceItem = priceListCache.findByKeyFields(product.getPrimaryPriceItem());
+        String price = cachedPriceItem.getPrice();
+        final Quote orderQuote = quoteService.getQuoteByAlphaId(placedOrder.getQuoteId());
+        for (QuoteItem quoteItem : orderQuote.getQuoteItems()) {
+            if (cachedPriceItem.sameAsQuoteItem(quoteItem)) {
+                if (new BigDecimal(quoteItem.getPrice()).compareTo(new BigDecimal(cachedPriceItem.getPrice())) < 0) {
+                    price = quoteItem.getPrice();
+                }
+            }
+        }
+        return price;
     }
 
     public static int getSampleCount(ProductOrder placedOrder, Product product) {
