@@ -450,7 +450,7 @@ function updateFunds(data) {
                 ' with ' + data.outstandingEstimate + ' unbilled across existing open orders';
         var fundingDetails = data.fundingDetails;
 
-        if(data.status != "Funded" || data.outstandingEstimate > data.fundsRemaining) {
+        if(data.status != "Funded" || data.outstandingEstimate > data.fundsRemaining || data.grantStatus != "Active") {
             quoteWarning = true;
         }
 
