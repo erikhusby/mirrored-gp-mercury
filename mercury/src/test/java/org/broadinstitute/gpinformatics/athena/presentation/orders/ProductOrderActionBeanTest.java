@@ -718,7 +718,7 @@ public class ProductOrderActionBeanTest {
         assertThat(pdo.getSkipRegulatoryReason(), not(isEmptyOrNullString()));
     }
 
-    public void testValueOfOrder() {
+    public void testValueOfOrder() throws Exception {
 
         Product primaryProduct = new Product();
         primaryProduct.setPartNumber("P-Test_primary");
