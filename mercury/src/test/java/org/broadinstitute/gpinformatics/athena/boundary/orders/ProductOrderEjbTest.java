@@ -337,8 +337,6 @@ public class ProductOrderEjbTest {
         conversionPdo.setQuoteId(testSingleSourceQuote.getAlphanumericId() );
         conversionPdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
-
-        //GPLIM-4693 TODO Sgm implement non mock price list solution in ProductOrderActionBeanTest
         priceList.add(new QuotePriceItem(conversionPdo.getProduct().getPrimaryPriceItem().getCategory(),
                 conversionPdo.getProduct().getPrimaryPriceItem().getName(),
                 conversionPdo.getProduct().getPrimaryPriceItem().getName(), "5", "test",

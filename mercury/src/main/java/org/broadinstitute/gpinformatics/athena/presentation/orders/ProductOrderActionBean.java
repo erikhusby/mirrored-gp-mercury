@@ -873,7 +873,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             productValue = productPrice * (unbilledCount);
         } else {
-            throw new QuoteServerException("Price item for " + product.getPrimaryPriceItem().getName() + " was not found.");
+            throw new QuoteServerException("Price for " + product.getPrimaryPriceItem().getName() + " was not found.");
         }
         return productValue;
     }

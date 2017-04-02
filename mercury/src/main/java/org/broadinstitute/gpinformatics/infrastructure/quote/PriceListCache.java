@@ -162,7 +162,7 @@ public class PriceListCache extends AbstractCache implements Serializable {
         return "invalid price item id " + priceItemId;
     }
 
-    public QuotePriceItem findByKeyFields(String platform, String category, String name) {
+    public QuotePriceItem findByKeyFields(String platform, String category, String name) throws QuoteServerException {
         for (QuotePriceItem quotePriceItem : getQuotePriceItems()) {
             if (quotePriceItem.getPlatformName().equals(platform) &&
                 quotePriceItem.getCategoryName().equals(category) &&
@@ -171,10 +171,10 @@ public class PriceListCache extends AbstractCache implements Serializable {
             }
         }
 
-        return null;
+        throw new QuoteServerException("The price item " + category+":"+name + " is not found");
     }
 
-    public QuotePriceItem findByKeyFields(PriceItem priceItem) {
+    public QuotePriceItem findByKeyFields(PriceItem priceItem) throws QuoteServerException {
         return findByKeyFields(priceItem.getPlatform(), priceItem.getCategory(), priceItem.getName());
     }
 
