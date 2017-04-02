@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 
 import javax.annotation.Nonnull;
 import java.text.DecimalFormat;
@@ -227,7 +228,7 @@ public class QuoteImportItem {
      *
      * @return null if this is not a replacement item or the primary price item if it is one.
      */
-    public QuotePriceItem getPrimaryForReplacement(PriceListCache priceListCache) {
+    public QuotePriceItem getPrimaryForReplacement(PriceListCache priceListCache) throws QuoteServerException {
         PriceItem primaryPriceItem = getPrimaryProduct().getPrimaryPriceItem();
 
         // If this is optional, then return the primary as the 'is replacing.' This is comparing the quote price item
