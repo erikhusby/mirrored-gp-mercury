@@ -65,6 +65,7 @@ public class QuoteServiceStub implements QuoteService {
         for (Quote aQuote : getAllSequencingPlatformQuotes().getQuotes()) {
             if (aQuote.getAlphanumericId().equals(id)) {
                 quote = aQuote;
+                break;
             }
         }
         return quote;
@@ -82,7 +83,7 @@ public class QuoteServiceStub implements QuoteService {
 
     @Override
     public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException {
-        return null;
+        return getAllSequencingPlatformQuotes();
     }
 
     @Override

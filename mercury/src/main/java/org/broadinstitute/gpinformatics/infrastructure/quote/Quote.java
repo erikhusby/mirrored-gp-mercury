@@ -1,10 +1,14 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
+import clover.org.apache.commons.collections.CollectionUtils;
+
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 
 @XmlRootElement(name="Quote")
 public class Quote {
@@ -18,6 +22,10 @@ public class Quote {
     private QuoteFunding quoteFunding;
     private QuoteType quoteType;
     private Collection<QuoteItem> quoteItems = new ArrayList<> ();
+
+    // quick access Cache of quote items
+    @XmlTransient
+    public HashMap<String, HashMap<String, HashMap<String, QuoteItem>>> quoteItemCache = new HashMap<>();
 
     public Quote() {}
 
@@ -129,6 +137,12 @@ public class Quote {
         return !(singleLevel == null);
     }
 
+    /**
+     * Helper method to support SAP transition.  If there is only one funding level, this will return it.  Otherwise
+     * Null will be returned
+     *
+     * @return Single funding level for the quote, or null if there is either more than one level or no level.
+     */
     public FundingLevel getFirstRelevantFundingLevel() {
         FundingLevel singleLevel = null;
 
@@ -140,5 +154,50 @@ public class Quote {
             }
         }
         return singleLevel;
+    }
+
+    /**
+     * initialized the Multi level hash map to make accessing items in the quote item collection easier
+     */
+    public void initializeQuoteItemCache () {
+        if(CollectionUtils.isNotEmpty(quoteItems)) {
+            for (QuoteItem quoteItem : quoteItems) {
+                if(!quoteItemCache.containsKey(quoteItem.getCategoryName())) {
+                    quoteItemCache.put(quoteItem.getCategoryName(), new HashMap<String, HashMap<String, QuoteItem>>());
+                }
+                if(!quoteItemCache.get(quoteItem.getCategoryName()).containsKey(quoteItem.getPlatform())) {
+                    quoteItemCache.get(quoteItem.getCategoryName()).put(quoteItem.getPlatform(),new HashMap<String, QuoteItem>());
+                }
+                if(!quoteItemCache.get(quoteItem.getCategoryName()).get(quoteItem.getPlatform()).containsKey(quoteItem.getName())) {
+                    quoteItemCache.get(quoteItem.getCategoryName()).get(quoteItem.getPlatform()).put(quoteItem.getName(), quoteItem);
+                }
+            }
+        }
+    }
+
+    /**
+     * Access a quote item defined on the quote by key criteria.
+     *
+     * @param platform  Platform with which the desired quote item should be associated
+     * @param category  Category with which the desired quote item should be associated
+     * @param name      Name with which the desired quote item should be named
+     * @return  specific QuoteItem on the quote when found, or null if it is not found
+     */
+    public QuoteItem findCachedQuoteItem(String platform, String category, String name) {
+
+        QuoteItem foundItem = null;
+
+        if(quoteItemCache.isEmpty()) {
+            initializeQuoteItemCache();
+        }
+        if (quoteItemCache.containsKey(category) &&
+            quoteItemCache.get(category).containsKey(platform) &&
+            quoteItemCache.get(category).get(platform).containsKey(name)) {
+
+            foundItem = quoteItemCache.get(category).get(platform).get(name);
+
+        }
+
+        return foundItem;
     }
 }
