@@ -5,6 +5,7 @@ import clover.org.apache.commons.collections.CollectionUtils;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -23,8 +24,8 @@ public class Quote {
     private Collection<QuoteItem> quoteItems = new ArrayList<> ();
 
     // quick access Cache of quote items
+    @XmlTransient
     public HashMap<String, HashMap<String, HashMap<String, QuoteItem>>> quoteItemCache = new HashMap<>();
-
 
     public Quote() {}
 
