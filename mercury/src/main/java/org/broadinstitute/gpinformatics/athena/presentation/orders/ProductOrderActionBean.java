@@ -749,7 +749,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     private void validateQuoteDetailsWithAddedSamples(String quoteId, final ErrorLevel errorLevel,
                                                       boolean countOpenOrders, int additionalSamplesCount)
-            throws InvalidProductException {
+            throws InvalidProductException, QuoteServerException {
         Quote quote = validateQuoteId(quoteId);
         ProductOrder.checkQuoteValidity(editOrder, quote);
         if (quote != null) {
