@@ -775,11 +775,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         double outstandingEstimate = estimateOutstandingOrders(quote.getAlphanumericId(), quote);
         double valueOfCurrentOrder = 0;
         if(countCurrentUnPlacedOrder) {
-            valueOfCurrentOrder = getValueOfOpenOrders(Collections.singletonList(editOrder), quote);
-            valueOfCurrentOrder = getValueOfOpenOrders(Collections.singletonList((editOrder.isChildOrder())?editOrder.getParentOrder():editOrder));
+            valueOfCurrentOrder = getValueOfOpenOrders(Collections.singletonList((editOrder.isChildOrder())?editOrder.getParentOrder():editOrder), quote);
         } else if(additionalSampleCount > 0) {
-            valueOfCurrentOrder = getOrderValue(editOrder, additionalSampleCount, quote);
-            valueOfCurrentOrder = getOrderValue((editOrder.isChildOrder())?editOrder.getParentOrder():editOrder, additionalSampleCount);
+            valueOfCurrentOrder = getOrderValue((editOrder.isChildOrder())?editOrder.getParentOrder():editOrder, additionalSampleCount, quote);
         }
 
         if (fundsRemaining <= 0d ||
@@ -827,8 +825,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     double getValueOfOpenOrders(List<ProductOrder> ordersWithCommonQuote, Quote quote) throws InvalidProductException {
         double value = 0d;
 
-        for (ProductOrder testOrder : ordersWithCommonQuote) {
-            value += getOrderValue(testOrder, testOrder.getUnbilledSampleCount(), quote);
         Set<ProductOrder> justParents = new HashSet<>();
         for (ProductOrder order : ordersWithCommonQuote) {
             if(order.isChildOrder()) {
@@ -839,7 +835,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         for (ProductOrder testOrder : justParents) {
-            value += getOrderValue(testOrder, testOrder.getUnbilledSampleCount());
+            value += getOrderValue(testOrder, testOrder.getUnbilledSampleCount(), quote);
         }
         return value;
     }

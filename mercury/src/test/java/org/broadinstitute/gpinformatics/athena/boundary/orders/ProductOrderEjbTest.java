@@ -19,7 +19,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.ProductTestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
@@ -477,11 +476,6 @@ public class ProductOrderEjbTest {
         Quote testSingleSourceQuote = new Quote(SapIntegrationServiceImplDBFreeTest.SINGLE_SOURCE_PO_QUOTE_ID, quoteFunding, ApprovalStatus.FUNDED);
 
         Mockito.when(mockQuoteService.getQuoteByAlphaId(testSingleSourceQuote.getAlphanumericId())).thenReturn(testSingleSourceQuote);
-
-        ProductTestUtils.addToMockPriceListCache(conversionPdo.getProduct(), mockPriceListCache, "5");
-        for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
-            ProductTestUtils.addToMockPriceListCache(productOrderAddOn.getAddOn(), mockPriceListCache, "5");
-        }
 
         conversionPdo.setQuoteId(testSingleSourceQuote.getAlphanumericId() );
         conversionPdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
