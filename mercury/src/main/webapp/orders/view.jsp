@@ -450,7 +450,7 @@ function updateFunds(data) {
                 ' with ' + data.outstandingEstimate + ' unbilled across existing open orders';
         var fundingDetails = data.fundingDetails;
 
-        if(data.status != "Funded" || data.outstandingEstimate > data.fundsRemaining || data.grantStatus != "Active") {
+        if(data.status != "Funded" || data.outstandingEstimate > data.fundsRemaining ) {
             quoteWarning = true;
         }
 
@@ -462,6 +462,9 @@ function updateFunds(data) {
                 fundsRemainingNotification += ' -- Has Expired ' + fundingDetails[detailIndex].grantEndDate;
                 quoteWarning = true;
             }
+            if(fundingDetails[detailIndex].grantStatus != "Active") {
+                quoteWarning = true;
+            }
         }
         $j("#fundsRemaining").text(fundsRemainingNotification);
     } else {
@@ -471,6 +474,8 @@ function updateFunds(data) {
 
     if(quoteWarning) {
         $j("#fundsRemaining").addClass("alert alert-error");
+    } else {
+        $j("#fundsRemaining").removeClass("alert alert-error");
     }
 }
 
@@ -1159,7 +1164,7 @@ function formatInput(item) {
             <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">
                     ${actionBean.editOrder.quoteId}
             </a>
-            <span id="fundsRemaining" style="margin-left: 20px;"> </span>
+            <div id="fundsRemaining" style="margin-left: 20px;"> </div>
         </div>
     </div>
 </div>

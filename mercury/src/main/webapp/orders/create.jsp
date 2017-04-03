@@ -863,7 +863,7 @@
                         ' with ' + data.outstandingEstimate + ' unbilled across existing open orders';
                 var fundingDetails = data.fundingDetails;
 
-                if(data.status != "Funded" || data.outstandingEstimate > data.fundsRemaining || data.grantStatus != "Active") {
+                if(data.status != "Funded" || data.outstandingEstimate > data.fundsRemaining ) {
                     quoteWarning = true;
                 }
 
@@ -875,6 +875,9 @@
                         fundsRemainingNotification += ' -- Has Expired ' + fundingDetails[detailIndex].grantEndDate;
                         quoteWarning = true;
                     }
+                    if(fundingDetails[detailIndex].grantStatus != "Active") {
+                        quoteWarning = true;
+                    }
                 }
                 $j("#fundsRemaining").text(fundsRemainingNotification);
             } else {
@@ -884,6 +887,8 @@
 
             if(quoteWarning) {
                 $j("#fundsRemaining").addClass("alert alert-error");
+            } else {
+                $j("#fundsRemaining").removeClass("alert alert-error");
             }
         }
 

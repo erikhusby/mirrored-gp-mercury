@@ -1174,6 +1174,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 final FastDateFormat dateFormater = FastDateFormat.getInstance("MM/dd/yyyy");
 
                 for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel()) {
+                    item.put("fundingType", fundingLevel.getFunding().getFundingType().equals(Funding.FUNDS_RESERVATION));
                     if(fundingLevel.getFunding().getFundingType().equals(Funding.FUNDS_RESERVATION)) {
                         JSONObject fundingInfo = new JSONObject();
                         fundingInfo.put("grantTitle", fundingLevel.getFunding().getDisplayName());
@@ -1181,6 +1182,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                                 dateFormater.format(fundingLevel.getFunding().getGrantEndDate()));
                         fundingInfo.put("grantNumber", fundingLevel.getFunding().getGrantNumber());
                         fundingInfo.put("grantStatus", fundingLevel.getFunding().getGrantStatus());
+
                         fundingInfo.put("activeGrant", (fundingLevel.getFunding().getGrantEndDate() != null && fundingLevel.getFunding().getGrantEndDate().after(new Date())));
                         fundingDetails.put(fundingInfo);
                     }
