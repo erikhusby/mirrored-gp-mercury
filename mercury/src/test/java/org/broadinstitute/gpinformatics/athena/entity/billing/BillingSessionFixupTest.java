@@ -24,6 +24,7 @@ import javax.inject.Inject;
 import java.util.*;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 
 @Test(groups = TestGroups.FIXUP)
 public class BillingSessionFixupTest extends Arquillian {
@@ -102,6 +103,17 @@ public class BillingSessionFixupTest extends Arquillian {
         billingSessionDao.persistAll(Collections.emptyList());
 
         logger.info("Registered Manual billing");
+    }
+
+    @Test(enabled = false)
+    public void endBillingSession() {
+
+        userBean.loginOSUser();
+
+        BillingSession sessionToEnd = billingSessionDao.findByBusinessKey("BILL-9314");
+        billingEjb.endSession(sessionToEnd);
+
+        billingSessionDao.persist(new FixupCommentary("ending Billing Session for Steve"));
     }
 
     @Test(enabled = false)
