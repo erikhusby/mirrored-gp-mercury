@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDeta
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -103,7 +104,7 @@ public class ProductOrderEjbJiraTransitionTest extends Arquillian {
         try {
             productOrderEjb.persistProductOrder(ProductOrder.SaveType.CREATING,newProductOrder,
                     Collections.<String>emptyList(), Collections.<ProductOrderKitDetail>emptyList());
-        } catch (QuoteNotFoundException e) {
+        } catch (QuoteNotFoundException|SAPInterfaceException e) {
             Assert.fail();
         }
         MessageCollection justToGetBy = new MessageCollection();

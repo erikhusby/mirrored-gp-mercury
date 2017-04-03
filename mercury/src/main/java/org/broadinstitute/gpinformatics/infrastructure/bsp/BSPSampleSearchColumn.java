@@ -7,6 +7,7 @@ public enum BSPSampleSearchColumn {
     COLLABORATOR_SAMPLE_ID("Collaborator Sample ID"),
     SPECIES("Species"),
     COLLABORATOR_PARTICIPANT_ID("Collaborator Participant ID"),
+    COLLABORATOR_FAMILY_ID("Collaborator Family ID"),
     MATERIAL_TYPE("Material Type"),
     VOLUME("Vol(uL)"),
     CONCENTRATION("Conc(ng/uL)"),
@@ -87,7 +88,7 @@ public enum BSPSampleSearchColumn {
     };
 
     public static final BSPSampleSearchColumn[] BUCKET_PAGE_COLUMNS = {
-            COLLABORATOR_SAMPLE_ID, MATERIAL_TYPE, RECEIPT_DATE
+            COLLABORATOR_SAMPLE_ID, MATERIAL_TYPE, RECEIPT_DATE, ROOT_SAMPLE
     };
 
     public static boolean isQuantColumn(BSPSampleSearchColumn bspSampleSearchColumn) {

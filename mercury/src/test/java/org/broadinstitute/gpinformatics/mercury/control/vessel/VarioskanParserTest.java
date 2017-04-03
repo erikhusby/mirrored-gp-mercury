@@ -105,11 +105,20 @@ public class VarioskanParserTest {
 
     public static Map<VesselPosition, BarcodedTube> buildPicoTubesAndTransfers(
             Map<String, StaticPlate> mapBarcodeToPlate, String plate1Barcode, String plate2Barcode, String tubePrefix) {
+        return buildPicoTubesAndTransfers(96, mapBarcodeToPlate, plate1Barcode, plate2Barcode, tubePrefix);
+    }
+
+    public static Map<VesselPosition, BarcodedTube> buildPicoTubesAndTransfers(int numSamples,
+            Map<String, StaticPlate> mapBarcodeToPlate, String plate1Barcode, String plate2Barcode, String tubePrefix) {
         Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
+        int counter = 0;
         for (VesselPosition vesselPosition : RackOfTubes.RackType.Matrix96.getVesselGeometry().getVesselPositions()) {
             BarcodedTube barcodedTube = new BarcodedTube(tubePrefix + vesselPosition.toString());
             barcodedTube.setVolume(new BigDecimal("75"));
             mapPositionToTube.put(vesselPosition, barcodedTube);
+            counter++;
+            if (counter >= numSamples)
+                break;
         }
 
         TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);

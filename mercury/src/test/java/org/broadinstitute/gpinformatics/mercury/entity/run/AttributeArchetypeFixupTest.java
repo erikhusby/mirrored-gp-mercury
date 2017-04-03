@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.run;
 
+import org.apache.commons.io.IOUtils;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingChipMapping;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -7,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.InfiniumRunResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -17,6 +19,7 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
+import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -54,7 +57,7 @@ public class AttributeArchetypeFixupTest extends Arquillian {
 
     static {
         try {
-            EARLIEST_XSTAIN_DATE = DateUtils.yyyymmmdddDateTimeFormat.parse("2015-OCT-09 11:13 AM");
+            EARLIEST_XSTAIN_DATE = DateUtils.yyyymmmdddDateTimeFormat.parse("2015-Oct-09 11:13 AM");
         } catch (ParseException e) {
             throw new RuntimeException("Cannot parse date.");
         }
@@ -397,4 +400,74 @@ public class AttributeArchetypeFixupTest extends Arquillian {
         attributeArchetypeDao.flush();
         utx.commit();
     }
+
+    @Test(enabled = false)
+    public void Gplim4397AddForwardToGap() throws Exception {
+        utx.begin();
+        userBean.loginOSUser();
+
+        final String chipFamily = InfiniumRunResource.INFINIUM_GROUP;
+
+        List<AttributeDefinition> definitions = new ArrayList<AttributeDefinition>() {{
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_CHIP,
+                    chipFamily, "forward_to_gap", true));
+        }};
+
+        Set<GenotypingChip> genotypingChips = attributeArchetypeDao.findGenotypingChips(chipFamily);
+        for (GenotypingChip genotypingChip: genotypingChips) {
+            genotypingChip.addOrSetAttribute("forward_to_gap", "Y");
+        }
+
+        String fixupReason = "GPLIM-4397 add forward_to_gap";
+        attributeArchetypeDao.persist(new FixupCommentary(fixupReason));
+        attributeArchetypeDao.persistAll(definitions);
+        attributeArchetypeDao.persistAll(genotypingChips);
+        attributeArchetypeDao.flush();
+        utx.commit();
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/FixupProductChipActiveDate.txt,
+     * so it can be used for other similar fixups, without writing a new test.  The format of the file is:
+     * one line with the ticket in the FixupCommentary
+     * followed by multiple lines with the archetypeId, the product part number, the active date, and optional
+     * inactive date
+     * For example:
+     * SUPPORT-1877
+     * 1952,P-WG-0023,2016-09-01 00:00:00
+     * 21,P-WG-0023,2015-10-09 11:13:00,2016-09-01 00:00:00
+     */
+    @Test(enabled = false)
+    public void fixupSupport2223() {
+        try {
+            userBean.loginOSUser();
+            List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("FixupProductChipActiveDate.txt"));
+            String ticketId = lines.get(0);
+            for (int i = 1; i < lines.size(); i++) {
+                String[] fields = lines.get(i).split(",");
+                long archetypeId = Long.parseLong(fields[0]);
+                String productPartNumber = fields[1];
+                String activeDate = fields[2];
+                String inactiveDate = null;
+                if (fields.length == 4) {
+                    inactiveDate = fields[3];
+                }
+
+                GenotypingChipMapping genotypingChipMapping = (GenotypingChipMapping) attributeArchetypeDao.findById(
+                        AttributeArchetype.class, archetypeId);
+                Assert.assertEquals(genotypingChipMapping.getArchetypeName(), productPartNumber);
+                genotypingChipMapping.setActiveDate(ArchetypeAttribute.dateFormat.parse(activeDate));
+                System.out.println("Changing date for " + genotypingChipMapping.getArchetypeId() + " to " +
+                        genotypingChipMapping.getActiveDate());
+                if (inactiveDate != null) {
+                    genotypingChipMapping.setInactiveDate(ArchetypeAttribute.dateFormat.parse(inactiveDate));
+                }
+            }
+            attributeArchetypeDao.persist(new FixupCommentary(ticketId + " adjust Active date for chip mapping"));
+            attributeArchetypeDao.flush();
+        } catch (ParseException | IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }

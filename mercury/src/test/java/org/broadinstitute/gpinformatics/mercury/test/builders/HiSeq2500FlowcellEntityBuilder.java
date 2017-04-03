@@ -212,6 +212,9 @@ public class HiSeq2500FlowcellEntityBuilder {
         case WHOLE_GENOME:
         case PCR_FREE:
         case PCR_PLUS:
+        case PCR_FREE_HYPER_PREP:
+        case PCR_PLUS_HYPER_PREP:
+        case CELL_FREE_HYPER_PREP:
         case TRU_SEQ_STRAND_SPECIFIC_CRSP:
             reagentsSize = 1;
             break;
@@ -220,6 +223,7 @@ public class HiSeq2500FlowcellEntityBuilder {
             reagentsSize = 2;
             break;
         case ICE_EXOME_EXPRESS:
+        case ICE_EXOME_EXPRESS_HYPER_PREP:
         case ICE:
             reagentsSize = 3;
         }

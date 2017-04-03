@@ -4,7 +4,9 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
+import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
@@ -16,6 +18,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
+import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
@@ -26,6 +29,8 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
@@ -86,7 +91,7 @@ import static org.hamcrest.Matchers.is;
  * Set @Test(enabled=false) after running once.
  */
 @Test(groups = TestGroups.FIXUP)
-public class    ProductOrderFixupTest extends Arquillian {
+public class ProductOrderFixupTest extends Arquillian {
 
     @Inject
     private ProductOrderDao productOrderDao;
@@ -122,6 +127,15 @@ public class    ProductOrderFixupTest extends Arquillian {
 
     @Inject
     private UserTransaction utx;
+
+    @Inject
+    private SapIntegrationService sapIntegrationService;
+
+    @Inject
+    private BillingSessionDao billingSessionDao;
+
+    @Inject
+    private BillingEjb billingEjb;
 
     // When you run this on prod, change to PROD and prod.
     @Deployment
@@ -845,6 +859,29 @@ public class    ProductOrderFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
+    public void gplim4755RemoveDuplicateRegulatoryInfo() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+        List<RegulatoryInfo> regulatoryInfos = regulatoryInfoDao.findByIdentifier("ORSP-750");
+        assertThat(regulatoryInfos, hasSize(1));
+        RegulatoryInfo orsp750 = regulatoryInfos.get(0);
+
+        ProductOrder pdo = productOrderDao.findByBusinessKey("PDO-6148");
+        assertThat(pdo.getRegulatoryInfos(), hasSize(2));
+
+        Set<RegulatoryInfo> distinctRegulatoryInfos = new HashSet<>(pdo.getRegulatoryInfos());
+        assertThat(distinctRegulatoryInfos, hasSize(1));
+        assertThat(orsp750, equalTo(distinctRegulatoryInfos.iterator().next()));
+
+        pdo.getRegulatoryInfos().clear();
+        productOrderDao.flush();
+        pdo.addRegulatoryInfo(distinctRegulatoryInfos.iterator().next());
+
+        productOrderDao.persist(new FixupCommentary("https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-4755"));
+        commitTransaction();
+    }
+
+    @Test(enabled = false)
     public void gplim4155RemoveUnattachedPDOSamples()
             throws SystemException, NotSupportedException, HeuristicRollbackException, HeuristicMixedException,
             RollbackException {
@@ -987,5 +1024,77 @@ public class    ProductOrderFixupTest extends Arquillian {
     private void commitTransaction()
             throws RollbackException, HeuristicMixedException, HeuristicRollbackException, SystemException {
         utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void updateSAPRecords() throws Exception {
+
+        userBean.loginOSUser();
+
+        List<ProductOrder> listWithWildcard =
+                productOrderDao.findListWithWildcard(ProductOrder.class, "%%", true, ProductOrder_.sapOrderNumber);
+
+        for(ProductOrder orderWithSap:listWithWildcard) {
+            if(CollectionUtils.isEmpty(orderWithSap.getSapReferenceOrders())) {
+                SapOrderDetail newDetail = new SapOrderDetail(orderWithSap.getSapOrderNumber(),
+                        SapIntegrationServiceImpl.getSampleCount(orderWithSap, orderWithSap.getProduct()),
+                        orderWithSap.getQuoteId(), sapIntegrationService.determineCompanyCode(orderWithSap).getCompanyCode());
+                orderWithSap.addSapOrderDetail(newDetail);
+            } else {
+                SapOrderDetail latestDetail = orderWithSap.latestSapOrderDetail();
+                latestDetail.setQuoteId(orderWithSap.getQuoteId());
+                latestDetail.setCompanyCode(sapIntegrationService.determineCompanyCode(orderWithSap).getCompanyCode());
+            }
+        }
+
+        productOrderDao.persist(new FixupCommentary("Adding entities for SAP Order Detail to account for new tables"));
+    }
+
+    @Test(enabled = false)
+    public void gplim4501deleteDraftPdo() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+        ProductOrder productOrder = productOrderDao.findByTitle("Health_2000_GWAS");
+        Assert.assertNotNull(productOrder);
+        Assert.assertNull(productOrder.getJiraTicketKey());
+        productOrderDao.remove(productOrder);
+        productOrderDao.persist(new FixupCommentary("GPLIM-4501 delete draft pdo"));
+        commitTransaction();
+    }
+
+    @Test(enabled = false)
+    public void gplim4595BackfillInfiniumPdosToOnPremises() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+        List<String> arraysPartNumbers = Arrays.asList(
+                "P-WG-0053",
+                "P-WG-0055",
+                "P-WG-0056",
+                "P-EX-0021",
+                "P-WG-0058",
+                "P-WG-0023",
+                "P-WG-0028",
+                "P-WG-0066",
+                "XTNL-GEN-011003",
+                "P-WG-0059",
+                "XTNL-WES-010210",
+                "XTNL-WES-010211",
+                "XTNL-GEN-011004",
+                "XTNL-GEN-011005",
+                "XTNL-WES-010212");
+        List<ProductOrder> allProductOrders = productOrderDao.findAll();
+        for (ProductOrder productOrder: allProductOrders) {
+            if (productOrder.getProduct() != null) {
+                if (productOrder.getProduct().getPartNumber() != null) {
+                    if (arraysPartNumbers.contains(productOrder.getProduct().getPartNumber())) {
+                        productOrder.setPipelineLocation(ProductOrder.PipelineLocation.ON_PREMISES);
+                        System.out.println("Updated " + productOrder.getJiraTicketKey() + " Pipeline Location to " +
+                                           productOrder.getPipelineLocation());
+                    }
+                }
+            }
+        }
+        productOrderDao.persist(new FixupCommentary("GPLIM-4595 Updated pipeline location for arrays PDOs to On Prem"));
+        commitTransaction();
     }
 }

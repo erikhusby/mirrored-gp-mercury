@@ -8,7 +8,19 @@ import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 import java.io.Serializable;
 import java.util.Date;
 
@@ -68,6 +80,9 @@ public class LedgerEntry implements Serializable {
     // work item id handed back from the quote server
     @Column(name = "QUOTE_SERVER_WORK_ITEM")
     private String workItem;
+
+    @Column(name = "SAP_DELIVERY_DOCUMENT_ID")
+    private String sapDeliveryDocumentId;
 
     /**
      * Package private constructor for JPA use.
@@ -140,6 +155,8 @@ public class LedgerEntry implements Serializable {
         this.billingMessage = billingMessage;
     }
 
+
+
     /**
      * A ledger item is billed if either its message is the success status or the session has been billed. The
      * isBillingSessionBilled method is probably not needed, since all should be success, but I don't want to
@@ -211,6 +228,14 @@ public class LedgerEntry implements Serializable {
 
     public void setWorkItem(String workItem) {
         this.workItem = workItem;
+    }
+
+    public String getSapDeliveryDocumentId() {
+        return sapDeliveryDocumentId;
+    }
+
+    public void setSapDeliveryDocumentId(String sapDeliveryDocumentId) {
+        this.sapDeliveryDocumentId = sapDeliveryDocumentId;
     }
 
     @Override

@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -16,11 +17,13 @@ import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_.product;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.QA;
 
 /**
  *
@@ -47,7 +50,7 @@ public class ProductFixupTest extends Arquillian {
      */
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
+        return DeploymentBuilder.buildMercuryWar(QA, "QA");
     }
 
     // Required for Arquillian tests so it should remain enabled for sprint4.
@@ -93,14 +96,32 @@ public class ProductFixupTest extends Arquillian {
         userBean.loginOSUser();
         utx.begin();
         for (Product product : productDao.findAll(Product.class)) {
-            product.setPairedEndRead(true);
-            if (product.getAggregationDataType() != null && product.getAggregationDataType().startsWith("Exome")) {
-                product.setLoadingConcentration(BigDecimal.valueOf(225));
-            } else if (product.getAggregationDataType() != null && product.getAggregationDataType().equals("WGS")) {
-                product.setLoadingConcentration(BigDecimal.valueOf(180));
+            if (product.getAggregationDataType() != null) {
+                product.setPairedEndRead(true);
+                if (product.getAggregationDataType().startsWith("Exome")) {
+                    product.setLoadingConcentration(BigDecimal.valueOf(225));
+                } else if (product.getAggregationDataType().equals("WGS")) {
+                    product.setLoadingConcentration(BigDecimal.valueOf(180));
+                }
             }
         }
         productDao.persist(new FixupCommentary("GPLIM-4159 set initial values after adding new columns."));
         utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void GPLIM3614InitializeNewValues() {
+        userBean.loginOSUser();
+        List<Product> allProducts = productDao.findAll(Product.class);
+
+        List<String> externalPartNumbers = Arrays.asList("P-CLA-0003", "P-CLA-0004", "P-EX-0011", "P-VAL-0010", "P-VAL-0016", "P-WG-0054", "P-VAL-0013", "P-VAL-0014", "P-VAL-0015");
+
+        for(Product currentProduct:allProducts) {
+            currentProduct.setExternalOnlyProduct(externalPartNumbers.contains(currentProduct.getPartNumber()) || currentProduct.isExternallyNamed());
+
+            currentProduct.setSavedInSAP(false);
+        }
+        productDao.persist(new FixupCommentary("GPLIM-3614 initialized external indicator and saved in SAP indicator for all products"));
+
     }
 }

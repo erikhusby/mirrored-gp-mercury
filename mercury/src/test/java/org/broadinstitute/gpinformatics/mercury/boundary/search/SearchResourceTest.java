@@ -44,18 +44,17 @@ public class SearchResourceTest extends RestServiceContainerTest {
         Assert.assertEquals(response.getSearchRowBeans().size(), 95);
     }
 
-    // todo jmt enable and change PDO after there are some real transfers.
     @RunAsClient
-    @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = false)
+    @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     public void testEmerge(@ArquillianResource URL baseUrl) throws MalformedURLException {
-        SearchRequestBean aliquotsSearchRequestBean = new SearchRequestBean("LabVessel", "eMERGE Aliqouts Web Service",
-                Collections.singletonList(new SearchValueBean("PDO", Collections.singletonList("PDO-8554"))));
+        SearchRequestBean aliquotsSearchRequestBean = new SearchRequestBean("LabVessel", "eMERGE Aliquots Web Service",
+                Collections.singletonList(new SearchValueBean("PDO", Collections.singletonList("PDO-8927"))));
         WebResource resource = makeWebResource(baseUrl, "run");
         SearchResponseBean aliquotsResponse = resource.type(MediaType.APPLICATION_XML_TYPE).
                 accept(MediaType.APPLICATION_XML_TYPE).entity(aliquotsSearchRequestBean).
                 post(SearchResponseBean.class);
 
-        Assert.assertEquals(aliquotsResponse.getSearchRowBeans().size(), 16);
+        Assert.assertEquals(aliquotsResponse.getSearchRowBeans().size(), 94);
         Assert.assertEquals(aliquotsResponse.getHeaders().size(), 3);
         Assert.assertEquals(aliquotsResponse.getHeaders().get(0), "Root Sample ID");
         Assert.assertEquals(aliquotsResponse.getHeaders().get(1), "EmergeVolumeTransfer SM-ID");
@@ -69,7 +68,9 @@ public class SearchResourceTest extends RestServiceContainerTest {
         SearchResponseBean manifestResponse = resource.type(MediaType.APPLICATION_XML_TYPE).
                 accept(MediaType.APPLICATION_XML_TYPE).entity(manifestSearchRequestBean).
                 post(SearchResponseBean.class);
-        Assert.assertEquals(manifestResponse.getSearchRowBeans().size(), 16);
+        Assert.assertEquals(manifestResponse.getHeaders().size(), 10);
+        // One was initially not transferred, because of bad molecular index well, but it was included in a later batch.
+        Assert.assertEquals(manifestResponse.getSearchRowBeans().size(), 94);
     }
 
     @Override

@@ -14,13 +14,16 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBeanContext;
+import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.InfiniumEntityBuilder;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -76,6 +79,7 @@ public class MetricsViewActionBeanTest {
         LabEventHandler labEventHandler = new LabEventHandler();
 
         int numSamples = 94;
+        BaseEventTest.expectedRouting = SystemRouter.System.SQUID;
         ProductOrder productOrder = ProductOrderTestFactory.buildInfiniumProductOrder(numSamples);
         List<StaticPlate> sourcePlates = buildSamplePlates(productOrder, "AmpPlate");
         StaticPlate sourcePlate = sourcePlates.get(0);
@@ -88,6 +92,10 @@ public class MetricsViewActionBeanTest {
         StaticPlate hybChip = hybChips.iterator().next();
 
         when(labVesselDaoMock.findByIdentifier(hybChip.getLabel())).thenReturn(hybChip);
+        Map<String, LabVessel> barcodeToVesselMap = new HashMap<>();
+        barcodeToVesselMap.put(hybChip.getLabel(), hybChip);
+        when(labVesselDaoMock.findByBarcodes(Collections.singletonList(hybChip.getLabel()))).
+                thenReturn(barcodeToVesselMap);
 
         ProductOrderSample productOrderSample = mock(ProductOrderSample.class);
         when(productOrderSampleDaoMock.findBySamples(anyList())).thenReturn(
@@ -102,16 +110,15 @@ public class MetricsViewActionBeanTest {
         attributeMap.put("call_rate_threshold", "98");
         when(genotypingChip.getAttributeMap()).thenReturn(attributeMap);
 
-        actionBean.setLabVesselIdentifier(hybChip.getLabel());
+        actionBean.setBarcodes(hybChip.getLabel());
         actionBean.validateData();
         assertTrue(actionBean.isFoundResults());
-        assertNotNull(actionBean.getLabVessel());
 
         ArraysQc arraysQc = mock(ArraysQc.class);
         when(arraysQc.getCallRate()).thenReturn(new BigDecimal(".9877"));
         when(arraysQc.getHetPct()).thenReturn(new BigDecimal(".19"));
         when(arraysQcDaoMock.findByBarcodes(anyList())).thenReturn(Collections.singletonList(arraysQc));
-        actionBean.buildInfiniumMetricsTable();
+        actionBean.buildInfiniumMetricsTable(hybChip);
 
         MetricsViewActionBean.PlateMap plateMap = actionBean.getPlateMap();
         assertNotNull(plateMap);

@@ -65,12 +65,25 @@
                         <td>${actionBean.orspSearchResult.status}</td>
                     </tr>
                     <c:if test="${!actionBean.orspSearchResult.usable}">
-                        <td colspan="4">
+                        <tr>
+                            <td colspan="4">
                             <span style="font-weight: bold; color: red;">
                                 WARNING: This ORSP project should not be used due to its status of "${actionBean.orspSearchResult.status}".<br>
                                 Please contact <a href="mailto:orsp@broadinstitute.org">orsp@broadinstitute.org</a> for assistance.
                             </span>
-                        </td>
+                            </td>
+                        </tr>
+                    </c:if>
+                    <c:if test="${actionBean.orspSearchResult.consentGroup}">
+                        <tr>
+                            <td colspan="4">
+                                <span style=" font-weight: bold; color: red;">
+                                    WARNING:  Consent Groups IDs are not evidence of IRB or ORSP approval; <BR>
+                                    instead please use the ORSP ID associated with your IRB approval or ORSP Not Engaged/Not Human Subject Research Determination.  <BR>
+                                    Contact <a href="mailto:orsp@broadinstitute.org">orsp@broadinstitute.org</a> for further assistance as needed.
+                                </span>
+                            </td>
+                        </tr>
                     </c:if>
                 </tbody>
             </table>

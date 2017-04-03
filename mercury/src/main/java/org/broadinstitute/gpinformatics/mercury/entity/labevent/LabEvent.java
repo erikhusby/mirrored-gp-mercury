@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -103,7 +102,7 @@ public class LabEvent {
         @Override
         public int compare(LabEvent o1, LabEvent o2) {
             int dateComparison = o1.getEventDate().compareTo(o2.getEventDate());
-            if (dateComparison == 0) {
+            if (dateComparison == 0 && o1.getEventLocation() != null && o2.getEventLocation() != null ) {
                 dateComparison = o1.getEventLocation().compareTo(o2.getEventLocation());
             }
             if (dateComparison == 0) {
@@ -732,8 +731,7 @@ todo jmt adder methods
      * Using workflow config, searches the Mercury supported workflows for events that can follow a bucketing
      * step. Takes into account that the optional steps after a bucket may be skipped.
      */
-    public static void setupEventTypesThatCanFollowBucket(WorkflowLoader workflowLoader) {
-        WorkflowConfig workflowConfig = workflowLoader.load();
+    public static void setupEventTypesThatCanFollowBucket(WorkflowConfig workflowConfig) {
         for (Workflow workflow : Workflow.SUPPORTED_WORKFLOWS) {
             ProductWorkflowDef workflowDef  = workflowConfig.getWorkflowByName(workflow.getWorkflowName());
             ProductWorkflowDefVersion effectiveWorkflow = workflowDef.getEffectiveVersion();

@@ -191,6 +191,7 @@ public class ManifestSessionEjbDBFreeTest {
                 mockedIssue.setSummary("");
                 mockedIssue.setDescription("");
                 mockedIssue.setReporter("QADudeLU");
+                mockedIssue.setStatus("Status");
                 mockedIssue.addFieldValue((String) invocationOnMock.getArguments()[1],
                         Collections.singletonList(new HashMap<>()));
                 return mockedIssue;

@@ -97,7 +97,9 @@ public class ConfigurableListActionBean extends CoreActionBean {
             // Add any row listeners
             configurableList.addAddRowsListeners(SearchDefinitionFactory.getForEntity(entityName));
 
-            configurableList.addRows(entityList, buildSearchContext(searchInstance));
+            SearchContext searchContext = buildSearchContext(searchInstance);
+            searchContext.setPagination(pagination);
+            configurableList.addRows(entityList, searchContext);
             ConfigurableList.ResultList resultList = configurableList.getResultList(false);
             return streamResultList(resultList);
         }

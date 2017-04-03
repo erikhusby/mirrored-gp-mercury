@@ -26,6 +26,7 @@ public class JiraIssue implements Serializable {
     private final String key;
 
     private String summary;
+    private String status;
     private String description;
     private List<String> subTasks;
 
@@ -64,6 +65,17 @@ public class JiraIssue implements Serializable {
 
     public void setSummary(@Nonnull String summary) {
         this.summary = summary;
+    }
+
+    public String getStatus() throws IOException {
+        if(status == null) {
+            copyFromJiraIssue(null);
+        }
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public String getDescription() throws IOException {
@@ -192,6 +204,7 @@ public class JiraIssue implements Serializable {
         dueDate = tempIssue.getDueDate();
         created = tempIssue.getCreated();
         reporter = tempIssue.getReporter();
+        status = tempIssue.getStatus();
         subTasks = tempIssue.getSubTasks();
         conditions = tempIssue.conditions;
     }

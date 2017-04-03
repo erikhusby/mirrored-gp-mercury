@@ -108,6 +108,11 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
         return records;
     }
 
+    public void writeEtlDataFileWrapper(List<Long> deleteIds, Set<Long> modifyIds, List<Long> addIds,
+            List<RevInfoPair<SequencingRun>> revInfoPairs, String etlDateStr) throws Exception {
+        writeEtlDataFile(deleteIds, modifyIds, addIds, revInfoPairs, etlDateStr);
+    }
+
     public static class SequencingRunDto {
         private SequencingRun sequencingRun;
         private String flowcellBarcode;

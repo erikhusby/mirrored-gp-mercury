@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.run;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
@@ -27,6 +28,7 @@ import javax.inject.Inject;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -67,7 +69,7 @@ public class InfiniumRunFinder implements Serializable {
     @Resource
     private EJBContext ejbContext;
 
-    private AtomicBoolean busy = new AtomicBoolean(false);
+    private static final AtomicBoolean busy = new AtomicBoolean(false);
 
     public void find() throws SystemException {
         if (!busy.compareAndSet(false, true)) {
@@ -84,14 +86,18 @@ public class InfiniumRunFinder implements Serializable {
                         StaticPlate staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
                         utx.begin();
                         processChip(staticPlate);
+                        // The commit doesn't cause a flush (not clear why), so we must do it explicitly.
+                        labEventDao.flush();
                         utx.commit();
                     }
                 } catch (Exception e) {
                     utx.rollback();
                     log.error("Failed to process chip " + labVessel.getLabel(), e);
                     emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
+                            Collections.<String>emptyList(),
                             "[Mercury] Failed to process infinium chip", "For " + labVessel.getLabel() +
-                                                                         " with error: " + e.getMessage());
+                                                                                     " with error: " + e.getMessage(),
+                            false);
                 }
             }
         } finally {
@@ -104,8 +110,21 @@ public class InfiniumRunFinder implements Serializable {
         if (!chipWellResults.isHasRunStarted()) {
             return;
         }
+        boolean failedToFindScannerName = chipWellResults.getScannerName() == null;
+        if (failedToFindScannerName) {
+            log.warn("Failed to find scanner name from filesystem, setting to Mercury");
+            chipWellResults.setScannerName(LabEvent.UI_PROGRAM_NAME);
+        }
+        if (checkForInvalidPipelineLocation(staticPlate)) {
+            log.debug("Won't forward plate where its Pipeline location not set to US Cloud: " + staticPlate.getLabel());
+            createEvent(staticPlate, LabEventType.INFINIUM_AUTOCALL_ALL_STARTED, chipWellResults.getScannerName());
+            if (failedToFindScannerName) {
+                sendFailedToFindScannerNameEmail(staticPlate);
+            }
+            return;
+        }
         log.debug("Processing chip: " + staticPlate.getLabel());
-        LabEvent someStartedEvent = findOrCreateSomeStartedEvent(staticPlate);
+        LabEvent someStartedEvent = findOrCreateSomeStartedEvent(staticPlate, chipWellResults.getScannerName());
         Set<LabEventMetadata> labEventMetadata = someStartedEvent.getLabEventMetadatas();
         boolean allComplete = true;
         for (VesselPosition vesselPosition : chipWellResults.getPositionWithSampleInstance()) {
@@ -162,18 +181,51 @@ public class InfiniumRunFinder implements Serializable {
         }
 
         if (allComplete && starterCalledOnAllWells) {
-            createEvent(staticPlate, LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
+            createEvent(staticPlate, LabEventType.INFINIUM_AUTOCALL_ALL_STARTED, someStartedEvent.getEventLocation());
+            if (failedToFindScannerName) {
+                sendFailedToFindScannerNameEmail(staticPlate);
+            }
         }
+    }
+
+    private void sendFailedToFindScannerNameEmail(StaticPlate staticPlate) {
+        String subject = "[Mercury] Failed to find scanner name for infinium chip " + staticPlate.getLabel();
+        String body = "Defaulted scanner name to be " + staticPlate.getLabel() + " for starter events";
+        emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
+                Collections.<String>emptyList(),
+                subject, body,
+                false);
+    }
+
+    /**
+     * Only want to send starter events for chips that are in US Cloud to prevent some samples like Danish Blood Spots
+     * to be sent to the cloud
+     * @return true if the pipeline location for any sample is not set to US Cloud or null
+     */
+    public boolean checkForInvalidPipelineLocation(StaticPlate staticPlate) {
+        int usCloudCounter = 0;
+        for (SampleInstanceV2 sampleInstanceV2: staticPlate.getSampleInstancesV2()) {
+            // Ignore the controls assuming that some non-control sample will be present
+            if (sampleInstanceV2.getSingleBucketEntry() != null) {
+                ProductOrder productOrder = sampleInstanceV2.getSingleBucketEntry().getProductOrder();
+                if (productOrder.getPipelineLocation() != ProductOrder.PipelineLocation.US_CLOUD) {
+                    return true;
+                } else {
+                    usCloudCounter++;
+                }
+            }
+        }
+        return usCloudCounter == 0;
     }
 
     private boolean callStarterOnWell(StaticPlate staticPlate, VesselPosition vesselPosition) {
         return infiniumPipelineClient.callStarterOnWell(staticPlate, vesselPosition);
     }
 
-    private LabEvent findOrCreateSomeStartedEvent(StaticPlate staticPlate) throws Exception {
+    private LabEvent findOrCreateSomeStartedEvent(StaticPlate staticPlate, String eventLocation) throws Exception {
         LabEvent labEvent = findLabEvent(staticPlate, LabEventType.INFINIUM_AUTOCALL_SOME_STARTED);
         if (labEvent == null) {
-            labEvent = createEvent(staticPlate, LabEventType.INFINIUM_AUTOCALL_SOME_STARTED);
+            labEvent = createEvent(staticPlate, LabEventType.INFINIUM_AUTOCALL_SOME_STARTED, eventLocation);
         }
 
         return labEvent;
@@ -188,15 +240,14 @@ public class InfiniumRunFinder implements Serializable {
         return null;
     }
 
-    private LabEvent createEvent(StaticPlate staticPlate, LabEventType eventType) throws Exception {
+    private LabEvent createEvent(StaticPlate staticPlate, LabEventType eventType, String eventLocation) throws Exception {
         Date start = new Date();
         BspUser bspUser = getBspUser("seqsystem");
         long operator = bspUser.getUserId();
         LabEvent labEvent =
-                new LabEvent(eventType, start, LabEvent.UI_PROGRAM_NAME, 1L, operator, LabEvent.UI_PROGRAM_NAME);
+                new LabEvent(eventType, start, eventLocation, 1L, operator, LabEvent.UI_PROGRAM_NAME);
         staticPlate.addInPlaceEvent(labEvent);
         labEventDao.persist(labEvent);
-        labEventDao.flush();
         return labEvent;
     }
 

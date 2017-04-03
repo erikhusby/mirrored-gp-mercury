@@ -104,7 +104,7 @@ public class BillingTrackerImporterContainerTest extends Arquillian {
         }
     }
 
-    @Test
+    @Test(groups = TestGroups.STANDARD)
     public void testImport() throws Exception {
 
         InputStream inputStream = null;

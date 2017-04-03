@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -10,11 +11,13 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -109,6 +112,9 @@ public class LabEventFixupTest extends Arquillian {
 
     @Inject
     private UserBean userBean;
+
+    @Inject
+    private LabVesselDao labVesselDao;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -1667,4 +1673,205 @@ public class LabEventFixupTest extends Arquillian {
         labEventDao.flush();
         utx.commit();
     }
+
+    @Test(enabled = false)
+    public void gplim4430() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        long wrongEventId = 1663671L;
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, wrongEventId);
+        if (labEvent == null || labEvent.getLabEventType() != LabEventType.ICE_CATCH_ENRICHMENT_CLEANUP) {
+            throw new RuntimeException("cannot find " + wrongEventId + " or is not ICE_CATCH_ENRICHMENT_CLEANUP");
+        }
+        System.out.println("LabEvent " + wrongEventId + " type " + labEvent.getLabEventType());
+        labEvent.setLabEventType(LabEventType.POND_REGISTRATION);
+        System.out.println("   updated to " + labEvent.getLabEventType());
+        labEventDao.persist(new FixupCommentary(
+                "GPLIM-4430 incorrect protocol chosen caused wrong type of lab event."));
+        labEventDao.flush();
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim4302() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        List<LabVessel> infiniumChips = labVesselDao.findAllWithEventButMissingAnother(LabEventType.INFINIUM_XSTAIN,
+                LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
+        BspUser bspUser = userBean.getBspUser();
+        long disambiguator = 1L;
+        for (LabVessel labVessel: infiniumChips) {
+            Date start = new Date();
+            long operator = bspUser.getUserId();
+            LabEvent labEvent = new LabEvent(LabEventType.INFINIUM_AUTOCALL_ALL_STARTED, start,
+                    LabEvent.UI_PROGRAM_NAME, disambiguator, operator, LabEvent.UI_PROGRAM_NAME);
+            labVessel.addInPlaceEvent(labEvent);
+            disambiguator++;
+            System.out.println("Adding InfiniumAutoCallAllStarted event as an in place lab event to chip " + labVessel.getLabel());
+        }
+
+        FixupCommentary fixupCommentary = new FixupCommentary(
+                "GPLIM-4302 - complete old infinium chips by adding InfiniumAutoCallAllStarted event");
+        labEventDao.persist(fixupCommentary);
+        labEventDao.flush();
+
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport2319() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        long[] ids = {1732578L,1732576L,1732580L,1732599L,1732608L,1732611L,1732616L,1732622L,1732627L,1732684L,
+                1732686L,1732688L,1732715L,1732759L};
+
+        Reagent undesired = reagentDao.findByReagentNameLotExpiration("HS buffer", "RG-10095", null);
+        Reagent desired = reagentDao.findByReagentNameLotExpiration("HS buffer", "RG-12126", null);
+        Assert.assertNotNull(undesired);
+        Assert.assertNotNull(desired);
+
+        for (long id: ids) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, id);
+            if (labEvent == null || labEvent.getLabEventType() != LabEventType.PICO_DILUTION_TRANSFER) {
+                throw new RuntimeException("cannot find " + id + " or is not PICO_DILUTION_TRANSFER");
+            }
+            for (LabEventReagent labEventReagent: labEvent.getLabEventReagents()) {
+                if (labEventReagent.getReagent().equals(undesired)) {
+                    System.out.println("Removing " + undesired.getName() + " on event " + labEvent.getLabEventId());
+                    labEvent.getLabEventReagents().remove(labEventReagent);
+                    genericReagentDao.remove(labEventReagent);
+                }
+            }
+            System.out.println("Adding " + desired.getName() + " on event " + labEvent.getLabEventId());
+            labEvent.addReagent(desired);
+        }
+
+        FixupCommentary fixupCommentary = new FixupCommentary(
+                "SUPPORT-2319 - Removing expired reagent for new one");
+        labEventDao.persist(fixupCommentary);
+        labEventDao.flush();
+
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport2330() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        long[] ids = {1740607L};
+
+        Reagent undesired = reagentDao.findByReagentNameLotExpiration("HS buffer", "RG-8262", null);
+        Reagent desired = reagentDao.findByReagentNameLotExpiration("HS buffer", "RG-3111", null);
+        Assert.assertNotNull(undesired);
+
+        if (desired == null) {
+            desired = new GenericReagent("HS buffer", "RG-3111", null);
+        }
+
+        for (long id: ids) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, id);
+            if (labEvent == null || labEvent.getLabEventType() != LabEventType.RIBO_DILUTION_TRANSFER) {
+                throw new RuntimeException("cannot find " + id + " or is not RiboDilutionTransfer");
+            }
+            for (LabEventReagent labEventReagent: labEvent.getLabEventReagents()) {
+                if (labEventReagent.getReagent().equals(undesired)) {
+                    System.out.println("Removing " + undesired.getName() + " on event " + labEvent.getLabEventId());
+                    labEvent.getLabEventReagents().remove(labEventReagent);
+                    genericReagentDao.remove(labEventReagent);
+                }
+            }
+            System.out.println("Adding " + desired.getName() + " on event " + labEvent.getLabEventId());
+            labEvent.addReagent(desired);
+        }
+
+        FixupCommentary fixupCommentary = new FixupCommentary(
+                "SUPPORT-2330 - Removing expired reagent for new one");
+        labEventDao.persist(fixupCommentary);
+        labEventDao.flush();
+
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim4508() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        long[] ids = {1727870L, 1727867L, 1727881L};
+        for (long wrongEventId : ids) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, wrongEventId);
+            if (labEvent == null || labEvent.getLabEventType() != LabEventType.EXTRACT_BLOOD_MICRO_TO_SPIN) {
+                throw new RuntimeException("cannot find " + wrongEventId + " or is not EXTRACT_BLOOD_MICRO_TO_SPIN");
+            }
+            System.out.println("LabEvent " + wrongEventId + " type " + labEvent.getLabEventType());
+            labEvent.setLabEventType(LabEventType.EXTRACT_FRESH_TISSUE_MICRO_TO_SPIN);
+            System.out.println("   updated to " + labEvent.getLabEventType());
+        }
+
+        labEventDao.persist(new FixupCommentary("GPLIM-4508 change event type to ExtractFreshTissueMicroToSpin"));
+        labEventDao.flush();
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim4422() {
+        userBean.loginOSUser();
+
+        fixupVesselToVessel(1644232L, "SM-CEMB5", "1125710886");
+
+        labEventDao.persist(new FixupCommentary("GPLIM-4422 fixup extraction transfer"));
+        labEventDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport2485() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        long[] ids = {1831499L, 1831501L};
+        for (long labEventId : ids) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, labEventId);
+            if (labEvent == null || labEvent.getLabEventType() != LabEventType.DILUTION_TO_FLOWCELL_TRANSFER) {
+                throw new RuntimeException("cannot find " + labEventId + " or is not DILUTION_TO_FLOWCELL_TRANSFER");
+            }
+            else if (!labEvent.getEventLocation().equals("SL-HDE")) {
+                throw new RuntimeException("Did not find expected station of SL-HDE");
+            } else {
+                System.out.println("LabEvent " + labEventId + " station " + labEvent.getEventLocation());
+                labEvent.setEventLocation("SL-HDD");
+                System.out.println("   updated to " + labEvent.getEventLocation());
+            }
+        }
+        labEventDao.persist(new FixupCommentary("SUPPORT-2485 change lab event location to SL-HDD"));
+        labEventDao.flush();
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport2691() throws Exception {
+        // Deletes shearing transfer in order to resend a corrected bettalims message with a tube in a new position.
+        userBean.loginOSUser();
+        utx.begin();
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 1934498L);
+        Assert.assertEquals(labEvent.getLabEventType(), LabEventType.SHEARING_TRANSFER);
+        for (LabEventReagent labEventReagent : labEvent.getLabEventReagents()) {
+            System.out.println("Removing labEventReagent " + labEventReagent.getLabEvent().getLabEventId() +
+                    ", " + labEventReagent.getReagent().getName());
+            labEventDao.remove(labEventReagent);
+        }
+        labEvent.getLabEventReagents().clear();
+        Assert.assertTrue(CollectionUtils.isEmpty(labEvent.getCherryPickTransfers()));
+        for (SectionTransfer sectionTransfer : labEvent.getSectionTransfers()) {
+            System.out.println("Removing sectionTransfer " + sectionTransfer.getVesselTransferId());
+            labEventDao.remove(sectionTransfer);
+        }
+        labEvent.getSectionTransfers().clear();
+        Assert.assertTrue(CollectionUtils.isEmpty(labEvent.getVesselToSectionTransfers()));
+        Assert.assertTrue(CollectionUtils.isEmpty(labEvent.getVesselToVesselTransfers()));
+        System.out.println("Removing " + labEvent.getLabEventType() + " " + labEvent.getLabEventId());
+        labEventDao.remove(labEvent);
+        labEventDao.persist(new FixupCommentary("SUPPORT-2691 delete shearing transfer event."));
+        labEventDao.flush();
+        utx.commit();
+    }
+
 }

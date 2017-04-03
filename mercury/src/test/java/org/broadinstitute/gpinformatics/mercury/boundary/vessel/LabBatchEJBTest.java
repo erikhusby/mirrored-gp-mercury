@@ -38,6 +38,7 @@ public class LabBatchEJBTest extends ContainerTest {
     public static final String STUB_TEST_PDO_KEY = "PDO-999";
     public static final String BUCKET_NAME = "Pico/Plating Bucket";
     public static final String EXTRACTION_BUCKET = "Extract to DNA and RNA";
+    public static final String EXTRACTION_TO_DNA_BUCKET = "Extract to DNA";
 
     @Inject
     private LabBatchEjb labBatchEJB;
@@ -85,7 +86,6 @@ public class LabBatchEJBTest extends ContainerTest {
         scottmat = "scottmat";
     }
 
-    @Override
     @AfterMethod(groups = TestGroups.STUBBY)
     public void tearDown() throws Exception {
         if (utx == null) {
@@ -219,7 +219,7 @@ public class LabBatchEJBTest extends ContainerTest {
 
     @Test
     public void testCreateXTRLabBatchAndRemoveFromBucket() throws ValidationException {
-        this.bucket = labBatchTestUtils.putTubesInSpecificBucket(EXTRACTION_BUCKET, BucketEntry.BucketEntryType.PDO_ENTRY,
+        this.bucket = labBatchTestUtils.putTubesInSpecificBucket(EXTRACTION_TO_DNA_BUCKET, BucketEntry.BucketEntryType.PDO_ENTRY,
                 mapBarcodeToTube);
 
         HashSet<LabVessel> starters = new HashSet<LabVessel>(mapBarcodeToTube.values());
@@ -228,14 +228,13 @@ public class LabBatchEJBTest extends ContainerTest {
         String bucketName = null;
         for (LabVessel starter : starters) {
             for (BucketEntry bucketEntry : starter.getBucketEntries()) {
-                bucketName = bucketEntry.getBucket().getBucketDefinitionName();
                 bucketIds.add(bucketEntry.getBucketEntryId());
             }
         }
 
         LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
                 Workflow.CLINICAL_WHOLE_BLOOD_EXTRACTION.getWorkflowName(), bucketIds, Collections.<Long>emptyList(),
-                "LabBatchEJBTest.testCreateLabBatchAndRemoveFromBucket", "", new Date(), "", scottmat, bucketName);
+                "LabBatchEJBTest.testCreateLabBatchAndRemoveFromBucket", "", new Date(), "", scottmat, EXTRACTION_TO_DNA_BUCKET);
 
         //link the JIRA tickets for the batch created to the pdo batches.
         for (String pdoKey : LabVessel.extractPdoKeyList(starters)) {
@@ -244,7 +243,7 @@ public class LabBatchEJBTest extends ContainerTest {
 
         labBatchDao.flush();
         labBatchDao.clear();
-        bucket = bucketDao.findByName(EXTRACTION_BUCKET);
+        bucket = bucketDao.findByName(EXTRACTION_TO_DNA_BUCKET);
 
         String expectedTicketId =
                 CreateFields.ProjectType.EXTRACTION_PROJECT.getKeyPrefix() + JiraServiceStub.getCreatedIssueSuffix();
@@ -293,7 +292,7 @@ public class LabBatchEJBTest extends ContainerTest {
 
     @Test
     public void testCreateXTRLabBatchAndRemoveFromBucketExistingTicket() throws ValidationException {
-        this.bucket = labBatchTestUtils.putTubesInSpecificBucket(EXTRACTION_BUCKET, BucketEntry.BucketEntryType.PDO_ENTRY,
+        this.bucket = labBatchTestUtils.putTubesInSpecificBucket(EXTRACTION_TO_DNA_BUCKET, BucketEntry.BucketEntryType.PDO_ENTRY,
                 mapBarcodeToTube);
 
         String expectedTicketId =
@@ -304,17 +303,16 @@ public class LabBatchEJBTest extends ContainerTest {
         String selectedBucket = null;
         for (LabVessel vessel : mapBarcodeToTube.values()) {
             for (BucketEntry bucketEntry : vessel.getBucketEntries()) {
-                selectedBucket = bucketEntry.getBucket().getBucketDefinitionName();
                 bucketIds.add(bucketEntry.getBucketEntryId());
             }
         }
 
         LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
                 Workflow.CLINICAL_WHOLE_BLOOD_EXTRACTION.getWorkflowName(), bucketIds, Collections.<Long>emptyList(),
-                expectedTicketId,"", new Date(), "", scottmat, selectedBucket);
+                expectedTicketId,"", new Date(), "", scottmat, EXTRACTION_TO_DNA_BUCKET);
         labBatchDao.flush();
         labBatchDao.clear();
-        bucket = bucketDao.findByName(EXTRACTION_BUCKET);
+        bucket = bucketDao.findByName(EXTRACTION_TO_DNA_BUCKET);
 
         Assert.assertEquals(savedBatch.getBatchName(), expectedTicketId);
         savedBatch = labBatchDao.findById(LabBatch.class, savedBatch.getLabBatchId());

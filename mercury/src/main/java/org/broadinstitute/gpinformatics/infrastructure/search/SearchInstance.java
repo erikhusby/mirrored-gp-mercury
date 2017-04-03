@@ -779,11 +779,6 @@ public class SearchInstance implements Serializable {
     private int pageSize;
 
     /**
-     * For how many seconds to allow the search to run.
-     */
-    private int timeoutLength = 60 * 3;
-
-    /**
      * Default constructor for Stripes.
      */
     public SearchInstance() {
@@ -1005,7 +1000,8 @@ public class SearchInstance implements Serializable {
                                                List<SearchValue> displaySearchValues) {
         for (SearchValue searchValue : valuesToSearch) {
             if (searchValue.getIncludeInResults() != null && searchValue.getIncludeInResults()
-                && searchValue.getSearchTerm().getDisplayValueExpression() != null) {
+                    && (searchValue.getSearchTerm().getDisplayValueExpression() != null ||
+                    searchValue.getSearchTerm().getDisplayExpression() != null)) {
                 displaySearchValues.add(searchValue);
             }
             recurseForDisplaySearchValues(searchValue.getChildren(), displaySearchValues);
@@ -1038,7 +1034,8 @@ public class SearchInstance implements Serializable {
             List<SearchValue> valuesToSearch, List<ColumnTabulation> columnTabulations, int depth) {
         for (SearchValue searchValue : valuesToSearch) {
             if (searchValue.getIncludeInResults() != null && searchValue.getIncludeInResults()
-                && searchValue.getSearchTerm().getDisplayValueExpression() != null) {
+                    && (searchValue.getSearchTerm().getDisplayValueExpression() != null ||
+                    searchValue.getSearchTerm().getDisplayExpression() != null)) {
                 columnTabulations.add(searchValue);
                 if (depth > 1) {
                     return;
@@ -1207,11 +1204,4 @@ public class SearchInstance implements Serializable {
         }
     }
 
-    public int getTimeoutLength() {
-        return timeoutLength;
-    }
-
-    public void setTimeoutLength(int timeoutLength) {
-        this.timeoutLength = timeoutLength;
-    }
 }
