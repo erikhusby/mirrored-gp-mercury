@@ -270,8 +270,7 @@
     </body>
 
     <footer>
-        <p>Copyright © 2012-2013 Eli and Edythe L. Broad Institute. All rights reserved. No unauthorized use or
-            disclosure is permitted.<br/>
+        <p>Copyright &copy; 2012<script>document.write("-"+new Date().getFullYear());</script> Broad Institute<br/>
             Genomics Platform. ${buildInfoBean.buildInformation}. Deployment
             - ${buildInfoBean.deployment}.</p>
     </footer>

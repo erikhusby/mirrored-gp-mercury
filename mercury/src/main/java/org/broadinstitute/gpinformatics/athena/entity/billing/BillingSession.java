@@ -8,6 +8,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportInfo;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.hibernate.envers.Audited;
 
@@ -177,18 +178,20 @@ public class BillingSession implements Serializable {
     /**
      * @return A list of only the unbilled quote items for this session.
      */
-    public List<QuoteImportItem> getUnBilledQuoteImportItems(PriceListCache priceListCache) {
+    public List<QuoteImportItem> getUnBilledQuoteImportItems(PriceListCache priceListCache)
+            throws QuoteServerException {
         return getQuoteImportItems(priceListCache, false);
     }
 
     /**
      * @return A list of all the quote items for this session.
      */
-    public List<QuoteImportItem> getQuoteImportItems(PriceListCache priceListCache) {
+    public List<QuoteImportItem> getQuoteImportItems(PriceListCache priceListCache) throws QuoteServerException {
         return getQuoteImportItems(priceListCache, true);
     }
 
-    private List<QuoteImportItem> getQuoteImportItems(PriceListCache priceListCache, boolean includeAll) {
+    private List<QuoteImportItem> getQuoteImportItems(PriceListCache priceListCache, boolean includeAll)
+            throws QuoteServerException {
         QuoteImportInfo quoteImportInfo = new QuoteImportInfo();
 
         for (LedgerEntry ledger : ledgerEntryItems) {

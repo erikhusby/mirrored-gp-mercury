@@ -131,8 +131,9 @@ public class WorkflowValidator {
             Date startTime = eventType.getStart();
             String station = eventType.getStation();
             String body = renderTemplate(labVessel.getLabel(), eventNames, startTime, operator, station,  validationErrors);
+            String eventTypesJoin = StringUtils.join(eventNames, ',');
             emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), Collections.<String>emptyList(),
-                    "Workflow validation failure for " + eventTypes, body, false);
+                    "Workflow validation failure for " + eventTypesJoin, body, false);
         }
     }
 

@@ -142,12 +142,8 @@ public class InfiniumRunFinder implements Serializable {
                 }
 
                 if (!autocallStarted && chipWellResults.getWellCompleteMap().get(vesselPosition)) {
-                    if (callStarterOnWell(staticPlate, vesselPosition)) {
-                        LabEventMetadata newMetadata = new LabEventMetadata();
-                        newMetadata.setLabEventMetadataType(LabEventMetadata.LabEventMetadataType.AutocallStarted);
-                        newMetadata.setValue(vesselPosition.name());
-                        someStartedEvent.addMetadata(newMetadata);
-                    } else {
+                    boolean started = start(staticPlate, vesselPosition, someStartedEvent);
+                    if (!started) {
                         allComplete = false;
                     }
                 }
@@ -186,6 +182,17 @@ public class InfiniumRunFinder implements Serializable {
                 sendFailedToFindScannerNameEmail(staticPlate);
             }
         }
+    }
+
+    public boolean start(StaticPlate staticPlate, VesselPosition vesselPosition, LabEvent someStartedEvent) {
+        boolean started = callStarterOnWell(staticPlate, vesselPosition);
+        if (started) {
+            LabEventMetadata newMetadata = new LabEventMetadata();
+            newMetadata.setLabEventMetadataType(LabEventMetadata.LabEventMetadataType.AutocallStarted);
+            newMetadata.setValue(vesselPosition.name());
+            someStartedEvent.addMetadata(newMetadata);
+        }
+        return started;
     }
 
     private void sendFailedToFindScannerNameEmail(StaticPlate staticPlate) {

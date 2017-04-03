@@ -53,7 +53,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 @Test(groups = TestGroups.FIXUP)
 public class LabVesselFixupTest extends Arquillian {
 
-    private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s");
+    public static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s");
 
     @Inject
     private LabVesselDao labVesselDao;

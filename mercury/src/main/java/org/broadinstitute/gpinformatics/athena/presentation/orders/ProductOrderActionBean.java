@@ -39,6 +39,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusF
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporterFactory;
+import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
@@ -104,11 +105,11 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
@@ -650,11 +651,17 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     void validateRinScores(Collection<ProductOrderSample> pdoSamples) {
         for (ProductOrderSample pdoSample : pdoSamples) {
-            if (pdoSample.isInBspFormat() && !pdoSample.canRinScoreBeUsedForOnRiskCalculation()) {
+            try {
+                if (pdoSample.isInBspFormat() && !pdoSample.canRinScoreBeUsedForOnRiskCalculation()) {
+                    addGlobalValidationError(
+                            "RIN '" + pdoSample.getSampleData().getRawRin() + "' for " + pdoSample.getName() +
+                            " isn't a number." + "  Please correct this by going to BSP -> Utilities -> Upload Sample " +
+                            "Annotation and updating the 'RIN Number' annotation for this sample.");
+                }
+            } catch (BSPLookupException e) {
                 addGlobalValidationError(
-                        "RIN '" + pdoSample.getSampleData().getRawRin() + "' for " + pdoSample.getName() +
-                        " isn't a number." + "  Please correct this by going to BSP -> Utilities -> Upload Sample " +
-                        "Annotation and updating the 'RIN Number' annotation for this sample.");
+                        pdoSample.getName() + " isn't a sample that is found in BSP.  For this reason the RIN score "
+                        + "cannot be validated at this time");
             }
         }
     }
@@ -698,6 +705,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", quoteId, e.getMessage());
         } catch (QuoteNotFoundException e) {
             addGlobalValidationError("The quote ''{2}'' was not found ", quoteId);
+        } catch (InvalidProductException e) {
+            addGlobalValidationError(e.getMessage());
         }
 
         if (editOrder != null) {
@@ -715,7 +724,8 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @param countOpenOrders indicator for if the current order should be added.  Typically used if it is Draft or
      *                        Pending
      */
-    private void validateQuoteDetails(String quoteId, final ErrorLevel errorLevel, boolean countOpenOrders) {
+    private void validateQuoteDetails(String quoteId, final ErrorLevel errorLevel, boolean countOpenOrders)
+            throws InvalidProductException {
         Quote quote = validateQuoteId(quoteId);
 
         if (quote != null) {
@@ -739,7 +749,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     private void validateQuoteDetailsWithAddedSamples(String quoteId, final ErrorLevel errorLevel,
                                                       boolean countOpenOrders, int additionalSamplesCount)
-            throws QuoteServerException, QuoteNotFoundException {
+            throws InvalidProductException {
         Quote quote = validateQuoteId(quoteId);
         ProductOrder.checkQuoteValidity(editOrder, quote);
         if (quote != null) {
@@ -759,19 +769,19 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @param additionalSampleCount
      */
     private void validateQuoteDetails(Quote quote, ErrorLevel errorLevel, boolean countCurrentUnPlacedOrder,
-                                      int additionalSampleCount) {
+                                      int additionalSampleCount) throws InvalidProductException {
         if (!quote.getApprovalStatus().equals(ApprovalStatus.FUNDED)) {
             String unFundedMessage = "A quote should be funded in order to be used for a product order.";
             addMessageBasedOnErrorLevel(errorLevel, unFundedMessage);
         }
 
         double fundsRemaining = Double.parseDouble(quote.getQuoteFunding().getFundsRemaining());
-        double outstandingEstimate = estimateOutstandingOrders(quote.getAlphanumericId());
+        double outstandingEstimate = estimateOutstandingOrders(quote.getAlphanumericId(), quote);
         double valueOfCurrentOrder = 0;
         if(countCurrentUnPlacedOrder) {
-            valueOfCurrentOrder = getValueOfOpenOrders(Collections.singletonList(editOrder));
+            valueOfCurrentOrder = getValueOfOpenOrders(Collections.singletonList((editOrder.isChildOrder())?editOrder.getParentOrder():editOrder), quote);
         } else if(additionalSampleCount > 0) {
-            valueOfCurrentOrder = getOrderValue(editOrder, additionalSampleCount);
+            valueOfCurrentOrder = getOrderValue((editOrder.isChildOrder())?editOrder.getParentOrder():editOrder, additionalSampleCount, quote);
         }
 
         if (fundsRemaining <= 0d ||
@@ -802,24 +812,34 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @param quoteId Common quote id to be used to determine which open orders will be found
      * @return total dollar amount of the monitary value of orders associated with the given quote
      */
-    double estimateOutstandingOrders(String quoteId) {
+    double estimateOutstandingOrders(String quoteId, Quote foundQuote) throws InvalidProductException {
 
         List<ProductOrder> ordersWithCommonQuote = productOrderDao.findOrdersWithCommonQuote(quoteId);
 
-        return getValueOfOpenOrders(ordersWithCommonQuote);
+        return getValueOfOpenOrders(ordersWithCommonQuote, foundQuote);
     }
 
     /**
      * Determines the total monitary value of all unbilled samples on a given list of orders
      *
      * @param ordersWithCommonQuote Subset of orders for which the monitary value is to be determined
+     * @param quote
      * @return Total dollar amount which equates to the monitary value of all orders given
      */
-    double getValueOfOpenOrders(List<ProductOrder> ordersWithCommonQuote) {
+    double getValueOfOpenOrders(List<ProductOrder> ordersWithCommonQuote, Quote quote) throws InvalidProductException {
         double value = 0d;
 
-        for (ProductOrder testOrder : ordersWithCommonQuote) {
-            value += getOrderValue(testOrder, testOrder.getUnbilledSampleCount());
+        Set<ProductOrder> justParents = new HashSet<>();
+        for (ProductOrder order : ordersWithCommonQuote) {
+            if(order.isChildOrder()) {
+                justParents.add(order.getParentOrder());
+            } else {
+                justParents.add(order);
+            }
+        }
+
+        for (ProductOrder testOrder : justParents) {
+            value += getOrderValue(testOrder, testOrder.getUnbilledSampleCount(), quote);
         }
         return value;
     }
@@ -831,19 +851,22 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @param sampleCount unbilled sample count to use for determining the order value.  Passed in separately to account
      *                    for the scenario when we do not want to use the sample count on the order but a sample count
      *                    that will potentially be on the order.
+     * @param quote
      * @return Total monitary value of the order
      */
-    double getOrderValue(ProductOrder testOrder, int sampleCount) {
+    double getOrderValue(ProductOrder testOrder, int sampleCount, Quote quote) throws InvalidProductException {
         double value = 0d;
         if(testOrder.getProduct() != null) {
             final Product product = testOrder.getProduct();
             double productValue =
-                    getProductValue((product.getSupportsNumberOfLanes())?testOrder.getLaneCount():sampleCount, product);
+                    getProductValue((product.getSupportsNumberOfLanes())?testOrder.getLaneCount():sampleCount, product,
+                            quote);
             value += productValue;
             for (ProductOrderAddOn testOrderAddon : testOrder.getAddOns()) {
                 final Product addOn = testOrderAddon.getAddOn();
                 double addOnValue =
-                        getProductValue((addOn.getSupportsNumberOfLanes())?testOrder.getLaneCount():sampleCount, addOn);
+                        getProductValue((addOn.getSupportsNumberOfLanes())?testOrder.getLaneCount():sampleCount, addOn,
+                                quote);
                 value += addOnValue;
             }
         }
@@ -856,18 +879,25 @@ public class ProductOrderActionBean extends CoreActionBean {
      *
      * @param unbilledCount count of samples that have not yet been billed
      * @param product Product from which the price can be determined
+     * @param quote
      * @return Derived value of the Product price multiplied by the number of unbilled samples
      */
-    double getProductValue(int unbilledCount, Product product) {
+    double getProductValue(int unbilledCount, Product product, Quote quote) throws InvalidProductException {
         double productValue = 0d;
-        QuotePriceItem primaryPriceItem =
-                priceListCache.findByKeyFields(product.getPrimaryPriceItem());
+        String foundPrice;
+        try {
+            foundPrice = priceListCache.getEffectivePrice(product.getPrimaryPriceItem(), quote);
+        } catch (InvalidProductException e) {
+            throw new InvalidProductException("For '" + product.getPartNumber() + "' " + e.getMessage(), e);
+        }
 
-        if (primaryPriceItem != null &&
-            StringUtils.isNotBlank(primaryPriceItem.getPrice())) {
-            Double productPrice = Double.valueOf(primaryPriceItem.getPrice());
+        if (StringUtils.isNotBlank(foundPrice)) {
+            Double productPrice = Double.valueOf(foundPrice);
 
             productValue = productPrice * (unbilledCount);
+        } else {
+            throw new InvalidProductException("Price for " + product.getPrimaryPriceItem().getDisplayName() + " for product "+
+                                              product.getPartNumber()+" was not found.");
         }
         return productValue;
     }
@@ -1167,7 +1197,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 item.put("fundsRemaining", NumberFormat.getCurrencyInstance().format(fundsRemaining));
                 item.put("status", quote.getApprovalStatus().getValue());
 
-                double outstandingOrdersValue = estimateOutstandingOrders(quoteIdentifier);
+                double outstandingOrdersValue = estimateOutstandingOrders(quoteIdentifier, quote);
                 item.put("outstandingEstimate",  NumberFormat.getCurrencyInstance().format(
                         outstandingOrdersValue));
                 JSONArray fundingDetails = new JSONArray();
@@ -1192,7 +1222,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         } catch (Exception ex) {
             try {
-                item.put("error", ex.getMessage());
+                item.put("error", "Unable to complete evaluating order values:  " + ex.getMessage());
             } catch (Exception ex1) {
                 // Don't really care if this gets an exception.
             }
@@ -1530,7 +1560,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         final List<ProductOrderSample> replacementSamples = stringToSampleList(replacementSampleList);
 
         if(editOrder.isSavedInSAP() && editOrder.hasAtLeastOneBilledLedgerEntry() &&
-           (editOrder.getNonAbandonedCount() < editOrder.latestSapOrderDetail().getPrimaryQuantity()) ) {
+           (editOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL) < editOrder.latestSapOrderDetail().getPrimaryQuantity()) ) {
             shareSapOrder = true;
         }
         ProductOrder.SaveType saveType = ProductOrder.SaveType.CREATING;
@@ -1566,7 +1596,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         Product tokenProduct = productTokenInput.getTokenObject();
         Product product = tokenProduct != null ? productDao.findByPartNumber(tokenProduct.getPartNumber()) : null;
 
-        if(editOrder.isSavedInSAP() && !editOrder.latestSapOrderDetail().getCompanyCode().equals(sapService.getSapCompanyConfigurationForProduct(product).getCompanyCode())) {
+        if(editOrder.isSavedInSAP() && !editOrder.latestSapOrderDetail().getCompanyCode().equals(
+                SapIntegrationServiceImpl.getSapCompanyConfigurationForProduct(product).getCompanyCode())) {
             addGlobalValidationError("Unable to update the order in SAP.  This combination of Product and Order is "
                                      + "attempting to change the company code to which this order will be associated.");
         }
@@ -1723,7 +1754,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         JSONArray jsonResults = new JSONArray();
 
         // Access sample list directly in order to suggest based on possibly not-yet-saved sample IDs.
-        if (!getSampleList().isEmpty()) {
+        if (!getSampleList().isEmpty() && !editOrder.isChildOrder()) {
             List<ProductOrderSample> productOrderSamples = stringToSampleListExisting(getSampleList());
             // Bulk-fetch collection IDs for all samples to avoid having them fetched individually on demand.
             ProductOrder.loadSampleData(productOrderSamples, BSPSampleSearchColumn.BSP_COLLECTION_BARCODE,
@@ -1917,7 +1948,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         JSONObject item = new JSONObject();
 
         if (product != null) {
-            supportsNumberOfLanes = productDao.findByBusinessKey(product).getSupportsNumberOfLanes();
+            final Product productToFind = productDao.findByBusinessKey(product);
+            supportsNumberOfLanes = productToFind.getSupportsNumberOfLanes();
             if(selectedOrderAddons != null)
             for (String selectedOrderAddon : selectedOrderAddons) {
                 if(!supportsNumberOfLanes) {
@@ -2762,7 +2794,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                     "its regulatory requirements met or a reason for bypassing the regulatory requirements",
                     action);
             if (!editOrder.orderPredatesRegulatoryRequirement()) {
-                requireField(editOrder.getAttestationConfirmed().booleanValue(),
+                requireField(editOrder.isAttestationConfirmed().booleanValue(),
                         "the checkbox checked which attests that you are aware of the regulatory requirements for this project",
                         action);
             }

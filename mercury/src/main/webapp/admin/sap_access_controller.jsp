@@ -40,7 +40,7 @@
                                                   title="${priceItem.name}"
                                                   value="${priceItem.name}" id="${priceItem.name}-id"/>
                                 <stripes:label for="${priceItem}-id">
-                                    ${priceItem.name} -- ${priceItem.platformName}
+                                    ${priceItem.name} -- ${priceItem.platform}
                                 </stripes:label>
                             </div>
                         </div>
