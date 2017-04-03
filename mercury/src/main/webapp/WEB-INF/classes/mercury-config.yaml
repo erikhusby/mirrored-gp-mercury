@@ -286,17 +286,17 @@ sap:
       login:      GPCOMU
       password:   SAPERD300!
       sapShortCloseRecipientEmail: zsearle@broadinstitute.org
-      sapShortCloseEmailSubject: TEST SAP Order: Short Close Request
+      sapShortCloseEmailSubject: "TEST SAP Order: Short Close Request"
     QA:
       login:      GPCOMU
       password:   SAPERQ300!
       sapShortCloseRecipientEmail: zsearle@broadinstitute.org
-      sapShortCloseEmailSubject: TEST SAP Order: Short Close Request
+      sapShortCloseEmailSubject: "TEST SAP Order: Short Close Request"
     PROD:
       login:      GPCOMU
       password:   SAPERP300!
       sapShortCloseRecipientEmail: BUSSYS@broadinstitute.org
-      sapShortCloseEmailSubject: SAP Order: Short Close Request
+      sapShortCloseEmailSubject: "SAP Order: Short Close Request"
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 mercury:
 
