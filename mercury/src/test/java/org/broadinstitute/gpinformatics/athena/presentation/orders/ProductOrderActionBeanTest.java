@@ -829,6 +829,36 @@ public class ProductOrderActionBeanTest {
 
         Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote),
                 Double.valueOf(573 * testOrder.getSamples().size() + 2500 * testOrder.getLaneCount() + 2500 * testOrder.getLaneCount()));
+
+        Assert.assertEquals(testOrder.getUnbilledSampleCount(), 75);
+        ProductOrderSample abandonedSample = testOrder.getSamples().get(0);
+        abandonedSample.setDeliveryStatus(ProductOrderSample.DeliveryStatus.ABANDONED);
+
+        Assert.assertEquals(testOrder.getUnbilledSampleCount(), 74);
+        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder)),
+                Double.valueOf(573 * (testOrder.getSamples().size()-1) + 2500 * testOrder.getLaneCount() + 2500 * testOrder.getLaneCount()));
+
+
+        ProductOrder testChildOrder = new ProductOrder();
+        testChildOrder.setJiraTicketKey("PDO-ChildTestValue");
+
+        testChildOrder.setSamples(Collections.singletonList(new ProductOrderSample("SM-TestChild1")));
+        testOrder.addChildOrder(testChildOrder);
+
+        Assert.assertEquals(testChildOrder.getUnbilledSampleCount(), 1);
+        Assert.assertEquals(testOrder.getUnbilledSampleCount(), 74);
+
+        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder)),
+                Double.valueOf((573 * (testOrder.getSamples().size() -1) + 2500 * testOrder.getLaneCount() + 2500 * testOrder.getLaneCount()
+                )));
+
+        testChildOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+
+        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder)),
+                Double.valueOf((573 * (testOrder.getSamples().size() -1) + 2500 * testOrder.getLaneCount() + 2500 * testOrder.getLaneCount()
+                                + 573 * testChildOrder.getSamples().size()
+                )));
+
     }
 
     /**

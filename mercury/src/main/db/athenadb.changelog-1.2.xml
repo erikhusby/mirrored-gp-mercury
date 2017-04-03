@@ -723,5 +723,48 @@
         <createSequence sequenceName="SEQ_ACCESS_CONTROL_ITEM" schemaName="athena" startValue="1" incrementBy="50" />
     </changeSet>
 
+    <changeSet author="scottmat" id="GPLIM-4685-1">
+        <dropNotNullConstraint tableName="sap_order_detail" columnName="REFERENCE_PRODUCT_ORDER" schemaName="athena"/>
+    </changeSet>
+    
+    <changeSet id="GPLIM-4685-2" author="scottmat">
+        <createTable tableName="product_order_sap_orders" schemaName="athena">
+            <column name="reference_product_order" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+            <column name="sap_reference_orders" type="number(19,0)" >
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+        
+        <addForeignKeyConstraint baseTableName="product_order_sap_orders" baseColumnNames="reference_product_order"
+                                 constraintName="fk_pdo_sap_to_pdo"
+                                 referencedTableName="product_order"
+                                 referencedColumnNames="PRODUCT_ORDER_ID" referencedTableSchemaName="athena" baseTableSchemaName="athena" />
+        <addForeignKeyConstraint baseTableName="product_order_sap_orders" baseColumnNames="sap_reference_orders"
+                                 constraintName="fk_pdo_sap_to_sap"
+                                 referencedTableName="SAP_ORDER_DETAIL"
+                                 referencedColumnNames="SAP_ORDER_DETAIL_ID" referencedTableSchemaName="athena" baseTableSchemaName="athena" />
+    </changeSet>
+
+    <changeSet id="GPLIM-4685-3" author="scottmat">
+        <createTable tableName="product_order_sap_orders_aud" schemaName="athena">
+            <column name="rev" type="number(19,0)" />
+            <column name="revtype" type="number(3,0)" />
+            <column name="reference_product_order" type="number(19,0)" />
+            <column name="sap_reference_orders" type="number(19,0)" />
+
+        </createTable>
+
+        <addPrimaryKey tableName="product_order_sap_orders_aud"
+                       columnNames="rev, reference_product_order, sap_reference_orders" />
+
+        <createIndex tableName="product_order_sap_orders_aud" indexName="idx_aud_pdo_sap_to_pdo">
+            <column name="reference_product_order" />
+        </createIndex>
+        <createIndex tableName="product_order_sap_orders_aud" indexName="idx_aud_pdo_sap_to_sap">
+            <column name="sap_reference_orders" />
+        </createIndex>
+    </changeSet>
 
 </databaseChangeLog>

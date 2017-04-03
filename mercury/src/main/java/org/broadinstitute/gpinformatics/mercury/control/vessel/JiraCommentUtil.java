@@ -217,7 +217,7 @@ public class JiraCommentUtil {
                     if (labEventNodes != null) {
                         if (labEventNodes.size() > 1) {
                             logger.debug("Can't handle multiple instances of lab event node found for : " + labEventType);
-                        } else {
+                        } else if (labEventNodes.size() == 1){
                             ProductWorkflowDefVersion.LabEventNode labEventNode = labEventNodes.iterator().next();
                             WorkflowStepDef workflowStepDef = labEventNode.getStepDef();
                             if (workflowStepDef != null && !workflowStepDef.getJiraTransition().isEmpty()) {

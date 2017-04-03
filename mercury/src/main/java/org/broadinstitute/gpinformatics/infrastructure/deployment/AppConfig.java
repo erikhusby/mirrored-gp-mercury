@@ -83,5 +83,4 @@ public class AppConfig extends AbstractConfig implements Serializable {
         return produce(AppConfig.class, deployment);
     }
 
-
 }
