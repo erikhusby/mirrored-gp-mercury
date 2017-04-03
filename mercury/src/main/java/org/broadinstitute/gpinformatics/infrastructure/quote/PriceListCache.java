@@ -198,6 +198,17 @@ public class PriceListCache extends AbstractCache implements Serializable {
 
     }
 
+    /**
+     * Given a price item, this method will compare the price of the price item on the price list with the Quote
+     * line item (if one exists) on a given quote to see which price is lower.  The lower of the two is returned
+     *
+     * @param primaryPriceItem Price item defined on a product
+     * @param orderQuote       Quote associated with the product order from which the product that defined the
+     *                         price item is associated
+     * @return Lowest price between the pricelist item and the quote item (if one exists)
+     * @throws InvalidProductException   Thrown if the price item from the product orders product is not found on the
+     * price list
+     */
     public String getEffectivePrice(PriceItem primaryPriceItem, Quote orderQuote) throws InvalidProductException {
 
         final QuotePriceItem cachedPriceItem = findByKeyFields(primaryPriceItem);

@@ -22,6 +22,10 @@ public class Quote {
     private QuoteType quoteType;
     private Collection<QuoteItem> quoteItems = new ArrayList<> ();
 
+    // quick access Cache of quote items
+    public HashMap<String, HashMap<String, HashMap<String, QuoteItem>>> quoteItemCache = new HashMap<>();
+
+
     public Quote() {}
 
     public Quote(String alphanumericId, QuoteFunding quoteFunding, ApprovalStatus approvalStatus) {
@@ -106,8 +110,6 @@ public class Quote {
         this.quoteType = quoteType;
     }
 
-    public HashMap<String, HashMap<String, HashMap<String, QuoteItem>>> quoteItemCache = new HashMap<>();
-
 
     @Override
     public boolean equals(Object o) {
@@ -134,6 +136,12 @@ public class Quote {
         return !(singleLevel == null);
     }
 
+    /**
+     * Helper method to support SAP transition.  If there is only one funding level, this will return it.  Otherwise
+     * Null will be returned
+     *
+     * @return Single funding level for the quote, or null if there is either more than one level or no level.
+     */
     public FundingLevel getFirstRelevantFundingLevel() {
         FundingLevel singleLevel = null;
 
@@ -147,7 +155,9 @@ public class Quote {
         return singleLevel;
     }
 
-
+    /**
+     * initialized the Multi level hash map to make accessing items in the quote item collection easier
+     */
     public void initializeQuoteItemCache () {
         if(CollectionUtils.isNotEmpty(quoteItems)) {
             for (QuoteItem quoteItem : quoteItems) {
@@ -164,6 +174,14 @@ public class Quote {
         }
     }
 
+    /**
+     * Access a quote item defined on the quote by key criteria.
+     *
+     * @param platform  Platform with which the desired quote item should be associated
+     * @param category  Category with which the desired quote item should be associated
+     * @param name      Name with which the desired quote item should be named
+     * @return  specific QuoteItem on the quote when found, or null if it is not found
+     */
     public QuoteItem findCachedQuoteItem(String platform, String category, String name) {
 
         QuoteItem foundItem = null;
