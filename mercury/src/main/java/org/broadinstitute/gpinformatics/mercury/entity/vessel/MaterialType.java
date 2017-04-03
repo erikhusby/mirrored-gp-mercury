@@ -51,6 +51,7 @@ public enum MaterialType implements Displayable {
     CELLS_RNALATER_REAGENT_PRESERVED("Cells:RNAlater Reagent Preserved"),
     DNA_CDNA_LIBRARY("DNA:cDNA Library"),
     DNA_CDNA("DNA:cDNA"),
+    DNA_DNA_CELL_FREE("DNA:DNA Cell Free"),
     DNA_DNA_GENOMIC("DNA:DNA Genomic"),
     DNA_DNA_LIBRARY_EXTERNAL("DNA:DNA Library External"),
     DNA_DNA_POOLED("DNA:DNA Pooled"),

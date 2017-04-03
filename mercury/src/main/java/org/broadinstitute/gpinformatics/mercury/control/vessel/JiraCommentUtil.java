@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 // todo jmt re-evaluate where this functionality belongs
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
@@ -41,6 +43,8 @@ import java.util.Set;
  * about samples to project managers
  */
 public class JiraCommentUtil {
+
+    private static final Log logger = LogFactory.getLog(JiraCommentUtil.class);
 
     private final JiraService jiraService;
 
@@ -207,12 +211,18 @@ public class JiraCommentUtil {
                 if (workflowName != null) {
                     ProductWorkflowDefVersion workflowVersion = workflowConfig.getWorkflowVersionByName(
                             workflowName, batch.getCreatedOn());
-                    ProductWorkflowDefVersion.LabEventNode labEventNode =
-                            workflowVersion.findStepByEventType(labEvent.getLabEventType().getName());
-                    if (labEventNode != null) {
-                        WorkflowStepDef workflowStepDef = labEventNode.getStepDef();
-                        if (workflowStepDef != null && !workflowStepDef.getJiraTransition().isEmpty()) {
-                            jiraTransitionTypes.addAll(workflowStepDef.getJiraTransition());
+                    String labEventType = labEvent.getLabEventType().getName();
+                    Collection<ProductWorkflowDefVersion.LabEventNode> labEventNodes =
+                            workflowVersion.findStepsByEventType(labEventType);
+                    if (labEventNodes != null) {
+                        if (labEventNodes.size() > 1) {
+                            logger.debug("Can't handle multiple instances of lab event node found for : " + labEventType);
+                        } else {
+                            ProductWorkflowDefVersion.LabEventNode labEventNode = labEventNodes.iterator().next();
+                            WorkflowStepDef workflowStepDef = labEventNode.getStepDef();
+                            if (workflowStepDef != null && !workflowStepDef.getJiraTransition().isEmpty()) {
+                                jiraTransitionTypes.addAll(workflowStepDef.getJiraTransition());
+                            }
                         }
                     }
                 }

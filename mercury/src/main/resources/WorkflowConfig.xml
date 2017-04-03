@@ -76,6 +76,7 @@
                     <materialTypes>DNA</materialTypes>
                     <materialTypes>DNA_DNA_GENOMIC</materialTypes>
                     <materialTypes>DNA_DNA_SOMATIC</materialTypes>
+                    <materialTypes>DNA_DNA_CELL_FREE</materialTypes>
                 </bucketEntryEvaluator>
                 </workflowStepDefs>
             <workflowStepDefs>
@@ -338,6 +339,7 @@
                     <materialTypes>DNA</materialTypes>
                     <materialTypes>DNA_DNA_GENOMIC</materialTypes>
                     <materialTypes>DNA_DNA_SOMATIC</materialTypes>
+                    <materialTypes>DNA_DNA_CELL_FREE</materialTypes>
                 </bucketEntryEvaluator>
                 </workflowStepDefs>
             <workflowStepDefs>
@@ -1051,6 +1053,7 @@
                     <materialTypes>DNA</materialTypes>
                     <materialTypes>DNA_DNA_GENOMIC</materialTypes>
                     <materialTypes>DNA_DNA_SOMATIC</materialTypes>
+                    <materialTypes>DNA_DNA_CELL_FREE</materialTypes>
                 </bucketEntryEvaluator>
                 </workflowStepDefs>
             <workflowStepDefs>
@@ -2621,13 +2624,13 @@
                 <optional>false</optional>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>InfiniumPostHybridizationHybOvenLoaded</name>
-                <labEventTypes>INFINIUM_POST_HYBRIDIZATION_HYB_OVEN_LOADED</labEventTypes>
+                <name>InfiniumHybChamberLoaded</name>
+                <labEventTypes>INFINIUM_HYB_CHAMBER_LOADED</labEventTypes>
                 <optional>false</optional>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>InfiniumHybChamberLoaded</name>
-                <labEventTypes>INFINIUM_HYB_CHAMBER_LOADED</labEventTypes>
+                <name>InfiniumPostHybridizationHybOvenLoaded</name>
+                <labEventTypes>INFINIUM_POST_HYBRIDIZATION_HYB_OVEN_LOADED</labEventTypes>
                 <optional>false</optional>
             </workflowStepDefs>
             <workflowStepDefs>
