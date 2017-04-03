@@ -1,17 +1,14 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
-
 /**
  * Traverses all ancestor and descendant vessels of a set of starting vessels. <br />
  * Results include starting vessels
@@ -24,25 +21,35 @@ public class LabVesselTraversalEvaluator extends TraversalEvaluator {
         List<LabVessel> startingVessels = (List<LabVessel>) rootEntities;
         resultLabVessels.addAll(startingVessels);
 
+        Collection<LabVessel> traverserVessels = Collections.EMPTY_SET;
+
         for (LabVessel startingLabVessel : startingVessels) {
             if( getTraversalDirection() == TransferTraverserCriteria.TraversalDirection.Ancestors ) {
                 if( startingLabVessel.getContainerRole() != null ) {
                     TransferTraverserCriteria.LabVesselAncestorCriteria containerCriteria = new TransferTraverserCriteria.LabVesselAncestorCriteria();
                     startingLabVessel.getContainerRole().applyCriteriaToAllPositions(containerCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors );
-                    resultLabVessels.addAll(containerCriteria.getLabVesselAncestors());
+                    traverserVessels = containerCriteria.getLabVesselAncestors();
                 } else {
-                    resultLabVessels.addAll(startingLabVessel.getAncestorVessels());
+                    traverserVessels = startingLabVessel.getAncestorVessels();
                 }
             } else {
                 if( startingLabVessel.getContainerRole() != null ) {
                     TransferTraverserCriteria.LabVesselDescendantCriteria containerCriteria = new TransferTraverserCriteria.LabVesselDescendantCriteria();
                     startingLabVessel.getContainerRole().applyCriteriaToAllPositions(containerCriteria, TransferTraverserCriteria.TraversalDirection.Descendants );
-                    resultLabVessels.addAll(containerCriteria.getLabVesselDescendants());
+                    traverserVessels = containerCriteria.getLabVesselDescendants();
                 } else {
-                    resultLabVessels.addAll(startingLabVessel.getDescendantVessels());
+                    traverserVessels = startingLabVessel.getDescendantVessels();
                 }
             }
+
+            for (LabVessel labVessel : traverserVessels) {
+                searchInstance.getEvalContext().getPagination().addExtraIdInfo(labVessel.getLabel(),
+                        startingLabVessel.getLabel());
+                resultLabVessels.add(labVessel);
+            }
         }
+
+
 
         return resultLabVessels;
     }
