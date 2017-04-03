@@ -1767,14 +1767,16 @@ public class LabVesselSearchDefinition {
         searchTerm.setName("Infinium Chip Drill Down");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public String evaluate(Object entity, SearchContext context) {
-                String result = null;
+            public List<String> evaluate(Object entity, SearchContext context) {
+                List<String> result = null;
                 LabVessel vessel = (LabVessel)entity;
 
                 for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
                         : InfiniumVesselTraversalEvaluator.getChipDetailsForDnaWell(vessel, CHIP_EVENT_TYPES, context ).asMap().entrySet()) {
-                    result = labVesselAndPositions.getKey().getLabel();
-                    break;
+                    if( result == null ) {
+                        result = new ArrayList<>();
+                    }
+                    result.add(labVesselAndPositions.getKey().getLabel());
                 }
 
                 return result;
@@ -1786,16 +1788,23 @@ public class LabVesselSearchDefinition {
 
             @Override
             public String evaluate(Object value, SearchContext context) {
-                String results = null;
-                String barcode = (String)value;
+                StringBuilder results = null;
+                List<String> barcodes = (List<String>)value;
 
-                if( barcode == null || barcode.isEmpty() ) {
-                    return results;
+                if( barcodes == null || barcodes.isEmpty() ) {
+                    return "";
                 }
 
-                Map<String, String[]> terms = new HashMap<>();
-                terms.put(drillDownSearchTerm, new String[]{barcode});
-                return SearchDefinitionFactory.buildDrillDownLink(barcode, ColumnEntity.LAB_VESSEL, drillDownSearchName, terms, context);
+                for( String barcode : barcodes ) {
+                    Map<String, String[]> terms = new HashMap<>();
+                    terms.put(drillDownSearchTerm, new String[]{barcode});
+                    if( results == null ) {
+                        results = new StringBuilder();
+                    }
+                    results.append( SearchDefinitionFactory.buildDrillDownLink(barcode, ColumnEntity.LAB_VESSEL, drillDownSearchName, terms, context));
+                    results.append(" ");
+                }
+                return results.toString();
             }
         });
         searchTerms.add(searchTerm);

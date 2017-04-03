@@ -85,21 +85,6 @@ public class TubeStripTubeFlowcellTraversalEvaluator extends CustomTraversalEval
     }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     @Override
     public List<Object> buildEntityIdList(Set<? extends Object> entities) {
         List<Object> idList = new ArrayList<>();

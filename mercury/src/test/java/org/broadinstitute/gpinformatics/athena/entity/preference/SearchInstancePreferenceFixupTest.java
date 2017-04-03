@@ -173,7 +173,7 @@ public class SearchInstancePreferenceFixupTest extends Arquillian {
                         isInfinium = true;
                         statusOutput.append( "Modified named search [");
                         statusOutput.append(searchInstance.getName());
-                        statusOutput.append("] (DNA plate term)");
+                        statusOutput.append("] (DNA plate term)\n");
                     } else if( termName.equals(LabVesselSearchDefinition.MultiRefTerm.INFINIUM_AMP_PLATE.getTermRefName() )
                             || termName.equals(LabVesselSearchDefinition.MultiRefTerm.INFINIUM_CHIP.getTermRefName() ) ) {
                         searchInstance.setExcludeInitialEntitiesFromResults(true);
@@ -182,7 +182,7 @@ public class SearchInstancePreferenceFixupTest extends Arquillian {
                         isInfinium = true;
                         statusOutput.append( "Modified named search [");
                         statusOutput.append(searchInstance.getName());
-                        statusOutput.append("] (Amp plate or Chip term)");
+                        statusOutput.append("] (Amp plate or Chip term)\n");
                     } else if( termName.equals("Infinium PDO")) {
                         isInfinium = true;
                         searchValue.setTermName("PDO");
@@ -192,16 +192,29 @@ public class SearchInstancePreferenceFixupTest extends Arquillian {
                         searchInstance.getTraversalEvaluatorValues().put("descendantOptionEnabled", Boolean.TRUE);
                         statusOutput.append( "Modified named search [");
                         statusOutput.append(searchInstance.getName());
-                        statusOutput.append("] (Infinium PDO term)");
+                        statusOutput.append("] (Infinium PDO term)\n");
                     }
                 }
 
                 if( isInfinium ) {
                     count++;
-                    statusOutput.insert(0, preference.getPreferenceType().toString());
-                    statusOutput.insert(0, " had modifications: \n");
-                    System.out.println(statusOutput.toString());
+                } else {
+                    // Existing ancestor/descendant logic
+                    if( searchInstance.getTraversalEvaluatorValues().containsValue(Boolean.TRUE
+                    && searchInstance.getCustomTraversalOptionName().equals("none"))) {
+                        searchInstance.setCustomTraversalOptionName("tubesEtcTraverser");
+                        count++;
+                        statusOutput.append( "Modified named search [");
+                        statusOutput.append(searchInstance.getName());
+                        statusOutput.append("] (converted traversal to custom tube traverser)\n");
+                    }
                 }
+            }
+
+            if( statusOutput.length() > 1 ) {
+                statusOutput.insert(0, " had modifications: \n");
+                statusOutput.insert(0, preference.getPreferenceType().toString());
+                System.out.println(statusOutput.toString());
             }
 
             if( count > 0 ) {

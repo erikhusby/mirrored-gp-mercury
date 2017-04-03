@@ -84,17 +84,17 @@ public class InfiniumVesselTraversalEvaluator extends CustomTraversalEvaluator {
 
                 // In cases where the PDO tube is plated directly, we don't need to traverse.
                 for (LabVessel rack : startingVessel.getContainers()) {
-                    VesselPosition sourcePosition = rack.getContainerRole().getPositionOfVessel(startingVessel);
                     for (SectionTransfer sectionTransfer : rack.getContainerRole().getSectionTransfersFrom()) {
                         if (sectionTransfer.getLabEvent().getLabEventType() == LabEventType.ARRAY_PLATING_DILUTION) {
                             VesselContainer<?> dnaPlate = sectionTransfer.getTargetVesselContainer();
                             infiniumVessels.add(dnaPlate.getEmbedder());
-                            // Sections will never be flipped (source position = target position)
-                            LabVessel dnaWell = dnaPlate.getVesselAtPosition(sourcePosition);
-                            if( dnaWell != null ) {
-                                infiniumVessels.add(dnaWell);
+                            // Grab all wells in the DNA plate to make sure controls are also included
+                            for(VesselPosition position : sectionTransfer.getTargetSection().getWells() ) {
+                                LabVessel dnaWell = dnaPlate.getVesselAtPosition(position);
+                                if( dnaWell != null ) {
+                                    infiniumVessels.add(dnaWell);
+                                }
                             }
-
                             found = true;
                         }
                     }
