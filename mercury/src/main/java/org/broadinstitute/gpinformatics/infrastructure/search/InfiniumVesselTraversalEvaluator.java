@@ -93,6 +93,9 @@ public class InfiniumVesselTraversalEvaluator extends CustomTraversalEvaluator {
                                 LabVessel dnaWell = dnaPlate.getVesselAtPosition(position);
                                 if( dnaWell != null ) {
                                     infiniumVessels.add(dnaWell);
+                                    // Starting vessel would be daughter plate tube barcode
+                                    searchInstance.getEvalContext().getPagination().addExtraIdInfo(dnaWell.getLabel(),
+                                            rack.getContainerRole().getVesselAtPosition(position).getLabel());
                                 }
                             }
                             found = true;
