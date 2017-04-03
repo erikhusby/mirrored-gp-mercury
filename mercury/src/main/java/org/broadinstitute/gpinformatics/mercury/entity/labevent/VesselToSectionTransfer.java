@@ -40,7 +40,7 @@ public class VesselToSectionTransfer extends VesselTransfer {
         this.ancillaryTargetVessel = ancillaryTargetVessel;
         this.labEvent = labEvent;
         this.targetVessel = targetVesselContainer.getEmbedder();
-        sourceVessel.getVesselToSectionTransfersThisAsSource().add(this);
+        sourceVessel.addVesselToSectionTransferThisAsSource(this);
         targetVessel.getContainerRole().getVesselToSectionTransfersTo().add(this);
     }
 
