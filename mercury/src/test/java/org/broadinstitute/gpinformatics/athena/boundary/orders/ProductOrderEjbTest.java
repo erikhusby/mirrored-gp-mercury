@@ -33,6 +33,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFunding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceStub;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapConfig;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImplDBFreeTest;
@@ -83,6 +84,7 @@ public class ProductOrderEjbTest {
     public final QuoteServiceImpl mockQuoteService = Mockito.mock(QuoteServiceImpl.class);
     public final SapIntegrationService mockSapService = Mockito.mock(SapIntegrationService.class);
     public final AppConfig mockAppConfig = Mockito.mock(AppConfig.class);
+    public final SapConfig mockSapConfig = Mockito.mock(SapConfig.class);
     public final EmailSender mockEmailSender = Mockito.mock(EmailSender.class);
     public final SAPAccessControlEjb mockAccessController = Mockito.mock(SAPAccessControlEjb.class);
     public final PriceListCache mockPriceListCache = Mockito.mock(PriceListCache.class);
@@ -102,6 +104,7 @@ public class ProductOrderEjbTest {
         Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenReturn(new SAPAccessControl());
 
         productOrderEjb.setAppConfig(mockAppConfig);
+        productOrderEjb.setSapConfig(mockSapConfig);
         productOrderEjb.setEmailSender(mockEmailSender);
         productOrderEjb.setAccessController(mockAccessController);
         productOrderEjb.setDeployment(Deployment.DEV);
