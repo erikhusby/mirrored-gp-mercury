@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
@@ -162,19 +163,22 @@ public class PriceListCache extends AbstractCache implements Serializable {
         return "invalid price item id " + priceItemId;
     }
 
-    public QuotePriceItem findByKeyFields(String platform, String category, String name) throws QuoteServerException {
+    public QuotePriceItem findByKeyFields(String platform, String category, String name) {
+
+        QuotePriceItem foundItem = null;
+
         for (QuotePriceItem quotePriceItem : getQuotePriceItems()) {
             if (quotePriceItem.getPlatformName().equals(platform) &&
                 quotePriceItem.getCategoryName().equals(category) &&
                 quotePriceItem.getName().equals(name)) {
-                return quotePriceItem;
+                foundItem = quotePriceItem;
             }
         }
 
-        throw new QuoteServerException("The price item " + category+":"+name + " is not found");
+        return foundItem;
     }
 
-    public QuotePriceItem findByKeyFields(PriceItem priceItem) throws QuoteServerException {
+    public QuotePriceItem findByKeyFields(PriceItem priceItem) {
         return findByKeyFields(priceItem.getPlatform(), priceItem.getCategory(), priceItem.getName());
     }
 
@@ -194,21 +198,20 @@ public class PriceListCache extends AbstractCache implements Serializable {
 
     }
 
-    public String getEffectivePrice(PriceItem primaryPriceItem, Quote orderQuote)
-            throws QuoteServerException, QuoteNotFoundException {
+    public String getEffectivePrice(PriceItem primaryPriceItem, Quote orderQuote) throws InvalidProductException {
 
         final QuotePriceItem cachedPriceItem = findByKeyFields(primaryPriceItem);
+        if(cachedPriceItem == null) {
+            throw new InvalidProductException("The price item "+primaryPriceItem.getDisplayName()+" does not exist");
+        }
         String price = cachedPriceItem.getPrice();
-        if (orderQuote.getQuoteItems() != null) {
-            for (QuoteItem quoteItem : orderQuote.getQuoteItems()) {
-                if (cachedPriceItem.sameAsQuoteItem(quoteItem)) {
-                    if (new BigDecimal(quoteItem.getPrice()).compareTo(new BigDecimal(cachedPriceItem.getPrice())) < 0) {
-                        price = quoteItem.getPrice();
-                    }
-                }
+        QuoteItem foundMatchingQuoteItem = orderQuote.findCachedQuoteItem(cachedPriceItem.getPlatformName(),
+                cachedPriceItem.getCategoryName(), cachedPriceItem.getName());
+        if (foundMatchingQuoteItem  != null) {
+            if (new BigDecimal(foundMatchingQuoteItem .getPrice()).compareTo(new BigDecimal(cachedPriceItem.getPrice())) < 0) {
+                price = foundMatchingQuoteItem .getPrice();
             }
         }
         return price;
     }
-
 }

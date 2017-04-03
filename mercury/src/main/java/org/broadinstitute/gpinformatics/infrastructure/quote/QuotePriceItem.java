@@ -298,6 +298,6 @@ public class QuotePriceItem {
     public boolean sameAsQuoteItem(QuoteItem quoteItem) {
         return quoteItem.getCategoryName().equals(getCategoryName()) &&
                quoteItem.getName().equals(getName()) &&
-               quoteItem.getPlatformName().equals(getPlatformName());
+               quoteItem.getPlatform().equals(getPlatformName());
     }
 }

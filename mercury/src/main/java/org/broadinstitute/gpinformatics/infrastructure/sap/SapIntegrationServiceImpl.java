@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.sap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
+import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
@@ -183,10 +184,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             return new SAPOrderItem(product.getPartNumber(),
                     price,
                     getSampleCount(placedOrder, product));
-        } catch (QuoteServerException e) {
-            throw new SAPIntegrationException("Unable to find Quote", e);
-        } catch (QuoteNotFoundException e) {
-            throw new SAPIntegrationException("Unable to find Quote", e);
+        } catch (InvalidProductException e) {
+            throw new SAPIntegrationException("For " + product.getPartNumber() + " " + e.getMessage());
         }
     }
 

@@ -38,6 +38,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusF
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporterFactory;
+import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
@@ -693,6 +694,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", quoteId, e.getMessage());
         } catch (QuoteNotFoundException e) {
             addGlobalValidationError("The quote ''{2}'' was not found ", quoteId);
+        } catch (InvalidProductException e) {
+            addGlobalValidationError(e.getMessage());
         }
 
         if (editOrder != null) {
@@ -711,7 +714,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      *                        Pending
      */
     private void validateQuoteDetails(String quoteId, final ErrorLevel errorLevel, boolean countOpenOrders)
-            throws QuoteNotFoundException, QuoteServerException {
+            throws InvalidProductException {
         Quote quote = validateQuoteId(quoteId);
 
         if (quote != null) {
@@ -735,7 +738,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     private void validateQuoteDetailsWithAddedSamples(String quoteId, final ErrorLevel errorLevel,
                                                       boolean countOpenOrders, int additionalSamplesCount)
-            throws QuoteNotFoundException, QuoteServerException {
+            throws InvalidProductException {
         Quote quote = validateQuoteId(quoteId);
 
         if (quote != null) {
@@ -755,14 +758,14 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @param additionalSampleCount
      */
     private void validateQuoteDetails(Quote quote, ErrorLevel errorLevel, boolean countCurrentUnPlacedOrder,
-                                      int additionalSampleCount) throws QuoteNotFoundException, QuoteServerException {
+                                      int additionalSampleCount) throws InvalidProductException {
         if (!quote.getApprovalStatus().equals(ApprovalStatus.FUNDED)) {
             String unFundedMessage = "A quote should be funded in order to be used for a product order.";
             addMessageBasedOnErrorLevel(errorLevel, unFundedMessage);
         }
 
         double fundsRemaining = Double.parseDouble(quote.getQuoteFunding().getFundsRemaining());
-        double outstandingEstimate = estimateOutstandingOrders(quote.getAlphanumericId());
+        double outstandingEstimate = estimateOutstandingOrders(quote.getAlphanumericId(), quote);
         double valueOfCurrentOrder = 0;
         if(countCurrentUnPlacedOrder) {
             valueOfCurrentOrder = getValueOfOpenOrders(Collections.singletonList(editOrder), quote);
@@ -798,12 +801,11 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @param quoteId Common quote id to be used to determine which open orders will be found
      * @return total dollar amount of the monitary value of orders associated with the given quote
      */
-    double estimateOutstandingOrders(String quoteId) throws QuoteNotFoundException, QuoteServerException {
+    double estimateOutstandingOrders(String quoteId, Quote foundQuote) throws InvalidProductException {
 
         List<ProductOrder> ordersWithCommonQuote = productOrderDao.findOrdersWithCommonQuote(quoteId);
 
-        return getValueOfOpenOrders(ordersWithCommonQuote,
-                quoteService.getQuoteByAlphaId(quoteId));
+        return getValueOfOpenOrders(ordersWithCommonQuote, foundQuote);
     }
 
     /**
@@ -813,13 +815,11 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @param quote
      * @return Total dollar amount which equates to the monitary value of all orders given
      */
-    double getValueOfOpenOrders(List<ProductOrder> ordersWithCommonQuote, Quote quote)
-            throws QuoteNotFoundException, QuoteServerException {
+    double getValueOfOpenOrders(List<ProductOrder> ordersWithCommonQuote, Quote quote) throws InvalidProductException {
         double value = 0d;
 
         for (ProductOrder testOrder : ordersWithCommonQuote) {
-            value += getOrderValue(testOrder, testOrder.getUnbilledSampleCount(),
-                    quote);
+            value += getOrderValue(testOrder, testOrder.getUnbilledSampleCount(), quote);
         }
         return value;
     }
@@ -834,8 +834,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @param quote
      * @return Total monitary value of the order
      */
-    double getOrderValue(ProductOrder testOrder, int sampleCount, Quote quote)
-            throws QuoteNotFoundException, QuoteServerException {
+    double getOrderValue(ProductOrder testOrder, int sampleCount, Quote quote) throws InvalidProductException {
         double value = 0d;
         if(testOrder.getProduct() != null) {
             final Product product = testOrder.getProduct();
@@ -863,17 +862,22 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @param quote
      * @return Derived value of the Product price multiplied by the number of unbilled samples
      */
-    double getProductValue(int unbilledCount, Product product, Quote quote)
-            throws QuoteNotFoundException, QuoteServerException {
+    double getProductValue(int unbilledCount, Product product, Quote quote) throws InvalidProductException {
         double productValue = 0d;
-        String foundPrice = priceListCache.getEffectivePrice(product.getPrimaryPriceItem(), quote);
+        String foundPrice;
+        try {
+            foundPrice = priceListCache.getEffectivePrice(product.getPrimaryPriceItem(), quote);
+        } catch (InvalidProductException e) {
+            throw new InvalidProductException("For '" + product.getPartNumber() + "' " + e.getMessage(), e);
+        }
 
         if (StringUtils.isNotBlank(foundPrice)) {
             Double productPrice = Double.valueOf(foundPrice);
 
             productValue = productPrice * (unbilledCount);
         } else {
-            throw new QuoteServerException("Price for " + product.getPrimaryPriceItem().getName() + " was not found.");
+            throw new InvalidProductException("Price for " + product.getPrimaryPriceItem().getDisplayName() + " for product "+
+                                              product.getPartNumber()+" was not found.");
         }
         return productValue;
     }
@@ -1173,14 +1177,14 @@ public class ProductOrderActionBean extends CoreActionBean {
                 item.put("fundsRemaining", NumberFormat.getCurrencyInstance().format(fundsRemaining));
                 item.put("status", quote.getApprovalStatus().getValue());
 
-                double outstandingOrdersValue = estimateOutstandingOrders(quoteIdentifier);
+                double outstandingOrdersValue = estimateOutstandingOrders(quoteIdentifier, quote);
                 item.put("outstandingEstimate",  NumberFormat.getCurrencyInstance().format(
                         outstandingOrdersValue));
             }
 
         } catch (Exception ex) {
             try {
-                item.put("error", ex.getMessage());
+                item.put("error", "Unable to complete evaluating order values:  " + ex.getMessage());
             } catch (Exception ex1) {
                 // Don't really care if this gets an exception.
             }

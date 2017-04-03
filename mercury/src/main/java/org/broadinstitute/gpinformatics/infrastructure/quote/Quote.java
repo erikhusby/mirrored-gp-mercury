@@ -1,10 +1,13 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
+import clover.org.apache.commons.collections.CollectionUtils;
+
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 
 @XmlRootElement(name="Quote")
 public class Quote {
@@ -103,6 +106,8 @@ public class Quote {
         this.quoteType = quoteType;
     }
 
+    public HashMap<String, HashMap<String, HashMap<String, QuoteItem>>> quoteItemCache = new HashMap<>();
+
 
     @Override
     public boolean equals(Object o) {
@@ -140,5 +145,40 @@ public class Quote {
             }
         }
         return singleLevel;
+    }
+
+
+    public void initializeQuoteItemCache () {
+        if(CollectionUtils.isNotEmpty(quoteItems)) {
+            for (QuoteItem quoteItem : quoteItems) {
+                if(!quoteItemCache.containsKey(quoteItem.getCategoryName())) {
+                    quoteItemCache.put(quoteItem.getCategoryName(), new HashMap<String, HashMap<String, QuoteItem>>());
+                }
+                if(!quoteItemCache.get(quoteItem.getCategoryName()).containsKey(quoteItem.getPlatform())) {
+                    quoteItemCache.get(quoteItem.getCategoryName()).put(quoteItem.getPlatform(),new HashMap<String, QuoteItem>());
+                }
+                if(!quoteItemCache.get(quoteItem.getCategoryName()).get(quoteItem.getPlatform()).containsKey(quoteItem.getName())) {
+                    quoteItemCache.get(quoteItem.getCategoryName()).get(quoteItem.getPlatform()).put(quoteItem.getName(), quoteItem);
+                }
+            }
+        }
+    }
+
+    public QuoteItem findCachedQuoteItem(String platform, String category, String name) {
+
+        QuoteItem foundItem = null;
+
+        if(quoteItemCache.isEmpty()) {
+            initializeQuoteItemCache();
+        }
+        if (quoteItemCache.containsKey(category) &&
+            quoteItemCache.get(category).containsKey(platform) &&
+            quoteItemCache.get(category).get(platform).containsKey(name)) {
+
+            foundItem = quoteItemCache.get(category).get(platform).get(name);
+
+        }
+
+        return foundItem;
     }
 }

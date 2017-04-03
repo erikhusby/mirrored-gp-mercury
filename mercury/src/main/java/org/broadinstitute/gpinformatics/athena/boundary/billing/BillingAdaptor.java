@@ -158,6 +158,7 @@ public class BillingAdaptor implements Serializable {
 
                     // The price item that we are billing.
                     QuotePriceItem priceItemBeingBilled = QuotePriceItem.convertMercuryPriceItem(item.getPriceItem());
+                    String price = priceListCache.getEffectivePrice(item.getPriceItem(), quote);
 
                     // Get the quote PriceItem that this is replacing, if it is a replacement.
                     QuotePriceItem primaryPriceItemIfReplacement = item.getPrimaryForReplacement(priceListCache);
@@ -202,7 +203,6 @@ public class BillingAdaptor implements Serializable {
                     BigDecimal replacementMultiplier = null;
                     if(primaryPriceItemIfReplacementForSAP != null) {
                         BigDecimal primaryPrice = new BigDecimal(primaryPriceItemIfReplacementForSAP.getPrice());
-                        String price = priceListCache.getEffectivePrice(item.getPriceItem(), quote);
                         BigDecimal replacementPrice  = new BigDecimal(price);
 
                         replacementMultiplier = (replacementPrice.divide(primaryPrice, 3, BigDecimal.ROUND_DOWN)).multiply(BigDecimal.valueOf(item.getQuantityForSAP())).setScale(3, BigDecimal.ROUND_DOWN);
