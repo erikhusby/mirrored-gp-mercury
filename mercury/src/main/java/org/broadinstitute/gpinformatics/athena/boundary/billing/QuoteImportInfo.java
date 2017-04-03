@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -97,7 +98,7 @@ public class QuoteImportInfo {
         return ledger.getProductOrderSample().getProductOrder().getQuoteId();
     }
 
-    public List<QuoteImportItem> getQuoteImportItems(PriceListCache priceListCache) {
+    public List<QuoteImportItem> getQuoteImportItems(PriceListCache priceListCache) throws QuoteServerException {
         List<QuoteImportItem> quoteItems = new ArrayList<>();
 
         for (String quoteId : quantitiesByQuotePriceItem.keySet()) {

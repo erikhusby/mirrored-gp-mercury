@@ -862,7 +862,7 @@
         }
 
         function updateFunds(data) {
-            if (data.fundsRemaining) {
+            if (data.fundsRemaining && !data.error) {
                 $j("#fundsRemaining").text('Status: ' + data.status + ' - Funds Remaining: ' + data.fundsRemaining +
                         ' with ' + data.outstandingEstimate + ' unbilled across existing open orders');
             } else {

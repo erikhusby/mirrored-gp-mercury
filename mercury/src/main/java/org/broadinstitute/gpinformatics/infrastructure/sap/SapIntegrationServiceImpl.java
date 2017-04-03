@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.sap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
+import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
@@ -160,11 +161,11 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         newOrder.setResearchProjectNumber(orderToUpdate.getResearchProject().getJiraTicketKey());
 
-        Product primaryProduct = orderToUpdate.getProduct();
-        newOrder.addOrderItem(getOrderItem(orderToUpdate, primaryProduct));
+        Product primaryProduct = placedOrder.getProduct();
+        newOrder.addOrderItem(getOrderItem(placedOrder, primaryProduct, foundQuote));
 
-        for (ProductOrderAddOn addon : orderToUpdate.getAddOns()) {
-            newOrder.addOrderItem(getOrderItem(orderToUpdate, addon.getAddOn()));
+        for (ProductOrderAddOn addon : placedOrder.getAddOns()) {
+            newOrder.addOrderItem(getOrderItem(placedOrder, addon.getAddOn(), foundQuote));
         }
 
         return newOrder;
@@ -175,13 +176,20 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      * is expected to be charged
      * @param placedOrder Order from which the quantities are defined
      * @param product Product that is to be eventually charged when work on the product order is completed
+     * @param quote
      * @return JAXB sub element of the SAP order to represent the Product that will be charged and the quantity that
      * is expected of it.
      */
-    protected SAPOrderItem getOrderItem(ProductOrder placedOrder, Product product) {
-        return new SAPOrderItem(product.getPartNumber(),
-                priceListCache.findByKeyFields(product.getPrimaryPriceItem()).getPrice(),
-                getSampleCount(placedOrder, product));
+    protected SAPOrderItem getOrderItem(ProductOrder placedOrder, Product product, Quote quote) throws SAPIntegrationException {
+        try {
+            String price = priceListCache.getEffectivePrice(product.getPrimaryPriceItem(), quote);
+
+            return new SAPOrderItem(product.getPartNumber(),
+                    price,
+                    getSampleCount(placedOrder, product));
+        } catch (InvalidProductException e) {
+            throw new SAPIntegrationException("For " + product.getPartNumber() + " " + e.getMessage());
+        }
     }
 
     public static int getSampleCount(ProductOrder placedOrder, Product product) {
