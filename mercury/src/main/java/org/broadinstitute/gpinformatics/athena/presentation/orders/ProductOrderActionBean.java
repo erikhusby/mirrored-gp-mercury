@@ -116,9 +116,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeDefinition;
 import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
-import org.broadinstitute.gpinformatics.mercury.presentation.datatables.Column;
 import org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver;
-import org.broadinstitute.gpinformatics.mercury.presentation.datatables.State;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.hibernate.Hibernate;
@@ -145,6 +143,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver.SAVE_SEARCH_DATA;
 
 /**
  * This handles all the needed interface processing elements.
@@ -205,8 +205,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             "On Risk",
             "Proceed OOS",
             "Yield Amount");
-
-    private Map<String, Boolean> headerVisibilityMap = new HashMap<>();
 
     public ProductOrderActionBean() {
         super(CREATE_ORDER, EDIT_ORDER, PRODUCT_ORDER_PARAMETER);
@@ -411,8 +409,11 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     // Search uses product family list.
     private List<ProductFamily> productFamilies;
+
     @Inject
     DatatablesStateSaver preferenceSaver;
+    String tableState="";
+
     @Inject
     private LabVesselDao labVesselDao;
 
@@ -498,9 +499,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             // This is only used for save, when creating a new product order.
             editOrder = new ProductOrder();
         }
-
-        preferenceSaver = new DatatablesStateSaver(PreferenceType.PRODUCT_ORDER_PREFERENCES);
-        buildHeaderVisibilityMap();
     }
 
     protected Map<String, Collection<RegulatoryInfo>> setupRegulatoryInformation(ResearchProject researchProject) {
@@ -510,6 +508,11 @@ public class ProductOrderActionBean extends CoreActionBean {
             projectRegulatoryMap.put(project.getTitle(), project.getRegulatoryInfos());
         }
         return projectRegulatoryMap;
+    }
+
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, SAVE_SEARCH_DATA})
+    public void initPreferenceSaver(){
+        preferenceSaver.setPreferenceType(PreferenceType.PRODUCT_ORDER_PREFERENCES);
     }
 
     /**
@@ -3037,6 +3040,22 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.replacementSampleList = replacementSampleList;
     }
 
+    public DatatablesStateSaver getPreferenceSaver() {
+        return preferenceSaver;
+    }
+
+    public void setPreferenceSaver(DatatablesStateSaver preferenceSaver) {
+        this.preferenceSaver = preferenceSaver;
+    }
+
+    public String getTableState() {
+        return tableState;
+    }
+
+    public void setTableState(String tableState) {
+        this.tableState = tableState;
+    }
+
     public static JSONObject buildOrspJsonObject(JSONObject orspProject, Set<String> samples,
                                                  Set<String> sampleCollections) throws JSONException
     {
@@ -3055,32 +3074,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    @HandlesEvent(DatatablesStateSaver.SAVE_SEARCH_DATA)
-    public Resolution saveSearchData(String tableState) throws Exception {
+    @HandlesEvent(SAVE_SEARCH_DATA)
+    public Resolution saveSearchData() throws Exception {
         preferenceSaver.saveTableData(tableState);
         return new StreamingResolution("application/json", preferenceSaver.getTableStateJson());
     }
 
-    private void buildHeaderVisibilityMap() {
-        State tableState = preferenceSaver.getTableState();
-        if (tableState!=null) {
-            for (Column column : tableState.getColumns()) {
-                boolean visible = true;
-                if (column!=null){
-                    visible = column.isVisible();
-                }
-                String headerName = column.getHeaderName();
-                if (StringUtils.isNotBlank(headerName)) {
-                    headerVisibilityMap.put(headerName, visible);
-                }
-            }
-        }
-    }
-
-
-    public boolean showHeader(String columnName) {
-        return headerVisibilityMap.isEmpty() || (headerVisibilityMap.get(columnName) != null && headerVisibilityMap
-                .get(columnName));
+    public boolean showColumn(String columnName) {
+        return preferenceSaver.showColumn(columnName);
     }
 
 }
