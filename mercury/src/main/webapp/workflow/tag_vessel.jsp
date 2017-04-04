@@ -361,8 +361,10 @@
                                             <c:set var="receptacleIndex" value="${rowStatus.index * geometry.columnCount + columnStatus.index}"/>
                                             <c:set var="positionTest" value="${rowName}${columnName}"/>
                                             <c:set var="vesselLabel" value="${actionBean.getVesselLabelByPosition(positionTest)}"/>
-                                            <c:set var="isTagged" value="${actionBean.isVesselTagged(positionTest)}"/>
-                                            <c:set var="devCondition" value="${actionBean.displayDevCondtions(positionTest)}"/>
+                                            <c:if test="${vesselLabel.length() > 1}">
+                                                <c:set var="isTagged" value="${actionBean.isVesselTagged(positionTest)}"/>
+                                                <c:set var="devCondition" value="${actionBean.displayDevCondtions(positionTest)}"/>
+                                            </c:if>
                                             <td  align="left">
                                                 <c:if test="${vesselLabel.length() > 1}">
                                                     <input type="checkbox"  id="cells_${rowName}${columnName}"
