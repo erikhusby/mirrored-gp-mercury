@@ -880,7 +880,7 @@
                     if(fundingDetails[detailIndex].activeGrant) {
                         fundsRemainingNotification += ' -- Expires ' + fundingDetails[detailIndex].grantEndDate;
                         if(fundingDetails[detailIndex].daysTillExpire < 45) {
-                            fundsRemainingNotification += 'in ' + fundingDetails[detailIndex].daysTillExpire + ' days';
+                            fundsRemainingNotification += ' in ' + fundingDetails[detailIndex].daysTillExpire + ' days';
                             quoteWarning = true;
                         }
                     } else {
