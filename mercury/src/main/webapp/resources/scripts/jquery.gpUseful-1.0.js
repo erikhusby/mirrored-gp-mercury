@@ -340,4 +340,11 @@ jQuery.extend( jQuery.fn.dataTableExt.oSort, {
 
 })(jQuery);
 
+String.prototype.escapeJson= function() {
+    return this.replace(/\n/g, "\\n")
+               .replace(/\&/g, "\\&")
+               .replace(/\r/g, "\\r")
+               .replace(/\t/g, "\\t")
+};
+
 

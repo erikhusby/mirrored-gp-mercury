@@ -36,7 +36,7 @@ function enableDefaultPagingOptions(){
  *  Set the defaults for DataTables initialization
  */
 $j.extend(true, $j.fn.dataTable.defaults, {
-    'sDom': "<'row-fluid'<'span6'f><'span4'B><'span2'ir>>t<'row-fluid'<'span6'l><'span6'p>>",
+    'sDom': "<'row-fluid'<'span6'f><'span2'><'span4'lBi>r>t<'row-fluid'<'span6'p>>",
     "bAutoWidth": false,
     "bInfo": false,
     "bStateSave": true,
@@ -96,13 +96,12 @@ function standardButtons(checkboxClass="shiftCheckbox", headerClass) {
         }
     };
 
-    return [{
-        extend: 'excelHtml5',
-        exportOptions: defaultOptions
-    }, {
-        extend: 'copyHtml5',
-        exportOptions: defaultOptions
-    }];
+    return [
+        {extend: 'copy', exportOptions: defaultOptions },
+        { extend: 'csv',  exportOptions: defaultOptions},
+        { extend: 'excel', exportOptions: defaultOptions},
+        { extend: 'print', exportOptions: defaultOptions}
+        ];
 }
 
 /**

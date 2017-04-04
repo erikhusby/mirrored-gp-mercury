@@ -86,6 +86,7 @@
 
         <c:if test="${withColVis}">
             <script src="${ctxpath}/resources/scripts/DataTablesPlugins-1.10/Buttons-1.2.2/js/buttons.colVis.min.js"></script>
+            <link rel="stylesheet"  href="${ctxpath}/resources/css/mercury.colvis.css"/>
         </c:if>
 
         <c:if test="${withColReorder}">
@@ -194,6 +195,15 @@
         <stripes:layout-component name="extraHead"/>
     </head>
     <body>
+    <script>
+            window.XREBEL_SERVERS = ["https://localhost:8443${ctxpath}"];
+
+              (function() {
+                var script = document.createElement("script");
+                script.src = window.XREBEL_SERVERS[0] + "/a65f4bf22bdd793dca6963ffe7fa0c62/resources/init.min.js";
+                document.body.appendChild(script);
+              }());
+            </script>
     <div class="container-fluid">
         <div class="row-fluid">
             <div class="brand" style="display:inline;">
