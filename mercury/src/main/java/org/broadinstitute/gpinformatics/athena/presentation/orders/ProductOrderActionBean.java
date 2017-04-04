@@ -112,6 +112,7 @@ import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
@@ -698,6 +699,18 @@ public class ProductOrderActionBean extends CoreActionBean {
         Quote quote = validateQuoteId(quoteId);
         try {
             ProductOrder.checkQuoteValidity(editOrder, quote);
+            for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel()) {
+                final Funding funding = fundingLevel.getFunding();
+                if(funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
+                    final int numDaysBetween =
+                            DateUtils.getNumDaysBetween(new Date(), funding.getGrantEndDate());
+                    if(numDaysBetween > 0 && numDaysBetween < 45) {
+                        addMessage("The grant " + funding.getDisplayName() + " for " + quote.getAlphanumericId() +
+                                   " expires in " + numDaysBetween + " days");
+                    }
+                }
+            }
+
             if(productOrderEjb.isOrderEligibleForSAP(editOrder)) {
                 validateQuoteDetails(quote, ErrorLevel.ERROR, !editOrder.hasJiraTicketKey(), 0);
             }
@@ -1201,7 +1214,6 @@ public class ProductOrderActionBean extends CoreActionBean {
                 item.put("outstandingEstimate",  NumberFormat.getCurrencyInstance().format(
                         outstandingOrdersValue));
                 JSONArray fundingDetails = new JSONArray();
-                final FastDateFormat dateFormater = FastDateFormat.getInstance("MM/dd/yyyy");
 
                 for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel()) {
                     item.put("fundingType", fundingLevel.getFunding().getFundingType().equals(Funding.FUNDS_RESERVATION));
@@ -1209,11 +1221,15 @@ public class ProductOrderActionBean extends CoreActionBean {
                         JSONObject fundingInfo = new JSONObject();
                         fundingInfo.put("grantTitle", fundingLevel.getFunding().getDisplayName());
                         fundingInfo.put("grantEndDate",
-                                dateFormater.format(fundingLevel.getFunding().getGrantEndDate()));
+                                DateUtils.getDate(fundingLevel.getFunding().getGrantEndDate()));
                         fundingInfo.put("grantNumber", fundingLevel.getFunding().getGrantNumber());
                         fundingInfo.put("grantStatus", fundingLevel.getFunding().getGrantStatus());
 
-                        fundingInfo.put("activeGrant", (fundingLevel.getFunding().getGrantEndDate() != null && fundingLevel.getFunding().getGrantEndDate().after(new Date())));
+                        final Date today = new Date();
+                        fundingInfo.put("activeGrant", (fundingLevel.getFunding().getGrantEndDate() != null &&
+                                                        fundingLevel.getFunding().getGrantEndDate().after(today)));
+                        fundingInfo.put("daysTillExpire",
+                                DateUtils.getNumDaysBetween(today, fundingLevel.getFunding().getGrantEndDate()));
                         fundingDetails.put(fundingInfo);
                     }
                 }
