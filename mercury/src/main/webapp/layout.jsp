@@ -195,6 +195,15 @@
         <stripes:layout-component name="extraHead"/>
     </head>
     <body>
+    <script>
+            window.XREBEL_SERVERS = ["https://localhost:8443${ctxpath}"];
+
+              (function() {
+                var script = document.createElement("script");
+                script.src = window.XREBEL_SERVERS[0] + "/a65f4bf22bdd793dca6963ffe7fa0c62/resources/init.min.js";
+                document.body.appendChild(script);
+              }());
+            </script>
     <div class="container-fluid">
         <div class="row-fluid">
             <div class="brand" style="display:inline;">
