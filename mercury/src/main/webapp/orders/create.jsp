@@ -870,7 +870,8 @@
                         ' with ' + data.outstandingEstimate + ' unbilled across existing open orders';
                 var fundingDetails = data.fundingDetails;
 
-                if(data.status != "Funded" || data.outstandingEstimate > data.fundsRemaining ) {
+                if(data.status != "Funded" ||
+                        Number(data.outstandingEstimate.replace(/[^0-9\.]+/g,"")) > Number(data.fundsRemaining.replace(/[^0-9\.]+/g,""))) {
                     quoteWarning = true;
                 }
 
@@ -878,6 +879,10 @@
                     fundsRemainingNotification += '\n'+fundingDetails[detailIndex].grantTitle;
                     if(fundingDetails[detailIndex].activeGrant) {
                         fundsRemainingNotification += ' -- Expires ' + fundingDetails[detailIndex].grantEndDate;
+                        if(fundingDetails[detailIndex].daysTillExpire < 45) {
+                            fundsRemainingNotification += 'in ' + fundingDetails[detailIndex].daysTillExpire + ' days';
+                            quoteWarning = true;
+                        }
                     } else {
                         fundsRemainingNotification += ' -- Has Expired ' + fundingDetails[detailIndex].grantEndDate;
                         quoteWarning = true;
@@ -885,6 +890,7 @@
                     if(fundingDetails[detailIndex].grantStatus != "Active") {
                         quoteWarning = true;
                     }
+                    fundsRemainingNotification += '\n';
                 }
                 $j("#fundsRemaining").text(fundsRemainingNotification);
             } else {
