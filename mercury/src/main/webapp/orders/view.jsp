@@ -5,19 +5,20 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver" %>
+<%@ page import="org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"/>
 
 <stripes:layout-render name="/layout.jsp" pageTitle="View Product Order: ${actionBean.editOrder.title}"
-                       dataTablesVersion="1.10" withColVis="true"
+                       dataTablesVersion="1.10" withColVis="true" withColReorder="true"
                        sectionTitle="View Product Order: ${actionBean.editOrder.title}"
                        businessKeyValue="${actionBean.editOrder.businessKey}">
 <stripes:layout-component name="extraHead">
     <style type="text/css">
-        .toggleSampleData {
-
+        th.no-min-width {
+            min-width: initial !important;
         }
     </style>
     <script src="${ctxpath}/resources/scripts/columnSelect.js"></script>
@@ -52,8 +53,7 @@ $j(document).ready(function () {
     var localStorageKey = 'DT_productOrderView';
 
     var oTable = $j('#sampleData').dataTable({
-        'dom': "<'row-fluid'<'span9'f><'info-header-display'irB><'#filtering'>>t<'row-fluid'<'span6'l><'span6'p>>",
-        'pageLength': 25,
+        'pageLength': 50,
         "deferLoading": true,
         colReorder: true,
         "stateSave": true,
@@ -65,57 +65,44 @@ $j(document).ready(function () {
                 extend: 'colvis',
                 className: 'show-or-hide',
                 text: "Show or Hide Columns",
-                columns: ':gt(1)'
+                columns: ':gt(1)',
+                prefixButtons: [
+                    'colvisRestore'
+                ],
+                collectionLayout: 'fixed two-column'
             }, standardButtons()],
         "columns": [
-            {"orderable": false},                           // Checkbox
-            {"orderable": true},        // Position
-            {"orderable": true, "sType": "html"},           // ID
-            {"orderable": true},                            // Collaborator Sample ID
-            {"orderable": true},                            // Participant ID
-            {"orderable": true},                            // Collaborator Participant ID
-            {"orderable": true},        // Shipped Date
-            {"orderable": true},        // Received Date
-            {"orderable": true},                            // Sample Type
-            {"orderable": true},                            // Material Type
-            {"orderable": true},        // Volume
-            {"orderable": true},        // Concentration
+            {"orderable": false,'class':'no-min-width'},      // Checkbox
+            {"orderable": true,'class':'no-min-width'},       // Position
+            {"title": "ID", "orderable": true, "sType": "html"},
+            {"title": "Collaborator Sample ID", "orderable": true},
+            {"title": "Participant ID", "orderable": true},
+            {"title": "Collaborator Participant ID", "orderable": true},
+            {"title": "Shipped Date", "orderable": true},
+            {"title": "Received Date", "orderable": true},
+            {"title": "Sample Type", "orderable": true},
+            {"title": "Material Type", "orderable": true},
+            {"title": "Volume", "orderable": true},
+            {"title": "Concentration", "orderable": true},
 
             <c:if test="${actionBean.supportsRin}">
-            {"orderable": true},        // RIN
-            {"orderable": true},        // RQS
-            {"orderable": true},        // DV200
+            {"title": "RIN", "orderable": true},
+            {"title": "RQS", "orderable": true},
+            {"title": "DV", "orderable": true},
             </c:if>
 
             <c:if test="${actionBean.supportsPico}">
-            {"orderable": true, "sType": "title-us-date"},  // Pico Run Date
+            {"title": "Last Pico Run Date", "orderable": true, "sType": "title-us-date"},
             </c:if>
-            {"orderable": true},        // Yield Amount
-            {"orderable": true},                            // sample kit upload/rackscan mismatch
-            {"orderable": true},                            // On Risk
-            {"orderable": false},                           // On Risk Details
-            {"orderable": true},                            // Proceed OOS
-            {"orderable": true},                            // Status
-            {"orderable": true, "sType": "title-string"},   // is billed
-            {"orderable": true}                             // Comment
+            {"title": "Yield Amount", "orderable": true},
+            {"title": "Rackscan Mismatch", "orderable": true},
+            {"title": "On Risk", "orderable": true},
+            {"title": "On Risk Details", "orderable": false},
+            {"title": "Proceed OOS", "orderable": true},
+            {"title": "Status", "orderable": true},
+            {"title": "Billed", "orderable": true, "sType": "title-string"},
+            {"title": "Comment", "orderable": true}
         ],
-        "initComplete": function (settings) {
-            initColumnSelect(settings, [
-                {"Collaborator Sample ID": 'text'},
-                {"Participant ID": "text"},
-                {"Collaborator Participant ID": "text"},
-                {"Sample Type": 'select'},
-                {"Material Type": 'select'},
-                {"Rackscan Mismatch": 'select'},
-                {"On Risk": 'select'},
-                {"On Risk Details": 'text'},
-                {"Proceed OOS": 'select'},
-                {"Status": "text"},
-                {"Billed": 'select'},
-                {"Comment": "text"},
-            ], "#filtering", "", "${ctxpath}");
-
-        },
         "preDrawCallback": function (settings) {
             let i;
             var $api = $j.fn.dataTable.Api(settings);
@@ -1492,7 +1479,7 @@ function formatInput(item) {
     </div>
 
     <c:if test="${not empty actionBean.editOrder.samples}">
-        <table id="sampleData" class="table simple">
+        <table id="sampleData" class="table simple compact">
             <thead>
             <tr>
                 <th width="20">
@@ -1558,51 +1545,51 @@ function formatInput(item) {
                                         </c:choose>
                                     </td>
                                     <td><c:if
-                                            test="${actionBean.showHeader('Collaborator Sample ID')}">${sample.sampleData.collaboratorsSampleName}</c:if>
+                                            test="${actionBean.showColumn('Collaborator Sample ID')}">${sample.sampleData.collaboratorsSampleName}</c:if>
                                     </td>
                                     <td><c:if
-                                            test="${actionBean.showHeader('Participant ID')}">${sample.sampleData.patientId}</c:if
+                                            test="${actionBean.showColumn('Participant ID')}">${sample.sampleData.patientId}</c:if
                                     ></td>
                                     <td><c:if
-                                            test="${actionBean.showHeader('Collaborator Participant ID')}">${sample.sampleData.collaboratorParticipantId}
+                                            test="${actionBean.showColumn('Collaborator Participant ID')}">${sample.sampleData.collaboratorParticipantId}
                                     </c:if></td>
 
                                     <td>
-                                        <c:if test="${actionBean.showHeader('Shipped Date')}">${sample.labEventSampleDTO.samplePackagedDate}</c:if>
+                                        <c:if test="${actionBean.showColumn('Shipped Date')}">${sample.labEventSampleDTO.samplePackagedDate}</c:if>
                                     </td>
                                     <td>
-                                            <c:if test="${actionBean.showHeader('Received Date')}">${sample.formattedReceiptDate}</c:if>
+                                            <c:if test="${actionBean.showColumn('Received Date')}">${sample.formattedReceiptDate}</c:if>
                                     </td>
 
-                                    <td><c:if test="${actionBean.showHeader('Sample Type')}">${sample.sampleData.sampleType}</c:if ></td>
-                                    <td><c:if test="${actionBean.showHeader('Material Type')}">${sample.latestMaterialType}</c:if ></td>
-                                    <td><c:if test="${actionBean.showHeader('Volume')}">${sample.sampleData.volume}</c:if ></td>
-                                <td><c:if test="${actionBean.showHeader('Concentration')}">${sample.sampleData.concentration}</c:if></td>
+                                    <td><c:if test="${actionBean.showColumn('Sample Type')}">${sample.sampleData.sampleType}</c:if ></td>
+                                    <td><c:if test="${actionBean.showColumn('Material Type')}">${sample.latestMaterialType}</c:if ></td>
+                                    <td><c:if test="${actionBean.showColumn('Volume')}">${sample.sampleData.volume}</c:if ></td>
+                                <td><c:if test="${actionBean.showColumn('Concentration')}">${sample.sampleData.concentration}</c:if></td>
 
                                     <c:if test="${actionBean.supportsRin}">
-                                        <td><c:if test="${actionBean.showHeader('RIN')}">${sample.sampleData.rawRin}</c:if></td>
-                                        <td><c:if test="${actionBean.showHeader('RQS')}">${sample.sampleData.rqs}</c:if></td>
-                                        <td><c:if test="${actionBean.showHeader('DV200')}">${sample.sampleData.dv200}</c:if></td>
+                                        <td><c:if test="${actionBean.showColumn('RIN')}">${sample.sampleData.rawRin}</c:if></td>
+                                        <td><c:if test="${actionBean.showColumn('RQS')}">${sample.sampleData.rqs}</c:if></td>
+                                        <td><c:if test="${actionBean.showColumn('DV200')}">${sample.sampleData.dv200}</c:if></td>
                                     </c:if>
 
                                     <c:if test="${actionBean.supportsPico}">
                                         <td>
-                                        <c:if test="${actionBean.showHeader('Last Pico Run Date')}"><div class="picoRunDate" style="width:auto">
+                                        <c:if test="${actionBean.showColumn('Last Pico Run Date')}"><div class="picoRunDate" style="width:auto">
                                             </div></c:if>
                                         </td>
                                     </c:if>
 
-                                    <td><c:if test="${actionBean.showHeader('Yield')}">${sample.sampleData.total}</c:if></td>
-                                    <td style="text-align: center"><c:if test="${actionBean.showHeader('Rackscan Mismatch')}">${sample.sampleData.hasSampleKitUploadRackscanMismatch}</c:if> </td>
+                                    <td><c:if test="${actionBean.showColumn('Yield')}">${sample.sampleData.total}</c:if></td>
+                                    <td style="text-align: center"><c:if test="${actionBean.showColumn('Rackscan Mismatch')}">${sample.sampleData.hasSampleKitUploadRackscanMismatch}</c:if> </td>
                                     <td style="text-align: center">
-                                        <c:if test="${sample.onRisk && actionBean.showHeader('On Risk')}">
+                                        <c:if test="${sample.onRisk && actionBean.showColumn('On Risk')}">
                                             <div class="onRisk" title="On Risk Details for ${sample.name}" rel="popover" data-trigger="hover" data-placement="left" data-html="true" data-content="<div style='text-align: left'>${sample.riskString}</div>">
                                                 <img src="${ctxpath}/images/check.png"> ...
                                             </div>
                                         </c:if>
                                     </td>
-                                    <td style="display:none;"><c:if test="${actionBean.showHeader('On Risk')}">${sample.riskString}</c:if></td>
-                                    <td><c:if test="${actionBean.showHeader('Proceed OOS')}">${sample.proceedIfOutOfSpec.displayName}</c:if></td>
+                                    <td style="display:none;"><c:if test="${actionBean.showColumn('On Risk')}">${sample.riskString}</c:if></td>
+                                    <td><c:if test="${actionBean.showColumn('Proceed OOS')}">${sample.proceedIfOutOfSpec.displayName}</c:if></td>
                                     <td>${sample.deliveryStatus.displayName}</td>
                                     <td style="text-align: center">${sample.completelyBilled}</td>
                                     <td>${sample.sampleComment}</td>

@@ -76,6 +76,10 @@ table.dataTable tr:hover td.subgroup, table.dataTable td.subgroup { background-c
 table.workflow td.latest { background-color: #b4ffcc }
 table.workflow td.current { background-color: #eecac6}
 
+/* min width for columns excluding the checkbox column */
+table.compact th:nth-child(n+2) { width:auto; min-width: 5em; }
+table.compact td,span.title { white-space: nowrap; }
+
 table.nocol tbody td,table.nocol tbody th { border-left: none; border-right: none; }
 
 .page-header { color: #644436; border-bottom: 1px solid #EEEEEE; margin: 0 0 15px 0; padding-bottom: 3px; font-size: x-large; font-weight: bold; line-height: 1; }

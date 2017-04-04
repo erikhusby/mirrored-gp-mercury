@@ -21,7 +21,6 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.NameValueDefini
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
-import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.json.JSONObject;
 
@@ -32,9 +31,8 @@ import java.util.List;
 import java.util.Map;
 
 public class DatatablesStateSaver {
-    private static final ObjectMapper objectMapper = new ObjectMapper().enable(DeserializationConfig.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
+    private static final ObjectMapper objectMapper = new ObjectMapper();
     private PreferenceEjb preferenceEjb;
-    @Inject
     private PreferenceDao preferenceDao;
 
     public static final String SAVE_SEARCH_DATA = "saveSearchData";
@@ -45,32 +43,23 @@ public class DatatablesStateSaver {
     private PreferenceType preferenceType;
     private State state;
     private Map<String, Boolean> columnVisibilityMap = new HashMap<>();
-    private String tableState = "{}";
 
     public DatatablesStateSaver() {
+
     }
 
-    public DatatablesStateSaver(PreferenceType preferenceType) {
-        this.preferenceType = preferenceType;
-    }
-    public DatatablesStateSaver(PreferenceType preferenceType, PreferenceDao preferenceDao, PreferenceEjb preferenceEjb) {
-        this.preferenceType = preferenceType;
+    @Inject
+    public DatatablesStateSaver(UserBean userBean, PreferenceDao preferenceDao, PreferenceEjb preferenceEjb) {
+        this.userBean = userBean;
         this.preferenceDao = preferenceDao;
         this.preferenceEjb = preferenceEjb;
     }
 
     public void saveTableData(String tableState) throws Exception {
-        this.tableState=tableState;
         NameValueDefinitionValue definitionValue = loadSearchData();
-        state = objectMapper.readValue(tableState, State.class);
-        if (state.getColumns().isEmpty()) {
-            state = new State();
-        }
-        definitionValue.put(TABLE_STATE_KEY, Collections.singletonList(objectMapper.writeValueAsString(state)));
-
+        definitionValue.put(TABLE_STATE_KEY, Collections.singletonList(tableState));
         preferenceEjb.add(userBean.getBspUser().getUserId(), preferenceType, definitionValue);
     }
-
 
     private NameValueDefinitionValue loadSearchData() throws Exception {
         List<Preference> preferences =
@@ -95,21 +84,22 @@ public class DatatablesStateSaver {
             List<String> tableStatePreferenceValue = nameValueDefinitionValue.getDataMap().get(TABLE_STATE_KEY);
             if (CollectionUtils.isNotEmpty(tableStatePreferenceValue)) {
                 String tableState = tableStatePreferenceValue.iterator().next();
-                state = objectMapper.readValue(tableState, State.class);
-                buildColumnVisibilityMap();
+                if (StringUtils.isNotBlank(tableState)) {
+                    state = objectMapper.readValue(tableState, State.class);
+                    buildColumnVisibilityMap();
+                }
+                if (state == null) {
+                    state = new State();
+                }
             }
         } catch (Exception e) {
             log.error("Load table state preference", e);
         }
-        if (state == null) {
-            state = new State();
-        }
     }
-
 
     private void buildColumnVisibilityMap() throws Exception {
         State state = getTableState();
-        if (tableState != null) {
+        if (state != null) {
             for (Column column : state.getColumns()) {
                 boolean visible = true;
                 if (column!=null){
@@ -117,14 +107,22 @@ public class DatatablesStateSaver {
                 }
                 String headerName = column.getHeaderName();
                 if (StringUtils.isNotBlank(headerName)) {
-                    columnVisibilityMap.put(headerName, visible);
+                    columnVisibilityMap.put(headerName.replaceAll("\\s{2}",""), visible);
                 }
             }
         }
     }
 
-
     public boolean showColumn(String columnName) {
+        String searchColumn = columnName.replaceAll("\\s{2}", "");
+        try {
+            if (columnVisibilityMap.isEmpty()) {
+                buildColumnVisibilityMap();
+            }
+        } catch (Exception e) {
+            log.error("Error loading columnVisibilityMap", e);
+            return true;
+        }
         return columnVisibilityMap.isEmpty() ||
                (columnVisibilityMap.get(columnName) != null && columnVisibilityMap.get(columnName));
     }
@@ -148,6 +146,10 @@ public class DatatablesStateSaver {
 
     private void setUserBean(UserBean userBean) {
         this.userBean = userBean;
+    }
+
+    public void setPreferenceType(PreferenceType preferenceType) {
+        this.preferenceType = preferenceType;
     }
 
     @Override
