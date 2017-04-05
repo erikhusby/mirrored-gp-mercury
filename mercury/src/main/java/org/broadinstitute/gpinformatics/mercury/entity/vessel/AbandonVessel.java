@@ -86,9 +86,7 @@ public class AbandonVessel {
         LAB_INCIDENT("Lab incident"),
         EQUIPMENT_FAILURE("Equipment failure"),
         DEPLETED("Depleted"),
-        UNUSED_TUBES_RETURNED_BY_COLLABORATOR("Unused tubes returned by collaborator"),
-        ORDER_COMPLETED_DISCARDED_PER_SOP("Order completed - Discarded per SOP");
-
+        UNUSED_TUBES_RETURNED_BY_COLLABORATOR("Unused tubes returned by collaborator");
         private final String value;
 
         Reason(String value) {
