@@ -70,11 +70,25 @@ public enum DisplayExpression {
             return results;
         }
     }),
-    XTR(SampleInstanceV2.class, new SearchTerm.Evaluator<List<String>>() {
+    ARRAY(SampleInstanceV2.class, new SearchTerm.Evaluator<List<String>>() {
         @Override
         public List<String> evaluate(Object entity, SearchContext context) {
             SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
             List<String> results = new ArrayList<>();
+            // todo jmt try getSingleBatch first
+            for( LabBatch labBatch : sampleInstanceV2.getAllWorkflowBatches() ) {
+                if( labBatch.getBatchName().startsWith("ARRAY")) {
+                    results.add(labBatch.getBatchName());
+                }
+            }
+            return results;
+        }
+    }),
+    XTR(SampleInstanceV2.class, new SearchTerm.Evaluator<Set<String>>() {
+        @Override
+        public Set<String> evaluate(Object entity, SearchContext context) {
+            SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
+            Set<String> results = new HashSet<>();
             // todo jmt try getSingleBatch first
             for( LabBatch labBatch : sampleInstanceV2.getAllWorkflowBatches() ) {
                 if( labBatch.getBatchName().startsWith("XTR")) {

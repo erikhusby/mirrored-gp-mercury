@@ -123,7 +123,6 @@ public class SearchInstancePreferenceFixupTest extends Arquillian {
                 if( nbrFixed > 0 ) {
                     replaceCount += nbrFixed;
                 }
-                replaceCount += fixGPLIM4761Preference( preference );
             }
 
             // Do the user search instances
@@ -133,7 +132,6 @@ public class SearchInstancePreferenceFixupTest extends Arquillian {
                 if( nbrFixed > 0 ) {
                     replaceCount += nbrFixed;
                 }
-                replaceCount += fixGPLIM4761Preference( preference );
             }
 
             preferenceDao.persist(new FixupCommentary("GPLIM-4761 Array UDS refactoring, " + replaceCount

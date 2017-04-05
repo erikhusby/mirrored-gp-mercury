@@ -255,6 +255,9 @@ public class LabVesselSearchDefinition {
         // LCSET batches are filtered by name prefix = LCSET-
         SearchTerm.ImmutableTermFilter lscetBatchFilter = new SearchTerm.ImmutableTermFilter(
                 "batchName", SearchInstance.Operator.LIKE, "LCSET-%");
+        // ARRAY batches are filtered by name prefix = ARRAY-
+        SearchTerm.ImmutableTermFilter arrayBatchFilter = new SearchTerm.ImmutableTermFilter(
+                "batchName", SearchInstance.Operator.LIKE, "ARRAY-%");
         // XTR batches are filtered by name prefix = XTR-
         SearchTerm.ImmutableTermFilter xtrBatchFilter = new SearchTerm.ImmutableTermFilter(
                 "batchName", SearchInstance.Operator.LIKE, "XTR-%");
@@ -288,6 +291,22 @@ public class LabVesselSearchDefinition {
         criteriaPath.setJoinFetch(Boolean.TRUE);
         criteriaPath.addImmutableTermFilter(workflowOnlyFilter);
         criteriaPath.addImmutableTermFilter(lscetBatchFilter);
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("ARRAY");
+        searchTerm.setDisplayExpression(DisplayExpression.ARRAY);
+
+        criteriaPaths = new ArrayList<>();
+        // Non-reworks (arrays don't get reworked)
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("labBatches", "labBatch"));
+        criteriaPath.setPropertyName("batchName");
+        criteriaPath.addImmutableTermFilter(workflowOnlyFilter);
+        criteriaPath.addImmutableTermFilter(arrayBatchFilter);
+        criteriaPath.setJoinFetch(Boolean.TRUE);
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerms.add(searchTerm);
