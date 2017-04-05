@@ -460,7 +460,7 @@ public class ProductOrderEjb {
         priceItemNameList.add(new AccessItem(editedProductOrder.getProduct().getPrimaryPriceItem().getName()));
         for (ProductOrderAddOn productOrderAddOn : editedProductOrder.getAddOns()) {
             productListFromOrder.add(productOrderAddOn.getAddOn());
-            priceItemNameList.add(new AccessItem(productOrderAddOn.getAddOn().getName()));
+            priceItemNameList.add(new AccessItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getName()));
         }
 
         if(orderQuote != null && accessControl.isEnabled()) {
@@ -469,7 +469,7 @@ public class ProductOrderEjb {
                                 editedProductOrder.getProduct()
                                         .getPrimaryPriceItem() != null &&
                                 determinePriceItemValidity(productListFromOrder) &&
-                                !CollectionUtils.containsAll(accessControl.getDisabledItems(), priceItemNameList) ;
+                                !CollectionUtils.containsAny(accessControl.getDisabledItems(), priceItemNameList) ;
         }
         return eligibilityResult;
     }

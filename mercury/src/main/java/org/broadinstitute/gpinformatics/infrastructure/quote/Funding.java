@@ -5,6 +5,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.DateAdapter;
+import org.broadinstitute.gpinformatics.infrastructure.ShortDateAdapter;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -142,7 +143,7 @@ public class Funding implements Displayable {
     }
 
     @XmlAttribute(name = "grantStartDate")
-    @XmlJavaTypeAdapter(DateAdapter.class)
+    @XmlJavaTypeAdapter(ShortDateAdapter.class)
     public Date getGrantStartDate() {
         return grantStartDate;
     }
@@ -151,7 +152,7 @@ public class Funding implements Displayable {
     }
 
     @XmlAttribute(name = "grantEndDate")
-    @XmlJavaTypeAdapter(DateAdapter.class)
+    @XmlJavaTypeAdapter(ShortDateAdapter.class)
     public Date getGrantEndDate() {
         return grantEndDate;
     }

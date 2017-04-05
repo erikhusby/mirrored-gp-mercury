@@ -22,6 +22,7 @@ import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.CharEncoding;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -99,6 +100,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
+import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
@@ -109,6 +112,7 @@ import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
@@ -694,6 +698,19 @@ public class ProductOrderActionBean extends CoreActionBean {
         String quoteId = editOrder.getQuoteId();
         Quote quote = validateQuoteId(quoteId);
         try {
+            ProductOrder.checkQuoteValidity(editOrder, quote);
+            for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel()) {
+                final Funding funding = fundingLevel.getFunding();
+                if(funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
+                    final int numDaysBetween =
+                            DateUtils.getNumDaysBetween(new Date(), funding.getGrantEndDate());
+                    if(numDaysBetween > 0 && numDaysBetween < 45) {
+                        addMessage("The grant " + funding.getDisplayName() + " for " + quote.getAlphanumericId() +
+                                   " expires in " + numDaysBetween + " days");
+                    }
+                }
+            }
+
             if(productOrderEjb.isOrderEligibleForSAP(editOrder)) {
                 validateQuoteDetails(quote, ErrorLevel.ERROR, !editOrder.hasJiraTicketKey(), 0);
             }
@@ -745,9 +762,9 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     private void validateQuoteDetailsWithAddedSamples(String quoteId, final ErrorLevel errorLevel,
                                                       boolean countOpenOrders, int additionalSamplesCount)
-            throws InvalidProductException {
+            throws InvalidProductException, QuoteServerException {
         Quote quote = validateQuoteId(quoteId);
-
+        ProductOrder.checkQuoteValidity(editOrder, quote);
         if (quote != null) {
             validateQuoteDetails(quote, errorLevel, countOpenOrders, additionalSamplesCount);
         }
@@ -1196,6 +1213,26 @@ public class ProductOrderActionBean extends CoreActionBean {
                 double outstandingOrdersValue = estimateOutstandingOrders(quoteIdentifier, quote);
                 item.put("outstandingEstimate",  NumberFormat.getCurrencyInstance().format(
                         outstandingOrdersValue));
+                JSONArray fundingDetails = new JSONArray();
+
+                for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel()) {
+                    if(fundingLevel.getFunding().getFundingType().equals(Funding.FUNDS_RESERVATION)) {
+                        JSONObject fundingInfo = new JSONObject();
+                        fundingInfo.put("grantTitle", fundingLevel.getFunding().getDisplayName());
+                        fundingInfo.put("grantEndDate",
+                                DateUtils.getDate(fundingLevel.getFunding().getGrantEndDate()));
+                        fundingInfo.put("grantNumber", fundingLevel.getFunding().getGrantNumber());
+                        fundingInfo.put("grantStatus", fundingLevel.getFunding().getGrantStatus());
+
+                        final Date today = new Date();
+                        fundingInfo.put("activeGrant", (fundingLevel.getFunding().getGrantEndDate() != null &&
+                                                        fundingLevel.getFunding().getGrantEndDate().after(today)));
+                        fundingInfo.put("daysTillExpire",
+                                DateUtils.getNumDaysBetween(today, fundingLevel.getFunding().getGrantEndDate()));
+                        fundingDetails.put(fundingInfo);
+                    }
+                }
+                item.put("fundingDetails", fundingDetails);
             }
 
         } catch (Exception ex) {
