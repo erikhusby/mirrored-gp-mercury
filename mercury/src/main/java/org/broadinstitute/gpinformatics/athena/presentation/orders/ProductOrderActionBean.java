@@ -1216,7 +1216,6 @@ public class ProductOrderActionBean extends CoreActionBean {
                 JSONArray fundingDetails = new JSONArray();
 
                 for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel()) {
-                    item.put("fundingType", fundingLevel.getFunding().getFundingType().equals(Funding.FUNDS_RESERVATION));
                     if(fundingLevel.getFunding().getFundingType().equals(Funding.FUNDS_RESERVATION)) {
                         JSONObject fundingInfo = new JSONObject();
                         fundingInfo.put("grantTitle", fundingLevel.getFunding().getDisplayName());
