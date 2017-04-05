@@ -92,6 +92,7 @@
                 $(pos).prop('checked', position.checked);
                 var labelId = pos.replace("cells_", "label_");
                 if(position.checked) {
+                    $(pos).attr('name', getDevConditionsID());
                     $(labelId).text(getDevConditions(position));
                 }
                 else {
@@ -113,6 +114,7 @@
                 $(pos).prop('checked', position.checked);
                 var labelId = pos.replace("cells_", "label_");
                 if(position.checked) {
+                    $(pos).attr('name', getDevConditionsID());
                     $(labelId).text(getDevConditions(position));
                 }
                 else {
@@ -135,6 +137,18 @@
                     }
                 }
                 return text.toString();
+            }
+
+            function getDevConditionsID() {
+                var fld = document.getElementById('ticket_conditions');
+                var values = [];
+                var text = [];
+                for (var i = 0; i < fld.options.length; i++) {
+                    if (fld.options[i].selected) {
+                        values.push(fld.options[i].value);
+                    }
+                }
+                return values.toString();
             }
 
             //Tag individual tubes based on single checkboxes
@@ -171,19 +185,24 @@
                         selection: "",
                         devCondition: ""
                     }
-
                     selected.push($(this).attr('id'));
                     selectionResults.position = $(this).attr('id').replace("cells_","");
                     selectionResults.selection = $('label[for="' + $(this).attr('id') + '"]').html();
+                    $(this).attr('name',getDevConditionsID());
                     selectionResults.devCondition = $(this).attr('name');
                     results.push(selectionResults);
-
                 });
                 document.getElementById("jsonData").value =(JSON.stringify(results));
             }
 
 
             $j(document).ready(function () {
+                //Default to first item in list box.
+                try {
+                    document.getElementById("ticket_conditions").selectedIndex = "0";
+                }
+                catch(err) {
+                }
 
                 //Persist page state on post back
                 var resultQueue = [];
@@ -317,11 +336,8 @@
                                 <div class="child-left">
                                     <select id="ticket_conditions" name="reasonDdl" style="width:100%;margin-bottom: 50px" multiple>
                                         <c:forEach items="${conditionSummary}" var="conditionValue" varStatus="conditionStatus">
-                                            <c:if test="${conditionStatus.count > 3}">
                                                 <option value="${conditionIds[conditionStatus.index]}">${conditionValue}</option>
-                                            </c:if>
                                         </c:forEach>
-                                        <option selected="SELECT">${actionBean.getSelected(positionTest)}</option>
                                     </select>
                                 </div>
                                 <div class="child-right" >

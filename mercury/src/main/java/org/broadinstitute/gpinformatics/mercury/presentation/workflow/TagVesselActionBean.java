@@ -143,8 +143,9 @@ public class TagVesselActionBean extends RackScanActionBean {
 
         for(TagVesselJsonData tagJsonVesselData : getTagVesselData()) {
             if(!tagJsonVesselData.getSelection().equals(reasonSelect)) {
-                addJiraTicket(tagJsonVesselData.getDevCondition(), tagJsonVesselData.getPosition());
-                messageCollection.addInfo("Successfully Added: " + tagJsonVesselData.getSelection() + " to position: " + tagJsonVesselData.getPosition());
+                if(tagJsonVesselData.getDevCondition().length() > 1) {
+                    addJiraTicket(tagJsonVesselData.getDevCondition(), tagJsonVesselData.getPosition());
+                }
             }
             else {
                 messageCollection.addError("Error Adding at position: " + tagJsonVesselData.getPosition() + " No condition selected");
@@ -335,7 +336,7 @@ public class TagVesselActionBean extends RackScanActionBean {
         }
         setShowResults(true);
         for(String devItem : devConditionList) {
-            JiraTicket existingTicket = jiraTicketDao.fetchByName(devCondition);
+            JiraTicket existingTicket = jiraTicketDao.fetchByName(devItem);
             LabVessel vessel = findAvailableVesslesByPosition(position);
             if(vessel == null) {
                 messageCollection.addError("Lab Vessel:  " +  getRackScan().get(vesselPosition) + " does not exist at position: " + position);
@@ -347,8 +348,11 @@ public class TagVesselActionBean extends RackScanActionBean {
                 vessel.getJiraTickets().add(existingTicket);
 
             labVesselDao.persist(vessel);
+
         }
         labVesselDao.flush();
+        messageCollection.addInfo("Successfully Added: " + getRackScan().get(vesselPosition) + " to position: " + position);
+
     }
 
     /**
