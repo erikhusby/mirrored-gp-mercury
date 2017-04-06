@@ -136,7 +136,7 @@ public class ArraysSummaryFactory {
             // Called Infinium SNPs
             printStream.print(arraysQc.getTotalSnps() + "\t");
             // LOD
-            if (!arraysQc.getArraysQcFingerprints().isEmpty()) {
+            if (arraysQc.getArraysQcFingerprints() != null && !arraysQc.getArraysQcFingerprints().isEmpty()) {
                 ArraysQcFingerprint arraysQcFingerprint = arraysQc.getArraysQcFingerprints().iterator().next();
                 printStream.print(MathUtils.scaleThreeDecimalPlaces(arraysQcFingerprint.getLodExpectedSample()));
             }
