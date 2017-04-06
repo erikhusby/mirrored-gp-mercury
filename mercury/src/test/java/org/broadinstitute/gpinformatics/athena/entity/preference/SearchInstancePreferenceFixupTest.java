@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.entity.preference;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDao;
+import org.broadinstitute.gpinformatics.infrastructure.common.SessionContextUtility;
+import org.broadinstitute.gpinformatics.infrastructure.search.LabVesselSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -10,9 +12,13 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
+import scala.Function;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -98,5 +104,125 @@ public class SearchInstancePreferenceFixupTest extends Arquillian {
         }
 
         return replaceCount;
+    }
+
+    /**
+     * GPLIM-4761 Array UDS refactoring
+     */
+    @Test(enabled=false)
+    public void refactorArraySearchesGPLIM4761(){
+
+        int replaceCount = 0;
+        try {
+            userBean.loginOSUser();
+
+            // Do the global search instance
+            List<Preference> preferences = preferenceDao.getPreferences(PreferenceType.GLOBAL_LAB_VESSEL_SEARCH_INSTANCES);
+            for (Preference preference : preferences) {
+                int nbrFixed = fixGPLIM4761Preference( preference );
+                if( nbrFixed > 0 ) {
+                    replaceCount += nbrFixed;
+                }
+            }
+
+            // Do the user search instances
+            preferences = preferenceDao.getPreferences(PreferenceType.USER_LAB_VESSEL_SEARCH_INSTANCES);
+            for (Preference preference : preferences) {
+                int nbrFixed = fixGPLIM4761Preference( preference );
+                if( nbrFixed > 0 ) {
+                    replaceCount += nbrFixed;
+                }
+            }
+
+            preferenceDao.persist(new FixupCommentary("GPLIM-4761 Array UDS refactoring, " + replaceCount
+                    + " saved searches modified"));
+
+            preferenceDao.flush();
+
+        } catch ( Exception e ) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private int fixGPLIM4761Preference(Preference preference ) {
+        int count = 0;
+        SearchInstanceList searchInstanceList;
+
+        Set<String> infiniumTermNames = new HashSet<>();
+        infiniumTermNames.add(LabVesselSearchDefinition.MultiRefTerm.INFINIUM_AMP_PLATE.getTermRefName());
+        infiniumTermNames.add(LabVesselSearchDefinition.MultiRefTerm.INFINIUM_CHIP.getTermRefName());
+        infiniumTermNames.add(LabVesselSearchDefinition.MultiRefTerm.INFINIUM_DNA_PLATE.getTermRefName());
+
+        StringBuilder statusOutput = new StringBuilder();
+        try {
+            // Unmarshall
+            searchInstanceList =
+                    (SearchInstanceList) preference.getPreferenceDefinition().getDefinitionValue();
+
+            for( SearchInstance searchInstance : searchInstanceList.getSearchInstances() ) {
+                boolean isInfinium = false;
+
+                for( SearchInstance.SearchValue searchValue : searchInstance.getSearchValues() ) {
+                    String termName = searchValue.getTermName();
+                    if( termName.equals(LabVesselSearchDefinition.MultiRefTerm.INFINIUM_DNA_PLATE.getTermRefName() ) ) {
+                        searchInstance.setExcludeInitialEntitiesFromResults(true);
+                        searchInstance.setCustomTraversalOptionName("infiniumWells");
+                        searchInstance.getTraversalEvaluatorValues().put("descendantOptionEnabled", Boolean.TRUE);
+                        isInfinium = true;
+                        statusOutput.append( "Modified named search [");
+                        statusOutput.append(searchInstance.getName());
+                        statusOutput.append("] (DNA plate term)\n");
+                    } else if( termName.equals(LabVesselSearchDefinition.MultiRefTerm.INFINIUM_AMP_PLATE.getTermRefName() )
+                            || termName.equals(LabVesselSearchDefinition.MultiRefTerm.INFINIUM_CHIP.getTermRefName() ) ) {
+                        searchInstance.setExcludeInitialEntitiesFromResults(true);
+                        searchInstance.setCustomTraversalOptionName("infiniumWells");
+                        searchInstance.getTraversalEvaluatorValues().put("ancestorOptionEnabled", Boolean.TRUE);
+                        isInfinium = true;
+                        statusOutput.append( "Modified named search [");
+                        statusOutput.append(searchInstance.getName());
+                        statusOutput.append("] (Amp plate or Chip term)\n");
+                    } else if( termName.equals("Infinium PDO")) {
+                        isInfinium = true;
+                        searchValue.setTermName("PDO");
+                        searchValue.setIncludeInResults(Boolean.FALSE);
+                        searchInstance.setExcludeInitialEntitiesFromResults(true);
+                        searchInstance.setCustomTraversalOptionName("infiniumPlates");
+                        searchInstance.getTraversalEvaluatorValues().put("descendantOptionEnabled", Boolean.TRUE);
+                        statusOutput.append( "Modified named search [");
+                        statusOutput.append(searchInstance.getName());
+                        statusOutput.append("] (Infinium PDO term)\n");
+                    }
+                }
+
+                if( isInfinium ) {
+                    count++;
+                } else {
+                    // Existing ancestor/descendant logic
+                    if( searchInstance.getTraversalEvaluatorValues().containsValue(Boolean.TRUE
+                    && searchInstance.getCustomTraversalOptionName().equals("none"))) {
+                        searchInstance.setCustomTraversalOptionName("tubesEtcTraverser");
+                        count++;
+                        statusOutput.append( "Modified named search [");
+                        statusOutput.append(searchInstance.getName());
+                        statusOutput.append("] (converted traversal to custom tube traverser)\n");
+                    }
+                }
+            }
+
+            if( statusOutput.length() > 1 ) {
+                statusOutput.insert(0, " had modifications: \n");
+                statusOutput.insert(0, preference.getPreferenceType().toString());
+                System.out.println(statusOutput.toString());
+            }
+
+            if( count > 0 ) {
+                preference.setData(searchInstanceList.marshal());
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        return count;
     }
 }

@@ -224,10 +224,19 @@ buttons to move columns from one to the other --%>
             </td>
             <td rowspan="2" style="padding-left: 30px;vertical-align: top">
                 <c:if test="${actionBean.configurableSearchDef.traversalEvaluators != null}">
+                    <c:if test="${actionBean.configurableSearchDef.customTraversalOptions  != null}">
+                        <label>Apply Custom Traversal Logic:  (Exclude initial entities <stripes:checkbox id="excludeInitialEntitiesFromResults" name="searchInstance.excludeInitialEntitiesFromResults"/>)</label><br />
+                        <stripes:select id="customTraversalOption" name="searchInstance.customTraversalOptionName" style="width:240px">
+                            <stripes:option value="none">None</stripes:option>
+                            <c:forEach items="${actionBean.configurableSearchDef.customTraversalOptions}" var="customTraversalOption">
+                            <stripes:option value="${customTraversalOption.key}">${customTraversalOption.value.label}</stripes:option>
+                        </c:forEach>
+                        </stripes:select> <br />
+                    </c:if>
                 <c:forEach items="${actionBean.configurableSearchDef.traversalEvaluators}" var="traversalMapEntry">
                     <stripes:checkbox id="${traversalMapEntry.key}" name="searchInstance.traversalEvaluatorValues['${traversalMapEntry.key}']" checked="${searchInstance.traversalEvaluatorValues[traversalMapEntry.key]}" /> ${traversalMapEntry.value.label}<br />
                 </c:forEach>
-                </c:if>
+                </c:if><br />
             </td>
         </tr>
         <tr>

@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
+
 import java.util.List;
 import java.util.Set;
 
@@ -12,9 +14,14 @@ import java.util.Set;
 public abstract class TraversalEvaluator {
 
     private String label;
-    protected String helpNote;
+    private String helpNote;
+    protected TransferTraverserCriteria.TraversalDirection traversalDirection;
 
     public TraversalEvaluator() {}
+
+    public TraversalEvaluator(String label) {
+        this.label = label;
+    }
 
     public abstract Set<Object> evaluate(List<? extends Object> rootEntities, SearchInstance searchInstance);
 
@@ -37,6 +44,10 @@ public abstract class TraversalEvaluator {
 
     public void setHelpNote(String helpNote){
         this.helpNote = helpNote;
+    }
+
+    public TransferTraverserCriteria.TraversalDirection getTraversalDirection(){
+        return traversalDirection;
     }
 
 }
