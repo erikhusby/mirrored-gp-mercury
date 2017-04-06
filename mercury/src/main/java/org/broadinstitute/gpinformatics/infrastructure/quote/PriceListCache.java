@@ -218,7 +218,7 @@ public class PriceListCache extends AbstractCache implements Serializable {
         String price = cachedPriceItem.getPrice();
         QuoteItem foundMatchingQuoteItem = orderQuote.findCachedQuoteItem(cachedPriceItem.getPlatformName(),
                 cachedPriceItem.getCategoryName(), cachedPriceItem.getName());
-        if (foundMatchingQuoteItem  != null) {
+        if (foundMatchingQuoteItem  != null && !orderQuote.getExpired()) {
             if (new BigDecimal(foundMatchingQuoteItem .getPrice()).compareTo(new BigDecimal(cachedPriceItem.getPrice())) < 0) {
                 price = foundMatchingQuoteItem .getPrice();
             }
