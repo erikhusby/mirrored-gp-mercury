@@ -838,11 +838,23 @@
         </createIndex>
     </changeSet>
 
-    <changeSet id="GPLIM-4430-41" author="dwilson">
-        <dropPrimaryKey tableName="LAB_VESSEL_TICKETS_CREATED"/>
-
-    <addPrimaryKey constraintName="PK_LAB_VESSEL_TICKETS_CREATED" tableName="LAB_VESSEL_TICKETS_CREATED"
-                   schemaName="mercury" columnNames="LAB_VESSEL, TICKETS_CREATED"/>
+    <changeSet id="GPLIM-4430-441" author="dwilson">
+        <sql splitStatements="false">
+            BEGIN
+                FOR r IN (
+                    SELECT TABLE_NAME, CONSTRAINT_NAME, OWNER
+                    FROM USER_CONSTRAINTS
+                    WHERE TABLE_NAME = 'LAB_VESSEL_TICKETS_CREATED'
+                    AND CONSTRAINT_TYPE = 'U'
+                )
+                LOOP
+                    EXECUTE IMMEDIATE REPLACE(REPLACE(REPLACE(
+                    'ALTER TABLE #OWNER#.#TABLE# DROP CONSTRAINT #CON#' ,
+                    '#TABLE#',r.TABLE_NAME) ,
+                    '#CON#',r.CONSTRAINT_NAME),'#OWNER#',r.OWNER);
+                END LOOP;
+            END;
+        </sql>
     </changeSet>
 
 </databaseChangeLog>

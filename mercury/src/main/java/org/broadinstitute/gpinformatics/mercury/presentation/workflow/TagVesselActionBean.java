@@ -294,15 +294,16 @@ public class TagVesselActionBean extends RackScanActionBean {
      *
      */
     public void removeTags() throws Exception {
+        List<LabVessel> vessels = new ArrayList<>();
         for(VesselPosition position : getVesselGeometry().getVesselPositions()) {
             JiraTicket jiraTicket = getVesselJiraTicket(position.toString());
             if(jiraTicket != null) {
                 LabVessel vessel = findAvailableVesslesByPosition(position.toString());
-                vessel.removeJiraTicket(jiraTicket);
-                labVesselDao.persist(vessel);
+                vessel.removeJiraTickets();
+                vessels.add(vessel);
             }
         }
-        labVesselDao.flush();
+        labVesselDao.persistAll(vessels);
     }
 
     /**
@@ -335,6 +336,7 @@ public class TagVesselActionBean extends RackScanActionBean {
             devConditionList.add(devCondition);
         }
         setShowResults(true);
+        List<LabVessel> vessels = new ArrayList<>();
         for(String devItem : devConditionList) {
             JiraTicket existingTicket = jiraTicketDao.fetchByName(devItem);
             LabVessel vessel = findAvailableVesslesByPosition(position);
@@ -347,10 +349,9 @@ public class TagVesselActionBean extends RackScanActionBean {
             else
                 vessel.getJiraTickets().add(existingTicket);
 
-            labVesselDao.persist(vessel);
-
+            vessels.add(vessel);
         }
-        labVesselDao.flush();
+        labVesselDao.persistAll(vessels);
         messageCollection.addInfo("Successfully Added: " + getRackScan().get(vesselPosition) + " to position: " + position);
 
     }
