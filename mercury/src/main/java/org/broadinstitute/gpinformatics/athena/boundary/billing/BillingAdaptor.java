@@ -6,10 +6,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
@@ -17,6 +20,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -143,15 +147,24 @@ public class BillingAdaptor implements Serializable {
             HashMultimap<String, String> quoteItemsByQuote = HashMultimap.create();
             for (QuoteImportItem item : unBilledQuoteImportItems) {
 
+                final List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(item.getProductOrder());
                 BillingEjb.BillingResult result = new BillingEjb.BillingResult(item);
                 results.add(result);
 
                 Quote quote = null;
                 String sapBillingId = null;
                 String workId = null;
+                final MessageCollection messageCollection = new MessageCollection();
                 try {
                     quote = quoteService.getQuoteByAlphaId(item.getQuoteId());
                     quote.setAlphanumericId(item.getQuoteId());
+                    List<String> effectivePricesForProducts = priceListCache
+                            .getEffectivePricesForProducts(allProductsOrdered, quote);
+
+                    if(!item.getProductOrder().latestSapOrderDetail().getOrderPricingHash().equals(
+                            TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ",")))) {
+                        productOrderEjb.publishProductOrderToSAP(item.getProductOrder(), messageCollection, true);
+                    }
 
                     workId = CollectionUtils.isEmpty(item.getWorkItems())?null:item.getWorkItems().toArray(new String[item.getWorkItems().size()])[0];
                     sapBillingId = quote.isEligibleForSAP()? item.getSapItems(): NOT_ELIGIBLE_FOR_SAP_INDICATOR;
@@ -198,7 +211,6 @@ public class BillingAdaptor implements Serializable {
                         billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacement, workId, sapBillingId,
                                 BillingSession.BILLED_FOR_QUOTES);
                     }
-
 
                     BigDecimal replacementMultiplier = null;
                     if(primaryPriceItemIfReplacementForSAP != null) {
