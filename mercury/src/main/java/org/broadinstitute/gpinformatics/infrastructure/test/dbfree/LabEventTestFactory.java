@@ -56,7 +56,11 @@ public class LabEventTestFactory {
     }
 
     public static LabEvent doSectionTransfer(LabVessel source, LabVessel destination) {
-        LabEvent event = new LabEvent(A_BASE, new Date(), "StaticPlateTest", 1L, 1L, "labEventTestFactory");
+        return doSectionTransfer(A_BASE, source, destination);
+    }
+
+    public static LabEvent doSectionTransfer(LabEventType labEventType, LabVessel source, LabVessel destination) {
+        LabEvent event = new LabEvent(labEventType, new Date(), "StaticPlateTest", 1L, 1L, "labEventTestFactory");
         event.getSectionTransfers().add(new SectionTransfer(source.getContainerRole(), ALL96, null,
                 destination.getContainerRole(), ALL96, null, event));
         return event;
