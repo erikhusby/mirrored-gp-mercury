@@ -79,7 +79,7 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
 
     private String orderProductsHash;
 
-    private String orderPricingHash;
+    private String orderPricesHash;
 
     public SapOrderDetail() {
     }
@@ -91,7 +91,7 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
         this.quoteId = quoteId;
         this.companyCode = companyCode;
         this.orderProductsHash = productsHash;
-        this.orderPricingHash = quantitiesHash;
+        this.orderPricesHash = quantitiesHash;
 
     }
 
@@ -136,12 +136,12 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
         this.orderProductsHash = orderProductHash;
     }
 
-    public String getOrderPricingHash() {
-        return orderPricingHash;
+    public String getOrderPricesHash() {
+        return orderPricesHash;
     }
 
-    public void setOrderPricingHash(String orderQuantitiesHash) {
-        this.orderPricingHash = orderQuantitiesHash;
+    public void setOrderPricesHash(String orderQuantitiesHash) {
+        this.orderPricesHash = orderQuantitiesHash;
     }
 
     @Override
@@ -176,7 +176,7 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
                 .append(sapOrderNumber, that.sapOrderNumber)
                 .append(referenceProductOrder, that.referenceProductOrder)
                 .append(orderProductsHash, that.orderProductsHash)
-                .append(orderPricingHash, that.orderPricingHash)
+                .append(orderPricesHash, that.orderPricesHash)
                 .isEquals();
     }
 
@@ -187,7 +187,7 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
 //                .append(primaryQuantity)
                 .append(referenceProductOrder)
                 .append(orderProductsHash)
-                .append(orderPricingHash)
+                .append(orderPricesHash)
                 .toHashCode();
     }
 }

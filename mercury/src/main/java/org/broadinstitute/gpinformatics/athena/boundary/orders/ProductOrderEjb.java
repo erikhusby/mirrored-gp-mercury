@@ -335,7 +335,7 @@ public class ProductOrderEjb {
 
                 boolean priceChangeForNewOrder = false;
                 if(orderToPublish.isSavedInSAP()) {
-                    priceChangeForNewOrder = !orderToPublish.latestSapOrderDetail().getOrderPricingHash().equals(
+                    priceChangeForNewOrder = !orderToPublish.latestSapOrderDetail().getOrderPricesHash().equals(
                             TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ",")))
                                              && orderToPublish.hasAtLeastOneBilledLedgerEntry();
                 }

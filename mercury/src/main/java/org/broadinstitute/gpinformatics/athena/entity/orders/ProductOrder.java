@@ -276,7 +276,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         if (shareSapOrder & toClone.isSavedInSAP()) {
             cloned.addSapOrderDetail(new SapOrderDetail(toClone.latestSapOrderDetail().getSapOrderNumber(),
                     toClone.latestSapOrderDetail().getPrimaryQuantity(), toClone.latestSapOrderDetail().getQuoteId(),
-                    toClone.latestSapOrderDetail().getCompanyCode(), toClone.latestSapOrderDetail().getOrderProductsHash(),toClone.latestSapOrderDetail().getOrderPricingHash()));
+                    toClone.latestSapOrderDetail().getCompanyCode(), toClone.latestSapOrderDetail().getOrderProductsHash(),toClone.latestSapOrderDetail().getOrderPricesHash()));
         }
 
         toClone.addChildOrder(cloned);
@@ -1976,6 +1976,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         final SapOrderDetail sapOrderDetail = latestSapOrderDetail();
         sapOrderDetail.setPrimaryQuantity(sampleCount);
         sapOrderDetail.setOrderProductsHash(productListHash);
-        sapOrderDetail.setOrderPricingHash(pricesForProducts);
+        sapOrderDetail.setOrderPricesHash(pricesForProducts);
     }
 }
