@@ -409,7 +409,7 @@ public class ProductOrderTest {
         assertThat(testProductOrder.getSapOrderNumber(), is(equalTo(sapOrderNumber+"2")));
     }
 
-    private void billSampleOut(ProductOrder productOrder, ProductOrderSample sample, int expected) {
+    public static void billSampleOut(ProductOrder productOrder, ProductOrderSample sample, int expected) {
 
         LedgerEntry primaryItemSampleEntry = new LedgerEntry(sample,
                 productOrder.getProduct().getPrimaryPriceItem(), new Date(), /*productOrder.getProduct(),*/ 1);

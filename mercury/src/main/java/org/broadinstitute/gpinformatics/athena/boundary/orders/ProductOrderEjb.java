@@ -333,11 +333,14 @@ public class ProductOrderEjb {
                                               !orderToPublish.getQuoteId()
                                                       .equals(orderToPublish.latestSapOrderDetail().getQuoteId());
 
-                final boolean priceChangeForNewOrder =
-                        !orderToPublish.latestSapOrderDetail().getOrderPricingHash().equals(TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ",")))
-                        && orderToPublish.hasAtLeastOneBilledLedgerEntry();
+                boolean priceChangeForNewOrder = false;
+                if(orderToPublish.isSavedInSAP()) {
+                    priceChangeForNewOrder = !orderToPublish.latestSapOrderDetail().getOrderPricingHash().equals(
+                            TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ",")))
+                                             && orderToPublish.hasAtLeastOneBilledLedgerEntry();
+                }
 
-                if (((!orderToPublish.isSavedInSAP() || priceChangeForNewOrder) && allowCreateOrder) || quoteIdChange) {
+                if ((!orderToPublish.isSavedInSAP() && allowCreateOrder) || quoteIdChange || priceChangeForNewOrder) {
                     String sapOrderIdentifier = sapService.createOrder(orderToPublish);
 
                     String oldNumber = null;
@@ -351,7 +354,7 @@ public class ProductOrderEjb {
                             TubeFormation.makeDigest(StringUtils.join(allProductsOrdered, ",")),
                             TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ","))));
 
-                    if(quoteIdChange) {
+                    if(quoteIdChange || priceChangeForNewOrder) {
                         String body = "The SAP order " + oldNumber + " for PDO "+ orderToPublish.getBusinessKey()+
                                       " is being associated with a new quote by "+
                                       userBean.getBspUser().getFullName() +" and needs" + " to be short closed.";
