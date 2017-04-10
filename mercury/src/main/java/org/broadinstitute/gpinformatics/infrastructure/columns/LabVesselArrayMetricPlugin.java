@@ -31,6 +31,7 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
     private enum VALUE_COLUMN_TYPE {
         CALL_RATE("Call Rate"),
         HET_PCT("Het %"),
+        VERSION("Version"),
         AUTOCALL_GENDER("Autocall Gender"),
         FP_GENDER("FP Gender"),
         REPORTED_GENDER("Reported Gender"),
@@ -122,6 +123,10 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
 
             value = ColumnValueType.THREE_PLACE_DECIMAL.format(arraysQc.getHetPct().multiply(BigDecimal.valueOf(100)), "");
             row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.HET_PCT.getResultHeader(),
+                    value, value));
+
+            value = String.valueOf(arraysQc.getAnalysisVersion());
+            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.VERSION.getResultHeader(),
                     value, value));
 
             value = String.valueOf(arraysQc.getAutocallGender());
