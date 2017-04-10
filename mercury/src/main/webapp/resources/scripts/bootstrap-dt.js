@@ -25,12 +25,13 @@ var sDomNoTableToolsButtons = "lfrtip";
 
 function enableDefaultPagingOptions(){
     $j.extend( true, $j.fn.dataTable.defaults, {
-        "bPaginate": true,
-        "iDisplayLength": 100,
-        "bLengthChange": true,
-        "sPaginationType": 'bootstrap',
+        "paging": true,
+        "pageLength": 100,
+        "info": true,
+        "lengthChange": true,
+        "pagingType": "simple_numbers",
     });
-    $j.fn.dataTable.defaults.aLengthMenu = [[50, 100, 200, 400, -1], [50, 100, 200, 400, "All"]];
+    $j.fn.dataTable.defaults.aLengthMenu = [[25, 50, 100, 200, 400, -1], [25, 50, 100, 200, 400, "All"]];
 }
 /**
  *  Set the defaults for DataTables initialization
