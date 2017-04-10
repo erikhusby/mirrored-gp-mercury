@@ -134,8 +134,7 @@ textarea.controlledText { width: 550px; }
 .dataTables_filter { float: left !important; text-align: left !important;}
 .dataTables_filter input.text { width: 500px; font-size: 12px; height: 14px; }
 .filterOptions { position: absolute; margin-left: 10px; display: inline; }
-.filterDropdown { height: 25px; }
-
+.dataTables_length select, .dataTables_info, .filterDropdown { height: 25px; width: auto !important;}
 /* The 'x' for clearing input */
 .clear-helper { color: #0000cd; cursor: pointer; font-size: 20px; font-weight: bold; margin: 8px 2px 0 -19px; padding: 1px 4px; }
 
