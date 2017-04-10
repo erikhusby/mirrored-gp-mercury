@@ -1473,6 +1473,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
         } catch (QuoteNotFoundException e) {
             addGlobalValidationError("The quote ''{2}'' was not found ", editOrder.getQuoteId());
+        } catch (InvalidProductException ipe) {
+            addGlobalValidationError(ipe.getMessage());
         }
         if (chipDefaults != null && attributes != null) {
             if (!chipDefaults.equals(attributes)) {

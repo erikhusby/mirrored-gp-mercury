@@ -72,6 +72,7 @@ public class SapIntegrationServiceImplDBFreeTest {
         QuoteFunding quoteFunding = new QuoteFunding(Collections.singleton(fundingLevel));
 
         testSingleSourceQuote = new Quote(SINGLE_SOURCE_PO_QUOTE_ID, quoteFunding, ApprovalStatus.FUNDED);
+        testSingleSourceQuote.setExpired(Boolean.FALSE);
 
         Funding costObjectFundingDefined = new Funding(Funding.FUNDS_RESERVATION, "to researchStuff", "8823");
         costObjectFundingDefined.setFundsReservationNumber("FR11293");
@@ -79,6 +80,7 @@ public class SapIntegrationServiceImplDBFreeTest {
         QuoteFunding costObjectQFunding = new QuoteFunding(Collections.singleton(coFundingLevel1));
 
         testSingleSourceFRQuote = new Quote(SINGLE_SOURCE_FUND_RES_QUOTE_ID, costObjectQFunding, ApprovalStatus.FUNDED);
+        testSingleSourceFRQuote.setExpired(Boolean.FALSE);
 
         Funding test3POFundingDefined = new Funding(Funding.PURCHASE_ORDER,null, null);
         test3POFundingDefined.setPurchaseOrderContact(testUser);
@@ -94,6 +96,7 @@ public class SapIntegrationServiceImplDBFreeTest {
                 Arrays.asList(new FundingLevel[]{test3PurchaseOrderFundingLevel,test3PO2FundingLevel}));
 
         testMultipleLevelQuote = new Quote(MULTIPLE_SOURCE_QUOTE_ID, test3Funding, ApprovalStatus.FUNDED);
+        testMultipleLevelQuote.setExpired(Boolean.FALSE);
 
         mockQuoteService = Mockito.mock(QuoteServiceImpl.class);
         Mockito.when(mockQuoteService.getQuoteByAlphaId(testSingleSourceQuote.getAlphanumericId())).thenReturn(testSingleSourceQuote);

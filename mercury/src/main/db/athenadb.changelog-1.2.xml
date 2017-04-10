@@ -700,4 +700,19 @@
         <createSequence sequenceName="SEQ_ACCESS_CONTROL_ITEM" schemaName="athena" startValue="1" incrementBy="50" />
     </changeSet>
 
+    <changeSet id="GPLIM-4778-1" author="scottmat">
+        <addColumn schemaName="athena" tableName="SAP_ORDER_DETAIL">
+            <column name="order_products_hash" type="varchar(255)" />
+        </addColumn>
+        <addColumn schemaName="athena" tableName="SAP_ORDER_DETAIL">
+            <column name="order_prices_hash" type="varchar(255)" />
+        </addColumn>
+        <addColumn schemaName="athena" tableName="SAP_ORDER_DETAIL_AUD">
+            <column name="order_products_hash" type="varchar(255)" />
+        </addColumn>
+        <addColumn schemaName="athena" tableName="SAP_ORDER_DETAIL_AUD">
+            <column name="order_prices_hash" type="varchar(255)" />
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
