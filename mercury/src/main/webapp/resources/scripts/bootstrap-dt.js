@@ -31,7 +31,7 @@ function enableDefaultPagingOptions(){
         "lengthChange": true,
         "pagingType": "simple_numbers",
     });
-    $j.fn.dataTable.defaults.aLengthMenu = [[50, 100, 200, 400, -1], [50, 100, 200, 400, "All"]];
+    $j.fn.dataTable.defaults.aLengthMenu = [[25, 50, 100, 200, 400, -1], [25, 50, 100, 200, 400, "All"]];
 }
 /**
  *  Set the defaults for DataTables initialization
@@ -51,7 +51,8 @@ $j.extend(true, $j.fn.dataTable.defaults, {
 });
 if (isLegacyDataTables()) {
     $j.extend(true, $j.fn.dataTable.defaults, {
-        'sDom': "<'row-fluid'<'span6'f><'span4'T><'span2'ir>>t<'row-fluid'<'span6'l><'span6'p>>",
+        'sDom': "<'row-fluid'<'span6'f><'span4'T><'span2'il>>rt<'row-fluid'<'span6'l><'span6'p>>",
+        "sPaginationType": "bootstrap",
     });
 }
 
