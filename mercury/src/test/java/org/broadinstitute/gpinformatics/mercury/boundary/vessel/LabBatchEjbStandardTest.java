@@ -289,7 +289,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
         LabBatch fctLabBatch = new LabBatch("Test FCT batch name", laneInfos,
                 LabBatch.LabBatchType.FCT, IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell);
         fctLabBatch.setBatchDescription(fctLabBatch.getBatchName());
-        labBatchEJB.createLabBatch(fctLabBatch, "jowalsh", CreateFields.IssueType.FLOWCELL,
+        labBatchEJB.createLabBatch(fctLabBatch, "jowalsh", CreateFields.IssueType.HISEQ_4000,
                 CreateFields.ProjectType.FCT_PROJECT);
 
         labBatchDao.flush();
@@ -302,6 +302,10 @@ public class LabBatchEjbStandardTest extends Arquillian {
         JiraIssue jiraIssue = jiraService.getIssue(testFind.getJiraTicket().getTicketName());
 
         System.out.println("FCT Jira ticket ID is... " + testFind.getJiraTicket().getTicketName());
+
+        String issueTypeValue = jiraIssue.getMappedField(LabBatch.TicketFields.ISSUE_TYPE_MAP.getName(),
+                LabBatch.TicketFields.ISSUE_TYPE_NAME.getName());
+        Assert.assertEquals(issueTypeValue, CreateFields.IssueType.HISEQ_4000.getJiraName());
 
         Object laneInfoValue = jiraIssue.getField(LabBatch.TicketFields.LANE_INFO.getName());
         Assert.assertNotNull(laneInfoValue);

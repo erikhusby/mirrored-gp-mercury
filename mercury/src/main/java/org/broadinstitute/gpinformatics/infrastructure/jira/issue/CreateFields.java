@@ -154,7 +154,11 @@ public class CreateFields extends UpdateFields {
         CDNA_TRUSEQ_SS("cDNA TruSeq Strand Specific Large Insert"),
         PRODUCT_ORDER("Product Order"),
         RESEARCH_PROJECT("Research Project"),
-        FLOWCELL("Flowcell"),
+        HISEQ_2000("HiSeq 2000"),
+        HISEQ_2500_RAPID_RUN("HiSeq 2500 Rapid Run"),
+        HISEQ_2500_HIGH_OUTPUT("HiSeq 2500 High Output"),
+        HISEQ_4000("HiSeq 4000"),
+        HISEQ_X_10("HiSeq X 10"),
         MISEQ("MiSeq"),
         SAMPLE_INITIATION("Sample Initiation"),
         RECEIPT("Receipt"),
@@ -164,6 +168,7 @@ public class CreateFields extends UpdateFields {
         RNA_EXTRACTION("RNA Extraction"),
         HUMAN_PCR_FREE("Human PCR-Free"),
         HUMAN_PCR_PLUS("Human PCR-Plus");
+
         private final String jiraName;
 
         IssueType(String jiraName) {
