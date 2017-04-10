@@ -172,7 +172,6 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
         SapOrderDetail that = (SapOrderDetail) o;
 
         return new EqualsBuilder()
-//                .append(primaryQuantity, that.primaryQuantity)
                 .append(sapOrderNumber, that.sapOrderNumber)
                 .append(referenceProductOrder, that.referenceProductOrder)
                 .append(orderProductsHash, that.orderProductsHash)
@@ -184,7 +183,6 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
     public int hashCode() {
         return new HashCodeBuilder(17, 37)
                 .append(sapOrderNumber)
-//                .append(primaryQuantity)
                 .append(referenceProductOrder)
                 .append(orderProductsHash)
                 .append(orderPricesHash)
