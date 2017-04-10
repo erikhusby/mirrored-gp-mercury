@@ -251,6 +251,22 @@ public class JiraIssue implements Serializable {
     }
 
     /**
+     * Returns the value of a JIRA field that is contained in a JIRA map field, such as "Issue Type".
+     * @param mapFieldName the name of the map object.
+     * @param mapKey the key used to lookup a value in the map object.
+     * @return the value from the map object, or null if not found or if the field is not a map object.
+     * @throws IOException
+     */
+    public String getMappedField(String mapFieldName, String mapKey) throws IOException {
+        Object mapObject = getField(mapFieldName);
+        if (mapObject != null && mapObject instanceof Map) {
+            return ((Map<String, String>)mapObject).get(mapKey);
+        } else {
+            return null;
+        }
+    }
+
+    /**
      * @return a list of all available workflow transitions for this ticket in its current state
      */
     public IssueTransitionListResponse findAvailableTransitions() {
