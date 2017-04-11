@@ -167,7 +167,7 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
     api.columns().every(function (index) {
         var column = api.column(index);
         var filteredRows = api.column(index, {search: 'none'}).data();
-        var savedFilterValue=escape(column.search());
+        var savedFilterValue=unEscape(column.search());
 
         var header = $j(column.header());
         var headerLabel = header.text().trim();
