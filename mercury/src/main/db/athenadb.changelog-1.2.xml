@@ -767,4 +767,14 @@
         </createIndex>
     </changeSet>
 
+    <changeSet author="scottmat" id="GPLIM-4685-4">
+        <sql>
+            insert into PRODUCT_ORDER_SAP_ORDERS ropo
+            (ropo.REFERENCE_PRODUCT_ORDER, ropo.SAP_REFERENCE_ORDERS )
+            select pdo.PRODUCT_ORDER_ID, sod.SAP_ORDER_DETAIL_ID
+            from product_order pdo
+            join SAP_ORDER_DETAIL sod on sod.REFERENCE_PRODUCT_ORDER = pdo.PRODUCT_ORDER_ID;
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
