@@ -777,4 +777,15 @@
         </sql>
     </changeSet>
 
+    <changeSet author="scottmat" id="GPLIM-4685-5">
+        <sql>
+            insert into PRODUCT_ORDER_SAP_ORDERS_aud ropo
+            (ropo.REFERENCE_PRODUCT_ORDER, ropo.SAP_REFERENCE_ORDERS, ropo.REV, ropo.REVTYPE )
+            select distinct pdo.PRODUCT_ORDER_ID, sod.SAP_ORDER_DETAIL_ID, sod.REV, sod.REVTYPE
+            from product_order_aud pdo
+            join SAP_ORDER_DETAIL_aud sod on sod.REFERENCE_PRODUCT_ORDER = pdo.PRODUCT_ORDER_ID
+            where JIRA_TICKET_KEY is not null;
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
