@@ -323,12 +323,13 @@ public class ProductOrderEjb {
             orderToPublish = editedProductOrder.getParentOrder();
         }
         try {
-            final List<String> effectivePricesForProducts = priceListCache
-                    .getEffectivePricesForProducts(allProductsOrdered,
-                            quoteService.getQuoteByAlphaId(orderToPublish.getQuoteId()));
-
             if (isOrderEligibleForSAP(orderToPublish)
                 && !orderToPublish.getOrderStatus().canPlace()) {
+
+                final List<String> effectivePricesForProducts = priceListCache
+                        .getEffectivePricesForProducts(allProductsOrdered,
+                                quoteService.getQuoteByAlphaId(orderToPublish.getQuoteId()));
+
                 final boolean quoteIdChange = orderToPublish.isSavedInSAP() &&
                                               !orderToPublish.getQuoteId()
                                                       .equals(orderToPublish.latestSapOrderDetail().getQuoteId());
@@ -411,25 +412,30 @@ public class ProductOrderEjb {
         SAPAccessControl accessControl = accessController.getCurrentControlDefinitions();
         boolean eligibilityResult = false;
 
-        Set<Product> productListFromOrder = new HashSet<>();
         Set<AccessItem> priceItemNameList = new HashSet<>();
 
-        productListFromOrder.add(editedProductOrder.getProduct());
-        priceItemNameList.add(new AccessItem(editedProductOrder.getProduct().getPrimaryPriceItem().getName()));
-        for (ProductOrderAddOn productOrderAddOn : editedProductOrder.getAddOns()) {
-            productListFromOrder.add(productOrderAddOn.getAddOn());
-            priceItemNameList.add(new AccessItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getName()));
-        }
+        final boolean b = arePriceItemsValid(editedProductOrder, priceItemNameList);
 
         if(orderQuote != null && accessControl.isEnabled()) {
 
             eligibilityResult = orderQuote.isEligibleForSAP() &&
                                 editedProductOrder.getProduct()
                                         .getPrimaryPriceItem() != null &&
-                                determinePriceItemValidity(productListFromOrder) &&
+                                b &&
                                 !CollectionUtils.containsAny(accessControl.getDisabledItems(), priceItemNameList) ;
         }
         return eligibilityResult;
+    }
+
+    public boolean arePriceItemsValid(ProductOrder editedProductOrder, Set<AccessItem> priceItemNameList) {
+        Set<Product> productListFromOrder = new HashSet<>();
+        productListFromOrder.add(editedProductOrder.getProduct());
+        priceItemNameList.add(new AccessItem(editedProductOrder.getProduct().getPrimaryPriceItem().getName()));
+        for (ProductOrderAddOn productOrderAddOn : editedProductOrder.getAddOns()) {
+            productListFromOrder.add(productOrderAddOn.getAddOn());
+            priceItemNameList.add(new AccessItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getName()));
+        }
+        return determinePriceItemValidity(productListFromOrder);
     }
 
     public boolean determinePriceItemValidity(Collection<Product> productsToConsider) {

@@ -53,6 +53,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryIn
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderCompletionStatus;
@@ -687,6 +688,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         String quoteId = editOrder.getQuoteId();
         Quote quote = validateQuoteId(quoteId);
         try {
+            testForPriceItemValidity(editOrder);
             if(productOrderEjb.isOrderEligibleForSAP(editOrder)) {
                 validateQuoteDetails(quote, ErrorLevel.ERROR, !editOrder.hasJiraTicketKey(), 0);
             }
@@ -695,7 +697,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         } catch (QuoteNotFoundException e) {
             addGlobalValidationError("The quote ''{2}'' was not found ", quoteId);
         } catch (InvalidProductException e) {
-            addGlobalValidationError(e.getMessage());
+            addGlobalValidationError("Unable to determine the existing value of open orders for " +
+                                     quote.getAlphanumericId() +": " +e.getMessage());
         }
 
         if (editOrder != null) {
@@ -837,17 +840,22 @@ public class ProductOrderActionBean extends CoreActionBean {
     double getOrderValue(ProductOrder testOrder, int sampleCount, Quote quote) throws InvalidProductException {
         double value = 0d;
         if(testOrder.getProduct() != null) {
-            final Product product = testOrder.getProduct();
-            double productValue =
-                    getProductValue((product.getSupportsNumberOfLanes())?testOrder.getLaneCount():sampleCount, product,
-                            quote);
-            value += productValue;
-            for (ProductOrderAddOn testOrderAddon : testOrder.getAddOns()) {
-                final Product addOn = testOrderAddon.getAddOn();
-                double addOnValue =
-                        getProductValue((addOn.getSupportsNumberOfLanes())?testOrder.getLaneCount():sampleCount, addOn,
+            try {
+                final Product product = testOrder.getProduct();
+                double productValue =
+                        getProductValue((product.getSupportsNumberOfLanes())?testOrder.getLaneCount():sampleCount, product,
                                 quote);
-                value += addOnValue;
+                value += productValue;
+                for (ProductOrderAddOn testOrderAddon : testOrder.getAddOns()) {
+                    final Product addOn = testOrderAddon.getAddOn();
+                    double addOnValue =
+                            getProductValue((addOn.getSupportsNumberOfLanes())?testOrder.getLaneCount():sampleCount, addOn,
+                                    quote);
+                    value += addOnValue;
+                }
+            } catch (InvalidProductException e) {
+                throw new InvalidProductException("For " + testOrder.getBusinessKey() + ": " + testOrder.getName() +
+                " " + e.getMessage(), e);
             }
         }
         return value;
@@ -1466,6 +1474,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             getSourcePageResolution();
         }
         try {
+            testForPriceItemValidity(editOrder);
             if(!productOrderEjb.isOrderEligibleForSAP(editOrder)) {
                 validateQuoteDetails(editOrder.getQuoteId(), ErrorLevel.WARNING, !editOrder.hasJiraTicketKey());
             }
@@ -1474,7 +1483,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         } catch (QuoteNotFoundException e) {
             addGlobalValidationError("The quote ''{2}'' was not found ", editOrder.getQuoteId());
         } catch (InvalidProductException ipe) {
-            addGlobalValidationError(ipe.getMessage());
+            addGlobalValidationError("Unable to determine the existing value of open orders for " + editOrder.getQuoteId() +": " +ipe.getMessage());
         }
         if (chipDefaults != null && attributes != null) {
             if (!chipDefaults.equals(attributes)) {
@@ -2123,6 +2132,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @ValidationMethod(on = ADD_SAMPLES_ACTION)
     public void addSampleExtraValidations() throws Exception {
         try {
+            testForPriceItemValidity(editOrder);
             if (productOrderEjb.isOrderEligibleForSAP(editOrder)) {
                 validateQuoteDetailsWithAddedSamples(editOrder.getQuoteId(), ErrorLevel.ERROR,
                         !editOrder.hasJiraTicketKey(), stringToSampleList(addSamplesText).size());
@@ -2131,10 +2141,23 @@ public class ProductOrderActionBean extends CoreActionBean {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
         } catch (QuoteNotFoundException e) {
             addGlobalValidationError("The quote ''{2}'' was not found ", editOrder.getQuoteId());
+        } catch (InvalidProductException e) {
+            addGlobalValidationError("Unable to determine the existing value of open orders for " + editOrder.getQuoteId() +": " +e.getMessage());
         }
     }
 
-        @HandlesEvent(ADD_SAMPLES_ACTION)
+    private void testForPriceItemValidity(ProductOrder editOrder) {
+        if(productOrderEjb.arePriceItemsValid(editOrder, new HashSet<AccessItem>())) {
+            final String errorMessage = "One of the price items on this orders products is invalid";
+            if(editOrder.getOrderStatus().canBill() && editOrder.isSavedInSAP()) {
+                addGlobalValidationError(errorMessage);
+            } else {
+                addMessage(errorMessage);
+            }
+        }
+    }
+
+    @HandlesEvent(ADD_SAMPLES_ACTION)
     public Resolution addSamples() throws Exception {
         List<ProductOrderSample> samplesToAdd = stringToSampleList(addSamplesText);
         try {
