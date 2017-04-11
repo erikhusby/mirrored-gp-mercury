@@ -688,7 +688,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         String quoteId = editOrder.getQuoteId();
         Quote quote = validateQuoteId(quoteId);
         try {
-            testForPriceItemValidity(editOrder);
             if(productOrderEjb.isOrderEligibleForSAP(editOrder)) {
                 validateQuoteDetails(quote, ErrorLevel.ERROR, !editOrder.hasJiraTicketKey(), 0);
             }
@@ -1474,7 +1473,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             getSourcePageResolution();
         }
         try {
-            testForPriceItemValidity(editOrder);
             if(!productOrderEjb.isOrderEligibleForSAP(editOrder)) {
                 validateQuoteDetails(editOrder.getQuoteId(), ErrorLevel.WARNING, !editOrder.hasJiraTicketKey());
             }
@@ -2132,7 +2130,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     @ValidationMethod(on = ADD_SAMPLES_ACTION)
     public void addSampleExtraValidations() throws Exception {
         try {
-            testForPriceItemValidity(editOrder);
             if (productOrderEjb.isOrderEligibleForSAP(editOrder)) {
                 validateQuoteDetailsWithAddedSamples(editOrder.getQuoteId(), ErrorLevel.ERROR,
                         !editOrder.hasJiraTicketKey(), stringToSampleList(addSamplesText).size());

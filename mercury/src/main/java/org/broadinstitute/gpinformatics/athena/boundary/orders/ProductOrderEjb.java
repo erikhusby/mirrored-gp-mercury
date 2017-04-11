@@ -407,22 +407,27 @@ public class ProductOrderEjb {
      * @throws QuoteNotFoundException
      */
     public boolean isOrderEligibleForSAP(ProductOrder editedProductOrder)
-            throws QuoteServerException, QuoteNotFoundException {
+            throws QuoteServerException, QuoteNotFoundException, InvalidProductException {
         Quote orderQuote = quoteService.getQuoteByAlphaId(editedProductOrder.getQuoteId());
         SAPAccessControl accessControl = accessController.getCurrentControlDefinitions();
         boolean eligibilityResult = false;
 
         Set<AccessItem> priceItemNameList = new HashSet<>();
 
-        final boolean b = arePriceItemsValid(editedProductOrder, priceItemNameList);
+        final boolean priceItemsValid = arePriceItemsValid(editedProductOrder, priceItemNameList);
 
         if(orderQuote != null && accessControl.isEnabled()) {
 
             eligibilityResult = orderQuote.isEligibleForSAP() &&
                                 editedProductOrder.getProduct()
                                         .getPrimaryPriceItem() != null &&
-                                b &&
                                 !CollectionUtils.containsAny(accessControl.getDisabledItems(), priceItemNameList) ;
+        }
+
+        if(eligibilityResult && !priceItemsValid) {
+            throw new InvalidProductException("One of the Price items associated with " +
+                                              editedProductOrder.getBusinessKey() + ": " +
+                                              editedProductOrder.getName() + " is invalid");
         }
         return eligibilityResult;
     }
