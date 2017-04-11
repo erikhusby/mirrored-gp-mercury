@@ -2149,7 +2149,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private void testForPriceItemValidity(ProductOrder editOrder) {
         if(productOrderEjb.arePriceItemsValid(editOrder, new HashSet<AccessItem>())) {
             final String errorMessage = "One of the price items on this orders products is invalid";
-            if(editOrder.getOrderStatus().canBill() && editOrder.isSavedInSAP()) {
+            if(editOrder.isSavedInSAP()) {
                 addGlobalValidationError(errorMessage);
             } else {
                 addMessage(errorMessage);
