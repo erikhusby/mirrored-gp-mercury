@@ -1,68 +1,71 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 
+import net.sourceforge.stripes.action.*;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator;
+import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.StreamCreatedSpreadsheetUtil;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
-
-import net.sourceforge.stripes.action.DefaultHandler;
-import net.sourceforge.stripes.action.ForwardResolution;
-import net.sourceforge.stripes.action.HandlesEvent;
-import net.sourceforge.stripes.action.Resolution;
-import net.sourceforge.stripes.action.UrlBinding;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.type.TypeReference;
 import org.codehaus.jettison.json.JSONObject;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import javax.inject.Inject;
-import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.HashSet;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.LinkedHashSet;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import javax.inject.Inject;
+
 
 @UrlBinding(TagVesselActionBean.ACTIONBEAN_URL_BINDING)
 public class TagVesselActionBean extends RackScanActionBean {
+    private static final Log log = LogFactory.getLog(TagVesselActionBean.class);
     public static final String ACTIONBEAN_URL_BINDING = "/workflow/TagVessel.action";
     public static final String PAGE_TITLE = "Tag Vessel";
     public static final String TAG_VESSEL = "tagVessel";
-    public static final String UNTAG_VESSEL = "unTagVessel";
     public static final String TICKET_SEARCH = "ticketSearch";
+    public static final String CREATE_SPREADSHEET = "createSpreadsheet";
     public static final String RACK_SCAN_EVENT = "rackScan";
-    /** POSTed from the form, for rack scan. */
-    private Integer scanIndex;
-    /** POSTed from the form, for rack scan. */
-    private Set<TubeFormation> tubeFormations;
-    private Set<LabVessel> foundVessels = new HashSet<>();
+    private String TagVesselJsonData;
     private static final String SESSION_LIST_PAGE = "/workflow/tag_vessel.jsp";
-    private String reasonSelect = "--Select--";
+    private String reasonSelect = "(no condition)";
     private boolean isVesselSearchDone = true;
     private boolean isTicketSearchDone = false;
     private boolean showResults = false;
-    public String barcode;
     private String ticketSummary;
     private VesselGeometry vesselGeometry;
     private String vesselPosition;
-    private String vesselLabel;
-    private String vesselPositionReason;
-    private boolean isMultiplePositions = false;
+    private String jsonData;
     private LabVessel labVessel;
     private String searchKey;
     private String devTicketKey;
     private MessageCollection messageCollection = new MessageCollection();
     private JiraIssue jiraIssue = null;
-    private static final Map<VesselPosition, BarcodedTube> positionToTubeMap = new HashMap<>();
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("M-d-yy");
+    private Workbook workbook;
+    private String displayCoditions;
+    private Map<String, LabVessel> labVessels = new LinkedHashMap<>();
+    private Map<JiraTicket, JiraIssue> jiraDetails = new LinkedHashMap<>();
 
     @Inject
     private JiraService jiraService;
@@ -109,6 +112,7 @@ public class TagVesselActionBean extends RackScanActionBean {
     public Resolution ticketSearch() throws Exception {
 
         getSubTasks();
+        displayExistingConditions();
 
         if(!isJiraTicketAvailable()) {
             setVesselSearchDone(true);
@@ -124,6 +128,7 @@ public class TagVesselActionBean extends RackScanActionBean {
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
 
+
     /**
      * Handles the tag event.
      *
@@ -131,29 +136,193 @@ public class TagVesselActionBean extends RackScanActionBean {
     @HandlesEvent(TAG_VESSEL)
     public Resolution tagVessel() throws Exception {
 
-        if(getVesselPositionReason().equals(reasonSelect)) {
-            messageCollection.addError("Please select a dev condition.");
-            addMessages(messageCollection);
-            return displayResults();
+        String json = getJsonData();
+        setTagVesselJsonData(json);
+        ObjectMapper mapper = new ObjectMapper();
+
+        removeTags();
+
+        for(TagVesselJsonData tagJsonVesselData : getTagVesselData()) {
+            if(!tagJsonVesselData.getSelection().equals(reasonSelect)) {
+                if(tagJsonVesselData.getDevCondition().length() > 1) {
+                    addJiraTicket(tagJsonVesselData.getDevCondition(), tagJsonVesselData.getPosition());
+                }
+            }
+            else {
+                messageCollection.addError("Error Adding at position: " + tagJsonVesselData.getPosition() + " No condition selected");
+            }
         }
 
-        addJiraTicket();
+        addMessages(messageCollection);
         return displayResults();
     }
 
+
     /**
-     * Delete association between vessel and Jira ticket
+     * Handles the create spreadsheet event
      *
      */
-    @HandlesEvent(UNTAG_VESSEL)
-    public Resolution unTagVessel() throws Exception {
-        JiraTicket jiraTicket = getVesselJiraTicket(getVesselPosition());
-        LabVessel vessel = labVesselDao.findByIdentifier(getVesselLabelByPosition(getVesselPosition()));
-        vessel.removeJiraTicket(jiraTicket);
-        labVesselDao.persist(vessel);
-        jiraTicketDao.remove(jiraTicket);
-        jiraTicketDao.flush();
-        return displayResults();
+    @HandlesEvent(CREATE_SPREADSHEET)
+    public Resolution downloadSpradsheet()
+    {
+        try{
+            // Makes the spreadsheet.
+            workbook = makeSpreadsheet(getTagVesselData());
+
+            // Sets the default filename.
+            String filename = DATE_FORMAT.format(new Date()) + "_EXPERIMENT_" + getDevTicketKey()  + ".xls";
+
+            // Streams the spreadsheet back to user.
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            workbook.write(out);
+            StreamingResolution stream = new StreamingResolution(StreamCreatedSpreadsheetUtil.XLS_MIME_TYPE,
+                    new ByteArrayInputStream(out.toByteArray()));
+            stream.setFilename(filename);
+
+            return stream;
+
+        } catch (IOException e) {
+            log.error("Failed to create spreadsheet", e);
+        }
+
+        return null;
+    }
+
+    /**
+     * Create spreadsheet of all dev conditions
+     *
+     */
+    private Workbook makeSpreadsheet( List<TagVesselJsonData> tagJsonData) throws IOException {
+        Map<String, Object[][]> sheets = new HashMap<>();
+
+        String[][] devCells = new String[tagJsonData.size() + 1][];
+
+        int rowIndex = 0;
+
+        // Fills in the headers.
+        devCells[rowIndex] = new String[] {"Receptacle 2D Barcode", "Position",
+                "Experiment", "Condition"};
+        ++rowIndex;
+
+        // Fills in the data.
+        for (TagVesselJsonData positions : tagJsonData) {
+            String barcode = labVesselDao.findByIdentifier(getVesselLabelByPosition(positions.getPosition())).getLabel();
+            devCells[rowIndex] = new String[] {barcode, positions.getPosition(), getDevTicketKey() , positions.getDevCondition() + " "  +positions.getSelection() };
+            ++rowIndex;
+        }
+
+        sheets.put("DevTags", devCells);
+
+        return SpreadsheetCreator.createSpreadsheet(sheets);
+    }
+
+    /**
+     * Find and return a list of ancestor lab vessels that have associated Jira tickets.
+     *
+     */
+    private List<LabVessel> findAncestors(LabVessel labVessel)
+    {
+        if(labVessel != null) {
+            List<LabVessel> labVessels = new ArrayList<>();
+            Collection<LabVessel> ancestorVessels = labVessel.getAncestorVessels();
+            for (LabVessel item : ancestorVessels) {
+                if (item.getJiraTickets() != null) {
+                    labVessels.add(item);
+                }
+            }
+            return labVessels;
+        }
+        return null;
+    }
+
+    /**
+     * Called by the .jsp page to get dev conditions based on position of vessel in the rack.
+     *
+     */
+    public String displayDevCondtions(String position)
+    {
+        List<LabVessel> labVessels = findAncestors(findAvailableVesslesByPosition(position));
+        return displayBuilder(labVessels);
+    }
+
+    /**
+     * Build the output for the Jira ticket dev conditions to be inserted as an HTML table for the .jsp page.
+     *
+     */
+    private String displayBuilder(List<LabVessel> labVessels)
+    {
+        if(labVessels != null) {
+            boolean found = false;
+            StringBuilder displayBuilder = new StringBuilder();
+            String experimentText = "";
+            displayBuilder.append("<div><table border=1><tbody><tr>");
+            for (LabVessel labVessel : labVessels) {
+                if (labVessel != null) {
+                    StringBuilder idsBuilder = new StringBuilder();
+                    experimentText = null;
+                    Collection<JiraTicket> jiraTickets = labVessel.getJiraTickets();
+                    for (JiraTicket ticket : jiraTickets) {
+                        String jiraTicket = "";
+                        if (ticket != null) {
+                            found = true;
+                            try {
+                                JiraIssue issue = getJiraDetails(ticket);
+                                jiraTicket = issue.getSummary();
+                            } catch (IOException e) {
+                            }
+                            experimentText = idsBuilder.append(" " + "<a target =_blank href=" + ticket.getBrowserUrl() + ">" + ticket.getTicketId() + "</a>").append(" ").append(jiraTicket).toString();
+                        }
+                    }
+                    String label = labVessel.getLabel();
+                    if(experimentText != null)
+                        displayBuilder.append("<td><label>Expirements for:" + label + "</label><label>" + experimentText + "</label></td>");
+                }
+            }
+
+            displayBuilder.append("<tr></tbody></table></div>");
+            if(!found) {
+                return "";
+            }
+            else {
+                return displayBuilder.toString();
+            }
+        }
+        return "";
+    }
+
+
+    /**
+     * buffer Jira ticket details to increase performance.
+     *
+     */
+    private JiraIssue getJiraDetails(JiraTicket ticket)
+    {
+        try {
+            JiraIssue issue = jiraDetails.get(ticket);
+            if( issue == null) {
+                issue = ticket.getJiraDetails();
+                jiraDetails.put(ticket, issue);
+            }
+            return issue;
+        } catch (IOException e) {
+            messageCollection.addError("Error locating Jira Ticket: " + ticket.getTicketId());
+        }
+        return null;
+    }
+
+    /**
+     * Delete all association between vessels and Jira tickets
+     *
+     */
+    public void removeTags() throws Exception {
+        for(VesselPosition position : getVesselGeometry().getVesselPositions()) {
+            JiraTicket jiraTicket = getVesselJiraTicket(position.toString());
+            if(jiraTicket != null) {
+                LabVessel vessel = findAvailableVesslesByPosition(position.toString());
+                vessel.removeJiraTickets();
+            }
+        }
+        labVesselDao.flush();
     }
 
     /**
@@ -162,37 +331,59 @@ public class TagVesselActionBean extends RackScanActionBean {
      */
     private  Resolution displayResults() throws Exception {
         getSubTasks();
+        displayExistingConditions();
         setVesselSearchDone(true);
         setTicketSearchDone(true);
         setShowResults(true);
         setTicketSummary(jiraIssue.getSummary());
+
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
 
     /**
-     * This method creates a link between the vessel and the jir ticket associated with the dev condition.
+     * This method creates a link between the vessel and the jira ticket associated with the dev condition.
      *
      */
-    public void addJiraTicket()
+    private void addJiraTicket(String devCondition, String position)
     {
 
+        List<String> devConditionList = new ArrayList<>();
+        if(devCondition.contains(",")) {
+            devConditionList = Arrays.asList(devCondition.split(","));
+        }
+        else {
+            devConditionList.add(devCondition);
+        }
         setShowResults(true);
-        JiraTicket jiraTicket = new JiraTicket(jiraService,getVesselPositionReason());
-        LabVessel vessel = labVesselDao.findByIdentifier(getVesselLabelByPosition(getVesselPosition()));
-        vessel.getJiraTickets().add(jiraTicket);
-        labVesselDao.persist(vessel);
+        for(String devItem : devConditionList) {
+            JiraTicket existingTicket = jiraTicketDao.fetchByName(devItem);
+            LabVessel vessel = findAvailableVesslesByPosition(position);
+            if(vessel == null) {
+                messageCollection.addError("Lab Vessel:  " +  getRackScan().get(position) + " does not exist at position: " + position);
+                return;
+            }
+            if(existingTicket == null)
+                vessel.getJiraTickets().add(new JiraTicket(jiraService,devItem));
+            else
+                vessel.getJiraTickets().add(existingTicket);
+        }
+        labVesselDao.flush();
+        messageCollection.addInfo("Successfully Added: " + getRackScan().get(position) + " to position: " + position);
+
     }
 
     /**
      * Return the the Jira ticket associated with vessel position
      *
      */
-    public JiraTicket getVesselJiraTicket(String position)
+    private JiraTicket getVesselJiraTicket(String position)
     {
-        Collection<JiraTicket> tickets = labVesselDao.findByIdentifier((String) getRackScan().get(position)).getJiraTickets();
-        for(JiraTicket ticket : tickets)
-        {
-            return ticket;
+        LabVessel labVessel = findAvailableVesslesByPosition(position);
+        if(labVessel != null) {
+            Collection<JiraTicket> tickets = labVessel.getJiraTickets();
+            for(JiraTicket ticket : tickets) {
+                return ticket;
+            }
         }
         return null;
     }
@@ -221,16 +412,17 @@ public class TagVesselActionBean extends RackScanActionBean {
      * Determine if the vessel has a condition tag associated with it.
      *
      */
-    public boolean isVesselTagged(String vesselPosition) throws IOException {
-        String label = (String) getRackScan().get(vesselPosition);
-        LabVessel vessel = labVesselDao.findByIdentifier(label);
-        Collection<JiraTicket> jiraTickets = vessel.getJiraTickets();
-        if(jiraTickets.size() > 0) {
-            return true;
+    public String isVesselTagged(String vesselPosition) throws IOException {
+        LabVessel vessel = findAvailableVesslesByPosition(vesselPosition);
+        if (vessel != null) {
+            Collection<JiraTicket> jiraTickets = vessel.getJiraTickets();
+            if (jiraTickets.size() > 0) {
+                return "checked";
+            } else {
+                return null;
+            }
         }
-        else{
-            return false;
-        }
+    return null;
     }
 
     /**
@@ -238,56 +430,62 @@ public class TagVesselActionBean extends RackScanActionBean {
      *
      */
     public String getSelected(String vesselPosition) throws IOException {
-        String label = (String) getRackScan().get(vesselPosition);
-        LabVessel vessel = labVesselDao.findByIdentifier(label);
-        Collection<JiraTicket> jiraTickets = vessel.getJiraTickets();
-        for(JiraTicket ticket: jiraTickets) {
-              JiraIssue jiraIssue =  jiraService.getIssue(ticket.getTicketId());
-              return jiraIssue.getSummary();
-        }
-        return reasonSelect;
-    }
-
-    /**
-     * Determine if this is a vessel with multiple positions.
-     *
-     */
-    public boolean getMultiplePositions(LabVessel vessel)
-    {
-        if(vessel.isMultiplePositions()) {
-            isMultiplePositions = true;
-            return true;
-        }
-        else {
-            isMultiplePositions = false;
-            return false;
-        }
-    }
-
-    /**
-     *  If the vessel has > 24 positions, change the CSS set to shrink
-     *  the elements so they fit on the screen.
-     *
-     */
-    public String shrinkCss(String cssType)
-    {
-        if((getVesselGeometry().getRowCount() * getVesselGeometry().getRowCount()) > 24) {
-            return cssType;
+        if(vesselPosition != "") {
+            LabVessel vessel = findAvailableVesslesByPosition(vesselPosition);
+            if (vessel != null) {
+                Collection<JiraTicket> jiraTickets = vessel.getJiraTickets();
+                String summary = "";
+                for (JiraTicket ticket : jiraTickets) {
+                    JiraIssue jiraIssue = jiraService.getIssue(ticket.getTicketId());
+                    summary += jiraIssue.getSummary() + " ";
+                }
+                if (summary.length() > 0)
+                    return summary;
+                else {
+                    return reasonSelect;
+                }
+            }
+            return reasonSelect;
         }
         return null;
     }
 
     /**
+     * Returns the Jira issue id for a given position.
+     *
+     */
+    public String getSelectedId(String vesselPosition) throws IOException {
+        LabVessel vessel = findAvailableVesslesByPosition(vesselPosition);
+        if(vessel != null) {
+            Collection<JiraTicket> jiraTickets = vessel.getJiraTickets();
+            String ticketId = "";
+            int count = 0;
+            for (JiraTicket ticket : jiraTickets) {
+                if (count > 0) {
+                    ticketId += ",";
+                }
+                ticketId += ticket.getTicketId();
+                ++count;
+            }
+            if (ticketId.length() > 0)
+                return ticketId;
+            else {
+                return "cells_" + vesselPosition;
+            }
+        }
+        return "cells_" + vesselPosition;
+    }
+
+     /**
      * Used by the jsp page to retrieve list of issue descriptions
      *
      */
     public String[] getJiraIssues()
     {
-        List<String> issueList = new ArrayList<String>();
+        List<String> issueList;
 
         if(jiraIssue != null) {
             issueList = jiraIssue.getSubTaskSummaries();
-            issueList.add(0,"--Select--");
             return issueList.toArray(new String[issueList.size()]);
         }
         else {
@@ -301,10 +499,9 @@ public class TagVesselActionBean extends RackScanActionBean {
      */
     public String[] getJiraIssuesIds()
     {
-        List<String> keyList = new ArrayList<String>();
+        List<String> keyList;
         if(jiraIssue != null) {
             keyList = jiraIssue.getSubTaskKeys();
-            keyList.add(0,reasonSelect);
             return keyList.toArray(new String[keyList.size()]);
         }
         else {
@@ -313,17 +510,44 @@ public class TagVesselActionBean extends RackScanActionBean {
     }
 
     /**
-     *
      * Check to see if the rack scan had results.
      *
      */
-    public  boolean isResultsAvailable() {
+    private  boolean isResultsAvailable() {
         if(getRackScan().size() > 0) {
             return true;
         }
         else {
             return false;
         }
+    }
+
+    /**
+     * Returns the existing Jira ticket subtasks / dev conditions for a given ticket.
+     *
+     */
+    public void displayExistingConditions()
+    {
+       LinkedHashSet<String> displayElements = new LinkedHashSet<>();
+        StringBuilder stringBuilder = new StringBuilder();
+        if(jiraIssue != null) {
+            for(String devTasks: jiraIssue.getSubTaskKeys()) {
+                JiraTicket jiraTicket = jiraTicketDao.fetchByName(devTasks);
+                if(jiraTicket != null) {
+                  List<LabVessel> labVessels = labVesselDao.findByTickets(jiraTicket.getTicketId());
+                    for(LabVessel labVessel : labVessels) {
+                        List<LabVessel> ancestorVessels = findAncestors(labVessel);
+                        if (ancestorVessels.size() > 0) {
+                            displayElements.add(displayBuilder(ancestorVessels));
+                        }
+                    }
+                }
+            }
+        }
+        for(String displayItem : displayElements){
+           stringBuilder.append(displayItem);
+        }
+        setDisplayCoditions(stringBuilder.toString());
     }
 
     /**
@@ -346,21 +570,45 @@ public class TagVesselActionBean extends RackScanActionBean {
         }
     }
 
+    /**
+     * Returns the vessel geometry to render the rack on the .jsp page.
+     *
+     */
     public VesselGeometry getVesselGeometry() {
         RackOfTubes rackOfTubes = new RackOfTubes("rackBarcode", RackOfTubes.RackType.Matrix96);
         this.vesselGeometry = rackOfTubes.getVesselGeometry();
         return this.vesselGeometry;
     }
 
-    public String getBarcode() {
-        return barcode;
+    /**
+     *  Retrieves and persists a copy of available labvessels if it does not already exist.
+     *
+     */
+    private LabVessel findAvailableVesslesByPosition(String vesselPosition) {
+        String barcode = getRackScan().get(vesselPosition);
+        if(barcode == null) {
+            return null;
+        }
+        if(labVessels.size() > 0) {
+            LabVessel labVessel = labVessels.get(barcode);
+            return labVessel;
+        }
+        else {
+            List<String> barcodes = new ArrayList<>();
+            List<String> positions = new ArrayList<>();
+            for (Map.Entry<String, String> e : getRackScan().entrySet()) {
+                positions.add(e.getKey());
+                barcodes.add(e.getValue());
+            }
+
+            labVessels = labVesselDao.findByBarcodes(barcodes);
+            LabVessel labVessel = labVessels.get(barcode);
+            return labVessel;
+        }
     }
 
-    public void getSubTasks()  throws Exception  { jiraIssue = jiraService.getIssueInfo(getDevTicketKey(), null);  }
 
-    public void setBarcode(String barcode) { this.barcode = barcode; }
-
-    public void setFoundVessels(Set<LabVessel> foundVessels) { this.foundVessels = foundVessels; }
+    private void getSubTasks()  throws Exception  { jiraIssue = jiraService.getIssueInfo(getDevTicketKey(), null);  }
 
     public LabVessel getLabVessel()
     {
@@ -375,13 +623,29 @@ public class TagVesselActionBean extends RackScanActionBean {
         return isTicketSearchDone;
     }
 
-    public String getVesselPositionReason() { return vesselPositionReason;}
+    public String getJsonData() { return jsonData; }
 
-    public void setVesselPositionReason(String vesselPositionReason)  { this.vesselPositionReason = vesselPositionReason;  }
+
+    public  List<TagVesselJsonData> getTagVesselData()
+    {
+        String json = getJsonData();
+        ObjectMapper mapper = new ObjectMapper();
+        try{
+            List<TagVesselJsonData> mappedJSON = mapper.readValue(json, new TypeReference<List<TagVesselJsonData>>(){});
+            if(mappedJSON.size() == 0) {
+                messageCollection.addError("No selections found");
+            }
+            return mappedJSON;
+
+        } catch (IOException e) {
+            log.error("Failed to parse JSON data from page: " + json, e);
+        }
+        return null;
+    }
+
+    public void setJsonData(String jsonData) { this.jsonData = jsonData; }
 
     public void setVesselPosition(String vesselPosition) { this.vesselPosition = vesselPosition; }
-
-    public String getVesselLabel()  { return this.vesselLabel; }
 
     public String getVesselPosition() { return vesselPosition; }
 
@@ -405,13 +669,26 @@ public class TagVesselActionBean extends RackScanActionBean {
 
     public  void setLabVessel(LabVessel vessel) { this.labVessel = vessel; }
 
-    public  String getSearchKey() { return searchKey; }
+    public String getSearchKey() { return searchKey; }
 
-    public String getVesselLabelByPosition(String position) { return (String) getRackScan().get(position); }
+    public String getVesselLabelByPosition(String position) { return getRackScan().get(position);  }
+
+    public void setDisplayCoditions(String displayCoditions) { this.displayCoditions = displayCoditions; }
+
+    public String getDisplayCoditions() { return displayCoditions;}
 
     @Override
     public String getRackScanPageUrl() { return ACTIONBEAN_URL_BINDING; }
 
     @Override
     public String getPageTitle() { return PAGE_TITLE; }
+
+    public void setTagVesselJsonData(String tagJsonVesselData) { TagVesselJsonData = tagJsonVesselData; }
+
+    public String getTagVesselJsonData() {
+        if(TagVesselJsonData == null) {
+            return null;
+        }
+        return TagVesselJsonData.replace("\"", "*");
+    }
 }

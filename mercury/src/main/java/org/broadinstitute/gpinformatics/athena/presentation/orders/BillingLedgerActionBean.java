@@ -346,20 +346,21 @@ public class BillingLedgerActionBean extends CoreActionBean {
         Multimap<ProductOrderSample, ProductOrderSample.LedgerUpdate> ledgerUpdates = LinkedListMultimap.create();
         for (int i = 0; i < ledgerData.size(); i++) {
             LedgerData data = ledgerData.get(i);
-            ProductOrderSample productOrderSample = productOrder.getSamples().get(i);
-            Map<PriceItem, ProductOrderSample.LedgerQuantities> ledgerQuantitiesMap =
-                    productOrderSample.getLedgerQuantities();
-
-            for (Map.Entry<Long, ProductOrderSampleQuantities> entry : data.getQuantities().entrySet()) {
-                PriceItem priceItem = priceItemDao.findById(PriceItem.class, entry.getKey());
-                ProductOrderSampleQuantities quantities = entry.getValue();
-                ProductOrderSample.LedgerQuantities ledgerQuantities = ledgerQuantitiesMap.get(priceItem);
-                double currentQuantity = ledgerQuantities != null ? ledgerQuantities.getTotal() : 0;
-                ProductOrderSample.LedgerUpdate ledgerUpdate =
-                        new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem,
-                                quantities.originalQuantity, currentQuantity, quantities.submittedQuantity,
-                                data.getWorkCompleteDate());
-                ledgerUpdates.put(productOrderSample, ledgerUpdate);
+            if (data != null) {
+                ProductOrderSample productOrderSample = productOrder.getSamples().get(i);
+                Map<PriceItem, ProductOrderSample.LedgerQuantities> ledgerQuantitiesMap =
+                        productOrderSample.getLedgerQuantities();
+                for (Map.Entry<Long, ProductOrderSampleQuantities> entry : data.getQuantities().entrySet()) {
+                    PriceItem priceItem = priceItemDao.findById(PriceItem.class, entry.getKey());
+                    ProductOrderSampleQuantities quantities = entry.getValue();
+                    ProductOrderSample.LedgerQuantities ledgerQuantities = ledgerQuantitiesMap.get(priceItem);
+                    double currentQuantity = ledgerQuantities != null ? ledgerQuantities.getTotal() : 0;
+                    ProductOrderSample.LedgerUpdate ledgerUpdate =
+                            new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem,
+                                    quantities.originalQuantity, currentQuantity, quantities.submittedQuantity,
+                                    data.getWorkCompleteDate());
+                    ledgerUpdates.put(productOrderSample, ledgerUpdate);
+                }
             }
         }
         return ledgerUpdates.asMap();

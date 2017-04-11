@@ -76,6 +76,7 @@
                     <materialTypes>DNA</materialTypes>
                     <materialTypes>DNA_DNA_GENOMIC</materialTypes>
                     <materialTypes>DNA_DNA_SOMATIC</materialTypes>
+                    <materialTypes>DNA_DNA_CELL_FREE</materialTypes>
                 </bucketEntryEvaluator>
                 </workflowStepDefs>
             <workflowStepDefs>
@@ -118,6 +119,20 @@
                 <reEntryPoint>false</reEntryPoint>
                 <numberOfRepeats>1</numberOfRepeats>
                 <deadEndBranch>true</deadEndBranch>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Automated Daughter Plate Creation</name>
+                <labEventTypes>AUTO_DAUGHTER_PLATE_CREATION</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <numberOfRepeats>1</numberOfRepeats>
+                <deadEndBranch>false</deadEndBranch>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>Start Plating</statusTransition>
+                    <endStatus>In Plating</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
@@ -277,6 +292,11 @@
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In Shearing</statusTransition>
+                    <endStatus>In Shearing</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Covaris Loaded</name>
@@ -319,6 +339,7 @@
                     <materialTypes>DNA</materialTypes>
                     <materialTypes>DNA_DNA_GENOMIC</materialTypes>
                     <materialTypes>DNA_DNA_SOMATIC</materialTypes>
+                    <materialTypes>DNA_DNA_CELL_FREE</materialTypes>
                 </bucketEntryEvaluator>
                 </workflowStepDefs>
             <workflowStepDefs>
@@ -327,6 +348,11 @@
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In Shearing</statusTransition>
+                    <endStatus>In Shearing</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Covaris Loaded</name>
@@ -366,6 +392,11 @@
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In LC</statusTransition>
+                    <endStatus>In LC</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>PostEndRepairThermoCyclerLoaded</name>
@@ -478,6 +509,11 @@
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In LC</statusTransition>
+                    <endStatus>In LC</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>PostEndRepairThermoCyclerLoaded</name>
@@ -805,6 +841,11 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <ancestryEtlFlag>false</ancestryEtlFlag>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In Plex Pooling</statusTransition>
+                    <endStatus>In Plex Pooling</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <!-- next two are alternatives -->
             <workflowStepDefs>
@@ -820,6 +861,11 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In Post LC</statusTransition>
+                    <endStatus>In Post LC</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>IcePoolTest</name>
@@ -1007,6 +1053,7 @@
                     <materialTypes>DNA</materialTypes>
                     <materialTypes>DNA_DNA_GENOMIC</materialTypes>
                     <materialTypes>DNA_DNA_SOMATIC</materialTypes>
+                    <materialTypes>DNA_DNA_CELL_FREE</materialTypes>
                 </bucketEntryEvaluator>
                 </workflowStepDefs>
             <workflowStepDefs>
@@ -1016,6 +1063,24 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <ancestryEtlFlag>true</ancestryEtlFlag>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>Norm and Pool</statusTransition>
+                    <endStatus>In Sequencing Prep</endStatus>
+                </jiraTransition>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Pool Correction</name>
+                <labEventTypes>POOL_CORRECTION</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <ancestryEtlFlag>true</ancestryEtlFlag>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>Ready for Sequencing</statusTransition>
+                    <endStatus>Ready for Sequencing</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>EcoTransfer</name>
@@ -1086,8 +1151,9 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <jiraTransition>
-                    <project>FCT</project>
-                    <statusTransition>Strip Tube Created (or Registered)</statusTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In Sequencing</statusTransition>
+                    <endStatus>In Sequencing</endStatus>
                 </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1180,11 +1246,8 @@
                 <reEntryPoint>false</reEntryPoint>
                 <jiraTransition>
                     <project>LCSET</project>
-                    <statusTransition>Closed</statusTransition>
-                </jiraTransition>
-                <jiraTransition>
-                    <project>FCT</project>
-                    <statusTransition>Flowcell Registered</statusTransition>
+                    <statusTransition>In Sequencing</statusTransition>
+                    <endStatus>In Sequencing</endStatus>
                 </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -2043,6 +2106,13 @@
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
             <workflowStepDefs>
+                <name>ERCCSpikeIn</name>
+                <labEventTypes>ERCC_SPIKE_IN</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
                 <name>PolyASelectionTS</name>
                 <labEventTypes>POLY_A_SELECTION_TS</labEventTypes>
                 <optional>false</optional>
@@ -2306,6 +2376,11 @@
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In LC</statusTransition>
+                    <endStatus>In LC</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>PostEndRepairThermoCyclerLoaded</name>
@@ -2350,7 +2425,8 @@
                 <reEntryPoint>false</reEntryPoint>
                 <jiraTransition>
                     <project>LCSET</project>
-                    <statusTransition>In Hyb Sel</statusTransition>
+                    <statusTransition>Norm And Pool</statusTransition>
+                    <endStatus>Norm And Pool</endStatus>
                 </jiraTransition>
                 <ancestryEtlFlag>true</ancestryEtlFlag>
             </workflowStepDefs>
@@ -2425,6 +2501,8 @@
                     <materialTypes>DNA</materialTypes>
                     <materialTypes>DNA_DNA_GENOMIC</materialTypes>
                     <materialTypes>DNA_DNA_SOMATIC</materialTypes>
+                    <materialTypes>DNA_DNA_WGA_QIAGEN</materialTypes>
+                    <materialTypes>DNA_DNA_WGA_CLEANED</materialTypes>
                 </bucketEntryEvaluator>
                 <autoBucketFromPdoSubmission>false</autoBucketFromPdoSubmission>
                 <!-- No JIRA setup, because BSP creates ARRAY tickets -->
@@ -2489,6 +2567,8 @@
                     <materialTypes>DNA</materialTypes>
                     <materialTypes>DNA_DNA_GENOMIC</materialTypes>
                     <materialTypes>DNA_DNA_SOMATIC</materialTypes>
+                    <materialTypes>DNA_DNA_WGA_QIAGEN</materialTypes>
+                    <materialTypes>DNA_DNA_WGA_CLEANED</materialTypes>
                 </bucketEntryEvaluator>
                 <autoBucketFromPdoSubmission>false</autoBucketFromPdoSubmission>
                 <!-- No JIRA setup, because BSP creates ARRAY tickets -->
@@ -2544,13 +2624,13 @@
                 <optional>false</optional>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>InfiniumPostHybridizationHybOvenLoaded</name>
-                <labEventTypes>INFINIUM_POST_HYBRIDIZATION_HYB_OVEN_LOADED</labEventTypes>
+                <name>InfiniumHybChamberLoaded</name>
+                <labEventTypes>INFINIUM_HYB_CHAMBER_LOADED</labEventTypes>
                 <optional>false</optional>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>InfiniumHybChamberLoaded</name>
-                <labEventTypes>INFINIUM_HYB_CHAMBER_LOADED</labEventTypes>
+                <name>InfiniumPostHybridizationHybOvenLoaded</name>
+                <labEventTypes>INFINIUM_POST_HYBRIDIZATION_HYB_OVEN_LOADED</labEventTypes>
                 <optional>false</optional>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -2628,6 +2708,30 @@
             <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
             <workflowProcessDefs>Library Construction</workflowProcessDefs>
             <workflowProcessDefs>Regular Pond</workflowProcessDefs>
+            <workflowProcessDefs>ICE</workflowProcessDefs>
+            <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>MiSEQ</workflowProcessDefs>
+            <workflowProcessDefs>HiSEQ 2500</workflowProcessDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
+            <routingRule>MERCURY</routingRule>
+            <inValidation>false</inValidation>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>Hyper Prep ICE Exome Express</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
+            <effectiveDate>2017-03-03T22:04:23.932-04:00</effectiveDate>
+            <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
+            <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
+            <workflowProcessDefs>WGS Library Construction Hyper Prep</workflowProcessDefs>
+            <workflowProcessDefs>PCR Plus Pond HyperPrep</workflowProcessDefs>
             <workflowProcessDefs>ICE</workflowProcessDefs>
             <workflowProcessDefs>QTP</workflowProcessDefs>
             <workflowProcessDefs>MiSEQ</workflowProcessDefs>

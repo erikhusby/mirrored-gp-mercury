@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.products;
 
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -19,6 +20,8 @@ import org.testng.annotations.Test;
 import java.util.Collections;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 
 @Test(groups = TestGroups.DATABASE_FREE)
@@ -35,7 +38,7 @@ public class ProductEjbDBFreeTest {
 
         SAPAccessControl noControl = new SAPAccessControl();
         SAPAccessControl blockControl = new SAPAccessControl();
-        blockControl.setDisabledFeatures(Collections.singleton("blockThisItem"));
+        blockControl.setDisabledItems(Collections.singleton(new AccessItem("blockThisItem")));
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(blockControl);
         Product testProduct = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "SGM-TEST-SAP");
@@ -95,5 +98,19 @@ public class ProductEjbDBFreeTest {
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockSapService, Mockito.times(1)).createProductInSAP(testProduct);
         Mockito.verify(mockSapService, Mockito.times(3)).changeProductInSAP(testProduct);
+
+
+        Product testProduct2 = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "P-CLIATEST-SAP");
+        testProduct2.setPrimaryPriceItem(new PriceItem("qsID", "testPlatform", "testCategory", "blockThisItem"));
+        testProduct2.setExternalOnlyProduct(true);
+        Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(noControl);
+
+        try {
+            testEjb.publishProductToSAP(testProduct2);
+            Assert.fail();
+        } catch (SAPIntegrationException e) {
+            assertThat(e.getMessage(), containsString("Cannot be published to SAP since it is either a Clinical or Commercial product"));
+        }
+
     }
 }

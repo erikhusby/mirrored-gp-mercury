@@ -438,7 +438,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
     }
 
     @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
-    public void testMultipleFailure() {
+    public void testMultipleFailure() throws Exception{
 
         String[] sampleNameList = {"SM-2342", "SM-9291", "SM-2349", "SM-9944", "SM-4444", "SM-4441", "SM-1112",
                 "SM-4488"};
@@ -485,7 +485,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
     }
 
     @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
-    public void testNoForcedFailures() {
+    public void testNoForcedFailures() throws Exception {
 
         log.debug("Running no forced failures threaded");
 

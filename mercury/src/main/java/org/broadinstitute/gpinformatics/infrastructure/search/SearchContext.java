@@ -37,6 +37,7 @@ public class SearchContext {
     private JSONObject rackScanData;
     private ResultCellTargetPlatform resultCellTargetPlatform = ResultCellTargetPlatform.TEXT;
     private String baseSearchURL;
+    private PaginationUtil.Pagination pagination;
 
     /**
      * Avoid having to access EJB or web application context to get user data for display
@@ -207,4 +208,11 @@ public class SearchContext {
         }
     }
 
+    public PaginationUtil.Pagination getPagination() {
+        return pagination;
+    }
+
+    public void setPagination(PaginationUtil.Pagination pagination) {
+        this.pagination = pagination;
+    }
 }

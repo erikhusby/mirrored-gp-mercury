@@ -8,43 +8,44 @@ import net.sourceforge.stripes.action.UrlBinding;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
-import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
-
+import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jettison.json.JSONObject;
 import javax.inject.Inject;
-import java.util.List;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.HashSet;
-import java.util.ArrayList;
 import java.util.LinkedHashSet;
-
+import java.util.List;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Set;
+import java.util.LinkedHashMap;
 /**
  * Abandon / Un-Abandon vessel / plastic logic.
  *
  */
 
 @UrlBinding(value = "/workflow/AbandonVessel.action")
-public class AbandonVesselActionBean  extends CoreActionBean {
+public class AbandonVesselActionBean  extends RackScanActionBean {
     public static final String ACTIONBEAN_URL_BINDING = "/search/vessel.action";
-    public static final String VESSEL_SEARCH = "vesselSearch";
+    public static final String VESSEL_SEARCH = "vesselBarcodeSearch";
     public static final String ABANDON_POSITION = "abandonPosition";
     public static final String UN_ABANDON_POSITION = "unAbandonPosition";
     public static final String UN_ABANDON_VESSEL = "unAbandonVessel";
     public static final String ABANDON_VESSEL = "abandonVessel";
     public static final String ABANDON_ALL_POSITIONS = "abandonAllPositions";
+    public static final String RACK_SCAN_EVENT = "rackScan";
     private Set<LabVessel> foundVessels = new HashSet<>();
     private static final String SESSION_LIST_PAGE = "/workflow/abandon_vessel.jsp";
-    private static String chipReason = "Vessel Position(s)";
+    public static final String PAGE_TITLE = "Abandon Vessel";
     private String resultSummaryString;
     private boolean resultsAvailable = false;
     private boolean isSearchDone = false;
-    private int numSearchTerms;
     private String abandonComment;
     private String unAbandonComment;
     private String vesselBarcode;
     private String vesselLabel;
-    public String barcode;
+    private String barcode;
     private VesselGeometry vesselGeometry;
     private String vesselPosition;
     private String vesselPositionReason;
@@ -57,7 +58,6 @@ public class AbandonVesselActionBean  extends CoreActionBean {
     @Inject
     private LabVesselDao labVesselDao;
 
-
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
@@ -65,10 +65,15 @@ public class AbandonVesselActionBean  extends CoreActionBean {
     }
 
     @HandlesEvent(VESSEL_SEARCH)
-    public Resolution vesselSearch() throws Exception {
+    public Resolution vesselBarcodeSearch() throws Exception {
         doSearch();
         orderResults();
-        if(!isResultsAvailable()) {
+        if(searchKey == null) {
+            setSearchDone(false);
+            messageCollection.addError("Please provide a barcode");
+            addMessages(messageCollection);
+        }
+        if(!getResultsAvailable()) {
             setSearchDone(false);
             messageCollection.addError("No results found for: " + getSearchKey());
             addMessages(messageCollection);
@@ -76,6 +81,66 @@ public class AbandonVesselActionBean  extends CoreActionBean {
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
 
+    public Resolution vesselSearch() throws Exception {
+        doSearch();
+        orderResults();
+        return new ForwardResolution(SESSION_LIST_PAGE);
+    }
+
+    /**
+     * Rack scan handler.
+     *
+     */
+    @HandlesEvent(RACK_SCAN_EVENT)
+    public Resolution rackScan() throws Exception {
+
+        scan();
+        setRackScanGeometry();
+        if(getRackScan() != null) {
+            if(!verifyRackUpload())  {
+                messageCollection.addError("Unable to parse simulator file");
+                addMessages(messageCollection);
+            }
+            else {
+                setRackScanGeometry();
+                resultsAvailable = true;
+                isSearchDone = true;
+                isMultiplePositions = true;
+            }
+        }
+
+        return new ForwardResolution(SESSION_LIST_PAGE);
+
+    }
+
+    /**
+     *
+     * Verify basic format of uploaded rack.
+     *
+     */
+
+    public boolean verifyRackUpload()
+    {
+        if(rackScan.size() == 0)
+            return false;
+
+        for (Map.Entry<String, String> entry : rackScan.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
+            if(!key.equals("rack"))  {
+                if(key.length() != 3 ) {
+                    return false;
+                }
+                if(key.length() == 3 ) {
+                    boolean isChar = key.substring(0,1).matches("[a-zA-z]{1}");
+                    if(!isChar) {
+                        return isChar;
+                    }
+                }
+            }
+        }
+        return true;
+    }
     /**
      *
      * Abandon a specific vessel position.
@@ -88,6 +153,9 @@ public class AbandonVesselActionBean  extends CoreActionBean {
         doSearch();
         String vesselPosition = getVesselPosition();
         String reason = getVesselPositionReason();
+        String responseLabel = "";
+
+        isRackScan(vesselPosition);
 
         if(reason.equals(reasonSelect)) {
             messageCollection.addError("Please select a reason for abandoning the well.");
@@ -96,19 +164,36 @@ public class AbandonVesselActionBean  extends CoreActionBean {
         }
 
         for (LabVessel vessel : getFoundVessels()) {
-             AbandonVessel abandonVessel = getVesselToAbandon(vessel);
-             abandonVessel.setAbandonedOn(true);
-             AbandonVesselPosition abandonVesselPosition = new AbandonVesselPosition();
-             abandonVesselPosition.setAbandonedOn(true);
-             abandonVesselPosition.setReason(AbandonVessel.Reason.valueOf(reason));
-             abandonVesselPosition.setPosition(vesselPosition);
-             abandonVessel.addAbandonVesselPosition(abandonVesselPosition);
-             vessel.addAbandonedVessel(abandonVessel);
-             labVesselDao.flush();
+             if(vessel != null) {
+                 AbandonVessel abandonVessel = getVesselToAbandon(vessel);
+                 abandonVessel.setAbandonedOn(true);
+                 AbandonVesselPosition abandonVesselPosition = new AbandonVesselPosition();
+                 abandonVesselPosition.setAbandonedOn(true);
+                 abandonVesselPosition.setReason(AbandonVessel.Reason.valueOf(reason));
+                 abandonVesselPosition.setPosition(vesselPosition);
+                 abandonVessel.addAbandonVesselPosition(abandonVesselPosition);
+                 vessel.addAbandonedVessel(abandonVessel);
+                 responseLabel = vessel.getLabel();
+             }
        }
-        messageCollection.addInfo("Position: " + vesselPosition +  " For Vessel: " + vesselLabel + " Successfully Abandoned. " );
+        labVesselDao.flush();
+        messageCollection.addInfo("Position: " + vesselPosition +  " For Vessel: " + responseLabel + " Successfully Abandoned. " );
         addMessages(messageCollection);
         return vesselSearch();
+    }
+
+    /**
+     *
+     * If this is a rack scan then add it to the list of found lab vessels.
+     *
+     */
+    private void isRackScan(String vesselPosition)
+    {
+        if(getRackScan() != null) {
+            foundVessels.clear();
+            setLabVessel(labVesselDao.findByIdentifier( getRackScan().get(vesselPosition)));
+            foundVessels.add(getLabVessel());
+        }
     }
 
     /**
@@ -122,18 +207,36 @@ public class AbandonVesselActionBean  extends CoreActionBean {
         doSearch();
         String reason = getVesselPositionReason();
 
+
         if(reason.equals(AbandonVessel.Reason.SELECT.name())) {
             messageCollection.addError("Please select a reason for abandoning all wells.");
             addMessages(messageCollection);
             return vesselSearch();
         }
 
-        for (LabVessel vessel : getFoundVessels()) {
-            AbandonVessel abandonVessel = getVesselToAbandon(vessel);
-            abandonVessel.setAbandonedOn(true);
+        if(getRackScan() != null) {
+            setRackScanGeometry();
+            for (VesselPosition position : getVesselGeometry().getVesselPositions()) {
+                setLabVessel(labVesselDao.findByIdentifier(getRackScan().get(position.toString())));
+                LabVessel vessel = getLabVessel();
+                if(vessel != null) {
+                    AbandonVessel abandonVessel = getVesselToAbandon(getLabVessel());
+                    abandonVessel.setAbandonedOn(true);
+                    AbandonVesselPosition abandonVesselPosition = new AbandonVesselPosition();
+                    abandonVesselPosition.setAbandonedOn(true);
+                    abandonVesselPosition.setReason(AbandonVessel.Reason.valueOf(reason));
+                    abandonVesselPosition.setPosition(position.toString());
+                    abandonVessel.addAbandonVesselPosition(abandonVesselPosition);
+                    vessel.addAbandonedVessel(abandonVessel);
+                }
+            }
+        }
+        else {
+            for (LabVessel vessel : getFoundVessels()) {
+                AbandonVessel abandonVessel = getVesselToAbandon(vessel);
+                abandonVessel.setAbandonedOn(true);
 
-            for (VesselPosition position : vessel.getVesselGeometry().getVesselPositions())
-                {
+                for (VesselPosition position : vessel.getVesselGeometry().getVesselPositions()) {
                     AbandonVesselPosition abandonVesselPosition = new AbandonVesselPosition();
                     abandonVesselPosition.setAbandonedOn(true);
                     abandonVesselPosition.setReason(AbandonVessel.Reason.valueOf(reason));
@@ -141,10 +244,10 @@ public class AbandonVesselActionBean  extends CoreActionBean {
                     abandonVessel.addAbandonVesselPosition(abandonVesselPosition);
                 }
                 vessel.addAbandonedVessel(abandonVessel);
-                labVesselDao.flush();
             }
-
-        messageCollection.addInfo("All Positions Successfully Abandoned.. " );
+        }
+        labVesselDao.flush();
+        messageCollection.addInfo("All Positions Successfully Abandoned." );
         addMessages(messageCollection);
         return vesselSearch();
     }
@@ -160,22 +263,27 @@ public class AbandonVesselActionBean  extends CoreActionBean {
         doSearch();
         String vesselPosition = getVesselPosition();
 
+        isRackScan(vesselPosition);
+
         for (LabVessel vessel : getFoundVessels()) {
-            for (AbandonVessel abaondendVessel : vessel.getAbandonVessels()) {
-                for (AbandonVesselPosition abandonVesselPosition : abaondendVessel.getAbandonedVesselPosition()) {
-                    if (abandonVesselPosition.getPosition().equals(vesselPosition)) {
-                        abaondendVessel.removeAbandonedWells(abandonVesselPosition);
-                        if (vessel.getParentAbandonVessel().getAbandonedVesselPosition().size() == 0) {
-                            vessel.removeAbandonedVessel(vessel.getAbandonVessels());
+            if(vessel != null) {
+                for (AbandonVessel abaondendVessel : vessel.getAbandonVessels()) {
+                    for (AbandonVesselPosition abandonVesselPosition : abaondendVessel.getAbandonedVesselPosition()) {
+                        if (abandonVesselPosition.getPosition().equals(vesselPosition)) {
+                            abaondendVessel.removeAbandonedWells(abandonVesselPosition);
+                            if (vessel.getParentAbandonVessel().getAbandonedVesselPosition().size() == 0) {
+                                vessel.removeAbandonedVessel(vessel.getAbandonVessels());
+                            }
+                            labVesselDao.flush();
+                            messageCollection.addInfo("Position Successfully Unabandoned. ");
+                            addMessages(messageCollection);
+                            return vesselSearch();
                         }
-                        labVesselDao.flush();
-                        messageCollection.addInfo("Position Successfully Unabandoned. " );
-                        addMessages(messageCollection);
-                        return vesselSearch();
                     }
                 }
             }
         }
+        labVesselDao.flush();
         return vesselSearch();
     }
 
@@ -197,12 +305,14 @@ public class AbandonVesselActionBean  extends CoreActionBean {
         }
 
         for (LabVessel vessel : getFoundVessels()) {
-            AbandonVessel abandonVessel = getVesselToAbandon(vessel);
-            abandonVessel.setReason(AbandonVessel.Reason.valueOf(abandonComment));
-            abandonVessel.setAbandonedOn(true);
-            vessel.addAbandonedVessel(abandonVessel);
-            labVesselDao.flush();
+            if(vessel != null) {
+                AbandonVessel abandonVessel = getVesselToAbandon(vessel);
+                abandonVessel.setReason(AbandonVessel.Reason.valueOf(abandonComment));
+                abandonVessel.setAbandonedOn(true);
+                vessel.addAbandonedVessel(abandonVessel);
+            }
         }
+        labVesselDao.flush();
         messageCollection.addInfo("Vessel: " + vesselBarcode + " Successfully Abandoned. " );
         addMessages(messageCollection);
         return vesselSearch();
@@ -218,13 +328,29 @@ public class AbandonVesselActionBean  extends CoreActionBean {
     public Resolution unAbandonVessel() throws Exception {
 
         setSearchKey(vesselLabel);
-        doSearch();
-        for (LabVessel vessel : getFoundVessels()) {
-            vessel.removeAbandonedVessel(vessel.getAbandonVessels());
+
+        if(getRackScan() != null) {
+            setRackScanGeometry();
+            for (VesselPosition position : getVesselGeometry().getVesselPositions()) {
+                LabVessel vessel = labVesselDao.findByIdentifier(getRackScan().get(position.toString()));
+                if(vessel != null) {
+                    setLabVessel(vessel);
+                    getLabVessel().removeAbandonedVessel(getLabVessel().getAbandonVessels());
+                }
+            }
+        }
+        else {
+
+            doSearch();
+            for (LabVessel vessel : getFoundVessels()) {
+                if(vessel != null) {
+                    vessel.removeAbandonedVessel(vessel.getAbandonVessels());
+                }
+            }
         }
 
         labVesselDao.flush();
-        messageCollection.addInfo("Vessel: " + vesselLabel + " Successfully Unabandoned. " );
+        messageCollection.addInfo("Vessel Position(s) Successfully Unabandoned. " );
         addMessages(messageCollection);
         return vesselSearch();
     }
@@ -236,6 +362,19 @@ public class AbandonVesselActionBean  extends CoreActionBean {
      *
      */
     public boolean isVesselAbandoned() {
+
+        if(getRackScan() != null) {
+            setRackScanGeometry();
+            for (VesselPosition position : getVesselGeometry().getVesselPositions()) {
+                setLabVessel(labVesselDao.findByIdentifier(getRackScan().get(position.toString())));
+                if(labVessel != null) {
+                    if (labVessel.getAbandonVessels().size() > 0) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
 
         if (labVessel.getAbandonVessels().size() == 0) {
             return false;
@@ -250,9 +389,15 @@ public class AbandonVesselActionBean  extends CoreActionBean {
      */
     public boolean isPositionAbandoned(String vesselPosition)
     {
+
+        isRackScan(vesselPosition);
+
         for (LabVessel vessel : getFoundVessels()) {
-            for (AbandonVessel abaondendVessel : vessel.getAbandonVessels()) {
-                for (AbandonVesselPosition abandonVesselPosition : abaondendVessel.getAbandonedVesselPosition()) {
+            if(vessel == null) {
+                return false;
+            }
+            for (AbandonVessel abandonVessel : vessel.getAbandonVessels()) {
+                for (AbandonVesselPosition abandonVesselPosition : abandonVessel.getAbandonedVesselPosition()) {
                     if(abandonVesselPosition.getPosition().equals(vesselPosition)){
                         return true;
                     }
@@ -270,8 +415,11 @@ public class AbandonVesselActionBean  extends CoreActionBean {
     public String getAbandonReason(String vesselPosition)
     {
         for (LabVessel vessel : getFoundVessels()) {
-            for (AbandonVessel abaondendVessel : vessel.getAbandonVessels()) {
-                for (AbandonVesselPosition abandonVesselPosition : abaondendVessel.getAbandonedVesselPosition()) {
+            if(vessel == null) {
+                return reasonSelect;
+            }
+            for (AbandonVessel abandonVessel : vessel.getAbandonVessels()) {
+                for (AbandonVesselPosition abandonVesselPosition : abandonVessel.getAbandonedVesselPosition()) {
                     if(abandonVesselPosition.getPosition().equals(vesselPosition)){
                        return abandonVesselPosition.getReason().getDisplayName();
                     }
@@ -326,12 +474,40 @@ public class AbandonVesselActionBean  extends CoreActionBean {
     }
 
     /**
+     * Serialize and set the rackScan object from the .jsp
+     *
+     */
+    public void setRackMap(String rackMap) throws Exception{
+        if(rackMap != null) {
+            this.rackScan = new ObjectMapper().readValue(rackMap.replaceAll("~", "\""), LinkedHashMap.class);
+        }
+    }
+
+    /**
+     * Return a serialized rackScan object to the .jsp
+     *
+     */
+    public String getRackMap() throws Exception {
+        if(rackScan != null) {
+            setResultsAvailable(true);
+            return  new JSONObject(rackScan).toString().replace("\"", "~");
+        }
+        return  null;
+    }
+
+    /**
      *
      * Determine if this is a vessel with multiple positions.
      *
      */
     public boolean getMultiplePositions(LabVessel vessel)
     {
+        if(getRackScan() != null){
+            isMultiplePositions = true;
+            setRackScanGeometry();
+            return true;
+        }
+
         if(vessel.isMultiplePositions()) {
             isMultiplePositions = true;
             return true;
@@ -358,7 +534,7 @@ public class AbandonVesselActionBean  extends CoreActionBean {
      */
     public String shrinkCss(String cssType)
     {
-        if(labVessel.getGeometrySize() > 24) {
+        if(getVesselGeometry().getCapacity() > 24) {
             return cssType;
         }
         return null;
@@ -396,7 +572,7 @@ public class AbandonVesselActionBean  extends CoreActionBean {
         return searchKey;
     }
 
-    public  boolean isResultsAvailable() {
+    public  boolean getResultsAvailable() {
         return resultsAvailable;
     }
 
@@ -413,6 +589,8 @@ public class AbandonVesselActionBean  extends CoreActionBean {
     public VesselGeometry getVesselGeometry() {
         return this.vesselGeometry;
     }
+
+    public void setVesselGeometry(VesselGeometry vesselGeometry) { this.vesselGeometry = vesselGeometry; }
 
     public boolean getIsMultiplePositions() {return isMultiplePositions; }
 
@@ -438,6 +616,10 @@ public class AbandonVesselActionBean  extends CoreActionBean {
 
     public String getUnAbandonComment() {
         return unAbandonComment;
+    }
+
+    public void setResultsAvailable(boolean resultsAvailable) {
+        this.resultsAvailable = resultsAvailable;
     }
 
     public void setUnAbandonComment(String unAbandonComment) {
@@ -467,4 +649,25 @@ public class AbandonVesselActionBean  extends CoreActionBean {
     public void setBarcode(String barcode) {
         this.barcode = barcode;
     }
+
+    public void setRackScanGeometry()
+    {
+        LinkedHashMap<String, String> rackScan = getRackScan();
+        int rackSize = rackScan.size();
+        switch (rackSize) {
+            case 96:  setVesselGeometry(RackOfTubes.RackType.Matrix96.getVesselGeometry());
+                break;
+            case 48:  setVesselGeometry(RackOfTubes.RackType.Matrix48SlotRack2mL.getVesselGeometry());
+                break;
+            default: // Needed for the simulator since it does not provide a default geometry.
+                setVesselGeometry(RackOfTubes.RackType.Matrix96.getVesselGeometry());
+                break;
+        }
+    }
+
+    @Override
+    public String getRackScanPageUrl() { return ACTIONBEAN_URL_BINDING; }
+
+    @Override
+    public String getPageTitle() { return PAGE_TITLE; }
 }

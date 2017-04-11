@@ -774,6 +774,13 @@ public class SearchInstance implements Serializable {
      */
     private Map<String,Boolean> traversalEvaluatorValues = new HashMap<>();
 
+    /**
+     * Should a custom ancestor/descendant traversal be enlisted?
+     */
+    private String customTraversalOptionName;
+
+    private boolean excludeInitialEntitiesFromResults = false;
+
     private boolean isDbSortable = true;
 
     private int pageSize;
@@ -1000,7 +1007,8 @@ public class SearchInstance implements Serializable {
                                                List<SearchValue> displaySearchValues) {
         for (SearchValue searchValue : valuesToSearch) {
             if (searchValue.getIncludeInResults() != null && searchValue.getIncludeInResults()
-                && searchValue.getSearchTerm().getDisplayValueExpression() != null) {
+                    && (searchValue.getSearchTerm().getDisplayValueExpression() != null ||
+                    searchValue.getSearchTerm().getDisplayExpression() != null)) {
                 displaySearchValues.add(searchValue);
             }
             recurseForDisplaySearchValues(searchValue.getChildren(), displaySearchValues);
@@ -1033,7 +1041,8 @@ public class SearchInstance implements Serializable {
             List<SearchValue> valuesToSearch, List<ColumnTabulation> columnTabulations, int depth) {
         for (SearchValue searchValue : valuesToSearch) {
             if (searchValue.getIncludeInResults() != null && searchValue.getIncludeInResults()
-                && searchValue.getSearchTerm().getDisplayValueExpression() != null) {
+                    && (searchValue.getSearchTerm().getDisplayValueExpression() != null ||
+                    searchValue.getSearchTerm().getDisplayExpression() != null)) {
                 columnTabulations.add(searchValue);
                 if (depth > 1) {
                     return;
@@ -1187,6 +1196,22 @@ public class SearchInstance implements Serializable {
 
     public Map<String,Boolean> getTraversalEvaluatorValues(){
         return traversalEvaluatorValues;
+    }
+
+    public String getCustomTraversalOptionName(){
+        return customTraversalOptionName==null?"none":customTraversalOptionName;
+    }
+
+    public void setCustomTraversalOptionName(String name){
+        this.customTraversalOptionName = name;
+    }
+
+    public boolean getExcludeInitialEntitiesFromResults(){
+        return excludeInitialEntitiesFromResults;
+    }
+
+    public void setExcludeInitialEntitiesFromResults( boolean excludeInitialEntitiesFromResults ) {
+        this.excludeInitialEntitiesFromResults = excludeInitialEntitiesFromResults;
     }
 
     public void setPageSize( int pageSize ) {

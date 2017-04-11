@@ -2,16 +2,22 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.*;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
@@ -31,7 +37,7 @@ import java.util.Date;
  * A transient class returned by LabVessel.getSampleInstances.  It accumulates information encountered
  * in a bottom-up traversal of LabEvents, from that LabVessel.
  */
-public class SampleInstanceV2 {
+public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
 
     /**
      * Allows LabEvent.computeLcSets to choose the nearest match if there are multiple.
@@ -92,6 +98,8 @@ public class SampleInstanceV2 {
     private LabVessel currentLabVessel;
     private MolecularIndexingScheme molecularIndexingScheme;
     private LabVessel firstPcrVessel;
+    private MaterialType materialType;
+
     private SampleInstanceEntity sampleInstanceEntity;
     private int depth;
     private boolean sampleInstanceFlag = false;
@@ -117,6 +125,18 @@ public class SampleInstanceV2 {
             message += " from " + labVessel.getLabel();
             log.info(message);
         }
+        for (MercurySample rootMercurySample : rootMercurySamples) {
+            for (Metadata metadata : rootMercurySample.getMetadata()) {
+                if (metadata.getKey() == Metadata.Key.MATERIAL_TYPE) {
+                    MaterialType metadataMaterialType = MaterialType.fromDisplayName(metadata.getValue());
+                    if (metadataMaterialType != MaterialType.NONE) {
+                        materialType = metadataMaterialType;
+                        break;
+                    }
+                }
+            }
+        }
+
         depth = 0;
         applyVesselChanges(labVessel);
     }
@@ -145,10 +165,12 @@ public class SampleInstanceV2 {
         molecularIndexingScheme = other.molecularIndexingScheme;
         initialLabVessel = other.initialLabVessel;
         firstPcrVessel = other.firstPcrVessel;
+        materialType = other.materialType;
         depth = other.depth + 1;
         sampleInstanceEntity = other.getSampleInstanceEntity();
         tzDevExperimentData = other.getTzDevExperimentData();
     }
+
     /**
      * Returns the sample that has no incoming transfers.  This is typically the sample that BSP received from the
      * collaborator, but in the absence of extraction transfers, Mercury may not be able to follow the transfer chain
@@ -506,11 +528,17 @@ public class SampleInstanceV2 {
      * Applies a LabEvent, specifically computed LCSets.
      */
     public void applyEvent(LabEvent labEvent, LabVessel labVessel) {
-        if (labEvent.getLabEventType().getPipelineTransformation() == LabEventType.PipelineTransformation.PCR) {
+        LabEventType labEventType = labEvent.getLabEventType();
+        if (labEventType.getPipelineTransformation() == LabEventType.PipelineTransformation.PCR) {
             if (firstPcrVessel == null && labVessel != null) {
                 firstPcrVessel = labVessel;
             }
         }
+        MaterialType resultingMaterialType = labEventType.getResultingMaterialType();
+        if (resultingMaterialType != null) {
+            materialType = resultingMaterialType;
+        }
+
         // Multiple workflow batches need help.
         // Avoid overwriting a singleWorkflowBatch set by applyVesselChanges.
         if (singleWorkflowBatch == null) {
@@ -539,7 +567,7 @@ public class SampleInstanceV2 {
                         if (LabVessel.DIAGNOSTICS) {
                             log.info("Setting singleBucketEntry to " +
                                     singleBucketEntry.getLabBatch().getBatchName() + " in " +
-                                    labEvent.getLabEventType().getName());
+                                    labEventType.getName());
                         }
                         break;
                     }
@@ -554,6 +582,11 @@ public class SampleInstanceV2 {
 
     public LabVessel getFirstPcrVessel() {
         return firstPcrVessel;
+    }
+
+    @Nullable
+    public MaterialType getMaterialType() {
+        return materialType;
     }
 
 
@@ -612,6 +645,7 @@ public class SampleInstanceV2 {
         return metadataSources.iterator().next();
     }
 
+    // todo jmt should these methods use nearest sample?
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -647,4 +681,13 @@ public class SampleInstanceV2 {
         return result;
     }
 
+    @Override
+    public int compareTo(@NotNull SampleInstanceV2 o) {
+        int compare = ObjectUtils.compare(getEarliestMercurySampleName(), o.getEarliestMercurySampleName());
+        if (compare != 0) {
+            return compare;
+        }
+        return ObjectUtils.compare(molecularIndexingScheme == null ? null : molecularIndexingScheme.getName(),
+                o.getMolecularIndexingScheme() == null ? null : o.getMolecularIndexingScheme().getName());
+    }
 }

@@ -1,7 +1,9 @@
 package org.broadinstitute.gpinformatics.athena.entity.infrastructure;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -9,10 +11,12 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -49,6 +53,9 @@ public abstract class AccessControl implements Serializable{
     @Column
     private String disabledFeatures;
 
+    @OneToMany(mappedBy = "accessControl", orphanRemoval = true, cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    private Set<AccessItem> disabledItems = new HashSet<>();
+
     public Long getId() {
         return id;
     }
@@ -61,6 +68,7 @@ public abstract class AccessControl implements Serializable{
         this.accessStatus = accessStatus;
     }
 
+    @Deprecated
     public Set<String> getDisabledFeatures() {
         final HashSet<String> featureSet = new HashSet<>();
 
@@ -70,19 +78,44 @@ public abstract class AccessControl implements Serializable{
         return featureSet;
     }
 
-    public void setDisabledFeatures(Set<String> disabledFeatures) {
-        this.disabledFeatures = StringUtils.join(disabledFeatures, CONTROLLER_SEPARATOR_CHARS);
+    public Set<AccessItem> getDisabledItems() {
+        return Collections.unmodifiableSet(disabledItems);
     }
 
-    public void addDisabledFeatures(String feature) {
+    public void setDisabledItems(Set<AccessItem> disabledFeatures) {
+        if (!(disabledFeatures.size() == disabledItems.size()) &&
+            !CollectionUtils.isEqualCollection(disabledItems, disabledFeatures)) {
 
-        Set<String> currentFeatures = new HashSet<>(getDisabledFeatures());
+             Set<AccessItem> toRemove = new HashSet<>();
 
-        if(!currentFeatures.contains(feature)) {
-            currentFeatures.add(feature);
+            for (AccessItem currentDisabledItem : disabledItems) {
+                if(!disabledFeatures.contains(currentDisabledItem)) {
+                    currentDisabledItem.remove();
+                    toRemove.add(currentDisabledItem);
+                }
+            }
+
+            disabledItems.removeAll(toRemove);
+
+            for (AccessItem disabledFeature : disabledFeatures) {
+                if(!disabledItems.contains(disabledFeature)) {
+                    addDisabledItem(disabledFeature);
+                }
+            }
         }
+    }
 
-        setDisabledFeatures(currentFeatures);
+    public void addDisabledItem(String feature) {
+
+        addDisabledItem(new AccessItem(feature));
+    }
+
+    public void addDisabledItem(AccessItem feature) {
+
+        if(!disabledItems.contains(feature)) {
+            feature.setAccessControl(this);
+            disabledItems.add(feature);
+        }
     }
 
     public abstract String getControlTitle() ;

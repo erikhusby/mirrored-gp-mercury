@@ -11,6 +11,7 @@ package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
+import org.broadinstitute.gpinformatics.infrastructure.columns.DisplayExpression;
 
 import javax.annotation.Nullable;
 import java.io.Serializable;
@@ -238,6 +239,11 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     private Evaluator<Object> displayValueExpression;
 
     /**
+     * Expression from enum (can be shared across entities)
+     */
+    private DisplayExpression displayExpression;
+
+    /**
      * Optional expression to enhance UI presentation of result column value
      */
     private Evaluator<String> uiDisplayOutputExpression;
@@ -318,13 +324,6 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     private Boolean isNestedParent = Boolean.FALSE;
 
     /**
-     * Handles cases where a display result column can be selected by user
-     *   , but can only be displayed in a nested child table plugin.
-     * This list holds columns that, if selected by user, will be handled by the child plugin display
-     */
-    private Set<String> parentTermsHandledByChild;
-
-    /**
      * Flag this for search criteria only, do not display as column option.
      * (Don't want parent term to show up in columns list)
      */
@@ -367,12 +366,12 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     /**
      * Display using JSP expression
-     * @return
      */
     public List<ConstrainedValue> getConstrainedValues() {
         return getConstrainedValues(new SearchContext());
     }
 
+    @Override
     public String getName() {
         return name;
     }
@@ -386,7 +385,6 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     /**
      * Display this text in UI if not null or empty string.
-     * @param helpText
      */
     public void setHelpText( String helpText ) {
         this.helpText = helpText;
@@ -430,7 +428,6 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     /**
      * Set a constant value type for this term
-     * @param valueType
      */
     public void setValueType( ColumnValueType valueType ) {
         this.valueType = valueType;
@@ -458,6 +455,14 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     public Evaluator<Object> getDisplayValueExpression() {
         return displayValueExpression;
+    }
+
+    public DisplayExpression getDisplayExpression() {
+        return displayExpression;
+    }
+
+    public void setDisplayExpression(DisplayExpression displayExpression) {
+        this.displayExpression = displayExpression;
     }
 
     /**
@@ -491,23 +496,8 @@ public class SearchTerm implements Serializable, ColumnTabulation {
         this.isNestedParent = isNestedParent;
     }
 
-    public void addParentTermHandledByChild( SearchTerm parentTermHandledByChild){
-        if( parentTermsHandledByChild == null ) {
-            parentTermsHandledByChild = new HashSet<>();
-        }
-        parentTermsHandledByChild.add(parentTermHandledByChild.getName());
-    }
-
-    public boolean isParentTermHandledByChild( SearchTerm searchTerm){
-        if( parentTermsHandledByChild == null ) {
-            return false;
-        }
-        return parentTermsHandledByChild.contains( searchTerm.getName() );
-    }
-
     /**
      * Handles cases where a search term cannot be combined with any others.
-     * @return
      */
     public Boolean isExclusive(){
         if( isExclusive ) {
@@ -528,7 +518,6 @@ public class SearchTerm implements Serializable, ColumnTabulation {
      * A traversal evaluator must be attached to the search with logic which will replace the returned entity list
      * with a new list of the proper entity type.
      * (Term should also be flagged as exclusive)
-     * @return
      */
     public void setAlternateSearchDefinition(ConfigurableSearchDefinition alternateSearchDefinition){
         this.alternateSearchDefinition = alternateSearchDefinition;
@@ -536,7 +525,6 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     /**
      * In certain cases, terms usable as search criteria need to be excluded from result column list.
-     * @return
      */
     public Boolean isExcludedFromResultColumns(){
         return  isExcludedFromResultColumns;
@@ -548,7 +536,6 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     /**
      * If user does not select any result columns, add any flagged as default to results
-     * @return
      */
     public Boolean isDefaultResultColumn(){
         return  isDefaultResultColumn && !isExcludedFromResultColumns;
@@ -697,12 +684,41 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     @Override
     public Object evalValueExpression(Object entity, SearchContext context) {
         context = addTermToContext(context);
+        if (getDisplayValueExpression() == null) {
+            // todo jmt revisit this
+/*
+            // Don't show results for this term if they will also be displayed in a layout.
+            ConfigurableSearchDefinition configurableSearchDefinition = SearchDefinitionFactory.getForEntity(
+                    context.getColumnEntityType().getEntityName());
+            for (String columnName : context.getSearchInstance().getPredefinedViewColumns()) {
+                SearchTerm searchTerm = configurableSearchDefinition.getSearchTerm(columnName);
+                if (searchTerm.getPluginClass() != null &&
+                        EventVesselPositionPlugin.class.isAssignableFrom(searchTerm.getPluginClass())) {
+                    return null;
+                }
+            }
+*/
+
+            Set resultObjects = new HashSet<>();
+            Collection<?> expressionObjects = DisplayExpression.rowObjectToExpressionObject(
+                    entity,
+                    getDisplayExpression().getExpressionClass(),
+                    context);
+            for (Object object : expressionObjects) {
+                Object resultObject = getDisplayExpression().getEvaluator().evaluate(object, context);
+                if (resultObject instanceof Collection) {
+                    resultObjects.addAll((Collection) resultObject);
+                } else {
+                    resultObjects.add(resultObject);
+                }
+            }
+            return resultObjects;
+        }
         return getDisplayValueExpression().evaluate(entity, context);
     }
 
     /**
      * If a dynamic type expression has been explicitly set, use it, otherwise, use the default for the type
-     * @return
      */
     @Override
     public ColumnValueType evalValueTypeExpression( Object value, SearchContext context ) {

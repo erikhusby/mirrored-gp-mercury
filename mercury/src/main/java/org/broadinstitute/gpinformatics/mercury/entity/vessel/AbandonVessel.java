@@ -81,12 +81,12 @@ public class AbandonVessel {
     }
 
     public enum Reason implements Displayable {
-        SELECT("--Select--"),
+        SELECT("-Select-"),
         FAILED_QC("Failed QC"),
         LAB_INCIDENT("Lab incident"),
         EQUIPMENT_FAILURE("Equipment failure"),
-        DEPLETED("Depleted");
-
+        DEPLETED("Depleted"),
+        UNUSED_TUBES_RETURNED_BY_COLLABORATOR("Unused tubes returned by collaborator");
         private final String value;
 
         Reason(String value) {

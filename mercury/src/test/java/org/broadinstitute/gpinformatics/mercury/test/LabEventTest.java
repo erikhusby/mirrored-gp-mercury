@@ -22,12 +22,9 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryP
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
-import org.broadinstitute.gpinformatics.mercury.boundary.graph.Graph;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
-import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEntityGrapher;
-import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizer;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ChildVesselBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
@@ -381,11 +378,6 @@ public class LabEventTest extends BaseEventTest {
 
         runTransferVisualizer(startingTube);
 
-        TransferEntityGrapher transferEntityGrapher = new TransferEntityGrapher();
-        transferEntityGrapher.setMaxNumVesselsPerRequest(1000);
-        Graph graph = new Graph();
-        transferEntityGrapher.startWithTube(startingTube, graph, new ArrayList<TransferVisualizer.AlternativeId>());
-        Assert.assertEquals(graph.getMapIdToVertex().size(), 3276, "Wrong number of vertices");
 //        Controller.stopCPURecording();
     }
 
@@ -1951,6 +1943,41 @@ public class LabEventTest extends BaseEventTest {
                 Workflow.PCR_FREE_HYPER_PREP);
     }
 
+    public void testICEHyperPrep() {
+//        Controller.startCPURecording(true);
+        expectedRouting = SystemRouter.System.MERCURY;
+
+        ProductOrder productOrder = ProductOrderTestFactory.buildICEHyperPrepProductOrder(NUM_POSITIONS_IN_RACK);
+        productOrder.getResearchProject().setJiraTicketKey("RP-123");
+
+        String[] expectedEventNames = {
+                "SamplesDaughterPlateCreation",
+                "SamplesNormalizationTransfer",
+                "PicoPlatingPostNorm",
+                "ShearingTransfer",
+                "PostShearingTransferCleanup",
+                "ShearingQC",
+                "AdapterLigationCleanup",
+                "PCRPlusPondRegistration",
+                "IcePoolingTransfer",
+                "Ice96PlexSpriConcentration",
+                "IcePoolTest",
+                "Ice1stHybridization",
+                "Ice1stCapture",
+                "Ice2ndCapture",
+                "IceCatchCleanup",
+                "IceCatchEnrichmentCleanup",
+                "PoolingTransfer",
+                "EcoTransfer",
+                "NormalizationTransfer",
+                "DenatureTransfer",
+                "StripTubeBTransfer",
+                "FlowcellTransfer",
+        };
+        testGenomeWorkflow(productOrder, LibraryConstructionJaxbBuilder.PondType.PCR_PLUS_HYPER_PREP, expectedEventNames,
+                Workflow.ICE_EXOME_EXPRESS_HYPER_PREP);
+    }
+
     public void testPcrFree() {
 //        Controller.startCPURecording(true);
         expectedRouting = SystemRouter.System.MERCURY;
@@ -2044,9 +2071,22 @@ public class LabEventTest extends BaseEventTest {
                 NUM_POSITIONS_IN_RACK,
                 pondType);
 
-        QtpEntityBuilder qtpEntityBuilder = runQtpProcess(libraryConstructionEntityBuilder.getPondRegRack(),
-                libraryConstructionEntityBuilder.getPondRegTubeBarcodes(),
-                libraryConstructionEntityBuilder.getMapBarcodeToPondRegTubes(), "1");
+        QtpEntityBuilder qtpEntityBuilder = null;
+        int numSeqReagents = 1;
+        if (workflow == Workflow.ICE_EXOME_EXPRESS_HYPER_PREP) {
+            IceEntityBuilder iceEntityBuilder = runIceProcess(
+                    Collections.singletonList(libraryConstructionEntityBuilder.getPondRegRack()),
+                    "1");
+            qtpEntityBuilder = runQtpProcess(iceEntityBuilder.getCatchEnrichRack(),
+                    iceEntityBuilder.getCatchEnrichBarcodes(),
+                    iceEntityBuilder.getMapBarcodeToCatchEnrichTubes(), "1");
+            numSeqReagents = 3;
+        } else {
+            qtpEntityBuilder = runQtpProcess(libraryConstructionEntityBuilder.getPondRegRack(),
+                    libraryConstructionEntityBuilder.getPondRegTubeBarcodes(),
+                    libraryConstructionEntityBuilder.getMapBarcodeToPondRegTubes(), "1");
+        }
+
 
         LabVessel denatureSource =
                 qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
@@ -2059,7 +2099,7 @@ public class LabEventTest extends BaseEventTest {
         IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
         Set<SampleInstanceV2> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPositionV2(
                 VesselPosition.LANE1);
-        Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 1,
+        Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), numSeqReagents,
                 "Wrong number of reagents");
 
         Map.Entry<String, BarcodedTube> stringBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();

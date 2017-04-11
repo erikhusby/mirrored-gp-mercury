@@ -9,6 +9,7 @@ app:
       jmsPort:  5445
       workflowValidationEmail:
 
+
     AUTO_BUILD:
       host:     mercurydev.broadinstitute.org
       port:     8444
@@ -248,7 +249,7 @@ infiniumStarter:
 
     PROD:
         dataPath: /humgen/illumina_data
-        minimumIdatFileLength: 15000000
+        minimumIdatFileLength: 2000000
         jmsHost: vpicard03
         jmsPort: 61616
         jmsQueue: broad.arrays.enqueue
@@ -284,12 +285,18 @@ sap:
     DEV:
       login:      GPCOMU
       password:   SAPERD300!
+      sapShortCloseRecipientEmail: zsearle@broadinstitute.org
+      sapShortCloseEmailSubject: "TEST SAP Order: Short Close Request"
     QA:
       login:      GPCOMU
       password:   SAPERQ300!
+      sapShortCloseRecipientEmail: zsearle@broadinstitute.org
+      sapShortCloseEmailSubject: "TEST SAP Order: Short Close Request"
     PROD:
       login:      GPCOMU
       password:   SAPERP300!
+      sapShortCloseRecipientEmail: BUSSYS@broadinstitute.org
+      sapShortCloseEmailSubject: "SAP Order: Short Close Request"
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 mercury:
 
@@ -411,5 +418,6 @@ mercury:
       collaborate: PROD
       bass:     PROD
       submission: PROD
+      infiniumStarter: PROD
       sap:  PROD
 

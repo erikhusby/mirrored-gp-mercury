@@ -17,7 +17,9 @@ import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActi
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Allows a user to declare the positive and negative controls in an LCSET.
@@ -63,6 +65,12 @@ public class LcsetActionBean extends RackScanActionBean {
     public Resolution scanControls() throws ScannerException {
         scan();
         MessageCollection messageCollection = new MessageCollection();
+        Iterator<Map.Entry<String, String>> it = rackScan.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, String> pair = it.next();
+            if (pair.getValue().isEmpty())
+                it.remove();
+        }
         controlBarcodes = labBatchEjb.findControlsInRackScan(lcsetName, rackScan, messageCollection);
         addMessages(messageCollection);
         return new ForwardResolution(LCSET_PAGE);

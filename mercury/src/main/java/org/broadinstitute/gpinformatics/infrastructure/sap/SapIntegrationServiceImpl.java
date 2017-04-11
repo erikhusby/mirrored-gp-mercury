@@ -3,11 +3,11 @@ package org.broadinstitute.gpinformatics.infrastructure.sap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
+import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
@@ -125,18 +125,21 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      * @throws SAPIntegrationException
      */
     protected SAPOrder initializeSAPOrder(ProductOrder placedOrder) throws SAPIntegrationException {
+
+        ProductOrder orderToUpdate = (placedOrder.isChildOrder() && placedOrder.getParentOrder().getSapOrderNumber().equals(placedOrder.getSapOrderNumber()))?placedOrder.getParentOrder():placedOrder;
+
         Quote foundQuote = null;
         try {
-            foundQuote = quoteService.getQuoteByAlphaId(placedOrder.getQuoteId());
+            foundQuote = quoteService.getQuoteByAlphaId(orderToUpdate.getQuoteId());
         } catch (QuoteServerException | QuoteNotFoundException e) {
             throw new SAPIntegrationException("Unable to get information for the Quote from the quote server", e);
         }
 
         SAPOrder newOrder =
-                new SAPOrder(SapIntegrationClientImpl.SystemIdentifier.MERCURY, determineCompanyCode(placedOrder),
-                        placedOrder.getQuoteId(), bspUserList.getUserFullName(placedOrder.getCreatedBy()));
+                new SAPOrder(SapIntegrationClientImpl.SystemIdentifier.MERCURY, determineCompanyCode(orderToUpdate),
+                        orderToUpdate.getQuoteId(), bspUserList.getUserFullName(orderToUpdate.getCreatedBy()));
 
-        newOrder.setExternalOrderNumber(placedOrder.getJiraTicketKey());
+        newOrder.setExternalOrderNumber(orderToUpdate.getJiraTicketKey());
 
         FundingLevel fundingLevel = foundQuote.getFirstRelevantFundingLevel();
 
@@ -148,7 +151,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         }
 
         if (fundingLevel.getFunding().getFundingType().equals(Funding.PURCHASE_ORDER)) {
-            String customerNumber = findCustomer(determineCompanyCode(placedOrder), fundingLevel);
+            String customerNumber = findCustomer(determineCompanyCode(orderToUpdate), fundingLevel);
 
             newOrder.setSapCustomerNumber(customerNumber);
             newOrder.setFundingSource(fundingLevel.getFunding().getPurchaseOrderNumber(), SAPOrder.FundingType.PURCHASE_ORDER);
@@ -156,13 +159,13 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             newOrder.setFundingSource(fundingLevel.getFunding().getFundsReservationNumber(), SAPOrder.FundingType.FUNDS_RESERVATION);
         }
 
-        newOrder.setResearchProjectNumber(placedOrder.getResearchProject().getJiraTicketKey());
+        newOrder.setResearchProjectNumber(orderToUpdate.getResearchProject().getJiraTicketKey());
 
         Product primaryProduct = placedOrder.getProduct();
-        newOrder.addOrderItem(getOrderItem(placedOrder, primaryProduct));
+        newOrder.addOrderItem(getOrderItem(placedOrder, primaryProduct, foundQuote));
 
         for (ProductOrderAddOn addon : placedOrder.getAddOns()) {
-            newOrder.addOrderItem(getOrderItem(placedOrder, addon.getAddOn()));
+            newOrder.addOrderItem(getOrderItem(placedOrder, addon.getAddOn(), foundQuote));
         }
 
         return newOrder;
@@ -173,20 +176,33 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      * is expected to be charged
      * @param placedOrder Order from which the quantities are defined
      * @param product Product that is to be eventually charged when work on the product order is completed
+     * @param quote
      * @return JAXB sub element of the SAP order to represent the Product that will be charged and the quantity that
      * is expected of it.
      */
-    protected SAPOrderItem getOrderItem(ProductOrder placedOrder, Product product) {
-        return new SAPOrderItem(product.getPartNumber(),
-                priceListCache.findByKeyFields(product.getPrimaryPriceItem()).getPrice(),
-                getSampleCount(placedOrder));
+    protected SAPOrderItem getOrderItem(ProductOrder placedOrder, Product product, Quote quote) throws SAPIntegrationException {
+        try {
+            String price = priceListCache.getEffectivePrice(product.getPrimaryPriceItem(), quote);
+
+            return new SAPOrderItem(product.getPartNumber(),
+                    price,
+                    getSampleCount(placedOrder, product));
+        } catch (InvalidProductException e) {
+            throw new SAPIntegrationException("For " + product.getPartNumber() + " " + e.getMessage());
+        }
     }
 
-    public static int getSampleCount(ProductOrder placedOrder) {
-        return (placedOrder.getProduct().getProductFamily().getName().equals(ProductFamily.ProductFamilyInfo.SEQUENCE_ONLY.getFamilyName()) &&
-        placedOrder.getLaneCount()>0)
-                ?placedOrder.getNonAbandonedCount()*placedOrder.getLaneCount()
-                :placedOrder.getNonAbandonedCount();
+    public static int getSampleCount(ProductOrder placedOrder, Product product) {
+
+        int sampleCount = 0;
+
+        if (product.getSupportsNumberOfLanes() && placedOrder.getLaneCount() > 0) {
+            sampleCount += placedOrder.getLaneCount();
+        } else {
+            ProductOrder targetSapPdo = ProductOrder.getTargetSAPProductOrder(placedOrder);
+            sampleCount += targetSapPdo.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY);
+        }
+        return sampleCount;
     }
 
     @Override
@@ -300,8 +316,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      * @param companyProductOrder Product Order from which the company code is to be determined
      * @return an indicator that represents one of the configured companies within SAP
      */
-    @Override
-    public SapIntegrationClientImpl.SAPCompanyConfiguration determineCompanyCode(ProductOrder companyProductOrder)
+    public static SapIntegrationClientImpl.SAPCompanyConfiguration determineCompanyCode(ProductOrder companyProductOrder)
             throws SAPIntegrationException {
         SapIntegrationClientImpl.SAPCompanyConfiguration companyCode =
                 getSapCompanyConfigurationForProduct(companyProductOrder.getProduct());
@@ -317,9 +332,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         return companyCode;
     }
 
-    @Override
     @NotNull
-    public SapIntegrationClientImpl.SAPCompanyConfiguration getSapCompanyConfigurationForProduct(Product product) {
+    public static SapIntegrationClientImpl.SAPCompanyConfiguration getSapCompanyConfigurationForProduct(Product product) {
         SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
         if (product.isExternalProduct()) {
             companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES;

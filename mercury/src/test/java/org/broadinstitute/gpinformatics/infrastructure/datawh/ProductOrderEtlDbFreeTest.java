@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -50,15 +52,18 @@ public class ProductOrderEtlDbFreeTest {
     private BSPUserList userList = createMock(BSPUserList.class);
     private BspUser owner = createMock(BspUser.class);
     private RegulatoryInfo regulatoryInfo = createMock(RegulatoryInfo.class);
+    private ProductEjb productEjb = createMock(ProductEjb.class);
 
-    private Object[] mocks = new Object[]{auditReader, dao, pdo, researchProject, product, userList, owner, regulatoryInfo};
+    private Object[] mocks = new Object[]{auditReader, dao, pdo, researchProject, product, userList, owner,
+            regulatoryInfo, productEjb};
     private String sapMockOrderNumber = "1000084774";
+    private String arrayChipType = "PsychChipContrived";
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
         reset(mocks);
 
-        tst = new ProductOrderEtl(dao, userList);
+        tst = new ProductOrderEtl(dao, userList, productEjb);
         tst.setAuditReaderDao(auditReader);
     }
 
@@ -90,7 +95,7 @@ public class ProductOrderEtlDbFreeTest {
         expect(pdo.getResearchProject()).andReturn(researchProject).times(2);
         expect(pdo.getProduct()).andReturn(product).times(2);
         expect(pdo.getOrderStatus()).andReturn(orderStatus);
-        expect(pdo.getCreatedDate()).andReturn(createdDate);
+        expect(pdo.getCreatedDate()).andReturn(createdDate).times(2);
         expect(pdo.getModifiedDate()).andReturn(modifiedDate);
         expect(pdo.getTitle()).andReturn(title);
         expect(pdo.getQuoteId()).andReturn(quoteId);
@@ -106,6 +111,8 @@ public class ProductOrderEtlDbFreeTest {
         expect(researchProject.getResearchProjectId()).andReturn(researchProjectId);
         expect(product.getProductId()).andReturn(productId);
 
+        expect(productEjb.getGenotypingChip(pdo, createdDate)).andReturn(Pair.of("notused", arrayChipType));
+
         replay(mocks);
 
         Collection<String> records = tst.dataRecords(etlDateString, false, entityId);
@@ -117,7 +124,7 @@ public class ProductOrderEtlDbFreeTest {
 
     private void verifyRecord(String record) {
         int i = 0;
-        String[] parts = record.split(",", 16);
+        String[] parts = record.split(",", 17);
         assertEquals(parts[i++], etlDateString);
         assertEquals(parts[i++], "F");
         assertEquals(parts[i++], String.valueOf(entityId));
@@ -133,6 +140,7 @@ public class ProductOrderEtlDbFreeTest {
         assertEquals(parts[i++], ExtractTransform.formatTimestamp(modifiedDate));
         assertEquals(parts[i++], "");
         assertEquals(parts[i++], sapMockOrderNumber);
+        assertEquals(parts[i++], arrayChipType);
         assertEquals(parts[i++], "");
         assertEquals(parts.length, i);
     }

@@ -8,9 +8,11 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.ArraysQcDao;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcFingerprint;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcGtConcordance;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
+import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarterConfig;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.InfiniumRunProcessor;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -86,14 +88,13 @@ public class ArraysSummaryFactory {
         String chipType = productEjb.getGenotypingChip(productOrder,
                 labVessel1.getEvents().iterator().next().getEventDate()).getRight();
 
-        // Preamble todo jmt
         // Header Group
-        printStream.println("PED Data\t\tCall Rate\tSample\t\t\t\t\t\tFingerprint\tGender\t\t\t\tTrio\t" +
-                "BEADSTUDIO\t\t\t\tZCALL\t\tScan\t\t\t\t\tPlate\t\t\t");
+        printStream.println("PED Data\t\tCall Rate\tSample\t\t\t\t\t\t\tFingerprint\tGender\t\t\t\tTrio\t" +
+                "BEADSTUDIO\t\t\t\t\tZCALL\t\tScan\t\t\t\t\tPlate\t\t\t");
         // Headers
         printStream.println("Family ID\tIndividual ID\tBEADSTUDIO\tAliquot\tRoot Sample\tStock Sample\tParticipant\t" +
-                "Collaborator Sample\tCollaborator Participant\tCalled Infinium SNPs\tReported Gender\tFldm FP Gender\t" +
-                "Beadstudio Gender\tAlgorithm Gender Concordance\tFamily\tHet %\tHap Map Concordance\t" +
+                "Collaborator Sample\tCollaborator Participant\tCalled Infinium SNPs\tLOD\tReported Gender\tFldm FP Gender\t" +
+                "Beadstudio Gender\tAlgorithm Gender Concordance\tFamily\tHet %\tAnalysis Version\tHap Map Concordance\t" +
                 "Version\tLast Cluster File\tRun\tVersion\tChip\tScan Date\tAmp Date\tScanner\tChip Well Barcode\t" +
                 "DNA Plate\tDNA Plate Well");
         for (int i = 0; i < vesselPositionPairs.size(); i++) {
@@ -134,6 +135,12 @@ public class ArraysSummaryFactory {
             printStream.print(sampleData.getCollaboratorParticipantId() + "\t");
             // Called Infinium SNPs
             printStream.print(arraysQc.getTotalSnps() + "\t");
+            // LOD
+            if (arraysQc.getArraysQcFingerprints() != null && !arraysQc.getArraysQcFingerprints().isEmpty()) {
+                ArraysQcFingerprint arraysQcFingerprint = arraysQc.getArraysQcFingerprints().iterator().next();
+                printStream.print(MathUtils.scaleThreeDecimalPlaces(arraysQcFingerprint.getLodExpectedSample()));
+            }
+            printStream.print("\t");
             // Reported Gender
             printStream.print(arraysQc.getReportedGender() + "\t");
             // Fldm FP Gender
@@ -146,6 +153,8 @@ public class ArraysSummaryFactory {
             printStream.print(sampleData.getCollaboratorFamilyId() + "\t");
             // Het %
             printStream.print(arraysQc.getHetPct100() + "\t");
+            // Analysis Version
+            printStream.print(arraysQc.getAnalysisVersion() + "\t");
             // Hap Map Concordance
             if (arraysQc.getArraysQcGtConcordances() != null) {
                 for (ArraysQcGtConcordance arraysQcGtConcordance: arraysQc.getArraysQcGtConcordances()) {

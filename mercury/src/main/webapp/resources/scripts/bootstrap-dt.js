@@ -23,10 +23,19 @@ if (isLegacyDataTables()) {
 }
 var sDomNoTableToolsButtons = "lfrtip";
 
+function enableDefaultPagingOptions(){
+    $j.extend( true, $j.fn.dataTable.defaults, {
+        "bPaginate": true,
+        "iDisplayLength": 100,
+        "bLengthChange": true,
+        "sPaginationType": 'bootstrap',
+    });
+    $j.fn.dataTable.defaults.aLengthMenu = [[50, 100, 200, 400, -1], [50, 100, 200, 400, "All"]];
+}
 /**
  *  Set the defaults for DataTables initialization
  */
-$j.extend( true, $j.fn.dataTable.defaults, {
+$j.extend(true, $j.fn.dataTable.defaults, {
     "sDom": "<'row-fluid'<'span8'f><'span4'B>r>t<'row-fluid'<'span6'i><'span6'p>>",
     "bAutoWidth": false,
     "bInfo": false,
@@ -37,7 +46,7 @@ $j.extend( true, $j.fn.dataTable.defaults, {
     "bLengthChange": false,
     "oLanguage": {
         "sLengthMenu": "_MENU_ records per page"
-        }
+    }
 });
 if (isLegacyDataTables()) {
     $j.extend(true, $j.fn.dataTable.defaults, {
@@ -55,6 +64,47 @@ var filterDropdownHtml = "<div class='filterOptions'>using <select class='filter
 function isBlank(value){
     return (value === undefined || value.trim() === '');
 }
+
+/**
+ * Create standard set of buttons used in Mercury: 'excel' and 'copy' which exports the data to chosen format.
+ *
+ * Exported data includes all checked entries in the DataTable with filtering, sorting:
+ */
+function standardButtons(checkboxClass="shiftCheckbox", headerClass) {
+    var defaultOptions = {
+        /* do not export colum 0 (the checkbox column) */
+        columns: ':visible :gt(0)',
+        rows: function (html, index, node) {
+            /* include only checked rows in the export */
+            var $checked = $j(node).find('input:checked.' + checkboxClass);
+            return $checked!==undefined && $checked.length>0;
+        },
+        format: {
+            /* if there are any additional things in the headers such as filtering widgets, ignore them */
+            header: function(html, index, node){
+                if (headerClass){
+                    return $j(node).find("."+headerClass).text();
+                }
+                return $j(node).text();
+            }
+        },
+        /* export results should include only filtered results and for all pages, not just the current page. */
+        modifier: {
+            search: 'applied',
+            order: 'current',
+            page: 'all'
+        }
+    };
+
+    return [{
+        extend: 'excelHtml5',
+        exportOptions: defaultOptions
+    }, {
+        extend: 'copyHtml5',
+        exportOptions: defaultOptions
+    }];
+}
+
 /**
  * Dynamically add the HTML element for the dropdown and the choices, as well as define the
  * dropdown behavior when the user changes it (clicks on it and selects another item).
@@ -188,25 +238,27 @@ $j.extend( $j.fn.dataTableExt.oPagination, {
                 $('li:gt(0)', an[i]).filter(':not(:last)').remove();
 
                 // Add the new list items and their event handlers
-                for ( j=iStart ; j<=iEnd ; j++ ) {
-                    sClass = (j==oPaging.iPage+1) ? 'class="active"' : '';
-                    $('<li '+sClass+'><a href="#">'+j+'</a></li>')
-                        .insertBefore( $('li:last', an[i])[0] )
-                        .bind('click', function (e) {
-                            e.preventDefault();
-                            oSettings._iDisplayStart = (parseInt($('a', this).text(),10)-1) * oPaging.iLength;
-                            fnDraw( oSettings );
-                        } );
+                if (oPaging.iTotalPages>1) {
+                    for (j = iStart; j <= iEnd; j++) {
+                        sClass = (j == oPaging.iPage + 1) ? 'class="active"' : '';
+                        $('<li ' + sClass + '><a href="#">' + j + '</a></li>')
+                            .insertBefore($('li:last', an[i])[0])
+                            .bind('click', function (e) {
+                                e.preventDefault();
+                                oSettings._iDisplayStart = (parseInt($('a', this).text(), 10) - 1) * oPaging.iLength;
+                                fnDraw(oSettings);
+                            });
+                    }
                 }
 
                 // Add / remove disabled classes from the static elements
-                if ( oPaging.iPage === 0 ) {
+                if ( oPaging.iPage <= 0 ) {
                     $('li:first', an[i]).addClass('disabled');
                 } else {
                     $j('li:first', an[i]).removeClass('disabled');
                 }
 
-                if ( oPaging.iPage === oPaging.iTotalPages-1 || oPaging.iTotalPages === 0 ) {
+                if ( oPaging.iPage === oPaging.iTotalPages-1 || oPaging.iTotalPages <= 0 ) {
                     $j('li:last', an[i]).addClass('disabled');
                 } else {
                     $j('li:last', an[i]).removeClass('disabled');

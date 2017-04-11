@@ -26,6 +26,7 @@ public class JiraIssue implements Serializable {
     private final String key;
 
     private String summary;
+    private String status;
     private String description;
     private List<String> subTasks;
 
@@ -64,6 +65,17 @@ public class JiraIssue implements Serializable {
 
     public void setSummary(@Nonnull String summary) {
         this.summary = summary;
+    }
+
+    public String getStatus() throws IOException {
+        if(status == null) {
+            copyFromJiraIssue(null);
+        }
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public String getDescription() throws IOException {
@@ -131,7 +143,7 @@ public class JiraIssue implements Serializable {
         for (int index = 0; index < fields.size(); index++)
         {
             Map<String, Object> id = (Map<String, Object>)fields.get(index);
-            idList.add(id.get("key").toString());
+            idList.add(id.get("id").toString());
         }
         return idList;
     }
@@ -192,6 +204,9 @@ public class JiraIssue implements Serializable {
         dueDate = tempIssue.getDueDate();
         created = tempIssue.getCreated();
         reporter = tempIssue.getReporter();
+        status = tempIssue.getStatus();
+        subTasks = tempIssue.getSubTasks();
+        conditions = tempIssue.conditions;
     }
 
     public <TV> void addFieldValue(String filedName, TV value) {
@@ -282,6 +297,22 @@ public class JiraIssue implements Serializable {
         CustomFieldDefinition definition = jiraService.getCustomFields(fieldName).get(fieldName);
         IssueFieldsResponse response = jiraService.getIssueFields(key, Collections.singleton(definition));
         return response.getFields().get(definition.getJiraCustomFieldId());
+    }
+
+    /**
+     * Returns the value of a JIRA field that is contained in a JIRA map field, such as "Issue Type".
+     * @param mapFieldName the name of the map object.
+     * @param mapKey the key used to lookup a value in the map object.
+     * @return the value from the map object, or null if not found or if the field is not a map object.
+     * @throws IOException
+     */
+    public String getMappedField(String mapFieldName, String mapKey) throws IOException {
+        Object mapObject = getField(mapFieldName);
+        if (mapObject != null && mapObject instanceof Map) {
+            return ((Map<String, String>)mapObject).get(mapKey);
+        } else {
+            return null;
+        }
     }
 
     /**

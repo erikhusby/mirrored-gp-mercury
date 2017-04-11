@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
@@ -42,11 +43,14 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.IssueFieldsRes
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BadBusinessKeyException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapConfig;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
@@ -126,12 +130,15 @@ public class ProductOrderEjb {
     private SapIntegrationService sapService;
 
     private AppConfig appConfig;
+    private SapConfig sapConfig;
 
     private EmailSender emailSender;
 
     private SAPAccessControlEjb accessController;
 
     private Deployment deployment;
+
+    private PriceListCache priceListCache;
 
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
@@ -149,7 +156,7 @@ public class ProductOrderEjb {
                            SquidConnector squidConnector,
                            MercurySampleDao mercurySampleDao,
                            ProductOrderJiraUtil productOrderJiraUtil,
-                           SapIntegrationService sapService) {
+                           SapIntegrationService sapService, PriceListCache priceListCache) {
         this.productOrderDao = productOrderDao;
         this.productDao = productDao;
         this.quoteService = quoteService;
@@ -161,6 +168,7 @@ public class ProductOrderEjb {
         this.mercurySampleDao = mercurySampleDao;
         this.productOrderJiraUtil = productOrderJiraUtil;
         this.sapService = sapService;
+        this.priceListCache = priceListCache;
     }
 
     private final Log log = LogFactory.getLog(ProductOrderEjb.class);
@@ -252,10 +260,17 @@ public class ProductOrderEjb {
             }
         } else {
             updateJiraIssue(editedProductOrder);
-
+            for (ProductOrder childProductOrder : editedProductOrder.getChildOrders()) {
+                if(!childProductOrder.getOrderStatus().canPlace()) {
+                    updateJiraIssue(childProductOrder);
+                }
+            }
             publishProductOrderToSAP(editedProductOrder, messageCollection, false);
         }
         attachMercurySamples(editedProductOrder.getSamples());
+        for (ProductOrder childProductOrder : editedProductOrder.getChildOrders()) {
+            attachMercurySamples(childProductOrder.getSamples());
+        }
 
         productOrderDao.persist(editedProductOrder);
     }
@@ -319,33 +334,29 @@ public class ProductOrderEjb {
                                               !orderToPublish.getQuoteId()
                                                       .equals(orderToPublish.latestSapOrderDetail().getQuoteId());
                 if ((!orderToPublish.isSavedInSAP() && allowCreateOrder) || quoteIdChange) {
-                    String sapOrderIdentifier = sapService.createOrder(orderToPublish);
 
-                    String oldNumber = null;
-                    if(StringUtils.isNotBlank(orderToPublish.getSapOrderNumber())) {
-                        oldNumber =orderToPublish.getSapOrderNumber();
-                    }
-                    orderToPublish.addSapOrderDetail(new SapOrderDetail(sapOrderIdentifier,
-                            SapIntegrationServiceImpl.getSampleCount(orderToPublish),
-                            orderToPublish.getQuoteId(),
-                            sapService.determineCompanyCode(orderToPublish).getCompanyCode()));
+                    final String newSapOrderNumber = createOrderInSAP(orderToPublish, quoteIdChange, messageCollection);
 
-                    if(quoteIdChange) {
-                        String body = "The SAP order " + oldNumber + " for PDO "+ orderToPublish.getBusinessKey()+
-                                      " is being associated with a new quote by "+
-                                      userBean.getBspUser().getFullName() +" and needs" + " to be short closed.";
-                        sendSapOrderShortCloseRequest(body);
+                    // Create orders for any Child orders that does not share
+                    for (ProductOrder childOrder : orderToPublish.getChildOrders()) {
+                        if(!ProductOrder.sharesSAPOrderWithParent(childOrder, newSapOrderNumber)) {
+                            createOrderInSAP(childOrder, quoteIdChange, messageCollection);
+                        }
                     }
-                    messageCollection.addInfo("Order "+orderToPublish.getJiraTicketKey() +
-                                              " has been successfully created in SAP");
+
                 } else if(orderToPublish.isSavedInSAP()){
-                    if (SapIntegrationServiceImpl.getSampleCount(orderToPublish) > 0) {
-                        sapService.updateOrder(orderToPublish);
-                        orderToPublish.latestSapOrderDetail()
-                                .setPrimaryQuantity(SapIntegrationServiceImpl.getSampleCount(orderToPublish
-                                ));
-                        messageCollection.addInfo("Order "+orderToPublish.getJiraTicketKey() +
-                                                  " has been successfully updated in SAP");
+                    if (SapIntegrationServiceImpl.getSampleCount(orderToPublish, orderToPublish.getProduct()) > 0) {
+                        updateOrderInSap(orderToPublish, messageCollection);
+
+                        for (ProductOrder childProductOrder : orderToPublish.getChildOrders()) {
+
+                            if (childProductOrder.isSubmitted() &&
+                                !StringUtils.equals(childProductOrder.getSapOrderNumber(),
+                                        orderToPublish.getSapOrderNumber())) {
+
+                                updateOrderInSap(childProductOrder, messageCollection);
+                            }
+                        }
                     }
                 }
                 productOrderDao.persist(orderToPublish);
@@ -370,6 +381,64 @@ public class ProductOrderEjb {
     }
 
     /**
+     * Encapsulates the series of calls to make when updating an order in SAP.  This is created to support updating
+     * the child orders of a product order for which abandoned samples have been replaced.
+     *
+     * @param orderToUpdate     A product order from which an SAP order is to be updated
+     * @param messageCollection To collect any errors or success messages that may occur during the process
+     * @throws SAPIntegrationException
+     */
+    private void updateOrderInSap(ProductOrder orderToUpdate, MessageCollection messageCollection)
+            throws SAPIntegrationException {
+        sapService.updateOrder(orderToUpdate);
+        orderToUpdate.latestSapOrderDetail()
+                .setPrimaryQuantity(SapIntegrationServiceImpl.getSampleCount(orderToUpdate,
+                        orderToUpdate.getProduct()));
+        messageCollection.addInfo("Order "+orderToUpdate.getJiraTicketKey() +
+                                  " has been successfully updated in SAP");
+
+    }
+
+    /**
+     * This method contains the specific logic surrounding the creation and persistence of an SAP order
+     * @param orderToPublish  The Product Order from which a new SAP order will be created
+     * @param quoteIdChange   Indicates that creating the SAP order is as a result of the Quote being changed
+     * @return  The order ID of the newly created SAP Order
+     * @throws SAPIntegrationException
+     */
+    private String createOrderInSAP(ProductOrder orderToPublish, boolean quoteIdChange,
+                                    MessageCollection messageCollection)
+            throws SAPIntegrationException {
+        String sapOrderIdentifier = sapService.createOrder(orderToPublish);
+
+        String oldNumber = null;
+        if(StringUtils.isNotBlank(orderToPublish.getSapOrderNumber())) {
+            oldNumber = orderToPublish.getSapOrderNumber();
+        }
+        orderToPublish.addSapOrderDetail(new SapOrderDetail(sapOrderIdentifier,
+                SapIntegrationServiceImpl.getSampleCount(orderToPublish, orderToPublish.getProduct()),
+                orderToPublish.getQuoteId(),
+                SapIntegrationServiceImpl.determineCompanyCode(orderToPublish).getCompanyCode()));
+
+        if(quoteIdChange) {
+            String body = "The SAP order " + oldNumber + " for PDO "+ orderToPublish.getBusinessKey()+
+                          " is being associated with a new quote by "+
+                          userBean.getBspUser().getFullName() +" and needs" + " to be short closed.";
+            for (ProductOrder childOrder : orderToPublish.getChildOrders()) {
+                if(ProductOrder.sharesSAPOrderWithParent(childOrder, oldNumber)) {
+                    childOrder.addSapOrderDetail(orderToPublish.latestSapOrderDetail());
+                }
+            }
+
+            sendSapOrderShortCloseRequest(body);
+        }
+        messageCollection.addInfo("Order "+orderToPublish.getJiraTicketKey() +
+                                  " has been successfully created in SAP");
+
+        return sapOrderIdentifier;
+    }
+
+    /**
      * Helper method to determine if, based on certain criteria, the order is allowed to be pushed to SAP at the time
      * that the method is called.
      *
@@ -383,15 +452,48 @@ public class ProductOrderEjb {
         Quote orderQuote = quoteService.getQuoteByAlphaId(editedProductOrder.getQuoteId());
         SAPAccessControl accessControl = accessController.getCurrentControlDefinitions();
         boolean eligibilityResult = false;
+
+        Set<Product> productListFromOrder = new HashSet<>();
+        Set<AccessItem> priceItemNameList = new HashSet<>();
+
+        productListFromOrder.add(editedProductOrder.getProduct());
+        priceItemNameList.add(new AccessItem(editedProductOrder.getProduct().getPrimaryPriceItem().getName()));
+        for (ProductOrderAddOn productOrderAddOn : editedProductOrder.getAddOns()) {
+            productListFromOrder.add(productOrderAddOn.getAddOn());
+            priceItemNameList.add(new AccessItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getName()));
+        }
+
         if(orderQuote != null && accessControl.isEnabled()) {
 
             eligibilityResult = orderQuote.isEligibleForSAP() &&
-                                !CollectionUtils.containsAll(accessControl.getDisabledFeatures(),
-                                        Collections.singleton(editedProductOrder.getProduct()
-                                                                                .getPrimaryPriceItem().getName()));
-
+                                editedProductOrder.getProduct()
+                                        .getPrimaryPriceItem() != null &&
+                                determinePriceItemValidity(productListFromOrder) &&
+                                !CollectionUtils.containsAny(accessControl.getDisabledItems(), priceItemNameList) ;
         }
         return eligibilityResult;
+    }
+
+    public boolean determinePriceItemValidity(Collection<Product> productsToConsider) {
+        boolean allItemsValid = true;
+        QuotePriceItem primaryPriceItem;
+        try {
+            for (Product product: productsToConsider) {
+               primaryPriceItem =
+                        priceListCache.findByKeyFields(product.getPrimaryPriceItem().getPlatform(),
+                                product.getPrimaryPriceItem().getCategory(),
+                                product.getPrimaryPriceItem().getName());
+                if(primaryPriceItem == null) {
+                    allItemsValid = false;
+                    break;
+                }
+            }
+
+        } catch (Exception e) {
+            allItemsValid = false;
+        }
+
+        return allItemsValid;
     }
 
     /**
@@ -983,27 +1085,26 @@ public class ProductOrderEjb {
             transitionIssueToSameOrderStatus(order);
             // The status was changed, let the user know.
             reporter.addMessage("The order status of ''{0}'' is now {1}.", jiraTicketKey, order.getOrderStatus());
-            if(order.isSavedInSAP() && ((order.getOrderStatus() == OrderStatus.Completed &&
-                order.getNonAbandonedCount() < order.latestSapOrderDetail().getPrimaryQuantity()
-               )
-               || order.getOrderStatus() == OrderStatus.Abandoned)) {
-
-                sendSapOrderShortCloseRequest(
-                        "The SAP order " + order.getSapOrderNumber() + " for PDO "+order.getBusinessKey()+
-                        " has been marked as completed in Mercury by " +
-                        userBean.getBspUser().getFullName() + " and may need to be short closed.");
-            }
+            conditionallyShortCloseOrder(order);
         }
     }
 
+    /**
+     * Encapsulates the call necessary to request that SAP short close an order.  The logic here will also send to
+     * test users in a non Production environment
+     *
+     * @param body The body of the short close request email
+     */
     void sendSapOrderShortCloseRequest(String body) {
-            Collection<String> ccAddresses = Collections.singletonList(userBean.getBspUser().getEmail());
+
+        Collection<String> currentUserForCC = Collections.singletonList(userBean.getBspUser().getEmail());
+
         final boolean isProduction = deployment.equals(Deployment.PROD);
-        emailSender.sendHtmlEmail(appConfig,
-                isProduction ?"BUSSYS@broadinstitute.org":"zsearle@broadinstitute.org",
-                isProduction ?ccAddresses:Arrays.asList("scottmat@broadinstitute.org", "smcdonou@broadinstitute.org"),
-                ((!isProduction) ? "Test" : "") + "SAP Order: Short Close Request", body,
-                !isProduction);
+        final Collection<String> ccAddrdesses = isProduction ? currentUserForCC :
+                Arrays.asList("scottmat@broadinstitute.org", "smcdonou@broadinstitute.org");
+
+        emailSender.sendHtmlEmail(appConfig, sapConfig.getSapShortCloseRecipientEmail(), ccAddrdesses,
+                sapConfig.getSapShortCloseEmailSubject(), body, !isProduction);
     }
 
     /**
@@ -1074,15 +1175,22 @@ public class ProductOrderEjb {
         // with the JIRA ticket.
         transitionJiraTicket(jiraTicketKey, JiraResolution.CANCELLED, JiraTransition.CANCEL, abandonComments);
 
-        if(productOrder.isSavedInSAP() && ((productOrder.getOrderStatus() == OrderStatus.Completed &&
-            productOrder.getNonAbandonedCount() < productOrder.latestSapOrderDetail().getPrimaryQuantity()
-           )
-           || productOrder.getOrderStatus() == OrderStatus.Abandoned)) {
+        conditionallyShortCloseOrder(productOrder);
+    }
+
+    private void conditionallyShortCloseOrder(ProductOrder productOrder) {
+
+        ProductOrder targetSapPdo = ProductOrder.getTargetSAPProductOrder(productOrder);
+
+        if(targetSapPdo.isSavedInSAP() &&
+           ((targetSapPdo.allOrdersAreComplete() &&
+             targetSapPdo.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY) < targetSapPdo.latestSapOrderDetail().getPrimaryQuantity()
+           ) || targetSapPdo.getOrderStatus() == OrderStatus.Abandoned)) {
+
 
             sendSapOrderShortCloseRequest(
-                    "The SAP order " + productOrder.getSapOrderNumber() + " for PDO "+productOrder.getBusinessKey()+
-                    " has been marked as completed in Mercury by "
-                    +
+                    "The SAP order " + productOrder.getSapOrderNumber() + " for PDO "+productOrder.getBusinessKey() +
+                    " has been marked as completed in Mercury by " +
                     userBean.getBspUser().getFullName() + " and may need to be short closed.");
         }
     }
@@ -1431,6 +1539,10 @@ public class ProductOrderEjb {
     public void setAccessController(
             SAPAccessControlEjb accessController) {
         this.accessController = accessController;
+    }
+
+    public void setSapConfig(SapConfig sapConfig) {
+        this.sapConfig = sapConfig;
     }
 
     @Inject

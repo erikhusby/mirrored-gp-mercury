@@ -67,6 +67,8 @@ public class MetadataPluginHelper {
                         metadata = rootSample.getMetadata();
                         if (metadata != null && !metadata.isEmpty()) {
                             fillInRowData( metadata, rowData );
+                            // todo jmt get material type from sampleInstance
+                            // todo jmt replace all of this code with DisplayExpression.METADATA?
                             // Replace material type with type from event
                             MaterialType materialType = sampleVessel.getLatestMaterialTypeFromEventHistory();
                             if (materialType != null && materialType != MaterialType.NONE) {

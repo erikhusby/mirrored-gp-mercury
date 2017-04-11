@@ -2,11 +2,13 @@ package org.broadinstitute.gpinformatics.mercury.presentation.labevent;
 
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
+import net.sourceforge.stripes.action.FileBean;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -32,6 +34,8 @@ import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessa
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.LimsFileType;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.QiagenRackFileParser;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -54,6 +58,7 @@ import org.codehaus.jackson.type.TypeReference;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -79,6 +84,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
     public static final String ACTION_BEAN_URL = "/labevent/manualtransfer.action";
     public static final String PAGE_TITLE = "Manual Transfers";
     public static final String RACK_SCAN_EVENT = "rackScan";
+    public static final String PARSE_LIMS_FILE_ACTION = "parseLimsFile";
+    public static final String SKIP_LIMS_FILE_ACTION = "skipLimsFile";
 
     /** Parameter from batch workflow page. */
     private String workflowProcessName;
@@ -109,6 +116,12 @@ public class ManualTransferActionBean extends RackScanActionBean {
     private String cherryPickJson;
     /** Persist the validation event to prevent invalid connection warnings for plate and strip-tube cherry pick events */
     private boolean isValidation = false;
+
+    private FileBean limsUploadFile;
+
+    private LimsFileType limsFileType;
+
+    private boolean isParseLimsFile;
 
     @Inject
     private BettaLimsMessageResource bettaLimsMessageResource;
@@ -308,13 +321,23 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 case RECEPTACLE_TRANSFER_EVENT:
                     ReceptacleTransferEventType receptacleTransferEventType = (ReceptacleTransferEventType) stationEvent;
                     ReceptacleType sourceReceptacle = new ReceptacleType();
-                    sourceReceptacle.setReceptacleType(
-                            manualTransferDetails.getSourceVesselTypeGeometry().getDisplayName());
+                    if (manualTransferDetails.getSourceVesselTypeGeometry() != null) {
+                        sourceReceptacle.setReceptacleType(
+                                manualTransferDetails.getSourceVesselTypeGeometry().getDisplayName());
+                    } else if (manualTransferDetails.getSourceVesselTypeGeometries() == null ||
+                               manualTransferDetails.getSourceVesselTypeGeometries().length == 0) {
+                        throw new RuntimeException("Source VesselTypeGeometry isn't set for this event");
+                    }
                     receptacleTransferEventType.setSourceReceptacle(sourceReceptacle);
 
                     ReceptacleType destinationReceptacle = new ReceptacleType();
-                    destinationReceptacle.setReceptacleType(
-                            manualTransferDetails.getTargetVesselTypeGeometry().getDisplayName());
+                    if (manualTransferDetails.getTargetVesselTypeGeometry() != null) {
+                        destinationReceptacle.setReceptacleType(
+                                manualTransferDetails.getTargetVesselTypeGeometry().getDisplayName());
+                    } else if (manualTransferDetails.getTargetVesselTypeGeometries() == null ||
+                               manualTransferDetails.getTargetVesselTypeGeometries().length == 0) {
+                        throw new RuntimeException("Target VesselTypeGeometry isn't set for this event");
+                    }
                     receptacleTransferEventType.setReceptacle(destinationReceptacle);
                     break;
                 default:
@@ -322,6 +345,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
             }
             stationEventIndex++;
         }
+        isParseLimsFile = manualTransferDetails.isLimsFile();
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }
 
@@ -362,6 +386,48 @@ public class ManualTransferActionBean extends RackScanActionBean {
             receptacleAtPosition.setBarcode(positionBarcodeEntry.getValue());
         }
 
+        return new ForwardResolution(MANUAL_TRANSFER_PAGE);
+    }
+
+    @HandlesEvent(SKIP_LIMS_FILE_ACTION)
+    public Resolution skipLimsFile() {
+        chooseLabEventType();
+        isParseLimsFile = false;
+        return new ForwardResolution(MANUAL_TRANSFER_PAGE);
+    }
+
+    @HandlesEvent(PARSE_LIMS_FILE_ACTION)
+    public Resolution parseLimsFile() {
+        chooseLabEventType();
+        if (limsUploadFile == null) {
+            addGlobalValidationError("File not selected.");
+            return new ForwardResolution(MANUAL_TRANSFER_PAGE);
+        }
+        InputStream limsFileStream = null;
+        MessageCollection messageCollection = new MessageCollection();
+        try {
+            limsFileStream = limsUploadFile.getInputStream();
+            switch (limsFileType) {
+            case QIAGEN_BLOOD_BIOPSY_24:
+                QiagenRackFileParser qiagenRackFileParser = new QiagenRackFileParser();
+                qiagenRackFileParser.attachSourcePlateData((PlateTransferEventType) stationEvents.get(0), limsFileStream,
+                        messageCollection);
+            }
+        } catch (IOException e) {
+            log.error("IO Exception when parsing LIMS File", e);
+            messageCollection.addError("IO Exception when parsing LIMS File");
+        } finally {
+            IOUtils.closeQuietly(limsFileStream);
+
+            try {
+                limsUploadFile.delete();
+            } catch (IOException ignored) {
+                // If cannot delete, oh well.
+            }
+        }
+
+        addMessages(messageCollection);
+        isParseLimsFile = messageCollection.hasErrors();
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }
 
@@ -1105,5 +1171,29 @@ public class ManualTransferActionBean extends RackScanActionBean {
     /** For testing. */
     void setLabVesselDao(LabVesselDao labVesselDao) {
         this.labVesselDao = labVesselDao;
+    }
+
+    public FileBean getLimsUploadFile() {
+        return limsUploadFile;
+    }
+
+    public void setLimsUploadFile(FileBean limsUploadFile) {
+        this.limsUploadFile = limsUploadFile;
+    }
+
+    public LimsFileType getLimsFileType() {
+        return limsFileType;
+    }
+
+    public void setLimsFileType(LimsFileType limsFileType) {
+        this.limsFileType = limsFileType;
+    }
+
+    public boolean isParseLimsFile() {
+        return isParseLimsFile;
+    }
+
+    public void setParseLimsFile(boolean parseLimsFile) {
+        isParseLimsFile = parseLimsFile;
     }
 }
