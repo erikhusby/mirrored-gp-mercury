@@ -51,8 +51,6 @@
                       href="${ctxpath}/resources/scripts/DataTables-1.10.12/css/jquery.dataTables.min.css"/>
                 <link rel="stylesheet"
                       href="${ctxpath}/resources/scripts/DataTables-1.10.12/css/dataTables.bootstrap.min.css"/>
-
-                <%--https://datatables.net/extensions/buttons--%>
                 <script type="text/javascript"
                         src="${ctxpath}/resources/scripts/DataTablesPlugins-1.10/JSZip-2.5.0/jszip.min.js"></script>
                 <script type="text/javascript"
