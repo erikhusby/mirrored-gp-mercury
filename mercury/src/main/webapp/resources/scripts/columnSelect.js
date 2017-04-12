@@ -295,7 +295,7 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
         var select = $j(header).find("select");
         var uniqueValues = [];
         for (var i = 0; i < columns.length; i++) {
-            var cell = columns[i];
+            var cell = columns[i].trim();
             cell = cell.replace(/<(?:.|\n)*?>/gi, '').trim();
             if (cell !== '' && uniqueValues.indexOf(cell) < 0) {
                 uniqueValues.push(cell.trim());
