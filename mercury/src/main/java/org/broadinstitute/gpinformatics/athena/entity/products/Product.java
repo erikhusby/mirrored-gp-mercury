@@ -800,4 +800,8 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     public void setSavedInSAP(boolean savedInSAP) {
         this.savedInSAP = savedInSAP;
     }
+
+    public boolean canPublishToSAP() {
+        return !isSavedInSAP() && !isExternalOnlyProduct();
+    }
 }

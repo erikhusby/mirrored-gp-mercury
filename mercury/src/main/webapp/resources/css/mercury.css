@@ -38,7 +38,10 @@ ul.DTTT_dropdown.dropdown-menu li { position: relative; }
 .DTTT { float: right; }
 
 .dropdown-menu a { text-decoration: none !important }
-
+/* Datatables bootstrap css adds box icsons which clutter the header */
+table.dataTable thead .sorting:after { content: "" }
+table.dataTable thead .sorting_asc:after { content: "" }
+table.dataTable thead .sorting_desc:after { content: "" }
 /* DataTables sorting CSS */
 table.table thead .sorting,
 table.table thead .sorting_asc,

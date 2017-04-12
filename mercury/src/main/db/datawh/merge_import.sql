@@ -1715,14 +1715,24 @@ AS
       V_COUNT := 0;
 
       FOR new IN (
-      SELECT *
+      SELECT LINE_NUMBER, ETL_DATE,
+             product_order_id, batch_name, lcset_sample_name, sample_name,
+             lab_event_id, lab_event_type, station_name, event_date,
+             lab_vessel_id, position
+      FROM im_array_process
+      WHERE lab_event_type = 'ArrayPlatingDilution'  -- Sanity - should only be this one type
+        AND is_delete = 'F'
+      UNION ALL
+      SELECT LINE_NUMBER, ETL_DATE,
+        product_order_id, batch_name, lcset_sample_name, sample_name,
+        lab_event_id, lab_event_type, station_name, event_date,
+        lab_vessel_id, position
       FROM im_event_fact
       WHERE is_delete = 'F'
             AND product_order_id  IS NOT NULL
             AND lcset_sample_name IS NOT NULL
             AND NVL(batch_name, 'NONE') <> 'NONE'
             AND lab_event_type IN (
-        'ArrayPlatingDilution',
         'InfiniumHybridization',
         'InfiniumAmplification',
         'InfiniumPostFragmentationHybOvenLoaded',

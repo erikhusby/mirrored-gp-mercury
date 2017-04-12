@@ -18,7 +18,9 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Represents the definition of a term in a user-defined search. Intended to be XStreamed.
@@ -697,7 +699,7 @@ public class SearchTerm implements Serializable, ColumnTabulation {
             }
 */
 
-            List resultObjects = new ArrayList<>();
+            Set resultObjects = new HashSet<>();
             Collection<?> expressionObjects = DisplayExpression.rowObjectToExpressionObject(
                     entity,
                     getDisplayExpression().getExpressionClass(),

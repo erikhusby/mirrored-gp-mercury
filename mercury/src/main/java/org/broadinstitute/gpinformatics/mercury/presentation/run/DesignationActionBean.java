@@ -332,10 +332,8 @@ public class DesignationActionBean extends CoreActionBean implements Designation
                 }
                 loadingTubeToControl.putAll(loadingTube, controls);
             }
-            if (startingVessels.isEmpty()) {
-                addMessage((CollectionUtils.isEmpty(loadingTubeToLabEvent.get(loadingTube)) ?
-                        "No denature, norm, or pooling event found for " :
-                        "No bucketed starting vessels found for ") + loadingTube.getLabel());
+            if (CollectionUtils.isEmpty(loadingTubeToLabEvent.get(loadingTube))) {
+                addMessage("No denature, norm, or pooling event found for " + loadingTube.getLabel());
             }
         }
 

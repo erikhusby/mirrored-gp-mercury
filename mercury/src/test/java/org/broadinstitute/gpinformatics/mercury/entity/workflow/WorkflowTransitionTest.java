@@ -99,6 +99,21 @@ public class WorkflowTransitionTest extends Arquillian {
     }
 
     @Test
+    public void testHandleMultipleLabEventNodes() throws Exception {
+        String sourceRackBarcode = "InPlatingSource" + timestampFormat.format(new Date());
+        String destPlateBarcode = "InPlatingPicoPlate" + timestampFormat.format(new Date());
+        List<String> sourceTubeBarcodes = Arrays.asList("1125699249"); //Crsp plating tube
+        PlateTransferEventType plateTransferEventType = bettaLimsMessageTestFactory.buildRackToPlate(
+                LabEventType.PICO_TRANSFER.getName(), sourceRackBarcode, sourceTubeBarcodes,
+                destPlateBarcode);
+        BettaLIMSMessage message = new BettaLIMSMessage();
+        message.getPlateTransferEvent().add(plateTransferEventType);
+        List<LabEvent> labEvents = labEventFactory.buildFromBettaLims(message);
+        LabEvent labEvent = labEvents.get(0);
+        jiraCommentUtil.postUpdate(labEvent);
+    }
+
+    @Test
     public void testAutomatedDaughterShouldTransitionToInPlating() throws IOException {
         Assert.assertEquals(genomeIssue.getStatus(), "On Hold");
         genomeIssue.postTransition("Ready for Plating", null);

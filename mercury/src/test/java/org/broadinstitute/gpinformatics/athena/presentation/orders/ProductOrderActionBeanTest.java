@@ -23,7 +23,6 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
-import org.broadinstitute.gpinformatics.athena.entity.products.ProductTestUtils;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo_;
@@ -36,7 +35,17 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
+import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFunding;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
@@ -91,15 +100,19 @@ public class ProductOrderActionBeanTest {
     public static final long BSP_INFORMATICS_TEST_SITE_ID = 1l;
     public static final long HOMO_SAPIENS = 1l;
     public static final long TEST_COLLECTION = 1062L;
-    private PriceListCache mockPriceListCache;
+    private PriceListCache priceListCache;
+
+    private QuoteService mockQuoteService;
 
 
     @BeforeMethod
     private void setUp() {
         actionBean = new ProductOrderActionBean();
         actionBean.setContext(new CoreActionBeanContext());
-        mockPriceListCache = Mockito.mock(PriceListCache.class);
-        actionBean.setPriceListCache(mockPriceListCache);
+
+        mockQuoteService = Mockito.mock(QuoteServiceImpl.class);
+        priceListCache = new PriceListCache(mockQuoteService);
+        actionBean.setPriceListCache(priceListCache);
 
         jsonObject = new JSONObject();
         pdo = newPdo();
@@ -718,7 +731,15 @@ public class ProductOrderActionBeanTest {
         assertThat(pdo.getSkipRegulatoryReason(), not(isEmptyOrNullString()));
     }
 
-    public void testValueOfOrder() {
+    public void testValueOfOrder() throws Exception {
+
+        final FundingLevel fundingLevel = new FundingLevel();
+        Funding funding = new Funding(Funding.FUNDS_RESERVATION, "test", "c333");
+        fundingLevel.setFunding(funding);
+        Collection<FundingLevel> fundingLevelCollection = Collections.singleton(fundingLevel);
+        QuoteFunding quoteFunding = new QuoteFunding(fundingLevelCollection);
+        final String testQuoteIdentifier = "testQuote";
+        Quote testQuote = new Quote(testQuoteIdentifier, quoteFunding, ApprovalStatus.FUNDED);
 
         Product primaryProduct = new Product();
         primaryProduct.setPartNumber("P-Test_primary");
@@ -730,8 +751,20 @@ public class ProductOrderActionBeanTest {
         ProductOrder testOrder = new ProductOrder();
         testOrder.setJiraTicketKey("PDO-TESTPDOValue");
         testOrder.setProduct(primaryProduct);
+        testOrder.setQuoteId(testQuoteIdentifier);
 
-        ProductTestUtils.addToMockPriceListCache(testOrder.getProduct(), mockPriceListCache, "1000");
+        PriceList priceList = new PriceList();
+        Collection<QuoteItem> quoteItems = new HashSet<>();
+
+        priceList.add(new QuotePriceItem(testOrder.getProduct().getPrimaryPriceItem().getCategory(),
+                testOrder.getProduct().getPrimaryPriceItem().getName(),
+                testOrder.getProduct().getPrimaryPriceItem().getName(), "2000", "test",
+                testOrder.getProduct().getPrimaryPriceItem().getPlatform()));
+
+        quoteItems.add(new QuoteItem(testQuoteIdentifier,testOrder.getProduct().getPrimaryPriceItem().getName(),
+                testOrder.getProduct().getPrimaryPriceItem().getName(),"2000", "1000","each",
+                testOrder.getProduct().getPrimaryPriceItem().getPlatform(),
+                testOrder.getProduct().getPrimaryPriceItem().getCategory()));
 
         Product addonNonSeqProduct = new Product();
         addonNonSeqProduct.setPartNumber("ADD-NON-SEQ");
@@ -739,7 +772,16 @@ public class ProductOrderActionBeanTest {
                 "secondary testing size", "Extraction price"));
         addonNonSeqProduct.setProductFamily(new ProductFamily(ProductFamily.ProductFamilyInfo.ALTERNATE_LIBRARY_PREP_DEVELOPMENT.getFamilyName()));
 
-        ProductTestUtils.addToMockPriceListCache(addonNonSeqProduct, mockPriceListCache, "573");
+        priceList.add(new QuotePriceItem(addonNonSeqProduct.getPrimaryPriceItem().getCategory(),
+                addonNonSeqProduct.getPrimaryPriceItem().getName(),
+                addonNonSeqProduct.getPrimaryPriceItem().getName(), "1573", "test",
+                addonNonSeqProduct.getPrimaryPriceItem().getPlatform()));
+        quoteItems.add(new QuoteItem(testQuoteIdentifier,addonNonSeqProduct.getPrimaryPriceItem().getName(),
+                addonNonSeqProduct.getPrimaryPriceItem().getName(),"2000", "573","each",
+                addonNonSeqProduct.getPrimaryPriceItem().getPlatform(),
+                addonNonSeqProduct.getPrimaryPriceItem().getCategory()));
+
+
         testOrder.updateAddOnProducts(Collections.singletonList(addonNonSeqProduct));
 
         List<ProductOrderSample> sampleList = new ArrayList<>();
@@ -758,21 +800,64 @@ public class ProductOrderActionBeanTest {
                 "Put it on the sequencer"));
         seqProduct.setProductFamily(new ProductFamily(ProductFamily.ProductFamilyInfo.SEQUENCE_ONLY.getFamilyName()));
 
-        ProductTestUtils.addToMockPriceListCache(seqProduct, mockPriceListCache, "2500");
+        priceList.add(new QuotePriceItem(seqProduct.getPrimaryPriceItem().getCategory(),
+                seqProduct.getPrimaryPriceItem().getName(),
+                seqProduct.getPrimaryPriceItem().getName(), "3500", "test",
+                seqProduct.getPrimaryPriceItem().getPlatform()));
 
-        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder)),
+        quoteItems.add(new QuoteItem(testQuoteIdentifier,seqProduct.getPrimaryPriceItem().getName(),
+                seqProduct.getPrimaryPriceItem().getName(),"2000", "2500","each",
+                seqProduct.getPrimaryPriceItem().getPlatform(),
+                seqProduct.getPrimaryPriceItem().getCategory()));
+
+        Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
+        Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuoteIdentifier)).thenReturn(testQuote);
+
+        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote),
+                Double.valueOf(1573 * testOrder.getSamples().size() + 2000 * testOrder.getSamples().size()));
+        testQuote.setQuoteItems(quoteItems);
+
+        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote),
                 Double.valueOf(573 * testOrder.getSamples().size() + 1000 * testOrder.getSamples().size()));
 
         testOrder.updateAddOnProducts(Arrays.asList(addonNonSeqProduct, seqProduct));
 
-        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder)),
+        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote),
                 Double.valueOf(573 * testOrder.getSamples().size() + 1000 * testOrder.getSamples().size() + 2500 * testOrder.getLaneCount()));
 
         testOrder.setProduct(seqProduct);
 
-        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder)),
+        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote),
                 Double.valueOf(573 * testOrder.getSamples().size() + 2500 * testOrder.getLaneCount() + 2500 * testOrder.getLaneCount()));
 
+        Assert.assertEquals(testOrder.getUnbilledSampleCount(), 75);
+        ProductOrderSample abandonedSample = testOrder.getSamples().get(0);
+        abandonedSample.setDeliveryStatus(ProductOrderSample.DeliveryStatus.ABANDONED);
+
+        Assert.assertEquals(testOrder.getUnbilledSampleCount(), 74);
+        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote),
+                Double.valueOf(573 * (testOrder.getSamples().size()-1) + 2500 * testOrder.getLaneCount() + 2500 * testOrder.getLaneCount()));
+
+
+        ProductOrder testChildOrder = new ProductOrder();
+        testChildOrder.setJiraTicketKey("PDO-ChildTestValue");
+
+        testChildOrder.setSamples(Collections.singletonList(new ProductOrderSample("SM-TestChild1")));
+        testOrder.addChildOrder(testChildOrder);
+
+        Assert.assertEquals(testChildOrder.getUnbilledSampleCount(), 1);
+        Assert.assertEquals(testOrder.getUnbilledSampleCount(), 74);
+
+        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote),
+                Double.valueOf((573 * (testOrder.getSamples().size() -1) + 2500 * testOrder.getLaneCount() + 2500 * testOrder.getLaneCount()
+                )));
+
+        testChildOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+
+        Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote),
+                Double.valueOf((573 * (testOrder.getSamples().size() -1) + 2500 * testOrder.getLaneCount() + 2500 * testOrder.getLaneCount()
+                                + 573 * testChildOrder.getSamples().size()
+                )));
 
     }
 

@@ -63,7 +63,7 @@ public class WorkflowConfigEtl extends GenericEntityEtl<WorkflowConfig, Object> 
 
     // Ignores revIds param and does an etl of workflow config if the current version has changed since last etl.
     @Override
-    public int doEtl(Set<Long> revIds, String etlDateStr) {
+    public int doIncrementalEtl(Set<Long> revIds, String etlDateStr) {
         // Does nothing if no change in WorkflowConfig, indicated by the hash.
         HashMatchResult res = hashesMatch();
         if (res.isMatch) {
@@ -81,7 +81,7 @@ public class WorkflowConfigEtl extends GenericEntityEtl<WorkflowConfig, Object> 
 
     // Ignores the id range and does an unconditional etl of workflow config.
     @Override
-    public int doEtl(Class requestedClass, long startId, long endId, String etlDateStr) {
+    public int doBackfillEtl(Class requestedClass, long startId, long endId, String etlDateStr) {
         // No-op unless the implementing class is the requested entity class.
         if (!entityClass.equals(requestedClass)) {
             return 0;

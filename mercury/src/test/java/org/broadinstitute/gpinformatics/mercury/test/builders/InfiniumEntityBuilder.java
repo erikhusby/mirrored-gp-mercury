@@ -195,20 +195,20 @@ public class InfiniumEntityBuilder {
         }
 
         int i = 0;
-        for (PlateEventType plateEventType : infiniumJaxbBuilder.getInfiniumPostHybridizationHybOvenLoadedJaxbs()) {
-            LabEventTest.validateWorkflow("InfiniumPostHybridizationHybOvenLoaded", hybChips.get(i));
-            LabEvent hybridizationHybOvenLoadedEvent = labEventFactory.buildFromBettaLimsPlateEventDbFree(plateEventType,
-                    hybChips.get(i));
-            labEventHandler.processEvent(hybridizationHybOvenLoadedEvent);
-            i++;
-        }
-
-        i = 0;
         for (PlateEventType plateEventType : infiniumJaxbBuilder.getInfiniumHybChamberLoadedJaxbs()) {
             LabEventTest.validateWorkflow("InfiniumHybChamberLoaded", hybChips.get(i));
             LabEvent hybChamberLoadedEvent = labEventFactory.buildFromBettaLimsPlateEventDbFree(plateEventType,
                     hybChips.get(i));
             labEventHandler.processEvent(hybChamberLoadedEvent);
+            i++;
+        }
+
+        i = 0;
+        for (PlateEventType plateEventType : infiniumJaxbBuilder.getInfiniumPostHybridizationHybOvenLoadedJaxbs()) {
+            LabEventTest.validateWorkflow("InfiniumPostHybridizationHybOvenLoaded", hybChips.get(i));
+            LabEvent hybridizationHybOvenLoadedEvent = labEventFactory.buildFromBettaLimsPlateEventDbFree(plateEventType,
+                    hybChips.get(i));
+            labEventHandler.processEvent(hybridizationHybOvenLoadedEvent);
             i++;
         }
 

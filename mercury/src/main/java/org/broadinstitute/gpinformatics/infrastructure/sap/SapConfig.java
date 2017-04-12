@@ -18,6 +18,10 @@ public class SapConfig extends AbstractConfig implements LoginAndPassword, Seria
     private String login;
     private String password;
 
+    private String sapShortCloseRecipientEmail;
+
+    private String sapShortCloseEmailSubject;
+
     public SapConfig(){}
 
     @Inject
@@ -45,5 +49,20 @@ public class SapConfig extends AbstractConfig implements LoginAndPassword, Seria
 
     public static SapConfig produce(Deployment deployment) {
         return produce(SapConfig.class, deployment);
+    }
+    public String getSapShortCloseRecipientEmail() {
+        return sapShortCloseRecipientEmail;
+    }
+
+    public void setSapShortCloseRecipientEmail(String sapShortCloseRecipientEmail) {
+        this.sapShortCloseRecipientEmail = sapShortCloseRecipientEmail;
+    }
+
+    public String getSapShortCloseEmailSubject() {
+        return sapShortCloseEmailSubject;
+    }
+
+    public void setSapShortCloseEmailSubject(String sapShortCloseEmailSubject) {
+        this.sapShortCloseEmailSubject = sapShortCloseEmailSubject;
     }
 }

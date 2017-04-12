@@ -213,6 +213,19 @@ public class SampleMetadataFixupTest extends Arquillian {
     }
 
     /**
+     * Samples were mixed up before receipt at The Broad.
+     */
+    @Test(enabled = false)
+    public void testCrsp475Mixup() throws Exception {
+        Map<String, MetaDataFixupItem> fixupItems = new HashMap<>();
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-CEMYY", Metadata.Key.PATIENT_ID, "CP-7596", "CP-7595"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-CEMYZ", Metadata.Key.PATIENT_ID, "CP-7595", "CP-7596"));
+
+        String fixupComment = "see https://gpinfojira.broadinstitute.org:8443/jira/browse/CRSP-475";
+        updateMetadataAndValidate(fixupItems, fixupComment);
+    }
+
+    /**
      * Perform actual fixup and validate.
      */
     private void updateMetadataAndValidate(@Nonnull Map<String, MetaDataFixupItem> fixupItems,

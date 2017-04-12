@@ -492,8 +492,8 @@ public abstract class TransferTraverserCriteria {
 
             if (context.getContextVessel() != null) {
                 vesselList.add(context.getContextVessel());
-            } else {
-                vesselList.addAll(context.getVesselEvent().getLabEvent().getTargetLabVessels());
+            } else if (context.getContextVesselContainer() != null) {
+                vesselList.add(context.getContextVesselContainer().getEmbedder());
             }
             labVesselAtHopCount.put(context.getHopCount(), vesselList);
 
@@ -534,9 +534,8 @@ public abstract class TransferTraverserCriteria {
 
             if ( context.getContextVessel() != null ) {
                 vesselList.add(context.getContextVessel());
-            } else {
-                // No source vessels, use target vessels(?)
-                vesselList.addAll(context.getVesselEvent().getLabEvent().getTargetLabVessels());
+            } else if (context.getContextVesselContainer() != null) {
+                vesselList.add(context.getContextVesselContainer().getEmbedder());
             }
             labVesselAtHopCount.put(context.getHopCount(), vesselList);
 

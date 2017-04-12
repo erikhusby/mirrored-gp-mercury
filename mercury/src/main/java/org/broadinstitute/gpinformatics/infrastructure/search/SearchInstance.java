@@ -774,6 +774,13 @@ public class SearchInstance implements Serializable {
      */
     private Map<String,Boolean> traversalEvaluatorValues = new HashMap<>();
 
+    /**
+     * Should a custom ancestor/descendant traversal be enlisted?
+     */
+    private String customTraversalOptionName;
+
+    private boolean excludeInitialEntitiesFromResults = false;
+
     private boolean isDbSortable = true;
 
     private int pageSize;
@@ -1189,6 +1196,22 @@ public class SearchInstance implements Serializable {
 
     public Map<String,Boolean> getTraversalEvaluatorValues(){
         return traversalEvaluatorValues;
+    }
+
+    public String getCustomTraversalOptionName(){
+        return customTraversalOptionName==null?"none":customTraversalOptionName;
+    }
+
+    public void setCustomTraversalOptionName(String name){
+        this.customTraversalOptionName = name;
+    }
+
+    public boolean getExcludeInitialEntitiesFromResults(){
+        return excludeInitialEntitiesFromResults;
+    }
+
+    public void setExcludeInitialEntitiesFromResults( boolean excludeInitialEntitiesFromResults ) {
+        this.excludeInitialEntitiesFromResults = excludeInitialEntitiesFromResults;
     }
 
     public void setPageSize( int pageSize ) {
