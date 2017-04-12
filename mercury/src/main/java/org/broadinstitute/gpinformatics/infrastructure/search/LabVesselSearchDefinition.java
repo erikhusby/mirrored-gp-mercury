@@ -1880,14 +1880,14 @@ public class LabVesselSearchDefinition {
         searchTerm.setName("Tecan Robot");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public List<String> evaluate(Object entity, SearchContext context) {
+            public Set<String> evaluate(Object entity, SearchContext context) {
                 LabVessel vessel = (LabVessel)entity;
                 TransferTraverserCriteria.VesselForEventTypeCriteria traverserCriteria =
                         new TransferTraverserCriteria.VesselForEventTypeCriteria(Collections.singletonList(
                                 LabEventType.INFINIUM_XSTAIN), true);
                 vessel.evaluateCriteria(traverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
 
-                List<String> result = new ArrayList<>();
+                Set<String> result = new HashSet<>();
                 for (LabEvent labEvent : traverserCriteria.getVesselsForLabEventType().keySet()) {
                     result.add(labEvent.getEventLocation());
                 }
