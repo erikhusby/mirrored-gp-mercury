@@ -106,7 +106,5 @@ public interface SampleData {
 
     Boolean getFfpeStatus();
 
-    String getSpecies();
-
     MercurySample.MetadataSource getMetadataSource();
 }

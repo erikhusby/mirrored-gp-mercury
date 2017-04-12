@@ -338,9 +338,6 @@ public class MercurySampleData implements SampleData {
     }
 
     @Override
-    public String getSpecies() { return species; }
-
-    @Override
     public String getSampleType() {
         return tumorNormal;
     }

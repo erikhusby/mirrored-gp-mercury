@@ -103,7 +103,6 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
 
     private SampleInstanceEntity sampleInstanceEntity;
     private int depth;
-    private boolean sampleInstanceFlag = false;
     private List<String> devConditions = new ArrayList<>();
     private TZDevExperimentData tzDevExperimentData;
     /**
@@ -591,24 +590,25 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
     }
 
 
-    public void mergeRootSamples(MercurySample mercurySample)
+    private void mergeRootSamples(MercurySample mercurySample)
     {
-        if(mercurySample != null)
-         this.rootMercurySamples.add(mercurySample);
+        if(mercurySample != null) {
+            this.rootMercurySamples.add(mercurySample);
+        }
     }
 
 
-    public void mergeMolecularIndex(MolecularIndexingScheme molecularIndexingScheme)
+    private void mergeMolecularIndex(MolecularIndexingScheme molecularIndexingScheme)
     {
         this.molecularIndexingScheme = molecularIndexingScheme;
     }
 
-    public void mergeReagents(Set<DesignedReagent> reagents)
+    private void mergeReagents(Set<DesignedReagent> reagents)
     {
-        reagents.addAll(reagents);
+        this.reagents.addAll(reagents);
     }
 
-    public void mergeDevConditions(String experimentName, List<String> subTasks)
+    private void mergeDevConditions(String experimentName, List<String> subTasks)
     {
         devConditions.addAll(subTasks);
         tzDevExperimentData = new TZDevExperimentData(experimentName,subTasks);
@@ -671,7 +671,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
         return true;
     }
 
-    public SampleInstanceEntity getSampleInstanceEntity() {
+    private SampleInstanceEntity getSampleInstanceEntity() {
         return sampleInstanceEntity;
     }
 

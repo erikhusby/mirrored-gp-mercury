@@ -372,15 +372,12 @@ public class ZimsIlluminaRunFactory {
                     baitName, indexingSchemeEntity, catNames, sampleInstanceDto.getSampleInstance().getWorkflowName(),
                     indexingSchemeDto, mapNameToControl, sampleInstanceDto.getPdoSampleName(),
                     sampleInstanceDto.isCrspLane(), sampleInstanceDto.getMetadataSourceForPipelineAPI(), analysisTypes,
-                    referenceSequenceKeys, aggregationDataTypes, positiveControlResearchProjects, insertSizes, devExperimentData, sampleData.getSpecies(), sampleData.getSampleLsid()) );
+                    referenceSequenceKeys, aggregationDataTypes, positiveControlResearchProjects, insertSizes, devExperimentData, sampleData.getOrganism(), sampleData.getSampleLsid()) );
         }
 
         // Make order predictable.  Include library name because for ICE there are 8 ancestor catch tubes, all with
         // the same samples.  We must tell the pipeline the same library name when they ask multiple times.
         Collections.sort(libraryBeans, LibraryBean.BY_SAMPLE_ID_LIBRARY);
-
-        // Consolidates beans that have the same consolidation key.
-        MolecularIndexingScheme molecularIndexingScheme = new MolecularIndexingScheme();
 
         SortedSet<String> previouslySeenSampleAndMis = new TreeSet<>();
         for (Iterator<LibraryBean> iter = libraryBeans.iterator(); iter.hasNext(); ) {
