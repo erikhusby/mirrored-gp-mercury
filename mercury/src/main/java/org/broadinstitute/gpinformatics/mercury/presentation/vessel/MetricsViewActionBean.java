@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.vessel;
 
+import com.google.common.collect.Sets;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
@@ -284,7 +285,7 @@ public class MetricsViewActionBean extends CoreActionBean {
         Set<ProductOrder> productOrders = barcodeToProductOrders.get(staticPlate.getLabel());
         GenotypingChip genotypingChip = barcodeToGenotypingChip.get(staticPlate.getLabel());
         boolean isClinical = barcodeToIsClinical.get(staticPlate.getLabel());
-
+        Set<String> allPositionNames = Sets.newHashSet(staticPlate.getVesselGeometry().getPositionNames());
         Set<LabEvent> hybEvents = new HashSet<>();
         if (staticPlate.getVesselGeometry().name().contains("CHIP")) {
             chips.add(staticPlate);
@@ -339,6 +340,7 @@ public class MetricsViewActionBean extends CoreActionBean {
         }
 
         // Call Rate threshold depends on the Genotyping Chip
+        int passingCallRateThreshold = 98;
         List<Options> callRateOptions = null;
         if (chipTypes.size() == 1 && genotypingChip != null) {
             Map<String, String> chipAttributes = genotypingChip.getAttributeMap();
@@ -359,7 +361,7 @@ public class MetricsViewActionBean extends CoreActionBean {
 
             if (chipAttributes.containsKey("call_rate_threshold")) {
                 String call_rate_threshold = chipAttributes.get("call_rate_threshold");
-                int passingCallRateThreshold = Integer.parseInt(call_rate_threshold);
+                passingCallRateThreshold = Integer.parseInt(call_rate_threshold);
                 int warningCallRateThreshold = passingCallRateThreshold - 3;
                 String passingLegendLabel = String.format(">= %d", passingCallRateThreshold);
                 String warningLegendLabel = String.format(">= %d", warningCallRateThreshold);
@@ -412,6 +414,7 @@ public class MetricsViewActionBean extends CoreActionBean {
             plateMap.getDatasets().add(wellDataset);
         }
 
+        int wellsPassingCallRate = 0;
         for(ArraysQc arraysQc: arraysQcList) {
             String chipWellbarcode = arraysQc.getChipWellBarcode();
             String startPosition = chipWellToSourcePosition.get(chipWellbarcode);
@@ -437,11 +440,14 @@ public class MetricsViewActionBean extends CoreActionBean {
             }
 
             // Call Rate
-            String value = ColumnValueType.TWO_PLACE_DECIMAL.format(
-                    arraysQc.getCallRate().multiply(BigDecimal.valueOf(100)), "");
+            BigDecimal callRate = arraysQc.getCallRate().multiply(BigDecimal.valueOf(100));
+            String value = ColumnValueType.TWO_PLACE_DECIMAL.format(callRate, "");
             WellDataset wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.CALL_RATE);
             wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
             wellDataset.setOptions(callRateOptions);
+            if (callRate.intValue() >= passingCallRateThreshold) {
+                wellsPassingCallRate++;
+            }
 
             // FP Gender
             value = String.valueOf(arraysQc.getFpGender());
@@ -517,6 +523,23 @@ public class MetricsViewActionBean extends CoreActionBean {
             }
 
         }
+
+        //Plate Metadata
+        int positionsScanned = arraysQcList.size();
+        int totalPositions = chipWellToSourcePosition.size();
+        float percent = 100 * ((float) positionsScanned / totalPositions);
+        String percentScanned = String.format("%.1f%% (%d of %d)", percent, positionsScanned, totalPositions);
+        plateMap.getPlateMetadata().add(Metadata.create("Percent Scanned", percentScanned));
+
+        float percentWellsPassing = 100 * ((float) wellsPassingCallRate / totalPositions);
+        String percentWellsPassingString = String.format("%.1f%% (%d of %d)",
+                percentWellsPassing, wellsPassingCallRate, totalPositions);
+        String percentWellsPassingKey = String.format("Call Rate >= %d%%", passingCallRateThreshold);
+        plateMap.getPlateMetadata().add(Metadata.create(percentWellsPassingKey, percentWellsPassingString));
+
+        allPositionNames.removeAll(chipWellToSourcePosition.values());
+        plateMap.setEmptyWells(allPositionNames);
+
         return plateMap;
     }
 
@@ -576,6 +599,8 @@ public class MetricsViewActionBean extends CoreActionBean {
     public class PlateMap {
         private List<WellDataset> datasets;
         private String label;
+        private List<Metadata> plateMetadata;
+        private Set<String> emptyWells;
 
         public List<WellDataset> getDatasets() {
             if (datasets == null) {
@@ -587,6 +612,29 @@ public class MetricsViewActionBean extends CoreActionBean {
         public void setDatasets(
                 List<WellDataset> datasets) {
             this.datasets = datasets;
+        }
+
+        public List<Metadata> getPlateMetadata() {
+            if (plateMetadata == null) {
+                plateMetadata = new ArrayList<>();
+            }
+            return plateMetadata;
+        }
+
+        public void setPlateMetadata(
+                List<Metadata> plateMetadata) {
+            this.plateMetadata = plateMetadata;
+        }
+
+        public Set<String> getEmptyWells() {
+            if (emptyWells == null) {
+                emptyWells = new HashSet<>();
+            }
+            return emptyWells;
+        }
+
+        public void setEmptyWells(Set<String> emptyWells) {
+            this.emptyWells = emptyWells;
         }
 
         public String getLabel() {
