@@ -7,6 +7,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingChipMapping;
@@ -321,19 +322,24 @@ public class ProductEjb {
         Set<String> errorMessages = new HashSet<>();
         SAPAccessControl control = accessController.getCurrentControlDefinitions();
         for (Product productToPublish : productsToPublish) {
-            if(!CollectionUtils.containsAll(control.getDisabledFeatures(),
-                                            Collections.singleton(productToPublish.getPrimaryPriceItem().getName()))
+            if(!CollectionUtils.containsAll(control.getDisabledItems(),
+                                            Collections.singleton(new AccessItem(productToPublish.getPrimaryPriceItem().getName())))
                     && control.isEnabled()) {
-                try {
-                    if (productToPublish.isSavedInSAP()) {
-                        sapService.changeProductInSAP(productToPublish);
-                    } else {
-                        sapService.createProductInSAP(productToPublish);
-                    }
-                    productToPublish.setSavedInSAP(true);
+                if (!productToPublish.isExternalOnlyProduct()) {
+                    try {
+                        if (productToPublish.isSavedInSAP()) {
+                            sapService.changeProductInSAP(productToPublish);
+                        } else {
+                            sapService.createProductInSAP(productToPublish);
+                        }
+                        productToPublish.setSavedInSAP(true);
 
-                } catch (SAPIntegrationException e) {
-                    errorMessages.add(e.getMessage());
+                    } catch (SAPIntegrationException e) {
+                        errorMessages.add(e.getMessage());
+                    }
+                } else {
+                    errorMessages.add(productToPublish.getName() + " Cannot be published to SAP since it is either a "
+                                      + "Clinical or Commercial product");
                 }
             } else {
                 errorMessages.add(productToPublish.getName() +

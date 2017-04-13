@@ -394,10 +394,10 @@ public class ProductOrderTest {
 
         final String sapOrderNumber = "SAP_001";
         final SapOrderDetail orderDetail1 = new SapOrderDetail(sapOrderNumber, 5, QUOTE,
-                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode());
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(), "", "");
         orderDetail1.getUpdateData().setCreatedDate(new Date());
         final SapOrderDetail orderDetail2 = new SapOrderDetail(sapOrderNumber + "2", 5, QUOTE,
-                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode());
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(), "", "");
         orderDetail2.getUpdateData().setCreatedDate(new Date());
         testProductOrder.addSapOrderDetail(orderDetail1);
 
@@ -409,7 +409,7 @@ public class ProductOrderTest {
         assertThat(testProductOrder.getSapOrderNumber(), is(equalTo(sapOrderNumber+"2")));
     }
 
-    private void billSampleOut(ProductOrder productOrder, ProductOrderSample sample, int expected) {
+    public static void billSampleOut(ProductOrder productOrder, ProductOrderSample sample, int expected) {
 
         LedgerEntry primaryItemSampleEntry = new LedgerEntry(sample,
                 productOrder.getProduct().getPrimaryPriceItem(), new Date(), /*productOrder.getProduct(),*/ 1);

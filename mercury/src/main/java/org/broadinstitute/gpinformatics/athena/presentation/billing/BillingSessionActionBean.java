@@ -31,6 +31,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
@@ -201,7 +202,7 @@ public class BillingSessionActionBean extends CoreActionBean {
         }
     }
 
-    public List<QuoteImportItem> getQuoteImportItems() {
+    public List<QuoteImportItem> getQuoteImportItems() throws QuoteServerException {
         return editSession.getQuoteImportItems(priceListCache);
     }
 

@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.sap;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
@@ -11,9 +11,11 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFunding;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl;
@@ -28,8 +30,10 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -51,6 +55,7 @@ public class SapIntegrationServiceImplDBFreeTest {
     public Quote testSingleSourceFRQuote;
     public SapIntegrationServiceImpl integrationService;
     public QuoteService mockQuoteService;
+    public PriceListCache priceListCache;
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -67,6 +72,7 @@ public class SapIntegrationServiceImplDBFreeTest {
         QuoteFunding quoteFunding = new QuoteFunding(Collections.singleton(fundingLevel));
 
         testSingleSourceQuote = new Quote(SINGLE_SOURCE_PO_QUOTE_ID, quoteFunding, ApprovalStatus.FUNDED);
+        testSingleSourceQuote.setExpired(Boolean.FALSE);
 
         Funding costObjectFundingDefined = new Funding(Funding.FUNDS_RESERVATION, "to researchStuff", "8823");
         costObjectFundingDefined.setFundsReservationNumber("FR11293");
@@ -74,6 +80,7 @@ public class SapIntegrationServiceImplDBFreeTest {
         QuoteFunding costObjectQFunding = new QuoteFunding(Collections.singleton(coFundingLevel1));
 
         testSingleSourceFRQuote = new Quote(SINGLE_SOURCE_FUND_RES_QUOTE_ID, costObjectQFunding, ApprovalStatus.FUNDED);
+        testSingleSourceFRQuote.setExpired(Boolean.FALSE);
 
         Funding test3POFundingDefined = new Funding(Funding.PURCHASE_ORDER,null, null);
         test3POFundingDefined.setPurchaseOrderContact(testUser);
@@ -89,6 +96,7 @@ public class SapIntegrationServiceImplDBFreeTest {
                 Arrays.asList(new FundingLevel[]{test3PurchaseOrderFundingLevel,test3PO2FundingLevel}));
 
         testMultipleLevelQuote = new Quote(MULTIPLE_SOURCE_QUOTE_ID, test3Funding, ApprovalStatus.FUNDED);
+        testMultipleLevelQuote.setExpired(Boolean.FALSE);
 
         mockQuoteService = Mockito.mock(QuoteServiceImpl.class);
         Mockito.when(mockQuoteService.getQuoteByAlphaId(testSingleSourceQuote.getAlphanumericId())).thenReturn(testSingleSourceQuote);
@@ -108,12 +116,9 @@ public class SapIntegrationServiceImplDBFreeTest {
 
         integrationService.setWrappedClient(mockIntegrationClient);
 
-        PriceListCache mockPriceListCache = Mockito.mock(PriceListCache.class);
-        QuotePriceItem testQuotePriceItem = new QuotePriceItem();
-        testQuotePriceItem.setPrice("30.50");
-        Mockito.when(mockPriceListCache.findByKeyFields(Mockito.any(PriceItem.class))).thenReturn(testQuotePriceItem);
+        priceListCache = new PriceListCache(mockQuoteService);
 
-        integrationService.setPriceListCache(mockPriceListCache);
+        integrationService.setPriceListCache(priceListCache);
     }
 
 
@@ -125,10 +130,38 @@ public class SapIntegrationServiceImplDBFreeTest {
     @Test(enabled = true)
     public void testInitializeSAPOrder() throws Exception {
 
+        PriceList priceList = new PriceList();
+        Collection<QuoteItem> quoteItems = new HashSet<>();
+
         String jiraTicketKey= "PDO-SAP-test";
         ProductOrder conversionPdo = ProductOrderTestFactory.createDummyProductOrder(10, jiraTicketKey);
         conversionPdo.setQuoteId(testSingleSourceQuote.getAlphanumericId());
 
+        priceList.add(new QuotePriceItem(conversionPdo.getProduct().getPrimaryPriceItem().getCategory(),
+                conversionPdo.getProduct().getPrimaryPriceItem().getName(),
+                conversionPdo.getProduct().getPrimaryPriceItem().getName(), "50.50", "test",
+                conversionPdo.getProduct().getPrimaryPriceItem().getPlatform()));
+        quoteItems.add(new QuoteItem(testSingleSourceQuote.getAlphanumericId(),
+                conversionPdo.getProduct().getPrimaryPriceItem().getName(),
+                conversionPdo.getProduct().getPrimaryPriceItem().getName(), "10", "30.50", "test",
+                conversionPdo.getProduct().getPrimaryPriceItem().getPlatform(),
+                conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
+
+        for (ProductOrderAddOn addOn : conversionPdo.getAddOns()) {
+            priceList.add(new QuotePriceItem(addOn.getAddOn().getPrimaryPriceItem().getCategory(),
+                    addOn.getAddOn().getPrimaryPriceItem().getName(),
+                    addOn.getAddOn().getPrimaryPriceItem().getName(), "40.50", "test",
+                    addOn.getAddOn().getPrimaryPriceItem().getPlatform()));
+
+            quoteItems.add(new QuoteItem(testSingleSourceQuote.getAlphanumericId(),
+                    addOn.getAddOn().getPrimaryPriceItem().getName(),
+                    addOn.getAddOn().getPrimaryPriceItem().getName(), "10", "20.50", "test",
+                    addOn.getAddOn().getPrimaryPriceItem().getPlatform(),
+                    addOn.getAddOn().getPrimaryPriceItem().getCategory()));
+        }
+
+        Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
+        testSingleSourceQuote.setQuoteItems(quoteItems);
         Map<String, SampleData> mockReturnValue = new HashMap<>();
 
         for (ProductOrderSample currentSample:conversionPdo.getSamples()) {
@@ -158,6 +191,11 @@ public class SapIntegrationServiceImplDBFreeTest {
 
         for(SAPOrderItem item:convertedOrder.getOrderItems()) {
             assertThat(item.getSampleCount(), equalTo(conversionPdo.getSamples().size()));
+            if(item.getProductIdentifier().equals(conversionPdo.getProduct().getPartNumber())) {
+                assertThat(item.getProductPrice(), equalTo("30.50"));
+            } else {
+                assertThat(item.getProductPrice(), equalTo("20.50"));
+            }
         }
     }
 

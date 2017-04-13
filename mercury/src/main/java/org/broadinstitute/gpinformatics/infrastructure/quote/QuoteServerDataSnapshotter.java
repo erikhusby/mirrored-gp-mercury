@@ -15,7 +15,7 @@ public class QuoteServerDataSnapshotter {
 
     public static final File PRICE_LIST_FILE = new File("src/test/data/quote/PriceList.xml");
 
-    public static final File QUOTES_FILE = new File("src/test/data/quote/Quotes.xml");
+    public static final File QUOTES_FILE = new File("src/test/data/quote/quoteTestData.xml");
 
     /**
      * Saves the {@link PriceList} generated from
