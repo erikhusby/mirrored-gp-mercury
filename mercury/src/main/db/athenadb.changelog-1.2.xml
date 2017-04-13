@@ -787,21 +787,6 @@
             where JIRA_TICKET_KEY is not null;
         </sql>
     </changeSet>
-    <changeSet id="GPLIM-4652-1" author="scottmat">
-        <createTable tableName="ACCESS_ITEM" schemaName="ATHENA">
-            <column name="id" type="number(19,0)">
-                <constraints nullable="false" primaryKey="true"/>
-            </column>
-            <column name="item_value" type="varchar(255)">
-                <constraints nullable="false" />
-            </column>
-            <column name="access_control" type="number(19,0)">
-                <constraints nullable="false" />
-            </column>
-        </createTable>
-        <createSequence sequenceName="SEQ_ACCESS_CONTROL_ITEM" schemaName="athena" startValue="1" incrementBy="50" />
-    </changeSet>
-
     <changeSet id="GPLIM-4778-1" author="scottmat">
         <addColumn schemaName="athena" tableName="SAP_ORDER_DETAIL">
             <column name="order_products_hash" type="varchar(255)" />
