@@ -445,7 +445,7 @@ function updateFunds(data) {
 
     var quoteWarning = false;
 
-    if (data.fundsRemaining) {
+    if (data.fundsRemaining && !data.error) {
         var fundsRemainingNotification = 'Status: ' + data.status + ' - Funds Remaining: ' + data.fundsRemaining +
                 ' with ' + data.outstandingEstimate + ' unbilled across existing open orders';
         var fundingDetails = data.fundingDetails;

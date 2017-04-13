@@ -726,7 +726,7 @@
     <changeSet author="scottmat" id="GPLIM-4685-1">
         <dropNotNullConstraint tableName="sap_order_detail" columnName="REFERENCE_PRODUCT_ORDER" schemaName="athena"/>
     </changeSet>
-    
+
     <changeSet id="GPLIM-4685-2" author="scottmat">
         <createTable tableName="product_order_sap_orders" schemaName="athena">
             <column name="reference_product_order" type="number(19,0)">
@@ -736,7 +736,7 @@
                 <constraints nullable="false" />
             </column>
         </createTable>
-        
+
         <addForeignKeyConstraint baseTableName="product_order_sap_orders" baseColumnNames="reference_product_order"
                                  constraintName="fk_pdo_sap_to_pdo"
                                  referencedTableName="product_order"
@@ -786,6 +786,35 @@
             join SAP_ORDER_DETAIL_aud sod on sod.REFERENCE_PRODUCT_ORDER = pdo.PRODUCT_ORDER_ID
             where JIRA_TICKET_KEY is not null;
         </sql>
+    </changeSet>
+    <changeSet id="GPLIM-4652-1" author="scottmat">
+        <createTable tableName="ACCESS_ITEM" schemaName="ATHENA">
+            <column name="id" type="number(19,0)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="item_value" type="varchar(255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="access_control" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+        <createSequence sequenceName="SEQ_ACCESS_CONTROL_ITEM" schemaName="athena" startValue="1" incrementBy="50" />
+    </changeSet>
+
+    <changeSet id="GPLIM-4778-1" author="scottmat">
+        <addColumn schemaName="athena" tableName="SAP_ORDER_DETAIL">
+            <column name="order_products_hash" type="varchar(255)" />
+        </addColumn>
+        <addColumn schemaName="athena" tableName="SAP_ORDER_DETAIL">
+            <column name="order_prices_hash" type="varchar(255)" />
+        </addColumn>
+        <addColumn schemaName="athena" tableName="SAP_ORDER_DETAIL_AUD">
+            <column name="order_products_hash" type="varchar(255)" />
+        </addColumn>
+        <addColumn schemaName="athena" tableName="SAP_ORDER_DETAIL_AUD">
+            <column name="order_prices_hash" type="varchar(255)" />
+        </addColumn>
     </changeSet>
 
 </databaseChangeLog>

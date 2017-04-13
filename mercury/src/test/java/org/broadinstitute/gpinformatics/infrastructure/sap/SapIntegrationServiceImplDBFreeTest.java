@@ -75,6 +75,7 @@ public class SapIntegrationServiceImplDBFreeTest {
         QuoteFunding quoteFunding = new QuoteFunding(Collections.singleton(fundingLevel));
 
         testSingleSourceQuote = new Quote(SINGLE_SOURCE_PO_QUOTE_ID, quoteFunding, ApprovalStatus.FUNDED);
+        testSingleSourceQuote.setExpired(Boolean.FALSE);
 
         Funding costObjectFundingDefined = new Funding(Funding.FUNDS_RESERVATION, "to researchStuff", "8823");
         costObjectFundingDefined.setFundsReservationNumber("FR11293");
@@ -82,6 +83,7 @@ public class SapIntegrationServiceImplDBFreeTest {
         QuoteFunding costObjectQFunding = new QuoteFunding(Collections.singleton(coFundingLevel1));
 
         testSingleSourceFRQuote = new Quote(SINGLE_SOURCE_FUND_RES_QUOTE_ID, costObjectQFunding, ApprovalStatus.FUNDED);
+        testSingleSourceFRQuote.setExpired(Boolean.FALSE);
 
         Funding test3POFundingDefined = new Funding(Funding.PURCHASE_ORDER,null, null);
         test3POFundingDefined.setPurchaseOrderContact(testUser);
@@ -97,6 +99,7 @@ public class SapIntegrationServiceImplDBFreeTest {
                 Arrays.asList(new FundingLevel[]{test3PurchaseOrderFundingLevel,test3PO2FundingLevel}));
 
         testMultipleLevelQuote = new Quote(MULTIPLE_SOURCE_QUOTE_ID, test3Funding, ApprovalStatus.FUNDED);
+        testMultipleLevelQuote.setExpired(Boolean.FALSE);
 
         mockQuoteService = Mockito.mock(QuoteServiceImpl.class);
         Mockito.when(mockQuoteService.getQuoteByAlphaId(testSingleSourceQuote.getAlphanumericId())).thenReturn(testSingleSourceQuote);
@@ -202,14 +205,14 @@ public class SapIntegrationServiceImplDBFreeTest {
 
         conversionPdo.addSapOrderDetail(new SapOrderDetail("testsap001", conversionPdo.getTotalNonAbandonedCount(
                 ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY),
-                conversionPdo.getQuoteId(), integrationService.determineCompanyCode(conversionPdo).getCompanyCode()));
+                conversionPdo.getQuoteId(), integrationService.determineCompanyCode(conversionPdo).getCompanyCode(), "", ""));
 
         ProductOrder childOrder = ProductOrder.cloneProductOrder(conversionPdo, false);
         childOrder.setJiraTicketKey("PDO-CLONE1");
 
         childOrder.addSapOrderDetail(new SapOrderDetail("testchildsap001", childOrder.getTotalNonAbandonedCount(
                 ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY),
-                childOrder.getQuoteId(), integrationService.determineCompanyCode(childOrder).getCompanyCode()));
+                childOrder.getQuoteId(), integrationService.determineCompanyCode(childOrder).getCompanyCode(), "", ""));
 
         childOrder.setSamples(ProductOrderSampleTestFactory
                 .createDBFreeSampleList(MercurySample.MetadataSource.BSP,
