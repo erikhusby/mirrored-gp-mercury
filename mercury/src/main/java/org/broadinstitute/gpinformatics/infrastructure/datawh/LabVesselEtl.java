@@ -6,6 +6,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel_;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
@@ -14,6 +16,7 @@ import java.util.Collection;
 
 @Stateful
 @Dependent
+@TransactionManagement(TransactionManagementType.BEAN)
 public class LabVesselEtl extends GenericEntityEtl<LabVessel, LabVessel> {
 
     public LabVesselEtl() {

@@ -19,6 +19,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
@@ -37,6 +39,7 @@ import java.util.TreeSet;
 
 @Stateful
 @Dependent
+@TransactionManagement(TransactionManagementType.BEAN)
 public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     private WorkflowConfigLookup workflowConfigLookup;
     private final Collection<EventFactDto> loggingDtos = new ArrayList<>();
@@ -81,7 +84,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     }
 
     @Override
-    Collection<String> dataRecords(String etlDateStr, boolean isDelete, LabEvent entity) {
+    public Collection<String> dataRecords(String etlDateStr, boolean isDelete, LabEvent entity) {
 
         Collection<String> eventFactRecords = new ArrayList<>();
         try {

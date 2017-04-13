@@ -5,6 +5,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun_;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
@@ -14,6 +16,7 @@ import java.util.Collection;
 
 @Stateful
 @Dependent
+@TransactionManagement(TransactionManagementType.BEAN)
 public class SequencingRunEtl extends GenericEntityEtl<IlluminaSequencingRun, IlluminaSequencingRun> {
 
     public SequencingRunEtl() {

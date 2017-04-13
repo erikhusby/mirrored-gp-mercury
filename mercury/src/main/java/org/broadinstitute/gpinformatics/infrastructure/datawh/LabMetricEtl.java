@@ -9,6 +9,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
@@ -17,6 +19,7 @@ import java.util.*;
 
 @Stateful
 @Dependent
+@TransactionManagement(TransactionManagementType.BEAN)
 public class LabMetricEtl extends GenericEntityEtl<LabMetric, LabMetric> {
     private final Map<String,List<Long>> loggerMessages = new HashMap<>();
     private final String nullVesselKey = "No lab vessel for metric";

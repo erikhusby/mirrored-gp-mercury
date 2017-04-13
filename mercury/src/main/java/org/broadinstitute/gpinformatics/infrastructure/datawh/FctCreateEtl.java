@@ -9,6 +9,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStarting
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel_;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
@@ -23,6 +25,7 @@ import java.util.List;
  */
 @Stateful
 @Dependent
+@TransactionManagement(TransactionManagementType.BEAN)
 public class FctCreateEtl extends GenericEntityEtl<LabBatchStartingVessel,LabBatchStartingVessel> {
 
     FlowcellDesignationEjb flowcellDesignationEjb;

@@ -5,6 +5,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.AbandonVesselPosit
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.AbandonVesselPosition_;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
@@ -14,6 +16,7 @@ import java.util.Collection;
  * ETL AbandonVesselPosition entity into denormalized DW table ABANDON_VESSEL
  */
 @Stateful
+@TransactionManagement(TransactionManagementType.BEAN)
 public class AbandonVesselPositionEtl extends GenericEntityEtl<AbandonVesselPosition, AbandonVesselPosition> {
 
     public AbandonVesselPositionEtl(){}
