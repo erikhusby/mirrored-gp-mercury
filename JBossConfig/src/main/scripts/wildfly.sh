@@ -52,35 +52,39 @@ setOptions() {
 # Start the server
 #
 start() {
-
-    mkdir -p $(dirname $SERVER_CONSOLE_LOG)
-    cat /dev/null > $SERVER_CONSOLE_LOG
-    mkdir -p $(dirname $SERVER_PIDFILE)
-
-#    $JBOSS_HOME/bin/standalone.sh -c standalone-modeshape.xml
-    if [ -e "$JBOSS_HOME/bin/standalone.conf" ]
+    isRunning
+    if [ $? -eq 0 ]
     then
-        echo "Loading $JBOSS_HOME/bin/standalone.conf"
-        . $JBOSS_HOME/bin/standalone.conf
-    fi
-    if [ -e "$SERVER_HOME/standalone.conf" ]
-    then
-        echo "Loading $SERVER_HOME/standalone.conf"
-        . $SERVER_HOME/standalone.conf
-    fi
+	mkdir -p $(dirname $SERVER_CONSOLE_LOG)
+	cat /dev/null > $SERVER_CONSOLE_LOG
+	mkdir -p $(dirname $SERVER_PIDFILE)
 
-    parameters
-    echo "Cleaning out tmp directory "
-    rm -rf $SERVER_HOME/tmp
-    echo -n "Starting WildFly: "
-    RUN_CMD="$JAVA -D\"[Standalone]\" $JAVA_OPTS -Dorg.jboss.boot.log.file=$SERVER_LOG_DIR/server.log -Dlogging.configuration=file:$SERVER_CONFIG_DIR/logging.properties -jar $JBOSS_HOME/jboss-modules.jar -mp ${JBOSS_MODULEPATH} org.jboss.as.standalone -Djboss.home.dir=$JBOSS_HOME  -Djboss.server.base.dir=$SERVER_HOME $SERVER_OPTS"
+	#    $JBOSS_HOME/bin/standalone.sh -c standalone-modeshape.xml
+	if [ -e "$JBOSS_HOME/bin/standalone.conf" ]
+	then
+            echo "Loading $JBOSS_HOME/bin/standalone.conf"
+            . $JBOSS_HOME/bin/standalone.conf
+	fi
+	if [ -e "$SERVER_HOME/standalone.conf" ]
+	then
+            echo "Loading $SERVER_HOME/standalone.conf"
+            . $SERVER_HOME/standalone.conf
+	fi
 
-    #echo "RUN_CMD=$RUN_CMD"
-    sh -c "nohup sh -c \" cd $BASEDIR && exec $RUN_CMD 2>&1 \" >>$SERVER_CONSOLE_LOG & umask 0000 ; echo \$! > $SERVER_PIDFILE "
+	parameters
+	echo "Cleaning out tmp directory "
+	rm -rf $SERVER_HOME/tmp
+	echo -n "Starting WildFly: "
+	RUN_CMD="$JAVA -D\"[Standalone]\" $JAVA_OPTS -Dorg.jboss.boot.log.file=$SERVER_LOG_DIR/server.log -Dlogging.configuration=file:$SERVER_CONFIG_DIR/logging.properties -jar $JBOSS_HOME/jboss-modules.jar -mp ${JBOSS_MODULEPATH} org.jboss.as.standalone -Djboss.home.dir=$JBOSS_HOME  -Djboss.server.base.dir=$SERVER_HOME $SERVER_OPTS"
 
-    echo -n " (pid `cat $SERVER_PIDFILE`) "
-    echo " "
+	echo "Starting Wildfly"
+	sh -c "nohup sh -c \" cd $BASEDIR && exec $RUN_CMD 2>&1 \" >>$SERVER_CONSOLE_LOG & umask 0000 ; echo \$! > $SERVER_PIDFILE "
 
+	echo -n " (pid `cat $SERVER_PIDFILE`) "
+	echo " "
+    else
+        echo "Wildfly is running, pid=`cat $SERVER_PIDFILE`"
+   fi
 }
 #
 # Stop the server if it is running
@@ -92,8 +96,8 @@ stop() {
         echo "Wildfly does not appear to be running."
     else
         echo "Wildfly is running, pid=`cat $SERVER_PIDFILE`, sending shutdown"
-        $JBOSS_HOME/bin/jboss-cli.sh --connect --controller=$HOSTIP command=:shutdown
-   fi
+        $JBOSS_HOME/bin/jboss-cli.sh --connect --controller="$HOSTIP" command=:shutdown
+    fi
     sleep 10
     isRunning
     if [ $? -eq 0 ]
@@ -136,6 +140,7 @@ isRunning() {
             IS_RUNNING=$ppid
         else
             IS_RUNNING=0
+	    rm $SERVER_PIDFILE
         fi
     else
         IS_RUNNING=0
