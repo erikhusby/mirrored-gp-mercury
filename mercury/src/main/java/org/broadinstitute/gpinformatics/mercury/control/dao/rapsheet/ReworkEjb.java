@@ -165,6 +165,14 @@ public class ReworkEjb {
                     }
                 }
             }
+            // A pooled tube added to a PDO won't have ProductOrderSamples associated with its sample instances,
+            // but might have one associated with the tube itself.
+            if (productOrderSamples.isEmpty()) {
+                List<ProductOrderSample> bySamples = productOrderSampleDao.findBySamples(Collections.singleton(vessel.getLabel()));
+                if (bySamples.size() == 1) {
+                    productOrderSamples.add(bySamples.get(0));
+                }
+            }
             bucketCandidates.addAll(collectBucketCandidatesForAMercuryVessel(vessel, productOrderSamples));
         }
 
