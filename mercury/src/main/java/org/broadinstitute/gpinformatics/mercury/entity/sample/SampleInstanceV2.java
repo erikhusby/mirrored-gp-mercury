@@ -115,8 +115,24 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
      * Constructs a sample instance from a LabVessel.
      */
     public SampleInstanceV2(LabVessel labVessel) {
+        initiateSampleInstanceV2(labVessel);
+        applyVesselChanges(labVessel, null);
+    }
+
+    /**
+     * Constructs a sample instance from a LabVessel and manually uploaded pooled tube(s).
+     */
+    public SampleInstanceV2(LabVessel labVessel, SampleInstanceEntity sampleInstanceEntity) {
+        initiateSampleInstanceV2(labVessel);
+        applyVesselChanges(labVessel, sampleInstanceEntity);
+    }
+
+    /**
+     * Common setup for the above constructors.
+     */
+    private void initiateSampleInstanceV2(LabVessel labVessel)
+    {
         initialLabVessel = labVessel;
-        rootMercurySamples.addAll(labVessel.getMercurySamples());
         if (LabVessel.DIAGNOSTICS) {
             String message = "Created sample instance ";
             if (!labVessel.getMercurySamples().isEmpty()) {
@@ -136,9 +152,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
                 }
             }
         }
-
         depth = 0;
-        applyVesselChanges(labVessel);
     }
 
     /**
@@ -468,24 +482,23 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
     /**
      * Applies to a clone any new information in a LabVessel.
      */
-    public final void applyVesselChanges(LabVessel labVessel) {
+    public final void applyVesselChanges(LabVessel labVessel, SampleInstanceEntity sampleInstanceEntity) {
 
         //Merge in sample instance pooled tubes upload.
-        if(labVessel.getSampleInstanceEntities().size() > 0) {
-            for(SampleInstanceEntity sampleInstanceEntity : labVessel.getSampleInstanceEntities())
-            {
+        if(sampleInstanceEntity != null) {
               MercurySample mercurySample = sampleInstanceEntity.getMercurySample();
               mergeDevConditions(sampleInstanceEntity.getExperiment(), sampleInstanceEntity.getSubTasks());
               mergeReagents(sampleInstanceEntity.getReagentDesign().getDesignedReagents());
               mergeMolecularIndex(sampleInstanceEntity.getMolecularIndexingScheme());
               mergeRootSamples(sampleInstanceEntity.getRootSample());
               mercurySamples.add(mercurySample);
-            }
+        }
+        else {
+            mercurySamples.addAll(labVessel.getMercurySamples());
         }
 
         currentLabVessel = labVessel;
         // order of assignments is same as order of fields
-        mercurySamples.addAll(labVessel.getMercurySamples());
         reagents.addAll(labVessel.getReagentContents());
 
         List<LabBatchStartingVessel> labBatchStartingVesselsByDate = labVessel.getLabBatchStartingVesselsByDate();

@@ -3,12 +3,10 @@ package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
-import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleInstanceEntityDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VesselPooledTubesProcessor;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -23,19 +21,19 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import java.util.List;
 import java.util.ArrayList;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Stateful
 @RequestScoped
 public class SampleInstanceEjb  {
 
     private Map<String, LabVessel> mapBarcodeToVessel;
-    private List<List<String>> jiraSubTaskList = new ArrayList<List<String>>();
+    private List<List<String>> jiraSubTaskList = new ArrayList<>();
     private List<String> collaboratorSampleId = new ArrayList<>();
     private List<String> collaboratorParticipantId = new ArrayList<>();
     private List<String> broadParticipantId = new ArrayList<>();
@@ -50,13 +48,6 @@ public class SampleInstanceEjb  {
     private List<MercurySample> rootSamples = new ArrayList<>();
     private List<Boolean> sampleRegistrationFlag = new ArrayList<>();
     private int rowOffset = 2;
-
-
-    @Inject
-    private VesselEjb vesselEjb;
-
-    @Inject
-    private BarcodedTubeDao barcodedTubeDao;
 
     @Inject
     private MolecularIndexingSchemeDao molecularIndexingSchemeDao;
@@ -76,8 +67,6 @@ public class SampleInstanceEjb  {
     @Inject
     private SampleInstanceEntityDao sampleInstanceEntityDao;
 
-
-
     /**
      * Build and return the collaborator metadata for the samples. (If supplied)
      */
@@ -89,6 +78,7 @@ public class SampleInstanceEjb  {
             add(new Metadata(Metadata.Key.GENDER, gender.get(index)));
             add(new Metadata(Metadata.Key.LSID, lsid.get(index)));
             add(new Metadata(Metadata.Key.SPECIES, species.get(index)));
+            add(new Metadata(Metadata.Key.MATERIAL_TYPE, "DNA"));
         }};
     }
 
@@ -171,7 +161,7 @@ public class SampleInstanceEjb  {
     public void verifySpreadSheet(VesselPooledTubesProcessor vesselSpreadsheetProcessor, MessageCollection messageCollection, boolean overWriteFlag) {
         mapBarcodeToVessel = labVesselDao.findByBarcodes( vesselSpreadsheetProcessor.getBarcodes());
         //Is the sample library name unique to the spreadsheet??
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = new HashMap<>();
         int mapIndex = 0;
         for (String libraryName : vesselSpreadsheetProcessor.getSingleSampleLibraryName()) {
             map.put(libraryName, libraryName);
@@ -259,18 +249,17 @@ public class SampleInstanceEjb  {
         int experimentIndex = 2;
         int conditionIndex = 0;
         List<Map<String, String>> devConditions = vesselSpreadsheetProcessor.getConditions();
-        List<String> subTaskList = new ArrayList<String>();
+        List<String> subTaskList = new ArrayList<>();
         for (Map<String, String> devCondition : devConditions) {
             String experiment = vesselSpreadsheetProcessor.getExperiment().get(conditionIndex);
             JiraIssue jiraIssue = getIssueInfoNoException(experiment, null);
-            List<String> jiraSubTasks;
             if (jiraIssue == null) {
                 messageCollection.addError("Dev ticket not found for Experiment: " + experiment + " At Row: " + experimentIndex
                         + " Column: " + VesselPooledTubesProcessor.Headers.EXPERIMENT.getText());
             } else {
-                jiraSubTasks = jiraIssue.getSubTasks();
+                List<String> jiraSubTasks = jiraIssue.getSubTaskKeys();
                 if (jiraSubTasks != null && devConditions.size() > 0) {
-                    subTaskList = new ArrayList<String>(devCondition.values());
+                    subTaskList = new ArrayList<>(devCondition.values());
                     for (String subTask : subTaskList) {
                         boolean foundFlag = false;
                         for (String jiraSubTask : jiraSubTasks) {
@@ -319,7 +308,7 @@ public class SampleInstanceEjb  {
             ++sampleIndex;
         }
 
-        /**
+        /*
          * If there are no errors attempt save the data to the database.
          */
         if (!messageCollection.hasErrors()) {
