@@ -162,8 +162,9 @@ public class BillingAdaptor implements Serializable {
                             .getEffectivePricesForProducts(allProductsOrdered, quote);
 
                     if(item.getProductOrder().isSavedInSAP()) {
-                        if (!item.getProductOrder().latestSapOrderDetail().getOrderPricesHash().equals(
-                                TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ",")))) {
+                        if (!StringUtils.equals(item.getProductOrder().latestSapOrderDetail().getOrderPricesHash(),
+                                TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ",")))
+                                ) {
                             productOrderEjb.publishProductOrderToSAP(item.getProductOrder(), messageCollection, true);
                         }
                     }
