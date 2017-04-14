@@ -1306,7 +1306,7 @@ public class LabBatchFixUpTest extends Arquillian {
             String newBarcode = mapOldBarcodeToNew.get(labBatchStartingVessel.getLabVessel().getLabel());
             if (newBarcode != null) {
                 LabVessel newLabVessel = labVesselDao.findByIdentifier(newBarcode);
-                System.out.println("Replacing " + labBatchStartingVessel.getLabVessel().getLabel() + " with " +
+                System.out.println("Replacing LBSV " + labBatchStartingVessel.getLabVessel().getLabel() + " with " +
                         newLabVessel.getLabel());
                 labBatchStartingVessel.setLabVessel(newLabVessel);
             }
@@ -1315,7 +1315,7 @@ public class LabBatchFixUpTest extends Arquillian {
             String newBarcode = mapOldBarcodeToNew.get(bucketEntry.getLabVessel().getLabel());
             if (newBarcode != null) {
                 LabVessel newLabVessel = labVesselDao.findByIdentifier(newBarcode);
-                System.out.println("Replacing " + bucketEntry.getLabVessel().getLabel() + " with " +
+                System.out.println("Replacing BE " + bucketEntry.getLabVessel().getLabel() + " with " +
                         newLabVessel.getLabel());
                 bucketEntry.setLabVessel(newLabVessel);
             }
