@@ -1279,8 +1279,8 @@ public class LabBatchFixUpTest extends Arquillian {
     /**
      * This test reads its parameters from a file, testdata/ChangeBucketEntries.txt, so it can be used for other similar fixups,
      * without writing a new test.  Example contents of the file are:
-     * LCSET-8579
-     * SUPPORT-1455
+     * LCSET-10923
+     * GPLIM-4797
      * 0221477796 0221477790
      * 0221477798 0221477792
      */
