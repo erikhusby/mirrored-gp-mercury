@@ -1874,4 +1874,34 @@ public class LabEventFixupTest extends Arquillian {
         utx.commit();
     }
 
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/ManualOverrideLabEvents.txt, so it can
+     * be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * GPLIM-4104
+     * LCSET-10868
+     * 1980836
+     */
+    @Test(enabled = false)
+    public void fixupGplim4798() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("ManualOverrideLabEvents.txt"));
+        String jiraTicket = lines.get(0);
+        String batchId = lines.get(1);
+        LabBatch labBatch = labBatchDao.findByName(batchId);
+        if (labBatch == null) {
+            throw new RuntimeException("Batch not found: " + batchId);
+        }
+        for (String id : lines.subList(2, lines.size())) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, Long.parseLong(id));
+            labEvent.setManualOverrideLcSet(labBatch);
+            System.out.println("Lab event " + labEvent.getLabEventId() + " manual override to " + batchId);
+        }
+
+        labEventDao.persist(new FixupCommentary(jiraTicket + " manual override to " + batchId));
+        labEventDao.flush();
+        utx.commit();
+    }
+
 }
