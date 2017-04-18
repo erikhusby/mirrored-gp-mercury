@@ -1854,26 +1854,30 @@ public class LabEventFixupTest extends Arquillian {
 
     @Test(enabled = false)
     public void gplim4796BackfillOnPremPdosToHaveAllStartedEvent() throws Exception {
-        userBean.loginOSUser();
-        utx.begin();
         List<LabVessel> infiniumChips = labVesselDao.findAllWithEventButMissingAnother(LabEventType.INFINIUM_XSTAIN,
                 LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
         InfiniumRunFinder runFinder = new InfiniumRunFinder();
         BspUser bspUser =  bspUserList.getByUsername("seqsystem");
-        long disambiguator = 1L;
+        List<LabVessel> invalidChips = new ArrayList<>();
         for (LabVessel  labVessel: infiniumChips) {
             StaticPlate staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
             boolean invalidPipelineLocation = runFinder.checkForInvalidPipelineLocation(staticPlate);
             if (invalidPipelineLocation) {
-                Date start = new Date();
-                long operator = bspUser.getUserId();
-                LabEvent labEvent =
-                        new LabEvent(LabEventType.INFINIUM_AUTOCALL_ALL_STARTED, start, LabEvent.UI_PROGRAM_NAME,
-                                disambiguator, operator, LabEvent.UI_PROGRAM_NAME);
-                staticPlate.addInPlaceEvent(labEvent);
-                System.out.println("Adding InfiniumAutoCallAllStarted event as an in place lab event to chip " + labVessel.getLabel());
-                disambiguator++;
+                invalidChips.add(labVessel);
             }
+        }
+        userBean.loginOSUser();
+        utx.begin();
+        long disambiguator = 1L;
+        for (LabVessel labVessel: invalidChips) {
+            Date start = new Date();
+            long operator = bspUser.getUserId();
+            LabEvent labEvent =
+                    new LabEvent(LabEventType.INFINIUM_AUTOCALL_ALL_STARTED, start, LabEvent.UI_PROGRAM_NAME,
+                            disambiguator, operator, LabEvent.UI_PROGRAM_NAME);
+            labVessel.addInPlaceEvent(labEvent);
+            System.out.println("Adding InfiniumAutoCallAllStarted event as an in place lab event to chip " + labVessel.getLabel());
+            disambiguator++;
         }
         labEventDao.persist(new FixupCommentary("GPLIM-4796 add started event to all chips marked on prem if missing"));
         utx.commit();
