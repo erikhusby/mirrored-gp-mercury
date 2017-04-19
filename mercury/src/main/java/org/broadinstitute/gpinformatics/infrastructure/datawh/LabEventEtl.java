@@ -79,7 +79,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     }
 
     @Override
-    Collection<String> dataRecords(String etlDateStr, boolean isDelete, LabEvent entity) {
+    public Collection<String> dataRecords(String etlDateStr, boolean isDelete, LabEvent entity) {
 
         Collection<String> eventFactRecords = new ArrayList<>();
         try {
