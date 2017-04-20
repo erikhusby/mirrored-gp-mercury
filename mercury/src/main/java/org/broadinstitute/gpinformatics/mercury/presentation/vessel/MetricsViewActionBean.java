@@ -196,8 +196,10 @@ public class MetricsViewActionBean extends CoreActionBean {
                     ProductOrder productOrder = productOrderSample.getProductOrder();
                     Date effectiveDate = productOrder.getCreatedDate();
                     Pair<String, String> chipPair = productEjb.getGenotypingChip(productOrder, effectiveDate);
-                    chipPairs.add(chipPair);
-                    productOrders.add(productOrder);
+                    if (chipPair != null && chipPair.getLeft() != null && chipPair.getRight()!= null) {
+                        chipPairs.add(chipPair);
+                        productOrders.add(productOrder);
+                    }
                 } else {
                     List<ProductOrderSample> productOrderSamples = productOrderSampleDao.findBySamples(
                             Collections.singletonList(sampleInstance.getRootOrEarliestMercurySampleName()));
@@ -207,7 +209,8 @@ public class MetricsViewActionBean extends CoreActionBean {
                             productOrders.add(productOrder);
                             Date effectiveDate = productOrder.getCreatedDate();
                             Pair<String, String> chipPair = productEjb.getGenotypingChip(productOrder, effectiveDate);
-                            chipPairs.add(chipPair);
+                            if (chipPair != null && chipPair.getLeft() != null && chipPair.getRight()!= null)
+                                chipPairs.add(chipPair);
                         }
                     }
                 }
