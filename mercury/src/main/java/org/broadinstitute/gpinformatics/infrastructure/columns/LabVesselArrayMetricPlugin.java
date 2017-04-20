@@ -31,7 +31,7 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
     private enum VALUE_COLUMN_TYPE {
         CALL_RATE("Call Rate"),
         HET_PCT("Het %"),
-        VERSION("Version"),
+        VERSION("Analysis Version"),
         AUTOCALL_GENDER("Autocall Gender"),
         FP_GENDER("FP Gender"),
         REPORTED_GENDER("Reported Gender"),
