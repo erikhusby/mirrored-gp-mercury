@@ -209,7 +209,7 @@ public class LibraryBean {
      */
     LibraryBean(String gssrLsid, String gssrMaterialType, String gssrCollaboratorSampleId, String gssrOrganism,
                 String gssrSpecies, String gssrStrain, String gssrIndividual, SampleData sampleData,
-                String labWorkflow, String productOrderSample, String libraryCreationDate) {
+                String labWorkflow, String productOrderSample, String libraryCreationDate, String pooledTubeCollaboratorId) {
         sampleLSID = gssrLsid;
         materialType = gssrMaterialType;
         collaboratorSampleId = gssrCollaboratorSampleId;
@@ -218,7 +218,7 @@ public class LibraryBean {
         species = gssrOrganism + ":" + gssrSpecies + ":" + gssrStrain;
         collaboratorParticipantId = gssrIndividual;
         this.libraryCreationDate = libraryCreationDate;
-        overrideSampleFieldsFromBSP(sampleData);
+        overrideSampleFieldsFromBSP(sampleData, pooledTubeCollaboratorId);
     }
 
     public LibraryBean(String library, String initiative, Long workRequest, MolecularIndexingScheme indexingScheme,
@@ -229,7 +229,7 @@ public class LibraryBean {
             TZDevExperimentData devExperimentData, Collection<String> gssrBarcodes, String gssrSampleType,
             Boolean doAggregation, Collection<String> customAmpliconSetNames, ProductOrder productOrder,
             String lcSet, SampleData sampleData, String labWorkflow, String libraryCreationDate,
-            String productOrderSample, String metadataSource, String aggregationDataType /*only for controls*/) {
+            String productOrderSample, String metadataSource, String aggregationDataType, String pooledTubeCollaboratorId) {
 
         // project was always null in the calls here, so don't send it through. Can add back later.
         this(library, null, initiative, workRequest, indexingScheme, hasIndexingRead, expectedInsertSize,
@@ -237,7 +237,7 @@ public class LibraryBean {
                 aligner, rrbsSizeRange, restrictionEnzyme, bait, null, labMeasuredInsertSize, positiveControl,
                 negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation, customAmpliconSetNames,
                 productOrder, lcSet, sampleData, labWorkflow, productOrderSample, libraryCreationDate, null, null,
-                metadataSource, aggregationDataType);
+                metadataSource, aggregationDataType, pooledTubeCollaboratorId);
     }
 
     /**
@@ -294,10 +294,10 @@ public class LibraryBean {
             Boolean doAggregation, Collection<String> customAmpliconSetNames, ProductOrder productOrder,
             String lcSet, SampleData sampleData, String labWorkflow, String productOrderSample,
             String libraryCreationDate, String workRequestType, String workRequestDomain, String metadataSource,
-            String aggregationDataType) {
+            String aggregationDataType, String pooledTubeCollaboratorId) {
 
         this(sampleLSID, gssrSampleType, collaboratorSampleId, organism, species, strain, individual, sampleData,
-                labWorkflow, productOrderSample, libraryCreationDate);
+                labWorkflow, productOrderSample, libraryCreationDate,pooledTubeCollaboratorId);
         this.library = library;
         this.project = project;
         this.initiative = initiative;
@@ -372,7 +372,7 @@ public class LibraryBean {
      *
      * @param sampleData BSP data for sample
      */
-    private void overrideSampleFieldsFromBSP(SampleData sampleData) {
+    private void overrideSampleFieldsFromBSP(SampleData sampleData, String pooledTubeCollaboratorId) {
         if (sampleData != null) {
             // We force all empty fields to null, because this is the format that the web service client (the
             // Picard pipeline) expects.  The raw results from BSP provide the empty string for missing data,
@@ -400,7 +400,15 @@ public class LibraryBean {
             participantId = StringUtils.trimToNull(sampleData.getPatientId());
             population = StringUtils.trimToNull(sampleData.getEthnicity());
             race = StringUtils.trimToNull(sampleData.getRace());
-            collaboratorParticipantId = StringUtils.trimToNull(sampleData.getCollaboratorParticipantId());
+
+            //ParticipantID and collaboratorParticipantId are always set to the same value in SampleData.
+            //This overrides the collaboratorParticipantId for manually uploaded pooled tubes.
+            if(pooledTubeCollaboratorId != null) {
+                collaboratorParticipantId = StringUtils.trimToNull(pooledTubeCollaboratorId);
+            }
+            else {
+                collaboratorParticipantId = StringUtils.trimToNull(sampleData.getCollaboratorParticipantId());
+            }
             isGssrSample = false;
             metadataSource = MercurySample.BSP_METADATA_SOURCE;
         } else {

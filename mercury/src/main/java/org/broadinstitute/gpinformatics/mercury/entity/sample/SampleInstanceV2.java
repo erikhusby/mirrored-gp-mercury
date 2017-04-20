@@ -16,7 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
@@ -38,7 +38,7 @@ import java.util.Date;
  * A transient class returned by LabVessel.getSampleInstances.  It accumulates information encountered
  * in a bottom-up traversal of LabEvents, from that LabVessel.
  */
-public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
+public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
 
     /**
      * Allows LabEvent.computeLcSets to choose the nearest match if there are multiple.
@@ -85,6 +85,10 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
     private Set<MercurySample> rootMercurySamples = new HashSet<>();
     private List<MercurySample> mercurySamples = new ArrayList<>();
     private List<Reagent> reagents = new ArrayList<>();
+    private List<ReagentDesign> reagentsDesigns = new ArrayList<>();
+    private String collaboratorParticipantId;
+    private Boolean isPooledTube;
+    private String sampleLibraryName;
 
     private List<LabBatch> allWorkflowBatches = new ArrayList<>();
     private List<LabBatchDepth> allWorkflowBatchDepths = new ArrayList<>();
@@ -123,6 +127,10 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
      * Constructs a sample instance from a LabVessel and manually uploaded pooled tube(s).
      */
     public SampleInstanceV2(LabVessel labVessel, SampleInstanceEntity sampleInstanceEntity) {
+        // TODO: DRW 4/20/2017
+        //This is not correct and needs to be changed pending a meeting with Justin.
+        //Leaving it in since root samples are needed to test other functionality
+        rootMercurySamples.addAll(labVessel.getMercurySamples());
         initiateSampleInstanceV2(labVessel);
         applyVesselChanges(labVessel, sampleInstanceEntity);
     }
@@ -183,6 +191,10 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
         depth = other.depth + 1;
         sampleInstanceEntity = other.getSampleInstanceEntity();
         tzDevExperimentData = other.getTzDevExperimentData();
+        reagentsDesigns = other.getReagentsDesigns();
+        collaboratorParticipantId = other.getCollaboratorParticipantId();
+        isPooledTube = other.getIsPooledTube();
+        sampleLibraryName = other.getSampleLibraryName();
     }
 
     /**
@@ -227,7 +239,9 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
                 rootMercurySamples.iterator().next() : (mercurySamples.isEmpty() ? null : mercurySamples.get(0));
     }
 
-    /** Returns the name of the root sample or if none, the earliest Mercury sample. */
+    /**
+     * Returns the name of the root sample or if none, the earliest Mercury sample.
+     */
     public String getRootOrEarliestMercurySampleName() {
         return CollectionUtils.isNotEmpty(rootMercurySamples) ?
                 rootMercurySamples.iterator().next().getSampleKey() :
@@ -245,6 +259,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
     /**
      * Returns all batches of the given type associated with ancestor vessels, sorted by increasing distance in the
      * transfer history.
+     *
      * @param labBatchType Pass type SAMPLES_IMPORT to get the Aliquot.  Pass null to get all batches.
      */
     public List<LabBatchStartingVessel> getAllBatchVessels(LabBatch.LabBatchType labBatchType) {
@@ -283,7 +298,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
      * Returns the nearest batch of the given type.
      */
     public LabBatchStartingVessel getSingleBatchVessel(LabBatch.LabBatchType labBatchType) {
-        for(int i = allLabBatchStartingVessels.size() - 1; i >= 0; i--) {
+        for (int i = allLabBatchStartingVessels.size() - 1; i >= 0; i--) {
             LabBatchStartingVessel labBatchStartingVessel = allLabBatchStartingVessels.get(i);
             if (labBatchType == null) {
                 return labBatchStartingVessel;
@@ -354,17 +369,17 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
      * This functionality gets the Sample/PDO associated with the single bucket.
      */
     public ProductOrderSample getProductOrderSampleForSingleBucket() {
-        if (allProductOrderSamples.isEmpty() || singleBucketEntry == null ) {
+        if (allProductOrderSamples.isEmpty() || singleBucketEntry == null) {
             return null;
         }
         ProductOrder bucketPDO = singleBucketEntry.getProductOrder();
         // Shouldn't happen, but if so, return latest
-        if( bucketPDO == null ) {
+        if (bucketPDO == null) {
             return getSingleProductOrderSample();
         }
 
-        for( int index = allProductOrderSamples.size() - 1; index >= 0 ; index-- ) {
-            if( bucketPDO.equals(allProductOrderSamples.get(index).getProductOrder())){
+        for (int index = allProductOrderSamples.size() - 1; index >= 0; index--) {
+            if (bucketPDO.equals(allProductOrderSamples.get(index).getProductOrder())) {
                 return allProductOrderSamples.get(index);
             }
         }
@@ -454,8 +469,8 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
                                     molecularIndexingScheme.getIndexes().entrySet();
                             if (entries.containsAll(
                                     fieldMolecularIndexReagent.getMolecularIndexingScheme().getIndexes().entrySet()) &&
-                                entries.containsAll(
-                                        newMolecularIndexReagent.getMolecularIndexingScheme().getIndexes().entrySet())) {
+                                    entries.containsAll(
+                                            newMolecularIndexReagent.getMolecularIndexingScheme().getIndexes().entrySet())) {
                                 foundMergedScheme = true;
                                 iterator.remove();
                                 reagents.add(new MolecularIndexReagent(molecularIndexingScheme));
@@ -484,20 +499,23 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
      */
     public final void applyVesselChanges(LabVessel labVessel, SampleInstanceEntity sampleInstanceEntity) {
 
+        currentLabVessel = labVessel;
+
         //Merge in sample instance pooled tubes upload.
-        if(sampleInstanceEntity != null) {
-              MercurySample mercurySample = sampleInstanceEntity.getMercurySample();
-              mergeDevConditions(sampleInstanceEntity.getExperiment(), sampleInstanceEntity.getSubTasks());
-              mergeReagents(sampleInstanceEntity.getReagentDesign().getDesignedReagents());
-              mergeMolecularIndex(sampleInstanceEntity.getMolecularIndexingScheme());
-              mergeRootSamples(sampleInstanceEntity.getRootSample());
-              mercurySamples.add(mercurySample);
-        }
-        else {
+        if (sampleInstanceEntity != null) {
+            setIsPooledTube(true);
+            MercurySample mercurySample = sampleInstanceEntity.getMercurySample();
+            mergeDevConditions(sampleInstanceEntity.getExperiment(), sampleInstanceEntity.getSubTasks());
+            mergeReagents(sampleInstanceEntity.getReagentDesign());
+            mergeMolecularIndex(sampleInstanceEntity.getMolecularIndexingScheme());
+            mergeRootSamples(sampleInstanceEntity.getRootSample());
+            mergeCollaboratorId(sampleInstanceEntity);
+            mergeSampleLibraryName(sampleInstanceEntity.getSampleLibraryName());
+            mercurySamples.add(mercurySample);
+        } else {
             mercurySamples.addAll(labVessel.getMercurySamples());
         }
 
-        currentLabVessel = labVessel;
         // order of assignments is same as order of fields
         reagents.addAll(labVessel.getReagentContents());
 
@@ -602,6 +620,20 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
         return materialType;
     }
 
+    public String getCollaboratorParticipantId() {
+        return collaboratorParticipantId;
+    }
+
+    public void mergeCollaboratorId(SampleInstanceEntity sampleInstanceEntity) {
+
+       for (Metadata metadata : sampleInstanceEntity.getMercurySample().getMetadata())
+       {
+           //The collaborator ID is stored in sample_id in Metadata.
+           if(metadata.getKey().equals(Metadata.Key.SAMPLE_ID)) {
+               this.collaboratorParticipantId = metadata.getValue();
+           }
+       }
+    }
 
     private void mergeRootSamples(MercurySample mercurySample)
     {
@@ -610,15 +642,34 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
         }
     }
 
+    public Boolean getIsPooledTube() {
+        return isPooledTube;
+    }
+
+    public void setIsPooledTube(Boolean isPooledTube) {
+        this.isPooledTube = isPooledTube;
+    }
 
     private void mergeMolecularIndex(MolecularIndexingScheme molecularIndexingScheme)
     {
         this.molecularIndexingScheme = molecularIndexingScheme;
     }
 
-    private void mergeReagents(Set<DesignedReagent> reagents)
+    public String getSampleLibraryName() {
+        return sampleLibraryName;
+    }
+
+    public void mergeSampleLibraryName(String sampleLibraryName) {
+        this.sampleLibraryName = sampleLibraryName;
+    }
+
+    private void mergeReagents(ReagentDesign reagentDesign)
     {
-        this.reagents.addAll(reagents);
+        this.reagentsDesigns.add(reagentDesign);
+    }
+
+    public List<ReagentDesign> getReagentsDesigns() {
+        return reagentsDesigns;
     }
 
     private void mergeDevConditions(String experimentName, List<String> subTasks)
@@ -626,10 +677,6 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
         devConditions.addAll(subTasks);
         tzDevExperimentData = new TZDevExperimentData(experimentName,subTasks);
 
-    }
-
-    public String getLibraryName() {
-        return getSingleBucketEntry().getLabVessel().getLabel();
     }
 
     public Date getLibraryCreationDate() {

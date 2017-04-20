@@ -107,6 +107,8 @@ public class SampleInstanceEntity {
 
     public void setSampleLibraryName(String sampleLibraryName) { this.sampleLibraryName = sampleLibraryName; }
 
+    public String getSampleLibraryName() { return sampleLibraryName;  }
+
     public void setUploadDate(){ this.uploadDate = new Date(); }
 
     public void setExperiment(String experiment) { this.experiment = experiment;  }
