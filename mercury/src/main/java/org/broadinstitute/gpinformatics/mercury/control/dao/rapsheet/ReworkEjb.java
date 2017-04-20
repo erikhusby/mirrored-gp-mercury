@@ -165,10 +165,11 @@ public class ReworkEjb {
                     }
                 }
             }
-            // A pooled tube added to a PDO won't have ProductOrderSamples associated with its sample instances,
-            // but might have one associated with the tube itself.
+            // For a pooled tube added to a PDO, the above loop on getSampleInstancesV2 won't find ProductOrderSamples.
+            // However, there may be a ProductOrderSample with a "sampleName" of the tube barcode.
             if (productOrderSamples.isEmpty()) {
-                List<ProductOrderSample> bySamples = productOrderSampleDao.findBySamples(Collections.singleton(vessel.getLabel()));
+                List<ProductOrderSample> bySamples = productOrderSampleDao.findBySamples(Collections.singleton(
+                        vessel.getLabel()));
                 if (bySamples.size() == 1) {
                     productOrderSamples.add(bySamples.get(0));
                 }
