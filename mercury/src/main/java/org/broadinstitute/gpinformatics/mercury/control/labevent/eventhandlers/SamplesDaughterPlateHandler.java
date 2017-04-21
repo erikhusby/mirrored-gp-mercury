@@ -13,27 +13,27 @@ package org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers;
 
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import com.sun.jersey.multipart.FormDataBodyPart;
+import com.sun.jersey.multipart.FormDataMultiPart;
+import com.sun.jersey.multipart.MultiPart;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator;
 import org.broadinstitute.gpinformatics.mercury.BSPRestClient;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ObjectFactory;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 /**
  * Handles bettalims messages that need to be passed to a BSP REST service for processing.
  */
 public class SamplesDaughterPlateHandler {
     public static final String BSP_TRANSFER_REST_URL = "plate/transfer";
-    private static final Log logger = LogFactory.getLog(SamplesDaughterPlateHandler.class);
+    private static final String BSP_KIT_REST_URL = "kit";
 
     @Inject
     private BSPRestClient bspRestClient;
@@ -52,4 +52,33 @@ public class SamplesDaughterPlateHandler {
 
     }
 
+    public void x() {
+        String sheetName;
+        Object[][] rows;
+        Workbook workbook = SpreadsheetCreator.createSpreadsheet(sheetName, rows);
+        String urlString = bspRestClient.getUrl(BSP_KIT_REST_URL);
+        WebResource webResource = bspRestClient.getWebResource(urlString);
+        try (FormDataMultiPart formDataMultiPart = new FormDataMultiPart()) {
+            formDataMultiPart.field("meta", "xyz");
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            workbook.write(byteArrayOutputStream);
+            MultiPart multiPart  = formDataMultiPart.bodyPart(
+                     new FormDataBodyPart("file", new ByteArrayInputStream(byteArrayOutputStream.toByteArray()),
+                             MediaType.APPLICATION_OCTET_STREAM_TYPE));
+            webResource.type(MediaType.MULTIPART_FORM_DATA_TYPE).post(multiPart);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+/*
+@POST
+@Consumes(MediaType.MULTIPART_FORM_DATA)
+@Produces("text/plain")
+public Response uploadFile(
+        @FormDataParam("content") final InputStream uploadedInputStream,
+        @FormDataParam("fileName") String fileName) throws IOException {
+    String uploadContent=IOUtils.toString(uploadedInputStream);
+    ret
+ */
 }
