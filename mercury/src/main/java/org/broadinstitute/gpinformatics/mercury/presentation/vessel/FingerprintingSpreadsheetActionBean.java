@@ -146,6 +146,7 @@ public class FingerprintingSpreadsheetActionBean extends CoreActionBean {
             return new ForwardResolution(CREATE_PAGE);
 
         } catch (Exception e) {
+            logger.log(Level.WARNING, "Exception thrown when attempting to make fingerprinting spreadsheet.", e);
             addGlobalValidationError(e.getMessage());
             return new ForwardResolution(CREATE_PAGE);
         }

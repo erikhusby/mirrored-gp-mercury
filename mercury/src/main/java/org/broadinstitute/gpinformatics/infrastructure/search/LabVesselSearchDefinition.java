@@ -1876,6 +1876,26 @@ public class LabVesselSearchDefinition {
         });
         searchTerms.add(searchTerm);
 
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Tecan Robot");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                LabVessel vessel = (LabVessel)entity;
+                TransferTraverserCriteria.VesselForEventTypeCriteria traverserCriteria =
+                        new TransferTraverserCriteria.VesselForEventTypeCriteria(Collections.singletonList(
+                                LabEventType.INFINIUM_XSTAIN), true);
+                vessel.evaluateCriteria(traverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+
+                Set<String> result = new HashSet<>();
+                for (LabEvent labEvent : traverserCriteria.getVesselsForLabEventType().keySet()) {
+                    result.add(labEvent.getEventLocation());
+                }
+                return result;
+            }
+        });
+        searchTerms.add(searchTerm);
+
         return searchTerms;
     }
 

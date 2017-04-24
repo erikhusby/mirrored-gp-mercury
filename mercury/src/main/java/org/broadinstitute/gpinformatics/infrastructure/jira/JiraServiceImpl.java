@@ -129,6 +129,8 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         private Map<String, Object> extraFields = new HashMap<>();
         private List<String> subTasks = new ArrayList<>();
         private CreateFields.IssueType issueType;
+        private List<String> subTaskSummaries = new ArrayList<>();
+        private List<String> subTaskKeys = new ArrayList<>();
         private Date dueDate;
         private Date created;
         private String reporter;
@@ -181,27 +183,34 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
             }
         }
 
-        WebResource webResource = getJerseyClient().resource(urlString).queryParam("fields", fieldList.toString());
+        try {
+                WebResource webResource = getJerseyClient().resource(urlString).queryParam("fields", fieldList.toString());
 
-        String queryResponse = webResource.get(String.class);
+                String queryResponse = webResource.get(String.class);
 
-        JiraSearchIssueData data = parseSearch(queryResponse, fields);
+                JiraSearchIssueData data = parseSearch(queryResponse, fields);
 
-        JiraIssue issueResult = new JiraIssue(key, this);
-        issueResult.setSummary(data.summary);
-        issueResult.setStatus(data.status);
-        issueResult.setDescription(data.description);
-        issueResult.setDueDate(data.dueDate);
-        issueResult.setCreated(data.created);
-        issueResult.setReporter(data.reporter);
-        issueResult.setSubTasks(data.subTasks);
+                JiraIssue issueResult = new JiraIssue(key, this);
+                issueResult.setSummary(data.summary);
+                issueResult.setStatus(data.status);
+                issueResult.setDescription(data.description);
+                issueResult.setDueDate(data.dueDate);
+                issueResult.setCreated(data.created);
+                issueResult.setReporter(data.reporter);
+                issueResult.setSubTasks(data.subTasks);
+                issueResult.setConditions(data.subTaskSummaries, data.subTaskKeys);
 
-        if (null != fields) {
-            for (String currField : fields) {
-                issueResult.addFieldValue(currField, data.extraFields.get(currField));
+                if (null != fields) {
+                    for (String currField : fields) {
+                        issueResult.addFieldValue(currField, data.extraFields.get(currField));
+                    }
+                }
+             return issueResult;
             }
+        catch (Exception ex)
+        {
+            return null;
         }
-        return issueResult;
     }
 
     @Override
@@ -229,6 +238,8 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         parsedResults.description = (String) fields.get("description");
         parsedResults.summary = (String) fields.get("summary");
         parsedResults.subTasks = JiraIssue.parseSubTasks((List<Object>) fields.get("subtasks"));
+        parsedResults.subTaskSummaries = JiraIssue.parseSubTaskSummaries((List<Object>) fields.get("subtasks"));
+        parsedResults.subTaskKeys = JiraIssue.parseSubTasKeys((List<Object>) fields.get("subtasks"));
         String dueDateValue = (String) fields.get("duedate");
         String createdDateValue = (String) fields.get("created");
         Map<?, ?> statusValues  = (Map<?, ?>) fields.get("status");

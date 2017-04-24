@@ -51,6 +51,10 @@
                 text-overflow: ellipsis;
             }
 
+            table, th, td {
+                border: 1px solid black;
+            }
+
             fieldset{
                 border: solid 1px black;
                 float:left;
@@ -241,7 +245,7 @@
                                     <tr>
                                         <td nowrap><div style="float:right;"></div> <div style="float:right;"></div></td>
                                         <c:forEach items="${geometry.columnNames}" var="columnName" varStatus="columnStatus">
-                                            <td nowrap><div style="float:left;">${columnName}</div> <div style="float:right;"> </div></td>
+                                            <td nowrap  style="text-align:center;" >${columnName}</td>
                                         </c:forEach>
                                     </tr>
                                 </c:if>

@@ -279,12 +279,24 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
 
         if (shareSapOrder & toClone.isSavedInSAP()) {
-            cloned.addSapOrderDetail(toClone.latestSapOrderDetail());
+            cloned.addSapOrderDetail(new SapOrderDetail(toClone.latestSapOrderDetail().getSapOrderNumber(),
+                    toClone.latestSapOrderDetail().getPrimaryQuantity(), toClone.latestSapOrderDetail().getQuoteId(),
+                    toClone.latestSapOrderDetail().getCompanyCode(), toClone.latestSapOrderDetail().getOrderProductsHash(),toClone.latestSapOrderDetail().getOrderPricesHash()));
         }
 
         toClone.addChildOrder(cloned);
 
         return cloned;
+    }
+
+    public static List<Product> getAllProductsOrdered(ProductOrder order ) {
+        List<Product> orderedListOfProducts = new ArrayList<>();
+        orderedListOfProducts.add(order.getProduct());
+        for (ProductOrderAddOn addOn : order.getAddOns()) {
+            orderedListOfProducts.add(addOn.getAddOn());
+        }
+        Collections.sort(orderedListOfProducts);
+        return orderedListOfProducts;
     }
 
     /**
@@ -2097,4 +2109,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                 .equals(childOrder.getSapOrderNumber(), parentSAPOrderNumber);
     }
 
+
+    public void updateSapDetails(int sampleCount, String productListHash, String pricesForProducts) {
+        final SapOrderDetail sapOrderDetail = latestSapOrderDetail();
+        sapOrderDetail.setPrimaryQuantity(sampleCount);
+        sapOrderDetail.setOrderProductsHash(productListHash);
+        sapOrderDetail.setOrderPricesHash(pricesForProducts);
+    }
 }
