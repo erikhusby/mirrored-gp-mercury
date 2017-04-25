@@ -143,9 +143,6 @@ public class SamplesDaughterPlateHandler {
             for (KitSample kitSample : createKitReturn.getSamples()) {
                 sampleIds.add(kitSample.getBspSampleId());
             }
-            SampleKitReceiptResponse sampleKitReceiptResponse = bspSampleReceiptService.receiveSamples(
-                    sampleIds, userBean.getBspUser().getUsername());
-            sampleKitReceiptResponse.getReceivedSamplesPerKit();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
