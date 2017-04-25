@@ -1099,7 +1099,7 @@ public class ProductOrderFixupTest extends Arquillian {
         commitTransaction();
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void gplim4823SetOrdersToCompleted() throws Exception {
         userBean.loginOSUser();
         List <String> ordersToComplete = Arrays.asList("PDO-11091","PDO-11492","PDO-11769");
