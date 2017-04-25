@@ -17,9 +17,12 @@ import com.sun.jersey.multipart.FormDataBodyPart;
 import com.sun.jersey.multipart.FormDataMultiPart;
 import com.sun.jersey.multipart.MultiPart;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.broadinstitute.bsp.client.response.SampleKitReceiptResponse;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleReceiptService;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator;
 import org.broadinstitute.gpinformatics.mercury.BSPRestClient;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
@@ -40,6 +43,12 @@ public class SamplesDaughterPlateHandler {
 
     @Inject
     private BSPRestClient bspRestClient;
+
+    @Inject
+    private BSPSampleReceiptService bspSampleReceiptService;
+
+    @Inject
+    protected UserBean userBean;
 
     public void postToBsp(BettaLIMSMessage message, String bspRestUrl) {
 
@@ -119,7 +128,7 @@ public class SamplesDaughterPlateHandler {
         try (FormDataMultiPart formDataMultiPart = new FormDataMultiPart()) {
             formDataMultiPart.field("collection", "Jon's Collection");
             formDataMultiPart.field("materialType", "Whole Blood:Buffy Coat");
-            formDataMultiPart.field("receptacleType", "Matrix Tube Screw cap [0.5mL]");
+            formDataMultiPart.field("receptacleType", "FluidX [6mL]");
             formDataMultiPart.field("datasetName", "NewRoots");
             formDataMultiPart.field("domain", "VIRAL");
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -129,7 +138,14 @@ public class SamplesDaughterPlateHandler {
                              MediaType.APPLICATION_OCTET_STREAM_TYPE));
             CreateKitReturn createKitReturn = webResource.type(MediaType.MULTIPART_FORM_DATA_TYPE).post(
                     CreateKitReturn.class, multiPart);
-            createKitReturn.getSamples();
+
+            List<String> sampleIds = new ArrayList<>();
+            for (KitSample kitSample : createKitReturn.getSamples()) {
+                sampleIds.add(kitSample.getBspSampleId());
+            }
+            SampleKitReceiptResponse sampleKitReceiptResponse = bspSampleReceiptService.receiveSamples(
+                    sampleIds, userBean.getBspUser().getUsername());
+            sampleKitReceiptResponse.getReceivedSamplesPerKit();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
