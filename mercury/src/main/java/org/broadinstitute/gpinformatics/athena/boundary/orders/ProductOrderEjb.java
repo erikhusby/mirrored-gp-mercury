@@ -1523,12 +1523,46 @@ public class ProductOrderEjb {
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void updateSampleLedgers(Map<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> ledgerUpdates)
-            throws ValidationWithRollbackException {
+            throws ValidationWithRollbackException, SAPInterfaceException, QuoteNotFoundException,
+            QuoteServerException, InvalidProductException {
         List<String> errorMessages = new ArrayList<>();
+
+        Map<String, Quote> usedQuotesMiniCache = new HashMap<>();
+
+        Map<String, Boolean> updatedOrderMap = new HashMap<>();
 
         for (Map.Entry<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> entry : ledgerUpdates
                 .entrySet()) {
             ProductOrderSample productOrderSample = entry.getKey();
+
+            if(!updatedOrderMap.containsKey(productOrderSample.getProductOrder().getBusinessKey()) ||
+               !updatedOrderMap.get(productOrderSample.getProductOrder().getBusinessKey())) {
+
+                Quote orderQuote = usedQuotesMiniCache.get(productOrderSample.getProductOrder().getQuoteId());
+
+                if(orderQuote == null) {
+                    orderQuote = quoteService.getQuoteByAlphaId(productOrderSample.getProductOrder().getQuoteId());
+                    usedQuotesMiniCache.put(orderQuote.getAlphanumericId(), orderQuote);
+                }
+
+
+                final List<Product> allProductsOrdered =
+                        ProductOrder.getAllProductsOrdered(productOrderSample.getProductOrder());
+                List<String> effectivePricesForProducts = priceListCache
+                        .getEffectivePricesForProducts(allProductsOrdered, orderQuote);
+
+                final MessageCollection messageCollection = new MessageCollection();
+                if (productOrderSample.getProductOrder().isSavedInSAP()) {
+                    if (!StringUtils
+                            .equals(productOrderSample.getProductOrder().latestSapOrderDetail().getOrderPricesHash(),
+                                    TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ",")))
+                            ) {
+                        publishProductOrderToSAP(productOrderSample.getProductOrder(), messageCollection, true);
+                    }
+                }
+                updatedOrderMap.put(productOrderSample.getProductOrder().getBusinessKey(), Boolean.TRUE);
+            }
+
             Collection<ProductOrderSample.LedgerUpdate> updates = entry.getValue();
             for (ProductOrderSample.LedgerUpdate update : updates) {
                 try {

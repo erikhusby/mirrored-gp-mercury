@@ -16,6 +16,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
+import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderListEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
@@ -32,6 +33,9 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn
 import org.broadinstitute.gpinformatics.infrastructure.cognos.SampleCoverageFirstMetFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.SampleCoverageFirstMet;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -158,7 +162,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
      */
     @Before(stages = LifecycleStage.EventHandling, on = { "ledgerDetails" })
     public void loadProductOrder() {
-        productOrder = productOrderDao.findByBusinessKey(orderId);
+        productOrder = productOrderDao.findByBusinessKey(orderId, ProductOrderDao.FetchSpec.RISK_ITEMS);
     }
 
     /**
@@ -196,6 +200,9 @@ public class BillingLedgerActionBean extends CoreActionBean {
             } catch (ValidationException e) {
                 logger.error(e);
                 addGlobalValidationErrors(e.getValidationMessages());
+            } catch ( QuoteNotFoundException | InvalidProductException | QuoteServerException | SAPInterfaceException otherEs) {
+                logger.error(otherEs);
+                addGlobalValidationError(otherEs.getMessage());
             }
         }
 
