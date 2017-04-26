@@ -294,11 +294,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         BigDecimal minimumOrderQuantity = product.getMinimumOrderSize() != null?new BigDecimal(product.getMinimumOrderSize()):BigDecimal.ONE;
         newMaterial.setMinimumOrderQuantity(minimumOrderQuantity);
 
-        if(product.isDiscontinued()) {
-            newMaterial.setStatus(SAPMaterial.MaterialStatus.DISABLED);
-        } else {
-            newMaterial.setStatus(SAPMaterial.MaterialStatus.ENABLED);
-        }
+        newMaterial.setStatus(SAPMaterial.MaterialStatus.ENABLED);
 
         return newMaterial;
     }
