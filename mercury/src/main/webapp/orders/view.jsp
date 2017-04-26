@@ -72,31 +72,68 @@ $j(document).ready(function () {
         showKitDetail();
     }
     enableDefaultPagingOptions();
-    var oTable = $j('#sampleData').dataTable({
-        "oTableTools": ttExportDefines,
-        "iDisplayLength": 50,
-        "aaSorting": [
-            [1, 'asc']
-        ],
-        "aoColumns": [
-            {"bSortable": false},                           // Checkbox
-            {"bSortable": true, "sType": "numeric"},        // Position
-            {"bSortable": true, "sType": "html"},           // ID
-            {"bSortable": true},                            // Collaborator Sample ID
-            {"bSortable": true},                            // Participant ID
-            {"bSortable": true},                            // Collaborator Participant ID
-            {"bSortable": true, "sType": "numeric"},        // Shipped Date
-            {"bSortable": true, "sType": "numeric"},        // Received Date
-            {"bSortable": true},                            // Sample Type
-            {"bSortable": true},                            // Material Type
-            {"bSortable": true, "sType": "numeric"},        // Volume
-            {"bSortable": true, "sType": "numeric"},        // Concentration
 
-            <c:if test="${actionBean.supportsRin}">
-            {"bSortable": true, "sType": "numeric"},        // RIN
-            {"bSortable": true, "sType": "numeric"},        // RQS
-            {"bSortable": true, "sType": "numeric"},        // DV200
-            </c:if>
+    function renderPico(data, type, row, meta) {
+        if (type === 'display') {
+            var $data = $j(data);
+            if (sampleData[x].hasSampleKitUploadRackscanMismatch) {
+                $j('#sampleKitUploadRackscanMismatch-' + sampleId).html('<img src="${ctxpath}/images/error.png" title="Yes"/>');
+            }
+        }
+        return data
+    }
+
+    function renderBilled(data, type, row, meta) {
+        if (type === 'display') {
+            if (data) {
+                return $j("<img/>", {src: "${ctxpath}/images/check.png", title: "Yes"})
+            }
+        }
+        return data;
+        <%--if (sampleData[x].completelyBilled) {--%>
+        <%--$j('#completelyBilled-' + sampleId).html('<img src="${ctxpath}/images/check.png" title="Yes"/>');--%>
+        <%--}--%>
+    }
+    var localStorageKey = 'DT_productOrderView';
+
+    if ($j("#sampleData tbody>tr").length > 0) {
+        var oTable = $j('#sampleData').dataTable({
+            'paging':true,
+            "scrollX": "940px",
+              "scrollCollapse": true,
+            "deferLoading": true,
+            'colReorder': true,
+            "stateSave": true,
+            "pageLength": 25,
+            'buttons': [{
+                'extend': 'colvis',
+                'text': "Show or Hide Columns",
+                'columns': ':gt(1)',
+                'prefixButtons': [{
+                    'extend': 'colvis', 'text': 'Show All',
+                    action: function (event, dt, node, config) {
+                        dt.columns(config.columns).visible(true);
+                    }
+                }],
+            }, standardButtons()],
+            "columns": [
+                {"orderable": false, 'class': 'no-min-width'},      // Checkbox
+                {"orderable": true, 'class': 'no-min-width'},       // Position
+                {"title": "${columnHeaderSampleId}", "orderable": true, "sType": "html"},
+                {"title": "${columnHeaderCollaboratorSampleId}", "orderable": true},
+                {"title": "${columnHeaderParticipantId}", "orderable": true},
+                {"title": "${columnHeaderCollaboratorParticipantId}", "orderable": true},
+                {"title": "${columnHeaderShippedDate}", "orderable": true},
+                {"title": "${columnHeaderReceivedDate}", "orderable": true},
+                {"title": "${columnHeaderSampleType}", "orderable": true},
+                {"title": "${columnHeaderMaterialType}", "orderable": true},
+                {"title": "${columnHeaderVolume}", "orderable": true},
+                {"title": "${columnHeaderConcentration}", "orderable": true},
+                <c:if test="${actionBean.supportsRin}">
+                {"title": "${columnHeaderRin}", "orderable": true},
+                {"title": "${columnHeaderRqs}", "orderable": true},
+                {"title": "${columnHeaderDv2000}", "orderable": true},
+                </c:if>
 
                 <c:if test="${actionBean.supportsPico}"> {
                     "title": "${columnHeaderPicoRunDate}",
@@ -493,16 +530,50 @@ function updateFundsRemaining() {
 }
 
 function updateFunds(data) {
+
+    var quoteWarning = false;
+
     if (data.fundsRemaining) {
-        $j("#fundsRemaining").text('Status: ' + data.status + ' - Funds Remaining: ' + data.fundsRemaining +
-                ' with ' + data.outstandingEstimate + ' unbilled across existing open orders');
+        var fundsRemainingNotification = 'Status: ' + data.status + ' - Funds Remaining: ' + data.fundsRemaining +
+                ' with ' + data.outstandingEstimate + ' unbilled across existing open orders';
+        var fundingDetails = data.fundingDetails;
+
+        if(data.status != "Funded" ||
+                Number(data.outstandingEstimate.replace(/[^0-9\.]+/g,"")) > Number(data.fundsRemaining.replace(/[^0-9\.]+/g,""))) {
+            quoteWarning = true;
+        }
+
+        for(var detailIndex in fundingDetails) {
+            fundsRemainingNotification += '\n'+fundingDetails[detailIndex].grantTitle;
+            if(fundingDetails[detailIndex].activeGrant) {
+                fundsRemainingNotification += ' -- Expires ' + fundingDetails[detailIndex].grantEndDate;
+                if(fundingDetails[detailIndex].daysTillExpire < 45) {
+                    fundsRemainingNotification += ' in ' + fundingDetails[detailIndex].daysTillExpire + ' days';
+                    quoteWarning = true;
+                }
+            } else {
+                fundsRemainingNotification += ' -- Has Expired ' + fundingDetails[detailIndex].grantEndDate;
+                quoteWarning = true;
+            }
+            if(fundingDetails[detailIndex].grantStatus != "Active") {
+                quoteWarning = true;
+            }
+            fundsRemainingNotification += '\n';
+        }
+        $j("#fundsRemaining").text(fundsRemainingNotification);
     } else {
         $j("#fundsRemaining").text('Error: ' + data.error);
+        quoteWarning = true;
+    }
+
+    if(quoteWarning) {
+        $j("#fundsRemaining").addClass("alert alert-error");
+    } else {
+        $j("#fundsRemaining").removeClass("alert alert-error");
     }
 }
 
-function showSummary() {
-    var data = ${actionBean.summary};
+function showSummary(data) {
     var dataList = '<ul>';
     data.map(function (item) {
         dataList += '<li>' + item.comment + '</li>'
@@ -1187,7 +1258,7 @@ function formatInput(item) {
             <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">
                     ${actionBean.editOrder.quoteId}
             </a>
-            <span id="fundsRemaining" style="margin-left: 20px;"> </span>
+            <div id="fundsRemaining"> </div>
         </div>
     </div>
 </div>
@@ -1482,6 +1553,7 @@ function formatInput(item) {
             <stripes:button name="setProceedOos" value="Set Proceed OOS" class="btn"
                     style="margin-left:5px;" onclick="showProceedOosDialog()"/>
         </security:authorizeBlock>
+
     </div>
 
     <div id="summaryId" class="fourcolumn" style="margin-bottom:10px;">
