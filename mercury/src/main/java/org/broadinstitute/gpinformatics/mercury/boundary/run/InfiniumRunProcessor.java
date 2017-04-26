@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarterConfig;
@@ -19,6 +20,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
@@ -58,6 +60,7 @@ public class InfiniumRunProcessor {
             String[] extensions = new String[] { "xml" };
             Collection<File> xmlFiles = FileUtils.listFiles(runDirectory, extensions, false);
             hasRunStarted = !xmlFiles.isEmpty();
+            scannerName = findScannerName(chipBarcode, infiniumStarterConfig);
             List<String> idatFiles = listIdatFiles(runDirectory);
             for (VesselPosition vesselPosition: chip.getVesselGeometry().getVesselPositions()) {
                 Set<SampleInstanceV2> sampleInstancesAtPositionV2 =
@@ -70,9 +73,6 @@ public class InfiniumRunProcessor {
                     wellCompleteMap.put(vesselPosition, complete);
                     if (!complete) {
                         isChipCompleted = false;
-                    }
-                    if (scannerName == null) {
-                        scannerName = findScannerName(chipBarcode, vesselPosition.name(), infiniumStarterConfig);
                     }
                 }
             }
@@ -108,34 +108,36 @@ public class InfiniumRunProcessor {
         return new File(rootDir, chipBarcode);
     }
 
-    public static String findScannerName(String chipBarcode, String vesselPosition,
-                                         InfiniumStarterConfig infiniumStarterConfig) {
+    /**
+     * Grab any red xml file in chip directory to attempt to parse scanner ID.
+     * @return scanner name if ID to scanner known, else null
+     */
+    public static String findScannerName(String chipBarcode, InfiniumStarterConfig infiniumStarterConfig) {
         try {
             if (infiniumStarterConfig != null) {
-                String redXml = String.format("%s_%s_1_Red.xml", chipBarcode, vesselPosition);
+                FileFilter fileFilter = new WildcardFileFilter("*_Red.xml");
                 File chipDir = new File(infiniumStarterConfig.getDataPath(), chipBarcode);
-                File redXmlFile = new File(chipDir, redXml);
-                if (!redXmlFile.exists()) {
-                    redXml = String.format("%s_%s_01_Red.xml", chipBarcode, vesselPosition);
-                    redXmlFile = new File(chipDir, redXml);
+                File[] files = chipDir.listFiles(fileFilter);
+                if (files != null && chipDir.length() > 0) {
+                    File redXmlFile = files[0];
                     if (!redXmlFile.exists()) {
-                        return null;
+                            return null;
                     }
+                    DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+                    DocumentBuilder documentBuilder = builderFactory.newDocumentBuilder();
+                    Document document = documentBuilder.parse(new FileInputStream(redXmlFile));
+                    XPath xPath = XPathFactory.newInstance().newXPath();
+                    XPathExpression lcsetKeyExpr = xPath.compile("ImageHeader/ScannerID");
+                    NodeList scannerIdNodeList = (NodeList) lcsetKeyExpr.evaluate(document,
+                            XPathConstants.NODESET);
+                    Node elemNode = scannerIdNodeList.item(0);
+                    String scannerId = elemNode.getFirstChild().getNodeValue();
+                    String scannerName = InfiniumRunResource.mapSerialNumberToMachineName.get(scannerId);
+                    if (scannerName == null) {
+                        scannerName = "Unknown";
+                    }
+                    return scannerName;
                 }
-                DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
-                DocumentBuilder documentBuilder = builderFactory.newDocumentBuilder();
-                Document document = documentBuilder.parse(new FileInputStream(redXmlFile));
-                XPath xPath = XPathFactory.newInstance().newXPath();
-                XPathExpression lcsetKeyExpr = xPath.compile("ImageHeader/ScannerID");
-                NodeList scannerIdNodeList = (NodeList) lcsetKeyExpr.evaluate(document,
-                        XPathConstants.NODESET);
-                Node elemNode = scannerIdNodeList.item(0);
-                String scannerId = elemNode.getFirstChild().getNodeValue();
-                String scannerName = InfiniumRunResource.mapSerialNumberToMachineName.get(scannerId);
-                if (scannerName == null) {
-                    scannerName = "Unknown";
-                }
-                return scannerName;
             }
         } catch (Exception e) {
             log.error("Failed to find scanner name from filesystem for " + chipBarcode);
