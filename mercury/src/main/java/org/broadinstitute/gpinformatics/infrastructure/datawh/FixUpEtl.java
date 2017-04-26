@@ -9,9 +9,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary_;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
+import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel_;
@@ -23,12 +26,9 @@ import org.hibernate.envers.CrossTypeRevisionChangesReader;
 import org.hibernate.envers.RevisionType;
 
 import javax.ejb.Stateful;
-import javax.ejb.TransactionManagement;
-import javax.ejb.TransactionManagementType;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -42,7 +42,6 @@ import java.util.Set;
  * This class analyses the lab event entities affected by the fix-up and refreshes any descendant events.
  */
 @Stateful
-@TransactionManagement(TransactionManagementType.BEAN)
 public class FixUpEtl extends GenericEntityEtl<FixupCommentary, FixupCommentary> {
 
     public FixUpEtl() {
@@ -55,10 +54,14 @@ public class FixUpEtl extends GenericEntityEtl<FixupCommentary, FixupCommentary>
 
     // Fixup events are layered on top of existing lab event output
     public final String ancestorFileName = "library_ancestry";
+    public final String seqSampleFactFileName = "sequencing_sample_fact";
 
 
     @Inject
     LabEventEtl labEventEtl;
+
+    @Inject
+    SequencingSampleFactEtl sequencingSampleFactEtl;
 
     @Override
     Long entityId(FixupCommentary entity) {
@@ -97,6 +100,8 @@ public class FixUpEtl extends GenericEntityEtl<FixupCommentary, FixupCommentary>
         // Creates the wrapped Writer to the sqlLoader data files.
         DataFile eventDataFile = new DataFile(dataFilename(etlDateStr, baseFilename));
         DataFile ancestryDataFile = new DataFile(dataFilename(etlDateStr, ancestorFileName));
+        DataFile seqSampleDataFile = new DataFile(dataFilename(etlDateStr, seqSampleFactFileName));
+        int count = 0;
 
         try {
             // Writes the records.
@@ -107,8 +112,13 @@ public class FixUpEtl extends GenericEntityEtl<FixupCommentary, FixupCommentary>
                         // Split file writes between events and ancestry ...
                         if( record.endsWith("E") ) {
                             eventDataFile.write(record);
+                            count++;
                         } else if ( record.endsWith("A") ) {
                             ancestryDataFile.write(record);
+                            count++;
+                        } else if ( record.endsWith("S") ) {
+                            seqSampleDataFile.write(record);
+                            count++;
                         }
                     }
                 } catch (Exception e) {
@@ -127,8 +137,9 @@ public class FixUpEtl extends GenericEntityEtl<FixupCommentary, FixupCommentary>
         } finally {
             eventDataFile.close();
             ancestryDataFile.close();
+            seqSampleDataFile.close();
         }
-        return eventDataFile.getRecordCount() + ancestryDataFile.getRecordCount();
+        return count;
     }
 
     /**
@@ -199,8 +210,33 @@ public class FixUpEtl extends GenericEntityEtl<FixupCommentary, FixupCommentary>
 
         // Using base events, traverse target vessel descendant events and refresh all
         Collection<LabEvent> eventsToRefresh = getEventsRelatedToAuditEvents( coreAuditEvents );
+        Set<SequencingRun> sequencingRunsToRefresh = new HashSet<>();
         for( LabEvent evt : eventsToRefresh ) {
             records.addAll( labEventEtl.dataRecords(etlDateStr, isDelete, evt) );
+
+            // Capture sequencing runs in order to refresh sequencing sample fact data
+            LabVessel flowcell = null;
+            if( evt.getLabEventType() == LabEventType.FLOWCELL_TRANSFER ||
+                    evt.getLabEventType() == LabEventType.DILUTION_TO_FLOWCELL_TRANSFER  ||
+                    evt.getLabEventType() == LabEventType.DENATURE_TO_FLOWCELL_TRANSFER ) {
+                flowcell = evt.getTargetLabVessels().iterator().next();
+            } else if( evt.getLabEventType() == LabEventType.FLOWCELL_LOADED ) {
+                flowcell = evt.getInPlaceLabVessel();
+            }
+            // Collects sequencing runs and build sequencing sample fact data from any descendant flowcells.
+            if (OrmUtil.proxySafeIsInstance(flowcell, RunCartridge.class)) {
+                RunCartridge runCartridge = OrmUtil.proxySafeCast(flowcell, RunCartridge.class );
+                sequencingRunsToRefresh.addAll(runCartridge.getSequencingRuns());
+            }
+
+        }
+
+        for (SequencingRun seqRun : sequencingRunsToRefresh) {
+            for( String etlData : sequencingSampleFactEtl.dataRecords( etlDateStr, false, seqRun ) ) {
+                // Suffix record with S to differentiate sequencing_sample_fact
+                // (vs. E for event_fact and A for library_ancestry)
+                records.add( etlData + ",S");
+            }
         }
 
         return records;

@@ -222,19 +222,10 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
                          Collection<RevInfoPair<AUDITED_ENTITY_CLASS>> revInfoPairs,
                          String etlDateStr) throws Exception {
         try {
-            processFixups(deletedEntityIds, modifiedEntityIds, etlDateStr);
             return writeRecords(deletedEntityIds, modifiedEntityIds, addedEntityIds, revInfoPairs, etlDateStr);
         } finally {
             postEtlLogging();
         }
-    }
-
-    /**
-     * Used when necessary to re-etl related entities (e.g. downstream events) when fixups occur.
-     */
-    protected void processFixups(Collection<Long> deletedEntityIds,
-                                 Collection<Long> modifiedEntityIds,
-                                 String etlDateStr) throws Exception {
     }
 
     /**
