@@ -93,7 +93,6 @@ public class AbandonVesselActionBean  extends RackScanActionBean {
      */
     @HandlesEvent(RACK_SCAN_EVENT)
     public Resolution rackScan() throws Exception {
-
         scan();
         setRackScanGeometry();
         if(getRackScan() != null) {
@@ -154,7 +153,7 @@ public class AbandonVesselActionBean  extends RackScanActionBean {
         String vesselPosition = getVesselPosition();
         String reason = getVesselPositionReason();
         String responseLabel = "";
-
+        boolean vesselsFound = false;
         isRackScan(vesselPosition);
 
         if(reason.equals(reasonSelect)) {
@@ -164,8 +163,14 @@ public class AbandonVesselActionBean  extends RackScanActionBean {
         }
 
         for (LabVessel vessel : getFoundVessels()) {
-             if(vessel != null) {
+             if(vessel != null && vessel.getLabel() != null) {
                  AbandonVessel abandonVessel = getVesselToAbandon(vessel);
+                 //If this is a barcoded tube persist the labvessel and reason in abandon_vessel
+                 if(isMatrixTube(vessel)) {
+                     abandonVessel.setReason(AbandonVessel.Reason.valueOf(reason));
+                 }
+                //Even for a barcoded tube we still need to persist the position since this
+                //is used to by the .JSP page to display the state of an abandoned tube.
                  abandonVessel.setAbandonedOn(true);
                  AbandonVesselPosition abandonVesselPosition = new AbandonVesselPosition();
                  abandonVesselPosition.setAbandonedOn(true);
@@ -173,12 +178,21 @@ public class AbandonVesselActionBean  extends RackScanActionBean {
                  abandonVesselPosition.setPosition(vesselPosition);
                  abandonVessel.addAbandonVesselPosition(abandonVesselPosition);
                  vessel.addAbandonedVessel(abandonVessel);
+                 vesselsFound = true;
                  responseLabel = vessel.getLabel();
              }
        }
-        labVesselDao.flush();
-        messageCollection.addInfo("Position: " + vesselPosition +  " For Vessel: " + responseLabel + " Successfully Abandoned. " );
-        addMessages(messageCollection);
+
+        if(!vesselsFound){
+            //Error message for rack scans with missing vessels in the database.
+            messageCollection.addError("No valid vessels found.");
+            addMessages(messageCollection);
+        }
+        else {
+            labVesselDao.flush();
+            messageCollection.addInfo("Position: " + vesselPosition + " For Vessel: " + responseLabel + " Successfully Abandoned. ");
+            addMessages(messageCollection);
+        }
         return vesselSearch();
     }
 
@@ -463,6 +477,13 @@ public class AbandonVesselActionBean  extends RackScanActionBean {
          List<String> searchList = new ArrayList<String>();
          searchList.add(searchKey);
          LabVessel vessel = labVesselDao.findByIdentifier(searchList.get(0));
+
+        if(isRackOfTubes(vessel) && getSearchKey() != null){
+            resultsAvailable = false;
+            messageCollection.addError("You must perform a rack scan to abandon tubes in a rack.");
+            addMessages(messageCollection);
+            return;
+          }
          if (vessel != null) {
              foundVessels.add(vessel);
              resultsAvailable = true;
@@ -670,4 +691,20 @@ public class AbandonVesselActionBean  extends RackScanActionBean {
 
     @Override
     public String getPageTitle() { return PAGE_TITLE; }
+
+    private boolean isRackOfTubes(LabVessel labVessel) {
+        if (labVessel.getType().equals(LabVessel.ContainerType.RACK_OF_TUBES)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private boolean isMatrixTube(LabVessel labVessel) {
+        if (labVessel.getType().equals(LabVessel.ContainerType.TUBE)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }
