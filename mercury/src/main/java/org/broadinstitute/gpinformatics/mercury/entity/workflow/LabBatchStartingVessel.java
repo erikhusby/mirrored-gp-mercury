@@ -18,6 +18,7 @@ import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.math.BigDecimal;
 
 @Entity
@@ -46,24 +47,38 @@ public class LabBatchStartingVessel {
     @Enumerated(EnumType.STRING)
     private VesselPosition vesselPosition;
 
+    @Transient
+    private String linkedLcset;
+
+    @Transient
+    private String productNames;
+
     public LabBatchStartingVessel() {
     }
 
     public LabBatchStartingVessel(@Nonnull LabVessel labVessel, @Nonnull LabBatch labBatch) {
-        this(labVessel, labBatch, null);
+        this.labVessel = labVessel;
+        this.labBatch = labBatch;
     }
 
     public LabBatchStartingVessel(@Nonnull LabVessel labVessel, @Nonnull LabBatch labBatch,
                                   @Nullable BigDecimal concentration) {
-        this(labVessel, labBatch, concentration, null);
+        this(labVessel, labBatch);
+        this.concentration = concentration;
     }
 
     public LabBatchStartingVessel(@Nonnull LabVessel labVessel, @Nonnull LabBatch labBatch,
                                   @Nullable BigDecimal concentration, VesselPosition vesselPosition) {
-        this.labVessel = labVessel;
-        this.labBatch = labBatch;
-        this.concentration = concentration;
+        this(labVessel, labBatch, concentration);
         this.vesselPosition = vesselPosition;
+    }
+
+    public LabBatchStartingVessel(@Nonnull LabVessel labVessel, @Nonnull LabBatch labBatch,
+            @Nullable BigDecimal concentration, VesselPosition vesselPosition, @Nullable String linkedLcset,
+            @Nullable String productNames) {
+        this(labVessel, labBatch, concentration, vesselPosition);
+        this.linkedLcset = linkedLcset;
+        this.productNames = productNames;
     }
 
     public Long getBatchStartingVesselId() {
@@ -113,5 +128,23 @@ public class LabBatchStartingVessel {
 
     public void setVesselPosition(VesselPosition vesselPosition) {
         this.vesselPosition = vesselPosition;
+    }
+
+    public String getLinkedLcset() {
+        return linkedLcset;
+    }
+
+    @Transient
+    public void setLinkedLcset(String linkedLcset) {
+        this.linkedLcset = linkedLcset;
+    }
+
+    public String getProductNames() {
+        return productNames;
+    }
+
+    @Transient
+    public void setProductNames(String productNames) {
+        this.productNames = productNames;
     }
 }

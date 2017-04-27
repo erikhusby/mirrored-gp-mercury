@@ -180,8 +180,8 @@ public class LabBatchEjbDBFreeTest {
         for (LabVessel tube : mapBarcodeToTube.values()) {
             VesselPosition lane =
                     IlluminaFlowcell.FlowcellType.HiSeqFlowcell.getVesselGeometry().getVesselPositions()[idx++];
-            vesselToLanesInfo.add(
-                    new LabBatch.VesselToLanesInfo(Collections.singletonList(lane), BigDecimal.TEN, tube));
+            vesselToLanesInfo.add(new LabBatch.VesselToLanesInfo(Collections.singletonList(lane), BigDecimal.TEN,
+                    tube, "LCSET-0004", "CP Human WES (80/20)"));
         }
         LabBatch testBatch = new LabBatch(testFCTKey, vesselToLanesInfo, LabBatch.LabBatchType.FCT,
                 IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell);

@@ -580,7 +580,7 @@ public class LabBatchFixUpTest extends Arquillian {
 
             LabVessel startingTube = labVesselDao.findByIdentifier(startingTubeLabel);
             LabBatch batch = new LabBatch(startingTubeLabel + " FCT ticket", Collections.singletonList(
-                    new LabBatch.VesselToLanesInfo(Arrays.asList(lanes), loadingConc, startingTube)),
+                    new LabBatch.VesselToLanesInfo(Arrays.asList(lanes), loadingConc, startingTube, null, null)),
                     batchType, selectedType);
             batch.setBatchDescription(batch.getBatchName());
             labBatchEjb.createLabBatch(batch, userBean.getLoginUserName(), issueType);

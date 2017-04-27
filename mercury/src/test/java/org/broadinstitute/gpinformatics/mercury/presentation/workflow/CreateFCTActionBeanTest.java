@@ -4,7 +4,6 @@ package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
@@ -21,12 +20,15 @@ import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb.laneToLinkedLcsets;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class CreateFCTActionBeanTest {
@@ -281,6 +283,28 @@ public class CreateFCTActionBeanTest {
     }
 
     @Test
+    public void testMixedLaneCount() {
+        int[][] numberLanes = {{1, 3}, {1, 15}, {3}};
+        int testIdx = 0;
+        for (IlluminaFlowcell.FlowcellType flowcellType : Arrays.asList(
+                IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell,
+                IlluminaFlowcell.FlowcellType.HiSeqX10Flowcell,
+                IlluminaFlowcell.FlowcellType.MiSeqFlowcell
+        )) {
+            Set<String> expectedLcsets = new HashSet<>();
+            Collection<Pair<FctDto, LabVessel>> dtoVessels = new ArrayList<>();
+            for (int i = 0; i < numberLanes[testIdx].length; ++i) {
+                LabVessel tube = stbTubes.get(i);
+                dtoVessels.add(Pair.of((FctDto) new CreateFctDto(tube.getLabel(), "lcset" + i, conc,
+                        numberLanes[testIdx][i]), tube));
+                expectedLcsets.add("lcset" + i);
+            }
+            Assert.assertTrue(CollectionUtils.isEmpty(allocateAndTest(dtoVessels, flowcellType, null, expectedLcsets)));
+            ++testIdx;
+        }
+    }
+
+    @Test
     public void testCycles() {
         DesignationDto dto = new DesignationDto();
 
@@ -325,21 +349,21 @@ public class CreateFCTActionBeanTest {
 
         int flowcellLaneCount = flowcellType.getVesselGeometry().getRowCount();
         if (!isDesignationDto) {
-            Assert.assertEquals(expectedLaneCount % flowcellLaneCount, 0, "Bad test setup");
+            Assert.assertEquals(expectedLaneCount % flowcellLaneCount, 0, "Bad test setup for " + flowcellType.name() +
+            " having barcodes " + StringUtils.join(expectedBarcodeOnEachLane, " "));
         }
         int expectedBatchCount = expectedLaneCount / flowcellLaneCount;
 
 
         // Does the starting vessel to FCT allocation.
-        Triple<List<LabBatch>, List<Set<String>>, FctDto> fctReturnTriple = testBean.makeFctDaoFree(dtoVessels,
-                        flowcellType, !isDesignationDto);
+        Pair<List<LabBatch>, FctDto> fctReturn = testBean.makeFctDaoFree(dtoVessels, flowcellType, !isDesignationDto);
 
         // Checks the split dto.
-        if (fctReturnTriple.getRight() == null) {
+        if (fctReturn.getRight() == null) {
             Assert.assertNull(splitDto);
         } else {
             Assert.assertTrue(isDesignationDto);
-            DesignationDto designationSplit = (DesignationDto)fctReturnTriple.getRight();
+            DesignationDto designationSplit = (DesignationDto)fctReturn.getRight();
             Assert.assertNotNull(splitDto);
             Assert.assertEquals(designationSplit.getAllocationOrder(), splitDto.getAllocationOrder());
             Assert.assertEquals(designationSplit.getBarcode(), splitDto.getBarcode());
@@ -351,12 +375,12 @@ public class CreateFCTActionBeanTest {
         }
 
         // Is the number of FCTs correct?
-        Assert.assertEquals(fctReturnTriple.getLeft().size(), expectedBatchCount, " On " + flowcellType.getDisplayName());
+        Assert.assertEquals(fctReturn.getLeft().size(), expectedBatchCount, " On " + flowcellType.getDisplayName());
 
         Set<String> foundLcsetNames = new HashSet<>();
-        for (int idx = 0; idx < fctReturnTriple.getLeft().size(); ++idx) {
-            LabBatch fctBatch = fctReturnTriple.getLeft().get(idx);
-            Set<String> lcsetNames = fctReturnTriple.getMiddle().get(idx);
+        for (int idx = 0; idx < fctReturn.getLeft().size(); ++idx) {
+            LabBatch fctBatch = fctReturn.getLeft().get(idx);
+            Set<String> lcsetNames = new HashSet<>(laneToLinkedLcsets(fctBatch).values());
 
             Assert.assertEquals(fctBatch.getLabBatchStartingVessels().size(), flowcellLaneCount);
 

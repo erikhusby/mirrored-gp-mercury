@@ -16,6 +16,7 @@ public interface FctDto {
     public void setAllocated(boolean wasAllocated);
     public int getAllocationOrder();
     public FctDto split(int numberLanes);
+    public String getProduct();
 
 
     public static final Comparator<Pair<FctDto, LabVessel>> BY_ALLOCATION_ORDER =

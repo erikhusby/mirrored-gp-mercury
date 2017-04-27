@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
@@ -92,6 +93,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
     private IlluminaFlowcell flowcellHiSeq4000;
     private LabBatch workflowBatch;
     private final List<FlowcellDesignation> flowcellDesignations = new ArrayList<>();
+    private ProductOrder productOrder;
 
     @Override
     @BeforeMethod
@@ -115,8 +117,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         });
         flowcellDesignations.clear();
 
-        final ProductOrder
-                productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
+        productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         runDate = new Date();
         Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         workflowBatch = new LabBatch("Exome Express Batch",
@@ -204,10 +205,12 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         List<LabBatch.VesselToLanesInfo> vesselToLanesInfos = new ArrayList<>();
 
         vesselToLanesInfo = new LabBatch.VesselToLanesInfo(
-                vesselPositions1, new BigDecimal("16.22"), denatureTube2000);
+                vesselPositions1, new BigDecimal("16.22"), denatureTube2000, workflowBatch.getBatchName(),
+                productOrder.getProduct().getProductName());
 
         vesselToLanesInfo2 = new LabBatch.VesselToLanesInfo(
-                vesselPositions2, BIG_DECIMAL_12_33, denatureTube4000);
+                vesselPositions2, BIG_DECIMAL_12_33, denatureTube4000, workflowBatch.getBatchName(),
+                productOrder.getProduct().getProductName());
 
         vesselToLanesInfos.add(vesselToLanesInfo);
         vesselToLanesInfos.add(vesselToLanesInfo2);
@@ -612,6 +615,12 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         flowcellDesignations.clear();
         flowcellDesignations.add(designation);
         flowcellDesignations.add(designation2);
+
+        // Verifies the transient fields are correct.
+        for (LabBatchStartingVessel labBatchStartingVessel : fctBatchHiSeq4000.getLabBatchStartingVessels()) {
+            Assert.assertEquals(labBatchStartingVessel.getLinkedLcset(), workflowBatch.getBatchName());
+            Assert.assertEquals(labBatchStartingVessel.getProductNames(), productOrder.getProduct().getProductName());
+        }
 
         template = factory.getSequencingTemplate(fctBatchHiSeq4000, false);
         for (SequencingTemplateLaneType laneType: template.getLanes()) {

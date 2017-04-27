@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 import com.google.common.collect.Lists;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -10,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationDto;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -32,16 +35,6 @@ public class FCTJiraFieldFactoryTest {
 
     private Map<String, CustomFieldDefinition> jiraFieldDefs;
 
-    private String laneInfo = "||Lane||Loading Vessel||Loading Concentration||\n"
-                              + "|LANE1|DenatureTube01|16.219999313354492|\n"
-                              + "|LANE2|DenatureTube01|16.219999313354492|\n"
-                              + "|LANE3|DenatureTube01|16.219999313354492|\n"
-                              + "|LANE4|DenatureTube01|16.219999313354492|\n"
-                              + "|LANE5|DenatureTube02|12.220000267028809|\n"
-                              + "|LANE6|DenatureTube02|12.220000267028809|\n"
-                              + "|LANE7|DenatureTube02|12.220000267028809|\n"
-                              + "|LANE8|DenatureTube02|12.220000267028809|\n";
-
     @BeforeMethod
     public void startUp() throws IOException {
         jiraFieldDefs = JiraServiceProducer.stubInstance().getCustomFields();
@@ -57,10 +50,12 @@ public class FCTJiraFieldFactoryTest {
         List<LabBatch.VesselToLanesInfo> vesselToLanesInfos = new ArrayList<>();
 
         LabBatch.VesselToLanesInfo vesselToLanesInfo = new LabBatch.VesselToLanesInfo(
-                vesselPositions1, BigDecimal.valueOf(16.22f), new BarcodedTube("DenatureTube01"));
+                vesselPositions1, BigDecimal.valueOf(16.22f), new BarcodedTube("DenatureTube01"), "LCSET-0001",
+                "Express Somatic Human WES (Deep Coverage) v1");
 
         LabBatch.VesselToLanesInfo vesselToLanesInfo2 = new LabBatch.VesselToLanesInfo(
-                vesselPositions2, BigDecimal.valueOf(12.22f), new BarcodedTube("DenatureTube02"));
+                vesselPositions2, BigDecimal.valueOf(12.22f), new BarcodedTube("DenatureTube02"), "LCSET-0002",
+                "Product 1" + DesignationDto.DELIMITER + "Product 2" + DesignationDto.DELIMITER + "Product 3");
 
         vesselToLanesInfos.add(vesselToLanesInfo);
         vesselToLanesInfos.add(vesselToLanesInfo2);
@@ -71,17 +66,32 @@ public class FCTJiraFieldFactoryTest {
         AbstractBatchJiraFieldFactory testBuilder = AbstractBatchJiraFieldFactory.getInstance(
                 CreateFields.ProjectType.FCT_PROJECT, labBatch, null, null);
 
-        Collection<CustomField> generatedFields = testBuilder.getCustomFields(jiraFieldDefs);
-
-        Assert.assertEquals(1, generatedFields.size());
-
-        for (CustomField field : generatedFields) {
-
-            String fieldDefinitionName = field.getFieldDefinition().getName();
-            if (fieldDefinitionName.equals(LabBatch.TicketFields.LANE_INFO.getName())) {
-                Assert.assertEquals(laneInfo, (String) field.getValue());
+        Collection<CustomField> testFields = testBuilder.getCustomFields(jiraFieldDefs);
+        Assert.assertEquals(1, testFields.size());
+        CustomField testField = testFields.iterator().next();
+        Assert.assertEquals(testField.getFieldDefinition().getName(), LabBatch.TicketFields.LANE_INFO.getName());
+        String laneInfo = (String) testField.getValue();
+        Assert.assertTrue(laneInfo.startsWith(FCTJiraFieldFactory.LANE_INFO_HEADER));
+        int counter = 1;
+        for (JiraLaneInfo jiraLaneInfo : FCTJiraFieldFactory.parseJiraLaneInfo(laneInfo)) {
+            if (counter < 5) {
+                Assert.assertEquals(jiraLaneInfo.getLane(), "LANE" + counter++);
+                Assert.assertEquals(jiraLaneInfo.getLoadingVessel(), "DenatureTube01");
+                Assert.assertEquals(MathUtils.scaleTwoDecimalPlaces(new BigDecimal(jiraLaneInfo.getLoadingConc())),
+                        new BigDecimal("16.22"));
+                Assert.assertEquals(jiraLaneInfo.getLcset(), "LCSET-0001");
+                Assert.assertEquals(jiraLaneInfo.getProductNames(), "Express Somatic Human WES (Deep Coverage) v1");
+            } else {
+                Assert.assertEquals(jiraLaneInfo.getLane(), "LANE" + counter++);
+                Assert.assertEquals(jiraLaneInfo.getLoadingVessel(), "DenatureTube02");
+                Assert.assertEquals(MathUtils.scaleTwoDecimalPlaces(new BigDecimal(jiraLaneInfo.getLoadingConc())),
+                        new BigDecimal("12.22"));
+                Assert.assertEquals(jiraLaneInfo.getLcset(), "LCSET-0002");
+                String[] productNames = jiraLaneInfo.getProductNames().split("\\\\n");
+                Assert.assertEquals(productNames.length, 3);
+                Assert.assertEquals(productNames, new String[]{"Product 1", "Product 2", "Product 3"});
             }
         }
     }
-
 }
+
