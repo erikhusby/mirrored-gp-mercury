@@ -52,7 +52,6 @@ public class AbandonVesselActionBean  extends RackScanActionBean {
     private boolean isMultiplePositions = false;
     private LabVessel labVessel;
     private String searchKey;
-    private boolean isScan = false;
     private MessageCollection messageCollection = new MessageCollection();
     private String reasonSelect = new AbandonVessel().getReasonList()[0].getDisplayName();
 
@@ -94,7 +93,6 @@ public class AbandonVesselActionBean  extends RackScanActionBean {
      */
     @HandlesEvent(RACK_SCAN_EVENT)
     public Resolution rackScan() throws Exception {
-        isScan = true;
         scan();
         setRackScanGeometry();
         if(getRackScan() != null) {
@@ -170,7 +168,6 @@ public class AbandonVesselActionBean  extends RackScanActionBean {
                  //If this is a barcoded tube persist the labvessel and reason in abandon_vessel
                  if(isMatrixTube(vessel)) {
                      abandonVessel.setReason(AbandonVessel.Reason.valueOf(reason));
-                     isScan = true;
                  }
                 //Even for a barcoded tube we still need to persist the position since this
                 //is used to by the .JSP page to display the state of an abandoned tube.
@@ -696,7 +693,7 @@ public class AbandonVesselActionBean  extends RackScanActionBean {
     public String getPageTitle() { return PAGE_TITLE; }
 
     private boolean isRackOfTubes(LabVessel labVessel) {
-        if (labVessel.toString().contains("RackOfTubes")) {
+        if (labVessel.getType().equals(LabVessel.ContainerType.RACK_OF_TUBES)) {
             return true;
         } else {
             return false;
@@ -704,7 +701,7 @@ public class AbandonVesselActionBean  extends RackScanActionBean {
     }
 
     private boolean isMatrixTube(LabVessel labVessel) {
-        if (labVessel.toString().contains("BarcodedTube")) {
+        if (labVessel.getType().equals(LabVessel.ContainerType.TUBE)) {
             return true;
         } else {
             return false;
