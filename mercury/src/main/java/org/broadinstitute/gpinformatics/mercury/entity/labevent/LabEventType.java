@@ -627,6 +627,7 @@ public enum LabEventType {
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.RECEPTACLE_TRANSFER_EVENT,
+                    // todo jmt CentriCutieSC_5 should be null?
                     BarcodedTube.BarcodedTubeType.CentriCutieSC_5, null).
                     sourceVesselTypeGeometries(
                             new VesselTypeGeometry[] { BarcodedTube.BarcodedTubeType.VacutainerBloodTube3,
@@ -645,8 +646,13 @@ public enum LabEventType {
                                     BarcodedTube.BarcodedTubeType.VacutainerBloodTubeYellowTop10,
                                     BarcodedTube.BarcodedTubeType.VacutainerCPTTube4,
                                     BarcodedTube.BarcodedTubeType.VacutainerCPTTube8,
-                            }). targetVesselTypeGeometries(new VesselTypeGeometry[] {
-                    BarcodedTube.BarcodedTubeType.FluidX_6mL, BarcodedTube.BarcodedTubeType.FluidX_10mL}).build(),
+                            }).
+                    targetVesselTypeGeometries(
+                            new VesselTypeGeometry[] {
+                                    BarcodedTube.BarcodedTubeType.FluidX_6mL,
+                                    BarcodedTube.BarcodedTubeType.FluidX_10mL
+                            }).
+                    build(),
             LibraryType.NONE_ASSIGNED),
     BLOOD_CRYOVIAL_EXTRACTION("BloodCryovialExtraction",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
