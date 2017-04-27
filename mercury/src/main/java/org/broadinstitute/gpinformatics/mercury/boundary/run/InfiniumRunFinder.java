@@ -80,24 +80,27 @@ public class InfiniumRunFinder implements Serializable {
             List<LabVessel> infiniumChips = labVesselDao.findAllWithEventButMissingAnother(LabEventType.INFINIUM_XSTAIN,
                     LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
             for (LabVessel labVessel : infiniumChips) {
-                UserTransaction utx = ejbContext.getUserTransaction();
-                try {
-                    if (OrmUtil.proxySafeIsInstance(labVessel, StaticPlate.class)) {
-                        StaticPlate staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
-                        utx.begin();
-                        processChip(staticPlate);
-                        // The commit doesn't cause a flush (not clear why), so we must do it explicitly.
-                        labEventDao.flush();
-                        utx.commit();
+                if (labEventDao != null && labEventDao.getEntityManager() != null &&
+                    labEventDao.getEntityManager().isOpen()) {
+                    UserTransaction utx = ejbContext.getUserTransaction();
+                    try {
+                        if (OrmUtil.proxySafeIsInstance(labVessel, StaticPlate.class)) {
+                            StaticPlate staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
+                            utx.begin();
+                            processChip(staticPlate);
+                            // The commit doesn't cause a flush (not clear why), so we must do it explicitly.
+                            labEventDao.flush();
+                            utx.commit();
+                        }
+                    } catch (Exception e) {
+                        utx.rollback();
+                        log.error("Failed to process chip " + labVessel.getLabel(), e);
+                        emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
+                                Collections.<String>emptyList(),
+                                "[Mercury] Failed to process infinium chip", "For " + labVessel.getLabel() +
+                                                                             " with error: " + e.getMessage(),
+                                false);
                     }
-                } catch (Exception e) {
-                    utx.rollback();
-                    log.error("Failed to process chip " + labVessel.getLabel(), e);
-                    emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
-                            Collections.<String>emptyList(),
-                            "[Mercury] Failed to process infinium chip", "For " + labVessel.getLabel() +
-                                                                                     " with error: " + e.getMessage(),
-                            false);
                 }
             }
         } finally {
