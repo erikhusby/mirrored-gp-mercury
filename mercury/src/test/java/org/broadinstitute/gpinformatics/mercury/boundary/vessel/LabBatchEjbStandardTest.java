@@ -434,7 +434,8 @@ public class LabBatchEjbStandardTest extends Arquillian {
                 dto.setBarcode(loadingTube.getLabel());
                 dto.setEvents(Collections.singleton(labEvent));
                 dto.setLcset(labBatch.getBatchName());
-                dto.setProductNames(Collections.singletonList(productName));
+                dto.setProduct(productName);
+                Assert.assertEquals(dto.getProduct(), productName);
                 dto.setNumberSamples(1);
                 dto.setRegulatoryDesignation(isClinical ? DesignationUtils.CLINICAL : DesignationUtils.RESEARCH);
                 dto.setSequencerModel(flowcellTypes[runIdx]);
@@ -502,7 +503,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
                 Assert.assertEquals(testDtos.get(0).getNumberSamples(), dto.getNumberSamples());
                 Assert.assertEquals(testDtos.get(0).getPoolTest(), dto.getPoolTest());
                 Assert.assertEquals(testDtos.get(0).getPriority(), dto.getPriority());
-                Assert.assertEquals(testDtos.get(0).getProductNameJoin(), dto.getProductNameJoin());
+                Assert.assertEquals(testDtos.get(0).getProduct(), dto.getProduct());
                 Assert.assertEquals(testDtos.get(0).getReadLength(), dto.getReadLength());
                 Assert.assertEquals(testDtos.get(0).getSequencerModel(), dto.getSequencerModel());
                 Assert.assertEquals(testDtos.get(0).getTubeEventId(), dto.getTubeEventId());
@@ -614,7 +615,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
             dto.setBarcode(loadingTubes[idx].getLabel());
             dto.setEvents(Collections.singleton(labEvent));
             dto.setLcset(labBatch.getBatchName());
-            dto.setProductNames(Collections.singletonList(productName));
+            dto.setProduct(productName);
             dto.setNumberSamples(1);
             dto.setRegulatoryDesignation(isClinical ? DesignationUtils.CLINICAL : DesignationUtils.RESEARCH);
             dto.setSequencerModel(IlluminaFlowcell.FlowcellType.HiSeqX10Flowcell);
@@ -709,7 +710,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
                 dto.setBarcode(loadingTube.getLabel());
                 dto.setEvents(Collections.singleton(labEvents.get(index)));
                 dto.setLcset(lcset.getBatchName());
-                dto.setProductNames(Collections.singletonList("Exome Express v2"));
+                dto.setProduct("Exome Express v2");
                 dto.setNumberSamples(1);
                 dto.setRegulatoryDesignation(regulatoryDesignation);
                 dto.setSequencerModel(flowcellType);
@@ -765,7 +766,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
                 dto.setBarcode(loadingTube.getLabel());
                 dto.setEvents(Collections.singleton(labEvent));
                 dto.setLcset(lcset.getBatchName());
-                dto.setProductNames(Collections.singletonList("Exome Express v2"));
+                dto.setProduct("Exome Express v2");
                 dto.setNumberSamples(1);
                 dto.setRegulatoryDesignation(i == 0 ? DesignationUtils.CLINICAL : DesignationUtils.RESEARCH);
                 dto.setSequencerModel(flowcellType);

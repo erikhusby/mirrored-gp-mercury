@@ -133,11 +133,11 @@ public class DesignationDto implements Cloneable, FctDto {
         return numberCycles;
     }
 
-    public String getProductNameJoin() {
+    public String getProduct() {
         return StringUtils.join(productNames, DELIMITER);
     }
 
-    public void setProductNameJoin(String delimitedProductNames) {
+    public void setProduct(String delimitedProductNames) {
         productNames = Arrays.asList(delimitedProductNames.split(DELIMITER));
     }
 
@@ -237,10 +237,6 @@ public class DesignationDto implements Cloneable, FctDto {
 
     public void setLcset(String lcset) {
         this.lcset = lcset;
-    }
-
-    public String getProduct() {
-        return StringUtils.join(productNames, DELIMITER);
     }
 
     public void setProductNames(List<String> productNames) {

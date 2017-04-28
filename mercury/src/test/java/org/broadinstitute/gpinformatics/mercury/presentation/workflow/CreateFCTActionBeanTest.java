@@ -48,7 +48,13 @@ public class CreateFCTActionBeanTest {
         Collection<Pair<FctDto, LabVessel>> dtoVessels = new ArrayList<>();
         for (int i = 0; i < 32; ++i) {
             LabVessel tube = stbTubes.get(i);
-            dtoVessels.add(Pair.of((FctDto)new CreateFctDto(tube.getLabel(), "lcset" + i, conc, 1), tube));
+            CreateFctDto dto = new CreateFctDto(tube.getLabel(), "lcset" + i, conc, 1);
+            //  Tests the split/join in the getter/setter.
+            dto.setProduct("product 1" + DesignationDto.DELIMITER + "product 2");
+            Assert.assertEquals(dto.getProduct(), "product 1" + DesignationDto.DELIMITER + "product 2");
+            dto.setProduct("product 3");
+            Assert.assertEquals(dto.getProduct(), "product 3");
+            dtoVessels.add(Pair.of((FctDto)dto, tube));
             expectedLcsets.add("lcset" + i);
         }
         for (IlluminaFlowcell.FlowcellType flowcellType : IlluminaFlowcell.FlowcellType.values()) {
@@ -89,6 +95,11 @@ public class CreateFCTActionBeanTest {
             dto.setNumberLanes(8);
             dto.setStatus(FlowcellDesignation.Status.QUEUED);
             dto.setLcset("lcset" + i / 9);
+            //  Tests the split/join in the getter/setter.
+            dto.setProductNames(Arrays.asList("product 1", "product 2"));
+            Assert.assertEquals(dto.getProduct(), "product 1" + DesignationDto.DELIMITER + "product 2");
+            dto.setProduct("product 3");
+            Assert.assertEquals(dto.getProduct(), "product 3");
             expectedLcsets.add(dto.getLcset());
 
             dtoVessels.add(Pair.of((FctDto)dto, tube));
