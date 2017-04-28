@@ -240,7 +240,7 @@ public class DesignationDto implements Cloneable, FctDto {
     }
 
     public String getProduct() {
-        return StringUtils.join(productNames, ", ");
+        return StringUtils.join(productNames, DELIMITER);
     }
 
     public void setProductNames(List<String> productNames) {

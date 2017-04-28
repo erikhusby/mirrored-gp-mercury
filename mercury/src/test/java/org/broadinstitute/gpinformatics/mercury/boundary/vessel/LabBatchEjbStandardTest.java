@@ -334,7 +334,6 @@ public class LabBatchEjbStandardTest extends Arquillian {
             Assert.assertEquals(laneInfoRow.getLcset(), "LCSET-0003", batchName);
             Assert.assertTrue(laneInfoRow.getProductNames().contains("CP Human WES (150xMTC)"),
                     laneInfoRow.getProductNames());
-            Assert.assertTrue(laneInfoRow.getProductNames().contains("\\n"), laneInfoRow.getProductNames());
             Assert.assertTrue(laneInfoRow.getProductNames().contains("Controls"), laneInfoRow.getProductNames());
         }
     }
@@ -399,7 +398,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
                     Assert.assertTrue(tubeMap.containsKey(laneInfoRow.getLoadingVessel()));
                     Assert.assertEquals(laneInfoRow.getLoadingConc(), "10");
                     Assert.assertEquals(laneInfoRow.getLcset(), barcodeToLcset.get(laneInfoRow.getLoadingVessel()));
-                    // Jira ticket has '\n' delimited product names, not '<br/>'.
+                    // Jira ticket has '\\' delimited product names, not '<br/>'.
                     Assert.assertEquals(laneInfoRow.getProductNames(),
                             FCTJiraFieldFactory.replaceDtoDelimiter(productName));
                 }

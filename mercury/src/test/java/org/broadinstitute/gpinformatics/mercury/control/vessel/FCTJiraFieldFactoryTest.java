@@ -87,7 +87,7 @@ public class FCTJiraFieldFactoryTest {
                 Assert.assertEquals(MathUtils.scaleTwoDecimalPlaces(new BigDecimal(jiraLaneInfo.getLoadingConc())),
                         new BigDecimal("12.22"));
                 Assert.assertEquals(jiraLaneInfo.getLcset(), "LCSET-0002");
-                String[] productNames = jiraLaneInfo.getProductNames().split("\\\\n");
+                String[] productNames = jiraLaneInfo.getProductNames().split(FCTJiraFieldFactory.JIRA_CRLF);
                 Assert.assertEquals(productNames.length, 3);
                 Assert.assertEquals(productNames, new String[]{"Product 1", "Product 2", "Product 3"});
             }

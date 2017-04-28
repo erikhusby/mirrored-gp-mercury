@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class FCTJiraFieldFactory extends AbstractBatchJiraFieldFactory {
-
+    public static final String JIRA_CRLF = "\\\\\\\\";
     /**
      * The header columns of the lane info table found in FCT or MISEQ Jira tickets.
      */
@@ -107,6 +107,7 @@ public class FCTJiraFieldFactory extends AbstractBatchJiraFieldFactory {
     }
 
     public static String replaceDtoDelimiter(String dtoString) {
-        return StringUtils.trimToEmpty(dtoString).replaceAll(DesignationDto.DELIMITER, "\\\\n");
+        // Jira wants two backslashes to show a <return> in the Jira table cell.
+        return StringUtils.trimToEmpty(dtoString).replaceAll(DesignationDto.DELIMITER, JIRA_CRLF);
     }
 }
