@@ -14,10 +14,10 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 /**
  * Created by thompson on 4/21/2017.
  */
-public class SamplesDaughterPlateHandlerTest extends Arquillian {
+public class BspNewRootHandlerTest extends Arquillian {
 
     @Inject
-    private SamplesDaughterPlateHandler samplesDaughterPlateHandler;
+    private BspNewRootHandler bspNewRootHandler;
 
     @Inject
     private UserBean userBean;
@@ -30,6 +30,7 @@ public class SamplesDaughterPlateHandlerTest extends Arquillian {
     @Test
     public void testX() {
         userBean.loginOSUser();
-        samplesDaughterPlateHandler.x();
+        // todo jmt fix
+        bspNewRootHandler.handleEvent(null, null);
     }
 }

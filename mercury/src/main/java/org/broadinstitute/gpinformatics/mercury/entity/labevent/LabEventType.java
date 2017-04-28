@@ -618,7 +618,7 @@ public enum LabEventType {
                     targetVesselTypeGeometries(
                             new VesselTypeGeometry[] { BarcodedTube.BarcodedTubeType.FluidX_6mL,
                                     BarcodedTube.BarcodedTubeType.FluidX_10mL}).build(),
-            LibraryType.NONE_ASSIGNED),
+            LibraryType.NONE_ASSIGNED, "-P", MaterialType.PLASMA_PLASMA),
     BLOOD_PLASMA_POOLING_TRANSFER("BloodPlasmaPoolingTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
@@ -1933,6 +1933,8 @@ public enum LabEventType {
 
     private LibraryType libraryType;
 
+    private String collabSampleSuffix;
+
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class ManualTransferDetails {
         /** Determines layout of page and type of message built. */
@@ -2311,6 +2313,17 @@ public enum LabEventType {
     }
 
     LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
+                 SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
+                 PipelineTransformation pipelineTransformation, ForwardMessage forwardMessage,
+                 VolumeConcUpdate volumeConcUpdate, ManualTransferDetails manualTransferDetails, LibraryType libraryType,
+                 String collabSampleSuffix, MaterialType resultingMaterialType) {
+        this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
+                pipelineTransformation, forwardMessage, volumeConcUpdate, manualTransferDetails, resultingMaterialType,
+                libraryType);
+        this.collabSampleSuffix = collabSampleSuffix;
+    }
+
+    LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
             SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
             PipelineTransformation pipelineTransformation, ForwardMessage forwardMessage,
             VolumeConcUpdate volumeConcUpdate, ManualTransferDetails manualTransferDetails,
@@ -2383,5 +2396,9 @@ public enum LabEventType {
 
     public LibraryType getLibraryType(){
         return libraryType;
+    }
+
+    public String getCollabSampleSuffix() {
+        return collabSampleSuffix;
     }
 }
