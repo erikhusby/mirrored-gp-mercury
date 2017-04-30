@@ -618,7 +618,7 @@ public enum LabEventType {
                     targetVesselTypeGeometries(
                             new VesselTypeGeometry[] { BarcodedTube.BarcodedTubeType.FluidX_6mL,
                                     BarcodedTube.BarcodedTubeType.FluidX_10mL}).build(),
-            LibraryType.NONE_ASSIGNED, "-P", MaterialType.PLASMA_PLASMA),
+            LibraryType.NONE_ASSIGNED, "_P", MaterialType.PLASMA_PLASMA),
     BLOOD_PLASMA_POOLING_TRANSFER("BloodPlasmaPoolingTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
@@ -629,31 +629,30 @@ public enum LabEventType {
             new ManualTransferDetails.Builder(MessageType.RECEPTACLE_TRANSFER_EVENT,
                     // todo jmt CentriCutieSC_5 should be null?
                     BarcodedTube.BarcodedTubeType.CentriCutieSC_5, null).
-                    sourceVesselTypeGeometries(
-                            new VesselTypeGeometry[] { BarcodedTube.BarcodedTubeType.VacutainerBloodTube3,
-                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTube6,
-                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTube10,
-                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeBlueTigerTop8,
-                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeEDTA_3,
-                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeEDTA_4,
-                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeEDTA_7,
-                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeEDTA_10,
-                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeGreenTigerTop8,
-                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeGreenTop10,
-                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubePaxgene,
-                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeRedTigerTopSST10,
-                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeRedTopClot10,
-                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeYellowTop10,
-                                    BarcodedTube.BarcodedTubeType.VacutainerCPTTube4,
-                                    BarcodedTube.BarcodedTubeType.VacutainerCPTTube8,
-                            }).
-                    targetVesselTypeGeometries(
-                            new VesselTypeGeometry[] {
-                                    BarcodedTube.BarcodedTubeType.FluidX_6mL,
-                                    BarcodedTube.BarcodedTubeType.FluidX_10mL
-                            }).
+                    sourceVesselTypeGeometries(new VesselTypeGeometry[] {
+                            BarcodedTube.BarcodedTubeType.VacutainerBloodTube3,
+                            BarcodedTube.BarcodedTubeType.VacutainerBloodTube6,
+                            BarcodedTube.BarcodedTubeType.VacutainerBloodTube10,
+                            BarcodedTube.BarcodedTubeType.VacutainerBloodTubeBlueTigerTop8,
+                            BarcodedTube.BarcodedTubeType.VacutainerBloodTubeEDTA_3,
+                            BarcodedTube.BarcodedTubeType.VacutainerBloodTubeEDTA_4,
+                            BarcodedTube.BarcodedTubeType.VacutainerBloodTubeEDTA_7,
+                            BarcodedTube.BarcodedTubeType.VacutainerBloodTubeEDTA_10,
+                            BarcodedTube.BarcodedTubeType.VacutainerBloodTubeGreenTigerTop8,
+                            BarcodedTube.BarcodedTubeType.VacutainerBloodTubeGreenTop10,
+                            BarcodedTube.BarcodedTubeType.VacutainerBloodTubePaxgene,
+                            BarcodedTube.BarcodedTubeType.VacutainerBloodTubeRedTigerTopSST10,
+                            BarcodedTube.BarcodedTubeType.VacutainerBloodTubeRedTopClot10,
+                            BarcodedTube.BarcodedTubeType.VacutainerBloodTubeYellowTop10,
+                            BarcodedTube.BarcodedTubeType.VacutainerCPTTube4,
+                            BarcodedTube.BarcodedTubeType.VacutainerCPTTube8,
+                    }).
+                    targetVesselTypeGeometries(new VesselTypeGeometry[] {
+                            BarcodedTube.BarcodedTubeType.FluidX_6mL,
+                            BarcodedTube.BarcodedTubeType.FluidX_10mL
+                    }).
                     build(),
-            LibraryType.NONE_ASSIGNED),
+            LibraryType.NONE_ASSIGNED, "_BC", MaterialType.WHOLE_BLOOD_BUFFY_COAT),
     BLOOD_CRYOVIAL_EXTRACTION("BloodCryovialExtraction",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
