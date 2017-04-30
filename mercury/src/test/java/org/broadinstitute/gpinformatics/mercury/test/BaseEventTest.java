@@ -78,6 +78,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEnt
 import org.broadinstitute.gpinformatics.mercury.test.builders.IceEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.IceJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.InfiniumEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.InfiniumJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.MiSeqReagentKitEntityBuilder;
@@ -91,7 +92,6 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuil
 import org.broadinstitute.gpinformatics.mercury.test.builders.StoolTNAEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.TenXEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.TruSeqStrandSpecificEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.TruSeqStrandSpecificJaxbBuilder;
 import org.easymock.EasyMock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -659,11 +659,11 @@ public class BaseEventTest {
 
     public InfiniumEntityBuilder runInfiniumProcess(StaticPlate sourcePlate, String barcodeSuffix) {
         return runInfiniumProcessWithMethylation(sourcePlate, barcodeSuffix,
-                InfiniumEntityBuilder.IncludeMethylation.FALSE);
+                InfiniumJaxbBuilder.IncludeMethylation.FALSE);
     }
 
     public InfiniumEntityBuilder runInfiniumProcessWithMethylation(
-            StaticPlate sourcePlate, String barcodeSuffix, InfiniumEntityBuilder.IncludeMethylation includeMethylation) {
+            StaticPlate sourcePlate, String barcodeSuffix, InfiniumJaxbBuilder.IncludeMethylation includeMethylation) {
         return new InfiniumEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
                 sourcePlate, barcodeSuffix, includeMethylation).invoke();
     }
