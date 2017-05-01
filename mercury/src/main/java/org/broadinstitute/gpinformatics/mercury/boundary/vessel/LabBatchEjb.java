@@ -819,10 +819,6 @@ public class LabBatchEjb {
             errorString += (isValid ? "" : "and ") + "pool test (null) ";
             isValid = false;
         }
-        if (designationDto.getTubeEventId() == null) {
-            errorString += (isValid ? "" : "and ") + "tube event (null) ";
-            isValid = false;
-        }
         if (StringUtils.isBlank(designationDto.getLcset())) {
             errorString += (isValid ? "" : "and ") + "lcset (null) ";
             isValid = false;

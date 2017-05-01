@@ -17,9 +17,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeD
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
@@ -338,7 +335,6 @@ public class LabBatchEjbStandardTest extends Arquillian {
                 return "";
             }
         };
-        final LabEvent labEvent = getAnyNormEvent().iterator().next();
 
         // Sets up the flowcell types to be created.
         final IlluminaFlowcell.FlowcellType[] flowcellTypes = {
@@ -409,7 +405,6 @@ public class LabBatchEjbStandardTest extends Arquillian {
                 }
                 DesignationDto dto = new DesignationDto();
                 dto.setBarcode(loadingTube.getLabel());
-                dto.setEvents(Collections.singleton(labEvent));
                 dto.setLcset(labBatches[idx].getBatchName());
                 dto.setProductNames(Collections.singletonList("Exome Express v2"));
                 dto.setNumberSamples(1);
@@ -477,7 +472,8 @@ public class LabBatchEjbStandardTest extends Arquillian {
             Assert.assertEquals(testDtos.get(0).getProductNameJoin(), dto.getProductNameJoin());
             Assert.assertEquals(testDtos.get(0).getReadLength(), dto.getReadLength());
             Assert.assertEquals(testDtos.get(0).getSequencerModel(), dto.getSequencerModel());
-            Assert.assertEquals(testDtos.get(0).getTubeEventId(), dto.getTubeEventId());
+            Assert.assertEquals(testDtos.get(0).getTubeType(), dto.getTubeType());
+            Assert.assertEquals(testDtos.get(0).getTubeDate(), dto.getTubeDate());
         }
 
         // Checks for the split dto.
@@ -560,7 +556,6 @@ public class LabBatchEjbStandardTest extends Arquillian {
                 return "";
             }
         };
-        final LabEvent labEvent = getAnyNormEvent().iterator().next();
 
         // Sets up the loading tubes to be put on flowcell.
         Iterator<BarcodedTube> tubeIterator = mapBarcodeToTube.values().iterator();
@@ -591,7 +586,6 @@ public class LabBatchEjbStandardTest extends Arquillian {
         for (int idx = 0; idx < loadingTubes.length; ++idx) {
             DesignationDto dto = new DesignationDto();
             dto.setBarcode(loadingTubes[idx].getLabel());
-            dto.setEvents(Collections.singleton(labEvent));
             dto.setLcset(labBatch.getBatchName());
             dto.setProductNames(Collections.singletonList("Exome Express v2"));
             dto.setNumberSamples(1);
@@ -681,41 +675,36 @@ public class LabBatchEjbStandardTest extends Arquillian {
         final LabBatch lcset = new LabBatch("lcset0", Collections.EMPTY_SET, LabBatch.LabBatchType.WORKFLOW);
         List<DesignationDto> dtos = new ArrayList<>();
         final int numberLanes = 1;
-        List<LabEvent> labEvents = getAnyNormEvent();
 
         for (int index = 0; index < 6; ++index) {
-            if (CollectionUtils.isNotEmpty(labEvents.get(index).getSourceVesselTubes())) {
-                LabVessel loadingTube = labEvents.get(index).getSourceVesselTubes().iterator().next();
 
-                // dtos for indexes 0, 1, 2, 3 form singleton groupings.
-                // dtos for indexes 4 & 5 will both be in one group.
-                // None of the groupings will have enough lanes to form a complete FCT.
+            // dtos for indexes 0, 1, 2, 3 form singleton groupings.
+            // dtos for indexes 4 & 5 will both be in one group.
+            // None of the groupings will have enough lanes to form a complete FCT.
 
-                String regulatoryDesignation = (index > 0) ? DesignationUtils.CLINICAL : DesignationUtils.RESEARCH;
-                FlowcellDesignation.IndexType indexType = (index > 1) ?
-                        FlowcellDesignation.IndexType.DUAL : FlowcellDesignation.IndexType.SINGLE;
-                boolean pairedEnd = (index > 2);
-                int readLength = (index > 3) ? 151 : 152;
+            String regulatoryDesignation = (index > 0) ? DesignationUtils.CLINICAL : DesignationUtils.RESEARCH;
+            FlowcellDesignation.IndexType indexType = (index > 1) ?
+                    FlowcellDesignation.IndexType.DUAL : FlowcellDesignation.IndexType.SINGLE;
+            boolean pairedEnd = (index > 2);
+            int readLength = (index > 3) ? 151 : 152;
 
-                DesignationDto dto = new DesignationDto();
-                dto.setBarcode(loadingTube.getLabel());
-                dto.setEvents(Collections.singleton(labEvents.get(index)));
-                dto.setLcset(lcset.getBatchName());
-                dto.setProductNames(Collections.singletonList("Exome Express v2"));
-                dto.setNumberSamples(1);
-                dto.setRegulatoryDesignation(regulatoryDesignation);
-                dto.setSequencerModel(flowcellType);
-                dto.setIndexType(indexType);
-                dto.setReadLength(readLength);
-                dto.setLoadingConc(BigDecimal.TEN);
-                dto.setNumberLanes(numberLanes);
-                dto.setStatus(FlowcellDesignation.Status.QUEUED);
-                dto.setPoolTest(false);
-                dto.setPairedEndRead(pairedEnd);
-                dto.setSelected(true);
+            DesignationDto dto = new DesignationDto();
+            dto.setBarcode("tube label " + index);
+            dto.setLcset(lcset.getBatchName());
+            dto.setProductNames(Collections.singletonList("Exome Express v2"));
+            dto.setNumberSamples(1);
+            dto.setRegulatoryDesignation(regulatoryDesignation);
+            dto.setSequencerModel(flowcellType);
+            dto.setIndexType(indexType);
+            dto.setReadLength(readLength);
+            dto.setLoadingConc(BigDecimal.TEN);
+            dto.setNumberLanes(numberLanes);
+            dto.setStatus(FlowcellDesignation.Status.QUEUED);
+            dto.setPoolTest(false);
+            dto.setPairedEndRead(pairedEnd);
+            dto.setSelected(true);
 
-                dtos.add(dto);
-            }
+            dtos.add(dto);
         }
 
         // Should make no FCTs.
@@ -747,7 +736,6 @@ public class LabBatchEjbStandardTest extends Arquillian {
                 return "";
             }
         };
-        final LabEvent labEvent = getAnyNormEvent().iterator().next();
         final LabVessel loadingTube = mapBarcodeToTube.values().iterator().next();
         final IlluminaFlowcell.FlowcellType flowcellType = IlluminaFlowcell.FlowcellType.MiSeqFlowcell;
         final LabBatch lcset = new LabBatch("lcset0", Collections.EMPTY_SET, LabBatch.LabBatchType.WORKFLOW);
@@ -755,7 +743,6 @@ public class LabBatchEjbStandardTest extends Arquillian {
             for (int i = 0; i < 2; ++i) {
                 DesignationDto dto = new DesignationDto();
                 dto.setBarcode(loadingTube.getLabel());
-                dto.setEvents(Collections.singleton(labEvent));
                 dto.setLcset(lcset.getBatchName());
                 dto.setProductNames(Collections.singletonList("Exome Express v2"));
                 dto.setNumberSamples(1);
@@ -782,10 +769,6 @@ public class LabBatchEjbStandardTest extends Arquillian {
         String msg = MessageFormat.format(LabBatchEjb.DESIGNATION_ERROR_MSG, loadingTube.getLabel());
         Assert.assertTrue(messageLines.get(0).startsWith(msg), messages.toString());
         Assert.assertTrue(messageLines.get(0).contains("number of lanes"), messages.toString());
-    }
-
-    private List<LabEvent> getAnyNormEvent() {
-        return labBatchDao.findList(LabEvent.class, LabEvent_.labEventType, LabEventType.NORMALIZATION_TRANSFER);
     }
 
 }

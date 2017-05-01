@@ -126,7 +126,7 @@ public class FctCreateEtlDbFreeTest {
 
         designations.clear();
         designations.add(new FlowcellDesignation(labBatchStartingVessel.getLabVessel(), labBatch,
-                labEvent, FlowcellDesignation.IndexType.DUAL, false /*poolTest*/,
+                FlowcellDesignation.IndexType.DUAL, false /*poolTest*/,
                 IlluminaFlowcell.FlowcellType.MiSeqFlowcell, 1, 76, BigDecimal.TEN, true,
                 FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL));
 
@@ -163,7 +163,7 @@ public class FctCreateEtlDbFreeTest {
 
         designations.clear();
         designations.add(new FlowcellDesignation(labBatchStartingVessel.getLabVessel(), labBatch,
-                labEvent, FlowcellDesignation.IndexType.DUAL, true /*poolTest*/,
+                FlowcellDesignation.IndexType.DUAL, true /*poolTest*/,
                 IlluminaFlowcell.FlowcellType.HiSeqFlowcell,  8, 76, BigDecimal.TEN, true,
                 FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL));
 
