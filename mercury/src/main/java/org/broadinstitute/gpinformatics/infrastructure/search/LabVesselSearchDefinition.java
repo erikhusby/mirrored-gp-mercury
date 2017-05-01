@@ -795,6 +795,28 @@ public class LabVesselSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
+        searchTerm.setName("Norm Pond Tube Barcode");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                LabVessel labVessel = (LabVessel) entity;
+
+                VesselsForEventTraverserCriteria eval = new VesselsForEventTraverserCriteria(Collections.singletonList(
+                        LabEventType.PCR_PLUS_POND_NORMALIZATION));
+                labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+
+                Set<String> barcodes = null;
+                for(Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
+                        : eval.getPositions().asMap().entrySet()) {
+                    (barcodes == null ? barcodes = new HashSet<>() : barcodes)
+                            .add(labVesselAndPositions.getKey().getLabel());
+                }
+                return barcodes;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
         searchTerm.setName("Shearing Sample Position");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
