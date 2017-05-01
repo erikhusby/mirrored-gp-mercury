@@ -274,7 +274,7 @@ bass:
 
 submission:
     DEV:
-      host:     picard01
+      host:     seqsubmission02
       port:     33333
 
     PROD:
