@@ -14,29 +14,36 @@ package org.broadinstitute.gpinformatics.mercury.presentation.datatables;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
-import org.json.JSONObject;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class State implements Serializable {
     private static final long serialVersionUID = 2016092701L;
 
-    private Long time = 0l;
-    private Integer start = 0;
-    private Integer length = 0;
+    private long time;
+    private int start;
+    private int length;
+    private List<Map<Integer, Direction>> orderList = new ArrayList<>();
 
-    private List<Column> columns = new ArrayList<>();
+    private Search search=new Search();
+
+    private List<Column> columns=new ArrayList<>();
 
     public State() {
     }
 
-    public State(Long time, Integer start, Integer length, List<Column> columns) {
+    public enum Direction {asc, desc}
+
+    public State(long time, Integer start, Integer length, List<Map<Integer, Direction>> orderList, Search search, List<Column> columns) {
         this.time = time;
         this.start = start;
         this.length = length;
+        this.orderList = orderList;
+        this.search = search;
         this.columns = columns;
     }
 
@@ -60,6 +67,22 @@ public class State implements Serializable {
         this.length = length;
     }
 
+    public List<Map<Integer, Direction>> getOrderList() {
+        return orderList;
+    }
+
+    public void setOrderList(List<Map<Integer, Direction>> orderList) {
+        this.orderList = orderList;
+    }
+
+    public Search getSearch() {
+        return search;
+    }
+
+    public void setSearch(Search search) {
+        this.search = search;
+    }
+
     public List<Column> getColumns() {
         return columns;
     }
@@ -70,12 +93,6 @@ public class State implements Serializable {
 
     public void setStart(Integer start) {
         this.start = start;
-    }
-
-
-    @Override
-    public String toString() {
-        return new JSONObject(this).toString();
     }
 
     @Override
@@ -94,6 +111,8 @@ public class State implements Serializable {
                  .append(getTime(), state.getTime())
                  .append(getStart(), state.getStart())
                  .append(getLength(), state.getLength())
+                 .append(getOrderList(), state.getOrderList())
+                 .append(getSearch(), state.getSearch())
                  .append(getColumns(), state.getColumns())
                  .isEquals();
      }
@@ -104,6 +123,8 @@ public class State implements Serializable {
                  .append(getTime())
                  .append(getStart())
                  .append(getLength())
+                 .append(getOrderList())
+                 .append(getSearch())
                  .append(getColumns())
                  .toHashCode();
      }

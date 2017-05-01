@@ -88,7 +88,7 @@
          */
         //pass the options variable to the function
         updateCheckCount:function (options) {
-            $('.' + options.countDisplayClass).text($("input." + options.checkboxClass + ":checked").size());
+            $('.' + options.countDisplayClass).text($("input." + options.checkboxClass + ":checked").length);
         },
 
         checkAll:function (input, options) {

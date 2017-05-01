@@ -36,7 +36,7 @@ function enableDefaultPagingOptions(){
  *  Set the defaults for DataTables initialization
  */
 $j.extend(true, $j.fn.dataTable.defaults, {
-    'sDom': "<'row-fluid'<'span2'i><'span4 pull-right'<'pull-right'l>>><'row-fluid'<'span4'f><'span4 pull-right'<'pull-right'B>>>rt<'row-fluid'<'span6'l><'span6 pull-right'p>>",
+    'sDom': "<'row-fluid'<'span8'f>><'row-fluid'<'span4'l><'span4 pull-right'<'pull-right'B>>>rt<'row-fluid'<'span6'l><'span6 pull-right'p>>",
     "bAutoWidth": false,
     "bInfo": false,
     "bStateSave": true,
