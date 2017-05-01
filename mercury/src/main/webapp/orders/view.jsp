@@ -50,61 +50,16 @@
 <script type="text/javascript">
 var kitDefinitionIndex = 0;
 $j(document).ready(function () {
-
-    updateFundsRemaining();
-    setupDialogs();
-
-    showSummary();
-    // Only show the fill kit detail information for sample initiation PDOs. With the collaboration portal, there
-    // can be kit definitions but since that is all automated, we do not want to show that. It is fairly irrelevant
-    // after the work request happens. Adding a work request id field to the UI when there is a work request with
-    // a non-sample initiation PDO.
-    <c:if test="${actionBean.editOrder.sampleInitiation}">
-    <c:forEach items="${actionBean.editOrder.productOrderKit.kitOrderDetails}" var="kitDetail">
-    showKitDetail('${kitDetail.numberOfSamples}', '${kitDetail.kitType.displayName}',
-            '${kitDetail.organismName}', '${kitDetail.bspMaterialName}',
-            '${kitDetail.getPostReceivedOptionsAsString("<br/>")}');
-    </c:forEach>
-    </c:if>
-
-    // if there are no sample kit details, just show one empty detail section
-    if (kitDefinitionIndex == 0) {
-        showKitDetail();
-    }
+//    if ($j("#sampleData tbody>tr").length > 0) {
     enableDefaultPagingOptions();
-
-    function renderPico(data, type, row, meta) {
-        if (type === 'display') {
-            var $data = $j(data);
-            if (sampleData[x].hasSampleKitUploadRackscanMismatch) {
-                $j('#sampleKitUploadRackscanMismatch-' + sampleId).html('<img src="${ctxpath}/images/error.png" title="Yes"/>');
-            }
-        }
-        return data
-    }
-
-    function renderBilled(data, type, row, meta) {
-        if (type === 'display') {
-            if (data) {
-                return $j("<img/>", {src: "${ctxpath}/images/check.png", title: "Yes"})
-            }
-        }
-        return data;
-        <%--if (sampleData[x].completelyBilled) {--%>
-        <%--$j('#completelyBilled-' + sampleId).html('<img src="${ctxpath}/images/check.png" title="Yes"/>');--%>
-        <%--}--%>
-    }
-    var localStorageKey = 'DT_productOrderView';
-
-    if ($j("#sampleData tbody>tr").length > 0) {
         var oTable = $j('#sampleData').dataTable({
             'paging':true,
-            "scrollX": "940px",
-              "scrollCollapse": true,
             "deferLoading": true,
             'colReorder': true,
             "stateSave": true,
-            "pageLength": 25,
+            "pageLength": 50,
+            'orderable': true,
+            'processing': true,
             'buttons': [{
                 'extend': 'colvis',
                 'text': "Show or Hide Columns",
@@ -118,55 +73,40 @@ $j(document).ready(function () {
             }, standardButtons()],
             "columns": [
                 {"orderable": false, 'class': 'no-min-width'},      // Checkbox
-                {"orderable": true, 'class': 'no-min-width'},       // Position
-                {"title": "${columnHeaderSampleId}", "orderable": true, "sType": "html"},
-                {"title": "${columnHeaderCollaboratorSampleId}", "orderable": true},
-                {"title": "${columnHeaderParticipantId}", "orderable": true},
-                {"title": "${columnHeaderCollaboratorParticipantId}", "orderable": true},
-                {"title": "${columnHeaderShippedDate}", "orderable": true},
-                {"title": "${columnHeaderReceivedDate}", "orderable": true},
-                {"title": "${columnHeaderSampleType}", "orderable": true},
-                {"title": "${columnHeaderMaterialType}", "orderable": true},
-                {"title": "${columnHeaderVolume}", "orderable": true},
-                {"title": "${columnHeaderConcentration}", "orderable": true},
+                {'class': 'no-min-width'},       // Position
+                {"title": "${columnHeaderSampleId}", "sType": "html"},
+                {"title": "${columnHeaderCollaboratorSampleId}"},
+                {"title": "${columnHeaderParticipantId}"},
+                {"title": "${columnHeaderCollaboratorParticipantId}"},
+                {"title": "${columnHeaderShippedDate}"},
+                {"title": "${columnHeaderReceivedDate}"},
+                {"title": "${columnHeaderSampleType}"},
+                {"title": "${columnHeaderMaterialType}"},
+                {"title": "${columnHeaderVolume}"},
+                {"title": "${columnHeaderConcentration}"},
                 <c:if test="${actionBean.supportsRin}">
-                {"title": "${columnHeaderRin}", "orderable": true},
-                {"title": "${columnHeaderRqs}", "orderable": true},
-                {"title": "${columnHeaderDv2000}", "orderable": true},
+                {"title": "${columnHeaderRin}"},
+                {"title": "${columnHeaderRqs}"},
+                {"title": "${columnHeaderDv2000}"},
                 </c:if>
 
                 <c:if test="${actionBean.supportsPico}"> {
                     "title": "${columnHeaderPicoRunDate}",
-                    "orderable": true,
                     "type": "title-us-date",
                     render: getHighlightClass
                 },</c:if>
-                {"title": "${columnHeaderYieldAmount}", "orderable": true},
-                {"title": "${columnHeaderRackscanMismatch}", "orderable": true},
-                {"title": "${columnHeaderOnRisk}", "orderable": true},
+                {"title": "${columnHeaderYieldAmount}"},
+                {"title": "${columnHeaderRackscanMismatch}"},
+                {"title": "${columnHeaderOnRisk}"},
                 {"title": "${columnHeaderOnRiskDetails}", "orderable": false},
-                {"title": "${columnHeaderProceedOutOfSpec}", "orderable": true},
-                {"title": "${columnHeaderStatus}", "orderable": true},
-                {"title": "${columnHeaderCompletelyBilled}", "orderable": true, "sType": "title-string",
-                    render: renderBilled}, {"title": "${columnHeaderComment}", "orderable": true}
+                {"title": "${columnHeaderProceedOutOfSpec}"},
+                {"title": "${columnHeaderStatus}"},
+                {
+                    "title": "${columnHeaderCompletelyBilled}", "sType": "title-string",
+                    render: renderBilled
+                }, {"title": "${columnHeaderComment}"}
             ],
             "preDrawCallback": function (settings) {
-                function imageForBoolean(selector, image) {
-                    var $api = $j.fn.dataTable.Api(settings);
-                    var nodes = $api.column(selector).nodes();
-                    for (var i = 0; i < nodes.length; i++) {
-                        var $cell = $j(nodes[i]);
-                        if ($cell.text().trim() === 'true') {
-                            $cell.html('<img src="' + image + '" title="Yes"/>');
-                        } else {
-                            $cell.empty();
-                        }
-                    }
-                    return nodes;
-                }
-
-                imageForBoolean(".rackscanMismatch", "${ctxpath}/images/error.png");
-                imageForBoolean(".completelyBilled", "${ctxpath}/images/check.png");
             },
             stateSaveCallback: function (settings, data) {
                 var api = new $j.fn.dataTable.Api(settings);
@@ -215,8 +155,100 @@ $j(document).ready(function () {
                     }
                 }
                 return data;
+            },
+            "initComplete": function (settings) {
+                function imageForBoolean(selector, image) {
+                    var $api = $j.fn.dataTable.Api(settings);
+                    var nodes = $api.column(selector).nodes();
+                    for (var i = 0; i < nodes.length; i++) {
+                        var $cell = $j(nodes[i]);
+                        if ($cell.text().trim() === 'true') {
+                            $cell.html('<img src="' + image + '" title="Yes"/>');
+                        } else {
+                            $cell.empty();
+                        }
+                    }
+                    return nodes;
+                }
+
+                imageForBoolean(".rackscanMismatch", "${ctxpath}/images/error.png");
+                imageForBoolean(".completelyBilled", "${ctxpath}/images/check.png");
+
+                initColumnVisibility($j.fn.dataTable.Api(settings));
+
+                updateFundsRemaining();
+                setupDialogs();
+
+                showSummary();
+                // Only show the fill kit detail information for sample initiation PDOs. With the collaboration portal, there
+                // can be kit definitions but since that is all automated, we do not want to show that. It is fairly irrelevant
+                // after the work request happens. Adding a work request id field to the UI when there is a work request with
+                // a non-sample initiation PDO.
+                <c:if test="${actionBean.editOrder.sampleInitiation}">
+                <c:forEach items="${actionBean.editOrder.productOrderKit.kitOrderDetails}" var="kitDetail">
+                showKitDetail('${kitDetail.numberOfSamples}', '${kitDetail.kitType.displayName}',
+                    '${kitDetail.organismName}', '${kitDetail.bspMaterialName}',
+                    '${kitDetail.getPostReceivedOptionsAsString("<br/>")}');
+                </c:forEach>
+                </c:if>
+
+                // if there are no sample kit details, just show one empty detail section
+                if (kitDefinitionIndex == 0) {
+                    showKitDetail();
+                }
+            }
+});
+//    }
+
+    function renderPico(data, type, row, meta) {
+        if (type === 'display') {
+            var $data = $j(data);
+            if (sampleData[x].hasSampleKitUploadRackscanMismatch) {
+                $j('#sampleKitUploadRackscanMismatch-' + sampleId).html('<img src="${ctxpath}/images/error.png" title="Yes"/>');
+            }
+        }
+        return data
+    }
+
+    function renderBilled(data, type, row, meta) {
+        if (type === 'display') {
+            if (data) {
+                return $j("<img/>", {src: "${ctxpath}/images/check.png", title: "Yes"})
+            }
+        }
+        return data;
+        <%--if (sampleData[x].completelyBilled) {--%>
+        <%--$j('#completelyBilled-' + sampleId).html('<img src="${ctxpath}/images/check.png" title="Yes"/>');--%>
+        <%--}--%>
+    }
+    var localStorageKey = 'DT_productOrderView';
+
+//    if ($j("#sampleData tbody>tr").length > 0) {
+    function initColumnVisibility(dataTable) {
+        var columnVisibilityKey = "columnVisibility";
+        $j('#sampleData').on('column-visibility.dt', function (e, settings, column, state) {
+            $j("body").data(columnVisibilityKey, state);
+        });
+
+        // If a column that was previously hidden but becomes visible the page
+        // must be reloaded since there is no data in that column.
+        $j(document.body).on("click", ".dt-button-background", function () {
+            dataTable.state.save();
+            var sessionVisibility = !undefined && $j("body").data(columnVisibilityKey) || false;
+            if (sessionVisibility) {
+                location.reload();
             }
         });
+    }
+
+    function dateRenderer(data, type) {
+        if (type === 'display' || type === 'filter') {
+            if (data) {
+                var date = new Date(data);
+                return formatDate(date);
+            }
+        }
+        return data;
     }
 
     includeAdvancedFilter(oTable, "#sampleData");
@@ -238,9 +270,14 @@ function setupDialogs() {
         $j("#dialogAction").attr("name", "");
     }
 
-    $j("#confirmDialog").dialog({
+    var $confirmDialogContainer = $j("#confirmDialog");
+    var $detachedConfirmDialogContainer = $confirmDialogContainer.children().detach();
+    $confirmDialogContainer.dialog({
         modal: true,
         autoOpen: false,
+        open: function(){
+            $detachedConfirmDialogContainer.appendTo($confirmDialogContainer);
+        },
         buttons: [
             {
                 id: "confirmOkButton",
@@ -497,23 +534,29 @@ function showSamples(sampleData) {
     }
 }
 
+function formatDate(date) {
+    return date.getMonth() + 1 + '/' + date.getDate() + '/' + date.getFullYear();
+}
 var oneYearAgo;
 var almostOneYearAgo;
 
-function getHighlightClass(data, type, row, meta) {
-    if (type === 'display') {
-        var theDate = $j(data).text().trim();
-        var $data = $j(data);
-        if (theDate) {
-            if ((theDate == 'No Pico') || (theDate < oneYearAgo)) {
-                $data.addClass("label label-important");
-            } else if (theDate < almostOneYearAgo) {
-                $data.addClass("label label-warning");
-            }
+function getHighlightClass(epochTime, type, c, d, e, f, g) {
+    if (type === 'display' || type === 'filter') {
+        var picoDate = undefined;
+        var cellData = 'No Pico';
+        if ($j(epochTime).text()) {
+            picoDate = new Date($j(epochTime).text());
+            cellData = formatDate(picoDate);
         }
-        data = $data[0].outerHTML;
+        var $container = $j("<span></span>", {text: cellData});
+        if (!picoDate || (picoDate.getTime() < oneYearAgo.getTime())) {
+            $container.addClass("label label-important");
+        } else if (picoDate.getTime() < almostOneYearAgo.getTime()) {
+            $container.addClass("label label-warning");
+        }
+        return $container[0].outerHTML;
     }
-    return data;
+    return epochTime;
 }
 
 function updateFundsRemaining() {
@@ -533,7 +576,7 @@ function updateFunds(data) {
 
     var quoteWarning = false;
 
-    if (data.fundsRemaining) {
+    if (data.fundsRemaining && !data.error) {
         var fundsRemainingNotification = 'Status: ' + data.status + ' - Funds Remaining: ' + data.fundsRemaining +
                 ' with ' + data.outstandingEstimate + ' unbilled across existing open orders';
         var fundingDetails = data.fundingDetails;
@@ -573,7 +616,8 @@ function updateFunds(data) {
     }
 }
 
-function showSummary(data) {
+function showSummary() {
+    var data = ${actionBean.summary};
     var dataList = '<ul>';
     data.map(function (item) {
         dataList += '<li>' + item.comment + '</li>'
