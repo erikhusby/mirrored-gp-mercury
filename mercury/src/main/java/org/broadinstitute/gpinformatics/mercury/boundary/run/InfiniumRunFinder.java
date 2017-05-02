@@ -196,8 +196,7 @@ public class InfiniumRunFinder implements Serializable {
                 new TransferTraverserCriteria.AbandonedLabVesselAncestorCriteria();
 
         staticPlate.getContainerRole().evaluateCriteria(vesselPosition, abandonedLabVesselAncestorCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors, 0);
-        Collection<LabVessel> abandonedVessels = abandonedLabVesselAncestorCriteria.getAbandonedLabVesselAncestors();
-        if(abandonedVessels.size() > 0 || staticPlate.isPositionAbandoned(vesselPosition.toString())) {
+        if(abandonedLabVesselAncestorCriteria.isAncestorAbandoned() || staticPlate.isPositionAbandoned(vesselPosition.toString())) {
             return true;
         }
 
