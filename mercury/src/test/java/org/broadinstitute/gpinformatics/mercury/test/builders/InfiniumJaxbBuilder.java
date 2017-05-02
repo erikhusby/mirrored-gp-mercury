@@ -48,7 +48,7 @@ public class InfiniumJaxbBuilder {
     private List<PlateEventType> infiniumPostHybridizationHybOvenLoadedJaxbs = new ArrayList<>();
     private List<PlateEventType> infiniumHybChamberLoadedJaxbs = new ArrayList<>();
     private List<PlateEventType> infiniumXStainJaxbs = new ArrayList<>();
-    private final InfiniumEntityBuilder.IncludeMethylation includeMethylation;
+    private final InfiniumJaxbBuilder.IncludeMethylation includeMethylation;
     private List<Triple<String, String, Integer>> amplificationReagents;
     private List<Triple<String, String, Integer>> amplificationReagentReagents;
     private List<Triple<String, String, Integer>> fragmentationReagents;
@@ -60,9 +60,13 @@ public class InfiniumJaxbBuilder {
     private String elutionPlate;
     private String zymoPlate;
 
+    public enum IncludeMethylation {
+        TRUE, FALSE
+    }
+
     public InfiniumJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String testPrefix,
                                String sourcePlate, int numSamples,
-                               InfiniumEntityBuilder.IncludeMethylation includeMethylation,
+                               InfiniumJaxbBuilder.IncludeMethylation includeMethylation,
                                List<Triple<String, String, Integer>> amplificationReagents,
                                List<Triple<String, String, Integer>> amplificationReagentReagents,
                                List<Triple<String, String, Integer>> fragmentationReagents,
@@ -86,7 +90,7 @@ public class InfiniumJaxbBuilder {
 
     public InfiniumJaxbBuilder invoke() {
         ampPlate = testPrefix + "AmplificationPlate";
-        if (includeMethylation == InfiniumEntityBuilder.IncludeMethylation.TRUE) {
+        if (includeMethylation == InfiniumJaxbBuilder.IncludeMethylation.TRUE) {
             zymoPlate = testPrefix + "ZymoPlate";
             infiniumMethlationZymoPlateJaxb = bettaLimsMessageTestFactory.buildPlateToPlate(
                     "InfiniumMethylationZymoTransferElution", sourcePlate, zymoPlate);
@@ -192,7 +196,7 @@ public class InfiniumJaxbBuilder {
         bettaLIMSMessage.getPlateEvent().add(infiniumResuspensionJaxb);
         bettaLIMSMessage.getPlateEvent().add(infiniumPostResuspensionHybOvenJaxb);
 
-        int numChips = numSamples / 24;
+        int numChips = (int) Math.ceil(numSamples / 24.0);
         for (int i = 0; i < numChips; i++) {
             hybridizationChips.add(testPrefix + "HC" + i);
         }
@@ -348,7 +352,7 @@ public class InfiniumJaxbBuilder {
         return zymoPlate;
     }
 
-    public InfiniumEntityBuilder.IncludeMethylation getIncludeMethylation() {
+    public InfiniumJaxbBuilder.IncludeMethylation getIncludeMethylation() {
         return includeMethylation;
     }
 }
