@@ -685,6 +685,29 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-4602-7" author="epolk">
+        <createIndex tableName="SAP_ORDER_DETAIL_AUD" indexName="IX_SAP_ORDER_DETAIL_AUD">
+            <column name="REV"/>
+            <column name="SAP_ORDER_DETAIL_ID"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-4602-2" author="epolk">
+        <createIndex tableName="SUBMISSION_TRACKER_AUD" indexName="IX_SUBMISSION_TRACKER_AUD">
+            <column name="SUBMISSION_TRACKER_ID"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-4656-1" author="scottmat">
+        <dropNotNullConstraint tableName="SAP_ORDER_DETAIL_AUD" columnName="SAP_ORDER_NUMBER" columnDataType="varchar (255)" schemaName="ATHENA" />
+        <dropNotNullConstraint tableName="SAP_ORDER_DETAIL_AUD" columnName="created_by" columnDataType="numeric(15, 0)" schemaName="ATHENA" />
+        <dropNotNullConstraint tableName="SAP_ORDER_DETAIL_AUD" columnName="modified_by" columnDataType="numeric(15, 0)" schemaName="ATHENA" />
+        <dropNotNullConstraint tableName="SAP_ORDER_DETAIL_AUD" columnName="created_date" columnDataType="timestamp(6)" schemaName="ATHENA" />
+        <dropNotNullConstraint tableName="SAP_ORDER_DETAIL_AUD" columnName="modified_date" columnDataType="timestamp(6)" schemaName="ATHENA" />
+        <dropNotNullConstraint tableName="SAP_ORDER_DETAIL_AUD" columnName="primary_quantity" columnDataType="number(10,0)" schemaName="ATHENA" />
+        <dropNotNullConstraint tableName="SAP_ORDER_DETAIL_AUD" columnName="REFERENCE_PRODUCT_ORDER" columnDataType="number(19,0)" schemaName="ATHENA" />
+    </changeSet>
+
     <changeSet id="GPLIM-4652-1" author="scottmat">
         <createTable tableName="ACCESS_ITEM" schemaName="ATHENA">
             <column name="id" type="number(19,0)">
@@ -700,6 +723,70 @@
         <createSequence sequenceName="SEQ_ACCESS_CONTROL_ITEM" schemaName="athena" startValue="1" incrementBy="50" />
     </changeSet>
 
+    <changeSet author="scottmat" id="GPLIM-4685-1">
+        <dropNotNullConstraint tableName="sap_order_detail" columnName="REFERENCE_PRODUCT_ORDER" schemaName="athena"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-4685-2" author="scottmat">
+        <createTable tableName="product_order_sap_orders" schemaName="athena">
+            <column name="reference_product_order" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+            <column name="sap_reference_orders" type="number(19,0)" >
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="product_order_sap_orders" baseColumnNames="reference_product_order"
+                                 constraintName="fk_pdo_sap_to_pdo"
+                                 referencedTableName="product_order"
+                                 referencedColumnNames="PRODUCT_ORDER_ID" referencedTableSchemaName="athena" baseTableSchemaName="athena" />
+        <addForeignKeyConstraint baseTableName="product_order_sap_orders" baseColumnNames="sap_reference_orders"
+                                 constraintName="fk_pdo_sap_to_sap"
+                                 referencedTableName="SAP_ORDER_DETAIL"
+                                 referencedColumnNames="SAP_ORDER_DETAIL_ID" referencedTableSchemaName="athena" baseTableSchemaName="athena" />
+    </changeSet>
+
+    <changeSet id="GPLIM-4685-3" author="scottmat">
+        <createTable tableName="product_order_sap_orders_aud" schemaName="athena">
+            <column name="rev" type="number(19,0)" />
+            <column name="revtype" type="number(3,0)" />
+            <column name="reference_product_order" type="number(19,0)" />
+            <column name="sap_reference_orders" type="number(19,0)" />
+
+        </createTable>
+
+        <addPrimaryKey tableName="product_order_sap_orders_aud"
+                       columnNames="rev, reference_product_order, sap_reference_orders" />
+
+        <createIndex tableName="product_order_sap_orders_aud" indexName="idx_aud_pdo_sap_to_pdo">
+            <column name="reference_product_order" />
+        </createIndex>
+        <createIndex tableName="product_order_sap_orders_aud" indexName="idx_aud_pdo_sap_to_sap">
+            <column name="sap_reference_orders" />
+        </createIndex>
+    </changeSet>
+
+    <changeSet author="scottmat" id="GPLIM-4685-4">
+        <sql>
+            insert into PRODUCT_ORDER_SAP_ORDERS ropo
+            (ropo.REFERENCE_PRODUCT_ORDER, ropo.SAP_REFERENCE_ORDERS )
+            select pdo.PRODUCT_ORDER_ID, sod.SAP_ORDER_DETAIL_ID
+            from product_order pdo
+            join SAP_ORDER_DETAIL sod on sod.REFERENCE_PRODUCT_ORDER = pdo.PRODUCT_ORDER_ID;
+        </sql>
+    </changeSet>
+
+    <changeSet author="scottmat" id="GPLIM-4685-5">
+        <sql>
+            insert into PRODUCT_ORDER_SAP_ORDERS_aud ropo
+            (ropo.REFERENCE_PRODUCT_ORDER, ropo.SAP_REFERENCE_ORDERS, ropo.REV, ropo.REVTYPE )
+            select distinct pdo.PRODUCT_ORDER_ID, sod.SAP_ORDER_DETAIL_ID, sod.REV, sod.REVTYPE
+            from product_order_aud pdo
+            join SAP_ORDER_DETAIL_aud sod on sod.REFERENCE_PRODUCT_ORDER = pdo.PRODUCT_ORDER_ID
+            where JIRA_TICKET_KEY is not null;
+        </sql>
+    </changeSet>
     <changeSet id="GPLIM-4778-1" author="scottmat">
         <addColumn schemaName="athena" tableName="SAP_ORDER_DETAIL">
             <column name="order_products_hash" type="varchar(255)" />

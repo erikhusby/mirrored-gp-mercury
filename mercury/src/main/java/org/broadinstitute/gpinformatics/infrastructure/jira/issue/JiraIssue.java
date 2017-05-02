@@ -26,8 +26,16 @@ public class JiraIssue implements Serializable {
     private final String key;
 
     private String summary;
+    private String status;
     private String description;
     private List<String> subTasks;
+
+    private class Conditions {
+        public List<String> subTaskSummaries = new ArrayList<>();
+        public List<String> subTaskKeys = new ArrayList<>();
+    }
+
+    private Conditions conditions = new Conditions();
 
     private final Map<String, Object> extraFields = new HashMap<>();
 
@@ -57,6 +65,17 @@ public class JiraIssue implements Serializable {
 
     public void setSummary(@Nonnull String summary) {
         this.summary = summary;
+    }
+
+    public String getStatus() throws IOException {
+        if(status == null) {
+            copyFromJiraIssue(null);
+        }
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public String getDescription() throws IOException {
@@ -124,17 +143,57 @@ public class JiraIssue implements Serializable {
         for (int index = 0; index < fields.size(); index++)
         {
             Map<String, Object> id = (Map<String, Object>)fields.get(index);
-            idList.add(id.get("key").toString());
+            idList.add(id.get("id").toString());
         }
         return idList;
+    }
+
+
+    public static List<String> parseSubTaskSummaries(List<Object> fields) throws IOException{
+        ArrayList<Object> fieldList = new ArrayList<>();
+        ArrayList<String> summaryList = new ArrayList<String>();
+        for (int index = 0; index < fields.size(); index++)
+        {
+            Map<String, Object> id = (Map<String, Object>)fields.get(index);
+            fieldList.add(id.get("fields"));
+        }
+        for (int sumaryIndex = 0; sumaryIndex < fieldList.size(); sumaryIndex++) {
+            Map<String, Object> item = (Map<String, Object>)fieldList.get(sumaryIndex);
+            summaryList.add(item.get("summary").toString());
+        }
+
+        return summaryList;
+    }
+
+    public static List<String> parseSubTasKeys(List<Object> fields) throws IOException{
+        ArrayList<String> keyList = new ArrayList<String>();
+        for (int index = 0; index < fields.size(); index++)
+        {
+            Map<String, Object> id = (Map<String, Object>)fields.get(index);
+            keyList.add(id.get("key").toString());
+        }
+        return keyList;
     }
 
     public List<String> getSubTasks(){
         return this.subTasks;
     }
 
+    public List<String> getSubTaskSummaries(){
+        return this.conditions.subTaskSummaries;
+    }
+
+    public List<String> getSubTaskKeys(){
+        return this.conditions.subTaskKeys;
+    }
+
     public void setSubTasks(@Nonnull List<String> subTaskList){
         this.subTasks = subTaskList;
+    }
+
+    public void setConditions(@Nonnull List<String> subTaskSummaryList, @Nonnull List<String> subTaskKeyList) {
+     this.conditions.subTaskKeys = subTaskKeyList;
+     this.conditions.subTaskSummaries = subTaskSummaryList;
     }
 
     private void copyFromJiraIssue(String fieldName) throws IOException {
@@ -145,6 +204,9 @@ public class JiraIssue implements Serializable {
         dueDate = tempIssue.getDueDate();
         created = tempIssue.getCreated();
         reporter = tempIssue.getReporter();
+        status = tempIssue.getStatus();
+        subTasks = tempIssue.getSubTasks();
+        conditions = tempIssue.conditions;
     }
 
     public <TV> void addFieldValue(String filedName, TV value) {
@@ -235,6 +297,22 @@ public class JiraIssue implements Serializable {
         CustomFieldDefinition definition = jiraService.getCustomFields(fieldName).get(fieldName);
         IssueFieldsResponse response = jiraService.getIssueFields(key, Collections.singleton(definition));
         return response.getFields().get(definition.getJiraCustomFieldId());
+    }
+
+    /**
+     * Returns the value of a JIRA field that is contained in a JIRA map field, such as "Issue Type".
+     * @param mapFieldName the name of the map object.
+     * @param mapKey the key used to lookup a value in the map object.
+     * @return the value from the map object, or null if not found or if the field is not a map object.
+     * @throws IOException
+     */
+    public String getMappedField(String mapFieldName, String mapKey) throws IOException {
+        Object mapObject = getField(mapFieldName);
+        if (mapObject != null && mapObject instanceof Map) {
+            return ((Map<String, String>)mapObject).get(mapKey);
+        } else {
+            return null;
+        }
     }
 
     /**

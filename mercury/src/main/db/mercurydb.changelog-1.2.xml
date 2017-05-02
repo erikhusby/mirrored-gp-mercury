@@ -238,14 +238,14 @@
             <column name="FLOWCELL_TYPE" type="varchar(255)" />
         </addColumn>
     </changeSet>
-    
+
     <changeSet author="scottmat" id="GPLIM-2731_drop_labevent_PDO_id">
         <preConditions>
             <columnExists tableName="LAB_EVENT" columnName="PRODUCT_ORDER_ID" schemaName="mercury" />
         </preConditions>
 
         <dropColumn tableName="LAB_EVENT" columnName="PRODUCT_ORDER_ID" schemaName="mercury" />
-    </changeSet> 
+    </changeSet>
 
     <changeSet author="scottmat" id="GPLIM-2731_drop_labevent_aud_PDO_id">
         <preConditions>
@@ -292,7 +292,7 @@
             <column name="workflow_qualifier" type="varchar2(255)"/>
         </addColumn>
     </changeSet>
-    
+
     <changeSet id="GPLIM-3707-1" author="thompson">
         <addColumn schemaName="mercury" tableName="lab_event_reagents">
             <column name="volume" type="number(10,2)"/>
@@ -818,6 +818,43 @@
     <changeSet id="GPLIM-4434-1825" author="dwilson">
         <createSequence schemaName="mercury" sequenceName="seq_sample_instance_entity" incrementBy="50"/>
         <createSequence schemaName="mercury" sequenceName="seq_sample_instance_entity_tsk" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-4602-6" author="epolk">
+        <createIndex tableName="LAB_EVENT_REAGENTS_AUD" indexName="IX2_LAB_EVENT_REAGENTS_AUD">
+            <column name="LAB_EVENT_REAGENT_ID"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-4602-4" author="epolk">
+        <createIndex tableName="LAB_VESSEL_TICKETS_CREATED_AUD" indexName="IX_LAB_VSL_TKTS_CRTD_AUD">
+            <column name="LAB_VESSEL"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-4602-5" author="epolk">
+        <createIndex tableName="LE_REAGENT_METADATA_AUD" indexName="IX_LE_REAGENT_METADATA_AUD">
+            <column name="LAB_EVENT_REAGENT_ID"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-4430-441" author="dwilson">
+        <sql splitStatements="false">
+            BEGIN
+                FOR r IN (
+                    SELECT TABLE_NAME, CONSTRAINT_NAME, OWNER
+                    FROM USER_CONSTRAINTS
+                    WHERE TABLE_NAME = 'LAB_VESSEL_TICKETS_CREATED'
+                    AND CONSTRAINT_TYPE = 'U'
+                )
+                LOOP
+                    EXECUTE IMMEDIATE REPLACE(REPLACE(REPLACE(
+                    'ALTER TABLE #OWNER#.#TABLE# DROP CONSTRAINT #CON#' ,
+                    '#TABLE#',r.TABLE_NAME) ,
+                    '#CON#',r.CONSTRAINT_NAME),'#OWNER#',r.OWNER);
+                END LOOP;
+            END;
+        </sql>
     </changeSet>
 
 </databaseChangeLog>

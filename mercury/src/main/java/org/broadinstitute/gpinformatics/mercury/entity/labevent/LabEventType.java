@@ -265,7 +265,12 @@ public enum LabEventType {
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.FALSE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT, StaticPlate.ManualTransferFlowCellType.StripTube1x1,
-                    StaticPlate.ManualTransferFlowCellType.FlowCell8).reagentNames(new String[]{"CbotReagentKit"}).build(),
+                    StaticPlate.ManualTransferFlowCellType.FlowCell8).reagentNames(new String[]{"CbotReagentKit"}).
+                    machineNames(new String[]{"ST-001", "ST-002", "ST-003", "ST-004", "ST-006", "ST-007", "ST-008",
+                            "ST-009", "ST-010", "ST-011", "ST-012", "ST-013", "ST-014", "ST-015", "ST-016", "ST-017",
+                            "ST-018", "ST-019", "ST-020", "ST-021", "ST-022", "ST-023", "ST-024", "ST-025", "ST-026",
+                            "ST-027", "ST-028", "ST-029", "ST-030", "ST-031", "ST-032", "ST-033", "ST-034", "ST-035",
+                            "ST-036", "ST-037"}).build(),
             LibraryType.NONE_ASSIGNED),
     FLOWCELL_LOADED("FlowcellLoaded",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.FALSE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
@@ -570,6 +575,79 @@ public enum LabEventType {
             LibraryType.NONE_ASSIGNED),
 
     //Cryovial Blood and Saliva Extraction
+    BLOOD_BIOPSY_EXTRACTION("BloodBiopsyExtraction",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
+                    RackOfTubes.RackType.QiasymphonyCarrier24,
+                    RackOfTubes.RackType.Matrix96).
+                    sourceSection(SBSSection.P96_4ROWSOF24_COLWISE_8TIP).
+                    targetSection(SBSSection.ALL96).
+                    limsFile(true).
+                    reagentNames(new String[]{"QIASymphony Kit"}).build(),
+            LibraryType.NONE_ASSIGNED),
+    BLOOD_PLASMA_TRANSFER("BloodPlasmaTransfer",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.RECEPTACLE_TRANSFER_EVENT, null,
+                    BarcodedTube.BarcodedTubeType.CentriCutieSC_5).
+                    sourceVesselTypeGeometries(
+                            new VesselTypeGeometry[] { BarcodedTube.BarcodedTubeType.VacutainerBloodTube3,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTube6,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTube10,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeBlueTigerTop8,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeEDTA_3,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeEDTA_4,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeEDTA_7,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeEDTA_10,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeGreenTigerTop8,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeGreenTop10,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubePaxgene,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeRedTigerTopSST10,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeRedTopClot10,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeYellowTop10,
+                                    BarcodedTube.BarcodedTubeType.VacutainerCPTTube4,
+                                    BarcodedTube.BarcodedTubeType.VacutainerCPTTube8,
+                                }).build(),
+            LibraryType.NONE_ASSIGNED),
+    BLOOD_PLASMA_SECOND_TRANSFER("BloodPlasmaSecondTransfer",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.RECEPTACLE_TRANSFER_EVENT,
+                    BarcodedTube.BarcodedTubeType.CentriCutieSC_5, null).
+                    targetVesselTypeGeometries(
+                            new VesselTypeGeometry[] { BarcodedTube.BarcodedTubeType.FluidX_6mL,
+                                    BarcodedTube.BarcodedTubeType.FluidX_10mL}).build(),
+            LibraryType.NONE_ASSIGNED),
+    BLOOD_PLASMA_POOLING_TRANSFER("BloodPlasmaPoolingTransfer",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    BLOOD_BUFFY_COAT_TRANSFER("BloodBuffyCoatTransfer",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.RECEPTACLE_TRANSFER_EVENT,
+                    BarcodedTube.BarcodedTubeType.CentriCutieSC_5, null).
+                    sourceVesselTypeGeometries(
+                            new VesselTypeGeometry[] { BarcodedTube.BarcodedTubeType.VacutainerBloodTube3,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTube6,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTube10,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeBlueTigerTop8,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeEDTA_3,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeEDTA_4,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeEDTA_7,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeEDTA_10,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeGreenTigerTop8,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeGreenTop10,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubePaxgene,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeRedTigerTopSST10,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeRedTopClot10,
+                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeYellowTop10,
+                                    BarcodedTube.BarcodedTubeType.VacutainerCPTTube4,
+                                    BarcodedTube.BarcodedTubeType.VacutainerCPTTube8,
+                            }). targetVesselTypeGeometries(new VesselTypeGeometry[] {
+                    BarcodedTube.BarcodedTubeType.FluidX_6mL, BarcodedTube.BarcodedTubeType.FluidX_10mL}).build(),
+            LibraryType.NONE_ASSIGNED),
     BLOOD_CRYOVIAL_EXTRACTION("BloodCryovialExtraction",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
@@ -711,11 +789,11 @@ public enum LabEventType {
     //Globin Depletion
     GLOBIN_BINDING("GlobinBinding",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
     GLOBIN_DEPLETION("GlobinDepletion",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
 
     //Ribo Zero
@@ -1285,6 +1363,10 @@ public enum LabEventType {
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.PCR_PLUS_NORMALIZED_POND),
+    POOL_CORRECTION("PoolCorrection",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
 
     // HyperPrep PCRFree
     END_REPAIR_ABASE("EndRepair_ABase",
@@ -1894,6 +1976,14 @@ public enum LabEventType {
         /** Prompts user with a list of machines. */
         private String[] machineNames = {};
 
+        /** Prompts user with a list of source vessel geometry types. */
+        @XmlTransient
+        private VesselTypeGeometry[] sourceVesselTypeGeometries = {};
+
+        /** Prompts user with a list of target vessel geometry types. */
+        @XmlTransient
+        private VesselTypeGeometry[] targetVesselTypeGeometries = {};
+
         /** Allows a transfer from one source to two destinations */
         private LabEventType secondaryEvent;
 
@@ -1905,6 +1995,9 @@ public enum LabEventType {
 
         /** What to display in the button that sends the message. */
         private String buttonValue = "Transfer";
+
+        /** If transfer can be filled from a generated LIMs file from automation. */
+        private boolean limsFile = false;
 
         /** For JAXB */
         public ManualTransferDetails() {
@@ -1928,6 +2021,9 @@ public enum LabEventType {
             buttonValue = builder.buttonValue;
             targetExpectedToExist = builder.targetExpectedToExist;
             targetExpectedEmpty = builder.targetExpectedEmpty;
+            sourceVesselTypeGeometries = builder.sourceVesselTypeGeometries;
+            targetVesselTypeGeometries = builder.targetVesselTypeGeometries;
+            limsFile = builder.limsFile;
         }
 
         public static class Builder {
@@ -1942,12 +2038,15 @@ public enum LabEventType {
             private boolean expirationDateIncluded = true;
             private int numEvents = 1;
             private String[] machineNames = {};
+            private VesselTypeGeometry[] sourceVesselTypeGeometries = {};
+            private VesselTypeGeometry[] targetVesselTypeGeometries = {};
             private LabEventType secondaryEvent;
             private LabEventType repeatedEvent;
             private String repeatedWorkflowQualifier;
             private String buttonValue = "Transfer";
             private boolean targetExpectedToExist = false;
             private boolean targetExpectedEmpty = true;
+            private boolean limsFile = false;
 
             public Builder(MessageType messageType, VesselTypeGeometry sourceVesselTypeGeometry,
                     VesselTypeGeometry targetVesselTypeGeometry) {
@@ -1991,6 +2090,16 @@ public enum LabEventType {
                 return this;
             }
 
+            public Builder sourceVesselTypeGeometries(VesselTypeGeometry[] sourceVesselTypeGeometries) {
+                this.sourceVesselTypeGeometries = sourceVesselTypeGeometries;
+                return this;
+            }
+
+            public Builder targetVesselTypeGeometries(VesselTypeGeometry[] targetVesselTypeGeometries) {
+                this.targetVesselTypeGeometries = targetVesselTypeGeometries;
+                return this;
+            }
+
             public Builder secondaryEvent(LabEventType secondaryEvent) {
                 this.secondaryEvent = secondaryEvent;
                 return this;
@@ -2018,6 +2127,11 @@ public enum LabEventType {
 
             public Builder targetExpectedEmpty(boolean targetExpectedEmpty) {
                 this.targetExpectedEmpty = targetExpectedEmpty;
+                return this;
+            }
+
+            public Builder limsFile(boolean limsFile) {
+                this.limsFile = limsFile;
                 return this;
             }
 
@@ -2091,6 +2205,30 @@ public enum LabEventType {
             return machineNames;
         }
 
+        public VesselTypeGeometry[] getSourceVesselTypeGeometries() {
+            return sourceVesselTypeGeometries;
+        }
+
+        public Set<String> getSourceVesselTypeGeometriesString() {
+            Set<String> vesselTypeNames = new HashSet<>();
+            for (VesselTypeGeometry vesselTypeGeometry: getSourceVesselTypeGeometries()) {
+                vesselTypeNames.add(vesselTypeGeometry.getDisplayName());
+            }
+            return vesselTypeNames;
+        }
+
+        public VesselTypeGeometry[] getTargetVesselTypeGeometries() {
+            return targetVesselTypeGeometries;
+        }
+
+        public Set<String> getTargetVesselTypeGeometriesString() {
+            Set<String> vesselTypeNames = new HashSet<>();
+            for (VesselTypeGeometry vesselTypeGeometry: getTargetVesselTypeGeometries()) {
+                vesselTypeNames.add(vesselTypeGeometry.getDisplayName());
+            }
+            return vesselTypeNames;
+        }
+
         public int[] getReagentFieldCounts() {
             if (reagentFieldCounts == null) {
                 reagentFieldCounts = new int[reagentNames.length];
@@ -2127,6 +2265,10 @@ public enum LabEventType {
 
         public String getButtonValue() {
             return buttonValue;
+        }
+
+        public boolean isLimsFile() {
+            return limsFile;
         }
     }
 

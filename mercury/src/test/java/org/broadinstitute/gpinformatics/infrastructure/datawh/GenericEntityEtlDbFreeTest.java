@@ -41,6 +41,7 @@ public class GenericEntityEtlDbFreeTest {
     private final String label = "012345678";
     private final LabVessel.ContainerType type = LabVessel.ContainerType.TUBE;
     private String vesselName = "vessel_name";
+    private Date vesselCreated = new Date();
 
     private final String datafileDir = System.getProperty("java.io.tmpdir");
 
@@ -95,6 +96,7 @@ public class GenericEntityEtlDbFreeTest {
         expect(obj.getLabel()).andReturn(label);
         expect(obj.getType()).andReturn(type);
         expect(obj.getName()).andReturn(vesselName);
+        expect(obj.getCreatedOn()).andReturn(vesselCreated);
 
         auditReader.clear();
 
@@ -102,7 +104,7 @@ public class GenericEntityEtlDbFreeTest {
 
         tst.setAuditReaderDao(auditReader);
 
-        int recordCount = tst.doEtl(revIds, etlDateStr);
+        int recordCount = tst.doIncrementalEtl(revIds, etlDateStr);
 
         assertEquals(recordCount, 1);
 
@@ -132,7 +134,7 @@ public class GenericEntityEtlDbFreeTest {
 
         tst.setAuditReaderDao(auditReader);
 
-        int recordCount = tst.doEtl(revIds, etlDateStr);
+        int recordCount = tst.doIncrementalEtl(revIds, etlDateStr);
         assertEquals(recordCount, 1);
 
         String dataFilename = etlDateStr + "_" + tst.baseFilename + ".dat";
@@ -157,6 +159,7 @@ public class GenericEntityEtlDbFreeTest {
         expect(obj.getLabel()).andReturn(label).times(2);
         expect(obj.getType()).andReturn(type).times(2);
         expect(obj.getName()).andReturn(vesselName).times(2);
+        expect(obj.getCreatedOn()).andReturn(vesselCreated).times(2);
         replay(mocks);
 
         tst.setAuditReaderDao(auditReader);

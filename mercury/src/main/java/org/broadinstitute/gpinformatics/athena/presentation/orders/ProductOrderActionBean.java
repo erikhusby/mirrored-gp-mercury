@@ -22,6 +22,7 @@ import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.CharEncoding;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -100,6 +101,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
+import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
@@ -107,8 +110,10 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerExceptio
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
@@ -648,11 +653,17 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     void validateRinScores(Collection<ProductOrderSample> pdoSamples) {
         for (ProductOrderSample pdoSample : pdoSamples) {
-            if (pdoSample.isInBspFormat() && !pdoSample.canRinScoreBeUsedForOnRiskCalculation()) {
+            try {
+                if (pdoSample.isInBspFormat() && !pdoSample.canRinScoreBeUsedForOnRiskCalculation()) {
+                    addGlobalValidationError(
+                            "RIN '" + pdoSample.getSampleData().getRawRin() + "' for " + pdoSample.getName() +
+                            " isn't a number." + "  Please correct this by going to BSP -> Utilities -> Upload Sample " +
+                            "Annotation and updating the 'RIN Number' annotation for this sample.");
+                }
+            } catch (BSPLookupException e) {
                 addGlobalValidationError(
-                        "RIN '" + pdoSample.getSampleData().getRawRin() + "' for " + pdoSample.getName() +
-                        " isn't a number." + "  Please correct this by going to BSP -> Utilities -> Upload Sample " +
-                        "Annotation and updating the 'RIN Number' annotation for this sample.");
+                        pdoSample.getName() + " isn't a sample that is found in BSP.  For this reason the RIN score "
+                        + "cannot be validated at this time");
             }
         }
     }
@@ -688,6 +699,21 @@ public class ProductOrderActionBean extends CoreActionBean {
         String quoteId = editOrder.getQuoteId();
         Quote quote = validateQuoteId(quoteId);
         try {
+            ProductOrder.checkQuoteValidity(editOrder, quote);
+            for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel()) {
+                final Funding funding = fundingLevel.getFunding();
+                if(funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
+                    final int numDaysBetween =
+                            DateUtils.getNumDaysBetween(new Date(), funding.getGrantEndDate());
+                    if(numDaysBetween > 0 && numDaysBetween < 45) {
+                        addMessage("The Funding Source "+funding.getDisplayName()+" on " +
+                                   quote.getAlphanumericId() + "  Quote expires in " + numDaysBetween +
+                                   " days. If it is likely this work will not be completed by then, please work on "
+                                   + "updating the Funding Source so Billing Errors can be avoided.");
+                    }
+                }
+            }
+
             if(productOrderEjb.isOrderEligibleForSAP(editOrder)) {
                 validateQuoteDetails(quote, ErrorLevel.ERROR, !editOrder.hasJiraTicketKey(), 0);
             }
@@ -740,9 +766,9 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     private void validateQuoteDetailsWithAddedSamples(String quoteId, final ErrorLevel errorLevel,
                                                       boolean countOpenOrders, int additionalSamplesCount)
-            throws InvalidProductException {
+            throws InvalidProductException, QuoteServerException {
         Quote quote = validateQuoteId(quoteId);
-
+        ProductOrder.checkQuoteValidity(editOrder, quote);
         if (quote != null) {
             validateQuoteDetails(quote, errorLevel, countOpenOrders, additionalSamplesCount);
         }
@@ -770,9 +796,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         double outstandingEstimate = estimateOutstandingOrders(quote.getAlphanumericId(), quote);
         double valueOfCurrentOrder = 0;
         if(countCurrentUnPlacedOrder) {
-            valueOfCurrentOrder = getValueOfOpenOrders(Collections.singletonList(editOrder), quote);
+            valueOfCurrentOrder = getValueOfOpenOrders(Collections.singletonList((editOrder.isChildOrder())?editOrder.getParentOrder():editOrder), quote);
         } else if(additionalSampleCount > 0) {
-            valueOfCurrentOrder = getOrderValue(editOrder, additionalSampleCount, quote);
+            valueOfCurrentOrder = getOrderValue((editOrder.isChildOrder())?editOrder.getParentOrder():editOrder, additionalSampleCount, quote);
         }
 
         if (fundsRemaining <= 0d ||
@@ -820,7 +846,16 @@ public class ProductOrderActionBean extends CoreActionBean {
     double getValueOfOpenOrders(List<ProductOrder> ordersWithCommonQuote, Quote quote) throws InvalidProductException {
         double value = 0d;
 
-        for (ProductOrder testOrder : ordersWithCommonQuote) {
+        Set<ProductOrder> justParents = new HashSet<>();
+        for (ProductOrder order : ordersWithCommonQuote) {
+            if(order.isChildOrder()) {
+                justParents.add(order.getParentOrder());
+            } else {
+                justParents.add(order);
+            }
+        }
+
+        for (ProductOrder testOrder : justParents) {
             value += getOrderValue(testOrder, testOrder.getUnbilledSampleCount(), quote);
         }
         return value;
@@ -1187,6 +1222,26 @@ public class ProductOrderActionBean extends CoreActionBean {
                 double outstandingOrdersValue = estimateOutstandingOrders(quoteIdentifier, quote);
                 item.put("outstandingEstimate",  NumberFormat.getCurrencyInstance().format(
                         outstandingOrdersValue));
+                JSONArray fundingDetails = new JSONArray();
+
+                for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel()) {
+                    if(fundingLevel.getFunding().getFundingType().equals(Funding.FUNDS_RESERVATION)) {
+                        JSONObject fundingInfo = new JSONObject();
+                        fundingInfo.put("grantTitle", fundingLevel.getFunding().getDisplayName());
+                        fundingInfo.put("grantEndDate",
+                                DateUtils.getDate(fundingLevel.getFunding().getGrantEndDate()));
+                        fundingInfo.put("grantNumber", fundingLevel.getFunding().getGrantNumber());
+                        fundingInfo.put("grantStatus", fundingLevel.getFunding().getGrantStatus());
+
+                        final Date today = new Date();
+                        fundingInfo.put("activeGrant", (fundingLevel.getFunding().getGrantEndDate() != null &&
+                                                        fundingLevel.getFunding().getGrantEndDate().after(today)));
+                        fundingInfo.put("daysTillExpire",
+                                DateUtils.getNumDaysBetween(today, fundingLevel.getFunding().getGrantEndDate()));
+                        fundingDetails.put(fundingInfo);
+                    }
+                }
+                item.put("fundingDetails", fundingDetails);
             }
 
         } catch (Exception ex) {
@@ -1531,7 +1586,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         final List<ProductOrderSample> replacementSamples = stringToSampleList(replacementSampleList);
 
         if(editOrder.isSavedInSAP() && editOrder.hasAtLeastOneBilledLedgerEntry() &&
-           (editOrder.getNonAbandonedCount() < editOrder.latestSapOrderDetail().getPrimaryQuantity()) ) {
+           (editOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL) < editOrder.latestSapOrderDetail().getPrimaryQuantity()) ) {
             shareSapOrder = true;
         }
         ProductOrder.SaveType saveType = ProductOrder.SaveType.CREATING;
@@ -1567,7 +1622,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         Product tokenProduct = productTokenInput.getTokenObject();
         Product product = tokenProduct != null ? productDao.findByPartNumber(tokenProduct.getPartNumber()) : null;
 
-        if(editOrder.isSavedInSAP() && !editOrder.latestSapOrderDetail().getCompanyCode().equals(sapService.getSapCompanyConfigurationForProduct(product).getCompanyCode())) {
+        if(editOrder.isSavedInSAP() && !editOrder.latestSapOrderDetail().getCompanyCode().equals(
+                SapIntegrationServiceImpl.getSapCompanyConfigurationForProduct(product).getCompanyCode())) {
             addGlobalValidationError("Unable to update the order in SAP.  This combination of Product and Order is "
                                      + "attempting to change the company code to which this order will be associated.");
         }
@@ -1724,7 +1780,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         JSONArray jsonResults = new JSONArray();
 
         // Access sample list directly in order to suggest based on possibly not-yet-saved sample IDs.
-        if (!getSampleList().isEmpty()) {
+        if (!getSampleList().isEmpty() && !editOrder.isChildOrder()) {
             List<ProductOrderSample> productOrderSamples = stringToSampleListExisting(getSampleList());
             // Bulk-fetch collection IDs for all samples to avoid having them fetched individually on demand.
             ProductOrder.loadSampleData(productOrderSamples, BSPSampleSearchColumn.BSP_COLLECTION_BARCODE,
@@ -1918,7 +1974,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         JSONObject item = new JSONObject();
 
         if (product != null) {
-            supportsNumberOfLanes = productDao.findByBusinessKey(product).getSupportsNumberOfLanes();
+            final Product productToFind = productDao.findByBusinessKey(product);
+            supportsNumberOfLanes = productToFind.getSupportsNumberOfLanes();
             if(selectedOrderAddons != null)
             for (String selectedOrderAddon : selectedOrderAddons) {
                 if(!supportsNumberOfLanes) {
@@ -2776,7 +2833,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                     "its regulatory requirements met or a reason for bypassing the regulatory requirements",
                     action);
             if (!editOrder.orderPredatesRegulatoryRequirement()) {
-                requireField(editOrder.getAttestationConfirmed().booleanValue(),
+                requireField(editOrder.isAttestationConfirmed().booleanValue(),
                         "the checkbox checked which attests that you are aware of the regulatory requirements for this project",
                         action);
             }

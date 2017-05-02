@@ -96,7 +96,7 @@ public class AbandonVesselEtlDbFreeTest {
         EasyMock.expect(abandonVessel.getAbandonVesselId()).andReturn(abandonVesselEntityId);
         EasyMock.expect(abandonVessel.getLabVessel()).andReturn(abandonedLabVessel);
         EasyMock.expect(abandonedLabVessel.getLabVesselId()).andReturn(abandonedLabVesselId);
-        EasyMock.expect(abandonVessel.getReason()).andReturn(abandonVesselReason);
+        EasyMock.expect(abandonVessel.getReason()).andReturn(abandonVesselReason).times(2);
         EasyMock.expect(abandonVessel.getAbandonedOn()).andReturn(abandonVesselDate);
 
         EasyMock.replay(mocks);
@@ -128,7 +128,7 @@ public class AbandonVesselEtlDbFreeTest {
         EasyMock.expect(abandonVessel.getLabVessel()).andReturn(abandonedLabVessel);
         EasyMock.expect(abandonedLabVessel.getLabVesselId()).andReturn(abandonedPositionLabVesselID);
         EasyMock.expect(abandonVesselPosition.getPosition()).andReturn(abandonPosition.toString());
-        EasyMock.expect(abandonVesselPosition.getReason()).andReturn(abandonPositionReason);
+        EasyMock.expect(abandonVesselPosition.getReason()).andReturn(abandonPositionReason).times(2);
         EasyMock.expect(abandonVesselPosition.getAbandonedOn()).andReturn(abandonVesselPositionDate);
 
         EasyMock.replay(mocks);

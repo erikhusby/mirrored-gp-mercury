@@ -4,9 +4,11 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.boundary.run.InfiniumRunFinder;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
@@ -15,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
@@ -115,6 +118,9 @@ public class LabEventFixupTest extends Arquillian {
 
     @Inject
     private LabVesselDao labVesselDao;
+
+    @Inject
+    private BSPUserList bspUserList;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -1842,6 +1848,95 @@ public class LabEventFixupTest extends Arquillian {
             }
         }
         labEventDao.persist(new FixupCommentary("SUPPORT-2485 change lab event location to SL-HDD"));
+        labEventDao.flush();
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void gplim4796BackfillOnPremPdosToHaveAllStartedEvent() throws Exception {
+        List<LabVessel> infiniumChips = labVesselDao.findAllWithEventButMissingAnother(LabEventType.INFINIUM_XSTAIN,
+                LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
+        InfiniumRunFinder runFinder = new InfiniumRunFinder();
+        BspUser bspUser =  bspUserList.getByUsername("seqsystem");
+        List<LabVessel> invalidChips = new ArrayList<>();
+        for (LabVessel  labVessel: infiniumChips) {
+            StaticPlate staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
+            boolean invalidPipelineLocation = runFinder.checkForInvalidPipelineLocation(staticPlate);
+            if (invalidPipelineLocation) {
+                invalidChips.add(labVessel);
+            }
+        }
+        userBean.loginOSUser();
+        utx.begin();
+        long disambiguator = 1L;
+        for (LabVessel labVessel: invalidChips) {
+            Date start = new Date();
+            long operator = bspUser.getUserId();
+            LabEvent labEvent =
+                    new LabEvent(LabEventType.INFINIUM_AUTOCALL_ALL_STARTED, start, LabEvent.UI_PROGRAM_NAME,
+                            disambiguator, operator, LabEvent.UI_PROGRAM_NAME);
+            labVessel.addInPlaceEvent(labEvent);
+            System.out.println("Adding InfiniumAutoCallAllStarted event as an in place lab event to chip " + labVessel.getLabel());
+            disambiguator++;
+        }
+        labEventDao.persist(new FixupCommentary("GPLIM-4796 add started event to all chips marked on prem if missing"));
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport2691() throws Exception {
+        // Deletes shearing transfer in order to resend a corrected bettalims message with a tube in a new position.
+        userBean.loginOSUser();
+        utx.begin();
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 1934498L);
+        Assert.assertEquals(labEvent.getLabEventType(), LabEventType.SHEARING_TRANSFER);
+        for (LabEventReagent labEventReagent : labEvent.getLabEventReagents()) {
+            System.out.println("Removing labEventReagent " + labEventReagent.getLabEvent().getLabEventId() +
+                    ", " + labEventReagent.getReagent().getName());
+            labEventDao.remove(labEventReagent);
+        }
+        labEvent.getLabEventReagents().clear();
+        Assert.assertTrue(CollectionUtils.isEmpty(labEvent.getCherryPickTransfers()));
+        for (SectionTransfer sectionTransfer : labEvent.getSectionTransfers()) {
+            System.out.println("Removing sectionTransfer " + sectionTransfer.getVesselTransferId());
+            labEventDao.remove(sectionTransfer);
+        }
+        labEvent.getSectionTransfers().clear();
+        Assert.assertTrue(CollectionUtils.isEmpty(labEvent.getVesselToSectionTransfers()));
+        Assert.assertTrue(CollectionUtils.isEmpty(labEvent.getVesselToVesselTransfers()));
+        System.out.println("Removing " + labEvent.getLabEventType() + " " + labEvent.getLabEventId());
+        labEventDao.remove(labEvent);
+        labEventDao.persist(new FixupCommentary("SUPPORT-2691 delete shearing transfer event."));
+        labEventDao.flush();
+        utx.commit();
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/ManualOverrideLabEvents.txt, so it can
+     * be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * GPLIM-4104
+     * LCSET-10868
+     * 1980836
+     */
+    @Test(enabled = false)
+    public void fixupGplim4798() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("ManualOverrideLabEvents.txt"));
+        String jiraTicket = lines.get(0);
+        String batchId = lines.get(1);
+        LabBatch labBatch = labBatchDao.findByName(batchId);
+        if (labBatch == null) {
+            throw new RuntimeException("Batch not found: " + batchId);
+        }
+        for (String id : lines.subList(2, lines.size())) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, Long.parseLong(id));
+            labEvent.setManualOverrideLcSet(labBatch);
+            System.out.println("Lab event " + labEvent.getLabEventId() + " manual override to " + batchId);
+        }
+
+        labEventDao.persist(new FixupCommentary(jiraTicket + " manual override to " + batchId));
         labEventDao.flush();
         utx.commit();
     }

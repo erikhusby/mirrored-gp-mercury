@@ -10,5 +10,6 @@ TRAILING NULLCOLS
  lab_vessel_id,
  label,
  lab_vessel_type,
- name
+ name,
+ created_on DATE "YYYYMMDDHH24MISS"
 )

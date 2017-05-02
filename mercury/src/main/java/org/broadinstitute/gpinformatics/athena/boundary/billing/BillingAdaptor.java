@@ -147,7 +147,6 @@ public class BillingAdaptor implements Serializable {
             HashMultimap<String, String> quoteItemsByQuote = HashMultimap.create();
             for (QuoteImportItem item : unBilledQuoteImportItems) {
 
-                final List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(item.getProductOrder());
                 BillingEjb.BillingResult result = new BillingEjb.BillingResult(item);
                 results.add(result);
 
@@ -157,16 +156,10 @@ public class BillingAdaptor implements Serializable {
                 final MessageCollection messageCollection = new MessageCollection();
                 try {
                     quote = quoteService.getQuoteByAlphaId(item.getQuoteId());
-                    quote.setAlphanumericId(item.getQuoteId());
-                    List<String> effectivePricesForProducts = priceListCache
-                            .getEffectivePricesForProducts(allProductsOrdered, quote);
+                    ProductOrder.checkQuoteValidity(item.getProductOrder(), quote);
 
-                    if(item.getProductOrder().isSavedInSAP()) {
-                        if (!item.getProductOrder().latestSapOrderDetail().getOrderPricesHash().equals(
-                                TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ",")))) {
-                            productOrderEjb.publishProductOrderToSAP(item.getProductOrder(), messageCollection, true);
-                        }
-                    }
+                    //todo SGM is this call really necessary?  Is it just for DBFree tests?
+                    quote.setAlphanumericId(item.getQuoteId());
 
                     workId = CollectionUtils.isEmpty(item.getWorkItems())?null:item.getWorkItems().toArray(new String[item.getWorkItems().size()])[0];
                     sapBillingId = quote.isEligibleForSAP()? item.getSapItems(): NOT_ELIGIBLE_FOR_SAP_INDICATOR;

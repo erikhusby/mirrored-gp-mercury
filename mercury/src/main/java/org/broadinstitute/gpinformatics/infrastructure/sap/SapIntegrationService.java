@@ -77,10 +77,4 @@ public interface SapIntegrationService {
      * @throws SAPIntegrationException
      */
     void changeProductInSAP(Product product) throws SAPIntegrationException;
-
-    SapIntegrationClientImpl.SAPCompanyConfiguration determineCompanyCode(ProductOrder companyProductOrder)
-            throws SAPIntegrationException;
-
-    @Nonnull
-    SapIntegrationClientImpl.SAPCompanyConfiguration getSapCompanyConfigurationForProduct(Product product);
 }

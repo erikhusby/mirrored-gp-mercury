@@ -26,7 +26,7 @@ public class InfiniumEntityBuilder {
     private final LabEventHandler labEventHandler;
     private final StaticPlate sourceplate;
     private final String testPrefix;
-    private final IncludeMethylation includeMethylation;
+    private final InfiniumJaxbBuilder.IncludeMethylation includeMethylation;
     private InfiniumJaxbBuilder infiniumJaxbBuilder;
     private LabEvent amplifcationEvent;
     private StaticPlate amplificationPlate;
@@ -36,23 +36,19 @@ public class InfiniumEntityBuilder {
     private StaticPlate elutionPlate;
     private StaticPlate zymoPlate;
 
-    public enum IncludeMethylation {
-        TRUE, FALSE
-    }
-
     public InfiniumEntityBuilder(
             BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
             LabEventFactory labEventFactory,
             LabEventHandler labEventHandler, StaticPlate sourceplate, String testPrefix) {
         this(bettaLimsMessageTestFactory, labEventFactory, labEventHandler, sourceplate, testPrefix,
-                IncludeMethylation.FALSE);
+                InfiniumJaxbBuilder.IncludeMethylation.FALSE);
     }
 
     public InfiniumEntityBuilder(
             BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
             LabEventFactory labEventFactory,
             LabEventHandler labEventHandler, StaticPlate sourceplate, String testPrefix,
-            IncludeMethylation includeMethylation) {
+            InfiniumJaxbBuilder.IncludeMethylation includeMethylation) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.labEventFactory = labEventFactory;
         this.labEventHandler = labEventHandler;
@@ -80,7 +76,7 @@ public class InfiniumEntityBuilder {
 
         Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
         mapBarcodeToVessel.put(sourceplate.getLabel(), sourceplate);
-        if (includeMethylation == IncludeMethylation.TRUE) {
+        if (includeMethylation == InfiniumJaxbBuilder.IncludeMethylation.TRUE) {
             LabEventTest.validateWorkflow("InfiniumMethylationZymoTransferElution", sourceplate);
             LabEvent zymoPlateEvent = labEventFactory.buildFromBettaLims(
                     infiniumJaxbBuilder.getInfiniumMethlationZymoPlateJaxb(), mapBarcodeToVessel);
@@ -195,20 +191,20 @@ public class InfiniumEntityBuilder {
         }
 
         int i = 0;
-        for (PlateEventType plateEventType : infiniumJaxbBuilder.getInfiniumPostHybridizationHybOvenLoadedJaxbs()) {
-            LabEventTest.validateWorkflow("InfiniumPostHybridizationHybOvenLoaded", hybChips.get(i));
-            LabEvent hybridizationHybOvenLoadedEvent = labEventFactory.buildFromBettaLimsPlateEventDbFree(plateEventType,
-                    hybChips.get(i));
-            labEventHandler.processEvent(hybridizationHybOvenLoadedEvent);
-            i++;
-        }
-
-        i = 0;
         for (PlateEventType plateEventType : infiniumJaxbBuilder.getInfiniumHybChamberLoadedJaxbs()) {
             LabEventTest.validateWorkflow("InfiniumHybChamberLoaded", hybChips.get(i));
             LabEvent hybChamberLoadedEvent = labEventFactory.buildFromBettaLimsPlateEventDbFree(plateEventType,
                     hybChips.get(i));
             labEventHandler.processEvent(hybChamberLoadedEvent);
+            i++;
+        }
+
+        i = 0;
+        for (PlateEventType plateEventType : infiniumJaxbBuilder.getInfiniumPostHybridizationHybOvenLoadedJaxbs()) {
+            LabEventTest.validateWorkflow("InfiniumPostHybridizationHybOvenLoaded", hybChips.get(i));
+            LabEvent hybridizationHybOvenLoadedEvent = labEventFactory.buildFromBettaLimsPlateEventDbFree(plateEventType,
+                    hybChips.get(i));
+            labEventHandler.processEvent(hybridizationHybOvenLoadedEvent);
             i++;
         }
 

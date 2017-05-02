@@ -83,6 +83,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellE
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.IceEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.InfiniumEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.InfiniumJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
@@ -1694,7 +1695,7 @@ public class LabEventTest extends BaseEventTest {
 
         InfiniumEntityBuilder infiniumEntityBuilder = runInfiniumProcessWithMethylation(
                 arrayPlatingEntityBuilder.getArrayPlatingPlate(), "Infinium",
-                InfiniumEntityBuilder.IncludeMethylation.TRUE);
+                InfiniumJaxbBuilder.IncludeMethylation.TRUE);
         Set<SampleInstanceV2> samples = infiniumEntityBuilder.getHybChips().get(0).getSampleInstancesV2();
         Assert.assertEquals(samples.size(), 24, "Wrong number of sample instances");
     }
@@ -1943,6 +1944,41 @@ public class LabEventTest extends BaseEventTest {
                 Workflow.PCR_FREE_HYPER_PREP);
     }
 
+    public void testICEHyperPrep() {
+//        Controller.startCPURecording(true);
+        expectedRouting = SystemRouter.System.MERCURY;
+
+        ProductOrder productOrder = ProductOrderTestFactory.buildICEHyperPrepProductOrder(NUM_POSITIONS_IN_RACK);
+        productOrder.getResearchProject().setJiraTicketKey("RP-123");
+
+        String[] expectedEventNames = {
+                "SamplesDaughterPlateCreation",
+                "SamplesNormalizationTransfer",
+                "PicoPlatingPostNorm",
+                "ShearingTransfer",
+                "PostShearingTransferCleanup",
+                "ShearingQC",
+                "AdapterLigationCleanup",
+                "PCRPlusPondRegistration",
+                "IcePoolingTransfer",
+                "Ice96PlexSpriConcentration",
+                "IcePoolTest",
+                "Ice1stHybridization",
+                "Ice1stCapture",
+                "Ice2ndCapture",
+                "IceCatchCleanup",
+                "IceCatchEnrichmentCleanup",
+                "PoolingTransfer",
+                "EcoTransfer",
+                "NormalizationTransfer",
+                "DenatureTransfer",
+                "StripTubeBTransfer",
+                "FlowcellTransfer",
+        };
+        testGenomeWorkflow(productOrder, LibraryConstructionJaxbBuilder.PondType.PCR_PLUS_HYPER_PREP, expectedEventNames,
+                Workflow.ICE_EXOME_EXPRESS_HYPER_PREP);
+    }
+
     public void testPcrFree() {
 //        Controller.startCPURecording(true);
         expectedRouting = SystemRouter.System.MERCURY;
@@ -2036,9 +2072,22 @@ public class LabEventTest extends BaseEventTest {
                 NUM_POSITIONS_IN_RACK,
                 pondType);
 
-        QtpEntityBuilder qtpEntityBuilder = runQtpProcess(libraryConstructionEntityBuilder.getPondRegRack(),
-                libraryConstructionEntityBuilder.getPondRegTubeBarcodes(),
-                libraryConstructionEntityBuilder.getMapBarcodeToPondRegTubes(), "1");
+        QtpEntityBuilder qtpEntityBuilder = null;
+        int numSeqReagents = 1;
+        if (workflow == Workflow.ICE_EXOME_EXPRESS_HYPER_PREP) {
+            IceEntityBuilder iceEntityBuilder = runIceProcess(
+                    Collections.singletonList(libraryConstructionEntityBuilder.getPondRegRack()),
+                    "1");
+            qtpEntityBuilder = runQtpProcess(iceEntityBuilder.getCatchEnrichRack(),
+                    iceEntityBuilder.getCatchEnrichBarcodes(),
+                    iceEntityBuilder.getMapBarcodeToCatchEnrichTubes(), "1");
+            numSeqReagents = 3;
+        } else {
+            qtpEntityBuilder = runQtpProcess(libraryConstructionEntityBuilder.getPondRegRack(),
+                    libraryConstructionEntityBuilder.getPondRegTubeBarcodes(),
+                    libraryConstructionEntityBuilder.getMapBarcodeToPondRegTubes(), "1");
+        }
+
 
         LabVessel denatureSource =
                 qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
@@ -2051,7 +2100,7 @@ public class LabEventTest extends BaseEventTest {
         IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
         Set<SampleInstanceV2> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPositionV2(
                 VesselPosition.LANE1);
-        Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 1,
+        Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), numSeqReagents,
                 "Wrong number of reagents");
 
         Map.Entry<String, BarcodedTube> stringBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();

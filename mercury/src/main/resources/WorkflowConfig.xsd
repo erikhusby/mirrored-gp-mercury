@@ -106,6 +106,7 @@
                 </xs:simpleType>
             </xs:element>
             <xs:element type="xs:string" name="statusTransition" minOccurs="0"/>
+            <xs:element type="xs:string" name="endStatus" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
     </xs:complexType>
     <xs:complexType name="sequencingConfigDefsType" mixed="true">

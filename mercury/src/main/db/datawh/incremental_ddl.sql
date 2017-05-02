@@ -87,3 +87,36 @@ CREATE TABLE IM_ABANDON_VESSEL_POSITION (
   REASON VARCHAR2(255),
   ABANDONED_ON TIMESTAMP(6)
 );
+
+
+-- ***************************
+--  GPLIM-4378 Make DW ETL of Infinium array process flow deterministic on PDO-LCSET-Sample combination
+CREATE TABLE im_array_process (
+  LINE_NUMBER NUMBER(9) NOT NULL,
+  ETL_DATE DATE NOT NULL,
+  IS_DELETE CHAR NOT NULL,
+  product_order_id NUMBER(19),
+  batch_name VARCHAR2(40),
+  lcset_sample_name VARCHAR2(40),
+  sample_name VARCHAR2(40),
+  lab_event_id NUMBER(19),
+  lab_event_type VARCHAR2(64),
+  station_name VARCHAR2(255),
+  event_date DATE,
+  lab_vessel_id NUMBER(19),
+  position VARCHAR2(32) );
+
+
+-- --------------------------------
+-- https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-4644
+-- Add created_on to LabVessel DW ETL process and use for library_lcset_sample library creation date
+-- --------------------------------
+ALTER TABLE im_lab_vessel add created_on date;
+ALTER TABLE lab_vessel add created_on date;
+
+-- Post-deploy required backfill of lab_vessel data
+-- Execute the following AFTER backfill:
+UPDATE LIBRARY_LCSET_SAMPLE_BASE LC
+   SET LC.LIBRARY_CREATION_DATE = NVL((SELECT LV.CREATED_ON FROM LAB_VESSEL LV WHERE LV.LAB_VESSEL_ID = LC.LIBRARY_ID ), LC.LIBRARY_CREATION_DATE);
+COMMIT;
+
