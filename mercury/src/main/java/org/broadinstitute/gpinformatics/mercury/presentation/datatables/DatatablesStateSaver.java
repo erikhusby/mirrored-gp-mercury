@@ -127,6 +127,9 @@ public class DatatablesStateSaver {
     }
 
     public String getTableStateJson() {
+        if (tableState == null) {
+            loadTableState();
+        }
         return tableState;
     }
 

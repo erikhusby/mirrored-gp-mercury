@@ -1910,8 +1910,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         return createTextResolution(kitIndexObject.toString());
     }
 
-    public String getSummary() throws Exception {
+    public Resolution getPostLoadSampleInfo() throws Exception {
         if (editOrder != null && StringUtils.isBlank(sampleSummary)) {
+            JSONObject resultJson = new JSONObject();
             JSONArray sampleSummaryJson = new JSONArray();
             try {
                 List<String> comments = editOrder.getSampleSummaryComments();
@@ -1920,12 +1921,14 @@ public class ProductOrderActionBean extends CoreActionBean {
                     item.put("comment", comment);
                     sampleSummaryJson.put(item);
                 }
-                sampleSummary = sampleSummaryJson.toString();
+                resultJson.put("summary", sampleSummaryJson);
+                resultJson.put("numberSamplesNotReceived", getSamplesNotReceivedString());
+                sampleSummary = resultJson.toString();
             } catch (BSPLookupException e) {
                 handleBspLookupFailed(e);
             }
         }
-        return sampleSummary;
+        return new StreamingResolution("text/json", sampleSummary);
     }
 
     /**
@@ -2927,16 +2930,26 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     /**
-     * Get count of samples not received. Return null if the samples can not be found in BSP
+     * get HTML fragment summarizing samples receivred.
      */
-    public Integer getNumberSamplesNotReceived() {
-        Integer samplesNotReceived=null;
+    public String getSamplesNotReceivedString() {
+        int samplesNotReceived=0;
+        String result = "N/A";
         try {
             samplesNotReceived = editOrder.getSampleCount() - editOrder.getReceivedSampleCount();
         } catch (BSPLookupException e) {
             handleBspLookupFailed(e);
         }
-        return samplesNotReceived;
+        if (samplesNotReceived == 1) {
+            result = "<em>NOTE:</em> There is one sample that has not yet been received. If the order is placed, "
+                     + "this sample will be removed from the order.";
+
+        } else if (samplesNotReceived > 1) {
+            result = String.format("<em>NOTE:</em> There are %s samples that have not yet been received. If the order "
+                                   + "is placed, these samples will be removed from the order.", samplesNotReceived);
+        }
+
+        return "<p>" + result + "</p>";
     }
 
     public EnumSet<ProductOrder.OrderStatus> getOrderStatusNamesWhichCantBeAbandoned() {
@@ -3136,4 +3149,18 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void setPriceListCache(PriceListCache priceListCache) {
         this.priceListCache = priceListCache;
     }
+
+
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
+    @HandlesEvent(SAVE_SEARCH_DATA)
+    public Resolution saveSearchData() throws Exception {
+        preferenceSaver.saveTableData(tableState);
+        return new StreamingResolution("application/json", preferenceSaver.getTableStateJson());
+    }
+
+    public boolean showColumn(String columnName) {
+        return preferenceSaver.showColumn(columnName);
+    }
+
 }
