@@ -549,6 +549,82 @@ public abstract class TransferTraverserCriteria {
         }
     }
 
+
+    /**
+     * Returns a list of all ancestor vessels & well positions that have been marked as abandoned.
+     */
+    public static class AbandonedLabVesselAncestorCriteria extends TransferTraverserCriteria {
+        private final Map<Integer, List<LabVessel>> labVesselAtHopCount = new TreeMap<>();
+        private Context context = new Context();
+        @Override
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            this.context = context;
+            // May support it, but avoid mis-match between name and function
+            if (context.getTraversalDirection() != TraversalDirection.Ancestors) {
+                throw new IllegalStateException("LabVesselAncestorCriteria supports ancestor traversal only");
+            }
+
+            List<LabVessel> vesselList;
+            if (labVesselAtHopCount.containsKey(context.getHopCount())) {
+                vesselList = labVesselAtHopCount.get(context.getHopCount());
+            } else {
+                vesselList = new ArrayList<>();
+            }
+
+
+            if ( context.getContextVessel() != null ) {
+                vesselList.add(context.getContextVessel());
+            } else if (context.getContextVesselContainer() != null) {
+                vesselList.add(context.getContextVesselContainer().getEmbedder());
+            }
+            labVesselAtHopCount.put(context.getHopCount(), vesselList);
+
+            return TraversalControl.ContinueTraversing;
+        }
+
+        @Override
+        public void evaluateVesselPostOrder(Context context) {
+        }
+
+        //If a well/vessel is marked as depleted we do not consider it abandoned.
+        private boolean isAbandonReasonValid(LabVessel labVessel) {
+            if(labVessel.getAbandonReason().equals(AbandonVessel.Reason.DEPLETED))
+                return false;
+            else
+                return true;
+        }
+
+        public Collection<LabVessel> getAbandonedLabVesselAncestors() {
+            LinkedHashSet<LabVessel> ancestors = new LinkedHashSet<>();
+            // Vessel sets sorted by hop count
+            for (List<LabVessel> vesselList : labVesselAtHopCount.values()) {
+                for(LabVessel vessel :  vesselList)
+                {
+                    Pair<LabVessel, VesselPosition> vesselPositionPair = this.context.getContextVesselAndPosition();
+                    VesselPosition contextVesselPosition = vesselPositionPair.getRight();
+                    LabVessel contextVessel = vesselPositionPair.getLeft();
+                    //Check for an abandoned tube.
+                    if(vessel.getType().equals(LabVessel.ContainerType.TUBE)){
+                        if(vessel.isVesselAbandoned()) {
+                            if(isAbandonReasonValid(vessel)) {
+                                ancestors.add(vessel);
+                            }
+                        }
+                    }
+                    else {
+                        //Check for an abandoned well on a plate by position
+                        if (vessel.isPositionAbandoned(contextVesselPosition.name())) {
+                            if(isAbandonReasonValid(vessel)) {
+                                ancestors.add(vessel);
+                            }
+                        }
+                    }
+                }
+            }
+            return ancestors;
+        }
+    }
+
     /**
      * NearestTubeAncestorsCriteria is a Traverser Criteria object intended to capture the closest (in number of hops)
      * BarcodedTube(s) that can be found in a target vessel's event history.  When found, not only will the the tube
