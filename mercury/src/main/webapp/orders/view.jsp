@@ -179,7 +179,7 @@ $j(document).ready(function () {
                 updateFundsRemaining();
                 setupDialogs();
 
-                showSummary();
+                postLoadSampleInfo();
                 // Only show the fill kit detail information for sample initiation PDOs. With the collaboration portal, there
                 // can be kit definitions but since that is all automated, we do not want to show that. It is fairly irrelevant
                 // after the work request happens. Adding a work request id field to the UI when there is a work request with
@@ -270,14 +270,9 @@ function setupDialogs() {
         $j("#dialogAction").attr("name", "");
     }
 
-    var $confirmDialogContainer = $j("#confirmDialog");
-    var $detachedConfirmDialogContainer = $confirmDialogContainer.children().detach();
-    $confirmDialogContainer.dialog({
+    $j("#confirmDialog").dialog({
         modal: true,
         autoOpen: false,
-        open: function(){
-            $detachedConfirmDialogContainer.appendTo($confirmDialogContainer);
-        },
         buttons: [
             {
                 id: "confirmOkButton",
@@ -616,15 +611,24 @@ function updateFunds(data) {
     }
 }
 
-function showSummary() {
-    var data = ${actionBean.summary};
-    var dataList = '<ul>';
-    data.map(function (item) {
-        dataList += '<li>' + item.comment + '</li>'
+function postLoadSampleInfo() {
+    $j.ajax({
+        url: "${ctxpath}/orders/order.action?getPostLoadSampleInfo",
+        dataType: 'json',
+        data: {"<%= ProductOrderActionBean.PRODUCT_ORDER_PARAMETER %>": "${actionBean.editOrder.businessKey}"},
+        success: function (data) {
+            var dataList = '<ul>';
+            data.summary.map(function (item) {
+                dataList += '<li>' + item.comment + '</li>'
+            });
+            dataList += '</ul>';
+            $j('#summaryId').html(dataList);
+            $j("#numberSamplesNotReceived").html(data.numberSamplesNotReceived);
+        },
+        error: function (a, b, c, d, e) {
+            debugger;
+        }
     });
-    dataList += '</ul>';
-
-    $j('#summaryId').html(dataList);
 }
 
 function showRecalculateRiskDialog() {
@@ -917,24 +921,7 @@ function formatInput(item) {
 
 <div id="placeConfirmation" style="display:none;" title="Place Order">
     <p>Click OK to place the order and make it available for lab work.</p>
-    <c:choose>
-        <c:when test="${actionBean.numberSamplesNotReceived == null}">
-            <p>N/A</p>
-        </c:when>
-        <c:when test="${actionBean.numberSamplesNotReceived == 1}">
-            <p>
-                <em>NOTE:</em> There is one sample that has not yet been received. If the order is placed,
-                this sample will be removed from the order.
-            </p>
-        </c:when>
-        <c:when test="${actionBean.numberSamplesNotReceived > 1}">
-            <p>
-                <em>NOTE:</em> There are ${actionBean.numberSamplesNotReceived} samples that have not yet been received.
-                If the order is placed, these samples will be removed from the order.
-            </p>
-        </c:when>
-    </c:choose>
-
+    <span id="numberSamplesNotReceived"></span>
     <div class="form-horizontal span7">
         <div class="view-control-group control-group">
             <label class="control-label label-form">Regulatory Info</label>
