@@ -551,7 +551,7 @@ public abstract class TransferTraverserCriteria {
 
 
     /**
-     * Returns a list of all ancestor vessels & well positions that have been marked as abandoned.
+     * Returns true if an an ancesstor for a given position is abandoned.
      */
     public static class AbandonedLabVesselAncestorCriteria extends TransferTraverserCriteria {
         private final Map<Integer, List<LabVessel>> labVesselAtHopCount = new TreeMap<>();
@@ -586,15 +586,33 @@ public abstract class TransferTraverserCriteria {
         public void evaluateVesselPostOrder(Context context) {
         }
 
-        //If a well/vessel is marked as depleted we do not consider it abandoned.
-        private boolean isAbandonReasonValid(LabVessel labVessel) {
-            if(labVessel.getAbandonReason().equals(AbandonVessel.Reason.DEPLETED))
+        // If the vessel is marked as depleted we do not consider it abandoned.
+        private boolean isTubeAbandonReasonValid(LabVessel labVessel) {
+
+           if(labVessel.getAbandonVessels().iterator().next().getReason().equals(AbandonVessel.Reason.DEPLETED))
                 return false;
             else
                 return true;
         }
 
-        public Collection<LabVessel> getAbandonedLabVesselAncestors() {
+        // If the plate position is marked as depleted we do not consider it abandoned.
+        private boolean isPlateAbandonReasonValid(LabVessel labVessel, VesselPosition contextVesselPosition ) {
+
+            //Multiple positions on a single plate may be abandoned with different reasons.
+            for (AbandonVessel abandonVessel : labVessel.getAbandonVessels()) {
+                for (AbandonVesselPosition abandonVesselPosition : abandonVessel.getAbandonedVesselPosition()) {
+                    if(contextVesselPosition.name().equals(abandonVesselPosition.getPosition())) {
+                        if (abandonVesselPosition.getReason().equals(AbandonVessel.Reason.DEPLETED)) {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+
+
+        public boolean isAncestorAbandoned() {
             LinkedHashSet<LabVessel> ancestors = new LinkedHashSet<>();
             // Vessel sets sorted by hop count
             for (List<LabVessel> vesselList : labVesselAtHopCount.values()) {
@@ -602,26 +620,25 @@ public abstract class TransferTraverserCriteria {
                 {
                     Pair<LabVessel, VesselPosition> vesselPositionPair = this.context.getContextVesselAndPosition();
                     VesselPosition contextVesselPosition = vesselPositionPair.getRight();
-                    LabVessel contextVessel = vesselPositionPair.getLeft();
                     //Check for an abandoned tube.
                     if(vessel.getType().equals(LabVessel.ContainerType.TUBE)){
                         if(vessel.isVesselAbandoned()) {
-                            if(isAbandonReasonValid(vessel)) {
-                                ancestors.add(vessel);
+                            if(isTubeAbandonReasonValid(vessel)) {
+                                return true;
                             }
                         }
                     }
                     else {
                         //Check for an abandoned well on a plate by position
                         if (vessel.isPositionAbandoned(contextVesselPosition.name())) {
-                            if(isAbandonReasonValid(vessel)) {
-                                ancestors.add(vessel);
+                            if(isPlateAbandonReasonValid(vessel,contextVesselPosition)) {
+                              return true;
                             }
                         }
                     }
                 }
             }
-            return ancestors;
+            return false;
         }
     }
 
