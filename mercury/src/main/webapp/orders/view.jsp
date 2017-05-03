@@ -175,7 +175,7 @@ $j(document).ready(function () {
                 imageForBoolean(".completelyBilled", "${ctxpath}/images/check.png");
 
                 initColumnVisibility($j.fn.dataTable.Api(settings));
-
+                $j("#sampleData tbody").show();
                 updateFundsRemaining();
                 setupDialogs();
 
@@ -535,12 +535,14 @@ function formatDate(date) {
 var oneYearAgo;
 var almostOneYearAgo;
 
-function getHighlightClass(epochTime, type, c, d, e, f, g) {
-    if (type === 'display' || type === 'filter') {
+function getHighlightClass(cell, type, row, meta) {
+    var api = new $j.fn.dataTable.Api(meta.settings);
+
+    if (api.column(meta.col).visible() && type === 'display' || type === 'filter') {
         var picoDate = undefined;
         var cellData = 'No Pico';
-        if ($j(epochTime).text()) {
-            picoDate = new Date($j(epochTime).text());
+        if ($j(cell).text()) {
+            picoDate = new Date($j(cell).text());
             cellData = formatDate(picoDate);
         }
         var $container = $j("<span></span>", {text: cellData});
@@ -551,7 +553,7 @@ function getHighlightClass(epochTime, type, c, d, e, f, g) {
         }
         return $container[0].outerHTML;
     }
-    return epochTime;
+    return cell;
 }
 
 function updateFundsRemaining() {
@@ -1630,7 +1632,7 @@ function formatInput(item) {
                 <th width="200"></th>
             </tr>
             </thead>
-            <tbody>
+            <tbody style="display:none;">
             <c:forEach items="${actionBean.editOrder.samples}" var="sample">
                 <tr>
                     <td><stripes:checkbox title="${sample.samplePosition}" class="shiftCheckbox"
