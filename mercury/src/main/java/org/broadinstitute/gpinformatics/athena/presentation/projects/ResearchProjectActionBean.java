@@ -362,29 +362,28 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
             setSubmissionRepositories(submissionsService.getSubmissionRepositories());
 
             if (submissionRepository == null && StringUtils.isBlank(selectedSubmissionRepository)) {
-                if (getActiveRepositories().size() == 1) {
-                    selectedSubmissionRepository = getActiveRepositories().iterator().next().getDescription();
-                }
-            }
-            String eventName = getContext().getEventName();
-            if (StringUtils.isNotBlank(editResearchProject.getSubmissionRepositoryName())) {
                 selectedSubmissionRepository = editResearchProject.getSubmissionRepositoryName();
-                submissionRepository = submissionsService.findRepositoryByKey(selectedSubmissionRepository);
-                if (submissionRepository != null && !submissionRepository.isActive() && eventName
-                        .equals(VIEW_SUBMISSIONS_ACTION)) {
-                    addMessage("Selected submission site ''{0}'' is not active.",
-                            submissionRepository.getDescription());
+                if (StringUtils.isNotBlank(selectedSubmissionRepository)) {
+                    submissionRepository = submissionsService.findRepositoryByKey(selectedSubmissionRepository);
                 }
             }
-
+            if (submissionRepository != null && !submissionRepository.isActive() && getContext().getEventName()
+                    .equals(VIEW_SUBMISSIONS_ACTION)) {
+                addMessage("Selected submission site ''{0}'' is not active.",
+                        submissionRepository.getDescription());
+            }
             if (submissionLibraryDescriptor == null) {
-                submissionLibraryDescriptor = findDefaultSubmissionType(editResearchProject);
-                if (submissionLibraryDescriptor != null) {
-                    selectedSubmissionLibraryDescriptor = submissionLibraryDescriptor.getName();
+                if (StringUtils.isNotBlank(selectedSubmissionLibraryDescriptor)) {
+                    submissionLibraryDescriptor =
+                            submissionsService.findLibraryDescriptorTypeByKey(selectedSubmissionLibraryDescriptor);
+                } else {
+                    submissionLibraryDescriptor = findDefaultSubmissionType(editResearchProject);
+                    if (submissionLibraryDescriptor != null) {
+                        selectedSubmissionLibraryDescriptor = submissionLibraryDescriptor.getName();
+                    }
                 }
             }
         }
-
     }
 
     SubmissionLibraryDescriptor findDefaultSubmissionType(ResearchProject researchProject) {
