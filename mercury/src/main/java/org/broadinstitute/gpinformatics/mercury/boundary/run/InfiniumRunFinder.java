@@ -191,15 +191,12 @@ public class InfiniumRunFinder implements Serializable {
      *  Check to see if the any position on the current chip or any ancestor plates or vessels are abandoned.
      */
     private boolean isAbandoned(StaticPlate staticPlate, VesselPosition vesselPosition) {
-
         TransferTraverserCriteria.AbandonedLabVesselAncestorCriteria abandonedLabVesselAncestorCriteria =
                 new TransferTraverserCriteria.AbandonedLabVesselAncestorCriteria();
-
         staticPlate.getContainerRole().evaluateCriteria(vesselPosition, abandonedLabVesselAncestorCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors, 0);
-        if(abandonedLabVesselAncestorCriteria.isAncestorAbandoned() || staticPlate.isPositionAbandoned(vesselPosition.toString())) {
+        if(abandonedLabVesselAncestorCriteria.isAncestorAbandoned()) {
             return true;
         }
-
         return false;
     }
 

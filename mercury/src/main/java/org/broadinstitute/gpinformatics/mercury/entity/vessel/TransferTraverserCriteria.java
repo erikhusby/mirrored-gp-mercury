@@ -555,10 +555,8 @@ public abstract class TransferTraverserCriteria {
      */
     public static class AbandonedLabVesselAncestorCriteria extends TransferTraverserCriteria {
         private final Map<Integer, List<LabVessel>> labVesselAtHopCount = new TreeMap<>();
-        private Context context = new Context();
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
-            this.context = context;
             // May support it, but avoid mis-match between name and function
             if (context.getTraversalDirection() != TraversalDirection.Ancestors) {
                 throw new IllegalStateException("LabVesselAncestorCriteria supports ancestor traversal only");
@@ -571,13 +569,25 @@ public abstract class TransferTraverserCriteria {
                 vesselList = new ArrayList<>();
             }
 
-
-            if ( context.getContextVessel() != null ) {
-                vesselList.add(context.getContextVessel());
+            if (context.getContextVessel() != null) {
+                if (context.getContextVessel().isVesselAbandoned()) {
+                    if (isTubeAbandonReasonValid(context.getContextVessel())) {
+                        vesselList.add(context.getContextVessel());
+                    }
+                }
             } else if (context.getContextVesselContainer() != null) {
-                vesselList.add(context.getContextVesselContainer().getEmbedder());
+                Pair<LabVessel, VesselPosition> vesselPositionPair = context.getContextVesselAndPosition();
+                VesselPosition contextVesselPosition = vesselPositionPair.getRight();
+                if (context.getContextVesselContainer().getEmbedder().isPositionAbandoned(contextVesselPosition.name())) {
+                    if (isPlateAbandonReasonValid(context.getContextVesselContainer().getEmbedder(), contextVesselPosition)) {
+                        vesselList.add(context.getContextVesselContainer().getEmbedder());
+                    }
+                }
             }
-            labVesselAtHopCount.put(context.getHopCount(), vesselList);
+
+            if (vesselList.size() > 0) {
+                labVesselAtHopCount.put(context.getHopCount(), vesselList);
+            }
 
             return TraversalControl.ContinueTraversing;
         }
@@ -588,11 +598,7 @@ public abstract class TransferTraverserCriteria {
 
         // If the vessel is marked as depleted we do not consider it abandoned.
         private boolean isTubeAbandonReasonValid(LabVessel labVessel) {
-
-           if(labVessel.getAbandonVessels().iterator().next().getReason().equals(AbandonVessel.Reason.DEPLETED))
-                return false;
-            else
-                return true;
+            return !labVessel.getAbandonVessels().iterator().next().getReason().equals(AbandonVessel.Reason.DEPLETED);
         }
 
         // If the plate position is marked as depleted we do not consider it abandoned.
@@ -611,34 +617,8 @@ public abstract class TransferTraverserCriteria {
             return true;
         }
 
-
-        public boolean isAncestorAbandoned() {
-            LinkedHashSet<LabVessel> ancestors = new LinkedHashSet<>();
-            // Vessel sets sorted by hop count
-            for (List<LabVessel> vesselList : labVesselAtHopCount.values()) {
-                for(LabVessel vessel :  vesselList)
-                {
-                    Pair<LabVessel, VesselPosition> vesselPositionPair = this.context.getContextVesselAndPosition();
-                    VesselPosition contextVesselPosition = vesselPositionPair.getRight();
-                    //Check for an abandoned tube.
-                    if(vessel.getType().equals(LabVessel.ContainerType.TUBE)){
-                        if(vessel.isVesselAbandoned()) {
-                            if(isTubeAbandonReasonValid(vessel)) {
-                                return true;
-                            }
-                        }
-                    }
-                    else {
-                        //Check for an abandoned well on a plate by position
-                        if (vessel.isPositionAbandoned(contextVesselPosition.name())) {
-                            if(isPlateAbandonReasonValid(vessel,contextVesselPosition)) {
-                              return true;
-                            }
-                        }
-                    }
-                }
-            }
-            return false;
+        public boolean  isAncestorAbandoned() {
+            return !labVesselAtHopCount.values().isEmpty();
         }
     }
 
