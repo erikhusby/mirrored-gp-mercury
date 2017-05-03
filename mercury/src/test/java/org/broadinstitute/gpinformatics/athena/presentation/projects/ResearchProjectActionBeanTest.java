@@ -16,11 +16,14 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.MockServerTest;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRepository;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsService;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsWillAlwaysWorkSubmissionsService;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
-import org.broadinstitute.gpinformatics.infrastructure.MockServerTest;
 import org.broadinstitute.gpinformatics.mercury.presentation.TestCoreActionBeanContext;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.mockito.Mockito;
@@ -31,6 +34,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -93,14 +97,61 @@ public class ResearchProjectActionBeanTest extends MockServerTest {
         }
 
         ResearchProjectActionBean actionBean = new ResearchProjectActionBean();
+        actionBean.setSubmissionsService(new SubmissionsWillAlwaysWorkSubmissionsService());
         actionBean.setUserBean(userBean);
         actionBean.setBroadPiList(broadPiList);
         actionBean.setBspUserList(bspUserList);
         actionBean.setEditResearchProject(researchProject);
         actionBean.setContext(new TestCoreActionBeanContext());
-
+        actionBean.initSubmissions();
         assertThat(actionBean.validateViewOrPostSubmissions(false), is(submissionAllowed.booleanValue()));
         assertThat(actionBean.getValidationErrors().isEmpty(), is(submissionAllowed.booleanValue()));
+    }
+
+
+    public void testSubmissionLibraryNotOverwritten() throws Exception {
+        SubmissionsService submissionsService = setupInitSubmissionsMocks();
+        ResearchProjectActionBean actionBean = setupInitSubmissionsProject(submissionsService);
+        String selectedLibrary = "RNA Seq";
+        actionBean.setSelectedSubmissionLibraryDescriptor(selectedLibrary);
+        actionBean.initSubmissions();
+        Mockito.verify(submissionsService, Mockito.atLeastOnce()).findLibraryDescriptorTypeByKey(Mockito.matches(selectedLibrary));
+        assertThat(actionBean.getSelectedSubmissionLibraryDescriptor(), is(selectedLibrary));
+    }
+
+    public void testSubmissionRepositoryNotOverwritten() throws Exception {
+        SubmissionsService submissionsService = setupInitSubmissionsMocks();
+        ResearchProjectActionBean actionBean = setupInitSubmissionsProject(submissionsService);
+        String selectedRepository = "GDC_PROTECTED";
+        actionBean.setSelectedSubmissionRepository(selectedRepository);
+        actionBean.initSubmissions();
+        Mockito.verify(submissionsService, Mockito.atLeastOnce()).getSubmissionRepositories();
+        Mockito.verify(submissionsService, Mockito.atLeastOnce()).findRepositoryByKey(Mockito.matches(selectedRepository));
+        assertThat(actionBean.getSelectedSubmissionRepository(), is(selectedRepository));
+
+    }
+
+    private ResearchProjectActionBean setupInitSubmissionsProject(SubmissionsService submissionsService) {
+        ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject();
+        ResearchProjectActionBean actionBean = new ResearchProjectActionBean();
+        actionBean.setEditResearchProject(researchProject);
+        actionBean.setContext(new TestCoreActionBeanContext());
+        actionBean.setSubmissionsService(submissionsService);
+        return actionBean;
+    }
+
+    private SubmissionsService setupInitSubmissionsMocks() {
+        SubmissionsService mockService = Mockito.mock(SubmissionsService.class);
+        Mockito.when(mockService.getSubmissionRepositories()).thenReturn(Arrays.asList(
+                new SubmissionRepository(SubmissionRepository.DEFAULT_REPOSITORY_NAME,
+                        SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR),
+                new SubmissionRepository("GDC_PROTECTED", "Genomics Data Commons (GDC) Controlled Access submissions")
+        ));
+        Mockito.when(mockService.getSubmissionLibraryDescriptors()).thenReturn(Arrays.asList(
+                new SubmissionLibraryDescriptor("Whole Genome", "Human Whole Genome"),
+                new SubmissionLibraryDescriptor("RNA Seq", "RNA Sequencing")
+        ));
+        return mockService;
     }
 
     public void testRpWithDraftPdoDoestThrowsException() {
