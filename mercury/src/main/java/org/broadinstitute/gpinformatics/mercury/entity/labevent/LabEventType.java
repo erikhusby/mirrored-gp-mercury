@@ -585,7 +585,7 @@ public enum LabEventType {
                     targetSection(SBSSection.ALL96).
                     limsFile(true).
                     reagentNames(new String[]{"QIASymphony Kit"}).build(),
-            LibraryType.NONE_ASSIGNED),
+            MaterialType.DNA_DNA_CELL_FREE, LibraryType.NONE_ASSIGNED),
     BLOOD_PLASMA_TRANSFER("BloodPlasmaTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
