@@ -22,6 +22,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -1929,6 +1931,55 @@ public class LabVesselSearchDefinition {
         searchTerm = new SearchTerm();
         searchTerm.setName("Proceed if OOS");
         searchTerm.setDisplayExpression(DisplayExpression.PROCEED_IF_OOS);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Flowcell Pool Test Lane(s)");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public List<String> evaluate(Object entity, SearchContext context) {
+                List<String> poolTestLanes;
+
+                LabVessel labVessel = (LabVessel)entity;
+
+                // Quick exit
+                if( labVessel.getType() != LabVessel.ContainerType.FLOWCELL
+                        || OrmUtil.proxySafeIsInstance(labVessel, IlluminaFlowcell.class)) {
+                    return null;
+                }
+
+                IlluminaFlowcell flowcell = OrmUtil.proxySafeCast(labVessel, IlluminaFlowcell.class);
+
+                VesselBatchTraverserCriteria downstreamBatchFinder = new VesselBatchTraverserCriteria();
+                flowcell.getContainerRole().applyCriteriaToAllPositions(
+                            downstreamBatchFinder, TransferTraverserCriteria.TraversalDirection.Ancestors);
+
+                // Never more than one Flowcell ticket per flowcell
+                LabBatch fct = null;
+
+                for ( LabBatch labBatch : downstreamBatchFinder.getLabBatches() ) {
+                    if( labBatch.getLabBatchType() == LabBatch.LabBatchType.FCT ) {
+                        fct = labBatch;
+                        break;
+                    }
+                }
+
+                if( fct == null ) {
+                    return null;
+                }
+
+                poolTestLanes = new ArrayList<>();
+
+                for( LabBatchStartingVessel startingVessel : fct.getLabBatchStartingVessels() ) {
+                    FlowcellDesignation designation = startingVessel.getFlowcellDesignation();
+                    if( designation != null && designation.isPoolTest() ) {
+                        poolTestLanes.add( startingVessel.getVesselPosition().toString() );
+                    }
+                }
+
+                return poolTestLanes;
+            }
+        });
         searchTerms.add(searchTerm);
 
         return searchTerms;

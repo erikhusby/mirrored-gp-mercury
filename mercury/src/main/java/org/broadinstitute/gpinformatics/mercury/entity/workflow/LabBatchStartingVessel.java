@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.hibernate.envers.Audited;
@@ -45,6 +46,9 @@ public class LabBatchStartingVessel {
 
     @Enumerated(EnumType.STRING)
     private VesselPosition vesselPosition;
+
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    private FlowcellDesignation flowcellDesignation;
 
     public LabBatchStartingVessel() {
     }
@@ -113,5 +117,13 @@ public class LabBatchStartingVessel {
 
     public void setVesselPosition(VesselPosition vesselPosition) {
         this.vesselPosition = vesselPosition;
+    }
+
+    public FlowcellDesignation getFlowcellDesignation(){
+        return flowcellDesignation;
+    }
+
+    public void setFlowcellDesignation( FlowcellDesignation flowcellDesignation){
+        this.flowcellDesignation = flowcellDesignation;
     }
 }
