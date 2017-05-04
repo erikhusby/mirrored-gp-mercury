@@ -549,6 +549,79 @@ public abstract class TransferTraverserCriteria {
         }
     }
 
+
+    /**
+     * Returns true if an an ancesstor for a given position is abandoned.
+     */
+    public static class AbandonedLabVesselAncestorCriteria extends TransferTraverserCriteria {
+        private final Map<Integer, List<LabVessel>> labVesselAtHopCount = new TreeMap<>();
+        @Override
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            // May support it, but avoid mis-match between name and function
+            if (context.getTraversalDirection() != TraversalDirection.Ancestors) {
+                throw new IllegalStateException("LabVesselAncestorCriteria supports ancestor traversal only");
+            }
+
+            List<LabVessel> vesselList;
+            if (labVesselAtHopCount.containsKey(context.getHopCount())) {
+                vesselList = labVesselAtHopCount.get(context.getHopCount());
+            } else {
+                vesselList = new ArrayList<>();
+            }
+
+            if (context.getContextVessel() != null) {
+                if (context.getContextVessel().isVesselAbandoned()) {
+                    if (isTubeAbandonReasonValid(context.getContextVessel())) {
+                        vesselList.add(context.getContextVessel());
+                    }
+                }
+            } else if (context.getContextVesselContainer() != null) {
+                Pair<LabVessel, VesselPosition> vesselPositionPair = context.getContextVesselAndPosition();
+                VesselPosition contextVesselPosition = vesselPositionPair.getRight();
+                if (context.getContextVesselContainer().getEmbedder().isPositionAbandoned(contextVesselPosition.name())) {
+                    if (isPlateAbandonReasonValid(context.getContextVesselContainer().getEmbedder(), contextVesselPosition)) {
+                        vesselList.add(context.getContextVesselContainer().getEmbedder());
+                    }
+                }
+            }
+
+            if (vesselList.size() > 0) {
+                labVesselAtHopCount.put(context.getHopCount(), vesselList);
+            }
+
+            return TraversalControl.ContinueTraversing;
+        }
+
+        @Override
+        public void evaluateVesselPostOrder(Context context) {
+        }
+
+        // If the vessel is marked as depleted we do not consider it abandoned.
+        private boolean isTubeAbandonReasonValid(LabVessel labVessel) {
+            return !labVessel.getAbandonVessels().iterator().next().getReason().equals(AbandonVessel.Reason.DEPLETED);
+        }
+
+        // If the plate position is marked as depleted we do not consider it abandoned.
+        private boolean isPlateAbandonReasonValid(LabVessel labVessel, VesselPosition contextVesselPosition ) {
+
+            //Multiple positions on a single plate may be abandoned with different reasons.
+            for (AbandonVessel abandonVessel : labVessel.getAbandonVessels()) {
+                for (AbandonVesselPosition abandonVesselPosition : abandonVessel.getAbandonedVesselPosition()) {
+                    if(contextVesselPosition.name().equals(abandonVesselPosition.getPosition())) {
+                        if (abandonVesselPosition.getReason().equals(AbandonVessel.Reason.DEPLETED)) {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+
+        public boolean  isAncestorAbandoned() {
+            return !labVesselAtHopCount.values().isEmpty();
+        }
+    }
+
     /**
      * NearestTubeAncestorsCriteria is a Traverser Criteria object intended to capture the closest (in number of hops)
      * BarcodedTube(s) that can be found in a target vessel's event history.  When found, not only will the the tube

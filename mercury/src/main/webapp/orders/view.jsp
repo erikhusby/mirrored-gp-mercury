@@ -460,7 +460,9 @@ function updateFunds(data) {
             if(fundingDetails[detailIndex].activeGrant) {
                 fundsRemainingNotification += ' -- Expires ' + fundingDetails[detailIndex].grantEndDate;
                 if(fundingDetails[detailIndex].daysTillExpire < 45) {
-                    fundsRemainingNotification += ' in ' + fundingDetails[detailIndex].daysTillExpire + ' days';
+                    fundsRemainingNotification += ' in ' + fundingDetails[detailIndex].daysTillExpire +
+                        ' days. If it is likely this work will not be completed by then, please work on updating the ' +
+                        'Funding Source so Billing Errors can be avoided.';
                     quoteWarning = true;
                 }
             } else {
