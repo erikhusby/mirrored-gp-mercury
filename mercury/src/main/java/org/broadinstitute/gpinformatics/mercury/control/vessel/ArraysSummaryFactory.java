@@ -90,12 +90,12 @@ public class ArraysSummaryFactory {
 
         // Header Group
         printStream.println("PED Data\t\tCall Rate\tSample\t\t\t\t\t\t\tFingerprint\tGender\t\t\t\tTrio\t" +
-                "BEADSTUDIO\t\t\t\t\tZCALL\t\tScan\t\t\t\t\tPlate\t\t\t");
+                "BEADSTUDIO\t\t\t\t\tZCALL\t\t\tScan\t\t\t\t\tPlate\t\t\t");
         // Headers
         printStream.println("Family ID\tIndividual ID\tBEADSTUDIO\tAliquot\tRoot Sample\tStock Sample\tParticipant\t" +
                 "Collaborator Sample\tCollaborator Participant\tCalled Infinium SNPs\tLOD\tReported Gender\tFldm FP Gender\t" +
                 "Beadstudio Gender\tAlgorithm Gender Concordance\tFamily\tHet %\tAnalysis Version\tHap Map Concordance\t" +
-                "Version\tLast Cluster File\tRun\tVersion\tChip\tScan Date\tAmp Date\tScanner\tChip Well Barcode\t" +
+                "Version\tLast Cluster File\tCall Rate\tRun\tVersion\tChip\tScan Date\tAmp Date\tScanner\tChip Well Barcode\t" +
                 "DNA Plate\tDNA Plate Well");
         for (int i = 0; i < vesselPositionPairs.size(); i++) {
             Pair<LabVessel, VesselPosition> vesselPositionPair = vesselPositionPairs.get(i);
@@ -120,7 +120,8 @@ public class ArraysSummaryFactory {
             // Individual ID
             printStream.print(sampleData.getPatientId() + "\t");
             // BEADSTUDIO
-            printStream.print(arraysQc.getCallRatePct() + "\t");
+            BigDecimal autocallCallRatePct = arraysQc.getAutocallCallRatePct();
+            printStream.print((autocallCallRatePct == null ? "" : autocallCallRatePct) + "\t");
             // Aliquot
             printStream.print(sampleInstanceV2.getNearestMercurySampleName() + "\t");
             // Root Sample
@@ -169,6 +170,8 @@ public class ArraysSummaryFactory {
             printStream.print(arraysQc.getAutocallVersion() + "\t");
             // Last Cluster File
             printStream.print(arraysQc.getClusterFileName() + "\t");
+            // (zCall) Call Rate
+            printStream.print(arraysQc.getCallRatePct() + "\t");
             // Run
             printStream.print(arraysQc.getZcalled() + "\t");
             // Version
