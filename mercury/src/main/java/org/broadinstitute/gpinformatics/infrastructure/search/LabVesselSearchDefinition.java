@@ -1935,6 +1935,7 @@ public class LabVesselSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Flowcell Pool Test Lane(s)");
+        searchTerm.setHelpText("Valid only when the row vessel is a flowcell");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public List<String> evaluate(Object entity, SearchContext context) {
@@ -1943,14 +1944,13 @@ public class LabVesselSearchDefinition {
                 LabVessel labVessel = (LabVessel)entity;
 
                 // Quick exit
-                if( labVessel.getType() != LabVessel.ContainerType.FLOWCELL
-                        || OrmUtil.proxySafeIsInstance(labVessel, IlluminaFlowcell.class)) {
+                if( !OrmUtil.proxySafeIsInstance(labVessel, IlluminaFlowcell.class)) {
                     return null;
                 }
 
                 IlluminaFlowcell flowcell = OrmUtil.proxySafeCast(labVessel, IlluminaFlowcell.class);
 
-                VesselBatchTraverserCriteria downstreamBatchFinder = new VesselBatchTraverserCriteria();
+                VesselBatchTraverserCriteria downstreamBatchFinder = new VesselBatchTraverserCriteria(true);
                 flowcell.getContainerRole().applyCriteriaToAllPositions(
                             downstreamBatchFinder, TransferTraverserCriteria.TraversalDirection.Ancestors);
 
@@ -2191,9 +2191,18 @@ public class LabVesselSearchDefinition {
 
         public VesselBatchTraverserCriteria( ) { }
 
+        /**
+         * For cases when looking in ancestry from a flowcell for FCT tickets where a huge amount of overhead
+         *   is saved by not traversing farther gathering all other batches
+         */
+        public VesselBatchTraverserCriteria( boolean isForFctBatchOnly ) {
+            this.isForFctBatchOnly = isForFctBatchOnly;
+        }
+
         private Set<LabBatch> labBatches = new HashSet<>();
         private LabVessel startingVessel = null;
         private boolean stopCollectingFctBatches = false;
+        private boolean isForFctBatchOnly = false;
 
         public Set<LabBatch> getLabBatches(){
             return labBatches;
@@ -2202,6 +2211,11 @@ public class LabVesselSearchDefinition {
         @Override
         public TraversalControl evaluateVesselPreOrder(
                 Context context ) {
+
+            // Save a ton of overhead by stopping if we're looking for an FCT batch and we found one
+            if( isForFctBatchOnly && stopCollectingFctBatches ) {
+                return TraversalControl.StopTraversing;
+            }
 
 
             // Ignore descendant batches for the starting vessel (context.getHopCount() == 0)
