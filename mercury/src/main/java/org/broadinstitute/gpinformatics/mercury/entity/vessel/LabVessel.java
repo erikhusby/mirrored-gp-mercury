@@ -1623,7 +1623,7 @@ public abstract class LabVessel implements Serializable {
             sampleInstances = new TreeSet<>();
             if (getContainerRole() == null) {
                 List<VesselEvent> ancestorEvents = getAncestors();
-                if (ancestorEvents.isEmpty()) {
+                if (ancestorEvents.isEmpty() || isRoot()) {
                     sampleInstances.add(new SampleInstanceV2(this));
                 } else {
                     sampleInstances.addAll(VesselContainer.getAncestorSampleInstances(this, ancestorEvents));
@@ -1633,6 +1633,17 @@ public abstract class LabVessel implements Serializable {
             }
         }
         return sampleInstances;
+    }
+
+    private boolean isRoot() {
+        for (MercurySample mercurySample : mercurySamples) {
+            Boolean isRoot = mercurySample.isRoot();
+            if (isRoot != null && isRoot) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
