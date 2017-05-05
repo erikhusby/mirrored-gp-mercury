@@ -16,6 +16,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.Date;
@@ -264,6 +265,11 @@ public class FlowcellDesignation {
 
     public Long getDesignationId() {
         return designationId;
+    }
+
+    @Transient
+    public void setDesignationIdForTest(Long designationId) {
+        this.designationId = designationId;
     }
 
     public boolean isPairedEndRead() {

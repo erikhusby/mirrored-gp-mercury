@@ -42,6 +42,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -206,11 +207,11 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
 
         vesselToLanesInfo = new LabBatch.VesselToLanesInfo(
                 vesselPositions1, new BigDecimal("16.22"), denatureTube2000, workflowBatch.getBatchName(),
-                productOrder.getProduct().getProductName());
+                productOrder.getProduct().getProductName(), Collections.<FlowcellDesignation>emptyList());
 
         vesselToLanesInfo2 = new LabBatch.VesselToLanesInfo(
                 vesselPositions2, BIG_DECIMAL_12_33, denatureTube4000, workflowBatch.getBatchName(),
-                productOrder.getProduct().getProductName());
+                productOrder.getProduct().getProductName(), Collections.<FlowcellDesignation>emptyList());
 
         vesselToLanesInfos.add(vesselToLanesInfo);
         vesselToLanesInfos.add(vesselToLanesInfo2);

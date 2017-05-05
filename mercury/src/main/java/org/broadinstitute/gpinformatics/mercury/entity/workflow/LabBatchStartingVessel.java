@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.hibernate.envers.Audited;
@@ -47,6 +48,9 @@ public class LabBatchStartingVessel {
     @Enumerated(EnumType.STRING)
     private VesselPosition vesselPosition;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    private FlowcellDesignation flowcellDesignation;
+
     @Transient
     private String linkedLcset;
 
@@ -75,10 +79,11 @@ public class LabBatchStartingVessel {
 
     public LabBatchStartingVessel(@Nonnull LabVessel labVessel, @Nonnull LabBatch labBatch,
             @Nullable BigDecimal concentration, VesselPosition vesselPosition, @Nullable String linkedLcset,
-            @Nullable String productNames) {
+            @Nullable String productNames, @Nullable FlowcellDesignation designation) {
         this(labVessel, labBatch, concentration, vesselPosition);
         this.linkedLcset = linkedLcset;
         this.productNames = productNames;
+        this.flowcellDesignation = designation;
     }
 
     public Long getBatchStartingVesselId() {
@@ -132,6 +137,14 @@ public class LabBatchStartingVessel {
 
     public String getLinkedLcset() {
         return linkedLcset;
+    }
+
+    public FlowcellDesignation getDesignation() {
+        return flowcellDesignation;
+    }
+
+    public void setDesignation(FlowcellDesignation designation) {
+        this.flowcellDesignation = designation;
     }
 
     @Transient
