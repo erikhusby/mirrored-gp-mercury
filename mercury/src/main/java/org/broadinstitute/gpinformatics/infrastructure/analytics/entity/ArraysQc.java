@@ -24,6 +24,7 @@ public class ArraysQc {
     private Long analysisVersion;
     private Boolean isLatest;
     private String chipType;
+    /** zCall call rate*/
     private BigDecimal callRate;
     private BigDecimal autocallCallRate;
     private Long numAutocallCalls;
