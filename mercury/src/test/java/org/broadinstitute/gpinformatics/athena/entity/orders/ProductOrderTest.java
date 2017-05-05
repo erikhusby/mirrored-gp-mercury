@@ -488,6 +488,8 @@ public class ProductOrderTest {
         assertThat(testProductOrder.getSapOrderNumber(), is(equalTo(sapOrderNumber+"2")));
     }
 
+    // This is a utility method and NOT a test method.  Will FAIL with arguments as it should.
+    @Test(enabled = false)
     public static void billSampleOut(ProductOrder productOrder, ProductOrderSample sample, int expected) {
 
         LedgerEntry primaryItemSampleEntry = new LedgerEntry(sample,
