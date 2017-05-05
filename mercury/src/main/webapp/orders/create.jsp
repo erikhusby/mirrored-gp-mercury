@@ -865,7 +865,7 @@
 
             var quoteWarning = false;
 
-            if (data.fundsRemaining) {
+            if (data.fundsRemaining && !data.error) {
                 var fundsRemainingNotification = 'Status: ' + data.status + ' - Funds Remaining: ' + data.fundsRemaining +
                         ' with ' + data.outstandingEstimate + ' unbilled across existing open orders';
                 var fundingDetails = data.fundingDetails;
@@ -880,7 +880,9 @@
                     if(fundingDetails[detailIndex].activeGrant) {
                         fundsRemainingNotification += ' -- Expires ' + fundingDetails[detailIndex].grantEndDate;
                         if(fundingDetails[detailIndex].daysTillExpire < 45) {
-                            fundsRemainingNotification += ' in ' + fundingDetails[detailIndex].daysTillExpire + ' days';
+                            fundsRemainingNotification += ' in ' + fundingDetails[detailIndex].daysTillExpire +
+                                ' days. If it is likely this work will not be completed by then, please work on updating the ' +
+                                'Funding Source so Billing Errors can be avoided.';
                             quoteWarning = true;
                         }
                     } else {

@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
@@ -45,6 +46,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -287,7 +289,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
         LabBatch fctLabBatch = new LabBatch("Test FCT batch name", laneInfos,
                 LabBatch.LabBatchType.FCT, IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell);
         fctLabBatch.setBatchDescription(fctLabBatch.getBatchName());
-        labBatchEJB.createLabBatch(fctLabBatch, "jowalsh", CreateFields.IssueType.FLOWCELL,
+        labBatchEJB.createLabBatch(fctLabBatch, "jowalsh", CreateFields.IssueType.HISEQ_4000,
                 CreateFields.ProjectType.FCT_PROJECT);
 
         labBatchDao.flush();
@@ -300,6 +302,10 @@ public class LabBatchEjbStandardTest extends Arquillian {
         JiraIssue jiraIssue = jiraService.getIssue(testFind.getJiraTicket().getTicketName());
 
         System.out.println("FCT Jira ticket ID is... " + testFind.getJiraTicket().getTicketName());
+
+        String issueTypeValue = jiraIssue.getMappedField(LabBatch.TicketFields.ISSUE_TYPE_MAP.getName(),
+                LabBatch.TicketFields.ISSUE_TYPE_NAME.getName());
+        Assert.assertEquals(issueTypeValue, CreateFields.IssueType.HISEQ_4000.getJiraName());
 
         Object laneInfoValue = jiraIssue.getField(LabBatch.TicketFields.LANE_INFO.getName());
         Assert.assertNotNull(laneInfoValue);
@@ -542,6 +548,122 @@ public class LabBatchEjbStandardTest extends Arquillian {
         }
 
     }
+
+    @Test
+    public void testContiguousLanes() throws Exception {
+        final Set<DesignationDto> designationDtos = new HashSet<>();
+        final StringBuilder messages = new StringBuilder();
+        final MessageReporter messageReporter = new MessageReporter() {
+            @Override
+            public String addMessage(String message, Object... arguments) {
+                messages.append(String.format(message, arguments)).append("\n");
+                return "";
+            }
+        };
+        final LabEvent labEvent = getAnyNormEvent().iterator().next();
+
+        // Sets up the loading tubes to be put on flowcell.
+        Iterator<BarcodedTube> tubeIterator = mapBarcodeToTube.values().iterator();
+        final BarcodedTube[] loadingTubes = {tubeIterator.next(), tubeIterator.next(), tubeIterator.next()};
+        final Integer[] numberLanes = {24, 24, 24};
+        boolean isClinical = false;
+
+        bucket = labBatchTestUtils.putTubesInSpecificBucket(LabBatchEJBTest.BUCKET_NAME,
+                BucketEntry.BucketEntryType.PDO_ENTRY, mapBarcodeToTube);
+
+        // Sets up an lcset.
+        List<Long> bucketIds = new ArrayList<>();
+        for (BarcodedTube barcodedTube : loadingTubes) {
+            for (BucketEntry bucketEntry : barcodedTube.getBucketEntries()) {
+                bucketIds.add(bucketEntry.getBucketEntryId());
+                isClinical = bucketEntry.getProductOrder().getResearchProject().getRegulatoryDesignation().
+                        isClinical();
+            }
+        }
+        LabBatch labBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
+                Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), bucketIds, Collections.<Long>emptyList(),
+                "Batch_" + System.currentTimeMillis(), "", new Date(), null, "epolk",
+                LabBatchEJBTest.BUCKET_NAME, MessageReporter.UNUSED, Collections.<String>emptyList());
+
+        Assert.assertEquals(labBatch.getLabBatchStartingVessels().size(), bucketIds.size());
+
+        // Makes action bean dtos that are queued designations.
+        for (int idx = 0; idx < loadingTubes.length; ++idx) {
+            DesignationDto dto = new DesignationDto();
+            dto.setBarcode(loadingTubes[idx].getLabel());
+            dto.setEvents(Collections.singleton(labEvent));
+            dto.setLcset(labBatch.getBatchName());
+            dto.setProductNames(Collections.singletonList("Exome Express v2"));
+            dto.setNumberSamples(1);
+            dto.setRegulatoryDesignation(isClinical ? DesignationUtils.CLINICAL : DesignationUtils.RESEARCH);
+            dto.setSequencerModel(IlluminaFlowcell.FlowcellType.HiSeqX10Flowcell);
+            dto.setIndexType(FlowcellDesignation.IndexType.DUAL);
+            dto.setReadLength(76);
+            dto.setLoadingConc(BigDecimal.TEN);
+            dto.setNumberLanes(numberLanes[idx]);
+            dto.setStatus(FlowcellDesignation.Status.QUEUED);
+            dto.setPoolTest(false);
+            dto.setPairedEndRead(true);
+            dto.setSelected(true);
+
+            designationDtos.add(dto);
+        }
+
+        // Makes the FCTs.
+        List<MutablePair<String, String>> fctUrls = labBatchEJB.makeFcts(designationDtos, "epolk", messageReporter);
+        Assert.assertFalse(messages.toString().contains(" invalid "), messages.toString());
+        labBatchDao.flush();
+
+        // Accumulates a list of fct+lane and loading tube barcode.
+        List<Pair<String, String>> fctLaneBarcode = new ArrayList<>();
+        for (MutablePair<String, String> fctUrl : fctUrls) {
+            String fctName = fctUrl.getLeft();
+            LabBatch fctLabBatch = labBatchDao.findByName(fctName);
+            Assert.assertNotNull(fctLabBatch);
+
+            // Gets the per-lane allocations from the jira ticket.
+            JiraIssue jiraIssue = jiraService.getIssue(fctLabBatch.getJiraTicket().getTicketName());
+            Assert.assertNotNull(jiraIssue);
+            String laneInfo = (String) (jiraIssue.getField(LabBatch.TicketFields.LANE_INFO.getName()));
+            Assert.assertNotNull(laneInfo);
+
+            int laneColumn = -1;
+            int barcodeColumn = -1;
+            String[] lines = laneInfo.split("\\n");
+            String[] headers = lines[0].split("\\|\\|");
+            for (int idx = 0; idx < headers.length; ++idx) {
+                if ("lane".equals(headers[idx].toLowerCase())) {
+                    laneColumn = idx;
+                } else if ("loading vessel".equals(headers[idx].toLowerCase())) {
+                    barcodeColumn = idx;
+                }
+            }
+            Assert.assertTrue(laneColumn > 0 && barcodeColumn > 0,
+                    "Cannot find columns 'Lane' or 'Loading Vessel' in " + lines[0]);
+            for (int lineIdx = 1; lineIdx < lines.length; ++lineIdx) {
+                String[] tokens = lines[lineIdx].split("\\|");
+                fctLaneBarcode.add(Pair.of(fctName + " " + tokens[laneColumn], tokens[barcodeColumn]));
+            }
+        }
+
+        // Iterates on flowcell lanes sorted by fct+lane and counts places where the loading tube barcode changes.
+        Collections.sort(fctLaneBarcode, new Comparator<Pair<String, String>>() {
+            @Override
+            public int compare(Pair<String, String> o1, Pair<String, String> o2) {
+                return o1.getLeft().compareTo(o2.getLeft());
+            }});
+        int barcodeChanges = 0;
+        String currentBarcode = "";
+        for (Pair<String, String> pair : fctLaneBarcode) {
+            //System.out.println(pair.getLeft() + " " + pair.getRight());
+            if (!currentBarcode.equals(pair.getRight())) {
+                ++barcodeChanges;
+            }
+            currentBarcode = pair.getRight();
+        }
+        Assert.assertEquals(barcodeChanges, loadingTubes.length, " tubes not allocated on contiguous flowcell lanes");
+    }
+
 
     /** Tests fct grouping of dto. */
     @Test

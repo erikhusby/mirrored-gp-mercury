@@ -795,6 +795,28 @@ public class LabVesselSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
+        searchTerm.setName("Norm Pond Tube Barcode");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                LabVessel labVessel = (LabVessel) entity;
+
+                VesselsForEventTraverserCriteria eval = new VesselsForEventTraverserCriteria(Collections.singletonList(
+                        LabEventType.PCR_PLUS_POND_NORMALIZATION));
+                labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+
+                Set<String> barcodes = null;
+                for(Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
+                        : eval.getPositions().asMap().entrySet()) {
+                    (barcodes == null ? barcodes = new HashSet<>() : barcodes)
+                            .add(labVesselAndPositions.getKey().getLabel());
+                }
+                return barcodes;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
         searchTerm.setName("Shearing Sample Position");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
@@ -1870,6 +1892,26 @@ public class LabVesselSearchDefinition {
                             break events;
                         }
                     }
+                }
+                return result;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Tecan Robot");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                LabVessel vessel = (LabVessel)entity;
+                TransferTraverserCriteria.VesselForEventTypeCriteria traverserCriteria =
+                        new TransferTraverserCriteria.VesselForEventTypeCriteria(Collections.singletonList(
+                                LabEventType.INFINIUM_XSTAIN), true);
+                vessel.evaluateCriteria(traverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+
+                Set<String> result = new HashSet<>();
+                for (LabEvent labEvent : traverserCriteria.getVesselsForLabEventType().keySet()) {
+                    result.add(labEvent.getEventLocation());
                 }
                 return result;
             }

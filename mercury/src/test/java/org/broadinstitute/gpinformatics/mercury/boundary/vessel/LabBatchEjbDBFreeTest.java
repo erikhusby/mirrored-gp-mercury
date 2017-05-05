@@ -185,7 +185,7 @@ public class LabBatchEjbDBFreeTest {
         }
         LabBatch testBatch = new LabBatch(testFCTKey, vesselToLanesInfo, LabBatch.LabBatchType.FCT,
                 IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell);
-        labBatchEJB.createLabBatch(testBatch, "scottmat", CreateFields.IssueType.FLOWCELL);
+        labBatchEJB.createLabBatch(testBatch, "scottmat", CreateFields.IssueType.HISEQ_2500_RAPID_RUN);
         EasyMock.verify(mockJira);
 
         Assert.assertNotNull(testBatch);

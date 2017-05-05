@@ -362,7 +362,7 @@ public class ProductOrderTest {
         ProductOrder testParentOrder = new ProductOrder(TEST_CREATOR, "Test order with Abandoned Count",
                 sixMercurySamplesNoDupes, QUOTE, null, null);
         testParentOrder.addSapOrderDetail(new SapOrderDetail("testParentNumber", testParentOrder.getNonAbandonedCount(),
-                testParentOrder.getQuoteId(), SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode()));
+                testParentOrder.getQuoteId(), SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(), "", ""));
 
         Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL),6);
         Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY),6);
@@ -473,10 +473,10 @@ public class ProductOrderTest {
 
         final String sapOrderNumber = "SAP_001";
         final SapOrderDetail orderDetail1 = new SapOrderDetail(sapOrderNumber, 5, QUOTE,
-                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode());
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(), "", "");
         orderDetail1.getUpdateData().setCreatedDate(new Date());
         final SapOrderDetail orderDetail2 = new SapOrderDetail(sapOrderNumber + "2", 5, QUOTE,
-                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode());
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(), "", "");
         orderDetail2.getUpdateData().setCreatedDate(new Date());
         testProductOrder.addSapOrderDetail(orderDetail1);
 
@@ -488,7 +488,7 @@ public class ProductOrderTest {
         assertThat(testProductOrder.getSapOrderNumber(), is(equalTo(sapOrderNumber+"2")));
     }
 
-    private void billSampleOut(ProductOrder productOrder, ProductOrderSample sample, int expected) {
+    public static void billSampleOut(ProductOrder productOrder, ProductOrderSample sample, int expected) {
 
         LedgerEntry primaryItemSampleEntry = new LedgerEntry(sample,
                 productOrder.getProduct().getPrimaryPriceItem(), new Date(), /*productOrder.getProduct(),*/ 1);

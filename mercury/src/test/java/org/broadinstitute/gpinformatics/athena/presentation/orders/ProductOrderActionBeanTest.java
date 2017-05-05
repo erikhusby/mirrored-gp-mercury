@@ -740,6 +740,7 @@ public class ProductOrderActionBeanTest {
         QuoteFunding quoteFunding = new QuoteFunding(fundingLevelCollection);
         final String testQuoteIdentifier = "testQuote";
         Quote testQuote = new Quote(testQuoteIdentifier, quoteFunding, ApprovalStatus.FUNDED);
+        testQuote.setExpired(Boolean.FALSE);
 
         Product primaryProduct = new Product();
         primaryProduct.setPartNumber("P-Test_primary");

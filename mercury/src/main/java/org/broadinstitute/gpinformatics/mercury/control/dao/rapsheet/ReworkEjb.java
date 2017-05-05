@@ -165,6 +165,15 @@ public class ReworkEjb {
                     }
                 }
             }
+            // For a pooled tube added to a PDO, the above loop on getSampleInstancesV2 won't find ProductOrderSamples.
+            // However, there may be a ProductOrderSample with a "sampleName" of the tube barcode.
+            if (productOrderSamples.isEmpty()) {
+                List<ProductOrderSample> bySamples = productOrderSampleDao.findBySamples(Collections.singleton(
+                        vessel.getLabel()));
+                if (bySamples.size() == 1) {
+                    productOrderSamples.add(bySamples.get(0));
+                }
+            }
             bucketCandidates.addAll(collectBucketCandidatesForAMercuryVessel(vessel, productOrderSamples));
         }
 

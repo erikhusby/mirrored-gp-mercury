@@ -27,6 +27,12 @@
             }
 
             .legend span { margin: 5px; border: 1px solid #ccc; float: right; width: 12px; height: 12px;}
+
+            .noSample {
+                background-color: lightgray;
+                background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,.5) 5px,
+                                                            rgba(255,255,255,.5) 10px);
+            }
         </style>
         <script src="${ctxpath}/resources/scripts/plateMap.js"></script>
         <script type="text/javascript">
@@ -111,6 +117,9 @@
                                     </div>
                                     <div class="span4">
                                         <div class="well">
+                                            Vessel Metadata
+                                            <dl class="metadataDefinitionPlateList dl-horizontal">
+                                            </dl>
                                             Well Metadata
                                             <dl class="metadataDefinitionList dl-horizontal">
                                             </dl>

@@ -6,11 +6,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
@@ -18,6 +20,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -150,6 +153,7 @@ public class BillingAdaptor implements Serializable {
                 Quote quote = null;
                 String sapBillingId = null;
                 String workId = null;
+                final MessageCollection messageCollection = new MessageCollection();
                 try {
                     quote = quoteService.getQuoteByAlphaId(item.getQuoteId());
                     ProductOrder.checkQuoteValidity(item.getProductOrder(), quote);
@@ -202,7 +206,6 @@ public class BillingAdaptor implements Serializable {
                         billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacement, workId, sapBillingId,
                                 BillingSession.BILLED_FOR_QUOTES);
                     }
-
 
                     BigDecimal replacementMultiplier = null;
                     if(primaryPriceItemIfReplacementForSAP != null) {

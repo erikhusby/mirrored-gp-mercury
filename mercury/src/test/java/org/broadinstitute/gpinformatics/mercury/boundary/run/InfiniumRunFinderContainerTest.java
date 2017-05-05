@@ -74,7 +74,7 @@ public class InfiniumRunFinderContainerTest extends Arquillian {
 
     private GapHandler mockGapHandler;
 
-    public static final String POST_PCR_PLATE = "000009981052";
+    public static final String POST_PCR_PLATE = "000016960009";
 
     private File tmpDir;
     private File runDir;
