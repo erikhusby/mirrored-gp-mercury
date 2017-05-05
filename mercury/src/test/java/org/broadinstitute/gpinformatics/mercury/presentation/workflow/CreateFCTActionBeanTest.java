@@ -117,7 +117,6 @@ public class CreateFCTActionBeanTest {
         List<DesignationDto> designationDtos = new ArrayList<>();
         Collection<Triple<FctDto, LabVessel, FlowcellDesignation>> dtoVessels = new ArrayList<>();
         int[] numberLanes = {1, 9, 10, 11};
-        long[] designationIds = {1001, 1009, 1010, 1011};
         final String[] lcsets = {"lcset1", "lcset9", "lcset10", "lcset11"};
         // Expects one lcset to be excluded.
         Set<String> expectedLcsets = new HashSet<String>() {{
@@ -127,8 +126,6 @@ public class CreateFCTActionBeanTest {
         }};
         for (int idx = 0; idx < numberLanes.length; ++idx) {
             LabVessel tube = stbTubes.get(idx);
-            FlowcellDesignation flowcellDesignation = new FlowcellDesignation();
-            flowcellDesignation.setDesignationIdForTest(designationIds[idx]);
 
             DesignationDto dto = new DesignationDto();
             dto.setBarcode(tube.getLabel());
@@ -137,10 +134,9 @@ public class CreateFCTActionBeanTest {
             dto.setStatus(FlowcellDesignation.Status.QUEUED);
             dto.setSelected(true);
             dto.setLcset(lcsets[idx]);
-            dto.setDesignationId(designationIds[idx]);
 
             designationDtos.add(dto);
-            dtoVessels.add(Triple.of((FctDto) dto, tube, flowcellDesignation));
+            dtoVessels.add(Triple.of((FctDto) dto, tube, (FlowcellDesignation)null));
         }
         // The 9 lane dto will get 3 lanes allocated and 6 lanes left as unallocated split dto.
         DesignationDto splitDto = new DesignationDto();
@@ -358,15 +354,11 @@ public class CreateFCTActionBeanTest {
 
         int expectedLaneCount = 0;
         List<String> expectedBarcodeOnEachLane = new ArrayList<>();
-        List<Long> startingVesselDesignations = new ArrayList<>();
         for (Triple<FctDto, LabVessel, FlowcellDesignation> triple : dtoVessels) {
             expectedLaneCount += triple.getLeft().getNumberLanes();
             Assert.assertNotNull(triple.getLeft().getLcset());
             for (int i = 0; i < triple.getLeft().getNumberLanes(); ++i) {
                 expectedBarcodeOnEachLane.add(triple.getMiddle().getLabel());
-                if (triple.getRight() != null) {
-                    startingVesselDesignations.add(triple.getRight().getDesignationId());
-                }
             }
         }
         List<String> expectedBatchStartingVesselBarcodes = new ArrayList<>(expectedBarcodeOnEachLane);
@@ -415,12 +407,6 @@ public class CreateFCTActionBeanTest {
                 String barcode = batchStartingVessel.getLabVessel().getLabel();
                 Assert.assertTrue(expectedBatchStartingVesselBarcodes.remove(barcode),
                         "FCT batch has unexpected batch starting vessel " + barcode);
-                Long designationId = batchStartingVessel.getDesignation() != null ?
-                        batchStartingVessel.getDesignation().getDesignationId() : null;
-                Assert.assertFalse(designationId == null ^ startingVesselDesignations.isEmpty());
-                Assert.assertTrue(designationId == null || startingVesselDesignations.remove(designationId),
-                        "found: " + designationId + " expected: " +
-                                StringUtils.join(startingVesselDesignations, ", "));
             }
             for (VesselPosition lane : flowcellType.getVesselGeometry().getVesselPositions()) {
                 // Did flowcell vessels end up with correct starting vessels?
