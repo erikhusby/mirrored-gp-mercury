@@ -418,7 +418,8 @@ public class MetricsViewActionBean extends CoreActionBean {
             plateMap.getDatasets().add(wellDataset);
         }
 
-        int wellsPassingCallRate = 0;
+        int wellsPassingAutoCallCallRate = 0;
+        int wellsPassingZCallCallRate = 0;
         for(ArraysQc arraysQc: arraysQcList) {
             String chipWellbarcode = arraysQc.getChipWellBarcode();
             String startPosition = chipWellToSourcePosition.get(chipWellbarcode);
@@ -454,7 +455,7 @@ public class MetricsViewActionBean extends CoreActionBean {
                 BigDecimal autocallCallRatePct = autocallCallRate.multiply(BigDecimal.valueOf(100));
                 value = ColumnValueType.TWO_PLACE_DECIMAL.format(autocallCallRatePct, "");
                 if (autocallCallRatePct.intValue() >= passingCallRateThreshold) {
-                    wellsPassingCallRate++;
+                    wellsPassingAutoCallCallRate++;
                 }
             }
             WellDataset wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.AUTOCALL_CALL_RATE);
@@ -467,6 +468,9 @@ public class MetricsViewActionBean extends CoreActionBean {
             wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.CALL_RATE);
             wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
             wellDataset.setOptions(callRateOptions);
+            if (callRate.intValue() >= passingCallRateThreshold) {
+                wellsPassingZCallCallRate++;
+            }
 
             // FP Gender
             value = String.valueOf(arraysQc.getFpGender());
@@ -550,11 +554,19 @@ public class MetricsViewActionBean extends CoreActionBean {
         String percentScanned = String.format("%.1f%% (%d of %d)", percent, positionsScanned, totalPositions);
         plateMap.getPlateMetadata().add(Metadata.create("Percent Scanned", percentScanned));
 
-        float percentWellsPassing = 100 * ((float) wellsPassingCallRate / totalPositions);
-        String percentWellsPassingString = String.format("%.1f%% (%d of %d)",
-                percentWellsPassing, wellsPassingCallRate, totalPositions);
-        String percentWellsPassingKey = String.format("Call Rate >= %d%%", passingCallRateThreshold);
-        plateMap.getPlateMetadata().add(Metadata.create(percentWellsPassingKey, percentWellsPassingString));
+        float percentAutoCallWellsPassing = 100 * ((float) wellsPassingAutoCallCallRate / totalPositions);
+        String percentAutoCallWellsPassingString = String.format("%.1f%% (%d of %d)",
+                percentAutoCallWellsPassing, wellsPassingAutoCallCallRate, totalPositions);
+        String percentAutoCallWellsPassingKey = String.format("AutoCall Call Rate >= %d%%", passingCallRateThreshold);
+        plateMap.getPlateMetadata().add(Metadata.create(percentAutoCallWellsPassingKey,
+                percentAutoCallWellsPassingString));
+
+        float percentZCallCallWellsPassing = 100 * ((float) wellsPassingZCallCallRate / totalPositions);
+        String percentZCallCallWellsPassingString = String.format("%.1f%% (%d of %d)",
+                percentZCallCallWellsPassing, wellsPassingZCallCallRate, totalPositions);
+        String percentZCallWellsPassingKey = String.format("zCall Call Rate >= %d%%", passingCallRateThreshold);
+        plateMap.getPlateMetadata().add(Metadata.create(percentZCallWellsPassingKey,
+                percentZCallCallWellsPassingString));
 
         allPositionNames.removeAll(chipWellToSourcePosition.values());
         plateMap.setEmptyWells(allPositionNames);
