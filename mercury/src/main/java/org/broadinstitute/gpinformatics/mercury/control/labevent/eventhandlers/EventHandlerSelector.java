@@ -19,18 +19,16 @@ public class EventHandlerSelector {
     private DenatureToDilutionTubeHandler denatureToDilutionTubeHandler;
     private FlowcellMessageHandler flowcellMessageHandler;
     private FlowcellLoadedHandler flowcellLoadedHandler;
-    private AutoDaughterHandler autoDaughterHandler;
 
     @Inject
     public EventHandlerSelector(SonicAliquotHandler sonicAliquotHandler,
             DenatureToDilutionTubeHandler denatureToDilutionTubeHandler,
             FlowcellMessageHandler flowcellMessageHandler,
-            FlowcellLoadedHandler flowcellLoadedHandler, AutoDaughterHandler autoDaughterHandler) {
+            FlowcellLoadedHandler flowcellLoadedHandler) {
         this.sonicAliquotHandler = sonicAliquotHandler;
         this.denatureToDilutionTubeHandler = denatureToDilutionTubeHandler;
         this.flowcellMessageHandler = flowcellMessageHandler;
         this.flowcellLoadedHandler = flowcellLoadedHandler;
-        this.autoDaughterHandler = autoDaughterHandler;
     }
 
     /**
@@ -74,5 +72,12 @@ public class EventHandlerSelector {
 
     public FlowcellLoadedHandler getFlowcellLoadedHandler() {
         return flowcellLoadedHandler;
+    }
+
+
+    public void setBspRestSender(BSPRestSender bspRestSender) {
+        if (sonicAliquotHandler != null) {
+            sonicAliquotHandler.setBspRestSender(bspRestSender);
+        }
     }
 }
