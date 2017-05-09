@@ -292,12 +292,11 @@ public class SampleInstanceEjb  {
         for (Map<String, String> devCondition : devConditions) {
             String experiment = vesselSpreadsheetProcessor.getExperiment().get(conditionIndex);
             JiraIssue jiraIssue = getIssueInfoNoException(experiment, null);
-            List<String> jiraSubTasks;
             if (jiraIssue == null) {
                 messageCollection.addError("Dev ticket not found for Experiment: " + experiment + " At Row: " + experimentIndex
                         + " Column: " + VesselPooledTubesProcessor.Headers.EXPERIMENT.getText());
             } else {
-                jiraSubTasks = jiraIssue.getSubTasks();
+                List<String> jiraSubTasks = jiraIssue.getSubTaskKeys();
                 if (jiraSubTasks != null && devConditions.size() > 0) {
                     subTaskList = new ArrayList<String>(devCondition.values());
                     for (String subTask : subTaskList) {
