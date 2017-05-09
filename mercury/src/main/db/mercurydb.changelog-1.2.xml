@@ -238,14 +238,14 @@
             <column name="FLOWCELL_TYPE" type="varchar(255)" />
         </addColumn>
     </changeSet>
-    
+
     <changeSet author="scottmat" id="GPLIM-2731_drop_labevent_PDO_id">
         <preConditions>
             <columnExists tableName="LAB_EVENT" columnName="PRODUCT_ORDER_ID" schemaName="mercury" />
         </preConditions>
 
         <dropColumn tableName="LAB_EVENT" columnName="PRODUCT_ORDER_ID" schemaName="mercury" />
-    </changeSet> 
+    </changeSet>
 
     <changeSet author="scottmat" id="GPLIM-2731_drop_labevent_aud_PDO_id">
         <preConditions>
@@ -292,7 +292,7 @@
             <column name="workflow_qualifier" type="varchar2(255)"/>
         </addColumn>
     </changeSet>
-    
+
     <changeSet id="GPLIM-3707-1" author="thompson">
         <addColumn schemaName="mercury" tableName="lab_event_reagents">
             <column name="volume" type="number(10,2)"/>
@@ -818,6 +818,18 @@
     <changeSet id="GPLIM-4434-1825" author="dwilson">
         <createSequence schemaName="mercury" sequenceName="seq_sample_instance_entity" incrementBy="50"/>
         <createSequence schemaName="mercury" sequenceName="seq_sample_instance_entity_tsk" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-4434-1870" author="dwilson">
+        <addColumn tableName="sample_instance_entity" schemaName="mercury">
+            <column name="read_length" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-4434-1871" author="dwilson">
+        <addColumn tableName="sample_instance_entity_aud" schemaName="mercury">
+            <column name="read_length" type="number(19,0)"/>
+        </addColumn>
     </changeSet>
 
 </databaseChangeLog>
