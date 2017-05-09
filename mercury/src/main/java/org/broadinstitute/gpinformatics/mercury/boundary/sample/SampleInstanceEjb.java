@@ -3,10 +3,12 @@ package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleInstanceEntityDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VesselPooledTubesProcessor;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -16,24 +18,27 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntityTsk;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.ArrayList;
 import java.util.Set;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Date;
+import java.math.BigDecimal;
 
 @Stateful
 @RequestScoped
 public class SampleInstanceEjb  {
 
     private Map<String, LabVessel> mapBarcodeToVessel;
-    private List<List<String>> jiraSubTaskList = new ArrayList<>();
+    private List<List<String>> jiraSubTaskList = new ArrayList<List<String>>();
     private List<String> collaboratorSampleId = new ArrayList<>();
     private List<String> collaboratorParticipantId = new ArrayList<>();
     private List<String> broadParticipantId = new ArrayList<>();
@@ -45,9 +50,16 @@ public class SampleInstanceEjb  {
     private List<MolecularIndexingScheme> molecularIndexSchemes = new ArrayList<>();
     private List<ReagentDesign> reagents = new ArrayList<>();
     private List<MercurySample> mercurySamples = new ArrayList<>();
-    private List<MercurySample> rootSamples = new ArrayList<>();
+    private List<MercurySample> mercuryRootSamples = new ArrayList<>();
     private List<Boolean> sampleRegistrationFlag = new ArrayList<>();
     private int rowOffset = 2;
+
+
+    @Inject
+    private VesselEjb vesselEjb;
+
+    @Inject
+    private BarcodedTubeDao barcodedTubeDao;
 
     @Inject
     private MolecularIndexingSchemeDao molecularIndexingSchemeDao;
@@ -67,6 +79,8 @@ public class SampleInstanceEjb  {
     @Inject
     private SampleInstanceEntityDao sampleInstanceEntityDao;
 
+
+
     /**
      * Build and return the collaborator metadata for the samples. (If supplied)
      */
@@ -78,7 +92,6 @@ public class SampleInstanceEjb  {
             add(new Metadata(Metadata.Key.GENDER, gender.get(index)));
             add(new Metadata(Metadata.Key.LSID, lsid.get(index)));
             add(new Metadata(Metadata.Key.SPECIES, species.get(index)));
-            add(new Metadata(Metadata.Key.MATERIAL_TYPE, "DNA"));
         }};
     }
 
@@ -90,9 +103,20 @@ public class SampleInstanceEjb  {
 
         for (String sampleId : vesselSpreadsheetProcessor.getBroadSampleId()) {
             LabVessel labVessel = mapBarcodeToVessel.get(vesselSpreadsheetProcessor.getBarcodes().get(sampleIndex));
+            String rootSampleId = vesselSpreadsheetProcessor.getRootSampleId().get(sampleIndex);
 
             if (labVessel == null) {
                 labVessel = new BarcodedTube(vesselSpreadsheetProcessor.getBarcodes().get(sampleIndex), BarcodedTube.BarcodedTubeType.MatrixTube);
+            }
+
+            //Add volume to lab vessel.
+            if(getVolume(vesselSpreadsheetProcessor, labVessel.getLabel()) != null) {
+                labVessel.setVolume(getVolume(vesselSpreadsheetProcessor, labVessel.getLabel()));
+            }
+
+            //Add library size lab metric to to lab vessel.
+            if(vesselSpreadsheetProcessor.getFragmentSize().get(sampleIndex) != null) {
+                labVessel = addLibrarySize(labVessel, vesselSpreadsheetProcessor.getFragmentSize().get(sampleIndex)  );
             }
 
             SampleInstanceEntity sampleInstanceEntity = sampleInstanceEntityDao.findByName(vesselSpreadsheetProcessor.getSingleSampleLibraryName().get(sampleIndex));
@@ -102,12 +126,20 @@ public class SampleInstanceEjb  {
 
             //Check if the sample is registered in Mercury.
             MercurySample mercurySample = mercurySampleDao.findBySampleKey(sampleId);
+            //Check if the Root sample is registered in Mercury.
+            MercurySample mercuryRootSample = mercurySampleDao.findBySampleKey(rootSampleId);
 
             //Add the new registration metadata.
             if (!sampleRegistrationFlag.get(sampleIndex)) {
                 if (mercurySample == null) {
                     mercurySample = new MercurySample(sampleId, MercurySample.MetadataSource.MERCURY);
                 }
+                if (mercuryRootSample == null) {
+                    mercuryRootSample = new MercurySample(rootSampleId, MercurySample.MetadataSource.MERCURY);
+                    mercuryRootSample.addMetadata(collaboratorSampleIdMetadata(sampleIndex));
+                    mercuryRootSample.addLabVessel(labVessel);
+                }
+
                 mercurySample.addMetadata(collaboratorSampleIdMetadata(sampleIndex));
                 mercurySample.addLabVessel(labVessel);
             }
@@ -116,13 +148,21 @@ public class SampleInstanceEjb  {
             mercurySampleDao.persist(mercurySample);
             mercurySamples.add(mercurySample);
 
+            mercuryRootSample.addLabVessel(labVessel);
+            mercurySampleDao.persist(mercuryRootSample);
+            if(!mercuryRootSamples.contains(mercuryRootSample)) {
+                mercuryRootSamples.add(mercuryRootSample);
+            }
+
             sampleInstanceEntity.setSampleLibraryName(vesselSpreadsheetProcessor.getSingleSampleLibraryName().get(sampleIndex));
             sampleInstanceEntity.setReagentDesign(reagents.get(sampleIndex));
             sampleInstanceEntity.setMolecularIndexScheme(molecularIndexSchemes.get(sampleIndex));
             sampleInstanceEntity.setMercurySampleId(mercurySamples.get(sampleIndex));
+            sampleInstanceEntity.setReadLength(Integer.valueOf(vesselSpreadsheetProcessor.getReadLength().get(sampleIndex)));
 
-            if(rootSamples.size() > sampleIndex) {
-                sampleInstanceEntity.setRootSample(rootSamples.get(sampleIndex));
+
+            if(mercuryRootSamples.size() >= sampleIndex) {
+                sampleInstanceEntity.setRootSample(mercuryRootSamples.get(sampleIndex));
             }
 
             sampleInstanceEntity.setExperiment(vesselSpreadsheetProcessor.getExperiment().get(sampleIndex));
@@ -161,7 +201,7 @@ public class SampleInstanceEjb  {
     public void verifySpreadSheet(VesselPooledTubesProcessor vesselSpreadsheetProcessor, MessageCollection messageCollection, boolean overWriteFlag) {
         mapBarcodeToVessel = labVesselDao.findByBarcodes( vesselSpreadsheetProcessor.getBarcodes());
         //Is the sample library name unique to the spreadsheet??
-        Map<String, String> map = new HashMap<>();
+        Map<String, String> map = new HashMap<String, String>();
         int mapIndex = 0;
         for (String libraryName : vesselSpreadsheetProcessor.getSingleSampleLibraryName()) {
             map.put(libraryName, libraryName);
@@ -212,7 +252,7 @@ public class SampleInstanceEjb  {
         for (String rootSampleId : vesselSpreadsheetProcessor.getRootSampleId()) {
             MercurySample mercurySample = mercurySampleDao.findBySampleKey(rootSampleId);
             if (mercurySample != null) {
-                this.rootSamples.add(mercurySample);
+                this.mercuryRootSamples.add(mercurySample);
             }
         }
 
@@ -249,7 +289,7 @@ public class SampleInstanceEjb  {
         int experimentIndex = 2;
         int conditionIndex = 0;
         List<Map<String, String>> devConditions = vesselSpreadsheetProcessor.getConditions();
-        List<String> subTaskList = new ArrayList<>();
+        List<String> subTaskList = new ArrayList<String>();
         for (Map<String, String> devCondition : devConditions) {
             String experiment = vesselSpreadsheetProcessor.getExperiment().get(conditionIndex);
             JiraIssue jiraIssue = getIssueInfoNoException(experiment, null);
@@ -259,7 +299,7 @@ public class SampleInstanceEjb  {
             } else {
                 List<String> jiraSubTasks = jiraIssue.getSubTaskKeys();
                 if (jiraSubTasks != null && devConditions.size() > 0) {
-                    subTaskList = new ArrayList<>(devCondition.values());
+                    subTaskList = new ArrayList<String>(devCondition.values());
                     for (String subTask : subTaskList) {
                         boolean foundFlag = false;
                         for (String jiraSubTask : jiraSubTasks) {
@@ -308,7 +348,7 @@ public class SampleInstanceEjb  {
             ++sampleIndex;
         }
 
-        /*
+        /**
          * If there are no errors attempt save the data to the database.
          */
         if (!messageCollection.hasErrors()) {
@@ -351,6 +391,43 @@ public class SampleInstanceEjb  {
         }
     }
 
+    /**
+     *  Return the first non empty volume for a given barcode(s)
+     */
+    private BigDecimal getVolume(VesselPooledTubesProcessor vesselSpreadsheetProcessor, String barcode)
+    {
+        int index = 0;
+        BigDecimal volume = BigDecimal.ZERO;
+        for (String volumeBarcode : vesselSpreadsheetProcessor.getBarcodes()) {
+            if(volumeBarcode.equals(barcode)){
+                if(vesselSpreadsheetProcessor.getVolume().get(index).trim().length() > 0) {
+                    volume = BigDecimal.valueOf(Float.parseFloat((vesselSpreadsheetProcessor.getVolume().get(index))));
+                }
+                if (volume.compareTo(BigDecimal.ZERO) > 0) {
+                    return volume;
+                }
+            }
+            ++index;
+        }
+        return null;
+    }
 
+    /**
+     *  Add library size metric to the given labvessel.
+     */
+    private LabVessel addLibrarySize(LabVessel labVessel, String librarySize)
+    {
+        //Don't continue to add the same value if it already exists for the that vessel.
+        for(LabMetric labMetric: labVessel.getMetrics()) {
+            if(labMetric.getName() == LabMetric.MetricType.FINAL_LIBRARY_SIZE && labMetric.getValue().equals(new BigDecimal(librarySize)) ) {
+                return labVessel;
+            }
+        }
+        LabMetric finalLibrarySizeMetric =
+                new LabMetric(new BigDecimal(librarySize), LabMetric.MetricType.FINAL_LIBRARY_SIZE, LabMetric.LabUnit.UG_PER_ML,
+                        null, new Date());
+        labVessel.addMetric(finalLibrarySizeMetric);
+        return labVessel;
+    }
 
 }
