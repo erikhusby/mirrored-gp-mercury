@@ -43,7 +43,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 public class WallacParserContainerTest extends Arquillian {
     public static final String WALLAC_OUTPUT = "Wallac96WellOutput.xls";
 
-    private static final FastDateFormat SIMPLE_DATE_FORMAT = FastDateFormat.getInstance("yyyyMMddHHmmss");
+    private static final FastDateFormat SIMPLE_DATE_FORMAT = FastDateFormat.getInstance("yyyyMMddHHmmssSSS");
     public static final String PLATE_1_BARCODE = "2408120";
     public static final String PLATE_2_BARCODE = "2408020";
 
@@ -62,8 +62,9 @@ public class WallacParserContainerTest extends Arquillian {
     public void testPersistence() throws Exception {
         // Replace plate barcodes with timestamps, to avoid unique constraints
         String timestamp = SIMPLE_DATE_FORMAT.format(new Date());
-        String plate1Barcode = timestamp + "01";
-        String plate2Barcode = timestamp + "02";
+        String prefix = "WallacPicoPlate";
+        String plate1Barcode = prefix + timestamp + "01";
+        String plate2Barcode = prefix + timestamp + "02";
         MessageCollection messageCollection = new MessageCollection();
         final boolean PERSIST_VESSELS = true;
         final boolean ACCEPT_PICO_REDO = true;

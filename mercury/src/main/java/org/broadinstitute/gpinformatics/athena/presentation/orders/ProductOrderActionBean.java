@@ -706,8 +706,10 @@ public class ProductOrderActionBean extends CoreActionBean {
                     final int numDaysBetween =
                             DateUtils.getNumDaysBetween(new Date(), funding.getGrantEndDate());
                     if(numDaysBetween > 0 && numDaysBetween < 45) {
-                        addMessage("The grant " + funding.getDisplayName() + " for " + quote.getAlphanumericId() +
-                                   " expires in " + numDaysBetween + " days");
+                        addMessage("The Funding Source "+funding.getDisplayName()+" on " +
+                                   quote.getAlphanumericId() + "  Quote expires in " + numDaysBetween +
+                                   " days. If it is likely this work will not be completed by then, please work on "
+                                   + "updating the Funding Source so Billing Errors can be avoided.");
                     }
                 }
             }
