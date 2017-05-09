@@ -158,7 +158,7 @@ public class SampleInstanceEjb  {
             sampleInstanceEntity.setReagentDesign(reagents.get(sampleIndex));
             sampleInstanceEntity.setMolecularIndexScheme(molecularIndexSchemes.get(sampleIndex));
             sampleInstanceEntity.setMercurySampleId(mercurySamples.get(sampleIndex));
-            sampleInstanceEntity.setReadLength(Long.valueOf(vesselSpreadsheetProcessor.getReadLength().get(sampleIndex)));
+            sampleInstanceEntity.setReadLength(Integer.valueOf(vesselSpreadsheetProcessor.getReadLength().get(sampleIndex)));
 
             if(mercuryRootSamples.size() >= sampleIndex) {
                 sampleInstanceEntity.setRootSample(mercuryRootSamples.get(sampleIndex));
