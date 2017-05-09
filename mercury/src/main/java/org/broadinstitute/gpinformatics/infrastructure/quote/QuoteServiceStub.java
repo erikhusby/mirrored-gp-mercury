@@ -52,12 +52,20 @@ public class QuoteServiceStub implements QuoteService {
     }
 
     @Override
+    public String registerNewSAPWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
+                                     Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
+                                     String callbackParameterName, String callbackParameterValue) {
+        return Integer.toString(workItemId++);
+    }
+
+    @Override
     public Quote getQuoteByAlphaId(String id) throws QuoteServerException, QuoteNotFoundException {
         Quote quote = null;
 
         for (Quote aQuote : getAllSequencingPlatformQuotes().getQuotes()) {
             if (aQuote.getAlphanumericId().equals(id)) {
                 quote = aQuote;
+                break;
             }
         }
         return quote;
@@ -75,7 +83,7 @@ public class QuoteServiceStub implements QuoteService {
 
     @Override
     public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException {
-        return null;
+        return getAllSequencingPlatformQuotes();
     }
 
     @Override

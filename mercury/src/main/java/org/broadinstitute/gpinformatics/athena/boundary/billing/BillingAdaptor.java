@@ -1,19 +1,26 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import com.google.common.collect.HashMultimap;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -22,6 +29,7 @@ import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -41,30 +49,35 @@ public class BillingAdaptor implements Serializable {
     private static final long serialVersionUID = 8829737083883106155L;
 
     private static final Log log = LogFactory.getLog(BillingAdaptor.class);
+    public static final String NOT_ELIGIBLE_FOR_SAP_INDICATOR = "NotEligible";
 
-    BillingEjb billingEjb;
+    private BillingEjb billingEjb;
 
-    BillingSessionDao billingSessionDao;
+    private BillingSessionDao billingSessionDao;
 
-    PriceListCache priceListCache;
+    private PriceListCache priceListCache;
 
-    ProductOrderEjb productOrderEjb;
+    private ProductOrderEjb productOrderEjb;
 
-    QuoteService quoteService;
+    private QuoteService quoteService;
 
-    BillingSessionAccessEjb billingSessionAccessEjb;
+    private BillingSessionAccessEjb billingSessionAccessEjb;
+
+    private SapIntegrationService sapService;
 
     private static final FastDateFormat BILLING_DATE_FORMAT =
             FastDateFormat.getDateTimeInstance(FastDateFormat.SHORT, FastDateFormat.SHORT);
 
     @Inject
-    public BillingAdaptor(BillingEjb billingEjb, BillingSessionDao billingSessionDao,PriceListCache priceListCache,
-                          QuoteService quoteService,BillingSessionAccessEjb billingSessionAccessEjb) {
+    public BillingAdaptor(BillingEjb billingEjb, BillingSessionDao billingSessionDao, PriceListCache priceListCache,
+                          QuoteService quoteService, BillingSessionAccessEjb billingSessionAccessEjb,
+                          SapIntegrationService sapService) {
         this.billingEjb = billingEjb;
         this.billingSessionDao = billingSessionDao;
         this.priceListCache = priceListCache;
         this.quoteService = quoteService;
         this.billingSessionAccessEjb = billingSessionAccessEjb;
+        this.sapService = sapService;
     }
 
     public BillingAdaptor() {
@@ -119,7 +132,12 @@ public class BillingAdaptor implements Serializable {
         BillingSession billingSession = billingSessionAccessEjb.findAndLockSession(sessionKey);
         try {
             List<QuoteImportItem> unBilledQuoteImportItems =
-                    billingSession.getUnBilledQuoteImportItems(priceListCache);
+                    null;
+            try {
+                unBilledQuoteImportItems = billingSession.getUnBilledQuoteImportItems(priceListCache);
+            } catch (QuoteServerException e) {
+                throw new BillingException("Getting unbilled items failed because::" + e.getMessage(), e);
+            }
 
             if (unBilledQuoteImportItems.isEmpty()) {
                 billingEjb.endSession(billingSession);
@@ -129,57 +147,135 @@ public class BillingAdaptor implements Serializable {
             HashMultimap<String, String> quoteItemsByQuote = HashMultimap.create();
             for (QuoteImportItem item : unBilledQuoteImportItems) {
 
+                final List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(item.getProductOrder());
                 BillingEjb.BillingResult result = new BillingEjb.BillingResult(item);
                 results.add(result);
 
-                Quote quote = new Quote();
-                quote.setAlphanumericId(item.getQuoteId());
-
-                // The price item that we are billing.
-                QuotePriceItem priceItemBeingBilled = QuotePriceItem.convertMercuryPriceItem(item.getPriceItem());
-
-                // Get the quote PriceItem that this is replacing, if it is a replacement.
-                QuotePriceItem primaryPriceItemIfReplacement = item.getPrimaryForReplacement(priceListCache);
-
+                Quote quote = null;
+                String sapBillingId = null;
+                String workId = null;
+                final MessageCollection messageCollection = new MessageCollection();
                 try {
+                    quote = quoteService.getQuoteByAlphaId(item.getQuoteId());
+                    ProductOrder.checkQuoteValidity(item.getProductOrder(), quote);
+
+                    //todo SGM is this call really necessary?  Is it just for DBFree tests?
+                    quote.setAlphanumericId(item.getQuoteId());
+                    List<String> effectivePricesForProducts = priceListCache
+                            .getEffectivePricesForProducts(allProductsOrdered, quote);
+
+                    if(item.getProductOrder().isSavedInSAP()) {
+                        if (!StringUtils.equals(item.getProductOrder().latestSapOrderDetail().getOrderPricesHash(),
+                                TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ",")))
+                                ) {
+                            productOrderEjb.publishProductOrderToSAP(item.getProductOrder(), messageCollection, true);
+                        }
+                    }
+
+                    workId = CollectionUtils.isEmpty(item.getWorkItems())?null:item.getWorkItems().toArray(new String[item.getWorkItems().size()])[0];
+                    sapBillingId = quote.isEligibleForSAP()? item.getSapItems(): NOT_ELIGIBLE_FOR_SAP_INDICATOR;
+
+                    // The price item that we are billing.
+                    QuotePriceItem priceItemBeingBilled = QuotePriceItem.convertMercuryPriceItem(item.getPriceItem());
+                    String price = priceListCache.getEffectivePrice(item.getPriceItem(), quote);
+
+                    // Get the quote PriceItem that this is replacing, if it is a replacement.
+                    QuotePriceItem primaryPriceItemIfReplacement = item.getPrimaryForReplacement(priceListCache);
+                    QuotePriceItem primaryPriceItemIfReplacementForSAP =item.getPrimaryForReplacement(priceListCache);
+
                     // Get the quote items on the quote, adding to the quote item cache, if not there.
                     Collection<String> quoteItemNames = getQuoteItems(quoteItemsByQuote, item.getQuoteId());
 
+                    //Using the first item in the set of work items because, even though it's a set all ledger items
+                    // in this quote item should have the same work item
                     // If this is a replacement, the primary is not on the quote and the replacement IS on the quote,
                     // set the primary to null so it will be billed as if it is a primary.
                     if (primaryPriceItemIfReplacement != null) {
                         if (!quoteItemNames.contains(primaryPriceItemIfReplacement.getName()) &&
-                                quoteItemNames.contains(priceItemBeingBilled.getName())) {
+                            quoteItemNames.contains(priceItemBeingBilled.getName()))
+                        {
+
                             primaryPriceItemIfReplacement = null;
+
                         }
                     }
 
-                    String workId = quoteService.registerNewWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
-                                                                 item.getWorkCompleteDate(), item.getQuantity(),
-                                                                 pageUrl, "billingSession", sessionKey);
+                    if(StringUtils.isBlank(workId)) {
+                        if (productOrderEjb.isOrderEligibleForSAP(item.getProductOrder())
+                            && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
+                            workId = quoteService
+                                    .registerNewSAPWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
+                                            item.getWorkCompleteDate(), item.getQuantity(),
+                                            pageUrl, "billingSession", sessionKey);
+                        } else {
+                            workId = quoteService
+                                    .registerNewWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
+                                            item.getWorkCompleteDate(), item.getQuantity(),
+                                            pageUrl, "billingSession", sessionKey);
+                        }
 
-                    result.setWorkId(workId);
+                        billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacement, workId, sapBillingId,
+                                BillingSession.BILLED_FOR_QUOTES);
+                    }
+
+                    BigDecimal replacementMultiplier = null;
+                    if(primaryPriceItemIfReplacementForSAP != null) {
+                        BigDecimal primaryPrice = new BigDecimal(primaryPriceItemIfReplacementForSAP.getPrice());
+                        BigDecimal replacementPrice  = new BigDecimal(price);
+
+                        replacementMultiplier = (replacementPrice.divide(primaryPrice, 3, BigDecimal.ROUND_DOWN)).multiply(BigDecimal.valueOf(item.getQuantityForSAP())).setScale(3, BigDecimal.ROUND_DOWN);
+                    }
+
+                    if( productOrderEjb.isOrderEligibleForSAP(item.getProductOrder() )
+                        && !item.getProductOrder().getOrderStatus().canPlace()
+                        && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
+                        && StringUtils.isBlank(item.getSapItems()))
+                    {
+                        if(item.getQuantityForSAP() != 0) {
+                            sapBillingId = sapService.billOrder(item, replacementMultiplier);
+                        }
+                        result.setSAPBillingId(sapBillingId);
+                        billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacementForSAP, workId, sapBillingId,
+                                BillingSession.BILLED_FOR_SAP + BillingSession.BILLED_FOR_QUOTES);
+                    }
+
                     Set<String> billedPdoKeys = getBilledPdoKeys(result);
-                    logBilling(workId, item, priceItemBeingBilled, billedPdoKeys);
-                    billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacement, workId);
+
+                    // Not sure I see the point of the next two lines!!!!
+                    result.setWorkId(workId);
+                    logBilling(workId, item, priceItemBeingBilled, billedPdoKeys, sapBillingId);
+                    billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacement, workId, sapBillingId,
+                            BillingSession.SUCCESS);
                 } catch (Exception ex) {
 
-                    String errorMessage;
-                    if (StringUtils.isBlank(result.getWorkId())) {
-                        errorMessage = "A problem occurred attempting to post to the quote server for " +
-                                       billingSession.getBusinessKey() + ".";
-                    } else {
-                        errorMessage = "A problem occurred saving the ledger entries for " +
-                                       billingSession.getBusinessKey() + " with work id of " + result.getWorkId()
-                                       + ".  " +
-                                       "The quote for this item may have been successfully sent to the quote server";
+                    StringBuilder errorMessage = new StringBuilder();
+                    if (StringUtils.isBlank(result.getWorkId()) && StringUtils.isBlank(workId)) {
+
+
+                        errorMessage.append("A problem occurred attempting to post to the quote server for ")
+                                .append(billingSession.getBusinessKey()).append(".");
+
+                    } else if (StringUtils.isBlank(result.getSAPBillingId()) && quote != null
+                               && quote.isEligibleForSAP()
+                               && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
+
+                        errorMessage.append("A problem occured attempting to post to SAP for ")
+                                .append(billingSession.getBusinessKey()).append(".");
+
+                    }
+                    else {
+                        errorMessage.append("A problem occurred saving the ledger entries for ")
+                                .append(billingSession.getBusinessKey()).append(" with an SAP ID of ")
+                                .append(StringUtils.isNotBlank(result.getSAPBillingId())?result.getSAPBillingId():sapBillingId).append(",")
+                                .append(" with work id of ").append(StringUtils.isNotBlank(result.getWorkId())?result.getWorkId():workId)
+                                .append(".  ")
+                                .append("The quote for this item may have been successfully sent to the quote server");
                     }
 
                     log.error(errorMessage + ex.toString());
 
                     item.setBillingMessages(errorMessage + ex.getMessage());
-                    result.setErrorMessage(errorMessage + ex
-                            .getMessage());
+                    result.setErrorMessage(errorMessage + ex.getMessage());
                     errorsInBilling = true;
                 }
             }
@@ -216,10 +312,12 @@ public class BillingAdaptor implements Serializable {
         return quoteItemsByQuote.get(quoteId);
     }
 
-    void logBilling(String workId, QuoteImportItem quoteImportItem, QuotePriceItem quotePriceItem, Set<String> billedPdoKeys) {
+    void logBilling(String workId, QuoteImportItem quoteImportItem, QuotePriceItem quotePriceItem,
+                    Set<String> billedPdoKeys, Object sapDocumentID) {
         String billingLogText = String.format(
-                "Work item '%s' with completion date of '%s' posted at '%s' for '%2.2f' units of '%s' on behalf of %s in '%s'",
+                "Work item '%s' and SAP Document '%s' with completion date of '%s' posted at '%s' for '%2.2f' units of '%s' on behalf of %s in '%s'",
                 workId,
+                sapDocumentID,
                 BILLING_DATE_FORMAT.format(quoteImportItem.getWorkCompleteDate()),
                 BILLING_DATE_FORMAT.format(new Date()),
                 quoteImportItem.getQuantity(),

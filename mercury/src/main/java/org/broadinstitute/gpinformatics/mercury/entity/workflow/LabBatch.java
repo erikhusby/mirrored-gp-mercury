@@ -473,8 +473,7 @@ public class LabBatch {
     }
 
     /**
-     * TicketFields is an enum intended to assist in the creation of a Jira ticket
-     * for Product orders
+     * TicketFields is an enum representing the fields in a Jira ticket.
      */
     public enum TicketFields implements CustomField.SubmissionField {
         PROTOCOL("Protocol", true),
@@ -508,7 +507,14 @@ public class LabBatch {
         SEQUENCING_STATION("Sequencing Station", true),
         CLUSTER_STATION("Cluster Station", true),
         MATERIAL_TYPE("BATCH_TYPE", true),
-        LANE_INFO("Lane Info", true);
+        LANE_INFO("Lane Info", true),
+        SAMPLES_ON_RISK("Samples On Risk", true),
+        RISK_CATEGORIZED_SAMPLES("Risk Categorized Samples", true),
+        REWORK_SAMPLES("Rework Samples",true),
+
+        ISSUE_TYPE_MAP("Issue Type", false),
+        ISSUE_TYPE_NAME("name", false),
+        ;
 
 
         private final String fieldName;

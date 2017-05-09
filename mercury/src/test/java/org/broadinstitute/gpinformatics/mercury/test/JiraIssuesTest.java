@@ -28,7 +28,7 @@ public class JiraIssuesTest {
             e.printStackTrace();
         }
 
-        Assert.assertEquals(jiraIssue.getSubTasks().size(), 74);
+        Assert.assertEquals(jiraIssue.getSubTasks().size(), 73);
     }
 }
 

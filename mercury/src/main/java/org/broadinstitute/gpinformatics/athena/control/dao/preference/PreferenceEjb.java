@@ -16,6 +16,8 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.List;
@@ -27,6 +29,7 @@ import java.util.List;
  */
 @Stateful
 @RequestScoped
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class PreferenceEjb {
 
     @Inject
@@ -44,6 +47,7 @@ public class PreferenceEjb {
      *
      * @throws PreferenceException Any problems processing the preference.
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void add(
             @Nonnull Long associatedUser,
             @Nonnull PreferenceType preferenceType,
@@ -81,6 +85,7 @@ public class PreferenceEjb {
      *
      * @throws PreferenceException Any problems processing the preference.
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void add(
             long createdBy,
             long object1Id,
@@ -117,6 +122,7 @@ public class PreferenceEjb {
      *
      * @throws Exception Any problems processing the preference.
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void clear(@Nonnull Long associatedUser) throws Exception {
 
         List<Preference> userPreferences = preferenceDao.getPreferences(associatedUser);
@@ -133,6 +139,7 @@ public class PreferenceEjb {
      *
      * @throws Exception Any problems processing the preference.
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void clear(@Nonnull Long associatedUser, @Nonnull PreferenceType preferenceType) throws Exception {
         List<Preference> userPreferences = preferenceDao.getPreferences(associatedUser, preferenceType);
         for (Preference preference : userPreferences) {
@@ -150,6 +157,7 @@ public class PreferenceEjb {
      *
      * @throws PreferenceException Any errors.
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void clear(
             @Nonnull Long object1Id,
             @Nullable Long object2Id,
@@ -160,42 +168,4 @@ public class PreferenceEjb {
         }
     }
 
-    /**
-     * Get a preference associated with objects.
-     *
-     * @param object1Id      An id for an object that is used for look up.
-     * @param object2Id      An id for a second object to be used for look up.
-     * @param preferenceType The preference type.
-     *
-     * @return Preference The matching preference
-     */
-    public List<Preference> getPreferences(
-            @Nonnull Long object1Id, @Nullable Long object2Id, @Nonnull PreferenceType preferenceType)
-            throws Exception {
-        return preferenceDao.getPreferences(object1Id, object2Id, preferenceType);
-    }
-
-    /**
-     * Get all preferences of all types attached to a user.
-     *
-     * @param associatedUser The user to associate with this preference.
-     *
-     * @return Preference The matching preference
-     */
-    public List<Preference> getPreferences(@Nonnull Long associatedUser) throws Exception {
-        return preferenceDao.getPreferences(associatedUser);
-    }
-
-    /**
-     * Get the preferences for a user of a particular type.
-     *
-     * @param associatedUser The user to associate with this preference.
-     * @param preferenceType The preference type for easy searching.
-     *
-     * @return Preference The matching preference
-     */
-    public List<Preference> getPreferences(
-            @Nonnull Long associatedUser, @Nullable PreferenceType preferenceType) throws Exception {
-        return preferenceDao.getPreferences(associatedUser, preferenceType);
-    }
 }

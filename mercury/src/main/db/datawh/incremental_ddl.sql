@@ -1,73 +1,122 @@
--- These indexes are on single column which is already the first column in PK, they aren't required
-DROP INDEX RESEARCH_PROJECT_STATUS_IDX1;
-DROP INDEX PRODUCT_ORDER_STATUS_IDX1;
-DROP INDEX PDO_SAMPLE_STATUS_IDX1;
+-- --------------------------------
+-- https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-4420
+-- Add array chip type to mercury DW ETL
+-- --------------------------------
 
-ALTER TABLE PRODUCT_ORDER_SAMPLE ADD (
-  BILLING_ETL_DATE DATE DEFAULT SYSDATE
-  , RISK_ETL_DATE DATE DEFAULT SYSDATE
-  );
+ALTER TABLE IM_PRODUCT_ORDER ADD ARRAY_CHIP_TYPE VARCHAR2(255);
+ALTER TABLE PRODUCT_ORDER ADD ARRAY_CHIP_TYPE VARCHAR2(255);
+ALTER TABLE ARRAY_PROCESS_FLOW
+  ADD SCANNER VARCHAR2(255);
 
-UPDATE PRODUCT_ORDER_SAMPLE
-SET BILLING_ETL_DATE = ETL_DATE
-  , RISK_ETL_DATE = ETL_DATE;
+-- --------------------------------
+-- https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-4554
+-- Add scanner to DW ETL of array process
+-- --------------------------------
+
+UPDATE ARRAY_PROCESS_FLOW
+SET SCANNER = (
+        SELECT STATION_NAME
+        FROM EVENT_FACT
+        WHERE LAB_EVENT_ID = AUTOCALL_EVENT_ID
+              AND ROWNUM = 1  )
+WHERE AUTOCALL_EVENT_ID IS NOT NULL;
 
 COMMIT;
 
-ALTER TABLE FLOWCELL_DESIGNATION
-  ADD FCLOAD_ETL_DATE DATE DEFAULT SYSDATE;
+SELECT SCANNER, COUNT(*)
+FROM ARRAY_PROCESS_FLOW
+GROUP BY SCANNER;
 
-UPDATE FLOWCELL_DESIGNATION
-SET FCLOAD_ETL_DATE = ETL_DATE;
+-- --------------------------------
+-- https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-4605
+-- Add modification timestamp to DW ETL of array process
+-- --------------------------------
+ALTER TABLE ARRAY_PROCESS_FLOW
+  ADD ETL_MOD_TIMESTAMP DATE DEFAULT SYSDATE NOT NULL;
 
-COMMIT;
+CREATE INDEX IDX_ARRAY_PROCESS_MOD_TS ON ARRAY_PROCESS_FLOW (ETL_MOD_TIMESTAMP);
 
--- Clean up old status data that had a new row for every data change whether or not the status changed
--- Only keep first status and first status change in a string of duplicates by date
-DELETE FROM PRODUCT_ORDER_STATUS
-WHERE ROWID
-      IN ( SELECT BASE_ROW
-           FROM ( SELECT ROWID AS BASE_ROW
-                    , STATUS
-                    , LAG ( STATUS ) OVER
-             ( PARTITION BY PRODUCT_ORDER_ID ORDER BY STATUS_DATE, STATUS ) AS PREV_STATUS
-                  FROM PRODUCT_ORDER_STATUS )
-           WHERE PREV_STATUS IS NOT NULL AND STATUS = PREV_STATUS  );
-COMMIT;
 
-DELETE FROM RESEARCH_PROJECT_STATUS
-WHERE ROWID
-      IN ( SELECT BASE_ROW
-           FROM ( SELECT ROWID AS BASE_ROW
-                    , STATUS
-                    , LAG ( STATUS ) OVER
-             ( PARTITION BY RESEARCH_PROJECT_ID
-               ORDER BY STATUS_DATE, STATUS
-             ) AS PREV_STATUS
-                  FROM RESEARCH_PROJECT_STATUS )
-           WHERE PREV_STATUS IS NOT NULL AND STATUS = PREV_STATUS  );
-COMMIT;
+-- --------------------------------
+-- https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-4540
+-- Add abandoned plastic data to DW ETL process
+-- --------------------------------
 
-DELETE FROM PRODUCT_ORDER_SAMPLE_STATUS
-WHERE ROWID
-      IN ( SELECT BASE_ROW
-           FROM ( SELECT ROWID AS BASE_ROW
-                    , DELIVERY_STATUS
-                    , LAG ( DELIVERY_STATUS ) OVER
-             ( PARTITION BY PRODUCT_ORDER_SAMPLE_ID ORDER BY STATUS_DATE, DELIVERY_STATUS ) AS PREV_STATUS
-                  FROM PRODUCT_ORDER_SAMPLE_STATUS )
-           WHERE PREV_STATUS IS NOT NULL AND DELIVERY_STATUS = PREV_STATUS  );
-COMMIT;
+DROP TABLE ABANDON_VESSEL;
 
-ALTER TABLE im_event_fact
-ADD (
-  library_name varchar2(64)
+CREATE TABLE ABANDON_VESSEL (
+  ABANDON_TYPE VARCHAR2(24) NOT NULL,
+  ABANDON_ID NUMBER(19) NOT NULL ENABLE,
+  ABANDON_VESSEL_ID NUMBER(19),
+  VESSEL_POSITION VARCHAR2(255),
+  REASON VARCHAR2(255),
+  ABANDONED_ON TIMESTAMP(6),
+  ETL_DATE DATE,
+  CONSTRAINT PK_ABANDON_VESSEL PRIMARY KEY (ABANDON_TYPE, ABANDON_ID)
+    USING INDEX (
+      CREATE UNIQUE INDEX PK_ABANDON_VESSEL
+        ON ABANDON_VESSEL( ABANDON_TYPE, ABANDON_ID )
+    )
 );
 
-ALTER TABLE event_fact
-ADD (
-  library_name varchar2(64)
+CREATE INDEX IDX_ABANDON_VESSEL_ID ON ABANDON_VESSEL( ABANDON_VESSEL_ID ) COMPUTE STATISTICS;
+
+DROP TABLE IM_ABANDON_VESSEL;
+
+CREATE TABLE IM_ABANDON_VESSEL (
+  LINE_NUMBER NUMBER(9),
+  ETL_DATE DATE,
+  IS_DELETE CHAR,
+  ABANDON_TYPE VARCHAR2(24),
+  ABANDON_ID NUMBER(19),
+  ABANDON_VESSEL_ID NUMBER(19),
+  REASON VARCHAR2(255),
+  ABANDONED_ON TIMESTAMP(6)
 );
 
-ALTER TABLE IM_LAB_VESSEL ADD NAME VARCHAR2(255);
-ALTER TABLE LAB_VESSEL ADD NAME VARCHAR2(255);
+DROP TABLE IM_ABANDON_VESSEL_POSITION;
+
+CREATE TABLE IM_ABANDON_VESSEL_POSITION (
+  LINE_NUMBER NUMBER(9),
+  ETL_DATE DATE,
+  IS_DELETE CHAR,
+  ABANDON_TYPE VARCHAR2(24),
+  ABANDON_ID NUMBER(19),
+  ABANDON_VESSEL_ID NUMBER(19),
+  VESSEL_POSITION VARCHAR2(255),
+  REASON VARCHAR2(255),
+  ABANDONED_ON TIMESTAMP(6)
+);
+
+
+-- ***************************
+--  GPLIM-4378 Make DW ETL of Infinium array process flow deterministic on PDO-LCSET-Sample combination
+CREATE TABLE im_array_process (
+  LINE_NUMBER NUMBER(9) NOT NULL,
+  ETL_DATE DATE NOT NULL,
+  IS_DELETE CHAR NOT NULL,
+  product_order_id NUMBER(19),
+  batch_name VARCHAR2(40),
+  lcset_sample_name VARCHAR2(40),
+  sample_name VARCHAR2(40),
+  lab_event_id NUMBER(19),
+  lab_event_type VARCHAR2(64),
+  station_name VARCHAR2(255),
+  event_date DATE,
+  lab_vessel_id NUMBER(19),
+  position VARCHAR2(32) );
+
+
+-- --------------------------------
+-- https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-4644
+-- Add created_on to LabVessel DW ETL process and use for library_lcset_sample library creation date
+-- --------------------------------
+ALTER TABLE im_lab_vessel add created_on date;
+ALTER TABLE lab_vessel add created_on date;
+
+-- Post-deploy required backfill of lab_vessel data
+-- Execute the following AFTER backfill:
+UPDATE LIBRARY_LCSET_SAMPLE_BASE LC
+   SET LC.LIBRARY_CREATION_DATE = NVL((SELECT LV.CREATED_ON FROM LAB_VESSEL LV WHERE LV.LAB_VESSEL_ID = LC.LIBRARY_ID ), LC.LIBRARY_CREATION_DATE);
+COMMIT;
+

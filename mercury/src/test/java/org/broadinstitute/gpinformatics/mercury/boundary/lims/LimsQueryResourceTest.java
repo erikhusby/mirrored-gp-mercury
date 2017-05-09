@@ -18,17 +18,14 @@ import org.testng.annotations.Test;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.List;
 
 import static java.util.Arrays.asList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.startsWith;
@@ -530,7 +527,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         String result = get(resource);
         assertThat(result, containsString("\"readStructure\":\"76T8B8B76T\""));
         assertThat(result, containsString("\"derivedVesselLabel\":\"AB56835527\""));
-        assertThat(result, containsString("\"name\":\"Express Human WES (Deep Coverage) v1\""));
+        assertThat(result, containsString("\"name\":\"Express Somatic Human WES (Deep Coverage) v1\""));
         assertThat(result, containsString("\"regulatoryDesignation\":[\"RESEARCH_ONLY\"]"));
         for (String varToTest :
                 asList("barcode", "name", "onRigWorkflow", "onRigChemistry")) {
@@ -551,5 +548,43 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(result, containsString("\"kitType\":\"Incorporation Master Mix\""));
         assertThat(result, containsString("\"kitType\":\"Cleavage Reagent Master Mix\""));
         assertThat(result, containsString("\"kitType\":\"Scan Reagent\","));
+    }
+
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testValidateWorkflow(@ArquillianResource URL baseUrl)
+            throws Exception {
+        String pondRegistrationSourcePlate = "000009163073";
+        WebResource resource = makeWebResource(baseUrl, "validateWorkflow")
+                .queryParam("nextEventTypeName", "IceCatchEnrichmentCleanup")
+                .queryParam("q", pondRegistrationSourcePlate);
+        String result = get(resource);
+        assertThat(result, containsString("\"hasErrors\":true"));
+
+        resource = makeWebResource(baseUrl, "validateWorkflow")
+                .queryParam("nextEventTypeName", "PondRegistration")
+                .queryParam("q", pondRegistrationSourcePlate);
+        String result2 = get(resource);
+        assertThat(result2, containsString("\"hasErrors\":false"));
+
+        resource = makeWebResource(baseUrl, "validateWorkflow")
+                .queryParam("nextEventTypeName", "PondRegistration")
+                .queryParam("q", "IamAnUnknownBarcode");
+
+        UniformInterfaceException caught = getWithError(resource);
+        assertThat(caught.getResponse().getStatus(), equalTo(500));
+        assertThat(getResponseContent(caught),
+                startsWith(
+                        "Failed to find lab vessels with barcodes: [IamAnUnknownBarcode]"));
+
+        resource = makeWebResource(baseUrl, "validateWorkflow")
+                .queryParam("nextEventTypeName", "PondRegistration")
+                .queryParam("q", "000006893901");
+
+        caught = getWithError(resource);
+        assertThat(caught.getResponse().getStatus(), equalTo(500));
+        assertThat(getResponseContent(caught),
+                startsWith(
+                        "Incompatible vessel types: [000006893901]"));
     }
 }

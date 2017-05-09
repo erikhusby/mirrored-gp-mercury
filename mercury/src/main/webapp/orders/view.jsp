@@ -1,9 +1,9 @@
-<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
-<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
-<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
-<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -42,6 +42,9 @@ $j(document).ready(function () {
     if (kitDefinitionIndex == 0) {
         showKitDetail();
     }
+    $j('#orderList').dataTable({
+        "oTableTools": ttExportDefines
+    });
 
     bspDataCount = $j(".sampleName").length;
 
@@ -109,6 +112,37 @@ function setupDialogs() {
                 click: handleCancelEvent
             }
         ]
+    });
+
+    $j("#replaceSamplesDialog").dialog({
+        modal: true,
+        autoOpen: false,
+        buttons: [
+            {
+                id: "replaceSamplesButton",
+                text: "OK",
+                click: function() {
+                    $j(this).dialog("close");
+                    $j("#replaceSamplesButton").attr("disabled", "disabled");
+                    $j("#replacementSampleList").attr("value", $j("#replacementSampleListId").val());
+                    $j("#orderForm").submit();
+                }
+            },
+            {
+                text: "cancel",
+                click: handleCancelEvent
+            }
+        ]
+    });
+
+    $j("#noReplacementsAvailableDialog").dialog({
+        modal: true,
+        autoOpen: false,
+        buttons: {
+            OK: function () {
+                $j(this).dialog("close");
+            }
+        }
     });
 
     $j("#riskDialog").dialog({
@@ -408,11 +442,46 @@ function updateFundsRemaining() {
 }
 
 function updateFunds(data) {
-    if (data.fundsRemaining) {
-        $j("#fundsRemaining").text('Status: ' + data.status + ' - Funds Remaining: ' + data.fundsRemaining +
-                ' with ' + data.outstandingEstimate + ' unbilled across existing open orders');
+
+    var quoteWarning = false;
+
+    if (data.fundsRemaining && !data.error) {
+        var fundsRemainingNotification = 'Status: ' + data.status + ' - Funds Remaining: ' + data.fundsRemaining +
+                ' with ' + data.outstandingEstimate + ' unbilled across existing open orders';
+        var fundingDetails = data.fundingDetails;
+
+        if(data.status != "Funded" ||
+                Number(data.outstandingEstimate.replace(/[^0-9\.]+/g,"")) > Number(data.fundsRemaining.replace(/[^0-9\.]+/g,""))) {
+            quoteWarning = true;
+        }
+
+        for(var detailIndex in fundingDetails) {
+            fundsRemainingNotification += '\n'+fundingDetails[detailIndex].grantTitle;
+            if(fundingDetails[detailIndex].activeGrant) {
+                fundsRemainingNotification += ' -- Expires ' + fundingDetails[detailIndex].grantEndDate;
+                if(fundingDetails[detailIndex].daysTillExpire < 45) {
+                    fundsRemainingNotification += ' in ' + fundingDetails[detailIndex].daysTillExpire + ' days';
+                    quoteWarning = true;
+                }
+            } else {
+                fundsRemainingNotification += ' -- Has Expired ' + fundingDetails[detailIndex].grantEndDate;
+                quoteWarning = true;
+            }
+            if(fundingDetails[detailIndex].grantStatus != "Active") {
+                quoteWarning = true;
+            }
+            fundsRemainingNotification += '\n';
+        }
+        $j("#fundsRemaining").text(fundsRemainingNotification);
     } else {
         $j("#fundsRemaining").text('Error: ' + data.error);
+        quoteWarning = true;
+    }
+
+    if(quoteWarning) {
+        $j("#fundsRemaining").addClass("alert alert-error");
+    } else {
+        $j("#fundsRemaining").removeClass("alert alert-error");
     }
 }
 
@@ -480,6 +549,19 @@ function showUnAbandonDialog() {
     } else {
         $j("#noneSelectedDialogMessage").text("Un-Abandon Samples");
         $j("#noneSelectedDialog").dialog("open");
+    }
+}
+
+function showSampleReplacementDialog() {
+
+    var availableReplacements = '${actionBean.editOrder.numberForReplacement}';
+
+    if (availableReplacements >0) {
+        $j("#dialogAction").attr("name", "replaceSamples");
+        $j("#replaceSamplesDialog").dialog("open");
+//        $j("#replaceSamplesDialog").dialog("open").dialog("option", "width", 800);
+    } else {
+        $j("#noReplacementsAvailableDialog").dialog("open");
     }
 }
 
@@ -618,6 +700,16 @@ function formatInput(item) {
         samples?</p>
 </div>
 
+    <div id="replaceSamplesDialog" style="display:none">
+
+        <p>Add up to ${actionBean.editOrder.numberForReplacement} Replacement samples </p>
+
+        <label for="replacementSampleListId">Replacement Samples:</label>
+
+        <textarea rows="15" cols="120" id="replacementSampleListId" name="replacementSamples" > </textarea>
+
+    </div>
+
 <div id="riskDialog" style="width:600px;display:none;">
     <p>Manually Update Risk (<span id="manualRiskSelectedCountId"> </span> selected)</p>
 
@@ -657,15 +749,15 @@ function formatInput(item) {
     <textarea id="abandonSampleCommentId" name="comment" class="controlledText" cols="80" rows="4"> </textarea>
 </div>
 
-<div id="unAbandonDialog" style="width:600px;display:none;">
-    <p>Un-Abandon Samples (<span id="unAbandonSelectedSamplesCountId"> </span> selected)</p>
+<%--<div id="unAbandonDialog" style="width:600px;display:none;">--%>
+    <%--<p>Un-Abandon Samples (<span id="unAbandonSelectedSamplesCountId"> </span> selected)</p>--%>
 
-    <p style="clear:both">
-        <label for="unAbandonSampleCommentId">Comment:</label>
-    </p>
+    <%--<p style="clear:both">--%>
+        <%--<label for="unAbandonSampleCommentId">Comment:</label>--%>
+    <%--</p>--%>
 
-    <textarea id="unAbandonSampleCommentId" name="comment" class="controlledText" cols="80" rows="4"> </textarea>
-</div>
+    <%--<textarea id="unAbandonSampleCommentId" name="comment" class="controlledText" cols="80" rows="4"> </textarea>--%>
+<%--</div>--%>
 
 <div id="recalculateRiskDialog" style="width:600px;display:none;">
     <p>Recalculate Risk (<span id="recalculateRiskSelectedCountId"> </span> selected)</p>
@@ -684,6 +776,10 @@ function formatInput(item) {
 <div style="display:none" id="noneSelectedDialog">
     <p>You must select at least one sample to <span id="noneSelectedDialogMessage"></span>.</p>
 </div>
+
+    <div style="display:none" id="noReplacementsAvailableDialog">
+        <p>There are no samples for you to replace.  Please open a new PDO to do any new work.</p>
+    </div>
 
 <stripes:form action="/orders/order.action" id="orderForm" class="form-horizontal">
 
@@ -735,7 +831,8 @@ function formatInput(item) {
 <stripes:hidden id="riskComment" name="riskComment" value=""/>
 <stripes:hidden id="proceedOos" name="proceedOos" value=""/>
 <stripes:hidden id="abandonComment" name="abandonComment" value=""/>
-<stripes:hidden id="unAbandonComment" name="unAbandonComment" value=""/>
+    <stripes:hidden name="replacementSampleList" id="replacementSampleList" value="" />
+<%--<stripes:hidden id="unAbandonComment" name="unAbandonComment" value=""/>--%>
 <stripes:hidden id="attestationConfirmed" name="editOrder.attestationConfirmed" value=""/>
 
 <div class="actionButtons">
@@ -820,6 +917,18 @@ function formatInput(item) {
 
             </c:if>
 
+            <security:authorizeBlock roles="<%= roles(PDM, PM, Developer) %>">
+
+                <c:if test="${!actionBean.editOrder.savedInSAP && !actionBean.editOrder.pending && !actionBean.editOrder.draft}">
+                    &nbsp;&nbsp;&nbsp;&nbsp;
+                    <stripes:submit name="${actionBean.publishSAPAction}" id="${actionBean.publishSAPAction}" value="Publish Product Order to SAP"
+                                    class="btn padright" title="Click to Publish Product Order to SAP"/>
+
+                </c:if>
+            </security:authorizeBlock>
+
+
+
         </c:otherwise>
     </c:choose>
 
@@ -829,6 +938,24 @@ function formatInput(item) {
 
 <div class="row-fluid">
 <div class="form-horizontal span7">
+
+    <c:if test="${actionBean.editOrder.childOrder}">
+        <div class="view-control-group control-group">
+            <label class="control-label label-form">Parent Order</label>
+
+            <div class="controls">
+                <div class="form-value">
+                    <stripes:link
+                            beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
+                            event="view">
+                        <stripes:param name="productOrder" value="${actionBean.editOrder.parentOrder.businessKey}"/>
+                        ${actionBean.editOrder.parentOrder.title}
+                    </stripes:link>
+                </div>
+            </div>
+        </div>
+    </c:if>
+
 <div class="view-control-group control-group">
     <label class="control-label label-form">Order ID</label>
 
@@ -847,7 +974,20 @@ function formatInput(item) {
     </div>
 </div>
 
-<c:if test="${not empty actionBean.editOrder.requisitionName}">
+    <div class="view-control-group control-group">
+        <label class="control-label label-form">SAP Order ID</label>
+
+        <div class="controls">
+            <div class="form-value">
+                    <%--<c:if test="${!actionBean.editOrder.draft && !actionBean.editOrder.pending && actionBean.editOrder.savedInSAP}">--%>
+                    <c:if test="${actionBean.editOrder.savedInSAP}">
+                        ${actionBean.editOrder.sapOrderNumber}
+                    </c:if>
+            </div>
+        </div>
+    </div>
+
+    <c:if test="${not empty actionBean.editOrder.requisitionName}">
     <div class="view-control-group control-group">
         <label class="control-label label-form">Requisition</label>
 
@@ -1004,7 +1144,7 @@ function formatInput(item) {
     </div>
 </div>
 
-<c:if test="${actionBean.editOrder.product.productFamily.supportsNumberOfLanes}">
+<c:if test="${actionBean.editOrder.requiresLaneCount()}">
     <div class="view-control-group control-group">
         <label class="control-label label-form">Number of Lanes Per Sample</label>
 
@@ -1030,7 +1170,7 @@ function formatInput(item) {
             <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">
                     ${actionBean.editOrder.quoteId}
             </a>
-            <span id="fundsRemaining" style="margin-left: 20px;"> </span>
+            <div id="fundsRemaining"> </div>
         </div>
     </div>
 </div>
@@ -1104,6 +1244,14 @@ function formatInput(item) {
     </div>
 </div>
 <c:if test="${actionBean.infinium}">
+    <div class="view-control-group control-group">
+        <label class="control-label label-form">Pipeline Location</label>
+
+        <div class="controls">
+            <div class="form-value">${actionBean.editOrder.pipelineLocation.displayName}</div>
+        </div>
+    </div>
+
     <c:forEach items="${actionBean.attributes}" var="item">
         <div class="view-control-group control-group">
             <stripes:label for="attributes[${item.key}]" class="control-label label-form">
@@ -1124,8 +1272,10 @@ function formatInput(item) {
 </div>
 </div>
 
-<c:if test="${actionBean.editOrder.sampleInitiation}">
     <div class="form-horizontal span5">
+
+
+        <c:if test="${actionBean.editOrder.sampleInitiation}">
         <fieldset>
             <legend>
                 <h4>
@@ -1205,10 +1355,63 @@ function formatInput(item) {
                 </div>
             </div>
         </fieldset>
+        </c:if>
     </div>
-</c:if>
 </div>
+    <div class="borderHeader">
+        <h4 style="display:inline">Replacement Sample Orders</h4>
+    </div>
 
+    <table id="orderList" class="table simple">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Order ID</th>
+                <th>Status</th>
+                <th>Updated</th>
+                <th width="80">%&nbsp;Complete</th>
+                <th>Replacement Sample Count</th>
+            </tr>
+            </thead>
+            <tbody>
+            <c:forEach items="${actionBean.editOrder.childOrders}" var="order">
+                <tr>
+                    <td>
+                        <stripes:link
+                                beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
+                                event="view">
+                            <stripes:param name="productOrder" value="${order.businessKey}"/>
+                            ${order.title}
+                        </stripes:link>
+                    </td>
+                    <td>
+                        <c:choose>
+
+                            <%-- draft PDO --%>
+                            <c:when test="${order.draft}">
+                                <span title="DRAFT">&#160;</span>
+                            </c:when>
+                            <c:otherwise>
+                                <a class="external" target="JIRA" href="${actionBean.jiraUrl(order.jiraTicketKey)}"
+                                   class="external" target="JIRA">
+                                        ${order.jiraTicketKey}
+                                </a>
+                            </c:otherwise>
+                        </c:choose>
+                    </td>
+                    <td>${order.orderStatus}</td>
+                    <td>
+                        <fmt:formatDate value="${order.modifiedDate}" pattern="${actionBean.datePattern}"/>
+                    </td>
+                    <td align="center">
+                        <stripes:layout-render name="/orders/sample_progress_bar.jsp"
+                                               status="${actionBean.progressFetcher.getStatus(order.businessKey)}"/>
+                    </td>
+                    <td>${actionBean.progressFetcher.getNumberOfSamples(order.businessKey)}</td>
+                </tr>
+            </c:forEach>
+            </tbody>
+        </table>
 <c:if test="${!actionBean.editOrder.draft || !actionBean.editOrder.sampleInitiation}">
 
     <div class="borderHeader">
@@ -1226,9 +1429,11 @@ function formatInput(item) {
                                         style="margin-left:15px;"
                                         onclick="showAbandonDialog()"/>
 
-                        <stripes:button name="unAbandonSamples" value="Un-Abandon Samples" class="btn"
-                                        style="margin-left:15px;"
-                                        onclick="showUnAbandonDialog()"/>
+                        <c:if test="${!actionBean.editOrder.childOrder}">
+                            <stripes:button name="replaceOrderSamples" id="replaceOrderSamples" value="Replace Abandoned Samples"
+                                            onclick="showSampleReplacementDialog()" class="btn padright"
+                                            title="Click to add replacement samples for abandoned samples" />
+                        </c:if>
                     </c:if>
                     <stripes:button name="recalculateRisk" value="Recalculate Risk" class="btn"
                                     style="margin-left:15px;" onclick="showRecalculateRiskDialog()"/>

@@ -2,29 +2,51 @@ package org.broadinstitute.gpinformatics.mercury.presentation.labevent;
 
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
+import net.sourceforge.stripes.action.FileBean;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.rackscan.ScannerException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.ObjectMarshaller;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.*;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.MetadataType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationSetupEvent;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.LimsFileType;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.QiagenRackFileParser;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselTypeGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
@@ -36,7 +58,16 @@ import org.codehaus.jackson.type.TypeReference;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.*;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * A Stripes Action Bean to record manual transfers.
@@ -53,6 +84,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
     public static final String ACTION_BEAN_URL = "/labevent/manualtransfer.action";
     public static final String PAGE_TITLE = "Manual Transfers";
     public static final String RACK_SCAN_EVENT = "rackScan";
+    public static final String PARSE_LIMS_FILE_ACTION = "parseLimsFile";
+    public static final String SKIP_LIMS_FILE_ACTION = "skipLimsFile";
 
     /** Parameter from batch workflow page. */
     private String workflowProcessName;
@@ -84,6 +117,12 @@ public class ManualTransferActionBean extends RackScanActionBean {
     /** Persist the validation event to prevent invalid connection warnings for plate and strip-tube cherry pick events */
     private boolean isValidation = false;
 
+    private FileBean limsUploadFile;
+
+    private LimsFileType limsFileType;
+
+    private boolean isParseLimsFile;
+
     @Inject
     private BettaLimsMessageResource bettaLimsMessageResource;
 
@@ -91,7 +130,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
     private LabVesselDao labVesselDao;
 
     @Inject
-    private WorkflowLoader workflowLoader;
+    private WorkflowConfig workflowConfig;
 
     @Inject
     private LabBatchDao labBatchDao;
@@ -113,7 +152,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
             String workflowEffectiveDateLocal = getContext().getRequest().getParameter("workflowEffectiveDate");
             if (!StringUtils.isEmpty(workflowEffectiveDateLocal)) {
                 workflowStepDef = loadWorkflowStepDef(new Date(workflowEffectiveDateLocal),
-                        workflowLoader, getContext().getRequest().getParameter("workflowProcessName"),
+                        workflowConfig, getContext().getRequest().getParameter("workflowProcessName"),
                         getContext().getRequest().getParameter("workflowStepName"));
             }
             if (workflowStepDef == null) {
@@ -282,13 +321,23 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 case RECEPTACLE_TRANSFER_EVENT:
                     ReceptacleTransferEventType receptacleTransferEventType = (ReceptacleTransferEventType) stationEvent;
                     ReceptacleType sourceReceptacle = new ReceptacleType();
-                    sourceReceptacle.setReceptacleType(
-                            manualTransferDetails.getSourceVesselTypeGeometry().getDisplayName());
+                    if (manualTransferDetails.getSourceVesselTypeGeometry() != null) {
+                        sourceReceptacle.setReceptacleType(
+                                manualTransferDetails.getSourceVesselTypeGeometry().getDisplayName());
+                    } else if (manualTransferDetails.getSourceVesselTypeGeometries() == null ||
+                               manualTransferDetails.getSourceVesselTypeGeometries().length == 0) {
+                        throw new RuntimeException("Source VesselTypeGeometry isn't set for this event");
+                    }
                     receptacleTransferEventType.setSourceReceptacle(sourceReceptacle);
 
                     ReceptacleType destinationReceptacle = new ReceptacleType();
-                    destinationReceptacle.setReceptacleType(
-                            manualTransferDetails.getTargetVesselTypeGeometry().getDisplayName());
+                    if (manualTransferDetails.getTargetVesselTypeGeometry() != null) {
+                        destinationReceptacle.setReceptacleType(
+                                manualTransferDetails.getTargetVesselTypeGeometry().getDisplayName());
+                    } else if (manualTransferDetails.getTargetVesselTypeGeometries() == null ||
+                               manualTransferDetails.getTargetVesselTypeGeometries().length == 0) {
+                        throw new RuntimeException("Target VesselTypeGeometry isn't set for this event");
+                    }
                     receptacleTransferEventType.setReceptacle(destinationReceptacle);
                     break;
                 default:
@@ -296,15 +345,15 @@ public class ManualTransferActionBean extends RackScanActionBean {
             }
             stationEventIndex++;
         }
+        isParseLimsFile = manualTransferDetails.isLimsFile();
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }
 
     @Nullable
-    public static WorkflowStepDef loadWorkflowStepDef(Date workflowEffectiveDate, WorkflowLoader workflowLoader,
-            String workflowProcessName, String workflowStepName) {
+    public static WorkflowStepDef loadWorkflowStepDef(Date workflowEffectiveDate, WorkflowConfig workflowConfig,
+                                                      String workflowProcessName, String workflowStepName) {
         WorkflowStepDef workflowStepDef = null;
         if (workflowProcessName != null) {
-            WorkflowConfig workflowConfig = workflowLoader.load();
             workflowStepDef = workflowConfig.getStep(workflowProcessName, workflowStepName,
                     workflowEffectiveDate);
             workflowStepDef.getReagentTypes();
@@ -340,6 +389,48 @@ public class ManualTransferActionBean extends RackScanActionBean {
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }
 
+    @HandlesEvent(SKIP_LIMS_FILE_ACTION)
+    public Resolution skipLimsFile() {
+        chooseLabEventType();
+        isParseLimsFile = false;
+        return new ForwardResolution(MANUAL_TRANSFER_PAGE);
+    }
+
+    @HandlesEvent(PARSE_LIMS_FILE_ACTION)
+    public Resolution parseLimsFile() {
+        chooseLabEventType();
+        if (limsUploadFile == null) {
+            addGlobalValidationError("File not selected.");
+            return new ForwardResolution(MANUAL_TRANSFER_PAGE);
+        }
+        InputStream limsFileStream = null;
+        MessageCollection messageCollection = new MessageCollection();
+        try {
+            limsFileStream = limsUploadFile.getInputStream();
+            switch (limsFileType) {
+            case QIAGEN_BLOOD_BIOPSY_24:
+                QiagenRackFileParser qiagenRackFileParser = new QiagenRackFileParser();
+                qiagenRackFileParser.attachSourcePlateData((PlateTransferEventType) stationEvents.get(0), limsFileStream,
+                        messageCollection);
+            }
+        } catch (IOException e) {
+            log.error("IO Exception when parsing LIMS File", e);
+            messageCollection.addError("IO Exception when parsing LIMS File");
+        } finally {
+            IOUtils.closeQuietly(limsFileStream);
+
+            try {
+                limsUploadFile.delete();
+            } catch (IOException ignored) {
+                // If cannot delete, oh well.
+            }
+        }
+
+        addMessages(messageCollection);
+        isParseLimsFile = messageCollection.hasErrors();
+        return new ForwardResolution(MANUAL_TRANSFER_PAGE);
+    }
+
     /**
      * Called after the user has entered barcodes.  Fetches existing data, if any.
      * @return JSP
@@ -362,7 +453,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
             case PLATE_EVENT:
                 for (StationEventType stationEvent : stationEvents) {
                     PlateEventType plateEventType = (PlateEventType) stationEvent;
-                    loadPlateFromDb(plateEventType.getPlate(), plateEventType.getPositionMap(), true, labBatch,
+                    loadPlateFromDb(plateEventType.getPlate(), plateEventType.getPositionMap(), true, null, labBatch,
                             messageCollection, Direction.SOURCE);
                 }
                 break;
@@ -370,7 +461,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 for (StationEventType stationEvent : stationEvents) {
                     PlateTransferEventType plateTransferEventType = (PlateTransferEventType) stationEvent;
                     Map<String, LabVessel> mapBarcodeToVessel = loadPlateFromDb(plateTransferEventType.getSourcePlate(),
-                            plateTransferEventType.getSourcePositionMap(), true, labBatch, messageCollection,
+                            plateTransferEventType.getSourcePositionMap(), true, null, labBatch, messageCollection,
                             Direction.SOURCE);
                     LabEventType repeatedEvent = manualTransferDetails.getRepeatedEvent();
                     if (repeatedEvent != null) {
@@ -378,7 +469,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
                                 manualTransferDetails.getRepeatedWorkflowQualifier(), messageCollection);
                     }
                     loadPlateFromDb(plateTransferEventType.getPlate(), plateTransferEventType.getPositionMap(),
-                            manualTransferDetails.isTargetExpectedToExist(), labBatch, messageCollection,
+                            manualTransferDetails.isTargetExpectedToExist(),
+                            manualTransferDetails.isTargetExpectedEmpty(), labBatch, messageCollection,
                             Direction.TARGET);
                 }
                 break;
@@ -392,11 +484,11 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     PlateCherryPickEvent plateCherryPickEvent = (PlateCherryPickEvent) stationEvent;
 
                     loadPlateFromDb(plateCherryPickEvent.getSourcePlate().get(0),
-                            plateCherryPickEvent.getSourcePositionMap().get(0), true, labBatch, messageCollection,
+                            plateCherryPickEvent.getSourcePositionMap().get(0), true, null, labBatch, messageCollection,
                             Direction.SOURCE);
 
                     loadPlateFromDb(plateCherryPickEvent.getPlate().get(0), plateCherryPickEvent.getPositionMap().get(0),
-                            false, labBatch, messageCollection,
+                            false, null, labBatch, messageCollection,
                             Direction.TARGET);
 
                     if (cherryPickJson == null) {
@@ -457,12 +549,11 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     PlateCherryPickEvent plateCherryPickEvent = (PlateCherryPickEvent) stationEvent;
 
                     Map<String, LabVessel> mapBarcodeToVessel = loadPlateFromDb(plateCherryPickEvent.getSourcePlate().get(0),
-                            plateCherryPickEvent.getSourcePositionMap().get(0), true, labBatch, messageCollection,
+                            plateCherryPickEvent.getSourcePositionMap().get(0), true, null, labBatch, messageCollection,
                             Direction.SOURCE);
 
                     loadPlateFromDb(plateCherryPickEvent.getPlate().get(0), plateCherryPickEvent.getPositionMap().get(0),
-                            false, labBatch, messageCollection,
-                            Direction.TARGET);
+                            false, null, labBatch, messageCollection, Direction.TARGET);
 
                     if(cherryPickJson == null) {
                         cherryPickJson = getContext().getRequest().getParameter("destPosList");
@@ -674,12 +765,23 @@ public class ManualTransferActionBean extends RackScanActionBean {
     }
 
     private enum Direction {
-        SOURCE,
-        TARGET
+        SOURCE("Source"),
+        TARGET("Destination");
+
+        private String text;
+
+        Direction(String text) {
+            this.text = text;
+        }
+
+        public String getText() {
+            return text;
+        }
     }
 
     private Map<String, LabVessel> loadPlateFromDb(PlateType plateType, PositionMapType positionMapType,
-            boolean required, @Nullable LabBatch labBatch, MessageCollection messageCollection, Direction direction) {
+            boolean required, Boolean expectedEmpty, @Nullable LabBatch labBatch, MessageCollection messageCollection,
+            Direction direction) {
         Map<String, LabVessel> returnMapBarcodeToVessel = new HashMap<>();
         if (plateType != null) {
             String barcode = plateType.getBarcode();
@@ -688,12 +790,12 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 if (labVessel == null) {
                     // Racks don't have to exist, static plates do
                     if (required && positionMapType == null) {
-                        messageCollection.addError(barcode + " is not in the database");
+                        messageCollection.addError(direction.getText() + " " + barcode + " is not in the database");
                     } else {
-                        messageCollection.addInfo(barcode + " is not in the database");
+                        messageCollection.addInfo(direction.getText() + " " + barcode + " is not in the database");
                     }
                 } else {
-                    messageCollection.addInfo(barcode + " is in the database");
+                    messageCollection.addInfo(direction.getText() + " " + barcode + " is in the database");
                     returnMapBarcodeToVessel.put(labVessel.getLabel(), labVessel);
                 }
             }
@@ -710,22 +812,33 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 LabVessel labVessel = stringLabVesselEntry.getValue();
                 String barcode = stringLabVesselEntry.getKey();
                 if (labVessel == null) {
-                    String message = barcode + " is not in the database";
+                    String message = direction.getText() + " " + barcode + " is not in the database";
                     if (required) {
                         messageCollection.addError(message);
                     } else {
                         messageCollection.addInfo(message);
                     }
                 } else {
-                    String message = barcode + " is in the database";
+                    String message = direction.getText() + " " + barcode + " is in the database";
                     if (required) {
                         messageCollection.addInfo(message);
                     } else {
                         messageCollection.addError(message);
                     }
+                    if (expectedEmpty != null) {
+                        if (labVessel.getTransfersTo().isEmpty()) {
+                            if (!expectedEmpty) {
+                                messageCollection.addError(direction.getText() + " " + barcode + " is empty");
+                            }
+                        } else {
+                            if (expectedEmpty) {
+                                messageCollection.addError(direction.getText() + " " + barcode + " is not empty");
+                            }
+                        }
+                    }
                     if (labBatch != null && direction == Direction.SOURCE &&
                             !labVessel.getNearestWorkflowLabBatches().contains(labBatch)) {
-                        messageCollection.addError(barcode + " is not in batch " + labBatch.getBatchName());
+                        messageCollection.addError(direction.getText() + " " + barcode + " is not in batch " + labBatch.getBatchName());
                     }
                 }
             }
@@ -1058,5 +1171,29 @@ public class ManualTransferActionBean extends RackScanActionBean {
     /** For testing. */
     void setLabVesselDao(LabVesselDao labVesselDao) {
         this.labVesselDao = labVesselDao;
+    }
+
+    public FileBean getLimsUploadFile() {
+        return limsUploadFile;
+    }
+
+    public void setLimsUploadFile(FileBean limsUploadFile) {
+        this.limsUploadFile = limsUploadFile;
+    }
+
+    public LimsFileType getLimsFileType() {
+        return limsFileType;
+    }
+
+    public void setLimsFileType(LimsFileType limsFileType) {
+        this.limsFileType = limsFileType;
+    }
+
+    public boolean isParseLimsFile() {
+        return isParseLimsFile;
+    }
+
+    public void setParseLimsFile(boolean parseLimsFile) {
+        isParseLimsFile = parseLimsFile;
     }
 }

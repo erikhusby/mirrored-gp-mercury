@@ -1,16 +1,24 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowProcessDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowProcessDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
 
-import static org.easymock.EasyMock.*;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotEquals;
 import static org.testng.Assert.assertNull;
@@ -31,19 +39,11 @@ public class WorkflowConfigLookupDbFreeTest {
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
-
-        WorkflowLoader workflowLoader = createMock(WorkflowLoader.class);
-        expect(workflowLoader.load()).andReturn(workflowConfig).times(2);
-        replay(workflowLoader);
-
         wfConfigLookup = new WorkflowConfigLookup();
-        wfConfigLookup.setWorkflowLoader(workflowLoader);
+        wfConfigLookup.setWorkflowConfig(workflowConfig);
 
         workflowConfigDenorms = wfConfigLookup.getDenormConfigs();
         assertTrue(workflowConfigDenorms.size() >= 4);
-
-        verify(workflowLoader);
-        reset(workflowLoader);
     }
 
     @Test

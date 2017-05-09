@@ -9,7 +9,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarterConfig;
@@ -17,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.run.ArchetypeAttribute;
@@ -24,6 +24,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -46,7 +48,6 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 import java.io.File;
 import java.io.FileInputStream;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -71,7 +72,7 @@ public class InfiniumRunResource {
     private static final Pattern BARCODE_PATTERN = Pattern.compile("([a-zA-Z0-9]*)_(R\\d*)(C\\d*)");
     /** This matches with attribute_definition.attribute_family in the database. */
     public static final String INFINIUM_GROUP = "Infinium";
-    private static String DATA_PATH = null;
+    private static String DATA_PATH;
 
     @Inject
     private LabVesselDao labVesselDao;
@@ -147,32 +148,45 @@ public class InfiniumRunResource {
             SampleData sampleData = sampleDataFetcher.fetchSampleData(
                     sampleInstanceV2.getNearestMercurySampleName());
 
-            List<ProductOrderSample> productOrderSamples;
-            Set<String> researchProjectIds;
-            Set<ProductOrder> productOrders;
             ProductOrderSample productOrderSample = sampleInstanceV2.getProductOrderSampleForSingleBucket();
-            ProductOrder productOrder = null;
-            if (productOrderSample == null) {
-                productOrderSamples = productOrderSampleDao.findBySamples(
-                        Collections.singletonList(sampleInstanceV2.getRootOrEarliestMercurySampleName()));
-                researchProjectIds = findResearchProjectIds(productOrderSamples);
-                productOrders = findProductOrders(productOrderSamples);
-            } else {
-                productOrder = productOrderSample.getProductOrder();
-                productOrders = Collections.singleton(productOrder);
-                productOrderSamples = Collections.singletonList(productOrderSample);
-                researchProjectIds = Collections.singleton(
-                        productOrderSample.getProductOrder().getResearchProject().getBusinessKey());
-            }
-            Set <GenotypingChip> chipTypes = findChipTypes(productOrderSamples, effectiveDate);
-
+            ProductOrder productOrder;
             boolean positiveControl = false;
             boolean negativeControl = false;
-            Control processControl = null;
-            if (chipTypes.isEmpty()) {
-                Pair<Control, Set<GenotypingChip>> pair = evaluateAsControl(chip, sampleData, effectiveDate);
-                chipTypes = pair.getRight();
-                processControl = pair.getLeft();
+            if (productOrderSample == null) {
+                // Likely a control, look at all samples on imported plate to try to find common ProductOrder
+                TransferTraverserCriteria.VesselForEventTypeCriteria vesselForEventTypeCriteria =
+                        new TransferTraverserCriteria.VesselForEventTypeCriteria(Collections.singletonList(
+                                LabEventType.ARRAY_PLATING_DILUTION), true);
+                chip.getContainerRole().applyCriteriaToAllPositions(vesselForEventTypeCriteria,
+                        TransferTraverserCriteria.TraversalDirection.Ancestors);
+
+                Set<ProductOrder> productOrders = new HashSet<>();
+                for (Map.Entry<LabEvent, Set<LabVessel>> labEventSetEntry :
+                        vesselForEventTypeCriteria.getVesselsForLabEventType().entrySet()) {
+                    for (LabVessel labVessel : labEventSetEntry.getValue()) {
+                        Set<SampleInstanceV2> sampleInstances = OrmUtil.proxySafeIsInstance(labVessel, PlateWell.class) ?
+                                labVessel.getContainers().iterator().next().getContainerRole().getSampleInstancesV2() :
+                                labVessel.getSampleInstancesV2();
+                        for (SampleInstanceV2 sampleInstance : sampleInstances) {
+                            ProductOrderSample platedPdoSample = sampleInstance.getProductOrderSampleForSingleBucket();
+                            if (platedPdoSample != null) {
+                                productOrders.add(platedPdoSample.getProductOrder());
+                            }
+                        }
+                        if (OrmUtil.proxySafeIsInstance(labVessel, PlateWell.class)) {
+                            break;
+                        }
+                    }
+                }
+
+                if (productOrders.size() == 1) {
+                    productOrder = productOrders.iterator().next();
+                } else if (productOrders.size() > 1){
+                    throw new ResourceException("Found mix of product orders ", Response.Status.INTERNAL_SERVER_ERROR);
+                } else  {
+                    throw new ResourceException("Found no product orders ", Response.Status.INTERNAL_SERVER_ERROR);
+                }
+                Control processControl = evaluateAsControl(sampleData);
                 if (processControl != null) {
                     if (processControl.getType() == Control.ControlType.POSITIVE) {
                         positiveControl = true;
@@ -180,37 +194,19 @@ public class InfiniumRunResource {
                         negativeControl = true;
                     }
                 }
+            } else {
+                productOrder = productOrderSample.getProductOrder();
             }
-            if (chipTypes.isEmpty()) {
+            GenotypingChip chipType = findChipType(productOrder, effectiveDate);
+
+            if (chipType == null) {
                 throw new ResourceException("Found no chip types for " + chip.getLabel() + " on " + effectiveDate,
                         Response.Status.INTERNAL_SERVER_ERROR);
             }
-            if (chipTypes.size() != 1) {
-                throw new ResourceException("Found mix of chip types for " + chip.getLabel() + " on " + effectiveDate,
-                        Response.Status.INTERNAL_SERVER_ERROR);
-            }
-
-            // Controls have a null research project id and product order.
-            String researchProjectId = null;
-            if (processControl == null) {
-                if (researchProjectIds.isEmpty()) {
-                    throw new ResourceException("Found no research projects", Response.Status.INTERNAL_SERVER_ERROR);
-                }
-                if (researchProjectIds.size() != 1) {
-                    throw new ResourceException("Found mix of research projects " + researchProjectIds, Response.Status.INTERNAL_SERVER_ERROR);
-                }
-                researchProjectId = researchProjectIds.iterator().next();
-
-                if (productOrders.isEmpty()) {
-                    throw new ResourceException("Found no product orders", Response.Status.INTERNAL_SERVER_ERROR);
-                }
-                productOrder = productOrders.iterator().next();
-            }
 
             String idatPrefix = DATA_PATH + "/" + chip.getLabel() + "/" + chip.getLabel() + "_" + vesselPosition.name();
-            GenotypingChip chipType = chipTypes.iterator().next();
             Map<String, String> chipAttributes = chipType.getAttributeMap();
-            if (chipType == null || chipAttributes.size() == 0) {
+            if (chipAttributes.isEmpty()) {
                 throw new ResourceException("Found no configuration for " + chipType.getChipName(),
                         Response.Status.INTERNAL_SERVER_ERROR);
             }
@@ -221,7 +217,7 @@ public class InfiniumRunResource {
                     startDate = labEvent.getEventDate();
                 }
             }
-            String scannerName = findScannerName(chip.getLabel(), vesselPosition.name());
+            String scannerName = InfiniumRunProcessor.findScannerName(chip.getLabel(), infiniumStarterConfig);
 
             String batchName = null;
             if (sampleInstanceV2.getSingleBatch() != null) {
@@ -231,11 +227,13 @@ public class InfiniumRunResource {
             String productName = null;
             String productFamily = null;
             String partNumber = null;
+            String researchProjectId = null;
             if (productOrder != null) {
                 productOrderId = productOrder.getJiraTicketKey();
                 productName = productOrder.getProduct().getProductName();
                 productFamily = productOrder.getProduct().getProductFamily().getName();
                 partNumber = productOrder.getProduct().getPartNumber();
+                researchProjectId = productOrder.getResearchProject().getBusinessKey();
 
                 //Attempt to override default chip attributes if changed in product order
                 GenotypingProductOrderMapping genotypingProductOrderMapping =
@@ -243,7 +241,7 @@ public class InfiniumRunResource {
                 if (genotypingProductOrderMapping != null) {
                     for (ArchetypeAttribute archetypeAttribute : genotypingProductOrderMapping.getAttributes()) {
                         if (chipAttributes.containsKey(archetypeAttribute.getAttributeName()) &&
-                            archetypeAttribute.getAttributeValue() != null) {
+                                archetypeAttribute.getAttributeValue() != null) {
                             chipAttributes.put(
                                     archetypeAttribute.getAttributeName(), archetypeAttribute.getAttributeValue());
                         }
@@ -285,92 +283,37 @@ public class InfiniumRunResource {
     }
 
     /**
-     * No connection to a product was found for a specific sample, so determine if it's a control, then try to
-     * get chip type from all samples.
+     * No connection to a product was found for a specific sample, so determine if it's a control.
      */
-    private Pair<Control, Set<GenotypingChip>> evaluateAsControl(LabVessel chip, SampleData sampleData, Date effectiveDate) {
-        Set<GenotypingChip> chipTypes = Collections.emptySet();
+    private Control evaluateAsControl(SampleData sampleData) {
         List<Control> controls = controlDao.findAllActive();
         Control processControl = null;
         for (Control control : controls) {
             if (control.getCollaboratorParticipantId().equals(sampleData.getCollaboratorParticipantId())) {
-                List<String> sampleNames = new ArrayList<>();
-                for (SampleInstanceV2 sampleInstanceV2 : chip.getSampleInstancesV2()) {
-                    sampleNames.add(sampleInstanceV2.getRootOrEarliestMercurySampleName());
-                }
-                chipTypes = findChipTypes(productOrderSampleDao.findBySamples(sampleNames), effectiveDate);
                 processControl = control;
                 break;
             }
         }
-        return Pair.of(processControl, chipTypes);
+        return processControl;
     }
 
-    private Set<GenotypingChip> findChipTypes(List<ProductOrderSample> productOrderSamples, Date effectiveDate) {
-        Set<GenotypingChip> chips = new HashSet<>();
-        for (ProductOrderSample productOrderSample : productOrderSamples) {
-            Pair<String, String> chipFamilyAndName = productEjb.getGenotypingChip(productOrderSample.getProductOrder(),
-                    effectiveDate);
-            if (chipFamilyAndName.getLeft() != null && chipFamilyAndName.getRight() != null) {
-                GenotypingChip chip = attributeArchetypeDao.findGenotypingChip(chipFamilyAndName.getLeft(),
-                        chipFamilyAndName.getRight());
-                if (chip == null) {
-                    throw new ResourceException("Chip " + chipFamilyAndName.getRight() + " is not configured",
-                            Response.Status.INTERNAL_SERVER_ERROR);
-                } else {
-                    chips.add(chip);
-                }
+    private GenotypingChip findChipType(ProductOrder productOrder, Date effectiveDate) {
+        GenotypingChip chip = null;
+        Pair<String, String> chipFamilyAndName = productEjb.getGenotypingChip(productOrder,
+                effectiveDate);
+        if (chipFamilyAndName.getLeft() != null && chipFamilyAndName.getRight() != null) {
+            chip = attributeArchetypeDao.findGenotypingChip(chipFamilyAndName.getLeft(),
+                    chipFamilyAndName.getRight());
+            if (chip == null) {
+                throw new ResourceException("Chip " + chipFamilyAndName.getRight() + " is not configured",
+                        Response.Status.INTERNAL_SERVER_ERROR);
             }
         }
-        return chips;
+        return chip;
     }
 
-    private Set<String> findResearchProjectIds(List<ProductOrderSample> productOrderSamples) {
-        Set<String> researchProjectIds = new HashSet<>();
-        for (ProductOrderSample productOrderSample : productOrderSamples) {
-            ResearchProject researchProject = productOrderSample.getProductOrder().getResearchProject();
-            if (researchProject != null) {
-                researchProjectIds.add(researchProject.getJiraTicketKey());
-            }
-        }
-        return researchProjectIds;
-    }
-
-
-    private Set<ProductOrder> findProductOrders(List<ProductOrderSample> productOrderSamples) {
-        Set<ProductOrder> productOrders = new HashSet<>();
-        for (ProductOrderSample productOrderSample : productOrderSamples) {
-            ProductOrder productOrder = productOrderSample.getProductOrder();
-            productOrders.add(productOrder);
-        }
-        return productOrders;
-    }
-
-    private String findScannerName(String chipBarcode, String vesselPosition) {
-        try {
-            if (infiniumStarterConfig != null) {
-                String redXml = String.format("%s_%s_1_Red.xml", chipBarcode, vesselPosition);
-                File chipDir = new File(infiniumStarterConfig.getDataPath(), chipBarcode);
-                File redXmlFile = new File(chipDir, redXml);
-                if (redXmlFile.exists()) {
-                    DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
-                    DocumentBuilder documentBuilder = builderFactory.newDocumentBuilder();
-                    Document document = documentBuilder.parse(new FileInputStream(redXmlFile));
-                    XPath xPath = XPathFactory.newInstance().newXPath();
-                    XPathExpression lcsetKeyExpr = xPath.compile("ImageHeader/ScannerID");
-                    NodeList scannerIdNodeList = (NodeList) lcsetKeyExpr.evaluate(document,
-                            XPathConstants.NODESET);
-                    Node elemNode = scannerIdNodeList.item(0);
-                    String scannerId = elemNode.getFirstChild().getNodeValue();
-                    return mapSerialNumberToMachineName.get(scannerId);
-                }
-            }
-        } catch (Exception e) {
-            log.error("Failed to find scanner name from filesystem for " + chipBarcode);
-        }
-        return null;
-    }
-
+    // Must be public, to allow calling from test
+    @SuppressWarnings("WeakerAccess")
     public void setInfiniumStarterConfig(InfiniumStarterConfig infiniumStarterConfig) {
         this.infiniumStarterConfig = infiniumStarterConfig;
     }
@@ -379,7 +322,7 @@ public class InfiniumRunResource {
         this.attributeArchetypeDao = attributeArchetypeDao;
     }
 
-    public static final Map<String, String> mapSerialNumberToMachineName = new HashMap<>();
+    static final Map<String, String> mapSerialNumberToMachineName = new HashMap<>();
     static {
         mapSerialNumberToMachineName.put("N296", "Practical Pig");
         mapSerialNumberToMachineName.put("N0296", "Practical Pig");

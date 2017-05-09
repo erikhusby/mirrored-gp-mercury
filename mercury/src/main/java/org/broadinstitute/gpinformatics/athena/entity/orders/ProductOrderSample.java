@@ -7,12 +7,14 @@ import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerPr
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.samples.SampleReceiptValidation;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.BillingLedgerActionBean;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProject;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
@@ -151,6 +153,24 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         sampleReceiptValidations.clear();
     }
 
+    public Product getProductForPriceItem(PriceItem priceItem) {
+        Product result = getProductOrder().getProduct();
+        if(getProductOrder().getProduct().getPrimaryPriceItem().equals(priceItem)) {
+            result = getProductOrder().getProduct();
+        } else {
+            for(ProductOrderAddOn addOn:getProductOrder().getAddOns()) {
+                if(addOn.getAddOn().getPrimaryPriceItem().equals(priceItem)) {
+                    result = addOn.getAddOn();
+                    break;
+                }
+            }
+        }
+        if(result == null) {
+            throw new RuntimeException("Unable to find a product associated with the given addon");
+        }
+        return result;
+    }
+
     /**
      * Whether to continue processing a sample if a quantification (e.g. Pico) is out of specification
      * (e.g. concentration is too low).
@@ -176,6 +196,17 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
     @Transient
     private MercurySample.MetadataSource metadataSource;
+
+    @Transient
+    private List<OrspProject> orspProjects = new ArrayList<>();
+
+    public List<OrspProject> getOrspProjects() {
+        return orspProjects;
+    }
+
+    public void addOrspProject(OrspProject orspProject) {
+        orspProjects.add(orspProject);
+    }
 
     /**
      * Convert a list of ProductOrderSamples into a list of sample names.
@@ -365,6 +396,14 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
             }
         }
         return false;
+    }
+
+    @Override
+    public void setSampleData(@Nonnull SampleData sampleData) {
+        super.setSampleData(sampleData);
+        if (mercurySample != null) {
+            mercurySample.setSampleData(sampleData);
+        }
     }
 
     @Override
@@ -1005,6 +1044,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
                     double quantityDelta = ledgerUpdate.getQuantityDelta();
 
                     if (!haveExistingEntry) {
+
                         addLedgerItem(ledgerUpdate.getWorkCompleteDate(), ledgerUpdate.getPriceItem(), quantityDelta);
                     } else {
 

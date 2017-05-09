@@ -197,13 +197,13 @@
                         </li>
                         <li>
                             <stripes:link id="sampleSheet"
-                                    beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.SampleSheetActionBean"
-                                    event="view">Arrays Sample Sheet</stripes:link>
+                                    beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.ArraysReportActionBean"
+                                    event="view">Arrays Reports</stripes:link>
                         </li>
                         <li>
-                            <stripes:link id="pooledTubeUpload"
-                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.PooledTubeUploadActionBean"
-                                          event="view">Pooled Tube Upload</stripes:link>
+                            <stripes:link id="tagVessel"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.TagVesselActionBean"
+                                          event="view">Add Dev Condition To Vessel</stripes:link>
                         </li>
                     </ul>
                 </li>
@@ -236,6 +236,9 @@
                             <li><stripes:link
                                     beanclass="org.broadinstitute.gpinformatics.mercury.presentation.admin.PublicMessageAdminActionBean"
                                     event="view">Manage Public Message</stripes:link></li>
+                            <li><stripes:link
+                                    beanclass="org.broadinstitute.gpinformatics.mercury.presentation.admin.SAPAccessControlActionBean"
+                                    event="view">Manage Access to SAP Components</stripes:link></li>
                         </security:authorizeBlock>
                     </ul>
                 </li>

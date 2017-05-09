@@ -16,8 +16,4 @@ public class SampleInstanceEntityDao extends GenericDao {
         return findSingle(SampleInstanceEntity.class, SampleInstanceEntity_.sampleLibraryName, sampleLibraryName );
     }
 
-    public SampleInstanceEntity findByLabVessel(LabVessel labVessel) {
-        return findSingle(SampleInstanceEntity.class, SampleInstanceEntity_.labVessel, labVessel );
-    }
-
 }

@@ -15,7 +15,6 @@ import net.sourceforge.stripes.controller.LifecycleStage;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
-// TODO: Move anything that is needed from SampleLedgerExporter into another class
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderListEntryDao;
@@ -46,6 +45,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+
+// TODO: Move anything that is needed from SampleLedgerExporter into another class
 
 @UrlBinding("/orders/ledger.action")
 public class BillingLedgerActionBean extends CoreActionBean {
@@ -345,19 +346,21 @@ public class BillingLedgerActionBean extends CoreActionBean {
         Multimap<ProductOrderSample, ProductOrderSample.LedgerUpdate> ledgerUpdates = LinkedListMultimap.create();
         for (int i = 0; i < ledgerData.size(); i++) {
             LedgerData data = ledgerData.get(i);
-            ProductOrderSample productOrderSample = productOrder.getSamples().get(i);
-            Map<PriceItem, ProductOrderSample.LedgerQuantities> ledgerQuantitiesMap =
-                    productOrderSample.getLedgerQuantities();
-            for (Map.Entry<Long, ProductOrderSampleQuantities> entry : data.getQuantities().entrySet()) {
-                PriceItem priceItem = priceItemDao.findById(PriceItem.class, entry.getKey());
-                ProductOrderSampleQuantities quantities = entry.getValue();
-                ProductOrderSample.LedgerQuantities ledgerQuantities = ledgerQuantitiesMap.get(priceItem);
-                double currentQuantity = ledgerQuantities != null ? ledgerQuantities.getTotal() : 0;
-                ProductOrderSample.LedgerUpdate ledgerUpdate =
-                        new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem,
-                                quantities.originalQuantity, currentQuantity, quantities.submittedQuantity,
-                                data.getWorkCompleteDate());
-                ledgerUpdates.put(productOrderSample, ledgerUpdate);
+            if (data != null) {
+                ProductOrderSample productOrderSample = productOrder.getSamples().get(i);
+                Map<PriceItem, ProductOrderSample.LedgerQuantities> ledgerQuantitiesMap =
+                        productOrderSample.getLedgerQuantities();
+                for (Map.Entry<Long, ProductOrderSampleQuantities> entry : data.getQuantities().entrySet()) {
+                    PriceItem priceItem = priceItemDao.findById(PriceItem.class, entry.getKey());
+                    ProductOrderSampleQuantities quantities = entry.getValue();
+                    ProductOrderSample.LedgerQuantities ledgerQuantities = ledgerQuantitiesMap.get(priceItem);
+                    double currentQuantity = ledgerQuantities != null ? ledgerQuantities.getTotal() : 0;
+                    ProductOrderSample.LedgerUpdate ledgerUpdate =
+                            new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem,
+                                    quantities.originalQuantity, currentQuantity, quantities.submittedQuantity,
+                                    data.getWorkCompleteDate());
+                    ledgerUpdates.put(productOrderSample, ledgerUpdate);
+                }
             }
         }
         return ledgerUpdates.asMap();

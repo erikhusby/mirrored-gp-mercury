@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -114,7 +115,7 @@ public class EventEtlDbFreeTest {
         mercurySamples.clear();
         mercurySamples.add(sample);
 
-        tst = new LabEventEtl(wfLookup, dao, sequencingSampleFactEtl);
+        tst = new LabEventEtl(wfLookup, dao, sequencingSampleFactEtl, new WorkflowLoader().load());
         tst.setAuditReaderDao(auditReader);
     }
 
@@ -572,7 +573,7 @@ public class EventEtlDbFreeTest {
         EasyMock.verify(mocks);
     }
 
-    public void testNoFixups() {
+    public void testNoFixups() throws Exception {
         Collection<Long> deletedEntityIds = new ArrayList<>();
         Collection<Long> modifiedEntityIds = new ArrayList<>();
         Collection<Long> addedEntityIds = new ArrayList<>();
@@ -582,7 +583,7 @@ public class EventEtlDbFreeTest {
     }
 
     @Test(groups = TestGroups.DATABASE_FREE, enabled = true)
-    public void testFixups() {
+    public void testFixups() throws Exception {
         Long modEventId = 9L;
         Long seqRunId = 8L;
         Long cartridgeEventId = 7L;

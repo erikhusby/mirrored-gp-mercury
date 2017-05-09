@@ -11,6 +11,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.time.DateUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
@@ -25,6 +26,10 @@ import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtili
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
+import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -97,13 +102,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @JoinColumn(name = "product_order", nullable = false)
     @OrderColumn(name = "SAMPLE_POSITION", nullable = false)
     @AuditJoinTable(name = "product_order_sample_join_aud")
-    @BatchSize(size = 100)
+    @BatchSize(size = 500)
     private final List<ProductOrderSample> samples = new ArrayList<>();
 
     @Transient
     private final SampleCounts sampleCounts = new SampleCounts();
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "productOrder", orphanRemoval = true)
+    @BatchSize(size = 100)
     private final Set<ProductOrderAddOn> addOns = new HashSet<>();
 
     @Id
@@ -211,6 +217,24 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @OneToMany(mappedBy = "productOrder")
     private Set<BucketEntry> bucketEntries;
 
+    @Column(name = "sap_order_number")
+    private String sapOrderNumber;
+
+    @ManyToMany(cascade = CascadeType.PERSIST)
+    @JoinTable(schema = "athena", name = "product_order_sap_orders", joinColumns = {@JoinColumn(name = "reference_product_order")})
+    private List<SapOrderDetail> sapReferenceOrders = new ArrayList<>();
+
+    @OneToMany(mappedBy = "parentOrder", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    private Set<ProductOrder> childOrders = new HashSet<>();
+
+    @ManyToOne(cascade = {CascadeType.PERSIST}, fetch = FetchType.EAGER)
+    @JoinColumn(name="PARENT_PRODUCT_ORDER")
+    private ProductOrder parentOrder;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "PIPELINE_LOCATION", nullable = true)
+    private PipelineLocation pipelineLocation;
+
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.
      */
@@ -231,6 +255,66 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      */
     public ProductOrder(@Nonnull BspUser createdBy, ResearchProject researchProject) {
         this(createdBy.getUserId(), "", new ArrayList<ProductOrderSample>(), "", null, researchProject);
+    }
+
+    /**
+     * Helper method to take specific basic elements of a Product Order for the purposes of creating a new cloned order
+     * @param toClone Original order to be cloned AND set as the parent of the cloned order
+     * @param shareSapOrder Indicates whether the cloned order will refer to the original orders SAP order reference
+     * @return A new Product Order which has certain elements copied from the original order
+     */
+    public static ProductOrder cloneProductOrder(ProductOrder toClone, boolean shareSapOrder) {
+
+        final ProductOrder cloned = new ProductOrder(toClone.getCreatedBy(),
+                "Clone " + toClone.getChildOrders().size() + ": " + toClone.getTitle(),
+                new ArrayList<ProductOrderSample>(), toClone.getQuoteId(), toClone.getProduct(),
+                toClone.getResearchProject());
+        List<Product> potentialAddons = new ArrayList<>();
+
+        for(ProductOrderAddOn cloneAddon : toClone.getAddOns()) {
+            potentialAddons.add(cloneAddon.getAddOn());
+        }
+        if(CollectionUtils.isNotEmpty(potentialAddons)) {
+            cloned.updateAddOnProducts(potentialAddons);
+        }
+
+        if (shareSapOrder & toClone.isSavedInSAP()) {
+            cloned.addSapOrderDetail(new SapOrderDetail(toClone.latestSapOrderDetail().getSapOrderNumber(),
+                    toClone.latestSapOrderDetail().getPrimaryQuantity(), toClone.latestSapOrderDetail().getQuoteId(),
+                    toClone.latestSapOrderDetail().getCompanyCode(), toClone.latestSapOrderDetail().getOrderProductsHash(),toClone.latestSapOrderDetail().getOrderPricesHash()));
+        }
+
+        toClone.addChildOrder(cloned);
+
+        return cloned;
+    }
+
+    public static List<Product> getAllProductsOrdered(ProductOrder order ) {
+        List<Product> orderedListOfProducts = new ArrayList<>();
+        orderedListOfProducts.add(order.getProduct());
+        for (ProductOrderAddOn addOn : order.getAddOns()) {
+            orderedListOfProducts.add(addOn.getAddOn());
+        }
+        Collections.sort(orderedListOfProducts);
+        return orderedListOfProducts;
+    }
+
+    /**
+     * helper method to see if at least one ledger entries across the collection of product order samples is marked
+     * as having completed billing.
+     * @return
+     */
+    public boolean hasAtLeastOneBilledLedgerEntry() {
+        boolean oneBilled = false;
+        for (ProductOrderSample sample : this.getSamples()) {
+            for (LedgerEntry ledgerEntry : sample.getLedgerItems()) {
+                if (ledgerEntry.getBillingSession() != null && ledgerEntry.getBillingSession().isComplete()) {
+                    oneBilled = true;
+                    break;
+                }
+            }
+        }
+        return oneBilled;
     }
 
     /**
@@ -329,6 +413,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     /**
      * Load SampleData for all the supplied ProductOrderSamples.
+     *
      * @see SampleDataFetcher
      */
     public static void loadSampleData(List<ProductOrderSample> samples) {
@@ -337,6 +422,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     /**
      * Load CollaboratorSampleName for all the supplied ProductOrderSamples.
+     *
      * @see SampleDataFetcher
      */
     public static void loadCollaboratorSampleName(List<ProductOrderSample> samples) {
@@ -345,9 +431,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     /**
      * Load SampleData for all the supplied ProductOrderSamples.
+     *
      * @see SampleDataFetcher
      */
-    public static void loadSampleData(List<ProductOrderSample> samples, BSPSampleSearchColumn... bspSampleSearchColumns) {
+    public static void loadSampleData(List<ProductOrderSample> samples,
+                                      BSPSampleSearchColumn... bspSampleSearchColumns) {
 
         // Create a subset of the samples so we only call BSP for BSP samples that aren't already cached.
         Set<String> sampleNames = new HashSet<>(samples.size());
@@ -416,13 +504,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public String getAddOnList(String delimiter) {
-        if (addOns.isEmpty()) {
+        if (getAddOns().isEmpty()) {
             return "no Add-ons";
         }
 
-        String[] addOnArray = new String[addOns.size()];
+        String[] addOnArray = new String[getAddOns().size()];
         int i = 0;
-        for (ProductOrderAddOn poAddOn : addOns) {
+        for (ProductOrderAddOn poAddOn : getAddOns()) {
             addOnArray[i++] = poAddOn.getAddOn().getProductName();
         }
 
@@ -430,11 +518,27 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public int getLaneCount() {
-        return laneCount;
+        return (isChildOrder())?parentOrder.getLaneCount():laneCount;
     }
 
     public void setLaneCount(int laneCount) {
         this.laneCount = laneCount;
+    }
+
+    public boolean requiresLaneCount() {
+        boolean laneCountNeeded = getProduct()!=null && getProduct().getProductFamily()!=null
+                                  && getProduct().getProductFamily().isSupportsNumberOfLanes();
+
+        if(!laneCountNeeded) {
+            for (ProductOrderAddOn addOn : getAddOns()) {
+                laneCountNeeded = addOn.getAddOn().getProductFamily().isSupportsNumberOfLanes();
+                if(laneCountNeeded) {
+                    break;
+                }
+            }
+        }
+
+        return laneCountNeeded;
     }
 
     public void updateData(ResearchProject researchProject, Product product, List<Product> addOnProducts,
@@ -506,6 +610,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      * Call this method before saving changes to the database.  It updates the modified date and modified user,
      * and sets the create date and create user if these haven't been set yet.
      *
+     * FIXME: 12/2/16 SGM This method call should be ripped out and have the Product Order class extend Updatable
+     * Doing so will automatically update these fields on save without this Hokey "Save Type"
+     *
      * @param user     the user doing the save operation.
      * @param saveType a {@link SaveType} enum to define if creating or just updating
      */
@@ -540,7 +647,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public List<ProductOrderAddOn> getAddOns() {
-        return ImmutableList.copyOf(addOns);
+        return isChildOrder()?parentOrder.getAddOns():ImmutableList.copyOf(addOns);
     }
 
     public void updateAddOnProducts(List<Product> addOnList) {
@@ -556,7 +663,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public ResearchProject getResearchProject() {
-        return researchProject;
+        return isChildOrder()?parentOrder.getResearchProject():researchProject;
     }
 
     public void setResearchProject(ResearchProject researchProject) {
@@ -570,7 +677,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public Product getProduct() {
-        return product;
+        return isChildOrder()?parentOrder.getProduct():product;
     }
 
     public void setProduct(Product product) {
@@ -578,7 +685,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public String getQuoteId() {
-        return quoteId;
+        return isChildOrder()?parentOrder.getQuoteId():quoteId;
     }
 
     public void setQuoteId(String quoteId) {
@@ -903,6 +1010,67 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     /**
+     * This enum helps to identfy how to aggregate the count totals across a PDO and its child orders
+     */
+    public enum CountAggregation{ ALL, BILL_READY, SHARE_SAP_ORDER, SHARE_SAP_ORDER_AND_BILL_READY}
+
+    /**
+     * Helper function to get the total number of samples associated with this order.  What makes this different than
+     * the other sample count methods are 2 things:
+     * <ol><li>This will work for Database Free test cases.  The sample counts internal class ultimately relies on
+     * calling ServiceAccessUtility during its initialization which is difficult to mock out </li>
+     * <li>The scenarios that utilize this method are mainly geared toward understanding the count for SAP
+     * communication.  At present time, that excludes the need to include abandoned Samples</li>
+     * </ol>
+     * @param sameSapOrderOnly tells what kind of aggregation the count should do
+     * @return
+     */
+    public int getTotalNonAbandonedCount(CountAggregation sameSapOrderOnly) {
+        int count = 0;
+        count = getNonAbandonedCount();
+
+        for (ProductOrder childOrder : getChildOrders()) {
+            switch (sameSapOrderOnly) {
+            case SHARE_SAP_ORDER:
+                if (!StringUtils.equals(childOrder.getSapOrderNumber(),getSapOrderNumber())) {
+                        continue;
+                }
+                break;
+            case SHARE_SAP_ORDER_AND_BILL_READY:
+                if (!StringUtils.equals(childOrder.getSapOrderNumber(),getSapOrderNumber())
+                        || !childOrder.getOrderStatus().canBillNotAbandoned()) {
+                    continue;
+                }
+                break;
+            case BILL_READY:
+                if(!childOrder.getOrderStatus().canBillNotAbandoned()) {
+                    continue;
+                }
+                break;
+            }
+            count += childOrder.getNonAbandonedCount();
+        }
+
+        return count;
+    }
+
+    /**
+     * Only used to support @see getTotalNonAbandonedCount, this helper method will retrieve the current count of all
+     * samples in the current order which are not abandoned
+     * @return count of samples in the order that matches the criteria in the code
+     */
+    protected int getNonAbandonedCount() {
+        int count = 0;
+
+        for (ProductOrderSample sample : getSamples()) {
+            if (sample.getDeliveryStatus() != ProductOrderSample.DeliveryStatus.ABANDONED) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /**
      * Helper method that determines how many BSP samples registered to the product order are
      * in an Active state.
      *
@@ -922,7 +1090,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
 
     public Collection<RegulatoryInfo> getRegulatoryInfos() {
-        return regulatoryInfos;
+        return isChildOrder()?parentOrder.getRegulatoryInfos():regulatoryInfos;
     }
 
     /**
@@ -970,8 +1138,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      * has a RIN risk criteria.
      */
     public boolean isRinScoreValidationRequired() {
-        if (product != null) {
-            for (RiskCriterion riskCriterion : product.getRiskCriteria()) {
+        if (getProduct() != null) {
+            for (RiskCriterion riskCriterion : getProduct().getRiskCriteria()) {
                 if (RiskCriterion.RiskCriteriaType.RIN == riskCriterion.getType()) {
                     return true;
                 }
@@ -991,7 +1159,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public String getSkipQuoteReason() {
-        return skipQuoteReason;
+        return isChildOrder()?parentOrder.getSkipQuoteReason():skipQuoteReason;
     }
 
     public void setSkipQuoteReason(String skipQuoteReason) {
@@ -999,7 +1167,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public String getSkipRegulatoryReason() {
-        return skipRegulatoryReason;
+        return isChildOrder()?parentOrder.getSkipRegulatoryReason():skipRegulatoryReason;
     }
 
     public void setSkipRegulatoryReason(String skipRegulatoryReason) {
@@ -1007,7 +1175,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public Collection<RegulatoryInfo> findAvailableRegulatoryInfos() {
-        return researchProject.getRegulatoryInfos();
+        return getResearchProject().getRegulatoryInfos();
     }
 
     public void setRegulatoryInfos(Collection<RegulatoryInfo> regulatoryInfos) {
@@ -1020,7 +1188,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public boolean orderPredatesRegulatoryRequirement() {
-        Date testDate = ((getPlacedDate() == null) ?new Date():getPlacedDate());
+        Date testDate = ((getPlacedDate() == null) ? new Date() : getPlacedDate());
         return testDate.before(getIrbRequiredStartDate());
     }
 
@@ -1039,7 +1207,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public boolean canSkipRegulatoryRequirements() {
-        return !StringUtils.isBlank(skipRegulatoryReason);
+        return !StringUtils.isBlank(getSkipRegulatoryReason());
     }
 
     public String getSquidWorkRequest() {
@@ -1058,10 +1226,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      * @see ResearchProject#getRegulatoryDesignationCodeForPipeline
      */
     public String getRegulatoryDesignationCodeForPipeline() {
-        if (researchProject == null) {
-            throw new RuntimeException("No research project for PDO " + getTitle() + ".  Cannot determine regulatory designation.");
+        if (getResearchProject() == null) {
+            throw new RuntimeException(
+                    "No research project for PDO " + getTitle() + ".  Cannot determine regulatory designation.");
         }
-        return researchProject.getRegulatoryDesignationCodeForPipeline();
+        return getResearchProject().getRegulatoryDesignationCodeForPipeline();
     }
 
     @Override
@@ -1145,6 +1314,31 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return getProduct() != null && getProduct().isSampleInitiationProduct();
     }
 
+    public String getSapOrderNumber() {
+
+        String sapOrderNumber = null;
+        if(latestSapOrderDetail()!= null) {
+            sapOrderNumber = latestSapOrderDetail().getSapOrderNumber();
+        }
+        return sapOrderNumber;
+    }
+
+    public SapOrderDetail latestSapOrderDetail() {
+
+        SapOrderDetail sapOrderDetail = null;
+        if (CollectionUtils.isNotEmpty(sapReferenceOrders)) {
+            ArrayList<SapOrderDetail> orderDetailSortList = new ArrayList<>(sapReferenceOrders);
+            Collections.sort(orderDetailSortList);
+
+            sapOrderDetail = orderDetailSortList.get(orderDetailSortList.size() - 1);
+        }
+        return sapOrderDetail;
+    }
+
+    public void setSapOrderNumber(String sapOrderNumber) {
+        throw new UnsupportedOperationException("No longer just setting the SAP Order Number");
+    }
+
     /**
      * This is used to help create or update a PDO's Jira ticket.
      */
@@ -1200,7 +1394,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         Completed;
 
         public static final EnumSet<OrderStatus> canAbandonStatuses = EnumSet.of(Pending, Submitted);
-        /** CSS Class to use when displaying this status in HTML. */
+        /**
+         * CSS Class to use when displaying this status in HTML.
+         */
         private final String cssClass;
 
         OrderStatus() {
@@ -1244,24 +1440,54 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             return cssClass;
         }
 
-        /** @return true if an order can be abandoned from this state. */
+        /**
+         * @return true if an order can be abandoned from this state.
+         */
         public boolean canAbandon() {
             return canAbandonStatuses.contains(this);
         }
 
-        /** @return true if an order can be placed from this state. */
+        /**
+         * @return true if an order can be placed from this state.
+         */
         public boolean canPlace() {
             return EnumSet.of(Draft, Pending).contains(this);
         }
 
-        /** @return true if an order is ready for the lab to begin work on it. */
+        /**
+         * @return true if an order is ready for the lab to begin work on it.
+         */
         public boolean readyForLab() {
             return !EnumSet.of(Draft, Pending, Abandoned).contains(this);
         }
 
-        /** @return true if an order can be billed from this state. */
+        /**
+         * @return true if an order can be billed from this state.
+         */
         public boolean canBill() {
             return EnumSet.of(Submitted, Abandoned, Completed).contains(this);
+        }
+        /**
+         * @return true if an order can be billed from this state.
+         */
+        public boolean canBillNotAbandoned() {
+            return EnumSet.of(Submitted, Completed).contains(this);
+        }
+    }
+
+    public enum PipelineLocation implements StatusType {
+        US_CLOUD("US Cloud"),
+        ON_PREMISES("On Premises");
+
+        private String displayName;
+
+        PipelineLocation(String displayName) {
+            this.displayName = displayName;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return displayName;
         }
     }
 
@@ -1326,6 +1552,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         private int missingBspMetaDataCount;
         private int uniqueSampleCount;
         private int uniqueParticipantCount;
+        private int abandonedCount;
 
         /**
          * This keeps track of unique and total samples per metadataSource.
@@ -1410,6 +1637,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             missingBspMetaDataCount = 0;
             onRiskCount = 0;
             notReceivedAndNotAbandonedCount = 0;
+            abandonedCount = 0;
             stockTypeCounter.clear();
             primaryDiseaseCounter.clear();
             genderCounter.clear();
@@ -1435,6 +1663,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                 receivedSampleCount++;
             } else if (!sample.getDeliveryStatus().isAbandoned()) {
                 notReceivedAndNotAbandonedCount++;
+            }
+
+            if (sample.getDeliveryStatus().isAbandoned()) {
+                abandonedCount++;
             }
 
             if (sampleData.isActiveStock()) {
@@ -1477,25 +1709,25 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
          * Format the number to say None if the value is zero if it matches the comparison number.
          *
          * @param metadataSource The metadataSource for this sample
-         * @param count        The number to format
+         * @param count          The number to format
          */
         private void formatSummaryNumber(List<String> output, String message,
                                          MercurySample.MetadataSource metadataSource, int count) {
-                output.add(MessageFormat.format(message, metadataSource.getDisplayName(), count));
+            output.add(MessageFormat.format(message, metadataSource.getDisplayName(), count));
         }
 
         /**
          * Format the number to say None if the value is zero, or All if it matches the comparison number.
          *
-         * @param count        The number to format
-         * @param compareCount The number to compare to
+         * @param count          The number to format
+         * @param compareCount   The number to compare to
          * @param metadataSource The metadataSource for this sample
-         *
          */
 
         private void formatSummaryNumber(List<String> output, String message,
                                          MercurySample.MetadataSource metadataSource, int count, int compareCount) {
-                output.add(MessageFormat.format(message, metadataSource.getDisplayName(), formatCountTotal(count, compareCount)));
+            output.add(MessageFormat
+                    .format(message, metadataSource.getDisplayName(), formatCountTotal(count, compareCount)));
         }
 
         /**
@@ -1590,8 +1822,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
          * This class keeps track of sample totals per Metadatasource
          */
         private class SampleCountForSource {
-            private int total=0;
-            private final Set<String> uniqueSampleIds =new HashSet<>();
+            private int total = 0;
+            private final Set<String> uniqueSampleIds = new HashSet<>();
 
             public void addSample(String... sampleIds) {
                 for (String sampleId : sampleIds) {
@@ -1600,8 +1832,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                 }
             }
 
-            public void clear(){
-                total=0;
+            public void clear() {
+                total = 0;
                 uniqueSampleIds.clear();
             }
 
@@ -1617,7 +1849,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
 
     public Boolean isAttestationConfirmed() {
-        return getAttestationConfirmed();
+        return isChildOrder()?parentOrder.getAttestationConfirmed():getAttestationConfirmed();
     }
 
     public Boolean getAttestationConfirmed() {
@@ -1651,7 +1883,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      * @return true if there is even one initiation product, false otherwise.
      */
     public boolean hasSampleInitiationAddOn() {
-        for (ProductOrderAddOn addOn : addOns) {
+        for (ProductOrderAddOn addOn : getAddOns()) {
             if (addOn.getAddOn().isSampleInitiationProduct()) {
                 return true;
             }
@@ -1680,7 +1912,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     public Collection<String> getPrintFriendlyRegulatoryInfo() {
         Set<String> regInfo = new HashSet<>();
 
-        for (RegulatoryInfo regulatoryInfo : regulatoryInfos) {
+        for (RegulatoryInfo regulatoryInfo : getRegulatoryInfos()) {
             regInfo.add(regulatoryInfo.printFriendlyValue());
         }
         return regInfo;
@@ -1713,14 +1945,175 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     public int getUnbilledSampleCount() {
         Iterable<ProductOrderSample> filteredResults = null;
 
-            filteredResults = Iterables.filter(samples,
-                    new Predicate<ProductOrderSample>() {
-                        @Override
-                        public boolean apply(@Nullable ProductOrderSample productOrderSample) {
-                            return productOrderSample.isToBeBilled();
-                        }
-                    });
+        List<ProductOrderSample> samplesToFilter = new ArrayList<>();
+        samplesToFilter.addAll(samples);
 
-        return (filteredResults != null)?Iterators.size(filteredResults.iterator()):0;
+        for (ProductOrder childProductOrder : getChildOrders()) {
+            if(childProductOrder.isSubmitted()) {
+                samplesToFilter.addAll(childProductOrder.samples);
+            }
+        }
+
+        filteredResults = Iterables.filter(samplesToFilter,
+                new Predicate<ProductOrderSample>() {
+                    @Override
+                    public boolean apply(@Nullable ProductOrderSample productOrderSample) {
+                        return productOrderSample.isToBeBilled();
+                    }
+                });
+
+        return (filteredResults != null) ? Iterators.size(filteredResults.iterator()) : 0;
+    }
+
+    public boolean isSavedInSAP() {
+        return StringUtils.isNotBlank(getSapOrderNumber());
+    }
+
+    public ProductOrder getParentOrder() {
+        return parentOrder;
+    }
+
+    public void setParentOrder(ProductOrder parentOrder) {
+
+        this.parentOrder = parentOrder;
+    }
+
+    public Collection<ProductOrder> getChildOrders() {
+        Collection<ProductOrder> result = Collections.emptyList();
+
+        if (CollectionUtils.isNotEmpty(childOrders)) {
+            result = childOrders;
+        }
+        return result;
+    }
+
+    public void addChildOrders(Collection<ProductOrder> childOrders) {
+
+        for (ProductOrder childOrder : childOrders) {
+            addChildOrder(childOrder);
+        }
+    }
+
+    public void addChildOrder(ProductOrder childOrder) {
+        childOrder.setParentOrder(this);
+        childOrders.add(childOrder);
+    }
+
+    public int getNumberForReplacement() {
+        return getSamples().size() - getTotalNonAbandonedCount(CountAggregation.ALL);
+    }
+
+    public boolean isChildOrder() {
+        return this.parentOrder != null;
+    }
+
+    public List<SapOrderDetail> getSapReferenceOrders() {
+        return sapReferenceOrders;
+    }
+
+    public void setSapReferenceOrders(
+            List<SapOrderDetail> sapReferenceOrders) {
+        for (SapOrderDetail orderDetail : sapReferenceOrders) {
+            addSapOrderDetail(orderDetail);
+        }
+    }
+
+    public void addSapOrderDetail(SapOrderDetail orderDetail) {
+
+        this.sapReferenceOrders.add(orderDetail);
+        orderDetail.addReferenceProductOrder(this);
+
+    }
+
+    public PipelineLocation getPipelineLocation() {
+        return pipelineLocation;
+    }
+
+    public void setPipelineLocation(
+            PipelineLocation pipelineLocation) {
+        this.pipelineLocation = pipelineLocation;
+    }
+
+    public static void checkQuoteValidity(ProductOrder productOrder, Quote quote) throws QuoteServerException {
+        for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel()) {
+            if(fundingLevel.getFunding().getFundingType().equals(Funding.FUNDS_RESERVATION)) {
+                if(fundingLevel.getFunding().getGrantEndDate() != null &&
+                   !fundingLevel.getFunding().getGrantEndDate().after(new Date())) {
+                    throw new QuoteServerException("The funding source " + fundingLevel.getFunding().getGrantNumber() +
+                                                   " has expired making this quote currently unfunded.");
+                }
+            }
+        }
+
+    }
+
+    /**
+     * Helps to determine if all orders associated with a product order (the main order and any "Child" orders created
+     * when replacing abandoned orders) are completed.
+     *
+     * @return boolean flag indicating all orders in the chain are completed
+     */
+    public boolean allOrdersAreComplete() {
+
+        boolean completeFlag = false;
+        if (isChildOrder() && StringUtils.equals(getParentOrder().getSapOrderNumber(), getSapOrderNumber())) {
+            completeFlag = getParentOrder().allOrdersAreComplete();
+        } else {
+            completeFlag = getOrderStatus() == OrderStatus.Completed;
+
+            for (ProductOrder childProductOrder : getChildOrders()) {
+                if(StringUtils.equals(childProductOrder.getSapOrderNumber(), getSapOrderNumber())) {
+                    if (completeFlag) {
+                        completeFlag = childProductOrder.getOrderStatus() == OrderStatus.Completed;
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
+        return completeFlag;
+    }
+
+    /**
+     * Helps to retrieve the highest lever order in a heirarchy which deals with the SAP order in question.  This makes
+     * it easier to get the total non abandoned sample count of the order.
+     *
+     * @param productOrder Product order associated with an SAP order which needs to be updated
+     * @return   either the product order passed in, or its' parent order depending on the relationship to the SAP
+     * order
+     */
+    public static ProductOrder getTargetSAPProductOrder(ProductOrder productOrder) {
+        ProductOrder returnOrder;
+        if(productOrder.isChildOrder()) {
+            final ProductOrder parentOrder = productOrder.getParentOrder();
+
+            final String sapOrderNumber = parentOrder.getSapOrderNumber();
+
+            boolean sameSAPOrderAsParent = sharesSAPOrderWithParent(productOrder, sapOrderNumber);
+            returnOrder = sameSAPOrderAsParent ? parentOrder : productOrder;
+        } else {
+            returnOrder = productOrder;
+        }
+        return returnOrder;
+    }
+
+    /**
+     * Encapsulates the conditional logic to determine if a given product order not only has a parent order but also if
+     * that parent order shares an sap order with the given product order
+     * @param childOrder            target order to determine if its parent shares the same sap number
+     * @param parentSAPOrderNumber  SAP number to compare between PDOs
+     * @return
+     */
+    public static boolean sharesSAPOrderWithParent(ProductOrder childOrder, String parentSAPOrderNumber) {
+        return childOrder.isChildOrder() && StringUtils
+                .equals(childOrder.getSapOrderNumber(), parentSAPOrderNumber);
+    }
+
+
+    public void updateSapDetails(int sampleCount, String productListHash, String pricesForProducts) {
+        final SapOrderDetail sapOrderDetail = latestSapOrderDetail();
+        sapOrderDetail.setPrimaryQuantity(sampleCount);
+        sapOrderDetail.setOrderProductsHash(productListHash);
+        sapOrderDetail.setOrderPricesHash(pricesForProducts);
     }
 }

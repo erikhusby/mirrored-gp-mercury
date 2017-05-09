@@ -22,6 +22,10 @@ public enum Workflow {
     WHOLE_GENOME("Whole Genome"),
     PCR_FREE("Whole Genome PCR Free"),
     PCR_PLUS("Whole Genome PCR Plus"),
+    PCR_FREE_HYPER_PREP("Whole Genome PCR Free HyperPrep"),
+    PCR_PLUS_HYPER_PREP("Whole Genome PCR Plus HyperPrep"),
+    CELL_FREE_HYPER_PREP("Cell Free HyperPrep"),
+    ICE_EXOME_EXPRESS_HYPER_PREP("Hyper Prep ICE Exome Express"),
     ICE("ICE"),
     ICE_CRSP("ICE CRSP"),
     CLINICAL_WHOLE_BLOOD_EXTRACTION("Clinical Whole Blood Extraction"),
@@ -29,6 +33,7 @@ public enum Workflow {
     TRU_SEQ_STRAND_SPECIFIC_CRSP("TruSeq Strand Specific CRSP"),
     TEN_X("10X"),
     INFINIUM("Infinium"),
+    INFINIUM_METHYLATION("Infinium Methylation"),
     /** Use this to indicate that no workflow is associated. */
     NONE(null, false);
 
@@ -60,7 +65,9 @@ public enum Workflow {
     // todo jmt make this a flag on the enum
     public static final EnumSet<Workflow> SUPPORTED_WORKFLOWS =
             EnumSet.of(AGILENT_EXOME_EXPRESS, ICE_EXOME_EXPRESS, ICE_CRSP, CLINICAL_WHOLE_BLOOD_EXTRACTION,
-                    DNA_RNA_EXTRACTION_CELL_PELLETS, TRU_SEQ_STRAND_SPECIFIC_CRSP, PCR_FREE, PCR_PLUS, TEN_X, INFINIUM
+                    DNA_RNA_EXTRACTION_CELL_PELLETS, TRU_SEQ_STRAND_SPECIFIC_CRSP, PCR_FREE, PCR_PLUS,
+                    PCR_FREE_HYPER_PREP, PCR_PLUS_HYPER_PREP, CELL_FREE_HYPER_PREP, ICE_EXOME_EXPRESS_HYPER_PREP,
+                    TEN_X, INFINIUM, INFINIUM_METHYLATION
             );
 
     public boolean isWorkflowSupportedByMercury() {

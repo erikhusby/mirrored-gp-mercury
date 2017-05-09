@@ -29,12 +29,9 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderT
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
-import org.broadinstitute.gpinformatics.mercury.boundary.graph.Graph;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
-import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEntityGrapher;
-import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizer;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizerV2;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
@@ -69,9 +66,31 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
-import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerClient;
-import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
-import org.broadinstitute.gpinformatics.mercury.test.builders.*;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.test.builders.ArrayPlatingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.CrspRiboPlatingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.FPEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq4000FlowcellEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.IceEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.IceJaxbBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.InfiniumEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionJaxbBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.MiSeqReagentKitEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.PreFlightEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
+import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.QtpJaxbBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.SageEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.StoolTNAEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.TenXEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.TruSeqStrandSpecificEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.TruSeqStrandSpecificJaxbBuilder;
 import org.easymock.EasyMock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -110,7 +129,7 @@ public class BaseEventTest {
     /**
      * Referenced in validation of routing.
      */
-    protected static SystemRouter.System expectedRouting = SystemRouter.System.MERCURY;
+    public static SystemRouter.System expectedRouting = SystemRouter.System.MERCURY;
     private final CrspPipelineUtils crspPipelineUtils = new CrspPipelineUtils(Deployment.DEV);
 
     private BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
@@ -181,7 +200,7 @@ public class BaseEventTest {
             }
         });
         labBatchEJB.setProductOrderDao(mockProductOrderDao);
-        labBatchEJB.setWorkflowLoader(new WorkflowLoader());
+        labBatchEJB.setWorkflowConfig(new WorkflowLoader().load());
 
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
         BSPSetVolumeConcentration bspSetVolumeConcentration = BSPSetVolumeConcentrationProducer.stubInstance();
@@ -637,8 +656,14 @@ public class BaseEventTest {
     }
 
     public InfiniumEntityBuilder runInfiniumProcess(StaticPlate sourcePlate, String barcodeSuffix) {
+        return runInfiniumProcessWithMethylation(sourcePlate, barcodeSuffix,
+                InfiniumEntityBuilder.IncludeMethylation.FALSE);
+    }
+
+    public InfiniumEntityBuilder runInfiniumProcessWithMethylation(
+            StaticPlate sourcePlate, String barcodeSuffix, InfiniumEntityBuilder.IncludeMethylation includeMethylation) {
         return new InfiniumEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
-                sourcePlate, barcodeSuffix).invoke();
+                sourcePlate, barcodeSuffix, includeMethylation).invoke();
     }
 
     public ArrayPlatingEntityBuilder runArrayPlatingProcess( Map<String, BarcodedTube> mapBarcodeToTube,
@@ -894,47 +919,20 @@ public class BaseEventTest {
      * @param labVessel starting point in graph.
      */
     public static void runTransferVisualizer(LabVessel labVessel) {
-        // Disabled by default, because it would block Bamboo tests.
-        if (false) {
-            try {
-                TransferVisualizerV2 transferVisualizerV2 = new TransferVisualizerV2();
-                File xfrVis = File.createTempFile("XfrVis", ".json");
-                FileWriter fileWriter = new FileWriter(xfrVis);
-                transferVisualizerV2.jsonForVessels(
-                        Collections.singletonList(labVessel),
-                        Arrays.asList(TransferTraverserCriteria.TraversalDirection.Ancestors,
-                                TransferTraverserCriteria.TraversalDirection.Descendants),
-                        fileWriter,
-                        Arrays.asList(TransferVisualizerV2.AlternativeIds.SAMPLE_ID,
-                                TransferVisualizerV2.AlternativeIds.LCSET));
-                fileWriter.flush();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-
-            TransferEntityGrapher transferEntityGrapher = new TransferEntityGrapher();
-            // "More Transfers" buttons won't work when there's no server, so render all vessels in first "request"
-            transferEntityGrapher.setMaxNumVesselsPerRequest(10000);
-            Graph graph = new Graph();
-            ArrayList<TransferVisualizer.AlternativeId> alternativeIds = new ArrayList<>();
-            if (false) {
-                alternativeIds.add(TransferVisualizer.AlternativeId.SAMPLE_ID);
-                alternativeIds.add(TransferVisualizer.AlternativeId.LCSET);
-            }
-            transferEntityGrapher.startWithTube((BarcodedTube) labVessel, graph, alternativeIds);
-
-            TransferVisualizerClient transferVisualizerClient = new TransferVisualizerClient(
-                    labVessel.getLabel(), alternativeIds);
-            transferVisualizerClient.setGraph(graph);
-
-            TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();
-            transferVisualizerFrame.setTransferVisualizerClient(transferVisualizerClient);
-            // Suspend the test thread, to give the user time to scroll around the graph.
-            try {
-                Thread.sleep(500000L);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+        try {
+            TransferVisualizerV2 transferVisualizerV2 = new TransferVisualizerV2();
+            File xfrVis = File.createTempFile("XfrVis", ".json");
+            FileWriter fileWriter = new FileWriter(xfrVis);
+            transferVisualizerV2.jsonForVessels(
+                    Collections.singletonList(labVessel),
+                    Arrays.asList(TransferTraverserCriteria.TraversalDirection.Ancestors,
+                            TransferTraverserCriteria.TraversalDirection.Descendants),
+                    fileWriter,
+                    Arrays.asList(TransferVisualizerV2.AlternativeIds.SAMPLE_ID,
+                            TransferVisualizerV2.AlternativeIds.LCSET));
+            fileWriter.flush();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -948,11 +946,13 @@ public class BaseEventTest {
     }
 
     public static void validateWorkflow(String nextEventTypeName, List<LabVessel> labVessels) {
-        SystemRouter systemRouter = new SystemRouter(null, new WorkflowLoader(), null);
+        WorkflowConfig workflowConfig = new WorkflowLoader().load();
+        SystemRouter systemRouter = new SystemRouter(null, workflowConfig, null);
         SystemRouter.System system = systemRouter.routeForVesselsDaoFree(labVessels, SystemRouter.Intent.ROUTE);
         Assert.assertEquals(system, expectedRouting);
 
         WorkflowValidator workflowValidator = new WorkflowValidator();
+        workflowValidator.setWorkflowConfig(workflowConfig);
         ProductOrderDao mockProductOrderDao = Mockito.mock(ProductOrderDao.class);
         Mockito.when(mockProductOrderDao.findByBusinessKey(Mockito.anyString())).then(new Answer<Object>() {
             @Override
@@ -1002,5 +1002,9 @@ public class BaseEventTest {
                 productOrderDao,
                 crspPipelineUtils, flowcellDesignationEjb
         );
+    }
+
+    public LabBatchEjb getLabBatchEJB() {
+        return labBatchEJB;
     }
 }

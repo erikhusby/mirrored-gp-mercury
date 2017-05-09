@@ -92,7 +92,6 @@ public class ResearchProjectResourceTest extends ContainerTest {
         return researchProject;
     }
 
-    @Override
     @AfterMethod(groups = TestGroups.STUBBY)
     public void tearDown() throws Exception {
         // Skip if no injections, meaning we're not running in container

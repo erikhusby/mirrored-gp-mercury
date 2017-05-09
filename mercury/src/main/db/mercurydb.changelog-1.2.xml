@@ -820,6 +820,43 @@
         <createSequence schemaName="mercury" sequenceName="seq_sample_instance_entity_tsk" incrementBy="50"/>
     </changeSet>
 
+    <changeSet id="GPLIM-4602-6" author="epolk">
+        <createIndex tableName="LAB_EVENT_REAGENTS_AUD" indexName="IX2_LAB_EVENT_REAGENTS_AUD">
+            <column name="LAB_EVENT_REAGENT_ID"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-4602-4" author="epolk">
+        <createIndex tableName="LAB_VESSEL_TICKETS_CREATED_AUD" indexName="IX_LAB_VSL_TKTS_CRTD_AUD">
+            <column name="LAB_VESSEL"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-4602-5" author="epolk">
+        <createIndex tableName="LE_REAGENT_METADATA_AUD" indexName="IX_LE_REAGENT_METADATA_AUD">
+            <column name="LAB_EVENT_REAGENT_ID"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-4430-441" author="dwilson">
+        <sql splitStatements="false">
+            BEGIN
+                FOR r IN (
+                    SELECT TABLE_NAME, CONSTRAINT_NAME, OWNER
+                    FROM USER_CONSTRAINTS
+                    WHERE TABLE_NAME = 'LAB_VESSEL_TICKETS_CREATED'
+                    AND CONSTRAINT_TYPE = 'U'
+                )
+                LOOP
+                    EXECUTE IMMEDIATE REPLACE(REPLACE(REPLACE(
+                    'ALTER TABLE #OWNER#.#TABLE# DROP CONSTRAINT #CON#' ,
+                    '#TABLE#',r.TABLE_NAME) ,
+                    '#CON#',r.CONSTRAINT_NAME),'#OWNER#',r.OWNER);
+                END LOOP;
+            END;
+        </sql>
+    </changeSet>
+
     <changeSet id="GPLIM-4434-1870" author="dwilson">
         <addColumn tableName="sample_instance_entity" schemaName="mercury">
             <column name="read_length" type="number(19,0)"/>

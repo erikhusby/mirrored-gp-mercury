@@ -119,5 +119,4 @@ public class SubmissionsServiceStub implements SubmissionsService {
     public SubmissionLibraryDescriptor findLibraryDescriptorTypeByKey(String key) {
         return null;
     }
-
 }

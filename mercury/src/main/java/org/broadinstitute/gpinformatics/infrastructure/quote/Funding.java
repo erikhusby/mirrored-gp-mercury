@@ -5,6 +5,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.DateAdapter;
+import org.broadinstitute.gpinformatics.infrastructure.ShortDateAdapter;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -48,6 +49,10 @@ public class Funding implements Displayable {
     private String institute;
 
     private String purchaseOrderNumber;
+
+    private String purchaseOrderContact;
+
+    private String fundsReservationNumber;
 
     public Funding() {}
 
@@ -138,7 +143,7 @@ public class Funding implements Displayable {
     }
 
     @XmlAttribute(name = "grantStartDate")
-    @XmlJavaTypeAdapter(DateAdapter.class)
+    @XmlJavaTypeAdapter(ShortDateAdapter.class)
     public Date getGrantStartDate() {
         return grantStartDate;
     }
@@ -147,7 +152,7 @@ public class Funding implements Displayable {
     }
 
     @XmlAttribute(name = "grantEndDate")
-    @XmlJavaTypeAdapter(DateAdapter.class)
+    @XmlJavaTypeAdapter(ShortDateAdapter.class)
     public Date getGrantEndDate() {
         return grantEndDate;
     }
@@ -171,6 +176,20 @@ public class Funding implements Displayable {
 
     public void setPurchaseOrderNumber(String purchaseOrderNumber) {
         this.purchaseOrderNumber = purchaseOrderNumber;
+    }
+
+    @XmlAttribute(name = "purchaseOrderContact")
+    public String getPurchaseOrderContact() { return purchaseOrderContact;}
+
+    public void setPurchaseOrderContact(String purchaseOrderContact) {
+        this.purchaseOrderContact = purchaseOrderContact;
+    }
+
+    @XmlAttribute(name = "fundsReservationNumber")
+    public String getFundsReservationNumber() {return fundsReservationNumber;}
+
+    public void setFundsReservationNumber(String fundsReservationNumber) {
+        this.fundsReservationNumber = fundsReservationNumber;
     }
 
     @Override

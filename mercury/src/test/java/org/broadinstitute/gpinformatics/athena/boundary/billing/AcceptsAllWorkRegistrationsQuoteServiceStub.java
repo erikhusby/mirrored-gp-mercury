@@ -1,9 +1,13 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import org.apache.commons.lang.NotImplementedException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
+import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFunding;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePlatformType;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
@@ -12,6 +16,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quotes;
 
 import javax.enterprise.inject.Alternative;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Set;
 
@@ -46,13 +51,32 @@ class AcceptsAllWorkRegistrationsQuoteServiceStub implements QuoteService {
     }
 
     @Override
+    public String registerNewSAPWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
+                                     Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
+                                     String callbackParameterName, String callbackParameterValue) {
+        return WORK_ITEM_PREPEND + (1000 + counter++);
+    }
+
+    @Override
     public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
-        return new Quote();
+        FundingLevel level = new FundingLevel("100", new Funding(Funding.PURCHASE_ORDER,null, null));
+        QuoteFunding funding = new QuoteFunding(Collections.singleton(level));
+        final Quote quote = new Quote("test1", funding, ApprovalStatus.FUNDED);
+
+        return quote;
     }
 
     @Override
     public Quote getQuoteWithPriceItems(String alphaId) throws QuoteServerException, QuoteNotFoundException {
-        return new Quote();
+        FundingLevel level = new FundingLevel("100", new Funding(Funding.PURCHASE_ORDER,null, null));
+        QuoteFunding funding = new QuoteFunding(Collections.singleton(level));
+        final Quote quote = new Quote("test1", funding, ApprovalStatus.FUNDED);
+
+
+        quote.setQuoteItems(Collections.singleton(new QuoteItem("test1", "priceitem1","Price Item", "10", "1000",
+                "each", "Genomics Platform", "testing")));
+
+        return quote;
     }
 
     @Override

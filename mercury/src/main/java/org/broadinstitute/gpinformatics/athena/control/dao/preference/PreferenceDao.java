@@ -18,6 +18,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.EntityManager;
 import javax.persistence.criteria.CriteriaBuilder;
@@ -32,6 +34,7 @@ import java.util.List;
  */
 @Stateful
 @RequestScoped
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class PreferenceDao extends GenericDao {
 
     /**

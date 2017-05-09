@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.columns;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.search.PaginationUtil;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
@@ -201,6 +202,7 @@ public class ConfigurableListContainerTest extends Arquillian {
     private SearchContext buildSearchContext(){
         SearchContext evalContext = new SearchContext();
         evalContext.setBspUserList( bspUserList );
+        evalContext.setPagination(new PaginationUtil.Pagination(1));
 
         return evalContext;
     }

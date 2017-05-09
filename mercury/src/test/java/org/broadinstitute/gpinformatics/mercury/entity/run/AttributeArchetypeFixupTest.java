@@ -57,7 +57,7 @@ public class AttributeArchetypeFixupTest extends Arquillian {
 
     static {
         try {
-            EARLIEST_XSTAIN_DATE = DateUtils.yyyymmmdddDateTimeFormat.parse("2015-OCT-09 11:13 AM");
+            EARLIEST_XSTAIN_DATE = DateUtils.yyyymmmdddDateTimeFormat.parse("2015-Oct-09 11:13 AM");
         } catch (ParseException e) {
             throw new RuntimeException("Cannot parse date.");
         }
@@ -469,4 +469,5 @@ public class AttributeArchetypeFixupTest extends Arquillian {
             throw new RuntimeException(e);
         }
     }
+
 }

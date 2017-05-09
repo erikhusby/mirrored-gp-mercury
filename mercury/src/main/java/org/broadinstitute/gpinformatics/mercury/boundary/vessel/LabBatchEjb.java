@@ -2,11 +2,13 @@ package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.Factory;
 import org.apache.commons.collections4.map.LazyMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
@@ -28,21 +30,17 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.AbstractBatchJiraFieldFactory;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
-import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation_;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
@@ -103,7 +101,7 @@ public class LabBatchEjb {
 
     private ControlDao controlDao;
 
-    private WorkflowLoader workflowLoader;
+    private WorkflowConfig workflowConfig;
 
     private LabVesselDao labVesselDao;
 
@@ -308,7 +306,6 @@ public class LabBatchEjb {
     }
 
     private WorkflowBucketDef getWorkflowBucketDef(String bucketName, String workflowName) {
-        WorkflowConfig workflowConfig = workflowLoader.load();
         WorkflowBucketDef bucketDef = null;
 
         ProductWorkflowDef workflowDef = workflowConfig.getWorkflowByName(workflowName);
@@ -375,7 +372,7 @@ public class LabBatchEjb {
             }
 
             AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory
-                    .getInstance(projectType, newBatch, productOrderDao);
+                    .getInstance(projectType, newBatch, productOrderDao, workflowConfig);
             if (projectType == null) {
                 projectType = fieldBuilder.getProjectType();
             }
@@ -531,7 +528,7 @@ public class LabBatchEjb {
         }
 
         AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory
-                .getInstance(projectType, batch, productOrderDao);
+                .getInstance(projectType, batch, productOrderDao, workflowConfig);
         if (projectType == null) {
             projectType = fieldBuilder.getProjectType();
         }
@@ -659,17 +656,22 @@ public class LabBatchEjb {
         if (dtoVessels.isEmpty()) {
             messageReporter.addMessage("No lanes were selected.");
         } else {
-            Pair<Multimap<LabBatch, String>, FctDto> fctReturnPair = makeFctDaoFree(dtoVessels, selectedFlowcellType,
-                    true);
-            if (fctReturnPair.getLeft().isEmpty()) {
+            Triple<List<LabBatch>, List<Set<String>>, FctDto> fctReturnTriple = makeFctDaoFree(dtoVessels,
+                    selectedFlowcellType, true);
+            if (fctReturnTriple.getLeft().isEmpty()) {
                 messageReporter.addMessage("No FCTs were created.");
             } else {
                 StringBuilder createdBatchLinks = new StringBuilder("<ol>");
                 // For each batch, pushes the FCT to JIRA, makes the parent-child JIRA links,
                 // and makes a UI message.
-                for (LabBatch fctBatch : fctReturnPair.getLeft().keys()) {
+                for (int idx = 0; idx < fctReturnTriple.getLeft().size(); ++idx) {
+                    LabBatch fctBatch = fctReturnTriple.getLeft().get(idx);
+                    Set<String> lcsetNames = fctReturnTriple.getMiddle().get(idx);
+                    if (CollectionUtils.isEmpty(lcsetNames)) {
+                        throw new RuntimeException("Found no LCSETs to link to the FCT");
+                    }
                     createLabBatch(fctBatch, userName, selectedFlowcellType.getIssueType(), messageReporter);
-                    for (String lcset : fctReturnPair.getLeft().get(fctBatch)) {
+                    for (String lcset : lcsetNames) {
                         linkJiraBatchToTicket(lcset, fctBatch);
                     }
                     createdBatchLinks.append("<li><a target=\"JIRA\" href=\"");
@@ -679,7 +681,7 @@ public class LabBatchEjb {
                     createdBatchLinks.append("</a></li>");
                 }
                 createdBatchLinks.append("</ol>");
-                messageReporter.addMessage("Created {0} FCT tickets: {1}", fctReturnPair.getLeft().size(),
+                messageReporter.addMessage("Created {0} FCT tickets: {1}", fctReturnTriple.getLeft().size(),
                         createdBatchLinks.toString());
             }
         }
@@ -725,11 +727,17 @@ public class LabBatchEjb {
 
                 // Allocates each designation dto to FctDto(s) depending on the designation's priority,
                 // number of lanes, and whether a full flowcell could be made or not.
-                Pair<Multimap<LabBatch, String>, FctDto> fctReturnPair = makeFctDaoFree(dtoVesselPairs,
+                Triple<List<LabBatch>, List<Set<String>>, FctDto> fctReturnTriple = makeFctDaoFree(dtoVesselPairs,
                         flowcellType, false);
-                for (LabBatch fctBatch : fctReturnPair.getLeft().keySet()) {
+                for (int idx = 0; idx < fctReturnTriple.getLeft().size(); ++idx) {
+                    LabBatch fctBatch = fctReturnTriple.getLeft().get(idx);
+                    Set<String> lcsetNames = fctReturnTriple.getMiddle().get(idx);
+                    if (CollectionUtils.isEmpty(lcsetNames)) {
+                        throw new RuntimeException("Found no LCSETs to link to the FCT");
+                    }
+
                     createLabBatch(fctBatch, userName, flowcellType.getIssueType(), messageReporter);
-                    for (String lcset : fctReturnPair.getLeft().get(fctBatch)) {
+                    for (String lcset : lcsetNames) {
                         linkJiraBatchToTicket(lcset, fctBatch);
                     }
                     fctUrls.add(MutablePair.of(fctBatch.getBatchName(), fctBatch.getJiraTicket().getBrowserUrl()));
@@ -743,7 +751,7 @@ public class LabBatchEjb {
                     }
                 }
                 // Any new split dto needs to be added to the UI's dto list and queues it.
-                DesignationDto dtoSplit = (DesignationDto) fctReturnPair.getRight();
+                DesignationDto dtoSplit = (DesignationDto) fctReturnTriple.getRight();
                 if (dtoSplit != null) {
                     dtoSplit.setStatus(FlowcellDesignation.Status.QUEUED);
                     designationDtos.add(dtoSplit);
@@ -844,18 +852,23 @@ public class LabBatchEjb {
      * drives which dtos may be left over. Also if a large dto has some but not all of its lanes exactly
      * fit on flowcells, the dto will be split up into a fully allocated dto and a new, unallocated dto.
      *
-     * @param dtoLabVessels the loading tubes dtos and corresponding lab vessels.
+     * @param dtoLabVessels the loading tubes' dtos and corresponding lab vessels.
+     *   After return, the dtos that were put in an FCT will be marked isAllocated.
      * @param flowcellType  the type of flowcells to create.
      * @param fillOrKill  If true, throws if all dtos will not exactly fit on flowcells. A dto is never split.
      *                    If false, fills as many complete flowcells as it can, and a split is possible.
-     * @return  Map of the fct batches to be persisted and their lcset names. Also the split dto, if any.
-     * In addition the input collection of fct dto's will marked as allocated if they were put on a flowcell.
+     * @return  Triple of the list of the fct batches to be persisted, the list of lcset names comprising each fct,
+     *   and the split dto, if any.
+     *   Fct batches will be in order of creation, which should put loading tubes on contiguous flowcell
+     *   lanes across sequential fcts, provided the fcts get persisted in the order returned.
+     *   Fct batch identity (i.e. equals, hashcode) is unstable (see GPLIM-4011).
      */
-    public Pair<Multimap<LabBatch, String>, FctDto> makeFctDaoFree(Collection<Pair<FctDto, LabVessel>> dtoLabVessels,
-                                                                   IlluminaFlowcell.FlowcellType flowcellType,
-                                                                   boolean fillOrKill) {
+    public Triple<List<LabBatch>, List<Set<String>>, FctDto> makeFctDaoFree(
+            Collection<Pair<FctDto, LabVessel>> dtoLabVessels, IlluminaFlowcell.FlowcellType flowcellType,
+            boolean fillOrKill) {
 
-        Multimap<LabBatch, String> createdFcts = HashMultimap.create();
+        List<LabBatch> createdFcts = new ArrayList<>();
+        List<Set<String>> fctLcsets = new ArrayList<>();
         int lanesPerFlowcell = flowcellType.getVesselGeometry().getRowCount();
         // These are per-flowcell accumulations, for one or more loading vessels.
         int laneIndex = 0;
@@ -892,7 +905,8 @@ public class LabBatchEjb {
         }
 
         // For each dto, keeps allocating its lanes until the tube's requested Number of Lanes is fulfilled.
-        // When enough lanes exist, an FCT is allocated and put in the return multimap.
+        // When enough lanes exist, an FCT is allocated and put in the return list.
+        Set<String> lcsetNames = new HashSet<>();
         for (Pair<FctDto, LabVessel> pair : orderedDtoVessels) {
             FctDto fctDto = pair.getLeft();
             LabVessel loadingTube = pair.getRight();
@@ -906,6 +920,8 @@ public class LabBatchEjb {
                         fctVesselLaneInfo.add(currentFct);
                     }
                     currentFct.getLanes().add(VESSEL_POSITIONS[laneIndex++]);
+                    lcsetNames.add(fctDto.getLcset());
+
                     // Are there are enough lanes to make a new FCT?
                     if (laneIndex == lanesPerFlowcell) {
                         // The batch name will be overwritten by the FCT-ID from JIRA, but if it's not made unique at
@@ -914,16 +930,18 @@ public class LabBatchEjb {
                         LabBatch fctBatch = new LabBatch(fctDto.getBarcode() + " FCT ticket " + i, fctVesselLaneInfo,
                                 flowcellType.getBatchType(), flowcellType);
                         fctBatch.setBatchDescription(fctDto.getBarcode() + " FCT ticket ");
-                        createdFcts.put(fctBatch, fctDto.getLcset());
+                        createdFcts.add(fctBatch);
+                        fctLcsets.add(lcsetNames);
                         // Resets the accumulations.
                         laneIndex = 0;
                         fctVesselLaneInfo = new ArrayList<>();
                         currentFct = null;
+                        lcsetNames = new HashSet<>();
                     }
                 }
             }
         }
-        return Pair.of(createdFcts, splitDto);
+        return Triple.of(createdFcts, fctLcsets, splitDto);
     }
 
     /*
@@ -970,8 +988,8 @@ public class LabBatchEjb {
     }
 
     @Inject
-    public void setWorkflowLoader(WorkflowLoader workflowLoader) {
-        this.workflowLoader = workflowLoader;
+    public void setWorkflowConfig(WorkflowConfig workflowConfig) {
+        this.workflowConfig = workflowConfig;
     }
 
     @Inject

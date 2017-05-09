@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.analytics.entity;
 
+import org.hibernate.annotations.BatchSize;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -54,9 +56,11 @@ public class ArraysQc {
     private Date modifiedAt;
 
     @OneToMany(mappedBy = "arraysQcId")
+    @BatchSize(size = 100)
     private Set<ArraysQcFingerprint> arraysQcFingerprints;
 
     @OneToMany(mappedBy = "arraysQcId")
+    @BatchSize(size = 100)
     private Set<ArraysQcGtConcordance> arraysQcGtConcordances;
 
     public Long getId() {
@@ -85,6 +89,13 @@ public class ArraysQc {
 
     public BigDecimal getCallRate() {
         return callRate;
+    }
+
+    public BigDecimal getCallRatePct() {
+        if (callRate == null) {
+            return null;
+        }
+        return callRate.multiply(BigDecimal.valueOf(100)).setScale(3, BigDecimal.ROUND_HALF_UP);
     }
 
     public Boolean getAutocallPf() {
@@ -121,6 +132,13 @@ public class ArraysQc {
 
     public BigDecimal getHetPct() {
         return hetPct;
+    }
+
+    public BigDecimal getHetPct100() {
+        if (hetPct == null) {
+            return null;
+        }
+        return hetPct.multiply(BigDecimal.valueOf(100)).setScale(3, BigDecimal.ROUND_HALF_UP);
     }
 
     public BigDecimal getHetHomvarRatio() {

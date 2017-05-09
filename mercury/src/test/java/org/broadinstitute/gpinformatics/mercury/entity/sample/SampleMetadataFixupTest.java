@@ -196,6 +196,36 @@ public class SampleMetadataFixupTest extends Arquillian {
     }
 
     /**
+     * Physician requested repatienting of samples uploaded through CRSP Portal.
+     */
+    @Test(enabled = false)
+    public void testCRSP_443_Repatient() throws Exception {
+        Map<String, MetaDataFixupItem> fixupItems = new HashMap<>();
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-9J5I2", Metadata.Key.PATIENT_ID, "CP-3682", "CP-3681"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-9J5I4", Metadata.Key.PATIENT_ID, "CP-3680", "CP-3679"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-9J5I6", Metadata.Key.PATIENT_ID, "CP-3679", "CP-3680"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-9J5I7", Metadata.Key.PATIENT_ID, "CP-3681", "CP-3683"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-9J5I8", Metadata.Key.PATIENT_ID, "CP-3681", "CP-3682"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-9J5I9", Metadata.Key.PATIENT_ID, "CP-3683", "CP-3681"));
+
+        String fixupComment = "see https://gpinfojira.broadinstitute.org:8443/jira/browse/CRSP-443";
+        updateMetadataAndValidate(fixupItems, fixupComment);
+    }
+
+    /**
+     * Samples were mixed up before receipt at The Broad.
+     */
+    @Test(enabled = false)
+    public void testCrsp475Mixup() throws Exception {
+        Map<String, MetaDataFixupItem> fixupItems = new HashMap<>();
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-CEMYY", Metadata.Key.PATIENT_ID, "CP-7596", "CP-7595"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-CEMYZ", Metadata.Key.PATIENT_ID, "CP-7595", "CP-7596"));
+
+        String fixupComment = "see https://gpinfojira.broadinstitute.org:8443/jira/browse/CRSP-475";
+        updateMetadataAndValidate(fixupItems, fixupComment);
+    }
+
+    /**
      * Perform actual fixup and validate.
      */
     private void updateMetadataAndValidate(@Nonnull Map<String, MetaDataFixupItem> fixupItems,

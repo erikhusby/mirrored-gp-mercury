@@ -1,10 +1,15 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
+import clover.org.apache.commons.collections.CollectionUtils;
+
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
 
 @XmlRootElement(name="Quote")
 public class Quote {
@@ -18,6 +23,10 @@ public class Quote {
     private QuoteFunding quoteFunding;
     private QuoteType quoteType;
     private Collection<QuoteItem> quoteItems = new ArrayList<> ();
+
+    // quick access Cache of quote items
+    @XmlTransient
+    public HashMap<String, HashMap<String, HashMap<String, QuoteItem>>> quoteItemCache = new HashMap<>();
 
     public Quote() {}
 
@@ -120,5 +129,92 @@ public class Quote {
     @Override
     public int hashCode() {
         return alphanumericId != null ? alphanumericId.hashCode() : 0;
+    }
+
+    /**
+     * Tests if the Quote is in a state that makes it eligible to be used on an order bound for SAP.  The criteria
+     * for this would be
+     * <ul>
+     *     <li>There is only one funding source defined for the quote.  SAP Orders will only be able to handle one
+     *     source of funding</li>
+     *     <li>If the funding source is backed by a Grant, ensure that the grant end date has not passed.</li>
+     * </ul>
+     *
+     * @return
+     */
+    public boolean isEligibleForSAP() {
+
+        FundingLevel singleLevel = getFirstRelevantFundingLevel();
+
+        boolean grantHasNotEnded = true;
+        if(singleLevel.getFunding().getGrantEndDate() != null) {
+
+            grantHasNotEnded = singleLevel.getFunding().getGrantEndDate().after(new Date());
+        }
+        return !(singleLevel == null) && grantHasNotEnded;
+    }
+
+    /**
+     * Helper method to support SAP transition.  If there is only one funding level, this will return it.  Otherwise
+     * Null will be returned
+     *
+     * @return Single funding level for the quote, or null if there is either more than one level or no level.
+     */
+    public FundingLevel getFirstRelevantFundingLevel() {
+        FundingLevel singleLevel = null;
+
+        for(FundingLevel level : quoteFunding.getFundingLevel()) {
+            if (singleLevel == null) {
+                singleLevel = level;
+            } else {
+                return null;
+            }
+        }
+        return singleLevel;
+    }
+
+    /**
+     * initialized the Multi level hash map to make accessing items in the quote item collection easier
+     */
+    public void initializeQuoteItemCache () {
+        if(CollectionUtils.isNotEmpty(quoteItems)) {
+            for (QuoteItem quoteItem : quoteItems) {
+                if(!quoteItemCache.containsKey(quoteItem.getCategoryName())) {
+                    quoteItemCache.put(quoteItem.getCategoryName(), new HashMap<String, HashMap<String, QuoteItem>>());
+                }
+                if(!quoteItemCache.get(quoteItem.getCategoryName()).containsKey(quoteItem.getPlatform())) {
+                    quoteItemCache.get(quoteItem.getCategoryName()).put(quoteItem.getPlatform(),new HashMap<String, QuoteItem>());
+                }
+                if(!quoteItemCache.get(quoteItem.getCategoryName()).get(quoteItem.getPlatform()).containsKey(quoteItem.getName())) {
+                    quoteItemCache.get(quoteItem.getCategoryName()).get(quoteItem.getPlatform()).put(quoteItem.getName(), quoteItem);
+                }
+            }
+        }
+    }
+
+    /**
+     * Access a quote item defined on the quote by key criteria.
+     *
+     * @param platform  Platform with which the desired quote item should be associated
+     * @param category  Category with which the desired quote item should be associated
+     * @param name      Name with which the desired quote item should be named
+     * @return  specific QuoteItem on the quote when found, or null if it is not found
+     */
+    public QuoteItem findCachedQuoteItem(String platform, String category, String name) {
+
+        QuoteItem foundItem = null;
+
+        if(quoteItemCache.isEmpty()) {
+            initializeQuoteItemCache();
+        }
+        if (quoteItemCache.containsKey(category) &&
+            quoteItemCache.get(category).containsKey(platform) &&
+            quoteItemCache.get(category).get(platform).containsKey(name)) {
+
+            foundItem = quoteItemCache.get(category).get(platform).get(name);
+
+        }
+
+        return foundItem;
     }
 }

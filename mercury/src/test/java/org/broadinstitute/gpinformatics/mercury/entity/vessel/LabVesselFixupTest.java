@@ -53,7 +53,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 @Test(groups = TestGroups.FIXUP)
 public class LabVesselFixupTest extends Arquillian {
 
-    private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s");
+    public static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s");
 
     @Inject
     private LabVesselDao labVesselDao;
@@ -1472,6 +1472,86 @@ public class LabVesselFixupTest extends Arquillian {
             throw new RuntimeException("Failed to find tube formation for shearing transfer");
         }
         FixupCommentary fixupCommentary = new FixupCommentary("GPLIM-4301 - Move sample from G03 to B11");
+        barcodedTubeDao.persist(fixupCommentary);
+        barcodedTubeDao.flush();
+
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupBsp3119FiupTubeLabels() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        Map<String, String> oldBarcodeToNewBarcode = new HashMap<String, String>() {{
+            put("1140121300", "1140121258");
+            put("1140121306", "1140121296");
+            put("1140121320", "1140121300");
+            put("1140121321", "1140121306");
+            put("1140121280", "1140121320");
+            put("1140121322", "1140121321");
+            put("1140121258", "1140121280");
+            put("1140121296", "1140121322");
+        }};
+
+        String tempSuffix = "_TEMP";
+        List<String> tempBarcodes = new ArrayList<>();
+        List<LabVessel> labVessels = labVesselDao.findByListIdentifiers(new ArrayList<>(oldBarcodeToNewBarcode.keySet()));
+        for (LabVessel labVessel: labVessels) {
+            String oldBarcode = labVessel.getLabel();
+            String newBarcode = oldBarcode + tempSuffix;
+            tempBarcodes.add(newBarcode);
+            labVessel.setLabel(newBarcode);
+            System.out.println(
+                    "Changing tube " + labVessel.getLabVesselId() + " label from " + oldBarcode + " to " + newBarcode);
+        }
+
+        FixupCommentary fixupCommentary =
+                new FixupCommentary("BSP-3119 Change tube labels to temp to avoid unique constaint.");
+        labBatchDao.persist(fixupCommentary);
+        labBatchDao.flush();
+
+        labVessels = labVesselDao.findByListIdentifiers(tempBarcodes);
+        for (LabVessel labVessel: labVessels) {
+            String oldBarcode = labVessel.getLabel().replaceAll(tempSuffix, "");
+            String newBarcode = oldBarcodeToNewBarcode.get(oldBarcode);
+            labVessel.setLabel(newBarcode);
+            System.out.println(
+                    "Changing tube " + labVessel.getLabVesselId() + " label from " + oldBarcode + " to " + newBarcode);
+        }
+
+        fixupCommentary = new FixupCommentary("BSP-3119 Change tube labels to correct name.");
+        labBatchDao.persist(fixupCommentary);
+        labBatchDao.flush();
+
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport2709() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<BarcodedTube> tubes = barcodedTubeDao.findListByBarcodes(Arrays.asList(
+                "1125668423",
+                "1125668470",
+                "1125668491",
+                "1125668483",
+                "1125664356",
+                "1125665028",
+                "1125664990",
+                "1125665004",
+                "1125665161",
+                "1125665157",
+                "1125665166",
+                "1125665212"));
+
+        for (LabVessel labVessel : tubes) {
+            labVessel.setReceptacleWeight(new BigDecimal(".62"));
+            System.out.println("Setting tube initial tare weight: " + labVessel.getLabel() + " to .62");
+        }
+
+        FixupCommentary fixupCommentary = new FixupCommentary("SUPPORT-2709 - Assign missing tare values to default");
         barcodedTubeDao.persist(fixupCommentary);
         barcodedTubeDao.flush();
 

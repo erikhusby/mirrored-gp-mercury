@@ -1,5 +1,9 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Multimap;
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.MaterialInfo;
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
 import net.sourceforge.stripes.action.After;
@@ -18,6 +22,7 @@ import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.CharEncoding;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -34,12 +39,14 @@ import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusF
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporterFactory;
+import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderListEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
@@ -47,6 +54,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryIn
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderCompletionStatus;
@@ -85,6 +93,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitReq
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.cognos.OrspProjectDao;
 import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProject;
+import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProjectConsent;
 import org.broadinstitute.gpinformatics.infrastructure.common.MercuryEnumUtils;
 import org.broadinstitute.gpinformatics.infrastructure.common.MercuryStringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
@@ -92,12 +101,19 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
+import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
@@ -108,6 +124,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
+import org.hibernate.Hibernate;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -161,8 +178,10 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String SET_RISK = "setRisk";
     private static final String SET_PROCEED_OOS = "setProceedOos";
     private static final String RECALCULATE_RISK = "recalculateRisk";
+    private static final String REPLACE_SAMPLES = "replaceSamples";
     protected static final String PLACE_ORDER_ACTION = "placeOrder";
     protected static final String VALIDATE_ORDER = "validate";
+    private static final String PUBLISH_PDO_TO_SAP = "publishProductOrderToSAP";
     // Search field constants
     private static final String FAMILY = "productFamily";
     private static final String PRODUCT = "product";
@@ -191,9 +210,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     private ProductDao productDao;
 
     @Inject
-    private ResearchProjectDao projectDao;
-
-    @Inject
     private BillingSessionDao billingSessionDao;
 
     @Inject
@@ -207,6 +223,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private PreferenceEjb preferenceEjb;
+
+    @Inject
+    private PreferenceDao preferenceDao;
 
     @Inject
     private ProductOrderListEntryDao orderListEntryDao;
@@ -260,7 +279,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private QuoteService quoteService;
 
-    @Inject
     private PriceListCache priceListCache;
 
     @Inject
@@ -272,9 +290,13 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private OrspProjectDao orspProjectDao;
 
+    @Inject
+    private SapIntegrationService sapService;
+
     private List<ProductOrderListEntry> displayedProductOrderListEntries;
 
     private String sampleList;
+    private String replacementSampleList;
 
     @Validate(required = true, on = {EDIT_ACTION})
     private String productOrder;
@@ -302,6 +324,8 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     private ProductOrder editOrder;
 
+    private ProductOrder replacementSampleOrder;
+
     // For create, we can also have a research project key to default.
     private String researchProjectKey;
 
@@ -317,6 +341,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private String quoteIdentifier;
 
     private String product;
+    private String selectedAddOns;
 
     /*
      * Used for Ajax call to retrieve post receive Options for a particular material info
@@ -451,7 +476,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void init() {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
         if (!StringUtils.isBlank(productOrder)) {
-            editOrder = productOrderEjb.findProductOrderByBusinessKeySafely(productOrder);
+            editOrder = productOrderDao.findByBusinessKey(productOrder);
             if (editOrder != null) {
                 progressFetcher = new CompletionStatusFetcher(
                         productOrderDao.getProgress(Collections.singleton(editOrder.getProductOrderId())));
@@ -485,8 +510,14 @@ public class ProductOrderActionBean extends CoreActionBean {
             // Since just getting the one item, get all the lazy data.
             editOrder = productOrderDao.findByBusinessKey(productOrder, ProductOrderDao.FetchSpec.RISK_ITEMS);
             if (editOrder != null) {
-                progressFetcher = new CompletionStatusFetcher(
-                        productOrderDao.getProgress(Collections.singleton(editOrder.getProductOrderId())));
+                List<Long> productOrderIds = new ArrayList<>();
+                productOrderIds.add(editOrder.getProductOrderId());
+                if (CollectionUtils.isNotEmpty(editOrder.getChildOrders())) {
+                    for (ProductOrder childOrder : editOrder.getChildOrders()) {
+                        productOrderIds.add(childOrder.getProductOrderId());
+                    }
+                }
+                progressFetcher = new CompletionStatusFetcher(productOrderDao.getProgress(productOrderIds));
             }
         }
     }
@@ -566,7 +597,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             editOrder.getProductOrderKit().getComments().length() > 255) {
             addValidationError("productOrderKit.comments", "Product order kit comments cannot exceed 255 characters");
         }
-//                @Validate(field = "count", on = {SAVE_ACTION}, label = "Number of Lanes"),
 
         // If this is not a draft, some fields are required.
         if (!editOrder.isDraft()) {
@@ -623,11 +653,17 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     void validateRinScores(Collection<ProductOrderSample> pdoSamples) {
         for (ProductOrderSample pdoSample : pdoSamples) {
-            if (pdoSample.isInBspFormat() && !pdoSample.canRinScoreBeUsedForOnRiskCalculation()) {
+            try {
+                if (pdoSample.isInBspFormat() && !pdoSample.canRinScoreBeUsedForOnRiskCalculation()) {
+                    addGlobalValidationError(
+                            "RIN '" + pdoSample.getSampleData().getRawRin() + "' for " + pdoSample.getName() +
+                            " isn't a number." + "  Please correct this by going to BSP -> Utilities -> Upload Sample " +
+                            "Annotation and updating the 'RIN Number' annotation for this sample.");
+                }
+            } catch (BSPLookupException e) {
                 addGlobalValidationError(
-                        "RIN '" + pdoSample.getSampleData().getRawRin() + "' for " + pdoSample.getName() +
-                        " isn't a number." + "  Please correct this by going to BSP -> Utilities -> Upload Sample " +
-                        "Annotation and updating the 'RIN Number' annotation for this sample.");
+                        pdoSample.getName() + " isn't a sample that is found in BSP.  For this reason the RIN score "
+                        + "cannot be validated at this time");
             }
         }
     }
@@ -662,32 +698,105 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         String quoteId = editOrder.getQuoteId();
         Quote quote = validateQuoteId(quoteId);
-//        validateQuoteDetails(quote, ErrorLevel.ERROR);
+        try {
+            ProductOrder.checkQuoteValidity(editOrder, quote);
+            for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel()) {
+                final Funding funding = fundingLevel.getFunding();
+                if(funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
+                    final int numDaysBetween =
+                            DateUtils.getNumDaysBetween(new Date(), funding.getGrantEndDate());
+                    if(numDaysBetween > 0 && numDaysBetween < 45) {
+                        addMessage("The grant " + funding.getDisplayName() + " for " + quote.getAlphanumericId() +
+                                   " expires in " + numDaysBetween + " days");
+                    }
+                }
+            }
+
+            if(productOrderEjb.isOrderEligibleForSAP(editOrder)) {
+                validateQuoteDetails(quote, ErrorLevel.ERROR, !editOrder.hasJiraTicketKey(), 0);
+            }
+        } catch (QuoteServerException e) {
+            addGlobalValidationError("The quote ''{2}'' is not valid: {3}", quoteId, e.getMessage());
+        } catch (QuoteNotFoundException e) {
+            addGlobalValidationError("The quote ''{2}'' was not found ", quoteId);
+        } catch (InvalidProductException e) {
+            addGlobalValidationError("Unable to determine the existing value of open orders for " +
+                                     quote.getAlphanumericId() +": " +e.getMessage());
+        }
 
         if (editOrder != null) {
             validateRinScores(editOrder);
         }
     }
 
-    private void validateQuoteDetails(String quoteId, final ErrorLevel errorLevel) {
+    /**
+     * Determines if there is enough funds available on a quote to do any more work based on unbilled samples and funds
+     * remaining on the quote
+     *
+     * @param quoteId   Identifier for The quote which the user intends to use.  From this we can determine the
+     *                  collection of orders to include in evaluating and the funds remaining
+     * @param errorLevel indicator for if the user should see a validation error or just a warning
+     * @param countOpenOrders indicator for if the current order should be added.  Typically used if it is Draft or
+     *                        Pending
+     */
+    private void validateQuoteDetails(String quoteId, final ErrorLevel errorLevel, boolean countOpenOrders)
+            throws InvalidProductException {
         Quote quote = validateQuoteId(quoteId);
 
         if (quote != null) {
-            validateQuoteDetails(quote, errorLevel);
+            validateQuoteDetails(quote, errorLevel, countOpenOrders, 0);
         }
     }
 
-    private void validateQuoteDetails(Quote quote, ErrorLevel errorLevel) {
+    /**
+     * Determines if there is enough funds available on a quote to do any more work based on unbilled samples and funds
+     * remaining on the quote.  This particular method will also consider Samples added on the page but not yet
+     * refelcted on the order.
+     *
+     * The scenario for this is when the user clicks on the "Add Samples" button of a placed order
+     *
+     * @param quoteId   Identifier for The quote which the user intends to use.  From this we can determine the
+     *                  collection of orders to include in evaluating and the funds remaining
+     * @param errorLevel indicator for if the user should see a validation error or just a warning
+     * @param countOpenOrders indicator for if the current order should be added.  Typically used if it is Draft or
+     *                        Pending
+     * @param additionalSamplesCount Number of extra samples to be considered which are not currently
+     */
+    private void validateQuoteDetailsWithAddedSamples(String quoteId, final ErrorLevel errorLevel,
+                                                      boolean countOpenOrders, int additionalSamplesCount)
+            throws InvalidProductException, QuoteServerException {
+        Quote quote = validateQuoteId(quoteId);
+        ProductOrder.checkQuoteValidity(editOrder, quote);
+        if (quote != null) {
+            validateQuoteDetails(quote, errorLevel, countOpenOrders, additionalSamplesCount);
+        }
+    }
+
+    /**
+     * Determines if there is enough funds available on a quote to do any more work based on unbilled samples and funds
+     * remaining on the quote
+     *
+     * @param quote  The quote which the user intends to use.  From this we can determine the collection of orders to
+     *               include in evaluating and the funds remaining
+     * @param errorLevel indicator for if the user should see a validation error or just a warning
+     * @param countCurrentUnPlacedOrder indicator for if the current order should be added.  Typically used if it is Draft or
+     *                        Pending
+     * @param additionalSampleCount
+     */
+    private void validateQuoteDetails(Quote quote, ErrorLevel errorLevel, boolean countCurrentUnPlacedOrder,
+                                      int additionalSampleCount) throws InvalidProductException {
         if (!quote.getApprovalStatus().equals(ApprovalStatus.FUNDED)) {
             String unFundedMessage = "A quote should be funded in order to be used for a product order.";
             addMessageBasedOnErrorLevel(errorLevel, unFundedMessage);
         }
 
         double fundsRemaining = Double.parseDouble(quote.getQuoteFunding().getFundsRemaining());
-        double outstandingEstimate = estimateOutstandingOrders(quote.getAlphanumericId());
+        double outstandingEstimate = estimateOutstandingOrders(quote.getAlphanumericId(), quote);
         double valueOfCurrentOrder = 0;
-        if(!editOrder.hasJiraTicketKey()) {
-            valueOfCurrentOrder = getValueOfOpenOrders(Collections.singletonList(editOrder));
+        if(countCurrentUnPlacedOrder) {
+            valueOfCurrentOrder = getValueOfOpenOrders(Collections.singletonList((editOrder.isChildOrder())?editOrder.getParentOrder():editOrder), quote);
+        } else if(additionalSampleCount > 0) {
+            valueOfCurrentOrder = getOrderValue((editOrder.isChildOrder())?editOrder.getParentOrder():editOrder, additionalSampleCount, quote);
         }
 
         if (fundsRemaining <= 0d ||
@@ -697,6 +806,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
+    /**
+     * Helper to determine if the returned message will be considered an full on validation error or simply a warning
+     * @param errorLevel Enum to trigger the logic for what message level is desired
+     * @param multiFundingLevelMessage Message to display to the user
+     */
     private void addMessageBasedOnErrorLevel(ErrorLevel errorLevel, String multiFundingLevelMessage) {
         switch (errorLevel) {
         case ERROR:
@@ -708,53 +822,104 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    private double estimateOutstandingOrders(String quoteId) {
+    /**
+     * Retrieves and determines the monitary value of a subset of Open Orders within Mercury
+     * @param quoteId Common quote id to be used to determine which open orders will be found
+     * @return total dollar amount of the monitary value of orders associated with the given quote
+     */
+    double estimateOutstandingOrders(String quoteId, Quote foundQuote) throws InvalidProductException {
 
         List<ProductOrder> ordersWithCommonQuote = productOrderDao.findOrdersWithCommonQuote(quoteId);
 
-        double value = getValueOfOpenOrders(ordersWithCommonQuote);
+        return getValueOfOpenOrders(ordersWithCommonQuote, foundQuote);
+    }
+
+    /**
+     * Determines the total monitary value of all unbilled samples on a given list of orders
+     *
+     * @param ordersWithCommonQuote Subset of orders for which the monitary value is to be determined
+     * @param quote
+     * @return Total dollar amount which equates to the monitary value of all orders given
+     */
+    double getValueOfOpenOrders(List<ProductOrder> ordersWithCommonQuote, Quote quote) throws InvalidProductException {
+        double value = 0d;
+
+        Set<ProductOrder> justParents = new HashSet<>();
+        for (ProductOrder order : ordersWithCommonQuote) {
+            if(order.isChildOrder()) {
+                justParents.add(order.getParentOrder());
+            } else {
+                justParents.add(order);
+            }
+        }
+
+        for (ProductOrder testOrder : justParents) {
+            value += getOrderValue(testOrder, testOrder.getUnbilledSampleCount(), quote);
+        }
         return value;
     }
 
-    private double getValueOfOpenOrders(List<ProductOrder> ordersWithCommonQuote) {
+    /**
+     * Helper method to consolidate the code for evaluating the monitary value of an order based on the price associated
+     * with its product(s) and the count of the unbilled samples
+     * @param testOrder Product order for which we wish to determine the monitary value
+     * @param sampleCount unbilled sample count to use for determining the order value.  Passed in separately to account
+     *                    for the scenario when we do not want to use the sample count on the order but a sample count
+     *                    that will potentially be on the order.
+     * @param quote
+     * @return Total monitary value of the order
+     */
+    double getOrderValue(ProductOrder testOrder, int sampleCount, Quote quote) throws InvalidProductException {
         double value = 0d;
-
-        for (ProductOrder testOrder : ordersWithCommonQuote) {
-            int unbilledCount = testOrder.getUnbilledSampleCount();
-
-            QuotePriceItem primaryPriceItem =
-                    priceListCache.findByKeyFields(testOrder.getProduct().getPrimaryPriceItem().getPlatform(),
-                            testOrder.getProduct().getPrimaryPriceItem().getCategory(),
-                            testOrder.getProduct().getPrimaryPriceItem().getName());
-
-            if (primaryPriceItem != null &&
-                StringUtils.isNotBlank(primaryPriceItem.getPrice())) {
-                Double productPrice = Double.valueOf(primaryPriceItem.getPrice());
-
-                if(productPrice != null) {
-                    value += productPrice * unbilledCount;
-                }
-
+        if(testOrder.getProduct() != null) {
+            try {
+                final Product product = testOrder.getProduct();
+                double productValue =
+                        getProductValue((product.getSupportsNumberOfLanes())?testOrder.getLaneCount():sampleCount, product,
+                                quote);
+                value += productValue;
                 for (ProductOrderAddOn testOrderAddon : testOrder.getAddOns()) {
-                    QuotePriceItem addonPriceItem =
-                            priceListCache
-                                    .findByKeyFields(testOrderAddon.getAddOn().getPrimaryPriceItem().getPlatform(),
-                                            testOrderAddon.getAddOn().getPrimaryPriceItem().getCategory(),
-                                            testOrderAddon.getAddOn().getPrimaryPriceItem().getName());
-
-                    if (addonPriceItem != null &&
-                        StringUtils.isNotBlank(addonPriceItem.getPrice())) {
-                        Double addOnPrice = Double.valueOf(addonPriceItem.getPrice());
-
-                        if(addOnPrice != null) {
-                            value += addOnPrice * unbilledCount;
-                        }
-                    }
+                    final Product addOn = testOrderAddon.getAddOn();
+                    double addOnValue =
+                            getProductValue((addOn.getSupportsNumberOfLanes())?testOrder.getLaneCount():sampleCount, addOn,
+                                    quote);
+                    value += addOnValue;
                 }
+            } catch (InvalidProductException e) {
+                throw new InvalidProductException("For " + testOrder.getBusinessKey() + ": " + testOrder.getName() +
+                " " + e.getMessage(), e);
             }
-
         }
         return value;
+    }
+
+    /**
+     * Based on a product and a sample count, this method will determine the monitary value for the sake of evaluating
+     * the monitary value of an order
+     *
+     * @param unbilledCount count of samples that have not yet been billed
+     * @param product Product from which the price can be determined
+     * @param quote
+     * @return Derived value of the Product price multiplied by the number of unbilled samples
+     */
+    double getProductValue(int unbilledCount, Product product, Quote quote) throws InvalidProductException {
+        double productValue = 0d;
+        String foundPrice;
+        try {
+            foundPrice = priceListCache.getEffectivePrice(product.getPrimaryPriceItem(), quote);
+        } catch (InvalidProductException e) {
+            throw new InvalidProductException("For '" + product.getPartNumber() + "' " + e.getMessage(), e);
+        }
+
+        if (StringUtils.isNotBlank(foundPrice)) {
+            Double productPrice = Double.valueOf(foundPrice);
+
+            productValue = productPrice * (unbilledCount);
+        } else {
+            throw new InvalidProductException("Price for " + product.getPrimaryPriceItem().getDisplayName() + " for product "+
+                                              product.getPartNumber()+" was not found.");
+        }
+        return productValue;
     }
 
     private void doSaveValidation(String action, ResearchProject researchProject) {
@@ -819,6 +984,11 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @ValidationMethod(on = PLACE_ORDER_ACTION)
     public void validatePlacedOrder() {
+        Hibernate.initialize(editOrder.getChildOrders());
+        Hibernate.initialize(editOrder.getSapReferenceOrders());
+        Hibernate.initialize(editOrder.getSamples());
+        Hibernate.initialize(editOrder.getParentOrder());
+
         validatePlacedOrder(PLACE_ORDER_ACTION);
     }
 
@@ -894,7 +1064,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void setupSearchCriteria() throws Exception {
         // Get the saved search for the user.
         List<Preference> preferences =
-                preferenceEjb.getPreferences(getUserBean().getBspUser().getUserId(), PreferenceType.PDO_SEARCH);
+                preferenceDao.getPreferences(getUserBean().getBspUser().getUserId(), PreferenceType.PDO_SEARCH);
 
         productFamilyId = null;
 
@@ -1016,7 +1186,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     // All actions that can result in the view page loading (either by a validation error or view itself)
     @After(stages = LifecycleStage.BindingAndValidation,
             on = {EDIT_ACTION, VIEW_ACTION, ADD_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK, ABANDON_SAMPLES_ACTION,
-                    DELETE_SAMPLES_ACTION, PLACE_ORDER_ACTION, VALIDATE_ORDER, UNABANDON_SAMPLES_ACTION, GET_SUMMARY})
+                    DELETE_SAMPLES_ACTION, PLACE_ORDER_ACTION, VALIDATE_ORDER, UNABANDON_SAMPLES_ACTION, GET_SUMMARY, REPLACE_SAMPLES})
     public void entryInit() {
         if (editOrder != null) {
             productOrderListEntry = editOrder.isDraft() ? ProductOrderListEntry.createDummy() :
@@ -1047,14 +1217,34 @@ public class ProductOrderActionBean extends CoreActionBean {
                 item.put("fundsRemaining", NumberFormat.getCurrencyInstance().format(fundsRemaining));
                 item.put("status", quote.getApprovalStatus().getValue());
 
-                double outstandingOrdersValue = estimateOutstandingOrders(quoteIdentifier);
+                double outstandingOrdersValue = estimateOutstandingOrders(quoteIdentifier, quote);
                 item.put("outstandingEstimate",  NumberFormat.getCurrencyInstance().format(
                         outstandingOrdersValue));
+                JSONArray fundingDetails = new JSONArray();
+
+                for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel()) {
+                    if(fundingLevel.getFunding().getFundingType().equals(Funding.FUNDS_RESERVATION)) {
+                        JSONObject fundingInfo = new JSONObject();
+                        fundingInfo.put("grantTitle", fundingLevel.getFunding().getDisplayName());
+                        fundingInfo.put("grantEndDate",
+                                DateUtils.getDate(fundingLevel.getFunding().getGrantEndDate()));
+                        fundingInfo.put("grantNumber", fundingLevel.getFunding().getGrantNumber());
+                        fundingInfo.put("grantStatus", fundingLevel.getFunding().getGrantStatus());
+
+                        final Date today = new Date();
+                        fundingInfo.put("activeGrant", (fundingLevel.getFunding().getGrantEndDate() != null &&
+                                                        fundingLevel.getFunding().getGrantEndDate().after(today)));
+                        fundingInfo.put("daysTillExpire",
+                                DateUtils.getNumDaysBetween(today, fundingLevel.getFunding().getGrantEndDate()));
+                        fundingDetails.put(fundingInfo);
+                    }
+                }
+                item.put("fundingDetails", fundingDetails);
             }
 
         } catch (Exception ex) {
             try {
-                item.put("error", ex.getMessage());
+                item.put("error", "Unable to complete evaluating order values:  " + ex.getMessage());
             } catch (Exception ex1) {
                 // Don't really care if this gets an exception.
             }
@@ -1189,6 +1379,16 @@ public class ProductOrderActionBean extends CoreActionBean {
         notificationListTokenInput.setup(editOrder.getProductOrderKit().getNotificationIds());
     }
 
+    @HandlesEvent(PUBLISH_PDO_TO_SAP)
+    public Resolution publishProductOrderToSAP() throws SAPInterfaceException {
+        MessageCollection placeOrderMessageCollection = new MessageCollection();
+
+        productOrderEjb.publishProductOrderToSAP(editOrder,placeOrderMessageCollection, true);
+
+        addMessages(placeOrderMessageCollection);
+        return createViewResolution(editOrder.getBusinessKey());
+    }
+
     @HandlesEvent(PLACE_ORDER_ACTION)
     public Resolution placeOrder() {
         String originalBusinessKey = editOrder.getBusinessKey();
@@ -1206,7 +1406,17 @@ public class ProductOrderActionBean extends CoreActionBean {
             addMessage("Product Order \"{0}\" has been placed", editOrder.getTitle());
             originalBusinessKey = null;
 
+            productOrderEjb.publishProductOrderToSAP(editOrder, placeOrderMessageCollection, true);
             addMessages(placeOrderMessageCollection);
+
+            /*
+             While fixing GPLIM-4481 we came across a scenario that left certain collections on the product order
+             uninitialized which caused a lazy initialization exception when they were access accessed on the
+             orders/view.jsp page. For this reason the calls to Hibernate.initialize were added below.
+
+             */
+            Hibernate.initialize(editOrder.getChildOrders());
+            Hibernate.initialize(editOrder.getSapReferenceOrders());
 
             productOrderEjb.handleSamplesAdded(editOrder.getBusinessKey(), editOrder.getSamples(), this);
             productOrderDao.persist(editOrder);
@@ -1216,7 +1426,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             // If we get here with an original business key, then clear out the session and refetch the order.
             if (originalBusinessKey != null) {
                 productOrderDao.clear();
-                editOrder = productOrderEjb.findProductOrderByBusinessKeySafely(originalBusinessKey);
+                editOrder = productOrderDao.findByBusinessKey(originalBusinessKey);
             }
 
             addGlobalValidationError(e.getMessage());
@@ -1290,6 +1500,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() throws Exception {
 
+        MessageCollection saveOrderMessageCollection = new MessageCollection();
+
         // Update the modified by and created by, if necessary.
         ProductOrder.SaveType saveType = ProductOrder.SaveType.UPDATING;
         if (isCreating()) {
@@ -1300,13 +1512,30 @@ public class ProductOrderActionBean extends CoreActionBean {
             updateRegulatoryInformation();
         }
         Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
-        productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails);
-
-        addMessage("Product Order \"{0}\" has been saved.", editOrder.getTitle());
-        // Temporarily adding the quote validation when the order is saved to give the user a warning of upcoming
-        // new restrictions
-        validateQuoteDetails(editOrder.getQuoteId(), ErrorLevel.WARNING);
-
+        try {
+            productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails,
+                    saveOrderMessageCollection);
+            if (isInfinium() && editOrder.getPipelineLocation() == null) {
+                editOrder.setPipelineLocation(ProductOrder.PipelineLocation.US_CLOUD);
+                productOrderDao.persist(editOrder);
+            }
+            addMessages(saveOrderMessageCollection);
+            addMessage("Product Order \"{0}\" has been saved.", editOrder.getTitle());
+        } catch (SAPInterfaceException e) {
+            addGlobalValidationError(e.getMessage());
+            getSourcePageResolution();
+        }
+        try {
+            if(!productOrderEjb.isOrderEligibleForSAP(editOrder)) {
+                validateQuoteDetails(editOrder.getQuoteId(), ErrorLevel.WARNING, !editOrder.hasJiraTicketKey());
+            }
+        } catch (QuoteServerException e) {
+            addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
+        } catch (QuoteNotFoundException e) {
+            addGlobalValidationError("The quote ''{2}'' was not found ", editOrder.getQuoteId());
+        } catch (InvalidProductException ipe) {
+            addGlobalValidationError("Unable to determine the existing value of open orders for " + editOrder.getQuoteId() +": " +ipe.getMessage());
+        }
         if (chipDefaults != null && attributes != null) {
             if (!chipDefaults.equals(attributes)) {
                 genotypingProductOrderMapping =
@@ -1330,6 +1559,50 @@ public class ProductOrderActionBean extends CoreActionBean {
         return createViewResolution(editOrder.getBusinessKey());
     }
 
+    @ValidationMethod(on = REPLACE_SAMPLES)
+    public void validateReplacementSample() {
+
+        final List<ProductOrderSample> replacementSamples = stringToSampleList(replacementSampleList);
+
+        if(editOrder.getNumberForReplacement() <= 0 ) {
+            addGlobalValidationError("There are no samples to replace.  If you must process samples, please open a new Product Order");
+        } else if (replacementSamples.size() > editOrder.getNumberForReplacement()) {
+            addGlobalValidationError("You are attempting to replace more samples than you are able to.  Please reduce the number samples entered");
+        }
+    }
+
+    @HandlesEvent(REPLACE_SAMPLES)
+    public Resolution replaceSamples() throws Exception {
+
+        boolean shareSapOrder = false;
+        MessageCollection saveOrderMessageCollection = new MessageCollection();
+
+        Hibernate.initialize(editOrder.getChildOrders());
+        Hibernate.initialize(editOrder.getSapReferenceOrders());
+        Hibernate.initialize(editOrder.getSamples());
+
+        final List<ProductOrderSample> replacementSamples = stringToSampleList(replacementSampleList);
+
+        if(editOrder.isSavedInSAP() && editOrder.hasAtLeastOneBilledLedgerEntry() &&
+           (editOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL) < editOrder.latestSapOrderDetail().getPrimaryQuantity()) ) {
+            shareSapOrder = true;
+        }
+        ProductOrder.SaveType saveType = ProductOrder.SaveType.CREATING;
+        replacementSampleOrder = ProductOrder.cloneProductOrder(editOrder, shareSapOrder);
+        replacementSampleOrder.setSamples(replacementSamples);
+        Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
+        try {
+            productOrderEjb.persistClonedProductOrder(saveType, replacementSampleOrder, saveOrderMessageCollection);
+            addMessages(saveOrderMessageCollection);
+            addMessage("Product Order \"{0}\" has been saved.", replacementSampleOrder.getTitle());
+        } catch (SAPInterfaceException e) {
+            addGlobalValidationError(e.getMessage());
+            return getSourcePageResolution();
+        }
+
+        return createViewResolution(replacementSampleOrder==null?editOrder.getBusinessKey():replacementSampleOrder.getBusinessKey());
+    }
+
     void updateRegulatoryInformation() {
         if (!editOrder.getRegulatoryInfos().isEmpty() && !isSkipRegulatoryInfo()) {
             editOrder.setSkipRegulatoryReason(null);
@@ -1343,9 +1616,16 @@ public class ProductOrderActionBean extends CoreActionBean {
         // Set the project, product and addOns for the order.
         ResearchProject tokenProject = projectTokenInput.getTokenObject();
         ResearchProject project =
-                tokenProject != null ? projectDao.findByBusinessKey(tokenProject.getBusinessKey()) : null;
+                tokenProject != null ? researchProjectDao.findByBusinessKey(tokenProject.getBusinessKey()) : null;
         Product tokenProduct = productTokenInput.getTokenObject();
         Product product = tokenProduct != null ? productDao.findByPartNumber(tokenProduct.getPartNumber()) : null;
+
+        if(editOrder.isSavedInSAP() && !editOrder.latestSapOrderDetail().getCompanyCode().equals(
+                SapIntegrationServiceImpl.getSapCompanyConfigurationForProduct(product).getCompanyCode())) {
+            addGlobalValidationError("Unable to update the order in SAP.  This combination of Product and Order is "
+                                     + "attempting to change the company code to which this order will be associated.");
+        }
+
         List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
         editOrder.updateData(project, product, addOnProducts, stringToSampleListExisting(sampleList));
         BspUser tokenOwner = owner.getTokenObject();
@@ -1493,55 +1773,99 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @return a resolution for the JSON results
      */
     @HandlesEvent("suggestRegulatoryInfo")
-    public Resolution suggestRegulatoryInfo() {
-        JSONArray results = new JSONArray();
+    public Resolution suggestRegulatoryInfo() throws Exception {
+        JSONObject results = new JSONObject();
+        JSONArray jsonResults = new JSONArray();
 
         // Access sample list directly in order to suggest based on possibly not-yet-saved sample IDs.
-        if (!getSampleList().isEmpty()) {
+        if (!getSampleList().isEmpty() && !editOrder.isChildOrder()) {
             List<ProductOrderSample> productOrderSamples = stringToSampleListExisting(getSampleList());
-
             // Bulk-fetch collection IDs for all samples to avoid having them fetched individually on demand.
-            ProductOrder.loadSampleData(productOrderSamples, BSPSampleSearchColumn.BSP_COLLECTION_BARCODE);
+            ProductOrder.loadSampleData(productOrderSamples, BSPSampleSearchColumn.BSP_COLLECTION_BARCODE,
+                    BSPSampleSearchColumn.COLLECTION);
 
-            List<OrspProject> orspProjects = orspProjectDao.findBySamples(productOrderSamples);
-            if (!orspProjects.isEmpty()) {
-
-                // Fetching RP here instead of a @Before method to avoid the fetch when it won't be used.
-                ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
-                Map<String, RegulatoryInfo> regulatoryInfoByIdentifier = researchProject.getRegulatoryByIdentifier();
-
-                for (OrspProject orspProject : orspProjects) {
-                    RegulatoryInfo regulatoryInfo = regulatoryInfoByIdentifier.get(orspProject.getProjectKey());
-                    results.put(orspProjectToJson(orspProject, regulatoryInfo));
+            Multimap<String, ProductOrderSample> samplesByCollection = HashMultimap.create();
+            for (ProductOrderSample productOrderSample : productOrderSamples) {
+                String collectionId = productOrderSample.getSampleData().getCollectionId();
+                if (!collectionId.isEmpty()) {
+                    samplesByCollection.put(collectionId, productOrderSample);
                 }
             }
+
+            List<OrspProject> orspProjects = orspProjectDao.findBySamples(productOrderSamples);
+            for (OrspProject orspProject : orspProjects) {
+                for (OrspProjectConsent consent : orspProject.getConsents()) {
+                    Collection<ProductOrderSample> samples =
+                            samplesByCollection.get(consent.getKey().getSampleCollection());
+                    for (ProductOrderSample sample : samples) {
+                        sample.addOrspProject(orspProject);
+                    }
+                }
+            }
+            // Fetching RP here instead of a @Before method to avoid the fetch when it won't be used.
+            ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
+            Map<String, RegulatoryInfo> regulatoryInfoByIdentifier = researchProject.getRegulatoryByIdentifier();
+            jsonResults = orspProjectToJson(productOrderSamples, regulatoryInfoByIdentifier);
         }
+        results.put("data", jsonResults);
+        results.put("draw", 1);
+        results.put("recordsTotal", jsonResults.length());
 
         return createTextResolution(results.toString());
     }
 
     /**
-     * Constructs a JSONObject for an OrspProject. If regulatoryInfo is non-null, it is assumed to be an existing record
-     * with the same identifier associated with the research project in which case its primary key is also placed in the
-     * result. This allows client-side scripts to match these results with entries in a regulatory info selection
-     * widget.
+     * Create a JSON data structure linking all the input ProductOrderSamples to possible OSRP Projects and Sample
+     * Collections. If regulatoryInfo is non-null, it is assumed to be an existing record with the same identifier
+     * associated with the Research Project in which case its primary key is also placed in the result. This allows
+     * client-side scripts to match these results with entries in a regulatory info selection widget.
      *
-     * @param orspProject       the ORSP project to serialize
-     * @param regulatoryInfo    the matching RegulatoryInfo record (or null)
-     * @return a new JSONObject for the ORSP project
+     * @param productOrderSamples input samples to find possible regulatory information about.
+     * @param regulatoryInfoById the matching RegulatoryInfo record (or null)
+     * @return A JSONArray of JSONObjects which link the ProductOrderSamples to ORSP projects and Sample Collections.
      */
-    private JSONObject orspProjectToJson(OrspProject orspProject, RegulatoryInfo regulatoryInfo) {
-        JSONObject result = new JSONObject();
+    private JSONArray orspProjectToJson(List<ProductOrderSample> productOrderSamples, Map<String, RegulatoryInfo> regulatoryInfoById) {
+        JSONArray resultList = new JSONArray();
         try {
-            result.put("identifier", orspProject.getProjectKey());
-            result.put("name", orspProject.getName());
-            if (regulatoryInfo != null) {
-                result.put("regulatoryInfoId", regulatoryInfo.getRegulatoryInfoId());
+            ListMultimap<OrspProject, ProductOrderSample> orspProjectSamples = ArrayListMultimap.create();
+            Set<String> samplesWithNoOrsp = new HashSet<>();
+            for (ProductOrderSample productOrderSample : productOrderSamples) {
+                if (productOrderSample.getOrspProjects().isEmpty()) {
+                    samplesWithNoOrsp.add(productOrderSample.getSampleKey());
+                }
+                for (OrspProject orspProject : productOrderSample.getOrspProjects()) {
+                    orspProjectSamples.put(orspProject, productOrderSample);
+                }
+            }
+
+            for (Map.Entry<OrspProject, Collection<ProductOrderSample>> pdoSamplesEntry : orspProjectSamples.asMap()
+                    .entrySet()) {
+                OrspProject orspProject = pdoSamplesEntry.getKey();
+                JSONObject orspObject = new JSONObject();
+                orspObject.put("identifier", orspProject.getProjectKey());
+                orspObject.put("name", orspProject.getName());
+
+                RegulatoryInfo regulatoryInfo = regulatoryInfoById.get(orspProject.getProjectKey());
+                if (regulatoryInfo != null) {
+                    orspObject.put("regulatoryInfoId", regulatoryInfo.getRegulatoryInfoId());
+                }
+
+                Set<String> samples = new HashSet<>();
+                Set<String> collections = new HashSet<>();
+                for (ProductOrderSample productOrderSample : pdoSamplesEntry.getValue()) {
+                    samples.add(productOrderSample.getSampleKey());
+                    collections.add(productOrderSample.getSampleData().getCollection());
+                }
+
+                resultList.put(buildOrspJsonObject(orspObject, samples, collections));
+            }
+            if (!samplesWithNoOrsp.isEmpty()) {
+                resultList.put(buildOrspJsonObject(new JSONObject(), samplesWithNoOrsp, Collections.<String>emptySet()));
             }
         } catch (JSONException e) {
             throw new RuntimeException("No, I didn't pass a null key to JSONObject.put()");
         }
-        return result;
+        return resultList;
     }
 
     @HandlesEvent("getPostReceiveOptions")
@@ -1641,10 +1965,23 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent("getSupportsNumberOfLanes")
     public Resolution getSupportsNumberOfLanes() throws Exception {
         boolean supportsNumberOfLanes = false;
+        List<String> selectedOrderAddons = null;
+        if(selectedAddOns != null) {
+            selectedOrderAddons = Arrays.asList(StringUtils.split(selectedAddOns, "|@|"));
+        }
         JSONObject item = new JSONObject();
 
         if (product != null) {
-            supportsNumberOfLanes = productDao.findByBusinessKey(product).getSupportsNumberOfLanes();
+            final Product productToFind = productDao.findByBusinessKey(product);
+            supportsNumberOfLanes = productToFind.getSupportsNumberOfLanes();
+            if(selectedOrderAddons != null)
+            for (String selectedOrderAddon : selectedOrderAddons) {
+                if(!supportsNumberOfLanes) {
+                    supportsNumberOfLanes = productDao.findByBusinessKey(selectedOrderAddon).getSupportsNumberOfLanes();
+                } else {
+                    break;
+                }
+            }
         }
 
         item.put(BspSampleData.SUPPORTS_NUMBER_OF_LANES, supportsNumberOfLanes);
@@ -1696,7 +2033,12 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent(DELETE_SAMPLES_ACTION)
     public Resolution deleteSamples() throws Exception {
-        productOrderEjb.removeSamples(editOrder.getBusinessKey(), selectedProductOrderSamples, this);
+        try {
+            productOrderEjb.removeSamples(editOrder.getBusinessKey(), selectedProductOrderSamples, this);
+        } catch (SAPInterfaceException e) {
+            logger.error("SAP error when attempting to delete samples", e);
+            addGlobalValidationError(e.getMessage());
+        }
         return createViewResolution(editOrder.getBusinessKey());
     }
 
@@ -1757,6 +2099,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         int originalOnRiskCount = editOrder.countItemsOnRisk();
 
         try {
+
+            //  FIXME SGM Must try this with setting the method to TransactionAttribute(TransactionAttributeType.REQUIRED)
+            // Currently it seems to cause an unintended Transaction to be started which will save the product order.
+            //  THere needs to be some persist action specifically called after the changes to risk in order to save
+            // The order.  it should not depend on what should be essentially a DBFree non transactional method.
+
             productOrderEjb.calculateRisk(editOrder.getBusinessKey(), selectedProductOrderSamples);
 
             // refetch the order to get updated risk status on the order.
@@ -1794,6 +2142,16 @@ public class ProductOrderActionBean extends CoreActionBean {
             addMessage("Abandoned samples: {0}.",
                     StringUtils.join(ProductOrderSample.getSampleNames(selectedProductOrderSamples), ", "));
             productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey(), this);
+
+            MessageCollection abandonSamplesMessageCollection = new MessageCollection();
+
+            try {
+                productOrderEjb.publishProductOrderToSAP(editOrder, abandonSamplesMessageCollection, false);
+            } catch (SAPInterfaceException e) {
+                logger.error("SAP Error when attempting to abandon samples", e);
+                addGlobalValidationError(e.getMessage());
+            }
+            addMessages(abandonSamplesMessageCollection);
         }
         return createViewResolution(editOrder.getBusinessKey());
     }
@@ -1812,10 +2170,43 @@ public class ProductOrderActionBean extends CoreActionBean {
                         editOrder.getBusinessKey());
             }
             productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey(), this);
+
+            MessageCollection abandonSamplesMessageCollection = new MessageCollection();
+            try {
+                productOrderEjb.publishProductOrderToSAP(editOrder, abandonSamplesMessageCollection, false);
+            } catch (SAPInterfaceException e) {
+                logger.error("SAP Error when attempting to abandon samples", e);
+                addGlobalValidationError(e.getMessage());
+            }
+            addMessages(abandonSamplesMessageCollection);
         }
-
         return createViewResolution(editOrder.getBusinessKey());
+    }
+    @ValidationMethod(on = ADD_SAMPLES_ACTION)
+    public void addSampleExtraValidations() throws Exception {
+        try {
+            if (productOrderEjb.isOrderEligibleForSAP(editOrder)) {
+                validateQuoteDetailsWithAddedSamples(editOrder.getQuoteId(), ErrorLevel.ERROR,
+                        !editOrder.hasJiraTicketKey(), stringToSampleList(addSamplesText).size());
+            }
+        } catch (QuoteServerException e) {
+            addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
+        } catch (QuoteNotFoundException e) {
+            addGlobalValidationError("The quote ''{2}'' was not found ", editOrder.getQuoteId());
+        } catch (InvalidProductException e) {
+            addGlobalValidationError("Unable to determine the existing value of open orders for " + editOrder.getQuoteId() +": " +e.getMessage());
+        }
+    }
 
+    private void testForPriceItemValidity(ProductOrder editOrder) {
+        if(productOrderEjb.arePriceItemsValid(editOrder, new HashSet<AccessItem>())) {
+            final String errorMessage = "One of the price items on this orders products is invalid";
+            if(editOrder.isSavedInSAP()) {
+                addGlobalValidationError(errorMessage);
+            } else {
+                addMessage(errorMessage);
+            }
+        }
     }
 
     @HandlesEvent(ADD_SAMPLES_ACTION)
@@ -1826,7 +2217,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         } catch (BucketException e) {
             logger.error("Problem adding samples to bucket", e);
             addGlobalValidationError(e.getMessage());
+        } catch (SAPInterfaceException sie) {
+            logger.error("Error from SAP when attempting to add samples");
+            addGlobalValidationError(sie.getMessage());
         }
+
         return createViewResolution(editOrder.getBusinessKey());
     }
 
@@ -1888,6 +2283,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setProduct(String product) {
         this.product = product;
+    }
+
+    public String getSelectedAddOns() {
+        return selectedAddOns;
+    }
+
+    public void setSelectedAddOns(String selectedAddOns) {
+        this.selectedAddOns = selectedAddOns;
     }
 
     public String getMaterialInfo() {
@@ -2008,7 +2411,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private static List<ProductOrderSample> stringToSampleList(String sampleListText) {
         List<ProductOrderSample> samples = new ArrayList<>();
-        for (String sampleName : SearchActionBean.cleanInputStringForSamples(sampleListText)) {
+        final List<String> sampleNames = SearchActionBean.cleanInputStringForSamples(sampleListText);
+        for (String sampleName : sampleNames) {
             samples.add(new ProductOrderSample(sampleName));
         }
 
@@ -2427,7 +2831,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                     "its regulatory requirements met or a reason for bypassing the regulatory requirements",
                     action);
             if (!editOrder.orderPredatesRegulatoryRequirement()) {
-                requireField(editOrder.getAttestationConfirmed().booleanValue(),
+                requireField(editOrder.isAttestationConfirmed().booleanValue(),
                         "the checkbox checked which attests that you are aware of the regulatory requirements for this project",
                         action);
             }
@@ -2715,5 +3119,29 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public HashMap<String, String> getChipDefaults() {
         return chipDefaults;
+    }
+    public String getPublishSAPAction() {return PUBLISH_PDO_TO_SAP;}
+
+    public String getReplacementSampleList() {
+        return replacementSampleList;
+    }
+
+    public void setReplacementSampleList(String replacementSampleList) {
+        this.replacementSampleList = replacementSampleList;
+    }
+
+    public static JSONObject buildOrspJsonObject(JSONObject orspProject, Set<String> samples,
+                                                 Set<String> sampleCollections) throws JSONException
+    {
+        JSONObject result = new JSONObject();
+        result.put("orspProject", orspProject);
+        result.put("samples", samples);
+        result.put("collections", sampleCollections);
+        return result;
+    }
+
+    @Inject
+    public void setPriceListCache(PriceListCache priceListCache) {
+        this.priceListCache = priceListCache;
     }
 }

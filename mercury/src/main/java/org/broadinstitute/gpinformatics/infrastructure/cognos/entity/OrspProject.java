@@ -4,9 +4,11 @@ import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -29,6 +31,7 @@ public class OrspProject {
      * enumerating.
      */
     private static final List<String> USABLE_STATUSES = Arrays.asList("Approved", "Completed");
+    public static final String CONSENT_GROUP_PREFIX = "CG-";
 
     @Id
     private String projectKey;
@@ -45,8 +48,10 @@ public class OrspProject {
 
     private String url;
 
-    @OneToMany(mappedBy = "orspProject")
+    @OneToMany(mappedBy = "orspProject", fetch = FetchType.EAGER)
     private Collection<OrspProjectConsent> consents = new HashSet<>();
+    @Transient
+    private Long regulatoryInfoId;
 
     /**
      * For JPA.
@@ -92,7 +97,7 @@ public class OrspProject {
      * @return the short name/description of this ORSP project (extracted from {@link #rawLabel})
      */
     public String getName() {
-        Matcher matcher = Pattern.compile("^ORSP-\\d+ \\((.*)\\)$").matcher(rawLabel);
+        Matcher matcher = Pattern.compile("^"+ projectKey +" \\((.*)\\)$").matcher(rawLabel);
         if (matcher.matches()) {
             return matcher.group(1).trim();
         } else {
@@ -132,6 +137,10 @@ public class OrspProject {
      */
     public boolean isUsable() {
         return USABLE_STATUSES.contains(status);
+    }
+
+    public boolean isConsentGroup() {
+        return projectKey.startsWith(CONSENT_GROUP_PREFIX);
     }
 
     /**

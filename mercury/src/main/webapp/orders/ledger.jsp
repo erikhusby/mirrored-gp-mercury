@@ -14,6 +14,7 @@
     <style type="text/css">
         #filters {
             margin-top: 6px;
+            margin-bottom: 6px;
         }
         #filters .nav {
             margin-bottom: 5px;
@@ -137,6 +138,18 @@
         .ledgerQuantity.pending, .unbilledStatus.pending {
             font-weight: bold;
         }
+
+        .autowidth select {
+            width: auto;
+        }
+        .processing {
+            z-index: 200;
+        }
+        .dataTables_info {
+            clear: none;
+            padding-top: 5px;
+            padding-left: 1em;
+        }
     </style>
 
 <%-- ================ Page-specific JavaScript ================ --%>
@@ -162,13 +175,15 @@
             /*
              * Configure ledger datatable.
              */
+            enableDefaultPagingOptions();
+            var ledgerQuantities = $j('input.ledgerQuantity');
             var ledgerTable = $j('#ledger').dataTable({
                 <%-- copy/csv/print buttons don't work very will with the hidden columns and text inputs. Buttons need
                      to be overridden with custom mColumns and fnCellRender. Disabling this feature for now by removing
                      the "T" from the sDom string.
                 'sDom': "<'row-fluid'<'span6'f><'span4'<'#dtButtonHolder'>><'span2'T>r>t<'row-fluid'<'span6'i><'span6'p>>",
                 --%>
-                'sDom': "<'row-fluid'<'span6'f><'span4'<'#dtButtonHolder'>><'span2'>r>t<'row-fluid'<'span6'i><'span6'p>>",
+                'sDom': "<'row-fluid'<'span6'fi>><'row-fluid'<'span6 .autowidth'l><'span4 pull-right'<'#dtButtonHolder'>><'.processing'r>>t<'row-fluid'<'span6 autowidth' l><'span6'p>>",
                 /*
                  * It's not useful to save filter state for this UI. Also, hSpinner widgets will not be initialized if
                  * they are filtered out of the DOM when the page loads
@@ -194,7 +209,59 @@
                     </c:forEach>
 
                     {'bSortable': true, 'sType': 'title-string'}    // billed
-                ]
+                ],
+                fnInitComplete: function(){
+                    /*
+                     * Set up hSpinner widgets for controlling ledger quantities.
+                     */
+                    ledgerQuantities.hSpinner({
+                        originalValue: function(element) {
+                            return $j(element).siblings().filter('input:hidden').eq(0).val();
+                        },
+                        incremented: function(event, inputName) {
+                            updateUnbilledStatus($j('#' + escapeForSelector(inputName)));
+                            applyToSelected(inputName, 'increment');
+                            updateSubmitButton();
+                        },
+                        decremented: function(event, inputName) {
+                            updateUnbilledStatus($j('#' + escapeForSelector(inputName)));
+                            applyToSelected(inputName, 'decrement');
+                            updateSubmitButton();
+                        },
+                        // hSpinner widget "input" event, not to be confused with the browser built-in DOM "input" event.
+                        input: function(event, inputName) {
+                            updateUnbilledStatus($j('#' + escapeForSelector(inputName)));
+                            applyToSelected(inputName, 'setValue');
+                            updateSubmitButton();
+                        }
+                    });
+                    /**
+                     * When rows are selected and one "date complete" is changed, change all selected rows.
+                     */
+                    $j('#ledger').on('change', '.dateComplete', function(event) {
+                        var $selectedRows = getSelectedRows();
+                        var $input = $j(event.target);
+                        var value = $input.val();
+                        if ($selectedRows.length > 0) {
+                            var inputName = $input.attr('name');
+                            var $selectedInputs = $selectedRows.find('input.dateComplete:enabled');
+                            for (var i = 0; i < $selectedInputs.length; i++) {
+                                var $selectedInput = $selectedInputs.eq(i);
+                                if ($selectedInput.attr('name') != inputName) {
+                                    $selectedInput.val(value);
+                                    var changed = value != $selectedInput.attr('originalValue');
+                                    $selectedInput.toggleClass('changed', changed);
+                                    updateDateCompleteValidation($selectedInput);
+                                }
+                            }
+                        }
+                        var changed = value != $input.attr('originalValue');
+                        $input.toggleClass('changed', changed);
+                        updateDateCompleteValidation($input);
+
+                        updateSubmitButton();
+                    });
+                }
             });
             // Reuse the existing filter input, but unbind its usual behavior and replace it with our own.
             $j(".dataTables_filter input").unbind('keyup');
@@ -249,64 +316,11 @@
              */
             $j('.dateComplete').datepicker({ dateFormat: 'M d, yy', maxDate: 0 }).datepicker('refresh');
 
-            /**
-             * When rows are selected and one "date complete" is changed, change all selected rows.
-             */
-            $j('.dateComplete').change(function(event) {
-                var $selectedRows = getSelectedRows();
-                var $input = $j(event.target);
-                var value = $input.val();
-                if ($selectedRows.length > 0) {
-                    var inputName = $input.attr('name');
-                    var $selectedInputs = $selectedRows.find('input.dateComplete:enabled');
-                    for (var i = 0; i < $selectedInputs.length; i++) {
-                        var $selectedInput = $selectedInputs.eq(i);
-                        if ($selectedInput.attr('name') != inputName) {
-                            $selectedInput.val(value);
-                            var changed = value != $selectedInput.attr('originalValue');
-                            $selectedInput.toggleClass('changed', changed);
-                            updateDateCompleteValidation($selectedInput);
-                        }
-                    }
-                }
-                var changed = value != $input.attr('originalValue');
-                $input.toggleClass('changed', changed);
-                updateDateCompleteValidation($input);
-
-                updateSubmitButton();
-            });
-
             // Update display styles for all date complete inputs when the page loads.
             var dateCompleteInputs = $j('.dateComplete');
             for (var i = 0; i < dateCompleteInputs.length; i++) {
                 updateDateCompleteValidation(dateCompleteInputs.eq(i));
             }
-
-            /*
-             * Set up hSpinner widgets for controlling ledger quantities.
-             */
-            var ledgerQuantities = $j('input.ledgerQuantity');
-            ledgerQuantities.hSpinner({
-                originalValue: function(element) {
-                    return $j(element).siblings().filter('input:hidden').eq(0).val();
-                },
-                incremented: function(event, inputName) {
-                    updateUnbilledStatus($j('#' + escapeForSelector(inputName)));
-                    applyToSelected(inputName, 'increment');
-                    updateSubmitButton();
-                },
-                decremented: function(event, inputName) {
-                    updateUnbilledStatus($j('#' + escapeForSelector(inputName)));
-                    applyToSelected(inputName, 'decrement');
-                    updateSubmitButton();
-                },
-                // hSpinner widget "input" event, not to be confused with the browser built-in DOM "input" event.
-                input: function(event, inputName) {
-                    updateUnbilledStatus($j('#' + escapeForSelector(inputName)));
-                    applyToSelected(inputName, 'setValue');
-                    updateSubmitButton();
-                }
-            });
 
             // Update display styles in response to change event fired after auto-fill.
             ledgerQuantities.on('change', function(event) {
@@ -348,18 +362,34 @@
                 autoFill();
             });
 
-            $j('#ledgerForm').submit(function() {
-                var hiddenInputs = $j(ledgerTable.fnGetHiddenNodes()).find('input');
+            $j('#ledgerForm').submit(function (event) {
+                var changedInputs;
+                var originalState;
                 var hiddenInputContainer = $j('#hiddenRowInputs');
-                hiddenInputs.appendTo(hiddenInputContainer);
-                var disabledInputs = $j('#ledgerForm').find('input:disabled');
-                for (var i = 0; i < disabledInputs.length; i++) {
-                    var disabledInput = disabledInputs.eq(i);
-                    hiddenInputContainer.append($j('<input/>', {
-                        type: 'hidden',
-                        name: disabledInput.attr('name'),
-                        value: disabledInput.val()
+                try {
+                    originalState = $j(ledgerTable.fnGetNodes()).find('input').not(":disabled").prop("disabled",true);
+                    $j(ledgerTable.fnGetNodes()).find('input').prop('disabled', true);
+
+                    // Find and enable (un-disable?) table rows that have changed inputs.
+                    changedInputs = $j(ledgerTable.fnGetNodes()).filter(function(){
+                        return $j(this).find("input.changed").length > 0;
+                    }).find('input').prop('disabled', false);
+
+                    hiddenInputContainer.append(changedInputs);
+                } catch (e) {
+                    var errorMessage = "Error collecting ledger entries: '" + e + "'";
+                    console.log(errorMessage);
+                    var errorBlock = $j("<div>", {'class': "modal alert alert-block"});
+                    errorBlock.append($j("<p>", {
+                        text: errorMessage,
+                        'class': 'text-error',
+                        css: 'font-weight: bold; margin-left: 50px'
                     }));
+                    originalState.prop('disabled', false);
+                    changedInputs.prop('disabled', true);
+                    hiddenInputContainer.empty();
+                    errorBlock.appendTo(document.body);
+                    event.preventDefault();
                 }
             });
 
@@ -814,7 +844,9 @@
                     </td>
                     <td>
                         ${info.sample.name}
-                        <stripes:hidden name="ledgerData[${info.sample.samplePosition}].sampleName" value="${info.sample.name}"/>
+                        <input type="hidden"
+                               name="ledgerData[${info.sample.samplePosition}].sampleName"
+                               value="${info.sample.name}"/>
                     </td>
                     <td>
                         ${info.sample.sampleData.collaboratorsSampleName}

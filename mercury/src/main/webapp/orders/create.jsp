@@ -1,11 +1,12 @@
-<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.entity.products.Product" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="${actionBean.submitString}: ${actionBean.editOrder.title}"
+<stripes:layout-render name="/layout.jsp" dataTablesVersion="1.10"
+                       pageTitle="${actionBean.submitString}: ${actionBean.editOrder.title}"
                        sectionTitle="${actionBean.submitString}: ${actionBean.editOrder.title}">
 
     <stripes:layout-component name="extraHead">
@@ -41,10 +42,37 @@
             vertical-align: bottom;
         }
 
-        .addRegulatoryInfo {
-            font-size: 12px;
+        .sample {
+            word-break: break-word;
+            text-overflow: ellipsis;
+            width: 25%;
+        }
+
+        .noOrsp {
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .divTable {
+            width: 100%;
+            white-space: nowrap;
+        }
+
+        .divCell {
+            white-space: normal;
+        }
+
+        .divCell.left {
+            width: 80%;
+            float: left;
+        }
+
+        .divCell.right {
+            float: right;
         }
     </style>
+        <script src="${ctxpath}/resources/scripts/clipboard.min.js" type="text/javascript"></script>
+        <script src="${ctxpath}/resources/scripts/bindWithDelay.js" type="text/javascript"></script>
         <script type="text/javascript">
 
         var duration = {'duration' : 400};
@@ -57,6 +85,15 @@
             readonlyText = ' readonly="readonly" ';
         }
 
+        function reloadRegulatorySuggestions() {
+            if (typeof $j("#researchProject").val() != undefined &&
+                    $j("#researchProject").val() != null &&
+                    $j("#researchProject").val().trim() !== "") {
+                regulatorySuggestionDT.ajax.reload(null, false);
+            }
+        }
+
+        var regulatorySuggestionDT;
         $j(document).ready(
 
                 function () {
@@ -80,8 +117,129 @@
                         });
                     };
 
+        String.prototype.trunc =
+            function (n) {
+                if (this.length > n) {
+                    var remaining = this.substr(n + 1, this.length).split(/\s+/);
+                    var label = "<br/><i>&hellip;(+" + remaining.length + " more)<i>";
+                    return this.substr(0, n - 1) + label;
+                }
+                return this;
+            };
+            function checkRegulatoryInfoItem(event) {
+                $j("input[name=selectedRegulatoryIds][value='" + $j(event.target).attr('name') + "']").click();
+                event.preventDefault();
+            }
+
+            function buildOrspTableCell(orspProject, type, fullData, context) {
+                var thisDatatable = $j.fn.dataTable.Api(context.settings);
+                var $divTable = $j("<div></div>", {'class': 'divTable'});
+                var $tableSelector = $j("#regulatoryInfoSuggestions");
+                if (orspProject.identifier != undefined) {
+                    var $orspDescription = $j("<div></div>", {
+                        'class': 'divCell left',
+                        'text': orspProject.identifier + ": " + orspProject.name
+                    });
+                    $divTable.append($orspDescription);
+                    var $selectButton = $j("<button></button>", {'text': 'select', 'disabled': 'disabled'});
+                    if (orspProject.regulatoryInfoId !== undefined) {
+                        $selectButton.attr('name', orspProject.regulatoryInfoId);
+                        $selectButton.attr('disabled', false);
+                    } else {
+                        $orspDescription.append('<br/>Not configured for ' + $j("#researchProject").val() + '. ');
+                        <c:if test="${actionBean.editResearchProjectAllowed}">
+                        var linkText = 'Link ' + orspProject.identifier + ' to ' + $j("#researchProject").val();
+                        var $addNow = $j('<a></a>', {
+                            'text': linkText,
+                            'title': 'Click here to link ' + linkText,
+                            'href': '#',
+                            'class': 'addRegulatoryInfo',
+                            'identifier': orspProject.identifier,
+                        });
+                        $orspDescription.append($addNow);
+                        $tableSelector.on('click', "a[identifier='" + orspProject.identifier + "']", function (event) {
+                            event.preventDefault();
+                            var projectSelection = $j("#researchProject").tokenInput('get')[0];
+                            openRegulatoryInfoDialog(projectSelection.id, projectSelection.name, function () {
+                                closeRegulatoryInfoDialog();
+                                populateRegulatorySelect();
+                                reloadRegulatorySuggestions();
+                            }, $j(event.target).attr('identifier'));
+                        });
+                        </c:if>
+
+                    }
+                    $tableSelector.on('click', "button[name='" + orspProject.regulatoryInfoId + "']", checkRegulatoryInfoItem);
+                    $divTable.append($j("<div></div>", {'class': 'divCell right', 'html': $selectButton}));
+                    return $divTable[0].outerHTML;
+                }
+                return $j("<div></div>", {"class": "noOrsp", "text": "No ORSP Projects found."})[0].outerHTML
+            }
+
+            regulatorySuggestionDT = $j("#regulatoryInfoSuggestions").DataTable({
+                dom: 't',
+                stateSave: false,
+                ordering: false,
+                ajax: {
+                    url: "${ctxpath}/orders/order.action?suggestRegulatoryInfo",
+                    data: {
+                        researchProjectKey: function() {
+                            return $j("#researchProject").val();
+                        },
+                        sampleList: function(){
+                            return $j("#samplesToAdd").val();
+                        }
+                    },
+                    dataType: 'json',
+                    method: 'POST'
+
+                },
+                columnDefs: [{targets: "_all", orderable: false}],
+                order: [[ 1, 'desc' ], [ 2, 'asc' ],[ 0, 'asc' ]],
+                deferRender: true,
+                columns: [{
+                    data: "samples", title: "Sample IDs", 'class': "sample", render: {
+                        display: function (samples, type, row, meta) {
+                            var linkId = 'orsp' + meta.row + meta.col;
+                            var sampleString = samples.join(", ");
+                            var sampleLength = samples.length;
+                            var linkSelector = '#' + linkId;
+                            var $href = $j("<a></a>", {
+                                'href': 'javascript:;',
+                                'id': linkId,
+                                'text': 'Click to copy',
+                                'data-placement': 'right',
+                                'data-delay': 2000,
+                                'data-toggle': "tooltip",
+                                'data-original-title': sampleLength + ' sample names copied to clipboard.',
+                                'data-clipboard-target': linkSelector,
+                                'data-clipboard-text': sampleString
+                            });
+                            var clipboard = new Clipboard("a" + linkSelector);
+                            var api = $j.fn.dataTable.Api(meta.settings);
+                            api.cell().on('click.dt', function(event) {
+                                $j(event.target).tooltip("show");
+                                setTimeout(function () {
+                                    $j(event.target).tooltip('hide');
+                                }, 2000);
+                            });
+
+                            return sampleString.trunc(90) + "<br/>" + '<div>' + $href[0].outerHTML+'</div>';
+
+                        }
+                    }
+                }, {
+                    data: "orspProject", title: "ORSP", render: {"display": buildOrspTableCell}
+                }, {
+                    data: "collections", title: "Sample Collection"
+                }],
+                preDrawCallback: function (settings) {
+                    var $container = $j($j.fn.dataTable.Api(settings).table().container());
+                    $container.toggle(settings.fnRecordsDisplay() > 0);
+                }
+            });
+
                     $j('#productList').dataTable({
-                        "oTableTools": ttExportDefines,
                         "aaSorting": [
                             [1, 'asc']
                         ],
@@ -112,6 +270,7 @@
                             }
                     );
 
+                    <c:if test="${!actionBean.editOrder.childOrder}">
                     $j("#researchProject").tokenInput(
                             "${ctxpath}/projects/project.action?projectAutocomplete=", {
                                 hintText: "Type a Research Project key or title",
@@ -124,7 +283,8 @@
                                 autoSelectFirstResult: true
                             }
                     );
-
+                    </c:if>
+                    <c:if test="${!actionBean.editOrder.childOrder}">
                     $j("#product").tokenInput(
                             "${ctxpath}/orders/order.action?productAutocomplete=", {
                                 hintText: "Type a Product name or Part Number   ",
@@ -137,6 +297,7 @@
                                 autoSelectFirstResult: true
                             }
                     );
+                    </c:if>
                     $j("#kitCollection").tokenInput(
                             "${ctxpath}/orders/order.action?groupCollectionAutocomplete=", {
                                 hintText: "Search for group and collection",
@@ -241,8 +402,7 @@
                     });
 
                     <c:if test="${actionBean.editOrder.draft}">
-                    $j('#samplesToAdd').on('input', suggestRegulatoryInfo);
-                    suggestRegulatoryInfo();
+                    $j('#samplesToAdd').bindWithDelay('input',reloadRegulatorySuggestions, 1000);
                     </c:if>
                 }
 
@@ -358,7 +518,9 @@
             }
             handleUpdateRegulatory(skipRegulatory);
             <c:if test="${actionBean.editOrder.draft}">
-            suggestRegulatoryInfo();
+            if(!skipRegulatory) {
+                reloadRegulatorySuggestions();
+            }
             </c:if>
         }
 
@@ -376,23 +538,29 @@
 
         }
 
-        function suggestRegulatoryInfo() {
-            var projectKey = $j("#researchProject").val();
-            var sampleList = $j('#samplesToAdd').val();
-            if (projectKey && sampleList) {
-                $j.ajax({
-                    url: "${ctxpath}/orders/order.action?suggestRegulatoryInfo",
-                    data: {
-                        researchProjectKey: projectKey,
-                        sampleList: sampleList
-                    },
-                    dataType: 'json',
-                    method: 'POST',
-                    success: showRegulatoryInfoSuggestions
-                });
-            }
+        function registerChangeForAddon () {
+            var productKey = $j("#product").val();
+
+            detectNumberOfLanesVisibility();
         }
 
+        function detectNumberOfLanesVisibility() {
+            var productKey = $j("#product").val();
+            var selectedAddonProducts = "";
+
+            $j('#createForm').find('input:checkbox[name="addOnKeys"]:checked').each(function () {
+                if (selectedAddonProducts != "") {
+                    selectedAddonProducts += "|@|";
+                }
+                selectedAddonProducts += $(this).val();
+            });
+
+            $j.ajax({
+                url: "${ctxpath}/orders/order.action?getSupportsNumberOfLanes=&product=" + productKey + "&selectedAddOns=" + selectedAddonProducts,
+                dataType: 'json',
+                success: updateNumberOfLanesVisibility
+            });
+        }
         function updateUIForProductChoice() {
 
             var productKey = $j("#product").val();
@@ -416,14 +584,13 @@
                 $j.ajax({
                     url: "${ctxpath}/orders/order.action?getAddOns=&product=" + productKey,
                     dataType: 'json',
-                    success: setupAddonCheckboxes
+                    success: setupAddonCheckboxes,
+                    complete: detectNumberOfLanesVisibility
                 });
 
-                $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getSupportsNumberOfLanes=&product=" + productKey,
-                    dataType: 'json',
-                    success: updateNumberOfLanesVisibility
-                });
+                // Moving the check for number of lanes visibility to the 'complete' (like finally in a try catch)
+                // setting for the ajax call for getting addons.  This way the addons that are set can be input for
+                // determining visibility of the number of lanes field
 
                 $j.ajax({
                     url: "${ctxpath}/orders/order.action?getSupportsSkippingQuote=&product=" + productKey,
@@ -595,46 +762,6 @@
             }
         }
 
-        function showRegulatoryInfoSuggestions(data) {
-            var $suggestionDiv = $j('#regulatoryInfoSuggestions');
-            $suggestionDiv.empty();
-            if (data.length != 0) {
-                $j.each(data, function(index, value) {
-                    var itemDiv = $j('<div></div>');
-                    itemDiv.append(value.identifier + ': ');
-                    itemDiv.append(value.name);
-                    if (value.regulatoryInfoId == undefined) {
-                        itemDiv.prepend($j('<button disabled="disabled">select</button> '));
-                        itemDiv = itemDiv.wrap('<div></div>');
-                        var addDiv = $j('<div style="padding-left: 6em;"></div>');
-                        addDiv.append('Not configured for ' + $j("#researchProject").val() + '. ');
-                        <c:if test="${actionBean.editResearchProjectAllowed}">
-                        addDiv.append('<a href="#" class="addRegulatoryInfo" identifier="' + value.identifier + '">Add now...</a>');
-                        </c:if>
-                        itemDiv.append(addDiv);
-                    } else {
-                        itemDiv.prepend($j('<button name="' + value.regulatoryInfoId + '">select</button>'));
-                    }
-                    itemDiv.css('padding-top', '8px');
-                    $suggestionDiv.append(itemDiv);
-                });
-
-                $suggestionDiv.find('button').click(function(event) {
-                    event.preventDefault();
-                    $j('input[name=selectedRegulatoryIds][value=' + $j(this).attr('name') + ']').click();
-                });
-                $suggestionDiv.find('.addRegulatoryInfo').click(function(event) {
-                    event.preventDefault();
-                    var projectSelection = $j("#researchProject").tokenInput('get')[0];
-                    openRegulatoryInfoDialog(projectSelection.id, projectSelection.name, function() {
-                        closeRegulatoryInfoDialog();
-                        populateRegulatorySelect();
-                        suggestRegulatoryInfo();
-                    }, $j(this).attr('identifier'));
-                });
-            }
-        }
-
         function setupAddonCheckboxes(data) {
             var productTitle = $j("#product").val();
 
@@ -654,7 +781,7 @@
                 }
 
                 var addOnId = "addOnCheckbox-" + index;
-                checkboxText += '  <input id="' + addOnId + '" type="checkbox"' + checked + ' name="addOnKeys" value="' + val.key + '"/>';
+                checkboxText += '  <input id="' + addOnId + '" type="checkbox"' + checked + ' name="addOnKeys" value="' + val.key + '" onchange="registerChangeForAddon()" />';
                 checkboxText += '  <label style="font-size: x-small;" for="' + addOnId + '">' + val.value + ' [' + val.key + ']</label>';
                 checkboxText += '  <br>';
             });
@@ -735,11 +862,46 @@
         }
 
         function updateFunds(data) {
-            if (data.fundsRemaining) {
-                $j("#fundsRemaining").text('Status: ' + data.status + ' - Funds Remaining: ' + data.fundsRemaining +
-                        ' with ' + data.outstandingEstimate + ' unbilled across existing open orders');
+
+            var quoteWarning = false;
+
+            if (data.fundsRemaining && !data.error) {
+                var fundsRemainingNotification = 'Status: ' + data.status + ' - Funds Remaining: ' + data.fundsRemaining +
+                        ' with ' + data.outstandingEstimate + ' unbilled across existing open orders';
+                var fundingDetails = data.fundingDetails;
+
+                if(data.status != "Funded" ||
+                        Number(data.outstandingEstimate.replace(/[^0-9\.]+/g,"")) > Number(data.fundsRemaining.replace(/[^0-9\.]+/g,""))) {
+                    quoteWarning = true;
+                }
+
+                for(var detailIndex in fundingDetails) {
+                    fundsRemainingNotification += '\n'+fundingDetails[detailIndex].grantTitle;
+                    if(fundingDetails[detailIndex].activeGrant) {
+                        fundsRemainingNotification += ' -- Expires ' + fundingDetails[detailIndex].grantEndDate;
+                        if(fundingDetails[detailIndex].daysTillExpire < 45) {
+                            fundsRemainingNotification += ' in ' + fundingDetails[detailIndex].daysTillExpire + ' days';
+                            quoteWarning = true;
+                        }
+                    } else {
+                        fundsRemainingNotification += ' -- Has Expired ' + fundingDetails[detailIndex].grantEndDate;
+                        quoteWarning = true;
+                    }
+                    if(fundingDetails[detailIndex].grantStatus != "Active") {
+                        quoteWarning = true;
+                    }
+                    fundsRemainingNotification += '\n';
+                }
+                $j("#fundsRemaining").text(fundsRemainingNotification);
             } else {
                 $j("#fundsRemaining").text('Error: ' + data.error);
+                quoteWarning = true;
+            }
+
+            if(quoteWarning) {
+                $j("#fundsRemaining").addClass("alert alert-error");
+            } else {
+                $j("#fundsRemaining").removeClass("alert alert-error");
             }
         }
 
@@ -1000,11 +1162,35 @@
                                 Research Project
                             </stripes:label>
                             <div class="controls">
-                                <stripes:text
-                                        readonly="${not actionBean.editOrder.draft}"
-                                        id="researchProject" name="projectTokenInput.listOfKeys"
-                                        class="defaultText"
-                                        title="Enter the research project for this order"/>
+                                <c:choose>
+                                    <c:when test="${actionBean.editOrder.childOrder}">
+                                        <div class="form-value">
+                                            <stripes:hidden id="researchProject" name="projectTokenInput.listOfKeys"
+                                                            value="${actionBean.editOrder.researchProject.jiraTicketKey}"/>
+                                            <stripes:link title="Research Project"
+                                                          beanclass="<%=ResearchProjectActionBean.class.getName()%>"
+                                                          event="view">
+                                                <stripes:param name="<%=ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER%>"
+                                                               value="${actionBean.editOrder.researchProject.businessKey}"/>
+                                                ${actionBean.editOrder.researchProject.title}
+                                            </stripes:link>
+                                            (<a target="JIRA"
+                                                href="${actionBean.jiraUrl(actionBean.editOrder.researchProject.jiraTicketKey)}"
+                                                class="external" target="JIRA">
+                                                ${actionBean.editOrder.researchProject.jiraTicketKey}
+                                        </a>)
+                                        </div>
+
+                                    </c:when>
+                                    <c:otherwise>
+                                        <stripes:text
+                                                readonly="${not actionBean.editOrder.draft}"
+                                                id="researchProject" name="projectTokenInput.listOfKeys"
+                                                class="defaultText"
+                                                title="Enter the research project for this order"/>
+
+                                    </c:otherwise>
+                                </c:choose>
                             </div>
                         </div>
                     </c:when>
@@ -1028,61 +1214,78 @@
                                         class="external" target="JIRA">
                                         ${actionBean.editOrder.researchProject.jiraTicketKey}
                                 </a>)
+
                                 </div>
                             </div>
                         </div>
                     </c:otherwise>
                 </c:choose>
                 <c:choose>
-                    <c:when test="${actionBean.editOrder.regulatoryInfoEditAllowed}">
-                        <div class="control-group">
-                            <stripes:label for="regulatoryInfo" class="control-label">
-                                Regulatory Information
-                            </stripes:label>
-
-
-                            <div id="regulatoryActive" class="controls">
-                                <stripes:checkbox name="skipRegulatoryInfo" id="skipRegulatoryInfoCheckbox"
-                                       title="Click if no IRB/ORSP review is required."/>No IRB/ORSP Review Required
-                            </div>
-                            <div id="skipRegulatoryDiv" class="controls controls-text">
-                                ${actionBean.complianceStatement}<br/>
-                                <stripes:text id="skipRegulatoryInfoReason" name="editOrder.skipRegulatoryReason"
-                                              maxlength="255"/>
-                            </div>
-                            <div id="regulatorySelect" class="controls controls-text"></div>
-                            <div id="attestationDiv" class="controls controls-text">
-
-                                <stripes:checkbox name="editOrder.attestationConfirmed" id="attestationConfirmed"/>
-                                ${actionBean.attestationMessage}
+                    <c:when test="${actionBean.editOrder.childOrder}">
+                        <div class="controls">
+                            <div class="form-value">
+                                <jsp:include page="regulatory_info_view.jsp"/>
                             </div>
                         </div>
                     </c:when>
                     <c:otherwise>
-                        <div class="view-control-group control-group">
-                            <label class="control-label">Regulatory Information</label>
+                        <c:choose>
+                            <c:when test="${actionBean.editOrder.regulatoryInfoEditAllowed}">
+                                <div class="control-group">
+                                    <stripes:label for="regulatoryInfo" class="control-label">
+                                        Regulatory Information
+                                    </stripes:label>
 
-                            <div class="controls">
-                                <div class="form-value">
-                                    <c:choose>
-                                        <c:when test="${fn:length(actionBean.editOrder.regulatoryInfos) ne 0}">
-                                            <c:forEach var="regulatoryInfo" items="${actionBean.editOrder.regulatoryInfos}">
-                                                ${regulatoryInfo.displayText}<br/>
-                                            </c:forEach>
-                                        </c:when>
 
-                                        <c:otherwise>
-                                            <c:choose><c:when test="${actionBean.editOrder.canSkipRegulatoryRequirements()}">
-                                                Regulatory information not entered because: ${actionBean.editOrder.skipRegulatoryReason}
-                                            </c:when>
-                                                <c:otherwise>
-                                                    No regulatory information entered.
-                                                </c:otherwise></c:choose>
-                                        </c:otherwise>
-                                    </c:choose>
+                                    <div id="regulatoryActive" class="controls">
+                                        <stripes:checkbox name="skipRegulatoryInfo" id="skipRegulatoryInfoCheckbox"
+                                                          title="Click if no IRB/ORSP review is required."/>No IRB/ORSP
+                                        Review Required
+                                    </div>
+                                    <div id="skipRegulatoryDiv" class="controls controls-text">
+                                            ${actionBean.complianceStatement}<br/>
+                                        <stripes:text id="skipRegulatoryInfoReason"
+                                                      name="editOrder.skipRegulatoryReason"
+                                                      maxlength="255"/>
+                                    </div>
+                                    <div id="regulatorySelect" class="controls controls-text"></div>
+                                    <div id="attestationDiv" class="controls controls-text">
+
+                                        <stripes:checkbox name="editOrder.attestationConfirmed"
+                                                          id="attestationConfirmed"/>
+                                            ${actionBean.attestationMessage}
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
+                            </c:when>
+                            <c:otherwise>
+                                <div class="view-control-group control-group">
+                                    <label class="control-label">Regulatory Information</label>
+
+                                    <div class="controls">
+                                        <div class="form-value">
+                                            <c:choose>
+                                                <c:when test="${fn:length(actionBean.editOrder.regulatoryInfos) ne 0}">
+                                                    <c:forEach var="regulatoryInfo"
+                                                               items="${actionBean.editOrder.regulatoryInfos}">
+                                                        ${regulatoryInfo.displayText}<br/>
+                                                    </c:forEach>
+                                                </c:when>
+
+                                                <c:otherwise>
+                                                    <c:choose><c:when
+                                                            test="${actionBean.editOrder.canSkipRegulatoryRequirements()}">
+                                                        Regulatory information not entered because: ${actionBean.editOrder.skipRegulatoryReason}
+                                                    </c:when>
+                                                        <c:otherwise>
+                                                            No regulatory information entered.
+                                                        </c:otherwise></c:choose>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </div>
+                                    </div>
+                                </div>
+                            </c:otherwise>
+                        </c:choose>
                     </c:otherwise>
                 </c:choose>
 
@@ -1109,12 +1312,27 @@
 
 
                 <div class="control-group">
+
                     <stripes:label for="product" class="control-label">
                         Product <c:if test="${not actionBean.editOrder.draft}">*</c:if>
                     </stripes:label>
                     <div class="controls">
-                        <stripes:text id="product" name="productTokenInput.listOfKeys" class="defaultText"
-                            title="Enter the product name for this order"/>
+                    <c:choose>
+                        <c:when test="${actionBean.editOrder.childOrder}">
+                            <c:if test="${actionBean.editOrder.product != null}">
+                                <stripes:hidden id="product" name="productTokenInput.listOfKeys"
+                                                value="${actionBean.editOrder.product.partNumber}"/>
+                                <stripes:link title="Product" href="${ctxpath}/products/product.action?view">
+                                    <stripes:param name="product" value="${actionBean.editOrder.product.partNumber}"/>
+                                    ${actionBean.editOrder.product.productName}
+                                </stripes:link>
+                            </c:if>
+                        </c:when>
+                        <c:otherwise>
+                                <stripes:text id="product" name="productTokenInput.listOfKeys" class="defaultText"
+                                              title="Enter the product name for this order"/>
+                        </c:otherwise>
+                    </c:choose>
                     </div>
                 </div>
 
@@ -1122,16 +1340,34 @@
                     <stripes:label for="selectedAddOns" class="control-label">
                         Add-ons
                     </stripes:label>
-                    <div id="addOnCheckboxes" class="controls controls-text"> </div>
+                    <c:choose>
+                        <c:when test="${actionBean.editOrder.childOrder}">
+                            <div class="controls">
+                                <div class="form-value">${actionBean.editOrder.addOnList}</div>
+                            </div>
+                        </c:when>
+                        <c:otherwise>
+
+                            <div id="addOnCheckboxes" class="controls controls-text"></div>
+                        </c:otherwise>
+                    </c:choose>
                 </div>
 
-                <div id="numberOfLanesDiv" class="control-group" style="display: ${actionBean.editOrder.product.supportsNumberOfLanes ? 'block' : 'none'};">
+                <div id="numberOfLanesDiv" class="control-group" style="display: ${actionBean.editOrder.requiresLaneCount() ? 'block' : 'none'};">
                     <stripes:label for="numberOfLanes" class="control-label">
                         Number of Lanes Per Sample
                     </stripes:label>
                     <div class="controls">
-                        <stripes:text id="numberOfLanes" name="editOrder.laneCount" class="defaultText"
-                                      title="Enter Number of Lanes"/>
+                        <c:choose>
+                            <c:when test="${actionBean.editOrder.childOrder}">
+                                <div class="form-value">${actionBean.editOrder.laneCount}</div>
+
+                            </c:when>
+                            <c:otherwise>
+                                <stripes:text id="numberOfLanes" name="editOrder.laneCount" class="defaultText"
+                                              title="Enter Number of Lanes"/>
+                            </c:otherwise>
+                        </c:choose>
                     </div>
                 </div>
 
@@ -1140,21 +1376,45 @@
                         Quote <c:if test="${not actionBean.editOrder.draft}">*</c:if>
                     </stripes:label>
                     <div class="controls">
-                        <stripes:text id="quote" name="editOrder.quoteId" class="defaultText"
-                                      onchange="updateFundsRemaining()"
-                                      title="Enter the Quote ID for this order"/>
-                        <div id="fundsRemaining"> </div>
-                        <div id="skipQuoteDiv">
-                            <input type="checkbox" id="skipQuote" name="skipQuote" value="${actionBean.editOrder.canSkipQuote()}" title="Click to start a PDO without a quote" />No quote required
-                            <div id="skipQuoteReasonDiv">
-                                Please enter a reason for skipping the quote *
-                                <stripes:text id="skipQuoteReason" name="editOrder.skipQuoteReason" title="Fill in a reason for skipping the quote" maxlength="255"/>
-                            </div>
-                        </div>
+                        <c:choose>
+                            <c:when test="${actionBean.editOrder.childOrder}">
+                                <div class="form-value">
+                                    <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">
+                                            ${actionBean.editOrder.quoteId}
+                                    </a>
+                                    <span id="fundsRemaining" style="margin-left: 20px;"> </span>
+                                </div>
+
+                            </c:when>
+                            <c:otherwise>
+                                <stripes:text id="quote" name="editOrder.quoteId" class="defaultText"
+                                              onchange="updateFundsRemaining()"
+                                              title="Enter the Quote ID for this order"/>
+                                <div id="fundsRemaining"> </div>
+                                <div id="skipQuoteDiv">
+                                    <input type="checkbox" id="skipQuote" name="skipQuote" value="${actionBean.editOrder.canSkipQuote()}" title="Click to start a PDO without a quote" />No quote required
+                                    <div id="skipQuoteReasonDiv">
+                                        Please enter a reason for skipping the quote *
+                                        <stripes:text id="skipQuoteReason" name="editOrder.skipQuoteReason" title="Fill in a reason for skipping the quote" maxlength="255"/>
+                                    </div>
+                                </div>
+                            </c:otherwise>
+                        </c:choose>
                     </div>
                 </div>
 
                 <c:if test="${actionBean.infinium}">
+                    <div class="control-group">
+                        <stripes:label for="pipelineLocation" class="control-label">Pipeline Location</stripes:label>
+                        <div class="controls">
+                            <stripes:select name="editOrder.pipelineLocation">
+                                <stripes:options-enumeration
+                                        enum="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.PipelineLocation"
+                                        label="displayName"/>
+                            </stripes:select>
+                        </div>
+                    </div>
+
                     <c:forEach items="${actionBean.attributes}" var="item">
                         <div class="control-group">
                             <stripes:label for="attributes[${item.key}]" class="control-label">
@@ -1213,9 +1473,11 @@
                 </c:choose>
                 <br/>
                 <br/>
-                <stripes:textarea readonly="${!actionBean.editOrder.draft}" class="controlledText" id="samplesToAdd" name="sampleList" rows="15" cols="120"/>
-                <div id="regulatoryInfoSuggestions"></div>
-            </div>
+                <stripes:textarea readonly="${!actionBean.editOrder.draft}" class="controlledText" id="samplesToAdd"
+                                  name="sampleList" rows="15" style="width: 100%;"/>
+            <table id="regulatoryInfoSuggestions" class="table simple">
+                <caption style="text-align: left;margin-top:1em;"><h3>ORSP(s) associated with samples</h3></caption>
+            </table>
             <div id="sampleInitiationKitRequestEdit" class="help-block span4" style="display: none">
             <div class="form-horizontal span5">
                 <fieldset>
