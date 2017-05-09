@@ -89,6 +89,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     private String collaboratorParticipantId;
     private Boolean isPooledTube;
     private String sampleLibraryName;
+    private Integer readLength;
 
     private List<LabBatch> allWorkflowBatches = new ArrayList<>();
     private List<LabBatchDepth> allWorkflowBatchDepths = new ArrayList<>();
@@ -127,10 +128,6 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
      * Constructs a sample instance from a LabVessel and manually uploaded pooled tube(s).
      */
     public SampleInstanceV2(LabVessel labVessel, SampleInstanceEntity sampleInstanceEntity) {
-        // TODO: DRW 4/20/2017
-        //This is not correct and needs to be changed pending a meeting with Justin.
-        //Leaving it in since root samples are needed to test other functionality
-        rootMercurySamples.addAll(labVessel.getMercurySamples());
         initiateSampleInstanceV2(labVessel);
         applyVesselChanges(labVessel, sampleInstanceEntity);
     }
@@ -195,6 +192,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         collaboratorParticipantId = other.getCollaboratorParticipantId();
         isPooledTube = other.getIsPooledTube();
         sampleLibraryName = other.getSampleLibraryName();
+        readLength = other.getReadLength();
     }
 
     /**
@@ -511,6 +509,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             mergeRootSamples(sampleInstanceEntity.getRootSample());
             mergeCollaboratorId(sampleInstanceEntity);
             mergeSampleLibraryName(sampleInstanceEntity.getSampleLibraryName());
+            mergeReadLength(sampleInstanceEntity);
             mercurySamples.add(mercurySample);
         } else {
             mercurySamples.addAll(labVessel.getMercurySamples());
@@ -624,7 +623,11 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         return collaboratorParticipantId;
     }
 
-    public void mergeCollaboratorId(SampleInstanceEntity sampleInstanceEntity) {
+    private void mergeReadLength(SampleInstanceEntity sampleInstanceEntity) {
+        this.readLength = sampleInstanceEntity.getReadLength();
+    }
+
+    private void mergeCollaboratorId(SampleInstanceEntity sampleInstanceEntity) {
 
        for (Metadata metadata : sampleInstanceEntity.getMercurySample().getMetadata())
        {
@@ -654,6 +657,8 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     {
         this.molecularIndexingScheme = molecularIndexingScheme;
     }
+
+    public Integer getReadLength() { return readLength;  }
 
     public String getSampleLibraryName() {
         return sampleLibraryName;
