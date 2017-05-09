@@ -146,11 +146,12 @@ public class BSPSampleDataFetcher extends BSPJerseyClient implements Serializabl
 
         final Map<String, BspSampleData> barcodeToSampleDataMap = new HashMap<>();
         for (BspSampleData bspSampleData : bspSampleDatas) {
-            barcodeToSampleDataMap.put(bspSampleData.getSampleId(), bspSampleData);
+            if (StringUtils.isNotBlank(bspSampleData.getSampleId())) {
+                barcodeToSampleDataMap.put(bspSampleData.getSampleId(), bspSampleData);
+            }
         }
-
         // Check to see if BSP is supported before trying to get data.
-        if (AbstractConfig.isSupported(getBspConfig())) {
+        if (!barcodeToSampleDataMap.isEmpty() && AbstractConfig.isSupported(getBspConfig())) {
             String urlString = getUrl(WS_FFPE_DERIVED);
             String queryString = makeQueryString("barcodes", barcodeToSampleDataMap.keySet());
             final int SAMPLE_BARCODE = 0;

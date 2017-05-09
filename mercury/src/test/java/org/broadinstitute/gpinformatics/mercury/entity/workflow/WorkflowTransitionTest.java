@@ -11,7 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventTy
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.SamplesDaughterPlateHandler;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.BSPRestSender;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -74,7 +74,7 @@ public class WorkflowTransitionTest extends Arquillian {
 
     private JiraIssue exexIssue;
 
-    private SamplesDaughterPlateHandler mockBspHandler;
+    private BSPRestSender mockBspHandler;
 
     private BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
 
@@ -91,9 +91,9 @@ public class WorkflowTransitionTest extends Arquillian {
             exexIssue = resetJiraTicketState(exexJiraTicket);
         }
         if (labEventFactory != null && mockBspHandler == null){
-            mockBspHandler = mock(SamplesDaughterPlateHandler.class);
+            mockBspHandler = mock(BSPRestSender.class);
             doNothing().when(mockBspHandler).postToBsp(any(BettaLIMSMessage.class), any(String.class));
-            labEventFactory.setSamplesDaughterPlateHandler(mockBspHandler);
+            labEventFactory.setBspRestSender(mockBspHandler);
             bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
         }
     }

@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserC
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -187,6 +188,9 @@ public class MercurySampleData implements SampleData {
         private Double concentration;
         private double totalDna;
 
+        private QuantData() {
+        }
+
         public QuantData(MercurySample mercurySample) {
             if (!mercurySample.getLabVessel().isEmpty()) {
                 // A sample with multiple vessels is a data inconsistency that should be fixed before quanting.
@@ -201,19 +205,23 @@ public class MercurySampleData implements SampleData {
                 if (labMetrics != null && !labMetrics.isEmpty()) {
                     // Use most recent
                     LabMetric labMetric = labMetrics.get(labMetrics.size() - 1);
-                    concentration = labMetric.getValue().doubleValue();
-                    if (labMetric.getTotalNg() != null) {
-                        totalDna = labMetric.getTotalNg().doubleValue();
-                    }
-                    LabMetricRun labMetricRun = labMetric.getLabMetricRun();
-
-                    // Generic uploads don't have runs
-                    if (labMetricRun == null) {
-                        picoRunDate = labMetric.getCreatedDate();
-                    } else {
-                        picoRunDate = labMetricRun.getRunDate();
-                    }
+                    updateFromLabMetric(labMetric);
                 }
+            }
+        }
+
+        public void updateFromLabMetric(LabMetric labMetric) {
+            concentration = labMetric.getValue().doubleValue();
+            if (labMetric.getTotalNg() != null) {
+                totalDna = labMetric.getTotalNg().doubleValue();
+            }
+            LabMetricRun labMetricRun = labMetric.getLabMetricRun();
+
+            // Generic uploads don't have runs
+            if (labMetricRun == null) {
+                picoRunDate = labMetric.getCreatedDate();
+            } else {
+                picoRunDate = labMetricRun.getRunDate();
             }
         }
 
@@ -405,5 +413,16 @@ public class MercurySampleData implements SampleData {
 
     public String getVisit() {
         return visit;
+    }
+
+    public void overrideWithQuants(Collection<LabMetric> labMetrics) {
+        if (quantData == null) {
+            quantData = new QuantData();
+        }
+        for (LabMetric labMetric : labMetrics) {
+            if (labMetric.getName() == LabMetric.MetricType.INITIAL_PICO) {
+                quantData.updateFromLabMetric(labMetric);
+            }
+        }
     }
 }

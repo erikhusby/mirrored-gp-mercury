@@ -1033,7 +1033,7 @@ public enum LabEventType {
             LibraryType.NONE_ASSIGNED),
     AUTO_DAUGHTER_PLATE_CREATION("AutomatedDaughterPlateCreation",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.TRUE,
-            PlasticToValidate.BOTH, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            PlasticToValidate.BOTH, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
     SONIC_DAUGHTER_PLATE_CREATION("SonicDaughterPlateCreation",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,

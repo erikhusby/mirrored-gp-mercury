@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -95,6 +97,7 @@ public class QuantificationEJB {
     public void updateRisk(Set<LabMetric> labMetrics, LabMetric.MetricType quantType,
             MessageCollection messageCollection) {
         Map<ProductOrder, List<ProductOrderSample>> mapPdoToListPdoSamples = new HashMap<>();
+        Multimap<ProductOrderSample, LabMetric> mapPdoSampleToMetrics = HashMultimap.create();
         if (quantType == LabMetric.MetricType.INITIAL_PICO) {
             for (LabMetric localLabMetric : labMetrics) {
                 if (localLabMetric.getLabMetricDecision() != null) {
@@ -109,9 +112,13 @@ public class QuantificationEJB {
                                 mapPdoToListPdoSamples.put(productOrder, productOrderSamples);
                             }
                             productOrderSamples.add(singleProductOrderSample);
+                            mapPdoSampleToMetrics.put(singleProductOrderSample, localLabMetric);
                         }
                     }
                 }
+            }
+            for (ProductOrderSample productOrderSample : mapPdoSampleToMetrics.keys().elementSet()) {
+                productOrderSample.getSampleData().overrideWithQuants(mapPdoSampleToMetrics.get(productOrderSample));
             }
             int calcRiskCount = 0;
             for (Map.Entry<ProductOrder, List<ProductOrderSample>> pdoListPdoSamplesEntry :

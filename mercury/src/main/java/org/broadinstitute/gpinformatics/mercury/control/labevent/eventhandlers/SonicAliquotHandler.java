@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapT
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -26,10 +27,18 @@ import java.util.Set;
 public class SonicAliquotHandler extends AbstractEventHandler {
 
     @Inject
-    private SamplesDaughterPlateHandler samplesDaughterPlateHandler;
+    private BSPRestSender bspRestSender;
 
     @Override
     public void handleEvent(LabEvent targetEvent, StationEventType stationEvent) {
+        // Forwards to BSP only if BSP knows the target plate.
+        SectionTransfer sectionTransfer = targetEvent.getSectionTransfers().iterator().next();
+        if (bspRestSender.vesselExists(sectionTransfer.getTargetVesselContainer().getSourceRack().getLabel())) {
+            BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
+            bettaLIMSMessage.getPlateTransferEvent().add((PlateTransferEventType)stationEvent);
+            bspRestSender.postToBsp(bettaLIMSMessage, BSPRestSender.BSP_TRANSFER_REST_URL);
+        }
+
         // Convert the section transfer to a cherry pick, because BSP doesn't require a matching source rack for
         // cherry picks.
         PlateTransferEventType plateTransferEventType = (PlateTransferEventType) stationEvent;
@@ -107,6 +116,6 @@ public class SonicAliquotHandler extends AbstractEventHandler {
         // Forward to BSP
         BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
         bettaLIMSMessage.getPlateCherryPickEvent().add(plateCherryPickEvent);
-        samplesDaughterPlateHandler.postToBsp(bettaLIMSMessage, SamplesDaughterPlateHandler.BSP_TRANSFER_REST_URL);
+        bspRestSender.postToBsp(bettaLIMSMessage, bspRestSender.BSP_TRANSFER_REST_URL);
     }
 }
