@@ -575,12 +575,14 @@ public enum LabEventType {
             LibraryType.NONE_ASSIGNED),
 
     //Cryovial Blood and Saliva Extraction
-    BLOOD_BIOPSY_EXTRACTION("BloodBiopsyExtraction",
+    BLOOD_BIOPSY_EXTRACTION("BloodBiopsyExtraction", // todo jmt rename?
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
-                    RackOfTubes.RackType.QiasymphonyCarrier24,
-                    RackOfTubes.RackType.Matrix96).
+                    RackOfTubes.RackType.HamiltonSampleCarrier24,
+                    RackOfTubes.RackType.Matrix96SlotRack14).
+                    sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.FluidX_6mL).
+                    targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.MatrixTube075).
                     sourceSection(SBSSection.P96_4ROWSOF24_COLWISE_8TIP).
                     targetSection(SBSSection.ALL96).
                     limsFile(true).
@@ -590,7 +592,7 @@ public enum LabEventType {
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.RECEPTACLE_TRANSFER_EVENT, null,
-                    BarcodedTube.BarcodedTubeType.CentriCutieSC_5).
+                    BarcodedTube.BarcodedTubeType.EppendoffFliptop15).
                     sourceVesselTypeGeometries(
                             new VesselTypeGeometry[] { BarcodedTube.BarcodedTubeType.VacutainerBloodTube3,
                                     BarcodedTube.BarcodedTubeType.VacutainerBloodTube6,
@@ -614,7 +616,7 @@ public enum LabEventType {
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.RECEPTACLE_TRANSFER_EVENT,
-                    BarcodedTube.BarcodedTubeType.CentriCutieSC_5, null).
+                    BarcodedTube.BarcodedTubeType.EppendoffFliptop15, null).
                     targetVesselTypeGeometries(
                             new VesselTypeGeometry[] { BarcodedTube.BarcodedTubeType.FluidX_6mL,
                                     BarcodedTube.BarcodedTubeType.FluidX_10mL}).build(),
@@ -626,9 +628,7 @@ public enum LabEventType {
     BLOOD_BUFFY_COAT_TRANSFER("BloodBuffyCoatTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
-            new ManualTransferDetails.Builder(MessageType.RECEPTACLE_TRANSFER_EVENT,
-                    // todo jmt CentriCutieSC_5 should be null?
-                    BarcodedTube.BarcodedTubeType.CentriCutieSC_5, null).
+            new ManualTransferDetails.Builder(MessageType.RECEPTACLE_TRANSFER_EVENT, null, null).
                     sourceVesselTypeGeometries(new VesselTypeGeometry[] {
                             BarcodedTube.BarcodedTubeType.VacutainerBloodTube3,
                             BarcodedTube.BarcodedTubeType.VacutainerBloodTube6,
@@ -1987,9 +1987,15 @@ public enum LabEventType {
         @XmlTransient
         private VesselTypeGeometry[] sourceVesselTypeGeometries = {};
 
+        /** For source rack geometries, specifies the type of tube in the rack */
+        private BarcodedTube.BarcodedTubeType sourceBarcodedTubeType = BarcodedTube.BarcodedTubeType.MatrixTube;
+
         /** Prompts user with a list of target vessel geometry types. */
         @XmlTransient
         private VesselTypeGeometry[] targetVesselTypeGeometries = {};
+
+        /** For target rack geometries, specifies the type of tube in the rack */
+        private BarcodedTube.BarcodedTubeType targetBarcodedTubeType = BarcodedTube.BarcodedTubeType.MatrixTube;
 
         /** Allows a transfer from one source to two destinations */
         private LabEventType secondaryEvent;
@@ -2014,8 +2020,10 @@ public enum LabEventType {
         public ManualTransferDetails(Builder builder) {
             messageType = builder.messageType;
             sourceVesselTypeGeometry = builder.sourceVesselTypeGeometry;
+            sourceBarcodedTubeType = builder.sourceBarcodedTubeType;
             sourceSection = builder.sourceSection;
             targetVesselTypeGeometry = builder.targetVesselTypeGeometry;
+            targetBarcodedTubeType = builder.targetBarcodedTubeType;
             targetSection = builder.targetSection;
             reagentFieldCounts = builder.reagentFieldCounts;
             expirationDateIncluded = builder.expirationDateIncluded;
@@ -2046,7 +2054,9 @@ public enum LabEventType {
             private int numEvents = 1;
             private String[] machineNames = {};
             private VesselTypeGeometry[] sourceVesselTypeGeometries = {};
+            private BarcodedTube.BarcodedTubeType sourceBarcodedTubeType;
             private VesselTypeGeometry[] targetVesselTypeGeometries = {};
+            private BarcodedTube.BarcodedTubeType targetBarcodedTubeType;
             private LabEventType secondaryEvent;
             private LabEventType repeatedEvent;
             private String repeatedWorkflowQualifier;
@@ -2102,8 +2112,18 @@ public enum LabEventType {
                 return this;
             }
 
+            public Builder sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType sourceBarcodedTubeType) {
+                this.sourceBarcodedTubeType = sourceBarcodedTubeType;
+                return this;
+            }
+
             public Builder targetVesselTypeGeometries(VesselTypeGeometry[] targetVesselTypeGeometries) {
                 this.targetVesselTypeGeometries = targetVesselTypeGeometries;
+                return this;
+            }
+
+            public Builder targetBarcodedTubeType(BarcodedTube.BarcodedTubeType targetBarcodedTubeType) {
+                this.targetBarcodedTubeType = targetBarcodedTubeType;
                 return this;
             }
 
@@ -2224,6 +2244,10 @@ public enum LabEventType {
             return vesselTypeNames;
         }
 
+        public BarcodedTube.BarcodedTubeType getSourceBarcodedTubeType() {
+            return sourceBarcodedTubeType;
+        }
+
         public VesselTypeGeometry[] getTargetVesselTypeGeometries() {
             return targetVesselTypeGeometries;
         }
@@ -2234,6 +2258,10 @@ public enum LabEventType {
                 vesselTypeNames.add(vesselTypeGeometry.getDisplayName());
             }
             return vesselTypeNames;
+        }
+
+        public BarcodedTube.BarcodedTubeType getTargetBarcodedTubeType() {
+            return targetBarcodedTubeType;
         }
 
         public int[] getReagentFieldCounts() {
