@@ -180,7 +180,7 @@ public class VarioskanParserTest {
         }
 
         TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
-        Assert.assertEquals(tubeFormation.getContainerRole().getContainedVessels().size(), 96);
+        Assert.assertEquals(tubeFormation.getContainerRole().getContainedVessels().size(), numSamples);
 
         StaticPlate staticPlate1 = new StaticPlate(plate1Barcode, StaticPlate.PlateType.Eppendorf96);
         mapBarcodeToPlate.put(staticPlate1.getLabel(), staticPlate1);
