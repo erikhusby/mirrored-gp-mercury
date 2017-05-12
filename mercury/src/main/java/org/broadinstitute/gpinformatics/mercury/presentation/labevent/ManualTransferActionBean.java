@@ -365,7 +365,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
     public Resolution rackScan() throws ScannerException {
         scan();
         StationEventType stationEventType = stationEvents.get(scanIndex);
-        PositionMapType positionMapType = new PositionMapType();
+        PositionMapType positionMapType;
 
         if(manualTransferDetails.getMessageType().equals(LabEventType.MessageType.PLATE_CHERRY_PICK_EVENT)) {
             positionMapType = scanSource ? ((PlateCherryPickEvent) stationEventType).getSourcePositionMap().get(0) :
@@ -479,7 +479,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
             case STRIP_TUBE_CHERRY_PICK_EVENT:
                 for (StationEventType stationEvent : stationEvents) {
                     ObjectMapper mapper = new ObjectMapper();
-                    List<CherryPicksPositions> cherryPickPositionMaps = null;
+                    List<CherryPicksPositions> cherryPickPositionMaps;
 
                     PlateCherryPickEvent plateCherryPickEvent = (PlateCherryPickEvent) stationEvent;
 
@@ -520,7 +520,6 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     targetPositionMap.setBarcode(targetRack.getBarcode());
 
                     for (CherryPicksPositions item : cherryPickPositionMaps) {
-                        CherryPickSourceType cherryPickSourceType = new CherryPickSourceType();
                         if (item.targetIDs.size() >= item.sourceIDs.size()) {
                             MetadataType metadataType = new MetadataType();
                             metadataType.setName("FCT");
@@ -532,7 +531,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
                                 receptacleType.setBarcode(item.targetBarcodes.get(0));
                                 receptacleType.setPosition(String.valueOf(item.targetPositions.get(targetWellPosition)));
                                 targetPositionMap.getReceptacle().add(0, receptacleType);
-                                cherryPickSourceType = new CherryPickSourceType();
+
+                                CherryPickSourceType cherryPickSourceType = new CherryPickSourceType();
                                 cherryPickSourceType.setBarcode(plateCherryPickEvent.getSourcePlate().get(0).getBarcode());
                                 cherryPickSourceType.setWell(parseWellFromJson(item.sourceIDs.get(0)));
                                 cherryPickSourceType.setDestinationBarcode(plateCherryPickEvent.getPlate().get(0).getBarcode());
@@ -564,7 +564,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     }
 
                     ObjectMapper mapper = new ObjectMapper();
-                    List<CherryPicksPositions> cherryPickPositionMaps = null;
+                    List<CherryPicksPositions> cherryPickPositionMaps;
 
                     //This handles barcode validation where no transfer connections have been made resulting in malformed Json.
                     try {
@@ -599,9 +599,9 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
                     for (CherryPicksPositions item: cherryPickPositionMaps)
                     {
-                        String srcWell = "";
-                        String destWell = "";
-                        CherryPickSourceType cherryPickSourceType = new CherryPickSourceType();
+                        String srcWell;
+                        String destWell;
+                        CherryPickSourceType cherryPickSourceType;
                         if(item.sourceIDs.size() >= item.targetIDs.size() ) {
                             destWell= parseWellFromJson(item.targetIDs.get(0));
                             for (String sourceItem : item.sourceIDs) {
@@ -652,9 +652,9 @@ public class ManualTransferActionBean extends RackScanActionBean {
     * Parse well data positions from Cherry Pick Json result.
     */
     private  String parseWellFromJson(String input) {
-        if (input.length() >= 3)
-           return input.substring(0, 3);
-        else {
+        if (input.length() >= 3) {
+            return input.substring(0, 3);
+        } else {
             addGlobalValidationError("Cherrypick position input malformed " + input);
             log.error("Cherrypick position input malformed ",null);
         }
@@ -966,6 +966,12 @@ public class ManualTransferActionBean extends RackScanActionBean {
                             manualTransferDetails.getSourceVesselTypeGeometry());
                     cleanupPositionMap(plateCherryPickEvent.getPositionMap().get(0), plateCherryPickEvent.getPlate().get(0),
                             manualTransferDetails.getTargetVesselTypeGeometry());
+                    if (!manualTransferDetails.getSourceVesselTypeGeometry().isBarcoded()) {
+                        // Flipper racks are assigned random barcodes. Set cherry picks to match.
+                        for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
+                            cherryPickSourceType.setBarcode(plateCherryPickEvent.getSourcePlate().get(0).getBarcode());
+                        }
+                    }
 
                     bettaLIMSMessage.getPlateCherryPickEvent().add((PlateCherryPickEvent) stationEvent);
                 } else if (stationEvent instanceof ReceptaclePlateTransferEvent) {
