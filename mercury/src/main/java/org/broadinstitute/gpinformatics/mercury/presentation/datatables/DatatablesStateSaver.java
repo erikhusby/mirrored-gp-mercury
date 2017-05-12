@@ -25,10 +25,13 @@ import org.codehaus.jackson.map.ObjectMapper;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class DatatablesStateSaver {
     private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -155,5 +158,16 @@ public class DatatablesStateSaver {
     @Override
     public String toString() {
         return getTableStateJson();
+    }
+
+    public Collection<String> visibleColumns() {
+        buildColumnVisibilityMap();
+        Set<String> visibleColumns = new HashSet<>();
+        for (Map.Entry<String, Boolean> columnVisiblityEntry : columnVisibilityMap.entrySet()) {
+            if (columnVisiblityEntry.getValue()) {
+                visibleColumns.add(columnVisiblityEntry.getKey());
+            }
+        }
+        return visibleColumns;
     }
 }
