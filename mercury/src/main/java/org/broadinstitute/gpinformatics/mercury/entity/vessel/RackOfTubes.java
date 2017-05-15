@@ -37,6 +37,7 @@ public class RackOfTubes extends LabVessel {
         Eppendorf12x8Box("Eppendorf12x8Box", VesselGeometry.G12x8),
         FlipperRackRow8("FlipperRackRow8", VesselGeometry.G8x1, false),
         FlipperRackRow24("FlipperRackRow24", VesselGeometry.G24x1, false),
+        FluidX_4x6_Rack("FluidX_4x6_Rack", VesselGeometry.G6x4_ALPHANUM, true),
         FourInch3x5Box("FourInch3x5Box", VesselGeometry.G5x3_NUM),
         FourInch7x7Box("FourInch7x7Box", VesselGeometry.G7x7_NUM),
         QiasymphonyCarrier24("QiasymphonyCarrier24", VesselGeometry.G24x4),

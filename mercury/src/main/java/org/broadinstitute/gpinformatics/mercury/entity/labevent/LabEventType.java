@@ -579,8 +579,7 @@ public enum LabEventType {
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
-//                    RackOfTubes.RackType.QiasymphonyCarrier24,
-                    RackOfTubes.RackType.HamiltonSampleCarrier24,
+                    RackOfTubes.RackType.QiasymphonyCarrier24,
                     RackOfTubes.RackType.Matrix96SlotRack14).
                     sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.FluidX_6mL).
                     targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.MatrixTube075).
@@ -593,14 +592,10 @@ public enum LabEventType {
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT,
-//                    RackOfTubes.RackType.FlipperRackRow8,
-                    RackOfTubes.RackType.HamiltonSampleCarrier24,
-                    RackOfTubes.RackType.HamiltonSampleCarrier24).
-//                    RackOfTubes.RackType.FlipperRackRow8).
+                    RackOfTubes.RackType.FlipperRackRow8,
+                    RackOfTubes.RackType.FlipperRackRow8).
                     sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.VacutainerBloodTube6).
-                    targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.Cryovial15).
-//                    BarcodedTube.BarcodedTubeType.CentriCutieSC_5).
-//                    BarcodedTube.BarcodedTubeType.EppendoffFliptop15).
+                    targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.CentriCutieSC_5).
 //                    sourceVesselTypeGeometries(
 //                            new VesselTypeGeometry[] { BarcodedTube.BarcodedTubeType.VacutainerBloodTube3,
 //                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTube6,
@@ -620,16 +615,19 @@ public enum LabEventType {
 //                                    BarcodedTube.BarcodedTubeType.VacutainerCPTTube8,
 //                                }).
                     build(),
-            LibraryType.NONE_ASSIGNED),
+            MaterialType.PLASMA_PLASMA, LibraryType.NONE_ASSIGNED),
     BLOOD_PLASMA_SECOND_TRANSFER("BloodPlasmaSecondTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
-            new ManualTransferDetails.Builder(MessageType.RECEPTACLE_TRANSFER_EVENT,
-//                    BarcodedTube.BarcodedTubeType.CentriCutieSC_5, null).
-                    BarcodedTube.BarcodedTubeType.Cryovial15, null).
-                    targetVesselTypeGeometries(
-                            new VesselTypeGeometry[] { BarcodedTube.BarcodedTubeType.FluidX_6mL,
-                                    BarcodedTube.BarcodedTubeType.FluidX_10mL}).build(),
+            new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT,
+                    RackOfTubes.RackType.FlipperRackRow8,
+                    RackOfTubes.RackType.FlipperRackRow8).
+                    sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.CentriCutieSC_5).
+                    targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.FluidX_6mL).
+//                    targetVesselTypeGeometries(
+//                            new VesselTypeGeometry[] { BarcodedTube.BarcodedTubeType.FluidX_6mL,
+//                                    BarcodedTube.BarcodedTubeType.FluidX_10mL}).
+                    build(),
             LibraryType.NONE_ASSIGNED, "_P", MaterialType.PLASMA_PLASMA),
     BLOOD_PLASMA_POOLING_TRANSFER("BloodPlasmaPoolingTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,

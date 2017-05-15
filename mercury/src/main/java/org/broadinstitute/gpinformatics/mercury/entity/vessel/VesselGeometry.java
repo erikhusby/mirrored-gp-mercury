@@ -343,6 +343,14 @@ public enum VesselGeometry {
                     VesselPosition._2_4, VesselPosition._2_5, VesselPosition._3_1, VesselPosition._3_2,
                     VesselPosition._3_3, VesselPosition._3_4, VesselPosition._3_5}),
 
+    G6x4_ALPHANUM("6 x 4",
+            new String[]{"01", "02", "03", "04", "05", "06"},
+            new String[]{"A", "B", "C", "D"},
+            new VesselPosition[]{VesselPosition.A01, VesselPosition.A02, VesselPosition.A03, VesselPosition.A04, VesselPosition.A05, VesselPosition.A06,
+                    VesselPosition.B01, VesselPosition.B02, VesselPosition.B03, VesselPosition.B04, VesselPosition.B05, VesselPosition.B06,
+                    VesselPosition.C01, VesselPosition.C02, VesselPosition.C03, VesselPosition.C04, VesselPosition.C05, VesselPosition.C06,
+                    VesselPosition.D01, VesselPosition.D02, VesselPosition.D03, VesselPosition.D04, VesselPosition.D05, VesselPosition.D06}),
+
     G6x6_NUM("6 x 6",
             new String[]{"01", "02", "03", "04", "05", "06"},
             new String[]{"01", "02", "03", "04", "05", "06"},
