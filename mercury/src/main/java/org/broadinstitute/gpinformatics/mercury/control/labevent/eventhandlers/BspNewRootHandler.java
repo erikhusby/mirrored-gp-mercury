@@ -12,11 +12,11 @@ import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCr
 import org.broadinstitute.gpinformatics.mercury.BSPRestClient;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
@@ -27,6 +27,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -91,12 +92,14 @@ public class BspNewRootHandler extends AbstractEventHandler {
                         "Patient Diagnosis or Disease"};
         List<String> sampleNames = new ArrayList<>();
         for (LabVessel labVessel : labVessels) {
-            Set<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
+/*
             if (sampleInstances.size() != 1) {
                 throw new RuntimeException("Expected 1 SampleInstance in " + labVessel.getLabel() + ", found " +
                         sampleInstances.size());
             }
-            sampleNames.add(sampleInstances.iterator().next().getRootOrEarliestMercurySample().getSampleKey());
+*/
+            sampleNames.add(labVessel.getSampleInstancesV2().iterator().next().getRootOrEarliestMercurySample().
+                    getSampleKey());
         }
         Map<String, BspSampleData> mapIdToSampleData = bspSampleDataFetcher.fetchSampleData(sampleNames,
                 BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID,
@@ -104,9 +107,7 @@ public class BspNewRootHandler extends AbstractEventHandler {
                 BSPSampleSearchColumn.GENDER, BSPSampleSearchColumn.COLLECTION);
         String collection = null;
         for (int i = 0; i < labVessels.size(); i++) {
-            SampleInstanceV2 sampleInstance = labVessels.get(i).getSampleInstancesV2().iterator().next();
-            String sampleKey = sampleInstance.getRootOrEarliestMercurySample().getSampleKey();
-            BspSampleData bspSampleData = mapIdToSampleData.get(sampleKey);
+            BspSampleData bspSampleData = mapIdToSampleData.get(sampleNames.get(i));
             collection = bspSampleData.getCollection();
             // "Collection" search result is actually Group / Collection, we want just Collection
             collection = collection.substring(collection.lastIndexOf('/') + 2);
@@ -154,16 +155,26 @@ public class BspNewRootHandler extends AbstractEventHandler {
 
     @Override
     public void handleEvent(LabEvent targetEvent, StationEventType stationEvent) {
-        List<LabVessel> labVessels = new ArrayList<>();
+        Set<LabVessel> labVessels = new LinkedHashSet<>();
         String receptacleType = null;
+
         for (VesselToVesselTransfer vesselToVesselTransfer : targetEvent.getVesselToVesselTransfers()) {
             BarcodedTube barcodedTube = OrmUtil.proxySafeCast(vesselToVesselTransfer.getTargetVessel(), BarcodedTube.class);
             receptacleType = barcodedTube.getTubeType().getDisplayName();
-            labVessels.add(vesselToVesselTransfer.getTargetVessel());
+            labVessels.add(barcodedTube);
         }
+
+        for (CherryPickTransfer cherryPickTransfer : targetEvent.getCherryPickTransfers()) {
+            LabVessel labVessel = cherryPickTransfer.getTargetVesselContainer().getVesselAtPosition(
+                    cherryPickTransfer.getTargetPosition());
+            BarcodedTube barcodedTube = OrmUtil.proxySafeCast(labVessel, BarcodedTube.class);
+            receptacleType = barcodedTube.getTubeType().getDisplayName();
+            labVessels.add(barcodedTube);
+        }
+
         LabEventType labEventType = targetEvent.getLabEventType();
-        createBspKit(labVessels, receptacleType, labEventType.getResultingMaterialType().getDisplayName(),
-                labEventType.getCollabSampleSuffix());
+        createBspKit(new ArrayList<>(labVessels), receptacleType,
+                labEventType.getResultingMaterialType().getDisplayName(), labEventType.getCollabSampleSuffix());
     }
 
 }
