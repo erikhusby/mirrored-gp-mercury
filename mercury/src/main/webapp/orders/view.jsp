@@ -92,8 +92,9 @@ $j(document).ready(function () {
                 }));
                 updateSampleInformation(sampleIds, settings);
             }
-        }).then(function(){
+        }).done(function(){
             table.rows().draw();
+            console.log("table draw")
         });
     }
 
@@ -576,7 +577,7 @@ function updateSampleInformation(samples, settings) {
     var table = new $j.fn.dataTable.Api(settings).table();
     console.log("loading " + samples.length + " samples from BSP");
      return $j.ajax({
-        url: "${ctxpath}/orders/order.action?getSampleData",
+        url: "${ctxpath}/orders/order.action?getSampleData",async:true,
         data: {
             'productOrder': "${actionBean.editOrder.businessKey}",
             'sampleIdsForGetBspData': samples,
@@ -603,10 +604,8 @@ function updateSampleInformation(samples, settings) {
             }
         }
     });
+    return result;
 }
-showSamples();
-function showSamples(sampleData) {
-    if (bspDataCount < 1) {
 
 function renderPico(data, type, row, meta) {
     var result = data;
@@ -615,7 +614,7 @@ function renderPico(data, type, row, meta) {
     }
     if (type === 'display') {
         if (data===null) {
-             result = "No Pico";
+//             result = "";
          } else {
             var oneYearAgo=meta.settings.oneYearAgo;
             var almostOneYearAgo=meta.settings.almostOneYearAgo;
@@ -659,11 +658,48 @@ function updateFundsRemaining() {
 }
 
 function updateFunds(data) {
-    if (data.fundsRemaining) {
-        $j("#fundsRemaining").text('Status: ' + data.status + ' - Funds Remaining: ' + data.fundsRemaining +
-                ' with ' + data.outstandingEstimate + ' unbilled across existing open orders');
+
+    var quoteWarning = false;
+
+    if (data.fundsRemaining && !data.error) {
+        var fundsRemainingNotification = 'Status: ' + data.status + ' - Funds Remaining: ' + data.fundsRemaining +
+                ' with ' + data.outstandingEstimate + ' unbilled across existing open orders';
+        var fundingDetails = data.fundingDetails;
+
+        if(data.status != "Funded" ||
+                Number(data.outstandingEstimate.replace(/[^0-9\.]+/g,"")) > Number(data.fundsRemaining.replace(/[^0-9\.]+/g,""))) {
+            quoteWarning = true;
+        }
+
+        for(var detailIndex in fundingDetails) {
+            fundsRemainingNotification += '\n'+fundingDetails[detailIndex].grantTitle;
+            if(fundingDetails[detailIndex].activeGrant) {
+                fundsRemainingNotification += ' -- Expires ' + fundingDetails[detailIndex].grantEndDate;
+                if(fundingDetails[detailIndex].daysTillExpire < 45) {
+                    fundsRemainingNotification += ' in ' + fundingDetails[detailIndex].daysTillExpire +
+                        ' days. If it is likely this work will not be completed by then, please work on updating the ' +
+                        'Funding Source so Billing Errors can be avoided.';
+                    quoteWarning = true;
+                }
+            } else {
+                fundsRemainingNotification += ' -- Has Expired ' + fundingDetails[detailIndex].grantEndDate;
+                quoteWarning = true;
+            }
+            if(fundingDetails[detailIndex].grantStatus != "Active") {
+                quoteWarning = true;
+            }
+            fundsRemainingNotification += '\n';
+        }
+        $j("#fundsRemaining").text(fundsRemainingNotification);
     } else {
         $j("#fundsRemaining").text('Error: ' + data.error);
+        quoteWarning = true;
+    }
+
+    if(quoteWarning) {
+        $j("#fundsRemaining").addClass("alert alert-error");
+    } else {
+        $j("#fundsRemaining").removeClass("alert alert-error");
     }
 }
 
@@ -873,11 +909,6 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
 
     $j("#sampleInitiationInfo").append(detailInfo);
     kitDefinitionIndex++;
-}
-
-function formatInput(item) {
-    var extraCount = (item.extraCount == undefined) ? "" : item.extraCount;
-    return "<li>" + item.dropdownItem + extraCount + '</li>';
 }
 </script>
 </stripes:layout-component>
@@ -1342,7 +1373,7 @@ function formatInput(item) {
             <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">
                     ${actionBean.editOrder.quoteId}
             </a>
-            <span id="fundsRemaining" style="margin-left: 20px;"> </span>
+            <div id="fundsRemaining"> </div>
         </div>
     </div>
 </div>
@@ -1637,6 +1668,7 @@ function formatInput(item) {
             <stripes:button name="setProceedOos" value="Set Proceed OOS" class="btn"
                     style="margin-left:5px;" onclick="showProceedOosDialog()"/>
         </security:authorizeBlock>
+
     </div>
 
     <div id="summaryId" class="fourcolumn" style="margin-bottom:10px;">
@@ -1647,8 +1679,9 @@ function formatInput(item) {
         <table id="sampleData" class="table simple compact">
             <thead>
             <tr>
-                <th width="20"><input id="checkAllSamples" for="count" type="checkbox" class="checkAll"
-                /><span id="count" class="checkedCount"></span>
+                <th width="20">
+                    <input id="checkAllSamples" for="count" type="checkbox" class="checkAll"/><span id="count"
+                                                                                                    class="checkedCount"></span>
                 </th>
                 <th width="10">#</th>
                 <th width="90"></th>

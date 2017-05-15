@@ -54,6 +54,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryIn
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderCompletionStatus;
@@ -206,8 +207,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String KIT_DEFINITION_INDEX = "kitDefinitionQueryIndex";
     private static final String COULD_NOT_LOAD_SAMPLE_DATA = "Could not load sample data";
     private String sampleSummary;
-
-    private Map<String, Boolean> headerVisibilityMap = new HashMap<>();
 
     public ProductOrderActionBean() {
         super(CREATE_ORDER, EDIT_ORDER, PRODUCT_ORDER_PARAMETER);
@@ -414,8 +413,11 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     // Search uses product family list.
     private List<ProductFamily> productFamilies;
+
     @Inject
     DatatablesStateSaver preferenceSaver;
+    String tableState="";
+
     @Inject
     private LabVesselDao labVesselDao;
 
@@ -501,9 +503,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             // This is only used for save, when creating a new product order.
             editOrder = new ProductOrder();
         }
-
-        preferenceSaver = new DatatablesStateSaver(PreferenceType.PRODUCT_ORDER_PREFERENCES);
-        buildHeaderVisibilityMap();
     }
 
     protected Map<String, Collection<RegulatoryInfo>> setupRegulatoryInformation(ResearchProject researchProject) {
@@ -729,8 +728,10 @@ public class ProductOrderActionBean extends CoreActionBean {
                     final int numDaysBetween =
                             DateUtils.getNumDaysBetween(new Date(), funding.getGrantEndDate());
                     if(numDaysBetween > 0 && numDaysBetween < 45) {
-                        addMessage("The grant " + funding.getDisplayName() + " for " + quote.getAlphanumericId() +
-                                   " expires in " + numDaysBetween + " days");
+                        addMessage("The Funding Source "+funding.getDisplayName()+" on " +
+                                   quote.getAlphanumericId() + "  Quote expires in " + numDaysBetween +
+                                   " days. If it is likely this work will not be completed by then, please work on "
+                                   + "updating the Funding Source so Billing Errors can be avoided.");
                     }
                 }
             }
@@ -743,7 +744,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         } catch (QuoteNotFoundException e) {
             addGlobalValidationError("The quote ''{2}'' was not found ", quoteId);
         } catch (InvalidProductException e) {
-            addGlobalValidationError(e.getMessage());
+            addGlobalValidationError("Unable to determine the existing value of open orders for " +
+                                     quote.getAlphanumericId() +": " +e.getMessage());
         }
 
         if (editOrder != null) {
@@ -894,17 +896,22 @@ public class ProductOrderActionBean extends CoreActionBean {
     double getOrderValue(ProductOrder testOrder, int sampleCount, Quote quote) throws InvalidProductException {
         double value = 0d;
         if(testOrder.getProduct() != null) {
-            final Product product = testOrder.getProduct();
-            double productValue =
-                    getProductValue((product.getSupportsNumberOfLanes())?testOrder.getLaneCount():sampleCount, product,
-                            quote);
-            value += productValue;
-            for (ProductOrderAddOn testOrderAddon : testOrder.getAddOns()) {
-                final Product addOn = testOrderAddon.getAddOn();
-                double addOnValue =
-                        getProductValue((addOn.getSupportsNumberOfLanes())?testOrder.getLaneCount():sampleCount, addOn,
+            try {
+                final Product product = testOrder.getProduct();
+                double productValue =
+                        getProductValue((product.getSupportsNumberOfLanes())?testOrder.getLaneCount():sampleCount, product,
                                 quote);
-                value += addOnValue;
+                value += productValue;
+                for (ProductOrderAddOn testOrderAddon : testOrder.getAddOns()) {
+                    final Product addOn = testOrderAddon.getAddOn();
+                    double addOnValue =
+                            getProductValue((addOn.getSupportsNumberOfLanes())?testOrder.getLaneCount():sampleCount, addOn,
+                                    quote);
+                    value += addOnValue;
+                }
+            } catch (InvalidProductException e) {
+                throw new InvalidProductException("For " + testOrder.getBusinessKey() + ": " + testOrder.getName() +
+                " " + e.getMessage(), e);
             }
         }
         return value;
@@ -1551,6 +1558,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
         } catch (QuoteNotFoundException e) {
             addGlobalValidationError("The quote ''{2}'' was not found ", editOrder.getQuoteId());
+        } catch (InvalidProductException ipe) {
+            addGlobalValidationError("Unable to determine the existing value of open orders for " + editOrder.getQuoteId() +": " +ipe.getMessage());
         }
         if (chipDefaults != null && attributes != null) {
             if (!chipDefaults.equals(attributes)) {
@@ -1928,7 +1937,6 @@ public class ProductOrderActionBean extends CoreActionBean {
                     sampleSummaryJson.put(item);
                 }
                 resultJson.put("summary", sampleSummaryJson);
-                resultJson.put("numberSamplesNotReceived", getSamplesNotReceivedString());
                 sampleSummary = resultJson.toString();
             } catch (BSPLookupException e) {
                 handleBspLookupFailed(e);
@@ -1999,6 +2007,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                         ProductOrderSample sample = iterator.next();
 
                         ProductOrderSampleBean bean = new ProductOrderSampleBean(sample, withSampleData, preferenceSaver, getSampleLink(sample));
+//                        objectMapper.writeValueAsString(bean);
                         jp.writeRaw(objectMapper.writeValueAsString(bean));
                         if (iterator.hasNext()) {
                             jp.writeRaw(',');
@@ -2258,6 +2267,19 @@ public class ProductOrderActionBean extends CoreActionBean {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
         } catch (QuoteNotFoundException e) {
             addGlobalValidationError("The quote ''{2}'' was not found ", editOrder.getQuoteId());
+        } catch (InvalidProductException e) {
+            addGlobalValidationError("Unable to determine the existing value of open orders for " + editOrder.getQuoteId() +": " +e.getMessage());
+        }
+    }
+
+    private void testForPriceItemValidity(ProductOrder editOrder) {
+        if(productOrderEjb.arePriceItemsValid(editOrder, new HashSet<AccessItem>())) {
+            final String errorMessage = "One of the price items on this orders products is invalid";
+            if(editOrder.isSavedInSAP()) {
+                addGlobalValidationError(errorMessage);
+            } else {
+                addMessage(errorMessage);
+            }
         }
     }
 
@@ -2487,6 +2509,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         // Use existing, if any, or create new.
+
         for (String sampleName : sampleNames) {
             ProductOrderSample productOrderSample;
             List<ProductOrderSample> productOrderSamples = mapIdToSampleList.get(sampleName);
@@ -3011,26 +3034,16 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     /**
-     * get HTML fragment summarizing samples receivred.
+     * Get count of samples not received. Return null if the samples can not be found in BSP
      */
-    public String getSamplesNotReceivedString() {
-        int samplesNotReceived=0;
-        String result = "N/A";
+    public Integer getNumberSamplesNotReceived() {
+        Integer samplesNotReceived=null;
         try {
             samplesNotReceived = editOrder.getSampleCount() - editOrder.getReceivedSampleCount();
         } catch (BSPLookupException e) {
             handleBspLookupFailed(e);
         }
-        if (samplesNotReceived == 1) {
-            result = "<em>NOTE:</em> There is one sample that has not yet been received. If the order is placed, "
-                     + "this sample will be removed from the order.";
-
-        } else if (samplesNotReceived > 1) {
-            result = String.format("<em>NOTE:</em> There are %s samples that have not yet been received. If the order "
-                                   + "is placed, these samples will be removed from the order.", samplesNotReceived);
-        }
-
-        return "<p>" + result + "</p>";
+        return samplesNotReceived;
     }
 
     public EnumSet<ProductOrder.OrderStatus> getOrderStatusNamesWhichCantBeAbandoned() {
@@ -3231,13 +3244,10 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.priceListCache = priceListCache;
     }
 
-
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-
     @HandlesEvent(SAVE_SEARCH_DATA)
     public Resolution saveSearchData() throws Exception {
         preferenceSaver.saveTableData(tableState);
-        return new StreamingResolution("application/json", preferenceSaver.getTableStateJson());
+        return new StreamingResolution("text/json", preferenceSaver.getTableStateJson());
     }
 
     public boolean showColumn(String columnName) {
