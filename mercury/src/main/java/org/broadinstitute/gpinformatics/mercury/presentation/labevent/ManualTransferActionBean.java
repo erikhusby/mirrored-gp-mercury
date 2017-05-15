@@ -614,7 +614,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                                 plateCherryPickEvent.getSource().add(cherryPickSourceType);
                             }
                         }
-                        if(item.targetIDs.size() >= item.sourceIDs.size() ) {
+                        if(item.targetIDs.size() > item.sourceIDs.size() ) {
                             srcWell= parseWellFromJson(item.sourceIDs.get(0));
                             for (String targetItem : item.targetIDs) {
                                 destWell= parseWellFromJson(targetItem);
