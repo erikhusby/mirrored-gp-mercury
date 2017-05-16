@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.run;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
-import org.apache.commons.lang3.tuple.Triple;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -12,7 +12,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -42,7 +41,6 @@ import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -176,11 +174,10 @@ public class FlowcellDesignationFixupTest extends Arquillian {
         String laneFieldName = fieldDefs.get(LabBatch.TicketFields.LANE_INFO.getName()).getJiraCustomFieldId();
 
         JiraIssue jiraFct;
-        String flowcellBarcode;
         Map<VesselPosition,String> laneInfo;
 
         // Get the jira ticket for each FCT batch  [batch - flowcell label -  [ loading tube label - lane ] ]
-        List<Triple<LabBatch, IlluminaFlowcell, Map<VesselPosition,String>>> fctDataList = new ArrayList<>();
+        List<Pair<LabBatch, Map<VesselPosition,String>>> fctDataList = new ArrayList<>();
         for( LabBatch fct : fcts ) {
             processLogWriter.write(" ## Processing " );
             processLogWriter.write( fct.getBatchName());
@@ -188,29 +185,6 @@ public class FlowcellDesignationFixupTest extends Arquillian {
             jiraFct = jiraService.getIssueInfo( fct.getBatchName(), laneFieldName );
             if( jiraFct == null || jiraFct.getSummary() == null ) {
                 processLogWriter.write("    No Jira ticket available, skipping designation assignment.\n");
-                continue;
-            }
-
-            flowcellBarcode = jiraFct.getSummary();
-            IlluminaFlowcell flowcell;
-            Map<String,LabVessel> flowcellVessels = labVesselDao.findByBarcodes( Collections.singletonList(flowcellBarcode));
-
-            if( flowcellVessels.get(flowcellBarcode) == null ) {
-                processLogWriter.write("    No Jira FCT flowcell available with barcode: ");
-                processLogWriter.write(flowcellBarcode);
-                processLogWriter.write("\n");
-                continue;
-            }
-
-            if( OrmUtil.proxySafeIsInstance( flowcellVessels.get(flowcellBarcode), IlluminaFlowcell.class)) {
-                flowcell = OrmUtil.proxySafeCast(flowcellVessels.get(flowcellBarcode), IlluminaFlowcell.class);
-            } else {
-                processLogWriter.write("    Jira vessel " );
-                processLogWriter.write(flowcellBarcode);
-                processLogWriter.write(" for batch " );
-                processLogWriter.write( fct.getBatchName() );
-                processLogWriter.write(" is not an IlluminaFlowcell");
-                processLogWriter.write("\n");
                 continue;
             }
 
@@ -239,7 +213,7 @@ public class FlowcellDesignationFixupTest extends Arquillian {
                 processLogWriter.write("    No Jira FCT flowcell lane info available\n");
                 continue;
             }
-            fctDataList.add(Triple.of( fct, flowcell, laneInfo));
+            fctDataList.add(Pair.of( fct, laneInfo));
         }
 
         processLogWriter.write(" ## ********* Finished Gathering FCT Jira data, " );
@@ -249,7 +223,7 @@ public class FlowcellDesignationFixupTest extends Arquillian {
         processLogWriter.write(" ## ********* Begin to assign designations. \n" );
 
         // Try to map Jira FCT data to designation
-        for( Triple<LabBatch, IlluminaFlowcell, Map<VesselPosition,String>> fctData :  fctDataList) {
+        for( Pair<LabBatch, Map<VesselPosition,String>> fctData :  fctDataList) {
 
             LabBatch fctBatch = fctData.getLeft();
 
