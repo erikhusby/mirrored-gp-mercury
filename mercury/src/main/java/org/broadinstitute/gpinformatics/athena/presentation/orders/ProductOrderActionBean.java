@@ -4,6 +4,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.MaterialInfo;
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
 import net.sourceforge.stripes.action.After;
@@ -22,7 +23,6 @@ import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.CharEncoding;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -123,7 +123,13 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeDefinition;
 import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
+import org.codehaus.jackson.JsonFactory;
+import org.codehaus.jackson.JsonGenerator;
+import org.codehaus.jackson.JsonParser;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.hibernate.Hibernate;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -132,7 +138,9 @@ import org.jvnet.inflector.Noun;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.StringReader;
 import java.text.MessageFormat;
 import java.text.NumberFormat;
@@ -146,8 +154,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
+
+import static org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderSampleBean.SAMPLE_TYPE;
+import static org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver.SAVE_SEARCH_DATA;
 
 /**
  * This handles all the needed interface processing elements.
@@ -194,7 +206,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private static final String KIT_DEFINITION_INDEX = "kitDefinitionQueryIndex";
     private static final String COULD_NOT_LOAD_SAMPLE_DATA = "Could not load sample data";
-    private static final String GET_SUMMARY = "getSummary";
+    private String sampleSummary;
 
     public ProductOrderActionBean() {
         super(CREATE_ORDER, EDIT_ORDER, PRODUCT_ORDER_PARAMETER);
@@ -303,6 +315,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private List<Long> sampleIdsForGetBspData;
 
+    private boolean includeSampleData = true;
+
     private CompletionStatusFetcher progressFetcher;
 
     private boolean skipRegulatoryInfo;
@@ -400,6 +414,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     // Search uses product family list.
     private List<ProductFamily> productFamilies;
 
+    @Inject
+    DatatablesStateSaver preferenceSaver;
+    String tableState="";
 
     @Inject
     private LabVesselDao labVesselDao;
@@ -472,7 +489,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      * Initialize the product with the passed in key for display in the form or create it, if not specified.
      */
     @Before(stages = LifecycleStage.BindingAndValidation,
-            on = {"!" + LIST_ACTION, "!getQuoteFunding", "!" + VIEW_ACTION})
+            on = {"!" + LIST_ACTION, "!getQuoteFunding", "!" + VIEW_ACTION, "getSampleData"})
     public void init() {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
         if (!StringUtils.isBlank(productOrder)) {
@@ -497,10 +514,15 @@ public class ProductOrderActionBean extends CoreActionBean {
         return projectRegulatoryMap;
     }
 
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, SAVE_SEARCH_DATA, "getSampleData"})
+    public void initPreferenceSaver(){
+        preferenceSaver.setPreferenceType(PreferenceType.PRODUCT_ORDER_PREFERENCES);
+    }
+
     /**
      * Initialize the product with the passed in key for display in the form or create it, if not specified.
      */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION})
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, "getSampleData"})
     public void editInit() {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
         // If there's no product order parameter, send an error.
@@ -1188,13 +1210,14 @@ public class ProductOrderActionBean extends CoreActionBean {
     // All actions that can result in the view page loading (either by a validation error or view itself)
     @After(stages = LifecycleStage.BindingAndValidation,
             on = {EDIT_ACTION, VIEW_ACTION, ADD_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK, ABANDON_SAMPLES_ACTION,
-                    DELETE_SAMPLES_ACTION, PLACE_ORDER_ACTION, VALIDATE_ORDER, UNABANDON_SAMPLES_ACTION, GET_SUMMARY, REPLACE_SAMPLES})
+                    DELETE_SAMPLES_ACTION, PLACE_ORDER_ACTION, VALIDATE_ORDER, UNABANDON_SAMPLES_ACTION, REPLACE_SAMPLES})
     public void entryInit() {
         if (editOrder != null) {
+//            editOrder.loadSampleData();
             productOrderListEntry = editOrder.isDraft() ? ProductOrderListEntry.createDummy() :
                     orderListEntryDao.findSingle(editOrder.getJiraTicketKey());
 
-            ProductOrder.loadLabEventSampleData(editOrder.getSamples());
+//            ProductOrder.loadLabEventSampleData(editOrder.getSamples());
 
             sampleDataSourceResolver.populateSampleDataSources(editOrder);
             populateAttributes(editOrder.getJiraTicketKey());
@@ -1900,23 +1923,27 @@ public class ProductOrderActionBean extends CoreActionBean {
         return createTextResolution(kitIndexObject.toString());
     }
 
-    @HandlesEvent(GET_SUMMARY)
-    public Resolution getSummary() throws Exception {
-        JSONArray itemList = new JSONArray();
-        if (editOrder != null) {
+    public Resolution getPostLoadSampleInfo() throws Exception {
+        if (editOrder != null && StringUtils.isBlank(sampleSummary)) {
+            JSONObject resultJson = new JSONObject();
+            JSONArray sampleSummaryJson = new JSONArray();
+            editOrder.loadSampleData();
+
             try {
                 List<String> comments = editOrder.getSampleSummaryComments();
                 for (String comment : comments) {
                     JSONObject item = new JSONObject();
                     item.put("comment", comment);
-                    itemList.put(item);
+                    sampleSummaryJson.put(item);
                 }
-
+                resultJson.put("summary", sampleSummaryJson);
+                resultJson.put("numberSamplesNotReceived", getNumberSamplesNotReceived());
+                sampleSummary = resultJson.toString();
             } catch (BSPLookupException e) {
                 handleBspLookupFailed(e);
             }
         }
-        return createTextResolution(itemList.toString());
+        return new StreamingResolution("text/json", sampleSummary);
     }
 
     /**
@@ -1930,27 +1957,73 @@ public class ProductOrderActionBean extends CoreActionBean {
         logger.error(errorMessage);
     }
 
-    @HandlesEvent("getBspData")
-    public Resolution getBspData() throws Exception {
-        List<ProductOrderSample> samples = productOrderSampleDao.findListByList(
-                ProductOrderSample.class, ProductOrderSample_.productOrderSampleId, sampleIdsForGetBspData);
-
-        JSONArray itemList = new JSONArray();
-
-        if (samples != null) {
-
-            // Assuming all samples come from same product order here.
-            try {
-                ProductOrder.loadSampleData(samples);
-                for (ProductOrderSample sample : samples) {
-                    JSONObject item = ProductOrderSampleJsonFactory.toJson(sample);
-                    itemList.put(item);
+    @HandlesEvent("getSampleData")
+    public Resolution getSampleData() throws Exception {
+        return new StreamingResolution("text/json"){
+            @Override
+            protected void stream(HttpServletResponse response) throws Exception {
+                List<ProductOrderSample> samples;
+                if (sampleIdsForGetBspData != null) {
+                    samples = productOrderSampleDao.findListByList(
+                            ProductOrderSample.class, ProductOrderSample_.productOrderSampleId, sampleIdsForGetBspData);
+                } else {
+                    samples = editOrder.getSamples();
                 }
-            } catch (BSPLookupException e) {
-                handleBspLookupFailed(e);
+
+                final Collection<String> allVisibleColumns = preferenceSaver.visibleColumns();
+                boolean withSampleData = includeSampleData;
+                if (withSampleData) {
+                    Set<String> bspColumns = Sets.newHashSet(ProductOrderSampleBean.COLLABORATOR_SAMPLE_ID,
+                            ProductOrderSampleBean.PARTICIPANT_ID, ProductOrderSampleBean.COLLABORATOR_PARTICIPANT_ID,
+                            SAMPLE_TYPE, ProductOrderSampleBean.MATERIAL_TYPE, ProductOrderSampleBean.VOLUME,
+                            ProductOrderSampleBean.CONCENTRATION, ProductOrderSampleBean.RIN, ProductOrderSampleBean.RQS,
+                            ProductOrderSampleBean.DV2000, ProductOrderSampleBean.PICO_RUN_DATE,
+                            ProductOrderSampleBean.RACKSCAN_MISMATCH, ProductOrderSampleBean.RECEIVED_DATE);
+
+                    for (String visibleColumn : allVisibleColumns) {
+                        if (bspColumns.contains(visibleColumn)) {
+                            withSampleData=true;
+                            break;
+                        }
+                        withSampleData=false;
+                    }
+                }
+
+                JsonGenerator jp = null;
+                JsonFactory jsonFactory = new JsonFactory();
+                OutputStream out = response.getOutputStream();
+                jp = jsonFactory.createJsonGenerator(out);
+                ObjectMapper objectMapper = new ObjectMapper(jsonFactory);
+                objectMapper.setSerializationInclusion(JsonSerialize.Inclusion.ALWAYS);
+                objectMapper.configure(JsonGenerator.Feature.QUOTE_FIELD_NAMES, true);
+                objectMapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, false);
+                try {
+                    if (withSampleData) {
+                        ProductOrder.loadSampleData(samples);
+                    }
+                    jp.writeStartObject();
+                    jp.writeArrayFieldStart("data");
+                    ListIterator<ProductOrderSample> iterator = samples.listIterator();
+                    while (iterator.hasNext()) {
+                        ProductOrderSample sample = iterator.next();
+
+                        ProductOrderSampleBean bean = new ProductOrderSampleBean(sample, withSampleData, preferenceSaver, getSampleLink(sample));
+//                        objectMapper.writeValueAsString(bean);
+                        jp.writeRaw(objectMapper.writeValueAsString(bean));
+                        if (iterator.hasNext()) {
+                            jp.writeRaw(',');
+                        }
+                    }
+                    jp.writeEndArray();
+                    jp.writeEndObject();
+
+                } catch (BSPLookupException e) {
+                    handleBspLookupFailed(e);
+                } finally {
+                    jp.close();
+                }
             }
-        }
-        return createTextResolution(itemList.toString());
+        };
     }
 
     @HandlesEvent("getSupportsSkippingQuote")
@@ -2437,6 +2510,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         // Use existing, if any, or create new.
+
         for (String sampleName : sampleNames) {
             ProductOrderSample productOrderSample;
             List<ProductOrderSample> productOrderSamples = mapIdToSampleList.get(sampleName);
@@ -2506,6 +2580,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setSampleIdsForGetBspData(List<Long> sampleIdsForGetBspData) {
         this.sampleIdsForGetBspData = sampleIdsForGetBspData;
+    }
+
+    public boolean isIncludeSampleData() {
+        return includeSampleData;
+    }
+
+    public void setIncludeSampleData(boolean includeSampleData) {
+        this.includeSampleData = includeSampleData;
     }
 
     public String getAddSamplesText() {
@@ -3132,6 +3214,22 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.replacementSampleList = replacementSampleList;
     }
 
+    public DatatablesStateSaver getPreferenceSaver() {
+        return preferenceSaver;
+    }
+
+    public void setPreferenceSaver(DatatablesStateSaver preferenceSaver) {
+        this.preferenceSaver = preferenceSaver;
+    }
+
+    public String getTableState() {
+        return tableState;
+    }
+
+    public void setTableState(String tableState) {
+        this.tableState = tableState;
+    }
+
     public static JSONObject buildOrspJsonObject(JSONObject orspProject, Set<String> samples,
                                                  Set<String> sampleCollections) throws JSONException
     {
@@ -3146,4 +3244,15 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void setPriceListCache(PriceListCache priceListCache) {
         this.priceListCache = priceListCache;
     }
+
+    @HandlesEvent(SAVE_SEARCH_DATA)
+    public Resolution saveSearchData() throws Exception {
+        preferenceSaver.saveTableData(tableState);
+        return new StreamingResolution("text/json", preferenceSaver.getTableStateJson());
+    }
+
+    public boolean showColumn(String columnName) {
+        return preferenceSaver.showColumn(columnName);
+    }
+
 }
