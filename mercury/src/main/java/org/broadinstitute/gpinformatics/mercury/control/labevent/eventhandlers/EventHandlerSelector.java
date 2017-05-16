@@ -67,6 +67,7 @@ public class EventHandlerSelector {
             sonicAliquotHandler.handleEvent(targetEvent, stationEvent);
             break;
         case BLOOD_PLASMA_SECOND_TRANSFER:
+        case BLOOD_BUFFY_COAT_TRANSFER:
             bspNewRootHandler.handleEvent(targetEvent, stationEvent);
             break;
         }
