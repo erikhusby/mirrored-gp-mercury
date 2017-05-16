@@ -24,7 +24,11 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowc
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.MiSeqReagentKitDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.UMIReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -53,6 +57,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class SequencingTemplateFactory {
     @Inject
@@ -202,10 +208,15 @@ public class SequencingTemplateFactory {
         Set<Integer> productReadLengths = new HashSet<>();
         Set<Boolean> productPairedEnds = new HashSet<>();
         Set<String> molecularIndexReadStructures = new HashSet<>();
-
+        Map<String, Set<UMIReagent>> mapLaneToUmi = new HashMap<>();
         for (LabBatchStartingVessel startingVessel : startingFCTVessels) {
+            Set<UMIReagent> umiReagents = new HashSet<>();
             extractInfo(startingVessel.getLabVessel().getSampleInstancesV2(), regulatoryDesignations, products,
-                    productReadLengths, productPairedEnds, molecularIndexReadStructures);
+                    productReadLengths, productPairedEnds, molecularIndexReadStructures, umiReagents);
+            if (umiReagents.size() > 1) {
+                throw new InformaticsServiceException("More than one UMI Reagent found for lab batch " +
+                                                      startingVessel.getLabBatch().getBatchName());
+            }
 
             if (startingVessel.getVesselPosition() != null) {
                 if (!fetchFromDesignation) {
@@ -218,6 +229,8 @@ public class SequencingTemplateFactory {
                 SequencingTemplateLaneType lane = LimsQueryObjectFactory.createSequencingTemplateLaneType(
                         startingVessel.getVesselPosition().name(), loadingConcentration, "",
                         startingVessel.getLabVessel().getLabel());
+                //TODO Assert umiReagents at most == 1
+                mapLaneToUmi.put(lane.getLaneName(), umiReagents);
                 lanes.add(lane);
             } else {
                 if (loadingConcentration == null) {
@@ -243,6 +256,7 @@ public class SequencingTemplateFactory {
                             LimsQueryObjectFactory.createSequencingTemplateLaneType(vesselPosition,
                                     loadingConcentration, "",
                                     startingVessel.getLabVessel().getLabel());
+                    mapLaneToUmi.put(lane.getLaneName(), umiReagents);
                     lanes.add(lane);
                 }
             }
@@ -261,9 +275,17 @@ public class SequencingTemplateFactory {
             }
         }
         SequencingConfigDef sequencingConfig = getSequencingConfig(isPoolTest);
-        String readStructure =  makeReadStructure(readLength, isPoolTest, molecularIndexReadStructures, isPairedEnd);
+        String readStructure =  makeReadStructure(readLength, isPoolTest, molecularIndexReadStructures, isPairedEnd, null);
         if (StringUtils.isBlank(readStructure)) {
             readStructure = sequencingConfig.getReadStructure().getValue();
+        }
+
+        for (SequencingTemplateLaneType laneType: lanes) {
+            Set<UMIReagent> umiReagentSet = mapLaneToUmi.get(laneType.getLaneName());
+            UMIReagent umiReagent = umiReagentSet.size() == 1 ? umiReagentSet.iterator().next() : null;
+            String laneReadStructure = makeReadStructure(readLength, isPoolTest, molecularIndexReadStructures,
+                    isPairedEnd, umiReagent);
+            laneType.setReadStructure(laneReadStructure);
         }
 
         SequencingTemplateType sequencingTemplate = LimsQueryObjectFactory.createSequencingTemplate(
@@ -345,9 +367,24 @@ public class SequencingTemplateFactory {
         Set<Integer> productReadLengths = new HashSet<>();
         Set<Boolean> productPairedEnds = new HashSet<>();
         Set<String> molecularIndexReadStructures = new HashSet<>();
+        Map<String, Set<UMIReagent>> mapLaneToUmi = new HashMap<>();
+        if (fctBatch != null) {
+            for (LabBatchStartingVessel startingVessel : fctBatch.getLabBatchStartingVessels()) {
+                Set<UMIReagent> umiReagents = new HashSet<>();
+                extractInfo(startingVessel.getLabVessel().getSampleInstancesV2(), regulatoryDesignations, products,
+                        productReadLengths, productPairedEnds, molecularIndexReadStructures, umiReagents);
+                if (umiReagents.size() > 1) {
+                    throw new InformaticsServiceException("More than one UMI Reagent found for lab batch " +
+                                                          startingVessel.getLabBatch().getBatchName());
+                }
+                mapLaneToUmi.put(startingVessel.getVesselPosition().name(), umiReagents);
+            }
+        } else {
+            Set<UMIReagent> umiReagents = new HashSet<>();
+            extractInfo(flowcell.getSampleInstancesV2(), regulatoryDesignations, products,
+                    productReadLengths, productPairedEnds, molecularIndexReadStructures, umiReagents);
 
-        extractInfo(flowcell.getSampleInstancesV2(), regulatoryDesignations, products,
-                productReadLengths, productPairedEnds, molecularIndexReadStructures);
+        }
 
         validateCollections(regulatoryDesignations, products, molecularIndexReadStructures);
         // Provides defaults from product when there is no designation. Pair end read should default to true.
@@ -361,8 +398,17 @@ public class SequencingTemplateFactory {
                 isPairedEnd = true;
             }
         }
+
+        for (SequencingTemplateLaneType laneType: lanes) {
+            Set<UMIReagent> umiReagentSet = mapLaneToUmi.get(laneType.getLaneName());
+            UMIReagent umiReagent = umiReagentSet.size() == 1 ? umiReagentSet.iterator().next() : null;
+            String laneReadStructure = makeReadStructure(readLength, isPoolTest, molecularIndexReadStructures,
+                    isPairedEnd, umiReagent);
+            laneType.setReadStructure(laneReadStructure);
+        }
+
         SequencingConfigDef sequencingConfig = getSequencingConfig(isPoolTest);
-        String readStructure =  makeReadStructure(readLength, isPoolTest, molecularIndexReadStructures, isPairedEnd);
+        String readStructure =  makeReadStructure(readLength, isPoolTest, molecularIndexReadStructures, isPairedEnd, null);
         if (StringUtils.isBlank(readStructure)) {
             readStructure = sequencingConfig.getReadStructure().getValue();
         }
@@ -459,10 +505,11 @@ public class SequencingTemplateFactory {
     }
 
     /** Iterates on the sample instances and adds product defaults and the molecular indexes to the collections. */
-    private void extractInfo(Set<SampleInstanceV2> sampleInstances,  Set<String> regulatoryDesignations,
+    private void extractInfo(Set<SampleInstanceV2> sampleInstances, Set<String> regulatoryDesignations,
                              Set<Product> products, Set<Integer> readLengths, Set<Boolean> pairedEnds,
-                             Set<String> molecularIndexReadStructures) {
+                             Set<String> molecularIndexReadStructures, Set<UMIReagent> umiReagents) {
 
+        //TODO This logic doesn't make sense, need this to be on a lane level
         for(SampleInstanceV2 sampleInstance: sampleInstances) {
             // Controls don't have bucket entries, but assumes that the non-control samples will be present.
             if (sampleInstance.getSingleBucketEntry() != null) {
@@ -487,6 +534,14 @@ public class SequencingTemplateFactory {
                     }
                     molecularIndexReadStructures.add(indexReadStructure);
                 }
+
+                for (Reagent reagent: sampleInstance.getReagents()) {
+                    if (OrmUtil.proxySafeIsInstance(reagent, UMIReagent.class)) {
+                        UMIReagent umiReagent =
+                                OrmUtil.proxySafeCast(reagent, UMIReagent.class);
+                        umiReagents.add(umiReagent);
+                    }
+                }
             }
         }
     }
@@ -508,10 +563,29 @@ public class SequencingTemplateFactory {
     }
 
     private String makeReadStructure(Integer readLength, boolean isPoolTest, Set<String> molecularIndexReadStructures,
-                                     @Nonnull Boolean isPairedEnd) {
+                                     @Nonnull Boolean isPairedEnd, UMIReagent umiReagent) {
+        String umiCode = (umiReagent != null) ? umiReagent.getUmiLength() + "M" : "";
         String strandCode = (readLength != null && !isPoolTest) ? readLength.intValue() + "T" : "";
         String indexCode = molecularIndexReadStructures.isEmpty() ? "" : molecularIndexReadStructures.iterator().next();
-        return strandCode + indexCode + (isPairedEnd  ? strandCode : "");
+        String ret = strandCode + indexCode + (isPairedEnd  ? strandCode : "");
+        if (umiReagent != null) {
+            Pattern pattern = Pattern.compile("(\\d*T)*(\\d+B)+(.*)T*");
+            Matcher matcher = pattern.matcher(ret);
+            switch (umiReagent.getUmiLocation()) {
+            case INLINE_FIRST_READ:
+                return strandCode + umiCode + indexCode + (isPairedEnd  ? strandCode : "");
+            case AFTER_FIRST_INDEX_READ:
+                if (matcher.matches()) {
+                    String firstIndex = matcher.group(2);
+                    return ret.replaceFirst(firstIndex, firstIndex + umiCode);
+                }
+                ret = ret.replaceFirst(strandCode + "$", strandCode + umiCode);
+                break;
+            case INLINE_SECOND_READ:
+                return strandCode + indexCode + (isPairedEnd  ? (umiCode + strandCode) : "");
+            }
+        }
+        return ret;
     }
 
     private SequencingConfigDef getSequencingConfig(boolean isPoolTest) {

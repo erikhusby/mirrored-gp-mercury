@@ -10,19 +10,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * A control that is not significant enough to be registered as a sample.  An example is the controls used to fill a
- * fingerprinting plate to 48 or 96 wells.
+ * A control that represents a Unique Molecular Identifier
  */
 @Entity
 @Audited
-public class UniqueMolecularIdentifierReagent extends Reagent {
+public class UMIReagent extends Reagent {
 
     public enum UMILocation {
         INLINE_FIRST_READ("Inline First Read"),
-        BEFORE_FIRST_INDEX_READ("Before First Index Read"),
         AFTER_FIRST_INDEX_READ("After First Index Read"),
-        BEFORE_SECOND_INDEX_READ("Before Second Index Read"),
-        AFTER_SECOND_INDEX_READ("After Second Index Read"),
         INLINE_SECOND_READ("Inline Second Read");
 
         private final String displayName;
@@ -52,12 +48,16 @@ public class UniqueMolecularIdentifierReagent extends Reagent {
     @Enumerated(EnumType.STRING)
     private UMILocation umiLocation;
 
-    private int length;
+    private Long umiLength;
 
-    public UniqueMolecularIdentifierReagent(UMILocation umiLocation, int length) {
+    /** For JPA. */
+    public UMIReagent() {
+    }
+
+    public UMIReagent(UMILocation umiLocation, Long umiLength) {
         super(null, null, null);
         this.umiLocation = umiLocation;
-        this.length = length;
+        this.umiLength = umiLength;
     }
 
     public UMILocation getUmiLocation() {
@@ -69,11 +69,11 @@ public class UniqueMolecularIdentifierReagent extends Reagent {
         this.umiLocation = umiLocation;
     }
 
-    public int getLength() {
-        return length;
+    public Long getUmiLength() {
+        return umiLength;
     }
 
-    public void setLength(int length) {
-        this.length = length;
+    public void setUmiLength(Long umiLength) {
+        this.umiLength = umiLength;
     }
 }

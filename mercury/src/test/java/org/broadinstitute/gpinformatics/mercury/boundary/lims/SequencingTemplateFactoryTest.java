@@ -1,19 +1,27 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import com.google.common.collect.Lists;
+import com.itextpdf.text.pdf.Barcode;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.UMIReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -22,14 +30,17 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
 import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
+import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq4000FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.hamcrest.core.AnyOf;
@@ -71,7 +82,9 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
     private static final BigDecimal BIG_DECIMAL_12_33 = new BigDecimal("12.33");
     private static final BigDecimal BIG_DECIMAL_7_77 = new BigDecimal("7.77");
     private SequencingTemplateFactory factory = null;
+    private StaticPlate shearingCleanupPlate = null;
     private BarcodedTube denatureTube2500 = null;
+    private BarcodedTube normTube2500 = null;
     private BarcodedTube denatureTube2000 = null;
     private BarcodedTube denatureTube4000 = null;
     private IlluminaFlowcell flowcellHiSeq2500 = null;
@@ -92,6 +105,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
     private IlluminaFlowcell flowcellHiSeq4000;
     private LabBatch workflowBatch;
     private final List<FlowcellDesignation> flowcellDesignations = new ArrayList<>();
+    private ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder;
 
     @Override
     @BeforeMethod
@@ -625,6 +639,137 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
                 Assert.fail(failMsg);
             }
         }
+    }
+
+    public void testUniqueMolecularIdentifierMultiDesignations() {
+        final ProductOrder
+                productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
+        runDate = new Date();
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "UMI");
+        workflowBatch = new LabBatch("Exome Express Batch",
+                new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
+        workflowBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
+
+        //Generate new rack, this time with a UMI on the LC plate
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, BARCODE_SUFFIX);
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
+                String.valueOf(runDate.getTime()),
+                BARCODE_SUFFIX, true);
+
+        exomeExpressShearingEntityBuilder =
+                runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
+                        picoPlatingEntityBuilder.getNormTubeFormation(),
+                        picoPlatingEntityBuilder.getNormalizationBarcode(), "UMIShearingSuffix");
+
+        shearingCleanupPlate = exomeExpressShearingEntityBuilder.getShearingCleanupPlate();
+        shearingCleanupPlate.clearCaches();
+        StaticPlate umiPlate = LabEventTest.buildUmiPlate("UMITestPlate0101", null);
+        LabEventTestFactory.doSectionTransfer(LabEventType.UMI_ADDITION, umiPlate, shearingCleanupPlate);
+
+        QtpEntityBuilder qtpEntityBuilder = runUpToQTP(exomeExpressShearingEntityBuilder, "UMI1010");
+
+        BarcodedTube denatureTubeUmi = qtpEntityBuilder.getDenatureRack().getContainerRole()
+                .getVesselAtPosition(VesselPosition.A01);
+
+        VesselPosition[] hiseq4000VesselPositions =
+                IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell.getVesselGeometry().getVesselPositions();
+        List<VesselPosition> vesselPositionList = Arrays.asList(hiseq4000VesselPositions);
+        List<List<VesselPosition>> partition = Lists.partition(vesselPositionList, hiseq4000VesselPositions.length / 2);
+        List<VesselPosition> vesselPositions1 = partition.get(0);
+        List<VesselPosition> vesselPositions2 = partition.get(1);
+
+        vesselToLanesInfo = new LabBatch.VesselToLanesInfo(
+                vesselPositions1, new BigDecimal("16.22"), denatureTube2000);
+
+        vesselToLanesInfo2 = new LabBatch.VesselToLanesInfo(
+                vesselPositions2, BIG_DECIMAL_12_33, denatureTubeUmi);
+        List<LabBatch.VesselToLanesInfo> vesselToLanesInfos = new ArrayList<>();
+
+        vesselToLanesInfos.add(vesselToLanesInfo);
+        vesselToLanesInfos.add(vesselToLanesInfo2);
+
+        fctBatchHiSeq4000 = new LabBatch(FLOWCELL_4000_TICKET, vesselToLanesInfos,
+                LabBatch.LabBatchType.FCT, IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell);
+
+        BigDecimal denatureTubeUmiConc = new BigDecimal("8.88");
+        BigDecimal denature2500Conc = new BigDecimal("13.33");
+        FlowcellDesignation designation = new FlowcellDesignation(denatureTubeUmi, fctBatchHiSeq4000,
+                denatureTubeUmi.getLatestEvent(), FlowcellDesignation.IndexType.DUAL, false,
+                IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, 4, 99, denatureTubeUmiConc, true,
+                FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL);
+
+        FlowcellDesignation designation2 = new FlowcellDesignation(denatureTube2500, fctBatchHiSeq4000,
+                denatureTube2500.getLatestEvent(), FlowcellDesignation.IndexType.DUAL, false,
+                IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, 4, 99, denature2500Conc, true,
+                FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL);
+
+        flowcellDesignations.clear();
+        flowcellDesignations.add(designation);
+        flowcellDesignations.add(designation2);
+
+        template = factory.getSequencingTemplate(fctBatchHiSeq4000, false);
+        for (SequencingTemplateLaneType laneType: template.getLanes()) {
+            if (laneType.getDerivedVesselLabel().equals(denatureTube2500.getLabel())) {
+                assertThat(laneType.getLoadingConcentration(), is(denature2500Conc));
+                assertThat(laneType.getReadStructure(), is("99T8B8B99T"));
+            } else if (laneType.getDerivedVesselLabel().equals(denatureTubeUmi.getLabel())) {
+                assertThat(laneType.getLoadingConcentration(), is(denatureTubeUmiConc));
+                assertThat(laneType.getReadStructure(), is("99T8B6M8B99T"));
+            } else {
+                String failMsg = String.format("Expected to only find tubes %s and %s but found %s",
+                        denatureTube2000.getLabel(), denatureTubeUmi.getLabel(), laneType.getDerivedVesselLabel());
+                Assert.fail(failMsg);
+            }
+        }
+
+        flowcellDesignations.clear();
+
+        //Build a new Flowcell for UMI tube to see if query works on flowcells
+        LabBatch fctBatchUmi = new LabBatch(FLOWCELL_4000_TICKET, vesselToLanesInfos,
+                LabBatch.LabBatchType.FCT, IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell);
+
+        Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
+        mapPositionToTube.put(VesselPosition.A01, denatureTubeUmi);
+        mapPositionToTube.put(VesselPosition.B01, denatureTube2000);
+        TubeFormation rearrayedDenatureRack = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
+        rearrayedDenatureRack.addRackOfTubes(new RackOfTubes("denatureRearrayUmi", RackOfTubes.RackType.Matrix96));
+        HiSeq4000FlowcellEntityBuilder flowcell4000EntityBuilder =
+                runHiSeq4000FlowcellProcess(rearrayedDenatureRack, null, BARCODE_SUFFIX + "UMIADXX",
+                        fctBatchUmi, null, HiSeq4000FlowcellEntityBuilder.FCTCreationPoint.DENATURE);
+        IlluminaFlowcell flowcellMixOfUMILanes = flowcell4000EntityBuilder.getIlluminaFlowcell();
+
+        template = factory.getSequencingTemplate(flowcellMixOfUMILanes, flowcellMixOfUMILanes.getLoadingVessels(), false);
+        System.out.println(template);
+        for (SequencingTemplateLaneType laneType: template.getLanes()) {
+            if (laneType.getDerivedVesselLabel().equals(denatureTube2500.getLabel())) {
+                assertThat(laneType.getReadStructure(), is("76T8B8B76T"));
+            } else if (laneType.getDerivedVesselLabel().equals(denatureTubeUmi.getLabel())) {
+                assertThat(laneType.getReadStructure(), is("76T8B6M8B76T"));
+            } else {
+                String failMsg = String.format("Expected to only find tubes %s and %s but found %s",
+                        denatureTube2000.getLabel(), denatureTubeUmi.getLabel(), laneType.getDerivedVesselLabel());
+                Assert.fail(failMsg);
+            }
+        }
+
+    }
+
+    private QtpEntityBuilder runUpToQTP(ExomeExpressShearingEntityBuilder shearingEntityBuilder, String qtpSuffix) {
+        LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
+                runLibraryConstructionProcessWithUMI(shearingEntityBuilder.getShearingCleanupPlate(),
+                        shearingEntityBuilder.getShearCleanPlateBarcode(),
+                        shearingEntityBuilder.getShearingPlate(), BARCODE_SUFFIX,
+                        LibraryConstructionJaxbBuilder.PondType.REGULAR);
+        HybridSelectionEntityBuilder hybridSelectionEntityBuilder =
+                runHybridSelectionProcess(libraryConstructionEntityBuilder.getPondRegRack(),
+                        libraryConstructionEntityBuilder.getPondRegRackBarcode(),
+                        libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), BARCODE_SUFFIX);
+        return runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
+                hybridSelectionEntityBuilder.getNormCatchBarcodes(),
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(),
+                qtpSuffix);
     }
 
 }
