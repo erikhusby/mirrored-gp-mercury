@@ -8,9 +8,11 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.UniqueMolecularIdentifierReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.UniqueMolecularIdentifierReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.UMIReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -52,14 +54,14 @@ public class UniqueMolecularIdentifierReagentFactory {
             Map<String, LabVessel> mapBarcodeToPlate =
                     labVesselDao.findByBarcodes(new ArrayList<>(mapBarcodeToReagent.keySet()));
 
-            Map<String, UniqueMolecularIdentifierReagent> mapPlateToUMI = new HashMap<>();
+            Map<String, UMIReagent> mapPlateToUMI = new HashMap<>();
             Set<Map.Entry<String, UniqueMolecularIdentifierReagentProcessor.UniqueMolecularIdentifierDto>> entrySet =
                     mapBarcodeToReagent.entrySet();
             for (Map.Entry<String, UniqueMolecularIdentifierReagentProcessor.UniqueMolecularIdentifierDto> entry: entrySet)
             {
                 String plateBarcode = entry.getKey();
                 UniqueMolecularIdentifierReagentProcessor.UniqueMolecularIdentifierDto dto = entry.getValue();
-                UniqueMolecularIdentifierReagent umiReagent =
+                UMIReagent umiReagent =
                         uniqueMolecularIdentifierReagentDao.findByLocationAndLength(dto.getLocation(), dto.getLength());
                 mapPlateToUMI.put(plateBarcode, umiReagent);
             }
@@ -86,7 +88,7 @@ public class UniqueMolecularIdentifierReagentFactory {
     public List<StaticPlate> buildPlates(
             Map<String, UniqueMolecularIdentifierReagentProcessor.UniqueMolecularIdentifierDto> mapBarcodeToUMI,
             MessageCollection messageCollection, Map<String, LabVessel> mapBarcodeToPlate,
-            Map<String, UniqueMolecularIdentifierReagent> mapBarcodeToReagent) {
+            Map<String, UMIReagent> mapBarcodeToReagent) {
         List<StaticPlate> plates = new ArrayList<>();
         for (Map.Entry<String, UniqueMolecularIdentifierReagentProcessor.UniqueMolecularIdentifierDto> umiDtoEntry :
                 mapBarcodeToUMI.entrySet()) {
@@ -103,11 +105,15 @@ public class UniqueMolecularIdentifierReagentFactory {
                     new StaticPlate(formattedBarcode, StaticPlate.PlateType.UniqueMolecularIdentifierPlate96);
             plate.setCreatedOn(new Date());
 
-            UniqueMolecularIdentifierReagent umiReagent = mapBarcodeToReagent.get(plateBarcode);
+            UMIReagent umiReagent = mapBarcodeToReagent.get(plateBarcode);
             if (umiReagent == null) {
-                umiReagent = new UniqueMolecularIdentifierReagent(umiDto.getLocation(), umiDto.getLength());
+                umiReagent = new UMIReagent(umiDto.getLocation(), umiDto.getLength());
             }
-            plate.addReagent(umiReagent);
+            for (VesselPosition vesselPosition: plate.getVesselGeometry().getVesselPositions()) {
+                PlateWell plateWell = new PlateWell(plate, vesselPosition);
+                plateWell.addReagent(umiReagent);
+                plate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
+            }
             plates.add(plate);
         }
         return plates;

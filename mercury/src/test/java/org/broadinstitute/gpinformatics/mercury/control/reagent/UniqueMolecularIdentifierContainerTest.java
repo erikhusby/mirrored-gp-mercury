@@ -11,7 +11,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.UniqueMolecularIdentifierReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.UMIReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -82,10 +82,10 @@ public class UniqueMolecularIdentifierContainerTest extends Arquillian {
 
             LabVessel labVessel = labVesselDao.findByIdentifier(staticPlates.get(0).getLabel());
             Assert.assertEquals(labVessel.getReagentContents().size(), 1);
-            UniqueMolecularIdentifierReagent umiReagent =
-                    (UniqueMolecularIdentifierReagent) labVessel.getReagentContents().iterator().next();
-            Assert.assertEquals(umiReagent.getLength(), 6);
-            Assert.assertEquals(umiReagent.getUmiLocation(), UniqueMolecularIdentifierReagent.UMILocation.INLINE_FIRST_READ);
+            UMIReagent umiReagent =
+                    (UMIReagent) labVessel.getReagentContents().iterator().next();
+            Assert.assertEquals(umiReagent.getUmiLength(), Long.valueOf(6));
+            Assert.assertEquals(umiReagent.getUmiLocation(), UMIReagent.UMILocation.INLINE_FIRST_READ);
 
         } catch (IOException | InvalidFormatException e) {
             throw new RuntimeException(e);

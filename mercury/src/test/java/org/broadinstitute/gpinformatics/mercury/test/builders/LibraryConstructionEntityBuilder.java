@@ -54,6 +54,7 @@ public class LibraryConstructionEntityBuilder {
 
     private final Map<String, BarcodedTube> mapBarcodeToPondRegTubes = new HashMap<>();
     private final Map<String, BarcodedTube> mapBarcodeToPondNormTubes = new HashMap<>();
+    private boolean includeUmi = false;
 
     public LibraryConstructionEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
             LabEventFactory labEventFactory, LabEventHandler labEventHandler, StaticPlate shearingCleanupPlate,
@@ -194,10 +195,18 @@ public class LibraryConstructionEntityBuilder {
                 shearingCleanupPlate.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.A01);
         SampleInstanceV2 sampleInstance = postIndexingSampleInstances.iterator().next();
         List<Reagent> reagents = sampleInstance.getReagents();
-        Assert.assertEquals(reagents.size(), 1, "Wrong number of reagents");
-        MolecularIndexReagent molecularIndexReagent = (MolecularIndexReagent) reagents.iterator().next();
-        Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P7-Habab",
-                                   "Wrong index");
+        MolecularIndexReagent molecularIndexReagent = null;
+        if (includeUmi) {
+            Assert.assertEquals(reagents.size(), 2, "Wrong number of reagents");
+            molecularIndexReagent = (MolecularIndexReagent) reagents.get(1);
+            Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P7-Habab",
+                    "Wrong index");
+        } else {
+            Assert.assertEquals(reagents.size(), 1, "Wrong number of reagents");
+            molecularIndexReagent = (MolecularIndexReagent) reagents.iterator().next();
+            Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P7-Habab",
+                    "Wrong index");
+        }
 
         // PostIndexedAdapterLigationThermoCyclerLoaded
         LabEventTest.validateWorkflow("PostIndexedAdapterLigationThermoCyclerLoaded", shearingCleanupPlate);
@@ -319,11 +328,24 @@ public class LibraryConstructionEntityBuilder {
                         .getRootOrEarliestMercurySampleName(),
                 "Wrong sample");
         reagents = pondRegSampleInstance.getReagents();
-        Assert.assertEquals(reagents.size(), 1, "Wrong number of reagents");
-        molecularIndexReagent = (MolecularIndexReagent) reagents.iterator().next();
-        Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P5-Habab_P7-Habab",
-                "Wrong index");
+        if (includeUmi) {
+            Assert.assertEquals(reagents.size(), 2, "Wrong number of reagents");
+            molecularIndexReagent = (MolecularIndexReagent) reagents.get(1);
+            Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(),
+                    "Illumina_P5-Habab_P7-Habab",
+                    "Wrong index");
+        } else {
+            Assert.assertEquals(reagents.size(), 1, "Wrong number of reagents");
+            molecularIndexReagent = (MolecularIndexReagent) reagents.iterator().next();
+            Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(),
+                    "Illumina_P5-Habab_P7-Habab",
+                    "Wrong index");
+        }
 
         return this;
+    }
+
+    public void setIncludeUmi(boolean includeUmi) {
+        this.includeUmi = includeUmi;
     }
 }
