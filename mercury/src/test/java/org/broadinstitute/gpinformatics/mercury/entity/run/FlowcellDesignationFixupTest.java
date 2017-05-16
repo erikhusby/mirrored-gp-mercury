@@ -125,7 +125,7 @@ public class FlowcellDesignationFixupTest extends Arquillian {
      * Backfill map designations to batch_starting_vessels so the designation to flowcell relationship is deterministic
      *    when multiple designations are created for the same loading vessel(s)
      */
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void gplim4582() throws Exception {
 
         String logDirName = System.getProperty("jboss.server.log.dir");
