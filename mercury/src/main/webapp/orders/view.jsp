@@ -78,24 +78,16 @@ $j(document).ready(function () {
             rowsToInvalidate.push(rowNum);
         }
 
-        updateSampleInformation(samplesToFetch, settings, true).then(function () {
-            while (remainingSamples.length > 0) {
-                var pageLength = table.page.info().length;
-                var SAMPLE_QUERY_MAX_SIZE = 500;
-                pageLength = pageLength < SAMPLE_QUERY_MAX_SIZE ? SAMPLE_QUERY_MAX_SIZE : pageLength;
-                if (remainingSamples.length < pageLength) {
-                    pageLength = remainingSamples.length;
-                }
-                var sampleIds = remainingSamples.splice(0, pageLength);
-                selectorArray = selectorArray.concat(sampleIds.map(function (row) {
-                    return "#id-" + row;
-                }));
-                updateSampleInformation(sampleIds, settings);
-            }
-        }).done(function(){
-            table.rows().draw();
-            console.log("table draw")
-        });
+        if (samplesToFetch.length > 0) {
+            updateSampleInformation(samplesToFetch, settings).done(function () {
+                updateSampleInformation(remainingSamples, settings, true);
+                table.rows().draw();
+//                console.log("table draw 1")
+            }).done(function () {
+                table.rows().draw();
+                console.log("table draw 2")
+            });
+        }
     }
 
     var oTable = $j('#sampleData').dataTable({
@@ -125,7 +117,8 @@ $j(document).ready(function () {
                 data: {
                     'productOrder': "${actionBean.editOrder.businessKey}",
                     'includeSampleData': false
-                }
+                },
+                method: 'POST'
             },
             "columns": [
                 {"data": "${columnHeaderPDOSampleId}","orderable": false, 'class': 'no-min-width', render:renderCheckbox},
@@ -215,7 +208,7 @@ $j(document).ready(function () {
                 updateFundsRemaining();
                 setupDialogs();
 
-                postLoadSampleInfo();
+//                postLoadSampleInfo();
                 // Only show the fill kit detail information for sample initiation PDOs. With the collaboration portal, there
                 // can be kit definitions but since that is all automated, we do not want to show that. It is fairly irrelevant
                 // after the work request happens. Adding a work request id field to the UI when there is a work request with
@@ -573,7 +566,7 @@ function setupDialogs() {
     });
 }
 
-function updateSampleInformation(samples, settings) {
+function updateSampleInformation(samples, settings, includeSampleSummary=false) {
     var table = new $j.fn.dataTable.Api(settings).table();
     console.log("loading " + samples.length + " samples from BSP");
      return $j.ajax({
@@ -581,7 +574,8 @@ function updateSampleInformation(samples, settings) {
         data: {
             'productOrder': "${actionBean.editOrder.businessKey}",
             'sampleIdsForGetBspData': samples,
-            'includeSampleData': true
+            'includeSampleData': true,
+            'includeSampleSummary': includeSampleSummary
         },
         method: 'POST',
         dataType: 'json',
@@ -601,6 +595,17 @@ function updateSampleInformation(samples, settings) {
                     }
                     this.invalidate();
                 });
+                if (json.comments){
+                    var dataList = '<ul>';
+                    json.comments.map(function (item) {
+                        dataList += '<li>' + item + '</li>'
+                    });
+                    dataList += '</ul>';
+                    $j('#summaryId').html(dataList);
+                }
+                if (json.numberSamplesNotReceived) {
+                    $j("#numberSamplesNotReceived").html(json.numberSamplesNotReceived);
+                }
             }
         }
     });

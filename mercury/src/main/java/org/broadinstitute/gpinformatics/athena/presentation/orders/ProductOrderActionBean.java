@@ -316,6 +316,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private List<Long> sampleIdsForGetBspData;
 
     private boolean includeSampleData = true;
+    private boolean includeSampleSummary = false;
 
     private CompletionStatusFetcher progressFetcher;
 
@@ -1932,29 +1933,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         return createTextResolution(kitIndexObject.toString());
     }
 
-    public Resolution getPostLoadSampleInfo() throws Exception {
-        if (editOrder != null && StringUtils.isBlank(sampleSummary)) {
-            JSONObject resultJson = new JSONObject();
-            JSONArray sampleSummaryJson = new JSONArray();
-            editOrder.loadSampleData();
-
-            try {
-                List<String> comments = editOrder.getSampleSummaryComments();
-                for (String comment : comments) {
-                    JSONObject item = new JSONObject();
-                    item.put("comment", comment);
-                    sampleSummaryJson.put(item);
-                }
-                resultJson.put("summary", sampleSummaryJson);
-                resultJson.put("numberSamplesNotReceived", getSamplesNotReceivedString());
-                sampleSummary = resultJson.toString();
-            } catch (BSPLookupException e) {
-                handleBspLookupFailed(e);
-            }
-        }
-        return new StreamingResolution("text/json", sampleSummary);
-    }
-
     /**
      * This convenience method logs exceptions from bsp and adds a global validation error.
      *
@@ -1967,7 +1945,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     @HandlesEvent("getSampleData")
-    public Resolution getSampleData() throws Exception {
+    public Resolution getSampleData() {
         return new StreamingResolution("text/json"){
             @Override
             protected void stream(HttpServletResponse response) throws Exception {
@@ -1997,39 +1975,45 @@ public class ProductOrderActionBean extends CoreActionBean {
                         withSampleData=false;
                     }
                 }
-
-                JsonGenerator jp = null;
                 JsonFactory jsonFactory = new JsonFactory();
-                OutputStream out = response.getOutputStream();
-                jp = jsonFactory.createJsonGenerator(out);
-                ObjectMapper objectMapper = new ObjectMapper(jsonFactory);
-                objectMapper.setSerializationInclusion(JsonSerialize.Inclusion.ALWAYS);
-                objectMapper.configure(JsonGenerator.Feature.QUOTE_FIELD_NAMES, true);
-                objectMapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, false);
+                JsonGenerator jsonGenerator = null;
                 try {
-                    if (withSampleData) {
-                        ProductOrder.loadSampleData(samples);
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    objectMapper.setSerializationInclusion(JsonSerialize.Inclusion.ALWAYS);
+                    objectMapper.configure(JsonGenerator.Feature.QUOTE_FIELD_NAMES, true);
+                    objectMapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, false);
+
+                    OutputStream outputStream = response.getOutputStream();
+                    jsonGenerator = jsonFactory.createJsonGenerator(outputStream);
+                    jsonGenerator.setCodec(objectMapper);
+                    jsonGenerator.writeStartObject();
+
+                    if (withSampleData || includeSampleSummary) {
+//                        ProductOrder.loadSampleData(samples);
+//                        if (includeSampleSummary) {
+                        List<String> comments = editOrder.getSampleSummaryComments();
+                        jsonGenerator.writeArrayFieldStart("comments");
+                        for (String comment : comments) {
+                            jsonGenerator.writeObject(comment);
+                        }
+                        jsonGenerator.writeEndArray();
+                        jsonGenerator.writeObjectField("numberSamplesNotReceived", getSamplesNotReceivedString());
                     }
-                    jp.writeStartObject();
-                    jp.writeArrayFieldStart("data");
+
+//                    }
+                    jsonGenerator.writeArrayFieldStart("data");
                     ListIterator<ProductOrderSample> iterator = samples.listIterator();
                     while (iterator.hasNext()) {
                         ProductOrderSample sample = iterator.next();
-
                         ProductOrderSampleBean bean = new ProductOrderSampleBean(sample, withSampleData, preferenceSaver, getSampleLink(sample));
-//                        objectMapper.writeValueAsString(bean);
-                        jp.writeRaw(objectMapper.writeValueAsString(bean));
-                        if (iterator.hasNext()) {
-                            jp.writeRaw(',');
-                        }
+                        jsonGenerator.writeObject(bean);
                     }
-                    jp.writeEndArray();
-                    jp.writeEndObject();
+                    jsonGenerator.writeEndArray();
 
                 } catch (BSPLookupException e) {
                     handleBspLookupFailed(e);
                 } finally {
-                    jp.close();
+                    jsonGenerator.close();
                 }
             }
         };
@@ -2589,6 +2573,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setSampleIdsForGetBspData(List<Long> sampleIdsForGetBspData) {
         this.sampleIdsForGetBspData = sampleIdsForGetBspData;
+    }
+
+    public boolean isIncludeSampleSummary() {
+        return includeSampleSummary;
+    }
+
+    public void setIncludeSampleSummary(boolean includeSampleSummary) {
+        this.includeSampleSummary = includeSampleSummary;
     }
 
     public boolean isIncludeSampleData() {
