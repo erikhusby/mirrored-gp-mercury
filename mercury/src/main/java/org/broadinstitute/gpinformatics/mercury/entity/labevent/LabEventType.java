@@ -632,7 +632,7 @@ public enum LabEventType {
             LibraryType.NONE_ASSIGNED),
     BLOOD_PLASMA_SECOND_TRANSFER("BloodPlasmaSecondTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT,
                     RackOfTubes.RackType.FlipperRackRow8,
                     RackOfTubes.RackType.FlipperRackRow8).
@@ -649,7 +649,7 @@ public enum LabEventType {
             LibraryType.NONE_ASSIGNED),
     BLOOD_BUFFY_COAT_TRANSFER("BloodBuffyCoatTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.RECEPTACLE_TRANSFER_EVENT, null, null).
                     sourceVesselTypeGeometries(new VesselTypeGeometry[] {
                             BarcodedTube.BarcodedTubeType.VacutainerBloodTube3,
