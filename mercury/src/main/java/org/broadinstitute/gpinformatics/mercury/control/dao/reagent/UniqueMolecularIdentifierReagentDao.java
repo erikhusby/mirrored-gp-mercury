@@ -1,10 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.reagent;
 
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent_;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.UniqueMolecularIdentifierReagent;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.UniqueMolecularIdentifierReagent_;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.UMIReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.UMIReagent_;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -20,15 +18,15 @@ import javax.persistence.criteria.Root;
 @RequestScoped
 public class UniqueMolecularIdentifierReagentDao extends GenericDao {
 
-    public UniqueMolecularIdentifierReagent findByLocationAndLength(
-            UniqueMolecularIdentifierReagent.UMILocation location, int length) {
+    public UMIReagent findByLocationAndLength(
+            UMIReagent.UMILocation location, long length) {
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
-        CriteriaQuery<UniqueMolecularIdentifierReagent> criteriaQuery =
-                criteriaBuilder.createQuery(UniqueMolecularIdentifierReagent.class);
-        Root<UniqueMolecularIdentifierReagent> root = criteriaQuery.from(UniqueMolecularIdentifierReagent.class);
-        criteriaQuery.where(criteriaBuilder.and(
-                criteriaBuilder.equal(root.get(UniqueMolecularIdentifierReagent_.umiLocation), location),
-                criteriaBuilder.equal(root.get(UniqueMolecularIdentifierReagent_.length), length)));
+        CriteriaQuery<UMIReagent> criteriaQuery =
+                criteriaBuilder.createQuery(UMIReagent.class);
+        Root<UMIReagent> root = criteriaQuery.from(UMIReagent.class);
+        criteriaQuery.where(
+                getCriteriaBuilder().equal(root.get(UMIReagent_.umiLocation), location),
+                getCriteriaBuilder().equal(root.get(UMIReagent_.umiLength), length));
         try {
             return getEntityManager().createQuery(criteriaQuery).getSingleResult();
         } catch (NoResultException ignored) {

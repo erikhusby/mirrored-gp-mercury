@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.control.reagent;
 
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.UniqueMolecularIdentifierReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.UMIReagent;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -20,19 +20,19 @@ public class UniqueMolecularIdentifierReagentProcessor extends TableProcessor {
     private final Map<UniqueMolecularIdentifierDto, UniqueMolecularIdentifierDto> mapUmiToUmi = new HashMap<>();
 
     public static class UniqueMolecularIdentifierDto {
-        private final UniqueMolecularIdentifierReagent.UMILocation location;
-        private final int length;
+        private final UMIReagent.UMILocation location;
+        private final long length;
 
-        public UniqueMolecularIdentifierDto(UniqueMolecularIdentifierReagent.UMILocation location,int length) {
+        public UniqueMolecularIdentifierDto(UMIReagent.UMILocation location, long length) {
             this.location = location;
             this.length = length;
         }
 
-        public UniqueMolecularIdentifierReagent.UMILocation getLocation() {
+        public UMIReagent.UMILocation getLocation() {
             return location;
         }
 
-        public int getLength() {
+        public long getLength() {
             return length;
         }
 
@@ -57,7 +57,7 @@ public class UniqueMolecularIdentifierReagentProcessor extends TableProcessor {
         @Override
         public int hashCode() {
             int result = location != null ? location.hashCode() : 0;
-            result = 31 * result + length;
+            result = 31 * result + (int) (length ^ (length >>> 32));
             return result;
         }
     }
@@ -95,8 +95,8 @@ public class UniqueMolecularIdentifierReagentProcessor extends TableProcessor {
             addDataMessage("Duplicate plate barcode " + plateBarcode, dataRowIndex);
         }
         try {
-            UniqueMolecularIdentifierReagent.UMILocation locationType =
-                    UniqueMolecularIdentifierReagent.UMILocation.getByName(location);
+            UMIReagent.UMILocation locationType =
+                    UMIReagent.UMILocation.getByName(location);
             int length = Integer.parseInt(lengthString);
             if (locationType != null) {
                 UniqueMolecularIdentifierDto umiKey =

@@ -976,4 +976,17 @@
         <dropNotNullConstraint schemaName="mercury" tableName="storage_location_aud" columnName="label"/>
         <dropNotNullConstraint schemaName="mercury" tableName="storage_location_aud" columnName="location_type"/>
     </changeSet>
+    <changeSet id="GPLIM-4825-1" author="jowalsh">
+        <addColumn schemaName="mercury" tableName="reagent">
+            <column name="umi_length" type="number(19,0)"/>
+            <column name="umi_location" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-4825-2" author="jowalsh">
+        <addColumn schemaName="mercury" tableName="reagent_aud">
+            <column name="umi_length" type="number(19,0)"/>
+            <column name="umi_location" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

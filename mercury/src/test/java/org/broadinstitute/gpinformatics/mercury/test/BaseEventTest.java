@@ -505,6 +505,31 @@ public class BaseEventTest {
     }
 
     /**
+     * This method runs the entities through the library construction process with UMI.
+     *
+     * @param shearingCleanupPlate   The shearing cleanup plate from the shearing process.
+     * @param shearCleanPlateBarcode The shearing clean plate barcode.
+     * @param shearingPlate          The shearing plate from the shearing process.
+     * @param barcodeSuffix          Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
+     * @param pondType               PCR Free, PCR Plus etc.
+     *
+     * @return Returns the entity builder that contains the entities after this process has been invoked.
+     */
+    public LibraryConstructionEntityBuilder runLibraryConstructionProcessWithUMI(StaticPlate shearingCleanupPlate,
+                                                                          String shearCleanPlateBarcode,
+                                                                          StaticPlate shearingPlate,
+                                                                          String barcodeSuffix,
+                                                                          LibraryConstructionJaxbBuilder.PondType pondType) {
+        LibraryConstructionEntityBuilder builder = new LibraryConstructionEntityBuilder(
+                bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
+                shearingCleanupPlate, shearCleanPlateBarcode, shearingPlate, NUM_POSITIONS_IN_RACK, barcodeSuffix,
+                LibraryConstructionEntityBuilder.Indexing.DUAL,
+                pondType);
+        builder.setIncludeUmi(true);
+        return builder.invoke();
+    }
+
+    /**
      * This method runs the entities through the hybrid selection process.
      *
      * @param pondRegRack         The pond registration rack coming out of the library construction process.
@@ -998,7 +1023,9 @@ public class BaseEventTest {
                 thenReturn(flowcellDesignations);
         Mockito.when(flowcellDesignationEjb.getFlowcellDesignations(Mockito.any(Collection.class))).
                 thenReturn(flowcellDesignations);
-
+        SequencingTemplateFactory sequencingTemplateFactory = new SequencingTemplateFactory();
+        sequencingTemplateFactory.setFlowcellDesignationEjb(flowcellDesignationEjb);
+        sequencingTemplateFactory.setWorkflowConfig(new WorkflowLoader().load());
         return new ZimsIlluminaRunFactory(
                 new SampleDataFetcher() {
                     @Override
@@ -1012,7 +1039,7 @@ public class BaseEventTest {
                         return controlList;
                     }
                 },
-                new SequencingTemplateFactory(),
+                sequencingTemplateFactory,
                 productOrderDao,
                 crspPipelineUtils, flowcellDesignationEjb
         );
