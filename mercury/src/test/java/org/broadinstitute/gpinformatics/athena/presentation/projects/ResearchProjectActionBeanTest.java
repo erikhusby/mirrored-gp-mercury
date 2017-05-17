@@ -26,6 +26,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.presentation.TestCoreActionBeanContext;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.hamcrest.Matchers;
 import org.mockito.Mockito;
 import org.mockserver.model.HttpResponse;
 import org.mockserver.model.HttpStatusCode;
@@ -49,6 +50,10 @@ import static org.hamcrest.Matchers.nullValue;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ResearchProjectActionBeanTest extends MockServerTest {
+
+    private static final String TEST_REPOSITORY_NAME = "myRepoName";
+    private static final String TEST_REPOSITORY_DESCRIPTION = "myRepoDescription";
+
     @BeforeMethod(alwaysRun = true)
     public void setUp() throws Exception {
     }
@@ -122,13 +127,35 @@ public class ResearchProjectActionBeanTest extends MockServerTest {
     public void testSubmissionRepositoryNotOverwritten() throws Exception {
         SubmissionsService submissionsService = setupInitSubmissionsMocks();
         ResearchProjectActionBean actionBean = setupInitSubmissionsProject(submissionsService);
-        String selectedRepository = "GDC_PROTECTED";
+        String selectedRepository = TEST_REPOSITORY_NAME;
         actionBean.setSelectedSubmissionRepository(selectedRepository);
         actionBean.initSubmissions();
-        Mockito.verify(submissionsService, Mockito.atLeastOnce()).getSubmissionRepositories();
-        Mockito.verify(submissionsService, Mockito.atLeastOnce()).findRepositoryByKey(Mockito.matches(selectedRepository));
         assertThat(actionBean.getSelectedSubmissionRepository(), is(selectedRepository));
+    }
 
+    public void testRepositoryIsNotNullAndSelectedIsBlank() throws Exception {
+        SubmissionsService submissionsService = setupInitSubmissionsMocks();
+        ResearchProjectActionBean actionBean = setupInitSubmissionsProject(submissionsService);
+        SubmissionRepository submissionRepository =
+                new SubmissionRepository(TEST_REPOSITORY_NAME, TEST_REPOSITORY_DESCRIPTION);
+        actionBean.setSubmissionRepository(submissionRepository);
+        actionBean.initSubmissions();
+
+        assertThat(actionBean.getSubmissionRepository(), Matchers.equalTo(submissionRepository));
+        assertThat(actionBean.getSelectedSubmissionRepository(), Matchers.nullValue());
+
+    }
+
+    public void testSelectedIsNotNullAndRepositoryIsNull() throws Exception {
+        SubmissionsService submissionsService = setupInitSubmissionsMocks();
+        ResearchProjectActionBean actionBean = setupInitSubmissionsProject(submissionsService);
+
+        actionBean.setSelectedSubmissionRepository(TEST_REPOSITORY_NAME);
+        actionBean.setSubmissionRepository(null);
+        actionBean.initSubmissions();
+
+        assertThat(actionBean.getSubmissionRepository(), nullValue());
+        assertThat(actionBean.getSelectedSubmissionRepository(), Matchers.equalTo(TEST_REPOSITORY_NAME));
     }
 
     private ResearchProjectActionBean setupInitSubmissionsProject(SubmissionsService submissionsService) {
