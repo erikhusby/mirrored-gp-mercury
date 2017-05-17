@@ -583,7 +583,7 @@ public enum LabEventType {
                     RackOfTubes.RackType.Matrix96SlotRack14).
                     sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.FluidX_6mL).
                     targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.MatrixTube075).
-                    sourceSection(SBSSection.P96_24ROWSOF4_COLWISE_8TIP). // todo jmt does BSP support this?
+                    sourceSection(SBSSection.P96_24ROWSOF4_COLWISE_8TIP).
                     targetSection(SBSSection.ALL96).
                     limsFile(true).
                     reagentNames(new String[]{"QIASymphony Kit"}).build(),

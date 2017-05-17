@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleTy
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.qiagen.generated.Rack;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.qiagen.generated.RackPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.xml.bind.JAXBContext;
