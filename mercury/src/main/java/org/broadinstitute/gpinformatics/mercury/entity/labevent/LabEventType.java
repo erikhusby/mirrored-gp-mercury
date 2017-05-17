@@ -581,7 +581,7 @@ public enum LabEventType {
             new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
                     RackOfTubes.RackType.QiasymphonyCarrier24,
                     RackOfTubes.RackType.Matrix96).
-                    sourceSection(SBSSection.P96_4ROWSOF24_COLWISE_8TIP).
+                    sourceSection(SBSSection.P96_24ROWSOF4_COLWISE_8TIP).
                     targetSection(SBSSection.ALL96).
                     limsFile(true).
                     reagentNames(new String[]{"QIASymphony Kit"}).build(),
