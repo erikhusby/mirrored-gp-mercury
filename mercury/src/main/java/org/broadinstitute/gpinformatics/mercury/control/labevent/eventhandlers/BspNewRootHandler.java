@@ -89,7 +89,7 @@ public class BspNewRootHandler extends AbstractEventHandler {
         Object[][] rows = new Object[labVessels.size() + 1][];
         rows[0] = new Object[] {"Collaborator Sample ID", "Collaborator Patient ID", "Submitted Material Type",
                         "Original Material Type", "Sample Type", "Tumor Type", "Patient Gender",
-                        "Patient Diagnosis or Disease"};
+                        "Patient Diagnosis or Disease", "External ID"};
         List<String> sampleNames = new ArrayList<>();
         for (LabVessel labVessel : labVessels) {
 /*
@@ -107,6 +107,7 @@ public class BspNewRootHandler extends AbstractEventHandler {
                 BSPSampleSearchColumn.GENDER, BSPSampleSearchColumn.COLLECTION);
         String collection = null;
         for (int i = 0; i < labVessels.size(); i++) {
+            LabVessel labVessel = labVessels.get(i);
             BspSampleData bspSampleData = mapIdToSampleData.get(sampleNames.get(i));
             collection = bspSampleData.getCollection();
             // "Collection" search result is actually Group / Collection, we want just Collection
@@ -119,7 +120,8 @@ public class BspNewRootHandler extends AbstractEventHandler {
                     bspSampleData.getSampleType(),
                     "Primary",
                     bspSampleData.getGender(),
-                    "Test"};
+                    "Test",
+                    labVessel.getLabel()};
         }
 
         String sheetName = "Sample Submission Form";
