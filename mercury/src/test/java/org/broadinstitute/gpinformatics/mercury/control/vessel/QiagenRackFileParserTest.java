@@ -5,16 +5,15 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.qiagen.generated.Rack;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.qiagen.generated.RackPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.testng.annotations.Test;
 
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.testng.Assert.*;
@@ -43,10 +42,13 @@ public class QiagenRackFileParserTest {
             QiagenRackFileParser parser = new QiagenRackFileParser();
             PlateTransferEventType plateTransferEventType = new PlateTransferEventType();
             PlateType sourcePlate = new PlateType();
+            sourcePlate.setSection(SBSSection.P96_24ROWSOF4_COLWISE_8TIP.getSectionName());
             sourcePlate.setPhysType("QiasymphonyCarrier24");
             plateTransferEventType.setSourcePlate(sourcePlate);
             plateTransferEventType.setSourcePositionMap(new PositionMapType());
-            plateTransferEventType.setPlate(new PlateType());
+            PlateType plateType = new PlateType();
+            plateType.setSection(SBSSection.ALL96.getSectionName());
+            plateTransferEventType.setPlate(plateType);
             plateTransferEventType.setPositionMap(new PositionMapType());
             parser.attachSourcePlateData(plateTransferEventType, inputStream, messageCollection);
             assertNotNull(plateTransferEventType);
