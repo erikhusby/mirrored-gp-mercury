@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.qiagen.generated.Rack;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.qiagen.generated.RackPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.testng.annotations.Test;
 
 import javax.xml.bind.JAXBException;
@@ -42,10 +43,13 @@ public class QiagenRackFileParserTest {
             QiagenRackFileParser parser = new QiagenRackFileParser();
             PlateTransferEventType plateTransferEventType = new PlateTransferEventType();
             PlateType sourcePlate = new PlateType();
+            sourcePlate.setSection(SBSSection.P96_24ROWSOF4_COLWISE_8TIP.getSectionName());
             sourcePlate.setPhysType("QiasymphonyCarrier24");
             plateTransferEventType.setSourcePlate(sourcePlate);
             plateTransferEventType.setSourcePositionMap(new PositionMapType());
-            plateTransferEventType.setPlate(new PlateType());
+            PlateType plateType = new PlateType();
+            plateType.setSection(SBSSection.ALL96.getSectionName());
+            plateTransferEventType.setPlate(plateType);
             plateTransferEventType.setPositionMap(new PositionMapType());
             parser.attachSourcePlateData(plateTransferEventType, inputStream, messageCollection);
             assertNotNull(plateTransferEventType);

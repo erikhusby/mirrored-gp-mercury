@@ -19,6 +19,7 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Parser for tube barcode/ well pairs to output vessel barcode from Qiagen Rack File output
@@ -49,8 +50,6 @@ public class QiagenRackFileParser {
             messageCollection.addError("Unknown rack type: " + plateTransferEventType.getSourcePlate().getPhysType());
             return;
         }
-        VesselPosition[] vesselPositions = rackType.getVesselGeometry().getVesselPositions();
-
         //Generate new source plate barcode since Qiasymphony doesn't supply one.
         String platePrefix = "QiagenSampleCarrier24";
         String sdf = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
@@ -66,21 +65,38 @@ public class QiagenRackFileParser {
         destinationPositionMap.setBarcode(rack.getRackId().getValue());
         plateTransferEventType.setPlate(destinationPlate);
 
+        SBSSection sbsSectionSource = SBSSection.getBySectionName(sourcePlate.getSection());
+        SBSSection sbsSectionDestination = SBSSection.getBySectionName(destinationPlate.getSection());
+
+        List<VesselPosition> destinationSectionWells = sbsSectionDestination.getWells();
+        List<VesselPosition> sourceSectionWells = sbsSectionSource.getWells();
+
         for (RackPosition rackPosition: rack.getRackPosition()) {
             if (rackPosition.getSampleId().getValue() != null && !rackPosition.getSampleId().getValue().isEmpty()) {
-                ReceptacleType sourceReceptacleType = new ReceptacleType();
-                sourceReceptacleType.setBarcode(rackPosition.getSampleId().getValue());
-                int posIdx = rackPosition.getPositionIndex().getValue();
-                String sourcePosition = vesselPositions[posIdx].name();
-                sourceReceptacleType.setPosition(sourcePosition);
-                plateTransferEventType.getSourcePositionMap().getReceptacle().add(sourceReceptacleType);
-
                 String destinationWell = rackPosition.getPositionName().getValue().replaceAll(":", "");
                 VesselPosition vesselPosition = VesselPosition.getByName(destinationWell);
                 if (vesselPosition == null) {
                     messageCollection.addError("Failed to find position name " + destinationWell);
                     continue;
                 }
+
+                int indexOfDestWellInSection = destinationSectionWells.indexOf(vesselPosition);
+                if (indexOfDestWellInSection == -1) {
+                    messageCollection.addError(String.format("Failed to find destination well %s in section %s",
+                            vesselPosition.name(), sbsSectionDestination.getSectionName()));
+                    return;
+                } else if (indexOfDestWellInSection > sourceSectionWells.size() - 1) {
+                    messageCollection.addError(String.format("Source Section %s and destination section %s size aren't equal",
+                            sbsSectionSource.getSectionName(), sbsSectionDestination.getSectionName()));
+                    return;
+                }
+
+                VesselPosition sourceVesselPosition = sourceSectionWells.get(indexOfDestWellInSection);
+                ReceptacleType sourceReceptacleType = new ReceptacleType();
+                sourceReceptacleType.setBarcode(rackPosition.getSampleId().getValue());
+                sourceReceptacleType.setPosition(sourceVesselPosition.name());
+                plateTransferEventType.getSourcePositionMap().getReceptacle().add(sourceReceptacleType);
+
                 ReceptacleType destinationReceptacleType = new ReceptacleType();
                 destinationReceptacleType.setPosition(vesselPosition.name());
                 destinationReceptacleType.setVolume(new BigDecimal(rackPosition.getTotalVolumeInUl().getValue()));
