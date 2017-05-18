@@ -571,7 +571,15 @@ public abstract class TransferTraverserCriteria {
 
             if (context.getContextVessel() != null) {
                 if (context.getContextVessel().isVesselAbandoned()) {
-                    if (isTubeAbandonReasonValid(context.getContextVessel())) {
+                    if(context.getContextVessel().getAbandonVessels().iterator().next().getReason() == null) {
+                        Pair<LabVessel, VesselPosition> vesselPositionPair = context.getContextVesselAndPosition();
+                        VesselPosition contextVesselPosition = vesselPositionPair.getRight();
+                        LabVessel contextVessel = vesselPositionPair.getLeft();
+                        if (isPlateAbandonReasonValid(contextVessel, contextVesselPosition)) {
+                            vesselList.add(context.getContextVessel());
+                        }
+                    }
+                    else if (isTubeAbandonReasonValid(context.getContextVessel())) {
                         vesselList.add(context.getContextVessel());
                     }
                 }
