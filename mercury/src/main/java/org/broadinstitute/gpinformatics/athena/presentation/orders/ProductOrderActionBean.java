@@ -1954,7 +1954,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                     Set<String> bspColumns = Sets.newHashSet(ProductOrderSampleBean.COLLABORATOR_SAMPLE_ID,
                             ProductOrderSampleBean.PARTICIPANT_ID, ProductOrderSampleBean.COLLABORATOR_PARTICIPANT_ID,
                             SAMPLE_TYPE, ProductOrderSampleBean.MATERIAL_TYPE, ProductOrderSampleBean.VOLUME,
-                            ProductOrderSampleBean.CONCENTRATION, ProductOrderSampleBean.RIN, ProductOrderSampleBean.RQS,
+                            ProductOrderSampleBean.SHIPPED_DATE, ProductOrderSampleBean.CONCENTRATION,
+                            ProductOrderSampleBean.RIN, ProductOrderSampleBean.RQS,
                             ProductOrderSampleBean.DV2000, ProductOrderSampleBean.PICO_RUN_DATE,
                             ProductOrderSampleBean.RACKSCAN_MISMATCH, ProductOrderSampleBean.RECEIVED_DATE);
 
