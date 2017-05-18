@@ -575,25 +575,13 @@ public enum LabEventType {
             LibraryType.NONE_ASSIGNED),
 
     //Cryovial Blood and Saliva Extraction
-    BLOOD_BIOPSY_EXTRACTION("BloodBiopsyExtraction", // todo jmt rename?
-            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
-            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
-                    RackOfTubes.RackType.QiasymphonyCarrier24,
-                    RackOfTubes.RackType.Matrix96SlotRack14).
-                    sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.FluidX_6mL).
-                    targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.MatrixTube075).
-                    sourceSection(SBSSection.P96_24ROWSOF4_COLWISE_8TIP).
-                    targetSection(SBSSection.ALL96).
-                    limsFile(true).
-                    reagentNames(new String[]{"QIASymphony Kit"}).build(),
-            MaterialType.DNA_DNA_CELL_FREE, LibraryType.NONE_ASSIGNED),
     BLOOD_CENTRIFUGE("BloodCentrifuge",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.RECEPTACLE_EVENT,
                     BarcodedTube.BarcodedTubeType.VacutainerBloodTube6,
-                    BarcodedTube.BarcodedTubeType.VacutainerBloodTube6).build(),
+                    BarcodedTube.BarcodedTubeType.VacutainerBloodTube6).
+                    build(),
             LibraryType.NONE_ASSIGNED),
     BLOOD_PLASMA_TRANSFER("BloodPlasmaTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
@@ -603,24 +591,6 @@ public enum LabEventType {
                     RackOfTubes.RackType.FlipperRackRow8).
                     sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.VacutainerBloodTube6).
                     targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.CentriCutieSC_5).
-//                    sourceVesselTypeGeometries(
-//                            new VesselTypeGeometry[] { BarcodedTube.BarcodedTubeType.VacutainerBloodTube3,
-//                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTube6,
-//                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTube10,
-//                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeBlueTigerTop8,
-//                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeEDTA_3,
-//                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeEDTA_4,
-//                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeEDTA_7,
-//                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeEDTA_10,
-//                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeGreenTigerTop8,
-//                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeGreenTop10,
-//                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubePaxgene,
-//                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeRedTigerTopSST10,
-//                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeRedTopClot10,
-//                                    BarcodedTube.BarcodedTubeType.VacutainerBloodTubeYellowTop10,
-//                                    BarcodedTube.BarcodedTubeType.VacutainerCPTTube4,
-//                                    BarcodedTube.BarcodedTubeType.VacutainerCPTTube8,
-//                                }).
                     build(),
             MaterialType.PLASMA_PLASMA, LibraryType.NONE_ASSIGNED),
     PLASMA_CENTRIFUGE("PlasmaCentrifuge",
@@ -638,15 +608,26 @@ public enum LabEventType {
                     RackOfTubes.RackType.FlipperRackRow8).
                     sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.CentriCutieSC_5).
                     targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.FluidX_6mL).
-//                    targetVesselTypeGeometries(
-//                            new VesselTypeGeometry[] { BarcodedTube.BarcodedTubeType.FluidX_6mL,
-//                                    BarcodedTube.BarcodedTubeType.FluidX_10mL}).
                     build(),
             LibraryType.NONE_ASSIGNED, "_P", MaterialType.PLASMA_PLASMA),
     BLOOD_PLASMA_POOLING_TRANSFER("BloodPlasmaPoolingTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
+    BLOOD_BIOPSY_EXTRACTION("BloodBiopsyExtraction", // todo jmt rename?
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
+                    RackOfTubes.RackType.QiasymphonyCarrier24,
+                    RackOfTubes.RackType.Matrix96SlotRack14).
+                    sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.FluidX_6mL).
+                    targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.MatrixTube075).
+                    sourceSection(SBSSection.P96_24ROWSOF4_COLWISE_8TIP).
+                    targetSection(SBSSection.ALL96).
+                    limsFile(true).
+                    reagentNames(new String[]{"QIASymphony Kit"}).
+                    build(),
+            MaterialType.DNA_DNA_CELL_FREE, LibraryType.NONE_ASSIGNED),
     BLOOD_BUFFY_COAT_TRANSFER("BloodBuffyCoatTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
