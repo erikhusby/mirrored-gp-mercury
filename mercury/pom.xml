@@ -981,7 +981,7 @@
                 <database.delimiterType>row</database.delimiterType>
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@gpinfoprod:1521:gpinfprd</database.url>
+                <database.url>jdbc:oracle:thin:@gpinfqa:1521:gpinfqa</database.url>
                 <!-- The production password is stored outside of the GIT repo in the Release Engineer's home directory -->
                 <passwords.properties>${user.home}/mercury-prod-passwords.properties</passwords.properties>
             </properties>
@@ -1288,9 +1288,9 @@ nodePrinter.print(webapp)
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.mock-server</groupId>
-            <artifactId>mockserver-netty</artifactId>
-            <version>3.10.4</version>
+             <groupId>org.mock-server</groupId>
+             <artifactId>mockserver-netty</artifactId>
+             <version>3.10.4</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -1904,10 +1904,10 @@ nodePrinter.print(webapp)
                 </plugin>
 
                 <plugin>
-                    <groupId>external.atlassian.jgitflow</groupId>
-                    <artifactId>jgitflow-maven-plugin</artifactId>
-                    <version>1.0-m5.1</version>
-                </plugin>
+                     <groupId>external.atlassian.jgitflow</groupId>
+                     <artifactId>jgitflow-maven-plugin</artifactId>
+                     <version>1.0-m5.1</version>
+                 </plugin>
 
                 <!--
                                 <plugin>
@@ -2206,9 +2206,9 @@ nodePrinter.print(webapp)
                 <artifactId>maven-pmd-plugin</artifactId>
                 <configuration>
                     <targetJdk>1.7</targetJdk>
-                    <!--
-                                        <includeTests>true</includeTests>
-                    -->
+<!--
+                    <includeTests>true</includeTests>
+-->
                 </configuration>
             </plugin>
 
