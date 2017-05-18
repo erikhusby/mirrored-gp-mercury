@@ -63,41 +63,41 @@ public class ProductOrderSampleBean {
     public static final String POSITION = "#";
 
     @JsonProperty(COLLABORATOR_SAMPLE_ID)
-    private String collaboratorSampleId;
+    private String collaboratorSampleId = "";
     @JsonProperty(PRODUCT_ORDER_SAMPLE_ID)
     private Long productOrderSampleId;
     @JsonProperty(UNIQUE_ROW_IDENTIFIER)
-    private String uniqueRowIdentifier;
+    private String uniqueRowIdentifier = "";
     @JsonProperty(SAMPLE_ID)
-    private String sampleId;
+    private String sampleId = "";
     @JsonProperty(SAMPLE_LINK)
-    private String sampleLinkString;
+    private String sampleLinkString = "";
     @JsonProperty(POSITION)
     private Integer position;
     @JsonProperty(PARTICIPANT_ID)
-    private String patientId;
+    private String patientId = "";
     @JsonProperty(COLLABORATOR_PARTICIPANT_ID)
-    private String collaboratorParticipantId;
+    private String collaboratorParticipantId = "";
     @JsonProperty(MATERIAL_TYPE)
-    private String materialType;
+    private String materialType = "";
     @JsonProperty(PROCEED_OOS)
-    private String proceedOutOfSpec;
+    private String proceedOutOfSpec="";
     @JsonProperty(RIN)
-    private String rin;
+    private String rin = "";
     @JsonProperty(DV2000)
     private Double dv2000;
     @JsonProperty(STATUS)
-    private String status;
+    private String status = "";
     @JsonProperty(COMMENT)
-    private String comment;
+    private String comment = "";
     @JsonProperty(RISK_STRING)
-    private String riskString;
+    private String riskString = "";
     @JsonProperty(RQS)
     private Double rqs;
     @JsonProperty(SAMPLE_TYPE)
-    private String sampleType;
+    private String sampleType = "";
     @JsonProperty(PICO_RUN_DATE)
-    private String picoDate;
+    private String picoDate = "";
     @JsonProperty(VOLUME)
     private Double volume;
     @JsonProperty(YIELD_AMOUNT)
@@ -109,13 +109,13 @@ public class ProductOrderSampleBean {
     @JsonProperty(BILLED)
     private boolean completelyBilled;
     @JsonProperty(RECEIVED_DATE)
-    private String receiptDate;
+    private String receiptDate = "";
     @JsonProperty(SHIPPED_DATE)
-    private String packageDate;
+    private String packageDate="";
     @JsonProperty(ON_RISK)
     private boolean onRisk;
     @JsonProperty(ON_RISK_DETAILS)
-    private String onRiskDetails;
+    private String onRiskDetails = "";
 
     private ProductOrderSample sample;
     private boolean includeSampleData;
@@ -149,6 +149,11 @@ public class ProductOrderSampleBean {
         }
         if (preferenceSaver.showColumn(COMMENT)) {
             comment = sample.getSampleComment();
+        }
+        if (preferenceSaver.showColumn(PROCEED_OOS)) {
+            if (sample.getProceedIfOutOfSpec() != null) {
+                proceedOutOfSpec = sample.getProceedIfOutOfSpec().getDisplayName();
+            }
         }
         if (preferenceSaver.showColumn(STATUS)) {
             status = sample.getDeliveryStatus().getDisplayName();
@@ -190,6 +195,9 @@ public class ProductOrderSampleBean {
             }
             if (preferenceSaver.showColumn(VOLUME)) {
                 volume = sampleData.getVolume();
+            }
+            if (preferenceSaver.showColumn(YIELD_AMOUNT)) {
+                total = sampleData.getTotal();
             }
             if (preferenceSaver.showColumn(CONCENTRATION)) {
                 concentration = sampleData.getConcentration();
@@ -297,10 +305,6 @@ public class ProductOrderSampleBean {
 
     public void setCollaboratorParticipantId(String collaboratorParticipantId) {
         this.collaboratorParticipantId = collaboratorParticipantId;
-    }
-
-    public static String getProceedOos() {
-        return PROCEED_OOS;
     }
 
     public String getMaterialType() {
