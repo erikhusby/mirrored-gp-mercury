@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Inject;
 import java.math.BigDecimal;
+import java.util.Set;
 
 @Impl
 public class SapIntegrationServiceImpl implements SapIntegrationService {
@@ -321,6 +322,18 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         SAPMaterial existingMaterial = initializeSapMaterialObject(product);
 
         getClient().changeMaterialDetails(existingMaterial);
+    }
+
+    @Override
+    public Set<SAPMaterial> findProductsInSap() throws SAPIntegrationException {
+
+
+        final Set<SAPMaterial> materials =
+                getClient().findMaterials(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getPlant(),
+                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
+        materials.addAll(getClient().findMaterials(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getPlant(),
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization()));
+        return materials;
     }
 
     /**

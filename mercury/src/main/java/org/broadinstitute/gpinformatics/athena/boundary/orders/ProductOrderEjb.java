@@ -51,6 +51,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapConfig;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
@@ -65,6 +66,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.sap.entity.SAPMaterial;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 
 import javax.annotation.Nonnull;
@@ -142,6 +144,8 @@ public class ProductOrderEjb {
 
     private PriceListCache priceListCache;
 
+    private SAPProductPriceCache productPriceCache;
+
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
     public ProductOrderEjb() {
@@ -158,7 +162,8 @@ public class ProductOrderEjb {
                            SquidConnector squidConnector,
                            MercurySampleDao mercurySampleDao,
                            ProductOrderJiraUtil productOrderJiraUtil,
-                           SapIntegrationService sapService, PriceListCache priceListCache) {
+                           SapIntegrationService sapService, PriceListCache priceListCache,
+                           SAPProductPriceCache productPriceCache) {
         this.productOrderDao = productOrderDao;
         this.productDao = productDao;
         this.quoteService = quoteService;
@@ -171,6 +176,7 @@ public class ProductOrderEjb {
         this.productOrderJiraUtil = productOrderJiraUtil;
         this.sapService = sapService;
         this.priceListCache = priceListCache;
+        this.productPriceCache = productPriceCache;
     }
 
     private final Log log = LogFactory.getLog(ProductOrderEjb.class);
@@ -513,21 +519,24 @@ public class ProductOrderEjb {
         return determinePriceItemValidity(productListFromOrder);
     }
 
-    public boolean determinePriceItemValidity(Collection<Product> productsToConsider) {
+    private boolean determinePriceItemValidity(Collection<Product> productsToConsider) {
         boolean allItemsValid = true;
         QuotePriceItem primaryPriceItem;
-        if(CollectionUtils.isNotEmpty(productsToConsider)) {
-            try {
-                for (Product product : productsToConsider) {
-                    primaryPriceItem =
-                            priceListCache.findByKeyFields(product.getPrimaryPriceItem().getPlatform(),
-                                    product.getPrimaryPriceItem().getCategory(),
-                                    product.getPrimaryPriceItem().getName());
-                    if (primaryPriceItem == null) {
-                        allItemsValid = false;
-                        break;
-                    }
+        if(CollectionUtils.isNotEmpty(productsToConsider)) {try {
+            for (Product product: productsToConsider) {
+               primaryPriceItem =
+                        priceListCache.findByKeyFields(product.getPrimaryPriceItem().getPlatform(),
+                                product.getPrimaryPriceItem().getCategory(),
+                                product.getPrimaryPriceItem().getName());
+                if(primaryPriceItem == null) {
+                    allItemsValid = false;
+                    break;
                 }
+SAPMaterial sapMaterial = productPriceCache.findByPartNumber(product.getPartNumber());
+                if(sapMaterial == null) {
+                    throw new InvalidProductException("Unable to continue since the product " + product.getDisplayName()
+                                                      + " has not been properly set up in SAP.");
+                }            }
 
             } catch (Exception e) {
                 allItemsValid = false;

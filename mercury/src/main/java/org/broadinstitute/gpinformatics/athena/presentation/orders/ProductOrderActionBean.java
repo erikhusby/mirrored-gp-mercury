@@ -110,6 +110,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundExcept
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
@@ -127,6 +128,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver;
 import org.broadinstitute.gpinformatics.mercury.presentation.datatables.State;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
+import org.broadinstitute.sap.entity.SAPMaterial;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -294,6 +296,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     private QuoteService quoteService;
 
     private PriceListCache priceListCache;
+
+    private SAPProductPriceCache productPriceCache;
 
     @Inject
     private AttributeArchetypeDao attributeArchetypeDao;
@@ -892,11 +896,11 @@ public class ProductOrderActionBean extends CoreActionBean {
     /**
      * Helper method to consolidate the code for evaluating the monitary value of an order based on the price associated
      * with its product(s) and the count of the unbilled samples
-     * @param testOrder Product order for which we wish to determine the monitary value
-     * @param sampleCount unbilled sample count to use for determining the order value.  Passed in separately to account
-     *                    for the scenario when we do not want to use the sample count on the order but a sample count
-     *                    that will potentially be on the order.
-     * @param quote
+     * @param testOrder     Product order for which we wish to determine the monitary value
+     * @param sampleCount   unbilled sample count to use for determining the order value.  Passed in separately to account
+     *                      for the scenario when we do not want to use the sample count on the order but a sample count
+     *                      that will potentially be on the order.
+     * @param quote         Quote used in the order for which this price is being derived
      * @return Total monitary value of the order
      */
     double getOrderValue(ProductOrder testOrder, int sampleCount, Quote quote) throws InvalidProductException {
@@ -928,15 +932,28 @@ public class ProductOrderActionBean extends CoreActionBean {
      * the monitary value of an order
      *
      * @param unbilledCount count of samples that have not yet been billed
-     * @param product Product from which the price can be determined
-     * @param quote
+     * @param product       Product from which the price can be determined
+     * @param quote         Quote used in the order for which this price is being derived
      * @return Derived value of the Product price multiplied by the number of unbilled samples
      */
     double getProductValue(int unbilledCount, Product product, Quote quote) throws InvalidProductException {
         double productValue = 0d;
         String foundPrice;
         try {
-            foundPrice = priceListCache.getEffectivePrice(product.getPrimaryPriceItem(), quote);
+            final SAPMaterial materialByPartNumber = productPriceCache.findByPartNumber(product.getPartNumber());
+            if(materialByPartNumber == null) {
+                foundPrice= priceListCache.getEffectivePrice(product.getPrimaryPriceItem(), quote);
+            } else {
+                foundPrice = materialByPartNumber.getBasePrice();
+                String testPrice = priceListCache.getEffectivePrice(product.getPrimaryPriceItem(), quote);
+
+                if (!StringUtils.equals(foundPrice, testPrice)) {
+                    throw new InvalidProductException(
+                            product.getDisplayName() + "Cannot be ordered because the pricing "
+                            + "has not been set up correct.  The price in the quote server "
+                            + "differs from the price in SAP");
+                }
+            }
         } catch (InvalidProductException e) {
             throw new InvalidProductException("For '" + product.getPartNumber() + "' " + e.getMessage(), e);
         }
@@ -3343,6 +3360,11 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     public void setPriceListCache(PriceListCache priceListCache) {
         this.priceListCache = priceListCache;
+    }
+
+    @Inject
+    public void setProductPriceCache(SAPProductPriceCache productPriceCache) {
+        this.productPriceCache = productPriceCache;
     }
 
     @HandlesEvent(SAVE_SEARCH_DATA)
