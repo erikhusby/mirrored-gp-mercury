@@ -46,6 +46,8 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
@@ -121,6 +123,7 @@ public class ProductOrderActionBeanTest {
         mockQuoteService = Mockito.mock(QuoteServiceImpl.class);
         priceListCache = new PriceListCache(mockQuoteService);
         actionBean.setPriceListCache(priceListCache);
+        actionBean.setProductPriceCache(new SAPProductPriceCache(SapIntegrationServiceProducer.stubInstance()));
 
         jsonObject = new JSONObject();
         pdo = newPdo();
