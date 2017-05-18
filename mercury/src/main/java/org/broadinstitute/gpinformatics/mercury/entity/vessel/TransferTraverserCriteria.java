@@ -575,7 +575,7 @@ public abstract class TransferTraverserCriteria {
                         Pair<LabVessel, VesselPosition> vesselPositionPair = context.getContextVesselAndPosition();
                         VesselPosition contextVesselPosition = vesselPositionPair.getRight();
                         LabVessel contextVessel = vesselPositionPair.getLeft();
-                        if (isPlateAbandonReasonValid(contextVessel, contextVesselPosition)) {
+                        if (isRackOfTubesReasonValid(contextVessel)) {
                             vesselList.add(context.getContextVessel());
                         }
                     }
@@ -609,13 +609,26 @@ public abstract class TransferTraverserCriteria {
             return !labVessel.getAbandonVessels().iterator().next().getReason().equals(AbandonVessel.Reason.DEPLETED);
         }
 
-        // If the plate position is marked as depleted we do not consider it abandoned.
-        private boolean isPlateAbandonReasonValid(LabVessel labVessel, VesselPosition contextVesselPosition ) {
+        //Tube in a rack container.
+        private boolean isRackOfTubesReasonValid(LabVessel labVessel) {
+            for (AbandonVessel abandonVessel : labVessel.getAbandonVessels()) {
+                for (AbandonVesselPosition abandonVesselPosition : abandonVessel.getAbandonedVesselPosition()) {
+                    // If the plate position is marked as depleted we do not consider it abandoned.
+                    if (abandonVesselPosition.getReason().equals(AbandonVessel.Reason.DEPLETED)) {
+                        return false;
+                    }
+                }
+            }
+            return false;
+        }
 
+        //Positions on a plate.
+        private boolean isPlateAbandonReasonValid(LabVessel labVessel, VesselPosition contextVesselPosition ) {
             //Multiple positions on a single plate may be abandoned with different reasons.
             for (AbandonVessel abandonVessel : labVessel.getAbandonVessels()) {
                 for (AbandonVesselPosition abandonVesselPosition : abandonVessel.getAbandonedVesselPosition()) {
                     if(contextVesselPosition.name().equals(abandonVesselPosition.getPosition())) {
+                        // If the plate position is marked as depleted we do not consider it abandoned.
                         if (abandonVesselPosition.getReason().equals(AbandonVessel.Reason.DEPLETED)) {
                             return false;
                         }
