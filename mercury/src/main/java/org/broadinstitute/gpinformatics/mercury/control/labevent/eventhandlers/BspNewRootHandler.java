@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
@@ -46,6 +47,7 @@ public class BspNewRootHandler extends AbstractEventHandler {
     @Inject
     private BSPSampleDataFetcher bspSampleDataFetcher;
 
+    /** Mirrors definition in BSP KitResource. */
     @XmlRootElement
     public static class KitSample {
         private String bspSampleId;
@@ -70,6 +72,7 @@ public class BspNewRootHandler extends AbstractEventHandler {
         }
     }
 
+    /** Mirrors definition in BSP KitResource. */
     @XmlRootElement
     public static class CreateKitReturn {
         private List<KitSample> samples = new ArrayList<>();
@@ -86,18 +89,9 @@ public class BspNewRootHandler extends AbstractEventHandler {
     private void createBspKit(List<LabVessel> labVessels, String receptacleType, String materialType,
             String collabSampleSuffix) {
 
-        Object[][] rows = new Object[labVessels.size() + 1][];
-        rows[0] = new Object[] {"Collaborator Sample ID", "Collaborator Patient ID", "Submitted Material Type",
-                        "Original Material Type", "Sample Type", "Tumor Type", "Patient Gender",
-                        "Patient Diagnosis or Disease", "External ID"};
+        // Get data from BSP
         List<String> sampleNames = new ArrayList<>();
         for (LabVessel labVessel : labVessels) {
-/*
-            if (sampleInstances.size() != 1) {
-                throw new RuntimeException("Expected 1 SampleInstance in " + labVessel.getLabel() + ", found " +
-                        sampleInstances.size());
-            }
-*/
             sampleNames.add(labVessel.getSampleInstancesV2().iterator().next().getRootOrEarliestMercurySample().
                     getSampleKey());
         }
@@ -105,9 +99,22 @@ public class BspNewRootHandler extends AbstractEventHandler {
                 BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID,
                 BSPSampleSearchColumn.ORIGINAL_MATERIAL_TYPE, BSPSampleSearchColumn.SAMPLE_TYPE,
                 BSPSampleSearchColumn.GENDER, BSPSampleSearchColumn.COLLECTION);
+
+        // Prepare data to send to web service
+        Object[][] rows = new Object[labVessels.size() + 1][];
+        rows[0] = new Object[] {"Collaborator Sample ID", "Collaborator Patient ID", "Submitted Material Type",
+                "Original Material Type", "Sample Type", "Patient Gender",
+                "External ID", "Original Root"};
         String collection = null;
         for (int i = 0; i < labVessels.size(); i++) {
             LabVessel labVessel = labVessels.get(i);
+            StringBuilder originalRoots = new StringBuilder();
+            for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                if (originalRoots.length() > 0) {
+                    originalRoots.append("||");
+                }
+                originalRoots.append(sampleInstanceV2.getRootOrEarliestMercurySampleName());
+            }
             BspSampleData bspSampleData = mapIdToSampleData.get(sampleNames.get(i));
             collection = bspSampleData.getCollection();
             // "Collection" search result is actually Group / Collection, we want just Collection
@@ -118,12 +125,12 @@ public class BspNewRootHandler extends AbstractEventHandler {
                     materialType,
                     bspSampleData.getOriginalMaterialType(),
                     bspSampleData.getSampleType(),
-                    "Primary",
                     bspSampleData.getGender(),
-                    "Test",
-                    labVessel.getLabel()};
+                    labVessel.getLabel(),
+                    originalRoots.toString()};
         }
 
+        // Call BSP KitResource web service
         String sheetName = "Sample Submission Form";
         Workbook workbook = SpreadsheetCreator.createSpreadsheet(sheetName, rows);
         String urlString = bspRestClient.getUrl(BSP_KIT_REST_URL);
