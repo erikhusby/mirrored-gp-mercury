@@ -857,4 +857,15 @@
         </sql>
     </changeSet>
 
+    <changeSet author="thompson" id="GPLIM-4816-1">
+        <addColumn schemaName="mercury" tableName="mercury_sample">
+            <column name="is_root" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="thompson" id="GPLIM-4816-2">
+        <addColumn schemaName="mercury" tableName="mercury_sample_aud">
+            <column name="is_root" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

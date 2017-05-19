@@ -1,7 +1,7 @@
 $(document).ready(function () {
 
    /****************************************************
-    * This script is used for the cherry pick manual tranfer.
+    * This script is used for the cherry pick manual transfer.
     * It must be included in the manual_transfer.jsp page.
     ****************************************************/
 
@@ -43,6 +43,7 @@ $(document).ready(function () {
             Container: "container0"
         });
 
+        // todo jmt why repeat line 27?
         $(document).ready(function () {
             $(window).scroll(function () {
                 jsPlumb.repaintEverything();

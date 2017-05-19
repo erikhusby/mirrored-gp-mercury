@@ -261,6 +261,7 @@
                                                 ${receptacleTransfer.receptacle.receptacleType}
                                                 <input type="hidden" name="stationEvents[${stationEventStatus.index}].receptacle.receptacleType"
                                                        value="${receptacleTransfer.receptacle.receptacleType}"/>
+                                                <!-- todo jmt material type? -->
                                             </c:otherwise>
                                         </c:choose>
                                         <label for="destRcpBcd${stationEventStatus.index}">Barcode</label>

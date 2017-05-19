@@ -16,7 +16,8 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 
 /**
  * Test parsing of Qiagen Rack file.

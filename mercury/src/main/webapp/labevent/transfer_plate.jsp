@@ -80,8 +80,17 @@ plate / rack.
                                     name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap' : 'positionMap'}.receptacle[${receptacleIndex}].position"
                                     value="${geometry.vesselPositions[receptacleIndex]}"/>
                             <input type="hidden"
+                                    name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap' : 'positionMap'}.receptacle[${receptacleIndex}].receptacleType"
+                                    value="${source ? actionBean.labEventType.manualTransferDetails.sourceBarcodedTubeType : actionBean.labEventType.manualTransferDetails.targetBarcodedTubeType}"/>
+                            <input type="hidden"
                                    name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap' : 'positionMap'}.receptacle[${receptacleIndex}].volume"
                                    value="${actionBean.findReceptacleAtPosition(positionMap, geometry.vesselPositions[receptacleIndex]).volume}"/>
+                            <c:if test="${not empty actionBean.labEventType.resultingMaterialType && !source}">
+                                <%-- This is primarily for messages forwarded to BSP --%>
+                                <input type="hidden"
+                                        name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap' : 'positionMap'}.receptacle[${receptacleIndex}].materialType"
+                                        value="${actionBean.labEventType.resultingMaterialType.displayName}"/>
+                            </c:if>
                         </td>
                     </c:forEach>
                 </tr>

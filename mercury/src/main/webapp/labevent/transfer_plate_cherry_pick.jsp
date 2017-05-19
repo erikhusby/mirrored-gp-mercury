@@ -68,11 +68,10 @@ plate / rack.
         <input type="text" id="${source ? 'src' : 'dst'}PltBcd${stationEventIndex}" autocomplete="off"
                name="stationEvents[${stationEventIndex}].${source ? 'sourcePlate[0]' : 'plate[0]'}.barcode"
                value="${plate[0].barcode}" class="clearable barcode unique" ${stationEventIndex == 0 ? "required" : ""}/>
-
-               <input type="hidden" id="dataSrc" name="srcPos" value="A1">
-               <input type="hidden" id="dataDest" name="destPos" value="A1">
-               <input type="hidden" id="dataDestList" name="destPosList" value="${actionBean.getConnectionPositions()}">
     </c:if>
+    <input type="hidden" id="dataSrc" name="srcPos" value="A1">
+    <input type="hidden" id="dataDest" name="destPos" value="A1">
+    <input type="hidden" id="dataDestList" name="destPosList" value="${actionBean.getConnectionPositions()}">
 
     <c:if test="${stationEvent.class.simpleName == 'PlateCherryPickEvent'}">
         <div style="display: none;">
@@ -123,7 +122,7 @@ plate / rack.
                     </tr>
                 </c:if>
                 <tr>
-                    <td>${rowName} </br><button id="btn_${source ? 'src' : 'dest'}_row_${rowName}" type="button" class="btn btn-primary btn-xs xs-row">Select</button></td>
+                    <td>${rowName} </br><button id="btn_${source ? 'src' : 'dest'}_row_${rowName}" type="button" class="btn btn-primary btn-xs xs-row" tabindex="0">Select</button></td>
                     <c:forEach items="${geometry.columnNames}" var="columnName" varStatus="columnStatus">
                         <c:set var="receptacleIndex"
                                 value="${rowStatus.index * geometry.columnCount + columnStatus.index}"/>
@@ -136,6 +135,15 @@ plate / rack.
                             <input type="hidden"
                                    name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap[0]' : 'positionMap[0]'}.receptacle[${receptacleIndex}].position"
                                    value="${geometry.vesselPositions[receptacleIndex]}"/>
+                            <input type="hidden"
+                                    name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap' : 'positionMap'}[0].receptacle[${receptacleIndex}].receptacleType"
+                                    value="${source ? actionBean.labEventType.manualTransferDetails.sourceBarcodedTubeType : actionBean.labEventType.manualTransferDetails.targetBarcodedTubeType}"/>
+                            <c:if test="${not empty actionBean.labEventType.resultingMaterialType && !source}">
+                                <%-- This is primarily for messages forwarded to BSP --%>
+                                <input type="hidden"
+                                        name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap' : 'positionMap'}[0].receptacle[${receptacleIndex}].materialType"
+                                        value="${actionBean.labEventType.resultingMaterialType.displayName}"/>
+                            </c:if>
                             </br>
                             <button id="${rowName}${columnName}_${source ? 'src' : 'dest'}_RcpBcd${stationEventIndex}_${receptacleIndex}" type="button" class= "${source ? 'src' : 'dest'}_col_${columnStatus.index} ${source ? 'src' : 'dest'}_row_${rowStatus.index} btn btn-primary btn-xs" disabled>Select</button>
                         </td>
