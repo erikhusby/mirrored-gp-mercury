@@ -2434,7 +2434,7 @@ nodePrinter.print(webapp)
                     <noDeploy>true</noDeploy>
                     <!-- Do push the release branches to the remote upstream -->
                     <pushReleases>true</pushReleases>
-                    <!-- Do push the hotfix branches to the remote upstream --> 
+                    <!-- Do push the hotfix branches to the remote upstream -->
                     <pushHotfixes>true</pushHotfixes>
                     <noHotfixBuild>true</noHotfixBuild>
                 </configuration>
