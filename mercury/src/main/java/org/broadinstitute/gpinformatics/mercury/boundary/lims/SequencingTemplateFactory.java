@@ -379,7 +379,9 @@ public class SequencingTemplateFactory {
                     throw new InformaticsServiceException("More than one UMI Reagent found for lab batch " +
                                                           startingVessel.getLabBatch().getBatchName());
                 }
-                mapLaneToUmi.put(startingVessel.getVesselPosition().name(), umiReagents);
+                if (startingVessel.getVesselPosition() != null) {
+                    mapLaneToUmi.put(startingVessel.getVesselPosition().name(), umiReagents);
+                }
             }
         } else {
             Set<UMIReagent> umiReagents = new HashSet<>();
@@ -403,10 +405,12 @@ public class SequencingTemplateFactory {
 
         for (SequencingTemplateLaneType laneType: lanes) {
             Set<UMIReagent> umiReagentSet = mapLaneToUmi.get(laneType.getLaneName());
-            UMIReagent umiReagent = umiReagentSet.size() == 1 ? umiReagentSet.iterator().next() : null;
-            String laneReadStructure = makeReadStructure(readLength, isPoolTest, molecularIndexReadStructures,
-                    isPairedEnd, umiReagent);
-            laneType.setReadStructure(laneReadStructure);
+            if (umiReagentSet != null) {
+                UMIReagent umiReagent = umiReagentSet.size() == 1 ? umiReagentSet.iterator().next() : null;
+                String laneReadStructure = makeReadStructure(readLength, isPoolTest, molecularIndexReadStructures,
+                        isPairedEnd, umiReagent);
+                laneType.setReadStructure(laneReadStructure);
+            }
         }
 
         SequencingConfigDef sequencingConfig = getSequencingConfig(isPoolTest);

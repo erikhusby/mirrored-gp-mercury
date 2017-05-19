@@ -733,37 +733,6 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
                 Assert.fail(failMsg);
             }
         }
-
-        flowcellDesignations.clear();
-
-        //Build a new Flowcell for UMI tube to see if query works on flowcells
-        LabBatch fctBatchUmi = new LabBatch(FLOWCELL_4000_TICKET, vesselToLanesInfos,
-                LabBatch.LabBatchType.FCT, IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell);
-
-        Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
-        mapPositionToTube.put(VesselPosition.A01, denatureTubeUmi);
-        mapPositionToTube.put(VesselPosition.B01, denatureTube2000);
-        TubeFormation rearrayedDenatureRack = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
-        rearrayedDenatureRack.addRackOfTubes(new RackOfTubes("denatureRearrayUmi", RackOfTubes.RackType.Matrix96));
-        HiSeq4000FlowcellEntityBuilder flowcell4000EntityBuilder =
-                runHiSeq4000FlowcellProcess(rearrayedDenatureRack, null, BARCODE_SUFFIX + "UMIADXX",
-                        fctBatchUmi, null, HiSeq4000FlowcellEntityBuilder.FCTCreationPoint.DENATURE);
-        IlluminaFlowcell flowcellMixOfUMILanes = flowcell4000EntityBuilder.getIlluminaFlowcell();
-
-        template = factory.getSequencingTemplate(flowcellMixOfUMILanes, flowcellMixOfUMILanes.getLoadingVessels(), false);
-        System.out.println(template);
-        for (SequencingTemplateLaneType laneType: template.getLanes()) {
-            if (laneType.getDerivedVesselLabel().equals(denatureTube2500.getLabel())) {
-                assertThat(laneType.getReadStructure(), is("76T8B8B76T"));
-            } else if (laneType.getDerivedVesselLabel().equals(denatureTubeUmi.getLabel())) {
-                assertThat(laneType.getReadStructure(), is("76T8B6M8B76T"));
-            } else {
-                String failMsg = String.format("Expected to only find tubes %s and %s but found %s",
-                        denatureTube2000.getLabel(), denatureTubeUmi.getLabel(), laneType.getDerivedVesselLabel());
-                Assert.fail(failMsg);
-            }
-        }
-
     }
 
     private QtpEntityBuilder runUpToQTP(ExomeExpressShearingEntityBuilder shearingEntityBuilder, String qtpSuffix) {
