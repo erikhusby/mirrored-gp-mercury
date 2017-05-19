@@ -74,6 +74,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
@@ -2138,9 +2139,9 @@ public class LabEventTest extends BaseEventTest {
         System.out.println(zimsIlluminaRun);
         for (ZimsIlluminaChamber zimsIlluminaChamber: zimsIlluminaRun.getLanes()) {
             if (zimsIlluminaChamber.getSequencedLibrary().equals(denatureTube.getLabel())) {
-                Assert.assertEquals(zimsIlluminaChamber.getSetupReadStructure(), "8B8B");
+                Assert.assertEquals(zimsIlluminaChamber.getSetupReadStructure(), "76T8B8B76T");
             } else if (zimsIlluminaChamber.getSequencedLibrary().equals(denatureTubeUMI.getLabel())) {
-                Assert.assertEquals(zimsIlluminaChamber.getSetupReadStructure(), "8B6M8B");
+                Assert.assertEquals(zimsIlluminaChamber.getSetupReadStructure(), "76T8B6M8B76T");
             } else {
                 Assert.fail("Wrong sequencing library found " + zimsIlluminaChamber.getSequencedLibrary());
             }
@@ -2160,8 +2161,10 @@ public class LabEventTest extends BaseEventTest {
         QtpEntityBuilder qtpEntityBuilder = pair.getRight();
         Map<String, BarcodedTube> mapBarcodeToTube = pair.getLeft();
         int numSeqReagents = 1;
+        if (workflow == Workflow.ICE_EXOME_EXPRESS_HYPER_PREP)
+            numSeqReagents = 3;
         if (includeUMI)
-            numSeqReagents = 2;
+            numSeqReagents++;
 
         LabVessel denatureSource =
                 qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
