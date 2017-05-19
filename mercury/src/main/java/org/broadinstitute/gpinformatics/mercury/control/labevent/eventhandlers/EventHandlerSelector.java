@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers;
 
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
@@ -59,13 +58,10 @@ public class EventHandlerSelector {
         case REAGENT_KIT_TO_FLOWCELL_TRANSFER:
             flowcellMessageHandler.handleEvent(targetEvent, stationEvent);
             break;
-
-        case AUTO_DAUGHTER_PLATE_CREATION:
-            stationEvent.setEventType(LabEventType.SAMPLES_DAUGHTER_PLATE_CREATION.getName());
-            break;
         case FLOWCELL_LOADED:
             flowcellLoadedHandler.handleEvent(targetEvent, stationEvent);
             break;
+        case AUTO_DAUGHTER_PLATE_CREATION:
         case SONIC_DAUGHTER_PLATE_CREATION:
             sonicAliquotHandler.handleEvent(targetEvent, stationEvent);
             break;
@@ -78,5 +74,12 @@ public class EventHandlerSelector {
 
     public FlowcellLoadedHandler getFlowcellLoadedHandler() {
         return flowcellLoadedHandler;
+    }
+
+
+    public void setBspRestSender(BSPRestSender bspRestSender) {
+        if (sonicAliquotHandler != null) {
+            sonicAliquotHandler.setBspRestSender(bspRestSender);
+        }
     }
 }

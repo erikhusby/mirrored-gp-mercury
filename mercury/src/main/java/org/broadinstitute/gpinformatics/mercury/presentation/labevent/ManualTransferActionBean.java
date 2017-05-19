@@ -409,8 +409,11 @@ public class ManualTransferActionBean extends RackScanActionBean {
             limsFileStream = limsUploadFile.getInputStream();
             switch (limsFileType) {
             case QIAGEN_BLOOD_BIOPSY_24:
+                PlateTransferEventType plateTransferEventType = (PlateTransferEventType) stationEvents.get(0);
+                plateTransferEventType.getSourcePlate().setSection(manualTransferDetails.getSourceSection().getSectionName());
+                plateTransferEventType.getPlate().setSection(manualTransferDetails.getTargetSection().getSectionName());
                 QiagenRackFileParser qiagenRackFileParser = new QiagenRackFileParser();
-                qiagenRackFileParser.attachSourcePlateData((PlateTransferEventType) stationEvents.get(0), limsFileStream,
+                qiagenRackFileParser.attachSourcePlateData(plateTransferEventType, limsFileStream,
                         messageCollection);
             }
         } catch (IOException e) {

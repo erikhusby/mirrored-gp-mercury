@@ -4,6 +4,7 @@ import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
@@ -22,7 +23,9 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -67,8 +70,9 @@ public class CaliperPlateProcessorTest {
                     PLATE_BARCODE, "");
 
             MessageCollection messageCollection = new MessageCollection();
+            Set<LabEventMetadata> metadata = new HashSet<>();
             LabMetricRun labMetricRun = vesselEjb.createRNACaliperRunDaoFree(LabMetric.MetricType.INITIAL_RNA_CALIPER,
-                    caliperRun, mapBarcodeToPlate, 101L, messageCollection).getLeft();
+                    caliperRun, mapBarcodeToPlate, 101L, messageCollection, metadata).getLeft();
             Assert.assertFalse(messageCollection.hasErrors());
             Assert.assertEquals(labMetricRun.getLabMetrics().size(), 2 * 96);
             Assert.assertEquals(mapPositionToTube.get(VesselPosition.A01).getMetrics().iterator().next().getValue(),

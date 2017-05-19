@@ -581,7 +581,7 @@ public enum LabEventType {
             new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
                     RackOfTubes.RackType.QiasymphonyCarrier24,
                     RackOfTubes.RackType.Matrix96).
-                    sourceSection(SBSSection.P96_4ROWSOF24_COLWISE_8TIP).
+                    sourceSection(SBSSection.P96_24ROWSOF4_COLWISE_8TIP).
                     targetSection(SBSSection.ALL96).
                     limsFile(true).
                     reagentNames(new String[]{"QIASymphony Kit"}).build(),
@@ -1033,7 +1033,7 @@ public enum LabEventType {
             LibraryType.NONE_ASSIGNED),
     AUTO_DAUGHTER_PLATE_CREATION("AutomatedDaughterPlateCreation",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.TRUE,
-            PlasticToValidate.BOTH, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            PlasticToValidate.BOTH, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
     SONIC_DAUGHTER_PLATE_CREATION("SonicDaughterPlateCreation",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,

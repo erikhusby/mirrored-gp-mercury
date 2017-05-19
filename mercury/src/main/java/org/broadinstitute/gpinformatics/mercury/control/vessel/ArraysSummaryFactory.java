@@ -89,10 +89,10 @@ public class ArraysSummaryFactory {
                 labVessel1.getEvents().iterator().next().getEventDate()).getRight();
 
         // Header Group
-        printStream.println("PED Data\t\tCall Rate\tSample\t\t\t\t\t\t\tFingerprint\tGender\t\t\t\tTrio\t" +
+        printStream.println("PED Data\t\tCall Rate\t\tSample\t\t\t\t\t\t\tFingerprint\tGender\t\t\t\tTrio\t" +
                 "BEADSTUDIO\t\t\t\t\tZCALL\t\tScan\t\t\t\t\tPlate\t\t\t");
         // Headers
-        printStream.println("Family ID\tIndividual ID\tBEADSTUDIO\tAliquot\tRoot Sample\tStock Sample\tParticipant\t" +
+        printStream.println("Family ID\tIndividual ID\tAutoCall\tzCall\tAliquot\tRoot Sample\tStock Sample\tParticipant\t" +
                 "Collaborator Sample\tCollaborator Participant\tCalled Infinium SNPs\tLOD\tReported Gender\tFldm FP Gender\t" +
                 "Beadstudio Gender\tAlgorithm Gender Concordance\tFamily\tHet %\tAnalysis Version\tHap Map Concordance\t" +
                 "Version\tLast Cluster File\tRun\tVersion\tChip\tScan Date\tAmp Date\tScanner\tChip Well Barcode\t" +
@@ -119,7 +119,10 @@ public class ArraysSummaryFactory {
             printStream.print(sampleData.getCollaboratorFamilyId() + "\t");
             // Individual ID
             printStream.print(sampleData.getPatientId() + "\t");
-            // BEADSTUDIO
+            // AutoCall
+            BigDecimal autocallCallRatePct = arraysQc.getAutocallCallRatePct();
+            printStream.print((autocallCallRatePct == null ? "" : autocallCallRatePct) + "\t");
+            // zCall
             printStream.print(arraysQc.getCallRatePct() + "\t");
             // Aliquot
             printStream.print(sampleInstanceV2.getNearestMercurySampleName() + "\t");

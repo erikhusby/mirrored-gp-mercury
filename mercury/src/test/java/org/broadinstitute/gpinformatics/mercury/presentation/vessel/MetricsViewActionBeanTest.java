@@ -116,6 +116,7 @@ public class MetricsViewActionBeanTest {
 
         ArraysQc arraysQc = mock(ArraysQc.class);
         when(arraysQc.getCallRate()).thenReturn(new BigDecimal(".9877"));
+        when(arraysQc.getAutocallCallRate()).thenReturn(new BigDecimal(".9788"));
         when(arraysQc.getHetPct()).thenReturn(new BigDecimal(".19"));
         when(arraysQcDaoMock.findByBarcodes(anyList())).thenReturn(Collections.singletonList(arraysQc));
         actionBean.buildInfiniumMetricsTable(hybChip);
