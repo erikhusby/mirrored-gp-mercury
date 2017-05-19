@@ -1941,4 +1941,22 @@ public class LabEventFixupTest extends Arquillian {
         utx.commit();
     }
 
+    /**
+     * A Pond Registration in PCR Plus workflow must be PCR Plus Pond Registration in order to ETL the library name <br/>
+     * ETL refresh events 1982110 and 1983690 after ticket deployed and this test is run
+     */
+    @Test(enabled = false)
+    public void fixupGplim4851() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 1982110L );
+        Assert.assertTrue(labEvent.getLabEventType()== LabEventType.POND_REGISTRATION );
+        labEvent.setLabEventType(LabEventType.PCR_PLUS_POND_REGISTRATION);
+
+        labEventDao.persist(new FixupCommentary("GPLIM-4851 Change event 1982110 type to PCR_PLUS_POND_REGISTRATION for workflow" ));
+        labEventDao.flush();
+        utx.commit();
+    }
+
 }

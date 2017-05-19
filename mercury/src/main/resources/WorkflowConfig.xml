@@ -637,6 +637,7 @@
                 <name>PCR Plus Pond Registration</name>
                 <labEventTypes>PCR_PLUS_POND_REGISTRATION</labEventTypes>
                 <optional>false</optional>
+                <ancestryEtlFlag>true</ancestryEtlFlag>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Pond Pico</name>
