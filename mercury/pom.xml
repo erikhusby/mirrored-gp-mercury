@@ -545,8 +545,8 @@
                                 </property>
                             </systemProperties>
                             <argLine>${surefire.argLine}</argLine>
-<!--                            <forkCount>2</forkCount> -->
-<!--                            <reuseForks>true</reuseForks> -->
+                            <!--                            <forkCount>2</forkCount> -->
+                            <!--                            <reuseForks>true</reuseForks> -->
                             <!--<parallel>methods</parallel>-->
                             <!--<threadCount>10</threadCount>-->
                         </configuration>
@@ -1266,9 +1266,9 @@ nodePrinter.print(webapp)
             <scope>test</scope>
         </dependency>
         <dependency>
-             <groupId>org.mock-server</groupId>
-             <artifactId>mockserver-netty</artifactId>
-             <version>3.10.4</version>
+            <groupId>org.mock-server</groupId>
+            <artifactId>mockserver-netty</artifactId>
+            <version>3.10.4</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -1882,10 +1882,10 @@ nodePrinter.print(webapp)
                 </plugin>
 
                 <plugin>
-                     <groupId>external.atlassian.jgitflow</groupId>
-                     <artifactId>jgitflow-maven-plugin</artifactId>
-                     <version>1.0-m5.1</version>
-                 </plugin>
+                    <groupId>external.atlassian.jgitflow</groupId>
+                    <artifactId>jgitflow-maven-plugin</artifactId>
+                    <version>1.0-m5.1</version>
+                </plugin>
 
                 <!--
                                 <plugin>
@@ -2168,9 +2168,9 @@ nodePrinter.print(webapp)
                 <artifactId>maven-pmd-plugin</artifactId>
                 <configuration>
                     <targetJdk>1.7</targetJdk>
-<!--
-                    <includeTests>true</includeTests>
--->
+                    <!--
+                                        <includeTests>true</includeTests>
+                    -->
                 </configuration>
             </plugin>
 
@@ -2396,7 +2396,7 @@ nodePrinter.print(webapp)
                     <noDeploy>true</noDeploy>
                     <!-- Do push the release branches to the remote upstream -->
                     <pushReleases>true</pushReleases>
-                    <!-- Do push the hotfix branches to the remote upstream --> 
+                    <!-- Do push the hotfix branches to the remote upstream -->
                     <pushHotfixes>true</pushHotfixes>
                     <noHotfixBuild>true</noHotfixBuild>
                 </configuration>
