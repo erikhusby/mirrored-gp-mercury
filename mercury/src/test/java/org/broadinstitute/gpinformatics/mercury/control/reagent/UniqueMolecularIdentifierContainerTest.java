@@ -12,8 +12,10 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.UMIReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -30,6 +32,7 @@ import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -81,9 +84,13 @@ public class UniqueMolecularIdentifierContainerTest extends Arquillian {
             labVesselDao.clear();
 
             LabVessel labVessel = labVesselDao.findByIdentifier(staticPlates.get(0).getLabel());
-            Assert.assertEquals(labVessel.getReagentContents().size(), 1);
+            Set<SampleInstanceV2> sampleInstances =
+                    labVessel.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.A01);
+            Assert.assertEquals(sampleInstances.size(), 1);
+            SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
+            Assert.assertEquals(sampleInstance.getReagents().size(), 1);
             UMIReagent umiReagent =
-                    (UMIReagent) labVessel.getReagentContents().iterator().next();
+                    (UMIReagent) sampleInstance.getReagents().iterator().next();
             Assert.assertEquals(umiReagent.getUmiLength(), Long.valueOf(6));
             Assert.assertEquals(umiReagent.getUmiLocation(), UMIReagent.UMILocation.INLINE_FIRST_READ);
 

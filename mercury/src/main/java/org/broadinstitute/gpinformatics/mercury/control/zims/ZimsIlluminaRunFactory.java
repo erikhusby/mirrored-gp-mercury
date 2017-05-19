@@ -243,7 +243,7 @@ public class ZimsIlluminaRunFactory {
         List<SequencingTemplateLaneType> sequencingTemplateLanes = null;
         try {
             SequencingTemplateType sequencingTemplate = sequencingTemplateFactory.getSequencingTemplate(
-                    illuminaFlowcell, loadedVesselsAndPositions, true);
+                    illuminaFlowcell, loadedVesselsAndPositions, false);
             sequencingTemplateLanes = sequencingTemplate.getLanes();
             if (sequencingTemplateLanes != null) {
                 Collections.sort(sequencingTemplateLanes, new Comparator<SequencingTemplateLaneType>() {
@@ -255,7 +255,7 @@ public class ZimsIlluminaRunFactory {
             }
         } catch (Exception e) {
             log.error("Failed to get sequencingTemplate.", e);
-            // don't rethrow, failing to get loading concentration is not fatal.
+            throw e;
         }
         for (List<SampleInstanceDto> sampleInstanceDtos : perLaneSampleInstanceDtos) {
             if (sampleInstanceDtos != null && !sampleInstanceDtos.isEmpty()) {
