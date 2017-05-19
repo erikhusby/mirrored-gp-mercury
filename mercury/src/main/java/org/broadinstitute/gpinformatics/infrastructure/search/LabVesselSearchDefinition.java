@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+import org.apache.commons.collections4.MapIterator;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
@@ -56,6 +57,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * Builds ConfigurableSearchDefinition for lab vessel user defined search logic
@@ -1708,7 +1710,7 @@ public class LabVesselSearchDefinition {
                     return null;
                 }
 
-                // DNA plate well event/vessel looks to descendant for chip well (1:1)
+                // DNA plate well event/vessel looks to (latest if rehyb-ed) descendant for chip well (1:1)
                 for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
                         : InfiniumVesselTraversalEvaluator.getChipDetailsForDnaWell(vessel, CHIP_EVENT_TYPES, context).asMap().entrySet()) {
                     result = labVesselAndPositions.getValue().iterator().next().toString();
@@ -1729,12 +1731,19 @@ public class LabVesselSearchDefinition {
                 String result = null;
                 LabVessel vessel = (LabVessel)entity;
 
-                for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
-                        : InfiniumVesselTraversalEvaluator.getChipDetailsForDnaWell(vessel, CHIP_EVENT_TYPES, context ).asMap().entrySet()) {
-                    result = labVesselAndPositions.getKey().getLabel();
-                    break;
+                if( vessel.getType() == LabVessel.ContainerType.PLATE_WELL ) {
+                    for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
+                            : InfiniumVesselTraversalEvaluator.getChipDetailsForDnaWell(vessel, CHIP_EVENT_TYPES, context ).asMap().entrySet()) {
+                        result = labVesselAndPositions.getKey().getLabel();
+                        break;
+                    }
+                } else {
+                    for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
+                            : InfiniumVesselTraversalEvaluator.getChipDetailsForDnaPlate(vessel, CHIP_EVENT_TYPES, context ).asMap().entrySet()) {
+                        result = labVesselAndPositions.getKey().getLabel();
+                        break;
+                    }
                 }
-
                 return result;
             }
         });
@@ -1812,8 +1821,16 @@ public class LabVesselSearchDefinition {
                 List<String> result = null;
                 LabVessel vessel = (LabVessel)entity;
 
+                Map<LabVessel, Collection<VesselPosition>> vesselCollectionMap;
+
+                if( vessel.getType() == LabVessel.ContainerType.PLATE_WELL ) {
+                    vesselCollectionMap = InfiniumVesselTraversalEvaluator.getChipDetailsForDnaWell(vessel, CHIP_EVENT_TYPES, context ).asMap();
+                } else {
+                    vesselCollectionMap = InfiniumVesselTraversalEvaluator.getChipDetailsForDnaPlate(vessel, CHIP_EVENT_TYPES, context ).asMap();
+                }
+
                 for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
-                        : InfiniumVesselTraversalEvaluator.getChipDetailsForDnaWell(vessel, CHIP_EVENT_TYPES, context ).asMap().entrySet()) {
+                        : vesselCollectionMap.entrySet()) {
                     if( result == null ) {
                         result = new ArrayList<>();
                     }
@@ -1854,19 +1871,38 @@ public class LabVesselSearchDefinition {
         searchTerm.setName("Hyb Chamber");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public String evaluate(Object entity, SearchContext context) {
-                String result = null;
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                Set<String> results = null;
                 LabVessel vessel = (LabVessel)entity;
+
                 TransferTraverserCriteria.VesselForEventTypeCriteria traverserCriteria =
                         new TransferTraverserCriteria.VesselForEventTypeCriteria(Collections.singletonList(
                                 LabEventType.INFINIUM_HYB_CHAMBER_LOADED), true);
-                vessel.evaluateCriteria(traverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
-                for (LabEvent labEvent : traverserCriteria.getVesselsForLabEventType().keySet()) {
-                    result = labEvent.getEventLocation();
-                    break;
+
+                if( vessel.getType() == LabVessel.ContainerType.PLATE_WELL ) {
+                    vessel.evaluateCriteria(traverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+                    LabEvent latestEvent = null;
+                    for (LabEvent labEvent : traverserCriteria.getVesselsForLabEventType().keySet()) {
+                        // Re-hybs based upon a plate well as the row source need to show chamber of latest event
+                        if( latestEvent == null ) {
+                            latestEvent = labEvent;
+                        } else if ( labEvent.getEventDate().after(latestEvent.getEventDate())) {
+                            latestEvent = labEvent;
+                        }
+                    }
+
+                    if( latestEvent != null ) {
+                        (results==null?results=new HashSet<>():results).add( latestEvent.getEventLocation() );
+                    }
+                } else if ( vessel.getType() == LabVessel.ContainerType.STATIC_PLATE ) {
+                    vessel.getContainerRole().applyCriteriaToAllPositions(traverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+                    for (LabEvent labEvent : traverserCriteria.getVesselsForLabEventType().keySet()) {
+                        // Show all chambers downstream from a plate as row source
+                        (results==null?results=new HashSet<>():results).add( labEvent.getEventLocation() );
+                    }
                 }
 
-                return result;
+                return results;
             }
         });
         searchTerms.add(searchTerm);
@@ -1875,25 +1911,55 @@ public class LabVesselSearchDefinition {
         searchTerm.setName("Tecan Position");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public String evaluate(Object entity, SearchContext context) {
-                String result = null;
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                Set<String> results = null;
+
+                if(!InfiniumVesselTraversalEvaluator.isInfiniumSearch(context)) {
+                    return results;
+                }
+
                 LabVessel vessel = (LabVessel)entity;
                 TransferTraverserCriteria.VesselForEventTypeCriteria traverserCriteria =
                         new TransferTraverserCriteria.VesselForEventTypeCriteria(Collections.singletonList(
                                 LabEventType.INFINIUM_XSTAIN), true);
-                vessel.evaluateCriteria(traverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
 
-            events:
-                for (LabEvent labEvent : traverserCriteria.getVesselsForLabEventType().keySet()) {
-                    for (LabEventMetadata labEventMetadata : labEvent.getLabEventMetadatas()) {
-                        if (labEventMetadata.getLabEventMetadataType() ==
-                                LabEventMetadata.LabEventMetadataType.MessageNum) {
-                            result = labEventMetadata.getValue();
-                            break events;
+                if( vessel.getType() == LabVessel.ContainerType.PLATE_WELL ) {
+                    vessel.evaluateCriteria(traverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+                    LabEvent latestEvent = null;
+
+                    // Re-hybs based upon a plate well as the row source need to show data from latest event
+                    for (LabEvent labEvent : traverserCriteria.getVesselsForLabEventType().keySet()) {
+                        if( latestEvent == null ) {
+                            latestEvent = labEvent;
+                        } else if ( labEvent.getEventDate().after(latestEvent.getEventDate())) {
+                            latestEvent = labEvent;
+                        }
+                    }
+
+                    if( latestEvent != null ) {
+                        for (LabEventMetadata labEventMetadata : latestEvent.getLabEventMetadatas()) {
+                            if (labEventMetadata.getLabEventMetadataType() ==
+                                    LabEventMetadata.LabEventMetadataType.MessageNum) {
+                                (results == null ? results = new HashSet<>() : results).add(labEventMetadata.getValue());
+                                break;
+                            }
+                        }
+                    }
+                } else if ( vessel.getType() == LabVessel.ContainerType.STATIC_PLATE ) {
+                    vessel.getContainerRole().applyCriteriaToAllPositions(traverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+                    for (LabEvent labEvent : traverserCriteria.getVesselsForLabEventType().keySet()) {
+                        // Show all chambers downstream from a plate as row source
+                        for (LabEventMetadata labEventMetadata : labEvent.getLabEventMetadatas()) {
+                            if (labEventMetadata.getLabEventMetadataType() ==
+                                    LabEventMetadata.LabEventMetadataType.MessageNum) {
+                                (results == null ? results = new HashSet<>() : results).add(labEventMetadata.getValue());
+                                break;
+                            }
                         }
                     }
                 }
-                return result;
+
+                return results;
             }
         });
         searchTerms.add(searchTerm);
@@ -1903,17 +1969,41 @@ public class LabVesselSearchDefinition {
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
+                Set<String> results = null;
+
+                if(!InfiniumVesselTraversalEvaluator.isInfiniumSearch(context)) {
+                    return results;
+                }
+
                 LabVessel vessel = (LabVessel)entity;
                 TransferTraverserCriteria.VesselForEventTypeCriteria traverserCriteria =
                         new TransferTraverserCriteria.VesselForEventTypeCriteria(Collections.singletonList(
                                 LabEventType.INFINIUM_XSTAIN), true);
-                vessel.evaluateCriteria(traverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
 
-                Set<String> result = new HashSet<>();
-                for (LabEvent labEvent : traverserCriteria.getVesselsForLabEventType().keySet()) {
-                    result.add(labEvent.getEventLocation());
+                if( vessel.getType() == LabVessel.ContainerType.PLATE_WELL ) {
+                    vessel.evaluateCriteria(traverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+                    LabEvent latestEvent = null;
+                    // Re-hybs based upon a plate well as the row source need to show data from latest event
+                    for (LabEvent labEvent : traverserCriteria.getVesselsForLabEventType().keySet()) {
+                        if( latestEvent == null ) {
+                            latestEvent = labEvent;
+                        } else if ( labEvent.getEventDate().after(latestEvent.getEventDate())) {
+                            latestEvent = labEvent;
+                        }
+                    }
+
+                    if( latestEvent != null ) {
+                        (results == null ? results = new HashSet<>() : results).add(latestEvent.getEventLocation());
+                    }
+                } else if ( vessel.getType() == LabVessel.ContainerType.STATIC_PLATE ) {
+                    vessel.getContainerRole().applyCriteriaToAllPositions(traverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+                    for (LabEvent labEvent : traverserCriteria.getVesselsForLabEventType().keySet()) {
+                        // Show all chambers downstream from a plate as row source
+                        (results == null ? results = new HashSet<>() : results).add(labEvent.getEventLocation());
+                    }
                 }
-                return result;
+
+                return results;
             }
         });
         searchTerms.add(searchTerm);
@@ -2022,6 +2112,10 @@ public class LabVesselSearchDefinition {
         // Traversal data accumulator
         private MultiValuedMap<LabVessel, VesselPosition> positions = new HashSetValuedHashMap<>();
 
+        // Want to be able to find vessel for latest event if more than one event (e.g infinium rehyb chip)
+        private boolean captureLatestEventVesselsFlag = false;
+        private Map<LabEvent,LabVessel> eventMap;
+
         // Traversal state control
         private int previousHopCount = -1;
         private boolean stopTraversingBeforeNextHop = false;
@@ -2063,11 +2157,31 @@ public class LabVesselSearchDefinition {
         }
 
         /**
+         * Flags traversal process to return only the vessels associated with the latest event found. <br />
+         * <strong>NOTE: This logic will fail (miserably) if traversal is started on a container (e.g. VesselContainer#applyCriteriaToAllPositions)</strong>
+         */
+        public void captureLatestEventVesselsOnly() {
+            this.captureLatestEventVesselsFlag = true;
+            eventMap = new TreeMap<>(LabEvent.BY_EVENT_DATE);
+        }
+
+        /**
          * Obtains the outcome of the traversal
          * @return A set of barcode-position pairs.
          * Note:  If the vessel in the event of interest is not in a container, the position value will be null.
          */
         public MultiValuedMap<LabVessel, VesselPosition> getPositions(){
+            if( !positions.isEmpty() && captureLatestEventVesselsFlag ) {
+                LabVessel lastEventVessel = null;
+                for( Map.Entry<LabEvent,LabVessel> entry : eventMap.entrySet() ) {
+                    lastEventVessel = entry.getValue();
+                }
+                for(MapIterator<LabVessel,VesselPosition> iter = positions.mapIterator(); iter.hasNext();) {
+                    if( !iter.next().getLabel().equals(lastEventVessel.getLabel()) ) {
+                        iter.remove();
+                    }
+                }
+            }
             return positions;
         }
 
@@ -2095,6 +2209,10 @@ public class LabVesselSearchDefinition {
                     Map.Entry<LabVessel,VesselPosition> vesselPositionEntry = getTraversalVessel(context);
                     positions.put(vesselPositionEntry.getKey(), vesselPositionEntry.getValue() );
                     catchThisVessel = true;
+
+                    if(captureLatestEventVesselsFlag) {
+                        eventMap.put(eventNode.getLabEvent(),vesselPositionEntry.getKey());
+                    }
                 } else {
                     // Try in-place events
                     Map.Entry<LabVessel,VesselPosition> vesselPositionEntry = getTraversalVessel(context);
@@ -2103,6 +2221,10 @@ public class LabVesselSearchDefinition {
                         if (labEventTypes.contains(inPlaceEvent.getLabEventType())) {
                             positions.put(vesselPositionEntry.getKey(), vesselPositionEntry.getValue());
                             catchThisVessel = true;
+
+                            if(captureLatestEventVesselsFlag) {
+                                eventMap.put(eventNode.getLabEvent(),vesselPositionEntry.getKey());
+                            }
                             break;
                         }
                     }
