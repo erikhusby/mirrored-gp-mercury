@@ -62,7 +62,7 @@ $j(document).ready(function () {
     function loadBspData(settings) {
         var api = new $j.fn.dataTable.Api(settings);
         var table = api.table();
-        var lastRecord = table.page.info().recordsTotal;
+
         var remainingSamples = [];
         table.column(0).data().each(function (cell) {
             remainingSamples.push($j(cell)[0]);
@@ -70,24 +70,26 @@ $j(document).ready(function () {
         if (remainingSamples.length > 0) {
             samplesToFetch = remainingSamples.splice(table.page.info().start, table.page.info().end);
         }
-        var selectorArray=[];
 
-        var firstRow = table.page.info().start;
-        var rowsToInvalidate=[];
-        for (var rowNum=firstRow; rowNum<=lastRecord;rowNum++) {
-            rowsToInvalidate.push(rowNum);
-        }
-
-        if (samplesToFetch.length > 0) {
-            updateSampleInformation(samplesToFetch, settings).done(function () {
-                updateSampleInformation(remainingSamples, settings, true);
-                table.rows().draw();
-//                console.log("table draw 1")
+        sampleInfoBatchUpdate(remainingSamples, table);
+    }
+        function sampleInfoBatchUpdate(samplesToFetch, settings) {
+            var maxFetchSize = 1000;
+            var api = new $j.fn.dataTable.Api(settings);
+            var table = api.table();
+            var pageLength = table.page.info().length;
+            var fetchSize = pageLength;
+            console.log("table draw " + Date.now());
+            var count = 0;
+            updateSampleInformation(samplesToFetch.splice(table.page.info().start, table.page.info().end), settings, false).then(function () {
+                while (samplesToFetch.length > 0) {
+                    console.log("running " + count++ + " " + Date.now());
+                    updateSampleInformation(samplesToFetch.splice(0, maxFetchSize), settings, true);
+                }
             }).done(function () {
                 table.rows().draw();
-                console.log("table draw 2")
+                console.log("done fetching");
             });
-        }
     }
 
     var oTable = $j('#sampleData').dataTable({
@@ -114,11 +116,14 @@ $j(document).ready(function () {
             }, standardButtons()],
             ajax: {
                 url: "${ctxpath}/orders/order.action?getSampleData",
-                data: {
-                    'productOrder': "${actionBean.editOrder.businessKey}",
-                    'includeSampleData': false
+                method: 'POST',
+                data: function (data, settings) {
+                    data.productOrder = "${actionBean.editOrder.businessKey}";
+                    data.initialLoad = true;
                 },
-                method: 'POST'
+                error: function (a, b, c) {
+                    console.log(a,b,c)
+                },
             },
             "columns": [
                 {"data": "${columnHeaderPDOSampleId}","orderable": false, 'class': 'no-min-width', render:renderCheckbox},
@@ -569,18 +574,17 @@ function setupDialogs() {
 function updateSampleInformation(samples, settings, includeSampleSummary=false) {
     var table = new $j.fn.dataTable.Api(settings).table();
     console.log("loading " + samples.length + " samples from BSP");
-     return $j.ajax({
-        url: "${ctxpath}/orders/order.action?getSampleData",async:true,
+    return $j.ajax({
+        url: "${ctxpath}/orders/order.action?getSampleData", async: true,
         data: {
             'productOrder': "${actionBean.editOrder.businessKey}",
             'sampleIdsForGetBspData': samples,
-            'includeSampleData': true,
             'includeSampleSummary': includeSampleSummary
         },
         method: 'POST',
         dataType: 'json',
         error: function (obj, error, ex) {
-            console.log(error, ex)
+            console.log(error, obj.responseText, JSON.stringify(ex));
         },
         success: function (json) {
             if (json) {
@@ -609,7 +613,7 @@ function updateSampleInformation(samples, settings, includeSampleSummary=false) 
             }
         }
     });
-    return result;
+    return result.promise();
 }
 
 function renderPico(data, type, row, meta) {
@@ -1570,7 +1574,7 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
         <h4 style="display:inline">Replacement Sample Orders</h4>
     </div>
 
-    <table id="orderList" class="table simple">
+    <table id="orderList" class="table simple display compact">
             <thead>
             <tr>
                 <th>Name</th>
@@ -1681,7 +1685,7 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
     </div>
 
     <c:if test="${not empty actionBean.editOrder.samples}">
-        <table id="sampleData" class="table simple compact">
+        <table id="sampleData" class="table display simple compact">
             <thead>
             <tr>
                 <th width="20">
