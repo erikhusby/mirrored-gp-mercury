@@ -124,6 +124,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver;
+import org.broadinstitute.gpinformatics.mercury.presentation.datatables.State;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
@@ -154,7 +155,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -206,6 +206,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private static final String KIT_DEFINITION_INDEX = "kitDefinitionQueryIndex";
     private static final String COULD_NOT_LOAD_SAMPLE_DATA = "Could not load sample data";
+    private static final String GET_SAMPLE_DATA = "getSampleData";
     private String sampleSummary;
 
     public ProductOrderActionBean() {
@@ -315,7 +316,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private List<Long> sampleIdsForGetBspData;
 
-    private boolean includeSampleData = true;
+    private boolean initialLoad = false;
     private boolean includeSampleSummary = false;
 
     private CompletionStatusFetcher progressFetcher;
@@ -490,7 +491,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      * Initialize the product with the passed in key for display in the form or create it, if not specified.
      */
     @Before(stages = LifecycleStage.BindingAndValidation,
-            on = {"!" + LIST_ACTION, "!getQuoteFunding", "!" + VIEW_ACTION, "getSampleData"})
+            on = {"!" + LIST_ACTION, "!getQuoteFunding", "!" + VIEW_ACTION, GET_SAMPLE_DATA})
     public void init() {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
         if (!StringUtils.isBlank(productOrder)) {
@@ -515,7 +516,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         return projectRegulatoryMap;
     }
 
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, SAVE_SEARCH_DATA, "getSampleData"})
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, SAVE_SEARCH_DATA, GET_SAMPLE_DATA})
     public void initPreferenceSaver(){
         preferenceSaver.setPreferenceType(PreferenceType.PRODUCT_ORDER_PREFERENCES);
     }
@@ -523,7 +524,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     /**
      * Initialize the product with the passed in key for display in the form or create it, if not specified.
      */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, "getSampleData"})
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION})
     public void editInit() {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
         // If there's no product order parameter, send an error.
@@ -1944,11 +1945,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         logger.error(errorMessage);
     }
 
-    @HandlesEvent("getSampleData")
+    @HandlesEvent(GET_SAMPLE_DATA)
     public Resolution getSampleData() {
-        return new StreamingResolution("text/json"){
+        Resolution resolution = new StreamingResolution("text/json"){
             @Override
-            protected void stream(HttpServletResponse response) throws Exception {
+            protected void stream(HttpServletResponse response)  throws IOException{
                 List<ProductOrderSample> samples;
                 if (sampleIdsForGetBspData != null) {
                     samples = productOrderSampleDao.findListByList(
@@ -1958,22 +1959,20 @@ public class ProductOrderActionBean extends CoreActionBean {
                 }
 
                 final Collection<String> allVisibleColumns = preferenceSaver.visibleColumns();
-                boolean withSampleData = includeSampleData;
-                if (withSampleData) {
-                    Set<String> bspColumns = Sets.newHashSet(ProductOrderSampleBean.COLLABORATOR_SAMPLE_ID,
-                            ProductOrderSampleBean.PARTICIPANT_ID, ProductOrderSampleBean.COLLABORATOR_PARTICIPANT_ID,
-                            SAMPLE_TYPE, ProductOrderSampleBean.MATERIAL_TYPE, ProductOrderSampleBean.VOLUME,
-                            ProductOrderSampleBean.SHIPPED_DATE, ProductOrderSampleBean.CONCENTRATION,
-                            ProductOrderSampleBean.RIN, ProductOrderSampleBean.RQS,
-                            ProductOrderSampleBean.DV2000, ProductOrderSampleBean.PICO_RUN_DATE,
-                            ProductOrderSampleBean.RACKSCAN_MISMATCH, ProductOrderSampleBean.RECEIVED_DATE);
 
-                    for (String visibleColumn : allVisibleColumns) {
-                        if (bspColumns.contains(visibleColumn)) {
-                            withSampleData=true;
-                            break;
-                        }
-                        withSampleData=false;
+                Set<String> bspColumns = Sets.newHashSet(ProductOrderSampleBean.COLLABORATOR_SAMPLE_ID,
+                        ProductOrderSampleBean.PARTICIPANT_ID, ProductOrderSampleBean.COLLABORATOR_PARTICIPANT_ID,
+                        SAMPLE_TYPE, ProductOrderSampleBean.MATERIAL_TYPE, ProductOrderSampleBean.VOLUME,
+                        ProductOrderSampleBean.SHIPPED_DATE, ProductOrderSampleBean.CONCENTRATION,
+                        ProductOrderSampleBean.RIN, ProductOrderSampleBean.RQS,
+                        ProductOrderSampleBean.DV2000, ProductOrderSampleBean.PICO_RUN_DATE,
+                        ProductOrderSampleBean.RACKSCAN_MISMATCH, ProductOrderSampleBean.RECEIVED_DATE);
+
+                boolean withSampleData = false;
+                for (String visibleColumn : allVisibleColumns) {
+                    if (bspColumns.contains(visibleColumn)) {
+                        withSampleData = true;
+                        break;
                     }
                 }
                 JsonFactory jsonFactory = new JsonFactory();
@@ -1989,9 +1988,27 @@ public class ProductOrderActionBean extends CoreActionBean {
                     jsonGenerator.setCodec(objectMapper);
                     jsonGenerator.writeStartObject();
 
-                    if (withSampleData || includeSampleSummary) {
-//                        ProductOrder.loadSampleData(samples);
-//                        if (includeSampleSummary) {
+                    State tableState = preferenceSaver.getTableState();
+                    jsonGenerator.writeArrayFieldStart("data");
+                    if (initialLoad){
+                        int tableLength = tableState.getEnd();
+                        int end = tableLength < samples.size() ? tableLength : samples.size();
+
+                        List<ProductOrderSample> firstPage =
+                                new ArrayList<>(samples.subList(tableState.getStart(), end));
+                        List<ProductOrderSample> otherPages = new ArrayList<>(samples);
+
+                        otherPages.removeAll(firstPage);
+
+                        ProductOrder.loadSampleData(firstPage);
+                        writeProductOrderSampleBean(jsonGenerator, firstPage, true, preferenceSaver);
+                        writeProductOrderSampleBean(jsonGenerator, otherPages, false, preferenceSaver);
+                    } else {
+                        ProductOrder.loadSampleData(samples);
+                        writeProductOrderSampleBean(jsonGenerator, samples, withSampleData, preferenceSaver);
+                    }
+                    jsonGenerator.writeEndArray();
+                    if (!initialLoad && includeSampleSummary) {
                         List<String> comments = editOrder.getSampleSummaryComments();
                         jsonGenerator.writeArrayFieldStart("comments");
                         for (String comment : comments) {
@@ -2000,24 +2017,29 @@ public class ProductOrderActionBean extends CoreActionBean {
                         jsonGenerator.writeEndArray();
                         jsonGenerator.writeObjectField("numberSamplesNotReceived", getSamplesNotReceivedString());
                     }
-
-//                    }
-                    jsonGenerator.writeArrayFieldStart("data");
-                    ListIterator<ProductOrderSample> iterator = samples.listIterator();
-                    while (iterator.hasNext()) {
-                        ProductOrderSample sample = iterator.next();
-                        ProductOrderSampleBean bean = new ProductOrderSampleBean(sample, withSampleData, preferenceSaver, getSampleLink(sample));
-                        jsonGenerator.writeObject(bean);
-                    }
-                    jsonGenerator.writeEndArray();
-
+                    jsonGenerator.writeEndObject();
                 } catch (BSPLookupException e) {
                     handleBspLookupFailed(e);
+                } catch (Exception e){
+                    logger.error(e);
                 } finally {
-                    jsonGenerator.close();
+                    if (jsonGenerator!=null) {
+                        jsonGenerator.close();
+                    }
                 }
             }
         };
+        return resolution;
+    }
+
+    private void writeProductOrderSampleBean(JsonGenerator jsonGenerator, List<ProductOrderSample> firstPage,
+                                             final boolean includeSampleData,
+                                             final DatatablesStateSaver preferenceSaver) throws IOException {
+        for (ProductOrderSample sample : firstPage) {
+            ProductOrderSampleBean bean =
+                    new ProductOrderSampleBean(sample, includeSampleData, preferenceSaver, getSampleLink(sample));
+            jsonGenerator.writeObject(bean);
+        }
     }
 
     @HandlesEvent("getSupportsSkippingQuote")
@@ -2067,8 +2089,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @ValidationMethod(
             on = {DELETE_SAMPLES_ACTION, ABANDON_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK, ADD_SAMPLES_TO_BUCKET,
-                    UNABANDON_SAMPLES_ACTION, SET_PROCEED_OOS},
-            priority = 0)
+                    UNABANDON_SAMPLES_ACTION, SET_PROCEED_OOS}, priority = 0)
     public void validateSampleListOperation() {
         if (selectedProductOrderSampleIds != null) {
             selectedProductOrderSamples = new ArrayList<>(selectedProductOrderSampleIds.size());
@@ -2584,12 +2605,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.includeSampleSummary = includeSampleSummary;
     }
 
-    public boolean isIncludeSampleData() {
-        return includeSampleData;
+    public boolean isInitialLoad() {
+        return initialLoad;
     }
 
-    public void setIncludeSampleData(boolean includeSampleData) {
-        this.includeSampleData = includeSampleData;
+    public void setInitialLoad(boolean initialLoad) {
+        this.initialLoad = initialLoad;
     }
 
     public String getAddSamplesText() {
