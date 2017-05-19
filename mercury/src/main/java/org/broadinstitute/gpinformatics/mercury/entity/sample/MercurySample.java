@@ -191,6 +191,7 @@ public class MercurySample extends AbstractSample {
      *
      * @param sampleKey         the name of the sample
      * @param metadataSource    the source of the sample data
+     * @param isRoot            true if this is a new root
      */
     public MercurySample(String sampleKey, MetadataSource metadataSource, Boolean isRoot) {
         this(sampleKey, metadataSource);
