@@ -208,6 +208,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String COULD_NOT_LOAD_SAMPLE_DATA = "Could not load sample data";
     private static final String GET_SAMPLE_DATA = "getSampleData";
     private String sampleSummary;
+    private State state;
 
     public ProductOrderActionBean() {
         super(CREATE_ORDER, EDIT_ORDER, PRODUCT_ORDER_PARAMETER);
@@ -519,6 +520,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, SAVE_SEARCH_DATA, GET_SAMPLE_DATA})
     public void initPreferenceSaver(){
         preferenceSaver.setPreferenceType(PreferenceType.PRODUCT_ORDER_PREFERENCES);
+        state = preferenceSaver.getTableState();
     }
 
     /**
@@ -1978,15 +1980,13 @@ public class ProductOrderActionBean extends CoreActionBean {
                     jsonGenerator = jsonFactory.createJsonGenerator(outputStream);
                     jsonGenerator.setCodec(objectMapper);
                     jsonGenerator.writeStartObject();
-
-                    State tableState = preferenceSaver.getTableState();
                     jsonGenerator.writeArrayFieldStart("data");
                     if (initialLoad){
-                        int tableLength = tableState.getEnd();
+                        int tableLength = state.getEnd();
                         int end = tableLength < samples.size() ? tableLength : samples.size();
 
                         List<ProductOrderSample> firstPage =
-                                new ArrayList<>(samples.subList(tableState.getStart(), end));
+                                new ArrayList<>(samples.subList(state.getStart(), end));
                         List<ProductOrderSample> otherPages = new ArrayList<>(samples);
 
                         otherPages.removeAll(firstPage);
