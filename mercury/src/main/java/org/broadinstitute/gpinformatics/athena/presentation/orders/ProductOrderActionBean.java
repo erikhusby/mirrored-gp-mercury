@@ -2369,14 +2369,16 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    private void testForPriceItemValidity(ProductOrder editOrder) {
-        if(productOrderEjb.arePriceItemsValid(editOrder, new HashSet<AccessItem>())) {
-            final String errorMessage = "One of the price items on this orders products is invalid";
-            if(editOrder.isSavedInSAP()) {
-                addGlobalValidationError(errorMessage);
-            } else {
-                addMessage(errorMessage);
+    private void testForPriceItemValidity(ProductOrder editOrder, Quote orderQuote) {
+        try {
+            if(!productOrderEjb.areProductPricesValid(editOrder, new HashSet<AccessItem>(), orderQuote)) {
+                final String errorMessage = "One of the price items on this orders products is invalid";
+                if(editOrder.isSavedInSAP()) {
+                    addGlobalValidationError(errorMessage);
+                }
             }
+        } catch (InvalidProductException e) {
+            addGlobalValidationError(e.getMessage());
         }
     }
 

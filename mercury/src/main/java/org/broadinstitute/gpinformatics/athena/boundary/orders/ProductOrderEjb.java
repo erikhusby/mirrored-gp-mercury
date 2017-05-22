@@ -488,7 +488,7 @@ public class ProductOrderEjb {
 
         Set<AccessItem> priceItemNameList = new HashSet<>();
 
-        final boolean priceItemsValid = arePriceItemsValid(editedProductOrder, priceItemNameList);
+        final boolean priceItemsValid = areProductPricesValid(editedProductOrder, priceItemNameList, orderQuote);
 
         if(orderQuote != null && accessControl.isEnabled()) {
 
@@ -506,7 +506,9 @@ public class ProductOrderEjb {
         return eligibilityResult;
     }
 
-    public boolean arePriceItemsValid(ProductOrder editedProductOrder, Set<AccessItem> priceItemNameList) {
+    public boolean areProductPricesValid(ProductOrder editedProductOrder, Set<AccessItem> priceItemNameList,
+                                         Quote orderQuote)
+            throws InvalidProductException {
         Set<Product> productListFromOrder = new HashSet<>();
         if (editedProductOrder.getProduct() != null) {
             productListFromOrder.add(editedProductOrder.getProduct());
@@ -516,33 +518,39 @@ public class ProductOrderEjb {
             productListFromOrder.add(productOrderAddOn.getAddOn());
             priceItemNameList.add(new AccessItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getName()));
         }
-        return determinePriceItemValidity(productListFromOrder);
+        return determinePriceItemValidity(productListFromOrder, orderQuote);
     }
 
-    private boolean determinePriceItemValidity(Collection<Product> productsToConsider) {
+    private boolean determinePriceItemValidity(Collection<Product> productsToConsider,
+                                               Quote orderQuote) throws InvalidProductException {
         boolean allItemsValid = true;
         QuotePriceItem primaryPriceItem;
-        if(CollectionUtils.isNotEmpty(productsToConsider)) {try {
+        if(CollectionUtils.isNotEmpty(productsToConsider)) {
             for (Product product: productsToConsider) {
-               primaryPriceItem =
-                        priceListCache.findByKeyFields(product.getPrimaryPriceItem().getPlatform(),
-                                product.getPrimaryPriceItem().getCategory(),
-                                product.getPrimaryPriceItem().getName());
-                if(primaryPriceItem == null) {
-                    allItemsValid = false;
-                    break;
-                }
-SAPMaterial sapMaterial = productPriceCache.findByPartNumber(product.getPartNumber());
-                if(sapMaterial == null) {
-                    throw new InvalidProductException("Unable to continue since the product " + product.getDisplayName()
-                                                      + " has not been properly set up in SAP.");
-                }            }
-
+                    try {
+                    primaryPriceItem =
+                            priceListCache.findByKeyFields(product.getPrimaryPriceItem().getPlatform(),
+                                    product.getPrimaryPriceItem().getCategory(),
+                                    product.getPrimaryPriceItem().getName());
+                    if (primaryPriceItem == null) {
+                        allItemsValid = false;
+                        break;
+                    }
             } catch (Exception e) {
                 allItemsValid = false;
+                break;
             }
-        } else {
-            allItemsValid = false;
+
+            SAPMaterial sapMaterial = productPriceCache.findByPartNumber(product.getPartNumber());
+            final String effectivePrice = priceListCache.getEffectivePrice(primaryPriceItem, orderQuote);
+            if (sapMaterial == null) {
+                throw new InvalidProductException("Unable to continue since the product " + product.getDisplayName()
+                                                  + " has not been properly set up in SAP.");
+            } else if(!StringUtils.equals(sapMaterial.getBasePrice(), effectivePrice)) {
+                throw new InvalidProductException("Unable to continue since the price for the product " +
+                                                  product.getDisplayName() + " has not been properly set up in SAP");
+            }
+            }
         }
 
         return allItemsValid;
