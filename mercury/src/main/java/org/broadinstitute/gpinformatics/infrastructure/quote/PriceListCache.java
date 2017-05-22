@@ -215,6 +215,10 @@ public class PriceListCache extends AbstractCache implements Serializable {
         if(cachedPriceItem == null) {
             throw new InvalidProductException("The price item "+primaryPriceItem.getDisplayName()+" does not exist");
         }
+        return getEffectivePrice(cachedPriceItem, orderQuote);
+    }
+
+    public String getEffectivePrice(QuotePriceItem cachedPriceItem, Quote orderQuote) {
         String price = cachedPriceItem.getPrice();
         QuoteItem foundMatchingQuoteItem = orderQuote.findCachedQuoteItem(cachedPriceItem.getPlatformName(),
                 cachedPriceItem.getCategoryName(), cachedPriceItem.getName());
