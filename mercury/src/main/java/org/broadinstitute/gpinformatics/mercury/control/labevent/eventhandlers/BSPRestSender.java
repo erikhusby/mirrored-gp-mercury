@@ -18,6 +18,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.BSPRestClient;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -27,6 +28,7 @@ import java.io.Serializable;
 /**
  * Passes info to BSP via a BSP REST service.
  */
+@Dependent
 public class BSPRestSender implements Serializable {
     public static final String BSP_TRANSFER_REST_URL = "plate/transfer";
     public static final String BSP_PLATE_EXISTS_URL = "plate/exists";
