@@ -87,7 +87,7 @@ public class BspNewRootHandler extends AbstractEventHandler {
     }
 
     private void createBspKit(List<LabVessel> labVessels, String receptacleType, String materialType,
-            String collabSampleSuffix) {
+            String collabSampleSuffix, String tumorNormal) {
 
         // Get data from BSP
         List<String> sampleNames = new ArrayList<>();
@@ -97,8 +97,8 @@ public class BspNewRootHandler extends AbstractEventHandler {
         }
         Map<String, BspSampleData> mapIdToSampleData = bspSampleDataFetcher.fetchSampleData(sampleNames,
                 BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID,
-                BSPSampleSearchColumn.ORIGINAL_MATERIAL_TYPE, BSPSampleSearchColumn.SAMPLE_TYPE,
-                BSPSampleSearchColumn.GENDER, BSPSampleSearchColumn.COLLECTION);
+                BSPSampleSearchColumn.ORIGINAL_MATERIAL_TYPE,  BSPSampleSearchColumn.GENDER,
+                BSPSampleSearchColumn.COLLECTION);
 
         // Prepare data to send to web service
         Object[][] rows = new Object[labVessels.size() + 1][];
@@ -124,7 +124,7 @@ public class BspNewRootHandler extends AbstractEventHandler {
                     bspSampleData.getCollaboratorParticipantId(),
                     materialType,
                     bspSampleData.getOriginalMaterialType(),
-                    bspSampleData.getSampleType(),
+                    tumorNormal,
                     bspSampleData.getGender(),
                     labVessel.getLabel(),
                     originalRoots.toString()};
@@ -183,7 +183,8 @@ public class BspNewRootHandler extends AbstractEventHandler {
 
         LabEventType labEventType = targetEvent.getLabEventType();
         createBspKit(new ArrayList<>(labVessels), receptacleType,
-                labEventType.getResultingMaterialType().getDisplayName(), labEventType.getCollabSampleSuffix());
+                labEventType.getResultingMaterialType().getDisplayName(), labEventType.getCollabSampleSuffix(),
+                labEventType.getMetadataValue());
     }
 
 }

@@ -31,6 +31,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleTy
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationSetupEvent;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -40,6 +41,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -134,6 +136,9 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
     @Inject
     private LabBatchDao labBatchDao;
+
+    @Inject
+    private MercurySampleDao mercurySampleDao;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -415,6 +420,32 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 QiagenRackFileParser qiagenRackFileParser = new QiagenRackFileParser();
                 qiagenRackFileParser.attachSourcePlateData(plateTransferEventType, limsFileStream,
                         messageCollection);
+
+                // If the inputs to QIAsymphony are SM-IDs, convert them to (FluidX) vessel labels
+                List<String> sampleIds = new ArrayList<>();
+                for (ReceptacleType receptacleType : plateTransferEventType.getSourcePositionMap().getReceptacle()) {
+                    String barcode = receptacleType.getBarcode();
+                    if (barcode.startsWith("SM-")) {
+                        sampleIds.add(barcode);
+                    }
+                }
+                if (!sampleIds.isEmpty()) {
+                    Map<String, MercurySample> mapIdToMercurySample = mercurySampleDao.findMapIdToMercurySample(sampleIds);
+                    for (ReceptacleType receptacleType : plateTransferEventType.getSourcePositionMap().getReceptacle()) {
+                        String barcode = receptacleType.getBarcode();
+                        MercurySample mercurySample = mapIdToMercurySample.get(barcode);
+                        if (mercurySample == null) {
+                            messageCollection.addError("Failed to find sample " + barcode);
+                        } else {
+                            Set<LabVessel> labVessels = mercurySample.getLabVessel();
+                            if (labVessels.size() != 1) {
+                                messageCollection.addError("Expected one vessel for " + barcode + ", found " +
+                                        labVessels.size());
+                            }
+                            receptacleType.setBarcode(labVessels.iterator().next().getLabel());
+                        }
+                    }
+                }
             }
         } catch (IOException e) {
             log.error("IO Exception when parsing LIMS File", e);

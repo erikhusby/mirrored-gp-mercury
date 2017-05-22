@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
@@ -609,12 +610,12 @@ public enum LabEventType {
                     sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.CentriCutieSC_5).
                     targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.FluidX_6mL).
                     build(),
-            LibraryType.NONE_ASSIGNED, "_P", MaterialType.PLASMA_PLASMA),
+            LibraryType.NONE_ASSIGNED, "_P", Metadata.Key.TUMOR_NORMAL, "Tumor", MaterialType.PLASMA_PLASMA),
     BLOOD_PLASMA_POOLING_TRANSFER("BloodPlasmaPoolingTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
-    BLOOD_BIOPSY_EXTRACTION("BloodBiopsyExtraction", // todo jmt rename?
+    BLOOD_BIOPSY_EXTRACTION("BloodBiopsyExtraction", // todo jmt create buffy coat version, use distinctive names
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
@@ -655,7 +656,7 @@ public enum LabEventType {
                             BarcodedTube.BarcodedTubeType.FluidX_10mL
                     }).
                     build(),
-            LibraryType.NONE_ASSIGNED, "_BC", MaterialType.WHOLE_BLOOD_BUFFY_COAT),
+            LibraryType.NONE_ASSIGNED, "_BC", Metadata.Key.TUMOR_NORMAL, "Normal", MaterialType.WHOLE_BLOOD_BUFFY_COAT),
     BLOOD_CRYOVIAL_EXTRACTION("BloodCryovialExtraction",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
@@ -1920,8 +1921,8 @@ public enum LabEventType {
             this.etlDisplayName = displayName;
         }
 
-        private String etlDisplayName;
-        private String mercuryDisplayName;
+        private final String etlDisplayName;
+        private final String mercuryDisplayName;
 
         public String getEtlDisplayName() {
             return etlDisplayName;
@@ -1933,9 +1934,13 @@ public enum LabEventType {
 
     }
 
-    private LibraryType libraryType;
+    private final LibraryType libraryType;
 
     private String collabSampleSuffix;
+
+    private Metadata.Key metadataKey;
+
+    private String metadataValue;
 
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class ManualTransferDetails {
@@ -2346,11 +2351,13 @@ public enum LabEventType {
                  SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
                  PipelineTransformation pipelineTransformation, ForwardMessage forwardMessage,
                  VolumeConcUpdate volumeConcUpdate, ManualTransferDetails manualTransferDetails, LibraryType libraryType,
-                 String collabSampleSuffix, MaterialType resultingMaterialType) {
+                 String collabSampleSuffix, Metadata.Key metadataKey, String metadataValue, MaterialType resultingMaterialType) {
         this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
                 pipelineTransformation, forwardMessage, volumeConcUpdate, manualTransferDetails, resultingMaterialType,
                 libraryType);
         this.collabSampleSuffix = collabSampleSuffix;
+        this.metadataKey = metadataKey;
+        this.metadataValue = metadataValue;
     }
 
     LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
@@ -2430,5 +2437,13 @@ public enum LabEventType {
 
     public String getCollabSampleSuffix() {
         return collabSampleSuffix;
+    }
+
+    public Metadata.Key getMetadataKey() {
+        return metadataKey;
+    }
+
+    public String getMetadataValue() {
+        return metadataValue;
     }
 }
