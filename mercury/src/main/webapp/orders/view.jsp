@@ -62,7 +62,7 @@ $j(document).ready(function () {
     function loadBspData(settings) {
         var api = new $j.fn.dataTable.Api(settings);
         var table = api.table();
-
+        table.rows().draw();
         var remainingSamples = [];
         table.column(0).data().each(function (cell) {
             remainingSamples.push($j(cell)[0]);
@@ -101,7 +101,6 @@ $j(document).ready(function () {
             "stateSave": true,
             "pageLength": 50,
             'orderable': true,
-            'processing': true,
             'rowId': "<%= ProductOrderSampleBean.UNIQUE_ROW_IDENTIFIER %>",
             'buttons': [{
                 'extend': 'colvis',
@@ -1680,8 +1679,8 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
 
     </div>
 
-    <div id="summaryId" class="fourcolumn" style="margin-bottom:10px;">
-        <img src="${ctxpath}/images/spinner.gif" alt="spinner"/>
+    <div id="summaryId" class="fourcolumn" style="margin-bottom:10px; min-height:8em">
+        <img src="${ctxpath}/images/spinner.gif" alt=""/> Loading Summary
     </div>
 
     <c:if test="${not empty actionBean.editOrder.samples}">
