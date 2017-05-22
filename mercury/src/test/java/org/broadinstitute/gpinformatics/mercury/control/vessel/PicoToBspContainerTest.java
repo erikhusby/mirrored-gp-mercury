@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServic
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentration;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentrationImpl;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPSampleDataFetcherImpl;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
@@ -127,7 +128,7 @@ public class PicoToBspContainerTest extends Arquillian {
     private Multimap<VesselPosition, VesselPosition> map96to384 = HashMultimap.create();
     private BSPConfig bspConfig = BSPConfig.produce(DEV);
     private BSPSampleSearchService bspSampleSearchService = new BSPSampleSearchServiceImpl(bspConfig);
-    private BSPSampleDataFetcher dataFetcher = new BSPSampleDataFetcher(bspSampleSearchService, bspConfig);
+    private BSPSampleDataFetcher dataFetcher = new BSPSampleDataFetcherImpl(bspSampleSearchService, bspConfig);
     private BSPSetVolumeConcentrationImpl bspSetVolumeConcentration = new BSPSetVolumeConcentrationImpl(bspConfig);
     private BettaLimsMessageTestFactory bettalimsFactory = new BettaLimsMessageTestFactory(true);
     private MessageCollection messageCollection;
