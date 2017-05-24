@@ -114,6 +114,8 @@ public class ProductOrderEjbTest {
     public void setUp() throws Exception {
 
         Mockito.reset(mockEmailSender);
+        Mockito.reset(mockSapService);
+        Mockito.reset(mockQuoteService);
         Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenReturn(new SAPAccessControl());
 
         productOrderEjb.setAppConfig(mockAppConfig);
@@ -357,7 +359,7 @@ public class ProductOrderEjbTest {
 
         Set<SAPMaterial> returnMaterials = new HashSet<>();
 
-        returnMaterials.add(new SAPMaterial(conversionPdo.getProduct().getPartNumber(),"5", Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet()));
+        returnMaterials.add(new SAPMaterial(conversionPdo.getProduct().getPartNumber(),"10", Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet()));
         priceList.add(new QuotePriceItem(conversionPdo.getProduct().getPrimaryPriceItem().getCategory(),
                 conversionPdo.getProduct().getPrimaryPriceItem().getName(),
                 conversionPdo.getProduct().getPrimaryPriceItem().getName(), "10", "test",
@@ -375,7 +377,7 @@ public class ProductOrderEjbTest {
                 conversionPdo.getProduct().getPrimaryPriceItem().getPlatform(),
                 conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
-            returnMaterials.add(new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(),"5", Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet()));
+            returnMaterials.add(new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(),"10", Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet()));
             priceList.add(new QuotePriceItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory(),
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(), "10", "test",
@@ -649,9 +651,9 @@ public class ProductOrderEjbTest {
 
         try {
             productOrderEjb.isOrderEligibleForSAP(conversionPdo);
-            Assert.fail();
+            Assert.fail("Differences in prices should have thrown an error");
         } catch (QuoteServerException | QuoteNotFoundException e) {
-            Assert.fail();
+            Assert.fail("Differences in prices should have thrown an InvalidProductException");
         } catch (InvalidProductException e) {
             e.printStackTrace();
         }

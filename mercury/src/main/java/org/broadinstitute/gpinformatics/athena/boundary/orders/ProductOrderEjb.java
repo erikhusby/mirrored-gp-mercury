@@ -29,6 +29,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.StaleLedgerUpdateException;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationWithRollbackException;
@@ -541,19 +542,25 @@ public class ProductOrderEjb {
                 break;
             }
 
-            SAPMaterial sapMaterial = productPriceCache.findByPartNumber(product.getPartNumber());
-            final String effectivePrice = priceListCache.getEffectivePrice(primaryPriceItem, orderQuote);
-            if (sapMaterial == null) {
-                throw new InvalidProductException("Unable to continue since the product " + product.getDisplayName()
-                                                  + " has not been properly set up in SAP.");
-            } else if(!StringUtils.equals(sapMaterial.getBasePrice(), effectivePrice)) {
-                throw new InvalidProductException("Unable to continue since the price for the product " +
-                                                  product.getDisplayName() + " has not been properly set up in SAP");
-            }
-            }
+            validateSAPAndQuoteServerPrices(orderQuote, product);
         }
 
         return allItemsValid;
+    }
+
+    public String validateSAPAndQuoteServerPrices(Quote orderQuote, Product product)
+            throws InvalidProductException {
+        SAPMaterial sapMaterial = productPriceCache.findByPartNumber(product.getPartNumber());
+        final QuotePriceItem priceListItem = priceListCache.findByKeyFields(product.getPrimaryPriceItem());
+        final String effectivePrice = priceListItem.getPrice();
+        if (sapMaterial == null) {
+            throw new InvalidProductException("Unable to continue since the product " + product.getDisplayName()
+                                              + " has not been properly set up in SAP.");
+        } else if(!StringUtils.equals(sapMaterial.getBasePrice(), effectivePrice)) {
+            throw new InvalidProductException("Unable to continue since the price for the product " +
+                                              product.getDisplayName() + " has not been properly set up in SAP");
+        }
+        return priceListCache.getEffectivePrice(product.getPrimaryPriceItem(), orderQuote);
     }
 
     /**

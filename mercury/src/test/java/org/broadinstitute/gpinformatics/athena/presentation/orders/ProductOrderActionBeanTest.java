@@ -13,7 +13,10 @@ import net.sourceforge.stripes.mock.MockRoundtrip;
 import net.sourceforge.stripes.mock.MockServletContext;
 import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
@@ -30,11 +33,13 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.StripesMockTestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
@@ -47,16 +52,24 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBeanContext;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.sap.entity.Condition;
+import org.broadinstitute.sap.entity.DeliveryCondition;
+import org.broadinstitute.sap.entity.SAPMaterial;
 import org.broadinstitute.gpinformatics.mercury.presentation.datatables.Column;
 import org.broadinstitute.gpinformatics.mercury.presentation.datatables.Search;
 import org.broadinstitute.gpinformatics.mercury.presentation.datatables.State;
@@ -107,12 +120,16 @@ public class ProductOrderActionBeanTest {
 
     private ProductOrder pdo;
 
+    private ProductOrderEjb productOrderEjb;
+
     public static final long BSP_INFORMATICS_TEST_SITE_ID = 1l;
     public static final long HOMO_SAPIENS = 1l;
     public static final long TEST_COLLECTION = 1062L;
     private PriceListCache priceListCache;
 
     private QuoteService mockQuoteService;
+    public SapIntegrationService mockSAPService;
+    public SAPProductPriceCache stubProductPriceCache;
 
 
     @BeforeMethod
@@ -123,7 +140,16 @@ public class ProductOrderActionBeanTest {
         mockQuoteService = Mockito.mock(QuoteServiceImpl.class);
         priceListCache = new PriceListCache(mockQuoteService);
         actionBean.setPriceListCache(priceListCache);
-        actionBean.setProductPriceCache(new SAPProductPriceCache(SapIntegrationServiceProducer.stubInstance()));
+        mockSAPService = Mockito.mock(SapIntegrationService.class);
+        stubProductPriceCache = new SAPProductPriceCache(mockSAPService);
+        actionBean.setProductPriceCache(stubProductPriceCache);
+
+        productOrderEjb = new ProductOrderEjb(Mockito.mock(ProductOrderDao.class), Mockito.mock(ProductDao.class),
+                mockQuoteService, Mockito.mock(JiraService.class),Mockito.mock(UserBean.class),
+                Mockito.mock(BSPUserList.class),Mockito.mock(BucketEjb.class),Mockito.mock(SquidConnector.class),
+                Mockito.mock(MercurySampleDao.class),Mockito.mock(ProductOrderJiraUtil.class), mockSAPService,priceListCache,
+                stubProductPriceCache);
+        actionBean.setProductOrderEjb(productOrderEjb);
 
         jsonObject = new JSONObject();
         pdo = newPdo();
@@ -767,7 +793,9 @@ public class ProductOrderActionBeanTest {
 
         PriceList priceList = new PriceList();
         Collection<QuoteItem> quoteItems = new HashSet<>();
+        Set<SAPMaterial> returnMaterials = new HashSet<>();
 
+        returnMaterials.add(new SAPMaterial(testOrder.getProduct().getPartNumber(),"2000", Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet()));
         priceList.add(new QuotePriceItem(testOrder.getProduct().getPrimaryPriceItem().getCategory(),
                 testOrder.getProduct().getPrimaryPriceItem().getName(),
                 testOrder.getProduct().getPrimaryPriceItem().getName(), "2000", "test",
@@ -783,6 +811,7 @@ public class ProductOrderActionBeanTest {
         addonNonSeqProduct.setPrimaryPriceItem(new PriceItem("Secondary", "Genomics Platform",
                 "secondary testing size", "Extraction price"));
         addonNonSeqProduct.setProductFamily(new ProductFamily(ProductFamily.ProductFamilyInfo.ALTERNATE_LIBRARY_PREP_DEVELOPMENT.getFamilyName()));
+        returnMaterials.add(new SAPMaterial(addonNonSeqProduct.getPartNumber(),"1573", Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet()));
 
         priceList.add(new QuotePriceItem(addonNonSeqProduct.getPrimaryPriceItem().getCategory(),
                 addonNonSeqProduct.getPrimaryPriceItem().getName(),
@@ -812,6 +841,8 @@ public class ProductOrderActionBeanTest {
                 "Put it on the sequencer"));
         seqProduct.setProductFamily(new ProductFamily(ProductFamily.ProductFamilyInfo.SEQUENCE_ONLY.getFamilyName()));
 
+        returnMaterials.add(new SAPMaterial(seqProduct.getPartNumber(),"3500", Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet()));
+
         priceList.add(new QuotePriceItem(seqProduct.getPrimaryPriceItem().getCategory(),
                 seqProduct.getPrimaryPriceItem().getName(),
                 seqProduct.getPrimaryPriceItem().getName(), "3500", "test",
@@ -821,6 +852,7 @@ public class ProductOrderActionBeanTest {
                 seqProduct.getPrimaryPriceItem().getName(),"2000", "2500","each",
                 seqProduct.getPrimaryPriceItem().getPlatform(),
                 seqProduct.getPrimaryPriceItem().getCategory()));
+        Mockito.when(mockSAPService.findProductsInSap()).thenReturn(returnMaterials);
 
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
         Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuoteIdentifier)).thenReturn(testQuote);
