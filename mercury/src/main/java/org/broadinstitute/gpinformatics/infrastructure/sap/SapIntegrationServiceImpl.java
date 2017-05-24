@@ -150,13 +150,21 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                     "Unable to continue with SAP.  The associated quote has either too few or too many funding sources");
         }
 
-        if (fundingLevel.getFunding().getFundingType().equals(Funding.PURCHASE_ORDER)) {
-            String customerNumber = findCustomer(determineCompanyCode(orderToUpdate), fundingLevel);
+        for (Funding funding:fundingLevel.getFunding()) {
+            if (funding.getFundingType().equals(Funding.PURCHASE_ORDER)) {
+                String customerNumber = findCustomer(determineCompanyCode(orderToUpdate), fundingLevel);
 
-            newOrder.setSapCustomerNumber(customerNumber);
-            newOrder.setFundingSource(fundingLevel.getFunding().getPurchaseOrderNumber(), SAPOrder.FundingType.PURCHASE_ORDER);
-        } else {
-            newOrder.setFundingSource(fundingLevel.getFunding().getFundsReservationNumber(), SAPOrder.FundingType.FUNDS_RESERVATION);
+                newOrder.setSapCustomerNumber(customerNumber);
+                newOrder.setFundingSource(funding.getPurchaseOrderNumber(), SAPOrder.FundingType.PURCHASE_ORDER);
+            } else {
+                newOrder.setFundingSource(funding.getFundsReservationNumber(), SAPOrder.FundingType.FUNDS_RESERVATION);
+            }
+
+            /*
+            This really only needs to loop once since the information that is retrieved will be the same for each
+            funding instance under fundingLevel
+             */
+            break;
         }
 
         newOrder.setResearchProjectNumber(orderToUpdate.getResearchProject().getJiraTicketKey());
@@ -215,38 +223,46 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             throw new SAPIntegrationException(
                     "Unable to continue with SAP.  The associated quote has either too few or too many funding sources");
         } else {
+            for (Funding funding : fundingLevel.getFunding()) {
 
-            if (fundingLevel.getFunding().getFundingType().equals(Funding.PURCHASE_ORDER)) {
-                try {
-                    customerNumber =
-                            getClient().findCustomerNumber(fundingLevel.getFunding().getPurchaseOrderContact(), companyCode);
-                } catch (SAPIntegrationException e) {
-                    if (e.getMessage().equals(SapIntegrationClientImpl.MISSING_CUSTOMER_RESULT)) {
-                        throw new SAPIntegrationException(
-                                "Your order cannot be placed in SAP because the email address "
-                                + "specified on the Quote is not attached to any SAP Customer account.\n"
-                                + "An email has been sent to Amber Kennedy in AR to initiate "
-                                + "this SAP Customer Creation process. Please contact Amber "
-                                + "Kennedy to follow this up.\n"
-                                + "Once the Customer has been created in SAP you will need "
-                                + "to resubmit this order to ensure that your work is "
-                                + "properly processed.\n"
-                                + "For further questions please contact Mercury support");
-                    } else if (e.getMessage().equals(SapIntegrationClientImpl.TOO_MANY_ACCOUNTS_RESULT)) {
-                        throw new SAPIntegrationException(
-                                "Your order cannot be placed because the email address specified "
-                                + "on the Quote is associated with more than 1 SAP Customer account.\n"
-                                + "An email has been sent to Amber Kennedy in AR to initiate "
-                                + "this SAP Customer Creation process. Please contact Amber "
-                                + "Kennedy to follow this up.\n"
-                                + "Once the SAP Customer account has been corrected you will "
-                                + "need to resubmit this order to ensure that your work is "
-                                + "properly processed.\n"
-                                + "For further questions please contact Mercury support");
-                    } else {
-                        throw e;
+                if (funding.getFundingType().equals(Funding.PURCHASE_ORDER)) {
+                    try {
+                        customerNumber =
+                                getClient().findCustomerNumber(funding.getPurchaseOrderContact(), companyCode);
+                    } catch (SAPIntegrationException e) {
+                        if (e.getMessage().equals(SapIntegrationClientImpl.MISSING_CUSTOMER_RESULT)) {
+                            throw new SAPIntegrationException(
+                                    "Your order cannot be placed in SAP because the email address "
+                                    + "specified on the Quote is not attached to any SAP Customer account.\n"
+                                    + "An email has been sent to Amber Kennedy in AR to initiate "
+                                    + "this SAP Customer Creation process. Please contact Amber "
+                                    + "Kennedy to follow this up.\n"
+                                    + "Once the Customer has been created in SAP you will need "
+                                    + "to resubmit this order to ensure that your work is "
+                                    + "properly processed.\n"
+                                    + "For further questions please contact Mercury support");
+                        } else if (e.getMessage().equals(SapIntegrationClientImpl.TOO_MANY_ACCOUNTS_RESULT)) {
+                            throw new SAPIntegrationException(
+                                    "Your order cannot be placed because the email address specified "
+                                    + "on the Quote is associated with more than 1 SAP Customer account.\n"
+                                    + "An email has been sent to Amber Kennedy in AR to initiate "
+                                    + "this SAP Customer Creation process. Please contact Amber "
+                                    + "Kennedy to follow this up.\n"
+                                    + "Once the SAP Customer account has been corrected you will "
+                                    + "need to resubmit this order to ensure that your work is "
+                                    + "properly processed.\n"
+                                    + "For further questions please contact Mercury support");
+                        } else {
+                            throw e;
+                        }
                     }
                 }
+                /*
+                This really only needs to loop once since the information that is retrieved will be the same for each
+                funding instance under fundingLevel
+                */
+
+                break;
             }
         }
 
