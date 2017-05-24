@@ -491,7 +491,7 @@ public class MetricsViewActionBean extends CoreActionBean {
             wellDataset.setOptions(genderOptions);
 
             // Gender Concordance PF
-            value = String.valueOf(arraysQc.getGenderConcordancePf());
+            value = arraysQc.getGenderConcordancePf();
             wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.GENDER_CONCORDANCE_PF);
             wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
             wellDataset.setOptions(trueFalseOption);
