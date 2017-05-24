@@ -153,7 +153,7 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
             row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.REPORTED_GENDER.getResultHeader(),
                     value, value));
 
-            value = String.valueOf(arraysQc.getGenderConcordancePf());
+            value = arraysQc.getGenderConcordancePf();
             row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.GENDER_CONCORDANCE_PF.getResultHeader(),
                     value, value));
 

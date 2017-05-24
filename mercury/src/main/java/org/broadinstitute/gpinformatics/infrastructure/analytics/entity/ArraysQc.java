@@ -35,7 +35,7 @@ public class ArraysQc {
     private Character autocallGender;
     private Character fpGender;
     private Character reportedGender;
-    private Boolean genderConcordancePf;
+    private String genderConcordancePf;
     private BigDecimal hetPct;
     private BigDecimal hetHomvarRatio;
     private String clusterFileName;
@@ -144,7 +144,7 @@ public class ArraysQc {
         return reportedGender;
     }
 
-    public Boolean getGenderConcordancePf() {
+    public String getGenderConcordancePf() {
         return genderConcordancePf;
     }
 
