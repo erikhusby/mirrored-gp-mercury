@@ -52,10 +52,10 @@ public class ManualTransferActionBeanTest {
     }
 
     /**
-     * Verify that choosing BloodBiopsyExtraction will ask for a lims file
+     * Verify that choosing QiaSymphonyCellFree will ask for a lims file
      */
     public void testQiagen() {
-        String eventType = "BloodBiopsyExtraction";
+        String eventType = "QiaSymphonyCellFree";
         ManualTransferActionBean actionBean = chooseEvent(eventType);
         Assert.assertEquals(actionBean.isParseLimsFile(), true);
     }
