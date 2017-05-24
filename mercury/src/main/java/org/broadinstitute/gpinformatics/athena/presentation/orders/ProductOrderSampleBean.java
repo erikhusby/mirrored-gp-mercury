@@ -137,9 +137,14 @@ public class ProductOrderSampleBean {
         uniqueRowIdentifier = ROW_ID_PREFIX + sample.getProductOrderSampleId();
         if (preferenceSaver.showColumn(SAMPLE_ID)) {
             sampleId = sample.getSampleKey();
-            sampleLinkString =
-                    String.format("<a href= '%s' class='external' target='%s' title='%s'>%s</>", sampleLink.getUrl(),
-                            sampleLink.getTarget(), sampleLink.getLabel(), sample.getName());
+            if (sampleLink != null) {
+                sampleLinkString =
+                        String.format("<a href='%s' class='external' target='%s' title='%s'>%s</>",
+                                sampleLink.getUrl(),
+                                sampleLink.getTarget(), sampleLink.getLabel(), sample.getName());
+            } else {
+                sampleLinkString = sample.getName();
+            }
         }
         if (preferenceSaver.showColumn(POSITION)) {
             position = sample.getSamplePosition() + 1;

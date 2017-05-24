@@ -100,6 +100,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
+import org.broadinstitute.gpinformatics.infrastructure.presentation.SampleLink;
 import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
@@ -1959,7 +1960,6 @@ public class ProductOrderActionBean extends CoreActionBean {
                 } else {
                     samples = editOrder.getSamples();
                 }
-
                 final Collection<String> allVisibleColumns = preferenceSaver.visibleColumns();
 
                 Set<String> bspColumns = Sets.newHashSet(ProductOrderSampleBean.COLLABORATOR_SAMPLE_ID,
@@ -1983,6 +1983,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                     ObjectMapper objectMapper = new ObjectMapper();
                     objectMapper.setSerializationInclusion(JsonSerialize.Inclusion.ALWAYS);
                     objectMapper.configure(JsonGenerator.Feature.QUOTE_FIELD_NAMES, true);
+//                    objectMapper.configure(SerializationConfig.Feature.WRITE_EMPTY_JSON_ARRAYS, true);
                     objectMapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, false);
 
                     OutputStream outputStream = response.getOutputStream();
@@ -1990,32 +1991,34 @@ public class ProductOrderActionBean extends CoreActionBean {
                     jsonGenerator.setCodec(objectMapper);
                     jsonGenerator.writeStartObject();
                     jsonGenerator.writeArrayFieldStart("data");
+                    int tableLength = state.getEnd();
+                    int end = tableLength < samples.size() ? tableLength : samples.size();
                     if (initialLoad){
-                        int tableLength = state.getEnd();
-                        int end = tableLength < samples.size() ? tableLength : samples.size();
-
-                        List<ProductOrderSample> firstPage =
-                                new ArrayList<>(samples.subList(state.getStart(), end));
+                        List<ProductOrderSample> firstPage = new ArrayList<>(samples.subList(state.getStart(), end));
                         List<ProductOrderSample> otherPages = new ArrayList<>(samples);
-
                         otherPages.removeAll(firstPage);
-
-                        ProductOrder.loadSampleData(firstPage);
                         writeProductOrderSampleBean(jsonGenerator, firstPage, true, preferenceSaver);
                         writeProductOrderSampleBean(jsonGenerator, otherPages, false, preferenceSaver);
                     } else {
-                        ProductOrder.loadSampleData(samples);
                         writeProductOrderSampleBean(jsonGenerator, samples, withSampleData, preferenceSaver);
                     }
                     jsonGenerator.writeEndArray();
-                    if (!initialLoad && includeSampleSummary) {
-                        List<String> comments = editOrder.getSampleSummaryComments();
+                    if ((!initialLoad && includeSampleSummary) || (initialLoad && end <= tableLength)) {
+                        ProductOrder.loadSampleData(samples);
+                        List<String> comments = new ArrayList<>();
+                        String samplesNotReceivedString = "";
+                        try {
+                            comments = editOrder.getSampleSummaryComments();
+                            samplesNotReceivedString = getSamplesNotReceivedString();
+                        } catch (Exception e) {
+                            logger.error("could get sample summary comments", e);
+                        }
                         jsonGenerator.writeArrayFieldStart("comments");
                         for (String comment : comments) {
                             jsonGenerator.writeObject(comment);
                         }
                         jsonGenerator.writeEndArray();
-                        jsonGenerator.writeObjectField("numberSamplesNotReceived", getSamplesNotReceivedString());
+                        jsonGenerator.writeObjectField("numberSamplesNotReceived", samplesNotReceivedString);
                     }
                     jsonGenerator.writeEndObject();
                 } catch (BSPLookupException e) {
@@ -2032,13 +2035,23 @@ public class ProductOrderActionBean extends CoreActionBean {
         return resolution;
     }
 
-    private void writeProductOrderSampleBean(JsonGenerator jsonGenerator, List<ProductOrderSample> firstPage,
+    private void writeProductOrderSampleBean(JsonGenerator jsonGenerator, List<ProductOrderSample> productOrderSamples,
                                              final boolean includeSampleData,
                                              final DatatablesStateSaver preferenceSaver) throws IOException {
-        for (ProductOrderSample sample : firstPage) {
+        if (includeSampleData) {
+            ProductOrder.loadSampleData(productOrderSamples);
+        }
+        for (ProductOrderSample sample : productOrderSamples) {
+            SampleLink sampleLink = null;
+            try {
+                sampleLink = getSampleLink(sample);
+            } catch (Exception e) {
+                logger.error("Could not get sample link", e);
+            }
             ProductOrderSampleBean bean =
-                    new ProductOrderSampleBean(sample, includeSampleData, preferenceSaver, getSampleLink(sample));
+                    new ProductOrderSampleBean(sample, includeSampleData, preferenceSaver, sampleLink);
             jsonGenerator.writeObject(bean);
+
         }
     }
 
