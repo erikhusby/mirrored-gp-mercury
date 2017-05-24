@@ -281,11 +281,6 @@
                                     <%--@elvariable id="receptacleEvent" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType"--%>
                                     <h4>Tube Event</h4>
                                     <div class="control-group">
-                                        <%-- todo jmt reduce copy / paste --%>
-                                        <label>Type</label>
-                                            ${receptacleEvent.receptacle.receptacleType}
-                                        <input type="hidden" name="stationEvents[${stationEventStatus.index}].receptacle.receptacleType"
-                                                value="${receptacleEvent.receptacle.receptacleType}"/>
                                         <label for="destRcpBcd${stationEventStatus.index}">
                                             ${fn:containsIgnoreCase(receptacleEvent.receptacle.receptacleType, "matrix") ? '2D ' : ''}Barcode
                                         </label>
@@ -293,10 +288,6 @@
                                                 name="stationEvents[${stationEventStatus.index}].receptacle.barcode"
                                                 value="${receptacleEvent.receptacle.barcode}"
                                                 class="clearable barcode unique" required/>
-                                        <label for="destRcpVol${stationEventStatus.index}">Volume</label>
-                                        <input type="text" id="destRcpVol${stationEventStatus.index}" autocomplete="off"
-                                                name="stationEvents[${stationEventStatus.index}].receptacle.volume"
-                                                value="${receptacleEvent.receptacle.volume}" class="clearable barcode"/> ul
                                     </div>
                                 </c:when> <%-- end ReceptacleEventType --%>
                             </c:choose>
