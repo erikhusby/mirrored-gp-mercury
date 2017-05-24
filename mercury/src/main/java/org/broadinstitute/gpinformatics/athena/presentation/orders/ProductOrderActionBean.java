@@ -255,7 +255,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private SquidLink squidLink;
 
-    @Inject
     private ProductOrderEjb productOrderEjb;
 
     @Inject
@@ -940,22 +939,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         double productValue = 0d;
         String foundPrice;
         try {
-            final SAPMaterial materialByPartNumber = productPriceCache.findByPartNumber(product.getPartNumber());
-            if(materialByPartNumber == null) {
-                foundPrice= priceListCache.getEffectivePrice(product.getPrimaryPriceItem(), quote);
-            } else {
-                foundPrice = materialByPartNumber.getBasePrice();
-                String testPrice = priceListCache.getEffectivePrice(product.getPrimaryPriceItem(), quote);
-
-                if (!StringUtils.equals(foundPrice, testPrice)) {
-                    throw new InvalidProductException(
-                            product.getDisplayName() + "Cannot be ordered because the pricing "
-                            + "has not been set up correct.  The price in the quote server "
-                            + "differs from the price in SAP");
-                }
-            }
+            foundPrice = productOrderEjb.validateSAPAndQuoteServerPrices(quote,product);
         } catch (InvalidProductException e) {
-            throw new InvalidProductException("For '" + product.getPartNumber() + "' " + e.getMessage(), e);
+            throw new InvalidProductException("For '" + product.getDisplayName() + "' " + e.getMessage(), e);
         }
 
         if (StringUtils.isNotBlank(foundPrice)) {
@@ -963,8 +949,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             productValue = productPrice * (unbilledCount);
         } else {
-            throw new InvalidProductException("Price for " + product.getPrimaryPriceItem().getDisplayName() + " for product "+
-                                              product.getPartNumber()+" was not found.");
+            throw new InvalidProductException("Price for " + product.getPrimaryPriceItem().getDisplayName() +
+                                              " for product " + product.getDisplayName() + " was not found.");
         }
         return productValue;
     }
@@ -3367,6 +3353,11 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     public void setProductPriceCache(SAPProductPriceCache productPriceCache) {
         this.productPriceCache = productPriceCache;
+    }
+
+    @Inject
+    public void setProductOrderEjb(ProductOrderEjb productOrderEjb) {
+        this.productOrderEjb = productOrderEjb;
     }
 
     @HandlesEvent(SAVE_SEARCH_DATA)
