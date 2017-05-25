@@ -207,7 +207,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private static final String KIT_DEFINITION_INDEX = "kitDefinitionQueryIndex";
     private static final String COULD_NOT_LOAD_SAMPLE_DATA = "Could not load sample data";
-    private static final String GET_SAMPLE_DATA = "getSampleData";
+    public static final String GET_SAMPLE_DATA = "getSampleData";
     private String sampleSummary;
     private State state;
 
