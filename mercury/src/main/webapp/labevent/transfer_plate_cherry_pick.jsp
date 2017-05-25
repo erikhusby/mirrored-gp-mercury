@@ -123,6 +123,8 @@ plate / rack.
                 </c:if>
                 <tr>
                     <td>${rowName} </br><button id="btn_${source ? 'src' : 'dest'}_row_${rowName}" type="button" class="btn btn-primary btn-xs xs-row" tabindex="0">Select</button></td>
+                    <c:set var="volumeType"
+                            value="${(source && actionBean.labEventType.manualTransferDetails.sourceVolume()) || (!source && actionBean.labEventType.manualTransferDetails.targetVolume()) ? 'text' : 'hidden'}"/>
                     <c:forEach items="${geometry.columnNames}" var="columnName" varStatus="columnStatus">
                         <c:set var="receptacleIndex"
                                 value="${rowStatus.index * geometry.columnCount + columnStatus.index}"/>
@@ -131,13 +133,20 @@ plate / rack.
                             <input type="text" id="${source ? 'src' : 'dest'}RcpBcd${stationEventIndex}_${receptacleIndex}"
                                    name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap[0]' : 'positionMap[0]'}.receptacle[${receptacleIndex}].barcode"
                                    value="${actionBean.findReceptacleAtPosition(positionMap[0], geometry.vesselPositions[receptacleIndex]).barcode}"
-                                   class="clearable smalltext unique" autocomplete="off"/>
+                                   class="clearable smalltext unique" autocomplete="off" placeholder="barcode"/>
                             <input type="hidden"
                                    name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap[0]' : 'positionMap[0]'}.receptacle[${receptacleIndex}].position"
                                    value="${geometry.vesselPositions[receptacleIndex]}"/>
                             <input type="hidden"
                                     name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap' : 'positionMap'}[0].receptacle[${receptacleIndex}].receptacleType"
                                     value="${source ? actionBean.labEventType.manualTransferDetails.sourceBarcodedTubeType : actionBean.labEventType.manualTransferDetails.targetBarcodedTubeType}"/>
+                            <c:if test="${volumeType == 'text'}">
+                                </br>
+                            </c:if>
+                            <input type="${volumeType}"
+                                    name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap' : 'positionMap'}[0].receptacle[${receptacleIndex}].volume"
+                                    value="${actionBean.findReceptacleAtPosition(positionMap[0], geometry.vesselPositions[receptacleIndex]).volume}"
+                                    class="clearable smalltext" autocomplete="off" placeholder="volume"/>
                             <c:if test="${not empty actionBean.labEventType.resultingMaterialType && !source}">
                                 <%-- This is primarily for messages forwarded to BSP --%>
                                 <input type="hidden"
