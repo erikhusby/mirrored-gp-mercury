@@ -109,7 +109,7 @@ $j(document).ready(function () {
                 }],
             }, standardButtons()],
             ajax: {
-                url: "${ctxpath}/orders/order.action?getSampleData",
+                url: "${ctxpath}/orders/order.action?<%= ProductOrderActionBean.GET_SAMPLE_DATA %>",
                 method: 'POST',
                 data: function (data, settings) {
                     data.productOrder = "${actionBean.editOrder.businessKey}";
@@ -589,7 +589,7 @@ function updateSampleInformation(samples, table, maxFetchSize, includeSampleSumm
         var fetchSize = samples.length < maxFetchSize ? samples.length : maxFetchSize;
         console.log("fetching " + fetchSize + " samples of " + samples.length + " " + samples[0] + "..." + samples[fetchSize - 1]);
         $j.ajax({
-            url: "${ctxpath}/orders/order.action?getSampleData",
+            url: "${ctxpath}/orders/order.action?<%= ProductOrderActionBean.GET_SAMPLE_DATA %>",
             data: {
                 'productOrder': "${actionBean.editOrder.businessKey}",
                 'sampleIdsForGetBspData': samples.splice(0, maxFetchSize),
