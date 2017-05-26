@@ -25,6 +25,8 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
@@ -118,6 +120,10 @@ public class ProductOrderEjbTest {
 
         productPriceCache = new SAPProductPriceCache(mockSapService);
         priceListCache = new PriceListCache(mockQuoteService);
+
+        //  this additon is for the temporary support of current processing of recognizing a valid Product.
+        //  When the full implementation of the fetchMatarials interface for SAP is completed, this will be removed
+        productPriceCache.setQuotesPriceListCache(priceListCache);
         mockMercurySampleDao = Mockito.mock(MercurySampleDao.class);
         productOrderDaoMock = Mockito.mock(ProductOrderDao.class);
         productOrderEjb = new ProductOrderEjb(productOrderDaoMock, null, mockQuoteService,
@@ -684,6 +690,7 @@ public class ProductOrderEjbTest {
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
         Mockito.when(mockQuoteService.getQuoteByAlphaId(Mockito.anyString())).thenReturn(testSingleSourceQuote);
 
+        Mockito.when(mockSapService.findProductsInSap()).thenReturn(returnMaterials);
         try {
             productOrderEjb.isOrderEligibleForSAP(conversionPdo);
             Assert.fail("Differences in prices should have thrown an error");
@@ -696,13 +703,9 @@ public class ProductOrderEjbTest {
         MessageCollection messageCollection = new MessageCollection();
 
         productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, true);
+        assertThat(conversionPdo.getBusinessKey(), is(equalTo(jiraTicketKey)));
         assertThat(messageCollection.getErrors(), is(not(Matchers.<String>empty())));
         assertThat(conversionPdo.isSavedInSAP(), is(false));
 
-        Mockito.when(mockSapService.findProductsInSap()).thenReturn(returnMaterials);
-
-        productOrderEjb.publishProductOrderToSAP(conversionPdo, messageCollection, true);
-        assertThat(messageCollection.getErrors(), is(not(Matchers.<String>empty())));
-        assertThat(conversionPdo.isSavedInSAP(), is(false));
     }
 }

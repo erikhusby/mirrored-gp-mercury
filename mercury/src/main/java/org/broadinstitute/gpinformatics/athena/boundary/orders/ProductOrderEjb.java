@@ -550,7 +550,7 @@ public class ProductOrderEjb {
 
     public String validateSAPAndQuoteServerPrices(Quote orderQuote, Product product)
             throws InvalidProductException {
-        SAPMaterial sapMaterial = productPriceCache.findByPartNumber(product.getPartNumber());
+        SAPMaterial sapMaterial = productPriceCache.findByProduct(product);
         final QuotePriceItem priceListItem = priceListCache.findByKeyFields(product.getPrimaryPriceItem());
         final String effectivePrice = priceListItem.getPrice();
         if (sapMaterial == null) {
