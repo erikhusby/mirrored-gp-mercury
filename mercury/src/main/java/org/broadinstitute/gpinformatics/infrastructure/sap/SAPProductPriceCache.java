@@ -3,7 +3,12 @@ package org.broadinstitute.gpinformatics.infrastructure.sap;
 import clover.org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.sap.entity.Condition;
+import org.broadinstitute.sap.entity.DeliveryCondition;
 import org.broadinstitute.sap.entity.SAPMaterial;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.springframework.util.CollectionUtils;
@@ -12,6 +17,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -24,6 +30,11 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
     private Set<SAPMaterial> sapMaterials = new HashSet<>();
 
     private SapIntegrationService sapService;
+
+    //  A temporary short circuit until actual implementation of the service to retrieve all materials is in place
+    //  When it is, this inclusion of the priceListCache will be removed.
+    @Inject
+    private PriceListCache quotesPriceListCache;
 
     private static final Log logger = LogFactory.getLog(SAPProductPriceCache.class);
 
@@ -62,7 +73,7 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
         return sapMaterials;
     }
 
-    public SAPMaterial findByPartNumber (String partNumber) {
+    private SAPMaterial findByPartNumber (String partNumber) {
         SAPMaterial foundMaterial = null;
 
         for (SAPMaterial sapMaterial : getSapMaterials()) {
@@ -75,4 +86,23 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
         return foundMaterial;
     }
 
+    public SAPMaterial findByProduct (Product product) {
+        SAPMaterial foundMaterial = findByPartNumber(product.getPartNumber());
+
+        //  A temporary short circuit until actual implementation of the service to retrieve all materials is in place
+        // When it is, this condition and it's contents will be removed
+        if(foundMaterial == null) {
+            final QuotePriceItem priceListItem = quotesPriceListCache.findByKeyFields(product.getPrimaryPriceItem());
+            foundMaterial = new SAPMaterial(product.getPartNumber(), priceListItem.getPrice(), Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet());
+        }
+
+        return foundMaterial;
+    }
+
+    //  this additon is for the temporary support of current processing of recognizing a valid Product.
+    //  When the full implementation of the fetchMatarials interface for SAP is completed, this will be removed
+    public void setQuotesPriceListCache(
+            PriceListCache quotesPriceListCache) {
+        this.quotesPriceListCache = quotesPriceListCache;
+    }
 }
