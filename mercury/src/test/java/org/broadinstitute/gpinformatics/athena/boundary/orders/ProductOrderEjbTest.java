@@ -91,34 +91,42 @@ import static org.hamcrest.Matchers.notNullValue;
 public class ProductOrderEjbTest {
     private static final BSPUserList.QADudeUser qaDudeUser = new BSPUserList.QADudeUser("PM", 2423L);
     private static final UserBean mockUserBean = Mockito.mock(UserBean.class);
-    private ProductOrderDao productOrderDaoMock = Mockito.mock(ProductOrderDao.class);
-    public final MercurySampleDao mockMercurySampleDao = Mockito.mock(MercurySampleDao.class);
-    public final QuoteServiceImpl mockQuoteService = Mockito.mock(QuoteServiceImpl.class);
-    public final SapIntegrationService mockSapService = Mockito.mock(SapIntegrationService.class);
-    public final AppConfig mockAppConfig = Mockito.mock(AppConfig.class);
-    public final SapConfig mockSapConfig = Mockito.mock(SapConfig.class);
-    public final EmailSender mockEmailSender = Mockito.mock(EmailSender.class);
-    public final SAPAccessControlEjb mockAccessController = Mockito.mock(SAPAccessControlEjb.class);
-    public final PriceListCache priceListCache = new PriceListCache(mockQuoteService);
-    public final SAPProductPriceCache productPriceCache = new SAPProductPriceCache(mockSapService);
-    ProductOrderEjb productOrderEjb = new ProductOrderEjb(productOrderDaoMock, null, mockQuoteService,
-            JiraServiceProducer.stubInstance(), mockUserBean, null, null, null, mockMercurySampleDao,
-            new ProductOrderJiraUtil(JiraServiceProducer.stubInstance(), mockUserBean),
-            mockSapService, priceListCache, productPriceCache);
+    private ProductOrderDao productOrderDaoMock;
+    private MercurySampleDao mockMercurySampleDao;
+    private QuoteServiceImpl mockQuoteService;
+    private SapIntegrationService mockSapService;
+    private AppConfig mockAppConfig;
+    private SapConfig mockSapConfig;
+    private EmailSender mockEmailSender;
+    private SAPAccessControlEjb mockAccessController;
+    private PriceListCache priceListCache;
+    private SAPProductPriceCache productPriceCache;
+    private ProductOrderEjb productOrderEjb;
 
     private static final String[] sampleNames = {"SM-1234", "SM-5678", "SM-9101", "SM-1112"};
-    ProductOrder productOrder = null;
+    private ProductOrder productOrder;
     private Log logger = LogFactory.getLog(ProductOrderEjbTest.class);
 
     @BeforeMethod
     public void setUp() throws Exception {
 
-        Mockito.reset(mockEmailSender);
-        Mockito.reset(mockSapService);
-        Mockito.reset(mockQuoteService);
+        mockEmailSender = Mockito.mock(EmailSender.class);
+        mockSapService = Mockito.mock(SapIntegrationService.class);
+        mockQuoteService = Mockito.mock(QuoteServiceImpl.class);
+        mockAccessController = Mockito.mock(SAPAccessControlEjb.class);
         Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenReturn(new SAPAccessControl());
 
+        productPriceCache = new SAPProductPriceCache(mockSapService);
+        priceListCache = new PriceListCache(mockQuoteService);
+        mockMercurySampleDao = Mockito.mock(MercurySampleDao.class);
+        productOrderDaoMock = Mockito.mock(ProductOrderDao.class);
+        productOrderEjb = new ProductOrderEjb(productOrderDaoMock, null, mockQuoteService,
+                JiraServiceProducer.stubInstance(), mockUserBean, null, null, null, mockMercurySampleDao,
+                new ProductOrderJiraUtil(JiraServiceProducer.stubInstance(), mockUserBean),
+                mockSapService, priceListCache, productPriceCache);
+        mockAppConfig = Mockito.mock(AppConfig.class);
         productOrderEjb.setAppConfig(mockAppConfig);
+        mockSapConfig = Mockito.mock(SapConfig.class);
         productOrderEjb.setSapConfig(mockSapConfig);
         productOrderEjb.setEmailSender(mockEmailSender);
         productOrderEjb.setAccessController(mockAccessController);
@@ -493,6 +501,9 @@ public class ProductOrderEjbTest {
         String jiraTicketKey= "PDO-SAP-test";
         String childOneJiraTicketKey = "PDO-SAP-Childone";
         String childtwoJiraTicketKey = "PDO-SAP-Childtwo";
+        PriceList priceList = new PriceList();
+        Collection<QuoteItem> quoteItems = new HashSet<>();
+
 
         ProductOrder conversionPdo = ProductOrderTestFactory.createDummyProductOrder(10, jiraTicketKey);
 
@@ -506,6 +517,30 @@ public class ProductOrderEjbTest {
         FundingLevel fundingLevel = new FundingLevel("100", Collections.singleton(fundingDefined));
         QuoteFunding quoteFunding = new QuoteFunding(Collections.singleton(fundingLevel));
         Quote testSingleSourceQuote = new Quote(SapIntegrationServiceImplDBFreeTest.SINGLE_SOURCE_PO_QUOTE_ID, quoteFunding, ApprovalStatus.FUNDED);
+        testSingleSourceQuote.setExpired(false);
+
+        Set<SAPMaterial> returnMaterials = new HashSet<>();
+
+        returnMaterials.add(new SAPMaterial(conversionPdo.getProduct().getPartNumber(),"10", Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet()));
+        priceList.add(new QuotePriceItem(conversionPdo.getProduct().getPrimaryPriceItem().getCategory(),
+                conversionPdo.getProduct().getPrimaryPriceItem().getName(),
+                conversionPdo.getProduct().getPrimaryPriceItem().getName(), "10", "test",
+                conversionPdo.getProduct().getPrimaryPriceItem().getPlatform()));
+        quoteItems.add(new QuoteItem(testSingleSourceQuote.getAlphanumericId(),conversionPdo.getProduct().getPrimaryPriceItem().getName(),
+                conversionPdo.getProduct().getPrimaryPriceItem().getName(),"2000", "10","each",
+                conversionPdo.getProduct().getPrimaryPriceItem().getPlatform(),
+                conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
+        for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
+            returnMaterials.add(new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(),"10", Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet()));
+            priceList.add(new QuotePriceItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory(),
+                    productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),
+                    productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(), "10", "test",
+                    productOrderAddOn.getAddOn().getPrimaryPriceItem().getPlatform()));
+        }
+
+        testSingleSourceQuote.setQuoteItems(quoteItems);
+        Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
+        Mockito.when(mockSapService.findProductsInSap()).thenReturn(returnMaterials);
 
         Mockito.when(mockQuoteService.getQuoteByAlphaId(testSingleSourceQuote.getAlphanumericId())).thenReturn(testSingleSourceQuote);
 
