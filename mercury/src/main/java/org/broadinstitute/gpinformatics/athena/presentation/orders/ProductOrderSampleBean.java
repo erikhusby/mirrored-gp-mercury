@@ -33,6 +33,10 @@ public class ProductOrderSampleBean {
 
     private static final Format dateFormatter = FastDateFormat.getInstance(CoreActionBean.DATE_PATTERN);
     public static final Log log = LogFactory.getLog(ProductOrderSampleBean.class);
+    public static final String RECORDS_TOTAL = "recordsTotal";
+    public static final String DATA_FIELD = "data";
+    public static final String SAMPLE_DATA_ROW_COUNT = "rowsWithSampleData";
+    public static final String SAMPLES_NOT_RECEIVED = "rowsWithSampleData";
     public static final String UNIQUE_ROW_IDENTIFIER = "rowId";
     public static final String SAMPLE_ID = "ID";
     public static final String PRODUCT_ORDER_SAMPLE_ID = "PRODUCT_ORDER_SAMPLE_ID";
