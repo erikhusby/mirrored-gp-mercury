@@ -128,7 +128,9 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver;
 import org.broadinstitute.gpinformatics.mercury.presentation.datatables.State;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
-import org.broadinstitute.sap.entity.SAPMaterial;
+import org.broadinstitute.sap.entity.OrderCalculatedValues;
+import org.broadinstitute.sap.entity.OrderValue;
+import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -752,7 +754,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", quoteId, e.getMessage());
         } catch (QuoteNotFoundException e) {
             addGlobalValidationError("The quote ''{2}'' was not found ", quoteId);
-        } catch (InvalidProductException e) {
+        } catch (InvalidProductException | SAPIntegrationException e) {
             addGlobalValidationError("Unable to determine the existing value of open orders for " +
                                      quote.getAlphanumericId() +": " +e.getMessage());
         }
@@ -773,7 +775,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      *                        Pending
      */
     private void validateQuoteDetails(String quoteId, final ErrorLevel errorLevel, boolean countOpenOrders)
-            throws InvalidProductException {
+            throws InvalidProductException, SAPIntegrationException {
         Quote quote = validateQuoteId(quoteId);
 
         if (quote != null) {
@@ -797,7 +799,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     private void validateQuoteDetailsWithAddedSamples(String quoteId, final ErrorLevel errorLevel,
                                                       boolean countOpenOrders, int additionalSamplesCount)
-            throws InvalidProductException, QuoteServerException {
+            throws InvalidProductException, QuoteServerException, SAPIntegrationException {
         Quote quote = validateQuoteId(quoteId);
         ProductOrder.checkQuoteValidity(quote);
         if (quote != null) {
@@ -816,18 +818,19 @@ public class ProductOrderActionBean extends CoreActionBean {
      *                        Pending
      * @param additionalSampleCount
      */
-    private void validateQuoteDetails(Quote quote, ErrorLevel errorLevel, boolean countCurrentUnPlacedOrder,
-                                      int additionalSampleCount) throws InvalidProductException {
+    protected void validateQuoteDetails(Quote quote, ErrorLevel errorLevel, boolean countCurrentUnPlacedOrder,
+                                      int additionalSampleCount) throws InvalidProductException,
+            SAPIntegrationException {
         if (!quote.getApprovalStatus().equals(ApprovalStatus.FUNDED)) {
             String unFundedMessage = "A quote should be funded in order to be used for a product order.";
             addMessageBasedOnErrorLevel(errorLevel, unFundedMessage);
         }
 
         double fundsRemaining = Double.parseDouble(quote.getQuoteFunding().getFundsRemaining());
-        double outstandingEstimate = estimateOutstandingOrders(quote.getAlphanumericId(), quote);
+        double outstandingEstimate = estimateOutstandingOrders(quote);
         double valueOfCurrentOrder = 0;
         if(countCurrentUnPlacedOrder) {
-            valueOfCurrentOrder = getValueOfOpenOrders(Collections.singletonList((editOrder.isChildOrder())?editOrder.getParentOrder():editOrder), quote);
+            valueOfCurrentOrder = getValueOfOpenOrders(Collections.singletonList((editOrder.isChildOrder())?editOrder.getParentOrder():editOrder), quote, Collections.<String>emptySet());
         } else if(additionalSampleCount > 0) {
             valueOfCurrentOrder = getOrderValue((editOrder.isChildOrder())?editOrder.getParentOrder():editOrder, additionalSampleCount, quote);
         }
@@ -857,14 +860,28 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     /**
      * Retrieves and determines the monitary value of a subset of Open Orders within Mercury
-     * @param quoteId Common quote id to be used to determine which open orders will be found
      * @return total dollar amount of the monitary value of orders associated with the given quote
      */
-    double estimateOutstandingOrders(String quoteId, Quote foundQuote) throws InvalidProductException {
+    double estimateOutstandingOrders(Quote foundQuote)
+            throws InvalidProductException, SAPIntegrationException {
 
-        List<ProductOrder> ordersWithCommonQuote = productOrderDao.findOrdersWithCommonQuote(quoteId);
+        List<ProductOrder> ordersWithCommonQuote = productOrderDao.findOrdersWithCommonQuote(foundQuote.getAlphanumericId());
 
-        return getValueOfOpenOrders(ordersWithCommonQuote, foundQuote);
+        final OrderCalculatedValues calculatedValues = sapService
+                .calculateOpenOrderValues((editOrder.isChildOrder()) ? editOrder.getParentOrder() : editOrder
+                );
+
+        Set<String> sapOrderIDsToExclude = new HashSet<>();
+
+        double value = 0d;
+
+        for (OrderValue orderValue : calculatedValues.getValue()) {
+            value += orderValue.getValue().doubleValue();
+            sapOrderIDsToExclude.add(orderValue.getSapOrderID());
+        }
+
+
+        return value + getValueOfOpenOrders(ordersWithCommonQuote, foundQuote, sapOrderIDsToExclude);
     }
 
     /**
@@ -874,14 +891,22 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @param quote
      * @return Total dollar amount which equates to the monitary value of all orders given
      */
-    double getValueOfOpenOrders(List<ProductOrder> ordersWithCommonQuote, Quote quote) throws InvalidProductException {
+    double getValueOfOpenOrders(List<ProductOrder> ordersWithCommonQuote, Quote quote,
+                                Collection<String> exclusionSapOrders)
+            throws InvalidProductException {
         double value = 0d;
 
         Set<ProductOrder> justParents = new HashSet<>();
         for (ProductOrder order : ordersWithCommonQuote) {
             if(order.isChildOrder()) {
+                if(order.getParentOrder().isSavedInSAP() && exclusionSapOrders.contains(order.getParentOrder().getSapOrderNumber())) {
+                    continue;
+                }
                 justParents.add(order.getParentOrder());
             } else {
+                if(order.isSavedInSAP() && exclusionSapOrders.contains(order.getSapOrderNumber())) {
+                    continue;
+                }
                 justParents.add(order);
             }
         }
@@ -1250,7 +1275,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 item.put("fundsRemaining", NumberFormat.getCurrencyInstance().format(fundsRemaining));
                 item.put("status", quote.getApprovalStatus().getValue());
 
-                double outstandingOrdersValue = estimateOutstandingOrders(quoteIdentifier, quote);
+                double outstandingOrdersValue = estimateOutstandingOrders(quote);
                 item.put("outstandingEstimate",  NumberFormat.getCurrencyInstance().format(
                         outstandingOrdersValue));
                 JSONArray fundingDetails = new JSONArray();
@@ -1575,7 +1600,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
         } catch (QuoteNotFoundException e) {
             addGlobalValidationError("The quote ''{2}'' was not found ", editOrder.getQuoteId());
-        } catch (InvalidProductException ipe) {
+        } catch (InvalidProductException | SAPIntegrationException ipe) {
             addGlobalValidationError("Unable to determine the existing value of open orders for " + editOrder.getQuoteId() +": " +ipe.getMessage());
         }
         if (chipDefaults != null && attributes != null) {
@@ -2350,7 +2375,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", editOrder.getQuoteId(), e.getMessage());
         } catch (QuoteNotFoundException e) {
             addGlobalValidationError("The quote ''{2}'' was not found ", editOrder.getQuoteId());
-        } catch (InvalidProductException e) {
+        } catch (InvalidProductException | SAPIntegrationException e) {
             addGlobalValidationError("Unable to determine the existing value of open orders for " + editOrder.getQuoteId() +": " +e.getMessage());
         }
     }

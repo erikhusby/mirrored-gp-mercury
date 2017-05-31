@@ -17,6 +17,9 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.sap.entity.Condition;
+import org.broadinstitute.sap.entity.OrderCalculatedValues;
+import org.broadinstitute.sap.entity.OrderCriteria;
 import org.broadinstitute.sap.entity.SAPDeliveryDocument;
 import org.broadinstitute.sap.entity.SAPDeliveryItem;
 import org.broadinstitute.sap.entity.SAPMaterial;
@@ -28,6 +31,9 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Inject;
 import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 @Impl
@@ -201,6 +207,12 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         }
     }
 
+    protected SAPOrderItem getOrderItem(ProductOrder placedOrder, Product product) {
+
+            return new SAPOrderItem(product.getPartNumber(), getSampleCount(placedOrder, product));
+    }
+
+
     public static int getSampleCount(ProductOrder placedOrder, Product product) {
 
         int sampleCount = 0;
@@ -327,13 +339,56 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     @Override
     public Set<SAPMaterial> findProductsInSap() throws SAPIntegrationException {
 
-
         final Set<SAPMaterial> materials =
                 getClient().findMaterials(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getPlant(),
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
         materials.addAll(getClient().findMaterials(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getPlant(),
                 SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization()));
         return materials;
+    }
+
+    @Override
+    public OrderCalculatedValues calculateOpenOrderValues(ProductOrder productOrder) throws SAPIntegrationException {
+        OrderCriteria potentialOrderCriteria = null;
+            potentialOrderCriteria = generateOrderCriteria(productOrder);
+        return getClient().calculateOrderValues(productOrder.getQuoteId(),
+                SapIntegrationClientImpl.SystemIdentifier.MERCURY, potentialOrderCriteria);
+    }
+
+    protected OrderCriteria generateOrderCriteria(ProductOrder productOrder) throws SAPIntegrationException {
+
+        final Set<SAPOrderItem> sapOrderItems = new HashSet<>();
+        final Map<Condition, String> conditionStringMap = Collections.emptyMap();
+        sapOrderItems.add(getOrderItem(productOrder, productOrder.getProduct() ));
+        for (ProductOrderAddOn productOrderAddOn : productOrder.getAddOns()) {
+            sapOrderItems.add(getOrderItem(productOrder, productOrderAddOn.getAddOn()));
+        }
+
+        Quote foundQuote = null;
+        try {
+            foundQuote = quoteService.getQuoteByAlphaId(productOrder.getQuoteId());
+        } catch (QuoteServerException | QuoteNotFoundException e) {
+            throw new SAPIntegrationException("Unable to get information for the Quote from the quote server", e);
+        }
+        FundingLevel fundingLevel = foundQuote.getFirstRelevantFundingLevel();
+
+        if (fundingLevel == null) {
+            // Too many funding sources to allow this to work with SAP.  Keep using the Quote Server as the definition
+            // of funding
+            throw new SAPIntegrationException(
+                    "Unable to continue with SAP.  The associated quote has either too few or too many funding sources");
+        }
+
+        String customerNumber;
+        if (fundingLevel.getFunding().getFundingType().equals(Funding.PURCHASE_ORDER)) {
+            customerNumber = findCustomer(determineCompanyCode(productOrder), fundingLevel);
+        } else {
+            customerNumber = SapIntegrationClientImpl.INTERNAL_ORDER_CUSTOMER_NUMBER;
+        }
+
+        return new OrderCriteria(customerNumber,
+                //This will probably change with the implementation of the product/pricing caching and/or selling a product from both research and external
+                determineCompanyCode(productOrder), sapOrderItems, conditionStringMap);
     }
 
     /**
