@@ -1983,26 +1983,32 @@ public class ProductOrderActionBean extends CoreActionBean {
                     ObjectMapper objectMapper = new ObjectMapper();
                     objectMapper.setSerializationInclusion(JsonSerialize.Inclusion.ALWAYS);
                     objectMapper.configure(JsonGenerator.Feature.QUOTE_FIELD_NAMES, true);
-//                    objectMapper.configure(SerializationConfig.Feature.WRITE_EMPTY_JSON_ARRAYS, true);
                     objectMapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, false);
 
                     OutputStream outputStream = response.getOutputStream();
                     jsonGenerator = jsonFactory.createJsonGenerator(outputStream);
                     jsonGenerator.setCodec(objectMapper);
                     jsonGenerator.writeStartObject();
-                    jsonGenerator.writeArrayFieldStart("data");
+                    jsonGenerator.writeObjectField(ProductOrderSampleBean.RECORDS_TOTAL, editOrder.getSamples().size());
+                    jsonGenerator.writeArrayFieldStart(ProductOrderSampleBean.DATA_FIELD);
                     int tableLength = state.getEnd();
                     int end = tableLength < samples.size() ? tableLength : samples.size();
+                    int rowsWithSampleData=0;
                     if (initialLoad){
                         List<ProductOrderSample> firstPage = new ArrayList<>(samples.subList(state.getStart(), end));
                         List<ProductOrderSample> otherPages = new ArrayList<>(samples);
                         otherPages.removeAll(firstPage);
                         writeProductOrderSampleBean(jsonGenerator, firstPage, true, preferenceSaver);
+                        rowsWithSampleData = firstPage.size();
                         writeProductOrderSampleBean(jsonGenerator, otherPages, false, preferenceSaver);
                     } else {
+                        if (withSampleData) {
+                            rowsWithSampleData = samples.size();
+                        }
                         writeProductOrderSampleBean(jsonGenerator, samples, withSampleData, preferenceSaver);
                     }
                     jsonGenerator.writeEndArray();
+                    jsonGenerator.writeObjectField(ProductOrderSampleBean.SAMPLE_DATA_ROW_COUNT, rowsWithSampleData);
                     if ((!initialLoad && includeSampleSummary) || (initialLoad && end <= tableLength)) {
                         ProductOrder.loadSampleData(samples);
                         List<String> comments = new ArrayList<>();

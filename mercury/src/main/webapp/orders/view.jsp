@@ -47,22 +47,29 @@
         th.no-min-width {
             min-width: initial !important;
         }
+        .ui-widget-header{
+            border: 1px solid #B9ECB3;
+            background: #B9ECB3;
+            height: 15px;
+        }
+        .sampleDataProgressText{
+            position: absolute;
+            margin-left: 1em;
+            font-style: oblique;
+        }
+        .ui-progressbar { height:19px}
         #sampleData_info {font-weight: bold}
     </style>
-    <script src="${ctxpath}/resources/scripts/columnSelect.js"></script>
-    <script src="${ctxpath}/resources/scripts/chosen_v1.6.2/chosen.jquery.min.js" type="text/javascript"></script>
-
 <script type="text/javascript">
 var kitDefinitionIndex = 0;
 
 $j(document).ready(function () {
-    $j('body').popover({selector:'[rel=popover]'});
+    $j('body').popover({selector: '[rel=popover]'});
 //    if ($j("#sampleData tbody>tr").length > 0) {
     enableDefaultPagingOptions();
     function loadBspData(settings) {
         var api = new $j.fn.dataTable.Api(settings);
         var table = api.table();
-//        table.rows().draw();
         var remainingSamples = [];
         table.column(0).data().each(function (cell) {
             remainingSamples.push($j(cell)[0]);
@@ -72,13 +79,13 @@ $j(document).ready(function () {
     }
 
     function sampleInfoBatchUpdate(samplesToFetch, settings) {
-        if (samplesToFetch.length===0){
+        if (samplesToFetch.length === 0) {
             return;
         }
         var table = new $j.fn.dataTable.Api(settings).table();
-        samplesToFetch.splice(table.page.info().start, table.page.info().end);
-        var maxFetchSize = 1000;
+        var maxFetchSize = 500;
         if (samplesToFetch.length > maxFetchSize) {
+
             // set the fetch size to be divisible by maxFetchSize, rounded down.
             fetchSize = Math.floor(samplesToFetch.length / 2 / maxFetchSize) * maxFetchSize;
             var parallelFetchSamples = samplesToFetch.splice(0, fetchSize);
@@ -86,15 +93,15 @@ $j(document).ready(function () {
         }
         updateSampleInformation(samplesToFetch, table, maxFetchSize, true);
     }
-
     var oTable = $j('#sampleData').dataTable({
+        'dom': "<'row-fluid'<'span12'f>><'row-fluid'<'span5'l><'span2 sampleDataProgress'><'span5 pull-right'<'pull-right'B>>>rt<'row-fluid'<'span6'l><'span6 pull-right'p>>",
         'paging': true,
         "deferRender": true,
         'colReorder': {
             fixedColumnsLeft: 2
         },
             "stateSave": true,
-            "pageLength": 50,
+            "pageLength": 100,
             'orderable': true,
             'rowId': "<%= ProductOrderSampleBean.UNIQUE_ROW_IDENTIFIER %>",
             'buttons': [{
@@ -120,11 +127,14 @@ $j(document).ready(function () {
                     },
                 complete: function (json) {
                     var data = json.responseJSON;
-                    if (data.comments) {
+                    var rowsWithSampleData = data['<%=ProductOrderSampleBean.SAMPLE_DATA_ROW_COUNT%>'];
+                    var recordsTotal = data['<%=ProductOrderSampleBean.RECORDS_TOTAL%>'];
+                    initSampleDataProgress(rowsWithSampleData, recordsTotal);
+                    if (data['<%=ProductOrderSampleBean.COMMENT%>']) {
                         writeSummaryData(data);
                     }
-                    if (data.numberSamplesNotReceived) {
-                        $j("#numberSamplesNotReceived").html(data.numberSamplesNotReceived);
+                    if (data['<%=ProductOrderSampleBean.SAMPLES_NOT_RECEIVED%>']) {
+                        $j("#numberSamplesNotReceived").html(data['<%=ProductOrderSampleBean.SAMPLES_NOT_RECEIVED%>']);
                     }
                 },
             },
@@ -585,8 +595,56 @@ function writeSummaryData(json) {
     $j('#summaryId').html(dataList);
 }
 
+function getSampleDataPctComplete($progressBar){
+    var currentValue  = $progressBar.progressbar('value');
+    var maxValue  = $progressBar.progressbar('option', 'max');
+    if (maxValue===0){
+        return 0;
+    }
+    return Math.floor(currentValue * 100 / maxValue);
+
+}
+function updateSampleDataProgress(incrementalValue, maxValue) {
+    var $progressBar = $j(".sampleDataProgress .sampleDataProgressBar").progressbar('widget');
+    var fetched = incrementalValue;
+    var currentValue = $progressBar.progressbar('value');
+    if (currentValue !== undefined) {
+        fetched += currentValue;
+        if (fetched > maxValue) {
+            fetched = maxValue;
+        }
+    }
+    $progressBar.progressbar('option', 'max', maxValue);
+    $progressBar.progressbar('value', fetched);
+}
+
+function initSampleDataProgress(value, maxValue) {
+    var $progressDiv = $j(".sampleDataProgress .sampleDataProgressBar");
+    var $progressBar;
+    var $sampleDataText;
+    if ($progressDiv.length === 0) {
+        $progressDiv = $j("<div></div>", {class: 'sampleDataProgressBar'}).appendTo($j(".sampleDataProgress"));
+        $sampleDataText = $j("<div></div>", {class: 'sampleDataProgressText'}).appendTo($progressDiv);
+    }
+    $progressBar = $progressDiv.progressbar({
+        value: 0,
+        max: maxValue,
+        change: function () {
+            pctComplete = getSampleDataPctComplete($progressBar);
+            $sampleDataText.text("Loading Sample Data: " + pctComplete + "% Complete");
+        },
+        complete: function () {
+            setTimeout(function () {
+                $j(".sampleDataProgress").fadeOut({'duration': 800});
+            }, 1000);
+        }
+    });
+    $progressBar.progressbar('value', value);
+}
+
 function updateSampleInformation(samples, table, maxFetchSize, includeSampleSummary) {
         var fetchSize = samples.length < maxFetchSize ? samples.length : maxFetchSize;
+        recordsTotal = table.page.info().recordsTotal;
         console.log("fetching " + fetchSize + " samples of " + samples.length + " " + samples[0] + "..." + samples[fetchSize - 1]);
         $j.ajax({
             url: "${ctxpath}/orders/order.action?<%= ProductOrderActionBean.GET_SAMPLE_DATA %>",
@@ -610,12 +668,13 @@ function updateSampleInformation(samples, table, maxFetchSize, includeSampleSumm
                         var newData = dataMap[this.data().rowId];
                         if (newData) {
                             this.data(newData);
+                            this.invalidate();
                         }
-                        this.invalidate();
                     });
                     if (json.comments) {
                         writeSummaryData(json);
                     }
+                    updateSampleDataProgress(json.rowsWithSampleData, json.recordsTotal);
                     if (json.numberSamplesNotReceived) {
                         $j("#numberSamplesNotReceived").html(json.numberSamplesNotReceived);
                     }
@@ -1675,11 +1734,17 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
 
     </div>
 
-    <div id="summaryId" class="fourcolumn" style="margin-bottom:10px;">
-        <img src="${ctxpath}/images/spinner.gif" alt=""/> Sample Summary
-    </div>
-
     <c:if test="${not empty actionBean.editOrder.samples}">
+        <div id="summaryId" class="fourcolumn" style="margin-bottom:10px;">
+            <img src="${ctxpath}/images/spinner.gif" alt=""/> Sample Summary
+        </div>
+
+        <%--<div id="progressWrapper" style="display:none;">--%>
+            <%--<div class="progress">--%>
+                <%--<div class="progress bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"--%>
+                     <%--style="width:70%"></div>--%>
+            <%--</div>--%>
+        <%--</div>--%>
         <table id="sampleData" class="table display simple compact">
             <thead>
             <tr>
