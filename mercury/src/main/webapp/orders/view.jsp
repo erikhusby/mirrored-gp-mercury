@@ -55,6 +55,7 @@
         .sampleDataProgressText{
             position: absolute;
             margin-left: 1em;
+            font-size: small;
             font-style: oblique;
         }
         .ui-progressbar { height:19px}
@@ -605,7 +606,11 @@ function getSampleDataPctComplete($progressBar){
 
 }
 function updateSampleDataProgress(incrementalValue, maxValue) {
-    var $progressBar = $j(".sampleDataProgress .sampleDataProgressBar").progressbar('widget');
+    var $progressDiv = $j(".sampleDataProgress .sampleDataProgressBar");
+    if ($progressDiv.length === 0){
+        return;
+    }
+    var $progressBar = $progressDiv.progressbar('widget');
     var fetched = incrementalValue;
     var currentValue = $progressBar.progressbar('value');
     if (currentValue !== undefined) {
@@ -624,7 +629,7 @@ function initSampleDataProgress(value, maxValue) {
     var $sampleDataText;
     if ($progressDiv.length === 0) {
         $progressDiv = $j("<div></div>", {class: 'sampleDataProgressBar'}).appendTo($j(".sampleDataProgress"));
-        $sampleDataText = $j("<div></div>", {class: 'sampleDataProgressText'}).appendTo($progressDiv);
+        $sampleDataText = $j("<span></span>", {class: 'sampleDataProgressText'}).appendTo($progressDiv);
     }
     $progressBar = $progressDiv.progressbar({
         value: 0,
@@ -636,7 +641,7 @@ function initSampleDataProgress(value, maxValue) {
         complete: function () {
             setTimeout(function () {
                 $j(".sampleDataProgress").fadeOut({'duration': 800});
-            }, 1000);
+            }, 5000);
         }
     });
     $progressBar.progressbar('value', value);
