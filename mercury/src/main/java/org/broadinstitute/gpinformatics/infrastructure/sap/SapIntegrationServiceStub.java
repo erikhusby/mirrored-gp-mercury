@@ -8,6 +8,8 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.sap.entity.Condition;
 import org.broadinstitute.sap.entity.DeliveryCondition;
+import org.broadinstitute.sap.entity.OrderCalculatedValues;
+import org.broadinstitute.sap.entity.OrderValue;
 import org.broadinstitute.sap.entity.SAPMaterial;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
@@ -293,5 +295,10 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
         }
 
         return sapMaterials;
+    }
+
+    @Override
+    public OrderCalculatedValues calculateOpenOrderValues(ProductOrder productOrder) throws SAPIntegrationException {
+        return new OrderCalculatedValues(BigDecimal.ONE, Collections.<OrderValue>emptySet());
     }
 }

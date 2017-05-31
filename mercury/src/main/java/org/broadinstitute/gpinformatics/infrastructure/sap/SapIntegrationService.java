@@ -4,11 +4,11 @@ import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
+import org.broadinstitute.sap.entity.OrderCalculatedValues;
 import org.broadinstitute.sap.entity.SAPMaterial;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 
-import javax.annotation.Nonnull;
 import java.math.BigDecimal;
 import java.util.Set;
 
@@ -81,4 +81,6 @@ public interface SapIntegrationService {
     void changeProductInSAP(Product product) throws SAPIntegrationException;
 
     Set<SAPMaterial> findProductsInSap() throws SAPIntegrationException;
+
+    OrderCalculatedValues calculateOpenOrderValues(ProductOrder productOrder) throws SAPIntegrationException;
 }
