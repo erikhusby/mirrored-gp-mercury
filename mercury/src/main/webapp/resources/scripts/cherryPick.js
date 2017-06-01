@@ -34,7 +34,7 @@ $(document).ready(function () {
     */
 
     var maxRackSize = $( "[id^=src_TABLE] td").length;
-    var sourceElementIndex = $j(".sourceElements").length;
+    var sourceIndexRegex = /stationEvents\[[0-9]*].source\[([0-9]*)]/;
 
     /** @namespace jsPlumb */
     jsPlumb.ready(function () {
@@ -138,8 +138,16 @@ $(document).ready(function () {
 
                 var sourceElementsDiv = $j("#cherryPickSourceElements");
                 for(var buttonIndex = 0; buttonIndex < maxButtons; buttonIndex++) {
-                    var namePrefix = "<input type='text' readonly name='stationEvents[" +
-                            targetContainer.getAttribute("data-event-index") + "].source[" + sourceElementIndex + "]";
+                    var eventIndex = targetContainer.getAttribute("data-event-index");
+                    var lastSourceElementForEvent = $j(".sourceElements input[name^='stationEvents\\[" + eventIndex +
+                            "]").last();
+                    var sourceElementIndex = 0;
+                    if (lastSourceElementForEvent.length > 0) {
+                        var match = sourceIndexRegex.exec(lastSourceElementForEvent[0].getAttribute("name"));
+                        sourceElementIndex = parseInt(match[1]) + 1;
+                    }
+                    var namePrefix = "<input type='text' readonly name='stationEvents[" + eventIndex + "].source[" +
+                            sourceElementIndex + "]";
                     sourceElementIndex++;
                     var div = $j("<div class='sourceElements'>");
                     var sourceButton = sourceButtons[Math.min(buttonIndex, sourceButtons.length - 1)];
