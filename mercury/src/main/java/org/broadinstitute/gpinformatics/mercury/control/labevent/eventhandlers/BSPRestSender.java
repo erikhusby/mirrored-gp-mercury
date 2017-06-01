@@ -17,6 +17,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.BSPRestClient;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
@@ -38,10 +42,32 @@ public class BSPRestSender implements Serializable {
 
     public void postToBsp(BettaLIMSMessage message, String bspRestUrl) {
 
-        // Posts message to BSP using the specified REST url.
+        // Forward only the events that are for BSP, e.g. Blood Biopsy extraction from blood to plasma and buffy coat
+        // is two events in one message, but only one is configured to forward to BSP.
+        BettaLIMSMessage copy = new BettaLIMSMessage();
         String urlString = bspRestClient.getUrl(bspRestUrl);
         WebResource webResource = bspRestClient.getWebResource(urlString);
-        ClientResponse response = webResource.type(MediaType.APPLICATION_XML).post(ClientResponse.class, message);
+        for (PlateCherryPickEvent plateCherryPickEvent : message.getPlateCherryPickEvent()) {
+            if(LabEventType.getByName(plateCherryPickEvent.getEventType()).getForwardMessage() ==
+                    LabEventType.ForwardMessage.BSP) {
+                copy.getPlateCherryPickEvent().add(plateCherryPickEvent);
+            }
+        }
+        for (PlateTransferEventType plateTransferEventType : message.getPlateTransferEvent()) {
+            if(LabEventType.getByName(plateTransferEventType.getEventType()).getForwardMessage() ==
+                    LabEventType.ForwardMessage.BSP) {
+                copy.getPlateTransferEvent().add(plateTransferEventType);
+            }
+        }
+        for (ReceptacleTransferEventType receptacleTransferEventType : message.getReceptacleTransferEvent()) {
+            if(LabEventType.getByName(receptacleTransferEventType.getEventType()).getForwardMessage() ==
+                    LabEventType.ForwardMessage.BSP) {
+                copy.getReceptacleTransferEvent().add(receptacleTransferEventType);
+            }
+        }
+
+        // Posts message to BSP using the specified REST url.
+        ClientResponse response = webResource.type(MediaType.APPLICATION_XML).post(ClientResponse.class, copy);
 
         // This is called in context of bettalims message handling which handles errors via RuntimeException.
         if (response.getClientResponseStatus().getFamily() != Response.Status.Family.SUCCESSFUL) {
