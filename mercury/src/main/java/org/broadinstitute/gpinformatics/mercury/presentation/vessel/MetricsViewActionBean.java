@@ -8,6 +8,7 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationMethod;
+import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -52,6 +53,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 
 @UrlBinding(value = "/view/metricsView.action")
@@ -283,19 +285,22 @@ public class MetricsViewActionBean extends CoreActionBean {
     public PlateMap buildInfiniumMetricsTable(StaticPlate staticPlate) throws IOException {
         boolean isHybChip = false;
         Set<LabVessel> chips = new HashSet<>();
-        Set<String> chipWellBarcodes = new HashSet<>();
-        Map<String, String> chipWellToSourcePosition = new HashMap<>();
+        Map<String, String> chipWellToSourcePosition;
         Set<String> chipTypes = barcodeToChipTypes.get(staticPlate.getLabel());
         Set<ProductOrder> productOrders = barcodeToProductOrders.get(staticPlate.getLabel());
         GenotypingChip genotypingChip = barcodeToGenotypingChip.get(staticPlate.getLabel());
         boolean isClinical = barcodeToIsClinical.get(staticPlate.getLabel());
         Set<String> allPositionNames = Sets.newHashSet(staticPlate.getVesselGeometry().getPositionNames());
-        Set<LabEvent> hybEvents = new HashSet<>();
+        Set<LabEvent> hybEvents = new TreeSet<>(LabEvent.BY_EVENT_DATE);
         if (staticPlate.getVesselGeometry().name().contains("CHIP")) {
             chips.add(staticPlate);
             hybEvents.addAll(staticPlate.getTransfersTo());
             isHybChip = true;
+            chipWellToSourcePosition = new HashMap<>();
         } else {
+            // Positions on Amp plates or DNA plates should only be mapped to the latest chip well (re-hyb)
+            // The event list sorted ascending overwrites older map positions to chip well barcode
+            chipWellToSourcePosition = new DualHashBidiMap<>();
             List<LabEventType> infiniumRootEventTypes =
                     Collections.singletonList(LabEventType.INFINIUM_HYBRIDIZATION);
             TransferTraverserCriteria.VesselForEventTypeCriteria eventTypeCriteria
@@ -317,7 +322,7 @@ public class MetricsViewActionBean extends CoreActionBean {
             }
         }
         if (chips.isEmpty()) {
-            addValidationError("labVesselIdentifier", "No infinium metrics found for lab vessel");
+            addValidationError("labVesselIdentifier", "No infinium chips found for vessel " + staticPlate.getLabel());
             return null;
         }
 
@@ -328,7 +333,6 @@ public class MetricsViewActionBean extends CoreActionBean {
                 VesselPosition destinationPosition = cherryPickTransfer.getTargetPosition();
                 LabVessel chip = cherryPickTransfer.getTargetVesselContainer().getEmbedder();
                 String chipWellBarcode = chip.getLabel() + "_" + destinationPosition.name();
-                chipWellBarcodes.add(chipWellBarcode);
                 if (isHybChip) {
                     chipWellToSourcePosition.put(chipWellBarcode, destinationPosition.name());
                 } else {
@@ -337,7 +341,7 @@ public class MetricsViewActionBean extends CoreActionBean {
             }
         }
 
-        List<ArraysQc> arraysQcList = arraysQcDao.findByBarcodes(new ArrayList<>(chipWellBarcodes));
+        List<ArraysQc> arraysQcList = arraysQcDao.findByBarcodes(new ArrayList<>(chipWellToSourcePosition.keySet()));
         if (arraysQcList.isEmpty()) {
             addGlobalValidationError("Failed to find any Arrays QC data for vessel " + staticPlate.getLabel());
             return null;
