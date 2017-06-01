@@ -43,7 +43,7 @@
                     var parentForm = $j(element).closest('form');
                     var timeRepeated = 0;
                     if (value != '') {
-                        $j(parentForm.find(':text')).each(function () {
+                        $j(parentForm.find(':text.unique')).each(function () {
                             if ($j(this).val() === value) {
                                 timeRepeated++;
                             }
@@ -300,11 +300,29 @@
                         <stripes:submit name="fetchExisting" value="Validate Barcodes" class="btn"/>
                         <stripes:submit name="transfer" value="${actionBean.manualTransferDetails.buttonValue}"
                                 class="btn btn-primary"/>
+                        <%-- todo jmt why does this require server roundtrip? --%>
                         <c:if test="${stationEvent.class.simpleName.equals('PlateCherryPickEvent')}">
                             <stripes:submit value="Clear Cherry Picks" id="ClearConnectionsButton" name="ClearConnectionsButton"  class="btn"/>
                         </c:if>
                         <input type="button" onclick="$('.clearable').each(function (){$(this).val('');});" value="Clear non-reagent fields" class="btn">
 
+                        <div id="cherryPickSourceElements">
+                            <c:forEach items="${actionBean.stationEvents}" var="stationEvent" varStatus="stationEventStatus">
+                                <c:if test="${stationEvent.class.simpleName == 'PlateCherryPickEvent'}">
+                                    <c:set var="plateCherryPickEvent" value="${stationEvent}"/>
+                                    <%--@elvariable id="plateCherryPickEvent" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent"--%>
+                                    <c:forEach items="${plateCherryPickEvent.source}" var="sourceElement" varStatus="sourceStatus">
+                                        <c:set var="namePrefix" value="stationEvents[${stationEventStatus.index}].source[${sourceStatus.index}]"/>
+                                        <div class="sourceElements">
+                                            <input type="text" readonly name="${namePrefix}.barcode" value="${sourceElement.barcode}"/>
+                                            <input type="text" readonly name="${namePrefix}.well" value="${sourceElement.well}"/>->
+                                            <input type="text" readonly name="${namePrefix}.destinationBarcode" value="${sourceElement.destinationBarcode}"/>
+                                            <input type="text" readonly name="${namePrefix}.destinationWell" value="${sourceElement.destinationWell}"/>
+                                        </div>
+                                    </c:forEach>
+                                </c:if>
+                            </c:forEach>
+                        </div>
                     </c:if>
                 </stripes:form>
             </c:otherwise>

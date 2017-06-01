@@ -58,20 +58,16 @@ plate / rack.
 
 </style>
 
-
-<div class="control-group" id="container0">
+<%-- todo jmt id is not unique --%>
+<div class="control-group vessel-container" id="container0" data-direction="${source ? "src" : "dest"}" data-event-index="${stationEventIndex}">
     <label>Type </label>${plate[0].physType}
     <input type="hidden" name="stationEvents[${stationEventIndex}].${source ? 'sourcePlate[0]' : 'plate[0]'}.physType"
            value="${plate[0].physType}"/>
-    <c:if test="${vesselTypeGeometry.barcoded}">
-        <label for="${source ? 'src' : 'dst'}PltBcd${stationEventIndex}">Barcode</label>
-        <input type="text" id="${source ? 'src' : 'dst'}PltBcd${stationEventIndex}" autocomplete="off"
-               name="stationEvents[${stationEventIndex}].${source ? 'sourcePlate[0]' : 'plate[0]'}.barcode"
-               value="${plate[0].barcode}" class="clearable barcode unique" ${stationEventIndex == 0 ? "required" : ""}/>
-    </c:if>
-    <input type="hidden" id="dataSrc" name="srcPos" value="A1">
-    <input type="hidden" id="dataDest" name="destPos" value="A1">
-    <input type="hidden" id="dataDestList" name="destPosList" value="${actionBean.getConnectionPositions()}">
+
+    <label for="${source ? 'src' : 'dst'}PltBcd${stationEventIndex}">Barcode</label>
+    <input type="text" ${vesselTypeGeometry.barcoded ? "" : "readonly"} id="${source ? 'src' : 'dst'}PltBcd${stationEventIndex}" autocomplete="off"
+           name="stationEvents[${stationEventIndex}].${source ? 'sourcePlate[0]' : 'plate[0]'}.barcode"
+           value="${plate[0].barcode}" class="container-barcode ${vesselTypeGeometry.barcoded ? "clearable" : ""} barcode unique" ${stationEventIndex == 0 ? "required" : ""}/>
 
     <c:if test="${stationEvent.class.simpleName == 'PlateCherryPickEvent'}">
         <div style="display: none;">
@@ -111,6 +107,7 @@ plate / rack.
             Or hand scan 2D barcodes.
 
         </c:if>
+        <%-- todo jmt id is not unique --%>
         <table id="${source ? 'src' : 'dest'}_TABLE_${vesselTypeGeometry.vesselGeometry}">
               <c:forEach items="${geometry.rowNames}" var="rowName" varStatus="rowStatus">
                 <c:if test="${rowStatus.first}">
@@ -122,7 +119,7 @@ plate / rack.
                     </tr>
                 </c:if>
                 <tr>
-                    <td>${rowName} </br><button id="btn_${source ? 'src' : 'dest'}_row_${rowName}" type="button" class="btn btn-primary btn-xs xs-row" tabindex="0">Select</button></td>
+                    <td>${rowName} </br><button id="btn_${source ? 'src' : 'dest'}_row_${rowName}" type="button" class="btn btn-primary btn-xs xs-row" tabindex="-1">Select</button></td>
                     <c:set var="volumeType"
                             value="${(source && actionBean.labEventType.manualTransferDetails.sourceVolume()) || (!source && actionBean.labEventType.manualTransferDetails.targetVolume()) ? 'text' : 'hidden'}"/>
                     <c:forEach items="${geometry.columnNames}" var="columnName" varStatus="columnStatus">
@@ -139,7 +136,7 @@ plate / rack.
                                    value="${geometry.vesselPositions[receptacleIndex]}"/>
                             <input type="hidden"
                                     name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap' : 'positionMap'}[0].receptacle[${receptacleIndex}].receptacleType"
-                                    value="${source ? actionBean.labEventType.manualTransferDetails.sourceBarcodedTubeType : actionBean.labEventType.manualTransferDetails.targetBarcodedTubeType}"/>
+                                    value="${source ? actionBean.labEventTypeByIndex(stationEventIndex).manualTransferDetails.sourceBarcodedTubeType : actionBean.labEventTypeByIndex(stationEventIndex).manualTransferDetails.targetBarcodedTubeType}"/>
                             <c:if test="${volumeType == 'text'}">
                                 </br>
                             </c:if>
@@ -154,7 +151,7 @@ plate / rack.
                                         value="${actionBean.labEventType.resultingMaterialType.displayName}"/>
                             </c:if>
                             </br>
-                            <button id="${rowName}${columnName}_${source ? 'src' : 'dest'}_RcpBcd${stationEventIndex}_${receptacleIndex}" type="button" class= "${source ? 'src' : 'dest'}_col_${columnStatus.index} ${source ? 'src' : 'dest'}_row_${rowStatus.index} btn btn-primary btn-xs" disabled>Select</button>
+                            <button data-position="${rowName}${columnName}" id="${rowName}${columnName}_${source ? 'src' : 'dest'}_RcpBcd${stationEventIndex}_${receptacleIndex}" type="button" class= "${source ? 'src' : 'dest'}_col_${columnStatus.index} ${source ? 'src' : 'dest'}_row_${rowStatus.index} btn btn-primary btn-xs" disabled tabindex="-1">Select</button>
                         </td>
                     </c:forEach>
                 </tr>
