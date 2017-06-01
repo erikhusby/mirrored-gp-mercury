@@ -63,6 +63,7 @@ public class BarcodedTube extends LabVessel {
         Slide_Gates("Slide_Gates", "Slide (Gates)"),
         Slide_Large_Gates("Slide_Large_Gates", "Slide Large (Gates)"),
         SpinColumn("SpinColumn", "Spin Column Tube"),
+        StripTube("StripTube", "Strip Tube"),
         TissueCassette("TissueCassette", "Tissue Cassette"),
         Tissue_Culture_Plate_6("Tissue_Culture_Plate_6", "Tissue Culture Plate 6-well"),
         Tissue_Culture_Plate_12("Tissue_Culture_Plate_12", "Tissue Culture Plate 12-well"),
