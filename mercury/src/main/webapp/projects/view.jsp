@@ -44,7 +44,7 @@
                     event.preventDefault();
                     openRegulatoryInfoDialog(
                             '${actionBean.editResearchProject.businessKey}',
-                            '${actionBean.editResearchProject.businessKey} - ${actionBean.editResearchProject.title}',
+                        '${actionBean.editResearchProject.businessKey} - ${actionBean.editResearchProject.webSafeTitle}',
                             function() {
                                 location.reload(true);
                             }
@@ -56,7 +56,7 @@
                     $target = $j(event.target);
                     openRegulatoryInfoEditDialog(
                             $target.attr('regulatoryInfoId'),
-                            '${actionBean.editResearchProject.businessKey} - ${actionBean.editResearchProject.title}',
+                            '${actionBean.editResearchProject.businessKey} - ${actionBean.editResearchProject.webSafeTitle}',
                             function() {
                                 location.reload(true);
                             }
