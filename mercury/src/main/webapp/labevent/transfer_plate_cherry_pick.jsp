@@ -121,7 +121,7 @@ plate / rack.
                 <tr>
                     <td>${rowName} </br><button id="btn_${source ? 'src' : 'dest'}_row_${rowName}" type="button" class="btn btn-primary btn-xs xs-row" tabindex="-1">Select</button></td>
                     <c:set var="volumeType"
-                            value="${(source && actionBean.labEventType.manualTransferDetails.sourceVolume()) || (!source && actionBean.labEventType.manualTransferDetails.targetVolume()) ? 'text' : 'hidden'}"/>
+                            value="${(source && actionBean.labEventTypeByIndex(stationEventIndex).manualTransferDetails.sourceVolume()) || (!source && actionBean.labEventTypeByIndex(stationEventIndex).manualTransferDetails.targetVolume()) ? 'text' : 'hidden'}"/>
                     <c:forEach items="${geometry.columnNames}" var="columnName" varStatus="columnStatus">
                         <c:set var="receptacleIndex"
                                 value="${rowStatus.index * geometry.columnCount + columnStatus.index}"/>
@@ -144,11 +144,11 @@ plate / rack.
                                     name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap' : 'positionMap'}[0].receptacle[${receptacleIndex}].volume"
                                     value="${actionBean.findReceptacleAtPosition(positionMap[0], geometry.vesselPositions[receptacleIndex]).volume}"
                                     class="clearable smalltext" autocomplete="off" placeholder="volume"/>
-                            <c:if test="${not empty actionBean.labEventType.resultingMaterialType && !source}">
+                            <c:if test="${not empty actionBean.labEventTypeByIndex(stationEventIndex).resultingMaterialType && !source}">
                                 <%-- This is primarily for messages forwarded to BSP --%>
                                 <input type="hidden"
                                         name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap' : 'positionMap'}[0].receptacle[${receptacleIndex}].materialType"
-                                        value="${actionBean.labEventType.resultingMaterialType.displayName}"/>
+                                        value="${actionBean.labEventTypeByIndex(stationEventIndex).resultingMaterialType.displayName}"/>
                             </c:if>
                             </br>
                             <button data-position="${rowName}${columnName}" id="${rowName}${columnName}_${source ? 'src' : 'dest'}_RcpBcd${stationEventIndex}_${receptacleIndex}" type="button" class= "${source ? 'src' : 'dest'}_col_${columnStatus.index} ${source ? 'src' : 'dest'}_row_${rowStatus.index} btn btn-primary btn-xs" disabled tabindex="-1">Select</button>
