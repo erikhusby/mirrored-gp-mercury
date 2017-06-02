@@ -221,7 +221,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private ProductFamilyDao productFamilyDao;
 
-    @Inject
     private ProductOrderDao productOrderDao;
 
     @Inject
@@ -309,7 +308,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private OrspProjectDao orspProjectDao;
 
-    @Inject
     private SapIntegrationService sapService;
 
     private List<ProductOrderListEntry> displayedProductOrderListEntries;
@@ -829,6 +827,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         double fundsRemaining = Double.parseDouble(quote.getQuoteFunding().getFundsRemaining());
         double outstandingEstimate = estimateOutstandingOrders(quote);
         double valueOfCurrentOrder = 0;
+
+        // TODO SGM  Must not account for the Current order if it is an SAP orders
+
         if(countCurrentUnPlacedOrder) {
             valueOfCurrentOrder = getValueOfOpenOrders(Collections.singletonList((editOrder.isChildOrder())?editOrder.getParentOrder():editOrder), quote, Collections.<String>emptySet());
         } else if(additionalSampleCount > 0) {
@@ -874,6 +875,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         Set<String> sapOrderIDsToExclude = new HashSet<>();
 
         double value = 0d;
+
+        value += calculatedValues.getPotentialOrderValue().doubleValue();
 
         for (OrderValue orderValue : calculatedValues.getValue()) {
             value += orderValue.getValue().doubleValue();
@@ -3383,6 +3386,16 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     public void setProductOrderEjb(ProductOrderEjb productOrderEjb) {
         this.productOrderEjb = productOrderEjb;
+    }
+
+    @Inject
+    protected void setProductOrderDao(ProductOrderDao productOrderDao) {
+        this.productOrderDao = productOrderDao;
+    }
+
+    @Inject
+    protected void setSapService(SapIntegrationService sapService) {
+        this.sapService = sapService;
     }
 
     @HandlesEvent(SAVE_SEARCH_DATA)
