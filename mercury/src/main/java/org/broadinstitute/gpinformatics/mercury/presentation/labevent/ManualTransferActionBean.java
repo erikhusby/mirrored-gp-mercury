@@ -241,6 +241,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     PlateEventType plateEventType = (PlateEventType) stationEvent;
                     PlateType plateType = new PlateType();
                     VesselTypeGeometry vesselTypeGeometry = manualTransferDetails.getTargetVesselTypeGeometry();
+                    assignSyntheticBarcode(plateType, vesselTypeGeometry,
+                            manualTransferDetails.getSourceContainerPrefix());
                     plateType.setPhysType(vesselTypeGeometry.getDisplayName());
                     plateEventType.setPlate(plateType);
                     if (vesselTypeGeometry instanceof RackOfTubes.RackType) {
@@ -251,6 +253,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     PlateTransferEventType plateTransferEventType = (PlateTransferEventType) stationEvent;
                     PlateType sourcePlate = new PlateType();
                     VesselTypeGeometry sourceVesselTypeGeometry = manualTransferDetails.getSourceVesselTypeGeometry();
+                    assignSyntheticBarcode(sourcePlate, sourceVesselTypeGeometry,
+                            manualTransferDetails.getSourceContainerPrefix());
                     sourcePlate.setPhysType(sourceVesselTypeGeometry.getDisplayName());
                     plateTransferEventType.setSourcePlate(sourcePlate);
                     if (sourceVesselTypeGeometry instanceof RackOfTubes.RackType) {
@@ -259,6 +263,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
                     PlateType destinationPlateType = new PlateType();
                     VesselTypeGeometry targetVesselTypeGeometry = manualTransferDetails.getTargetVesselTypeGeometry();
+                    assignSyntheticBarcode(destinationPlateType, targetVesselTypeGeometry,
+                            manualTransferDetails.getSourceContainerPrefix());
                     destinationPlateType.setPhysType(targetVesselTypeGeometry.getDisplayName());
                     plateTransferEventType.setPlate(destinationPlateType);
                     if (targetVesselTypeGeometry instanceof RackOfTubes.RackType) {
@@ -558,6 +564,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                                 Direction.SOURCE);
 
                         //Check for duplicate molecular indexes in source tubes.
+                        Set<String> set = new HashSet<>();
                         for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
                             ReceptacleType receptacleType = findReceptacleAtPosition(
                                     plateCherryPickEvent.getSourcePositionMap().get(0), cherryPickSourceType.getWell());
@@ -565,7 +572,6 @@ public class ManualTransferActionBean extends RackScanActionBean {
                             if (currentLabVessel == null) {
                                 continue;
                             }
-                            Set<String> set = new HashSet<>();
                             for (SampleInstanceV2 sample : currentLabVessel.getSampleInstancesV2()) {
                                 if (sample.getMolecularIndexingScheme() != null) {
                                     String molIndex = sample.getMolecularIndexingScheme().getName();
