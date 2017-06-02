@@ -620,6 +620,7 @@ public enum LabEventType {
                     }).
                     targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.FluidX_6mL).
                     targetContainerPrefix("BuffyCoat").
+                    targetVolume(true).
                     build(),
             LibraryType.NONE_ASSIGNED, "_BC", Metadata.Key.TUMOR_NORMAL, "Normal", MaterialType.WHOLE_BLOOD_BUFFY_COAT),
     BLOOD_PLASMA_TRANSFER("BloodPlasmaBuffyTransfer",
