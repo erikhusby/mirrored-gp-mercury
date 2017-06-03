@@ -219,6 +219,7 @@ public class IceEntityBuilder {
 
             // IceHyperPrep2ndBaitAddition (bait plate merges into 2nd hyb plate)
             LabEventTest.validateWorkflow("IceHyperPrep2ndBaitAddition", firstCapturePlate);
+            mapBarcodeToVessel.clear();
             mapBarcodeToVessel.put(baitPlate.getLabel(), baitPlate);
             mapBarcodeToVessel.put(firstCapturePlate.getLabel(), firstCapturePlate);
             LabEvent baitAdditionEvent = labEventFactory.buildFromBettaLims(
