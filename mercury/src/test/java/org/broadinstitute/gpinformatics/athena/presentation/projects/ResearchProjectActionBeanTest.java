@@ -11,7 +11,9 @@
 
 package org.broadinstitute.gpinformatics.athena.presentation.projects;
 
+import net.sourceforge.stripes.validation.ValidationErrors;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -43,6 +45,7 @@ import java.util.List;
 import static org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS;
 import static org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject.RegulatoryDesignation.GENERAL_CLIA_CAP;
 import static org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject.RegulatoryDesignation.RESEARCH_ONLY;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
@@ -56,6 +59,36 @@ public class ResearchProjectActionBeanTest extends MockServerTest {
 
     @BeforeMethod(alwaysRun = true)
     public void setUp() throws Exception {
+    }
+
+    @DataProvider(name = "titlesProvider")
+    public Iterator<Object[]> titlesProvider() {
+        List<Object[]> testCases = new ArrayList<>();
+        testCases.add(new Object[]{"foo<foo+", false});
+        testCases.add(new Object[]{"foo>foo\"", false});
+        testCases.add(new Object[]{"foo+foo\'", false});
+        testCases.add(new Object[]{"foo>foo<", false});
+        testCases.add(new Object[]{"foo+foo>", false});
+        testCases.add(new Object[]{"foo-foo+", false});
+        testCases.add(new Object[]{"foo\"foo-", false});
+        testCases.add(new Object[]{"foo", true});
+
+        return testCases.iterator();
+    }
+
+    @Test(dataProvider = "titlesProvider")
+    public void testTitleValidation(String title, boolean passesValidation) throws Exception {
+        ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject();
+        researchProject.setTitle(title);
+        ResearchProjectActionBean actionBean = new ResearchProjectActionBean();
+        actionBean.setEditResearchProject(researchProject);
+        actionBean.setContext(new TestCoreActionBeanContext());
+        ResearchProjectDao mockResearchProjectDao = Mockito.mock(ResearchProjectDao.class);
+        Mockito.when(mockResearchProjectDao.findByTitle(title)).thenReturn(null);
+        actionBean.setResearchProjectDao(mockResearchProjectDao);
+        ValidationErrors validationErrors = new ValidationErrors();
+        actionBean.createUniqueNameValidation(validationErrors);
+        assertThat(validationErrors.hasFieldErrors(), not(passesValidation));
     }
 
     @DataProvider(name = "submissionDataProvider")

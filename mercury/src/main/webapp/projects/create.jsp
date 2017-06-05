@@ -1,4 +1,4 @@
-<%@ page import="org.broadinstitute.gpinformatics.infrastructure.common.TokenInput" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -95,6 +95,16 @@
                                     autoSelectFirstResult: true
                                 }
                         );
+                        // Stripes doesn't handle html5 validation, so add the property manually via jquery
+                        $j("#title").prop('pattern', '^((?!\"|\'|\<|\>|\\+|-).)*$');
+                        $j("#title").on("keyup",function(){
+                            if (this.validity.patternMismatch){
+                                this.setCustomValidity("\", \', <, +, -, or > characters are not allowed.");
+                            }else{
+                                this.setCustomValidity("");
+                            }
+                        });
+
                     }
             );
 
