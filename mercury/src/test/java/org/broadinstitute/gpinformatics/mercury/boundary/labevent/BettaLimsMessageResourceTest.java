@@ -73,7 +73,6 @@ import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500JaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.IceJaxbBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PreFlightJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
