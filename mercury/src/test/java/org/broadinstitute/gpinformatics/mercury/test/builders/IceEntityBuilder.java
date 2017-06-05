@@ -121,7 +121,6 @@ public class IceEntityBuilder {
         StaticPlate firstHybPlate;
         if (prepType == IceJaxbBuilder.PrepType.HYPER_PREP_ICE) {
             // IceHyperPrep1stBaitPick (bait tubes to empty plate)
-            LabEventTest.validateWorkflow("IceHyperPrep1stBaitPick", spriRack);
             ReagentDesign baitDesign = new ReagentDesign("Ice Bait 1", ReagentDesign.ReagentType.BAIT);
             BarcodedTube baitTube = LabEventTest.buildBaitTube(iceJaxbBuilder.getBaitTube1Barcode(), baitDesign);
             mapBarcodeToVessel.clear();
@@ -132,7 +131,6 @@ public class IceEntityBuilder {
             StaticPlate baitPlate = (StaticPlate) baitPickEvent.getTargetLabVessels().iterator().next();
 
             // IceHyperPrep1stBaitAddition (bait plate to empty hyb plate)
-            LabEventTest.validateWorkflow("IceHyperPrep1stBaitAddition", spriRack);
             mapBarcodeToVessel.clear();
             mapBarcodeToVessel.put(baitPlate.getLabel(), baitPlate);
             LabEvent baitAdditionEvent = labEventFactory.buildFromBettaLims(
@@ -202,7 +200,6 @@ public class IceEntityBuilder {
 
         if (prepType == IceJaxbBuilder.PrepType.HYPER_PREP_ICE) {
             // IceHyperPrep2ndBaitPick (bait tubes to empty plate)
-            LabEventTest.validateWorkflow("IceHyperPrep2ndBaitPick", firstCapturePlate);
             ReagentDesign baitDesign = new ReagentDesign("Ice Bait 2", ReagentDesign.ReagentType.BAIT);
             BarcodedTube baitTube = LabEventTest.buildBaitTube(iceJaxbBuilder.getBaitTube2Barcode(), baitDesign);
             mapBarcodeToVessel.clear();
