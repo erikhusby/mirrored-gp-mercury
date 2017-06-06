@@ -42,7 +42,7 @@
             }
             var regInfoDialogDiv = $j('#addRegulatoryInfoDialog');
             regInfoDialogDiv.find('input[name=researchProjectKey]').val(rpKey);
-            regInfoDialogDiv.dialog({title: 'Add Regulatory Information for ' + rpLabel}).dialog("open");
+            regInfoDialogDiv.dialog({title: 'Add Regulatory Information for ' + decodeURIComponent(rpLabel)}).dialog("open");
         }
 
         /**

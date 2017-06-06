@@ -128,23 +128,18 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     public static final String STRIPES_ERRORS = "error";
     public static final String STRIPES_MESSAGES_KEY = "stripesMessages";
     public static final String STRIPES_MESSAGE_TYPE = "messageType";
+    public static final String DISALLOWED_CHARACTERS_ERROR = "\", \', <, +, -, or > characters are not allowed.";
 
-    @Inject
     private ResearchProjectDao researchProjectDao;
 
-    @Inject
     private BSPUserList bspUserList;
 
-    @Inject
     private BSPCohortList cohortList;
 
-    @Inject
     private ProjectTokenInput projectTokenInput;
 
-    @Inject
     private BioProjectTokenInput bioProjectTokenInput;
 
-    @Inject
     private SubmissionsService submissionsService;
 
     private List<SubmissionRepository> submissionRepositories=new ArrayList<>();
@@ -158,13 +153,10 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     private String selectedSubmissionLibraryDescriptor;
     private String selectedSubmissionRepository;
 
-    @Inject
     private RegulatoryInfoEjb regulatoryInfoEjb;
 
-    @Inject
     private SubmissionDtoFetcher submissionDtoFetcher;
 
-    @Inject
     private OrspProjectDao orspProjectDao;
 
     /**
@@ -216,7 +208,6 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     @Validate(converter = SubmissionTupleTypeConverter.class)
     private List<SubmissionTuple> selectedSubmissionTuples=new ArrayList<>();
 
-    @Inject
     private AlignerDao alignerDao;
 
     private SessionCache<List<SubmissionDto>> sessionCache;
@@ -238,37 +229,27 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     @ValidateNestedProperties(
             @Validate(field = "listOfKeys", label = "Project Managers", required = true, on = {SAVE_ACTION})
     )
-    @Inject
+
     private UserTokenInput projectManagerList;
 
-    @Inject
     private UserTokenInput scientistList;
 
-    @Inject
     private UserTokenInput externalCollaboratorList;
 
-    @Inject
     private UserTokenInput broadPiList;
 
-    @Inject
     private UserTokenInput otherUserList;
 
-    @Inject
     private FundingTokenInput fundingSourceList;
 
-    @Inject
     private CohortTokenInput cohortsList;
 
-    @Inject
     private ProductOrderDao productOrderDao;
 
-    @Inject
     private ResearchProjectEjb researchProjectEjb;
 
-    @Inject
     private CollaborationService collaborationService;
 
-    @Inject
     private ReferenceSequenceDao referenceSequenceDao;
 
     private String irbList;
@@ -281,7 +262,6 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
 
     private int rpSelectedTab = 1;
 
-    @Inject
     private BioProjectList bioProjectList;
 
     public ResearchProjectActionBean() {
@@ -420,6 +400,9 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
             ResearchProject existingProject = researchProjectDao.findByTitle(editResearchProject.getTitle());
             if (existingProject != null) {
                 errors.add("title", new SimpleError("A research project already exists with this name."));
+            }
+            if (editResearchProject.getTitle().matches(".*([\\\"|\\'\\>\\<\\+-]+).*")) {
+                errors.add("title", new SimpleError(DISALLOWED_CHARACTERS_ERROR));
             }
         }
     }
@@ -1042,6 +1025,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         return cohortsList;
     }
 
+    @Inject
     public void setCohortsList(CohortTokenInput cohortsList) {
         this.cohortsList = cohortsList;
     }
@@ -1050,6 +1034,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         return fundingSourceList;
     }
 
+    @Inject
     public void setFundingSourceList(FundingTokenInput fundingSourceList) {
         this.fundingSourceList = fundingSourceList;
     }
@@ -1058,6 +1043,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         return broadPiList;
     }
 
+    @Inject
     void setBroadPiList(UserTokenInput broadPiList) {
         this.broadPiList = broadPiList;
     }
@@ -1066,6 +1052,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         return externalCollaboratorList;
     }
 
+    @Inject
     public void setExternalCollaboratorList(UserTokenInput externalCollaboratorList) {
         this.externalCollaboratorList = externalCollaboratorList;
     }
@@ -1074,6 +1061,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         return scientistList;
     }
 
+    @Inject
     public void setScientistList(UserTokenInput scientistList) {
         this.scientistList = scientistList;
     }
@@ -1082,6 +1070,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         return projectManagerList;
     }
 
+    @Inject
     public void setProjectManagerList(UserTokenInput projectManagerList) {
         this.projectManagerList = projectManagerList;
     }
@@ -1090,6 +1079,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         return otherUserList;
     }
 
+    @Inject
     public void setOtherUserList(UserTokenInput otherUserList) {
         this.otherUserList = otherUserList;
     }
@@ -1255,7 +1245,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         return bioProjectTokenInput;
     }
 
-
+    @Inject
     public void setBioProjectTokenInput(BioProjectTokenInput bioProjectTokenInput) {
         this.bioProjectTokenInput = bioProjectTokenInput;
     }
@@ -1378,18 +1368,71 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         }
     }
 
+    @Inject
+    public void setProjectTokenInput(ProjectTokenInput projectTokenInput) {
+        this.projectTokenInput = projectTokenInput;
+    }
+
+    @Inject
+    public void setRegulatoryInfoEjb(RegulatoryInfoEjb regulatoryInfoEjb) {
+        this.regulatoryInfoEjb = regulatoryInfoEjb;
+    }
+
+    @Inject
+    public void setSubmissionDtoFetcher(SubmissionDtoFetcher submissionDtoFetcher) {
+        this.submissionDtoFetcher = submissionDtoFetcher;
+    }
+
+    @Inject
+    public void setOrspProjectDao(OrspProjectDao orspProjectDao) {
+        this.orspProjectDao = orspProjectDao;
+    }
+
+    @Inject
+    public void setAlignerDao(AlignerDao alignerDao) {
+        this.alignerDao = alignerDao;
+    }
+
+    @Inject
+    public void setProductOrderDao(ProductOrderDao productOrderDao) {
+        this.productOrderDao = productOrderDao;
+    }
+
+    @Inject
+    public void setResearchProjectEjb(ResearchProjectEjb researchProjectEjb) {
+        this.researchProjectEjb = researchProjectEjb;
+    }
+
+    @Inject
+    public void setReferenceSequenceDao(ReferenceSequenceDao referenceSequenceDao) {
+        this.referenceSequenceDao = referenceSequenceDao;
+    }
+
+    @Inject
+    public void setCohortList(BSPCohortList cohortList) {
+        this.cohortList = cohortList;
+    }
+
+    @Inject
+    public void setCollaborationService(CollaborationService collaborationService) {
+        this.collaborationService = collaborationService;
+    }
+
     void setEditResearchProject(ResearchProject editResearchProject) {
         this.editResearchProject = editResearchProject;
     }
 
+    @Inject
     void setUserBean(UserBean userBean) {
         this.userBean = userBean;
     }
 
+    @Inject
     void setBspUserList(BSPUserList bspUserList) {
         this.bspUserList = bspUserList;
     }
 
+    @Inject
     void setSubmissionsService(SubmissionsService submissionsService) {
         this.submissionsService = submissionsService;
     }
@@ -1400,6 +1443,16 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
 
     public void setSupressValidationErrors(boolean supressValidationErrors) {
         this.supressValidationErrors = supressValidationErrors;
+    }
+
+    @Inject
+    public void setResearchProjectDao(ResearchProjectDao researchProjectDao) {
+        this.researchProjectDao = researchProjectDao;
+    }
+
+    @Inject
+    public void setBioProjectList(BioProjectList bioProjectList) {
+        this.bioProjectList = bioProjectList;
     }
 
 }
