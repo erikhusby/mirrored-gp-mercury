@@ -854,21 +854,23 @@ public class ProductOrderActionBeanTest {
         Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuoteIdentifier)).thenReturn(testQuote);
 
         Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote, Collections.<String>emptySet()),
-                Double.valueOf(1573 * testOrder.getSamples().size() + 2000 * testOrder.getSamples().size()));
+                (double) (1573 * testOrder.getSamples().size() + 2000 * testOrder.getSamples().size()));
         testQuote.setQuoteItems(quoteItems);
 
         Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote, Collections.<String>emptySet()),
-                Double.valueOf(573 * testOrder.getSamples().size() + 1000 * testOrder.getSamples().size()));
+                (double) (573 * testOrder.getSamples().size() + 1000 * testOrder.getSamples().size()));
 
         testOrder.updateAddOnProducts(Arrays.asList(addonNonSeqProduct, seqProduct));
 
         Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote, Collections.<String>emptySet()),
-                Double.valueOf(573 * testOrder.getSamples().size() + 1000 * testOrder.getSamples().size() + 2500 * testOrder.getLaneCount()));
+                (double) (573 * testOrder.getSamples().size() + 1000 * testOrder.getSamples().size() + 2500 * testOrder
+                        .getLaneCount()));
 
         testOrder.setProduct(seqProduct);
 
         Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote, Collections.<String>emptySet()),
-                Double.valueOf(573 * testOrder.getSamples().size() + 2500 * testOrder.getLaneCount() + 2500 * testOrder.getLaneCount()));
+                (double) (573 * testOrder.getSamples().size() + 2500 * testOrder.getLaneCount() + 2500 * testOrder
+                        .getLaneCount()));
 
         Assert.assertEquals(testOrder.getUnbilledSampleCount(), 75);
         ProductOrderSample abandonedSample = testOrder.getSamples().get(0);
@@ -876,7 +878,8 @@ public class ProductOrderActionBeanTest {
 
         Assert.assertEquals(testOrder.getUnbilledSampleCount(), 74);
         Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote, Collections.<String>emptySet()),
-                Double.valueOf(573 * (testOrder.getSamples().size()-1) + 2500 * testOrder.getLaneCount() + 2500 * testOrder.getLaneCount()));
+                (double) (573 * (testOrder.getSamples().size() - 1) + 2500 * testOrder.getLaneCount() + 2500 * testOrder
+                        .getLaneCount()));
 
 
         ProductOrder testChildOrder = new ProductOrder();
@@ -889,15 +892,17 @@ public class ProductOrderActionBeanTest {
         Assert.assertEquals(testOrder.getUnbilledSampleCount(), 74);
 
         Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote, Collections.<String>emptySet()),
-                Double.valueOf((573 * (testOrder.getSamples().size() -1) + 2500 * testOrder.getLaneCount() + 2500 * testOrder.getLaneCount()
-                )));
+                (double) (573 * (testOrder.getSamples().size() - 1) + 2500 * testOrder.getLaneCount() + 2500 * testOrder
+                        .getLaneCount()
+                ));
 
         testChildOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
         Assert.assertEquals(actionBean.getValueOfOpenOrders(Collections.singletonList(testOrder), testQuote, Collections.<String>emptySet()),
-                Double.valueOf((573 * (testOrder.getSamples().size() -1) + 2500 * testOrder.getLaneCount() + 2500 * testOrder.getLaneCount()
-                                + 573 * testChildOrder.getSamples().size()
-                )));
+                (double) (573 * (testOrder.getSamples().size() - 1) + 2500 * testOrder.getLaneCount() + 2500 * testOrder
+                        .getLaneCount()
+                          + 573 * testChildOrder.getSamples().size()
+                ));
     }
 
     public void testEstimateNoSAPOrders() throws Exception {
@@ -966,28 +971,30 @@ public class ProductOrderActionBeanTest {
         Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuoteIdentifier)).thenReturn(testQuote);
 
         Mockito.when(mockProductOrderDao.findOrdersWithCommonQuote(Mockito.anyString())).thenReturn(Collections.singletonList(testOrder));
-        Mockito.when(mockSAPService.calculateOpenOrderValues(Mockito.any(ProductOrder.class))).thenReturn(new OrderCalculatedValues(
+        Mockito.when(mockSAPService.calculateOpenOrderValues(Mockito.any(ProductOrder.class), addedSampleCount)).thenReturn(new OrderCalculatedValues(
                 BigDecimal.ZERO, Collections.<OrderValue>emptySet()));
 
         actionBean.setEditOrder(testOrder);
 
 
         Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote),
-                Double.valueOf(1573 * testOrder.getSamples().size() + 2000 * testOrder.getSamples().size()));
+                (double) (1573 * testOrder.getSamples().size() + 2000 * testOrder.getSamples().size()));
         testQuote.setQuoteItems(quoteItems);
 
         Assert.assertEquals(actionBean.estimateOutstandingOrders( testQuote),
-                Double.valueOf(573 * testOrder.getSamples().size() + 1000 * testOrder.getSamples().size()));
+                (double) (573 * testOrder.getSamples().size() + 1000 * testOrder.getSamples().size()));
 
         testOrder.updateAddOnProducts(Arrays.asList(addonNonSeqProduct, seqProduct));
 
         Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote),
-                Double.valueOf(573 * testOrder.getSamples().size() + 1000 * testOrder.getSamples().size() + 2500 * testOrder.getLaneCount()));
+                (double) (573 * testOrder.getSamples().size() + 1000 * testOrder.getSamples().size() + 2500 * testOrder
+                        .getLaneCount()));
 
         testOrder.setProduct(seqProduct);
 
         Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote),
-                Double.valueOf(573 * testOrder.getSamples().size() + 2500 * testOrder.getLaneCount() + 2500 * testOrder.getLaneCount()));
+                (double) (573 * testOrder.getSamples().size() + 2500 * testOrder.getLaneCount() + 2500 * testOrder
+                        .getLaneCount()));
 
         Assert.assertEquals(testOrder.getUnbilledSampleCount(), 75);
         ProductOrderSample abandonedSample = testOrder.getSamples().get(0);
@@ -995,7 +1002,8 @@ public class ProductOrderActionBeanTest {
 
         Assert.assertEquals(testOrder.getUnbilledSampleCount(), 74);
         Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote),
-                Double.valueOf(573 * (testOrder.getSamples().size()-1) + 2500 * testOrder.getLaneCount() + 2500 * testOrder.getLaneCount()));
+                (double) (573 * (testOrder.getSamples().size() - 1) + 2500 * testOrder.getLaneCount() + 2500 * testOrder
+                        .getLaneCount()));
 
 
         ProductOrder testChildOrder = new ProductOrder();
@@ -1008,15 +1016,17 @@ public class ProductOrderActionBeanTest {
         Assert.assertEquals(testOrder.getUnbilledSampleCount(), 74);
 
         Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote),
-                Double.valueOf((573 * (testOrder.getSamples().size() -1) + 2500 * testOrder.getLaneCount() + 2500 * testOrder.getLaneCount()
-                )));
+                (double) (573 * (testOrder.getSamples().size() - 1) + 2500 * testOrder.getLaneCount() + 2500 * testOrder
+                        .getLaneCount()
+                ));
 
         testChildOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
         Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote),
-                Double.valueOf((573 * (testOrder.getSamples().size() -1) + 2500 * testOrder.getLaneCount() + 2500 * testOrder.getLaneCount()
-                                + 573 * testChildOrder.getSamples().size()
-                )));
+                (double) (573 * (testOrder.getSamples().size() - 1) + 2500 * testOrder.getLaneCount() + 2500 * testOrder
+                        .getLaneCount()
+                          + 573 * testChildOrder.getSamples().size()
+                ));
     }
 
 
@@ -1094,29 +1104,30 @@ public class ProductOrderActionBeanTest {
         final OrderCalculatedValues testCalculatedValues = new OrderCalculatedValues(
                 BigDecimal.ZERO, sapOrderValues);
 
-        Mockito.when(mockSAPService.calculateOpenOrderValues(Mockito.any(ProductOrder.class))).thenReturn(
+        Mockito.when(mockSAPService.calculateOpenOrderValues(Mockito.any(ProductOrder.class), addedSampleCount)).thenReturn(
                 testCalculatedValues);
 
         actionBean.setEditOrder(testOrder);
 
 
         Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote),
-                Double.valueOf(1573 * testOrder.getSamples().size() + 2000 * testOrder.getSamples().size()) + 82);
+                (double) (1573 * testOrder.getSamples().size() + 2000 * testOrder.getSamples().size()) + 82);
         testQuote.setQuoteItems(quoteItems);
 
         Assert.assertEquals(actionBean.estimateOutstandingOrders( testQuote),
-                Double.valueOf(573 * testOrder.getSamples().size() + 1000 * testOrder.getSamples().size()) + 82);
+                (double) (573 * testOrder.getSamples().size() + 1000 * testOrder.getSamples().size()) + 82);
 
         testOrder.updateAddOnProducts(Arrays.asList(addonNonSeqProduct, seqProduct));
 
         Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote),
-                Double.valueOf(573 * testOrder.getSamples().size() + 1000 * testOrder.getSamples().size() + 2500 * testOrder
+                (double) (573 * testOrder.getSamples().size() + 1000 * testOrder.getSamples().size() + 2500 * testOrder
                         .getLaneCount()) + 82);
 
         testOrder.setProduct(seqProduct);
 
         Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote),
-                Double.valueOf(573 * testOrder.getSamples().size() + 2500 * testOrder.getLaneCount() + 2500 * testOrder.getLaneCount()) + 82);
+                (double) (573 * testOrder.getSamples().size() + 2500 * testOrder.getLaneCount() + 2500 * testOrder
+                        .getLaneCount()) + 82);
 
         Assert.assertEquals(testOrder.getUnbilledSampleCount(), 75);
         ProductOrderSample abandonedSample = testOrder.getSamples().get(0);
@@ -1124,7 +1135,7 @@ public class ProductOrderActionBeanTest {
 
         Assert.assertEquals(testOrder.getUnbilledSampleCount(), 74);
         Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote),
-                Double.valueOf(573 * (testOrder.getSamples().size() - 1) + 2500 * testOrder.getLaneCount() + 2500 * testOrder
+                (double) (573 * (testOrder.getSamples().size() - 1) + 2500 * testOrder.getLaneCount() + 2500 * testOrder
                         .getLaneCount()) + 82);
 
 
@@ -1138,17 +1149,17 @@ public class ProductOrderActionBeanTest {
         Assert.assertEquals(testOrder.getUnbilledSampleCount(), 74);
 
         Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote),
-                Double.valueOf((573 * (testOrder.getSamples().size() - 1) + 2500 * testOrder.getLaneCount() + 2500 * testOrder
+                (double) (573 * (testOrder.getSamples().size() - 1) + 2500 * testOrder.getLaneCount() + 2500 * testOrder
                         .getLaneCount()
-                ))+82);
+                ) + 82);
 
         testChildOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
         Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote),
-                Double.valueOf((573 * (testOrder.getSamples().size() - 1) + 2500 * testOrder.getLaneCount() + 2500 * testOrder
+                (double) (573 * (testOrder.getSamples().size() - 1) + 2500 * testOrder.getLaneCount() + 2500 * testOrder
                         .getLaneCount()
-                                + 573 * testChildOrder.getSamples().size()
-                ))+82);
+                          + 573 * testChildOrder.getSamples().size()
+                ) + 82);
     }
 
     public void testEstimateSAPOrdersWithUpdateCurrentSapOrder() throws Exception {
@@ -1221,37 +1232,38 @@ public class ProductOrderActionBeanTest {
         sapOrderValues.add(new OrderValue("Test_listed_1", BigDecimal.TEN));
         sapOrderValues.add(new OrderValue("Test_listed_2", new BigDecimal(23)));
         sapOrderValues.add(new OrderValue("Test_listed_3", new BigDecimal(49)));
+
         final int overrideCalculatedOrderValue = 70000;
         sapOrderValues.add(new OrderValue("test001", new BigDecimal(overrideCalculatedOrderValue)));
 
         final OrderCalculatedValues testCalculatedValues = new OrderCalculatedValues(
-                BigDecimal.ZERO, sapOrderValues);
+                new BigDecimal(overrideCalculatedOrderValue), sapOrderValues);
 
-        Mockito.when(mockSAPService.calculateOpenOrderValues(Mockito.any(ProductOrder.class))).thenReturn(
+        Mockito.when(mockSAPService.calculateOpenOrderValues(Mockito.any(ProductOrder.class), addedSampleCount)).thenReturn(
                 testCalculatedValues);
 
         actionBean.setEditOrder(testOrder);
 
 
-        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote), Double.valueOf(overrideCalculatedOrderValue)+82);
+        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote), (double) (overrideCalculatedOrderValue + 82));
         testQuote.setQuoteItems(quoteItems);
 
-        Assert.assertEquals(actionBean.estimateOutstandingOrders( testQuote), Double.valueOf(overrideCalculatedOrderValue)+82);
+        Assert.assertEquals(actionBean.estimateOutstandingOrders( testQuote), (double) overrideCalculatedOrderValue + 82);
 
         testOrder.updateAddOnProducts(Arrays.asList(addonNonSeqProduct, seqProduct));
 
-        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote), Double.valueOf(overrideCalculatedOrderValue)+82);
+        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote), (double) overrideCalculatedOrderValue + 82);
 
         testOrder.setProduct(seqProduct);
 
-        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote), Double.valueOf(overrideCalculatedOrderValue)+82);
+        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote), (double) overrideCalculatedOrderValue + 82);
 
         Assert.assertEquals(testOrder.getUnbilledSampleCount(), 75);
         ProductOrderSample abandonedSample = testOrder.getSamples().get(0);
         abandonedSample.setDeliveryStatus(ProductOrderSample.DeliveryStatus.ABANDONED);
 
         Assert.assertEquals(testOrder.getUnbilledSampleCount(), 74);
-        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote), Double.valueOf(overrideCalculatedOrderValue)+82);
+        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote), (double) overrideCalculatedOrderValue + 82);
 
 
         ProductOrder testChildOrder = new ProductOrder();
@@ -1263,11 +1275,11 @@ public class ProductOrderActionBeanTest {
         Assert.assertEquals(testChildOrder.getUnbilledSampleCount(), 1);
         Assert.assertEquals(testOrder.getUnbilledSampleCount(), 74);
 
-        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote), Double.valueOf(overrideCalculatedOrderValue)+82);
+        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote), (double) overrideCalculatedOrderValue + 82);
 
         testChildOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
-        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote), Double.valueOf(overrideCalculatedOrderValue)+82);
+        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote), (double) overrideCalculatedOrderValue + 82);
 
         Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty());
 

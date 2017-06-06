@@ -825,14 +825,15 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         double fundsRemaining = Double.parseDouble(quote.getQuoteFunding().getFundsRemaining());
-        double outstandingEstimate = estimateOutstandingOrders(quote);
+        double outstandingEstimate = estimateOutstandingOrders(quote, additionalSampleCount);
         double valueOfCurrentOrder = 0;
 
         // TODO SGM  Must not account for the Current order if it is an SAP orders
 
         if(countCurrentUnPlacedOrder) {
             valueOfCurrentOrder = getValueOfOpenOrders(Collections.singletonList((editOrder.isChildOrder())?editOrder.getParentOrder():editOrder), quote, Collections.<String>emptySet());
-        } else if(additionalSampleCount > 0) {
+        } else
+            if(additionalSampleCount > 0) {
             valueOfCurrentOrder = getOrderValue((editOrder.isChildOrder())?editOrder.getParentOrder():editOrder, additionalSampleCount, quote);
         }
 
@@ -863,14 +864,13 @@ public class ProductOrderActionBean extends CoreActionBean {
      * Retrieves and determines the monitary value of a subset of Open Orders within Mercury
      * @return total dollar amount of the monitary value of orders associated with the given quote
      */
-    double estimateOutstandingOrders(Quote foundQuote)
+    double estimateOutstandingOrders(Quote foundQuote, int addedSampleCount)
             throws InvalidProductException, SAPIntegrationException {
 
         List<ProductOrder> ordersWithCommonQuote = productOrderDao.findOrdersWithCommonQuote(foundQuote.getAlphanumericId());
 
         final OrderCalculatedValues calculatedValues = sapService
-                .calculateOpenOrderValues((editOrder.isChildOrder()) ? editOrder.getParentOrder() : editOrder
-                );
+                .calculateOpenOrderValues((editOrder.isChildOrder()) ? editOrder.getParentOrder() : editOrder, addedSampleCount);
 
         Set<String> sapOrderIDsToExclude = new HashSet<>();
 
@@ -879,10 +879,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         value += calculatedValues.getPotentialOrderValue().doubleValue();
 
         for (OrderValue orderValue : calculatedValues.getValue()) {
-            value += orderValue.getValue().doubleValue();
+            if(!StringUtils.equals(orderValue.getSapOrderID(), editOrder.getSapOrderNumber())) {
+                value += orderValue.getValue().doubleValue();
+            }
             sapOrderIDsToExclude.add(orderValue.getSapOrderID());
         }
-
 
         return value + getValueOfOpenOrders(ordersWithCommonQuote, foundQuote, sapOrderIDsToExclude);
     }
@@ -1278,7 +1279,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 item.put("fundsRemaining", NumberFormat.getCurrencyInstance().format(fundsRemaining));
                 item.put("status", quote.getApprovalStatus().getValue());
 
-                double outstandingOrdersValue = estimateOutstandingOrders(quote);
+                double outstandingOrdersValue = estimateOutstandingOrders(quote, 0);
                 item.put("outstandingEstimate",  NumberFormat.getCurrencyInstance().format(
                         outstandingOrdersValue));
                 JSONArray fundingDetails = new JSONArray();
