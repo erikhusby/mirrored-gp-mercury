@@ -68,7 +68,7 @@ $(document).ready(function () {
             connect();
         });
 
-        // if(gPositionList.value != "")
+        // Draw lines for any cherry picks that have been through a server roundtrip.
         connect();
 
         function getButtons(barcode, well) {
@@ -98,13 +98,14 @@ $(document).ready(function () {
                 var destinationButton = getButtons(destinationBarcode, destinationWell);
 
                 colorSpace = getRandomColor();
+                var buttonDistance = Math.abs(destinationButton.position().top - sourceButton.position().top);
                 var sourcePos = instance.addEndpoint(sourceButton, endpointOptions);
                 instance.connect({
                     source: sourcePos,
                     target: destinationButton,
                     overlays: overlays,
                     paintStyle:{ strokeStyle:colorSpace, lineWidth:3 },
-                    connector: ["StateMachine", { proximityLimit: -5, curviness: getRandomCurve() }]
+                    connector: ["StateMachine", { proximityLimit: -5, curviness: buttonDistance / 7 }]
                 });
             })
         }
@@ -178,12 +179,6 @@ $(document).ready(function () {
             color += letters[Math.floor(Math.random() * 16)];
         }
         return color;
-    }
-
-    //Generate random curves for lines.
-    function getRandomCurve() {
-        // var curve = Math.floor(Math.random() * 150) + -150;
-        return 100; //Hard-Wired to 100 since this seems to work best.
     }
 
     //Select rows and cols
