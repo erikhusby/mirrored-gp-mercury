@@ -99,7 +99,8 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     private static final String LIBRARY_DESCRIPTOR_PARAMETER = "selectedSubmissionLibraryDescriptor";
     private static final String REPOSITORY_PARAMETER = "selectedSubmissionRepository";
     public static final String SUBMISSION_TUPLES_PARAMETER = "selectedSubmissionTuples";
-    public static final int RESEARCH_PROJECT_SUBMISSIONS_TAB = 2;
+    public static final String RESEARCH_PROJECT_ORDERS_TAB = "ordersTab";
+    public static final String RESEARCH_PROJECT_SUBMISSIONS_TAB = "submissionsTab";
 
     private static final String PROJECT = "Research Project";
     public static final String CREATE_PROJECT = CoreActionBean.CREATE + PROJECT;
@@ -260,7 +261,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
 
     private boolean validCollaborationPortal;
 
-    private int rpSelectedTab = 1;
+    private String rpSelectedTab = RESEARCH_PROJECT_ORDERS_TAB;
 
     private BioProjectList bioProjectList;
 
@@ -1258,11 +1259,11 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         this.selectedSubmissionTuples = selectedSubmissionTuples;
     }
 
-    public int getRpSelectedTab() {
+    public String getRpSelectedTab() {
         return rpSelectedTab;
     }
 
-    public void setRpSelectedTab(int rpSelectedTab) {
+    public void setRpSelectedTab(String rpSelectedTab) {
         this.rpSelectedTab = rpSelectedTab;
     }
 
