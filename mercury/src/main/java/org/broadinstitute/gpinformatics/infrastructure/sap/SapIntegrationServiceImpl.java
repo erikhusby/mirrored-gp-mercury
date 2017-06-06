@@ -348,14 +348,19 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     @Override
-    public OrderCalculatedValues calculateOpenOrderValues(ProductOrder productOrder) throws SAPIntegrationException {
+    public OrderCalculatedValues calculateOpenOrderValues(ProductOrder productOrder, int addedSampleCount) throws SAPIntegrationException {
         OrderCriteria potentialOrderCriteria = null;
-            potentialOrderCriteria = generateOrderCriteria(productOrder);
+            potentialOrderCriteria = generateOrderCriteria(productOrder, 0);
         return getClient().calculateOrderValues(productOrder.getQuoteId(),
                 SapIntegrationClientImpl.SystemIdentifier.MERCURY, potentialOrderCriteria);
     }
 
     protected OrderCriteria generateOrderCriteria(ProductOrder productOrder) throws SAPIntegrationException {
+        return generateOrderCriteria(productOrder, 0);
+    }
+
+    protected OrderCriteria generateOrderCriteria(ProductOrder productOrder, int addedSampleCount) throws SAPIntegrationException {
+
 
         final Set<SAPOrderItem> sapOrderItems = new HashSet<>();
         final Map<Condition, String> conditionStringMap = Collections.emptyMap();

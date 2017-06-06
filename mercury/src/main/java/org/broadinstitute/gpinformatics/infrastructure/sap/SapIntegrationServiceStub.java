@@ -14,7 +14,6 @@ import org.broadinstitute.sap.entity.SAPMaterial;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 
-import javax.annotation.Nonnull;
 import javax.enterprise.inject.Alternative;
 import java.math.BigDecimal;
 import java.util.Arrays;
@@ -298,7 +297,7 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
     }
 
     @Override
-    public OrderCalculatedValues calculateOpenOrderValues(ProductOrder productOrder) throws SAPIntegrationException {
+    public OrderCalculatedValues calculateOpenOrderValues(ProductOrder productOrder, int addedSampleCount) throws SAPIntegrationException {
         return new OrderCalculatedValues(BigDecimal.ONE, Collections.<OrderValue>emptySet());
     }
 }
