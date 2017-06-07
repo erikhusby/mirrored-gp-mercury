@@ -95,16 +95,6 @@
                                     autoSelectFirstResult: true
                                 }
                         );
-                        // Stripes doesn't handle html5 validation, so add the property manually via jquery
-                        $j("#title").prop('pattern', '^((?!\"|\'|\<|\>|\\+|-).)*$');
-                        $j("#title").on("keyup",function(){
-                            if (this.validity.patternMismatch){
-                                this.setCustomValidity("\", \', <, +, -, or > characters are not allowed.");
-                            }else{
-                                this.setCustomValidity("");
-                            }
-                        });
-
                     }
             );
 

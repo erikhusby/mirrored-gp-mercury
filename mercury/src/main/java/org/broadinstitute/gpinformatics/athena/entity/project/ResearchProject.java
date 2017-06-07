@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Maps;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -42,8 +43,6 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -302,11 +301,7 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
      * @return URLEncoded title.
      */
     public String getWebSafeTitle() {
-        try {
-             return URLEncoder.encode(title, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException("Error encoding title", e);
-        }
+        return StringEscapeUtils.escapeEcmaScript(title);
     }
 
     public String getTitle() {
