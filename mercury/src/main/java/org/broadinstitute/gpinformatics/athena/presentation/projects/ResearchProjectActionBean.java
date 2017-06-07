@@ -129,7 +129,6 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     public static final String STRIPES_ERRORS = "error";
     public static final String STRIPES_MESSAGES_KEY = "stripesMessages";
     public static final String STRIPES_MESSAGE_TYPE = "messageType";
-    public static final String DISALLOWED_CHARACTERS_ERROR = "\", \', <, +, -, or > characters are not allowed.";
 
     private ResearchProjectDao researchProjectDao;
 
@@ -401,9 +400,6 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
             ResearchProject existingProject = researchProjectDao.findByTitle(editResearchProject.getTitle());
             if (existingProject != null) {
                 errors.add("title", new SimpleError("A research project already exists with this name."));
-            }
-            if (editResearchProject.getTitle().matches(".*([\\\"|\\'\\>\\<\\+-]+).*")) {
-                errors.add("title", new SimpleError(DISALLOWED_CHARACTERS_ERROR));
             }
         }
     }
