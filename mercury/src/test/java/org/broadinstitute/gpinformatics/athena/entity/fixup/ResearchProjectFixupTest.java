@@ -29,6 +29,7 @@ import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
@@ -114,6 +115,24 @@ public class ResearchProjectFixupTest extends Arquillian {
 
         rpDao.remove(researchProject);
         rpDao.persist(new FixupCommentary("see https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-3526"));
+    }
+
+    @Test(enabled = false)
+    public void fixupGPLIM_4880_Change_Title() {
+        userBean.loginOSUser();
+
+        final String RP1449 = "RP-1449";
+        final String OLD_TITLE = "Nada Kalaany - Boston Children's Hospital";
+        final String NEW_TITLE = "Nada Kalaany - Boston Childrens Hospital";
+
+        ResearchProject researchProject = rpDao.findByJiraTicketKey(RP1449);
+        if (researchProject == null) {
+            Assert.fail(String.format("Research Project %s doesn't exist.", RP1449));
+        }
+        assertThat(researchProject.getTitle(), equalTo(OLD_TITLE));
+        researchProject.setTitle(NEW_TITLE);
+
+        rpDao.persist(new FixupCommentary("see https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-4880"));
     }
 
     /**

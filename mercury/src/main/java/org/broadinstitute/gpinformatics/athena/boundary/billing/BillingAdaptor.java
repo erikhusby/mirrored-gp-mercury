@@ -6,17 +6,21 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -28,7 +32,6 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -129,7 +132,12 @@ public class BillingAdaptor implements Serializable {
         BillingSession billingSession = billingSessionAccessEjb.findAndLockSession(sessionKey);
         try {
             List<QuoteImportItem> unBilledQuoteImportItems =
-                    billingSession.getUnBilledQuoteImportItems(priceListCache);
+                    null;
+            try {
+                unBilledQuoteImportItems = billingSession.getUnBilledQuoteImportItems(priceListCache);
+            } catch (QuoteServerException e) {
+                throw new BillingException("Getting unbilled items failed because::" + e.getMessage(), e);
+            }
 
             if (unBilledQuoteImportItems.isEmpty()) {
                 billingEjb.endSession(billingSession);
@@ -145,8 +153,12 @@ public class BillingAdaptor implements Serializable {
                 Quote quote = null;
                 String sapBillingId = null;
                 String workId = null;
+                final MessageCollection messageCollection = new MessageCollection();
                 try {
                     quote = quoteService.getQuoteByAlphaId(item.getQuoteId());
+                    ProductOrder.checkQuoteValidity(item.getProductOrder(), quote);
+
+                    //todo SGM is this call really necessary?  Is it just for DBFree tests?
                     quote.setAlphanumericId(item.getQuoteId());
 
                     workId = CollectionUtils.isEmpty(item.getWorkItems())?null:item.getWorkItems().toArray(new String[item.getWorkItems().size()])[0];
@@ -154,6 +166,7 @@ public class BillingAdaptor implements Serializable {
 
                     // The price item that we are billing.
                     QuotePriceItem priceItemBeingBilled = QuotePriceItem.convertMercuryPriceItem(item.getPriceItem());
+                    String price = priceListCache.getEffectivePrice(item.getPriceItem(), quote);
 
                     // Get the quote PriceItem that this is replacing, if it is a replacement.
                     QuotePriceItem primaryPriceItemIfReplacement = item.getPrimaryForReplacement(priceListCache);
@@ -194,11 +207,10 @@ public class BillingAdaptor implements Serializable {
                                 BillingSession.BILLED_FOR_QUOTES);
                     }
 
-
                     BigDecimal replacementMultiplier = null;
                     if(primaryPriceItemIfReplacementForSAP != null) {
                         BigDecimal primaryPrice = new BigDecimal(primaryPriceItemIfReplacementForSAP.getPrice());
-                        BigDecimal replacementPrice  = new BigDecimal(priceItemBeingBilled.getPrice());
+                        BigDecimal replacementPrice  = new BigDecimal(price);
 
                         replacementMultiplier = (replacementPrice.divide(primaryPrice, 3, BigDecimal.ROUND_DOWN)).multiply(BigDecimal.valueOf(item.getQuantityForSAP())).setScale(3, BigDecimal.ROUND_DOWN);
                     }

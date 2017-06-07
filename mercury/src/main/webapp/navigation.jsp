@@ -201,10 +201,16 @@
                                     event="view">Arrays Reports</stripes:link>
                         </li>
                         <li>
+                            <stripes:link id="tagVessel"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.TagVesselActionBean"
+                                          event="view">Add Dev Condition To Vessel</stripes:link>
+                        </li>
+                        <li>
                             <stripes:link id="externalLibraryUpload"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ExternalLibraryUploadActionBean"
                                           event="view">External Library Upload</stripes:link>
                         </li>
+
                     </ul>
                 </li>
             </security:authorizeBlock>

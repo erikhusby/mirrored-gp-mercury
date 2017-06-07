@@ -24,7 +24,10 @@ public class ArraysQc {
     private Long analysisVersion;
     private Boolean isLatest;
     private String chipType;
+    /** zCall call rate*/
     private BigDecimal callRate;
+    private BigDecimal autocallCallRate;
+    private Long numAutocallCalls;
     private Boolean autocallPf;
     private Date autocallDate;
     private Date imagingDate;
@@ -96,6 +99,21 @@ public class ArraysQc {
             return null;
         }
         return callRate.multiply(BigDecimal.valueOf(100)).setScale(3, BigDecimal.ROUND_HALF_UP);
+    }
+
+    public BigDecimal getAutocallCallRate() {
+        return autocallCallRate;
+    }
+
+    public BigDecimal getAutocallCallRatePct() {
+        if (autocallCallRate == null) {
+            return null;
+        }
+        return autocallCallRate.multiply(BigDecimal.valueOf(100)).setScale(3, BigDecimal.ROUND_HALF_UP);
+    }
+
+    public Long getNumAutocallCalls() {
+        return numAutocallCalls;
     }
 
     public Boolean getAutocallPf() {

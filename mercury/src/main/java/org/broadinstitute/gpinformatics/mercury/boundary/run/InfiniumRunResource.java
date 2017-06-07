@@ -217,8 +217,7 @@ public class InfiniumRunResource {
                     startDate = labEvent.getEventDate();
                 }
             }
-            String scannerName = InfiniumRunProcessor.findScannerName(chip.getLabel(), vesselPosition.name(),
-                    infiniumStarterConfig);
+            String scannerName = InfiniumRunProcessor.findScannerName(chip.getLabel(), infiniumStarterConfig);
 
             String batchName = null;
             if (sampleInstanceV2.getSingleBatch() != null) {

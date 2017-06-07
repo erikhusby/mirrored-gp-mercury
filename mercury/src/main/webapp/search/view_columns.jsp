@@ -224,10 +224,19 @@ buttons to move columns from one to the other --%>
             </td>
             <td rowspan="2" style="padding-left: 30px;vertical-align: top">
                 <c:if test="${actionBean.configurableSearchDef.traversalEvaluators != null}">
-                <c:forEach items="${actionBean.configurableSearchDef.traversalEvaluators}" var="traversalMapEntry">
-                    <stripes:checkbox id="${traversalMapEntry.key}" name="searchInstance.traversalEvaluatorValues['${traversalMapEntry.key}']" checked="${searchInstance.traversalEvaluatorValues[traversalMapEntry.key]}" /> ${traversalMapEntry.value.label}<br />
-                </c:forEach>
-                </c:if>
+                    <c:if test="${actionBean.configurableSearchDef.customTraversalOptions  != null}">
+                        <label>Apply Custom Traversal Logic:  (Exclude initial entities <input type="checkbox" id="excludeInitialEntitiesFromResults" name="searchInstance.excludeInitialEntitiesFromResults" <c:if test="${actionBean.searchInstance.excludeInitialEntitiesFromResults}">checked='true'</c:if>/>)</label><br />
+                        <select id="customTraversalOptionName" name="searchInstance.customTraversalOptionName" style="width:240px">
+                            <option value="none">None</option>
+                            <c:forEach items="${actionBean.configurableSearchDef.customTraversalOptions}" var="customTraversalOption">
+                                <option value="${customTraversalOption.key}" <c:if test="${actionBean.searchInstance.customTraversalOptionName eq customTraversalOption.key}">selected="true"</c:if> >${customTraversalOption.value.label}</option>
+                            </c:forEach>
+                        </select> <br />
+                    </c:if>
+                    <c:forEach items="${actionBean.configurableSearchDef.traversalEvaluators}" var="traversalMapEntry">
+                        <input type="checkbox" id="${traversalMapEntry.key}" name="searchInstance.traversalEvaluatorValues['${traversalMapEntry.key}']" <c:if test="${actionBean.searchInstance.traversalEvaluatorValues[traversalMapEntry.key]}">checked='true'</c:if>/> ${traversalMapEntry.value.label}<br />
+                    </c:forEach>
+                </c:if><br />
             </td>
         </tr>
         <tr>

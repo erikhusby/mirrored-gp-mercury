@@ -5,7 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcFingerprint;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcGtConcordance;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
-import org.broadinstitute.gpinformatics.infrastructure.search.LabVesselSearchDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.search.InfiniumVesselTraversalEvaluator;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -29,8 +29,10 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
 
     // Partially from edu.mit.broad.esp.web.stripes.infinium.ViewInfiniumChemPlateActionBean
     private enum VALUE_COLUMN_TYPE {
-        CALL_RATE("Call Rate"),
+        AUTOCALL_CALL_RATE("AutoCall Call Rate"),
+        CALL_RATE("zCall Call Rate"),
         HET_PCT("Het %"),
+        VERSION("Analysis Version"),
         AUTOCALL_GENDER("Autocall Gender"),
         FP_GENDER("FP Gender"),
         REPORTED_GENDER("Reported Gender"),
@@ -78,7 +80,10 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
             headerGroup.addHeader(valueColumnType.getResultHeader());
         }
 
-        if( !LabVesselSearchDefinition.isInfiniumSearch( context ) ) {
+        if( !InfiniumVesselTraversalEvaluator.isInfiniumSearch( context ) ) {
+            for (LabVessel labVessel : labVesselList) {
+                metricRows.add(new ConfigurableList.Row(labVessel.getLabel()));
+            }
             return metricRows;
         }
 
@@ -91,7 +96,7 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
                 continue;
             }
             for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions :
-                    LabVesselSearchDefinition.getChipDetailsForDnaWell(labVessel, CHIP_EVENT_TYPES, context).asMap().entrySet()) {
+                    InfiniumVesselTraversalEvaluator.getChipDetailsForDnaWell(labVessel, CHIP_EVENT_TYPES, context).asMap().entrySet()) {
                 String label = labVesselAndPositions.getKey().getLabel() + "_" +
                         labVesselAndPositions.getValue().iterator().next();
                 chipWellBarcodes.add(label);
@@ -110,18 +115,30 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
         // Populate rows with any available metrics data.
         for( LabVessel labVessel : labVesselList ) {
             ArraysQc arraysQc = mapWellBarcodeToMetric.get(mapSourceToTargetBarcodes.get(labVessel.getLabel()));
+            ConfigurableList.Row row = new ConfigurableList.Row(labVessel.getLabel());
+            metricRows.add(row);
             if (arraysQc == null) {
                 continue;
             }
 
-            ConfigurableList.Row row = new ConfigurableList.Row( labVessel.getLabel() );
+            BigDecimal autocallCallRate = arraysQc.getAutocallCallRate();
+            String value = null;
+            if (autocallCallRate != null) {
+                value = ColumnValueType.THREE_PLACE_DECIMAL.format(
+                        autocallCallRate.multiply(BigDecimal.valueOf(100)), "");
+            }
+            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.AUTOCALL_CALL_RATE.getResultHeader(), value, value));
 
-            String value = ColumnValueType.THREE_PLACE_DECIMAL.format(
+            value = ColumnValueType.THREE_PLACE_DECIMAL.format(
                     arraysQc.getCallRate().multiply(BigDecimal.valueOf(100)), "");
             row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.CALL_RATE.getResultHeader(), value, value));
 
             value = ColumnValueType.THREE_PLACE_DECIMAL.format(arraysQc.getHetPct().multiply(BigDecimal.valueOf(100)), "");
             row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.HET_PCT.getResultHeader(),
+                    value, value));
+
+            value = String.valueOf(arraysQc.getAnalysisVersion());
+            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.VERSION.getResultHeader(),
                     value, value));
 
             value = String.valueOf(arraysQc.getAutocallGender());
@@ -179,8 +196,6 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
             }
             row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.HAPMAP_CONCORDANCE.getResultHeader(),
                     value, value));
-
-            metricRows.add(row);
         }
 
         return metricRows;

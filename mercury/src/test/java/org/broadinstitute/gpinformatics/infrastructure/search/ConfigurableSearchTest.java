@@ -374,12 +374,16 @@ public class ConfigurableSearchTest extends Arquillian {
         String entity = ColumnEntity.LAB_VESSEL.getEntityName();
         ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entity);
 
-        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("Infinium PDO", configurableSearchDef);
+        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("PDO", configurableSearchDef);
         searchValue.setOperator(SearchInstance.Operator.EQUALS);
         searchValue.setValues(Collections.singletonList("PDO-9246"));
 
         searchInstance.getPredefinedViewColumns().add("Infinium DNA Plate Drill Down");
         searchInstance.getPredefinedViewColumns().add("Infinium Amp Plate Drill Down");
+        searchInstance.setCustomTraversalOptionName(InfiniumVesselTraversalEvaluator.DNA_PLATE_INSTANCE.getUiName());
+        searchInstance.setExcludeInitialEntitiesFromResults(true);
+        searchInstance.getTraversalEvaluatorValues().put(LabEventSearchDefinition.TraversalEvaluatorName.DESCENDANTS.getId(), Boolean.TRUE);
+        searchInstance.getTraversalEvaluatorValues().put(LabEventSearchDefinition.TraversalEvaluatorName.ANCESTORS.getId(), Boolean.FALSE);
 
         ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
                 searchInstance, configurableSearchDef, null, 0, null, "ASC", entity);

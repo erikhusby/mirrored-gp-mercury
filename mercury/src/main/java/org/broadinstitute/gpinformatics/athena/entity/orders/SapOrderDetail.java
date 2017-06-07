@@ -18,10 +18,13 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Going forward Product Orders will be reflected in SAP as orders.  There are certain restrictions on what can change
@@ -73,18 +76,25 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
 
     private String companyCode;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinColumn(name="REFERENCE_PRODUCT_ORDER")
-    private ProductOrder referenceProductOrder;
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE}, mappedBy = "sapReferenceOrders")
+    private Set<ProductOrder> referenceProductOrder = new HashSet<>();
+
+    private String orderProductsHash;
+
+    private String orderPricesHash;
 
     public SapOrderDetail() {
     }
 
-    public SapOrderDetail(String sapOrderNumber, int primaryQuantity, String quoteId, String companyCode) {
+    public SapOrderDetail(String sapOrderNumber, int primaryQuantity, String quoteId, String companyCode,
+                          String productsHash, String quantitiesHash) {
         this.sapOrderNumber = sapOrderNumber;
         this.primaryQuantity = primaryQuantity;
         this.quoteId = quoteId;
         this.companyCode = companyCode;
+        this.orderProductsHash = productsHash;
+        this.orderPricesHash = quantitiesHash;
+
     }
 
     public String getSapOrderNumber() {
@@ -99,9 +109,9 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
         this.primaryQuantity = primaryQuantity;
     }
 
-    public void setReferenceProductOrder(
+    public void addReferenceProductOrder(
             ProductOrder referenceProductOrder) {
-        this.referenceProductOrder = referenceProductOrder;
+        this.referenceProductOrder.add(referenceProductOrder);
     }
 
     public String getQuoteId() {
@@ -118,6 +128,22 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
 
     public void setCompanyCode(String companyCode) {
         this.companyCode = companyCode;
+    }
+
+    public String getOrderProductsHash() {
+        return orderProductsHash;
+    }
+
+    public void setOrderProductsHash(String orderProductHash) {
+        this.orderProductsHash = orderProductHash;
+    }
+
+    public String getOrderPricesHash() {
+        return orderPricesHash;
+    }
+
+    public void setOrderPricesHash(String orderQuantitiesHash) {
+        this.orderPricesHash = orderQuantitiesHash;
     }
 
     @Override
@@ -148,9 +174,10 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
         SapOrderDetail that = (SapOrderDetail) o;
 
         return new EqualsBuilder()
-                .append(primaryQuantity, that.primaryQuantity)
                 .append(sapOrderNumber, that.sapOrderNumber)
                 .append(referenceProductOrder, that.referenceProductOrder)
+                .append(orderProductsHash, that.orderProductsHash)
+                .append(orderPricesHash, that.orderPricesHash)
                 .isEquals();
     }
 
@@ -158,8 +185,9 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
     public int hashCode() {
         return new HashCodeBuilder(17, 37)
                 .append(sapOrderNumber)
-                .append(primaryQuantity)
                 .append(referenceProductOrder)
+                .append(orderProductsHash)
+                .append(orderPricesHash)
                 .toHashCode();
     }
 }

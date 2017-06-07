@@ -43,7 +43,7 @@
                     var parentForm = $j(element).closest('form');
                     var timeRepeated = 0;
                     if (value != '') {
-                        $j(parentForm.find(':text')).each(function () {
+                        $j(parentForm.find(':text.unique')).each(function () {
                             if ($j(this).val() === value) {
                                 timeRepeated++;
                             }
@@ -221,10 +221,21 @@
 
                                     <div class="control-group">
                                     <h5>Source</h5>
-                                    <label>Type</label>
-                                    ${receptacleTransfer.sourceReceptacle.receptacleType}
-                                    <input type="hidden" name="stationEvents[${stationEventStatus.index}].sourceReceptacle.receptacleType"
-                                            value="${receptacleTransfer.sourceReceptacle.receptacleType}"/>
+                                        <c:choose>
+                                            <c:when test="${not empty actionBean.manualTransferDetails.sourceVesselTypeGeometriesString}">
+                                                <stripes:label for="sourceReceptacleType">Type </stripes:label>
+                                                <stripes:select name="stationEvents[${stationEventStatus.index}].sourceReceptacle.receptacleType"
+                                                                id="sourceReceptacleType">
+                                                    <stripes:options-collection collection="${actionBean.manualTransferDetails.sourceVesselTypeGeometriesString}"/>
+                                                </stripes:select>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <label>Type</label>
+                                                ${receptacleTransfer.sourceReceptacle.receptacleType}
+                                                <input type="hidden" name="stationEvents[${stationEventStatus.index}].sourceReceptacle.receptacleType"
+                                                       value="${receptacleTransfer.sourceReceptacle.receptacleType}"/>
+                                            </c:otherwise>
+                                        </c:choose>
                                     <label for="srcRcpBcd${stationEventStatus.index}">Barcode</label>
                                     <input type="text" id="srcRcpBcd${stationEventStatus.index}" autocomplete="off"
                                             name="stationEvents[${stationEventStatus.index}].sourceReceptacle.barcode"
@@ -237,10 +248,22 @@
                                     </div>
                                     <div class="control-group">
                                         <h5>Destination</h5>
-                                        <label>Type</label>
-                                        ${receptacleTransfer.receptacle.receptacleType}
-                                        <input type="hidden" name="stationEvents[${stationEventStatus.index}].receptacle.receptacleType"
-                                                value="${receptacleTransfer.receptacle.receptacleType}"/>
+                                        <c:choose>
+                                            <c:when test="${not empty actionBean.manualTransferDetails.targetVesselTypeGeometriesString}">
+                                                <stripes:label for="targetReceptacleType">Type </stripes:label>
+                                                <stripes:select name="stationEvents[${stationEventStatus.index}].receptacle.receptacleType"
+                                                                id="targetReceptacleType">
+                                                    <stripes:options-collection collection="${actionBean.manualTransferDetails.targetVesselTypeGeometriesString}"/>
+                                                </stripes:select>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <label>Type</label>
+                                                ${receptacleTransfer.receptacle.receptacleType}
+                                                <input type="hidden" name="stationEvents[${stationEventStatus.index}].receptacle.receptacleType"
+                                                       value="${receptacleTransfer.receptacle.receptacleType}"/>
+                                                <!-- todo jmt material type? -->
+                                            </c:otherwise>
+                                        </c:choose>
                                         <label for="destRcpBcd${stationEventStatus.index}">Barcode</label>
                                         <input type="text" id="destRcpBcd${stationEventStatus.index}" autocomplete="off"
                                                 name="stationEvents[${stationEventStatus.index}].receptacle.barcode"
@@ -258,11 +281,6 @@
                                     <%--@elvariable id="receptacleEvent" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType"--%>
                                     <h4>Tube Event</h4>
                                     <div class="control-group">
-                                        <%-- todo jmt reduce copy / paste --%>
-                                        <label>Type</label>
-                                            ${receptacleEvent.receptacle.receptacleType}
-                                        <input type="hidden" name="stationEvents[${stationEventStatus.index}].receptacle.receptacleType"
-                                                value="${receptacleEvent.receptacle.receptacleType}"/>
                                         <label for="destRcpBcd${stationEventStatus.index}">
                                             ${fn:containsIgnoreCase(receptacleEvent.receptacle.receptacleType, "matrix") ? '2D ' : ''}Barcode
                                         </label>
@@ -270,10 +288,6 @@
                                                 name="stationEvents[${stationEventStatus.index}].receptacle.barcode"
                                                 value="${receptacleEvent.receptacle.barcode}"
                                                 class="clearable barcode unique" required/>
-                                        <label for="destRcpVol${stationEventStatus.index}">Volume</label>
-                                        <input type="text" id="destRcpVol${stationEventStatus.index}" autocomplete="off"
-                                                name="stationEvents[${stationEventStatus.index}].receptacle.volume"
-                                                value="${receptacleEvent.receptacle.volume}" class="clearable barcode"/> ul
                                     </div>
                                 </c:when> <%-- end ReceptacleEventType --%>
                             </c:choose>
@@ -286,11 +300,29 @@
                         <stripes:submit name="fetchExisting" value="Validate Barcodes" class="btn"/>
                         <stripes:submit name="transfer" value="${actionBean.manualTransferDetails.buttonValue}"
                                 class="btn btn-primary"/>
+                        <%-- todo jmt why does this require server roundtrip? --%>
                         <c:if test="${stationEvent.class.simpleName.equals('PlateCherryPickEvent')}">
                             <stripes:submit value="Clear Cherry Picks" id="ClearConnectionsButton" name="ClearConnectionsButton"  class="btn"/>
                         </c:if>
                         <input type="button" onclick="$('.clearable').each(function (){$(this).val('');});" value="Clear non-reagent fields" class="btn">
 
+                        <div id="cherryPickSourceElements">
+                            <c:forEach items="${actionBean.stationEvents}" var="stationEvent" varStatus="stationEventStatus">
+                                <c:if test="${stationEvent.class.simpleName == 'PlateCherryPickEvent'}">
+                                    <c:set var="plateCherryPickEvent" value="${stationEvent}"/>
+                                    <%--@elvariable id="plateCherryPickEvent" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent"--%>
+                                    <c:forEach items="${plateCherryPickEvent.source}" var="sourceElement" varStatus="sourceStatus">
+                                        <c:set var="namePrefix" value="stationEvents[${stationEventStatus.index}].source[${sourceStatus.index}]"/>
+                                        <div class="sourceElements">
+                                            <input type="text" readonly name="${namePrefix}.barcode" value="${sourceElement.barcode}"/>
+                                            <input type="text" readonly name="${namePrefix}.well" value="${sourceElement.well}"/>->
+                                            <input type="text" readonly name="${namePrefix}.destinationBarcode" value="${sourceElement.destinationBarcode}"/>
+                                            <input type="text" readonly name="${namePrefix}.destinationWell" value="${sourceElement.destinationWell}"/>
+                                        </div>
+                                    </c:forEach>
+                                </c:if>
+                            </c:forEach>
+                        </div>
                     </c:if>
                 </stripes:form>
             </c:otherwise>

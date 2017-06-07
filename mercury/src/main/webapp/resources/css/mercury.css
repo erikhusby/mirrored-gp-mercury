@@ -38,7 +38,10 @@ ul.DTTT_dropdown.dropdown-menu li { position: relative; }
 .DTTT { float: right; }
 
 .dropdown-menu a { text-decoration: none !important }
-
+/* Datatables bootstrap css adds box icsons which clutter the header */
+table.dataTable thead .sorting:after { content: "" }
+table.dataTable thead .sorting_asc:after { content: "" }
+table.dataTable thead .sorting_desc:after { content: "" }
 /* DataTables sorting CSS */
 table.table thead .sorting,
 table.table thead .sorting_asc,
@@ -54,7 +57,7 @@ table.table thead .sorting_asc_disabled { background: url('/Mercury/images/sort_
 table.table thead .sorting_desc_disabled { background: url('/Mercury/images/sort_desc_disabled.png') no-repeat center right; }
 
 /* highlight error */
-input.error, select.error, textarea.error { background-color: #F2DEDE; border: 1px #8b0000 solid; }
+input.error, select.error, textarea.error, input:invalid { background-color: #F2DEDE; border: 1px #8b0000 solid; }
 
 /* SIMPLE (HIGHTLIGHTS ROW W/ MOUSE)***************** */
 table.simple thead tr { text-align: left; border-radius: 3px;-moz-border-radius: 3px; -webkit-border-radius: 3px; -khtml-border-radius: 3px;}

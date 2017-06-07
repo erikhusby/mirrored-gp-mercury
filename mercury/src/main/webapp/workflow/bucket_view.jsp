@@ -163,11 +163,25 @@
             background-repeat: no-repeat;
             background-position: right 5px center;
         }
+        #bucketEntryView th {
+            vertical-align: top;
+        }
+        /* min width for columns excluding the checkbox column */
+        #bucketEntryView th:nth-child(n+2) {
+            width:auto;
+            min-width: 5em;
+        }
+        #bucketEntryView td,span.title {
+            white-space: nowrap;
+        }
+        .ellipsis {
+            max-width: 250px;
+        }
 
         /* add a line break after the header */
         .title:after {
             content: '\A';
-            white-space: pre;
+            white-space: pre-wrap;
         }
     </style>
 
@@ -316,6 +330,13 @@
             columnsEditable = true;
             </security:authorizeBlock>
 
+            // Initialize data-search attribute before datatables loads the table.
+            // Note: Putting this in a 'preInit.dt' event callback should work but doesn't.
+            $j('#bucketEntryView').find("td").each(function () {
+                $td = $j(this);
+                $td.attr('data-search', $td.text().trim());
+            });
+
             var editablePdo = function () {
                 if (columnsEditable) {
                     var oTable = $j('#bucketEntryView').DataTable();
@@ -393,6 +414,7 @@
                 // If a column that was previously hidden but becomes visible the page
                 // must be reloaded since there is no data in that column.
                 $j(document.body).on("click", ".dt-button-background", function () {
+                    oTable.state.save();
                     var sessionVisibility = !undefined && $j("body").data(columnVisibilityKey) || false;
                     if (sessionVisibility) {
                         $j("#bucketForm").submit();
@@ -456,30 +478,28 @@
                         }
                     }
 
-                    if (bucketName !== '') {
-                        var batchSize = $j("input#batchSize").val();
-                        var stateData = {
-                            "<%= BucketViewActionBean.TABLE_STATE_KEY %>": JSON.stringify(data),
-                            "<%= BucketViewActionBean.SELECTED_BUCKET_KEY %>": bucketName,
-                            "<%= BucketViewActionBean.SELECT_NEXT_SIZE %>": batchSize
-                        };
-                        localStorage.setItem(localStorageKey, JSON.stringify(stateData));
-                        $j.ajax({
-                            'url': "${ctxpath}/workflow/bucketView.action?<%= BucketViewActionBean.SAVE_SEARCH_DATA %>=",
-                            'data': stateData,
-                            dataType: 'json',
-                            type: 'POST'
-                        });
-                    }
+                    var batchSize = $j("input#batchSize").val();
+                    var stateData = {
+                        "<%= BucketViewActionBean.TABLE_STATE_KEY %>": JSON.stringify(data),
+                        "<%= BucketViewActionBean.SELECTED_BUCKET_KEY %>": bucketName,
+                        "<%= BucketViewActionBean.SELECT_NEXT_SIZE %>": batchSize
+                    };
+                    localStorage.setItem(localStorageKey, JSON.stringify(stateData));
+                    $j.ajax({
+                        'url': "${ctxpath}/workflow/bucketView.action?<%= BucketViewActionBean.SAVE_SEARCH_DATA %>=",
+                        'data': stateData,
+                        dataType: 'json',
+                        type: 'POST'
+                    });
                 },
                 "stateLoadCallback": function (settings, data) {
                     var storedJson = '${actionBean.tableState}';
                     var useLocalData = true;
-                    if (storedJson) {
+                    if (storedJson && storedJson !== '{}') {
                         // if bad data was stored in the preferences it will cause problems here, so wrap
                         // it around an exception.
                         try {
-                            data = JSON.parse(storedJson);
+                            data = JSON.parse(storedJson.replace(/\\/g,'\\\\'));
                             useLocalData = false;
                         } catch (e) { /* Nothing to do here */ }
                     }
@@ -499,7 +519,7 @@
                         {"Root Sample": 'text'},
                         {"Sample Name": 'text'},
                         {"PDO": 'select'},
-                        {"PDO Name": 'text'},
+                        {"PDO Name": 'select'},
                         {"PDO Owner": 'select'},
                         {"Batch Name": 'text'},
                         {"Product": 'select'},
@@ -520,10 +540,12 @@
                     var api = new $j.fn.dataTable.Api(settings);
 
                     // attach event handler so preferences are saved when select next field is changed.
-                    $j("input#batchSize").on("change blur input increment decrement", function () {
+                    function saveState() {
                         api.state.save();
-                    });
-                    api.state.save();
+                    }
+
+                    $j("input#batchSize").on("change blur input incremented decremented", saveState);
+                    $j("#chooseNext").on("click", "button", saveState);
                 }
             });
             // set up the "Show or Hide" buttons
@@ -716,20 +738,20 @@
                         <input type="checkbox" class="bucket-checkAll" title="Check All"/>
                         <span id="count" class="bucket-checkedCount"></span>
                     </th>
-                    <th width="60"><span class="title">Vessel Name</span></th>
-                    <th width="60"><span class="title">Nearest Sample</span></th>
-                    <th width="60"><span class="title">Root Sample</span></th>
-                    <th width="50"><span class="title">Sample Name</span></th>
+                    <th><span class="title">Vessel Name</span></th>
+                    <th><span class="title">Nearest Sample</span></th>
+                    <th><span class="title">Root Sample</span></th>
+                    <th><span class="title">Sample Name</span></th>
                     <th><span class="title ">Material Type</span></th>
                     <th><span class="title">PDO</span></th>
                     <th><span class="title">PDO Name</span></th>
                     <th><span class="title">PDO Owner</span></th>
-                    <th style="min-width: 50px" class=""><span class="title">Batch Name</span></th>
+                    <th><span class="title">Batch Name</span></th>
                     <th><span class="title ">Workflow</span></th>
                     <th><span class="title">Product</span></th>
                     <th><span class="title">Add-ons</span></th>
-                    <th width="100"><span class="title ">Receipt Date</span></th>
-                    <th width="100"><span class="title">Created Date</span></th>
+                    <th><span class="title ">Receipt Date</span></th>
+                    <th><span class="title">Created Date</span></th>
                     <th><span class="title">Bucket Entry Type</span></th>
                     <th><span class="title">Rework Reason</span></th>
                     <th><span class="title">Rework Comment</span></th>
@@ -773,12 +795,12 @@
                                 <c:if test="${!stat.last}">&nbsp;</c:if>
                             </c:forEach>
                         </c:if></td>
-                        <td class="ellipsis">
+                        <td>
                             <c:if test="${actionBean.showHeader('Material Type')}">
                                 ${entry.labVessel.latestMaterialType.displayName}
                             </c:if>
                         </td>
-                        <td class="ellipsis editable">
+                        <td class="editable">
                         <c:if test="${actionBean.showHeader('PDO')}">
                             ${entry.productOrder.businessKey}
                             <span style="display: none;" class="icon-pencil"></span>
@@ -786,10 +808,10 @@
                         </td>
                         <td>
                             <c:if test="${actionBean.showHeader('PDO Name')}">
-                                <div class="ellipsis" style="width: 300px"> ${entry.productOrder.title} </div>
+                                <div class="ellipsis" title="${entry.productOrder.title}">${entry.productOrder.title}</div>
                             </c:if>
                         </td>
-                        <td class="ellipsis">
+                        <td>
                             <c:if test="${actionBean.showHeader('PDO Owner')}">
                                 ${actionBean.getUserFullName(entry.productOrder.createdBy)}</c:if>
                         </td>
@@ -799,29 +821,29 @@
                             ${actionBean.getLink(batch.businessKey)} <c:if test="${!stat.last}">&nbsp;</c:if></c:forEach></c:if>
                         </td>
                         <td>
-                            <div class="ellipsis" style="max-width: 250px;">
-                                <c:if test="${actionBean.showHeader('Workflow')}">
-                                    ${mercuryStatic:join(actionBean.bucketWorkflowNames(entry), "<br/>")}
-                                </c:if>
-                            </div>
+                            <c:if test="${actionBean.showHeader('Workflow')}">
+                                <c:set var="workflows"
+                                       value="${mercuryStatic:join(actionBean.bucketWorkflowNames(entry), '<br/>')}"/>
+                                <div class="ellipsis" title="${workflows}">${workflows}</div>
+                            </c:if>
                         </td>
                         <td>
                             <c:if test="${actionBean.showHeader('Product')}">
-                            <div class="ellipsis" style="max-width: 250px;">${entry.productOrder.product.name}</div></c:if>
+                            <div class="ellipsis" title="${entry.productOrder.product.name}">${entry.productOrder.product.name}</div></c:if>
                         </td>
                         <td>
                             <c:if test="${headerVisibilityMap['Add-ons']}">
-                                <div class="ellipsis" style="max-width: 250px;">
+                                <div class="ellipsis" title="entry.productOrder.getAddOnList("<br/>")">
                                         ${entry.productOrder.getAddOnList("<br/>")}
                                 </div>
                             </c:if></td>
-                        <td class="ellipsis">
+                        <td>
                         <c:if test="${actionBean.showHeader('Receipt Date')}"><c:forEach items="${entry.labVessel.mercurySamples}" var="mercurySample" varStatus="stat">
                                 <fmt:formatDate value="${mercurySample.receivedDate}" pattern="MM/dd/yyyy HH:mm"/>
                                 <c:if test="${!stat.last}">&nbsp;</c:if>
                             </c:forEach></c:if>
                         </td>
-                        <td class="ellipsis">
+                        <td>
                         <c:if test="${actionBean.showHeader('Created Date')}"><fmt:formatDate value="${entry.createdDate}" pattern="MM/dd/yyyy HH:mm"/></c:if>
                         </td>
                         <td>
@@ -831,7 +853,9 @@
                             <c:if test="${actionBean.showHeader('Rework Reason')}">${entry.reworkDetail.reason.reason}</c:if>
                         </td>
                         <td>
-                        <c:if test="${actionBean.showHeader('Rework Comment')}"><div class="ellipsis">${entry.reworkDetail.comment}</div></c:if>
+                            <c:if test="${actionBean.showHeader('Rework Comment')}">
+                                <div class="ellipsis">${entry.reworkDetail.comment}</div>
+                            </c:if>
                         </td>
                         <td>
                             <c:if test="${entry.reworkDetail != null && actionBean.showHeader('Rework User')}">

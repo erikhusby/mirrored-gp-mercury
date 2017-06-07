@@ -11,18 +11,24 @@
 
 package org.broadinstitute.gpinformatics.athena.presentation.projects;
 
+import net.sourceforge.stripes.validation.ValidationErrors;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.MockServerTest;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRepository;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsService;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsWillAlwaysWorkSubmissionsService;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
-import org.broadinstitute.gpinformatics.infrastructure.MockServerTest;
 import org.broadinstitute.gpinformatics.mercury.presentation.TestCoreActionBeanContext;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.hamcrest.Matchers;
 import org.mockito.Mockito;
 import org.mockserver.model.HttpResponse;
 import org.mockserver.model.HttpStatusCode;
@@ -31,6 +37,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -38,6 +45,7 @@ import java.util.List;
 import static org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS;
 import static org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject.RegulatoryDesignation.GENERAL_CLIA_CAP;
 import static org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject.RegulatoryDesignation.RESEARCH_ONLY;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
@@ -45,8 +53,42 @@ import static org.hamcrest.Matchers.nullValue;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ResearchProjectActionBeanTest extends MockServerTest {
+
+    private static final String TEST_REPOSITORY_NAME = "myRepoName";
+    private static final String TEST_REPOSITORY_DESCRIPTION = "myRepoDescription";
+
     @BeforeMethod(alwaysRun = true)
     public void setUp() throws Exception {
+    }
+
+    @DataProvider(name = "titlesProvider")
+    public Iterator<Object[]> titlesProvider() {
+        List<Object[]> testCases = new ArrayList<>();
+        testCases.add(new Object[]{"foo<foo+", false});
+        testCases.add(new Object[]{"foo>foo\"", false});
+        testCases.add(new Object[]{"foo+foo\'", false});
+        testCases.add(new Object[]{"foo>foo<", false});
+        testCases.add(new Object[]{"foo+foo>", false});
+        testCases.add(new Object[]{"foo-foo+", false});
+        testCases.add(new Object[]{"foo\"foo-", false});
+        testCases.add(new Object[]{"foo", true});
+
+        return testCases.iterator();
+    }
+
+    @Test(dataProvider = "titlesProvider")
+    public void testTitleValidation(String title, boolean passesValidation) throws Exception {
+        ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject();
+        researchProject.setTitle(title);
+        ResearchProjectActionBean actionBean = new ResearchProjectActionBean();
+        actionBean.setEditResearchProject(researchProject);
+        actionBean.setContext(new TestCoreActionBeanContext());
+        ResearchProjectDao mockResearchProjectDao = Mockito.mock(ResearchProjectDao.class);
+        Mockito.when(mockResearchProjectDao.findByTitle(title)).thenReturn(null);
+        actionBean.setResearchProjectDao(mockResearchProjectDao);
+        ValidationErrors validationErrors = new ValidationErrors();
+        actionBean.createUniqueNameValidation(validationErrors);
+        assertThat(validationErrors.hasFieldErrors(), not(passesValidation));
     }
 
     @DataProvider(name = "submissionDataProvider")
@@ -93,14 +135,83 @@ public class ResearchProjectActionBeanTest extends MockServerTest {
         }
 
         ResearchProjectActionBean actionBean = new ResearchProjectActionBean();
+        actionBean.setSubmissionsService(new SubmissionsWillAlwaysWorkSubmissionsService());
         actionBean.setUserBean(userBean);
         actionBean.setBroadPiList(broadPiList);
         actionBean.setBspUserList(bspUserList);
         actionBean.setEditResearchProject(researchProject);
         actionBean.setContext(new TestCoreActionBeanContext());
-
+        actionBean.initSubmissions();
         assertThat(actionBean.validateViewOrPostSubmissions(false), is(submissionAllowed.booleanValue()));
         assertThat(actionBean.getValidationErrors().isEmpty(), is(submissionAllowed.booleanValue()));
+    }
+
+
+    public void testSubmissionLibraryNotOverwritten() throws Exception {
+        SubmissionsService submissionsService = setupInitSubmissionsMocks();
+        ResearchProjectActionBean actionBean = setupInitSubmissionsProject(submissionsService);
+        String selectedLibrary = "RNA Seq";
+        actionBean.setSelectedSubmissionLibraryDescriptor(selectedLibrary);
+        actionBean.initSubmissions();
+        Mockito.verify(submissionsService, Mockito.atLeastOnce()).findLibraryDescriptorTypeByKey(Mockito.matches(selectedLibrary));
+        assertThat(actionBean.getSelectedSubmissionLibraryDescriptor(), is(selectedLibrary));
+    }
+
+    public void testSubmissionRepositoryNotOverwritten() throws Exception {
+        SubmissionsService submissionsService = setupInitSubmissionsMocks();
+        ResearchProjectActionBean actionBean = setupInitSubmissionsProject(submissionsService);
+        String selectedRepository = TEST_REPOSITORY_NAME;
+        actionBean.setSelectedSubmissionRepository(selectedRepository);
+        actionBean.initSubmissions();
+        assertThat(actionBean.getSelectedSubmissionRepository(), is(selectedRepository));
+    }
+
+    public void testRepositoryIsNotNullAndSelectedIsBlank() throws Exception {
+        SubmissionsService submissionsService = setupInitSubmissionsMocks();
+        ResearchProjectActionBean actionBean = setupInitSubmissionsProject(submissionsService);
+        SubmissionRepository submissionRepository =
+                new SubmissionRepository(TEST_REPOSITORY_NAME, TEST_REPOSITORY_DESCRIPTION);
+        actionBean.setSubmissionRepository(submissionRepository);
+        actionBean.initSubmissions();
+
+        assertThat(actionBean.getSubmissionRepository(), Matchers.equalTo(submissionRepository));
+        assertThat(actionBean.getSelectedSubmissionRepository(), Matchers.nullValue());
+
+    }
+
+    public void testSelectedIsNotNullAndRepositoryIsNull() throws Exception {
+        SubmissionsService submissionsService = setupInitSubmissionsMocks();
+        ResearchProjectActionBean actionBean = setupInitSubmissionsProject(submissionsService);
+
+        actionBean.setSelectedSubmissionRepository(TEST_REPOSITORY_NAME);
+        actionBean.setSubmissionRepository(null);
+        actionBean.initSubmissions();
+
+        assertThat(actionBean.getSubmissionRepository(), nullValue());
+        assertThat(actionBean.getSelectedSubmissionRepository(), Matchers.equalTo(TEST_REPOSITORY_NAME));
+    }
+
+    private ResearchProjectActionBean setupInitSubmissionsProject(SubmissionsService submissionsService) {
+        ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject();
+        ResearchProjectActionBean actionBean = new ResearchProjectActionBean();
+        actionBean.setEditResearchProject(researchProject);
+        actionBean.setContext(new TestCoreActionBeanContext());
+        actionBean.setSubmissionsService(submissionsService);
+        return actionBean;
+    }
+
+    private SubmissionsService setupInitSubmissionsMocks() {
+        SubmissionsService mockService = Mockito.mock(SubmissionsService.class);
+        Mockito.when(mockService.getSubmissionRepositories()).thenReturn(Arrays.asList(
+                new SubmissionRepository(SubmissionRepository.DEFAULT_REPOSITORY_NAME,
+                        SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR),
+                new SubmissionRepository("GDC_PROTECTED", "Genomics Data Commons (GDC) Controlled Access submissions")
+        ));
+        Mockito.when(mockService.getSubmissionLibraryDescriptors()).thenReturn(Arrays.asList(
+                new SubmissionLibraryDescriptor("Whole Genome", "Human Whole Genome"),
+                new SubmissionLibraryDescriptor("RNA Seq", "RNA Sequencing")
+        ));
+        return mockService;
     }
 
     public void testRpWithDraftPdoDoestThrowsException() {

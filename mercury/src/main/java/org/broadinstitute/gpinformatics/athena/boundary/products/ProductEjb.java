@@ -325,16 +325,21 @@ public class ProductEjb {
             if(!CollectionUtils.containsAll(control.getDisabledItems(),
                                             Collections.singleton(new AccessItem(productToPublish.getPrimaryPriceItem().getName())))
                     && control.isEnabled()) {
-                try {
-                    if (productToPublish.isSavedInSAP()) {
-                        sapService.changeProductInSAP(productToPublish);
-                    } else {
-                        sapService.createProductInSAP(productToPublish);
-                    }
-                    productToPublish.setSavedInSAP(true);
+                if (!productToPublish.isExternalOnlyProduct()) {
+                    try {
+                        if (productToPublish.isSavedInSAP()) {
+                            sapService.changeProductInSAP(productToPublish);
+                        } else {
+                            sapService.createProductInSAP(productToPublish);
+                        }
+                        productToPublish.setSavedInSAP(true);
 
-                } catch (SAPIntegrationException e) {
-                    errorMessages.add(e.getMessage());
+                    } catch (SAPIntegrationException e) {
+                        errorMessages.add(e.getMessage());
+                    }
+                } else {
+                    errorMessages.add(productToPublish.getName() + " Cannot be published to SAP since it is either a "
+                                      + "Clinical or Commercial product");
                 }
             } else {
                 errorMessages.add(productToPublish.getName() +
