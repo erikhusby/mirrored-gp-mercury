@@ -1962,7 +1962,7 @@ public class LabEventTest extends BaseEventTest {
                 "IcePoolingTransfer",
                 "Ice96PlexSpriConcentration",
                 "IcePoolTest",
-                "Ice1stHybridization",
+                "IceHyperPrep1stHybridization",
                 "Ice1stCapture",
                 "Ice2ndCapture",
                 "IceCatchCleanup",
@@ -2074,7 +2074,7 @@ public class LabEventTest extends BaseEventTest {
         QtpEntityBuilder qtpEntityBuilder = null;
         int numSeqReagents = 1;
         if (workflow == Workflow.ICE_EXOME_EXPRESS_HYPER_PREP) {
-            IceEntityBuilder iceEntityBuilder = runIceProcess(
+            IceEntityBuilder iceEntityBuilder = runHyperPrepIceProcess(
                     Collections.singletonList(libraryConstructionEntityBuilder.getPondRegRack()),
                     "1");
             qtpEntityBuilder = runQtpProcess(iceEntityBuilder.getCatchEnrichRack(),
