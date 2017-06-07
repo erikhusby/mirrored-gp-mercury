@@ -17,20 +17,16 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.infrastructure.presentation.SampleLink;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver;
 import org.codehaus.jackson.annotate.JsonProperty;
 
-import javax.annotation.Nonnull;
 import java.text.Format;
 import java.util.Date;
 
 
 public class ProductOrderSampleBean {
-    private SampleLink.Factory sampleLinkFactory;
-
     private static final Format dateFormatter = FastDateFormat.getInstance(CoreActionBean.DATE_PATTERN);
     public static final Log log = LogFactory.getLog(ProductOrderSampleBean.class);
     public static final String RECORDS_TOTAL = "recordsTotal";
@@ -237,10 +233,6 @@ public class ProductOrderSampleBean {
                 "<div class=\"onRisk\" title=\"On Risk Details for %s\" rel=\"popover\" data-trigger=\"hover\" data-placement=\"left\" data-html=\"true\" data-content=\"<div style='text-align: left; white-space: normal; word-break: break-word;'>%s</div>\"><img src=\"/Mercury/images/check.png\">...</div>",
                 sample.getSampleKey(), sample.getRiskString());
         return riskDiv;
-    }
-
-    public SampleLink getSampleLink(@Nonnull AbstractSample sample) {
-        return sampleLinkFactory.create(sample);
     }
 
     private static String formatPicoRunDate(Date picoRunDate, String defaultReturn) {

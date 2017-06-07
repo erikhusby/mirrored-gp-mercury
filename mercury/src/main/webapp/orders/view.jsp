@@ -655,7 +655,7 @@ function updateSampleInformation(samples, table, maxFetchSize, includeSampleSumm
             url: "${ctxpath}/orders/order.action?<%= ProductOrderActionBean.GET_SAMPLE_DATA %>",
             data: {
                 'productOrder': "${actionBean.editOrder.businessKey}",
-                'sampleIdsForGetBspData': samples.splice(0, maxFetchSize),
+                'sampleIdsForGetBspData': samples.splice(0, fetchSize),
                 'includeSampleSummary': includeSampleSummary
             },
             method: 'POST',

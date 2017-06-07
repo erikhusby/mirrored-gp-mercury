@@ -2040,10 +2040,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
         for (ProductOrderSample sample : productOrderSamples) {
             SampleLink sampleLink = null;
-            try {
-                sampleLink = getSampleLink(sample);
-            } catch (Exception e) {
-                logger.error("Could not get sample link", e);
+            if (includeSampleData && sample.isInBspFormat()) {
+                try {
+                    sampleLink = getSampleLink(sample);
+                } catch (Exception e) {
+                    logger.error("Could not get sample link", e);
+                }
             }
             ProductOrderSampleBean bean =
                     new ProductOrderSampleBean(sample, includeSampleData, preferenceSaver, sampleLink);
