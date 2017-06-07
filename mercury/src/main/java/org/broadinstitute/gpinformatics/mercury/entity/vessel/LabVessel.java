@@ -217,7 +217,6 @@ public abstract class LabVessel implements Serializable {
     private Set<VesselToSectionTransfer> vesselToSectionTransfersThisAsSource = new HashSet<>();
 
     @OneToMany(mappedBy = "labVessel", cascade = CascadeType.PERSIST)
-    @BatchSize(size = 100)
     private Set<LabMetric> labMetrics = new HashSet<>();
 
     @Transient
