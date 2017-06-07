@@ -298,7 +298,7 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     /**
      * If the title is being used to populate javascript code, a special character in the title could corrupt
      * the script, resulting in page rendering errors.
-     * @return URLEncoded title.
+     * @return websafe title which won't corrupt javascript.
      */
     public String getWebSafeTitle() {
         return StringEscapeUtils.escapeEcmaScript(title);
