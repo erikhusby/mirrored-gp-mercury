@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -16,7 +18,13 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Date;
+
 
 @Entity
 @Audited
@@ -40,10 +48,12 @@ public class SampleInstanceEntity {
     @ManyToOne(cascade = CascadeType.PERSIST)
     private MercurySample rootSample;
 
-
     @OneToMany(mappedBy = "sampleInstanceEntity", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @BatchSize(size = 100)
     private Set<SampleInstanceEntityTsk> sampleInstanceEntityTsks = new HashSet<>();
+
+    @ManyToOne
+    private SampleKitRequest sampleKitRequest;
 
     @ManyToOne
     private ReagentDesign reagentDesign;
@@ -51,11 +61,45 @@ public class SampleInstanceEntity {
     @ManyToOne
     private MolecularIndexingScheme molecularIndexingScheme;
 
+    @ManyToOne
+    private ResearchProject researchProject;
+
+    @ManyToOne
+    private ProductOrder productOrder;
+
     private String sampleLibraryName;
+
+    private String referenceSequence;
+
+    private String coverage;
+
+    private String restrictionEnzyme;
+
+    private String illumina_454_KitUsed;
 
     private Date uploadDate;
 
+    private String librarySizeRange;
+
+    private String jumpSize;
+
+    private String insertSizeRange;
+
+    private String pooled;
+
+    private String libraryType;
+
     private String experiment;
+
+    private String collaboratorSampleId;
+
+    private String tissueType;
+
+    private String sampleTubeBarcode;
+
+    private String sampleNumber;
+
+    private String readLength;
 
     public void removeSubTasks() {
         sampleInstanceEntityTsks.clear();
@@ -115,5 +159,73 @@ public class SampleInstanceEntity {
 
     public void setExperiment(String experiment) { this.experiment = experiment;  }
 
-    public String getExperiment() { return experiment; }
+    public String getExperiment() { return this.experiment; }
+
+    public String getReferenceSequence() { return this.referenceSequence; }
+
+    public void setReferenceSequence(String referenceSequence) {this.referenceSequence = referenceSequence;}
+
+    public String getCoverage() { return this.coverage; }
+
+    public void setCoverage(String coverage) { this.coverage = coverage;}
+
+    public String getRestrictionEnzyme(){ return this.restrictionEnzyme ;}
+
+    public void setRestrictionEnzyme(String restrictionEnzyme) {this.restrictionEnzyme = restrictionEnzyme;}
+
+    public String getIllumina454KitUsed() { return this.illumina_454_KitUsed; }
+
+    public void setIllumina454KitUsed(String illumina454KitUsed) {this.illumina_454_KitUsed = illumina454KitUsed;}
+
+    public String getJumpSize() { return this.jumpSize; }
+
+    public void setJumpSize(String jumpSize) {this.jumpSize = jumpSize; }
+
+    public String getLibrarySizeRange() { return this.librarySizeRange; }
+
+    public void setLibrarySizeRange(String librarySizeRange) { this.librarySizeRange = librarySizeRange;}
+
+    public String getInsertSizeRange() { return  this.insertSizeRange; }
+
+    public void setInsertSizeRange(String insertSizeRange) { this.insertSizeRange = insertSizeRange;}
+
+    public String getPooled() { return this.pooled; }
+
+    public void setPooled(String pooled) { this.pooled = pooled; }
+
+    public String getLibraryType() { return  this.libraryType; }
+
+    public void setLibraryType(String libraryType) { this.libraryType = libraryType; }
+
+    public String getCollaboratorSampleId() { return this.collaboratorSampleId; }
+
+    public void setCollaboratorSampleId(String collaboratorSampleId) { this.collaboratorSampleId = collaboratorSampleId;}
+
+    public void setTissueType(String tissueType) { this.tissueType = tissueType;}
+
+    public String getTissueType() { return this.tissueType;}
+
+    public void setSampleTubeBarcode(String sampleTubeBarcode) {this.sampleTubeBarcode = sampleTubeBarcode;}
+
+    public String getSampleTubeBarcode() { return this.sampleTubeBarcode;}
+
+    private String getSampleNumber() { return this.sampleNumber;}
+
+    private void setSampleNumber(String sampleNumber) { this.sampleNumber = sampleNumber;}
+
+    public void setDesiredReadLength(String readLength) { this.readLength = readLength;}
+
+    public String getDesiredReadLength() {return this.readLength;}
+
+    public SampleKitRequest getSampleKitRequest() { return sampleKitRequest; }
+
+    public void setSampleKitRequest(SampleKitRequest sampleKitRequest) { this.sampleKitRequest = sampleKitRequest; }
+
+    public ResearchProject getResearchProject() { return researchProject;  }
+
+    public void setResearchProject(ResearchProject researchProject) { this.researchProject = researchProject; }
+
+    public ProductOrder getProductOrder() { return productOrder; }
+
+    public void setProductOrder(ProductOrder productOrder) { this.productOrder = productOrder; }
 }

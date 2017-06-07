@@ -126,18 +126,35 @@ public final class PoiSpreadsheetParser {
         int headerRowIndex = processor.getHeaderRowIndex();
         int headerRowNum = 0;
         int numHeaderRows = processor.getNumHeaderRows();
+        List<String> rowsBeforeHeader = new ArrayList<>();
         while (rows.hasNext() && headerRowNum < numHeaderRows) {
             Row headerRow = rows.next();
             if (headerRow.getRowNum() < headerRowIndex) {
+                Iterator<Cell> cellIterator = headerRow.cellIterator();
+                cellIterator.next();
+                if(cellIterator.hasNext()) {
+                    rowsBeforeHeader.add(getCellValues(cellIterator.next(), false, true));
+                }
                 continue;
             }
 
             List<String> headers = new ArrayList<>();
             Iterator<Cell> cellIterator = headerRow.cellIterator();
+
+            //If there are leading offset column(s) before the actual data.
+            for(int offset = 0; offset < processor.columnOffset(); ++offset)
+            {
+                    headers.add("");
+            }
+
             while (cellIterator.hasNext()) {
                 // Headers are always strings, so the false is for the date and the true is in case the header looks
-                // like a number to excel
-                headers.add(getCellValues(cellIterator.next(), false, true));
+                // like a number to excel.
+                String value = getCellValues(cellIterator.next(), false, true).trim();
+                //Empty column headers should be ignored.
+               if(value != "") {
+                   headers.add(value);
+               }
             }
 
             // The primary header row is the one that needs to be generally validated.
@@ -148,7 +165,20 @@ public final class PoiSpreadsheetParser {
             }
 
             // Turn the header strings for this row into whatever objects are needed to continue on.
-            processor.processHeader(headers, headerRowNum++);
+
+            if(rowsBeforeHeader.size() > 0)
+            {
+                //For spreadsheets thave booth vertical and horizontal header components.
+                List<String> newHeaders = new ArrayList<>();
+                newHeaders.addAll(rowsBeforeHeader);
+                processor.processHeader(newHeaders, headerRowNum++);
+                processor.processSubHeaders(headers);
+                return;
+            }
+            else {
+                processor.processHeader(headers, headerRowNum++);
+                return;
+            }
         }
     }
 

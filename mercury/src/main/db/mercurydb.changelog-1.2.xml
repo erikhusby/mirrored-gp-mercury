@@ -838,4 +838,87 @@
         </createIndex>
     </changeSet>
 
+    <changeSet id="GPLIM-4712-187" author="dwilson">
+        <addColumn schemaName="mercury" tableName="sample_instance_entity">
+            <column name="READ_LENGTH"  type="varchar(255)"/>
+            <column name="REFERENCE_SEQUENCE"  type="varchar(255)"/>
+            <column name="COVERAGE"  type="varchar(255)"/>
+            <column name="RESTRICTION_ENZYME"  type="varchar(255)"/>
+            <column name="ILLUMINA_454_KIT_USED"  type="varchar(255)"/>
+            <column name="JUMP_SIZE"  type="varchar(255)"/>
+            <column name="LIBRARY_SIZE_RANGE"  type="varchar(255)"/>
+            <column name="INSERT_SIZE_RANGE"  type="varchar(255)"/>
+            <column name="POOLED"  type="varchar(255)"/>
+            <column name="LIBRARY_TYPE"  type="varchar(255)"/>
+            <column name="COLLABORATOR_SAMPLE_ID"  type="varchar(255)"/>
+            <column name="TISSUE_TYPE"  type="varchar(255)"/>
+            <column name="SAMPLE_TUBE_BARCODE"  type="varchar(255)"/>
+            <column name="SAMPLE_NUMBER"  type="varchar(255)"/>
+            <column name="PRODUCT_ORDER"  type="number(19,0)"/>
+            <column name="RESEARCH_PROJECT"  type="number(19,0)"/>
+            <column name="SAMPLE_KIT_REQUEST"  type="number(19,0)"/>
+        </addColumn>
+
+        <addColumn schemaName="mercury" tableName="sample_instance_entity_aud">
+            <column name="READ_LENGTH"  type="varchar(255)"/>
+            <column name="REFERENCE_SEQUENCE"  type="varchar(255)"/>
+            <column name="COVERAGE"  type="varchar(255)"/>
+            <column name="RESTRICTION_ENZYME"  type="varchar(255)"/>
+            <column name="ILLUMINA_454_KIT_USED"  type="varchar(255)"/>
+            <column name="JUMP_SIZE"  type="varchar(255)"/>
+            <column name="LIBRARY_SIZE_RANGE"  type="varchar(255)"/>
+            <column name="INSERT_SIZE_RANGE"  type="varchar(255)"/>
+            <column name="POOLED"  type="varchar(255)"/>
+            <column name="LIBRARY_TYPE"  type="varchar(255)"/>
+            <column name="COLLABORATOR_SAMPLE_ID"  type="varchar(255)"/>
+            <column name="TISSUE_TYPE"  type="varchar(255)"/>
+            <column name="SAMPLE_TUBE_BARCODE"  type="varchar(255)"/>
+            <column name="SAMPLE_NUMBER"  type="varchar(255)"/>
+            <column name="PRODUCT_ORDER"  type="number(19,0)"/>
+            <column name="RESEARCH_PROJECT"  type="number(19,0)"/>
+            <column name="SAMPLE_KIT_REQUEST"  type="number(19,0)"/>
+        </addColumn>
+
+        <!-- What should be the primary key on this table?? -->
+        <createTable tableName="sample_kit_request" schemaName="mercury">
+            <column name="SAMPLE_KIT_REQUEST_ID"  type="number(19,0)"/>
+            <column name="FIRST_NAME"  type="varchar(255)"/>
+            <column name="LAST_NAME"  type="varchar(255)"/>
+            <column name="ORGANIZATION"  type="varchar(255)"/>
+            <column name="ADDRESS"  type="varchar(255)"/>
+            <column name="CITY"  type="varchar(255)"/>
+            <column name="STATE"  type="varchar(255)"/>
+            <column name="POSTAL_CODE"  type="varchar(255)"/>
+            <column name="COUNTRY"  type="varchar(255)"/>
+            <column name="PHONE"  type="varchar(255)"/>
+            <column name="EMAIL"  type="varchar(255)"/>
+            <column name="COMMON_NAME"  type="varchar(255)"/>
+            <column name="GENUS"  type="varchar(255)"/>
+            <column name="SPECIES"  type="varchar(255)"/>
+            <column name="IRB_APPROVAL_REQUIRED"  type="varchar(255)"/>
+        </createTable>
+
+        <createTable tableName="sample_kit_request_aud" schemaName="mercury">
+            <column name="SAMPLE_KIT_REQUEST_ID"  type="number(19,0)"/>
+            <column name="FIRST_NAME"  type="varchar(255)"/>
+            <column name="LAST_NAME"  type="varchar(255)"/>
+            <column name="ORGANIZATION"  type="varchar(255)"/>
+            <column name="ADDRESS"  type="varchar(255)"/>
+            <column name="CITY"  type="varchar(255)"/>
+            <column name="STATE"  type="varchar(255)"/>
+            <column name="POSTAL_CODE"  type="varchar(255)"/>
+            <column name="COUNTRY"  type="varchar(255)"/>
+            <column name="PHONE"  type="varchar(255)"/>
+            <column name="EMAIL"  type="varchar(255)"/>
+            <column name="COMMON_NAME"  type="varchar(255)"/>
+            <column name="GENUS"  type="varchar(255)"/>
+            <column name="SPECIES"  type="varchar(255)"/>
+            <column name="IRB_APPROVAL_REQUIRED"  type="varchar(255)"/>
+            <column name="rev" type="number(19,0)" />
+            <column name="revtype" type="number(3,0)" />
+        </createTable>
+
+        <createSequence sequenceName="seq_sample_kit_request" schemaName="mercury" startValue="1" incrementBy="50"/>
+    </changeSet>
+
 </databaseChangeLog>

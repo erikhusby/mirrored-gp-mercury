@@ -269,7 +269,12 @@ public class Metadata {
         NA(Category.LAB_METRIC, DataType.STRING, "NA", Visibility.USER),
         BAIT_WELL(Category.REAGENT, DataType.STRING, "Bait Well", Visibility.USER),
         LSID(Category.SAMPLE, DataType.STRING, "Life Science Identifier", Visibility.USER),
-        SPECIES(Category.SAMPLE, DataType.STRING, "Species", Visibility.USER);
+        SPECIES(Category.SAMPLE, DataType.STRING, "Species", Visibility.USER),
+        CELL_LINE(Category.SAMPLE, DataType.STRING, "Cell Line", Visibility.USER),
+        TISSUE_TYPE(Category.SAMPLE, DataType.STRING, "Tissue Type", Visibility.USER),
+        INDIVIDUAL_NAME(Category.SAMPLE, DataType.STRING, "Individual Name", Visibility.USER),
+        ORGANISM(Category.SAMPLE, DataType.STRING, "Organism", Visibility.USER),
+        STRAIN(Category.SAMPLE, DataType.STRING, "Strain", Visibility.USER);
 
         private final Category category;
         private final DataType dataType;

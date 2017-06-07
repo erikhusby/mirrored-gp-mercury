@@ -33,7 +33,7 @@ public abstract class TableProcessor implements Serializable {
     public static final String REQUIRED_VALUE_IS_MISSING = "Required value for %s is missing.";
 
     private final List<String> validationMessages = new ArrayList<>();
-
+    private int headerRowIndex;
     private final Set<String> warnings = new LinkedHashSet<>();
 
     private final String sheetName;
@@ -66,8 +66,19 @@ public abstract class TableProcessor implements Serializable {
         return 1;
     }
 
-    public int getHeaderRowIndex() {
+    public int columnOffset() {
         return 0;
+    }
+
+    public void processSubHeaders(List<String> headers) {
+    }
+
+    public int getHeaderRowIndex() {
+        return this.headerRowIndex;
+     }
+
+    public void setHeaderRowIndex(int headerRowIndex) {
+        this.headerRowIndex = headerRowIndex;
     }
 
     /**
