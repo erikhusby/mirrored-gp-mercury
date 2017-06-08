@@ -137,7 +137,7 @@ public class ProductOrderSampleBean {
         uniqueRowIdentifier = ROW_ID_PREFIX + sample.getProductOrderSampleId();
         if (preferenceSaver.showColumn(SAMPLE_ID)) {
             sampleId = sample.getSampleKey();
-            if (sampleLink != null) {
+            if (sampleLink != null && sampleLink.getHasLink()) {
                 sampleLinkString =
                         String.format("<a href='%s' class='external' target='%s' title='%s'>%s</>",
                                 sampleLink.getUrl(),
