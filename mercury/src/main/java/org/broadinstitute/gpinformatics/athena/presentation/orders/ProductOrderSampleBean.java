@@ -149,6 +149,10 @@ public class ProductOrderSampleBean {
         if (preferenceSaver.showColumn(POSITION)) {
             position = sample.getSamplePosition() + 1;
         }
+        if (!includeSampleData) {
+            return;
+        }
+
         if (preferenceSaver.showColumn(BILLED)) {
             completelyBilled = sample.isCompletelyBilled();
         }

@@ -48,17 +48,17 @@
             min-width: initial !important;
         }
         .ui-widget-header{
-            border: 1px solid #B9ECB3;
-            background: #B9ECB3;
+            border: 1px solid #c4eec0;
+            background: #c4eec0;
             height: 15px;
         }
         .sampleDataProgressText{
             position: absolute;
             margin-left: 1em;
-            font-size: small;
+            font-size: 12px;
             font-style: oblique;
         }
-        .ui-progressbar { height:19px}
+        .ui-progressbar { height:15px}
         #sampleData_info {font-weight: bold}
     </style>
 <script type="text/javascript">
@@ -93,6 +93,7 @@ $j(document).ready(function () {
             updateSampleInformation(parallelFetchSamples, table, maxFetchSize, false);
         }
         updateSampleInformation(samplesToFetch, table, maxFetchSize, true);
+        table.rows().draw();
     }
     var oTable = $j('#sampleData').dataTable({
         'dom': "<'row-fluid'<'span12'f>><'row-fluid'<'span5'l><'span2 sampleDataProgress'><'span5 pull-right'<'pull-right'B>>>rt<'row-fluid'<'span6'l><'span6 pull-right'p>>",
@@ -116,6 +117,7 @@ $j(document).ready(function () {
                     }
                 }],
             }, standardButtons()],
+            order: [[ 1, 'desc' ]],
             ajax: {
                 url: "${ctxpath}/orders/order.action?<%= ProductOrderActionBean.GET_SAMPLE_DATA %>",
                 method: 'POST',
@@ -636,7 +638,7 @@ function initSampleDataProgress(value, maxValue) {
         max: maxValue,
         change: function () {
             pctComplete = getSampleDataPctComplete($progressBar);
-            $sampleDataText.text("Loading Sample Data: " + pctComplete + "% Complete");
+            $sampleDataText.text("Loading Sample Data: " + pctComplete + "%");
         },
         complete: function () {
             setTimeout(function () {
@@ -679,7 +681,7 @@ function updateSampleInformation(samples, table, maxFetchSize, includeSampleSumm
                     if (json.comments) {
                         writeSummaryData(json);
                     }
-                    updateSampleDataProgress(json.rowsWithSampleData, json.recordsTotal);
+                    updateSampleDataProgress(json.rowsWithSampleData, recordsTotal);
                     if (json.numberSamplesNotReceived) {
                         $j("#numberSamplesNotReceived").html(json.numberSamplesNotReceived);
                     }
@@ -688,7 +690,6 @@ function updateSampleInformation(samples, table, maxFetchSize, includeSampleSumm
                     updateSampleInformation(samples, table, maxFetchSize, false);
                 } else if (samples.length === 0) {
                     console.log("ajax done.");
-                    table.rows().draw();
                 }
             }
         })
