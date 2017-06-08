@@ -491,7 +491,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      * Initialize the product with the passed in key for display in the form or create it, if not specified.
      */
     @Before(stages = LifecycleStage.BindingAndValidation,
-            on = {"!" + LIST_ACTION, "!getQuoteFunding", "!" + VIEW_ACTION, GET_SAMPLE_DATA})
+            on = {"!" + LIST_ACTION, "!getQuoteFunding", "!" + VIEW_ACTION, "!" + GET_SAMPLE_DATA})
     public void init() {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
         if (!StringUtils.isBlank(productOrder)) {
@@ -532,8 +532,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (StringUtils.isBlank(productOrder)) {
             addGlobalValidationError("No product order was specified.");
         } else {
-            // Since just getting the one item, get all the lazy data.
-            editOrder = productOrderDao.findByBusinessKey(productOrder, ProductOrderDao.FetchSpec.RISK_ITEMS);
+            editOrder = productOrderDao.findByBusinessKey(productOrder);
             if (editOrder != null) {
                 List<Long> productOrderIds = new ArrayList<>();
                 productOrderIds.add(editOrder.getProductOrderId());
@@ -1970,15 +1969,11 @@ public class ProductOrderActionBean extends CoreActionBean {
                 JsonGenerator jsonGenerator = null;
                 try {
                     ObjectMapper objectMapper = new ObjectMapper();
-//                    objectMapper.setSerializationInclusion(JsonSerialize.Inclusion.ALWAYS);
-//                    objectMapper.configure(JsonGenerator.Feature.QUOTE_FIELD_NAMES, true);
-//                    objectMapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, false);
-
                     OutputStream outputStream = response.getOutputStream();
                     jsonGenerator = jsonFactory.createJsonGenerator(outputStream);
                     jsonGenerator.setCodec(objectMapper);
                     jsonGenerator.writeStartObject();
-                    jsonGenerator.writeObjectField(ProductOrderSampleBean.RECORDS_TOTAL, editOrder.getSamples().size());
+                    jsonGenerator.writeObjectField(ProductOrderSampleBean.RECORDS_TOTAL, samples.size());
                     jsonGenerator.writeArrayFieldStart(ProductOrderSampleBean.DATA_FIELD);
                     int tableLength = state.getEnd();
                     int end = tableLength < samples.size() ? tableLength : samples.size();
@@ -2000,7 +1995,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                     }
                     jsonGenerator.writeEndArray();
                     jsonGenerator.writeObjectField(ProductOrderSampleBean.SAMPLE_DATA_ROW_COUNT, rowsWithSampleData);
-                    if ((!initialLoad && includeSampleSummary) || (initialLoad && end <= tableLength)) {
+                    if (includeSampleSummary) {
                         ProductOrder.loadSampleData(samples);
                         List<String> comments = new ArrayList<>();
                         String samplesNotReceivedString = "";
