@@ -298,10 +298,6 @@ public class ExternalLibraryProcessorPooled extends TableProcessor {
         return pooled;
     }
 
-    public List<String> getMemeberOfPool() {
-        return memeberOfPool;
-    }
-
     public List<String> getSubmittedToGSSR() {
         return submittedToGSSR;
     }
@@ -344,10 +340,6 @@ public class ExternalLibraryProcessorPooled extends TableProcessor {
 
     public List<String> getDesiredReadLength() {
         return desiredReadLength;
-    }
-
-    public List<String> accessList() {
-        return accessList;
     }
 
     public List<String> getRequiredControlledAccess() {
@@ -490,16 +482,8 @@ public class ExternalLibraryProcessorPooled extends TableProcessor {
         return commonName;
     }
 
-    public void setCommonName(String commonName) {
-        this.commonName = commonName;
-    }
-
     public String getGenus() {
         return genus;
-    }
-
-    public void setGenus(String genus) {
-        this.genus = genus;
     }
 
     public String getSpecies() {
@@ -512,10 +496,6 @@ public class ExternalLibraryProcessorPooled extends TableProcessor {
 
     public String getIrbRequired() {
         return irbRequired;
-    }
-
-    public void setIrbRequired(String irbRequired) {
-        this.irbRequired = irbRequired;
     }
 
 }
