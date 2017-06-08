@@ -25,6 +25,8 @@ public class SampleKitRequest {
     @Id
     private Long sampleKitRequestId;
 
+    private String collaboratorName;
+
     private String firstName;
 
     private String lastName;
@@ -52,14 +54,6 @@ public class SampleKitRequest {
     private String species;
 
     private String irbApprovalRequired;
-
-    public Long getSampleKitRequest() {
-        return sampleKitRequestId;
-    }
-
-    public void setSampleKitRequest(Long sampleKitRequestId) {
-        this.sampleKitRequestId = sampleKitRequestId;
-    }
 
     public String getFirstName() {
         return firstName;
@@ -93,10 +87,6 @@ public class SampleKitRequest {
         this.address = address;
     }
 
-    public String getCity() {
-        return city;
-    }
-
     public void setCity(String city) {
         this.city = city;
     }
@@ -109,16 +99,8 @@ public class SampleKitRequest {
         this.state = state;
     }
 
-    public String getPostalCode() {
-        return postalCode;
-    }
-
     public void setPostalCode(String postalCode) {
         this.postalCode = postalCode;
-    }
-
-    public String getCountry() {
-        return country;
     }
 
     public void setCountry(String country) {
@@ -141,16 +123,8 @@ public class SampleKitRequest {
         this.email = email;
     }
 
-    public String getCommonName() {
-        return commonName;
-    }
-
     public void setCommonName(String commonName) {
         this.commonName = commonName;
-    }
-
-    public String getGenus() {
-        return genus;
     }
 
     public void setGenus(String genus) {
@@ -165,11 +139,15 @@ public class SampleKitRequest {
         this.species = species;
     }
 
-    public String getIrbApprovalRequired() {
-        return irbApprovalRequired;
+    public String getCollaboratorName() {
+        return collaboratorName;
     }
 
-    public void setIrbApprovalRequired(String irbApprovalREquired) {
-        this.irbApprovalRequired = irbApprovalREquired;
+    public void setCollaboratorName(String collaboratorName) {
+        this.collaboratorName = collaboratorName;
+    }
+
+    public void setIrbApprovalRequired(String irbApprovalRequired) {
+        this.irbApprovalRequired = irbApprovalRequired;
     }
 }

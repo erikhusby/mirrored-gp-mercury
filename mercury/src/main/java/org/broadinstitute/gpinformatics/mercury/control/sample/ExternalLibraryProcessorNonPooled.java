@@ -42,8 +42,8 @@ public class ExternalLibraryProcessorNonPooled extends TableProcessor {
     private List<String> irbNumber = new ArrayList<>();
     private List<String> desiredReadLength = new ArrayList<>();
     private List<String> projectTitle = new ArrayList<>();
-    public List<String> requiredControlledAccess = new ArrayList<>();
-    public List<String> accessList = new ArrayList<>();
+    private List<String> requiredControlledAccess = new ArrayList<>();
+    private List<String> accessList = new ArrayList<>();
     private String collaboratorName;
     private String firstName;
     private String lastName;
@@ -279,20 +279,12 @@ public class ExternalLibraryProcessorNonPooled extends TableProcessor {
     }
 
 
-    public List<String> getAdditionalAssemblyInformation() {
-        return additionalAssemblyInformation;
-    }
-
     public List<String> getDataSubmission() {
         return dataSubmission;
     }
 
     public List<String> getRequestedCompletionDate() {
         return requestedCompletionDate;
-    }
-
-    public List<String> getApprovedBy() {
-        return approvedBy;
     }
 
     public List<String> getCoverage() {
@@ -303,24 +295,8 @@ public class ExternalLibraryProcessorNonPooled extends TableProcessor {
         return fundingSource;
     }
 
-    public List<String> getAdditionalSampleInformation() {
-        return additionalSampleInformation;
-    }
-
-    public List<String> getSingleDoubleStranded() {
-        return singleDoubleStranded;
-    }
-
     public List<String> getDesiredReadLength() {
         return desiredReadLength;
-    }
-
-    public List<String> accessList() {
-        return accessList;
-    }
-
-    public List<String> getRequiredControlledAccess() {
-        return requiredControlledAccess;
     }
 
     public List<String> getTotalLibraryConcentration() {
@@ -335,10 +311,6 @@ public class ExternalLibraryProcessorNonPooled extends TableProcessor {
         return projectTitle;
     }
 
-    public List<String> getMolecularBarcodeName() {
-        return molecularBarcodeName;
-    }
-
     public List<String> getMolecularBarcodeSequence() {
         return molecularBarcodeSequence;
     }
@@ -349,10 +321,6 @@ public class ExternalLibraryProcessorNonPooled extends TableProcessor {
 
     public List<String> getRestrictionEnzymes() {
         return restrictionEnzymes;
-    }
-
-    public List<String> getIlluminaKitUsed() {
-        return illuminaKitUsed;
     }
 
     public List<String> getJumpSize() {
@@ -387,10 +355,6 @@ public class ExternalLibraryProcessorNonPooled extends TableProcessor {
         return tissueType;
     }
 
-    public List<String> getCellLine() {
-        return cellLine;
-    }
-
     public List<String> getSex() {
         return sex;
     }
@@ -409,10 +373,6 @@ public class ExternalLibraryProcessorNonPooled extends TableProcessor {
 
     public List<String> getCollaboratorSampleId() {
         return collaboratorSampleId;
-    }
-
-    public String getCollaboratorName() {
-        return collaboratorName;
     }
 
     public String getFirstName() {
@@ -463,24 +423,12 @@ public class ExternalLibraryProcessorNonPooled extends TableProcessor {
         return null;
     }
 
-    public List<String> getAccessList() {
-        return null;
-    }
-
     public String getCommonName() {
         return commonName;
     }
 
-    public void setCommonName(String commonName) {
-        this.commonName = commonName;
-    }
-
     public String getGenus() {
         return genus;
-    }
-
-    public void setGenus(String genus) {
-        this.genus = genus;
     }
 
     public String getSpecies() {
@@ -495,7 +443,8 @@ public class ExternalLibraryProcessorNonPooled extends TableProcessor {
         return irbRequired;
     }
 
-    public void setIrbRequired(String irbRequired) {
-        this.irbRequired = irbRequired;
+    public String getCollaboratorName() {
+        return collaboratorName;
     }
+
 }

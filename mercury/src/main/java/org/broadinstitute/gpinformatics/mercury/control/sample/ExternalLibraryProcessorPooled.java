@@ -298,28 +298,12 @@ public class ExternalLibraryProcessorPooled extends TableProcessor {
         return pooled;
     }
 
-    public List<String> getSubmittedToGSSR() {
-        return submittedToGSSR;
-    }
-
-    public List<String> getDerivedFrom() {
-        return derivedFrom;
-    }
-
-    public List<String> getAdditionalAssemblyInformation() {
-        return additionalAssemblyInformation;
-    }
-
     public List<String> getDataSubmission() {
         return dataSubmission;
     }
 
     public List<String> getRequestedCompletionDate() {
         return requestedCompletionDate;
-    }
-
-    public List<String> getApprovedBy() {
-        return approvedBy;
     }
 
     public List<String> getCoverage() {
@@ -330,20 +314,8 @@ public class ExternalLibraryProcessorPooled extends TableProcessor {
         return fundingSource;
     }
 
-    public List<String> getAdditionalSampleInformation() {
-        return additionalSampleInformation;
-    }
-
-    public List<String> getSingleDoubleStranded() {
-        return singleDoubleStranded;
-    }
-
     public List<String> getDesiredReadLength() {
         return desiredReadLength;
-    }
-
-    public List<String> getRequiredControlledAccess() {
-        return requiredControlledAccess;
     }
 
     public List<String> getTotalLibraryConcentration() {
@@ -358,10 +330,6 @@ public class ExternalLibraryProcessorPooled extends TableProcessor {
         return projectTitle;
     }
 
-    public List<String> getMolecularBarcodeName() {
-        return molecularBarcodeName;
-    }
-
     public List<String> getMolecularBarcodeSequence() {
         return molecularBarcodeSequence;
     }
@@ -372,10 +340,6 @@ public class ExternalLibraryProcessorPooled extends TableProcessor {
 
     public List<String> getRestrictionEnzymes() {
         return restrictionEnzymes;
-    }
-
-    public List<String> getIlluminaKitUsed() {
-        return illuminaKitUsed;
     }
 
     public List<String> getJumpSize() {
@@ -408,10 +372,6 @@ public class ExternalLibraryProcessorPooled extends TableProcessor {
 
     public List<String> getTissueType() {
         return tissueType;
-    }
-
-    public List<String> getCellLine() {
-        return cellLine;
     }
 
     public List<String> getSex() {

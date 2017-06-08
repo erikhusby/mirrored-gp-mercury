@@ -214,6 +214,7 @@ public class ExternalLibrarySampleInstanceEjb {
         String organism = null;
 
         SampleKitRequest sampleKitRequest = getSampleKit(vesselSpreadsheetProcessor.getOrganization());
+        sampleKitRequest.setCollaboratorName(vesselSpreadsheetProcessor.getCollaboratorName());
         sampleKitRequest.setFirstName(vesselSpreadsheetProcessor.getFirstName());
         sampleKitRequest.setLastName(vesselSpreadsheetProcessor.getLastName());
         sampleKitRequest.setOrganization(vesselSpreadsheetProcessor.getOrganization());
@@ -314,7 +315,7 @@ public class ExternalLibrarySampleInstanceEjb {
             validateRequiredFields(vesselSpreadsheetProcessor.getTotalLibraryVolume().get(index), ExternalLibraryMapped.Headers.TOTAL_LIBRARY_VOLUME.getText(), displayIndex, messageCollection);
             validateRequiredFields(vesselSpreadsheetProcessor.getTotalLibraryConcentration().get(index), ExternalLibraryMapped.Headers.TOTAL_LIBRARY_CONCENTRATION.getText(), displayIndex, messageCollection);
             if (spreadsheetType == ExternalLibraryUploadActionBean.MULTI_ORG) {
-                validateRequiredFields(vesselSpreadsheetProcessor.getOrganism().get(index), ExternalLibraryMapped.Headers.ORGANISIM.getText(), displayIndex, messageCollection);
+                validateRequiredFields(vesselSpreadsheetProcessor.getOrganism().get(index), ExternalLibraryMapped.Headers.ORGANISM.getText(), displayIndex, messageCollection);
             }
             validateRequiredFields(vesselSpreadsheetProcessor.getDesiredReadLength().get(index), ExternalLibraryMapped.Headers.DESIRED_READ_LEGTH.getText(), displayIndex, messageCollection);
             validateRequiredFields(vesselSpreadsheetProcessor.getFundingSource().get(index), ExternalLibraryMapped.Headers.FUNDING_SOURCE.getText(), displayIndex, messageCollection);

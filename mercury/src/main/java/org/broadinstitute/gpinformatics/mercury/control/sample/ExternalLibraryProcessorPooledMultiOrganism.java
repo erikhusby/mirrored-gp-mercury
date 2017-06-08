@@ -294,24 +294,8 @@ public class ExternalLibraryProcessorPooledMultiOrganism extends TableProcessor 
         return organism;
     }
 
-    public List<String> getSequencingTechnology() {
-        return sequencingTechnology;
-    }
-
     public List<String> getPooled() {
         return pooled;
-    }
-
-    public List<String> getSubmittedToGSSR() {
-        return submittedToGSSR;
-    }
-
-    public List<String> getDerivedFrom() {
-        return derivedFrom;
-    }
-
-    public List<String> getAdditionalAssemblyInformation() {
-        return additionalAssemblyInformation;
     }
 
     public List<String> getDataSubmission() {
@@ -322,10 +306,6 @@ public class ExternalLibraryProcessorPooledMultiOrganism extends TableProcessor 
         return requestedCompletionDate;
     }
 
-    public List<String> getApprovedBy() {
-        return approvedBy;
-    }
-
     public List<String> getCoverage() {
         return coverage;
     }
@@ -334,24 +314,8 @@ public class ExternalLibraryProcessorPooledMultiOrganism extends TableProcessor 
         return fundingSource;
     }
 
-    public List<String> getAdditionalSampleInformation() {
-        return additionalSampleInformation;
-    }
-
-    public List<String> getSingleDoubleStranded() {
-        return singleDoubleStranded;
-    }
-
     public List<String> getDesiredReadLength() {
         return desiredReadLength;
-    }
-
-    public List<String> getAccessList() {
-        return accessList;
-    }
-
-    public List<String> getRequiredControlledAccess() {
-        return requiredControlledAccess;
     }
 
     public List<String> getTotalLibraryConcentration() {
@@ -366,10 +330,6 @@ public class ExternalLibraryProcessorPooledMultiOrganism extends TableProcessor 
         return projectTitle;
     }
 
-    public List<String> getMolecularBarcodeName() {
-        return molecularBarcodeName;
-    }
-
     public List<String> getMolecularBarcodeSequence() {
         return molecularBarcodeSequence;
     }
@@ -380,10 +340,6 @@ public class ExternalLibraryProcessorPooledMultiOrganism extends TableProcessor 
 
     public List<String> getRestrictionEnzymes() {
         return restrictionEnzymes;
-    }
-
-    public List<String> getIlluminaKitUsed() {
-        return illuminaKitUsed;
     }
 
     public List<String> getJumpSize() {
@@ -416,10 +372,6 @@ public class ExternalLibraryProcessorPooledMultiOrganism extends TableProcessor 
 
     public List<String> getTissueType() {
         return tissueType;
-    }
-
-    public List<String> getCellLine() {
-        return cellLine;
     }
 
     public List<String> getSex() {

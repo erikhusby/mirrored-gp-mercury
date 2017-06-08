@@ -911,7 +911,8 @@
 
         <!-- What should be the primary key on this table?? -->
         <createTable tableName="sample_kit_request" schemaName="mercury">
-            <column name="SAMPLE_KIT_REQUEST_ID"  type="number(19,0)"/>
+            <column name="COLLABORATOR_NAME"  type="number(19,0)"/>
+            <column name="FIRST_NAME"  type="varchar(255)"/>
             <column name="FIRST_NAME"  type="varchar(255)"/>
             <column name="LAST_NAME"  type="varchar(255)"/>
             <column name="ORGANIZATION"  type="varchar(255)"/>
@@ -929,7 +930,7 @@
         </createTable>
 
         <createTable tableName="sample_kit_request_aud" schemaName="mercury">
-            <column name="SAMPLE_KIT_REQUEST_ID"  type="number(19,0)"/>
+            <column name="COLLABORATOR_NAME"  type="number(19,0)"/>
             <column name="FIRST_NAME"  type="varchar(255)"/>
             <column name="LAST_NAME"  type="varchar(255)"/>
             <column name="ORGANIZATION"  type="varchar(255)"/>

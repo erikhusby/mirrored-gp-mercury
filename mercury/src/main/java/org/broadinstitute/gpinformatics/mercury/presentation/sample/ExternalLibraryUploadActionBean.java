@@ -36,7 +36,6 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
     private boolean overWriteFlag;
     public static final int externalLibraryRowOffset = 25;
     public static final int ezPassRowOffset = 28;
-    AppConfig appConfig;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -116,7 +115,8 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
 
             spreadSheetProcessor.setHeaderRowIndex(ezPassRowOffset);
             PoiSpreadsheetParser.processSingleWorksheet(samplesSpreadsheet.getInputStream(), spreadSheetProcessor);
-            externalLibrarySampleInstanceEjb.verifyExternalLibraryEZPass(spreadSheetProcessor, messageCollection, overWriteFlag, isKiosk);
+            //TODO: Not finished
+            //externalLibrarySampleInstanceEjb.verifyExternalLibraryEZPass(spreadSheetProcessor, messageCollection, overWriteFlag, isKiosk);
 
             addMessages(messageCollection);
         } catch (InvalidFormatException | IOException | ValidationException e) {
