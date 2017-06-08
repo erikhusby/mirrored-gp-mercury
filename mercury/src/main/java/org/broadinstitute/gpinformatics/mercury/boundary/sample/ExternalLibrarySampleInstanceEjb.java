@@ -176,15 +176,16 @@ public class ExternalLibrarySampleInstanceEjb {
     /**
      * Persist External library EZPass and EZPass Kiosk data to the database if it passes all the edit checks.
      */
-    private void persistExternalLibraryEZPass(ExternalLibraryProcessorEzPass vesselSpreadsheetProcessor, MessageCollection messageCollection) {
-        int sampleIndex = 0;
-
-        for (String sampleId : vesselSpreadsheetProcessor.getSingleSampleLibraryName()) {
-            SampleInstanceEntity sampleInstanceEntity = sampleInstanceEntityDao.findByName(vesselSpreadsheetProcessor.getSingleSampleLibraryName().get(sampleIndex));
-
-            ++sampleIndex;
-        }
-    }
+//    private void persistExternalLibraryEZPass(ExternalLibraryProcessorEzPass vesselSpreadsheetProcessor) {
+//        //TODO: Not finished.
+//        int sampleIndex = 0;
+//
+//        for (String sampleId : vesselSpreadsheetProcessor.getSingleSampleLibraryName()) {
+//            SampleInstanceEntity sampleInstanceEntity = sampleInstanceEntityDao.findByName(vesselSpreadsheetProcessor.getSingleSampleLibraryName().get(sampleIndex));
+//
+//            ++sampleIndex;
+//        }
+//    }
 
     /**
      * Collate sample metadata for all external library types
@@ -230,9 +231,7 @@ public class ExternalLibrarySampleInstanceEjb {
 
         for (String libraryName : vesselSpreadsheetProcessor.getSingleSampleLibraryName()) {
 
-            int displayIndex = ExternalLibraryUploadActionBean.externalLibraryRowOffset + 1;
-
-            LabVessel labVessel = getLabVessel(displayIndex, vesselSpreadsheetProcessor.getSingleSampleLibraryName().get(sampleIndex), messageCollection);
+            LabVessel labVessel = getLabVessel(vesselSpreadsheetProcessor.getSingleSampleLibraryName().get(sampleIndex));
 
             if (messageCollection.hasErrors()) {
                 return;
@@ -283,7 +282,6 @@ public class ExternalLibrarySampleInstanceEjb {
             sampleInstanceEntityDao.persist(sampleInstanceEntity);
 
             ++sampleIndex;
-            ++displayIndex;
             messageCollection.addInfo("Spreadsheet with " + String.valueOf(sampleIndex) + " rows successfully uploaded!");
         }
 
@@ -348,46 +346,44 @@ public class ExternalLibrarySampleInstanceEjb {
     /**
      * Verify required fields for EZPass and EZPass Kiosk spreadsheet.
      */
-    public void verifyExternalLibraryEZPass(ExternalLibraryProcessorEzPass vesselSpreadsheetProcessor, MessageCollection messageCollection, boolean overWriteFlag, boolean isKiosk) {
-
-        //TODO: THIS IS NOT COMPLETE
-
-        //Is the sample library name unique to the spreadsheet??
-        Map<String, String> map = new HashMap<String, String>();
-        int index = 0;
-        int displayIndex = ExternalLibraryUploadActionBean.ezPassRowOffset;
-        mapBarcodeToVessel = labVesselDao.findByBarcodes(vesselSpreadsheetProcessor.getSingleSampleLibraryName());
-
-        for (String libraryName : vesselSpreadsheetProcessor.getSingleSampleLibraryName()) {
-
-            if (!isKiosk) {
-
-                validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.TUBE_BARCODE.getText(), displayIndex, messageCollection);
-                validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.SOURCE_SAMPLE_GSSR_ID.getText(), displayIndex, messageCollection);
-                validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.VIRTUAL_GSSR_ID.getText(), displayIndex, messageCollection);
-                validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.SQUID_PROJECT.getText(), displayIndex, messageCollection);
-            }
-
-            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.SEQUENCING_TECHNOLOGY.getText(), displayIndex, messageCollection);
-            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.COLLABORATOR_SAMPLE_ID.getText(), displayIndex, messageCollection);
-            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.INDIVIDUAL_NAME.getText(), displayIndex, messageCollection);
-            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText(), displayIndex, messageCollection);
-            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.LIBRARY_TYPE.getText(), displayIndex, messageCollection);
-            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.DATA_ANALYSIS_TYPE.getText(), displayIndex, messageCollection);
-            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.REFERENCE_SEQUENCE.getText(), displayIndex, messageCollection);
-            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.DATA_ANALYSIS_TYPE.getText(), displayIndex, messageCollection);
-            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.INSERT_SIZE_RANGE_BP.getText(), displayIndex, messageCollection);
-            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.LIBRARY_SIZE_RANGE_BP.getText(), displayIndex, messageCollection);
-            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.ILLUMINA_KIT_USED.getText(), displayIndex, messageCollection);
-            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.TOTAL_LIBRARY_VOLUME.getText(), displayIndex, messageCollection);
-            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.TOTAL_LIBRARY_CONCENTRATION.getText(), displayIndex, messageCollection);
-            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.SINGLE_DOUBLE_STRANDED.getText(), displayIndex, messageCollection);
-
-            if (!messageCollection.hasErrors()) {
-                persistExternalLibraryEZPass(vesselSpreadsheetProcessor, messageCollection);
-            }
-        }
-    }
+//    public void verifyExternalLibraryEZPass(ExternalLibraryProcessorEzPass vesselSpreadsheetProcessor, MessageCollection messageCollection, boolean overWriteFlag, boolean isKiosk) {
+//
+//        //TODO: THIS IS NOT COMPLETE
+//
+//        int index = 0;
+//        int displayIndex = ExternalLibraryUploadActionBean.ezPassRowOffset;
+//        mapBarcodeToVessel = labVesselDao.findByBarcodes(vesselSpreadsheetProcessor.getSingleSampleLibraryName());
+//
+//        for (String libraryName : vesselSpreadsheetProcessor.getSingleSampleLibraryName()) {
+//
+//            if (!isKiosk) {
+//
+//                validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.TUBE_BARCODE.getText(), displayIndex, messageCollection);
+//                validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.SOURCE_SAMPLE_GSSR_ID.getText(), displayIndex, messageCollection);
+//                validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.VIRTUAL_GSSR_ID.getText(), displayIndex, messageCollection);
+//                validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.SQUID_PROJECT.getText(), displayIndex, messageCollection);
+//            }
+//
+//            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.SEQUENCING_TECHNOLOGY.getText(), displayIndex, messageCollection);
+//            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.COLLABORATOR_SAMPLE_ID.getText(), displayIndex, messageCollection);
+//            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.INDIVIDUAL_NAME.getText(), displayIndex, messageCollection);
+//            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText(), displayIndex, messageCollection);
+//            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.LIBRARY_TYPE.getText(), displayIndex, messageCollection);
+//            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.DATA_ANALYSIS_TYPE.getText(), displayIndex, messageCollection);
+//            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.REFERENCE_SEQUENCE.getText(), displayIndex, messageCollection);
+//            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.DATA_ANALYSIS_TYPE.getText(), displayIndex, messageCollection);
+//            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.INSERT_SIZE_RANGE_BP.getText(), displayIndex, messageCollection);
+//            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.LIBRARY_SIZE_RANGE_BP.getText(), displayIndex, messageCollection);
+//            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.ILLUMINA_KIT_USED.getText(), displayIndex, messageCollection);
+//            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.TOTAL_LIBRARY_VOLUME.getText(), displayIndex, messageCollection);
+//            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.TOTAL_LIBRARY_CONCENTRATION.getText(), displayIndex, messageCollection);
+//            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.SINGLE_DOUBLE_STRANDED.getText(), displayIndex, messageCollection);
+//
+//            if (!messageCollection.hasErrors()) {
+//                persistExternalLibraryEZPass(vesselSpreadsheetProcessor);
+//            }
+//        }
+//    }
 
     /**
      * Check that required fields exist
@@ -569,7 +565,6 @@ public class ExternalLibrarySampleInstanceEjb {
     private ProductOrder getPdo(String project, String dataAnalysisType, int index, MessageCollection messageCollection) {
 
         ProductOrder productOrder = productOrderDao.findByTitle(project);
-        Product product = new Product();
         if (productOrder == null) {
             messageCollection.addError("No valid prouct order found at line: " + index);
             return null;
@@ -615,17 +610,6 @@ public class ExternalLibrarySampleInstanceEjb {
             return researchProject;
         }
         return null;
-    }
-
-
-    /**
-     * Method to create errors when no Broad ID was supplied and some/all collaborator information is missing.
-     */
-    private void checkRequiredField(String value, String header, int index, MessageCollection messageCollection) {
-        if (isFieldEmpty(value)) {
-            messageCollection.addError("Volume " + header
-                    + " was missing a required value at Row: " + (index + 2));
-        }
     }
 
     /**
@@ -734,7 +718,7 @@ public class ExternalLibrarySampleInstanceEjb {
     /**
      * Find the current lab vessel or create a new one.
      */
-    public LabVessel getLabVessel(int index, String barcode, MessageCollection messageCollection) {
+    public LabVessel getLabVessel(String barcode) {
         if (barcode == null)
             return null;
 
