@@ -293,6 +293,11 @@ sap:
       password:   SAPERD300!
       sapShortCloseRecipientEmail: zsearle@broadinstitute.org
       sapShortCloseEmailSubject: "TEST SAP Order: Short Close Request"
+    DEV_400:
+      login:      GPCOMU
+      password:   temp1!
+      sapShortCloseRecipientEmail: zsearle@broadinstitute.org
+      sapShortCloseEmailSubject: "TEST SAP Order: Short Close Request"
     QA:
       login:      GPCOMU
       password:   SAPERQ300!
@@ -324,7 +329,7 @@ mercury:
       bass: PROD
       submission: DEV
       infiniumStarter: DEV
-      sap:  QA
+      sap:  DEV_400
 
 
     AUTO_BUILD:

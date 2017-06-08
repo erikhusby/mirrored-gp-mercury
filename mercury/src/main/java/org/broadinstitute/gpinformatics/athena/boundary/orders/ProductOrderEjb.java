@@ -29,7 +29,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.StaleLedgerUpdateException;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
-import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationWithRollbackException;
@@ -372,7 +371,9 @@ public class ProductOrderEjb {
                     }
 
                 } else if(orderToPublish.isSavedInSAP()){
-                    if (SapIntegrationServiceImpl.getSampleCount(orderToPublish, orderToPublish.getProduct()) > 0) {
+                    if (SapIntegrationServiceImpl.getSampleCount((ProductOrder) orderToPublish,
+                            (Product) orderToPublish.getProduct(),
+                            (int) 0) > 0) {
                         updateOrderInSap(orderToPublish, allProductsOrdered, effectivePricesForProducts, messageCollection);
 
                         for (ProductOrder childProductOrder : orderToPublish.getChildOrders()) {
@@ -420,8 +421,8 @@ public class ProductOrderEjb {
                                   List<String> effectivePricesForProducts, MessageCollection messageCollection)
             throws SAPIntegrationException {
         sapService.updateOrder(orderToUpdate);
-        orderToUpdate.updateSapDetails(SapIntegrationServiceImpl.getSampleCount(orderToUpdate,
-                orderToUpdate.getProduct()),
+        orderToUpdate.updateSapDetails(SapIntegrationServiceImpl.getSampleCount((ProductOrder) orderToUpdate,
+                (Product) orderToUpdate.getProduct(), (int) 0),
                 TubeFormation.makeDigest(StringUtils.join(allProductsOrdered, ",")),
                 TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ",")));
         messageCollection.addInfo("Order "+orderToUpdate.getJiraTicketKey() +
@@ -448,7 +449,9 @@ public class ProductOrderEjb {
             oldNumber = orderToPublish.getSapOrderNumber();
         }
         orderToPublish.addSapOrderDetail(new SapOrderDetail(sapOrderIdentifier,
-                SapIntegrationServiceImpl.getSampleCount(orderToPublish, orderToPublish.getProduct()),
+                SapIntegrationServiceImpl.getSampleCount((ProductOrder) orderToPublish,
+                        (Product) orderToPublish.getProduct(),
+                        (int) 0),
                 orderToPublish.getQuoteId(),
                 SapIntegrationServiceImpl.determineCompanyCode(orderToPublish).getCompanyCode(),
                 TubeFormation.makeDigest(StringUtils.join(allProductsOrdered, ",")),

@@ -828,15 +828,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         double outstandingEstimate = estimateOutstandingOrders(quote, additionalSampleCount);
         double valueOfCurrentOrder = 0;
 
-        // TODO SGM  Must not account for the Current order if it is an SAP orders
-
-        if(countCurrentUnPlacedOrder) {
-            valueOfCurrentOrder = getValueOfOpenOrders(Collections.singletonList((editOrder.isChildOrder())?editOrder.getParentOrder():editOrder), quote, Collections.<String>emptySet());
-        } else
-            if(additionalSampleCount > 0) {
-            valueOfCurrentOrder = getOrderValue((editOrder.isChildOrder())?editOrder.getParentOrder():editOrder, additionalSampleCount, quote);
-        }
-
         if (fundsRemaining <= 0d ||
             (fundsRemaining < (outstandingEstimate+valueOfCurrentOrder))) {
             String inssuficientFundsMessage = "Insufficient funds are available on " + quote.getName() + " to place a new Product order";
