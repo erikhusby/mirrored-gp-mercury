@@ -129,9 +129,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.datatables.State;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
-import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.hibernate.Hibernate;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -527,7 +525,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     /**
      * Initialize the product with the passed in key for display in the form or create it, if not specified.
      */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION})
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, GET_SAMPLE_DATA})
     public void editInit() {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
         // If there's no product order parameter, send an error.
@@ -1214,7 +1212,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     // All actions that can result in the view page loading (either by a validation error or view itself)
     @After(stages = LifecycleStage.BindingAndValidation,
-            on = {EDIT_ACTION, VIEW_ACTION, ADD_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK, ABANDON_SAMPLES_ACTION,
+            on = {EDIT_ACTION, VIEW_ACTION, GET_SAMPLE_DATA, ADD_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK, ABANDON_SAMPLES_ACTION,
                     DELETE_SAMPLES_ACTION, PLACE_ORDER_ACTION, VALIDATE_ORDER, UNABANDON_SAMPLES_ACTION, REPLACE_SAMPLES})
     public void entryInit() {
         if (editOrder != null) {
@@ -1972,9 +1970,9 @@ public class ProductOrderActionBean extends CoreActionBean {
                 JsonGenerator jsonGenerator = null;
                 try {
                     ObjectMapper objectMapper = new ObjectMapper();
-                    objectMapper.setSerializationInclusion(JsonSerialize.Inclusion.ALWAYS);
-                    objectMapper.configure(JsonGenerator.Feature.QUOTE_FIELD_NAMES, true);
-                    objectMapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, false);
+//                    objectMapper.setSerializationInclusion(JsonSerialize.Inclusion.ALWAYS);
+//                    objectMapper.configure(JsonGenerator.Feature.QUOTE_FIELD_NAMES, true);
+//                    objectMapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, false);
 
                     OutputStream outputStream = response.getOutputStream();
                     jsonGenerator = jsonFactory.createJsonGenerator(outputStream);
@@ -1987,11 +1985,13 @@ public class ProductOrderActionBean extends CoreActionBean {
                     int rowsWithSampleData=0;
                     if (initialLoad){
                         List<ProductOrderSample> firstPage = new ArrayList<>(samples.subList(state.getStart(), end));
-                        List<ProductOrderSample> otherPages = new ArrayList<>(samples);
-                        otherPages.removeAll(firstPage);
                         writeProductOrderSampleBean(jsonGenerator, firstPage, true, preferenceSaver);
                         rowsWithSampleData = firstPage.size();
-                        writeProductOrderSampleBean(jsonGenerator, otherPages, false, preferenceSaver);
+                        List<ProductOrderSample> otherPages = new ArrayList<>(samples);
+                        otherPages.removeAll(firstPage);
+                        if (CollectionUtils.isNotEmpty(otherPages)) {
+                            writeProductOrderSampleBean(jsonGenerator, otherPages, false, preferenceSaver);
+                        }
                     } else {
                         if (withSampleData) {
                             rowsWithSampleData = samples.size();
@@ -2040,7 +2040,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
         for (ProductOrderSample sample : productOrderSamples) {
             SampleLink sampleLink = null;
-            if (includeSampleData && sample.isInBspFormat()) {
+            if (sample.isInBspFormat()) {
                 try {
                     sampleLink = getSampleLink(sample);
                 } catch (Exception e) {

@@ -641,7 +641,7 @@ function initSampleDataProgress(value, maxValue) {
         complete: function () {
             setTimeout(function () {
                 $j(".sampleDataProgress").fadeOut({'duration': 800});
-            }, 5000);
+            }, 2000);
         }
     });
     $progressBar.progressbar('value', value);
@@ -696,24 +696,24 @@ function updateSampleInformation(samples, table, maxFetchSize, includeSampleSumm
 
 function renderPico(data, type, row, meta) {
     var result = data;
-    if (result===null) {
+    if (result === null) {
         result = "";
     }
     if (type === 'display') {
-        if (data===null) {
-//             result = "";
-         } else {
-            var oneYearAgo=meta.settings.oneYearAgo;
-            var almostOneYearAgo=meta.settings.almostOneYearAgo;
-            if (oneYearAgo===undefined) {
+        if (result === "") {
+            result = "No Pico";
+        } else {
+            var oneYearAgo = meta.settings.oneYearAgo;
+            var almostOneYearAgo = meta.settings.almostOneYearAgo;
+            if (oneYearAgo === undefined) {
                 oneYearAgo = new Date();
                 oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-                meta.settings.oneYearAgo=oneYearAgo;
+                meta.settings.oneYearAgo = oneYearAgo;
             }
-            if (almostOneYearAgo===undefined) {
+            if (almostOneYearAgo === undefined) {
                 almostOneYearAgo = new Date(oneYearAgo);
                 almostOneYearAgo.setMonth(oneYearAgo.getMonth() + 1);
-                meta.settings.almostOneYearAgo=almostOneYearAgo;
+                meta.settings.almostOneYearAgo = almostOneYearAgo;
             }
 
             var containerClass = "";
