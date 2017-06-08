@@ -104,7 +104,7 @@ public class BspNewRootHandler extends AbstractEventHandler {
         Object[][] rows = new Object[labVessels.size() + 1][];
         rows[0] = new Object[] {"Collaborator Sample ID", "Collaborator Patient ID", "Submitted Material Type",
                 "Original Material Type", "Sample Type", "Patient Gender",
-                "External ID", "Original Root"};
+                "External ID", "Original Root", "Sample Volume"};
         String collection = null;
         for (int i = 0; i < labVessels.size(); i++) {
             LabVessel labVessel = labVessels.get(i);
@@ -127,7 +127,8 @@ public class BspNewRootHandler extends AbstractEventHandler {
                     tumorNormal,
                     bspSampleData.getGender(),
                     labVessel.getLabel(),
-                    originalRoots.toString()};
+                    originalRoots.toString(),
+                    labVessel.getVolume() == null ? "" : labVessel.getVolume()};
         }
 
         // Call BSP KitResource web service
