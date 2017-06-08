@@ -125,9 +125,9 @@ $j(document).ready(function () {
                     data.productOrder = "${actionBean.editOrder.businessKey}";
                     data.initialLoad = true;
                 },
-                error: function(obj, error, ex) {
-                        console.log(error, obj.responseText, JSON.stringify(ex));
-                    },
+                error: function (obj, error, ex) {
+                    console.log(error, obj.responseText, JSON.stringify(ex));
+                },
                 complete: function (json) {
                     var data = json.responseJSON;
                     var rowsWithSampleData = data['<%=ProductOrderSampleBean.SAMPLE_DATA_ROW_COUNT%>'];
@@ -652,7 +652,7 @@ function initSampleDataProgress(value, maxValue) {
 function updateSampleInformation(samples, table, maxFetchSize, includeSampleSummary) {
         var fetchSize = samples.length < maxFetchSize ? samples.length : maxFetchSize;
         recordsTotal = table.page.info().recordsTotal;
-        console.log("fetching " + fetchSize + " samples of " + samples.length + " " + samples[0] + "..." + samples[fetchSize - 1]);
+
         $j.ajax({
             url: "${ctxpath}/orders/order.action?<%= ProductOrderActionBean.GET_SAMPLE_DATA %>",
             data: {
@@ -663,8 +663,8 @@ function updateSampleInformation(samples, table, maxFetchSize, includeSampleSumm
             method: 'POST',
             dataType: 'json',
             error: function(obj, error, ex) {
-                    console.log(error, obj.responseText, JSON.stringify(ex));
-                },
+                console.log(error, obj.responseText, JSON.stringify(ex));
+            },
             success: function (json) {
                 if (json) {
                     var dataMap = {};
@@ -689,7 +689,7 @@ function updateSampleInformation(samples, table, maxFetchSize, includeSampleSumm
                 if (samples.length > 0) {
                     updateSampleInformation(samples, table, maxFetchSize, false);
                 } else if (samples.length === 0) {
-                    console.log("ajax done.");
+                    table.rows().draw();
                 }
             }
         })
