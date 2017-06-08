@@ -302,10 +302,6 @@ public class ExternalLibraryProcessorPooledMultiOrganism extends TableProcessor 
         return pooled;
     }
 
-    public List<String> getMemeberOfPool() {
-        return memeberOfPool;
-    }
-
     public List<String> getSubmittedToGSSR() {
         return submittedToGSSR;
     }
