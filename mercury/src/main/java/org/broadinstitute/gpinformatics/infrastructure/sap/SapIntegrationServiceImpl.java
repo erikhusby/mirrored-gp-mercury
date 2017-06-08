@@ -177,10 +177,10 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         newOrder.setResearchProjectNumber(orderToUpdate.getResearchProject().getJiraTicketKey());
 
         Product primaryProduct = placedOrder.getProduct();
-        newOrder.addOrderItem(getOrderItem(placedOrder, primaryProduct, foundQuote));
+        newOrder.addOrderItem(getOrderItem(placedOrder, primaryProduct, foundQuote, 0));
 
         for (ProductOrderAddOn addon : placedOrder.getAddOns()) {
-            newOrder.addOrderItem(getOrderItem(placedOrder, addon.getAddOn(), foundQuote));
+            newOrder.addOrderItem(getOrderItem(placedOrder, addon.getAddOn(), foundQuote, 0));
         }
 
         return newOrder;
@@ -192,36 +192,42 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      * @param placedOrder Order from which the quantities are defined
      * @param product Product that is to be eventually charged when work on the product order is completed
      * @param quote
+     * @param additionalSampleCount
      * @return JAXB sub element of the SAP order to represent the Product that will be charged and the quantity that
      * is expected of it.
      */
-    protected SAPOrderItem getOrderItem(ProductOrder placedOrder, Product product, Quote quote) throws SAPIntegrationException {
+    protected SAPOrderItem getOrderItem(ProductOrder placedOrder, Product product, Quote quote,
+                                        int additionalSampleCount) throws SAPIntegrationException {
         try {
             String price = priceListCache.getEffectivePrice(product.getPrimaryPriceItem(), quote);
 
             return new SAPOrderItem(product.getPartNumber(),
                     price,
-                    getSampleCount(placedOrder, product));
+                    getSampleCount((ProductOrder) placedOrder, (Product) product, (int) additionalSampleCount));
         } catch (InvalidProductException e) {
             throw new SAPIntegrationException("For " + product.getPartNumber() + " " + e.getMessage());
         }
     }
 
-    protected SAPOrderItem getOrderItem(ProductOrder placedOrder, Product product) {
+    protected SAPOrderItem getOrderItem(ProductOrder placedOrder, Product product, int additionalSampleCount) {
 
-            return new SAPOrderItem(product.getPartNumber(), getSampleCount(placedOrder, product));
+            return new SAPOrderItem(product.getPartNumber(), getSampleCount(placedOrder, product, additionalSampleCount));
     }
 
 
     public static int getSampleCount(ProductOrder placedOrder, Product product) {
 
+        return getSampleCount(placedOrder, product, 0);
+    }
+
+    public static int getSampleCount(ProductOrder placedOrder, Product product, int additionalSampleCount) {
         int sampleCount = 0;
 
         if (product.getSupportsNumberOfLanes() && placedOrder.getLaneCount() > 0) {
             sampleCount += placedOrder.getLaneCount();
         } else {
             ProductOrder targetSapPdo = ProductOrder.getTargetSAPProductOrder(placedOrder);
-            sampleCount += targetSapPdo.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY);
+            sampleCount += targetSapPdo.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY) + additionalSampleCount;
         }
         return sampleCount;
     }
@@ -350,7 +356,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     @Override
     public OrderCalculatedValues calculateOpenOrderValues(ProductOrder productOrder, int addedSampleCount) throws SAPIntegrationException {
         OrderCriteria potentialOrderCriteria = null;
-            potentialOrderCriteria = generateOrderCriteria(productOrder, 0);
+            potentialOrderCriteria = generateOrderCriteria(productOrder, addedSampleCount);
         return getClient().calculateOrderValues(productOrder.getQuoteId(),
                 SapIntegrationClientImpl.SystemIdentifier.MERCURY, potentialOrderCriteria);
     }
@@ -364,9 +370,9 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         final Set<SAPOrderItem> sapOrderItems = new HashSet<>();
         final Map<Condition, String> conditionStringMap = Collections.emptyMap();
-        sapOrderItems.add(getOrderItem(productOrder, productOrder.getProduct() ));
+        sapOrderItems.add(getOrderItem(productOrder, productOrder.getProduct(), addedSampleCount));
         for (ProductOrderAddOn productOrderAddOn : productOrder.getAddOns()) {
-            sapOrderItems.add(getOrderItem(productOrder, productOrderAddOn.getAddOn()));
+            sapOrderItems.add(getOrderItem(productOrder, productOrderAddOn.getAddOn(), addedSampleCount));
         }
 
         Quote foundQuote = null;
