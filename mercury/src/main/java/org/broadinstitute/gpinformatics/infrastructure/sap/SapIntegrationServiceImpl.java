@@ -78,6 +78,9 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         case DEV:
             environment = SapIntegrationClientImpl.SAPEnvironment.DEV;
             break;
+        case TEST:
+            environment = SapIntegrationClientImpl.SAPEnvironment.DEV_400;
+            break;
         case QA:
         default:
             environment = SapIntegrationClientImpl.SAPEnvironment.QA;
