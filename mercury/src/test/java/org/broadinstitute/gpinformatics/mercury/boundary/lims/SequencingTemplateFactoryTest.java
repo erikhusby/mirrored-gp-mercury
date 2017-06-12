@@ -1,21 +1,16 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import com.google.common.collect.Lists;
-import com.itextpdf.text.pdf.Barcode;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.UMIReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
@@ -41,7 +36,6 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructio
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.hamcrest.core.AnyOf;
@@ -678,7 +672,8 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         StaticPlate umiPlate = LabEventTest.buildUmiPlate("UMITestPlate0101", null);
         LabEventTestFactory.doSectionTransfer(LabEventType.UMI_ADDITION, umiPlate, shearingCleanupPlate);
 
-        QtpEntityBuilder qtpEntityBuilder = runUpToQTP(exomeExpressShearingEntityBuilder, "UMI1010");
+        QtpEntityBuilder qtpEntityBuilder = runUpToQTP(exomeExpressShearingEntityBuilder, "UMI1010",
+                LibraryConstructionEntityBuilder.Indexing.DUAL);
 
         BarcodedTube denatureTubeUmi = qtpEntityBuilder.getDenatureRack().getContainerRole()
                 .getVesselAtPosition(VesselPosition.A01);
@@ -735,12 +730,13 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         }
     }
 
-    private QtpEntityBuilder runUpToQTP(ExomeExpressShearingEntityBuilder shearingEntityBuilder, String qtpSuffix) {
+    private QtpEntityBuilder runUpToQTP(ExomeExpressShearingEntityBuilder shearingEntityBuilder, String qtpSuffix,
+                                        LibraryConstructionEntityBuilder.Indexing indexing) {
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
                 runLibraryConstructionProcessWithUMI(shearingEntityBuilder.getShearingCleanupPlate(),
                         shearingEntityBuilder.getShearCleanPlateBarcode(),
                         shearingEntityBuilder.getShearingPlate(), BARCODE_SUFFIX,
-                        LibraryConstructionJaxbBuilder.PondType.REGULAR);
+                        LibraryConstructionJaxbBuilder.PondType.REGULAR, indexing);
         HybridSelectionEntityBuilder hybridSelectionEntityBuilder =
                 runHybridSelectionProcess(libraryConstructionEntityBuilder.getPondRegRack(),
                         libraryConstructionEntityBuilder.getPondRegRackBarcode(),
