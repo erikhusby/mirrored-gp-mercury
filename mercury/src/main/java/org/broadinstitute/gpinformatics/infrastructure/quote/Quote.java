@@ -146,12 +146,26 @@ public class Quote {
 
         FundingLevel singleLevel = getFirstRelevantFundingLevel();
 
-        boolean grantHasNotEnded = true;
-        if(singleLevel.getFunding().getGrantEndDate() != null) {
+        boolean grantHasEnded = false;
 
-            grantHasNotEnded = singleLevel.getFunding().getGrantEndDate().after(new Date());
+        boolean multipleFundReservation = singleLevel.getFunding().size()>1;
+
+        if (singleLevel != null && !multipleFundReservation) {
+
+            for (Funding funding : singleLevel.getFunding()) {
+
+                if(funding.getGrantEndDate() != null) {
+
+                    grantHasEnded = grantHasEnded && funding.getGrantEndDate().after(new Date());
+
+                    if(grantHasEnded) {
+                        break;
+                    }
+                }
+            }
+
         }
-        return !(singleLevel == null) && grantHasNotEnded;
+        return !(singleLevel == null) && !grantHasEnded && !multipleFundReservation;
     }
 
     /**

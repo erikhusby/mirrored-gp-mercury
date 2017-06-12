@@ -701,15 +701,16 @@ public class ProductOrderActionBean extends CoreActionBean {
         try {
             ProductOrder.checkQuoteValidity(editOrder, quote);
             for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel()) {
-                final Funding funding = fundingLevel.getFunding();
-                if(funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
-                    final int numDaysBetween =
-                            DateUtils.getNumDaysBetween(new Date(), funding.getGrantEndDate());
-                    if(numDaysBetween > 0 && numDaysBetween < 45) {
-                        addMessage("The Funding Source "+funding.getDisplayName()+" on " +
-                                   quote.getAlphanumericId() + "  Quote expires in " + numDaysBetween +
-                                   " days. If it is likely this work will not be completed by then, please work on "
-                                   + "updating the Funding Source so Billing Errors can be avoided.");
+                for (Funding funding :fundingLevel.getFunding()) {
+                    if(funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
+                        final int numDaysBetween =
+                                DateUtils.getNumDaysBetween(new Date(), funding.getGrantEndDate());
+                        if(numDaysBetween > 0 && numDaysBetween < 45) {
+                            addMessage("The Funding Source "+funding.getDisplayName()+" on " +
+                                       quote.getAlphanumericId() + "  Quote expires in " + numDaysBetween +
+                                       " days. If it is likely this work will not be completed by then, please work on "
+                                       + "updating the Funding Source so Billing Errors can be avoided.");
+                        }
                     }
                 }
             }
@@ -1225,20 +1226,28 @@ public class ProductOrderActionBean extends CoreActionBean {
                 JSONArray fundingDetails = new JSONArray();
 
                 for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel()) {
-                    if(fundingLevel.getFunding().getFundingType().equals(Funding.FUNDS_RESERVATION)) {
-                        JSONObject fundingInfo = new JSONObject();
-                        fundingInfo.put("grantTitle", fundingLevel.getFunding().getDisplayName());
-                        fundingInfo.put("grantEndDate",
-                                DateUtils.getDate(fundingLevel.getFunding().getGrantEndDate()));
-                        fundingInfo.put("grantNumber", fundingLevel.getFunding().getGrantNumber());
-                        fundingInfo.put("grantStatus", fundingLevel.getFunding().getGrantStatus());
+                    for (Funding funding:fundingLevel.getFunding()) {
+                        if(funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
+                            JSONObject fundingInfo = new JSONObject();
+                            fundingInfo.put("grantTitle", funding.getDisplayName());
+                            fundingInfo.put("grantEndDate",
+                                    DateUtils.getDate(funding.getGrantEndDate()));
+                            fundingInfo.put("grantNumber", funding.getGrantNumber());
+                            fundingInfo.put("grantStatus", funding.getGrantStatus());
 
-                        final Date today = new Date();
-                        fundingInfo.put("activeGrant", (fundingLevel.getFunding().getGrantEndDate() != null &&
-                                                        fundingLevel.getFunding().getGrantEndDate().after(today)));
-                        fundingInfo.put("daysTillExpire",
-                                DateUtils.getNumDaysBetween(today, fundingLevel.getFunding().getGrantEndDate()));
-                        fundingDetails.put(fundingInfo);
+                            final Date today = new Date();
+                            fundingInfo.put("activeGrant", (funding.getGrantEndDate() != null &&
+                                                            funding.getGrantEndDate().after(today)));
+                            fundingInfo.put("daysTillExpire",
+                                    DateUtils.getNumDaysBetween(today, funding.getGrantEndDate()));
+                            fundingDetails.put(fundingInfo);
+                        }
+                /*
+                This really only needs to loop once since the information that is retrieved will be the same for each
+                funding instance under fundingLevel
+                */
+
+                        break;
                     }
                 }
                 item.put("fundingDetails", fundingDetails);

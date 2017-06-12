@@ -18,10 +18,14 @@ import java.util.Map;
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class QuotesCacheTest {
 
-    Quote quote1 = new Quote("DNA32", new QuoteFunding(Collections.singleton(new FundingLevel("100", new Funding(Funding.FUNDS_RESERVATION, "Magical Infinite Grant", "Magical Infinite Grant")))), ApprovalStatus.FUNDED);
-    Quote quote2 = new Quote("DNA33", new QuoteFunding(Collections.singleton(new FundingLevel("100", new Funding(Funding.FUNDS_RESERVATION, "Magical Infinite Grant", "Magical Infinite Grant")))), ApprovalStatus.FUNDED);
-    Quote quote3 = new Quote("DNA34", new QuoteFunding(Collections.singleton(new FundingLevel("100", new Funding(Funding.FUNDS_RESERVATION, "Cheap Grant", "Cheap Grant")))), ApprovalStatus.FUNDED);
-    Quote quote4 = new Quote("DNA35", new QuoteFunding(Collections.singleton(new FundingLevel("50", new Funding(Funding.FUNDS_RESERVATION, "NHGRI", "NHGRI")))), ApprovalStatus.FUNDED);
+    Quote quote1 = new Quote("DNA32", new QuoteFunding(Collections.singleton(new FundingLevel("100",
+            Collections.singleton(new Funding(Funding.FUNDS_RESERVATION, "Magical Infinite Grant", "Magical Infinite Grant"))))), ApprovalStatus.FUNDED);
+    Quote quote2 = new Quote("DNA33", new QuoteFunding(Collections.singleton(new FundingLevel("100",
+            Collections.singleton(new Funding(Funding.FUNDS_RESERVATION, "Magical Infinite Grant", "Magical Infinite Grant"))))), ApprovalStatus.FUNDED);
+    Quote quote3 = new Quote("DNA34", new QuoteFunding(Collections.singleton(new FundingLevel("100",
+            Collections.singleton(new Funding(Funding.FUNDS_RESERVATION, "Cheap Grant", "Cheap Grant"))))), ApprovalStatus.FUNDED);
+    Quote quote4 = new Quote("DNA35", new QuoteFunding(Collections.singleton(new FundingLevel("50",
+            Collections.singleton(new Funding(Funding.FUNDS_RESERVATION, "NHGRI", "NHGRI"))))), ApprovalStatus.FUNDED);
 
 
     @Test(groups = {TestGroups.EXTERNAL_INTEGRATION})
@@ -93,8 +97,11 @@ public class QuotesCacheTest {
                     new StringBuilder(foundQuote.getAlphanumericId());
             quoteInfo.append(" ");
             for(FundingLevel level : foundQuote.getQuoteFunding().getFundingLevel()) {
-                quoteInfo.append("--");
-                quoteInfo.append(level.getFunding().getCostObject());
+
+                for (Funding funding :level.getFunding()) {
+                    quoteInfo.append("--");
+                    quoteInfo.append(funding.getCostObject());
+                }
             }
             System.out.println(quoteInfo);
         }
