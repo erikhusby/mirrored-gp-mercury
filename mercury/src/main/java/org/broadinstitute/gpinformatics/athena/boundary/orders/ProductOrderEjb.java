@@ -1612,6 +1612,7 @@ public class ProductOrderEjb {
         this.accessController = accessController;
     }
 
+    @Inject
     public void setSapConfig(SapConfig sapConfig) {
         this.sapConfig = sapConfig;
     }
