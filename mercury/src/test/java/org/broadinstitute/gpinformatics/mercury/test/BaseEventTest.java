@@ -519,11 +519,12 @@ public class BaseEventTest {
                                                                           String shearCleanPlateBarcode,
                                                                           StaticPlate shearingPlate,
                                                                           String barcodeSuffix,
-                                                                          LibraryConstructionJaxbBuilder.PondType pondType) {
+                                                                          LibraryConstructionJaxbBuilder.PondType pondType,
+                                                                          LibraryConstructionEntityBuilder.Indexing indexing) {
         LibraryConstructionEntityBuilder builder = new LibraryConstructionEntityBuilder(
                 bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
                 shearingCleanupPlate, shearCleanPlateBarcode, shearingPlate, NUM_POSITIONS_IN_RACK, barcodeSuffix,
-                LibraryConstructionEntityBuilder.Indexing.DUAL,
+                indexing,
                 pondType);
         builder.setIncludeUmi(true);
         return builder.invoke();
