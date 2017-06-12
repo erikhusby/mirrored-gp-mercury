@@ -8,7 +8,10 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.UniqueMolecularIdentifierReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.UMIReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -96,8 +99,31 @@ public class UniqueMolecularIdentifierReagentFactory {
             UniqueMolecularIdentifierReagentProcessor.UniqueMolecularIdentifierDto umiDto = umiDtoEntry.getValue();
 
             if (mapBarcodeToPlate.get(plateBarcode) != null) {
-                messageCollection.addError("Plate is already in the database: " + plateBarcode);
-                continue;
+                LabVessel labVessel = mapBarcodeToPlate.get(plateBarcode);
+                if (OrmUtil.proxySafeIsInstance(labVessel, StaticPlate.class)) {
+                    StaticPlate staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
+                    if (staticPlate.getPlateType() == StaticPlate.PlateType.IndexedAdapterPlate96 ||
+                        staticPlate.getPlateType() == StaticPlate.PlateType.IndexedAdapterPlate384) {
+                        Set<SampleInstanceV2> sampleInstances =
+                                staticPlate.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.A01);
+                        if (sampleInstances != null && sampleInstances.size() > 0) {
+                            boolean foundUmiReagent = false;
+                            SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
+                            for (Reagent reagent: sampleInstance.getReagents()) {
+                                if (OrmUtil.proxySafeIsInstance(reagent, UMIReagent.class)) {
+                                    foundUmiReagent = true;
+                                    break;
+                                }
+                            }
+                            if (foundUmiReagent) {
+                                messageCollection.addError("Index Plate already has an associated UMI " + plateBarcode);
+                            }
+                        }
+                    } else {
+                        messageCollection.addError("Plate is already in the database: " + plateBarcode);
+                        continue;
+                    }
+                }
             }
 
             String formattedBarcode = StringUtils.leftPad(plateBarcode, BARCODE_LENGTH, '0');
@@ -109,10 +135,18 @@ public class UniqueMolecularIdentifierReagentFactory {
             if (umiReagent == null) {
                 umiReagent = new UMIReagent(umiDto.getLocation(), umiDto.getLength());
             }
+
+            // Previously registered Index Plates may already have Plate Wells associated to each Vessel Position.
+            Map<VesselPosition, PlateWell> mapPositionToVessel = plate.getContainerRole().getMapPositionToVessel();
             for (VesselPosition vesselPosition: plate.getVesselGeometry().getVesselPositions()) {
-                PlateWell plateWell = new PlateWell(plate, vesselPosition);
-                plateWell.addReagent(umiReagent);
-                plate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
+                if (mapPositionToVessel != null && mapPositionToVessel.containsKey(vesselPosition)) {
+                    PlateWell plateWell = mapPositionToVessel.get(vesselPosition);
+                    plateWell.addReagent(umiReagent);
+                } else {
+                    PlateWell plateWell = new PlateWell(plate, vesselPosition);
+                    plateWell.addReagent(umiReagent);
+                    plate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
+                }
             }
             plates.add(plate);
         }

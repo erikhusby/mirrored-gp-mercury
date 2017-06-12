@@ -18,7 +18,8 @@ public class UMIReagent extends Reagent {
 
     public enum UMILocation {
         INLINE_FIRST_READ("Inline First Read"),
-        AFTER_FIRST_INDEX_READ("After First Index Read"),
+        BEFORE_FIRST_INDEX_READ("Before First Index Read"),
+        BEFORE_SECOND_INDEX_READ("Before Second Index Read"),
         INLINE_SECOND_READ("Inline Second Read");
 
         private final String displayName;
