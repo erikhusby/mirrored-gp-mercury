@@ -1945,6 +1945,20 @@ public class ProductOrderActionBean extends CoreActionBean {
         logger.error(errorMessage);
     }
 
+    /**
+     * Get JSON for PDO Samples.
+     *
+     * This method streams data back to the client as it is generated rather then collecting it all in an array
+     * and sending it back.<br/>This method also takes into account several factors when deciding which data to return:
+     * <ul>
+     *     <li><b>preferenceSaver.visibleColumns()</b> <code>Collection&lt;String&gt;</code>: Return data only for visible columns</li>
+     *     <li>POST/GET Parameter <b>sampleIdsForGetBspData</b> <code>String[]</code>: Which PDO sampleIds to receive data for if specified otherwise,
+     *     all PDO Samples for this PDO are returned</li>
+     *     <li>POST/GET Parameter <b>initialLoad</b> <code>Boolean</code>, <br/><ul><li>If true it is the initial call populating the DataTable. When true, sample data is returned only for the first page (which is saved in the tableState preference)</li>
+     *     <li>If false, all sample data is returned</li></ul></li>
+     *     <li>POST/GET Parameter <b>includeSampleSummary</b> <code>Boolean</code>, If true, return sample summary information. It is included in this JSON in order to prevent extra call to BSP for sample data</li>
+     * </ul>
+     */
     @HandlesEvent(GET_SAMPLE_DATA)
     public Resolution getSampleData() {
         Resolution resolution = new StreamingResolution("text/json"){
