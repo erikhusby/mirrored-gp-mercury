@@ -1216,11 +1216,10 @@ public class ProductOrderActionBean extends CoreActionBean {
                     DELETE_SAMPLES_ACTION, PLACE_ORDER_ACTION, VALIDATE_ORDER, UNABANDON_SAMPLES_ACTION, REPLACE_SAMPLES})
     public void entryInit() {
         if (editOrder != null) {
-//            editOrder.loadSampleData();
             productOrderListEntry = editOrder.isDraft() ? ProductOrderListEntry.createDummy() :
                     orderListEntryDao.findSingle(editOrder.getJiraTicketKey());
 
-//            ProductOrder.loadLabEventSampleData(editOrder.getSamples());
+            ProductOrder.loadLabEventSampleData(editOrder.getSamples());
 
             sampleDataSourceResolver.populateSampleDataSources(editOrder);
             populateAttributes(editOrder.getJiraTicketKey());
@@ -2026,7 +2025,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                             comments = editOrder.getSampleSummaryComments();
                             samplesNotReceivedString = getSamplesNotReceivedString();
                         } catch (Exception e) {
-                            logger.error("could get sample summary comments", e);
+                            logger.error("Could not get sample summary.", e);
                         }
                         jsonGenerator.writeArrayFieldStart("comments");
                         for (String comment : comments) {

@@ -1744,13 +1744,6 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
         <div id="summaryId" class="fourcolumn" style="margin-bottom:10px;">
             <img src="${ctxpath}/images/spinner.gif" alt=""/> Sample Summary
         </div>
-
-        <%--<div id="progressWrapper" style="display:none;">--%>
-            <%--<div class="progress">--%>
-                <%--<div class="progress bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"--%>
-                     <%--style="width:70%"></div>--%>
-            <%--</div>--%>
-        <%--</div>--%>
         <table id="sampleData" class="table display simple compact">
             <thead>
             <tr>
