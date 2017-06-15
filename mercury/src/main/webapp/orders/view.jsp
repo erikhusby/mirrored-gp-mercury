@@ -144,12 +144,12 @@ $j(document).ready(function () {
             "columns": [
                 {"data": "${columnHeaderPDOSampleId}","orderable": false, 'class': 'no-min-width', render:renderCheckbox},
                 {"data": "${columnHeaderPosition}", "title": "${columnHeaderPosition}", 'class': 'no-min-width'},
-                {"data": "${columnHeaderSampleId}", "title": "${columnHeaderSampleId}", "sType": "html", render: renderSampleLink},
-                {"data": "${columnHeaderCollaboratorSampleId}", "title": "${columnHeaderCollaboratorSampleId}"},
+                {"data": "${columnHeaderSampleId}", "title": "${columnHeaderSampleId}", "class": "${fn:replace(columnHeaderSampleId,' ','').trim()}", "sType": "html", render: renderSampleLink},
+                {"data": "${columnHeaderCollaboratorSampleId}", "title": "${columnHeaderCollaboratorSampleId}", "class": "${fn:replace(columnHeaderCollaboratorSampleId,' ','').trim()}"},
                 {"data": "${columnHeaderParticipantId}", "title": "${columnHeaderParticipantId}"},
                 {"data": "${columnHeaderCollaboratorParticipantId}", "title": "${columnHeaderCollaboratorParticipantId}"},
                 {"data": "${columnHeaderShippedDate}", "title": "${columnHeaderShippedDate}"},
-                {"data": "${columnHeaderReceivedDate}", "title": "${columnHeaderReceivedDate}"},
+                {"data": "${columnHeaderReceivedDate}", "title": "${columnHeaderReceivedDate}", "class": "${fn:replace(columnHeaderReceivedDate,' ','').trim()}"},
                 {"data": "${columnHeaderSampleType}", "title": "${columnHeaderSampleType}"},
                 {"data": "${columnHeaderMaterialType}", "title": "${columnHeaderMaterialType}"},
                 {"data": "${columnHeaderVolume}", "title": "${columnHeaderVolume}"},
@@ -320,15 +320,16 @@ $j(document).ready(function () {
         return result;
     }
 
-    function renderCheckbox(data, type) {
+    function renderCheckbox(data, type, row) {
         var result = data;
         if (type === 'display') {
             tagAttributes = {
                 "name": "selectedProductOrderSampleIds",
                 "value": data,
                 "type": "checkbox",
-                "class": "shiftCheckbox"
-            }
+                "class": "shiftCheckbox",
+                "data-sample-checkbox" :row["<%= ProductOrderSampleBean.SAMPLE_ID %>"]
+            };
             result = jQuery("<input/>", tagAttributes)[0].outerHTML;
         }
         return result;

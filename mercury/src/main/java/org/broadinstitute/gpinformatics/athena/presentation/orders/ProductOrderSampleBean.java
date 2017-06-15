@@ -59,7 +59,7 @@ public class ProductOrderSampleBean {
     public static final String PROCEED_OOS = "Proceed OOS";
     public static final String STATUS = "Status";
     public static final String COMMENT = "Comment";
-    public static final String ROW_ID_PREFIX = "id-";
+    public static final String ROW_ID_PREFIX = "sampleId-";
     public static final String POSITION = "#";
 
     @JsonProperty(COLLABORATOR_SAMPLE_ID)
@@ -139,9 +139,9 @@ public class ProductOrderSampleBean {
             sampleId = sample.getSampleKey();
             if (sampleLink != null && sampleLink.getHasLink()) {
                 sampleLinkString =
-                        String.format("<a href='%s' class='external' target='%s' title='%s'>%s</>",
+                        String.format("<a href='%s' class='external' target='%s' title='%s' data-sample-name='%s'>%s</>",
                                 sampleLink.getUrl(),
-                                sampleLink.getTarget(), sampleLink.getLabel(), sample.getName());
+                                sampleLink.getTarget(), sampleLink.getLabel(), sample.getName(), sample.getName());
             } else {
                 sampleLinkString = sample.getName();
             }
