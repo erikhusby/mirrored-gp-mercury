@@ -7,9 +7,14 @@ import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
+import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.mercury.control.dao.storage.StorageLocationDao;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+
+import javax.inject.Inject;
 
 /**
  * A Stripes action bean to allow the creation of Laboratory Storage locations such as Freezers
@@ -19,10 +24,14 @@ public class CreateStorageActionBean extends CoreActionBean {
     private static final Log logger = LogFactory.getLog(CreateStorageActionBean.class);
 
     public static final String CHOOSE_STORAGE_UNIT = "chooseStorageUnit";
-
-    private static final String VIEW_PAGE = "/storage/create_storage.jsp";
+    public static final String VIEW_PAGE = "/storage/create_storage.jsp";
+    public static final String CREATE_STORAGE_UNIT = "createStorageUnit";
 
     private StorageUnit storageUnit;
+    private MessageCollection messageCollection = new MessageCollection();
+
+    @Inject
+    private StorageLocationDao storageLocationDao;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -38,7 +47,11 @@ public class CreateStorageActionBean extends CoreActionBean {
     //TODO validate storage unit name is not in database and not null
     @HandlesEvent(CHOOSE_STORAGE_UNIT)
     public Resolution chooseStorageUnit() {
-        logger.debug("Storage Unit initialized: " + storageUnit);
+        return new ForwardResolution(VIEW_PAGE);
+    }
+
+    @HandlesEvent(CREATE_STORAGE_UNIT)
+    public Resolution createStorageUnit() {
         return new ForwardResolution(VIEW_PAGE);
     }
 
@@ -84,10 +97,16 @@ public class CreateStorageActionBean extends CoreActionBean {
     }
 
     public class StorageUnit {
+        @Validate(required = true, on = {CHOOSE_STORAGE_UNIT})
         private String name;
+
         private StorageUnitType storageUnitType;
+
+        @Validate(required = true, minlength = 1, on = {CREATE_STORAGE_UNIT})
         private int sections;
+
         private int shelves;
+
         private int slots;
 
         public StorageUnit() {

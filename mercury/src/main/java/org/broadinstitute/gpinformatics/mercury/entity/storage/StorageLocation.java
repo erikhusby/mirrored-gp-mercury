@@ -1,13 +1,15 @@
 package org.broadinstitute.gpinformatics.mercury.entity.storage;
 
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.hibernate.envers.Audited;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -15,9 +17,8 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Stores position of materials in the laboratory. Self references to Parent Location allow for deeply
@@ -28,16 +29,10 @@ import java.util.Map;
 @Entity
 @Audited
 @Table(schema = "mercury")
-public class Location {
-
-    public enum Level {
-
-    }
+public class StorageLocation {
 
     public enum LocationType {
-        FreezerMinus80("Freezer (-80 Celsius)"),
-        FreezerMinus20("Freezer (-20 Celsius)"),
-        RefridgeratorPlus4("Refridgerator (4 Celsius)"),
+        Refridgerator("Refridgerator"),
         Freezer("Freezer"),
         ShelvingUnit("Shelving Unit"),
         Shelf("Shelf"),
@@ -60,7 +55,7 @@ public class Location {
     @SequenceGenerator(name = "SEQ_LOCATION", schema = "mercury", sequenceName = "SEQ_LOCATION")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LOCATION")
     @Column(name = "LOCATION_ID", nullable = true)
-    private Long locationId;
+    private Long storageLocationId;
 
     private String label;
 
@@ -68,28 +63,31 @@ public class Location {
     private LocationType locationType;
 
     @ManyToOne
-    private Location parentLocation;
+    private StorageLocation parentStorageLocation;
 
-    @OneToMany(mappedBy = "parentLocation")
-    private Collection<Location> childrenLocation;
+    @OneToMany(mappedBy = "parentStorageLocation")
+    private Collection<StorageLocation> childrenStorageLocation;
 
-    public Location() {
+    @OneToMany(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY, mappedBy = "storageLocation")
+    private Collection<LabVessel> labVessels;
+
+    public StorageLocation() {
     }
 
-    public Location(String label,
-                    LocationType locationType,
-                    Location parentLocation) {
+    public StorageLocation(String label,
+                           LocationType locationType,
+                           StorageLocation parentStorageLocation) {
         this.label = label;
         this.locationType = locationType;
-        this.parentLocation = parentLocation;
+        this.parentStorageLocation = parentStorageLocation;
     }
 
-    public Long getLocationId() {
-        return locationId;
+    public Long getStorageLocationId() {
+        return storageLocationId;
     }
 
-    public void setLocationId(Long locationId) {
-        this.locationId = locationId;
+    public void setStorageLocationId(Long storageLocationId) {
+        this.storageLocationId = storageLocationId;
     }
 
     public String getLabel() {
@@ -109,20 +107,28 @@ public class Location {
     }
 
     @JsonIgnore
-    public Location getParentLocation() {
-        return parentLocation;
+    public StorageLocation getParentStorageLocation() {
+        return parentStorageLocation;
     }
 
-    public void setParentLocation(Location parentLocation) {
-        this.parentLocation = parentLocation;
+    public void setParentStorageLocation(StorageLocation parentStorageLocation) {
+        this.parentStorageLocation = parentStorageLocation;
     }
 
-    public Collection<Location> getChildrenLocation() {
-        return childrenLocation;
+    public Collection<StorageLocation> getChildrenStorageLocation() {
+        return childrenStorageLocation;
     }
 
-    public void setChildrenLocation(
-            Collection<Location> childrenLocation) {
-        this.childrenLocation = childrenLocation;
+    public void setChildrenStorageLocation(
+            Collection<StorageLocation> childrenStorageLocation) {
+        this.childrenStorageLocation = childrenStorageLocation;
+    }
+
+    public Collection<LabVessel> getLabVessels() {
+        return labVessels;
+    }
+
+    public void setLabVessels(Collection<LabVessel> labVessels) {
+        this.labVessels = labVessels;
     }
 }

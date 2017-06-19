@@ -55,7 +55,7 @@
                             </div>
                             <div class="control-group">
                                 <div class="controls">
-                                    <stripes:submit name="chooseStorageUnit" value="Submit" class="btn btn-primary"/>
+                                    <stripes:submit name="createStorageUnit" value="Submit" class="btn btn-primary"/>
                                 </div>
                             </div>
                         </div>
@@ -70,7 +70,7 @@
                             </div>
                             <div class="control-group">
                                 <div class="controls">
-                                    <stripes:submit name="chooseStorageUnit" value="Submit" class="btn btn-primary"/>
+                                    <stripes:submit name="createStorageUnit" value="Submit" class="btn btn-primary"/>
                                 </div>
                             </div>
                         </div>

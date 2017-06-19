@@ -3,12 +3,46 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.storage.StorageManagerActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="Create Storage" sectionTitle="Create Storage">
+<stripes:layout-render name="/layout.jsp" pageTitle="Manage Storage" sectionTitle="Manage Storage">
 
     <stripes:layout-component name="extraHead">
         <%@ include file="/vessel/rack_scanner_list_with_sim_part1.jsp" %>
         <script type="text/javascript">
             $j(document).ready(function () {
+
+                /**
+                 * When freezer selection changes, query to grab its children
+                 */
+                $("#freezerSelection").change(function () {
+                    var label = $("#freezerSelection").val();
+                    var formData = new FormData();
+                    formData.append("freezerSearchKey", label);
+                    formData.append("freezerSearch", label);
+                    $j.ajax({
+                        url: "${ctxpath}/storage/storageManager.action",
+                        type: 'POST',
+                        data: formData,
+                        async: true,
+                        success: function (results) {
+                            $j("#slotSearchSubmit").removeAttr("disabled");
+                            if( results.startsWith("Failure")) {
+                                $j("#slotSearchError").text(results);
+                            } else {
+                                // Results is html frag in location_select.jsp
+                                $('#manageStorageForm').append(results);
+                            }
+                        },
+                        error: function(results){
+                            //TODO Handle errors
+                            $j("#slotSearchSubmit").removeAttr("disabled");
+                            $j("#rackScanError").text("A server error occurred");
+                        },
+                        cache: false,
+                        datatype: "text",
+                        processData: false,
+                        contentType: false
+                    });
+                });
 
                 /*
                  * User is searching for a slot, query to find its rack and that racks last known locations
@@ -29,10 +63,20 @@
                             if( results.startsWith("Failure")) {
                                 $j("#slotSearchError").text(results);
                             } else {
-                                //TODO Handle successful results
+                                console.log(results);
+                                // SlotSearchResult object
+//                                var freezerData = JSON.parse(results);
+                                $("#searchResultsAjax").html(results);
+//                                $('#rackSelection').val(freezerData.rack.label);
+//                                $('#freezerSelection').val(freezerData.locationTrail[0].label);
+//                                $.each(freezerData.locationTrail.slice(1), function (idx, location) {
+//
+//                                    $('#freezerSelection').val(freezerData.locationTrail[0].label);
+//                                });
                             }
                         },
                         error: function(results){
+                            //TODO Handle errors
                             $j("#slotSearchSubmit").removeAttr("disabled");
                             $j("#rackScanError").text("A server error occurred");
                         },
@@ -83,7 +127,7 @@
 
         <div id="searchResults">
             <c:if test="${actionBean.resultsAvailable}">
-                <stripes:form beanclass="${actionBean.class.name}" id="createStorageForm" class="form-horizontal">
+                <stripes:form beanclass="${actionBean.class.name}" id="manageStorageForm" class="form-horizontal">
                     <div id="platemap" class="platemapcontainer">
                         <div class="row">
                             <div class="span5">
@@ -109,8 +153,9 @@
                                             <th>${rowName}</th>
                                             <c:forEach items="${actionBean.vesselGeometry.columnNames}"
                                                        var="colName">
-                                                <td id="${rowName}${colName}"
-                                                    class="${actionBean.hasSample(rowName, colName) ? 'sample' : ''}">
+                                                <c:set var="wellName" value="${rowName.concat(colName)}" />
+                                                <td id="$wellName"
+                                                    class="${actionBean.rackScan.containsKey(wellName) ? 'sample' : ''}">
                                                 </td>
                                             </c:forEach>
                                         </tr>
@@ -128,6 +173,29 @@
                             <stripes:submit id="slotSearchSubmit" name="slotBarcodeSearch" value="Find" class="btn btn-primary"/>
                         </div>
                     </div>
+                    <div id="searchResultsAjax">
+                        <div class="control-group">
+                            <stripes:label for="rackSelect" class="control-label">Rack</stripes:label>
+                            <div class="controls">
+                                <stripes:select name="rackSelection" id="rackSelection">
+                                    <c:forEach items="${actionBean.rackLocations}" var="entry">
+                                        <option value="${entry.label}">${entry.label}</option>
+                                    </c:forEach>
+                                </stripes:select>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <stripes:label for="freezerSelect" class="control-label">Freezer</stripes:label>
+                            <div class="controls">
+                                <stripes:select name="freezerSelection" id="freezerSelection">
+                                    <c:forEach items="${actionBean.freezerLocations}" var="entry">
+                                        <option value="${entry.label}">${entry.label}</option>
+                                    </c:forEach>
+                                </stripes:select>
+                            </div>
+                        </div>
+                    </div>
+                    <stripes:submit name="store" value="Store" class="btn btn-primary"/>
                 </stripes:form>
             </c:if>
         </div>
