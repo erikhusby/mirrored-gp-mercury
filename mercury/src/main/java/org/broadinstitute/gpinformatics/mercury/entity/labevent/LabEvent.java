@@ -87,6 +87,9 @@ public class LabEvent {
     public static final String UI_EVENT_LOCATION = "User Interface";
     public static final String UI_PROGRAM_NAME = "Mercury";
 
+    /**
+     * Sort by ascending date, ascending disambiguator
+     */
     public static final Comparator<LabEvent> BY_EVENT_DATE = new Comparator<LabEvent>() {
         @Override
         public int compare(LabEvent o1, LabEvent o2) {

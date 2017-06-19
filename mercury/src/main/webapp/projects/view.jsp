@@ -19,13 +19,12 @@
             }
         </style>
         <script type="text/javascript">
-            var activeTab = ${actionBean.rpSelectedTab}
-
             $j(document).ready(function () {
                 $j("#tabs").tabs({
-                    active: activeTab,
-                    activate: function () {
-                        this.scrollIntoView({block: "start", behavior: "smooth"});
+                    activate: function (event, ui) {
+                        if ($j(ui.newTab).text() === "<%=ResearchProjectActionBean.RESEARCH_PROJECT_SUBMISSIONS_TAB%>") {
+                            this.scrollIntoView({block: "start", behavior: "smooth"});
+                        }
                     }
                 });
                 if (${! actionBean.validateViewOrPostSubmissions(true)}) {
@@ -44,7 +43,7 @@
                     event.preventDefault();
                     openRegulatoryInfoDialog(
                             '${actionBean.editResearchProject.businessKey}',
-                            '${actionBean.editResearchProject.businessKey} - ${actionBean.editResearchProject.title}',
+                        '${actionBean.editResearchProject.businessKey} - ${actionBean.editResearchProject.webSafeTitle}',
                             function() {
                                 location.reload(true);
                             }
@@ -56,7 +55,7 @@
                     $target = $j(event.target);
                     openRegulatoryInfoEditDialog(
                             $target.attr('regulatoryInfoId'),
-                            '${actionBean.editResearchProject.businessKey} - ${actionBean.editResearchProject.title}',
+                            '${actionBean.editResearchProject.businessKey} - ${actionBean.editResearchProject.webSafeTitle}',
                             function() {
                                 location.reload(true);
                             }
@@ -72,10 +71,8 @@
 
             // $(window).load(...) is used here because the submissions.jsp dom is not ready
             // when $j(document).ready() is called.
-            $(window).load(function(){
-                if (activeTab) {
-                    $j("#tabs ul li:nth-child(" + activeTab + ") a").trigger('click');
-                }
+            $(window).load(function () {
+                $j("a[href='#${actionBean.rpSelectedTab}']").trigger('click');
             });
 
             function showBeginCollaboration() {

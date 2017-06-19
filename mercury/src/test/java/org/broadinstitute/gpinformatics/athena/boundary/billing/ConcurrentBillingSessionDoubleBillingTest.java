@@ -227,7 +227,7 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
         @Override
         public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
 
-            FundingLevel level = new FundingLevel("100", new Funding(Funding.PURCHASE_ORDER,null, null));
+            FundingLevel level = new FundingLevel("100", Collections.singleton(new Funding(Funding.PURCHASE_ORDER,null, null)));
             QuoteFunding funding = new QuoteFunding(Collections.singleton(level));
             Quote stubQuote = new Quote("testMMA", funding, ApprovalStatus.FUNDED);
             stubQuote.setAlphanumericId("testMMA");

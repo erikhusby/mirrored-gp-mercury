@@ -107,7 +107,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
     }
 
     /**
-     * Constructs a sample instance from a LabVessel.
+     * Constructs a sample instance from a root LabVessel.
      */
     public SampleInstanceV2(LabVessel labVessel) {
         initialLabVessel = labVessel;
@@ -465,6 +465,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
         currentLabVessel = labVessel;
         // order of assignments is same as order of fields
         mercurySamples.addAll(labVessel.getMercurySamples());
+        // todo jmt check for root
         reagents.addAll(labVessel.getReagentContents());
 
         List<LabBatchStartingVessel> labBatchStartingVesselsByDate = labVessel.getLabBatchStartingVesselsByDate();

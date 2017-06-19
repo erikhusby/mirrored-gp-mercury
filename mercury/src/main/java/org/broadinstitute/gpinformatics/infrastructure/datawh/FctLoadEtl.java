@@ -109,7 +109,7 @@ public class FctLoadEtl extends GenericEntityEtl<LabEvent,LabEvent> {
                             format(flowcellAndSourceTubes.getLeft().getLabel())
                     ));
                 }
-            } else {
+            } else if (srcTube != null) {
                 // FCT logic is driven exclusively from vessels registered in LabBatchStartingVessel#dilutionVessel
                 // Older events with only denatured tubes registered in LabBatchStartingVessel#labVessel
                 //     produce non-deterministic flowcell barcodes

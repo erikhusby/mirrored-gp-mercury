@@ -8,7 +8,7 @@
     file as well until such a time that we reconfigure the mercury structure to have a dependant project or something
      that can inherit this version setting. -->
 
-    <version>1.79-SNAPSHOT</version>
+    <version>1.80-SNAPSHOT</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
@@ -1246,9 +1246,9 @@ nodePrinter.print(webapp)
             <scope>test</scope>
         </dependency>
         <dependency>
-             <groupId>org.mock-server</groupId>
-             <artifactId>mockserver-netty</artifactId>
-             <version>3.10.4</version>
+            <groupId>org.mock-server</groupId>
+            <artifactId>mockserver-netty</artifactId>
+            <version>3.10.4</version>
             <scope>test</scope>
         </dependency>
 
@@ -1584,6 +1584,11 @@ nodePrinter.print(webapp)
             <artifactId>jersey-client</artifactId>
             <version>${jersey.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.sun.jersey.contribs</groupId>
+            <artifactId>jersey-multipart</artifactId>
+            <version>${jersey.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>com.sun.jersey</groupId>
@@ -1915,10 +1920,10 @@ nodePrinter.print(webapp)
                 </plugin>
 
                 <plugin>
-                     <groupId>external.atlassian.jgitflow</groupId>
-                     <artifactId>jgitflow-maven-plugin</artifactId>
-                     <version>1.0-m5.1</version>
-                 </plugin>
+                    <groupId>external.atlassian.jgitflow</groupId>
+                    <artifactId>jgitflow-maven-plugin</artifactId>
+                    <version>1.0-m5.1</version>
+                </plugin>
 
             </plugins>
 
@@ -2178,9 +2183,9 @@ nodePrinter.print(webapp)
                 <artifactId>maven-pmd-plugin</artifactId>
                 <configuration>
                     <targetJdk>1.8</targetJdk>
-<!--
-                    <includeTests>true</includeTests>
--->
+                    <!--
+                                        <includeTests>true</includeTests>
+                    -->
                 </configuration>
             </plugin>
 

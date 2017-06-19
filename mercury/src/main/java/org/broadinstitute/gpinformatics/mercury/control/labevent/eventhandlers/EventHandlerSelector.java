@@ -21,16 +21,19 @@ public class EventHandlerSelector {
     private DenatureToDilutionTubeHandler denatureToDilutionTubeHandler;
     private FlowcellMessageHandler flowcellMessageHandler;
     private FlowcellLoadedHandler flowcellLoadedHandler;
+    private BspNewRootHandler bspNewRootHandler;
 
     @Inject
     public EventHandlerSelector(SonicAliquotHandler sonicAliquotHandler,
             DenatureToDilutionTubeHandler denatureToDilutionTubeHandler,
             FlowcellMessageHandler flowcellMessageHandler,
-            FlowcellLoadedHandler flowcellLoadedHandler) {
+            FlowcellLoadedHandler flowcellLoadedHandler,
+            BspNewRootHandler bspNewRootHandler) {
         this.sonicAliquotHandler = sonicAliquotHandler;
         this.denatureToDilutionTubeHandler = denatureToDilutionTubeHandler;
         this.flowcellMessageHandler = flowcellMessageHandler;
         this.flowcellLoadedHandler = flowcellLoadedHandler;
+        this.bspNewRootHandler = bspNewRootHandler;
     }
 
     /**
@@ -64,6 +67,10 @@ public class EventHandlerSelector {
         case AUTO_DAUGHTER_PLATE_CREATION:
         case SONIC_DAUGHTER_PLATE_CREATION:
             sonicAliquotHandler.handleEvent(targetEvent, stationEvent);
+            break;
+        case BLOOD_PLASMA_SECOND_TRANSFER:
+        case BLOOD_BUFFY_COAT_TRANSFER:
+            bspNewRootHandler.handleEvent(targetEvent, stationEvent);
             break;
         }
     }

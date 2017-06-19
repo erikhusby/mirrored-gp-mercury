@@ -281,7 +281,7 @@ public class ProductOrderEjbTest {
         Mockito.when(mockUserBean.getBspUser()).thenReturn(new BSPUserList.QADudeUser("PM", 2423L));
         Funding funding = new Funding(Funding.PURCHASE_ORDER, "238293", null);
         funding.setPurchaseOrderContact("Test@broad.com");
-        Set<FundingLevel> fundingLevels = Collections.singleton(new FundingLevel("100", funding));
+        Set<FundingLevel> fundingLevels = Collections.singleton(new FundingLevel("100", Collections.singleton(funding)));
         QuoteFunding quoteFunding = new QuoteFunding(fundingLevels);
         Quote mockQuote =  new Quote(order.getQuoteId(), quoteFunding, ApprovalStatus.FUNDED);
         Mockito.when(mockQuoteService.getQuoteByAlphaId(Mockito.anyString())).thenReturn(
@@ -319,7 +319,7 @@ public class ProductOrderEjbTest {
         Funding fundingDefined = new Funding(Funding.PURCHASE_ORDER,null, null);
         fundingDefined.setPurchaseOrderContact(testUser);
         fundingDefined.setPurchaseOrderNumber("PO00Id8923");
-        FundingLevel fundingLevel = new FundingLevel("100",fundingDefined);
+        FundingLevel fundingLevel = new FundingLevel("100",Collections.singleton(fundingDefined));
 
         QuoteFunding quoteFunding = new QuoteFunding(Collections.singleton(fundingLevel));
 
@@ -436,7 +436,7 @@ public class ProductOrderEjbTest {
         Funding fundingDefined = new Funding(Funding.PURCHASE_ORDER,null, null);
         fundingDefined.setPurchaseOrderContact(testUser);
         fundingDefined.setPurchaseOrderNumber("PO00Id8923");
-        FundingLevel fundingLevel = new FundingLevel("100",fundingDefined);
+        FundingLevel fundingLevel = new FundingLevel("100",Collections.singleton(fundingDefined));
 
         QuoteFunding quoteFunding = new QuoteFunding(Collections.singleton(fundingLevel));
 
@@ -483,7 +483,7 @@ public class ProductOrderEjbTest {
         Funding fundingDefined = new Funding(Funding.PURCHASE_ORDER,null, null);
         fundingDefined.setPurchaseOrderContact(testUser);
         fundingDefined.setPurchaseOrderNumber("PO00Id8923");
-        FundingLevel fundingLevel = new FundingLevel("100",fundingDefined);
+        FundingLevel fundingLevel = new FundingLevel("100", Collections.singleton(fundingDefined));
         QuoteFunding quoteFunding = new QuoteFunding(Collections.singleton(fundingLevel));
         Quote testSingleSourceQuote = new Quote(SapIntegrationServiceImplDBFreeTest.SINGLE_SOURCE_PO_QUOTE_ID, quoteFunding, ApprovalStatus.FUNDED);
 

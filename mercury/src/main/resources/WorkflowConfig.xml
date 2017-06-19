@@ -637,6 +637,7 @@
                 <name>PCR Plus Pond Registration</name>
                 <labEventTypes>PCR_PLUS_POND_REGISTRATION</labEventTypes>
                 <optional>false</optional>
+                <ancestryEtlFlag>true</ancestryEtlFlag>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Pond Pico</name>
@@ -832,6 +833,7 @@
                     <materialTypes>DNA</materialTypes>
                     <materialTypes>DNA_DNA_GENOMIC</materialTypes>
                     <materialTypes>DNA_DNA_SOMATIC</materialTypes>
+                    <materialTypes>DNA_DNA_CELL_FREE</materialTypes>
                 </bucketEntryEvaluator>
                 </workflowStepDefs>
             <workflowStepDefs>
@@ -874,10 +876,32 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
+            <!-- next three are all in HyperPrep ICE -->
+            <workflowStepDefs>
+                <name>IceHyperPrep1stBaitPick</name>
+                <labEventTypes>ICE_HYPERPREP_1ST_BAIT_PICK</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>IceHyperPrep1stBaitAddition</name>
+                <labEventTypes>ICE_HYPERPREP_1ST_BAIT_ADDITION</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>IceHyperPrep1stHybridization</name>
+                <labEventTypes>ICE_HYPERPREP_1ST_HYBRIDIZATION</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
             <workflowStepDefs>
                 <name>Ice1stHybridization</name>
                 <labEventTypes>ICE_1ST_HYBRIDIZATION</labEventTypes>
-                <optional>false</optional>
+                <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
@@ -896,10 +920,11 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
+            <!-- not present in HyperPrep ICE -->
             <workflowStepDefs>
                 <name>PostIce1stHybridizationThermoCyclerLoaded</name>
                 <labEventTypes>POST_ICE_1ST_HYBRIDIZATION_THERMO_CYCLER_LOADED</labEventTypes>
-                <optional>false</optional>
+                <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
@@ -914,6 +939,21 @@
                 <name>PostIce1stCaptureThermoCyclerLoaded</name>
                 <labEventTypes>POST_ICE_1ST_CAPTURE_THERMO_CYCLER_LOADED</labEventTypes>
                 <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <!-- next two are both in HyperPrep ICE -->
+            <workflowStepDefs>
+                <name>IceHyperPrep2ndBaitPick</name>
+                <labEventTypes>ICE_HYPERPREP_2ND_BAIT_PICK</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>IceHyperPrep2ndBaitAddition</name>
+                <labEventTypes>ICE_HYPERPREP_2ND_BAIT_ADDITION</labEventTypes>
+                <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
@@ -939,10 +979,11 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
+            <!-- not present in HyperPrep ICE -->
             <workflowStepDefs>
                 <name>PostIce2ndHybridizationThermoCyclerLoaded</name>
                 <labEventTypes>POST_ICE_2ND_HYBRIDIZATION_THERMO_CYCLER_LOADED</labEventTypes>
-                <optional>false</optional>
+                <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
