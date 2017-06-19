@@ -591,6 +591,11 @@
                 <labEventTypes>PCR_FREE_POND_REGISTRATION</labEventTypes>
                 <optional>false</optional>
                 <ancestryEtlFlag>true</ancestryEtlFlag>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>Norm And Pool</statusTransition>
+                    <endStatus>Norm And Pool</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Pond Pico</name>
@@ -609,6 +614,11 @@
                 <labEventTypes>PCR_PLUS_POND_REGISTRATION</labEventTypes>
                 <optional>false</optional>
                 <ancestryEtlFlag>true</ancestryEtlFlag>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>Norm And Pool</statusTransition>
+                    <endStatus>Norm And Pool</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Pond Pico</name>
@@ -637,6 +647,12 @@
                 <name>PCR Plus Pond Registration</name>
                 <labEventTypes>PCR_PLUS_POND_REGISTRATION</labEventTypes>
                 <optional>false</optional>
+                <ancestryEtlFlag>true</ancestryEtlFlag>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>Norm And Pool</statusTransition>
+                    <endStatus>Norm And Pool</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Pond Pico</name>
