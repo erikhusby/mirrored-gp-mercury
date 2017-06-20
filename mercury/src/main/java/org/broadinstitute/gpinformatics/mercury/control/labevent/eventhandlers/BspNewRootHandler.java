@@ -21,6 +21,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -37,6 +38,7 @@ import java.util.Set;
  * Creates a new root sample in BSP, e.g. for Blood Biopsy plasma and buffy coat samples, so they can have
  * different collaborator sample ID suffixes.
  */
+@Dependent
 public class BspNewRootHandler extends AbstractEventHandler {
 
     private static final String BSP_KIT_REST_URL = "kit";
