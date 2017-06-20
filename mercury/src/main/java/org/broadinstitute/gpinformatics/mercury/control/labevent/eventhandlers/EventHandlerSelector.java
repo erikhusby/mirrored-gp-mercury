@@ -62,7 +62,6 @@ public class EventHandlerSelector {
         case FLOWCELL_LOADED:
             flowcellLoadedHandler.handleEvent(targetEvent, stationEvent);
             break;
-        case AUTO_DAUGHTER_PLATE_CREATION:
         case SONIC_DAUGHTER_PLATE_CREATION:
             sonicAliquotHandler.handleEvent(targetEvent, stationEvent);
             break;
