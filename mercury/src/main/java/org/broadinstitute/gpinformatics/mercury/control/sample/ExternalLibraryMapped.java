@@ -1,7 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.control.sample;
 
-import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -555,7 +553,7 @@ public class ExternalLibraryMapped {
         TOTAL_LIBRARY_CONCENTRATION("Sample Concentration (ng/ul)"),
         SINGLE_DOUBLE_STRANDED("Single/Double Stranded (S/D)"),
         ADDITIONAL_SAMPLE_INFORMATION("Additional Sample Information"),
-        DESIRED_READ_LEGTH("Desired Read Length for Illumina and note specific cluster density, if required . (See above)"),
+        DESIRED_READ_LENGTH("Desired Read Length for Illumina and note specific cluster density, if required . (See above)"),
         FUNDING_SOURCE("Funding Source"),
         COVERAGE("Coverage (# Lanes/Sample)"),
         APPROVED_BY("Approved By"),

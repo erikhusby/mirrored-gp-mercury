@@ -210,4 +210,8 @@ public class MolecularIndex implements Serializable {
     public Set<MolecularIndexingScheme> getMolecularIndexingSchemes() {
         return molecularIndexingSchemes;
     }
+
+    public void setMolecularIndexingSchemes(Set<MolecularIndexingScheme> molecularIndexingSchemes) {
+        this.molecularIndexingSchemes = molecularIndexingSchemes;
+    }
 }

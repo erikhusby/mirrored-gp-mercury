@@ -47,7 +47,7 @@ public class ExternalLibraryProcessorPooled extends TableProcessor {
     private List<String> requiredControlledAccess = new ArrayList<>();
     private List<String> accessList = new ArrayList<>();
     private List<String> pooled = new ArrayList<>();
-    private List<String> memeberOfPool = new ArrayList<>();
+    private List<String> memberOfPool = new ArrayList<>();
     private List<String> submittedToGSSR = new ArrayList<>();
     private List<String> derivedFrom = new ArrayList<>();
     private String collaboratorName;
@@ -189,7 +189,7 @@ public class ExternalLibraryProcessorPooled extends TableProcessor {
         totalLibraryConcentration.add(dataRow.get(ExternalLibraryProcessorPooled.Headers.TOTAL_LIBRARY_CONCENTRATION.getText()));
         additionalSampleInformation.add(dataRow.get(ExternalLibraryProcessorPooled.Headers.ADDITIONAL_SAMPLE_INFORMATION.getText()));
         singleDoubleStranded.add(dataRow.get(ExternalLibraryProcessorPooled.Headers.SINGLE_DOUBLE_STRANDED.getText()));
-        desiredReadLength.add(dataRow.get(ExternalLibraryProcessorPooled.Headers.DESIRED_READ_LEGTH.getText()));
+        desiredReadLength.add(dataRow.get(ExternalLibraryProcessorPooled.Headers.DESIRED_READ_LENGTH.getText()));
         projectTitle.add(dataRow.get(ExternalLibraryProcessorPooled.Headers.PROJECT_TITLE.getText()));
         fundingSource.add(dataRow.get(ExternalLibraryProcessorPooled.Headers.FUNDING_SOURCE.getText()));
         coverage.add(dataRow.get(ExternalLibraryProcessorPooled.Headers.COVERAGE.getText()));
@@ -202,7 +202,7 @@ public class ExternalLibraryProcessorPooled extends TableProcessor {
         requiredControlledAccess.add(dataRow.get(ExternalLibraryProcessorPooled.Headers.REQUIRED_ACCESS.getText()));
         accessList.add(dataRow.get(ExternalLibraryProcessorPooled.Headers.ACCESS_LIST.getText()));
         pooled.add(dataRow.get(Headers.POOLED.getText()));
-        memeberOfPool.add(dataRow.get(Headers.MEMBER_OF_POOL.getText()));
+        memberOfPool.add(dataRow.get(Headers.MEMBER_OF_POOL.getText()));
         submittedToGSSR.add(dataRow.get(Headers.SUBMITTED_TO_GSSR.getText()));
         derivedFrom.add(dataRow.get(Headers.DERIVED_FROM.getText()));
         individualName.add(dataRow.get(Headers.INDIVIDUAL_NAME.getText()));
@@ -241,7 +241,7 @@ public class ExternalLibraryProcessorPooled extends TableProcessor {
         TOTAL_LIBRARY_CONCENTRATION("Sample Concentration (ng/ul)", ColumnHeader.OPTIONAL_HEADER, true),
         SINGLE_DOUBLE_STRANDED("Single/Double Stranded (S/D)", ColumnHeader.OPTIONAL_HEADER, true),
         ADDITIONAL_SAMPLE_INFORMATION("Additional Sample Information", ColumnHeader.OPTIONAL_HEADER, true),
-        DESIRED_READ_LEGTH("Desired Read Length for Illumina and note specific cluster density, if required . (See above)", ColumnHeader.OPTIONAL_HEADER, true),
+        DESIRED_READ_LENGTH("Desired Read Length for Illumina and note specific cluster density, if required . (See above)", ColumnHeader.OPTIONAL_HEADER, true),
         FUNDING_SOURCE("Funding Source", ColumnHeader.OPTIONAL_HEADER, true),
         COVERAGE("Coverage (# Lanes/Sample)", ColumnHeader.OPTIONAL_HEADER, true),
         APPROVED_BY("Approved By", ColumnHeader.OPTIONAL_HEADER, true),

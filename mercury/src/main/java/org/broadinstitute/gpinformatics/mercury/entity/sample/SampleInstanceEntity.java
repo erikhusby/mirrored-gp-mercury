@@ -18,12 +18,11 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import java.util.HashMap;
-import java.util.Set;
-import java.util.HashSet;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 
 @Entity
@@ -133,19 +132,11 @@ public class SampleInstanceEntity {
 
     public void setLabVessel(LabVessel labVessel) { this.labVessel = labVessel; }
 
-    public LabVessel getBarodedTube() { return labVessel;  }
-
-    public String getSampleLibraryName() { return  sampleLibraryName; }
-
     public MolecularIndexingScheme getMolecularIndexingScheme() { return molecularIndexingScheme;  }
 
     public void setReagentDesign(ReagentDesign reagentDesign){ this.reagentDesign = reagentDesign; }
 
     public ReagentDesign getReagentDesign() { return this.reagentDesign; }
-
-    public void setSampleInstanceEntityId(Long sampleInstanceEntityId) {this.sampleInstanceEntityId = sampleInstanceEntityId; }
-
-    public Long getSampleInstanceEntityId() { return sampleInstanceEntityId; }
 
     public void setMolecularIndexScheme(MolecularIndexingScheme molecularIndexingScheme) { this.molecularIndexingScheme = molecularIndexingScheme; }
 
@@ -169,23 +160,11 @@ public class SampleInstanceEntity {
 
     public void setCoverage(String coverage) { this.coverage = coverage;}
 
-    public String getRestrictionEnzyme(){ return this.restrictionEnzyme ;}
-
     public void setRestrictionEnzyme(String restrictionEnzyme) {this.restrictionEnzyme = restrictionEnzyme;}
-
-    public String getIllumina454KitUsed() { return this.illumina_454_KitUsed; }
-
-    public void setIllumina454KitUsed(String illumina454KitUsed) {this.illumina_454_KitUsed = illumina454KitUsed;}
-
-    public String getJumpSize() { return this.jumpSize; }
 
     public void setJumpSize(String jumpSize) {this.jumpSize = jumpSize; }
 
-    public String getLibrarySizeRange() { return this.librarySizeRange; }
-
     public void setLibrarySizeRange(String librarySizeRange) { this.librarySizeRange = librarySizeRange;}
-
-    public String getInsertSizeRange() { return  this.insertSizeRange; }
 
     public void setInsertSizeRange(String insertSizeRange) { this.insertSizeRange = insertSizeRange;}
 
@@ -203,21 +182,7 @@ public class SampleInstanceEntity {
 
     public void setTissueType(String tissueType) { this.tissueType = tissueType;}
 
-    public String getTissueType() { return this.tissueType;}
-
-    public void setSampleTubeBarcode(String sampleTubeBarcode) {this.sampleTubeBarcode = sampleTubeBarcode;}
-
-    public String getSampleTubeBarcode() { return this.sampleTubeBarcode;}
-
-    private String getSampleNumber() { return this.sampleNumber;}
-
-    private void setSampleNumber(String sampleNumber) { this.sampleNumber = sampleNumber;}
-
     public void setDesiredReadLength(String readLength) { this.readLength = readLength;}
-
-    public String getDesiredReadLength() {return this.readLength;}
-
-    public SampleKitRequest getSampleKitRequest() { return sampleKitRequest; }
 
     public void setSampleKitRequest(SampleKitRequest sampleKitRequest) { this.sampleKitRequest = sampleKitRequest; }
 

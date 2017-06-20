@@ -10,7 +10,6 @@ import net.sourceforge.stripes.validation.Validate;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.ExternalLibrarySampleInstanceEjb;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryMapped;
@@ -226,4 +225,5 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
     public void setOverWriteFlag(boolean overWriteFlag) {
         this.overWriteFlag = overWriteFlag;
     }
+
 }

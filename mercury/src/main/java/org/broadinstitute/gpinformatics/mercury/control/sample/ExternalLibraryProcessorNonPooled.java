@@ -182,7 +182,7 @@ public class ExternalLibraryProcessorNonPooled extends TableProcessor {
         totalLibraryConcentration.add(dataRow.get(ExternalLibraryProcessorNonPooled.Headers.TOTAL_LIBRARY_CONCENTRATION.getText()));
         additionalSampleInformation.add(dataRow.get(ExternalLibraryProcessorNonPooled.Headers.ADDITIONAL_SAMPLE_INFORMATION.getText()));
         singleDoubleStranded.add(dataRow.get(ExternalLibraryProcessorNonPooled.Headers.SINGLE_DOUBLE_STRANDED.getText()));
-        desiredReadLength.add(dataRow.get(Headers.DESIRED_READ_LEGTH.getText()));
+        desiredReadLength.add(dataRow.get(Headers.DESIRED_READ_LENGTH.getText()));
         projectTitle.add(dataRow.get(Headers.PROJECT_TITLE.getText()));
         fundingSource.add(dataRow.get(ExternalLibraryProcessorNonPooled.Headers.FUNDING_SOURCE.getText()));
         coverage.add(dataRow.get(ExternalLibraryProcessorNonPooled.Headers.COVERAGE.getText()));
@@ -231,7 +231,7 @@ public class ExternalLibraryProcessorNonPooled extends TableProcessor {
         TOTAL_LIBRARY_CONCENTRATION("Sample Concentration (ng/ul)", ColumnHeader.OPTIONAL_HEADER, true),
         SINGLE_DOUBLE_STRANDED("Single/Double Stranded (S/D)", ColumnHeader.OPTIONAL_HEADER, true),
         ADDITIONAL_SAMPLE_INFORMATION("Additional Sample Information", ColumnHeader.OPTIONAL_HEADER, true),
-        DESIRED_READ_LEGTH("Desired Read Length for Illumina and note specific cluster density, if required . (See above)", ColumnHeader.OPTIONAL_HEADER, true),
+        DESIRED_READ_LENGTH("Desired Read Length for Illumina and note specific cluster density, if required . (See above)", ColumnHeader.OPTIONAL_HEADER, true),
         FUNDING_SOURCE("Funding Source", ColumnHeader.OPTIONAL_HEADER, true),
         COVERAGE("Coverage (# Lanes/Sample)", ColumnHeader.OPTIONAL_HEADER, true),
         APPROVED_BY("Approved By ", ColumnHeader.OPTIONAL_HEADER, true),

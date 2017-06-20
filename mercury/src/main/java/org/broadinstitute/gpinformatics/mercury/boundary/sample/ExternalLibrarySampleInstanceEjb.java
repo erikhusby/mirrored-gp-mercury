@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
@@ -15,7 +14,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleInstanc
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleKitRequestDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryMapped;
-import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorEzPass;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VesselPooledTubesProcessor;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
@@ -28,15 +26,16 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleKitRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.sample.ExternalLibraryUploadActionBean;
+import org.jetbrains.annotations.Nullable;
 
 import javax.inject.Inject;
 import java.math.BigDecimal;
-import java.util.Map;
-import java.util.List;
 import java.util.ArrayList;
-import java.util.Set;
-import java.util.HashSet;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class ExternalLibrarySampleInstanceEjb {
     private Map<String, LabVessel> mapBarcodeToVessel;
@@ -84,6 +83,8 @@ public class ExternalLibrarySampleInstanceEjb {
 
     @Inject
     private MolecularIndexDao molecularIndexDao;
+
+
 
 
     /**
@@ -243,7 +244,8 @@ public class ExternalLibrarySampleInstanceEjb {
 
             MercurySample mercurySample = getMercurySample(vesselSpreadsheetProcessor.getCollaboratorSampleId().get(sampleIndex));
 
-            if (spreadsheetType == ExternalLibraryUploadActionBean.MULTI_ORG) {
+
+            if (spreadsheetType.equals(ExternalLibraryUploadActionBean.MULTI_ORG)) {
                 organism = vesselSpreadsheetProcessor.getOrganism().get(sampleIndex);
             }
 
@@ -254,8 +256,12 @@ public class ExternalLibrarySampleInstanceEjb {
                     vesselSpreadsheetProcessor.getIndividualName().get(sampleIndex),
                     organism));
 
+            mercurySample.addLabVessel(labVessel);
+            mercurySampleDao.persist(mercurySample);
+
+
             SampleInstanceEntity sampleInstanceEntity = getSampleInstanceEntity(libraryName, sampleKitRequest);
-            if (spreadsheetType != ExternalLibraryUploadActionBean.NON_POOLED) {
+            if (!spreadsheetType.equals(ExternalLibraryUploadActionBean.NON_POOLED)) {
                 sampleInstanceEntity.setPooled(vesselSpreadsheetProcessor.getPooled().get(sampleIndex));
             }
             sampleInstanceEntity.setTissueType(vesselSpreadsheetProcessor.getTissueType().get(sampleIndex));
@@ -276,8 +282,7 @@ public class ExternalLibrarySampleInstanceEjb {
             sampleInstanceEntity.setCollaboratorSampleId(mercurySample.getSampleKey());
             sampleInstanceEntity.setUploadDate();
 
-            mercurySample.addLabVessel(labVessel);
-            mercurySampleDao.persist(mercurySample);
+
             sampleInstanceEntity.setLabVessel(labVessel);
             sampleInstanceEntity.setMercurySampleId(mercurySample);
             sampleInstanceEntityDao.persist(sampleInstanceEntity);
@@ -296,9 +301,10 @@ public class ExternalLibrarySampleInstanceEjb {
 
         int index = 0;
         int displayIndex = ExternalLibraryUploadActionBean.externalLibraryRowOffset + 1;
-        mapBarcodeToVessel = labVesselDao.findByBarcodes(vesselSpreadsheetProcessor.getSingleSampleLibraryName());
         researchProjects.clear();
         productOrders.clear();
+
+        mapBarcodeToVessel = labVesselDao.findByBarcodes(vesselSpreadsheetProcessor.getSingleSampleLibraryName());
 
         for (String libraryName : vesselSpreadsheetProcessor.getSingleSampleLibraryName()) {
 
@@ -307,28 +313,29 @@ public class ExternalLibrarySampleInstanceEjb {
             validateRequiredFields(vesselSpreadsheetProcessor.getIndividualName().get(index), ExternalLibraryMapped.Headers.INDIVIDUAL_NAME.getText(), displayIndex, messageCollection);
             validateRequiredFields(vesselSpreadsheetProcessor.getSingleSampleLibraryName().get(index), ExternalLibraryMapped.Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText(), displayIndex, messageCollection);
             validateRequiredFields(vesselSpreadsheetProcessor.getLibraryType().get(index), ExternalLibraryMapped.Headers.LIBRARY_TYPE.getText(), displayIndex, messageCollection);
-            if (spreadsheetType != ExternalLibraryUploadActionBean.NON_POOLED) {
+            if (!spreadsheetType.equals(ExternalLibraryUploadActionBean.NON_POOLED)) {
                 validateRequiredFields(vesselSpreadsheetProcessor.getPooled().get(index), ExternalLibraryMapped.Headers.POOLED.getText(), displayIndex, messageCollection);
             }
             validateRequiredFields(vesselSpreadsheetProcessor.getInsertSizeRangeBp().get(index), ExternalLibraryMapped.Headers.INSERT_SIZE_RANGE_BP.getText(), displayIndex, messageCollection);
             validateRequiredFields(vesselSpreadsheetProcessor.getLibrarySizeRangeBp().get(index), ExternalLibraryMapped.Headers.LIBRARY_SIZE_RANGE_BP.getText(), displayIndex, messageCollection);
             validateRequiredFields(vesselSpreadsheetProcessor.getTotalLibraryVolume().get(index), ExternalLibraryMapped.Headers.TOTAL_LIBRARY_VOLUME.getText(), displayIndex, messageCollection);
             validateRequiredFields(vesselSpreadsheetProcessor.getTotalLibraryConcentration().get(index), ExternalLibraryMapped.Headers.TOTAL_LIBRARY_CONCENTRATION.getText(), displayIndex, messageCollection);
-            if (spreadsheetType == ExternalLibraryUploadActionBean.MULTI_ORG) {
+            if (spreadsheetType.equals(ExternalLibraryUploadActionBean.MULTI_ORG)) {
                 validateRequiredFields(vesselSpreadsheetProcessor.getOrganism().get(index), ExternalLibraryMapped.Headers.ORGANISM.getText(), displayIndex, messageCollection);
             }
-            validateRequiredFields(vesselSpreadsheetProcessor.getDesiredReadLength().get(index), ExternalLibraryMapped.Headers.DESIRED_READ_LEGTH.getText(), displayIndex, messageCollection);
+            validateRequiredFields(vesselSpreadsheetProcessor.getDesiredReadLength().get(index), ExternalLibraryMapped.Headers.DESIRED_READ_LENGTH.getText(), displayIndex, messageCollection);
             validateRequiredFields(vesselSpreadsheetProcessor.getFundingSource().get(index), ExternalLibraryMapped.Headers.FUNDING_SOURCE.getText(), displayIndex, messageCollection);
             validateRequiredFields(vesselSpreadsheetProcessor.getReferenceSequence().get(index), ExternalLibraryMapped.Headers.REFERENCE_SEQUENCE.getText(), displayIndex, messageCollection);
             validateRequiredFields(vesselSpreadsheetProcessor.getRequestedCompletionDate().get(index), ExternalLibraryMapped.Headers.REQUESTED_COMPLETION_DATE.getText(), displayIndex, messageCollection);
             validateRequiredFields(vesselSpreadsheetProcessor.getDataSubmission().get(index), ExternalLibraryMapped.Headers.DATA_SUBMISSION.getText(), displayIndex, messageCollection);
             validateRequiredFields(vesselSpreadsheetProcessor.getDataAnalysisType().get(index), ExternalLibraryMapped.Headers.DATA_ANALYSIS_TYPE.getText(), displayIndex, messageCollection);
 
+            //Database validations.
             getMolIndex(vesselSpreadsheetProcessor.getMolecularBarcodeSequence().get(index), messageCollection, displayIndex);
             String project = vesselSpreadsheetProcessor.getProjectTitle().get(index);
             String irbNumber = vesselSpreadsheetProcessor.getIrbNumber().get(index);
-            String dataAnalsysiType = vesselSpreadsheetProcessor.getDataAnalysisType().get(index);
-            productOrders.add(getPdo(project, dataAnalsysiType, displayIndex, messageCollection));
+            String dataAnalysisType = vesselSpreadsheetProcessor.getDataAnalysisType().get(index);
+            productOrders.add(getPdo(project, dataAnalysisType, displayIndex, messageCollection));
             researchProjects.add(getResearchProject(productOrders.get(index), displayIndex, messageCollection));
             validateIRB(researchProjects.get(index), irbNumber, displayIndex, messageCollection);
             sampleExists(libraryName, overWriteFlag, messageCollection, displayIndex);
@@ -401,7 +408,9 @@ public class ExternalLibrarySampleInstanceEjb {
      * Verify the spreadsheet contents before attempting to persist data for pooled tubes (not external libraries)
      */
     public void verifyPooledTubes(VesselPooledTubesProcessor vesselSpreadsheetProcessor, MessageCollection messageCollection, boolean overWriteFlag) {
+
         mapBarcodeToVessel = labVesselDao.findByBarcodes(vesselSpreadsheetProcessor.getBarcodes());
+
         //Is the sample library name unique to the spreadsheet??
         Map<String, String> map = new HashMap<String, String>();
         int mapIndex = 0;
@@ -524,7 +533,7 @@ public class ExternalLibrarySampleInstanceEjb {
             conditionIndex++;
         }
 
-        //Is the sample ID registred in Mercury? If not check for optional ID fields.
+        //Is the sample ID registered in Mercury? If not check for optional ID fields.
         int sampleIndex = 0;
         for (String sampleId : vesselSpreadsheetProcessor.getBroadSampleId()) {
             MercurySample mercurySample = mercurySampleDao.findBySampleKey(sampleId);
@@ -552,7 +561,7 @@ public class ExternalLibrarySampleInstanceEjb {
         }
 
         /**
-         * If there are no errors attempt save the data to the database.
+         * If there are no errors and this is not a verification test, attempt save the data to the database.
          */
         if (!messageCollection.hasErrors()) {
             persistPooledTubeResults(vesselSpreadsheetProcessor, messageCollection);
@@ -567,11 +576,11 @@ public class ExternalLibrarySampleInstanceEjb {
 
         ProductOrder productOrder = productOrderDao.findByTitle(project);
         if (productOrder == null) {
-            messageCollection.addError("No valid prouct order found at line: " + index);
+            messageCollection.addError("No valid product order found at row: " + index);
             return null;
         } else {
-            if (dataAnalysisType.equals(productOrder.getProduct().getAnalysisTypeKey())) {
-                messageCollection.addError("Data Analysus type is invalid at line: " + index);
+            if (!dataAnalysisType.equals(productOrder.getProduct().getAnalysisTypeKey())) {
+                messageCollection.addError("Data Analysis type is invalid at row: " + index);
                 return null;
             }
         }
@@ -724,8 +733,9 @@ public class ExternalLibrarySampleInstanceEjb {
             return null;
 
         LabVessel labVessel = null;
-        labVessel = mapBarcodeToVessel.get(barcode);
-
+        if(mapBarcodeToVessel != null) {
+            labVessel = mapBarcodeToVessel.get(barcode);
+        }
         if (labVessel == null) {
             labVessel = new BarcodedTube(barcode, BarcodedTube.BarcodedTubeType.MatrixTube);
         }
@@ -737,6 +747,7 @@ public class ExternalLibrarySampleInstanceEjb {
     /**
      * This intercepts the Jira Issue exception handler and keeps it from preempting the global validation errors
      */
+    @Nullable
     private JiraIssue getIssueInfoNoException(String key, String... fields) {
         try {
             return jiraService.getIssueInfo(key, fields);
@@ -744,4 +755,46 @@ public class ExternalLibrarySampleInstanceEjb {
             return null;
         }
     }
+
+    public void setLabVesselDao(LabVesselDao labVesselDao) {
+        this.labVesselDao = labVesselDao;
+    }
+
+    public void setSampleInstanceEntityDao(SampleInstanceEntityDao sampleInstanceEntityDao) {
+        this.sampleInstanceEntityDao = sampleInstanceEntityDao;
+    }
+
+   public void  setMolecularIndexingSchemeDao(MolecularIndexingSchemeDao molecularIndexingSchemeDao) {
+       this.molecularIndexingSchemeDao = molecularIndexingSchemeDao;
+   }
+
+    public void setMercurySampleDao(MercurySampleDao mercurySampleDao) {
+        this.mercurySampleDao = mercurySampleDao;
+    }
+
+    public void  setReagentDesignDao(ReagentDesignDao reagentDesignDao) {
+        this.reagentDesignDao = reagentDesignDao;
+    }
+
+    public void  setJiraService(JiraService jiraService) {
+        this.jiraService = jiraService;
+    }
+
+    public void setMolecularIndexDao(MolecularIndexDao molecularIndexDao)    {
+        this.molecularIndexDao = molecularIndexDao;
+
+    }
+
+    public void setProductOrderDao(ProductOrderDao productOrderDao) {
+        this.productOrderDao = productOrderDao;
+    }
+
+    public void setSampleKitRequestDao(SampleKitRequestDao sampleKitRequestDao) {
+        this.sampleKitRequestDao = sampleKitRequestDao;
+    }
+
+    public void setRootSamples(List<MercurySample> mercurySamples) {
+        this.rootSamples = mercurySamples;
+    }
+
 }
