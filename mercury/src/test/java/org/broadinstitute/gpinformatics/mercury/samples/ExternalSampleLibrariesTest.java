@@ -69,7 +69,7 @@ public class ExternalSampleLibrariesTest {
         ExternalLibraryMapped externalLibraryMapped = new ExternalLibraryMapped();
         externalLibraryMapped.mapPooledMultiOrg(spreadSheetProcessor);
         MessageCollection messageCollection = new MessageCollection();
-        setExternalLibraryMocks("AATATGCTGC","Microsporidia_RNASeq_Sanscrainte","CIP_Colon_EPI_WEX_B2_B3_130220", "0504001179",externalLibrarySampleInstanceEjb);
+        setExternalLibraryMocks("AATATGCTGC","Microsporidia_RNASeq_Sanscrainte","WholeGenomeShotgun.Resequencing", "0504001179",externalLibrarySampleInstanceEjb);
         externalLibrarySampleInstanceEjb.verifyExternalLibrary(externalLibraryMapped, messageCollection, true, externalLibraryUploadActionBean.MULTI_ORG);
 
         Assert.assertFalse(messageCollection.hasErrors(), "Unable to parse and verify External Library Multi Organism uploads");
@@ -82,7 +82,7 @@ public class ExternalSampleLibrariesTest {
     public void testExternalPooledLibrary() throws InvalidFormatException, IOException, ValidationException {
 
         InputStream testSpreadSheetInputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                "testdata/PooledTubesTest.xlsx");
+                "testdata/ExternalLibraryPooledTest.xlsx");
 
         ExternalLibraryProcessorPooled spreadSheetProcessor = new ExternalLibraryProcessorPooled("Sheet1");
         ExternalLibrarySampleInstanceEjb externalLibrarySampleInstanceEjb = new ExternalLibrarySampleInstanceEjb();
@@ -91,7 +91,7 @@ public class ExternalSampleLibrariesTest {
         ExternalLibraryMapped externalLibraryMapped = new ExternalLibraryMapped();
         externalLibraryMapped.mapPooled(spreadSheetProcessor);
         MessageCollection messageCollection = new MessageCollection();
-        setExternalLibraryMocks("ACAGTCATAT","Microsporidia_RNASeq_Sanscrainte","CIP_Colon_EPI_WEX_B2_B3_130220", "0504001179",externalLibrarySampleInstanceEjb);
+        setExternalLibraryMocks("ACAGTCATAT","Microsporidia_RNASeq_Sanscrainte","WholeGenomeShotgun.Resequencing", "0504001179",externalLibrarySampleInstanceEjb);
         externalLibrarySampleInstanceEjb.verifyExternalLibrary(externalLibraryMapped, messageCollection, true, externalLibraryUploadActionBean.POOLED);
 
         Assert.assertFalse(messageCollection.hasErrors(), "Unable to parse and verify External Library pooled uploads");
@@ -113,7 +113,7 @@ public class ExternalSampleLibrariesTest {
         ExternalLibraryMapped externalLibraryMapped = new ExternalLibraryMapped();
         externalLibraryMapped.mapNonPooled(spreadSheetProcessor);
         MessageCollection messageCollection = new MessageCollection();
-        setExternalLibraryMocks("ACAGTCATAT","Microsporidia_RNASeq_Sanscrainte","CIP_Colon_EPI_WEX_B2_B3_130220", "0504001179",externalLibrarySampleInstanceEjb);
+        setExternalLibraryMocks("ACAGTCATAT","Microsporidia_RNASeq_Sanscrainte","WholeGenomeShotgun.Resequencing", "0504001179",externalLibrarySampleInstanceEjb);
         externalLibrarySampleInstanceEjb.verifyExternalLibrary(externalLibraryMapped, messageCollection, true, externalLibraryUploadActionBean.NON_POOLED);
 
         Assert.assertFalse(messageCollection.hasErrors(), "Unable to parse and verify External Library non-pooled uploads");
@@ -224,6 +224,7 @@ public class ExternalSampleLibrariesTest {
                 new HashMap<String, LabVessel>() {{
                     put(tubeBarcode, new BarcodedTube(tubeBarcode, BarcodedTube.BarcodedTubeType.MatrixTube075));
                 }});
+
         Mockito.when(molecularIndexingSchemeDao.findByName(molIndex_1)).thenReturn(molecularIndexingScheme_1);
         Mockito.when(molecularIndexingSchemeDao.findByName(molIndex_2)).thenReturn(molecularIndexingScheme_2);
         Mockito.when(reagentDesignDao.findByBusinessKey(reagent)).thenReturn(reagentDesign);

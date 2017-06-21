@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
+import clover.org.apache.commons.lang.math.NumberUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -38,7 +39,6 @@ import java.util.Map;
 import java.util.Set;
 
 public class ExternalLibrarySampleInstanceEjb {
-    private Map<String, LabVessel> mapBarcodeToVessel;
     private List<List<String>> jiraSubTaskList = new ArrayList<List<String>>();
     private List<String> collaboratorSampleId = new ArrayList<>();
     private List<String> collaboratorParticipantId = new ArrayList<>();
@@ -109,7 +109,7 @@ public class ExternalLibrarySampleInstanceEjb {
         int sampleIndex = 0;
 
         for (String sampleId : vesselSpreadsheetProcessor.getBroadSampleId()) {
-            LabVessel labVessel = mapBarcodeToVessel.get(vesselSpreadsheetProcessor.getBarcodes().get(sampleIndex));
+            LabVessel labVessel = labVesselDao.findByIdentifier(vesselSpreadsheetProcessor.getBarcodes().get(sampleIndex));
 
             if (labVessel == null) {
                 labVessel = new BarcodedTube(vesselSpreadsheetProcessor.getBarcodes().get(sampleIndex), BarcodedTube.BarcodedTubeType.MatrixTube);
@@ -161,7 +161,7 @@ public class ExternalLibrarySampleInstanceEjb {
 
             sampleInstanceEntityDao.persist(sampleInstanceEntity);
             sampleInstanceEntityDao.flush();
-            mapBarcodeToVessel.put(labVessel.getLabel(), labVessel);
+            //mapBarcodeToVessel.put(labVessel.getLabel(), labVessel);
 
             ++sampleIndex;
         }
@@ -213,6 +213,7 @@ public class ExternalLibrarySampleInstanceEjb {
 
         int sampleIndex = 0;
         String organism = null;
+
 
         SampleKitRequest sampleKitRequest = getSampleKit(vesselSpreadsheetProcessor.getOrganization());
         sampleKitRequest.setCollaboratorName(vesselSpreadsheetProcessor.getCollaboratorName());
@@ -304,7 +305,6 @@ public class ExternalLibrarySampleInstanceEjb {
         researchProjects.clear();
         productOrders.clear();
 
-        mapBarcodeToVessel = labVesselDao.findByBarcodes(vesselSpreadsheetProcessor.getSingleSampleLibraryName());
 
         for (String libraryName : vesselSpreadsheetProcessor.getSingleSampleLibraryName()) {
 
@@ -320,6 +320,9 @@ public class ExternalLibrarySampleInstanceEjb {
             validateRequiredFields(vesselSpreadsheetProcessor.getLibrarySizeRangeBp().get(index), ExternalLibraryMapped.Headers.LIBRARY_SIZE_RANGE_BP.getText(), displayIndex, messageCollection);
             validateRequiredFields(vesselSpreadsheetProcessor.getTotalLibraryVolume().get(index), ExternalLibraryMapped.Headers.TOTAL_LIBRARY_VOLUME.getText(), displayIndex, messageCollection);
             validateRequiredFields(vesselSpreadsheetProcessor.getTotalLibraryConcentration().get(index), ExternalLibraryMapped.Headers.TOTAL_LIBRARY_CONCENTRATION.getText(), displayIndex, messageCollection);
+            validateNumericFields(vesselSpreadsheetProcessor.getTotalLibraryVolume().get(index), ExternalLibraryMapped.Headers.TOTAL_LIBRARY_VOLUME.getText(), displayIndex, messageCollection);
+            validateNumericFields(vesselSpreadsheetProcessor.getTotalLibraryConcentration().get(index), ExternalLibraryMapped.Headers.TOTAL_LIBRARY_CONCENTRATION.getText(), displayIndex, messageCollection);
+
             if (spreadsheetType.equals(ExternalLibraryUploadActionBean.MULTI_ORG)) {
                 validateRequiredFields(vesselSpreadsheetProcessor.getOrganism().get(index), ExternalLibraryMapped.Headers.ORGANISM.getText(), displayIndex, messageCollection);
             }
@@ -343,6 +346,9 @@ public class ExternalLibrarySampleInstanceEjb {
             displayIndex++;
             index++;
 
+        }
+        if(index < 1 ){
+            messageCollection.addError("No data found.");
         }
 
         if (!messageCollection.hasErrors()) {
@@ -403,13 +409,21 @@ public class ExternalLibrarySampleInstanceEjb {
         }
     }
 
+    /**
+     * Check if a field contains a valid number.
+     */
+    private void validateNumericFields(String value, String header, int index, MessageCollection messageCollection) {
+
+        if (!NumberUtils.isNumber(value)) {
+            messageCollection.addError(header + " is not a valid number. " + (index));
+        }
+    }
 
     /**
      * Verify the spreadsheet contents before attempting to persist data for pooled tubes (not external libraries)
      */
     public void verifyPooledTubes(VesselPooledTubesProcessor vesselSpreadsheetProcessor, MessageCollection messageCollection, boolean overWriteFlag) {
 
-        mapBarcodeToVessel = labVesselDao.findByBarcodes(vesselSpreadsheetProcessor.getBarcodes());
 
         //Is the sample library name unique to the spreadsheet??
         Map<String, String> map = new HashMap<String, String>();
@@ -437,7 +451,7 @@ public class ExternalLibrarySampleInstanceEjb {
         for (String barcode : vesselSpreadsheetProcessor.getBarcodes()) {
             if (barcode == null) {
                 messageCollection.addError("Barcode not found: " + barcode.toString() + " At Row: " + (barcodeIndex + rowOffset) + " Column: " + VesselPooledTubesProcessor.Headers.TUBE_BARCODE.getText());
-            } else if (mapBarcodeToVessel.get(barcode) != null && !overWriteFlag) {
+            } else if (labVesselDao.findByIdentifier(barcode) != null && !overWriteFlag) {
                 messageCollection.addError("Barcode already registered: " + barcode.toString() + " At Row: " + (barcodeIndex + rowOffset) + " Column: " + VesselPooledTubesProcessor.Headers.TUBE_BARCODE.getText());
             } else {
                 this.barcode.add(barcode);
@@ -579,6 +593,7 @@ public class ExternalLibrarySampleInstanceEjb {
             messageCollection.addError("No valid product order found at row: " + index);
             return null;
         } else {
+            //TODO: productOrder.getProduct().getAnalysisTypeKey() Is this the correct field???
             if (!dataAnalysisType.equals(productOrder.getProduct().getAnalysisTypeKey())) {
                 messageCollection.addError("Data Analysis type is invalid at row: " + index);
                 return null;
@@ -697,7 +712,7 @@ public class ExternalLibrarySampleInstanceEjb {
      * Find the current instance of the sample V2 entity.
      */
     private MolecularIndex getMolIndex(String molIndex, MessageCollection messageCollection, int displayIndex) {
-        if (molIndex.isEmpty())
+        if (molIndex == null || molIndex.isEmpty())
             return null;
         MolecularIndex molecularIndex = molecularIndexDao.findBySequence(molIndex);
         if (molecularIndex == null) {
@@ -733,9 +748,9 @@ public class ExternalLibrarySampleInstanceEjb {
             return null;
 
         LabVessel labVessel = null;
-        if(mapBarcodeToVessel != null) {
-            labVessel = mapBarcodeToVessel.get(barcode);
-        }
+
+        labVessel = labVesselDao.findByIdentifier(barcode);
+
         if (labVessel == null) {
             labVessel = new BarcodedTube(barcode, BarcodedTube.BarcodedTubeType.MatrixTube);
         }
