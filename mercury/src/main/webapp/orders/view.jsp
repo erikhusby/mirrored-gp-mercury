@@ -80,21 +80,22 @@ $j(document).ready(function () {
     }
 
     function sampleInfoBatchUpdate(samplesToFetch, settings) {
-        if (samplesToFetch.length === 0) {
+        var pdoSampleCount = samplesToFetch.length;
+        if (pdoSampleCount === 0) {
             return;
         }
         var table = new $j.fn.dataTable.Api(settings).table();
-        var maxFetchSize = 500;
-        if (samplesToFetch.length > maxFetchSize) {
 
-            // set the fetch size to be divisible by maxFetchSize, rounded down.
-            fetchSize = Math.floor(samplesToFetch.length / 2 / maxFetchSize) * maxFetchSize;
-            var parallelFetchSamples = samplesToFetch.splice(0, fetchSize);
-            updateSampleInformation(parallelFetchSamples, table, maxFetchSize, false);
+        // When there are greater than 1000 samples split the call to updateSampleInformation
+        if (pdoSampleCount > 1000) {
+            fetchSize = Math.ceil(pdoSampleCount / 2);
+            updateSampleInformation(samplesToFetch.splice(0, fetchSize), table, true);
+            updateSampleInformation(samplesToFetch.splice(0, fetchSize), table, false);
+        } else {
+            updateSampleInformation(samplesToFetch, table, true);
         }
-        updateSampleInformation(samplesToFetch, table, maxFetchSize, true);
-        table.rows().draw();
     }
+
     var oTable = $j('#sampleData').dataTable({
         'dom': "<'row-fluid'<'span12'f>><'row-fluid'<'span5'l><'span2 sampleDataProgress'><'span5 pull-right'<'pull-right'B>>>rt<'row-fluid'<'span6'l><'span6 pull-right'p>>",
         'paging': true,
@@ -650,16 +651,17 @@ function initSampleDataProgress(value, maxValue) {
     $progressBar.progressbar('value', value);
 }
 
-function updateSampleInformation(samples, table, maxFetchSize, includeSampleSummary) {
-        var fetchSize = samples.length < maxFetchSize ? samples.length : maxFetchSize;
+// Keep track of the ajax connections because after all calls complete we need to redraw the table.
+var ajaxConnections = 0;
+function updateSampleInformation(samples, table, includeSampleSummary) {
         recordsTotal = table.page.info().recordsTotal;
-
+        ajaxConnections++;
         $j.ajax({
             url: "${ctxpath}/orders/order.action?<%= ProductOrderActionBean.GET_SAMPLE_DATA %>",
             data: {
                 'productOrder': "${actionBean.editOrder.businessKey}",
-                'sampleIdsForGetBspData': samples.splice(0, fetchSize),
-                'includeSampleSummary': includeSampleSummary
+                'sampleIdsForGetBspData': samples,
+                'includeSampleSummary': includeSampleSummary,
             },
             method: 'POST',
             dataType: 'json',
@@ -687,9 +689,10 @@ function updateSampleInformation(samples, table, maxFetchSize, includeSampleSumm
                         $j("#numberSamplesNotReceived").html(json.numberSamplesNotReceived);
                     }
                 }
-                if (samples.length > 0) {
-                    updateSampleInformation(samples, table, maxFetchSize, false);
-                } else if (samples.length === 0) {
+            },
+            complete: function () {
+                ajaxConnections--;
+                if (ajaxConnections === 0) {
                     table.rows().draw();
                 }
             }
