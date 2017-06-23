@@ -593,8 +593,8 @@
                 <ancestryEtlFlag>true</ancestryEtlFlag>
                 <jiraTransition>
                     <project>LCSET</project>
-                    <statusTransition>Norm And Pool</statusTransition>
-                    <endStatus>Norm And Pool</endStatus>
+                    <statusTransition>Norm and Pool</statusTransition>
+                    <endStatus>Norm and Pool</endStatus>
                 </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -616,8 +616,8 @@
                 <ancestryEtlFlag>true</ancestryEtlFlag>
                 <jiraTransition>
                     <project>LCSET</project>
-                    <statusTransition>Norm And Pool</statusTransition>
-                    <endStatus>Norm And Pool</endStatus>
+                    <statusTransition>Norm and Pool</statusTransition>
+                    <endStatus>Norm and Pool</endStatus>
                 </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -650,8 +650,8 @@
                 <ancestryEtlFlag>true</ancestryEtlFlag>
                 <jiraTransition>
                     <project>LCSET</project>
-                    <statusTransition>Norm And Pool</statusTransition>
-                    <endStatus>Norm And Pool</endStatus>
+                    <statusTransition>Norm and Pool</statusTransition>
+                    <endStatus>Norm and Pool</endStatus>
                 </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -2481,8 +2481,8 @@
                 <reEntryPoint>false</reEntryPoint>
                 <jiraTransition>
                     <project>LCSET</project>
-                    <statusTransition>Norm And Pool</statusTransition>
-                    <endStatus>Norm And Pool</endStatus>
+                    <statusTransition>Norm and Pool</statusTransition>
+                    <endStatus>Norm and Pool</endStatus>
                 </jiraTransition>
                 <ancestryEtlFlag>true</ancestryEtlFlag>
             </workflowStepDefs>
