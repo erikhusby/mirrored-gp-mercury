@@ -4,6 +4,8 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
@@ -69,6 +71,9 @@ public class ReagentFixupTest extends Arquillian {
 
     @Inject
     private LabEventDao labEventDao;
+
+    @Inject
+    private ProductDao productDao;
 
     @Inject
     private UserTransaction utx;
@@ -1265,5 +1270,23 @@ public class ReagentFixupTest extends Arquillian {
         genericReagentDao.flush();
         utx.commit();
     }
+
+    @Test(enabled = false)
+    public void fixupSupport3067() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        // requires setting updatable = true on ReagentDesign.designName (On Product, bait is referred to by name,
+        // not PK).
+        ReagentDesign reagentDesign = reagentDesignDao.findByBusinessKey("Broad_Liquid_Biopsy_Panel_v1.1");
+        reagentDesign.setDesignName("Broad_Liquid_Biopsy_Panel_v1_1");
+        Product product = productDao.findByPartNumber("P-VAL-0018");
+        Assert.assertEquals(product.getProductName(), "Deep Coverage Exome for Cell-Free Liquid Biopsy_Custom Panel");
+        product.setReagentDesignKey(reagentDesign.getDesignName());
+
+        reagentDesignDao.persist(new FixupCommentary("SUPPORT-3067 change design to correct spelling"));
+        reagentDesignDao.flush();
+        utx.commit();
+    }
+
 
 }
