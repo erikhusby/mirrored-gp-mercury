@@ -236,6 +236,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Column(name = "PIPELINE_LOCATION", nullable = true)
     private PipelineLocation pipelineLocation;
 
+    @OneToMany(mappedBy = "productOrder", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    private Set<ProductOrderPriceAdjustment> priceAdjustments = new HashSet<>();
+
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.
      */
