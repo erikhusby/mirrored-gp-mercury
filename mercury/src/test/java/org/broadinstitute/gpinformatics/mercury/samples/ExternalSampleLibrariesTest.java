@@ -224,8 +224,8 @@ public class ExternalSampleLibrariesTest {
         String molIndex_1 = "Illumina_P5-Nijow_P7-Waren";
         String molIndex_2 = "Illumina_P5-Piwan_P7-Bidih";
         String jiraIssueKey = "DEV-7501";
-        String sampleid_1 = "SM-JT12";
-        String sampleid_2 = "SM-JT23";
+        String sampleId_1 = "SM-JT12";
+        String sampleId_2 = "SM-JT23";
         String reagent = "NewtonCheh_NatPepMDC_12genes3regions_Sep2011";
 
         JiraIssue jiraIssue = new JiraIssue(jiraIssueKey, jiraService);
@@ -235,8 +235,8 @@ public class ExternalSampleLibrariesTest {
         molecularIndexingScheme_1.setName(molIndex_2);
         ReagentDesign reagentDesign = new ReagentDesign();
         reagentDesign.setDesignName(reagent);
-        MercurySample mercurySample_1 = new MercurySample(sampleid_1,MercurySample.MetadataSource.MERCURY);
-        MercurySample mercurySample_2 = new MercurySample(sampleid_2,MercurySample.MetadataSource.MERCURY);
+        MercurySample mercurySample_1 = new MercurySample(sampleId_1,MercurySample.MetadataSource.MERCURY);
+        MercurySample mercurySample_2 = new MercurySample(sampleId_2,MercurySample.MetadataSource.MERCURY);
         mercurySamples.add(mercurySample_1);
         mercurySamples.add(mercurySample_2);
         actionBean.setRootSamples(mercurySamples);
@@ -250,8 +250,8 @@ public class ExternalSampleLibrariesTest {
         Mockito.when(molecularIndexingSchemeDao.findByName(molIndex_2)).thenReturn(molecularIndexingScheme_2);
         Mockito.when(reagentDesignDao.findByBusinessKey(reagent)).thenReturn(reagentDesign);
         Mockito.when(jiraService.getIssueInfo(jiraIssueKey,null)).thenReturn(jiraIssue);
-        Mockito.when(mercurySampleDao.findBySampleKey(sampleid_1)).thenReturn(mercurySample_1);
-        Mockito.when(mercurySampleDao.findBySampleKey(sampleid_2)).thenReturn(mercurySample_2);
+        Mockito.when(mercurySampleDao.findBySampleKey(sampleId_1)).thenReturn(mercurySample_1);
+        Mockito.when(mercurySampleDao.findBySampleKey(sampleId_2)).thenReturn(mercurySample_2);
 
         actionBean.setLabVesselDao(labVesselDao);
         actionBean.setSampleInstanceEntityDao(sampleInstanceEntityDao);
