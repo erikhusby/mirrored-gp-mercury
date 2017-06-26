@@ -802,4 +802,97 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-4750-1" author="scottmat">
+        <createTable tableName="pdo_addon_price_adjustment" schemaName="athena">
+            <column name="pdo_price_adjustment_id" type="number(19,0)">
+                <constraints primaryKey="true" nullable="false" />
+            </column>
+            <column name="adjustment_value" type="number(19,2)" />
+            <column name="price_adjustment_condition" type="varchar(255)" />
+            <column name="add_on" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+
+        <createSequence sequenceName="SEQ_PDO_ADDON_PRICE_ADJUSTMENT" schemaName="athena" startValue="1" incrementBy="50" />
+        <createIndex tableName="pdo_addon_price_adjustment" indexName="ix_pdo_add_on_price_adjustment" >
+            <column name="add_on"/>
+        </createIndex>
+        <addForeignKeyConstraint baseTableSchemaName="athena" baseTableName="pdo_addon_price_adjustment"
+                                 baseColumnNames="add_on" referencedTableSchemaName="athena"
+                                 referencedTableName="product_order_add_on" referencedColumnNames="add_on"
+                                 constraintName="FK_PDO_ADDON_ADJUSTMENT_PDO" />
+    </changeSet>
+
+    <changeSet id="GPLIM-4750-2" author="scottmat">
+        <createTable tableName="pdo_addon_price_adjustment_aud" schemaName="athena">
+            <column name="pdo_price_adjustment_id" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+            <column name="rev" type="number(19,0)" >
+                <constraints nullable="false" />
+            </column>
+            <column name="revtype" type="number(3,0)" />
+
+            <column name="adjustment_value" type="number(19,2)" />
+            <column name="price_adjustment_condition" type="varchar(255)" />
+            <column name="add_on" type="number(19,0)" />
+        </createTable>
+
+        <addPrimaryKey schemaName="athena" tableName="pdo_addon_price_adjustment_aud"
+                       columnNames="pdo_price_adjustment_id, rev" constraintName="PK_PDO_ADDON_ADJUSTMENT_AUD"/>
+        <addForeignKeyConstraint constraintName="fk_pdo_addon_adjustment_aud" baseTableSchemaName="athena"
+                                 baseTableName="pdo_addon_price_adjustment_aud" baseColumnNames="rev"
+                                 referencedTableSchemaName="mercury"
+                                 referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-4750-3" author="scottmat">
+        <createTable tableName="pdo_price_adjustment" schemaName="athena">
+            <column name="pdo_price_adjustment_id" type="number(19,0)">
+                <constraints nullable="false" primaryKey="true" />
+            </column>
+            <column name="adjustment_value" type="number(19,2)" />
+            <column name="price_adjustment_condition" type="varchar(255)" />
+            <column name="product_order" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+        
+        <addForeignKeyConstraint constraintName="FK_PDO_PRICE_ADJUSTMENT_PDO" baseTableName="pdo_price_adjustment"
+                                 baseColumnNames="product_order" baseTableSchemaName="athena"
+                                 referencedColumnNames="product_order_id" referencedTableName="product_order"
+                                 referencedTableSchemaName="athena" />
+
+        <createSequence sequenceName="SEQ_PDO_PRICE_ADJUSTMENT" schemaName="athena" startValue="1" incrementBy="50" />
+
+        <createIndex tableName="pdo_price_adjustment" indexName="IX_PDO_PRICE_ADJUSTMENT">
+            <column name="product_order"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-4750-4" author="scottmat">
+        <createTable tableName="pdo_price_adjustment_aud" schemaName="athena">
+            <column name="pdo_price_adjustment_id" type="number(19,0)">
+                <constraints nullable="false" primaryKey="true" />
+            </column>
+            <column name="rev" type="number(19,0)" >
+                <constraints nullable="false" />
+            </column>
+            <column name="adjustment_value" type="number(19,2)" />
+            <column name="price_adjustment_condition" type="varchar(255)" />
+            <column name="product_order" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+
+        <addPrimaryKey schemaName="athena" tableName="pdo_price_adjustment_aud"
+                       constraintName="PK_PDO_ADJUSTMENT_AUD" columnNames="pdo_price_adjustment_id, rev"/>
+
+        <addForeignKeyConstraint constraintName="fk_pdo_adjustment_aud" baseTableSchemaName="athena"
+                                 baseTableName="pdo_price_adjustment_aud" baseColumnNames="rev"
+                                 referencedTableSchemaName="mercury"
+                                 referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
+    </changeSet>
+
 </databaseChangeLog>

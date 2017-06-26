@@ -8,6 +8,9 @@ import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
 import javax.persistence.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  *
@@ -31,6 +34,9 @@ public class ProductOrderAddOn {
 
     @ManyToOne(cascade = CascadeType.PERSIST, optional = false)
     private Product addOn;
+
+    @OneToMany(mappedBy = "addOn", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    Set<ProductOrderAddOnPriceAdjustment> priceAdjustments = new HashSet<>();
 
     protected ProductOrderAddOn() {
     }
