@@ -22,6 +22,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleInstanc
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleKitRequestDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryMapped;
+import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorEzPass;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorNonPooled;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorPooled;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorPooledMultiOrganism;
@@ -55,6 +56,24 @@ public class ExternalSampleLibrariesTest {
 
 
     /**
+     * Database Free tests for EZPass Kiosk library.
+     */
+    public void testEZPassExternalLibraries() throws InvalidFormatException, IOException, ValidationException {
+
+        InputStream testSpreadSheetInputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(
+                "testdata/ExternalLibraryEZPassTest.xlsx");
+
+        ExternalLibraryProcessorEzPass spreadSheetProcessor = new ExternalLibraryProcessorEzPass("Sheet1");
+        spreadSheetProcessor.setHeaderRowIndex(externalLibraryUploadActionBean.ezPassRowOffset);
+        PoiSpreadsheetParser.processSingleWorksheet(testSpreadSheetInputStream, spreadSheetProcessor);
+        ExternalLibraryMapped externalLibraryMapped = new ExternalLibraryMapped();
+        externalLibraryMapped.mapEzPass(spreadSheetProcessor);
+        setParams(externalLibraryMapped,"EZPass upload", true, externalLibraryUploadActionBean.EZPASS_KIOSK);
+    }
+
+
+
+    /**
      * Database Free tests for Multi Organism External Libraries
      */
     public void testExternalMultiOrganismLibrary() throws InvalidFormatException, IOException, ValidationException {
@@ -63,17 +82,11 @@ public class ExternalSampleLibrariesTest {
                 "testdata/ExternalLibraryMultiOrganismTest.xlsx");
 
         ExternalLibraryProcessorPooledMultiOrganism spreadSheetProcessor = new ExternalLibraryProcessorPooledMultiOrganism("Sheet1");
-        ExternalLibrarySampleInstanceEjb externalLibrarySampleInstanceEjb = new ExternalLibrarySampleInstanceEjb();
         spreadSheetProcessor.setHeaderRowIndex(externalLibraryUploadActionBean.externalLibraryRowOffset);
         PoiSpreadsheetParser.processSingleWorksheet(testSpreadSheetInputStream, spreadSheetProcessor);
         ExternalLibraryMapped externalLibraryMapped = new ExternalLibraryMapped();
         externalLibraryMapped.mapPooledMultiOrg(spreadSheetProcessor);
-        MessageCollection messageCollection = new MessageCollection();
-        setExternalLibraryMocks("AATATGCTGC","Microsporidia_RNASeq_Sanscrainte","WholeGenomeShotgun.Resequencing", "0504001179",externalLibrarySampleInstanceEjb);
-        externalLibrarySampleInstanceEjb.verifyExternalLibrary(externalLibraryMapped, messageCollection, true, externalLibraryUploadActionBean.MULTI_ORG);
-
-        Assert.assertFalse(messageCollection.hasErrors(), "Unable to parse and verify External Library Multi Organism uploads");
-
+        setParams(externalLibraryMapped,"Multi Organism uploads", true, externalLibraryUploadActionBean.MULTI_ORG);
     }
 
     /**
@@ -85,16 +98,11 @@ public class ExternalSampleLibrariesTest {
                 "testdata/ExternalLibraryPooledTest.xlsx");
 
         ExternalLibraryProcessorPooled spreadSheetProcessor = new ExternalLibraryProcessorPooled("Sheet1");
-        ExternalLibrarySampleInstanceEjb externalLibrarySampleInstanceEjb = new ExternalLibrarySampleInstanceEjb();
         spreadSheetProcessor.setHeaderRowIndex(externalLibraryUploadActionBean.externalLibraryRowOffset);
         PoiSpreadsheetParser.processSingleWorksheet(testSpreadSheetInputStream, spreadSheetProcessor);
         ExternalLibraryMapped externalLibraryMapped = new ExternalLibraryMapped();
         externalLibraryMapped.mapPooled(spreadSheetProcessor);
-        MessageCollection messageCollection = new MessageCollection();
-        setExternalLibraryMocks("ACAGTCATAT","Microsporidia_RNASeq_Sanscrainte","WholeGenomeShotgun.Resequencing", "0504001179",externalLibrarySampleInstanceEjb);
-        externalLibrarySampleInstanceEjb.verifyExternalLibrary(externalLibraryMapped, messageCollection, true, externalLibraryUploadActionBean.POOLED);
-
-        Assert.assertFalse(messageCollection.hasErrors(), "Unable to parse and verify External Library pooled uploads");
+        setParams(externalLibraryMapped,"pooled uploads", true, externalLibraryUploadActionBean.POOLED);
     }
 
 
@@ -107,17 +115,30 @@ public class ExternalSampleLibrariesTest {
                 "testdata/ExternalLibraryNONPooledTest.xlsx");
 
         ExternalLibraryProcessorNonPooled spreadSheetProcessor = new ExternalLibraryProcessorNonPooled("Sheet1");
-        ExternalLibrarySampleInstanceEjb externalLibrarySampleInstanceEjb = new ExternalLibrarySampleInstanceEjb();
         spreadSheetProcessor.setHeaderRowIndex(externalLibraryUploadActionBean.externalLibraryRowOffset);
         PoiSpreadsheetParser.processSingleWorksheet(testSpreadSheetInputStream, spreadSheetProcessor);
-        ExternalLibraryMapped externalLibraryMapped = new ExternalLibraryMapped();
+        ExternalLibraryMapped externalLibraryMapped  = new ExternalLibraryMapped();
         externalLibraryMapped.mapNonPooled(spreadSheetProcessor);
+        setParams(externalLibraryMapped,"non-pooled uploads", true, externalLibraryUploadActionBean.NON_POOLED);
+    }
+
+    /**
+     *  Run the test against the Ejb and check the results.
+     */
+    public void setParams(ExternalLibraryMapped externalLibraryMapped, String title, boolean overwrite, String spreadsheetType) {
+
+        ExternalLibrarySampleInstanceEjb externalLibrarySampleInstanceEjb = new ExternalLibrarySampleInstanceEjb();
         MessageCollection messageCollection = new MessageCollection();
-        setExternalLibraryMocks("ACAGTCATAT","Microsporidia_RNASeq_Sanscrainte","WholeGenomeShotgun.Resequencing", "0504001179",externalLibrarySampleInstanceEjb);
-        externalLibrarySampleInstanceEjb.verifyExternalLibrary(externalLibraryMapped, messageCollection, true, externalLibraryUploadActionBean.NON_POOLED);
-
-        Assert.assertFalse(messageCollection.hasErrors(), "Unable to parse and verify External Library non-pooled uploads");
-
+        String irb = "";
+        String molSeq = externalLibraryMapped.getMolecularBarcodeSequence().get(0);
+        String projectTitle = externalLibraryMapped.getProjectTitle().get(0);
+        String productType = externalLibraryMapped.getDataAnalysisType().get(0);
+        if(!spreadsheetType.equals(externalLibraryUploadActionBean.EZPASS_KIOSK)) {
+            irb = externalLibraryMapped.getIrbNumber().get(0);
+        }
+        setExternalLibraryMocks(molSeq,projectTitle,productType, irb,externalLibrarySampleInstanceEjb);
+        externalLibrarySampleInstanceEjb.verifyExternalLibrary(externalLibraryMapped, messageCollection, overwrite, spreadsheetType);
+        Assert.assertFalse(messageCollection.hasErrors(), "Unable to parse and verify External Library " + title);
 
     }
 

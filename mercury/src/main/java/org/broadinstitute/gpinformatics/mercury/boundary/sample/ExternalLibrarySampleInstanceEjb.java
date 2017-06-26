@@ -56,6 +56,7 @@ public class ExternalLibrarySampleInstanceEjb {
     private List<ProductOrder> productOrders = new ArrayList<>();
     private List<ResearchProject> researchProjects = new ArrayList<>();
     private int rowOffset = 2;
+    private final String EZPASS = "ezpass";
 
     @Inject
     private MolecularIndexingSchemeDao molecularIndexingSchemeDao;
@@ -271,7 +272,11 @@ public class ExternalLibrarySampleInstanceEjb {
             sampleInstanceEntity.setLibrarySizeRange(vesselSpreadsheetProcessor.getLibrarySizeRangeBp().get(sampleIndex));
             sampleInstanceEntity.setJumpSize(vesselSpreadsheetProcessor.getJumpSize().get(sampleIndex));
             sampleInstanceEntity.setRestrictionEnzyme(vesselSpreadsheetProcessor.getRestrictionEnzymes().get(sampleIndex));
-            sampleInstanceEntity.setDesiredReadLength(vesselSpreadsheetProcessor.getDesiredReadLength().get(sampleIndex));
+
+            if(!spreadsheetType.contains(EZPASS)) {
+                sampleInstanceEntity.setDesiredReadLength(vesselSpreadsheetProcessor.getDesiredReadLength().get(sampleIndex));
+            }
+
             sampleInstanceEntity.setReferenceSequence(vesselSpreadsheetProcessor.getReferenceSequence().get(sampleIndex));
             MolecularIndex molecularIndex = molecularIndexDao.findBySequence(vesselSpreadsheetProcessor.getMolecularBarcodeSequence().get(sampleIndex));
             if (molecularIndex != null) {
@@ -308,7 +313,19 @@ public class ExternalLibrarySampleInstanceEjb {
 
         for (String libraryName : vesselSpreadsheetProcessor.getSingleSampleLibraryName()) {
 
-            validateRequiredFields(vesselSpreadsheetProcessor.getIrbNumber().get(index), ExternalLibraryMapped.Headers.IRB_NUMBER.getText(), displayIndex, messageCollection);
+            if(spreadsheetType.equals(ExternalLibraryUploadActionBean.EZPASS_KIOSK)) {
+                //TODO: Should we be validating and retaining SQUID AND GSSR Fields???
+                validateRequiredFields(vesselSpreadsheetProcessor.getBarcodes().get(index), ExternalLibraryMapped.Headers.TUBE_BARCODE.getText(), displayIndex, messageCollection);
+                validateRequiredFields(vesselSpreadsheetProcessor.getSourceSampleGssrId().get(index), ExternalLibraryMapped.Headers.SOURCE_SAMPLE_GSSR_ID.getText(), displayIndex, messageCollection);
+                validateRequiredFields(vesselSpreadsheetProcessor.getSquidProject().get(index), ExternalLibraryMapped.Headers.SQUID_PROJECT.getText(), displayIndex, messageCollection);
+                validateRequiredFields(vesselSpreadsheetProcessor.getVirtualGssrId().get(index), ExternalLibraryMapped.Headers.VIRTUAL_GSSR_ID.getText(), displayIndex, messageCollection);
+            }
+
+            if(!spreadsheetType.contains(EZPASS)) {
+                validateRequiredFields(vesselSpreadsheetProcessor.getIrbNumber().get(index), ExternalLibraryMapped.Headers.IRB_NUMBER.getText(), displayIndex, messageCollection);
+                validateRequiredFields(vesselSpreadsheetProcessor.getDesiredReadLength().get(index), ExternalLibraryMapped.Headers.DESIRED_READ_LENGTH.getText(), displayIndex, messageCollection);
+            }
+
             validateRequiredFields(vesselSpreadsheetProcessor.getCollaboratorSampleId().get(index), ExternalLibraryMapped.Headers.COLLABORATOR_SAMPLE_ID.getText(), displayIndex, messageCollection);
             validateRequiredFields(vesselSpreadsheetProcessor.getIndividualName().get(index), ExternalLibraryMapped.Headers.INDIVIDUAL_NAME.getText(), displayIndex, messageCollection);
             validateRequiredFields(vesselSpreadsheetProcessor.getSingleSampleLibraryName().get(index), ExternalLibraryMapped.Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText(), displayIndex, messageCollection);
@@ -326,7 +343,6 @@ public class ExternalLibrarySampleInstanceEjb {
             if (spreadsheetType.equals(ExternalLibraryUploadActionBean.MULTI_ORG)) {
                 validateRequiredFields(vesselSpreadsheetProcessor.getOrganism().get(index), ExternalLibraryMapped.Headers.ORGANISM.getText(), displayIndex, messageCollection);
             }
-            validateRequiredFields(vesselSpreadsheetProcessor.getDesiredReadLength().get(index), ExternalLibraryMapped.Headers.DESIRED_READ_LENGTH.getText(), displayIndex, messageCollection);
             validateRequiredFields(vesselSpreadsheetProcessor.getFundingSource().get(index), ExternalLibraryMapped.Headers.FUNDING_SOURCE.getText(), displayIndex, messageCollection);
             validateRequiredFields(vesselSpreadsheetProcessor.getReferenceSequence().get(index), ExternalLibraryMapped.Headers.REFERENCE_SEQUENCE.getText(), displayIndex, messageCollection);
             validateRequiredFields(vesselSpreadsheetProcessor.getRequestedCompletionDate().get(index), ExternalLibraryMapped.Headers.REQUESTED_COMPLETION_DATE.getText(), displayIndex, messageCollection);
@@ -336,11 +352,16 @@ public class ExternalLibrarySampleInstanceEjb {
             //Database validations.
             getMolIndex(vesselSpreadsheetProcessor.getMolecularBarcodeSequence().get(index), messageCollection, displayIndex);
             String project = vesselSpreadsheetProcessor.getProjectTitle().get(index);
-            String irbNumber = vesselSpreadsheetProcessor.getIrbNumber().get(index);
+
             String dataAnalysisType = vesselSpreadsheetProcessor.getDataAnalysisType().get(index);
             productOrders.add(getPdo(project, dataAnalysisType, displayIndex, messageCollection));
             researchProjects.add(getResearchProject(productOrders.get(index), displayIndex, messageCollection));
-            validateIRB(researchProjects.get(index), irbNumber, displayIndex, messageCollection);
+
+            if(!spreadsheetType.contains(EZPASS)) {
+                String irbNumber = vesselSpreadsheetProcessor.getIrbNumber().get(index);
+                validateIRB(researchProjects.get(index), irbNumber, displayIndex, messageCollection);
+            }
+
             sampleExists(libraryName, overWriteFlag, messageCollection, displayIndex);
 
             displayIndex++;

@@ -27,6 +27,8 @@ import java.io.IOException;
 @UrlBinding(value = "/sample/ExternalLibraryUpload.action")
 public class ExternalLibraryUploadActionBean extends CoreActionBean {
 
+    public static final String EZPASS_KIOSK = "ezpassKiosk";
+    public static final String EZPASS_NON_KIOSK = "ezpassNonKiosk";
     public static final String UPLOAD_SAMPLES = "uploadSamples";
     public static final String POOLED = "pooled";
     public static final String NON_POOLED = "non-pooled";
@@ -114,8 +116,15 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
 
             spreadSheetProcessor.setHeaderRowIndex(ezPassRowOffset);
             PoiSpreadsheetParser.processSingleWorksheet(samplesSpreadsheet.getInputStream(), spreadSheetProcessor);
-            //TODO: Not finished
-            //externalLibrarySampleInstanceEjb.verifyExternalLibraryEZPass(spreadSheetProcessor, messageCollection, overWriteFlag, isKiosk);
+            ExternalLibraryMapped externalLibraryMapped = new ExternalLibraryMapped();
+            externalLibraryMapped.mapEzPass(spreadSheetProcessor);
+            if(isKiosk) {
+                externalLibrarySampleInstanceEjb.verifyExternalLibrary(externalLibraryMapped, messageCollection, overWriteFlag, EZPASS_KIOSK);
+            }
+            else {
+                externalLibrarySampleInstanceEjb.verifyExternalLibrary(externalLibraryMapped, messageCollection, overWriteFlag, EZPASS_NON_KIOSK);
+            }
+
 
             addMessages(messageCollection);
         } catch (InvalidFormatException | IOException | ValidationException e) {

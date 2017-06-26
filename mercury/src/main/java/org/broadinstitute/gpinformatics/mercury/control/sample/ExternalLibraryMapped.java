@@ -33,6 +33,9 @@ public class ExternalLibraryMapped {
     private List<String> projectTitle = new ArrayList<>();
     private List<String> pooled = new ArrayList<>();
     private List<String> organism = new ArrayList<>();
+    private List<String> sourceSampleGssrId = new ArrayList<>();
+    private List<String> virtualGssrId = new ArrayList<>();
+    private List<String> squidProject = new ArrayList<>();
     private String collaboratorName;
     private String firstName;
     private String lastName;
@@ -189,6 +192,78 @@ public class ExternalLibraryMapped {
 
     }
 
+    public void mapEzPass(ExternalLibraryProcessorEzPass spreadsheet) {
+
+        setBarcodes(spreadsheet.getBarcodes());
+        setCollaboratorName(spreadsheet.getCollaboratorName());
+        setHeaders(spreadsheet.getHeaderNames());
+        setStrain(spreadsheet.getStrain());
+        setSex(spreadsheet.getSex());
+        setTissueType(spreadsheet.getTissueType());
+        setCollaboratorSampleId(spreadsheet.getCollaboratorSampleId());
+        setIndividualName(spreadsheet.getIndividualName());
+        setSingleSampleLibraryName(spreadsheet.getSingleSampleLibraryName());
+        setLibraryType(spreadsheet.getLibraryType());
+        setDataAnalysisType(spreadsheet.getDataAnalysisType());
+        setReferenceSequence(spreadsheet.getReferenceSequence());
+        setInsertSizeRangeBp(spreadsheet.getInsertSizeRangeBp());
+        setLibrarySizeRangeBp(spreadsheet.getLibrarySizeRangeBp());
+        setJumpSize(spreadsheet.getJumpSize());
+        setRestrictionEnzymes(spreadsheet.getRestrictionEnzymes());
+        setMolecularBarcodeSequence(spreadsheet.getMolecularBarcodeSequence());
+        setTotalLibraryVolume(spreadsheet.getTotalLibraryVolume());
+        setTotalLibraryConcentration(spreadsheet.getTotalLibraryConcentration());
+        setFundingSource(spreadsheet.getFundingSource());
+        setCoverage(spreadsheet.getCoverage());
+        setRequestedCompletionDate(spreadsheet.getRequestedCompletionDate());
+        setDataSubmission(spreadsheet.getDataSubmission());
+        setBarcodes(spreadsheet.getBarcodes());
+        setProjectTitle(spreadsheet.getProjectTitle());
+        setPooled(spreadsheet.getPooled());
+        setFirstName(spreadsheet.getFirstName());
+        setLastName(spreadsheet.getLastName());
+        setOrganization(spreadsheet.getOrganization());
+        setAddress(spreadsheet.getAddress());
+        setCity(spreadsheet.getCity());
+        setState(spreadsheet.getState());
+        setZip(spreadsheet.getZip());
+        setCountry(spreadsheet.getCountry());
+        setPhone(spreadsheet.getPhone());
+        setEmail(spreadsheet.getEmail());
+        setGenus(spreadsheet.getGenus());
+        setSpecies(spreadsheet.getSpecies());
+        setSourceSampleGssrId(spreadsheet.getSourceSampleGSSRId());
+        setVirtualGssrId(spreadsheet.getVirtualGSSRId());
+        setSquidProject(spreadsheet.getSquidProject());
+
+
+
+    }
+
+    public List<String> getSquidProject() {
+        return squidProject;
+    }
+
+    public void setSquidProject(List<String> squidProject) {
+        this.squidProject = squidProject;
+    }
+
+    public List<String> getVirtualGssrId() {
+        return virtualGssrId;
+    }
+
+    public void setVirtualGssrId(List<String> virtualGssrId) {
+        this.virtualGssrId = virtualGssrId;
+    }
+
+    public List<String> getSourceSampleGssrId() {
+        return sourceSampleGssrId;
+    }
+
+    public void setSourceSampleGssrId(List<String> sourceSampleGssrId) {
+        this.sourceSampleGssrId = sourceSampleGssrId;
+    }
+
     public List<String> getHeaders() {
         return headers;
     }
@@ -196,7 +271,6 @@ public class ExternalLibraryMapped {
     public void setHeaders(List<String> headers) {
         this.headers = headers;
     }
-
 
     public List<String> getStrain() {
         return strain;
@@ -560,7 +634,10 @@ public class ExternalLibraryMapped {
         REQUESTED_COMPLETION_DATE("Requested Completion Date"),
         DATA_SUBMISSION("Data Submission (Yes, Yes Later, or No)"),
         POOLED("Pooled (Y/N)"),
-        ORGANISM("Organism");
+        ORGANISM("Organism"),
+        VIRTUAL_GSSR_ID("Virtual GSSR ID"),
+        SOURCE_SAMPLE_GSSR_ID("Source Sample GSSR ID"),
+        SQUID_PROJECT("SQUID Project");
 
         private String text = null;
 

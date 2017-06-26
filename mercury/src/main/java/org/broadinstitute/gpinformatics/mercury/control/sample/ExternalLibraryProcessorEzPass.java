@@ -42,7 +42,6 @@ public class ExternalLibraryProcessorEzPass extends TableProcessor {
     private List<String> additionalSampleInformation = new ArrayList<>();
     private List<String> fundingSource = new ArrayList<>();
     private List<String> coverage = new ArrayList<>();
-    private List<String> approvedBy = new ArrayList<>();
     private List<String> requestedCompletionDate = new ArrayList<>();
     private List<String> dataSubmission = new ArrayList<>();
     private List<String> additionalAssemblyInformation = new ArrayList<>();
@@ -61,7 +60,6 @@ public class ExternalLibraryProcessorEzPass extends TableProcessor {
     private String email;
     private String genus;
     private String species;
-    private String orgamismCommonName;
 
     private List<String> barcodes = new ArrayList<>();
 
@@ -128,7 +126,6 @@ public class ExternalLibraryProcessorEzPass extends TableProcessor {
                 case 15:
                     break;
                 case 16:
-                    orgamismCommonName = preamble;
                     break;
                 case 17:
                     genus = preamble;
@@ -172,6 +169,7 @@ public class ExternalLibraryProcessorEzPass extends TableProcessor {
         virtualGSSRId.add(dataRow.get(Headers.VIRTUAL_GSSR_ID.getText()));
         squidProject.add(dataRow.get(Headers.SQUID_PROJECT.getText()));
         sequencingTechnology.add(dataRow.get(Headers.SEQUENCING_TECHNOLOGY.getText()));
+        individualName.add(dataRow.get(Headers.INDIVIDUAL_NAME.getText()));
         strain.add(dataRow.get(Headers.STRAIN.getText()));
         sex.add(dataRow.get(Headers.SEX.getText()));
         cellLine.add(dataRow.get(Headers.CELL_LINE.getText()));
@@ -180,7 +178,7 @@ public class ExternalLibraryProcessorEzPass extends TableProcessor {
         singleSampleLibraryName.add(dataRow.get(Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText()));
         libraryType.add(dataRow.get(Headers.LIBRARY_TYPE.getText()));
         dataAnalysisType.add(dataRow.get(Headers.DATA_ANALYSIS_TYPE.getText()));
-        referenceSequence.add(dataRow.get(Headers.DATA_ANALYSIS_TYPE.getText()));
+        referenceSequence.add(dataRow.get(Headers.REFERENCE_SEQUENCE.getText()));
         gssrOfBaitPool.add(dataRow.get(Headers.GSSR_OF_BAIT_POOL.getText()));
         insertSizeRangeBp.add(dataRow.get(Headers.INSERT_SIZE_RANGE_BP.getText()));
         librarySizeRangeBp.add(dataRow.get(Headers.LIBRARY_SIZE_RANGE_BP.getText()));
@@ -230,8 +228,8 @@ public class ExternalLibraryProcessorEzPass extends TableProcessor {
         DATA_ANALYSIS_TYPE("Data Analysis Type (see dropdown)", ColumnHeader.OPTIONAL_HEADER, true),
         REFERENCE_SEQUENCE("Reference Sequence", ColumnHeader.OPTIONAL_HEADER, true),
         GSSR_OF_BAIT_POOL("GSSR # of Bait Pool (If submitting a hybrid selection library, please provide GSSR of bait pool used in experiment in order to properly run Hybrid Selection pipeline analyses)", ColumnHeader.OPTIONAL_HEADER, true),
-        INSERT_SIZE_RANGE_BP("Insert Size Range bp. (i.e the library size without adapters", ColumnHeader.OPTIONAL_HEADER, true),
-        LIBRARY_SIZE_RANGE_BP("Library Size Range bp. (i.e. the insert size plus adapters", ColumnHeader.OPTIONAL_HEADER, true),
+        INSERT_SIZE_RANGE_BP("Insert Size Range bp. (i.e the library size without adapters)", ColumnHeader.OPTIONAL_HEADER, true),
+        LIBRARY_SIZE_RANGE_BP("Library Size Range bp. (i.e. the insert size plus adapters)", ColumnHeader.OPTIONAL_HEADER, true),
         JUMP_SIZE("Jump Size (kb) if applicable", ColumnHeader.OPTIONAL_HEADER, true),
         ILLUMINA_KIT_USED("Illumina or 454 Kit Used", ColumnHeader.OPTIONAL_HEADER, true),
         RESTRICTION_ENZYMES("Restriction Enzyme if applicable", ColumnHeader.OPTIONAL_HEADER, true),
@@ -291,10 +289,6 @@ public class ExternalLibraryProcessorEzPass extends TableProcessor {
         return pooled;
     }
 
-    public List<String> getAdditionalAssemblyInformation() {
-        return additionalAssemblyInformation;
-    }
-
     public List<String> getProjectTitle() {
         return projectTitle;
     }
@@ -307,24 +301,12 @@ public class ExternalLibraryProcessorEzPass extends TableProcessor {
         return requestedCompletionDate;
     }
 
-    public List<String> getApprovedBy() {
-        return approvedBy;
-    }
-
     public List<String> getCoverage() {
         return coverage;
     }
 
     public List<String> getFundingSource() {
         return fundingSource;
-    }
-
-    public List<String> getAdditionalSampleInformation() {
-        return additionalSampleInformation;
-    }
-
-    public List<String> getSingleDoubleStranded() {
-        return singleDoubleStranded;
     }
 
     public List<String> getTotalLibraryConcentration() {
@@ -335,28 +317,12 @@ public class ExternalLibraryProcessorEzPass extends TableProcessor {
         return totalLibraryVolume;
     }
 
-    public List<String> getMolecularBarcodeName() {
-        return molecularBarcodeName;
-    }
-
     public List<String> getMolecularBarcodeSequence() {
         return molecularBarcodeSequence;
     }
 
-    public List<String> getMolecularBarcodePlateWellID() {
-        return molecularBarcodePlateWellID;
-    }
-
-    public List<String> getMolecularBarcodePlateID() {
-        return molecularBarcodePlateID;
-    }
-
     public List<String> getRestrictionEnzymes() {
         return restrictionEnzymes;
-    }
-
-    public List<String> getIlluminaKitUsed() {
-        return illuminaKitUsed;
     }
 
     public List<String> getJumpSize() {
@@ -369,10 +335,6 @@ public class ExternalLibraryProcessorEzPass extends TableProcessor {
 
     public List<String> getInsertSizeRangeBp() {
         return insertSizeRangeBp;
-    }
-
-    public List<String> getGssrOfBaitPool() {
-        return gssrOfBaitPool;
     }
 
     public List<String> getReferenceSequence() {
@@ -395,10 +357,6 @@ public class ExternalLibraryProcessorEzPass extends TableProcessor {
         return tissueType;
     }
 
-    public List<String> getCellLine() {
-        return cellLine;
-    }
-
     public List<String> getSex() {
         return sex;
     }
@@ -411,16 +369,8 @@ public class ExternalLibraryProcessorEzPass extends TableProcessor {
         return squidProject;
     }
 
-    public List<String> getSequencingTechnology() {
+      public List<String> getVirtualGSSRId() {
         return virtualGSSRId;
-    }
-
-    public List<String> getVirtualGSSRId() {
-        return virtualGSSRId;
-    }
-
-    public List<String> getSampleNumber() {
-        return sampleNumber;
     }
 
     public List<String> getBarcodes() {
@@ -487,8 +437,8 @@ public class ExternalLibraryProcessorEzPass extends TableProcessor {
         return species;
     }
 
-    public String getOrgamismCommonName() {
-        return orgamismCommonName;
+    public List<String> getSourceSampleGSSRId() {
+        return sourceSampleGSSRId;
     }
 
 }
