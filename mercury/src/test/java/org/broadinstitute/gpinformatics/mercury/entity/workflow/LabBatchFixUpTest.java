@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -1270,5 +1271,31 @@ public class LabBatchFixUpTest extends Arquillian {
         }
         labBatchDao.persist(new FixupCommentary("SUPPORT-2545 change batch membership"));
         labBatchDao.flush();
+    }
+
+    /**
+     * This test is used to delete LCSETs that are canceled in JIRA.  It reads its parameters from a file,
+     * testdata/DeleteLabBatch.txt, so it can be used for other similar fixups, without writing a new test.
+     * Example contents of the file are:
+     * PO-9128
+     * LCSET-11312
+     */
+    @Test(enabled = false)
+    public void fixupPo9128() throws Exception {
+        userBean.loginOSUser();
+        userTransaction.begin();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("DeleteLabBatch.txt"));
+        // From database queries, found that there were batch_starting_vessels for this LCSET, but no bucket entries.
+        // Ran the test with rollback, and verified with SQL logging that batch_starting_vessels orphans were removed.
+        LabBatch labBatch = labBatchDao.findByName(lines.get(1));
+        System.out.println("Deleting " + labBatch.getBatchName());
+        labBatchDao.remove(labBatch.getJiraTicket());
+        labBatch.getReworks().clear();
+        labBatchDao.remove(labBatch);
+
+        labBatchDao.persist(new FixupCommentary(lines.get(0) + " delete duplicate LCSET"));
+        labBatchDao.flush();
+        userTransaction.commit();
     }
 }

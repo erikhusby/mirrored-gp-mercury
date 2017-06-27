@@ -187,7 +187,7 @@ public class LabBatch {
     @Transient
     private String important;
 
-    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labBatch")
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "labBatch", orphanRemoval = true)
     private Set<BucketEntry> bucketEntries = new HashSet<>();
 
     protected LabBatch() {
