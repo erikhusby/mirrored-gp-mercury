@@ -176,20 +176,6 @@ public class ExternalLibrarySampleInstanceEjb {
     }
 
     /**
-     * Persist External library EZPass and EZPass Kiosk data to the database if it passes all the edit checks.
-     */
-//    private void persistExternalLibraryEZPass(ExternalLibraryProcessorEzPass vesselSpreadsheetProcessor) {
-//        //TODO: Not finished.
-//        int sampleIndex = 0;
-//
-//        for (String sampleId : vesselSpreadsheetProcessor.getSingleSampleLibraryName()) {
-//            SampleInstanceEntity sampleInstanceEntity = sampleInstanceEntityDao.findByName(vesselSpreadsheetProcessor.getSingleSampleLibraryName().get(sampleIndex));
-//
-//            ++sampleIndex;
-//        }
-//    }
-
-    /**
      * Collate sample metadata for all external library types
      */
     private Set<Metadata> setExternalMetaData(final String sex, final String strain, final String cellLine, final String sampleId,
@@ -377,48 +363,6 @@ public class ExternalLibrarySampleInstanceEjb {
         }
 
     }
-
-    /**
-     * Verify required fields for EZPass and EZPass Kiosk spreadsheet.
-     */
-//    public void verifyExternalLibraryEZPass(ExternalLibraryProcessorEzPass vesselSpreadsheetProcessor, MessageCollection messageCollection, boolean overWriteFlag, boolean isKiosk) {
-//
-//        //TODO: THIS IS NOT COMPLETE
-//
-//        int index = 0;
-//        int displayIndex = ExternalLibraryUploadActionBean.ezPassRowOffset;
-//        mapBarcodeToVessel = labVesselDao.findByBarcodes(vesselSpreadsheetProcessor.getSingleSampleLibraryName());
-//
-//        for (String libraryName : vesselSpreadsheetProcessor.getSingleSampleLibraryName()) {
-//
-//            if (!isKiosk) {
-//
-//                validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.TUBE_BARCODE.getText(), displayIndex, messageCollection);
-//                validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.SOURCE_SAMPLE_GSSR_ID.getText(), displayIndex, messageCollection);
-//                validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.VIRTUAL_GSSR_ID.getText(), displayIndex, messageCollection);
-//                validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.SQUID_PROJECT.getText(), displayIndex, messageCollection);
-//            }
-//
-//            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.SEQUENCING_TECHNOLOGY.getText(), displayIndex, messageCollection);
-//            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.COLLABORATOR_SAMPLE_ID.getText(), displayIndex, messageCollection);
-//            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.INDIVIDUAL_NAME.getText(), displayIndex, messageCollection);
-//            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText(), displayIndex, messageCollection);
-//            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.LIBRARY_TYPE.getText(), displayIndex, messageCollection);
-//            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.DATA_ANALYSIS_TYPE.getText(), displayIndex, messageCollection);
-//            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.REFERENCE_SEQUENCE.getText(), displayIndex, messageCollection);
-//            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.DATA_ANALYSIS_TYPE.getText(), displayIndex, messageCollection);
-//            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.INSERT_SIZE_RANGE_BP.getText(), displayIndex, messageCollection);
-//            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.LIBRARY_SIZE_RANGE_BP.getText(), displayIndex, messageCollection);
-//            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.ILLUMINA_KIT_USED.getText(), displayIndex, messageCollection);
-//            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.TOTAL_LIBRARY_VOLUME.getText(), displayIndex, messageCollection);
-//            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.TOTAL_LIBRARY_CONCENTRATION.getText(), displayIndex, messageCollection);
-//            validateRequiredFields(vesselSpreadsheetProcessor.getSequencingTechnology().get(index), ExternalLibraryProcessorEzPass.Headers.SINGLE_DOUBLE_STRANDED.getText(), displayIndex, messageCollection);
-//
-//            if (!messageCollection.hasErrors()) {
-//                persistExternalLibraryEZPass(vesselSpreadsheetProcessor);
-//            }
-//        }
-//    }
 
     /**
      * Check that required fields exist
