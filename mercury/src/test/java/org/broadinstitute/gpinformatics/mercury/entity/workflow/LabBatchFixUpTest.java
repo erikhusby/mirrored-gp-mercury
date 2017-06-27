@@ -1286,8 +1286,7 @@ public class LabBatchFixUpTest extends Arquillian {
         userTransaction.begin();
 
         List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("DeleteLabBatch.txt"));
-        // From database queries, found that there were batch_starting_vessels for this LCSET, but no bucket entries.
-        // Ran the test with rollback, and verified with SQL logging that batch_starting_vessels orphans were removed.
+
         LabBatch labBatch = labBatchDao.findByName(lines.get(1));
         System.out.println("Deleting " + labBatch.getBatchName());
         labBatchDao.remove(labBatch.getJiraTicket());
