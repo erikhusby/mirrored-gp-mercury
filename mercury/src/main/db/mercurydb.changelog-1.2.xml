@@ -868,4 +868,15 @@
         </addColumn>
     </changeSet>
 
+    <changeSet author="jsacco" id="GPLIM-4886-1">
+        <addColumn schemaName="mercury" tableName="reagent">
+            <column name="first_use" type="date"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="jsacco" id="GPLIM-4886-2">
+        <addColumn schemaName="mercury" tableName="reagent_aud">
+            <column name="first_use" type="date"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

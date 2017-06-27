@@ -28,6 +28,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
@@ -38,6 +39,7 @@ import javax.transaction.UserTransaction;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1285,6 +1287,39 @@ public class ReagentFixupTest extends Arquillian {
 
         reagentDesignDao.persist(new FixupCommentary("SUPPORT-3067 change design to correct spelling"));
         reagentDesignDao.flush();
+        utx.commit();
+    }
+
+    /**
+     * Backfill to update reagent with date of first use for GPLIM-4886
+     */
+    @Test(enabled = false)
+    public void fixupBackfillFirstUse() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        EntityManager em = genericReagentDao.getEntityManager();
+        Query qry = em.createNativeQuery("select r.reagent_id, min(e.event_date)\n" +
+                "  from lab_event e\n" +
+                "     , lab_event_reagents er\n" +
+                "     , reagent r\n" +
+                " where er.lab_event = e.lab_event_id\n" +
+                "   and er.reagents   = r.reagent_id\n" +
+                "group by r.reagent_id");
+        List<Object[]> rslts = qry.getResultList();
+        Long reagentId;
+        Date firstUsed;
+        Reagent reagent;
+        for( Object[] vals : rslts) {
+            reagentId = ((BigDecimal) vals[0]).longValue();
+            firstUsed = (Date) vals[1];
+            reagent = genericReagentDao.findById( Reagent.class, reagentId );
+            reagent.setFirstUse(firstUsed);
+
+        }
+
+        genericReagentDao.persist(new FixupCommentary("GPLIM-4886 Backfill reagent first used dates"));
+        genericReagentDao.flush();
         utx.commit();
     }
 
