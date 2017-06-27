@@ -216,17 +216,17 @@ public class ExternalSampleLibrariesTest {
         JiraService jiraService = Mockito.mock(JiraService.class);
 
 
-        final String tubeBarcode = "JT041431";
+        final String tubeBarcode = spreadSheetProcessor.getBarcodes().get(0);
         List<String> tubes = new ArrayList<>();
         List<MercurySample> mercurySamples = new ArrayList<>();
-        tubes.add("JT041431");
-        tubes.add("JT041431");
-        String molIndex_1 = "Illumina_P5-Nijow_P7-Waren";
-        String molIndex_2 = "Illumina_P5-Piwan_P7-Bidih";
-        String jiraIssueKey = "DEV-7501";
-        String sampleId_1 = "SM-JT12";
-        String sampleId_2 = "SM-JT23";
-        String reagent = "NewtonCheh_NatPepMDC_12genes3regions_Sep2011";
+        tubes.add(tubeBarcode);
+        tubes.add(tubeBarcode);
+        String molIndex_1 = spreadSheetProcessor.getMolecularIndexingScheme().get(0);
+        String molIndex_2 = spreadSheetProcessor.getMolecularIndexingScheme().get(1);
+        String jiraIssueKey =  spreadSheetProcessor.getExperiment().get(0);
+        String sampleId_1 =  spreadSheetProcessor.getBroadSampleId().get(0);
+        String sampleId_2 = spreadSheetProcessor.getBroadSampleId().get(1);
+        String reagent = spreadSheetProcessor.getBait().get(0);
 
         JiraIssue jiraIssue = new JiraIssue(jiraIssueKey, jiraService);
         MolecularIndexingScheme molecularIndexingScheme_1 = new MolecularIndexingScheme();
