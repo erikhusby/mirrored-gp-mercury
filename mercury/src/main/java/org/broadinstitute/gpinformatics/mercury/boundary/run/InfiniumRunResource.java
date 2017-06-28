@@ -27,9 +27,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -40,14 +37,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathFactory;
-import java.io.File;
-import java.io.FileInputStream;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -148,54 +137,58 @@ public class InfiniumRunResource {
             SampleData sampleData = sampleDataFetcher.fetchSampleData(
                     sampleInstanceV2.getNearestMercurySampleName());
 
-            ProductOrderSample productOrderSample = sampleInstanceV2.getProductOrderSampleForSingleBucket();
             ProductOrder productOrder;
             boolean positiveControl = false;
             boolean negativeControl = false;
-            if (productOrderSample == null) {
-                // Likely a control, look at all samples on imported plate to try to find common ProductOrder
-                TransferTraverserCriteria.VesselForEventTypeCriteria vesselForEventTypeCriteria =
-                        new TransferTraverserCriteria.VesselForEventTypeCriteria(Collections.singletonList(
-                                LabEventType.ARRAY_PLATING_DILUTION), true);
-                chip.getContainerRole().applyCriteriaToAllPositions(vesselForEventTypeCriteria,
-                        TransferTraverserCriteria.TraversalDirection.Ancestors);
+            if (sampleInstanceV2.getSingleBucketEntry() == null) {
+                ProductOrderSample productOrderSample = sampleInstanceV2.getProductOrderSampleForSingleBucket();
+                if (productOrderSample == null) {
+                    // Likely a control, look at all samples on imported plate to try to find common ProductOrder
+                    TransferTraverserCriteria.VesselForEventTypeCriteria vesselForEventTypeCriteria =
+                            new TransferTraverserCriteria.VesselForEventTypeCriteria(Collections.singletonList(
+                                    LabEventType.ARRAY_PLATING_DILUTION), true);
+                    chip.getContainerRole().applyCriteriaToAllPositions(vesselForEventTypeCriteria,
+                            TransferTraverserCriteria.TraversalDirection.Ancestors);
 
-                Set<ProductOrder> productOrders = new HashSet<>();
-                for (Map.Entry<LabEvent, Set<LabVessel>> labEventSetEntry :
-                        vesselForEventTypeCriteria.getVesselsForLabEventType().entrySet()) {
-                    for (LabVessel labVessel : labEventSetEntry.getValue()) {
-                        Set<SampleInstanceV2> sampleInstances = OrmUtil.proxySafeIsInstance(labVessel, PlateWell.class) ?
-                                labVessel.getContainers().iterator().next().getContainerRole().getSampleInstancesV2() :
-                                labVessel.getSampleInstancesV2();
-                        for (SampleInstanceV2 sampleInstance : sampleInstances) {
-                            ProductOrderSample platedPdoSample = sampleInstance.getProductOrderSampleForSingleBucket();
-                            if (platedPdoSample != null) {
-                                productOrders.add(platedPdoSample.getProductOrder());
+                    Set<ProductOrder> productOrders = new HashSet<>();
+                    for (Map.Entry<LabEvent, Set<LabVessel>> labEventSetEntry :
+                            vesselForEventTypeCriteria.getVesselsForLabEventType().entrySet()) {
+                        for (LabVessel labVessel : labEventSetEntry.getValue()) {
+                            Set<SampleInstanceV2> sampleInstances = OrmUtil.proxySafeIsInstance(labVessel, PlateWell.class) ?
+                                    labVessel.getContainers().iterator().next().getContainerRole().getSampleInstancesV2() :
+                                    labVessel.getSampleInstancesV2();
+                            for (SampleInstanceV2 sampleInstance : sampleInstances) {
+                                ProductOrderSample platedPdoSample = sampleInstance.getProductOrderSampleForSingleBucket();
+                                if (platedPdoSample != null) {
+                                    productOrders.add(platedPdoSample.getProductOrder());
+                                }
+                            }
+                            if (OrmUtil.proxySafeIsInstance(labVessel, PlateWell.class)) {
+                                break;
                             }
                         }
-                        if (OrmUtil.proxySafeIsInstance(labVessel, PlateWell.class)) {
-                            break;
+                    }
+
+                    if (productOrders.size() == 1) {
+                        productOrder = productOrders.iterator().next();
+                    } else if (productOrders.size() > 1) {
+                        throw new ResourceException("Found mix of product orders ", Response.Status.INTERNAL_SERVER_ERROR);
+                    } else {
+                        throw new ResourceException("Found no product orders ", Response.Status.INTERNAL_SERVER_ERROR);
+                    }
+                    Control processControl = evaluateAsControl(sampleData);
+                    if (processControl != null) {
+                        if (processControl.getType() == Control.ControlType.POSITIVE) {
+                            positiveControl = true;
+                        } else if (processControl.getType() == Control.ControlType.NEGATIVE) {
+                            negativeControl = true;
                         }
                     }
-                }
-
-                if (productOrders.size() == 1) {
-                    productOrder = productOrders.iterator().next();
-                } else if (productOrders.size() > 1){
-                    throw new ResourceException("Found mix of product orders ", Response.Status.INTERNAL_SERVER_ERROR);
-                } else  {
-                    throw new ResourceException("Found no product orders ", Response.Status.INTERNAL_SERVER_ERROR);
-                }
-                Control processControl = evaluateAsControl(sampleData);
-                if (processControl != null) {
-                    if (processControl.getType() == Control.ControlType.POSITIVE) {
-                        positiveControl = true;
-                    } else if (processControl.getType() == Control.ControlType.NEGATIVE) {
-                        negativeControl = true;
-                    }
+                } else {
+                    productOrder = productOrderSample.getProductOrder();
                 }
             } else {
-                productOrder = productOrderSample.getProductOrder();
+                productOrder = sampleInstanceV2.getSingleBucketEntry().getProductOrder();
             }
             GenotypingChip chipType = findChipType(productOrder, effectiveDate);
 
