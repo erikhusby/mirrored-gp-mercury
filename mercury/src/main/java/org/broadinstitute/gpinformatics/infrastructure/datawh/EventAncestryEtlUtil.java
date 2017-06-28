@@ -101,6 +101,7 @@ public class EventAncestryEtlUtil {
             // Find ancestor library event(s) of interest
             // Build the ancestry dtos
             eventFact.addAllAncestryDtos(buildAncestryFacts(labEvent, labVessel));
+            eventFact.setIsEtlLibrary();
             vesselsToSkip.add(labVessel);
         }
     }
