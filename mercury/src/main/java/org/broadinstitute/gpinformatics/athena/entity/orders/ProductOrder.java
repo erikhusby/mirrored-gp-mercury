@@ -1965,6 +1965,20 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return (filteredResults != null) ? Iterators.size(filteredResults.iterator()) : 0;
     }
 
+    public static double getUnbilledLaneCount(ProductOrder order, Product targetProduct) {
+        double existingCount = 0;
+
+        for (ProductOrderSample targetSample : order.getSamples()) {
+            for (LedgerEntry ledgerItem: targetSample.getLedgerItems()) {
+                if(ledgerItem.getPriceItem().equals(targetProduct.getPrimaryPriceItem())) {
+                    existingCount += ledgerItem.getQuantity();
+                }
+            }
+
+        }
+        return order.getLaneCount() - existingCount;
+    }
+
     public boolean isSavedInSAP() {
         return StringUtils.isNotBlank(getSapOrderNumber());
     }

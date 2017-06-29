@@ -723,18 +723,17 @@ public class ProductOrderActionBean extends CoreActionBean {
         String quoteId = editOrder.getQuoteId();
         Quote quote = validateQuoteId(quoteId);
         try {
-            ProductOrder.checkQuoteValidity(editOrder, quote);
+            if (quote != null) {ProductOrder.checkQuoteValidity(editOrder, quote);
             for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel()) {
-                for (Funding funding :fundingLevel.getFunding()) {
-                    if(funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
-                        final int numDaysBetween =
-                                DateUtils.getNumDaysBetween(new Date(), funding.getGrantEndDate());
-                        if(numDaysBetween > 0 && numDaysBetween < 45) {
-                            addMessage("The Funding Source "+funding.getDisplayName()+" on " +
-                                       quote.getAlphanumericId() + "  Quote expires in " + numDaysBetween +
-                                       " days. If it is likely this work will not be completed by then, please work on "
-                                       + "updating the Funding Source so Billing Errors can be avoided.");
-                        }
+                for ( Funding funding : fundingLevel.getFunding()) {
+                if(funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
+                    final int numDaysBetween =
+                            DateUtils.getNumDaysBetween(new Date(), funding.getGrantEndDate());
+                    if(numDaysBetween > 0 && numDaysBetween < 45) {
+                        addMessage("The Funding Source "+funding.getDisplayName()+" on " +
+                                   quote.getAlphanumericId() + "  Quote expires in " + numDaysBetween +
+                                   " days. If it is likely this work will not be completed by then, please work on "
+                                   + "updating the Funding Source so Billing Errors can be avoided.");}
                     }
                 }
             }
@@ -902,13 +901,13 @@ public class ProductOrderActionBean extends CoreActionBean {
             try {
                 final Product product = testOrder.getProduct();
                 double productValue =
-                        getProductValue((product.getSupportsNumberOfLanes())?testOrder.getLaneCount():sampleCount, product,
+                        getProductValue((product.getSupportsNumberOfLanes())?(int)ProductOrder.getUnbilledLaneCount(testOrder, product):sampleCount, product,
                                 quote);
                 value += productValue;
                 for (ProductOrderAddOn testOrderAddon : testOrder.getAddOns()) {
                     final Product addOn = testOrderAddon.getAddOn();
                     double addOnValue =
-                            getProductValue((addOn.getSupportsNumberOfLanes())?testOrder.getLaneCount():sampleCount, addOn,
+                            getProductValue((addOn.getSupportsNumberOfLanes())?(int)ProductOrder.getUnbilledLaneCount(testOrder, product):sampleCount, addOn,
                                     quote);
                     value += addOnValue;
                 }

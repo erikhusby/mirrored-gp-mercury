@@ -486,9 +486,9 @@ public class ProductOrderEjb {
 
         if(orderQuote != null && accessControl.isEnabled()) {
 
-            eligibilityResult = orderQuote.isEligibleForSAP() &&
-                                editedProductOrder.getProduct()
-                                        .getPrimaryPriceItem() != null &&
+            eligibilityResult = editedProductOrder.getProduct()!=null &&
+                                editedProductOrder.getProduct().getPrimaryPriceItem() != null &&
+                                orderQuote != null && orderQuote.isEligibleForSAP() &&
                                 !CollectionUtils.containsAny(accessControl.getDisabledItems(), priceItemNameList) ;
         }
 
@@ -502,8 +502,10 @@ public class ProductOrderEjb {
 
     public boolean arePriceItemsValid(ProductOrder editedProductOrder, Set<AccessItem> priceItemNameList) {
         Set<Product> productListFromOrder = new HashSet<>();
-        productListFromOrder.add(editedProductOrder.getProduct());
-        priceItemNameList.add(new AccessItem(editedProductOrder.getProduct().getPrimaryPriceItem().getName()));
+        if (editedProductOrder.getProduct() != null) {
+            productListFromOrder.add(editedProductOrder.getProduct());
+            priceItemNameList.add(new AccessItem(editedProductOrder.getProduct().getPrimaryPriceItem().getName()));
+        }
         for (ProductOrderAddOn productOrderAddOn : editedProductOrder.getAddOns()) {
             productListFromOrder.add(productOrderAddOn.getAddOn());
             priceItemNameList.add(new AccessItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getName()));
@@ -514,19 +516,23 @@ public class ProductOrderEjb {
     public boolean determinePriceItemValidity(Collection<Product> productsToConsider) {
         boolean allItemsValid = true;
         QuotePriceItem primaryPriceItem;
-        try {
-            for (Product product: productsToConsider) {
-               primaryPriceItem =
-                        priceListCache.findByKeyFields(product.getPrimaryPriceItem().getPlatform(),
-                                product.getPrimaryPriceItem().getCategory(),
-                                product.getPrimaryPriceItem().getName());
-                if(primaryPriceItem == null) {
-                    allItemsValid = false;
-                    break;
+        if(CollectionUtils.isNotEmpty(productsToConsider)) {
+            try {
+                for (Product product : productsToConsider) {
+                    primaryPriceItem =
+                            priceListCache.findByKeyFields(product.getPrimaryPriceItem().getPlatform(),
+                                    product.getPrimaryPriceItem().getCategory(),
+                                    product.getPrimaryPriceItem().getName());
+                    if (primaryPriceItem == null) {
+                        allItemsValid = false;
+                        break;
+                    }
                 }
-            }
 
-        } catch (Exception e) {
+            } catch (Exception e) {
+                allItemsValid = false;
+            }
+        } else {
             allItemsValid = false;
         }
 
@@ -1612,6 +1618,7 @@ public class ProductOrderEjb {
         this.accessController = accessController;
     }
 
+    @Inject
     public void setSapConfig(SapConfig sapConfig) {
         this.sapConfig = sapConfig;
     }
