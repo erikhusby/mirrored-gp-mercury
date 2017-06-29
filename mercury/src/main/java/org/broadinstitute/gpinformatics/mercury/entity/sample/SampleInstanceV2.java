@@ -499,6 +499,10 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
             singleBucketEntry = null;
         }
 
+        if (singleWorkflowBatch == null && singleBucketEntry != null) {
+            singleWorkflowBatch = singleBucketEntry.getLabBatch();
+        }
+
         for (MercurySample mercurySample : labVessel.getMercurySamples()) {
             allProductOrderSamples.addAll(mercurySample.getProductOrderSamples());
         }
