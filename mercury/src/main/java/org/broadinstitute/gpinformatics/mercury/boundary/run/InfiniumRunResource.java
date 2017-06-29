@@ -138,8 +138,6 @@ public class InfiniumRunResource {
                     sampleInstanceV2.getNearestMercurySampleName());
 
             ProductOrder productOrder;
-            boolean positiveControl = false;
-            boolean negativeControl = false;
             if (sampleInstanceV2.getSingleBucketEntry() == null) {
                 ProductOrderSample productOrderSample = sampleInstanceV2.getProductOrderSampleForSingleBucket();
                 if (productOrderSample == null) {
@@ -176,20 +174,24 @@ public class InfiniumRunResource {
                     } else {
                         throw new ResourceException("Found no product orders ", Response.Status.INTERNAL_SERVER_ERROR);
                     }
-                    Control processControl = evaluateAsControl(sampleData);
-                    if (processControl != null) {
-                        if (processControl.getType() == Control.ControlType.POSITIVE) {
-                            positiveControl = true;
-                        } else if (processControl.getType() == Control.ControlType.NEGATIVE) {
-                            negativeControl = true;
-                        }
-                    }
                 } else {
                     productOrder = productOrderSample.getProductOrder();
                 }
             } else {
                 productOrder = sampleInstanceV2.getSingleBucketEntry().getProductOrder();
             }
+
+            boolean positiveControl = false;
+            boolean negativeControl = false;
+            Control processControl = evaluateAsControl(sampleData);
+            if (processControl != null) {
+                if (processControl.getType() == Control.ControlType.POSITIVE) {
+                    positiveControl = true;
+                } else if (processControl.getType() == Control.ControlType.NEGATIVE) {
+                    negativeControl = true;
+                }
+            }
+
             GenotypingChip chipType = findChipType(productOrder, effectiveDate);
 
             if (chipType == null) {
