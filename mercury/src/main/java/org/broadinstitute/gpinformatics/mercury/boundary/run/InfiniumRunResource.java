@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchety
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.run.ArchetypeAttribute;
@@ -137,9 +138,15 @@ public class InfiniumRunResource {
             SampleData sampleData = sampleDataFetcher.fetchSampleData(
                     sampleInstanceV2.getNearestMercurySampleName());
 
+            // When the ARRAY batch is auto-created, all samples on the plate get BucketEntries, even controls (this
+            // is arguably a bug in BucketEjb), so the BucketEntry can be used to determine an unambiguous PDO, unless
+            // the sample pre-dates auto-creation of ARRAY batches.
+            // To determine whether the sample is a process control (as opposed to a HapMap sample added to a PDO for
+            // scientific purposes), we have to look for the absence of a ProductOrderSample.
             ProductOrder productOrder;
-            if (sampleInstanceV2.getSingleBucketEntry() == null) {
-                ProductOrderSample productOrderSample = sampleInstanceV2.getProductOrderSampleForSingleBucket();
+            BucketEntry singleBucketEntry = sampleInstanceV2.getSingleBucketEntry();
+            ProductOrderSample productOrderSample = sampleInstanceV2.getProductOrderSampleForSingleBucket();
+            if (singleBucketEntry == null) {
                 if (productOrderSample == null) {
                     // Likely a control, look at all samples on imported plate to try to find common ProductOrder
                     TransferTraverserCriteria.VesselForEventTypeCriteria vesselForEventTypeCriteria =
@@ -178,17 +185,19 @@ public class InfiniumRunResource {
                     productOrder = productOrderSample.getProductOrder();
                 }
             } else {
-                productOrder = sampleInstanceV2.getSingleBucketEntry().getProductOrder();
+                productOrder = singleBucketEntry.getProductOrder();
             }
 
             boolean positiveControl = false;
             boolean negativeControl = false;
-            Control processControl = evaluateAsControl(sampleData);
-            if (processControl != null) {
-                if (processControl.getType() == Control.ControlType.POSITIVE) {
-                    positiveControl = true;
-                } else if (processControl.getType() == Control.ControlType.NEGATIVE) {
-                    negativeControl = true;
+            if (productOrderSample == null) {
+                Control processControl = evaluateAsControl(sampleData);
+                if (processControl != null) {
+                    if (processControl.getType() == Control.ControlType.POSITIVE) {
+                        positiveControl = true;
+                    } else if (processControl.getType() == Control.ControlType.NEGATIVE) {
+                        negativeControl = true;
+                    }
                 }
             }
 
