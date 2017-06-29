@@ -74,7 +74,11 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     private Long productId;
 
     @Column(name = "PRODUCT_NAME", length = 255)
+    @Column(name = "PRODUCT_NAME", length = 255)
     private String productName;
+
+    @Column(name = "EXTERNAL_PRODUCT_NAME", length = 255)
+    private String externalProductName;
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST}, optional = false)
     private ProductFamily productFamily;
@@ -130,6 +134,9 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
      */
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, optional = false)
     private PriceItem primaryPriceItem;
+
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, optional = false)
+    private PriceItem externalPriceItem;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinTable(schema = "athena")

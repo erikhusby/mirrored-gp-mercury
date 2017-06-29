@@ -40,12 +40,18 @@ public class ProductOrderAddOnPriceAdjustment {
     // number(19,4)  ?
     private BigDecimal adjustmentValue;
 
+    private String customProductName;
+
     public ProductOrderAddOnPriceAdjustment() {
+    }
+
+    public ProductOrderAddOnPriceAdjustment(ProductOrderAddOn addOn) {
+        this.addOn = addOn;
     }
 
     public ProductOrderAddOnPriceAdjustment(ProductOrderAddOn addOn,
                                             Condition priceAdjustmentCondition, BigDecimal adjustmentValue) {
-        this.addOn = addOn;
+        this(addOn);
         this.priceAdjustmentCondition = priceAdjustmentCondition;
         this.adjustmentValue = adjustmentValue;
     }
@@ -58,12 +64,16 @@ public class ProductOrderAddOnPriceAdjustment {
         return priceAdjustmentCondition;
     }
 
-    public void setAdjustmentValue(BigDecimal adjustmentValue) {
-        this.adjustmentValue = adjustmentValue;
-    }
-
     public BigDecimal getAdjustmentValue() {
         return adjustmentValue;
+    }
+
+    public String getCustomProductName() {
+        return customProductName;
+    }
+
+    public void setCustomProductName(String customProductName) {
+        this.customProductName = customProductName;
     }
 
     @Override
@@ -82,6 +92,7 @@ public class ProductOrderAddOnPriceAdjustment {
                 .append(getAddOn(), that.getAddOn())
                 .append(getPriceAdjustmentCondition(), that.getPriceAdjustmentCondition())
                 .append(getAdjustmentValue(), that.getAdjustmentValue())
+                .append(getCustomProductName(), that.getCustomProductName())
                 .isEquals();
     }
 
@@ -91,6 +102,7 @@ public class ProductOrderAddOnPriceAdjustment {
                 .append(getAddOn())
                 .append(getPriceAdjustmentCondition())
                 .append(getAdjustmentValue())
+                .append(getCustomProductName())
                 .toHashCode();
     }
 }
