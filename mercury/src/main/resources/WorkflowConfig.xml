@@ -2777,6 +2777,7 @@
             <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
             <effectiveDate>2017-03-03T22:04:23.932-04:00</effectiveDate>
             <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
+            <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
             <workflowProcessDefs>WGS Library Construction Hyper Prep</workflowProcessDefs>
             <workflowProcessDefs>PCR Plus Pond HyperPrep</workflowProcessDefs>
             <workflowProcessDefs>ICE</workflowProcessDefs>
@@ -2910,6 +2911,7 @@
             <batchJiraIssueType>HUMAN_PCR_FREE</batchJiraIssueType>
             <effectiveDate>2016-11-21T22:04:23.932-04:00</effectiveDate>
             <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
+            <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
             <workflowProcessDefs>WGS Library Construction Hyper Prep</workflowProcessDefs>
             <workflowProcessDefs>Cell Free Pond HyperPrep</workflowProcessDefs>
             <workflowProcessDefs>QTP</workflowProcessDefs>
@@ -2930,6 +2932,7 @@
             <batchJiraIssueType>HUMAN_PCR_FREE</batchJiraIssueType>
             <effectiveDate>2016-11-21T22:04:23.932-04:00</effectiveDate>
             <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
+            <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
             <workflowProcessDefs>WGS Library Construction Hyper Prep</workflowProcessDefs>
             <workflowProcessDefs>PCR Free Pond</workflowProcessDefs>
             <workflowProcessDefs>QTP</workflowProcessDefs>
@@ -2950,6 +2953,7 @@
             <batchJiraIssueType>HUMAN_PCR_PLUS</batchJiraIssueType>
             <effectiveDate>2016-11-21T22:04:23.932-04:00</effectiveDate>
             <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
+            <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
             <workflowProcessDefs>WGS Library Construction Hyper Prep</workflowProcessDefs>
             <workflowProcessDefs>PCR Plus Pond HyperPrep</workflowProcessDefs>
             <workflowProcessDefs>QTP</workflowProcessDefs>
