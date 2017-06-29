@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -357,11 +358,17 @@ public class ProductOrderTest {
         Assert.assertEquals(testProductOrder.getUnbilledSampleCount(), 0);
     }
 
-    public void testNonAbandonedCount() {
-        ProductOrder testParentOrder = new ProductOrder(TEST_CREATOR, "Test order with Abandoned Count",sixMercurySamplesNoDupes, QUOTE,null, null);
+    public void testNonAbandonedCount() throws Exception {
+        ProductOrder testParentOrder = new ProductOrder(TEST_CREATOR, "Test order with Abandoned Count",
+                sixMercurySamplesNoDupes, QUOTE, null, null);
+        testParentOrder.addSapOrderDetail(new SapOrderDetail("testParentNumber", testParentOrder.getNonAbandonedCount(),
+                testParentOrder.getQuoteId(), SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(), "", ""));
 
-        Assert.assertEquals(6, testParentOrder.getNonAbandonedCount());
-        Assert.assertEquals(0, testParentOrder.getNumberForReplacement());
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL),6);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY),6);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER),6);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY),6);
+        Assert.assertEquals(testParentOrder.getNumberForReplacement(), 0);
 
         int numberOfAbandoned = 4;
         for(ProductOrderSample sampleToAbandon:testParentOrder.getSamples()) {
@@ -372,17 +379,89 @@ public class ProductOrderTest {
             sampleToAbandon.setDeliveryStatus(ProductOrderSample.DeliveryStatus.ABANDONED);
             numberOfAbandoned--;
         }
-        Assert.assertEquals(2, testParentOrder.getNonAbandonedCount());
-        Assert.assertEquals(4, testParentOrder.getNumberForReplacement());
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL), 2);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY), 2);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER), 2);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY), 2);
+        Assert.assertEquals(testParentOrder.getNumberForReplacement(), 4);
 
         ProductOrder cloneOrder = ProductOrder.cloneProductOrder(testParentOrder, true);
+        cloneOrder.setOrderStatus(OrderStatus.Draft);
 
-        Assert.assertEquals(2, testParentOrder.getNonAbandonedCount());
-        Assert.assertEquals(4, testParentOrder.getNumberForReplacement());
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL), 2);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER), 2);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY), 2);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY), 2);
+        Assert.assertEquals(testParentOrder.getNumberForReplacement(), 4);
         cloneOrder.addSamples(fourBspSamplesWithNoDupes);
 
-        Assert.assertEquals(6, testParentOrder.getNonAbandonedCount());
-        Assert.assertEquals(0, testParentOrder.getNumberForReplacement());
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL), 6);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER), 6);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY), 2);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY), 2);
+        Assert.assertEquals(testParentOrder.getNumberForReplacement(), 0);
+
+        cloneOrder.setOrderStatus(OrderStatus.Pending);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL), 6);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER), 6);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY), 2);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY), 2);
+        Assert.assertEquals(testParentOrder.getNumberForReplacement(), 0);
+
+
+
+        cloneOrder.setJiraTicketKey("PDO-CLONE1");
+        cloneOrder.setOrderStatus(OrderStatus.Submitted);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL), 6);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER), 6);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY), 6);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY), 6);
+        Assert.assertEquals(testParentOrder.getNumberForReplacement(), 0);
+
+        int numberNextAbandoned = 1;
+        for (ProductOrderSample productOrderSample : testParentOrder.getSamples()) {
+            if(numberNextAbandoned == 0) {
+                break;
+            }
+            if (productOrderSample.isToBeBilled()) {
+
+                productOrderSample.setDeliveryStatus(ProductOrderSample.DeliveryStatus.ABANDONED);
+                numberNextAbandoned--;
+            }
+        }
+
+        ProductOrder cloneOrder2 = ProductOrder.cloneProductOrder(testParentOrder, false);
+        cloneOrder2.setOrderStatus(OrderStatus.Draft);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL), 5);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER), 5);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY), 5);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY), 5);
+        Assert.assertEquals(testParentOrder.getNumberForReplacement(), 1);
+
+        cloneOrder2.addSamples(ProductOrderSampleTestFactory.createSampleListWithMercurySamples("SM-test9"));
+
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL), 6);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER), 5);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY), 5);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY), 5);
+        Assert.assertEquals(testParentOrder.getNumberForReplacement(), 0);
+
+        cloneOrder2.setOrderStatus(OrderStatus.Pending);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL), 6);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER), 5);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY), 5);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY), 5);
+        Assert.assertEquals(testParentOrder.getNumberForReplacement(), 0);
+
+        cloneOrder2.setJiraTicketKey("PDO-CLONE2");
+        cloneOrder2.setOrderStatus(OrderStatus.Submitted);
+
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL), 6);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER), 5);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY), 5);
+        Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.BILL_READY), 6);
+        Assert.assertEquals(testParentOrder.getNumberForReplacement(), 0);
+
     }
 
     public void testLatestSapOrder() {

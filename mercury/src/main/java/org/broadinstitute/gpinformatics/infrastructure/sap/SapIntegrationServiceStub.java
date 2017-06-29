@@ -48,15 +48,4 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
     public void changeProductInSAP(Product product) throws SAPIntegrationException {
 
     }
-
-    @Override
-    public SapIntegrationClientImpl.SAPCompanyConfiguration determineCompanyCode(ProductOrder companyProductOrder) {
-        return SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
-    }
-
-    @Nonnull
-    @Override
-    public SapIntegrationClientImpl.SAPCompanyConfiguration getSapCompanyConfigurationForProduct(Product product) {
-        return SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
-    }
 }

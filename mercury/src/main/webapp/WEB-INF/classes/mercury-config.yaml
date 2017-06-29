@@ -9,6 +9,7 @@ app:
       jmsPort:  5445
       workflowValidationEmail:
 
+
     AUTO_BUILD:
       host:     mercurydev.broadinstitute.org
       port:     8444
@@ -273,7 +274,7 @@ bass:
 
 submission:
     DEV:
-      host:     picard01
+      host:     seqsubmission02
       port:     33333
 
     PROD:
@@ -284,12 +285,18 @@ sap:
     DEV:
       login:      GPCOMU
       password:   SAPERD300!
+      sapShortCloseRecipientEmail: zsearle@broadinstitute.org
+      sapShortCloseEmailSubject: "TEST SAP Order: Short Close Request"
     QA:
       login:      GPCOMU
       password:   SAPERQ300!
+      sapShortCloseRecipientEmail: zsearle@broadinstitute.org
+      sapShortCloseEmailSubject: "TEST SAP Order: Short Close Request"
     PROD:
       login:      GPCOMU
       password:   SAPERP300!
+      sapShortCloseRecipientEmail: BUSSYS@broadinstitute.org
+      sapShortCloseEmailSubject: "SAP Order: Short Close Request"
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 mercury:
 

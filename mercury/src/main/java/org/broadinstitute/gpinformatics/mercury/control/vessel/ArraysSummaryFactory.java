@@ -205,8 +205,7 @@ public class ArraysSummaryFactory {
                 }
 
                 if (scannerName == null) {
-                    scannerName = InfiniumRunProcessor.findScannerName(chip.getLabel(), vesselPosition.name(),
-                            infiniumStarterConfig);
+                    scannerName = InfiniumRunProcessor.findScannerName(chip.getLabel(), infiniumStarterConfig);
                 }
                 printStream.print(scannerName == null ? "" : scannerName);
             }

@@ -43,7 +43,8 @@ public class LabVesselEtl extends GenericEntityEtl<LabVessel, LabVessel> {
                 entity.getLabVesselId(),
                 format(entity.getLabel()),
                 format(entity.getType().getName()),
-                format(entity.getName())
+                format(entity.getName()),
+                format(entity.getCreatedOn())
         );
     }
 }

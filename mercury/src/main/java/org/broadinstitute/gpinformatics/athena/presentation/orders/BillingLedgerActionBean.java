@@ -16,6 +16,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
+import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderListEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
@@ -32,6 +33,9 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn
 import org.broadinstitute.gpinformatics.infrastructure.cognos.SampleCoverageFirstMetFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.SampleCoverageFirstMet;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -158,7 +162,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
      */
     @Before(stages = LifecycleStage.EventHandling, on = { "ledgerDetails" })
     public void loadProductOrder() {
-        productOrder = productOrderDao.findByBusinessKey(orderId);
+        productOrder = productOrderDao.findByBusinessKey(orderId, ProductOrderDao.FetchSpec.RISK_ITEMS);
     }
 
     /**
@@ -196,6 +200,19 @@ public class BillingLedgerActionBean extends CoreActionBean {
             } catch (ValidationException e) {
                 logger.error(e);
                 addGlobalValidationErrors(e.getValidationMessages());
+            } catch ( QuoteNotFoundException | QuoteServerException  otherEs) {
+                logger.error(otherEs);
+                addGlobalValidationError(otherEs.getMessage());
+            } catch (SAPInterfaceException sie) {
+                String errorMessage = "While updating this order in SAP an error occurred:  ";
+                logger.error(sie);
+                addGlobalValidationError(errorMessage + sie.getMessage());
+            } catch (InvalidProductException ipe) {
+                String errorMessage = "Either the product or one of the selected add-ons for this order is associated "
+                                      + "with an invalid Price item.  Please set the correct price item before "
+                                      + "continuing for this will cause issues when billing: ";
+                logger.error(ipe);
+                addGlobalValidationError(errorMessage+ipe.getMessage());
             }
         }
 

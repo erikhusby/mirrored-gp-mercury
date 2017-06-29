@@ -52,6 +52,15 @@ public class ManualTransferActionBeanTest {
     }
 
     /**
+     * Verify that choosing QiaSymphonyCellFree will ask for a lims file
+     */
+    public void testQiagen() {
+        String eventType = "QiaSymphonyCellFree";
+        ManualTransferActionBean actionBean = chooseEvent(eventType);
+        Assert.assertEquals(actionBean.isParseLimsFile(), true);
+    }
+
+    /**
      * Simulate choosing an event, and return the resulting action bean.
      */
     private ManualTransferActionBean chooseEvent(String eventType) {
@@ -187,8 +196,6 @@ public class ManualTransferActionBeanTest {
         plateTransferEventType.getSourcePositionMap().add(0, sourcePositionMap);
         actionBean.setStationEvents(stationEvents);
 
-        //Inject a fake JSON string to simulate the input from the pooling transfer screen.
-        actionBean.setCherryPickJSON("[{\"sourceIDs\":[\"B02_src_RcpBcd0_13\"],\"targetIDs\":[\"A01_dest_RcpBcd0_0\"],\"sourceBarcodes\":[\"1077064182\"],\"targetBarcodes\":[\"1076205469\"],\"targetFCT\":[null],\"targetPositions\":[1]}]");
         BettaLIMSMessage bettaLIMSMessage = actionBean.buildBettaLIMSMessage();
         Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty());
         Assert.assertNotNull(bettaLIMSMessage);
@@ -248,8 +255,6 @@ public class ManualTransferActionBeanTest {
 
         actionBean.setStationEvents(stationEvents);
 
-        //Inject a fake JSON string to simulate the input from the strip tube transfer screen.
-        actionBean.setCherryPickJSON("[{\"sourceIDs\":[\"A01_src_RcpBcd0_0\"],\"targetIDs\":[\"A01_dest_RcpBcd0_0\",\"B01_dest_RcpBcd0_0\",\"C01_dest_RcpBcd0_0\",\"D01_dest_RcpBcd0_0\",\"E01_dest_RcpBcd0_0\",\"F01_dest_RcpBcd0_0\",\"G01_dest_RcpBcd0_0\",\"H01_dest_RcpBcd0_0\"],\"sourceBarcodes\":[\"DenatureTube08120952080\"],\"targetBarcodes\":[\"StripTube0812095208ADXX1\",\"StripTube0812095208ADXX1\",\"StripTube0812095208ADXX1\",\"StripTube0812095208ADXX1\",\"StripTube0812095208ADXX1\",\"StripTube0812095208ADXX1\",\"StripTube0812095208ADXX1\",\"StripTube0812095208ADXX1\"],\"targetFCT\":[\"FCT-32386\",\"FCT-32386\",\"FCT-32386\",\"FCT-32386\",\"FCT-32386\",\"FCT-32386\",\"FCT-32386\",\"FCT-32386\"],\"targetPositions\":[1,2,3,4,5,6,7,8]}]");
         BettaLIMSMessage bettaLIMSMessage = actionBean.buildBettaLIMSMessage();
         Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty());
         Assert.assertNotNull(bettaLIMSMessage);

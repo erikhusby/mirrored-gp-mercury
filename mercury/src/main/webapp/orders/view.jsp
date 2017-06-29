@@ -442,11 +442,48 @@ function updateFundsRemaining() {
 }
 
 function updateFunds(data) {
+
+    var quoteWarning = false;
+
     if (data.fundsRemaining && !data.error) {
-        $j("#fundsRemaining").text('Status: ' + data.status + ' - Funds Remaining: ' + data.fundsRemaining +
-                ' with ' + data.outstandingEstimate + ' unbilled across existing open orders');
+        var fundsRemainingNotification = 'Status: ' + data.status + ' - Funds Remaining: ' + data.fundsRemaining +
+                ' with ' + data.outstandingEstimate + ' unbilled across existing open orders';
+        var fundingDetails = data.fundingDetails;
+
+        if(data.status != "Funded" ||
+                Number(data.outstandingEstimate.replace(/[^0-9\.]+/g,"")) > Number(data.fundsRemaining.replace(/[^0-9\.]+/g,""))) {
+            quoteWarning = true;
+        }
+
+        for(var detailIndex in fundingDetails) {
+            fundsRemainingNotification += '\n'+fundingDetails[detailIndex].grantTitle;
+            if(fundingDetails[detailIndex].activeGrant) {
+                fundsRemainingNotification += ' -- Expires ' + fundingDetails[detailIndex].grantEndDate;
+                if(fundingDetails[detailIndex].daysTillExpire < 45) {
+                    fundsRemainingNotification += ' in ' + fundingDetails[detailIndex].daysTillExpire +
+                        ' days. If it is likely this work will not be completed by then, please work on updating the ' +
+                        'Funding Source so Billing Errors can be avoided.';
+                    quoteWarning = true;
+                }
+            } else {
+                fundsRemainingNotification += ' -- Has Expired ' + fundingDetails[detailIndex].grantEndDate;
+                quoteWarning = true;
+            }
+            if(fundingDetails[detailIndex].grantStatus != "Active") {
+                quoteWarning = true;
+            }
+            fundsRemainingNotification += '\n';
+        }
+        $j("#fundsRemaining").text(fundsRemainingNotification);
     } else {
         $j("#fundsRemaining").text('Error: ' + data.error);
+        quoteWarning = true;
+    }
+
+    if(quoteWarning) {
+        $j("#fundsRemaining").addClass("alert alert-error");
+    } else {
+        $j("#fundsRemaining").removeClass("alert alert-error");
     }
 }
 
@@ -1135,7 +1172,7 @@ function formatInput(item) {
             <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">
                     ${actionBean.editOrder.quoteId}
             </a>
-            <span id="fundsRemaining" style="margin-left: 20px;"> </span>
+            <div id="fundsRemaining"> </div>
         </div>
     </div>
 </div>

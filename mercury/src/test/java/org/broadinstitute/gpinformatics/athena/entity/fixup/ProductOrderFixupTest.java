@@ -12,7 +12,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSa
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -37,7 +36,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
-import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -82,7 +80,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
@@ -862,6 +859,29 @@ public class ProductOrderFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
+    public void gplim4755RemoveDuplicateRegulatoryInfo() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+        List<RegulatoryInfo> regulatoryInfos = regulatoryInfoDao.findByIdentifier("ORSP-750");
+        assertThat(regulatoryInfos, hasSize(1));
+        RegulatoryInfo orsp750 = regulatoryInfos.get(0);
+
+        ProductOrder pdo = productOrderDao.findByBusinessKey("PDO-6148");
+        assertThat(pdo.getRegulatoryInfos(), hasSize(2));
+
+        Set<RegulatoryInfo> distinctRegulatoryInfos = new HashSet<>(pdo.getRegulatoryInfos());
+        assertThat(distinctRegulatoryInfos, hasSize(1));
+        assertThat(orsp750, equalTo(distinctRegulatoryInfos.iterator().next()));
+
+        pdo.getRegulatoryInfos().clear();
+        productOrderDao.flush();
+        pdo.addRegulatoryInfo(distinctRegulatoryInfos.iterator().next());
+
+        productOrderDao.persist(new FixupCommentary("https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-4755"));
+        commitTransaction();
+    }
+
+    @Test(enabled = false)
     public void gplim4155RemoveUnattachedPDOSamples()
             throws SystemException, NotSupportedException, HeuristicRollbackException, HeuristicMixedException,
             RollbackException {
@@ -1018,13 +1038,13 @@ public class ProductOrderFixupTest extends Arquillian {
             if(CollectionUtils.isEmpty(orderWithSap.getSapReferenceOrders())) {
                 SapOrderDetail newDetail = new SapOrderDetail(orderWithSap.getSapOrderNumber(),
                         SapIntegrationServiceImpl.getSampleCount(orderWithSap, orderWithSap.getProduct()),
-                        orderWithSap.getQuoteId(), sapIntegrationService.determineCompanyCode(orderWithSap).getCompanyCode(),
+                        orderWithSap.getQuoteId(), SapIntegrationServiceImpl.determineCompanyCode(orderWithSap).getCompanyCode(),
                         "", "");
                 orderWithSap.addSapOrderDetail(newDetail);
             } else {
                 SapOrderDetail latestDetail = orderWithSap.latestSapOrderDetail();
                 latestDetail.setQuoteId(orderWithSap.getQuoteId());
-                latestDetail.setCompanyCode(sapIntegrationService.determineCompanyCode(orderWithSap).getCompanyCode());
+                latestDetail.setCompanyCode(SapIntegrationServiceImpl.determineCompanyCode(orderWithSap).getCompanyCode());
             }
         }
 
@@ -1077,5 +1097,29 @@ public class ProductOrderFixupTest extends Arquillian {
         }
         productOrderDao.persist(new FixupCommentary("GPLIM-4595 Updated pipeline location for arrays PDOs to On Prem"));
         commitTransaction();
+    }
+
+    @Test(enabled = false)
+    public void gplim4823SetOrdersToCompleted() throws Exception {
+        userBean.loginOSUser();
+        List <String> ordersToComplete = Arrays.asList("PDO-11091","PDO-11492","PDO-11769","PDO-11628","PDO-11629",
+                "PDO-11766","PDO-11164","PDO-11721","PDO-11390","PDO-11495","PDO-11519");
+
+        // Update the state of all PDOs affected by this billing session.
+        for (String key : ordersToComplete) {
+            try {
+                // Update the order status using the ProductOrderEjb with a version of the order status update
+                // method that does not mark transactions for rollback in the event that JIRA-related RuntimeExceptions
+                // are thrown.  It is still possible that this method will throw a checked exception,
+                // but these will not mark the transaction for rollback.
+                productOrderEjb.updateOrderStatusNoRollback(key);
+            } catch (Exception e) {
+                // Errors are just logged here because the current user doesn't work with PDOs, and wouldn't
+                // be able to resolve these issues.  Exceptions should only occur if a required resource,
+                // such as JIRA, is missing.
+                log.error("Failed to update PDO status after billing: " + key, e);
+            }
+        }
+        productOrderDao.persist(new FixupCommentary("GPLIM-4823: Updating productOrders to Submitted which were not previously tranistioned as such"));
     }
 }

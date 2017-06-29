@@ -2,7 +2,9 @@ package org.broadinstitute.gpinformatics.infrastructure;
 
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 
+import java.util.Collection;
 import java.util.Date;
 
 /**
@@ -107,4 +109,6 @@ public interface SampleData {
     Boolean getFfpeStatus();
 
     MercurySample.MetadataSource getMetadataSource();
+
+    void overrideWithQuants(Collection<LabMetric> labMetrics);
 }

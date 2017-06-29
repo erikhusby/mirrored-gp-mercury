@@ -120,6 +120,20 @@
                 <numberOfRepeats>1</numberOfRepeats>
                 <deadEndBranch>true</deadEndBranch>
             </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Automated Daughter Plate Creation</name>
+                <labEventTypes>AUTO_DAUGHTER_PLATE_CREATION</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <numberOfRepeats>1</numberOfRepeats>
+                <deadEndBranch>false</deadEndBranch>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>Start Plating</statusTransition>
+                    <endStatus>In Plating</endStatus>
+                </jiraTransition>
+            </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
     <workflowProcessDefs>
@@ -278,6 +292,11 @@
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In Shearing</statusTransition>
+                    <endStatus>In Shearing</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Covaris Loaded</name>
@@ -329,6 +348,11 @@
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In Shearing</statusTransition>
+                    <endStatus>In Shearing</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Covaris Loaded</name>
@@ -368,6 +392,11 @@
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In LC</statusTransition>
+                    <endStatus>In LC</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>PostEndRepairThermoCyclerLoaded</name>
@@ -480,6 +509,11 @@
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In LC</statusTransition>
+                    <endStatus>In LC</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>PostEndRepairThermoCyclerLoaded</name>
@@ -557,6 +591,11 @@
                 <labEventTypes>PCR_FREE_POND_REGISTRATION</labEventTypes>
                 <optional>false</optional>
                 <ancestryEtlFlag>true</ancestryEtlFlag>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>Norm and Pool</statusTransition>
+                    <endStatus>Norm and Pool</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Pond Pico</name>
@@ -575,6 +614,11 @@
                 <labEventTypes>PCR_PLUS_POND_REGISTRATION</labEventTypes>
                 <optional>false</optional>
                 <ancestryEtlFlag>true</ancestryEtlFlag>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>Norm and Pool</statusTransition>
+                    <endStatus>Norm and Pool</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Pond Pico</name>
@@ -603,6 +647,12 @@
                 <name>PCR Plus Pond Registration</name>
                 <labEventTypes>PCR_PLUS_POND_REGISTRATION</labEventTypes>
                 <optional>false</optional>
+                <ancestryEtlFlag>true</ancestryEtlFlag>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>Norm and Pool</statusTransition>
+                    <endStatus>Norm and Pool</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Pond Pico</name>
@@ -798,6 +848,7 @@
                     <materialTypes>DNA</materialTypes>
                     <materialTypes>DNA_DNA_GENOMIC</materialTypes>
                     <materialTypes>DNA_DNA_SOMATIC</materialTypes>
+                    <materialTypes>DNA_DNA_CELL_FREE</materialTypes>
                 </bucketEntryEvaluator>
                 </workflowStepDefs>
             <workflowStepDefs>
@@ -807,6 +858,11 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <ancestryEtlFlag>false</ancestryEtlFlag>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In Plex Pooling</statusTransition>
+                    <endStatus>In Plex Pooling</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <!-- next two are alternatives -->
             <workflowStepDefs>
@@ -822,6 +878,11 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In Post LC</statusTransition>
+                    <endStatus>In Post LC</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>IcePoolTest</name>
@@ -1058,6 +1119,24 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <ancestryEtlFlag>true</ancestryEtlFlag>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>Norm and Pool</statusTransition>
+                    <endStatus>In Sequencing Prep</endStatus>
+                </jiraTransition>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Pool Correction</name>
+                <labEventTypes>POOL_CORRECTION</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <ancestryEtlFlag>true</ancestryEtlFlag>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>Ready for Sequencing</statusTransition>
+                    <endStatus>Ready for Sequencing</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>EcoTransfer</name>
@@ -1128,8 +1207,9 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <jiraTransition>
-                    <project>FCT</project>
-                    <statusTransition>Strip Tube Created (or Registered)</statusTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In Sequencing</statusTransition>
+                    <endStatus>In Sequencing</endStatus>
                 </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1222,11 +1302,8 @@
                 <reEntryPoint>false</reEntryPoint>
                 <jiraTransition>
                     <project>LCSET</project>
-                    <statusTransition>Closed</statusTransition>
-                </jiraTransition>
-                <jiraTransition>
-                    <project>FCT</project>
-                    <statusTransition>Flowcell Registered</statusTransition>
+                    <statusTransition>In Sequencing</statusTransition>
+                    <endStatus>In Sequencing</endStatus>
                 </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -2355,6 +2432,11 @@
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In LC</statusTransition>
+                    <endStatus>In LC</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>PostEndRepairThermoCyclerLoaded</name>
@@ -2399,7 +2481,8 @@
                 <reEntryPoint>false</reEntryPoint>
                 <jiraTransition>
                     <project>LCSET</project>
-                    <statusTransition>In Hyb Sel</statusTransition>
+                    <statusTransition>Norm and Pool</statusTransition>
+                    <endStatus>Norm and Pool</endStatus>
                 </jiraTransition>
                 <ancestryEtlFlag>true</ancestryEtlFlag>
             </workflowStepDefs>
@@ -2597,13 +2680,13 @@
                 <optional>false</optional>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>InfiniumPostHybridizationHybOvenLoaded</name>
-                <labEventTypes>INFINIUM_POST_HYBRIDIZATION_HYB_OVEN_LOADED</labEventTypes>
+                <name>InfiniumHybChamberLoaded</name>
+                <labEventTypes>INFINIUM_HYB_CHAMBER_LOADED</labEventTypes>
                 <optional>false</optional>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>InfiniumHybChamberLoaded</name>
-                <labEventTypes>INFINIUM_HYB_CHAMBER_LOADED</labEventTypes>
+                <name>InfiniumPostHybridizationHybOvenLoaded</name>
+                <labEventTypes>INFINIUM_POST_HYBRIDIZATION_HYB_OVEN_LOADED</labEventTypes>
                 <optional>false</optional>
             </workflowStepDefs>
             <workflowStepDefs>

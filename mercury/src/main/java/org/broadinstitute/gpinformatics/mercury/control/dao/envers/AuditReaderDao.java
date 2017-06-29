@@ -23,6 +23,8 @@ import org.hibernate.type.LongType;
 import org.hibernate.type.StringType;
 import org.hibernate.type.TimestampType;
 
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
@@ -48,6 +50,7 @@ import java.util.TreeMap;
  */
 @Stateful
 @RequestScoped
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class AuditReaderDao extends GenericDao {
     private final long MSEC_IN_SEC = 1000L;
     private static final Log logger = LogFactory.getLog(ExtractTransform.class);

@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.jira;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -23,6 +24,7 @@ import javax.enterprise.inject.Alternative;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -129,6 +131,11 @@ public class JiraServiceStub implements JiraService {
             customFields.put(requiredFieldName, new CustomFieldDefinition("stub_custom_field_" + requiredFieldName,
                     requiredFieldName, true));
         }
+
+        for (String fieldName : fieldNames) {
+            customFields.put(fieldName, new CustomFieldDefinition("stub_custom_field_" + fieldName, fieldName, true));
+        }
+
         return customFields;
     }
 
@@ -141,12 +148,13 @@ public class JiraServiceStub implements JiraService {
     @Override
     public IssueTransitionListResponse findAvailableTransitions(String jiraIssueKey) {
         Transition[] transitions = new Transition[]{
-                new Transition("1", "Open", new NextTransition("", "In Progress", "In Progress", "", "2")),
-                new Transition("3", "Complete", new NextTransition("", "Closed", "Closed", "", "4")),
+                new Transition("1", ProductOrderEjb.JiraTransition.OPEN.getStateName(), new NextTransition("", "In Progress", "In Progress", "", "2")),
+                new Transition("3", ProductOrderEjb.JiraTransition.COMPLETE_ORDER.getStateName(), new NextTransition("", "Closed", "Closed", "", "4")),
+                new Transition("15", "Complete", new NextTransition("", "Closed", "Closed", "", "4")),
                 new Transition("5", "Cancel", new NextTransition("", "Closed", "Closed", "", "6")),
                 new Transition("7", "Start Progress", new NextTransition("", "In Progress", "In Progress", "", "8")),
                 new Transition("9", "Put On Hold", new NextTransition("", "held", "held", "", "10")),
-                new Transition("11", "Order Complete", new NextTransition("", "Complete", "Complete", "", "12")),
+                new Transition("11", ProductOrderEjb.JiraTransition.ORDER_COMPLETE.getStateName(), new NextTransition("", "Complete", "Complete", "", "12")),
                 new Transition("13", ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName(), new NextTransition("", "In Progress", "In Progress", "", "14"))
         };
 
@@ -192,7 +200,18 @@ public class JiraServiceStub implements JiraService {
     public IssueFieldsResponse getIssueFields(String jiraIssueKey,
                                               Collection<CustomFieldDefinition> customFieldDefinitions) throws
             IOException {
-        return null;
+        final IssueFieldsResponse issueFieldsResponse = new IssueFieldsResponse();
+
+        Map<String, Object> customFields = new HashMap<>();
+        for (String requiredFieldName : JiraCustomFieldsUtil.REQUIRED_FIELD_NAMES) {
+            customFields.put("stub_custom_field_" + requiredFieldName,"Open");
+        }
+        customFields.put("stub_custom_field_"+ProductOrder.JiraField.STATUS.getName(), Collections.singletonMap("name","Open"));
+
+
+        issueFieldsResponse.setFields(customFields);
+
+        return issueFieldsResponse;
     }
 
     @Override

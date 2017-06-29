@@ -118,9 +118,11 @@ public class LabEventResource {
         List<LabEvent> labEvents = new ArrayList<>();
 
         for (LabVessel labVessel : labVessels) {
-            for (LabEvent labEvent : labVessel.getInPlaceEventsWithContainers()) {
-                if (!labEvent.getReagents().isEmpty()) {
-                    labEvents.add(labEvent);
+            if (labVessel != null) {
+                for (LabEvent labEvent : labVessel.getInPlaceEventsWithContainers()) {
+                    if (!labEvent.getReagents().isEmpty()) {
+                        labEvents.add(labEvent);
+                    }
                 }
             }
         }

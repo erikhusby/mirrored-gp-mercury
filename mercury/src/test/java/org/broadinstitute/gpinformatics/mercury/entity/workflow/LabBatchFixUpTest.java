@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -74,6 +75,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -81,6 +83,8 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 
 @Test(groups = TestGroups.FIXUP)
 public class LabBatchFixUpTest extends Arquillian {
+
+    private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s");
 
     @Inject
     private LabBatchDao labBatchDao;
@@ -1270,5 +1274,120 @@ public class LabBatchFixUpTest extends Arquillian {
         }
         labBatchDao.persist(new FixupCommentary("SUPPORT-2545 change batch membership"));
         labBatchDao.flush();
+    }
+
+    /**
+     * This test is driven by a file of the following format (line 1 is for the fixup commentary;
+     * line 2 is the LCSET that has the routing error;
+     * line 3 is the barcode of the tube that is in two LCSETs;
+     * line 4 is the barcode of the tube that is in none):
+     * SUPPORT-2545
+     * LCSET-10646
+     * 1147649332
+     * 1147649319
+     */
+    @Test(enabled = false)
+    public void fixupSupport2603() {
+        try {
+            List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("MoveControlDiffLcset.txt"));
+            moveControlToDiffLcset(lines.get(0), lines.get(1), lines.get(2), lines.get(3));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * User somehow scanned same rack for two different LCSETs, so one control was associated with 2 LCSETs,
+     * and another control with none.
+     * @param supportTicketId the ID of the ticket in which the problem was reported
+     * @param lcsetRoutingError the ID of the LCSET that has the routing error
+     * @param barcodeInTwoLcsets the barcode of the tube that is in two LCSETs
+     * @param barcodeInNoLcset the barcode of the tube in the message
+     */
+    private void moveControlToDiffLcset(String supportTicketId, String lcsetRoutingError, String barcodeInTwoLcsets, String barcodeInNoLcset) {
+        userBean.loginOSUser();
+        LabVessel labVessel = labVesselDao.findByIdentifier(barcodeInTwoLcsets);
+        LabVessel labVessel2 = labVesselDao.findByIdentifier(barcodeInNoLcset);
+        for (LabBatchStartingVessel labBatchStartingVessel : labVessel.getLabBatchStartingVessels()) {
+            if (labBatchStartingVessel.getLabBatch().getBatchName().equals(lcsetRoutingError)) {
+                System.out.println("Changing LabBatchStartingVessel " +
+                        labBatchStartingVessel.getBatchStartingVesselId() + " from " + labVessel.getLabel() + " to " +
+                        labVessel2.getLabel());
+                labBatchStartingVessel.setLabVessel(labVessel2);
+            }
+        }
+        labBatchDao.persist(new FixupCommentary(supportTicketId + " change batch membership"));
+        labBatchDao.flush();
+    }
+
+    /**
+     * Likely that user scanned same rack for two different LCSETs, so one control was associated with 2 LCSETs,
+     * and another control with none.
+     */
+    @Test(enabled = false)
+    public void fixupIpi61789() {
+        userBean.loginOSUser();
+        LabVessel labVessel = labVesselDao.findByIdentifier("1147649272");
+        LabVessel labVessel2 = labVesselDao.findByIdentifier("1147649283");
+        for (LabBatchStartingVessel labBatchStartingVessel : labVessel.getLabBatchStartingVessels()) {
+            if (labBatchStartingVessel.getLabBatch().getBatchName().equals("LCSET-10652")) {
+                System.out.println("Changing LabBatchStartingVessel " +
+                        labBatchStartingVessel.getBatchStartingVesselId() + " from " + labVessel.getLabel() + " to " +
+                        labVessel2.getLabel());
+                labBatchStartingVessel.setLabVessel(labVessel2);
+            }
+        }
+        labBatchDao.persist(new FixupCommentary("IPI-61789 change batch membership"));
+        labBatchDao.flush();
+    }
+
+    /**
+     * This test reads its parameters from a file, testdata/ChangeBucketEntries.txt, so it can be used for other similar fixups,
+     * without writing a new test.  Example contents of the file are:
+     * LCSET-10923
+     * GPLIM-4797
+     * 0221477796 0221477790
+     * 0221477798 0221477792
+     */
+    @Test(enabled = false)
+    public void fixupGplim4797() throws Exception {
+        userBean.loginOSUser();
+        userTransaction.begin();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("ChangeBucketEntries.txt"));
+        String batchName = lines.get(0);
+        String fixupTicketId = lines.get(1);
+        Map<String, String> mapOldBarcodeToNew = new HashMap<>();
+        for (int i = 2; i < lines.size(); i++) {
+            String[] fields = WHITESPACE_PATTERN.split(lines.get(i));
+            if (fields.length != 2) {
+                throw new RuntimeException("Expected two white-space separated fields in " + lines.get(i));
+            }
+            mapOldBarcodeToNew.put(fields[0], fields[1]);
+        }
+
+        LabBatch labBatch = labBatchDao.findByName(batchName);
+        for (LabBatchStartingVessel labBatchStartingVessel : labBatch.getLabBatchStartingVessels()) {
+            String newBarcode = mapOldBarcodeToNew.get(labBatchStartingVessel.getLabVessel().getLabel());
+            if (newBarcode != null) {
+                LabVessel newLabVessel = labVesselDao.findByIdentifier(newBarcode);
+                System.out.println("Replacing LBSV " + labBatchStartingVessel.getLabVessel().getLabel() + " with " +
+                        newLabVessel.getLabel());
+                labBatchStartingVessel.setLabVessel(newLabVessel);
+            }
+        }
+        for (BucketEntry bucketEntry : labBatch.getBucketEntries()) {
+            String newBarcode = mapOldBarcodeToNew.get(bucketEntry.getLabVessel().getLabel());
+            if (newBarcode != null) {
+                LabVessel newLabVessel = labVesselDao.findByIdentifier(newBarcode);
+                System.out.println("Replacing BE " + bucketEntry.getLabVessel().getLabel() + " with " +
+                        newLabVessel.getLabel());
+                bucketEntry.setLabVessel(newLabVessel);
+            }
+        }
+
+        labBatchDao.persist(new FixupCommentary(fixupTicketId + " replace vessels in batch"));
+        labBatchDao.flush();
+        userTransaction.commit();
     }
 }

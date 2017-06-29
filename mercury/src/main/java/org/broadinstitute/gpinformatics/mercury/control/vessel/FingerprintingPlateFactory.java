@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ControlReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
@@ -19,6 +20,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleDataFetcher;
@@ -82,6 +84,24 @@ public class FingerprintingPlateFactory {
                 continue;
             }
 
+            int fingerprintingPlateSetupCount = 0;
+            boolean isRework = false;
+            Set<LabEvent> inPlaceLabEvents = tube.getEvents();
+            for (LabEvent labEvent: inPlaceLabEvents) {
+                if (labEvent.getLabEventType() == LabEventType.FINGERPRINTING_PLATE_SETUP) {
+                    fingerprintingPlateSetupCount++;
+                }
+            }
+            if (fingerprintingPlateSetupCount > 1) {
+                List<LabEventType> registrationEventTypes =
+                        Collections.singletonList(LabEventType.POND_REGISTRATION);
+                TransferTraverserCriteria.VesselForEventTypeCriteria eventTypeCriteria
+                        = new TransferTraverserCriteria.VesselForEventTypeCriteria(registrationEventTypes, true);
+                tube.evaluateCriteria(eventTypeCriteria,
+                        TransferTraverserCriteria.TraversalDirection.Descendants);
+                isRework = !eventTypeCriteria.getVesselsForLabEventType().isEmpty();
+            }
+
             // Volume applies to all samples on the plate.
             BigDecimal wellVolume = getFpVolume(plate, position);
 
@@ -89,6 +109,8 @@ public class FingerprintingPlateFactory {
                 FpSpreadsheetRow dto = new FpSpreadsheetRow(position.name());
                 for (SampleInstanceV2 sampleInstance : tube.getSampleInstancesV2()) {
                     String sampleName = null;
+                    boolean positiveControl = false;
+                    boolean negativeControl = false;
 
                     // Sets the sample name for these cases:
                     // - Reagent-only tubes are labeled as NA12878 filler tubes.
@@ -100,8 +122,10 @@ public class FingerprintingPlateFactory {
                                 ControlReagent controlReagent = OrmUtil.proxySafeCast(reagent, ControlReagent.class);
                                 if (controlReagent.getControl().getType() == Control.ControlType.POSITIVE) {
                                     sampleName = NA12878;
+                                    positiveControl = true;
                                 } else if (controlReagent.getControl().getType() == Control.ControlType.NEGATIVE) {
                                     sampleName = NEGATIVE_CONTROL;
+                                    negativeControl = true;
                                 }
                             }
                         }
@@ -111,6 +135,7 @@ public class FingerprintingPlateFactory {
                         }
                     } else if (isNegativeControl(sampleInstance)) {
                         sampleName = NEGATIVE_CONTROL;
+                        negativeControl = true;
                     } else {
                         sampleName = sampleInstance.getRootOrEarliestMercurySampleName();
                         if (StringUtils.isBlank(sampleName)) {
@@ -121,8 +146,15 @@ public class FingerprintingPlateFactory {
                     dto.setRootSampleId(sampleName);
                     dto.setSampleAliquotId(sampleName);
                     dto.setParticipantId(sampleName);
-                    dto.setConcentration(labMetric != null ? labMetric.getValue() : BigDecimal.ZERO);
+                    if (positiveControl) {
+                        dto.setConcentration(labMetric != null ? labMetric.getValue() : new BigDecimal("20"));
+                    } else {
+                        dto.setConcentration(labMetric != null ? labMetric.getValue() : BigDecimal.ZERO);
+                    }
                     dto.setVolume(wellVolume != null ? wellVolume : BigDecimal.ZERO);
+                    dto.setPositiveControl(positiveControl);
+                    dto.setNegativeControl(negativeControl);
+                    dto.setRework(isRework);
                     dtos.add(dto);
                 }
             }
@@ -189,10 +221,17 @@ public class FingerprintingPlateFactory {
     public Workbook makeSpreadsheet(List<FpSpreadsheetRow> dtos) throws IOException {
         Map<String, Object[][]> sheets = new HashMap<>();
 
-        String[][] participantsCells = new String[dtos.size() + 1][];
+        int numParticipantCells = 0;
+        for (FpSpreadsheetRow dto : dtos) {
+            if (!dto.isNegativeControl() && !dto.isPositiveControl() && !dto.isRework()) {
+                numParticipantCells++;
+            }
+        }
+        String[][] participantsCells = new String[numParticipantCells + 1][];
         String[][] plateCells = new String[dtos.size() + 1][];
 
         int rowIndex = 0;
+        int participantRowIndex = 0;
 
         // Fills in the headers.
         participantsCells[rowIndex] = new String[] {"Participant Id", "Gender", "LSID", "Global Participant Id",
@@ -200,11 +239,15 @@ public class FingerprintingPlateFactory {
         plateCells[rowIndex] = new String[] {"Well Position", "Participant Id", "Root Sample Id", "Sample Aliquot Id",
                 "Volume (ul)", "Concentration (ng/ul)"};
         ++rowIndex;
+        ++participantRowIndex;
 
         // Fills in the data.
         for (FpSpreadsheetRow dto : dtos) {
             // gender=0 means "unspecified"
-            participantsCells[rowIndex] = new String[] {dto.getParticipantId(), "0", "", "", "", "", ""};
+            if (!dto.isNegativeControl() && !dto.isPositiveControl() && !dto.isRework()) {
+                participantsCells[participantRowIndex] = new String[]{dto.getParticipantId(), "0", "", "", "", "", ""};
+                participantRowIndex++;
+            }
             plateCells[rowIndex] = new String[] {dto.getPosition(), dto.getParticipantId(), dto.getRootSampleId(),
                     dto.getSampleAliquotId(), String.valueOf(dto.getVolume()), String.valueOf(dto.getConcentration())};
             ++rowIndex;
@@ -229,6 +272,9 @@ public class FingerprintingPlateFactory {
         private String sampleAliquotId;   // value is always the root sample id
         private BigDecimal volume;        // in units of uL
         private BigDecimal concentration; // in units of ng/uL
+        private boolean isPositiveControl;
+        private boolean isNegativeControl;
+        private boolean isRework; // if there exists another FingerprintPlateSetup event and a downstream Pond Reg.
 
         FpSpreadsheetRow(String position) {
             this.position = position;
@@ -276,6 +322,30 @@ public class FingerprintingPlateFactory {
 
         public void setConcentration(BigDecimal concentration) {
             this.concentration = concentration;
+        }
+
+        public boolean isPositiveControl() {
+            return isPositiveControl;
+        }
+
+        public void setPositiveControl(boolean positiveControl) {
+            isPositiveControl = positiveControl;
+        }
+
+        public boolean isNegativeControl() {
+            return isNegativeControl;
+        }
+
+        public void setNegativeControl(boolean negativeControl) {
+            isNegativeControl = negativeControl;
+        }
+
+        public boolean isRework() {
+            return isRework;
+        }
+
+        public void setRework(boolean rework) {
+            isRework = rework;
         }
 
         @Override

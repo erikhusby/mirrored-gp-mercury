@@ -83,6 +83,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellE
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.IceEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.InfiniumEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.InfiniumJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
@@ -1694,7 +1695,7 @@ public class LabEventTest extends BaseEventTest {
 
         InfiniumEntityBuilder infiniumEntityBuilder = runInfiniumProcessWithMethylation(
                 arrayPlatingEntityBuilder.getArrayPlatingPlate(), "Infinium",
-                InfiniumEntityBuilder.IncludeMethylation.TRUE);
+                InfiniumJaxbBuilder.IncludeMethylation.TRUE);
         Set<SampleInstanceV2> samples = infiniumEntityBuilder.getHybChips().get(0).getSampleInstancesV2();
         Assert.assertEquals(samples.size(), 24, "Wrong number of sample instances");
     }

@@ -53,7 +53,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 @Test(groups = TestGroups.FIXUP)
 public class LabVesselFixupTest extends Arquillian {
 
-    private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s");
+    public static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s");
 
     @Inject
     private LabVesselDao labVesselDao;
@@ -1523,6 +1523,37 @@ public class LabVesselFixupTest extends Arquillian {
         fixupCommentary = new FixupCommentary("BSP-3119 Change tube labels to correct name.");
         labBatchDao.persist(fixupCommentary);
         labBatchDao.flush();
+
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport2709() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<BarcodedTube> tubes = barcodedTubeDao.findListByBarcodes(Arrays.asList(
+                "1125668423",
+                "1125668470",
+                "1125668491",
+                "1125668483",
+                "1125664356",
+                "1125665028",
+                "1125664990",
+                "1125665004",
+                "1125665161",
+                "1125665157",
+                "1125665166",
+                "1125665212"));
+
+        for (LabVessel labVessel : tubes) {
+            labVessel.setReceptacleWeight(new BigDecimal(".62"));
+            System.out.println("Setting tube initial tare weight: " + labVessel.getLabel() + " to .62");
+        }
+
+        FixupCommentary fixupCommentary = new FixupCommentary("SUPPORT-2709 - Assign missing tare values to default");
+        barcodedTubeDao.persist(fixupCommentary);
+        barcodedTubeDao.flush();
 
         utx.commit();
     }

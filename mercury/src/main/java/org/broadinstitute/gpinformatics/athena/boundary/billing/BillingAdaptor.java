@@ -8,6 +8,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
+import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
@@ -16,9 +17,11 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 
@@ -128,11 +131,11 @@ public class BillingAdaptor implements Serializable {
         boolean errorsInBilling = false;
 
         List<BillingEjb.BillingResult> results = new ArrayList<>();
+        Quote quote;
 
         BillingSession billingSession = billingSessionAccessEjb.findAndLockSession(sessionKey);
         try {
-            List<QuoteImportItem> unBilledQuoteImportItems =
-                    null;
+            List<QuoteImportItem> unBilledQuoteImportItems = null;
             try {
                 unBilledQuoteImportItems = billingSession.getUnBilledQuoteImportItems(priceListCache);
             } catch (QuoteServerException e) {
@@ -144,30 +147,60 @@ public class BillingAdaptor implements Serializable {
                 throw new BillingException(BillingEjb.NO_ITEMS_TO_BILL_ERROR_TEXT);
             }
 
+            for(QuoteImportItem itemForPriceUpdate : unBilledQuoteImportItems) {
+                final List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(itemForPriceUpdate.getProductOrder());
+                final MessageCollection messageCollection = new MessageCollection();
+                List<String> effectivePricesForProducts;
+
+                try {
+                    quote = quoteService.getQuoteByAlphaId(itemForPriceUpdate.getQuoteId());
+                    ProductOrder.checkQuoteValidity(itemForPriceUpdate.getProductOrder(), quote);
+
+                    //todo SGM is this call really necessary?  Is it just for DBFree tests?
+                    quote.setAlphanumericId(itemForPriceUpdate.getQuoteId());
+                    effectivePricesForProducts = priceListCache
+                            .getEffectivePricesForProducts(allProductsOrdered, quote);
+
+                    if(itemForPriceUpdate.getProductOrder().isSavedInSAP()) {
+                        if (!StringUtils.equals(itemForPriceUpdate.getProductOrder().latestSapOrderDetail().getOrderPricesHash(),
+                                TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ",")))
+                                ) {
+                            productOrderEjb.publishProductOrderToSAP(itemForPriceUpdate.getProductOrder(), messageCollection, true);
+                        }
+                    }
+                } catch (QuoteServerException|QuoteNotFoundException|InvalidProductException|SAPInterfaceException e) {
+                    BillingEjb.BillingResult result = new BillingEjb.BillingResult(itemForPriceUpdate);
+
+                    final String errorMessage = "Unable to Update pricing in SAP for " +itemForPriceUpdate.getProductOrder().getBusinessKey()+": "+e.getMessage();
+                    itemForPriceUpdate.setBillingMessages(errorMessage);
+                    result.setErrorMessage(errorMessage);
+                    errorsInBilling = true;
+
+                    results.add(result);
+
+                    log.error(errorMessage);
+                }
+            }
+
+            if(!results.isEmpty()) {
+                throw new BillingException("Pricing Update to SAP Failed.  Unable to complete Billing Session at this time");
+            }
+
             HashMultimap<String, String> quoteItemsByQuote = HashMultimap.create();
             for (QuoteImportItem item : unBilledQuoteImportItems) {
 
-                final List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(item.getProductOrder());
                 BillingEjb.BillingResult result = new BillingEjb.BillingResult(item);
                 results.add(result);
 
-                Quote quote = null;
+                quote = null;
                 String sapBillingId = null;
                 String workId = null;
-                final MessageCollection messageCollection = new MessageCollection();
                 try {
                     quote = quoteService.getQuoteByAlphaId(item.getQuoteId());
-                    quote.setAlphanumericId(item.getQuoteId());
-                    List<String> effectivePricesForProducts = priceListCache
-                            .getEffectivePricesForProducts(allProductsOrdered, quote);
+                    ProductOrder.checkQuoteValidity(item.getProductOrder(), quote);
 
-                    if(item.getProductOrder().isSavedInSAP()) {
-                        if (!StringUtils.equals(item.getProductOrder().latestSapOrderDetail().getOrderPricesHash(),
-                                TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ",")))
-                                ) {
-                            productOrderEjb.publishProductOrderToSAP(item.getProductOrder(), messageCollection, true);
-                        }
-                    }
+                    //todo SGM is this call really necessary?  Is it just for DBFree tests?
+                    quote.setAlphanumericId(item.getQuoteId());
 
                     workId = CollectionUtils.isEmpty(item.getWorkItems())?null:item.getWorkItems().toArray(new String[item.getWorkItems().size()])[0];
                     sapBillingId = quote.isEligibleForSAP()? item.getSapItems(): NOT_ELIGIBLE_FOR_SAP_INDICATOR;

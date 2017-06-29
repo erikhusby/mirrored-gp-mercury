@@ -14,6 +14,7 @@
     <style type="text/css">
         #filters {
             margin-top: 6px;
+            margin-bottom: 6px;
         }
         #filters .nav {
             margin-bottom: 5px;
@@ -144,6 +145,11 @@
         .processing {
             z-index: 200;
         }
+        .dataTables_info {
+            clear: none;
+            padding-top: 5px;
+            padding-left: 1em;
+        }
     </style>
 
 <%-- ================ Page-specific JavaScript ================ --%>
@@ -177,7 +183,7 @@
                      the "T" from the sDom string.
                 'sDom': "<'row-fluid'<'span6'f><'span4'<'#dtButtonHolder'>><'span2'T>r>t<'row-fluid'<'span6'i><'span6'p>>",
                 --%>
-                'sDom': "<'row-fluid'<'span6'f><'span4'<'#dtButtonHolder'>><'span2'i><'.processing'r>>t<'row-fluid'<'span6'<'.autowidth' l>><'span6'p>>",
+                'sDom': "<'row-fluid'<'span6'fi>><'row-fluid'<'span6 .autowidth'l><'span4 pull-right'<'#dtButtonHolder'>><'.processing'r>>t<'row-fluid'<'span6 autowidth' l><'span6'p>>",
                 /*
                  * It's not useful to save filter state for this UI. Also, hSpinner widgets will not be initialized if
                  * they are filtered out of the DOM when the page loads
