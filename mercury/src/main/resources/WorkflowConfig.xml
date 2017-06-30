@@ -504,6 +504,13 @@
             <version>1.0</version>
             <effectiveDate>2016-11-21T21:03:24.085-04:00</effectiveDate>
             <workflowStepDefs>
+                <name>PreEndRepairTransfer</name>
+                <labEventTypes>PRE_END_REPAIR_TRANSFER</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
                 <name>EndRepair_ABase</name>
                 <labEventTypes>END_REPAIR_ABASE</labEventTypes>
                 <optional>false</optional>
