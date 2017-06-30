@@ -27,12 +27,12 @@ import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Date;
 
 /**
  * A transient class returned by LabVessel.getSampleInstances.  It accumulates information encountered
@@ -87,7 +87,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     private List<Reagent> reagents = new ArrayList<>();
     private List<ReagentDesign> reagentsDesigns = new ArrayList<>();
     private String collaboratorParticipantId;
-    private Boolean isPooledTube;
+    private boolean isPooledTube;
     private String sampleLibraryName;
     private Integer readLength;
 
@@ -138,6 +138,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     private void initiateSampleInstanceV2(LabVessel labVessel)
     {
         initialLabVessel = labVessel;
+        rootMercurySamples.addAll(labVessel.getMercurySamples());
         if (LabVessel.DIAGNOSTICS) {
             String message = "Created sample instance ";
             if (!labVessel.getMercurySamples().isEmpty()) {
@@ -645,11 +646,11 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         }
     }
 
-    public Boolean getIsPooledTube() {
+    public boolean getIsPooledTube() {
         return isPooledTube;
     }
 
-    public void setIsPooledTube(Boolean isPooledTube) {
+    public void setIsPooledTube(boolean isPooledTube) {
         this.isPooledTube = isPooledTube;
     }
 
