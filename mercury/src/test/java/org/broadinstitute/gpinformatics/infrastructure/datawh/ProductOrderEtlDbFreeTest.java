@@ -11,6 +11,9 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
+import org.broadinstitute.gpinformatics.mercury.entity.run.ArchetypeAttribute;
+import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -45,7 +48,9 @@ public class ProductOrderEtlDbFreeTest {
     private Collection<RegulatoryInfo> regulatoryInfos = Collections.EMPTY_LIST;
 
     private AuditReaderDao auditReader = createMock(AuditReaderDao.class);
-    private ProductOrderDao dao = createMock(ProductOrderDao.class);
+    private ProductOrderDao pdoDao = createMock(ProductOrderDao.class);
+    private AttributeArchetypeDao archetypeDao = createMock(AttributeArchetypeDao.class);
+    private GenotypingChip genotypingChip = createMock(GenotypingChip.class);
     private ProductOrder pdo = createMock(ProductOrder.class);
     private ResearchProject researchProject = createMock(ResearchProject.class);
     private Product product = createMock(Product.class);
@@ -54,16 +59,18 @@ public class ProductOrderEtlDbFreeTest {
     private RegulatoryInfo regulatoryInfo = createMock(RegulatoryInfo.class);
     private ProductEjb productEjb = createMock(ProductEjb.class);
 
-    private Object[] mocks = new Object[]{auditReader, dao, pdo, researchProject, product, userList, owner,
+    private Object[] mocks = new Object[]{auditReader, pdoDao, archetypeDao, genotypingChip, pdo, researchProject, product, userList, owner,
             regulatoryInfo, productEjb};
     private String sapMockOrderNumber = "1000084774";
+    private String chipArchetypeGroup = "Infinium";
     private String arrayChipType = "PsychChipContrived";
+    private String callThreshold = "66";
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
         reset(mocks);
 
-        tst = new ProductOrderEtl(dao, userList, productEjb);
+        tst = new ProductOrderEtl(pdoDao, userList, productEjb, archetypeDao);
         tst.setAuditReaderDao(auditReader);
     }
 
@@ -79,7 +86,7 @@ public class ProductOrderEtlDbFreeTest {
     }
 
     public void testCantMakeEtlRecord() throws Exception {
-        expect(dao.findById(ProductOrder.class, -1L)).andReturn(null);
+        expect(pdoDao.findById(ProductOrder.class, -1L)).andReturn(null);
 
         replay(mocks);
 
@@ -89,7 +96,7 @@ public class ProductOrderEtlDbFreeTest {
     }
 
     public void testIncrementalEtl() throws Exception {
-        expect(dao.findById(ProductOrder.class, entityId)).andReturn(pdo);
+        expect(pdoDao.findById(ProductOrder.class, entityId)).andReturn(pdo);
 
         expect(pdo.getProductOrderId()).andReturn(entityId);
         expect(pdo.getResearchProject()).andReturn(researchProject).times(2);
@@ -111,7 +118,9 @@ public class ProductOrderEtlDbFreeTest {
         expect(researchProject.getResearchProjectId()).andReturn(researchProjectId);
         expect(product.getProductId()).andReturn(productId);
 
-        expect(productEjb.getGenotypingChip(pdo, createdDate)).andReturn(Pair.of("notused", arrayChipType));
+        expect(productEjb.getGenotypingChip(pdo, createdDate)).andReturn(Pair.of(chipArchetypeGroup, arrayChipType));
+        expect(archetypeDao.findGenotypingChip(chipArchetypeGroup, arrayChipType)).andReturn(genotypingChip);
+        expect(genotypingChip.getAttribute("call_rate_threshold")).andReturn(new ArchetypeAttribute(genotypingChip, "call_rate_threshold", callThreshold));
 
         replay(mocks);
 
@@ -124,7 +133,7 @@ public class ProductOrderEtlDbFreeTest {
 
     private void verifyRecord(String record) {
         int i = 0;
-        String[] parts = record.split(",", 17);
+        String[] parts = record.split(",", 18);
         assertEquals(parts[i++], etlDateString);
         assertEquals(parts[i++], "F");
         assertEquals(parts[i++], String.valueOf(entityId));
@@ -141,6 +150,7 @@ public class ProductOrderEtlDbFreeTest {
         assertEquals(parts[i++], "");
         assertEquals(parts[i++], sapMockOrderNumber);
         assertEquals(parts[i++], arrayChipType);
+        assertEquals(parts[i++], callThreshold);
         assertEquals(parts[i++], "");
         assertEquals(parts.length, i);
     }
