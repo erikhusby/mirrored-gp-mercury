@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+import com.atlassian.clover.api.registry.HasStatements;
 import org.apache.commons.collections4.MapIterator;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
@@ -1727,21 +1728,22 @@ public class LabVesselSearchDefinition {
         searchTerm.setCriteriaPaths(labelCriteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public String evaluate(Object entity, SearchContext context) {
-                String result = null;
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                Set<String> result = null;
                 LabVessel vessel = (LabVessel)entity;
 
+                // Plate well will only show latest chip in the case of a re-hyb
                 if( vessel.getType() == LabVessel.ContainerType.PLATE_WELL ) {
                     for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
                             : InfiniumVesselTraversalEvaluator.getChipDetailsForDnaWell(vessel, CHIP_EVENT_TYPES, context ).asMap().entrySet()) {
-                        result = labVesselAndPositions.getKey().getLabel();
+                        (result == null?result = new HashSet<>():result).add(labVesselAndPositions.getKey().getLabel());
                         break;
                     }
                 } else {
+                    // Plate shows list of all chips, initial and re-hyb
                     for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
                             : InfiniumVesselTraversalEvaluator.getChipDetailsForDnaPlate(vessel, CHIP_EVENT_TYPES, context ).asMap().entrySet()) {
-                        result = labVesselAndPositions.getKey().getLabel();
-                        break;
+                        (result == null?result = new HashSet<>():result).add(labVesselAndPositions.getKey().getLabel());
                     }
                 }
                 return result;
