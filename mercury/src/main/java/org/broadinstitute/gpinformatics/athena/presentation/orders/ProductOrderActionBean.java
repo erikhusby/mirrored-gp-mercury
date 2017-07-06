@@ -1224,7 +1224,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             ProductOrder.loadLabEventSampleData(editOrder.getSamples());
 
             sampleDataSourceResolver.populateSampleDataSources(editOrder);
-            populateAttributes(editOrder.getJiraTicketKey());
+            populateAttributes(editOrder.getProductOrderId());
         }
     }
 
@@ -1575,8 +1575,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
         if (chipDefaults != null && attributes != null) {
             if (!chipDefaults.equals(attributes)) {
-                genotypingProductOrderMapping =
-                        productOrderEjb.findOrCreateGenotypingChipProductOrderMapping(editOrder.getJiraTicketKey());
+                genotypingProductOrderMapping
+                        = productOrderEjb.findOrCreateGenotypingChipProductOrderMapping(editOrder.getProductOrderId());
                 if (genotypingProductOrderMapping != null) {
                     boolean foundChange = false;
                     for (ArchetypeAttribute existingAttribute : genotypingProductOrderMapping.getAttributes()) {
@@ -3131,7 +3131,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public GenotypingProductOrderMapping getGenotypingProductOrderMapping() {
         if (genotypingProductOrderMapping == null) {
             genotypingProductOrderMapping =
-                    attributeArchetypeDao.findGenotypingProductOrderMapping(editOrder.getJiraTicketKey());
+                    attributeArchetypeDao.findGenotypingProductOrderMapping(editOrder.getProductOrderId());
         }
         return genotypingProductOrderMapping;
     }
@@ -3139,7 +3139,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private GenotypingProductOrderMapping findOrCreateGenotypingProductOrderMapping() {
         if (genotypingProductOrderMapping == null) {
             genotypingProductOrderMapping =
-                    productOrderEjb.findOrCreateGenotypingChipProductOrderMapping(editOrder.getJiraTicketKey());
+                    productOrderEjb.findOrCreateGenotypingChipProductOrderMapping(editOrder.getProductOrderId());
         }
         return genotypingProductOrderMapping;
     }
@@ -3209,7 +3209,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     /**
      * Override fields are group attributes set in AttributeDefinition
      */
-    private void populateAttributes(String jiraTicketKey) {
+    private void populateAttributes(Long productOrderId) {
         // Set default values first from GenotypingChip
         attributes.clear();
         Map<String, AttributeDefinition> definitionsMap = getPdoAttributeDefinitions();
@@ -3230,7 +3230,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         // Check if a mapping exists for this pdo, if so override default values if not null
         genotypingProductOrderMapping =
-                attributeArchetypeDao.findGenotypingProductOrderMapping(jiraTicketKey);
+                attributeArchetypeDao.findGenotypingProductOrderMapping(productOrderId);
         if (genotypingProductOrderMapping != null) {
             for (ArchetypeAttribute attribute : genotypingProductOrderMapping.getAttributes()) {
                 AttributeDefinition definition = getPdoAttributeDefinitions().get(attribute.getAttributeName());

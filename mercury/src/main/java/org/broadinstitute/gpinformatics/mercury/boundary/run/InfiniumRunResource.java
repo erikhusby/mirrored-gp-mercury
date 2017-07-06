@@ -241,7 +241,7 @@ public class InfiniumRunResource {
 
                 //Attempt to override default chip attributes if changed in product order
                 GenotypingProductOrderMapping genotypingProductOrderMapping =
-                        attributeArchetypeDao.findGenotypingProductOrderMapping(productOrder.getJiraTicketKey());
+                        attributeArchetypeDao.findGenotypingProductOrderMapping(productOrder.getProductOrderId());
                 if (genotypingProductOrderMapping != null) {
                     for (ArchetypeAttribute archetypeAttribute : genotypingProductOrderMapping.getAttributes()) {
                         if (chipAttributes.containsKey(archetypeAttribute.getAttributeName()) &&
