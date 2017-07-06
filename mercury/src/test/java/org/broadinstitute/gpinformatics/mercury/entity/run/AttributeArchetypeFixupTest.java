@@ -343,6 +343,27 @@ public class AttributeArchetypeFixupTest extends Arquillian {
         utx.commit();
     }
 
+    /**
+     * GPLIM-4320 add pdo specific overrides used wrong AttributeDefinition group name
+     */
+    @Test(enabled = false)
+    public void gplim4949PdoOverrides() throws Exception {
+        utx.begin();
+        userBean.loginOSUser();
+
+        final String attributeGroup = GenotypingProductOrderMapping.ATTRIBUTES_GROUP;
+
+        AttributeDefinition attribDef = attributeArchetypeDao.findById(AttributeDefinition.class, 2951L);
+        attribDef.setGroup(attributeGroup);
+        attribDef = attributeArchetypeDao.findById(AttributeDefinition.class, 2952L);
+        attribDef.setGroup(attributeGroup);
+
+        String fixupReason = "GPLIM-4949 fix AttributeDefinition group value for Infinium pdo specific overrides.";
+        attributeArchetypeDao.persist(new FixupCommentary(fixupReason));
+        attributeArchetypeDao.flush();
+        utx.commit();
+    }
+
 
     @Test(enabled = false)
     public void gplim4350IlluminaManifestAttribute() throws Exception {
