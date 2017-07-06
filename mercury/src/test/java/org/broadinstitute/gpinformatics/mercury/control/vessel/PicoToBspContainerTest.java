@@ -135,7 +135,7 @@ public class PicoToBspContainerTest extends Arquillian {
     // Each test case is a row in this array. The fields are:
     // #research, #crsp, quantType, #dilutionWells, #microfluorWells, sensitivityFactor, dilutionFactor, bsp quant
     private Object[][] testCases = {
-            // Duplicate pico, Rack -> 1st blackPlate(96 well) and rack -> 2nd blackPlate(96 well).
+            // Double single-stamp pico, Rack -> 1st blackPlate(96 well) and rack -> 2nd blackPlate(96 well).
             {2, 2, 2, 0, 96, 1, 1, 3.3348},
             // Triplicate pico, rack -> blackPlate(384 well) e.g. CO-20552814.
             {2, 0, 3, 0, 384, 1, 1, 53.745},
@@ -248,7 +248,7 @@ public class PicoToBspContainerTest extends Arquillian {
             Assert.assertNotNull(microfluorPlate, "No support for " + microfluorWells);
 
             log.info("Testing " +
-                    (quantCardinality == 1 ? "single" : quantCardinality == 2 ? "duplicate" : "triplicate") +
+                    (quantCardinality == 1 ? "single" : quantCardinality == 2 ? "double single" : "triplicate") +
                      " quant, " + (dilutionPlate == null ? "no" : dilutionWells) + " dilution, " +
                     research + " research + " +  crsp + " clinical, " +
                     " sensitivity=" + sensitivityFactor + ", dilution=" + dilutionFactor);
@@ -363,7 +363,7 @@ public class PicoToBspContainerTest extends Arquillian {
         Map<String, String> mapTubeToPosition = new HashMap<>();
 
         for (int i = 0; i < dto.getTotalTubeCount(); ++i) {
-            BarcodedTube tube = (i < dto.getResearchTubeCount() ? bspTubeIterator : mercuryTubeIterator).next();
+            BarcodedTube tube = (i >= dto.getResearchTubeCount() ? bspTubeIterator : mercuryTubeIterator).next();
             String barcode = tube.getLabel();
             String position = positionFor(i);
             mapTubeToPosition.put(barcode, position);
@@ -574,22 +574,21 @@ public class PicoToBspContainerTest extends Arquillian {
                         VarioskanParserTest.VARIOSKAN_384_OUTPUT : VarioskanParserTest.VARIOSKAN_OUTPUT,
                 String.valueOf(System.currentTimeMillis()));
 
-        // Finds the tube-derived microfluor positions that don't have a source tube transfer into them.
-        Set<VesselPosition> positionsWithoutTube = new HashSet<>(dto.getMicrofluorPlateType() == Eppendorf96 ?
-                ALL96.getWells() : CollectionUtils.subtract(ALL384.getWells(), P384_96TIP_1INTERVAL_B2.getWells()));
+        // Finds the tube-derived microfluor positions that have a source tube transfer into them.
+        Set<VesselPosition> positionsWithTube = new HashSet<>();
         for (String positionName : dto.getTubeToPosition().values()) {
             VesselPosition position = VesselPosition.getByName(positionName);
             if (dto.getMicrofluorPlateType() == Eppendorf96) {
-                positionsWithoutTube.remove(position);
+                positionsWithTube.add(position);
             } else if (dto.getMicrofluorPlateType() == Eppendorf384) {
-                positionsWithoutTube.removeAll(map96to384.get(position));
+                positionsWithTube.addAll(map96to384.get(position));
             } else {
                 Assert.fail("No support for " + dto.getMicrofluorPlateType().getAutomationName() + " microfluor");
             }
         }
         // Trims rows from spreadsheet if their wells were not present in the microfluor
         // transfer. This is not where crisp samples get filtered out.
-        return VesselEjb.filterOutRows(quantStream, positionsWithoutTube);
+        return VesselEjb.filterOutRows(quantStream, positionsWithTube);
     }
 
     private class Dto {
