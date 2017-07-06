@@ -1,11 +1,9 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
-import com.atlassian.clover.api.registry.HasStatements;
 import org.apache.commons.collections4.MapIterator;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
-import org.broadinstitute.gpinformatics.infrastructure.columns.SampleDataFetcherAddRowsListener;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
@@ -14,6 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselArrayMet
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselLatestEventPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetadataPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetricPlugin;
+import org.broadinstitute.gpinformatics.infrastructure.columns.SampleDataFetcherAddRowsListener;
 import org.broadinstitute.gpinformatics.infrastructure.columns.VesselLayoutPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.VesselMetricDetailsPlugin;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
