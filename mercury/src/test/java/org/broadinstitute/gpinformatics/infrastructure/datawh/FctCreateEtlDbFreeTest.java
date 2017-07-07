@@ -15,6 +15,7 @@ import org.easymock.EasyMock;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.ws.rs.HEAD;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -109,12 +110,9 @@ public class FctCreateEtlDbFreeTest {
         expect(labBatchStartingVessel.getLabBatch()).andReturn(labBatch);
         expect(labBatch.getBatchName()).andReturn(fctName);
         expect(labBatch.getLabBatchId()).andReturn(labBatchId);
-        expect(labBatch.getLabBatchType()).andReturn(miseqBatchType).anyTimes();
+        expect(labBatch.getLabBatchType()).andReturn(fctBatchType).anyTimes();
         expect(labBatch.getFlowcellType()).andReturn(flowcellType).times(2);
         expect(labBatch.getCreatedOn()).andReturn(createdDate);
-
-        expect(flowcellDesignationEjb.getFlowcellDesignations(EasyMock.anyObject(Collection.class))).
-                andReturn(designations);
 
         expect(labBatchStartingVessel.getLabVessel()).andReturn(batchVessel).anyTimes();
         expect(batchVessel.getLabel()).andReturn(batchVesselLabel);
@@ -122,13 +120,17 @@ public class FctCreateEtlDbFreeTest {
         expect(labBatchStartingVessel.getVesselPosition()).andReturn(flowcellLane).times(2);
         expect(labBatchStartingVessel.getConcentration()).andReturn(concentration);
 
-        replay(mocks);
-
-        designations.clear();
-        designations.add(new FlowcellDesignation(labBatchStartingVessel.getLabVessel(), labBatch,
+        FlowcellDesignation designation = new FlowcellDesignation(batchVessel, labBatch,
                 FlowcellDesignation.IndexType.DUAL, false /*poolTest*/,
                 IlluminaFlowcell.FlowcellType.MiSeqFlowcell, 1, 76, BigDecimal.TEN, true,
-                FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL));
+                FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL);
+
+        designations.clear();
+        designations.add(designation);
+
+        expect(labBatchStartingVessel.getFlowcellDesignation()).andReturn( designation ).times(2);
+
+        replay(mocks);
 
         Collection<String> records = tst.dataRecords(etlDateString, false, entityId);
         assertEquals(records.size(), 1);
@@ -141,8 +143,6 @@ public class FctCreateEtlDbFreeTest {
     public void testPoolTestFromDesignation() throws Exception {
         expect(dao.findById(LabBatchStartingVessel.class, entityId)).andReturn(labBatchStartingVessel);
 
-        expect(labBatchStartingVessel.getBatchStartingVesselId()).andReturn(entityId);
-
         expect(labBatchStartingVessel.getLabBatch()).andReturn(labBatch);
         expect(labBatch.getBatchName()).andReturn(fctName);
         expect(labBatch.getLabBatchId()).andReturn(labBatchId);
@@ -150,22 +150,24 @@ public class FctCreateEtlDbFreeTest {
         expect(labBatch.getFlowcellType()).andReturn(flowcellType).times(2);
         expect(labBatch.getCreatedOn()).andReturn(createdDate);
 
-        expect(flowcellDesignationEjb.getFlowcellDesignations(EasyMock.anyObject(Collection.class))).
-                andReturn(designations);
-
+        expect(labBatchStartingVessel.getBatchStartingVesselId()).andReturn(entityId);
         expect(labBatchStartingVessel.getLabVessel()).andReturn(batchVessel).anyTimes();
         expect(batchVessel.getLabel()).andReturn(batchVesselLabel);
 
         expect(labBatchStartingVessel.getVesselPosition()).andReturn(flowcellLane).times(2);
         expect(labBatchStartingVessel.getConcentration()).andReturn(concentration);
 
-        replay(mocks);
+        FlowcellDesignation designation = new FlowcellDesignation(batchVessel, labBatch,
+                        FlowcellDesignation.IndexType.DUAL, true /*poolTest*/,
+                        IlluminaFlowcell.FlowcellType.HiSeqFlowcell,  8, 76, BigDecimal.TEN, true,
+                        FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL);
+
+        expect(labBatchStartingVessel.getFlowcellDesignation()). andReturn(designation).times(2);
 
         designations.clear();
-        designations.add(new FlowcellDesignation(labBatchStartingVessel.getLabVessel(), labBatch,
-                FlowcellDesignation.IndexType.DUAL, true /*poolTest*/,
-                IlluminaFlowcell.FlowcellType.HiSeqFlowcell,  8, 76, BigDecimal.TEN, true,
-                FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL));
+        designations.add(designation);
+
+        replay(mocks);
 
         Collection<String> records = tst.dataRecords(etlDateString, false, entityId);
         assertEquals(records.size(), 1);
@@ -187,18 +189,22 @@ public class FctCreateEtlDbFreeTest {
         expect(labBatch.getFlowcellType()).andReturn(flowcellType).times(2);
         expect(labBatch.getCreatedOn()).andReturn(createdDate);
 
-        expect(flowcellDesignationEjb.getFlowcellDesignations(EasyMock.anyObject(Collection.class))).
-                andReturn(designations);
-
         expect(labBatchStartingVessel.getLabVessel()).andReturn(batchVessel).anyTimes();
         expect(batchVessel.getLabel()).andReturn(batchVesselLabel);
 
         expect(labBatchStartingVessel.getVesselPosition()).andReturn(flowcellLane).times(2);
         expect(labBatchStartingVessel.getConcentration()).andReturn(concentration);
 
+        expect(labBatchStartingVessel.getFlowcellDesignation()). andReturn(
+                new FlowcellDesignation(batchVessel, labBatch,
+                        FlowcellDesignation.IndexType.DUAL, false /*poolTest*/,
+                        IlluminaFlowcell.FlowcellType.HiSeqFlowcell,  8, 76, BigDecimal.TEN, true,
+                        FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL)
+        ).times(2);
+
         replay(mocks);
 
-        designations.clear();
+
 
         Collection<String> records = tst.dataRecords(etlDateString, false, entityId);
         assertEquals(records.size(), 1);
@@ -219,9 +225,6 @@ public class FctCreateEtlDbFreeTest {
         expect(labBatch.getLabBatchType()).andReturn(miseqBatchType).anyTimes();
         expect(labBatch.getFlowcellType()).andReturn(flowcellType).times(2);
         expect(labBatch.getCreatedOn()).andReturn(createdDate);
-
-        expect(flowcellDesignationEjb.getFlowcellDesignations(EasyMock.anyObject(Collection.class))).
-                andReturn(designations);
 
         expect(labBatchStartingVessel.getLabVessel()).andReturn(batchVessel).anyTimes();
         expect(batchVessel.getLabel()).andReturn(batchVesselLabel);

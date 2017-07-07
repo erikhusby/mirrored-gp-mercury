@@ -874,4 +874,13 @@
       <dropColumn tableName="FLOWCELL_DESIGNATION_AUD" columnName="loading_tube_event"/>
     </changeSet>
 
+    <changeSet id="GPLIM-4582-1" author="jsacco">
+        <addColumn schemaName="mercury" tableName="batch_starting_vessels">
+            <column name="flowcell_designation" type="number(19,0)"/>
+        </addColumn>
+        <addColumn schemaName="mercury" tableName="batch_starting_vessels_aud">
+            <column name="flowcell_designation" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

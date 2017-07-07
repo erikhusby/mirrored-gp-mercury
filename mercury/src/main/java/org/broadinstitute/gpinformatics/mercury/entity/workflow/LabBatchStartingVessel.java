@@ -48,7 +48,7 @@ public class LabBatchStartingVessel {
     @Enumerated(EnumType.STRING)
     private VesselPosition vesselPosition;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private FlowcellDesignation flowcellDesignation;
 
     @Transient
@@ -139,14 +139,6 @@ public class LabBatchStartingVessel {
         return linkedLcset;
     }
 
-    public FlowcellDesignation getDesignation() {
-        return flowcellDesignation;
-    }
-
-    public void setDesignation(FlowcellDesignation designation) {
-        this.flowcellDesignation = designation;
-    }
-
     @Transient
     public void setLinkedLcset(String linkedLcset) {
         this.linkedLcset = linkedLcset;
@@ -159,5 +151,13 @@ public class LabBatchStartingVessel {
     @Transient
     public void setProductNames(String productNames) {
         this.productNames = productNames;
+    }
+
+    public FlowcellDesignation getFlowcellDesignation(){
+        return flowcellDesignation;
+    }
+
+    public void setFlowcellDesignation( FlowcellDesignation flowcellDesignation){
+        this.flowcellDesignation = flowcellDesignation;
     }
 }
