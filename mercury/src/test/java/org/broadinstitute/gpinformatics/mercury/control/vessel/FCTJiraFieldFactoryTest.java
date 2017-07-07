@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -21,6 +22,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -50,11 +52,12 @@ public class FCTJiraFieldFactoryTest {
 
         LabBatch.VesselToLanesInfo vesselToLanesInfo = new LabBatch.VesselToLanesInfo(
                 vesselPositions1, BigDecimal.valueOf(16.22f), new BarcodedTube("DenatureTube01"), "LCSET-0001",
-                "Express Somatic Human WES (Deep Coverage) v1");
+                "Express Somatic Human WES (Deep Coverage) v1", Collections.<FlowcellDesignation>emptyList());
 
         LabBatch.VesselToLanesInfo vesselToLanesInfo2 = new LabBatch.VesselToLanesInfo(
                 vesselPositions2, BigDecimal.valueOf(12.22f), new BarcodedTube("DenatureTube02"), "LCSET-0002",
-                "Product 1" + DesignationDto.DELIMITER + "Product 2" + DesignationDto.DELIMITER + "Product 3");
+                "Product 1" + DesignationDto.DELIMITER + "Product 2" + DesignationDto.DELIMITER + "Product 3",
+                Collections.<FlowcellDesignation>emptyList());
 
         vesselToLanesInfos.add(vesselToLanesInfo);
         vesselToLanesInfos.add(vesselToLanesInfo2);

@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
@@ -28,6 +29,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationDto;
@@ -50,6 +52,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -94,7 +97,10 @@ public class LabBatchEjbStandardTest extends Arquillian {
     private JiraService jiraService;
 
     @Inject
-    LabBatchTestUtils labBatchTestUtils;
+    private LabBatchTestUtils labBatchTestUtils;
+
+    @Inject
+    private FlowcellDesignationEjb flowcellDesignationEjb;
 
     private Bucket bucket;
     private boolean isClinical;
@@ -297,7 +303,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
         String productNames = "CP Human WES (150xMTC)" + DesignationDto.DELIMITER + "Controls";
         LabBatch.VesselToLanesInfo vesselToLanesInfo =
                 new LabBatch.VesselToLanesInfo(vesselPositionList, BigDecimal.valueOf(13.11f), barcodedTube,
-                        lcset, productNames);
+                        lcset, productNames, Collections.<FlowcellDesignation>emptyList());
         laneInfos.add(vesselToLanesInfo);
         LabBatch fctLabBatch = new LabBatch("Test FCT batch name", laneInfos,
                 LabBatch.LabBatchType.FCT, HiSeq4000Flowcell);
@@ -377,14 +383,13 @@ public class LabBatchEjbStandardTest extends Arquillian {
 
             // Makes the FCTs.
             final StringBuilder messages = new StringBuilder();
-            final MessageReporter messageReporter = new MessageReporter() {
+            List<LabBatch> fcts = labBatchEJB.makeFcts(dtos, flowcellTypes[runIdx], "epolk", new MessageReporter() {
                 @Override
                 public String addMessage(String message, Object... arguments) {
                     messages.append(String.format(message, arguments)).append("\n");
                     return "";
                 }
-            };
-            List<LabBatch> fcts = labBatchEJB.makeFcts(dtos, flowcellTypes[runIdx], "epolk", messageReporter);
+            });
             Assert.assertFalse(messages.toString().contains(" invalid "), messages.toString());
             Assert.assertEquals(fcts.size(), laneCount / flowcellTypes[runIdx].getVesselGeometry().getCapacity());
 
@@ -459,31 +464,22 @@ public class LabBatchEjbStandardTest extends Arquillian {
                 barcodeToLcset.put(dto.getBarcode(), dto.getLcset());
             }
 
-            // Makes the FCTs.
-            final StringBuilder messages = new StringBuilder();
-            final MessageReporter messageReporter = new MessageReporter() {
-                @Override
-                public String addMessage(String message, Object... arguments) {
-                    messages.append(String.format(message, arguments)).append("\n");
-                    return "";
-                }
-            };
-            List<MutablePair<String, String>> fctUrls = labBatchEJB.makeFcts(designationDtos, "epolk", messageReporter);
-            Assert.assertFalse(messages.toString().contains(" invalid "), messages.toString());
+            // Creates FlowcellDesignations from the dtos.
+            Assert.assertFalse(designationDtos.isEmpty());
+            DesignationUtils.updateDesignationsAndDtos(designationDtos,
+                    EnumSet.allOf(FlowcellDesignation.Status.class), flowcellDesignationEjb);
 
-            // Created the correct number of FCTs?
-            Assert.assertEquals(fctUrls.size(), laneCount / flowcellTypes[runIdx].getVesselGeometry().getCapacity());
-            labBatchDao.flush();
+            Set<String> expectedBarcodes = new HashSet<>(barcodeToLcset.keySet());
+            Set<Long> expectedDesignationIds = new HashSet<>();
 
             // Checks the persisted flowcell designations against their dtos.
-            Assert.assertFalse(designationDtos.isEmpty());
             for (DesignationDto dto : designationDtos) {
                 Assert.assertNotNull(dto.getDesignationId());
                 FlowcellDesignation flowcellDesignation = labBatchDao.findById(FlowcellDesignation.class,
                         dto.getDesignationId());
                 Assert.assertNotNull(flowcellDesignation);
-                Assert.assertEquals(dto.isAllocated(),
-                        (flowcellDesignation.getStatus() == FlowcellDesignation.Status.IN_FCT));
+                expectedDesignationIds.add(flowcellDesignation.getDesignationId());
+                Assert.assertFalse(dto.isAllocated());
                 Assert.assertNull(flowcellDesignation.getChosenLcset());
 
                 // Tests that a dto can be made from the persisted flowcell designation.
@@ -508,8 +504,27 @@ public class LabBatchEjbStandardTest extends Arquillian {
                 Assert.assertEquals(testDtos.get(0).getSequencerModel(), dto.getSequencerModel());
                 Assert.assertEquals(testDtos.get(0).getTubeEventId(), dto.getTubeEventId());
             }
-            Set<String> expectedBarcodes = new HashSet<>(barcodeToLcset.keySet());
-            Set<String> foundBarcodes = new HashSet<>();
+            Assert.assertEquals(expectedDesignationIds.size(), numberLanes[runIdx].length);
+
+            for (DesignationDto dto : designationDtos) {
+                dto.setSelected(true);
+            }
+
+            // Makes the FCTs.
+            final StringBuilder messages = new StringBuilder();
+            List<MutablePair<String, String>> fctUrls = labBatchEJB.makeFcts(designationDtos, "epolk",
+                    new MessageReporter() {
+                        @Override
+                        public String addMessage(String message, Object... arguments) {
+                            messages.append(String.format(message, arguments)).append("\n");
+                            return "";
+                        }
+                    });
+            Assert.assertFalse(messages.toString().contains(" invalid "), messages.toString());
+
+            // Created the correct number of FCTs?
+            Assert.assertEquals(fctUrls.size(), laneCount / flowcellTypes[runIdx].getVesselGeometry().getCapacity());
+            labBatchDao.flush();
 
             // Checks for the split dto.
             int splitDtoCount = 0;
@@ -526,6 +541,8 @@ public class LabBatchEjbStandardTest extends Arquillian {
                 }
             }
             Assert.assertEquals(splitDtoCount, splitDtoBarcode == null ? 0 : 1);
+            Set<String> foundBarcodes = new HashSet<>();
+            Set<Long> foundDesignationIds = new HashSet<>();
 
             for (MutablePair<String, String> fctUrl : fctUrls) {
                 String fctName = fctUrl.getLeft();
@@ -547,6 +564,12 @@ public class LabBatchEjbStandardTest extends Arquillian {
                     Assert.assertEquals(laneInfoRow.getProductNames(), productName);
                     foundBarcodes.add(laneInfoRow.getLoadingVessel());
                 }
+
+                // Gets the starting batch vessels' designation ids.
+                for (LabBatchStartingVessel startingVessel : fctLabBatch.getLabBatchStartingVessels()) {
+                    Assert.assertNotNull(startingVessel.getDesignation());
+                    foundDesignationIds.add(startingVessel.getDesignation().getDesignationId());
+                }
             }
             if (splitDtoCount > 0) {
                 // Verifies the one action bean message is about the split dto.
@@ -558,14 +581,12 @@ public class LabBatchEjbStandardTest extends Arquillian {
             }
 
             // Verifies the allocated loading tube barcodes all matched up with the expected ones.
-            Set<String> unexpectedBarcodes = new HashSet<>(foundBarcodes);
-            unexpectedBarcodes.removeAll(expectedBarcodes);
-            Assert.assertTrue(unexpectedBarcodes.isEmpty(), "Unexpected loading tubes: " +
-                    StringUtils.join(unexpectedBarcodes, " "));
-
-            expectedBarcodes.removeAll(foundBarcodes);
-            Assert.assertTrue(expectedBarcodes.isEmpty(), "Missing loading tubes: " +
-                    StringUtils.join(expectedBarcodes, " "));
+            Assert.assertTrue(CollectionUtils.disjunction(foundBarcodes, expectedBarcodes).isEmpty(), "Mismatches: " +
+                    StringUtils.join(CollectionUtils.disjunction(foundBarcodes, expectedBarcodes), ", "));
+            // Verifies the starting batch flowcell designations are correct.
+            Assert.assertTrue(CollectionUtils.disjunction(foundDesignationIds, expectedDesignationIds).isEmpty(),
+                    "Mismatches: " +
+                    StringUtils.join(CollectionUtils.disjunction(foundDesignationIds, expectedDesignationIds), ", "));
         }
     }
 
@@ -629,6 +650,15 @@ public class LabBatchEjbStandardTest extends Arquillian {
             dto.setSelected(true);
 
             designationDtos.add(dto);
+        }
+
+        // Creates FlowcellDesignations from the dtos.
+        Assert.assertFalse(designationDtos.isEmpty());
+        DesignationUtils.updateDesignationsAndDtos(designationDtos,
+                EnumSet.allOf(FlowcellDesignation.Status.class), flowcellDesignationEjb);
+
+        for (DesignationDto dto : designationDtos) {
+            dto.setSelected(true);
         }
 
         // Makes the FCTs.
@@ -726,6 +756,14 @@ public class LabBatchEjbStandardTest extends Arquillian {
                 dtos.add(dto);
             }
         }
+        // Creates FlowcellDesignations from the dtos.
+        Assert.assertFalse(dtos.isEmpty());
+        DesignationUtils.updateDesignationsAndDtos(dtos, EnumSet.allOf(FlowcellDesignation.Status.class),
+                flowcellDesignationEjb);
+
+        for (DesignationDto dto : dtos) {
+            dto.setSelected(true);
+        }
 
         // Should make no FCTs.
         Assert.assertTrue(CollectionUtils.isEmpty(labBatchEJB.makeFcts(dtos, "epolk", messageReporter)));
@@ -781,6 +819,15 @@ public class LabBatchEjbStandardTest extends Arquillian {
                 add(dto);
             }
         }};
+
+        // Creates FlowcellDesignations from the dtos.
+        Assert.assertFalse(dtos.isEmpty());
+        DesignationUtils.updateDesignationsAndDtos(dtos, EnumSet.allOf(FlowcellDesignation.Status.class),
+                flowcellDesignationEjb);
+
+        for (DesignationDto dto : dtos) {
+            dto.setSelected(true);
+        }
 
         // Normally would make an FCT but the error should prevent it.
         Assert.assertTrue(CollectionUtils.isEmpty(labBatchEJB.makeFcts(dtos, "epolk", messageReporter)));

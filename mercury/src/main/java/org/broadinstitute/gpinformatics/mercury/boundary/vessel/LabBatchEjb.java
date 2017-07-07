@@ -8,6 +8,7 @@ import org.apache.commons.collections4.map.LazyMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
@@ -647,11 +648,11 @@ public class LabBatchEjb {
     public List<LabBatch> makeFcts(List<CreateFctDto> createFctDtos,
             IlluminaFlowcell.FlowcellType selectedFlowcellType, String userName, MessageReporter messageReporter) {
         // Collects all the selected createFctDtos and their loading tubes.
-        Collection<Pair<FctDto, LabVessel>> dtoVessels = new ArrayList<>();
+        Collection<Triple<FctDto, LabVessel, FlowcellDesignation>> dtoVessels = new ArrayList<>();
         for (CreateFctDto createFctDto : createFctDtos) {
             if (createFctDto.getNumberLanes() > 0) {
                 LabVessel labVessel = labVesselDao.findByIdentifier(createFctDto.getBarcode());
-                dtoVessels.add(Pair.of((FctDto)createFctDto, labVessel));
+                dtoVessels.add(Triple.of((FctDto)createFctDto, labVessel, (FlowcellDesignation)null));
             }
         }
         List<LabBatch> createdFcts = Collections.emptyList();
@@ -717,12 +718,13 @@ public class LabBatchEjb {
         boolean hasError = false;
 
         // Validates dtos and groups them by how they are permitted to be combined on a flowcell.
-        Multimap<String, Pair<FctDto, LabVessel>> typeMap = HashMultimap.create();
+        Multimap<String, Triple<FctDto, LabVessel, FlowcellDesignation>> typeMap = HashMultimap.create();
         for (DesignationDto designationDto : designationDtos) {
             if (designationDto.isSelected()) {
                 if (isValidDto(designationDto, messageReporter)) {
-                    LabVessel labVessel = labVesselDao.findByIdentifier(designationDto.getBarcode());
-                    typeMap.put(designationDto.fctGrouping(), Pair.of((FctDto)designationDto, labVessel));
+                    typeMap.put(designationDto.fctGrouping(), Triple.of((FctDto)designationDto,
+                            labVesselDao.findByIdentifier(designationDto.getBarcode()),
+                            labVesselDao.findById(FlowcellDesignation.class, designationDto.getDesignationId())));
                 } else {
                     hasError = true;
                 }
@@ -735,15 +737,15 @@ public class LabBatchEjb {
         List<MutablePair<String, String>> fctUrls = new ArrayList<>();
         if (!hasError) {
             for (String fctGrouping : typeMap.keySet()) {
-                Collection<Pair<FctDto, LabVessel>> dtoVesselPairs = typeMap.get(fctGrouping);
+                Collection<Triple<FctDto, LabVessel, FlowcellDesignation>> dtoVessels = typeMap.get(fctGrouping);
                 int unallocatedLaneCount = 0;
                 int splitCount = 0;
-                DesignationDto firstDto = (DesignationDto)dtoVesselPairs.iterator().next().getLeft();
+                DesignationDto firstDto = (DesignationDto)dtoVessels.iterator().next().getLeft();
                 IlluminaFlowcell.FlowcellType flowcellType = firstDto.getSequencerModel();
 
                 // Allocates each designation dto to FctDto(s) depending on the designation's priority,
                 // number of lanes, and whether a full flowcell could be made or not.
-                Pair<List<LabBatch>, FctDto> fctReturn = makeFctDaoFree(dtoVesselPairs, flowcellType, false);
+                Pair<List<LabBatch>, FctDto> fctReturn = makeFctDaoFree(dtoVessels, flowcellType, false);
                 for (int idx = 0; idx < fctReturn.getLeft().size(); ++idx) {
                     LabBatch fctBatch = fctReturn.getLeft().get(idx);
                     Set<String> lcsetNames = new HashSet<>(laneToLinkedLcsets(fctBatch).values());
@@ -757,8 +759,8 @@ public class LabBatchEjb {
                     }
                     fctUrls.add(MutablePair.of(fctBatch.getBatchName(), fctBatch.getJiraTicket().getBrowserUrl()));
                 }
-                for (Pair<FctDto, LabVessel> pair : dtoVesselPairs) {
-                    DesignationDto dto = (DesignationDto) pair.getLeft();
+                for (Triple<FctDto, LabVessel, FlowcellDesignation> triple : dtoVessels) {
+                    DesignationDto dto = (DesignationDto) triple.getLeft();
                     if (dto.isAllocated()) {
                         dto.setStatus(FlowcellDesignation.Status.IN_FCT);
                     } else {
@@ -867,7 +869,7 @@ public class LabBatchEjb {
      * drives which dtos may be left over. Also if a large dto has some but not all of its lanes exactly
      * fit on flowcells, the dto will be split up into a fully allocated dto and a new, unallocated dto.
      *
-     * @param dtoLabVessels the loading tubes' dtos and corresponding lab vessels.
+     * @param dtoLabVessels the loading tubes' dto, corresponding lab vessel, and designation.
      *   After return, the dtos that were put in an FCT will be marked isAllocated.
      * @param flowcellType  the type of flowcells to create.
      * @param fillOrKill  If true, throws if all dtos will not exactly fit on flowcells. A dto is never split.
@@ -877,8 +879,10 @@ public class LabBatchEjb {
      *   lanes across sequential fcts, provided the fcts get persisted in the order returned.
      *   Fct batch identity (i.e. equals, hashcode) is unstable (see GPLIM-4011).
      */
-    public Pair<List<LabBatch>, FctDto> makeFctDaoFree(Collection<Pair<FctDto, LabVessel>> dtoLabVessels,
-            IlluminaFlowcell.FlowcellType flowcellType, boolean fillOrKill) {
+    public Pair<List<LabBatch>, FctDto> makeFctDaoFree(
+            Collection<Triple<FctDto, LabVessel, FlowcellDesignation>> dtoLabVessels,
+            IlluminaFlowcell.FlowcellType flowcellType,
+            boolean fillOrKill) {
 
         List<LabBatch> createdFcts = new ArrayList<>();
         int lanesPerFlowcell = flowcellType.getVesselGeometry().getRowCount();
@@ -887,8 +891,8 @@ public class LabBatchEjb {
         List<LabBatch.VesselToLanesInfo> fctVesselLaneInfo = new ArrayList<>();
 
         int totalDtoLanes = 0;
-        for (Pair<FctDto, LabVessel> pair : dtoLabVessels) {
-            totalDtoLanes += pair.getLeft().getNumberLanes();
+        for (Triple<FctDto, LabVessel, FlowcellDesignation> triple : dtoLabVessels) {
+            totalDtoLanes += triple.getLeft().getNumberLanes();
         }
         int unallocatedDtoLanes = totalDtoLanes % lanesPerFlowcell;
         if (fillOrKill && unallocatedDtoLanes > 0) {
@@ -898,16 +902,16 @@ public class LabBatchEjb {
 
         // Orders the dtos by decreasing allocation order (priority) and within each priority group
         // decreasing number of lanes, which is intended to reduce the chance of a split.
-        List<Pair<FctDto, LabVessel>> orderedDtoVessels = new ArrayList<>();
+        List<Triple<FctDto, LabVessel, FlowcellDesignation>> orderedDtoVessels = new ArrayList<>();
         orderedDtoVessels.addAll(dtoLabVessels);
         Collections.sort(orderedDtoVessels, BY_ALLOCATION_ORDER);
 
         // Allocates dtos, and splits the last dto if its lanes would not be completely allocated.
         int remainingLaneCount = totalDtoLanes - unallocatedDtoLanes;
         FctDto splitDto = null;
-        for (Pair<FctDto, LabVessel> pair : orderedDtoVessels) {
+        for (Triple<FctDto, LabVessel, FlowcellDesignation> triple : orderedDtoVessels) {
             if (remainingLaneCount > 0) {
-                FctDto fctDto = pair.getLeft();
+                FctDto fctDto = triple.getLeft();
                 if (fctDto.getNumberLanes() > remainingLaneCount) {
                     splitDto = fctDto.split(remainingLaneCount);
                 }
@@ -919,18 +923,22 @@ public class LabBatchEjb {
         // For each dto, keeps allocating its lanes until the tube's requested Number of Lanes is fulfilled.
         // When enough lanes exist, an FCT is allocated and put in the return list.
 
-        for (Pair<FctDto, LabVessel> pair : orderedDtoVessels) {
-            FctDto fctDto = pair.getLeft();
-            LabVessel loadingTube = pair.getRight();
+        for (Triple<FctDto, LabVessel, FlowcellDesignation> triple : orderedDtoVessels) {
+            FctDto fctDto = triple.getLeft();
+            LabVessel loadingTube = triple.getMiddle();
+            FlowcellDesignation flowcellDesignation = triple.getRight();
+
             LabBatch.VesselToLanesInfo laneInfo = null;
             if (fctDto.isAllocated()) {
                 for (int i = 0; i < fctDto.getNumberLanes(); ++i) {
                     if (laneInfo == null) {
                         laneInfo = new LabBatch.VesselToLanesInfo(new ArrayList<VesselPosition>(),
-                                fctDto.getLoadingConc(), loadingTube, fctDto.getLcset(), fctDto.getProduct());
+                                fctDto.getLoadingConc(), loadingTube, fctDto.getLcset(), fctDto.getProduct(),
+                                new ArrayList<FlowcellDesignation>());
                         fctVesselLaneInfo.add(laneInfo);
                     }
                     laneInfo.getLanes().add(VESSEL_POSITIONS[laneIndex++]);
+                    laneInfo.getDesignations().add(flowcellDesignation);
 
                     // Are there are enough lanes to make a new FCT?
                     if (laneIndex == lanesPerFlowcell) {
