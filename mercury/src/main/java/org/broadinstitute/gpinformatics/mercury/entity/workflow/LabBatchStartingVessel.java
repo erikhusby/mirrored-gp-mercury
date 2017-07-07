@@ -48,14 +48,14 @@ public class LabBatchStartingVessel {
     @Enumerated(EnumType.STRING)
     private VesselPosition vesselPosition;
 
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    private FlowcellDesignation flowcellDesignation;
+
     @Transient
     private String linkedLcset;
 
     @Transient
     private String productNames;
-
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
-    private FlowcellDesignation flowcellDesignation;
 
     public LabBatchStartingVessel() {
     }
