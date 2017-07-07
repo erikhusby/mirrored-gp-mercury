@@ -567,8 +567,8 @@ public class LabBatchEjbStandardTest extends Arquillian {
 
                 // Gets the starting batch vessels' designation ids.
                 for (LabBatchStartingVessel startingVessel : fctLabBatch.getLabBatchStartingVessels()) {
-                    Assert.assertNotNull(startingVessel.getDesignation());
-                    foundDesignationIds.add(startingVessel.getDesignation().getDesignationId());
+                    Assert.assertNotNull(startingVessel.getFlowcellDesignation());
+                    foundDesignationIds.add(startingVessel.getFlowcellDesignation().getDesignationId());
                 }
             }
             if (splitDtoCount > 0) {
