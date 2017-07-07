@@ -36,6 +36,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -582,8 +583,9 @@ public class LabBatchFixUpTest extends Arquillian {
             CreateFields.IssueType issueType = selectedType.getIssueType();
 
             LabVessel startingTube = labVesselDao.findByIdentifier(startingTubeLabel);
-            LabBatch batch = new LabBatch(startingTubeLabel + " FCT ticket", Collections.singletonList(
-                    new LabBatch.VesselToLanesInfo(Arrays.asList(lanes), loadingConc, startingTube)),
+            LabBatch batch = new LabBatch(startingTubeLabel + " FCT ticket",
+                    Collections.singletonList(new LabBatch.VesselToLanesInfo(Arrays.asList(lanes), loadingConc,
+                            startingTube, null, null, Collections.<FlowcellDesignation>emptyList())),
                     batchType, selectedType);
             batch.setBatchDescription(batch.getBatchName());
             labBatchEjb.createLabBatch(batch, userBean.getLoginUserName(), issueType);

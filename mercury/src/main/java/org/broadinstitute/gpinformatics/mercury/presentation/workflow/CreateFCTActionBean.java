@@ -268,9 +268,8 @@ public class CreateFCTActionBean extends CoreActionBean {
                     }
                 }
 
-                CreateFctDto createFctDto = new CreateFctDto(loadingTube.getLabel(), targetLcset.getBatchName(), additionalLcsets,
-                        StringUtils.join(eventDates, "<br/>"),
-                        StringUtils.join(productNameList, "<br/>"),
+                CreateFctDto createFctDto = new CreateFctDto(loadingTube.getLabel(), targetLcset.getBatchName(),
+                        additionalLcsets, StringUtils.join(eventDates, "<br/>"), productNameList,
                         StringUtils.join(startingVesselList, "\n"),
                         selectedEventTypeDisplay, defaultLoadingConc, targetLcset.getJiraTicket().getBrowserUrl(),
                         regulatoryDesignation, numberSamples);
