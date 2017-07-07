@@ -495,7 +495,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         for (boolean poolTest : new boolean[]{false, true}) {
 
             FlowcellDesignation designation = new FlowcellDesignation(dilutionTube2500, workflowBatch,
-                    denatureTube2500.getLatestEvent(), FlowcellDesignation.IndexType.DUAL, poolTest,
+                    FlowcellDesignation.IndexType.DUAL, poolTest,
                     IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, 4, 99, BIG_DECIMAL_7_77, true,
                     FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL);
             flowcellDesignations.clear();
@@ -536,7 +536,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         for (boolean poolTest : new boolean[]{false, true}) {
 
             FlowcellDesignation designation = new FlowcellDesignation(dilutionTube2500, workflowBatch,
-                    denatureTube2500.getLatestEvent(), FlowcellDesignation.IndexType.DUAL, poolTest,
+                    FlowcellDesignation.IndexType.DUAL, poolTest,
                     IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, 4, 99, BIG_DECIMAL_7_77, true,
                     FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL);
             flowcellDesignations.clear();
@@ -573,7 +573,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         for (boolean poolTest : new boolean[]{false, true}) {
 
             FlowcellDesignation designation = new FlowcellDesignation(dilutionTube2500, workflowBatch,
-                    denatureTube2500.getLatestEvent(), FlowcellDesignation.IndexType.DUAL, poolTest,
+                    FlowcellDesignation.IndexType.DUAL, poolTest,
                     IlluminaFlowcell.FlowcellType.MiSeqFlowcell, 4, 100, BIG_DECIMAL_7_77, true,
                     FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL);
             flowcellDesignations.clear();
@@ -604,12 +604,12 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         BigDecimal denature4000Conc = new BigDecimal("8.88");
         BigDecimal denature2500Conc = new BigDecimal("13.33");
         FlowcellDesignation designation = new FlowcellDesignation(denatureTube4000, fctBatchHiSeq4000,
-                denatureTube4000.getLatestEvent(), FlowcellDesignation.IndexType.DUAL, false,
+                FlowcellDesignation.IndexType.DUAL, false,
                 IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, 4, 99, denature4000Conc, true,
                 FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL);
 
         FlowcellDesignation designation2 = new FlowcellDesignation(denatureTube2500, fctBatchHiSeq4000,
-                denatureTube2500.getLatestEvent(), FlowcellDesignation.IndexType.DUAL, false,
+                FlowcellDesignation.IndexType.DUAL, false,
                 IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, 4, 99, denature2500Conc, true,
                 FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL);
 

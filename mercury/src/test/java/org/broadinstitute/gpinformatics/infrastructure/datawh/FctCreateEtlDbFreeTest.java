@@ -15,6 +15,7 @@ import org.easymock.EasyMock;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.ws.rs.HEAD;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -120,9 +121,12 @@ public class FctCreateEtlDbFreeTest {
         expect(labBatchStartingVessel.getConcentration()).andReturn(concentration);
 
         FlowcellDesignation designation = new FlowcellDesignation(batchVessel, labBatch,
-                labEvent, FlowcellDesignation.IndexType.DUAL, false /*poolTest*/,
+                FlowcellDesignation.IndexType.DUAL, false /*poolTest*/,
                 IlluminaFlowcell.FlowcellType.MiSeqFlowcell, 1, 76, BigDecimal.TEN, true,
                 FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL);
+
+        designations.clear();
+        designations.add(designation);
 
         expect(labBatchStartingVessel.getFlowcellDesignation()).andReturn( designation ).times(2);
 
@@ -153,12 +157,15 @@ public class FctCreateEtlDbFreeTest {
         expect(labBatchStartingVessel.getVesselPosition()).andReturn(flowcellLane).times(2);
         expect(labBatchStartingVessel.getConcentration()).andReturn(concentration);
 
-        expect(labBatchStartingVessel.getFlowcellDesignation()). andReturn(
-                new FlowcellDesignation(batchVessel, labBatch,
-                        labEvent, FlowcellDesignation.IndexType.DUAL, true /*poolTest*/,
+        FlowcellDesignation designation = new FlowcellDesignation(batchVessel, labBatch,
+                        FlowcellDesignation.IndexType.DUAL, true /*poolTest*/,
                         IlluminaFlowcell.FlowcellType.HiSeqFlowcell,  8, 76, BigDecimal.TEN, true,
-                        FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL)
-        ).times(2);
+                        FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL);
+
+        expect(labBatchStartingVessel.getFlowcellDesignation()). andReturn(designation).times(2);
+
+        designations.clear();
+        designations.add(designation);
 
         replay(mocks);
 
@@ -190,7 +197,7 @@ public class FctCreateEtlDbFreeTest {
 
         expect(labBatchStartingVessel.getFlowcellDesignation()). andReturn(
                 new FlowcellDesignation(batchVessel, labBatch,
-                        labEvent, FlowcellDesignation.IndexType.DUAL, false /*poolTest*/,
+                        FlowcellDesignation.IndexType.DUAL, false /*poolTest*/,
                         IlluminaFlowcell.FlowcellType.HiSeqFlowcell,  8, 76, BigDecimal.TEN, true,
                         FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL)
         ).times(2);

@@ -9,7 +9,6 @@ import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -219,8 +218,7 @@ public class DesignationUtils {
                 }
 
                 DesignationDto designationDto = makeDesignationDto(designation.getLoadingTube(),
-                        lcset, Collections.singletonList(designation.getLoadingTubeEvent()),
-                        bucketEntries, controls, designation);
+                        lcset, bucketEntries, controls, designation);
 
                 caller.getDtos().add(designationDto);
             }
@@ -234,18 +232,16 @@ public class DesignationUtils {
      * the collections passed in.
      */
     public static DesignationDto makeDesignationDto(LabVessel loadingTube, LabBatch lcset,
-                                                    Collection<LabEvent> loadingTubeEvents,
                                                     Collection<BucketEntry> bucketEntries,
                                                     Collection<LabVessel> controlTubes,
                                                     FlowcellDesignation flowcellDesignation) {
 
         // Populates values from existing flowcell designation if it exists.
         DesignationDto dto = new DesignationDto(flowcellDesignation);
-
+        dto.setTypeAndDate(loadingTube);
         dto.setBarcode(loadingTube.getLabel());
         dto.setLcset(lcset.getBatchName());
         dto.setLcsetUrl(lcset.getJiraTicket().getBrowserUrl());
-        dto.setEvents(loadingTubeEvents);
 
         int numberSamples = 0;
         Multimap<String, String> productToStartingVessel = HashMultimap.create();

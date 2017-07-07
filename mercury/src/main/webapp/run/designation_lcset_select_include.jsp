@@ -67,7 +67,6 @@
 
 
                 <input type="hidden" name="dtos[${item.index}].designationId" value="${dto.designationId}"/>
-                <input type="hidden" name="dtos[${item.index}].tubeEventId" value="${dto.tubeEventId}"/>
             </c:forEach>
 
             <p>These tubes were found to have samples in multiple LCSETs.</p>

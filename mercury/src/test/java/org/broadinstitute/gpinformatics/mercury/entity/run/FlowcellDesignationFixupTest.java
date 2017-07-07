@@ -108,7 +108,7 @@ public class FlowcellDesignationFixupTest extends Arquillian {
             for (LabEvent loadingEvent : loadingTube.getEvents()) {
                 if (loadingEvent.getLabEventType() == LabEventType.DENATURE_TRANSFER) {
                     System.out.println("Creating flowcell designation for loading tube " + loadingTube);
-                    entities.add(new FlowcellDesignation(loadingTube, null, loadingEvent, indexType, IS_POOL_TEST,
+                    entities.add(new FlowcellDesignation(loadingTube, null, indexType, IS_POOL_TEST,
                             flowcell.getFlowcellType(), numberLanes, 151, new BigDecimal(180), IS_PAIRED_END_READ,
                             FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL));
                 }

@@ -122,11 +122,10 @@ public class FlowcellDesignationEjb {
             if (dto.isSelected() && targetableStatuses.contains(dto.getStatus())) {
                 if (dto.getDesignationId() == null) {
                     LabVessel loadingTube = barcodedTubeDao.findByBarcode(dto.getBarcode());
-                    LabEvent loadingTubeEvent = labBatchDao.findById(LabEvent.class, dto.getTubeEventId());
                     LabBatch chosenLcset = StringUtils.isBlank(dto.getChosenLcset()) ?
                             null : labBatchDao.findByName(dto.getChosenLcset());
                     FlowcellDesignation designation = new FlowcellDesignation(loadingTube, chosenLcset,
-                            loadingTubeEvent, dto.getIndexType(), dto.getPoolTest(), dto.getSequencerModel(),
+                            dto.getIndexType(), dto.getPoolTest(), dto.getSequencerModel(),
                             dto.getNumberLanes(), dto.getReadLength(), dto.getLoadingConc(), dto.getPairedEndRead(),
                             dto.getStatus(), dto.getPriority());
                     labBatchDao.persist(designation);

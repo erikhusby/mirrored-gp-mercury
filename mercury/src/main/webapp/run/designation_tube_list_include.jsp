@@ -91,7 +91,6 @@
                             <input type="hidden" name="dtos[${item.index}].startingBatchVessels" value="${dto.startingBatchVessels}"/>
 
                             <input type="hidden" name="dtos[${item.index}].designationId" value="${dto.designationId}"/>
-                            <input type="hidden" name="dtos[${item.index}].tubeEventId" value="${dto.tubeEventId}"/>
                         </tr>
                     </c:forEach>
                     </tbody>
