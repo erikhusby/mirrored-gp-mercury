@@ -857,6 +857,17 @@
         </sql>
     </changeSet>
 
+    <changeSet author="thompson" id="GPLIM-4816-1">
+        <addColumn schemaName="mercury" tableName="mercury_sample">
+            <column name="is_root" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="thompson" id="GPLIM-4816-2">
+        <addColumn schemaName="mercury" tableName="mercury_sample_aud">
+            <column name="is_root" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
+
     <changeSet id="GPLIM-4820-1" author="epolk">
       <dropForeignKeyConstraint baseTableName="FLOWCELL_DESIGNATION" constraintName="FK_FLOWCELL_DESIG_EVENT"/>
       <dropColumn tableName="FLOWCELL_DESIGNATION" columnName="loading_tube_event"/>

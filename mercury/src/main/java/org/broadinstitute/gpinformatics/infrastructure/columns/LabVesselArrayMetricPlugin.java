@@ -29,7 +29,8 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
 
     // Partially from edu.mit.broad.esp.web.stripes.infinium.ViewInfiniumChemPlateActionBean
     private enum VALUE_COLUMN_TYPE {
-        CALL_RATE("Call Rate"),
+        AUTOCALL_CALL_RATE("AutoCall Call Rate"),
+        CALL_RATE("zCall Call Rate"),
         HET_PCT("Het %"),
         VERSION("Analysis Version"),
         AUTOCALL_GENDER("Autocall Gender"),
@@ -114,13 +115,21 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
         // Populate rows with any available metrics data.
         for( LabVessel labVessel : labVesselList ) {
             ArraysQc arraysQc = mapWellBarcodeToMetric.get(mapSourceToTargetBarcodes.get(labVessel.getLabel()));
-            ConfigurableList.Row row = new ConfigurableList.Row( labVessel.getLabel() );
+            ConfigurableList.Row row = new ConfigurableList.Row(labVessel.getLabel());
             metricRows.add(row);
             if (arraysQc == null) {
                 continue;
             }
 
-            String value = ColumnValueType.THREE_PLACE_DECIMAL.format(
+            BigDecimal autocallCallRate = arraysQc.getAutocallCallRate();
+            String value = null;
+            if (autocallCallRate != null) {
+                value = ColumnValueType.THREE_PLACE_DECIMAL.format(
+                        autocallCallRate.multiply(BigDecimal.valueOf(100)), "");
+            }
+            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.AUTOCALL_CALL_RATE.getResultHeader(), value, value));
+
+            value = ColumnValueType.THREE_PLACE_DECIMAL.format(
                     arraysQc.getCallRate().multiply(BigDecimal.valueOf(100)), "");
             row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.CALL_RATE.getResultHeader(), value, value));
 
@@ -144,7 +153,7 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
             row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.REPORTED_GENDER.getResultHeader(),
                     value, value));
 
-            value = String.valueOf(arraysQc.getGenderConcordancePf());
+            value = arraysQc.getGenderConcordancePf();
             row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.GENDER_CONCORDANCE_PF.getResultHeader(),
                     value, value));
 

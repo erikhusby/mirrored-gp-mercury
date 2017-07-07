@@ -58,7 +58,7 @@
                 <input type="hidden" name="dtos[${item.index}].pairedEndRead" value="${dto.pairedEndRead?'Yes':'No'}"/>
                 <input type="hidden" name="dtos[${item.index}].poolTest" value="${dto.poolTest?'Yes':'No'}"/>
                 <input type="hidden" name="dtos[${item.index}].regulatoryDesignation" value="${dto.regulatoryDesignation}"/>
-                <input type="hidden" name="dtos[${item.index}].productNameJoin" value="${dto.productNameJoin}"/>
+                <input type="hidden" name="dtos[${item.index}].product" value="${dto.product}"/>
                 <input type="hidden" name="dtos[${item.index}].startingBatchVessels" value="${dto.startingBatchVessels}"/>
 
                 <input type="hidden" name="dtos[${item.index}].numberLanes" value="${dto.numberLanes}"/>

@@ -98,7 +98,6 @@ public class EventAncestryEtlUtil {
             ancestorEventTypesToFind.addAll(findAllAncestorEtlEventTypes(workflowStepList));
             // Build the ancestry dtos
             eventFact.addAllAncestryDtos(buildAncestryFacts(labEvent, labVessel, ancestorEventTypesToFind));
-            eventFact.setIsEtlLibrary();
             vesselsToSkip.add(labVessel);
         }
     }

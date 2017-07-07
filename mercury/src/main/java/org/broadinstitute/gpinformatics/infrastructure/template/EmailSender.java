@@ -25,7 +25,7 @@ public class EmailSender implements Serializable {
 
     private static final Log LOG = LogFactory.getLog(EmailSender.class);
 
-    @Resource(mappedName = "java:/mail/broadsmtp")
+    @Resource(mappedName = "java:jboss/mail/Default")
     private Session mailSession;
 
     /**

@@ -44,7 +44,7 @@ public class DesignationDto implements Cloneable, FctDto {
     private boolean allocated = false;
     private int allocationOrder = 0;
 
-    private final static String DELIMITER = "<br/>";
+    public final static String DELIMITER = "<br/>";
 
     public DesignationDto() {
         createdOn = new Date();
@@ -126,11 +126,11 @@ public class DesignationDto implements Cloneable, FctDto {
         return numberCycles;
     }
 
-    public String getProductNameJoin() {
+    public String getProduct() {
         return StringUtils.join(productNames, DELIMITER);
     }
 
-    public void setProductNameJoin(String delimitedProductNames) {
+    public void setProduct(String delimitedProductNames) {
         productNames = Arrays.asList(delimitedProductNames.split(DELIMITER));
     }
 
@@ -230,10 +230,6 @@ public class DesignationDto implements Cloneable, FctDto {
 
     public void setLcset(String lcset) {
         this.lcset = lcset;
-    }
-
-    public List<String> getProductNames() {
-        return productNames;
     }
 
     public void setProductNames(List<String> productNames) {
