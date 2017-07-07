@@ -488,7 +488,7 @@ public class LabVesselSearchDefinition {
                 Set<String> results = null;
                 LabVessel labVessel = (LabVessel) entity;
 
-                // Can't imagine a case where a vessel would be a descendant of a BSP sample kit
+                // Only look for BSP sample kit as an ancestor of a mercury lab vessel
                 VesselBatchTraverserCriteria downstreamBatchFinder = new VesselBatchTraverserCriteria();
                 if( labVessel.getContainerRole() != null ) {
                     labVessel.getContainerRole().applyCriteriaToAllPositions(
