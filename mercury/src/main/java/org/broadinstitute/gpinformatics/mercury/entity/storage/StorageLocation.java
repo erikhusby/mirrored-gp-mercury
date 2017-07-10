@@ -18,13 +18,18 @@ import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
- * Stores position of materials in the laboratory. Self references to Parent Location allow for deeply
+ * Stores location of vessels in the lab. Self references to Parent Location allow for deeply
  * nested locations. A RackOfTubes can be found in Slot A1 of Gage Rack G5 on Shelf 3 of the Deli Fridge
- *
- * e.g. to create a Freezer with two cabinets one with 4 shelves and one with 3 shelves
  */
 @Entity
 @Audited
@@ -32,29 +37,144 @@ import java.util.Collection;
 public class StorageLocation {
 
     public enum LocationType {
-        Refridgerator("Refridgerator"),
-        Freezer("Freezer"),
-        ShelvingUnit("Shelving Unit"),
-        Shelf("Shelf"),
-        GageRack("Gage Rack"),
-        Slot("Slot"),
-        Cabinet("Cabinet");
+        REFRIDGERATOR("Refridgerator", ExpectParentLocation.FALSE),
+        FREEZER("Freezer", ExpectParentLocation.FALSE),
+        SHELVINGUNIT("Shelving Unit", ExpectParentLocation.FALSE),
+        CABINET("Cabinet", ExpectParentLocation.FALSE),
+        SECTION("Section", ExpectParentLocation.TRUE, ExpectSlots.FALSE, Moveable.FALSE, CanCreate.FALSE),
+        SHELF("Shelf", ExpectParentLocation.TRUE),
+        GAGERACK("Gage Rack", ExpectParentLocation.TRUE, ExpectSlots.TRUE, Moveable.TRUE),
+        BOX("Box", ExpectParentLocation.TRUE, ExpectSlots.TRUE, Moveable.TRUE),
+        SLOT("Slot", ExpectParentLocation.TRUE, ExpectSlots.FALSE, Moveable.FALSE, CanCreate.FALSE);
+
+        private enum CanCreate {
+            TRUE(true),
+            FALSE(false);
+            private boolean value;
+
+            private CanCreate(boolean value) {
+                this.value = value;
+            }
+        }
+
+        private enum ExpectSlots {
+            TRUE(true),
+            FALSE(false);
+            private boolean value;
+
+            private ExpectSlots(boolean value) {
+                this.value = value;
+            }
+        }
+
+        /**
+         * Whether a location would expect to have a parent. E.g. a shelf only makes sense in a freezer,
+         * but a freezer wouldn't have a parent.
+         */
+        private enum ExpectParentLocation {
+            TRUE(true),
+            FALSE(false);
+            private boolean value;
+
+            private ExpectParentLocation(boolean value) {
+                this.value = value;
+            }
+        }
+
+        /**
+         * Whether it makes sense for a location to move from a parent to another. E.g. A shelf should never move
+         * between freezers, whereas Gage Racks and boxes can readily move.
+         */
+        private enum Moveable {
+            TRUE(true),
+            FALSE(false);
+            private boolean value;
+
+            private Moveable(boolean value) {
+                this.value = value;
+            }
+        }
 
         private final String displayName;
+        private final ExpectParentLocation expectParentLocation;
+        private final ExpectSlots expectSlots;
+        private final Moveable moveable;
+        private final CanCreate canCreate;
+        private static final List<LocationType> LIST_TOP_LEVEL_LOCATION_TYPES = new
+                ArrayList<>(LocationType.values().length);
+        private static final List<LocationType> LIST_CREATEABLE_LOCATION_TYPES = new
+                ArrayList<>(LocationType.values().length);
 
-        LocationType(String displayName) {
+        private static final Map<String, LocationType> MAP_NAME_TO_LOCATION = new
+                HashMap<>(LocationType.values().length);
+
+        LocationType(String displayName, ExpectParentLocation expectParentLocation) {
+            this(displayName, expectParentLocation, ExpectSlots.FALSE, Moveable.FALSE);
+        }
+
+        LocationType(String displayName, ExpectParentLocation expectParentLocation, ExpectSlots expectSlots,
+                     Moveable moveable) {
+            this(displayName, expectParentLocation, expectSlots, moveable, CanCreate.TRUE);
+        }
+
+        LocationType(String displayName, ExpectParentLocation expectParentLocation, ExpectSlots expectSlots,
+                     Moveable moveable, CanCreate canCreate) {
             this.displayName = displayName;
+            this.expectParentLocation = expectParentLocation;
+            this.expectSlots = expectSlots;
+            this.moveable = moveable;
+            this.canCreate = canCreate;
+        }
+
+        static {
+            for (LocationType location: LocationType.values()) {
+                if (location.isTopLevelLocation()) {
+                    LIST_TOP_LEVEL_LOCATION_TYPES.add(location);
+                }
+                if (location.isCreateable()) {
+                    LIST_CREATEABLE_LOCATION_TYPES.add(location);
+                }
+                MAP_NAME_TO_LOCATION.put(location.getDisplayName(), location);
+            }
         }
 
         public String getDisplayName() {
             return displayName;
         }
+
+        public boolean isTopLevelLocation() {
+            return expectParentLocation == ExpectParentLocation.FALSE;
+        }
+
+        public boolean isMoveable() {
+            return moveable == Moveable.TRUE;
+        }
+
+        public boolean isCreateable() {
+            return canCreate == CanCreate.TRUE;
+        }
+
+        public boolean expectSlots() {
+            return expectSlots == ExpectSlots.TRUE;
+        }
+
+        public static List<LocationType> getTopLevelLocationTypes() {
+            return LIST_TOP_LEVEL_LOCATION_TYPES;
+        }
+
+        public static List<LocationType> getCreateableLocationTypes() {
+            return LIST_CREATEABLE_LOCATION_TYPES;
+        }
+
+        public static LocationType getByDisplayName(String displayName) {
+            return MAP_NAME_TO_LOCATION.get(displayName);
+        }
     }
 
     @Id
-    @SequenceGenerator(name = "SEQ_LOCATION", schema = "mercury", sequenceName = "SEQ_LOCATION")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LOCATION")
-    @Column(name = "LOCATION_ID", nullable = true)
+    @SequenceGenerator(name = "SEQ_STORAGE_LOCATION", schema = "mercury", sequenceName = "SEQ_STORAGE_LOCATION")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_STORAGE_LOCATION")
+    @Column(name = "STORAGE_LOCATION_ID")
     private Long storageLocationId;
 
     private String label;
@@ -65,11 +185,12 @@ public class StorageLocation {
     @ManyToOne
     private StorageLocation parentStorageLocation;
 
-    @OneToMany(mappedBy = "parentStorageLocation")
-    private Collection<StorageLocation> childrenStorageLocation;
+    @OneToMany(mappedBy = "parentStorageLocation", cascade = CascadeType.PERSIST)
+    private Set<StorageLocation> childrenStorageLocation = new HashSet<>();
 
     @OneToMany(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY, mappedBy = "storageLocation")
-    private Collection<LabVessel> labVessels;
+    private Set<LabVessel> labVessels = new HashSet<>();
+
 
     public StorageLocation() {
     }
@@ -106,29 +227,59 @@ public class StorageLocation {
         this.locationType = locationType;
     }
 
-    @JsonIgnore
     public StorageLocation getParentStorageLocation() {
         return parentStorageLocation;
     }
 
-    public void setParentStorageLocation(StorageLocation parentStorageLocation) {
+    public void setParentStorageLocation(
+            StorageLocation parentStorageLocation) {
         this.parentStorageLocation = parentStorageLocation;
     }
 
-    public Collection<StorageLocation> getChildrenStorageLocation() {
+    public Set<StorageLocation> getChildrenStorageLocation() {
         return childrenStorageLocation;
     }
 
     public void setChildrenStorageLocation(
-            Collection<StorageLocation> childrenStorageLocation) {
+            Set<StorageLocation> childrenStorageLocation) {
         this.childrenStorageLocation = childrenStorageLocation;
     }
 
-    public Collection<LabVessel> getLabVessels() {
+    public Set<LabVessel> getLabVessels() {
         return labVessels;
     }
 
-    public void setLabVessels(Collection<LabVessel> labVessels) {
+    public void setLabVessels(Set<LabVessel> labVessels) {
         this.labVessels = labVessels;
+    }
+
+    @Transient
+    public String buildLocationTrail() {
+        String locationTrailString = "";
+        LinkedList<StorageLocation> locationTrail = new LinkedList<>();
+        locationTrail.add(this);
+        StorageLocation parentLocation = getParentStorageLocation();
+        while (parentLocation != null) {
+            locationTrail.addFirst(parentLocation);
+            parentLocation = parentLocation.getParentStorageLocation();
+        }
+
+        for (int i = 0; i < locationTrail.size(); i++) {
+            StorageLocation location = locationTrail.get(i);
+            locationTrailString += location.getLabel();
+            if (i < locationTrail.size() - 1) {
+                locationTrailString += " > ";
+            }
+        }
+        return locationTrailString;
+    }
+
+    public static class StorageLocationLabelComparator
+            implements Comparator<StorageLocation> {
+        @Override
+        public int compare(StorageLocation storageLocation1, StorageLocation storageLocation2) {
+            return storageLocation1.getLabel()
+                    .compareTo(storageLocation2.getLabel());
+        }
     }
 }

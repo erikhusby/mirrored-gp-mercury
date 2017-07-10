@@ -898,9 +898,7 @@
             <column name="location_type" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="parent_storage_location" type="number(19,0)">
-                <constraints nullable="false"/>
-            </column>
+            <column name="parent_storage_location" type="number(19,0)"/>
             <column name="rev" type="number(19,0)" />
             <column name="revtype" type="number(3,0)" />
         </createTable>
@@ -922,6 +920,9 @@
         <addColumn schemaName="mercury" tableName="lab_vessel_aud">
             <column name="storage_location" type="number(19,0)"/>
         </addColumn>
+    </changeSet>
+    <changeSet author="jowalsh" id="GPLIM-4178-5" >
+        <createSequence schemaName="mercury" sequenceName="SEQ_STORAGE_LOCATION" incrementBy="50"/>
     </changeSet>
 
 </databaseChangeLog>

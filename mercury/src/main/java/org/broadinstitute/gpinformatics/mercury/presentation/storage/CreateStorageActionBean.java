@@ -1,20 +1,19 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.storage;
 
-import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
-import net.sourceforge.stripes.controller.LifecycleStage;
-import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.mercury.control.dao.storage.StorageLocationDao;
+import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
+import java.util.List;
 
 /**
  * A Stripes action bean to allow the creation of Laboratory Storage locations such as Freezers
@@ -23,11 +22,23 @@ import javax.inject.Inject;
 public class CreateStorageActionBean extends CoreActionBean {
     private static final Log logger = LogFactory.getLog(CreateStorageActionBean.class);
 
+    public static final String CHOOSE_STORAGE_TYPE = "chooseStorageType";
     public static final String CHOOSE_STORAGE_UNIT = "chooseStorageUnit";
     public static final String VIEW_PAGE = "/storage/create_storage.jsp";
-    public static final String CREATE_STORAGE_UNIT = "createStorageUnit";
 
-    private StorageUnit storageUnit;
+    private boolean readyForDetails;
+    private String name;
+    private String storageUnitTypeName;
+    private long storageId;
+    private StorageLocation parentStorageLocation;
+    private StorageLocation.LocationType locationType;
+    private int sections;
+    private int shelves;
+    private int slots;
+
+    private List<StorageLocation.LocationType> creatableLocationTypes =
+            StorageLocation.LocationType.getCreateableLocationTypes();
+
     private MessageCollection messageCollection = new MessageCollection();
 
     @Inject
@@ -39,118 +50,196 @@ public class CreateStorageActionBean extends CoreActionBean {
         return new ForwardResolution(VIEW_PAGE);
     }
 
-    @Before(stages = LifecycleStage.BindingAndValidation)
-    public void init() {
-        storageUnit = new StorageUnit();
+    @HandlesEvent(CHOOSE_STORAGE_TYPE)
+    public Resolution chooseStorageType() {
+        if (getName() == null || getName().isEmpty()) {
+            messageCollection.addError("Storage name is required.");
+        } else if (storageLocationDao.findByIdentifier(getName()) != null) {
+            messageCollection.addError("Storage name already in use: " + getName());
+            addMessages(messageCollection);
+        } else if (storageUnitTypeName == null || storageUnitTypeName.isEmpty()) {
+            messageCollection.addError("Location Type is required.");
+            addMessages(messageCollection);
+        }
+        locationType = StorageLocation.LocationType.getByDisplayName(storageUnitTypeName);
+        if (messageCollection.hasErrors()) {
+            addMessages(messageCollection);
+            readyForDetails = false;
+            return new ForwardResolution(VIEW_PAGE);
+        }
+        readyForDetails = true;
+        return new ForwardResolution(VIEW_PAGE);
     }
 
-    //TODO validate storage unit name is not in database and not null
     @HandlesEvent(CHOOSE_STORAGE_UNIT)
     public Resolution chooseStorageUnit() {
+        if (getName() == null || getName().isEmpty()) {
+            messageCollection.addError("Storage name is required.");
+        } else if (storageLocationDao.findByIdentifier(getName()) != null) {
+            messageCollection.addError("Storage name already in use: " + getName());
+            addMessages(messageCollection);
+        } else if (storageUnitTypeName == null || storageUnitTypeName.isEmpty()) {
+            messageCollection.addError("Location Type is required.");
+            addMessages(messageCollection);
+        }
+        if (messageCollection.hasErrors()) {
+            addMessages(messageCollection);
+            return new ForwardResolution(VIEW_PAGE);
+        }
+        if (storageLocationDao.findByIdentifier(getName()) != null) {
+            messageCollection.addError("Storage name already in use: " + getName());
+        }
+
+        locationType = StorageLocation.LocationType.getByDisplayName(storageUnitTypeName);
+        boolean isRackType = locationType == StorageLocation.LocationType.GAGERACK ||
+                             locationType == StorageLocation.LocationType.BOX;
+        if (isRackType) {
+            if (getSlots() <= 0) {
+                messageCollection.addError("Must have at least one slot ");
+            }
+            parentStorageLocation = storageLocationDao.findById(StorageLocation.class, storageId);
+            if (parentStorageLocation == null) {
+                messageCollection.addError("Failed to find storage location: " + storageId);
+            } else if (parentStorageLocation.getLocationType().isMoveable()) {
+                messageCollection.addError("Invalid Parent Storage Location Selected");
+            }
+        } else {
+            if (getSections() <= 0) {
+                messageCollection.addError("Must have at least one section ");
+            }
+
+            if (getShelves() <= 0) {
+                messageCollection.addError("Must have at least one shelf ");
+            }
+        }
+        if (messageCollection.hasErrors()) {
+            addMessages(messageCollection);
+            return new ForwardResolution(VIEW_PAGE);
+        } else {
+            StorageLocation storageLocation;
+            if (isRackType) {
+                storageLocation = createNewRack();
+            } else {
+                storageLocation = createNewFreezer();
+            }
+            storageLocationDao.persist(storageLocation);
+        }
+
+        addMessage("Successfully created new storage.");
+        name = "";
+        sections = 0;
+        shelves = 0;
+        slots = 0;
+        readyForDetails = false;
+
         return new ForwardResolution(VIEW_PAGE);
     }
 
-    @HandlesEvent(CREATE_STORAGE_UNIT)
-    public Resolution createStorageUnit() {
-        return new ForwardResolution(VIEW_PAGE);
+    private StorageLocation createNewRack() {
+        StorageLocation rack = new StorageLocation(getName(), locationType, parentStorageLocation);
+        for (int i = 1; i < getSlots(); i++) {
+            String slotName = " Slot " + i;
+            StorageLocation slot = new StorageLocation(slotName, StorageLocation.LocationType.SLOT, rack);
+            rack.getChildrenStorageLocation().add(slot);
+        }
+        return rack;
     }
 
-    public StorageUnit getStorageUnit() {
-        return storageUnit;
+    private StorageLocation createNewFreezer() {
+        StorageLocation freezer = new StorageLocation(getName(), locationType, null);
+        if (getSections() > 1) {
+            for (int i = 0; i < getSections(); i++) {
+                String sectionName = String.valueOf((char)('A' + i));
+                StorageLocation section = new StorageLocation(sectionName, StorageLocation.LocationType.SECTION, freezer);
+                for (int j = 0; j < getShelves(); j++) {
+                    String shelfName = "Shelf " +  j;
+                    StorageLocation shelf = new StorageLocation(shelfName, StorageLocation.LocationType.SHELF, section);
+                    section.getChildrenStorageLocation().add(shelf);
+                }
+                freezer.getChildrenStorageLocation().add(section);
+            }
+        } else {
+            for (int j = 1; j < getShelves(); j++) {
+                String shelfName = " Shelf " + j;
+                StorageLocation shelf = new StorageLocation(shelfName, StorageLocation.LocationType.SHELF, freezer);
+                freezer.getChildrenStorageLocation().add(shelf);
+            }
+        }
+
+        return freezer;
     }
 
-    public void setStorageUnit(
-            StorageUnit storageUnit) {
-        this.storageUnit = storageUnit;
+    public String getName() {
+        return name;
     }
 
-    public enum Level {
-        FREEZER,
-        SHELF,
-        RACK,
-        SLOT
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public enum StorageUnitType {
-        Refridgerator("Refridgerator", Level.FREEZER),
-        Freezer("Freezer", Level.FREEZER),
-        ShelvingUnit("Shelving Unit", Level.FREEZER),
-        Cabinet("Cabinet", Level.FREEZER),
-        Shelf("Shelf", Level.SHELF),
-        Rack("Rack", Level.RACK);
-
-        private final String displayName;
-        private final Level level;
-
-        StorageUnitType(String displayName, Level level) {
-            this.displayName = displayName;
-            this.level = level;
-        }
-
-        public String getDisplayName() {
-            return displayName;
-        }
-
-        public Level getLevel() {
-            return level;
-        }
+    public String getStorageUnitTypeName() {
+        return storageUnitTypeName;
     }
 
-    public class StorageUnit {
-        @Validate(required = true, on = {CHOOSE_STORAGE_UNIT})
-        private String name;
+    public void setStorageUnitTypeName(String storageUnitTypeName) {
+        this.storageUnitTypeName = storageUnitTypeName;
+    }
 
-        private StorageUnitType storageUnitType;
+    public int getSections() {
+        return sections;
+    }
 
-        @Validate(required = true, minlength = 1, on = {CREATE_STORAGE_UNIT})
-        private int sections;
+    public void setSections(int sections) {
+        this.sections = sections;
+    }
 
-        private int shelves;
+    public int getShelves() {
+        return shelves;
+    }
 
-        private int slots;
+    public void setShelves(int shelves) {
+        this.shelves = shelves;
+    }
 
-        public StorageUnit() {
-        }
+    public int getSlots() {
+        return slots;
+    }
 
-        public String getName() {
-            return name;
-        }
+    public void setSlots(int slots) {
+        this.slots = slots;
+    }
 
-        public void setName(String name) {
-            this.name = name;
-        }
+    public long getStorageId() {
+        return storageId;
+    }
 
-        public StorageUnitType getStorageUnitType() {
-            return storageUnitType;
-        }
+    public void setStorageId(long storageId) {
+        this.storageId = storageId;
+    }
 
-        public void setStorageUnitType(
-                StorageUnitType storageUnitType) {
-            this.storageUnitType = storageUnitType;
-        }
+    public StorageLocation.LocationType getLocationType() {
+        return locationType;
+    }
 
-        public int getSections() {
-            return sections;
-        }
+    public void setLocationType(
+            StorageLocation.LocationType locationType) {
+        this.locationType = locationType;
+    }
 
-        public void setSections(int sections) {
-            this.sections = sections;
-        }
+    public boolean isReadyForDetails() {
+        return readyForDetails;
+    }
 
-        public int getShelves() {
-            return shelves;
-        }
+    public void setReadyForDetails(boolean readyForDetails) {
+        this.readyForDetails = readyForDetails;
+    }
 
-        public void setShelves(int shelves) {
-            this.shelves = shelves;
-        }
+    public List<StorageLocation.LocationType> getCreatableLocationTypes() {
+        return creatableLocationTypes;
+    }
 
-        public int getSlots() {
-            return slots;
-        }
-
-        public void setSlots(int slots) {
-            this.slots = slots;
-        }
+    public void setCreatableLocationTypes(
+            List<StorageLocation.LocationType> creatableLocationTypes) {
+        this.creatableLocationTypes = creatableLocationTypes;
     }
 }

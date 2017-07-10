@@ -5,78 +5,93 @@
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.storage.CreateStorageActionBean"/>
 
 <stripes:layout-render name="/layout.jsp" pageTitle="Create Storage" sectionTitle="Create Storage">
+
+    <stripes:layout-component name="extraHead">
+        <script type="javascript">
+            var ctxpath = ${ctxpath};
+        </script>
+        <script src="${ctxpath}/resources/scripts/storage-location-ajax.js"></script>
+    </stripes:layout-component>
+
     <stripes:layout-component name="content">
+
+        <div id="storage_location_overlay">
+            <div class="control-group">
+                <div class="control">
+                    <input type="text" id="searchTerm" name="searchTerm" placeholder="storage barcode"/>
+                    <input type="submit" value="Find" id="searchTermSubmit"/>
+                </div>
+            </div>
+
+            <div id="ajax-jstree"></div>
+        </div>
 
         <%--Step 1 Choose Storage Unit Type--%>
         <stripes:form beanclass="${actionBean.class.name}" id="createStorageForm">
             <div class="form-horizontal">
                 <div class="control-group">
-                    <stripes:label for="storageUnitType" name="Unit Type" class="control-label"/>
+                    <stripes:label for="storageUnitName" name="Unit Name" class="control-label"/>
                     <div class="controls">
-                        <stripes:select name="storageUnit.storageUnitType" id="storageUnitType">
-                            <stripes:options-enumeration
-                                    enum="org.broadinstitute.gpinformatics.mercury.presentation.storage.CreateStorageActionBean.StorageUnitType"
-                                    label="displayName"/>
+                        <stripes:text id="storageUnitName" name="name"/>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <stripes:label for="storageUnitTypeName" name="Unit Type" class="control-label"/>
+                    <div class="controls">
+                        <stripes:select name="storageUnitTypeName">
+                            <stripes:options-collection collection="${actionBean.creatableLocationTypes}"
+                                                        label="displayName" value="displayName"/>
                         </stripes:select>
                     </div>
                 </div>
                 <div class="control-group">
-                    <stripes:label for="storageUnitName" name="Unit Name" class="control-label"/>
                     <div class="controls">
-                        <stripes:text id="storageUnitName" name="storageUnit.name"/>
+                        <stripes:submit name="chooseStorageType" value="Select Type" class="btn"/>
                     </div>
                 </div>
 
-                <div class="control-group">
-                    <div class="controls">
-                        <stripes:submit name="chooseStorageUnit" value="Continue" class="btn btn-primary"/>
-                    </div>
-                </div>
-            </div>
-        </stripes:form>
-
-        <%--Step 2 Enter Storage Unit information --%>
-        <c:if test="${not empty actionBean.storageUnit}">
-            <stripes:form beanclass="${actionBean.class.name}" id="storageUnitInformation">
-                <c:choose>
-                    <c:when test="${actionBean.storageUnit.storageUnitType.level == 'FREEZER'}">
-                        <div class="form-horizontal">
+                <c:if test="${actionBean.readyForDetails}">
+                    <c:choose>
+                        <c:when test="${actionBean.locationType.moveable}">
+                            <div class="control-group">
+                                <stripes:label for="slots" name="Number Of Slots" class="control-label"/>
+                                <div class="controls">
+                                    <stripes:text id="slots" name="slots"/>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <stripes:label for="storageName" class="control-label"/>
+                                <div class="controls">
+                                    <stripes:text id="storageName" name="storageName"  readonly="true"/>
+                                    <stripes:submit name="browse" id="browse" value="Browse"
+                                                    class="btn btn-primary"/>
+                                </div>
+                            </div>
+                        </c:when>
+                        <c:otherwise>
                             <div class="control-group">
                                 <stripes:label for="sections" name="Number Of Sections" class="control-label"/>
                                 <div class="controls">
-                                    <stripes:text id="sections" name="storageUnit.sections"/>
+                                    <stripes:text id="sections" name="sections"/>
                                 </div>
                             </div>
                             <div class="control-group">
                                 <stripes:label for="shelves" name="Number Of Shelves" class="control-label"/>
                                 <div class="controls">
-                                    <stripes:text id="shelves" name="storageUnit.shelves"/>
+                                    <stripes:text id="shelves" name="shelves"/>
                                 </div>
                             </div>
-                            <div class="control-group">
-                                <div class="controls">
-                                    <stripes:submit name="createStorageUnit" value="Submit" class="btn btn-primary"/>
-                                </div>
-                            </div>
+                        </c:otherwise>
+                    </c:choose>
+                    <div class="control-group">
+                        <div class="controls">
+                            <stripes:hidden id="storageId" name="storageId" value="${actionBean.storageId}" />
+                            <stripes:hidden name="readyForDetails" value="${actionBean.readyForDetails}" />
+                            <stripes:submit name="chooseStorageUnit" value="Create" class="btn btn-primary"/>
                         </div>
-                    </c:when>
-                    <c:when test="${actionBean.storageUnit.storageUnitType.level == 'RACK'}">
-                        <div class="form-horizontal">
-                            <div class="control-group">
-                                <stripes:label for="sections" name="Number Of Slots" class="control-label"/>
-                                <div class="controls">
-                                    <stripes:text id="sections" name="storageUnit.slots"/>
-                                </div>
-                            </div>
-                            <div class="control-group">
-                                <div class="controls">
-                                    <stripes:submit name="createStorageUnit" value="Submit" class="btn btn-primary"/>
-                                </div>
-                            </div>
-                        </div>
-                    </c:when>
-                </c:choose>
-            </stripes:form>
-        </c:if>
+                    </div>
+                </c:if>
+            </div>
+        </stripes:form>
     </stripes:layout-component>
 </stripes:layout-render>
