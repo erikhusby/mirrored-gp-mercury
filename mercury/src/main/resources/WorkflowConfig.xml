@@ -1554,6 +1554,85 @@
         </workflowProcessDefVersions>
     </workflowProcessDefs>
     <workflowProcessDefs>
+        <name>Whole Blood QiaSymphony Extraction</name>
+        <workflowProcessDefVersions>
+            <version>02</version>
+            <effectiveDate>2017-07-08T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Extract to DNA</name>
+                <labEventTypes>DNA_EXTRACTION_BUCKET</labEventTypes>
+                <bucketEntryEvaluator>
+                    <materialTypes>FRESH_BLOOD</materialTypes>
+                    <materialTypes>FRESH_FROZEN_BLOOD</materialTypes>
+                    <materialTypes>WHOLE_BLOOD_WHOLE_BLOOD_FRESH</materialTypes>
+                    <materialTypes>WHOLE_BLOOD_WHOLE_BLOOD_FROZEN</materialTypes>
+                    <workflows>CLINICAL_WHOLE_BLOOD_EXTRACTION</workflows>
+                </bucketEntryEvaluator>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Initial Scan</name>
+                <labEventTypes>IN_PLACE</labEventTypes>
+                <workflowQualifier>CRSP_BLOOD_INITIAL_SCAN</workflowQualifier>
+                <instructions>Scan all parent source SM-IDs to cross check against samples in XTR ticket
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_EVENT</messageType>
+                    <targetVesselTypeGeometryString>RackType.FlipperRackRow8</targetVesselTypeGeometryString>
+                    <targetSection>ROWOF8</targetSection>
+                    <buttonValue>Cross Check</buttonValue>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Prep Reagents</name>
+                <labEventTypes>PREP</labEventTypes>
+                <workflowQualifier>Reagents</workflowQualifier>
+                <instructions>Before starting, confirm all reagents have been prepared:
+                    Buffer AL incubated at 56C to dissolve precipitate, if needed
+                    100% Ethanol added to Buffer AW1
+                    100% Ethanol added to Buffer AW2
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Prep workspace</name>
+                <labEventTypes>PREP</labEventTypes>
+                <workflowQualifier>Disinfect</workflowQualifier>
+                <instructions>Disinfect lab space and sample rack.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Incubate Samples</name>
+                <labEventTypes>INCUBATE</labEventTypes>
+                <workflowQualifier>Samples</workflowQualifier>
+                <instructions>Collect samples for extraction from +4C fridge or freezer.
+                    If samples are frozen, incubate at 37C for 10 minutes. Remove from incubator and place on ice.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Transfer to microcentrifuge tube</name>
+                <labEventTypes>EXTRACT_BLOOD_TO_MICRO</labEventTypes>
+                <reagentTypes>Proteinase K</reagentTypes>
+                <reagentTypes>Buffer AL</reagentTypes>
+                <instructions>Label one microcentrifuge tube for each sample. Pipet 20ul of proteinase K into the tube.
+                    Add 200ul of blood to each microcentrifuge tube.
+                    Add 200ul of Buffer AL to each microcentrifuge tube.
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>RackType.FlipperRackRow8</sourceVesselTypeGeometryString>
+                    <sourceSection>ROWOF8</sourceSection>
+                    <targetVesselTypeGeometryString>RackType.FlipperRackRow8</targetVesselTypeGeometryString>
+                    <targetSection>ROWOF8</targetSection>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Store</name>
+                <labEventTypes>STORE</labEventTypes>
+                <instructions>If necessary, store at +4C until ready to proceed to Plating.
+                </instructions>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
         <name>DNA and RNA from Cell Pellets</name>
         <workflowProcessDefVersions>
             <version>01</version>
@@ -2887,6 +2966,23 @@
             <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>
             <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
             <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
+            <routingRule>MERCURY</routingRule>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>Clinical Genome</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>HUMAN_PCR_FREE</batchJiraIssueType> <!-- XTR? -->
+            <effectiveDate>2016-07-08T22:04:23.932-04:00</effectiveDate>
+            <workflowProcessDefs>Whole Blood QiaSymphony Extraction</workflowProcessDefs>
+            <workflowProcessDefs>Pico/FP/Plating</workflowProcessDefs>
+            <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
+            <workflowProcessDefs>Library Construction</workflowProcessDefs>
+            <workflowProcessDefs>PCR Free Pond</workflowProcessDefs>
+            <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>HiSEQ</workflowProcessDefs>
             <routingRule>MERCURY</routingRule>
         </productWorkflowDefVersions>
     </productWorkflowDefs>
