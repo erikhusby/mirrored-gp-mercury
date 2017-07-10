@@ -1590,8 +1590,5 @@ public class LabEventFactory implements Serializable {
 
     public void setBspRestSender(BSPRestSender bspRestSender) {
         this.bspRestSender = bspRestSender;
-        if (eventHandlerSelector != null) {
-            eventHandlerSelector.setBspRestSender(bspRestSender);
-        }
     }
 }
