@@ -1,9 +1,10 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:layout-definition>
+    <%--@elvariable id="abandonedVessel" type="org.broadinstitute.gpinformatics.mercury.entity.vessel.abandonedvessels"--%>
     <%--@elvariable id="vessel" type="org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel"--%>
     <%--@elvariable id="bean" type="org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean"--%>
-    <input type="hidden" name="vesselLabel" id="vesselLabel"  value="${actionBean.barcode}">
+    <input type="hidden" name="vesselLabel" id="vesselLabel"  value="${vessel.label}">
     <div id="headerId" class="fourcolumn" style="padding: 0">
         <div>Vessel Type: ${vessel.type.name}</div>
         <div>Vessel Label: ${vessel.label}</div>
