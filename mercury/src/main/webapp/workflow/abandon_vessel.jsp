@@ -1,12 +1,9 @@
-<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.workflow.AbandonVesselActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 <%@ taglib prefix='fn' uri='http://java.sun.com/jsp/jstl/functions' %>
 <%@ taglib uri="http://mercury.broadinstitute.org/Mercury/security" prefix="security" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
-<%@ page import="org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList" %>
-<%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean" %>
 <stripes:useActionBean var="actionBean" beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.AbandonVesselActionBean"/>
 <c:set var="reasonCodes" value="${actionBean.reasonCodes}"/>
 <stripes:layout-render name="/layout.jsp" pageTitle="Abandon Vessel" sectionTitle="Abandon Vessel">
@@ -55,19 +52,11 @@
                 border: 1px solid black;
             }
 
-            fieldset{
-                border: solid 1px black;
-                float:left;
-            }
-
         </style>
-        <script src="${ctxpath}/resources/scripts/jsPlumb-2.1.4.js"></script>
-        <script type="text/javascript" src="${ctxpath}/resources/scripts/cherryPick.js"></script>
         <script src="${ctxpath}/resources/scripts/jquery.validate-1.14.0.min.js"></script>
 
         <%--@elvariable id="vessel" type="org.broadinstitute.gpinformatics.mercury.presentation.workflow.abandonvesselactionbean"--%>
         <%--@elvariable id="geometry" type="org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry"--%>
-        <%--@elvariable id="positionMap" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType"--%>
 
         <script type="text/javascript">
             $(function() {
@@ -76,10 +65,6 @@
                     $('#abandonComment').val(x);
                 });
             });
-
-            function myFunction() {
-                document.getElementById("mySubmit").disabled = true;
-            }
 
             function abandonAllPositionReason() {
                 var reason = $("#reasonCodeAllPositions").val();
@@ -206,6 +191,7 @@
                             <stripes:layout-render name="/vessel/abandon_vessel_info_header.jsp" bean="${actionBean}"
                                                    vessel="${vessel}"/>
                         </div>
+                        </br>
                     </c:forEach>
                 </div>
                 </br>
@@ -265,7 +251,7 @@
                                                 <stripes:submit id="${rowName}${columnName}" name="abandonPosition" value="Abandon" onclick="abandonPositions(this.id)" class="btn btn-primary ${actionBean.shrinkCss('btn-xs')}"/>
                                             </c:otherwise>
                                             </c:choose>
-                                            <select class="filterDropdown ${actionBean.shrinkCss('ddl-xs')}" id="reason_${rowName}${columnName}" name="reasonDdl">
+                                            <select class="${actionBean.shrinkCss('ddl-xs')}" id="reason_${rowName}${columnName}" name="reasonDdl">
                                                 <c:forEach items="${reasonCodes}" var="reasonValue" varStatus="reasonStatus">
                                                     <c:if test="${reasonStatus.count > 1}">
                                                           <option value="${reasonValue}">${reasonValue.getDisplayName()}</option>
@@ -289,7 +275,7 @@
                                 </security:authorizeBlock>
                             </c:when>
                             <c:otherwise>
-                                <stripes:button id="abandonVesselItem" name="abandonVesselItem" value="Abandon Vessel" class="btn btn-primary"
+                                <stripes:button id="abandonVesselItem" name="abandonVesselItem" value="Abandon Vessel(s)" class="btn btn-primary"
                                                 onclick="showAbandonDialog()"/>
                             </c:otherwise>
                             </c:choose>
@@ -302,8 +288,8 @@
 
             </c:if>
             <div id="abandonDialog" style="width:600px;display:none;">
-                <p>Abandon Vessel</p>
-                <p>Vessel Barcode (<span id="abandonVesselBarcode"> </span>)</p>
+                <p>Abandon Vessel(s)</p>
+                <p>Vessel Barcode(s): <span id="abandonVesselBarcode"> </span></p>
                 <p style="clear:both">
                     <label>Reason:</label>
                 </p>
