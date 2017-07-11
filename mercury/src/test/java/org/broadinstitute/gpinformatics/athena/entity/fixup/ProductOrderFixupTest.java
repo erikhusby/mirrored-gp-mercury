@@ -1123,7 +1123,7 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderDao.persist(new FixupCommentary("GPLIM-4823: Updating productOrders to Submitted which were not previously tranistioned as such"));
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void gplim4954SetOrdersToCompleted() throws Exception {
         userBean.loginOSUser();
         List <String> ordersToComplete = Arrays.asList("PDO-11934",
