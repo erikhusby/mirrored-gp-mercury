@@ -54,7 +54,7 @@ public class CreateStorageActionBean extends CoreActionBean {
     public Resolution chooseStorageType() {
         if (getName() == null || getName().isEmpty()) {
             messageCollection.addError("Storage name is required.");
-        } else if (storageLocationDao.findByIdentifier(getName()) != null) {
+        } else if (storageLocationDao.findByLabel(getName()) != null) {
             messageCollection.addError("Storage name already in use: " + getName());
             addMessages(messageCollection);
         } else if (storageUnitTypeName == null || storageUnitTypeName.isEmpty()) {
@@ -75,7 +75,7 @@ public class CreateStorageActionBean extends CoreActionBean {
     public Resolution chooseStorageUnit() {
         if (getName() == null || getName().isEmpty()) {
             messageCollection.addError("Storage name is required.");
-        } else if (storageLocationDao.findByIdentifier(getName()) != null) {
+        } else if (!storageLocationDao.findByLabel(getName()).isEmpty()) {
             messageCollection.addError("Storage name already in use: " + getName());
             addMessages(messageCollection);
         } else if (storageUnitTypeName == null || storageUnitTypeName.isEmpty()) {
@@ -85,9 +85,6 @@ public class CreateStorageActionBean extends CoreActionBean {
         if (messageCollection.hasErrors()) {
             addMessages(messageCollection);
             return new ForwardResolution(VIEW_PAGE);
-        }
-        if (storageLocationDao.findByIdentifier(getName()) != null) {
-            messageCollection.addError("Storage name already in use: " + getName());
         }
 
         locationType = StorageLocation.LocationType.getByDisplayName(storageUnitTypeName);

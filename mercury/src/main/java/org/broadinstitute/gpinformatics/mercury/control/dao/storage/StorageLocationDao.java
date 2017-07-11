@@ -15,6 +15,15 @@ import java.util.List;
 @RequestScoped
 public class StorageLocationDao extends GenericDao {
 
+    public List<StorageLocation> findByLabel(final String label) {
+        return findAll(StorageLocation.class, new GenericDaoCallback<StorageLocation>() {
+            @Override
+            public void callback(CriteriaQuery<StorageLocation> criteriaQuery, Root<StorageLocation> root) {
+                criteriaQuery.where(getCriteriaBuilder().equal(root.get(StorageLocation_.label), label));
+            }
+        });
+    }
+
     public List<StorageLocation> findByLocationType(final StorageLocation.LocationType locationType) {
         return findAll(StorageLocation.class, new GenericDaoCallback<StorageLocation>() {
             @Override
