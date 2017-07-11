@@ -54,7 +54,7 @@ public class CreateStorageActionBean extends CoreActionBean {
     public Resolution chooseStorageType() {
         if (getName() == null || getName().isEmpty()) {
             messageCollection.addError("Storage name is required.");
-        } else if (storageLocationDao.findByLabel(getName()) != null) {
+        } else if (!storageLocationDao.findByLabel(getName()).isEmpty()) {
             messageCollection.addError("Storage name already in use: " + getName());
             addMessages(messageCollection);
         } else if (storageUnitTypeName == null || storageUnitTypeName.isEmpty()) {
