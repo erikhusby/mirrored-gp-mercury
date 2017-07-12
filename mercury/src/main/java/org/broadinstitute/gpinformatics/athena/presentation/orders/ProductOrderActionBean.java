@@ -22,7 +22,6 @@ import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.CharEncoding;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -138,6 +137,7 @@ import java.text.MessageFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -700,7 +700,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         Quote quote = validateQuoteId(quoteId);
         try {
             if (quote != null) {
-                ProductOrder.checkQuoteValidity(editOrder, quote);
+                ProductOrder.checkQuoteValidity(quote);
                 for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel()) {
                     final Funding funding = fundingLevel.getFunding();
                     if (funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
@@ -770,7 +770,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                                                       boolean countOpenOrders, int additionalSamplesCount)
             throws InvalidProductException, QuoteServerException {
         Quote quote = validateQuoteId(quoteId);
-        ProductOrder.checkQuoteValidity(editOrder, quote);
+        ProductOrder.checkQuoteValidity(quote);
         if (quote != null) {
             validateQuoteDetails(quote, errorLevel, countOpenOrders, additionalSamplesCount);
         }
@@ -1226,21 +1226,23 @@ public class ProductOrderActionBean extends CoreActionBean {
                         outstandingOrdersValue));
                 JSONArray fundingDetails = new JSONArray();
 
+                final Date todayTruncated = org.apache.commons.lang3.time.DateUtils.truncate(new Date(), Calendar.DATE);
+                
                 for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel()) {
-                    if(fundingLevel.getFunding().getFundingType().equals(Funding.FUNDS_RESERVATION)) {
-                        JSONObject fundingInfo = new JSONObject();
-                        fundingInfo.put("grantTitle", fundingLevel.getFunding().getDisplayName());
-                        fundingInfo.put("grantEndDate",
-                                DateUtils.getDate(fundingLevel.getFunding().getGrantEndDate()));
-                        fundingInfo.put("grantNumber", fundingLevel.getFunding().getGrantNumber());
-                        fundingInfo.put("grantStatus", fundingLevel.getFunding().getGrantStatus());
+                    if (Integer.valueOf(fundingLevel.getPercent()) > 0) {
+                        if(fundingLevel.getFunding().getFundingType().equals(Funding.FUNDS_RESERVATION)) {
+                            JSONObject fundingInfo = new JSONObject();
+                            fundingInfo.put("grantTitle", fundingLevel.getFunding().getDisplayName());
+                            fundingInfo.put("grantEndDate",
+                                    DateUtils.getDate(fundingLevel.getFunding().getGrantEndDate()));
+                            fundingInfo.put("grantNumber", fundingLevel.getFunding().getGrantNumber());
+                            fundingInfo.put("grantStatus", fundingLevel.getFunding().getGrantStatus());
 
-                        final Date today = new Date();
-                        fundingInfo.put("activeGrant", (fundingLevel.getFunding().getGrantEndDate() != null &&
-                                                        fundingLevel.getFunding().getGrantEndDate().after(today)));
-                        fundingInfo.put("daysTillExpire",
-                                DateUtils.getNumDaysBetween(today, fundingLevel.getFunding().getGrantEndDate()));
-                        fundingDetails.put(fundingInfo);
+                            fundingInfo.put("activeGrant", (FundingLevel.isPastGrantDate(todayTruncated,fundingLevel)));
+                            fundingInfo.put("daysTillExpire",
+                                    DateUtils.getNumDaysBetween(todayTruncated, fundingLevel.getFunding().getGrantEndDate()));
+                            fundingDetails.put(fundingInfo);
+                        }
                     }
                 }
                 item.put("fundingDetails", fundingDetails);

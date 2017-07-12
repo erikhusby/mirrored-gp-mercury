@@ -1,12 +1,16 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.apache.commons.lang3.time.DateUtils;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
+import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -28,6 +32,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -516,5 +521,32 @@ public class ProductOrderTest {
         Assert.assertEquals(productOrder.getUnbilledSampleCount(), expected);
         primaryItemSampleEntry.setBillingMessage(BillingSession.SUCCESS);
         billingSession.setBilledDate(new Date());
+    }
+
+    public void testQuoteGrantValidityWithUnallocatedFundingSources() throws Exception{
+        QuoteService stubbedQuoteService = QuoteServiceProducer.stubInstance();
+
+        Quote gp87Uquote = stubbedQuoteService.getQuoteByAlphaId("GP87U");
+
+        try {
+            ProductOrder.checkQuoteValidity(gp87Uquote);
+        } catch (Exception shouldNotHappen) {
+            Assert.fail();
+        }
+    }
+
+    public void testQuoteGrantValidityWithGrantExpiringNow() throws Exception{
+        QuoteService stubbedQuoteService = QuoteServiceProducer.stubInstance();
+
+        Quote expiringNowQuote = stubbedQuoteService.getQuoteByAlphaId("STCIL1");
+        for (FundingLevel fundingLevel : expiringNowQuote.getQuoteFunding().getFundingLevel()) {
+            fundingLevel.getFunding().setGrantEndDate( DateUtils.truncate(new Date(), Calendar.DATE));
+        }
+
+        try {
+            ProductOrder.checkQuoteValidity(expiringNowQuote);
+        } catch (Exception shouldNotHappen) {
+            Assert.fail();
+        }
     }
 }

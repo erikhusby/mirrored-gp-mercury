@@ -147,9 +147,12 @@ public class Quote {
         FundingLevel singleLevel = getFirstRelevantFundingLevel();
 
         boolean grantHasNotEnded = true;
-        if(singleLevel.getFunding().getGrantEndDate() != null) {
+        if (singleLevel != null) {
+            if(singleLevel.getFunding().getFundingType().equals(Funding.FUNDS_RESERVATION) &&
+               singleLevel.getFunding().getGrantEndDate() != null) {
 
-            grantHasNotEnded = singleLevel.getFunding().getGrantEndDate().after(new Date());
+                grantHasNotEnded = singleLevel.getFunding().getGrantEndDate().after(new Date());
+            }
         }
         return !(singleLevel == null) && grantHasNotEnded;
     }
