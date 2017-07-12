@@ -2961,7 +2961,7 @@
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <productWorkflowDefs>
-        <name>Clinical Genome</name>
+        <name>CLIA-Grade Genome</name>
         <productWorkflowDefVersions>
             <version>1.0</version>
             <batchJiraProjectType>LCSET</batchJiraProjectType>
