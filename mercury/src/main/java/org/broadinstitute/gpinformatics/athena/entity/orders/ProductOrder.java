@@ -69,6 +69,7 @@ import java.text.MessageFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -2048,17 +2049,23 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         this.pipelineLocation = pipelineLocation;
     }
 
-    public static void checkQuoteValidity(ProductOrder productOrder, Quote quote) throws QuoteServerException {
+    public static void checkQuoteValidity(Quote quote) throws QuoteServerException {
+        final Date todayTruncated = DateUtils.truncate(new Date(), Calendar.DATE);
+
+        checkQuoteValidity(quote, todayTruncated);
+    }
+
+    public static void checkQuoteValidity(Quote quote, Date todayTruncated) throws QuoteServerException {
         for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel()) {
-            if(fundingLevel.getFunding().getFundingType().equals(Funding.FUNDS_RESERVATION)) {
-                if(fundingLevel.getFunding().getGrantEndDate() != null &&
-                   !fundingLevel.getFunding().getGrantEndDate().after(new Date())) {
-                    throw new QuoteServerException("The funding source " + fundingLevel.getFunding().getGrantNumber() +
-                                                   " has expired making this quote currently unfunded.");
+            if (Integer.valueOf(fundingLevel.getPercent()) > 0) {
+                if(fundingLevel.getFunding().getFundingType().equals(Funding.FUNDS_RESERVATION)) {
+                    if(FundingLevel.isPastGrantDate(todayTruncated, fundingLevel)) {
+                        throw new QuoteServerException("The funding source " + fundingLevel.getFunding().getGrantNumber() +
+                                                       " has expired making this quote currently unfunded.");
+                    }
                 }
             }
         }
-
     }
 
     /**
