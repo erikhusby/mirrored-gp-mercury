@@ -549,4 +549,14 @@ public class ProductOrderTest {
             Assert.fail();
         }
     }
+   public void testQuoteGrantValidityWithGrantExpired() throws Exception{
+        QuoteService stubbedQuoteService = QuoteServiceProducer.stubInstance();
+
+        Quote expiringNowQuote = stubbedQuoteService.getQuoteByAlphaId("STCIL1");
+        try {
+            ProductOrder.checkQuoteValidity(expiringNowQuote);
+            Assert.fail();
+        } catch (Exception shouldNotHappen) {
+        }
+    }
 }

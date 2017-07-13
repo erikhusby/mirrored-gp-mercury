@@ -154,7 +154,7 @@ public class Quote {
                singleLevel.getFunding().getGrantEndDate() != null) {
 
                 final Date today = DateUtils.truncate(new Date(), Calendar.DATE);
-                grantHasNotEnded = FundingLevel.isPastGrantDate(today, singleLevel);
+                grantHasNotEnded = FundingLevel.isGrantActiveForDate(today, singleLevel);
             }
         }
         return !(singleLevel == null) && grantHasNotEnded;

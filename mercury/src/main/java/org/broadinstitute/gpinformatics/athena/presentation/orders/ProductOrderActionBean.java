@@ -1238,7 +1238,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                             fundingInfo.put("grantNumber", fundingLevel.getFunding().getGrantNumber());
                             fundingInfo.put("grantStatus", fundingLevel.getFunding().getGrantStatus());
 
-                            fundingInfo.put("activeGrant", (!FundingLevel.isPastGrantDate(todayTruncated,fundingLevel)));
+                            fundingInfo.put("activeGrant", (FundingLevel.isGrantActiveForDate(todayTruncated,fundingLevel)));
                             fundingInfo.put("daysTillExpire",
                                     DateUtils.getNumDaysBetween(todayTruncated, fundingLevel.getFunding().getGrantEndDate()));
                             fundingDetails.put(fundingInfo);
