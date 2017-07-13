@@ -74,7 +74,6 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     private Long productId;
 
     @Column(name = "PRODUCT_NAME", length = 255)
-    @Column(name = "PRODUCT_NAME", length = 255)
     private String productName;
 
     @Column(name = "EXTERNAL_PRODUCT_NAME", length = 255)
