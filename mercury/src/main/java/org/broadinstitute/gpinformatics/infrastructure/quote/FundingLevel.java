@@ -19,10 +19,10 @@ public class FundingLevel {
         this.funding = funding;
     }
 
-    public static boolean isPastGrantDate(Date effectiveDate, FundingLevel fundingLevel) {
+    public static boolean isGrantActiveForDate(Date effectiveDate, FundingLevel fundingLevel) {
         final Date grantEndDate = fundingLevel.getFunding().getGrantEndDate();
-        return grantEndDate != null &&
-               (effectiveDate.after(grantEndDate) && !effectiveDate.equals(grantEndDate));
+        return grantEndDate == null ||
+               (effectiveDate.before(grantEndDate) || effectiveDate.equals(grantEndDate));
     }
 
     @XmlAttribute(name = "percent")

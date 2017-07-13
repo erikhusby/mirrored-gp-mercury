@@ -1,12 +1,14 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
 import clover.org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.time.DateUtils;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -151,7 +153,8 @@ public class Quote {
             if(singleLevel.getFunding().getFundingType().equals(Funding.FUNDS_RESERVATION) &&
                singleLevel.getFunding().getGrantEndDate() != null) {
 
-                grantHasNotEnded = singleLevel.getFunding().getGrantEndDate().after(new Date());
+                final Date today = DateUtils.truncate(new Date(), Calendar.DATE);
+                grantHasNotEnded = FundingLevel.isGrantActiveForDate(today, singleLevel);
             }
         }
         return !(singleLevel == null) && grantHasNotEnded;
