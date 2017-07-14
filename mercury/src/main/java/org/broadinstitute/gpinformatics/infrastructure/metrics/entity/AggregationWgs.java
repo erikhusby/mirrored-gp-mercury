@@ -20,6 +20,7 @@ import javax.persistence.Table;
 
 @Entity
 @Table(name = "AGGREGATION_WGS", schema = "METRICS")
+@BatchSize(size = 500)
 public class AggregationWgs {
     @Id
     @Column(name = "AGGREGATION_ID")
