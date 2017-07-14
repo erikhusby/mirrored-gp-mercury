@@ -726,7 +726,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         try {
             if (quote != null) {
                 ProductOrder.checkQuoteValidity(quote);
-                for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel()) {
+                for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel(true)) {
                     for (Funding funding : fundingLevel.getFunding()) {
                         if (funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
                             final int numDaysBetween =
@@ -1254,7 +1254,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
                 final Date todayTruncated = org.apache.commons.lang3.time.DateUtils.truncate(new Date(), Calendar.DATE);
 
-                for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel()) {
+                for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel(true)) {
                     for (Funding funding:fundingLevel.getFunding()) {
                         if(funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
                             JSONObject fundingInfo = new JSONObject();
