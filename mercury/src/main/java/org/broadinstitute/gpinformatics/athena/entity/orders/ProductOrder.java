@@ -69,6 +69,7 @@ import java.text.MessageFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -2048,13 +2049,18 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         this.pipelineLocation = pipelineLocation;
     }
 
-    public static void checkQuoteValidity(ProductOrder productOrder, Quote quote) throws QuoteServerException {
+    public static void checkQuoteValidity(Quote quote) throws QuoteServerException {
+        final Date todayTruncated = DateUtils.truncate(new Date(), Calendar.DATE);
+
+        checkQuoteValidity(quote, todayTruncated);
+    }
+
+    public static void checkQuoteValidity(Quote quote, Date todayTruncated) throws QuoteServerException {
         for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel()) {
             for (Funding funding : fundingLevel.getFunding()) {
 
                 if(funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
-                    if(funding.getGrantEndDate() != null &&
-                       !funding.getGrantEndDate().after(new Date())) {
+                    if(!FundingLevel.isGrantActiveForDate(todayTruncated, funding)) {
                         throw new QuoteServerException("The funding source " + funding.getGrantNumber() +
                                                        " has expired making this quote currently unfunded.");
                     }

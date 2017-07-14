@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 import com.google.common.collect.HashMultimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -34,6 +35,7 @@ import javax.inject.Inject;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -154,7 +156,8 @@ public class BillingAdaptor implements Serializable {
 
                 try {
                     quote = quoteService.getQuoteByAlphaId(itemForPriceUpdate.getQuoteId());
-                    ProductOrder.checkQuoteValidity(itemForPriceUpdate.getProductOrder(), quote);
+                    ProductOrder.checkQuoteValidity(quote,
+                            DateUtils.truncate(itemForPriceUpdate.getWorkCompleteDate(), Calendar.DATE));
 
                     //todo SGM is this call really necessary?  Is it just for DBFree tests?
                     quote.setAlphanumericId(itemForPriceUpdate.getQuoteId());
@@ -197,7 +200,8 @@ public class BillingAdaptor implements Serializable {
                 String workId = null;
                 try {
                     quote = quoteService.getQuoteByAlphaId(item.getQuoteId());
-                    ProductOrder.checkQuoteValidity(item.getProductOrder(), quote);
+                    ProductOrder.checkQuoteValidity(quote,
+                            DateUtils.truncate(item.getWorkCompleteDate(), Calendar.DATE));
 
                     //todo SGM is this call really necessary?  Is it just for DBFree tests?
                     quote.setAlphanumericId(item.getQuoteId());

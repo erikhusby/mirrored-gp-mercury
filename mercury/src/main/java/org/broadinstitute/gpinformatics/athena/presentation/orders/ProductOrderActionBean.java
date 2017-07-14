@@ -146,6 +146,7 @@ import java.text.MessageFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -724,7 +725,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         Quote quote = validateQuoteId(quoteId);
         try {
             if (quote != null) {
-                ProductOrder.checkQuoteValidity(editOrder, quote);
+                ProductOrder.checkQuoteValidity(quote);
                 for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel()) {
                     for (Funding funding : fundingLevel.getFunding()) {
                         if (funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
@@ -795,7 +796,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                                                       boolean countOpenOrders, int additionalSamplesCount)
             throws InvalidProductException, QuoteServerException {
         Quote quote = validateQuoteId(quoteId);
-        ProductOrder.checkQuoteValidity(editOrder, quote);
+        ProductOrder.checkQuoteValidity(quote);
         if (quote != null) {
             validateQuoteDetails(quote, errorLevel, countOpenOrders, additionalSamplesCount);
         }
@@ -1251,6 +1252,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                         outstandingOrdersValue));
                 JSONArray fundingDetails = new JSONArray();
 
+                final Date todayTruncated = org.apache.commons.lang3.time.DateUtils.truncate(new Date(), Calendar.DATE);
+
                 for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel()) {
                     for (Funding funding:fundingLevel.getFunding()) {
                         if(funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
@@ -1262,8 +1265,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                             fundingInfo.put("grantStatus", funding.getGrantStatus());
 
                             final Date today = new Date();
-                            fundingInfo.put("activeGrant", (funding.getGrantEndDate() != null &&
-                                                            funding.getGrantEndDate().after(today)));
+                            fundingInfo.put("activeGrant", (FundingLevel.isGrantActiveForDate(todayTruncated,funding)));
                             fundingInfo.put("daysTillExpire",
                                     DateUtils.getNumDaysBetween(today, funding.getGrantEndDate()));
                             fundingDetails.put(fundingInfo);
