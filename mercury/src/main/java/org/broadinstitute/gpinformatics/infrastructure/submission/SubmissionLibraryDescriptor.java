@@ -25,6 +25,10 @@ public class SubmissionLibraryDescriptor implements Serializable {
     public static final String WHOLE_GENOME_NAME = "Whole Genome";
     public static final String WHOLE_GENOME_DESCRIPTION = "Human Whole Genome";
 
+    public static final SubmissionLibraryDescriptor RNA_SEQUENCING =
+        new SubmissionLibraryDescriptor("RNA Seq", "RNA Sequencing");
+
+
     private String name;
 
     private String description;
@@ -55,6 +59,12 @@ public class SubmissionLibraryDescriptor implements Serializable {
     @XmlElement(required = false)
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("{\'submissiondatatype\': "
+                             + "[{\'name\': \'%s\', \'description\': \'%s\'}]}", name, description);
     }
 
     @Override

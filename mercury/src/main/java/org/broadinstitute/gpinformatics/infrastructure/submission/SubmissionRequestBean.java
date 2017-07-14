@@ -27,8 +27,7 @@ public class SubmissionRequestBean implements Serializable {
     public List<SubmissionBean> getSubmissions() {
         return submissions;
     }
-
-    @XmlElement
+    @XmlElement(name = "onPremOrCloudSubmissions")
     public void setSubmissions(List<SubmissionBean> submissions) {
         this.submissions = submissions;
     }

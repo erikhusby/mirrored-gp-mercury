@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.metrics;
 
-import edu.mit.broad.core.util.CollectionUtility;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Iterables;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
@@ -14,6 +15,8 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardAnal
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardAnalysis_;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardFingerprint;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardFingerprint_;
+import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
+import org.hibernate.ejb.criteria.predicate.CompoundPredicate;
 
 import javax.ejb.Stateful;
 import javax.persistence.EntityManager;
@@ -32,7 +35,6 @@ import javax.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -46,49 +48,123 @@ public class AggregationMetricsFetcher {
 
     private static final Log log = LogFactory.getLog(AggregationMetricsFetcher.class);
 
-    public static final String SAMPLE_COLUMN = "sample";
-    public static final String PROJECT_COLUMN = "project";
-    public static final String VERSION_COLUMN = "version";
     private static final int MAX_AGGREGATION_FETCHER_QUERY_SIZE = 500;
 
     @PersistenceContext(unitName = "metrics_pu", type = PersistenceContextType.EXTENDED)
     private EntityManager entityManager;
 
-    public List<Aggregation> fetch(List<SubmissionTuple> tuples) {
+    public List<Aggregation> fetch(String researchProject,
+                                   MessageReporter messageReporter) {
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaQuery<Aggregation> criteriaQuery = criteriaBuilder.createQuery(Aggregation.class);
-
         Root<Aggregation> root = criteriaQuery.from(Aggregation.class);
-        Collection<Collection<SubmissionTuple>> splitTuples =
-                CollectionUtility.split(tuples, MAX_AGGREGATION_FETCHER_QUERY_SIZE);
+        Predicate projectPredicate = criteriaBuilder.equal(root.get(Aggregation_.project), researchProject);
+            Predicate latestPredicate = criteriaBuilder.equal(root.get(Aggregation_.latest), true);
+        criteriaQuery.where(criteriaBuilder
+            .and(projectPredicate, latestPredicate,
+                criteriaBuilder.isNull(root.get(Aggregation_.library))
+            )
+        );
 
+
+        TypedQuery<Aggregation> query = entityManager.createQuery(criteriaQuery);
         List<Aggregation> aggregations = new ArrayList<>();
-        for (Collection<SubmissionTuple> subTuples : splitTuples) {
-            List<Predicate> predicates = new ArrayList<>();
-            for (SubmissionTuple tuple : subTuples) {
-                List<Predicate> tuplePredicates = new ArrayList<>();
-                tuplePredicates.add(criteriaBuilder.equal(root.get(Aggregation_.project), tuple.getProject()));
-                tuplePredicates.add(criteriaBuilder.equal(root.get(Aggregation_.sample), tuple.getSampleName()));
-                tuplePredicates.add(criteriaBuilder.equal(root.get(Aggregation_.version), tuple.getVersion()));
-                predicates.add(criteriaBuilder.and(tuplePredicates.toArray(new Predicate[tuplePredicates.size()])));
+        try {
+            aggregations.addAll(query.getResultList());
+        } catch (NoResultException e) {
+            log.info("Unable to retrieve aggregations based on given criteria");
+        }
+
+        fetchLod(aggregations);
+        return aggregations;
+    }
+
+    public List<Aggregation> fetch(String researchProject, Collection<SubmissionTuple> tuples, MessageReporter messageReporter) {
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Aggregation> criteriaQuery = criteriaBuilder.createQuery(Aggregation.class);
+        Root<Aggregation> root = criteriaQuery.from(Aggregation.class);
+        HashMultimap<String, SubmissionTuple> tuplesByProject = HashMultimap.create();
+        for (SubmissionTuple tuple : tuples) {
+            tuplesByProject.put(tuple.getProject(), tuple);
+        }
+
+        List<Aggregation> allResults = new ArrayList<>();
+        for (List<SubmissionTuple> tuplesSublist : Iterables.partition(tuples, 1000)) {
+            List<Aggregation> aggregations = new ArrayList<>();
+
+            SubmissionTuple aTuple = tuplesSublist.iterator().next();
+            Predicate versionPredicate = null;
+            if (aTuple.getVersion() == null) {
+                versionPredicate = criteriaBuilder.equal(root.get(Aggregation_.latest), true);
+            } else {
+                versionPredicate = criteriaBuilder.equal(root.get(Aggregation_.version), aTuple.getVersion());
             }
 
-            criteriaQuery.where(criteriaBuilder.or(predicates.toArray(new Predicate[predicates.size()])),
-                    criteriaBuilder.isNull(root.get(Aggregation_.library)));
+            Predicate projectPredicate = criteriaBuilder.equal(root.get(Aggregation_.project), researchProject);
+            Predicate latestPredicate = criteriaBuilder.equal(root.get(Aggregation_.latest), true);
+            criteriaQuery.where(criteriaBuilder
+                .and(projectPredicate, latestPredicate,
+                    criteriaBuilder.isNull(root.get(Aggregation_.library)),
+                    getTupleExpression(new ArrayList<SubmissionTuple>(tuplesSublist), root)
+                )
+            );
 
-            List<Aggregation> aggregationResult = new ArrayList<>();
+
             TypedQuery<Aggregation> query = entityManager.createQuery(criteriaQuery);
 
             try {
-                aggregationResult = query.getResultList();
+                aggregations.addAll(query.getResultList());
             } catch (NoResultException e) {
                 log.info("Unable to retrieve aggregations based on given criteria");
             }
-            fetchLod(aggregationResult);
-            aggregations.addAll(aggregationResult);
+
+        List<Aggregation> results = new ArrayList<>();
+
+        for (Aggregation aggregation : aggregations) {
+            Map<String, Collection<SubmissionTuple>> tuplesBySample =
+                SubmissionTuple.sampleMap(tuples, aggregation.getTuple());
+            Collection<SubmissionTuple> foundTuples = tuplesBySample.get(aggregation.getSample());
+            if (foundTuples != null) {
+                if (foundTuples.size() > 1) {
+                    messageReporter
+                        .addMessage("Ambiguous tuple found for {1}: {2}", aggregation.getSample(), foundTuples);
+                } else if (!foundTuples.isEmpty()) {
+                    if (!results.contains(aggregation)) {
+                        results.add(aggregation);
+                    }
+                }
+            }
         }
-        return aggregations;
+
+        fetchLod(results);
+        allResults.addAll(results);
     }
+//        results.addAll(results);
+        return allResults;
+    }
+
+    private CompoundPredicate getTupleExpression(List<SubmissionTuple> tuples, Root<Aggregation> root) {
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+        CompoundPredicate and = (CompoundPredicate) criteriaBuilder.conjunction();
+
+        Expression<String> sampleExpression = root.get(Aggregation_.sample);
+        Predicate in = root.get(Aggregation_.sample).in(SubmissionTuple.samples(tuples));
+
+        and.getExpressions().add(in);
+
+        return and;
+    }
+
+//    private Collection<SubmissionTuple> collectTuples(List<ProductOrderSample> productOrderSamples) {
+//        return Collections2.transform(productOrderSamples,
+//                new Function<ProductOrderSample, SubmissionTuple>() {
+//                    @Override
+//                    public SubmissionTuple apply(@Nullable ProductOrderSample input) {
+//                        return new SubmissionTuple(input.getProductOrder().getResearchProject().getJiraTicketKey(),
+//                                input.getSampleData().getCollaboratorsSampleName(), null);
+//                    }
+//                });
+//    }
 
     @SuppressWarnings("unchecked")
     public void fetchLod(List<Aggregation> aggregations) {
@@ -106,7 +182,9 @@ public class AggregationMetricsFetcher {
                 readGroupPicardAnalysisJoin.join(AggregationReadGroup_.aggregation);
 
         List<Predicate> predicates = new ArrayList<>();
+        List<Integer> aggregationIds = new ArrayList<>(aggregations.size());
         for (Aggregation aggregation : aggregations) {
+            aggregationIds.add(aggregation.getId());
             predicates.add(queryBuilder
                     .equal(aggregationAggregationReadGroupsJoin.get(Aggregation_.id), aggregation.getId()));
         }
@@ -117,7 +195,8 @@ public class AggregationMetricsFetcher {
 
         CriteriaQuery<Tuple> multiselect = tupleQuery.multiselect(
                 aggregationPath, minExpression, maxExpression)
-                .where(queryBuilder.or(predicates.toArray(new Predicate[predicates.size()])))
+            .where(aggregationPath.in(aggregationIds))
+//                .where(queryBuilder.or(predicates.toArray(new Predicate[predicates.size()])))
                 .groupBy(aggregationPath);
 
         List<Tuple> tuples = entityManager.createQuery(multiselect).getResultList();
@@ -135,5 +214,9 @@ public class AggregationMetricsFetcher {
                 aggregation.setLevelOfDetection(lod);
             }
         }
+    }
+
+    public List<Aggregation> fetch(String researchProject, Collection<SubmissionTuple> submissionTuples) {
+        return fetch(researchProject, submissionTuples, MessageReporter.UNUSED);
     }
 }
