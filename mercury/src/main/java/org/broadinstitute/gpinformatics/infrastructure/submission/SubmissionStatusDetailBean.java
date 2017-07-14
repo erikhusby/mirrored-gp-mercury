@@ -6,8 +6,9 @@ import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+import org.codehaus.jackson.annotate.JsonProperty;
 
-import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,37 +19,54 @@ import java.util.List;
  * TODO scottmat fill in javadoc!!!
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
+@XmlRootElement
 public class SubmissionStatusDetailBean implements Serializable {
-
     private static final long serialVersionUID = 6352810343445206054L;
+
+    @JsonProperty
     private String uuid;
+    @JsonProperty
     private Status status;
+    @JsonProperty
     private List<String> errors=new ArrayList<>();
+    @JsonProperty
     private Date lastStatusUpdate;
-    private BioProject bioproject;
+    @JsonProperty
+    private BioProject bioProject;
+    @JsonProperty
     private String site;
-    private String submissiondatatype;
+    @JsonProperty
+    private String submissionDatatype;
+    @JsonProperty
     private String submittedVersion;
 
     public SubmissionStatusDetailBean() {
     }
 
-    public SubmissionStatusDetailBean(String uuid, String status, String site, String submissiondatatype,
+    public SubmissionStatusDetailBean(String uuid, String status, String site, String submissionDatatype,
                                       Date lastStatusUpdate, String... errors) {
         this.uuid = uuid;
         this.site = site;
-        this.submissiondatatype = submissiondatatype;
+        this.submissionDatatype = submissionDatatype;
         this.lastStatusUpdate = lastStatusUpdate;
         setStatus(status);
         setErrors(Arrays.asList(errors));
     }
 
+    public SubmissionStatusDetailBean(String uuid,
+                                      String status, List<String> errors) {
+        this(uuid, status, null, null, null, errors.toArray(new String[errors.size()]));
+    }
+
+    //{"submissionStatuses":[{
+    // "uuid":"MERCURY_TEST_SUB_1499710803691_0001",
+    // "status":"Failure",
+    // "errors":["Invalid V2","Unable to access bam path for PRJNA75723 4304714212_K RP-418 V2 located GCP."]},{"uuid":"MERCURY_TEST_SUB_1499710803692_0002","status":"Failure","errors":["Invalid V2","Unable to access bam path for PRJNA75723 4377315018_E RP-418 V2 located OnPrem."]}]}
     public String getUuid ()
     {
         return uuid;
     }
 
-    @XmlElement
     public void setUuid (String uuid)
     {
         this.uuid = uuid;
@@ -58,7 +76,6 @@ public class SubmissionStatusDetailBean implements Serializable {
         return (status != null)?status.getLabel():null;
     }
 
-    @XmlElement
     public void setStatus(String status) {
         this.status = Status.fromKey(status);
     }
@@ -67,47 +84,43 @@ public class SubmissionStatusDetailBean implements Serializable {
         return errors;
     }
 
-    @XmlElement
     public void setErrors(List<String> errors) {
         this.errors = errors;
     }
-
 
     public Date getLastStatusUpdate() {
         return lastStatusUpdate;
     }
 
-    @XmlElement
     public void setLastStatusUpdate(Date lastStatusUpdate) {
         this.lastStatusUpdate = lastStatusUpdate;
     }
 
-    public BioProject getBioproject() {
-        return bioproject;
+    public BioProject getBioProject() {
+        return bioProject;
     }
 
-    @XmlElement
-    public void setBioproject(BioProject bioproject) {
-        this.bioproject = bioproject;
+    public void setBioProject(BioProject bioProject) {
+        this.bioProject = bioProject;
     }
 
     public String getSite() {
         return site;
     }
 
-    @XmlElement(name = "site")
+
+
     public void setSite(String site) {
         this.site = site;
     }
 
 
-    public String getSubmissiondatatype() {
-        return submissiondatatype;
+    public String getSubmissionDatatype() {
+        return submissionDatatype;
     }
 
-    @XmlElement(name = "submissiondatatype")
-    public void setSubmissiondatatype(String submissiondatatype) {
-        this.submissiondatatype = submissiondatatype;
+    public void setSubmissionDatatype(String submissionDatatype) {
+        this.submissionDatatype = submissionDatatype;
     }
 
     @Override
@@ -124,7 +137,7 @@ public class SubmissionStatusDetailBean implements Serializable {
         return new EqualsBuilder().append(getUuid(), castOther.getUuid()).append(getStatus(), castOther.getStatus())
                                   .append(getErrors(), castOther.getErrors())
                                   .append(getLastStatusUpdate().getTime(), castOther.getLastStatusUpdate().getTime())
-                                  .append(getBioproject(), castOther.getBioproject()).isEquals();
+                                  .append(getBioProject(), castOther.getBioProject()).isEquals();
     }
 
 
@@ -132,7 +145,7 @@ public class SubmissionStatusDetailBean implements Serializable {
     @Override
     public int hashCode() {
         return new HashCodeBuilder().append(getUuid()).append(getStatus()).append(getErrors())
-                                    .append(getLastStatusUpdate()).append(getBioproject()).toHashCode();
+                                    .append(getLastStatusUpdate()).append(getBioProject()).toHashCode();
     }
 
     @JsonIgnore

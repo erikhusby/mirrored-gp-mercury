@@ -43,7 +43,6 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Fundi
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProjectList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
@@ -946,14 +945,11 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         }
         if (!errors) {
             List<SubmissionDto> selectedSubmissions = new ArrayList<>();
-            Map<SubmissionTuple, BassDTO> bassDtoMap = submissionDtoFetcher.fetchBassDtos(
-                    editResearchProject.getBusinessKey(),
-                    tupleToSampleMap.values().toArray(new String[tupleToSampleMap.values().size()]));
-            for (BassDTO bassDTO : bassDtoMap.values()) {
-                if (tupleToSampleMap.containsKey(bassDTO.getTuple())) {
-                    // All required data are in the bassDTO
-                    selectedSubmissions
-                            .add(new SubmissionDto(bassDTO, null, editResearchProject.getProductOrders(), null));
+
+            for (SubmissionDto submissionDto : submissionDtoFetcher.fetch(editResearchProject, this)) {
+                if (tupleToSampleMap.containsKey(submissionDto.getSubmissionTuple())) {
+                    // All required data are in the submissionDto
+                    selectedSubmissions.add(submissionDto);
                 }
             }
 

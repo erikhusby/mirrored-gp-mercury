@@ -25,7 +25,7 @@ public class AggregationTestFactory {
     public static Aggregation buildAggregation(String project, String sample, int version, Double contamination,
                                                LevelOfDetection fingerprintLod, String dataType,
                                                Double pctTargetBases20X, Long totalReadsAlignedInPairs,
-                                               Double meanCoverageWgs) {
+                                               Double meanCoverageWgs, String processingLocation) {
 
         AggregationContam aggregationContam = new AggregationContam(contamination);
         AggregationHybridSelection aggregationHybridSelection = new AggregationHybridSelection(pctTargetBases20X);
@@ -36,6 +36,6 @@ public class AggregationTestFactory {
 
         return new Aggregation(project, sample, null, version, readGroupCount, dataType,
                 Collections.singleton(aggregationAlignment), aggregationContam, aggregationHybridSelection,
-                Collections.singleton(aggregationReadGroup), aggregationWgs, fingerprintLod);
+                Collections.singleton(aggregationReadGroup), aggregationWgs, fingerprintLod, processingLocation);
     }
 }

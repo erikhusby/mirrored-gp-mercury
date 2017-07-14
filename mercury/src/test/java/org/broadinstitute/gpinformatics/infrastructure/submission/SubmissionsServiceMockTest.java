@@ -1,7 +1,7 @@
 /*
  * The Broad Institute
  * SOFTWARE COPYRIGHT NOTICE AGREEMENT
- * This software and its documentation are copyright 2014 by the
+ * This software and its documentation are copyright 2017 by the
  * Broad Institute/Massachusetts Institute of Technology. All rights are reserved.
  *
  * This software is supplied without any warranty or guaranteed support
@@ -11,16 +11,14 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
-import com.sun.jersey.api.client.ClientResponse;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
+import org.broadinstitute.gpinformatics.infrastructure.MockServerTest;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
-import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
-import org.hamcrest.Matchers;
-import org.mockito.Mockito;
-import org.testng.Assert;
+import org.mockserver.model.HttpResponse;
+import org.mockserver.model.HttpStatusCode;
+import org.mockserver.model.JsonBody;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -30,16 +28,15 @@ import java.util.Collection;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.emptyCollectionOf;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasItemInArray;
-import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.startsWith;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-public class SubmissionsServiceImplTest {
+@Test(groups = TestGroups.DATABASE_FREE)
+public class SubmissionsServiceMockTest extends MockServerTest {
 
     private static int sequenceNumber = 1;
 
@@ -61,67 +58,37 @@ public class SubmissionsServiceImplTest {
         bioProject = new BioProject(BIO_PROJECT_ACCESSION_ID);
         contactBean =
                 new SubmissionContactBean("Jeff", "A", "Gentry", "jgentry@broadinstitute.org", "617-555-9292", "homer");
-        submissionsService = new SubmissionsServiceImpl(SubmissionConfig.produce(Deployment.DEV));
-        submissionRepository = submissionsService.getSubmissionRepositories().iterator().next();
-        submissionLibraryDescriptor =submissionsService.getSubmissionLibraryDescriptors().iterator().next();
-    }
 
-    public void testServerResponseBadRequest() {
-        ClientResponse clientResponse = Mockito.mock(ClientResponse.class);
-        Mockito.when(clientResponse.getStatus()).thenReturn(ClientResponse.Status.BAD_REQUEST.getStatusCode());
-        String activityName = "just testing y'all";
-        String exceptonMessage = "There was an error";
-        String errorMessage = String.format("Error received while %s: %s (%d)", activityName, exceptonMessage,
-                ClientResponse.Status.BAD_REQUEST.getStatusCode());
-        Mockito.when(clientResponse.getEntity(String.class)).thenReturn(exceptonMessage);
-        SubmissionsServiceImpl submissionsServiceImpl = ((SubmissionsServiceImpl) submissionsService);
-        try {
-            submissionsServiceImpl.validateResponseStatus(activityName, clientResponse);
-            Assert.fail("Should have thrown an exception but didn't");
-        } catch (InformaticsServiceException e) {
-            assertThat(e.getLocalizedMessage(), equalTo(errorMessage));
-        } catch (Exception e) {
-            Assert.fail("Wrong exception thrown: " + e.getClass().getName());
+//        String responseString="{\"submissionStatuses\":[{\"uuid\":\"MERCURY_TEST_SUB_1499713455783_0001\",\"status\":\"Failure\",\"errors\":[\"Invalid v2\",\"Unable to access bam path for PRJNA75723 4304714212_K RP-418 v2 located GCP.\"]},{\"uuid\":\"MERCURY_TEST_SUB_1499713455783_0002\",\"status\":\"Failure\",\"errors\":[\"Invalid v2\",\"Unable to access bam path for PRJNA75723 4377315018_E RP-418 v2 located OnPrem.\"]}]}";
+//
+//        HttpResponse httpResponse = new HttpResponse()
+//            .withStatusCode(HttpStatusCode.BAD_REQUEST_400.code())
+//            .withHeader("Content-Type", "application/json")
+//            .withBody(new JsonBody(responseString));
+//
+//        submissionsService = serviceWithResponse(httpResponse);
 
-        }
-    }
-
-    public void testServerResponseOK() {
-        ClientResponse clientResponse = Mockito.mock(ClientResponse.class);
-        Mockito.when(clientResponse.getStatus()).thenReturn(ClientResponse.Status.OK.getStatusCode());
-        SubmissionsServiceImpl submissionsServiceImpl = ((SubmissionsServiceImpl) submissionsService);
-        try {
-            submissionsServiceImpl.validateResponseStatus(null, clientResponse);
-        } catch (Exception e) {
-            Assert.fail("Wrong exception thrown: " + e.getClass().getName());
-        }
-    }
-
-    public void testGetAllBioProjects() throws Exception {
-        Collection<BioProject> allBioProjects = submissionsService.getAllBioProjects();
-        assertThat(allBioProjects, is(not(Matchers.emptyCollectionOf(BioProject.class))));
-    }
-
-    public void testGetSubmissionSamples() throws Exception {
-        String[] expectedSampleNames = {SAMPLE1_ID, SAMPLE2_ID, "4304714040_C"};
-
-        Collection<String> submissionSamples = submissionsService.getSubmissionSamples(bioProject);
-        int minimumExpectedSizeOfResult = 300;
-        assertThat(submissionSamples.size(), greaterThan(minimumExpectedSizeOfResult));
-        assertThat(submissionSamples, hasItems(expectedSampleNames));
-    }
-
-    public void testSubmissionRepositoriesHaveActiveStatus(){
-        Collection<SubmissionRepository> submissionRepositories = submissionsService.getSubmissionRepositories();
-        for (SubmissionRepository repository : submissionRepositories) {
-            if (repository.getName().equals(SubmissionRepository.DEFAULT_REPOSITORY_NAME)) {
-                assertThat(repository.isActive(), is(true));
-            }
-        }
+        submissionRepository = new SubmissionRepository(SubmissionRepository.DEFAULT_REPOSITORY_NAME,
+            SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR);
+        submissionLibraryDescriptor = new SubmissionLibraryDescriptor(SubmissionLibraryDescriptor.WHOLE_GENOME_NAME,
+            SubmissionLibraryDescriptor.WHOLE_GENOME_DESCRIPTION);
     }
 
     @Test
-    public void testSubmit() {
+    public void testSubmissionCanHandleErrorsIn200Response() {
+        bioProject = new BioProject(BIO_PROJECT_ACCESSION_ID);
+        contactBean =
+                new SubmissionContactBean("Jeff", "A", "Gentry", "jgentry@broadinstitute.org", "617-555-9292", "homer");
+
+        String responseString="{\"submissionStatuses\":[{\"uuid\":\"MERCURY_TEST_SUB_1499713455783_0001\",\"status\":\"Failure\",\"errors\":[\"Invalid v2\",\"Unable to access bam path for PRJNA75723 4304714212_K RP-418 v2 located GCP.\"]},{\"uuid\":\"MERCURY_TEST_SUB_1499713455783_0002\",\"status\":\"Failure\",\"errors\":[\"Invalid v2\",\"Unable to access bam path for PRJNA75723 4377315018_E RP-418 v2 located OnPrem.\"]}]}";
+
+        HttpResponse httpResponse = new HttpResponse()
+            .withStatusCode(HttpStatusCode.OK_200.code())
+            .withHeader("Content-Type", "application/json")
+            .withBody(new JsonBody(responseString));
+
+        submissionsService = serviceWithResponse(httpResponse);
+
         SubmissionBean submissionBean1 = new SubmissionBean(getTestUUID(), "jgentry",
                 bioProject, new SubmissionBioSampleBean(SAMPLE1_ID, SubmissionBioSampleBean.GCP, contactBean),
                 submissionRepository, submissionLibraryDescriptor, broadProject, bamVersion);
@@ -133,13 +100,10 @@ public class SubmissionsServiceImplTest {
         Collection<SubmissionStatusDetailBean>
                 submissionResult = submissionsService.postSubmissions(submissionRequestBean);
         assertThat(submissionResult.size(), is(2));
-        for (SubmissionStatusDetailBean submissionStatusDetailBean : submissionResult) {
-            assertThat(submissionStatusDetailBean.getStatus(),
-                    is(SubmissionStatusDetailBean.Status.READY_FOR_SUBMISSION.getLabel()));
-            assertThat(submissionStatusDetailBean.getErrors(), emptyCollectionOf(String.class));
-            assertThat(DateUtils.convertDateTimeToString(submissionStatusDetailBean.getLastStatusUpdate()),
-                    notNullValue());
-        }
+
+        SubmissionStatusDetailBean statusDetailBean = submissionResult.iterator().next();
+        assertThat(statusDetailBean.getStatus(), is(SubmissionStatusDetailBean.Status.FAILURE.getLabel()));
+        assertThat(statusDetailBean.getErrors(), hasItem(startsWith("Unable to access")));
     }
 
     public void testGetSubmissionStatusAlwaysReturnsSomething() {
