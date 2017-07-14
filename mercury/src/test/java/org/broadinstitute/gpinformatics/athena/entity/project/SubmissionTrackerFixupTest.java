@@ -15,7 +15,6 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.SubmissionTrackerDao;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDtoFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -56,28 +55,28 @@ public class SubmissionTrackerFixupTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
-    @Test(enabled = false)
-    public void gplim4091BackfillFileType() throws Exception {
-        userBean.loginOSUser();
-
-        List<SubmissionTracker> submissionTrackerList =
-                submissionTrackerDao.findList(SubmissionTracker.class, SubmissionTracker_.fileType, null);
-
-        BassFileType defaultFileType = BassFileType.BAM;
-
-        for (SubmissionTracker submissionTracker : submissionTrackerList) {
-            if (submissionTracker.getFileType() != null) {
-                throw new RuntimeException(
-                        String.format("Expected SubmissionTracker %s to have null value but it was %s",
-                                submissionTracker.createSubmissionIdentifier(), submissionTracker.getFileType()));
-            } else {
-                submissionTracker.setFileType(defaultFileType);
-            }
-        }
-
-        submissionTrackerDao.persist(new FixupCommentary(
-                "Backfill fileTypes for existing SubmissionTrackers. See https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-4060"));
-    }
+//    @Test(enabled = false)
+//    public void gplim4091BackfillFileType() throws Exception {
+//        userBean.loginOSUser();
+//
+//        List<SubmissionTracker> submissionTrackerList =
+//                submissionTrackerDao.findList(SubmissionTracker.class, SubmissionTracker_.fileType, null);
+//
+//        BassFileType defaultFileType = BassFileType.BAM;
+//
+//        for (SubmissionTracker submissionTracker : submissionTrackerList) {
+//            if (submissionTracker.getFileType() != null) {
+//                throw new RuntimeException(
+//                        String.format("Expected SubmissionTracker %s to have null value but it was %s",
+//                                submissionTracker.createSubmissionIdentifier(), submissionTracker.getFileType()));
+//            } else {
+//                submissionTracker.setFileType(defaultFileType);
+//            }
+//        }
+//
+//        submissionTrackerDao.persist(new FixupCommentary(
+//                "Backfill fileTypes for existing SubmissionTrackers. See https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-4060"));
+//    }
 
     @Test(enabled = false)
     public void gplim4086RemoveDuplicateSubmissions() {

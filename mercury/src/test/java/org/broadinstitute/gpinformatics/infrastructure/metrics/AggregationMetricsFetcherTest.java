@@ -9,7 +9,6 @@ import org.hamcrest.Matchers;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-
 import java.util.Collections;
 import java.util.List;
 
@@ -40,6 +39,11 @@ public class AggregationMetricsFetcherTest extends ContainerTest {
     public static final String MERCURY_PROJECT = "RP-697";
 
     /**
+     * Datatype for the submission.
+     */
+    public static final String DATA_TYPE = "WGS";
+
+    /**
      * Version of aggregation on Mercury research project.
      */
     public static final int MERCURY_AGGREGATION_VERSION = 1;
@@ -61,8 +65,9 @@ public class AggregationMetricsFetcherTest extends ContainerTest {
     private static final double MAX_LOD = 55.771678;
 
     public void testFetchMetricsForSampleAggregatedByMercuryRP() {
-        List<Aggregation> aggregationResults = fetcher.fetch(Collections.singletonList(
-                new SubmissionTuple(MERCURY_PROJECT, SAMPLE, Integer.toString(MERCURY_AGGREGATION_VERSION), null)));
+
+        List<Aggregation> aggregationResults = fetcher.fetch(MERCURY_PROJECT, Collections.singletonList(
+                new SubmissionTuple(MERCURY_PROJECT, SAMPLE, Integer.toString(MERCURY_AGGREGATION_VERSION))));
 
         Aggregation aggregation = aggregationResults.get(0);
         assertThat(aggregation.getProject(), equalTo(MERCURY_PROJECT));
@@ -76,29 +81,29 @@ public class AggregationMetricsFetcherTest extends ContainerTest {
     }
 
     public void testFetchMetricsWithBadProject() {
-        List<Aggregation> aggregationResults = fetcher.fetch(Collections.singletonList(
-                new SubmissionTuple("BAD-" + MERCURY_PROJECT, SAMPLE, Integer.toString(MERCURY_AGGREGATION_VERSION),
-                        null)));
+
+        List<Aggregation> aggregationResults = fetcher.fetch(MERCURY_PROJECT, Collections.singletonList(
+                new SubmissionTuple("BAD-" + MERCURY_PROJECT, SAMPLE, Integer.toString(MERCURY_AGGREGATION_VERSION))));
         assertThat(aggregationResults, Matchers.emptyIterableOf(Aggregation.class));
     }
 
     public void testFetchMetricsWithBadSample() {
-        List<Aggregation> aggregationResults = fetcher.fetch(Collections.singletonList(
-                new SubmissionTuple(MERCURY_PROJECT, "BAD-" + SAMPLE, Integer.toString(MERCURY_AGGREGATION_VERSION),
-                        null)));
+        List<Aggregation> aggregationResults = fetcher.fetch(MERCURY_PROJECT, Collections.singletonList(
+                new SubmissionTuple(MERCURY_PROJECT, "BAD-" + SAMPLE, Integer.toString(MERCURY_AGGREGATION_VERSION)
+                )));
         assertThat(aggregationResults, Matchers.emptyIterableOf(Aggregation.class));
     }
 
     public void testFetchMetricsWithBadVersion() {
-        List<Aggregation> aggregationResults = fetcher.fetch(Collections.singletonList(
-                new SubmissionTuple(MERCURY_PROJECT, SAMPLE, Integer.toString(MERCURY_AGGREGATION_VERSION * 100),
-                        null)));
+        List<Aggregation> aggregationResults = fetcher.fetch(MERCURY_PROJECT, Collections.singletonList(
+                new SubmissionTuple(MERCURY_PROJECT, SAMPLE, Integer.toString(MERCURY_AGGREGATION_VERSION * 100)
+                )));
         assertThat(aggregationResults, Matchers.emptyIterableOf(Aggregation.class));
     }
 
     public void testFetchMetricsForSampleAggregatedBySquidProject() {
-        List<Aggregation> aggregationResults = fetcher.fetch(Collections.singletonList(
-                new SubmissionTuple(SQUID_PROJECT, SAMPLE, Integer.toString(SQUID_AGGREGATION_VERSION), null)));
+        List<Aggregation> aggregationResults = fetcher.fetch(MERCURY_PROJECT, Collections.singletonList(
+                new SubmissionTuple(SQUID_PROJECT, SAMPLE, Integer.toString(SQUID_AGGREGATION_VERSION))));
         Aggregation aggregation = aggregationResults.get(0);
         assertThat(aggregation.getProject(), equalTo(SQUID_PROJECT));
         assertThat(aggregation.getSample(), equalTo(SAMPLE));
