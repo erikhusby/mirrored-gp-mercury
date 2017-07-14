@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
+import org.broadinstitute.gpinformatics.infrastructure.submission.FileType;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -16,7 +16,6 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -50,7 +49,10 @@ public class SubmissionTracker {
     private String submittedSampleName;
 
     @Enumerated(EnumType.STRING)
-    private BassFileType fileType;
+    private FileType fileType;
+
+//    @Column(name = "DATA_TYPE")
+//    private String dataType;
 
     /**
      * version of the data file created
@@ -70,8 +72,7 @@ public class SubmissionTracker {
     protected SubmissionTracker() {
     }
 
-    SubmissionTracker(Long submissionTrackerId, String project, String submittedSampleName, String version,
-                      BassFileType fileType) {
+    SubmissionTracker(Long submissionTrackerId, String project, String submittedSampleName, String version, FileType fileType) {
         this.submissionTrackerId = submissionTrackerId;
         this.submittedSampleName = submittedSampleName;
         this.project = project;
@@ -80,7 +81,7 @@ public class SubmissionTracker {
         requestDate = new Date();
     }
 
-    public SubmissionTracker(String project, String submittedSampleName, String version, BassFileType fileType) {
+    public SubmissionTracker(String project, String submittedSampleName, String version, FileType fileType) {
         this(null, project, submittedSampleName, version, fileType);
     }
 
@@ -119,11 +120,11 @@ public class SubmissionTracker {
         this.project = project;
     }
 
-    public BassFileType getFileType() {
+    public FileType getFileType() {
         return fileType;
     }
 
-    public void setFileType(BassFileType fileType) {
+    public void setFileType(FileType fileType) {
         this.fileType = fileType;
     }
 
@@ -151,9 +152,16 @@ public class SubmissionTracker {
         return requestDate;
     }
 
+//    public String getDataType() {
+//        return dataType;
+//    }
+//
+//    public void setDataType(String dataType) {
+//        this.dataType = dataType;
+//    }
+
     // todo: should be in interface?
-    @Transient
     public SubmissionTuple getTuple() {
-        return new SubmissionTuple(project, submittedSampleName, version, fileType);
+        return new SubmissionTuple(project, submittedSampleName, version);
     }
 }

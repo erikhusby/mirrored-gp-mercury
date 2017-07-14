@@ -75,11 +75,11 @@ public class SubmissionsServiceImpl implements SubmissionsService {
             bioProjectMap.put(bioProject.getAccession(), bioProject);
         }
         for (SubmissionStatusDetailBean result : allResults) {
-            if (result.getBioproject() != null) {
-                String accession = result.getBioproject().getAccession();
+            if (result.getBioProject() != null) {
+                String accession = result.getBioProject().getAccession();
                 BioProject fullBioProject = bioProjectMap.get(accession);
                 if (fullBioProject != null) {
-                    result.setBioproject(fullBioProject);
+                    result.setBioProject(fullBioProject);
                 }
                 String site = result.getSite();
                 if (StringUtils.isNotBlank(site)) {
@@ -88,11 +88,11 @@ public class SubmissionsServiceImpl implements SubmissionsService {
                         result.setSite(siteDescription);
                     }
                 }
-                String library = result.getSubmissiondatatype();
+                String library = result.getSubmissionDatatype();
                 if (StringUtils.isNotBlank(library)) {
                     String libraryDescription = libraryDescriptionMap.get(library);
                     if (StringUtils.isNotBlank(libraryDescription)) {
-                        result.setSubmissiondatatype(libraryDescription);
+                        result.setSubmissionDatatype(libraryDescription);
                     }
                 }
             }
@@ -114,7 +114,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
     }
 
     /**
-     * Defines the Rest call to post submissions for sequenced sample results
+     * Defines the Rest call to post submissions fo`r sequenced sample results
      * @param submissions   JAXB representation of all selected sample submission information
      * @return
      */

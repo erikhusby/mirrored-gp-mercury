@@ -11,12 +11,16 @@
 
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
+import org.broadinstitute.gpinformatics.infrastructure.submission.FileType;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.testng.annotations.Test;
 
-import static org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTrackerTest.*;
+import static org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTrackerTest.SubmissionTrackerStub;
+import static org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTrackerTest.testAccessionID;
+import static org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTrackerTest.testFileType;
+import static org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTrackerTest.testProjectId;
+import static org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTrackerTest.testVersion;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
@@ -28,10 +32,10 @@ public class ResearchProjectSubmissionTrackerTest {
         SubmissionTrackerStub tracker =
                 new SubmissionTrackerStub(testProjectId, testAccessionID, testVersion, testFileType);
         SubmissionTrackerStub tracker2 =
-                new SubmissionTrackerStub(testProjectId, testAccessionID + 2, testVersion + 2, BassFileType.PICARD);
+                new SubmissionTrackerStub(testProjectId, testAccessionID + 2, testVersion + 2, FileType.PICARD);
         testResearchProject.addSubmissionTracker(tracker, tracker2);
         SubmissionTracker resultTracker = testResearchProject.getSubmissionTracker(new SubmissionTuple(testProjectId,
-                testAccessionID, testVersion, testFileType));
+                testAccessionID, testVersion));
         assertThat(tracker, equalTo(resultTracker));
     }
 
@@ -42,7 +46,7 @@ public class ResearchProjectSubmissionTrackerTest {
                 new SubmissionTrackerStub(testProjectId, testAccessionID, testVersion, testFileType);
         testResearchProject.addSubmissionTracker(tracker, tracker);
         SubmissionTracker resultTracker = testResearchProject.getSubmissionTracker(new SubmissionTuple(testProjectId,
-                testAccessionID, testVersion, testFileType));
+                testAccessionID, testVersion));
         assertThat(resultTracker, equalTo(resultTracker));
     }
 
@@ -51,7 +55,7 @@ public class ResearchProjectSubmissionTrackerTest {
         SubmissionTracker tracker = new SubmissionTracker(testProjectId, testAccessionID, testVersion, testFileType);
         testResearchProject.addSubmissionTracker(tracker);
         SubmissionTracker resultTracker = testResearchProject
-                .getSubmissionTracker(new SubmissionTuple("other", "using", "arguments", BassFileType.PICARD));
+                .getSubmissionTracker(new SubmissionTuple("other", "using", "arguments"));
         assertThat(resultTracker, nullValue());
     }
 

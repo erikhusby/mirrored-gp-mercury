@@ -47,6 +47,7 @@ public class SubmissionTrackerDao extends GenericDao {
                     submissionTrackerCriteria.equal(root.get(SubmissionTracker_.project), submissionDto.getAggregationProject()),
                     submissionTrackerCriteria.equal(root.get(SubmissionTracker_.submittedSampleName), submissionDto.getSampleName()),
                     submissionTrackerCriteria.equal(root.get(SubmissionTracker_.fileType),submissionDto.getFileType())
+                // todo: do we  need to join on version?
 //                    submissionTrackerCriteria.equal(root.get(SubmissionTracker_.version), submissionDto.getVersion()),
             ));
         }
