@@ -29,7 +29,6 @@ import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
 import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -271,9 +270,7 @@ public class ResearchProjectEjb {
         Map<SubmissionTracker, SubmissionDto> submissionDtoMap = new HashMap<>();
 
         for (SubmissionDto submissionDto : submissionDtos) {
-            SubmissionTracker tracker = new SubmissionTracker(submissionDto.getAggregationProject(),
-                    submissionDto.getSampleName(), String.valueOf(submissionDto.getVersion()),
-                    submissionDto.getFileType());
+            SubmissionTracker tracker = submissionDto.buildSubmissionTracker();
             submissionProject.addSubmissionTracker(tracker);
             submissionDtoMap.put(tracker, submissionDto);
         }
@@ -288,16 +285,17 @@ public class ResearchProjectEjb {
             submitBioProject.setAccession(selectedBioProject.getAccession());
 
             SubmissionBioSampleBean bioSampleBean =
-                    new SubmissionBioSampleBean(dtoByTracker.getValue().getSampleName(),
-                            dtoByTracker.getValue().getFilePath());
-            bioSampleBean.setContact(new SubmissionContactBean(userBean.getBspUser().getFirstName(),
-                    userBean.getBspUser().getLastName(), userBean.getBspUser().getEmail()
-            ));
+                new SubmissionBioSampleBean(dtoByTracker.getValue().getSampleName(),
+                    dtoByTracker.getValue().getProcessingLocation(),
+                    new SubmissionContactBean(userBean.getBspUser().getFirstName(),
+                        userBean.getBspUser().getLastName(), userBean.getBspUser().getEmail()
+                    ));
 
             SubmissionBean submissionBean =
                     new SubmissionBean(dtoByTracker.getKey().createSubmissionIdentifier(),
                             userBean.getBspUser().getUsername(), submitBioProject, bioSampleBean, repository,
-                            submissionLibraryDescriptor);
+                            submissionLibraryDescriptor, researchProjectBusinessKey,
+                            String.valueOf(dtoByTracker.getValue().getVersion()));
             submissionBeans.add(submissionBean);
         }
 
@@ -358,11 +356,10 @@ public class ResearchProjectEjb {
         Set<String> errors = new HashSet<>();
         Set<SubmissionTuple> tuples = new HashSet<>(submissionDtos.size());
         for (SubmissionDto submissionDto : submissionDtos) {
-            BassDTO bassDTO = submissionDto.getBassDTO();
-            if (bassDTO != null) {
-                SubmissionTuple tuple = bassDTO.getTuple();
-                if (!tuples.add(tuple)) {
-                    errors.add(tuple.toString());
+            SubmissionTuple submissionTuple = submissionDto.getSubmissionTuple();
+            if (submissionTuple != null) {
+                if (!tuples.add(submissionTuple)) {
+                    errors.add(submissionTuple.toString());
                 }
             }
         }

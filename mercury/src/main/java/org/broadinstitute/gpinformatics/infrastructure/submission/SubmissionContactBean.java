@@ -4,17 +4,26 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import java.io.Serializable;
 
+@XmlAccessorType(XmlAccessType.FIELD)
 public class SubmissionContactBean implements Serializable {
 
     private static final long serialVersionUID = 8166404474924070240L;
+    @XmlElement
     private String email;
+    @XmlElement
     private String phone;
+    @XmlElement
     private String lab;
+    @XmlElement
     private String firstName;
+    @XmlElement
     private String lastName;
+    @XmlElement
     private String middleName;
 
     public SubmissionContactBean() {
@@ -38,7 +47,6 @@ public class SubmissionContactBean implements Serializable {
         return email;
     }
 
-    @XmlElement
     public void setEmail(String email) {
         this.email = email;
     }
@@ -47,7 +55,6 @@ public class SubmissionContactBean implements Serializable {
         return phone;
     }
 
-    @XmlElement
     public void setPhone(String phone) {
         this.phone = phone;
     }
@@ -56,7 +63,6 @@ public class SubmissionContactBean implements Serializable {
         return lab;
     }
 
-    @XmlElement
     public void setLab(String lab) {
         this.lab = lab;
     }
@@ -65,7 +71,6 @@ public class SubmissionContactBean implements Serializable {
         return firstName;
     }
 
-    @XmlElement
     public void setFirstName(String firstName) {
         this.firstName = firstName;
     }
@@ -74,7 +79,6 @@ public class SubmissionContactBean implements Serializable {
         return lastName;
     }
 
-    @XmlElement
     public void setLastName(String lastName) {
         this.lastName = lastName;
     }
@@ -83,7 +87,6 @@ public class SubmissionContactBean implements Serializable {
         return middleName;
     }
 
-    @XmlElement
     public void setMiddleName(String middleName) {
         this.middleName = middleName;
     }

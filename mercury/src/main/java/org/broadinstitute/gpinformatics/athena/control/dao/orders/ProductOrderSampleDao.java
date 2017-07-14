@@ -167,25 +167,31 @@ public class ProductOrderSampleDao extends GenericDao {
     }
 
     /**
-     * Find all ProductOrderSamples in PDOs which are in a ResearchProject
+     * Find all ProductOrderSamples in a ResearchProject which are available for data submissions.
      *
      * @param researchProjectKey The research project to search.
      * @return List<ProductOrderSample> which are in ResearchProject with key researchProjectKey
      */
-    public List<ProductOrderSample> findByResearchProject(String researchProjectKey) {
+    public List<ProductOrderSample> findSubmissionSamples(String researchProjectKey) {
         EntityManager entityManager = getEntityManager();
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
 
         CriteriaQuery<ProductOrderSample> criteriaQuery =
                 criteriaBuilder.createQuery(ProductOrderSample.class);
         Root<ProductOrderSample> productOrderSampleRoot = criteriaQuery.from(ProductOrderSample.class);
+        productOrderSampleRoot.alias("pdoSample");
+
         Join<ProductOrderSample, ProductOrder> productOrderJoin =
                 productOrderSampleRoot.join(ProductOrderSample_.productOrder);
         Join<ProductOrder, ResearchProject> researchProjectrJoin = productOrderJoin.join(ProductOrder_.researchProject);
 
         Predicate predicate =
                 criteriaBuilder.equal(researchProjectrJoin.get(ResearchProject_.jiraTicketKey), researchProjectKey);
-        criteriaQuery.where(predicate);
+
+        Predicate orderStatusPredicate = criteriaBuilder.not(productOrderJoin.get(ProductOrder_.orderStatus)
+                .in(ProductOrder.OrderStatus.Draft, ProductOrder.OrderStatus.Abandoned));
+
+        criteriaQuery.where(predicate).having(orderStatusPredicate);
         criteriaQuery.orderBy(criteriaBuilder.desc(productOrderJoin.get(ProductOrder_.placedDate)));
 
         try {

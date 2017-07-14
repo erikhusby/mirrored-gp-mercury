@@ -14,8 +14,6 @@ package org.broadinstitute.gpinformatics.athena.control.dao.projects;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -29,9 +27,7 @@ import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.emptyCollectionOf;
@@ -75,7 +71,7 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
     }
 
     public void testFindSubmissionTrackersNoneExist() throws Exception {
-        SubmissionDto submissionDto = getSubmissionDto(PDO_ID, "P123", sampleName, 1, BassFileType.BAM, TEST_FILE);
+        SubmissionDto submissionDto = getSubmissionDto(PDO_ID, "P123", sampleName, 1, TEST_FILE);
         List<SubmissionTracker> submissionTrackers =
                 submissionTrackerDao.findSubmissionTrackers(Collections.singleton(submissionDto));
         assertThat(submissionTrackers, emptyCollectionOf(SubmissionTracker.class));
@@ -83,7 +79,7 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
 
     public void testFindSubmissionTrackersWithResult() throws Exception {
         SubmissionDto submissionDto =
-                getSubmissionDto(PDO_ID, "P123", sampleName, DEFAULT_VERSION, BassFileType.BAM, null);
+                getSubmissionDto(PDO_ID, "P123", sampleName, DEFAULT_VERSION, null);
         SubmissionTracker submissionTracker = addTracker(submissionDto);
 
         persistTrackers(Collections.singleton(submissionTracker));
@@ -93,16 +89,16 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
         assertThat(submissionTrackers, hasSize(1));
 
         assertThat(submissionTrackers.iterator().next().getTuple(),
-                equalTo(submissionDto.getBassDTO().getTuple()));
+                equalTo(null));
     }
 
     public void testFindSubmissionTrackersWithNewVersion() throws Exception {
         SubmissionDto submissionDto1 =
-                getSubmissionDto(PDO_ID, "P123", sampleName, DEFAULT_VERSION, BassFileType.BAM, null);
+                getSubmissionDto(PDO_ID, "P123", sampleName, DEFAULT_VERSION, null);
         SubmissionTracker submissionTracker1 = addTracker(submissionDto1);
 
         int newVersion = DEFAULT_VERSION + 1;
-        SubmissionDto submissionDto2 = getSubmissionDto(PDO_ID, "P123", sampleName, newVersion, BassFileType.BAM, null);
+        SubmissionDto submissionDto2 = getSubmissionDto(PDO_ID, "P123", sampleName, newVersion, null);
         SubmissionTracker submissionTracker2 = addTracker(submissionDto2);
 
         persistTrackers(Arrays.asList(submissionTracker1, submissionTracker2));
@@ -119,15 +115,15 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
     }
 
     public void testFindSubmissionTrackersWithDifferentFileType() throws Exception {
-        BassFileType bam = BassFileType.BAM;
-        BassFileType picard = BassFileType.PICARD;
+//        BassFileType bam = BassFileType.BAM;
+//        BassFileType picard = BassFileType.PICARD;
 
         // SubmissionTracker 1
-        SubmissionDto submissionDto1 = getSubmissionDto(PDO_ID, "P123", sampleName, DEFAULT_VERSION, bam, null);
+        SubmissionDto submissionDto1 = getSubmissionDto(PDO_ID, "P123", sampleName, DEFAULT_VERSION,  null);
         SubmissionTracker submissionTracker1 = addTracker(submissionDto1);
 
         // SubmissionTracker 2
-        SubmissionDto submissionDto2 = getSubmissionDto(PDO_ID, "P123", sampleName, DEFAULT_VERSION, picard, null);
+        SubmissionDto submissionDto2 = getSubmissionDto(PDO_ID, "P123", sampleName, DEFAULT_VERSION,  null);
         SubmissionTracker submissionTracker2 = addTracker(submissionDto2);
 
         persistTrackers(Arrays.asList(submissionTracker1, submissionTracker2));
@@ -153,12 +149,12 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
         submissionTrackerDao.clear();
     }
 
-    private SubmissionDto getSubmissionDto(ProductOrder productOrder, Map<BassDTO.BassResultColumn, String> bassInfo) {
-        return new SubmissionDto(new BassDTO(bassInfo), null, Collections.singleton(productOrder), null);
+    private SubmissionDto getSubmissionDto(ProductOrder productOrder) {
+        return new SubmissionDto(null, Collections.singleton(productOrder), null);
     }
 
     private SubmissionDto getSubmissionDto(String productOrderId, final String project, final String sampleName,
-                                           final int version, final BassFileType fileType, final String path) {
+                                           final int version, final String path) {
         ProductOrder productOrder = ProductOrderTestFactory.createDummyProductOrder(1, productOrderId);
         /*
          * TODO: Allow this relationship to be set for these tests.
@@ -173,14 +169,7 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
          * persisted product.
          */
 //        productOrder.setResearchProject(researchProject);
-        return getSubmissionDto(productOrder, new HashMap<BassDTO.BassResultColumn, String>() {{
-                    put(BassDTO.BassResultColumn.project, project);
-                    put(BassDTO.BassResultColumn.sample, sampleName);
-                    put(BassDTO.BassResultColumn.file_type, fileType == null ? null : fileType.getBassValue());
-                    put(BassDTO.BassResultColumn.version, String.valueOf(version));
-                    put(BassDTO.BassResultColumn.path, path);
-                }}
-        );
+        return getSubmissionDto(productOrder        );
     }
 
     private SubmissionTracker addTracker(SubmissionDto submissionDto) {
