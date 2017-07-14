@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
@@ -540,7 +541,11 @@ public class ProductOrderTest {
 
         Quote expiringNowQuote = stubbedQuoteService.getQuoteByAlphaId("STCIL1");
         for (FundingLevel fundingLevel : expiringNowQuote.getQuoteFunding().getFundingLevel()) {
-            fundingLevel.getFunding().setGrantEndDate( DateUtils.truncate(new Date(), Calendar.DATE));
+            for (Funding funding : fundingLevel.getFunding()) {
+
+                funding.setGrantEndDate( DateUtils.truncate(new Date(), Calendar.DATE));
+            }
+
         }
 
         try {
