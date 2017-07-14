@@ -179,6 +179,8 @@ public class ProductOrderSampleDao extends GenericDao {
         CriteriaQuery<ProductOrderSample> criteriaQuery =
                 criteriaBuilder.createQuery(ProductOrderSample.class);
         Root<ProductOrderSample> productOrderSampleRoot = criteriaQuery.from(ProductOrderSample.class);
+        productOrderSampleRoot.alias("pdoSample");
+
         Join<ProductOrderSample, ProductOrder> productOrderJoin =
                 productOrderSampleRoot.join(ProductOrderSample_.productOrder);
         Join<ProductOrder, ResearchProject> researchProjectrJoin = productOrderJoin.join(ProductOrder_.researchProject);
