@@ -17,11 +17,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTrackerTest;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassDtoTestFactory;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassSearchService;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassSearchServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.AggregationMetricsFetcher;
@@ -41,7 +36,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -69,22 +63,18 @@ public class SubmissionDtoFetcherTest {
     // Test doubles
     private SubmissionsService submissionService = new SubmissionsServiceStub();
     private AggregationMetricsFetcher aggregationMetricsFetcher = Mockito.mock(AggregationMetricsFetcher.class);
-    private BassSearchService bassSearchService = Mockito.mock(BassSearchServiceImpl.class);
     private ProductOrderSampleDao productOrderSampleDao = Mockito.mock(ProductOrderSampleDao.class);
 
     // Collections returned from mocks
-    private List<BassDTO> bassDTOs;
     private List<Aggregation> aggregations;
 
     @BeforeMethod
     public void setUp() {
         // Prepare mocks
-        bassDTOs = new ArrayList<>();
-        Mockito.when(bassSearchService.runSearch(Mockito.anyString(), Mockito.<String>anyVararg()))
-                .thenReturn(bassDTOs);
         aggregations = new ArrayList<>();
-        Mockito.when(aggregationMetricsFetcher.fetch(Mockito.anyListOf(SubmissionTuple.class)))
-                .thenReturn(aggregations);
+        Mockito
+            .when(aggregationMetricsFetcher.fetch(Mockito.anyString(), Mockito.anyCollectionOf(SubmissionTuple.class)))
+            .thenReturn(aggregations);
 
         // Create Mercury RP and PDO with one sample
         researchProject = ResearchProjectTestFactory.createTestResearchProject(RESEARCH_PROJECT_ID);
@@ -96,12 +86,12 @@ public class SubmissionDtoFetcherTest {
         }}));
         productOrder.addSample(productOrderSample);
         researchProject.addProductOrder(productOrder);
-        Mockito.when(productOrderSampleDao.findByResearchProject(Mockito.anyString())).thenReturn(
+        Mockito.when(productOrderSampleDao.findSubmissionSamples(Mockito.anyString())).thenReturn(
                 Collections.singletonList(productOrderSample)
         );
 
         // Create unit under test
-        submissionDtoFetcher = new SubmissionDtoFetcher(aggregationMetricsFetcher, bassSearchService, submissionService,
+        submissionDtoFetcher = new SubmissionDtoFetcher(aggregationMetricsFetcher, submissionService,
                 productOrderSampleDao);
     }
 
@@ -121,10 +111,13 @@ public class SubmissionDtoFetcherTest {
      * @throws Exception
      */
     public void testFetch() throws Exception {
-        addBassFile(RESEARCH_PROJECT_ID, COLLABORATOR_SAMPLE_ID, 1);
         researchProject.addSubmissionTracker(new SubmissionTrackerTest.SubmissionTrackerStub(1234L, RESEARCH_PROJECT_ID,
-                COLLABORATOR_SAMPLE_ID, "1", BassFileType.BAM));
+                COLLABORATOR_SAMPLE_ID, "1", FileType.BAM));
 
+        Aggregation aggregation = AggregationTestFactory
+                .buildAggregation(RESEARCH_PROJECT_ID, COLLABORATOR_SAMPLE_ID, 1, CONTAMINATION, FINGERPRINT_LOD, DATA_TYPE, QUALITY_METRIC,
+                        null, null, "OnPrem");
+        aggregations.add(aggregation);
         List<SubmissionDto> submissionDtoList = submissionDtoFetcher.fetch(researchProject, MessageReporter.UNUSED);
 
         assertThat(submissionDtoList, hasSize(1));
@@ -143,69 +136,5 @@ public class SubmissionDtoFetcherTest {
             assertThat(submissionDto.getStatusDate(), Matchers.notNullValue());
             assertThat(submissionDto.getSubmittedErrors(), Matchers.contains(NCBI_ERROR));
         }
-
-    }
-
-    public void testFetchWithMultipleBamsForSameSample() {
-        // Add BAMs to Bass
-        String submittedAggregationProjectId = "P123";
-        BassDTO bassDTO1 = addBassFile(RESEARCH_PROJECT_ID, COLLABORATOR_SAMPLE_ID, 1);
-        BassDTO bassDTO2 = addBassFile(submittedAggregationProjectId, COLLABORATOR_SAMPLE_ID, 1);
-
-        // Record submission of one of the BAMs
-        researchProject.addSubmissionTracker(new SubmissionTrackerTest.SubmissionTrackerStub(1234L,
-                submittedAggregationProjectId, COLLABORATOR_SAMPLE_ID, "1", BassFileType.BAM));
-
-        // Finally actually exercising the code under test
-        List<SubmissionDto> submissionDtoList = submissionDtoFetcher.fetch(researchProject, MessageReporter.UNUSED);
-
-        assertThat(submissionDtoList, hasSize(2));
-        for (SubmissionDto submissionDto : submissionDtoList) {
-            assertThat(submissionDto.getSampleName(), equalTo(COLLABORATOR_SAMPLE_ID));
-            assertThat(submissionDto.getResearchProject(), equalTo(RESEARCH_PROJECT_ID));
-            assertThat(submissionDto.getFingerprintLOD(), equalTo(FINGERPRINT_LOD));
-            assertThat(submissionDto.getProductOrders(), containsInAnyOrder(productOrder));
-            assertThat(submissionDto.getLanesInAggregation(), Matchers.equalTo(2));
-        }
-
-        Map<SubmissionTuple, SubmissionDto> submissionDtoByTuple = new HashMap<>();
-        for (SubmissionDto submissionDto : submissionDtoList) {
-            submissionDtoByTuple.put(submissionDto.getSubmissionTuple(), submissionDto);
-        }
-        SubmissionDto submissionDto1 = submissionDtoByTuple.get(bassDTO1.getTuple());
-        assertThat(submissionDto1.getAggregationProject(), equalTo(bassDTO1.getProject()));
-        assertThat(submissionDto1.getSubmittedStatus(), equalTo(""));
-        assertThat(submissionDto1.getSubmissionLibraryDescriptor(), equalTo(""));
-        assertThat(submissionDto1.getSubmissionRepositoryName(), equalTo(""));
-        assertThat(submissionDto1.getStatusDate(), equalTo(""));
-        assertThat(submissionDto1.getSubmittedErrors(), Matchers.<String>empty());
-
-        SubmissionDto submissionDto2 = submissionDtoByTuple.get(bassDTO2.getTuple());
-        assertThat(submissionDto2.getAggregationProject(), equalTo(bassDTO2.getProject()));
-        assertThat(submissionDto2.getSubmittedStatus(), equalTo(SubmissionStatusDetailBean.Status.FAILURE.getKey()));
-        assertThat(submissionDto2.getSubmissionLibraryDescriptor(),
-                equalTo(SubmissionLibraryDescriptor.WHOLE_GENOME_DESCRIPTION));
-        assertThat(submissionDto2.getSubmissionRepositoryName(),
-                equalTo(SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR));
-        assertThat(submissionDto2.getStatusDate(), equalTo(SubmissionsServiceStub.STUB_UPDATE_DATE));
-        assertThat(submissionDto2.getSubmittedErrors(), Matchers.contains(NCBI_ERROR));
-    }
-
-    /**
-     * Create a BassDTO and Aggregation that will be returned by mock services in this test.
-     *
-     * @param project   the aggregation project
-     * @param sample    the collaborator sample ID
-     * @param version   the file version
-     * @return the new BassDTO
-     */
-    private BassDTO addBassFile(String project, String sample, Integer version) {
-        BassDTO bassDTO = BassDtoTestFactory.buildBassResults(project, sample, version.toString(), RESEARCH_PROJECT_ID);
-        bassDTOs.add(bassDTO);
-        Aggregation aggregation = AggregationTestFactory
-                .buildAggregation(project, sample, version, CONTAMINATION, FINGERPRINT_LOD, DATA_TYPE, QUALITY_METRIC,
-                        null, null);
-        aggregations.add(aggregation);
-        return bassDTO;
     }
 }

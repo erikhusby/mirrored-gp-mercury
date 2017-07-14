@@ -37,7 +37,7 @@ import static org.hamcrest.Matchers.not;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class SubmissionDtoFetcherDbFreeTest {
     public void testGetSamplesForProjectHasNoNullKeys() throws Exception {
-        SubmissionDtoFetcher submissionDtoFetcher = new SubmissionDtoFetcher(null, null, null, null);
+        SubmissionDtoFetcher submissionDtoFetcher = new SubmissionDtoFetcher(null, null, null);
 
         Set<Metadata> nullMetadata = Collections.singleton(new Metadata(Metadata.Key.SAMPLE_ID, (String)null));
         String noCollaboratorSampleId = "SM-NONE";
@@ -45,6 +45,7 @@ public class SubmissionDtoFetcherDbFreeTest {
         ProductOrderSample productOrderSample = new ProductOrderSample(noCollaboratorSampleId, sampleData);
 
         ProductOrder productOrder = ProductOrderTestFactory.createDummyProductOrder("PDO-1");
+        productOrder.setOrderStatus(ProductOrder.OrderStatus.Pending);
         productOrder.addSample(productOrderSample);
 
 

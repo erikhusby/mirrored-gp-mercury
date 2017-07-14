@@ -30,7 +30,7 @@ public class SubmissionStatusResultBean implements Serializable {
         return submissionStatuses;
     }
 
-    @XmlElement
+    @XmlElement(name = "submissionStatuses")
     public void setSubmissionStatuses (List<SubmissionStatusDetailBean> submissionStatuses) {
         this.submissionStatuses = submissionStatuses;
     }
