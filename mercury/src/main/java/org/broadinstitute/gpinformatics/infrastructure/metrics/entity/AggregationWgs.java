@@ -11,6 +11,8 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 
+import org.hibernate.annotations.BatchSize;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -18,6 +20,7 @@ import javax.persistence.Table;
 
 @Entity
 @Table(name = "AGGREGATION_WGS", schema = "METRICS")
+@BatchSize(size = 500)
 public class AggregationWgs {
     @Id
     @Column(name = "AGGREGATION_ID")
