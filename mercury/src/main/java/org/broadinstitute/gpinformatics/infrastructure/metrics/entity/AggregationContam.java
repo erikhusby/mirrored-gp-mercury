@@ -21,6 +21,7 @@ import java.io.Serializable;
 
 @Entity
 @Table(name = "AGGREGATION_CONTAM", schema = "METRICS")
+@BatchSize(size = 500)
 public class AggregationContam implements Serializable {
     @Id
     @Column(name = "AGGREGATION_ID", nullable = false, insertable = false, updatable = false)
