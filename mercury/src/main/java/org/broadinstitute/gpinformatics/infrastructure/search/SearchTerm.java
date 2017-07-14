@@ -23,7 +23,10 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Represents the definition of a term in a user-defined search. Intended to be XStreamed.
+ * Represents the definition of both a search criteria term (input) and a search result column (output) <br />
+ * To be displayed as user selectable input criteria, (basically) will have criteria path(s) assigned  <br />
+ * Output value as a result column will be generated via display expressions <br />
+ * Intended to be XStreamed.
  */
 public class SearchTerm implements Serializable, ColumnTabulation {
 
@@ -215,6 +218,11 @@ public class SearchTerm implements Serializable, ColumnTabulation {
      * Expression that fetches list of constrained values
      */
     private Evaluator<List<ConstrainedValue>> constrainedValuesExpression;
+
+    /**
+     * Expression that provides list of constrained result column values
+     */
+    private Evaluator<List<ConstrainedValue>> constrainedResultColumnExpression;
 
     /**
      * Dynamic value type expression.
@@ -424,6 +432,17 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     public void setConstrainedValuesExpression(Evaluator<List<ConstrainedValue>> constrainedValuesExpression) {
         this.constrainedValuesExpression = constrainedValuesExpression;
+    }
+
+    /**
+     * Allow user selection of one or more logically related result columns
+     */
+    public Evaluator<List<ConstrainedValue>> getConstrainedResultColumnExpression() {
+        return constrainedResultColumnExpression;
+    }
+
+    public void setConstrainedResultColumnExpression(Evaluator<List<ConstrainedValue>> constrainedResultColumnExpression) {
+        this.constrainedResultColumnExpression = constrainedResultColumnExpression;
     }
 
     /**

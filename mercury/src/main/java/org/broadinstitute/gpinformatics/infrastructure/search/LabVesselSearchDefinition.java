@@ -709,6 +709,23 @@ public class LabVesselSearchDefinition {
         searchTerm.setSearchValueConversionExpression(new SearchDefinitionFactory.EventTypeValueConversionExpression());
         searchTerms.add(searchTerm);
 
+        /****  Result Criteria ****/
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Event Vessel Barcodes");
+        // Results are too vague when vessels are in multiple events...
+        // searchTerm.setDbSortPath("inPlaceLabEvents.labEventType");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public List<String> evaluate(Object entity, SearchContext context) {
+                List<String> labEventNames = new ArrayList<>();
+                labEventNames.add("Blah Blah Blah");
+                return labEventNames;
+            }
+        });
+        searchTerm.setConstrainedResultColumnExpression(new SearchDefinitionFactory.EventTypeValuesExpression());
+        searchTerms.add(searchTerm);
+        /****  Result Criteria ****/
+
         class EventMaterialTypeEvaluator extends SearchTerm.Evaluator<Object> {
 
             private final MaterialType materialType;
