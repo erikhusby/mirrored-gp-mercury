@@ -15,8 +15,8 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.SubmissionTr
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.AggregationTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -29,17 +29,14 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-
-import static org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO.BassResultColumn.path;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ResearchProjectEjbSubmissionTest {
-    private static final String DEFAULT_FILE_PATH = "/some/file.bam";
     private static final int TEST_VERSION_2 = 2;
+    private static final String ON_PREM = "OnPrem";
+    private static final String GCP = "GCP";
     private static String TEST_SAMPLE_1 = String.format("%d_E", System.currentTimeMillis());
     private static final int TEST_VERSION_1 = 1;
     private static final String PDO_99999 = "PDO-99999";
@@ -47,7 +44,7 @@ public class ResearchProjectEjbSubmissionTest {
 
     @SuppressWarnings("ConstantConditions")
     public void testValidateSubmissionsDtoHasNullsDto() throws Exception {
-        SubmissionDto submissionDto = new SubmissionDto(null, null, null, null);
+        SubmissionDto submissionDto = new SubmissionDto(null, null, null);
 
         ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(null);
 
@@ -74,7 +71,7 @@ public class ResearchProjectEjbSubmissionTest {
         setupSubmissionTrackerMock(submissionTrackerDao, Collections.<SubmissionTracker>emptyList());
         ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
 
-        SubmissionDto submissionDto = getSubmissionDto("ABC1234", BassFileType.BAM, 9);
+        SubmissionDto submissionDto = getSubmissionDto(dummyProductOrder, TEST_SAMPLE_1, ON_PREM, TEST_VERSION_1);
 
         try {
             researchProjectEjb.validateSubmissionDto(Collections.singletonList(submissionDto));
@@ -86,32 +83,12 @@ public class ResearchProjectEjbSubmissionTest {
         verifySubmissionTrackerMock(submissionTrackerDao);
     }
 
-
-    public void testFileTypeVariationNoBassDTOFileType() throws Exception {
-        // data setup for dao result.
-        SubmissionDto submissionDto = getSubmissionDto(dummyProductOrder, BassFileType.BAM, "/some/file");
-        SubmissionTracker submissionTracker = new SubmissionTracker("P123", submissionDto.getSampleName(),
-                String.valueOf(submissionDto.getVersion()), BassFileType.BAM);
-
-        SubmissionTrackerDao submissionTrackerDao = Mockito.mock(SubmissionTrackerDao.class);
-        setupSubmissionTrackerMock(submissionTrackerDao, Collections.singletonList(submissionTracker));
-
-        ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
-        try {
-            // data setup for submission request.
-            SubmissionDto newSubmissionDto = getSubmissionDto(dummyProductOrder, null, "/some/file");
-            researchProjectEjb.validateSubmissionDto(Collections.singletonList(newSubmissionDto));
-        } catch (IllegalArgumentException e) {
-            Assert.assertTrue(e.getMessage().contains("No enum constant for"));
-        }
-    }
-
     @SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
     @DataProvider(name = "manyDtosManyTrackers")
     public Iterator<Object[]> manyDtosManyTrackers() {
-        SubmissionDto bA = getSubmissionDto("A", BassFileType.BAM, TEST_VERSION_1);
-        SubmissionDto bA2 = getSubmissionDto("A", BassFileType.BAM, TEST_VERSION_2);
-        SubmissionDto bApicard = getSubmissionDto("A", BassFileType.PICARD, TEST_VERSION_1);
+        SubmissionDto bA = getSubmissionDto(dummyProductOrder, "A", ON_PREM, TEST_VERSION_1);
+        SubmissionDto bA2 = getSubmissionDto(dummyProductOrder, "A", ON_PREM, TEST_VERSION_2);
+        SubmissionDto bApicard = getSubmissionDto(dummyProductOrder, "A", GCP, TEST_VERSION_1);
 
         SubmissionTracker stA =
                 new SubmissionTracker("P123", bA.getSampleName(), String.valueOf(bA.getVersion()), bA.getFileType());
@@ -146,14 +123,8 @@ public class ResearchProjectEjbSubmissionTest {
     }
 
     public void testValidateSubmissionsDtoDiffersTupleEqual() throws Exception {
-        SubmissionDto submissionDto =
-                getSubmissionDto(TEST_SAMPLE_1, BassFileType.BAM, TEST_VERSION_1);
-
-        Map<BassDTO.BassResultColumn, String> bassInfo = new HashMap<>(submissionDto.getBassDTO().getColumnToValue());
-        bassInfo.put(path, "not"+DEFAULT_FILE_PATH);
-        bassInfo.put(BassDTO.BassResultColumn.gssr_barcode, "8675309");
-
-        SubmissionDto submissionDto2 = getSubmissionDto(dummyProductOrder, bassInfo);
+        SubmissionDto submissionDto = getSubmissionDto(dummyProductOrder, TEST_SAMPLE_1, ON_PREM, TEST_VERSION_1);
+        SubmissionDto submissionDto2 = getSubmissionDto(dummyProductOrder, TEST_SAMPLE_1, GCP, TEST_VERSION_1);
 
         SubmissionTrackerDao submissionTrackerDao = Mockito.mock(SubmissionTrackerDao.class);
         ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
@@ -161,17 +132,15 @@ public class ResearchProjectEjbSubmissionTest {
         try {
             researchProjectEjb.validateSubmissionDto(Arrays.asList(submissionDto, submissionDto2));
             Assert.fail(
-                    "Since the tuples for these two BassDTOs should be equal, an exception should have been thrown.");
+                    "Since the tuples for these two SubmissionDTO's should be equal, an exception should have been thrown.");
         } catch (ValidationException e) {
-            Assert.assertTrue(e.getMessage().contains(submissionDto.getBassDTO().getTuple().toString()));
+            Assert.assertTrue(e.getMessage().contains(submissionDto.getSubmissionTuple().toString()));
         }
     }
 
     public void testValidateSubmissionsDtoEqual() throws Exception {
-        SubmissionDto submissionDto =
-                getSubmissionDto(TEST_SAMPLE_1, BassFileType.BAM, TEST_VERSION_1);
-        SubmissionDto submissionDto2 =
-                getSubmissionDto(TEST_SAMPLE_1, BassFileType.BAM, TEST_VERSION_1);
+        SubmissionDto submissionDto = getSubmissionDto(dummyProductOrder, TEST_SAMPLE_1, ON_PREM, TEST_VERSION_1);
+        SubmissionDto submissionDto2 = getSubmissionDto(dummyProductOrder, TEST_SAMPLE_1, ON_PREM, TEST_VERSION_1);
 
         SubmissionTrackerDao submissionTrackerDao = Mockito.mock(SubmissionTrackerDao.class);
         ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
@@ -179,7 +148,7 @@ public class ResearchProjectEjbSubmissionTest {
             researchProjectEjb.validateSubmissionDto(Arrays.asList(submissionDto, submissionDto2));
             Assert.fail("You should not be able to submit two duplicate submissions.");
         } catch (ValidationException e) {
-            Assert.assertTrue(e.getMessage().contains(submissionDto.getBassDTO().getTuple().toString()));
+            Assert.assertTrue(e.getMessage().contains(submissionDto.getSubmissionTuple().toString()));
         }
     }
 
@@ -187,31 +156,12 @@ public class ResearchProjectEjbSubmissionTest {
         return new ResearchProjectEjb(null, null, null, null, null, null, null, submissionTrackerDao);
     }
 
-    private SubmissionDto getSubmissionDto(ProductOrder productOrder, Map<BassDTO.BassResultColumn, String> bassInfo) {
-        return new SubmissionDto(new BassDTO(bassInfo), null, Collections.singleton(productOrder), null);
-    }
-
-    private SubmissionDto getSubmissionDto(ProductOrder productOrder, BassFileType fileType, String bassFilePath) {
-        Map<BassDTO.BassResultColumn, String> bassInfo = new HashMap<>();
-        bassInfo.put(path, bassFilePath);
-        bassInfo.put(BassDTO.BassResultColumn.file_type, fileType == null ? null : fileType.getBassValue());
-        bassInfo.put(BassDTO.BassResultColumn.version, String.valueOf(TEST_VERSION_1));
-        bassInfo.put(BassDTO.BassResultColumn.sample, TEST_SAMPLE_1);
-
-        return new SubmissionDto(new BassDTO(bassInfo), null,
-                Collections.singletonList(productOrder), null);
-    }
-
-    @SuppressWarnings("serial")
-    public SubmissionDto getSubmissionDto(final String sampleName,
-                                          final BassFileType fileType, final int version) {
-        ProductOrder productOrder = ProductOrderTestFactory.createDummyProductOrder(1, PDO_99999);
-        return getSubmissionDto(productOrder, new HashMap<BassDTO.BassResultColumn, String>() {{
-                    put(BassDTO.BassResultColumn.sample, sampleName);
-                    put(BassDTO.BassResultColumn.file_type, fileType == null ? null : fileType.getBassValue());
-                    put(BassDTO.BassResultColumn.version, String.valueOf(version));
-                }}
-        );
+    private SubmissionDto getSubmissionDto(ProductOrder productOrder, String sample, String processingLocation, int version) {
+        Aggregation aggregation = AggregationTestFactory
+            .buildAggregation(productOrder.getResearchProject().getBusinessKey(), sample, version, null, null, null,
+                null, null, null, null);
+        SubmissionDto submissionDto = new SubmissionDto(aggregation, Collections.singleton(productOrder), null);
+        return submissionDto;
     }
 
     private void setupSubmissionTrackerMock(SubmissionTrackerDao submissionTrackerDao,

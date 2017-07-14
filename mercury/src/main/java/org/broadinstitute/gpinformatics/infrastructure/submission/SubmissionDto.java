@@ -14,11 +14,11 @@ package org.broadinstitute.gpinformatics.infrastructure.submission;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationContam;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
@@ -27,6 +27,8 @@ import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import java.io.Serializable;
 import java.text.NumberFormat;
 import java.util.Collection;
@@ -37,6 +39,7 @@ import java.util.List;
 
 @JsonSerialize(include = JsonSerialize.Inclusion.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
+@XmlAccessorType(XmlAccessType.FIELD)
 public class SubmissionDto implements Serializable {
     private static final long serialVersionUID = 8359394045710346776L;
 
@@ -51,9 +54,6 @@ public class SubmissionDto implements Serializable {
 
     @JsonIgnore
     private SubmissionStatusDetailBean statusDetailBean;
-
-    @JsonIgnore
-    private BassDTO bassDTO;
 
     @JsonIgnore
     private Aggregation aggregation;
@@ -71,13 +71,18 @@ public class SubmissionDto implements Serializable {
     private LevelOfDetection levelOfDetection;
 
     @JsonIgnore
-    private String filePath;
-
-    @JsonIgnore
     private String[] submittedErrorsArray;
 
-    @JsonProperty(value = SubmissionDto.SubmissionField.BASS_TUPLE)
-    private String bassTupleString="";
+    private SubmissionTuple submissionTuple;
+
+    @JsonProperty(value = SubmissionField.SUBMISSION_TUPLE)
+    String getSubmissionTupleString() {
+        String value = "";
+        if (submissionTuple != null) {
+            value = submissionTuple.toString();
+        }
+        return value;
+    }
 
     @JsonProperty(value = SubmissionDto.SubmissionField.UUID)
     private String uuid="";
@@ -95,7 +100,9 @@ public class SubmissionDto implements Serializable {
     private String project="";
 
     @JsonProperty(value = SubmissionDto.SubmissionField.FILE_TYPE)
-    private String fileTypeString="";
+    private String fileTypeString = "";
+
+    private FileType fileType=null;
 
     @JsonProperty(value = SubmissionDto.SubmissionField.VERSION)
     private Integer version;
@@ -114,6 +121,9 @@ public class SubmissionDto implements Serializable {
 
     @JsonProperty(value = SubmissionDto.SubmissionField.FILE_NAME)
     private String fileName="";
+
+    @JsonProperty(value = SubmissionDto.SubmissionField.PROCESSING_LOCATION)
+    private String processingLocation = "";
 
     @JsonProperty(value = SubmissionDto.SubmissionField.SUBMITTED_VERSION)
     private Integer submittedVersion;
@@ -145,10 +155,9 @@ public class SubmissionDto implements Serializable {
     public SubmissionDto() {
     }
 
-    public SubmissionDto(@Nonnull BassDTO bassDTO, Aggregation aggregation,
+    public SubmissionDto(Aggregation aggregation,
                          @Nonnull Collection<ProductOrder> productOrders,
                          @Nullable SubmissionStatusDetailBean statusDetailBean) {
-        this.bassDTO = bassDTO;
         this.aggregation = aggregation;
         this.productOrders = productOrders;
         this.statusDetailBean = statusDetailBean;
@@ -161,24 +170,25 @@ public class SubmissionDto implements Serializable {
 
     private void initializeFieldValues() {
         dateCompleted = null;
-        if (bassDTO != null) {
-            sample = bassDTO.getSample();
-            datatype = bassDTO.getDatatype();
-            project = bassDTO.getProject();
-            fileTypeString = bassDTO.getFileType();
-            version = bassDTO.getVersion();
-            rpid = bassDTO.getRpid();
-            fileName = bassDTO.getFileName();
-            filePath = bassDTO.getPath();
-            bassTupleString = bassDTO.getTuple().toString();
-        }
         if (aggregation != null) {
-            String datatype = bassDTO.getDatatype();
+            sample = aggregation.getSample();
+            datatype = aggregation.getDataType();
+            project = aggregation.getProject();
+            version = aggregation.getVersion();
+            rpid = aggregation.getProject();
+            processingLocation = aggregation.getProcessingLocation();
+            submissionTuple = aggregation.getTuple();
+            fileType = submissionTuple.getFileType();
+            fileTypeString = fileType.toString();
+            String datatype = aggregation.getDataType();
             if (StringUtils.isNotBlank(datatype)) {
-                qualityMetric = aggregation.getQualityMetric(datatype);
+                qualityMetric = aggregation.getQualityMetric();
             }
-            qualityMetricString = aggregation.getQualityMetricString(bassDTO.getDatatype());
-            pctContamination = aggregation.getAggregationContam().getPctContamination();
+            qualityMetricString = aggregation.getQualityMetricString();
+            AggregationContam aggregationContam = aggregation.getAggregationContam();
+            if (aggregationContam != null) {
+                pctContamination = aggregationContam.getPctContamination();
+            }
             levelOfDetection = aggregation.getLevelOfDetection();
             if (levelOfDetection != null) {
                 fingerprintLodMin = numberFormat.format(levelOfDetection.getMin());
@@ -213,11 +223,11 @@ public class SubmissionDto implements Serializable {
             if (statusDetail.getLastStatusUpdate() != null) {
                 statusDate = DATE_FORMAT.format(statusDetail.getLastStatusUpdate());
             }
-            BioProject project = statusDetail.getBioproject();
+            BioProject project = statusDetail.getBioProject();
             if (project != null) {
                 bioProject = String.format("%s %s", project.getAccession(), project.getAlias());
             }
-            libraryDescriptor = statusDetail.getSubmissiondatatype();
+            libraryDescriptor = statusDetail.getSubmissionDatatype();
             submissionSite = statusDetail.getSite();
 
         } else {
@@ -227,10 +237,6 @@ public class SubmissionDto implements Serializable {
 
     public String getUuid() {
         return uuid;
-    }
-
-    public BassDTO getBassDTO() {
-        return bassDTO;
     }
 
     public Aggregation getAggregation() {
@@ -257,13 +263,9 @@ public class SubmissionDto implements Serializable {
         return project;
     }
 
-    public String getFileTypeString(){
-        return fileTypeString;
-    }
-
     @JsonIgnore
-    public BassFileType getFileType() {
-        return BassFileType.byBassValue(fileTypeString);
+    public FileType getFileType() {
+        return fileType;
     }
 
     public Integer getVersion() {
@@ -314,8 +316,12 @@ public class SubmissionDto implements Serializable {
         return fileName;
     }
 
-    public String getFilePath() {
-        return filePath;
+    public String getProcessingLocation() {
+        return processingLocation;
+    }
+
+    public void setProcessingLocation(String processingLocation) {
+        this.processingLocation = processingLocation;
     }
 
     public Integer getSubmittedVersion() {
@@ -350,13 +356,8 @@ public class SubmissionDto implements Serializable {
         return submissionSite;
     }
 
-    public String getBassTupleString() {
-        return bassTupleString;
-    }
-
-    @JsonIgnore
     public SubmissionTuple getSubmissionTuple() {
-        return new SubmissionTuple(project, sample, String.valueOf(version), getFileType());
+        return submissionTuple;
     }
 
     public void setStatusDetailBean(SubmissionStatusDetailBean statusDetailBean) {
@@ -371,8 +372,17 @@ public class SubmissionDto implements Serializable {
         this.uuid = uuid;
     }
 
+    public void setVersion(int version) {
+        this.version = version;
+    }
+
+    public SubmissionTracker buildSubmissionTracker() {
+        return new SubmissionTracker(project, sample, String.valueOf(version), FileType.BAM);
+    }
+
+
     public class SubmissionField {
-        public static final String BASS_TUPLE = "bassDtoTuple";
+        public static final String SUBMISSION_TUPLE = "submissionTuple";
         public static final String SAMPLE_NAME = "sampleName";
         public static final String DATA_TYPE = "dataType";
         public static final String RESEARCH_PROJECT = "researchProject";
@@ -395,5 +405,6 @@ public class SubmissionDto implements Serializable {
         public static final String LIBRARY_DESCRIPTOR = "libraryDescriptor";
         public static final String SUBMISSION_SITE = "site";
         public static final String UUID = "uuid";
+        public static final String PROCESSING_LOCATION = "processingLocation";
     }
 }
