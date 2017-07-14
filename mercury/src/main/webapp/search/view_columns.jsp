@@ -69,6 +69,13 @@ buttons to move columns from one to the other --%>
                     var entityName = $j( this ).dialog("option","entityName");
                     var searchTermName = $j( this ).dialog("option","searchTermName");
                     $j("#resultParamsPrompt").text("Column '" + searchTermName + "' options:");
+                    // ajax call is cached, de-select list
+                    var parmOptions = $j( this ).find( "#resultParamsList" ).find("option").filter(":selected");
+                    if( parmOptions ) {
+                        for (var i = 0; i < parmOptions.length; i++) {
+                            parmOptions[i].selected = false;
+                        }
+                    }
                     $j.ajax({
                         url: '${ctxpath}/search/ConfigurableSearch.action',
                         data: { "paramsFetch":""
@@ -104,12 +111,23 @@ buttons to move columns from one to the other --%>
             dialog.find( "#resultParamsBtn" )[0].onclick = function(event){
                 var parmOptions = dialog.find( "#resultParamsList" ).find("option").filter(":selected");
                 var chosenColumns = $j('#selectedColumnDefNames')[0];
+                var selectedColumnOptions = $j(chosenColumns).find("option");
+                var searchTermName = dialog.dialog("option", "searchTermName");
                 if( parmOptions ) {
                     for( var i = 0; i < parmOptions.length; i++ ) {
-                        var newOption = document.createElement('option');
-                        newOption.text = dialog.dialog("option","searchTermName") + ":" + parmOptions[i].text;
-                        newOption.value = dialog.dialog("option","searchTermName") + "|" + parmOptions[i].value;
-                        chosenColumns.options[chosenColumns.options.length] = newOption;
+                        var isNew = true;
+                        for( var j = 0; j < selectedColumnOptions.length; j++ ) {
+                            if( selectedColumnOptions[j].value === searchTermName + "|" + parmOptions[i].value ) {
+                                isNew = false;
+                                break;
+                            }
+                        }
+                        if( isNew ) {
+                            var newOption = document.createElement('option');
+                            newOption.text = searchTermName + ":" + parmOptions[i].text;
+                            newOption.value = searchTermName + "|" + parmOptions[i].value;
+                            chosenColumns.options[chosenColumns.options.length] = newOption;
+                        }
                     }
                 }
                 dialog.dialog("close");
