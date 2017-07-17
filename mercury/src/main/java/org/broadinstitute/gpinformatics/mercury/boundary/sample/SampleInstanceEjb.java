@@ -159,8 +159,9 @@ public class SampleInstanceEjb  {
             sampleInstanceEntity.setReagentDesign(reagents.get(sampleIndex));
             sampleInstanceEntity.setMolecularIndexScheme(molecularIndexSchemes.get(sampleIndex));
             sampleInstanceEntity.setMercurySampleId(mercurySamples.get(sampleIndex));
-            sampleInstanceEntity.setReadLength(Integer.valueOf(vesselSpreadsheetProcessor.getReadLength().get(sampleIndex)));
-
+            if(!StringUtils.isEmpty(vesselSpreadsheetProcessor.getReadLength().get(sampleIndex).trim())) {
+                sampleInstanceEntity.setReadLength(Integer.valueOf(vesselSpreadsheetProcessor.getReadLength().get(sampleIndex)));
+            }
             if(mercuryRootSamples.size() >= sampleIndex) {
                 sampleInstanceEntity.setRootSample(mercuryRootSamples.get(sampleIndex));
             }
@@ -348,10 +349,10 @@ public class SampleInstanceEjb  {
 
             //Validate if Fragment and Read Length exist that they are actual numbers.
             validateNumber( vesselSpreadsheetProcessor.getFragmentSize().get(sampleIndex),
-                    VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE,sampleIndex,messageCollection);
+                    VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE,sampleIndex,messageCollection, true);
 
             validateNumber(vesselSpreadsheetProcessor.getReadLength().get(sampleIndex),
-                    VesselPooledTubesProcessor.Headers.READ_LENGTH,sampleIndex,messageCollection);
+                    VesselPooledTubesProcessor.Headers.READ_LENGTH,sampleIndex,messageCollection, false);
 
             ++sampleIndex;
         }
@@ -441,8 +442,23 @@ public class SampleInstanceEjb  {
     /**
      *  Check for missing / invalid numeric fields.
      */
-    private void validateNumber(String input, VesselPooledTubesProcessor.Headers headers, int index, MessageCollection messageCollection) {
+    private void validateNumber(String input, VesselPooledTubesProcessor.Headers headers, int index, MessageCollection messageCollection, Boolean required) {
 
+        //Check for fields that are not required, but if they are there, they must contain a valid number.
+        if(!required && StringUtils.isEmpty(input.trim())) {
+            return;
+        }
+        if(!required && !StringUtils.isEmpty(input.trim())) {
+            if(StringUtils.isNumeric(input)) {
+                return;
+            }
+            else {
+                messageCollection.addError("Invalid number:   " + input + " at column: " + headers.getText() + " at row: " + (index + 2));
+                return;
+            }
+        }
+
+        //Check for required fields
         if(StringUtils.isNumeric(input)) {
             return;
         }
