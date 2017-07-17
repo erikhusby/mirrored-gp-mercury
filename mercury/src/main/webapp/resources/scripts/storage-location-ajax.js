@@ -25,6 +25,7 @@ $j(document).ready( function() {
             },
             error: function(results){
                 console.log("Error message");
+                console.log(results);
             },
             cache: false,
             datatype: "application/json",
@@ -33,9 +34,9 @@ $j(document).ready( function() {
         });
     }
 
-    $j("#searchTermSubmit").click(function (e) {
+    $j("#searchTermAjaxSubmit").click(function (e) {
         e.preventDefault();
-        var searchTerm = $j("#searchTerm").val();
+        var searchTerm = $j("#searchTermAjax").val();
         var oldPath = $j("#ajax-jstree").jstree(true).settings.core.data.url;
         var newPath = '/Mercury/storage/storage.action?searchNode=&searchTerm=' + searchTerm;
         try {
@@ -48,7 +49,7 @@ $j(document).ready( function() {
 
     function initializeJsTreeNav() {
         $j('#ajax-jstree').jstree({
-            plugins: ["types", "sort"],
+            plugins: ["types", "sort", "wholerow"],
             types : {
                 FREEZER: {
                 },
@@ -83,7 +84,9 @@ $j(document).ready( function() {
             }
         }).bind("select_node.jstree", function (e, data) {
             var node = data.node;
+            console.log(">>>>");
             console.log(node);
+            console.log("<<<");
             var typesLabVessels = ['SHELF', 'GAGERACK', 'BOX', 'SLOT'];
             if ($j.inArray(node.type, typesLabVessels) > -1) {
                 findLocationTrail(node.data.storageLocationId);

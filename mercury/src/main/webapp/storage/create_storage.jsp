@@ -7,6 +7,9 @@
 <stripes:layout-render name="/layout.jsp" pageTitle="Create Storage" sectionTitle="Create Storage">
 
     <stripes:layout-component name="extraHead">
+        <link rel="stylesheet"
+              href="${ctxpath}/resources/scripts/jsTree/themes/default/style.min.css"/>
+        <script src="${ctxpath}/resources/scripts/jsTree/jstree.min.js"></script>
         <script type="javascript">
             var ctxpath = ${ctxpath};
         </script>

@@ -13,8 +13,11 @@ import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.mercury.control.dao.storage.StorageLocationDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -43,6 +46,8 @@ public class StorageLocationActionBean extends CoreActionBean {
     public static final String LOAD_TREE_AJAX_ACTION = "loadTreeAjax";
     public static final String SEARCH_NODE_ACTION = "searchNode";
     public static final String MOVE_NODE_ACTION = "moveNodeAction";
+    public static final String RENAME_NODE_ACTION = "renameNodeAction";
+    public static final String FIND_LOCATION_TRAIL_ACTION = "findLocationTrail";
     public static final String ROOT_NODE = "#";
 
     @Inject
@@ -62,10 +67,11 @@ public class StorageLocationActionBean extends CoreActionBean {
     private VesselGeometry vesselGeometry;
     private StorageLocation storageLocation;
 
-    // Move Action Data Types
+    // Move/Rename Action Data Types
     private String nodeName;
     private String newParentName;
     private String id;
+    private String oldName;
 
     //Node Search
     private String searchTerm;
@@ -83,18 +89,17 @@ public class StorageLocationActionBean extends CoreActionBean {
     @HandlesEvent(LOAD_TREE_AJAX_ACTION)
     public Resolution loadTreeAjax() throws Exception {
         List<StorageLocation> rootStorageLocations;
+        StorageLocation storageLocation = null;
         if (id.equals(ROOT_NODE)) {
-
             rootStorageLocations = storageLocationDao.findByLocationTypes(
                     StorageLocation.LocationType.getTopLevelLocationTypes());
         } else {
             long parentId = Long.parseLong(id);
-            StorageLocation storageLocation = storageLocationDao.findById(StorageLocation.class, parentId);
+            storageLocation = storageLocationDao.findById(StorageLocation.class, parentId);
             rootStorageLocations = new ArrayList<>(storageLocation.getChildrenStorageLocation());
             Collections.sort(rootStorageLocations, new StorageLocation.StorageLocationLabelComparator());
-
         }
-        String storageJson = generateJsonFromRoots(rootStorageLocations, true);
+        String storageJson = generateJsonFromRoots(storageLocation, rootStorageLocations, true);
         return new StreamingResolution("text", new StringReader(storageJson));
     }
 
@@ -102,7 +107,7 @@ public class StorageLocationActionBean extends CoreActionBean {
     public Resolution loadTree() throws Exception {
         List<StorageLocation> rootStorageLocations = storageLocationDao.findByLocationTypes(
                 StorageLocation.LocationType.getTopLevelLocationTypes());
-        String storageJson = generateJsonFromRoots(rootStorageLocations, false);
+        String storageJson = generateJsonFromRoots(null, rootStorageLocations, false);
         return new StreamingResolution("text", new StringReader(storageJson));
     }
 
@@ -163,6 +168,36 @@ public class StorageLocationActionBean extends CoreActionBean {
         parentNode.put("state", currentNodeState);
     }
 
+    @HandlesEvent(RENAME_NODE_ACTION)
+    public Resolution renameNode() throws JSONException {
+        JSONObject retObj = new JSONObject();
+        try {
+            if (StringUtils.isEmpty(nodeName)) {
+                retObj.put("error", "Location to rename not specified");
+                retObj.put("hasError", true);
+            } else if (StringUtils.isEmpty(storageName)) {
+                retObj.put("error", "Storage Name is required.");
+                retObj.put("hasError", true);
+            } else {
+                long nodeId = Long.parseLong(nodeName);
+                StorageLocation location = storageLocationDao.findById(StorageLocation.class, nodeId);
+                if (!location.getLocationType().isMoveable()) {
+                    retObj.put("error", "Cannot rename location of this type: " + location.getLocationType().getDisplayName());
+                    retObj.put("hasError", true);
+                } else {
+                    location.setLabel(storageName);
+                    storageLocationDao.persist(location);
+                    retObj.put("hasError", false);
+                }
+            }
+            return new StreamingResolution("text", new StringReader(retObj.toString()));
+        } catch (Exception e) {
+            logger.error("Error occured when attempting to move location", e);
+            retObj.put("error", e.getMessage());
+            retObj.put("hasError", true);
+            return new StreamingResolution("text", new StringReader(retObj.toString()));
+        }
+    }
 
     @HandlesEvent(MOVE_NODE_ACTION)
     public Resolution moveNode() throws JSONException {
@@ -181,7 +216,7 @@ public class StorageLocationActionBean extends CoreActionBean {
                 StorageLocation newParent = storageLocationDao.findById(StorageLocation.class, nodeParentId);
                 if (!location.getLocationType().isMoveable()) {
                     retObj.put("error", "Cannot move location of this type: " + location.getLocationType().getDisplayName());
-                        retObj.put("hasError", true);
+                    retObj.put("hasError", true);
                 } else {
                     location.setParentStorageLocation(newParent);
                     storageLocationDao.persist(location);
@@ -195,6 +230,40 @@ public class StorageLocationActionBean extends CoreActionBean {
             retObj.put("hasError", true);
             return new StreamingResolution("text", new StringReader(retObj.toString()));
         }
+    }
+
+    @HandlesEvent(FIND_LOCATION_TRAIL_ACTION)
+    public Resolution findLocationTrail() throws IOException {
+        locationTrailString = "";
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode objectNode = mapper.createObjectNode();
+        try {
+            String storageParam = getContext().getRequest().getParameter("storageId");
+            if (StringUtils.isEmpty(storageParam)) {
+                objectNode.put("hasErrors", true);
+                objectNode.put("errors", "storage ID is a required parameter.");
+            } else {
+                storageId = Long.parseLong(storageParam);
+                storageLocation = storageLocationDao.findById(StorageLocation.class, storageId);
+                if (storageLocation == null) {
+                    objectNode.put("hasErrors", true);
+                    objectNode.put("errors", "Failed to find location trail for storage id " + storageId);
+                } else {
+                    locationTrailString = storageLocation.buildLocationTrail();
+                    if (StringUtils.isEmpty(locationTrailString)) {
+                        objectNode.put("hasErrors", true);
+                        objectNode.put("errors", "Failed to find location trail for storage id " + storageId);
+                    } else {
+                        objectNode.put("hasErrors", false);
+                        objectNode.put("locationTrail", locationTrailString);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            objectNode.put("hasErrors", true);
+            objectNode.put("errors", "Error finding location trail.");
+        }
+        return new StreamingResolution("application/json", mapper.writeValueAsString(objectNode));
     }
 
     @HandlesEvent(CREATE_ACTION)
@@ -216,6 +285,14 @@ public class StorageLocationActionBean extends CoreActionBean {
         this.nodeName = nodeName;
     }
 
+    public String getOldName() {
+        return oldName;
+    }
+
+    public void setOldName(String oldName) {
+        this.oldName = oldName;
+    }
+
     public String getNewParentName() {
         return newParentName;
     }
@@ -224,7 +301,8 @@ public class StorageLocationActionBean extends CoreActionBean {
         this.newParentName = newParentName;
     }
 
-    public String generateJsonFromRoots(List<StorageLocation> topLevelLocations, boolean ajax) throws IOException {
+    public String generateJsonFromRoots(StorageLocation parentStorageLocation, List<StorageLocation> topLevelLocations,
+                                        boolean ajax) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
 
         ObjectNode root = mapper.createObjectNode();
@@ -232,6 +310,23 @@ public class StorageLocationActionBean extends CoreActionBean {
         for (StorageLocation storageLocation: topLevelLocations) {
             ObjectNode rootNode = generateJSON(storageLocation, mapper.createObjectNode(), ajax);
             arrayNode.add(rootNode);
+        }
+        if (parentStorageLocation != null) {
+            if (!parentStorageLocation.getLabVessels().isEmpty()) {
+                for (LabVessel labVessel : parentStorageLocation.getLabVessels()) {
+                    if (OrmUtil.proxySafeIsInstance(labVessel, RackOfTubes.class)) {
+                        ObjectNode objectNode = root.objectNode();
+                        objectNode.put("text", labVessel.getLabel());
+                        objectNode.put("type", RackOfTubes.class.getSimpleName());
+                        arrayNode.add(objectNode);
+                    } else if (OrmUtil.proxySafeIsInstance(labVessel, StaticPlate.class)) {
+                        ObjectNode objectNode = root.objectNode();
+                        objectNode.put("text", labVessel.getLabel());
+                        objectNode.put("type", StaticPlate.class.getSimpleName());
+                        arrayNode.add(objectNode);
+                    }
+                }
+            }
         }
         root.put("children", arrayNode);
         storageJson = mapper.writeValueAsString(arrayNode);
@@ -256,7 +351,8 @@ public class StorageLocationActionBean extends CoreActionBean {
         dataNode.put("storageLocationId", storageLocation.getStorageLocationId());
         obN.put("data", dataNode);
         if (ajax) {
-            if (!storageLocation.getChildrenStorageLocation().isEmpty()) {
+            if (!storageLocation.getChildrenStorageLocation().isEmpty() ||
+                !storageLocation.getLabVessels().isEmpty()) {
                 obN.put("children", true);
             }
         } else {
@@ -274,15 +370,6 @@ public class StorageLocationActionBean extends CoreActionBean {
             }
         }
 
-        ArrayNode labVesselsNode = obN.arrayNode();
-        if (!storageLocation.getLabVessels().isEmpty()) {
-            for (LabVessel labVessel: storageLocation.getLabVessels()) {
-                ObjectNode objectNode = obN.objectNode();
-                objectNode.put("label", labVessel.getLabel());
-                labVesselsNode.add(objectNode);
-            }
-        }
-        dataNode.put("labVessels", labVesselsNode);
         return obN;
     }
 

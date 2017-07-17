@@ -36,10 +36,6 @@
         <script src="${ctxpath}/resources/scripts/jquery-1.10.1.min.js"></script>
         <script type="text/javascript"> var $j = jQuery.noConflict(); </script>
         <script src="${ctxpath}/resources/scripts/jquery-ui-1.9.2.custom.min.js"></script>
-        <link rel="stylesheet"
-              href="${ctxpath}/resources/scripts/jsTree/themes/default/style.min.css"/>
-        <script src="${ctxpath}/resources/scripts/jsTree/jstree.min.js"></script>
-
         <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-dropdown.js"></script>
         <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-tooltip.js"></script>
         <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-popover.js"></script>

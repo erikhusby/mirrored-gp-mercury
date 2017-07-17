@@ -9,6 +9,9 @@
 
     <stripes:layout-component name="extraHead">
         <%@ include file="/vessel/rack_scanner_list_with_sim_part1.jsp" %>
+        <link rel="stylesheet"
+              href="${ctxpath}/resources/scripts/jsTree/themes/default/style.min.css"/>
+        <script src="${ctxpath}/resources/scripts/jsTree/jstree.min.js"></script>
         <style type="text/css">
             .platemap {
                 width: auto;

@@ -88,7 +88,7 @@ public class CreateStorageActionBean extends CoreActionBean {
         }
 
         locationType = StorageLocation.LocationType.getByDisplayName(storageUnitTypeName);
-        boolean isRackType = locationType == StorageLocation.LocationType.GAGERACK ||
+        boolean isRackType = locationType == StorageLocation.LocationType.GAUGERACK ||
                              locationType == StorageLocation.LocationType.BOX;
         if (isRackType) {
             if (getSlots() <= 0) {

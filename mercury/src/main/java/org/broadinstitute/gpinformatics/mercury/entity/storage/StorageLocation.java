@@ -18,6 +18,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+import javax.persistence.UniqueConstraint;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -33,17 +34,17 @@ import java.util.Set;
  */
 @Entity
 @Audited
-@Table(schema = "mercury")
+@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"barcode"}))
 public class StorageLocation {
 
     public enum LocationType {
-        REFRIDGERATOR("Refridgerator", ExpectParentLocation.FALSE),
+        REFRIGERATOR("Refrigerator", ExpectParentLocation.FALSE),
         FREEZER("Freezer", ExpectParentLocation.FALSE),
         SHELVINGUNIT("Shelving Unit", ExpectParentLocation.FALSE),
         CABINET("Cabinet", ExpectParentLocation.FALSE),
         SECTION("Section", ExpectParentLocation.TRUE, ExpectSlots.FALSE, Moveable.FALSE, CanCreate.FALSE),
         SHELF("Shelf", ExpectParentLocation.TRUE),
-        GAGERACK("Gage Rack", ExpectParentLocation.TRUE, ExpectSlots.TRUE, Moveable.TRUE),
+        GAUGERACK("Gauge Rack", ExpectParentLocation.TRUE, ExpectSlots.TRUE, Moveable.TRUE),
         BOX("Box", ExpectParentLocation.TRUE, ExpectSlots.TRUE, Moveable.TRUE),
         SLOT("Slot", ExpectParentLocation.TRUE, ExpectSlots.FALSE, Moveable.FALSE, CanCreate.FALSE);
 
@@ -191,6 +192,7 @@ public class StorageLocation {
     @OneToMany(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY, mappedBy = "storageLocation")
     private Set<LabVessel> labVessels = new HashSet<>();
 
+    private String barcode;
 
     public StorageLocation() {
     }
@@ -251,6 +253,14 @@ public class StorageLocation {
 
     public void setLabVessels(Set<LabVessel> labVessels) {
         this.labVessels = labVessels;
+    }
+
+    public String getBarcode() {
+        return barcode;
+    }
+
+    public void setBarcode(String barcode) {
+        this.barcode = barcode;
     }
 
     @Transient

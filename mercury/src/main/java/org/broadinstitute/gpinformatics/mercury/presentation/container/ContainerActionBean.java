@@ -19,6 +19,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.rackscan.ScannerException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
@@ -46,6 +47,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActi
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -108,6 +110,7 @@ public class ContainerActionBean extends RackScanActionBean {
     private String locationTrail;
     private String storageId;
     private StaticPlate staticPlate;
+    private boolean ajaxRequest;
 
     public ContainerActionBean() {
         super(CREATE_CONTAINER, EDIT_CONTAINER, CONTAINER_PARAMETER);
@@ -147,7 +150,7 @@ public class ContainerActionBean extends RackScanActionBean {
     }
 
     @ValidationMethod(on = {VIEW_CONTAINER_ACTION, EDIT_ACTION, SAVE_ACTION, SAVE_LOCATION_ACTION,
-            CANCEL_SAVE_ACTION, FIRE_RACK_SCAN, REMOVE_LOCATION_ACTION})
+            CANCEL_SAVE_ACTION, FIRE_RACK_SCAN, REMOVE_LOCATION_ACTION, VIEW_CONTAINER_AJAX_ACTION})
     public void labVesselExist() {
         if (StringUtils.isEmpty(containerBarcode)) {
             addValidationError(containerBarcode, "Container Barcode is required.");
@@ -173,7 +176,7 @@ public class ContainerActionBean extends RackScanActionBean {
      * Attempt to determine the position map of the container under the disclaimer that the RackOfTubes
      */
     @After(stages = LifecycleStage.CustomValidation, on = {VIEW_CONTAINER_ACTION, EDIT_ACTION, SAVE_ACTION,
-            SAVE_LOCATION_ACTION, CANCEL_SAVE_ACTION, REMOVE_LOCATION_ACTION})
+            SAVE_LOCATION_ACTION, CANCEL_SAVE_ACTION, REMOVE_LOCATION_ACTION, VIEW_CONTAINER_AJAX_ACTION})
     public void buildPositionMapping() {
         mapPositionToVessel = new HashMap<>();
         if (rackOfTubes == null && staticPlate == null) {
@@ -292,6 +295,8 @@ public class ContainerActionBean extends RackScanActionBean {
 
     @HandlesEvent(VIEW_CONTAINER_AJAX_ACTION)
     public Resolution viewContainerAjax() {
+//        editLayout = true;
+        ajaxRequest = true;
         return new ForwardResolution(CONTAINER_VIEW_SHIM_PAGE);
     }
 
@@ -460,6 +465,11 @@ public class ContainerActionBean extends RackScanActionBean {
                 .addParameter(VIEW_CONTAINER_ACTION, "");
     }
 
+    public boolean isMoveAllowed() {
+        Collection<Role> roles = getUserBean().getRoles();
+        return roles.contains(Role.LabManager) || roles.contains(Role.Developer);
+    }
+
     @Override
     public boolean isEditAllowed() {
         return rackOfTubes != null;
@@ -513,6 +523,10 @@ public class ContainerActionBean extends RackScanActionBean {
 
     public boolean isEditLayout() {
         return editLayout;
+    }
+
+    public boolean isAjaxRequest() {
+        return ajaxRequest;
     }
 
     public List<ReceptacleType> getReceptacleTypes() {

@@ -1,9 +1,18 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
 <%@ taglib prefix='fn' uri='http://java.sun.com/jsp/jstl/functions' %>
 <%--@elvariable id="geometry" type="org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry"--%>
-
+<stripes:useActionBean var="actionBean"
+                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.container.ContainerActionBean"/>
 <%@ include file="/vessel/rack_scanner_list_with_sim_part1.jsp" %>
 <style type="text/css">
+    .jstree-anchor {
+        /*enable wrapping*/
+        white-space : normal !important;
+        /*ensure lower nodes move down*/
+        height : auto !important;
+        /*offset icon width*/
+        padding-right : 24px;
+    }
     label {
         display: inline;
         font-weight: bold;
@@ -25,8 +34,8 @@
 <div id="storage_location_overlay">
     <div class="control-group">
         <div class="control">
-            <input type="text" id="searchTerm" name="searchTerm" placeholder="storage barcode"/>
-            <input type="submit" value="Find" id="searchTermSubmit"/>
+            <input type="text" id="searchTermAjax" name="searchTerm" placeholder="storage barcode"/>
+            <input type="submit" value="Find" id="searchTermAjaxSubmit"/>
         </div>
     </div>
 
@@ -34,9 +43,15 @@
 </div>
 <div class="row-fluid">
     <strong>Container ${actionBean.viewVessel.label} Type: ${actionBean.containerTypeDisplayName}</strong>
+    <c:if test="${actionBean.ajaxRequest}">
+        <a title="Click to Edit Container" class="pull-right"
+           href="${ctxpath}/container/container.action?edit=&amp;containerBarcode=${actionBean.containerBarcode}">
+            <span class="icon-pencil"></span>Edit Container</a>
+    </c:if>
 </div>
 <stripes:form beanclass="${actionBean.class.name}"
               id="editContainerForm" class="form-horizontal">
+    <c:set var="geometry" value="${actionBean.viewVessel.vesselGeometry}"/>
     <c:set var="canRackScan" value="${actionBean.editLayout and
                     actionBean.rackOfTubes.rackType.displayName.startsWith('Matrix96')}"/>
     <stripes:hidden name="containerBarcode" value="${actionBean.containerBarcode}"/>
@@ -97,7 +112,7 @@
                 <stripes:text id="storageName" name="storageName" value="${actionBean.locationTrail}" readonly="true"/>
                 <stripes:submit name="browse" id="browse" value="Browse"
                                 class="btn"/>
-                <stripes:submit name="saveLocation" value="Save Location"
+                <stripes:submit name="saveLocation" value="Save To Location"
                                 class="btn btn-primary"/>
             </div>
         </div>

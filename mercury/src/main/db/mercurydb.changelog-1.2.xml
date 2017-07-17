@@ -879,6 +879,7 @@
             <column name="location_type" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
+            <column name="barcode" type="varchar(255)"/>
             <column name="parent_storage_location" type="number(19,0)" />
         </createTable>
         <addPrimaryKey constraintName="pk_storage_location" tableName="storage_location"
@@ -886,6 +887,8 @@
         <addForeignKeyConstraint constraintName="fk_location_parent_location"
                                  baseTableName="storage_location" baseColumnNames="parent_storage_location"
                                  referencedTableName="storage_location" referencedColumnNames="storage_location_id"/>
+        <addUniqueConstraint constraintName="U_STORAGE_BARCODE" tableName="STORAGE_LOCATION"
+                             schemaName="mercury" columnNames="barcode"/>
     </changeSet>
     <changeSet author="jowalsh" id="GPLIM-4178-2">
         <createTable schemaName="mercury" tableName="storage_location_aud">
@@ -898,6 +901,7 @@
             <column name="location_type" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
+            <column name="barcode" type="varchar(255)"/>
             <column name="parent_storage_location" type="number(19,0)"/>
             <column name="rev" type="number(19,0)" />
             <column name="revtype" type="number(3,0)" />
