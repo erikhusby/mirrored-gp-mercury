@@ -387,6 +387,10 @@ public class LabMetric implements Comparable<LabMetric> {
         return labUnit;
     }
 
+    public void setLabUnit(LabUnit labUnit) {
+        this.labUnit = labUnit;
+    }
+
     public LabMetricRun getLabMetricRun() {
         return labMetricRun;
     }
