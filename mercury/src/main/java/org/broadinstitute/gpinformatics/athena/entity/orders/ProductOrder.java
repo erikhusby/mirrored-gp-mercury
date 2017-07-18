@@ -239,6 +239,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @OneToMany(mappedBy = "productOrder", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     private Set<ProductOrderPriceAdjustment> priceAdjustments = new HashSet<>();
 
+    private Boolean priorToSAP1_5 = false;
+
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.
      */
@@ -2050,6 +2052,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     public void setPipelineLocation(
             PipelineLocation pipelineLocation) {
         this.pipelineLocation = pipelineLocation;
+    }
+
+    public Boolean getPriorToSAP1_5() {
+        return priorToSAP1_5;
+    }
+
+    void setPriorToSAP1_5(Boolean priorToSAP1_5) {
+        this.priorToSAP1_5 = priorToSAP1_5;
     }
 
     public static void checkQuoteValidity(Quote quote) throws QuoteServerException {

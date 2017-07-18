@@ -895,4 +895,45 @@
                                  referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
     </changeSet>
 
+    <changeSet id="GPLIM-4924-1" author="scottmat">
+        <addColumn schemaName="athena" tableName="product">
+            <column name="EXTERNAL_PRODUCT_NAME" type="varchar 255" />
+            <column name="external_price_item" type="number(19,0)" />
+        </addColumn>
+
+        <addForeignKeyConstraint constraintName="FK_PRODUCT_EXT_PRICE_ITEM" baseTableSchemaName="athena" baseTableName="product"
+                                 baseColumnNames="external_price_item" referencedTableSchemaName="athena"
+                                 referencedTableName="price_item" referencedColumnNames="price_item_id" />
+    </changeSet>
+
+    <changeSet id="GPLIM-4924-2" author="scottmat">
+        <addColumn schemaName="athena" tableName="product_aud">
+            <column name="EXTERNAL_PRODUCT_NAME" type="varchar 255" />
+            <column name="external_price_item" type="number(19,0)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-4748-1" author="scottmat">
+        <addColumn schemaName="athena" tableName="product_order">
+            <column name="PRIOR_TOSAP1_5" type="number(1,0)" />
+        </addColumn>
+
+        <sql>
+             update PRODUCT_ORDER pdo
+            set pdo.PRIOR_TOSAP1_5 = 1;
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-4748-2" author="scottmat">
+        <addColumn schemaName="athena" tableName="product_order_aud">
+            <column name="PRIOR_TOSAP1_5" type="number(1,0)" />
+        </addColumn>
+
+        <sql>
+            update PRODUCT_ORDER_aud pdo
+            set pdo.PRIOR_TOSAP1_5 = 1;
+        </sql>
+
+    </changeSet>
+
 </databaseChangeLog>
