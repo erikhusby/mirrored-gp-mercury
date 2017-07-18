@@ -915,7 +915,9 @@
 
     <changeSet id="GPLIM-4748-1" author="scottmat">
         <addColumn schemaName="athena" tableName="product_order">
-            <column name="PRIOR_TOSAP1_5" type="number(1,0)" />
+            <column name="PRIOR_TOSAP1_5" type="number(1,0)" >
+                <constraints nullable="false" />
+            </column>
         </addColumn>
 
         <sql>
@@ -926,7 +928,9 @@
 
     <changeSet id="GPLIM-4748-2" author="scottmat">
         <addColumn schemaName="athena" tableName="product_order_aud">
-            <column name="PRIOR_TOSAP1_5" type="number(1,0)" />
+            <column name="PRIOR_TOSAP1_5" type="number(1,0)" >
+                <constraints nullable="false" />
+            </column>
         </addColumn>
 
         <sql>
