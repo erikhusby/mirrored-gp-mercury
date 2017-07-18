@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.Collection;
 import java.util.Date;
 
 @XmlRootElement(name = "FundingLevel")
@@ -10,17 +11,17 @@ public class FundingLevel {
 
     private String percent;
     
-    private Funding funding;
+    private Collection<Funding> funding;
 
     public FundingLevel() {}
 
-    public FundingLevel(String percent,Funding funding) {
+    public FundingLevel(String percent,Collection<Funding> funding) {
         this.percent = percent;
         this.funding = funding;
     }
 
-    public static boolean isGrantActiveForDate(Date effectiveDate, FundingLevel fundingLevel) {
-        final Date grantEndDate = fundingLevel.getFunding().getGrantEndDate();
+    public static boolean isGrantActiveForDate(Date effectiveDate, Funding funding) {
+        final Date grantEndDate = funding.getGrantEndDate();
         return grantEndDate == null ||
                (effectiveDate.before(grantEndDate) || effectiveDate.equals(grantEndDate));
     }
@@ -35,11 +36,11 @@ public class FundingLevel {
     }
 
     @XmlElement(name = "Funding")
-    public Funding getFunding() {
+    public Collection<Funding> getFunding() {
         return funding;
     }
 
-    public void setFunding(Funding funding) {
+    public void setFunding(Collection<Funding> funding) {
         this.funding = funding;
     }
 }

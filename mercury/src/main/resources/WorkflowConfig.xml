@@ -65,7 +65,7 @@
         <name>Pico/Plating</name>
         <workflowProcessDefVersions>
             <version>1.0</version>
-            <effectiveDate>2014-10-19T21:03:24.085-04:00</effectiveDate>
+        <effectiveDate>2012-09-30T22:04:23.932-04:00</effectiveDate>
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
                 <name>Pico/Plating Bucket</name>
                 <labEventTypes>PICO_PLATING_BUCKET</labEventTypes>
@@ -570,7 +570,7 @@
         <name>Regular Pond</name>
         <workflowProcessDefVersions>
             <version>1.0</version>
-            <effectiveDate>2016-07-01T21:03:24.085-04:00</effectiveDate>
+        <effectiveDate>2012-09-30T22:04:23.932-04:00</effectiveDate>
             <workflowStepDefs>
                 <name>Pond Registration</name>
                 <labEventTypes>POND_REGISTRATION</labEventTypes>

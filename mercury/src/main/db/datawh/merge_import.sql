@@ -147,7 +147,7 @@ AS
                FROM im_event_fact
               WHERE is_delete = 'F' ) im
       WHERE e.lab_event_id = im.lab_event_id
-        AND e.etl_date    >= im.etl_date;
+        AND e.etl_date    > im.etl_date;
 
       IF V_PK_DEL_ARR.COUNT > 0 THEN
         FORALL IDX IN V_PK_DEL_ARR.FIRST .. V_PK_DEL_ARR.LAST
@@ -1051,6 +1051,7 @@ AS
               skip_regulatory_reason = new.skip_regulatory_reason,
               sap_order_number = new.sap_order_number,
               array_chip_type = new.array_chip_type,
+              call_rate_threshold = new.call_rate_threshold,
               etl_date = new.etl_date
             WHERE product_order_id = new.product_order_id;
 
@@ -1072,6 +1073,7 @@ AS
               skip_regulatory_reason,
               sap_order_number,
               array_chip_type,
+              call_rate_threshold,
               etl_date
             ) VALUES (
               new.product_order_id,
@@ -1088,6 +1090,7 @@ AS
               new.skip_regulatory_reason,
               new.sap_order_number,
               new.array_chip_type,
+              new.call_rate_threshold,
               new.etl_date );
 
             V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
@@ -1708,32 +1711,39 @@ AS
   PROCEDURE MERGE_ARRAY_PROCESS_FLOW
   IS
     V_COUNT     PLS_INTEGER;
-    V_IS_INSERT CHAR;
-    V_THE_ROWID ROWID;
+    V_THE_ROWID UROWID;
     V_LABEL VARCHAR2(255);
+
+    -- Flag to split row and chip barcode if DNA/Amp plate well is re-hybed to a new chip
+    V_DO_SPLIT  BOOLEAN;
+    V_CHIP_BARCODE ARRAY_PROCESS_FLOW.CHIP%TYPE;
+
+    V_ROWID_ARR DBMS_SQL.UROWID_TABLE;
+
     BEGIN
       V_COUNT := 0;
 
       FOR new IN (
       SELECT LINE_NUMBER, ETL_DATE,
-             product_order_id, batch_name, lcset_sample_name, sample_name,
-             lab_event_id, lab_event_type, station_name, event_date,
-             lab_vessel_id, position
+        product_order_id, batch_name, lcset_sample_name, sample_name,
+        lab_event_id, lab_event_type, station_name, event_date,
+        lab_vessel_id, position,
+        'N' as split_on_rehyb
       FROM im_array_process
       WHERE lab_event_type = 'ArrayPlatingDilution'  -- Sanity - should only be this one type
-        AND is_delete = 'F'
+            AND is_delete = 'F'
       UNION ALL
       SELECT LINE_NUMBER, ETL_DATE,
         product_order_id, batch_name, lcset_sample_name, sample_name,
         lab_event_id, lab_event_type, station_name, event_date,
-        lab_vessel_id, position
+        lab_vessel_id, position,
+        'N' as split_on_rehyb
       FROM im_event_fact
       WHERE is_delete = 'F'
             AND product_order_id  IS NOT NULL
             AND lcset_sample_name IS NOT NULL
             AND NVL(batch_name, 'NONE') <> 'NONE'
             AND lab_event_type IN (
-        'InfiniumHybridization',
         'InfiniumAmplification',
         'InfiniumPostFragmentationHybOvenLoaded',
         'InfiniumFragmentation',
@@ -1741,39 +1751,110 @@ AS
         'InfiniumPostPrecipitationHeatBlockLoaded',
         'InfiniumPrecipitationIsopropanolAddition',
         'InfiniumResuspension',
-        'InfiniumPostResuspensionHybOven',
+        'InfiniumPostResuspensionHybOven' )
+      UNION ALL
+      SELECT LINE_NUMBER, ETL_DATE,
+        product_order_id, batch_name, lcset_sample_name, sample_name,
+        lab_event_id, lab_event_type, station_name, event_date,
+        lab_vessel_id, position,
+        'Y' as split_on_rehyb
+      FROM im_event_fact
+      WHERE is_delete = 'F'
+            AND product_order_id  IS NOT NULL
+            AND lcset_sample_name IS NOT NULL
+            AND NVL(batch_name, 'NONE') <> 'NONE'
+            AND lab_event_type IN (
+        'InfiniumHybridization',
         'InfiniumPostHybridizationHybOvenLoaded',
         'InfiniumHybChamberLoaded',
         'InfiniumXStain',
         'InfiniumAutocallSomeStarted',
         'InfiniumAutoCallAllStarted' ) )
       LOOP
-        -- Find initial base row
+        -- Find initial base row (multiple if chip rehyb)
         BEGIN
-          SELECT ROWID INTO V_THE_ROWID
+
+          SELECT ROWID
+          BULK COLLECT INTO V_ROWID_ARR
           FROM array_process_flow
           WHERE product_order_id  = new.product_order_id
                 AND lcset_sample_name = new.lcset_sample_name
                 AND batch_name = new.batch_name;
-          V_IS_INSERT := 'N';
-          EXCEPTION WHEN NO_DATA_FOUND THEN
-          V_IS_INSERT := 'Y';
-        END;
 
-        BEGIN
-
-          IF V_IS_INSERT = 'Y' THEN
+          IF V_ROWID_ARR.COUNT = 0 THEN
             -- Have to create initial base row data
             INSERT INTO array_process_flow (
               product_order_id, batch_name, lcset_sample_name, sample_name, etl_mod_timestamp )
             VALUES( new.product_order_id, new.batch_name, new.lcset_sample_name, new.sample_name, V_ETL_MOD_TIMESTAMP )
             RETURNING ROWID INTO V_THE_ROWID;
+            -- Reassign for updates
+            V_ROWID_ARR(1) := V_THE_ROWID;
+
+          ELSIF new.split_on_rehyb = 'Y' AND V_ROWID_ARR.COUNT > 0 THEN
+          
+            V_DO_SPLIT := FALSE;
+            -- Does a row match chip label?
+            SELECT LABEL INTO V_CHIP_BARCODE FROM LAB_VESSEL WHERE LAB_VESSEL_ID = new.LAB_VESSEL_ID;
+
+            BEGIN
+              SELECT ROWID INTO V_THE_ROWID
+              FROM array_process_flow
+              WHERE product_order_id  = new.product_order_id
+                    AND lcset_sample_name = new.lcset_sample_name
+                    AND batch_name = new.batch_name
+                    AND NVL(chip, V_CHIP_BARCODE)  = V_CHIP_BARCODE
+                    AND ROWNUM = 1;
+              -- Reassign for updates
+              V_ROWID_ARR.DELETE;
+              V_ROWID_ARR(1) := V_THE_ROWID;
+              EXCEPTION WHEN NO_DATA_FOUND THEN
+              V_DO_SPLIT := TRUE;
+            END;
+
+            IF V_DO_SPLIT THEN
+              -- Row to update
+              V_THE_ROWID := V_ROWID_ARR(1);
+              V_ROWID_ARR.DELETE;
+              V_ROWID_ARR(1) := V_THE_ROWID;
+
+              -- Copy all existing data to new row (and ignore)
+              INSERT INTO array_process_flow
+                SELECT *
+                FROM array_process_flow
+                WHERE ROWID = V_THE_ROWID;
+
+              -- Clear out post hyb data from row
+              UPDATE ARRAY_PROCESS_FLOW
+              SET HYB_EVENT_ID = NULL,
+                HYB_STATION = NULL,
+                HYB_POSITION = NULL,
+                HYB_DATE = NULL,
+                CHIP = NULL,
+                CHIP_WELL_BARCODE = NULL,
+                POSTHYBHYBOVENLOADED_EVENT_ID = NULL,
+                POSTHYBHYBOVENLOADED_STATION = NULL,
+                POSTHYBHYBOVENLOADED_DATE = NULL,
+                HYBCHAMBERLOADED_EVENT_ID = NULL,
+                HYBCHAMBERLOADED = NULL,
+                HYBCHAMBERLOADED_DATE = NULL,
+                XSTAIN_EVENT_ID = NULL,
+                XSTAIN = NULL,
+                XSTAIN_DATE = NULL,
+                AUTOCALL_EVENT_ID = NULL,
+                AUTOCALL_STARTED = NULL,
+                SCANNER = NULL
+              WHERE ROWID = V_THE_ROWID;
+            END IF;
           END IF;
+        END;
+
+        BEGIN
 
           -- Update applicable process flow values in base row
           CASE new.lab_event_type
             WHEN 'ArrayPlatingDilution' THEN
 
+            FORALL IDX IN 1 .. V_ROWID_ARR.COUNT
             UPDATE array_process_flow
             SET plating_event_id = new.lab_event_id
               , plating_dilution_station = new.station_name
@@ -1782,15 +1863,83 @@ AS
               -- Strip position suffix from label to get plate barcode
               , dna_plate = ( SELECT REGEXP_REPLACE( LABEL, new.position || '$', '' ) FROM LAB_VESSEL WHERE LAB_VESSEL_ID = new.LAB_VESSEL_ID )
               , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
-            WHERE ROWID = V_THE_ROWID
-            RETURNING dna_plate INTO V_LABEL ;
+            WHERE ROWID = V_ROWID_ARR(IDX);
 
             -- DNA plate name is associated with plate, not plate well
-            UPDATE array_process_flow
-            SET dna_plate_name = ( SELECT NAME FROM LAB_VESSEL WHERE LABEL = V_LABEL )
-            WHERE ROWID = V_THE_ROWID;
+            FORALL IDX IN 1 .. V_ROWID_ARR.COUNT
+            UPDATE array_process_flow apf
+            SET dna_plate_name = ( SELECT NAME FROM LAB_VESSEL WHERE LABEL = apf.dna_plate )
+            WHERE apf.ROWID = V_ROWID_ARR(IDX);
 
+            WHEN 'InfiniumAmplification' THEN
+            FORALL IDX IN 1 .. V_ROWID_ARR.COUNT
+            UPDATE array_process_flow
+            SET amp_event_id = new.lab_event_id
+              , amp_station = new.station_name
+              , amp_plate_position = new.position
+              , amp_date = new.event_date
+              , amp_plate = ( SELECT LABEL FROM LAB_VESSEL WHERE LAB_VESSEL_ID = new.LAB_VESSEL_ID )
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
+            WHERE ROWID = V_ROWID_ARR(IDX);
+            WHEN 'InfiniumPostFragmentationHybOvenLoaded' THEN
+            FORALL IDX IN 1 .. V_ROWID_ARR.COUNT
+            UPDATE array_process_flow
+            SET post_frag_event_id = new.lab_event_id
+              , post_frag_hyb_oven = new.station_name
+              , post_frag_hyb_oven_date = new.event_date
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
+            WHERE ROWID = V_ROWID_ARR(IDX);
+            WHEN 'InfiniumFragmentation' THEN
+            FORALL IDX IN 1 .. V_ROWID_ARR.COUNT
+            UPDATE array_process_flow
+            SET frag_event_id = new.lab_event_id
+              , frag_station = new.station_name
+              , frag_date = new.event_date
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
+            WHERE ROWID = V_ROWID_ARR(IDX);
+            WHEN 'InfiniumPrecipitation' THEN
+            FORALL IDX IN 1 .. V_ROWID_ARR.COUNT
+            UPDATE array_process_flow
+            SET precip_event_id = new.lab_event_id
+              , precip_station = new.station_name
+              , precip_date = new.event_date
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
+            WHERE ROWID = V_ROWID_ARR(IDX);
+            WHEN 'InfiniumPostPrecipitationHeatBlockLoaded' THEN
+            FORALL IDX IN 1 .. V_ROWID_ARR.COUNT
+            UPDATE array_process_flow
+            SET post_precip_event_id = new.lab_event_id
+              , post_precip_hyb_oven = new.station_name
+              , post_precip_hyb_oven_date = new.event_date
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
+            WHERE ROWID = V_ROWID_ARR(IDX);
+            WHEN 'InfiniumPrecipitationIsopropanolAddition' THEN
+            FORALL IDX IN 1 .. V_ROWID_ARR.COUNT
+            UPDATE array_process_flow
+            SET precip_ipa_event_id = new.lab_event_id
+              , precip_ipa_station = new.station_name
+              , precip_ipa_date = new.event_date
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
+            WHERE ROWID = V_ROWID_ARR(IDX);
+            WHEN 'InfiniumResuspension' THEN
+            FORALL IDX IN 1 .. V_ROWID_ARR.COUNT
+            UPDATE array_process_flow
+            SET resuspension_event_id = new.lab_event_id
+              , resuspension_station = new.station_name
+              , resuspension_date = new.event_date
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
+            WHERE ROWID = V_ROWID_ARR(IDX);
+            WHEN 'InfiniumPostResuspensionHybOven' THEN
+            FORALL IDX IN 1 .. V_ROWID_ARR.COUNT
+            UPDATE array_process_flow
+            SET postresusphyboven_event_id = new.lab_event_id
+              , postresusphyboven_station = new.station_name
+              , postresusphyboven_date = new.event_date
+              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
+            WHERE ROWID = V_ROWID_ARR(IDX);
+            -- ****** Chip events - possibly re-hyb splits ***********
             WHEN 'InfiniumHybridization' THEN
+            FORALL IDX IN 1 .. V_ROWID_ARR.COUNT
             UPDATE array_process_flow
             SET hyb_event_id = new.lab_event_id
               , hyb_station = new.station_name
@@ -1799,100 +1948,57 @@ AS
               -- Append underscore and position suffix to chip barcode to get chip well pseudo-barcode
               , ( chip, chip_well_barcode ) = ( SELECT LABEL, LABEL || '_' || new.position FROM LAB_VESSEL WHERE LAB_VESSEL_ID = new.LAB_VESSEL_ID )
               , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
-            WHERE ROWID = V_THE_ROWID;
-            WHEN 'InfiniumAmplification' THEN
-            UPDATE array_process_flow
-            SET amp_event_id = new.lab_event_id
-              , amp_station = new.station_name
-              , amp_plate_position = new.position
-              , amp_date = new.event_date
-              , amp_plate = ( SELECT LABEL FROM LAB_VESSEL WHERE LAB_VESSEL_ID = new.LAB_VESSEL_ID )
-              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
-            WHERE ROWID = V_THE_ROWID;
-            WHEN 'InfiniumPostFragmentationHybOvenLoaded' THEN
-            UPDATE array_process_flow
-            SET post_frag_event_id = new.lab_event_id
-              , post_frag_hyb_oven = new.station_name
-              , post_frag_hyb_oven_date = new.event_date
-              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
-            WHERE ROWID = V_THE_ROWID;
-            WHEN 'InfiniumFragmentation' THEN
-            UPDATE array_process_flow
-            SET frag_event_id = new.lab_event_id
-              , frag_station = new.station_name
-              , frag_date = new.event_date
-              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
-            WHERE ROWID = V_THE_ROWID;
-            WHEN 'InfiniumPrecipitation' THEN
-            UPDATE array_process_flow
-            SET precip_event_id = new.lab_event_id
-              , precip_station = new.station_name
-              , precip_date = new.event_date
-              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
-            WHERE ROWID = V_THE_ROWID;
-            WHEN 'InfiniumPostPrecipitationHeatBlockLoaded' THEN
-            UPDATE array_process_flow
-            SET post_precip_event_id = new.lab_event_id
-              , post_precip_hyb_oven = new.station_name
-              , post_precip_hyb_oven_date = new.event_date
-              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
-            WHERE ROWID = V_THE_ROWID;
-            WHEN 'InfiniumPrecipitationIsopropanolAddition' THEN
-            UPDATE array_process_flow
-            SET precip_ipa_event_id = new.lab_event_id
-              , precip_ipa_station = new.station_name
-              , precip_ipa_date = new.event_date
-              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
-            WHERE ROWID = V_THE_ROWID;
-            WHEN 'InfiniumResuspension' THEN
-            UPDATE array_process_flow
-            SET resuspension_event_id = new.lab_event_id
-              , resuspension_station = new.station_name
-              , resuspension_date = new.event_date
-              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
-            WHERE ROWID = V_THE_ROWID;
-            WHEN 'InfiniumPostResuspensionHybOven' THEN
-            UPDATE array_process_flow
-            SET postresusphyboven_event_id = new.lab_event_id
-              , postresusphyboven_station = new.station_name
-              , postresusphyboven_date = new.event_date
-              , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
-            WHERE ROWID = V_THE_ROWID;
+            WHERE ROWID = V_ROWID_ARR(IDX);
             WHEN 'InfiniumPostHybridizationHybOvenLoaded' THEN
+            FORALL IDX IN 1 .. V_ROWID_ARR.COUNT
             UPDATE array_process_flow
             SET posthybhybovenloaded_event_id = new.lab_event_id
               , posthybhybovenloaded_station = new.station_name
               , posthybhybovenloaded_date = new.event_date
+              -- Append underscore and position suffix to chip barcode to get chip well pseudo-barcode
+              , ( chip, chip_well_barcode ) = ( SELECT LABEL, LABEL || '_' || new.position FROM LAB_VESSEL WHERE LAB_VESSEL_ID = new.LAB_VESSEL_ID )
               , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
-            WHERE ROWID = V_THE_ROWID;
+            WHERE ROWID = V_ROWID_ARR(IDX);
             WHEN 'InfiniumHybChamberLoaded' THEN
+            FORALL IDX IN 1 .. V_ROWID_ARR.COUNT
             UPDATE array_process_flow
             SET hybchamberloaded_event_id = new.lab_event_id
               , hybchamberloaded = new.station_name
               , hybchamberloaded_date = new.event_date
+              -- Append underscore and position suffix to chip barcode to get chip well pseudo-barcode
+              , ( chip, chip_well_barcode ) = ( SELECT LABEL, LABEL || '_' || new.position FROM LAB_VESSEL WHERE LAB_VESSEL_ID = new.LAB_VESSEL_ID )
               , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
-            WHERE ROWID = V_THE_ROWID;
+            WHERE ROWID = V_ROWID_ARR(IDX);
             WHEN 'InfiniumXStain' THEN
+            FORALL IDX IN 1 .. V_ROWID_ARR.COUNT
             UPDATE array_process_flow
             SET xstain_event_id = new.lab_event_id
               , xstain = new.station_name
               , xstain_date = new.event_date
+              -- Append underscore and position suffix to chip barcode to get chip well pseudo-barcode
+              , ( chip, chip_well_barcode ) = ( SELECT LABEL, LABEL || '_' || new.position FROM LAB_VESSEL WHERE LAB_VESSEL_ID = new.LAB_VESSEL_ID )
               , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
-            WHERE ROWID = V_THE_ROWID;
+            WHERE ROWID = V_ROWID_ARR(IDX);
             WHEN 'InfiniumAutocallSomeStarted' THEN
+            FORALL IDX IN 1 .. V_ROWID_ARR.COUNT
             UPDATE array_process_flow
             SET autocall_event_id = new.lab_event_id
               , scanner = NVL(new.station_name, scanner)
               , autocall_started = new.event_date
+              -- Append underscore and position suffix to chip barcode to get chip well pseudo-barcode
+              , ( chip, chip_well_barcode ) = ( SELECT LABEL, LABEL || '_' || new.position FROM LAB_VESSEL WHERE LAB_VESSEL_ID = new.LAB_VESSEL_ID )
               , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
-            WHERE ROWID = V_THE_ROWID;
+            WHERE ROWID = V_ROWID_ARR(IDX);
             WHEN  'InfiniumAutoCallAllStarted' THEN
+            FORALL IDX IN 1 .. V_ROWID_ARR.COUNT
             UPDATE array_process_flow
             SET autocall_event_id = new.lab_event_id
               , scanner = NVL(new.station_name, scanner)
               , autocall_started = new.event_date
+              -- Append underscore and position suffix to chip barcode to get chip well pseudo-barcode
+              , ( chip, chip_well_barcode ) = ( SELECT LABEL, LABEL || '_' || new.position FROM LAB_VESSEL WHERE LAB_VESSEL_ID = new.LAB_VESSEL_ID )
               , etl_mod_timestamp = V_ETL_MOD_TIMESTAMP
-            WHERE ROWID = V_THE_ROWID
+            WHERE ROWID = V_ROWID_ARR(IDX)
                   AND ( autocall_event_id IS NULL
                         OR
                         -- Don't overwrite some started with all started

@@ -2056,11 +2056,12 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public static void checkQuoteValidity(Quote quote, Date todayTruncated) throws QuoteServerException {
-        for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel()) {
-            if (Integer.valueOf(fundingLevel.getPercent()) > 0) {
-                if(fundingLevel.getFunding().getFundingType().equals(Funding.FUNDS_RESERVATION)) {
-                    if(!FundingLevel.isGrantActiveForDate(todayTruncated, fundingLevel)) {
-                        throw new QuoteServerException("The funding source " + fundingLevel.getFunding().getGrantNumber() +
+        for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel(true)) {
+            for (Funding funding : fundingLevel.getFunding()) {
+
+                if (funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
+                    if (!FundingLevel.isGrantActiveForDate(todayTruncated, funding)) {
+                        throw new QuoteServerException("The funding source " + funding.getGrantNumber() +
                                                        " has expired making this quote currently unfunded.");
                     }
                 }
