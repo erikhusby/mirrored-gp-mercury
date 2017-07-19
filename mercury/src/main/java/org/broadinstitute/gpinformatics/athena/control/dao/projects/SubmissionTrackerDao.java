@@ -46,12 +46,7 @@ public class SubmissionTrackerDao extends GenericDao {
             predicates.add(submissionTrackerCriteria.and(
                     submissionTrackerCriteria.equal(root.get(SubmissionTracker_.project), submissionDto.getAggregationProject()),
                     submissionTrackerCriteria.equal(root.get(SubmissionTracker_.submittedSampleName), submissionDto.getSampleName()),
-                    submissionTrackerCriteria.or(
-                        submissionTrackerCriteria.equal(root.get(SubmissionTracker_.processingLocation),
-                            submissionDto.getProcessingLocation()),
-
-                        // Until processing location gets back-filled.
-                        submissionTrackerCriteria.isNull(root.get(SubmissionTracker_.processingLocation))),
+                    submissionTrackerCriteria.equal(root.get(SubmissionTracker_.processingLocation), submissionDto.getProcessingLocation()),
                     submissionTrackerCriteria.equal(root.get(SubmissionTracker_.fileType),submissionDto.getFileType())
                 // todo: do we  need to join on version?
 //                    submissionTrackerCriteria.equal(root.get(SubmissionTracker_.version), submissionDto.getVersion()),
