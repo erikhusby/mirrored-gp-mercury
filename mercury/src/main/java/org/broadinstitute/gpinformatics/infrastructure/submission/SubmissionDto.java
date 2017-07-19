@@ -12,6 +12,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
@@ -102,6 +104,7 @@ public class SubmissionDto implements Serializable {
     @JsonProperty(value = SubmissionDto.SubmissionField.FILE_TYPE)
     private String fileTypeString = "";
 
+    @JsonIgnore
     private FileType fileType=null;
 
     @JsonProperty(value = SubmissionDto.SubmissionField.VERSION)
@@ -263,7 +266,6 @@ public class SubmissionDto implements Serializable {
         return project;
     }
 
-    @JsonIgnore
     public FileType getFileType() {
         return fileType;
     }
@@ -377,9 +379,96 @@ public class SubmissionDto implements Serializable {
     }
 
     public SubmissionTracker buildSubmissionTracker() {
-        return new SubmissionTracker(project, sample, String.valueOf(version), FileType.BAM);
+        return new SubmissionTracker(project, sample, String.valueOf(version), FileType.BAM, SubmissionBioSampleBean.ON_PREM);
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        SubmissionDto that = (SubmissionDto) o;
+
+        return new EqualsBuilder()
+            .append(numberFormat, that.numberFormat)
+            .append(productOrders, that.productOrders)
+            .append(statusDetailBean, that.statusDetailBean)
+            .append(aggregation, that.aggregation)
+            .append(qualityMetric, that.qualityMetric)
+            .append(pctContamination, that.pctContamination)
+            .append(dateCompleted, that.dateCompleted)
+            .append(levelOfDetection, that.levelOfDetection)
+            .append(submittedErrorsArray, that.submittedErrorsArray)
+            .append(submissionTuple, that.submissionTuple)
+            .append(uuid, that.uuid)
+            .append(sample, that.sample)
+            .append(datatype, that.datatype)
+            .append(productOrdersString, that.productOrdersString)
+            .append(project, that.project)
+            .append(fileTypeString, that.fileTypeString)
+            .append(fileType, that.fileType)
+            .append(version, that.version)
+            .append(qualityMetricString, that.qualityMetricString)
+            .append(contaminationString, that.contaminationString)
+            .append(rpid, that.rpid)
+            .append(readGroupCount, that.readGroupCount)
+            .append(fileName, that.fileName)
+            .append(processingLocation, that.processingLocation)
+            .append(submittedVersion, that.submittedVersion)
+            .append(submittedErrors, that.submittedErrors)
+            .append(submittedStatus, that.submittedStatus)
+            .append(statusDate, that.statusDate)
+            .append(bioProject, that.bioProject)
+            .append(libraryDescriptor, that.libraryDescriptor)
+            .append(submissionSite, that.submissionSite)
+            .append(fingerprintLodMin, that.fingerprintLodMin)
+            .append(fingerprintLodMax, that.fingerprintLodMax)
+            .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+            .append(numberFormat)
+            .append(productOrders)
+            .append(statusDetailBean)
+            .append(aggregation)
+            .append(qualityMetric)
+            .append(pctContamination)
+            .append(dateCompleted)
+            .append(levelOfDetection)
+            .append(submittedErrorsArray)
+            .append(submissionTuple)
+            .append(uuid)
+            .append(sample)
+            .append(datatype)
+            .append(productOrdersString)
+            .append(project)
+            .append(fileTypeString)
+            .append(fileType)
+            .append(version)
+            .append(qualityMetricString)
+            .append(contaminationString)
+            .append(rpid)
+            .append(readGroupCount)
+            .append(fileName)
+            .append(processingLocation)
+            .append(submittedVersion)
+            .append(submittedErrors)
+            .append(submittedStatus)
+            .append(statusDate)
+            .append(bioProject)
+            .append(libraryDescriptor)
+            .append(submissionSite)
+            .append(fingerprintLodMin)
+            .append(fingerprintLodMax)
+            .toHashCode();
+    }
 
     public class SubmissionField {
         public static final String SUBMISSION_TUPLE = "submissionTuple";
