@@ -14,31 +14,9 @@ import javax.xml.bind.annotation.XmlElement;
 import java.io.Serializable;
 
 @XmlAccessorType(XmlAccessType.FIELD)
+
+// setting the access order to alphabetical helps the tests pass more reliably.
 @XmlAccessorOrder(value= XmlAccessOrder.ALPHABETICAL)
-/*          + "        {\n"
-                   + "            \"bamversion\": \"V1\",\n"
-                   + "            \"bioproject\": {\n"
-                   + "                \"accession\": \"PRJNA75333\"\n"
-                   + "            },\n"
-                   + "            \"submissionsample\": {\n"
-                   + "                \"contact\": {\n"
-                   + "                    \"email\": \"jgentry@broadinstitute.org\",\n"
-                   + "                    \"firstName\": \"Jeff\",\n"
-                   + "                    \"lab\": \"homer\",\n"
-                   + "                    \"lastName\": \"Gentry\",\n"
-                   + "                    \"middleName\": \"A\",\n"
-                   + "                    \"phone\": \"617-555-9292\"\n"
-                   + "                },\n"
-                   + "            \"processinglocation\": \"OnPrem\",\n"
-                   + "            \"sampleId\": \"S_2507\"\n"
-                   + "        },\n"
-                   + "            \"broadproject\": \"RP-1234\",\n"
-                   + "            \"studyContact\": \"jgentry\",\n"
-                   + "            \"site\": \"NCBI_PROTECTED\",\n"
-                   + "            \"submissiondatatype\": \"Whole Genome\",\n"
-                   + "            \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618745\"\n"
-                   + "        },\n"
-                   + "        {\n"*/
 public class SubmissionBean implements Serializable {
     private static final long serialVersionUID = 5575909517269494566L;
     @XmlElement

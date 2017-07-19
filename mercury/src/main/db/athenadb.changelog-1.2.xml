@@ -802,4 +802,24 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-4923-1" author="dryan">
+        <addColumn tableName="SUBMISSION_TRACKER" schemaName="athena">
+            <column name="PROCESSING_LOCATION" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-4923-2" author="dryan">
+        <addColumn tableName="SUBMISSION_TRACKER_AUD" schemaName="athena">
+            <column name="PROCESSING_LOCATION" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-4923-3" author="dryan">
+        <dropUniqueConstraint tableName="SUBMISSION_TRACKER" constraintName="UNQ_SUBMISSION_TRACKER_TUPLE"
+                              schemaName="ATHENA"/>
+    </changeSet>
+
+    <!--<changeSet id="GPLIM-4923-4" author="dryan">-->
+        <!--<addUniqueConstraint tableName="SUBMISSION_TRACKER" constraintName="UNQ_SUBMISSION_TRACKER_TUPLE"-->
+                             <!--schemaName="ATHENA" columnNames="PROJECT, SUBMITTED_SAMPLE_NAME, FILE_TYPE, VERSION, PROCESSING_LOCATION" />-->
+    <!--</changeSet>-->
+
 </databaseChangeLog>
