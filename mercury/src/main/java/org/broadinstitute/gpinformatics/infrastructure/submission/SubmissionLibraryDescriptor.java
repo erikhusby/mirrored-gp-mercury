@@ -13,7 +13,6 @@ package org.broadinstitute.gpinformatics.infrastructure.submission;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.codehaus.jackson.annotate.JsonProperty;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
@@ -29,8 +28,10 @@ public class SubmissionLibraryDescriptor implements Serializable {
         new SubmissionLibraryDescriptor("RNA Seq", "RNA Sequencing");
 
 
+    @XmlElement
     private String name;
 
+    @XmlElement
     private String description;
 
     public SubmissionLibraryDescriptor(String name, String description) {
@@ -45,20 +46,12 @@ public class SubmissionLibraryDescriptor implements Serializable {
     public SubmissionLibraryDescriptor() {
     }
 
-    @JsonProperty
-    @XmlElement
     public void setName(String name) {
         this.name = name;
     }
 
     public String getDescription() {
         return description;
-    }
-
-    @JsonProperty
-    @XmlElement(required = false)
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     @Override

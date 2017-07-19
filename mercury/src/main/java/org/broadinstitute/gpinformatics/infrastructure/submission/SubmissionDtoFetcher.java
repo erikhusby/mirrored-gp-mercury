@@ -90,25 +90,11 @@ public class SubmissionDtoFetcher {
      * @return a list of files for submission
      */
     public List<SubmissionDto> fetch(@Nonnull ResearchProject researchProject, MessageReporter messageReporter) {
-//        List<Aggregation> aggregations = aggregationMetricsFetcher.fetch(researchProject.getBusinessKey(), messageReporter);
-//        HashMap<String, Aggregation> aggregationBySample = new HashMap<>(aggregations.size());
-//        for (Aggregation aggregation : aggregations) {
-//            aggregationBySample.put(aggregation.getSample(), aggregation);
-//        }
-
         List<ProductOrderSample> productOrderSamples =
                 productOrderSampleDao.findSubmissionSamples(researchProject.getJiraTicketKey());
-//        List<ProductOrderSample> productOrderSamples
-//                = new ArrayList<>(Collections2.filter(unfilteredSamples, new Predicate<ProductOrderSample>() {
-//            @Override
-//            public boolean apply(@Nullable ProductOrderSample input) {
-//                return input.canBeSubmitted();
-//            }
-//        }));
 
         ProductOrder.loadCollaboratorSampleName(productOrderSamples);
         Map<String, Collection<ProductOrder>> sampleNameToPdos = getCollaboratorSampleNameToPdoMap(productOrderSamples, messageReporter);
-//        Map<String, SubmissionTuple> tuplesForProject = getTuplesForProject(productOrderSamples, messageReporter);
 
         // Gather status for anything that has already been submitted
         Map<String, SubmissionStatusDetailBean> sampleSubmissionMap = buildSampleToSubmissionMap(researchProject);
@@ -124,57 +110,17 @@ public class SubmissionDtoFetcher {
         return results;
     }
 
-
-//    private Map<String, Collection<ProductOrder>> getTuplxsssesForProject(ResearchProject researchProject,
-//                                                                      MessageReporter messageReporter) {
-//        List<ProductOrderSample> unfilteredSamples =
-//                productOrderSampleDao.findByResearchProject(researchProject.getJiraTicketKey());
-//        List<ProductOrderSample> productOrderSamples
-//                = new ArrayList<>(Collections2.filter(unfilteredSamples, new Predicate<ProductOrderSample>() {
-//            @Override
-//            public boolean apply(@Nullable ProductOrderSample input) {
-//                return input.canBeSubmitted();
-//            }
-//        }));
-//        ProductOrder.loadCollaboratorSampleName(productOrderSamples);
-//
-////        return getCollaboratorSampleNameToPdoMap(productOrderSamples, messageReporter);
-//    }
-
     Map<String, SubmissionTuple> getTuplesForProject(Collection<ProductOrderSample> productOrderSamples, MessageReporter messageReporter) {
         Map<String, SubmissionTuple> tupleMap = new HashMap<>();
         for (ProductOrderSample productOrderSample : productOrderSamples) {
             String sampleName = productOrderSample.getSampleData().getCollaboratorsSampleName();
             tupleMap.put(sampleName,
                     new SubmissionTuple(productOrderSample.getProductOrder().getResearchProject().getJiraTicketKey(),
-                            sampleName, null));
+                            sampleName, null, SubmissionBioSampleBean.ON_PREM));
         }
-//        Map<String, SubmissionTuple> tupleMap = new HashMap<>(samplesByCollaboratorName.size());
-//        for (ProductOrderSample pdoSamples : samplesByCollaboratorName) {
-//            String collaboratorsSampleName = pdoSamples.getSampleData().getCollaboratorsSampleName();
-//            if (StringUtils.isNotBlank(collaboratorsSampleName)) {
-//                tupleMap.put(collaboratorsSampleName, new SubmissionTuple(pdoSamples.getProductOrder().getResearchProject().getBusinessKey(),
-//                        collaboratorsSampleName, null));
-//            } else {
-//                missingPdoSampleMap.put(pdoSamples.getProductOrder().getBusinessKey(), pdoSamples.getBusinessKey());
-//            }
-//        }
-
 
         return tupleMap;
     }
-
-//    private Map<SubmissionTuple, BassDTO> buildBassDtoMap(List<BassDTO> bassDTOs) {
-//        Map<SubmissionTuple, BassDTO> bassDTOMap = new HashMap<>();
-//        for (BassDTO bassDTO : bassDTOs) {
-//            SubmissionTuple tuple = bassDTO.getTuple();
-//            if (bassDTOMap.containsKey(tuple)) {
-//                throw new RuntimeException("The bassDTO Map already contains an index for: " + tuple);
-//            }
-//            bassDTOMap.put(tuple, bassDTO);
-//        }
-//        return bassDTOMap;
-//    }
 
     /**
      * Fetch aggregation metrics for a set of files from Bass. This only applies to BAM files. Since Mercury is
@@ -194,7 +140,7 @@ public class SubmissionDtoFetcher {
             String sampleName = productOrderSample.getSampleData().getCollaboratorsSampleName();
             SubmissionTuple submissionTuple =
                 new SubmissionTuple(productOrderSample.getProductOrder().getResearchProject().getJiraTicketKey(),
-                    sampleName, null);
+                    sampleName, null, SubmissionBioSampleBean.ON_PREM);
             projectSamples.put(researchProject.getBusinessKey(), submissionTuple);
 
         }

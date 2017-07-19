@@ -23,9 +23,9 @@ public class SubmissionBioSampleBean implements Serializable {
     private SubmissionContactBean contact;
 
     @XmlTransient
-    static final String GCP = "GCP";
+    public static final String GCP = "GCP";
     @XmlTransient
-    static final String ON_PREM = "OnPrem";
+    public static final String ON_PREM = "OnPrem";
 
     public SubmissionBioSampleBean() {
     }

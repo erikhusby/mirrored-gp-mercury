@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.metrics;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioSampleBean;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.hamcrest.Matchers;
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.closeTo;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 
 /**
  * Tests for the connection to the Picard aggregation metrics database as well as the JPA entity mappings.
@@ -65,9 +67,9 @@ public class AggregationMetricsFetcherTest extends ContainerTest {
     private static final double MAX_LOD = 55.771678;
 
     public void testFetchMetricsForSampleAggregatedByMercuryRP() {
-
         List<Aggregation> aggregationResults = fetcher.fetch(MERCURY_PROJECT, Collections.singletonList(
-                new SubmissionTuple(MERCURY_PROJECT, SAMPLE, Integer.toString(MERCURY_AGGREGATION_VERSION))));
+                new SubmissionTuple(MERCURY_PROJECT, SAMPLE, Integer.toString(MERCURY_AGGREGATION_VERSION),
+                    SubmissionBioSampleBean.ON_PREM)));
 
         Aggregation aggregation = aggregationResults.get(0);
         assertThat(aggregation.getProject(), equalTo(MERCURY_PROJECT));
@@ -81,29 +83,31 @@ public class AggregationMetricsFetcherTest extends ContainerTest {
     }
 
     public void testFetchMetricsWithBadProject() {
-
         List<Aggregation> aggregationResults = fetcher.fetch(MERCURY_PROJECT, Collections.singletonList(
-                new SubmissionTuple("BAD-" + MERCURY_PROJECT, SAMPLE, Integer.toString(MERCURY_AGGREGATION_VERSION))));
+                new SubmissionTuple("BAD-" + MERCURY_PROJECT, SAMPLE, Integer.toString(MERCURY_AGGREGATION_VERSION),
+                    SubmissionBioSampleBean.ON_PREM)));
         assertThat(aggregationResults, Matchers.emptyIterableOf(Aggregation.class));
     }
 
     public void testFetchMetricsWithBadSample() {
         List<Aggregation> aggregationResults = fetcher.fetch(MERCURY_PROJECT, Collections.singletonList(
-                new SubmissionTuple(MERCURY_PROJECT, "BAD-" + SAMPLE, Integer.toString(MERCURY_AGGREGATION_VERSION)
-                )));
+                new SubmissionTuple(MERCURY_PROJECT, "BAD-" + SAMPLE, Integer.toString(MERCURY_AGGREGATION_VERSION),
+                    SubmissionBioSampleBean.ON_PREM)));
         assertThat(aggregationResults, Matchers.emptyIterableOf(Aggregation.class));
     }
 
     public void testFetchMetricsWithBadVersion() {
         List<Aggregation> aggregationResults = fetcher.fetch(MERCURY_PROJECT, Collections.singletonList(
-                new SubmissionTuple(MERCURY_PROJECT, SAMPLE, Integer.toString(MERCURY_AGGREGATION_VERSION * 100)
-                )));
+                new SubmissionTuple(MERCURY_PROJECT, SAMPLE, Integer.toString(MERCURY_AGGREGATION_VERSION * 100),
+                    SubmissionBioSampleBean.ON_PREM)));
         assertThat(aggregationResults, Matchers.emptyIterableOf(Aggregation.class));
     }
 
     public void testFetchMetricsForSampleAggregatedBySquidProject() {
         List<Aggregation> aggregationResults = fetcher.fetch(MERCURY_PROJECT, Collections.singletonList(
-                new SubmissionTuple(SQUID_PROJECT, SAMPLE, Integer.toString(SQUID_AGGREGATION_VERSION))));
+                new SubmissionTuple(SQUID_PROJECT, SAMPLE, Integer.toString(SQUID_AGGREGATION_VERSION),
+                    SubmissionBioSampleBean.ON_PREM)));
+        assertThat(aggregationResults, hasSize(1));
         Aggregation aggregation = aggregationResults.get(0);
         assertThat(aggregation.getProject(), equalTo(SQUID_PROJECT));
         assertThat(aggregation.getSample(), equalTo(SAMPLE));

@@ -8,7 +8,6 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
 
-import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,7 +18,6 @@ import java.util.List;
  * TODO scottmat fill in javadoc!!!
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@XmlRootElement
 public class SubmissionStatusDetailBean implements Serializable {
     private static final long serialVersionUID = 6352810343445206054L;
 
@@ -58,17 +56,11 @@ public class SubmissionStatusDetailBean implements Serializable {
         this(uuid, status, null, null, null, errors.toArray(new String[errors.size()]));
     }
 
-    //{"submissionStatuses":[{
-    // "uuid":"MERCURY_TEST_SUB_1499710803691_0001",
-    // "status":"Failure",
-    // "errors":["Invalid V2","Unable to access bam path for PRJNA75723 4304714212_K RP-418 V2 located GCP."]},{"uuid":"MERCURY_TEST_SUB_1499710803692_0002","status":"Failure","errors":["Invalid V2","Unable to access bam path for PRJNA75723 4377315018_E RP-418 V2 located OnPrem."]}]}
-    public String getUuid ()
-    {
+    public String getUuid () {
         return uuid;
     }
 
-    public void setUuid (String uuid)
-    {
+    public void setUuid (String uuid) {
         this.uuid = uuid;
     }
 
@@ -108,8 +100,6 @@ public class SubmissionStatusDetailBean implements Serializable {
         return site;
     }
 
-
-
     public void setSite(String site) {
         this.site = site;
     }
@@ -139,8 +129,6 @@ public class SubmissionStatusDetailBean implements Serializable {
                                   .append(getLastStatusUpdate().getTime(), castOther.getLastStatusUpdate().getTime())
                                   .append(getBioProject(), castOther.getBioProject()).isEquals();
     }
-
-
 
     @Override
     public int hashCode() {
