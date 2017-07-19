@@ -1280,7 +1280,6 @@ public class LabBatchFixUpTest extends Arquillian {
     }
 
     /**
-<<<<<<< HEAD
      * This test is driven by a file of the following format (line 1 is for the fixup commentary;
      * line 2 is the LCSET that has the routing error;
      * line 3 is the barcode of the tube that is in two LCSETs;
