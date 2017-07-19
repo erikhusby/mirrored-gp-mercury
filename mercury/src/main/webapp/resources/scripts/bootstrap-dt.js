@@ -123,7 +123,7 @@ function includeAdvancedFilter(oTable, tableID) {
     });
 
 
-    $j(".dataTables_filter input[type='text']").keyup();
+    $j(".dataTables_filter").find("input[type='text'],input[type='search']").keyup();
 }
 
 function findDataTableWrapper(oTable) {
@@ -131,7 +131,7 @@ function findDataTableWrapper(oTable) {
 }
 
 function findFilterTextInput(oTable) {
-    return $j(findDataTableWrapper(oTable)).find(".dataTables_filter input[type='text']");
+    return $j(findDataTableWrapper(oTable)).find(".dataTables_filter").find("input[type='text'],input[type='search']");
 }
 /**
  * Define the regular expression for the AND and OR filter.  The OR filter needs to create
