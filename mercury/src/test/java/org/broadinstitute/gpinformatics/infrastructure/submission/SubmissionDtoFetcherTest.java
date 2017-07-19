@@ -73,7 +73,7 @@ public class SubmissionDtoFetcherTest {
         // Prepare mocks
         aggregations = new ArrayList<>();
         Mockito
-            .when(aggregationMetricsFetcher.fetch(Mockito.anyString(), Mockito.anyCollectionOf(SubmissionTuple.class)))
+            .when(aggregationMetricsFetcher.fetch(Mockito.anyString(), Mockito.anyCollectionOf(SubmissionTuple.class), Mockito.any(MessageReporter.class)))
             .thenReturn(aggregations);
 
         // Create Mercury RP and PDO with one sample
@@ -112,11 +112,11 @@ public class SubmissionDtoFetcherTest {
      */
     public void testFetch() throws Exception {
         researchProject.addSubmissionTracker(new SubmissionTrackerTest.SubmissionTrackerStub(1234L, RESEARCH_PROJECT_ID,
-                COLLABORATOR_SAMPLE_ID, "1", FileType.BAM));
+                COLLABORATOR_SAMPLE_ID, "1", FileType.BAM, SubmissionBioSampleBean.ON_PREM));
 
         Aggregation aggregation = AggregationTestFactory
                 .buildAggregation(RESEARCH_PROJECT_ID, COLLABORATOR_SAMPLE_ID, 1, CONTAMINATION, FINGERPRINT_LOD, DATA_TYPE, QUALITY_METRIC,
-                        null, null, "OnPrem");
+                        null, null, SubmissionBioSampleBean.ON_PREM);
         aggregations.add(aggregation);
         List<SubmissionDto> submissionDtoList = submissionDtoFetcher.fetch(researchProject, MessageReporter.UNUSED);
 

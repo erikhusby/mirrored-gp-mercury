@@ -14,11 +14,15 @@ package org.broadinstitute.gpinformatics.athena.control.dao.projects;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.AggregationTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioSampleBean;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
+import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -42,8 +46,6 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
     @Inject
     private ResearchProjectDao researchProjectDao;
     private ResearchProject researchProject;
-
-    private static final String TEST_FILE = "/some/test/file";
 
     private static final String RP_ID = "RP-SubmissionTrackerDaoTest";
     private static final String PDO_ID = "PDO-SubmissionTrackerDaoTest";
@@ -71,7 +73,7 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
     }
 
     public void testFindSubmissionTrackersNoneExist() throws Exception {
-        SubmissionDto submissionDto = getSubmissionDto(PDO_ID, "P123", sampleName, 1, TEST_FILE);
+        SubmissionDto submissionDto = getSubmissionDto(PDO_ID, "P123", sampleName, 1, SubmissionBioSampleBean.ON_PREM);
         List<SubmissionTracker> submissionTrackers =
                 submissionTrackerDao.findSubmissionTrackers(Collections.singleton(submissionDto));
         assertThat(submissionTrackers, emptyCollectionOf(SubmissionTracker.class));
@@ -90,15 +92,17 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
 
         assertThat(submissionTrackers.iterator().next().getTuple(),
                 equalTo(null));
+
+        Assert.fail("is previous assertion valid?");
     }
 
     public void testFindSubmissionTrackersWithNewVersion() throws Exception {
         SubmissionDto submissionDto1 =
-                getSubmissionDto(PDO_ID, "P123", sampleName, DEFAULT_VERSION, null);
+                getSubmissionDto(PDO_ID, "P123", sampleName, DEFAULT_VERSION, SubmissionBioSampleBean.ON_PREM);
         SubmissionTracker submissionTracker1 = addTracker(submissionDto1);
 
         int newVersion = DEFAULT_VERSION + 1;
-        SubmissionDto submissionDto2 = getSubmissionDto(PDO_ID, "P123", sampleName, newVersion, null);
+        SubmissionDto submissionDto2 = getSubmissionDto(PDO_ID, "P123", sampleName, newVersion, SubmissionBioSampleBean.ON_PREM);
         SubmissionTracker submissionTracker2 = addTracker(submissionDto2);
 
         persistTrackers(Arrays.asList(submissionTracker1, submissionTracker2));
@@ -114,16 +118,14 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
         assertThat(submissionTracker1.getVersion(), not(equalTo(submissionTracker2.getVersion())));
     }
 
-    public void testFindSubmissionTrackersWithDifferentFileType() throws Exception {
-//        BassFileType bam = BassFileType.BAM;
-//        BassFileType picard = BassFileType.PICARD;
-
+    public void testFindSubmissionTrackersWithDifferentLocations() throws Exception {
         // SubmissionTracker 1
-        SubmissionDto submissionDto1 = getSubmissionDto(PDO_ID, "P123", sampleName, DEFAULT_VERSION,  null);
+        SubmissionDto submissionDto1 = getSubmissionDto(PDO_ID, "P123", sampleName, DEFAULT_VERSION,
+            SubmissionBioSampleBean.ON_PREM);
         SubmissionTracker submissionTracker1 = addTracker(submissionDto1);
 
         // SubmissionTracker 2
-        SubmissionDto submissionDto2 = getSubmissionDto(PDO_ID, "P123", sampleName, DEFAULT_VERSION,  null);
+        SubmissionDto submissionDto2 = getSubmissionDto(PDO_ID, "P123", sampleName, DEFAULT_VERSION,  SubmissionBioSampleBean.GCP);
         SubmissionTracker submissionTracker2 = addTracker(submissionDto2);
 
         persistTrackers(Arrays.asList(submissionTracker1, submissionTracker2));
@@ -149,13 +151,15 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
         submissionTrackerDao.clear();
     }
 
-    private SubmissionDto getSubmissionDto(ProductOrder productOrder) {
-        return new SubmissionDto(null, Collections.singleton(productOrder), null);
-    }
-
     private SubmissionDto getSubmissionDto(String productOrderId, final String project, final String sampleName,
-                                           final int version, final String path) {
+                                           final int version, String processingLocation) {
         ProductOrder productOrder = ProductOrderTestFactory.createDummyProductOrder(1, productOrderId);
+        ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(project);
+        researchProject.addProductOrder(productOrder);
+
+        Aggregation aggregation = AggregationTestFactory
+            .buildAggregation(productOrderId, sampleName, version, null, null, null, null, null, null,
+                processingLocation);
         /*
          * TODO: Allow this relationship to be set for these tests.
          * While it's not necessary for the current implementation of the behavior being tested here, this relationship
@@ -169,12 +173,13 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
          * persisted product.
          */
 //        productOrder.setResearchProject(researchProject);
-        return getSubmissionDto(productOrder        );
+        return new SubmissionDto(aggregation, Collections.singletonList(productOrder), null);
     }
 
     private SubmissionTracker addTracker(SubmissionDto submissionDto) {
         SubmissionTracker submissionTracker = new SubmissionTracker(submissionDto.getAggregationProject(),
-                submissionDto.getSampleName(), String.valueOf(submissionDto.getVersion()), submissionDto.getFileType());
+            submissionDto.getSampleName(), String.valueOf(submissionDto.getVersion()), submissionDto.getFileType(),
+            submissionDto.getProcessingLocation());
         submissionTracker.setResearchProject(researchProject);
         return submissionTracker;
     }

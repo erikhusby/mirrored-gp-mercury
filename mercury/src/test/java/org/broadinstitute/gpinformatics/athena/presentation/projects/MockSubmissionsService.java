@@ -29,6 +29,7 @@ public class MockSubmissionsService extends SubmissionsServiceImpl {
     public static MockSubmissionsService serviceWithResponse(ClientAndServer mockServer, HttpResponse httpResponse) {
         MockSubmissionConfig submissionConfig = new MockSubmissionConfig(mockServer);
         MockSubmissionsService mockSubmissionsService = new MockSubmissionsService(submissionConfig);
+
 //        Cookie sessionId = new Cookie("sessionId", String.format("%d", mockSubmissionsService.hashCode()));
 
         mockServer.when(HttpRequest.request()

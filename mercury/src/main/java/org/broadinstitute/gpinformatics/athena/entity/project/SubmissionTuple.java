@@ -50,6 +50,8 @@ public class SubmissionTuple implements Serializable {
     private FileType fileType = FileType.BAM;
     @JsonProperty
     private String version;
+    @JsonProperty
+    private String processingLocation;
 
     @JsonIgnore
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -74,15 +76,19 @@ public class SubmissionTuple implements Serializable {
             this.sampleName=submissionTuple.sampleName;
             this.version=submissionTuple.version;
             this.fileType = submissionTuple.fileType;
+            this.processingLocation= submissionTuple.processingLocation;
         } catch (IOException e) {
             log.info(String.format("Could not map JSON String [%s] to SubmissionTuple", jsonString), e);
         }
     }
 
-    public SubmissionTuple(String project, String sampleName, String version) {
+    public SubmissionTuple(String project, String sampleName, String version, String processingLocation) {
         this.project = project;
         this.sampleName = sampleName;
+        this.fileType = fileType;
         this.version = version;
+        this.processingLocation = processingLocation;
+        this.jsonValue = jsonValue;
     }
 
     public String getProject() {
@@ -106,43 +112,22 @@ public class SubmissionTuple implements Serializable {
         if (this == o) {
             return true;
         }
-
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
 
         SubmissionTuple that = (SubmissionTuple) o;
-
         return new EqualsBuilder()
-            .append(getProject(), that.getProject())
-            .append(getSampleName(), that.getSampleName())
-            .append(getFileType(), that.getFileType())
-            .append(getVersion(), that.getVersion())
-            .isEquals();
+                .append(this.sampleName, that.sampleName)
+                .append(this.project, that.project)
+                .append(this.fileType, that.fileType)
+                .append(this.processingLocation, that.processingLocation)
+                .append(this.version, that.version).isEquals();
     }
 
-    @Override
-    public int hashCode() {
-        return new HashCodeBuilder(17, 37)
-            .append(getProject())
-            .append(getSampleName())
-            .append(getFileType())
-            .append(getVersion())
-            .toHashCode();
-    }
-
-    @Override
-    public String toString() {
-        if (StringUtils.isBlank(jsonValue)) {
-            try {
-                jsonValue = objectMapper.writeValueAsString(this);
-            } catch (IOException e) {
-                log.info("SubmissionTracker could not be converted to JSON String.", e);
-            }
-        }
-        return jsonValue;
-    }
-
+    /**
+     * @return SubmissionTuple object from given jsonString
+     */
     public static Map<String, Collection<SubmissionTuple>> sampleMap(Collection<SubmissionTuple> tuples,
                                                                      SubmissionTuple submissionTuple) {
         Multimap<String, SubmissionTuple> result = HashMultimap.create();
@@ -160,6 +145,28 @@ public class SubmissionTuple implements Serializable {
         for (SubmissionTuple tuple : tuples) {
             samples.add(tuple.getSampleName());
         }
-        return samples;//.toArray(new String[samples.size()]);
+        return samples;
+    }
+
+    @Override
+    public String toString() {
+        if (StringUtils.isBlank(jsonValue)) {
+            try {
+                jsonValue = objectMapper.writeValueAsString(this);
+            } catch (IOException e) {
+                log.info("SubmissionTracker could not be converted to JSON String.", e);
+            }
+        }
+        return jsonValue;
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder().append(this.sampleName).append(project).append(this.fileType).append(this.version)
+            .append(this.processingLocation).hashCode();
+    }
+
+    void setFileType(FileType fileType) {
+        this.fileType = fileType;
     }
 }
