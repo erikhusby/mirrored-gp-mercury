@@ -98,6 +98,13 @@ public class AggregationMetricsFetcherTest extends ContainerTest {
         assertThat(aggregationResults, Matchers.emptyIterableOf(Aggregation.class));
     }
 
+    public void testFetchMetricsWithBadVersion() {
+        List<Aggregation> aggregationResults = fetcher.fetch(Collections.singletonList(
+                new SubmissionTuple(MERCURY_PROJECT, SAMPLE, Integer.toString(MERCURY_AGGREGATION_VERSION * 100),
+                    SubmissionBioSampleBean.ON_PREM, EXOME)));
+        assertThat(aggregationResults, Matchers.emptyIterableOf(Aggregation.class));
+    }
+
     public void testFetchMetricsForSampleAggregatedBySquidProject() {
         List<Aggregation> aggregationResults = fetcher.fetch(Collections.singletonList(
                 new SubmissionTuple(SQUID_PROJECT, SAMPLE, Integer.toString(SQUID_AGGREGATION_VERSION),
