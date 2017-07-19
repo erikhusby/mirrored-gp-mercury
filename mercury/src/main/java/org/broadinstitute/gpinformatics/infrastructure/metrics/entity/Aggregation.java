@@ -65,19 +65,19 @@ public class Aggregation {
     @Column(name = "DATA_TYPE")
     private String dataType;
 
-    @OneToMany(fetch = FetchType.EAGER, mappedBy = "aggregation")
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "aggregation")
     @BatchSize(size = 100)
     private Set<AggregationAlignment> aggregationAlignments = new HashSet<>();
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ID", referencedColumnName = "AGGREGATION_ID", insertable = false, updatable = false)
     private AggregationContam aggregationContam;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ID", referencedColumnName = "AGGREGATION_ID", insertable = false, updatable = false)
     private AggregationHybridSelection aggregationHybridSelection;
 
-    @OneToMany(fetch = FetchType.EAGER, mappedBy = "aggregation")
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "aggregation")
     @BatchSize(size = 100)
     private Set<AggregationReadGroup> aggregationReadGroups = new HashSet<>();
 
