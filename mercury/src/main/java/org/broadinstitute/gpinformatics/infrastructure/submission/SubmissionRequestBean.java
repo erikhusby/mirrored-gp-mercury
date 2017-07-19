@@ -5,15 +5,19 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 import java.util.List;
 
 @XmlRootElement()
+@XmlAccessorType(XmlAccessType.FIELD)
 public class SubmissionRequestBean implements Serializable {
-
     private static final long serialVersionUID = -2195569074348464285L;
+
+    @XmlElement(name = "onPremOrCloudSubmissions")
     private List<SubmissionBean> submissions;
 
     public SubmissionRequestBean() {
@@ -27,7 +31,6 @@ public class SubmissionRequestBean implements Serializable {
     public List<SubmissionBean> getSubmissions() {
         return submissions;
     }
-    @XmlElement(name = "onPremOrCloudSubmissions")
     public void setSubmissions(List<SubmissionBean> submissions) {
         this.submissions = submissions;
     }

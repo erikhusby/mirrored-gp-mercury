@@ -11,7 +11,10 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.hibernate.annotations.BatchSize;
 
 import javax.persistence.Column;
@@ -62,19 +65,19 @@ public class Aggregation {
     @Column(name = "DATA_TYPE")
     private String dataType;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "aggregation")
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "aggregation")
     @BatchSize(size = 100)
     private Set<AggregationAlignment> aggregationAlignments = new HashSet<>();
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "ID", referencedColumnName = "AGGREGATION_ID", insertable = false, updatable = false)
     private AggregationContam aggregationContam;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "ID", referencedColumnName = "AGGREGATION_ID", insertable = false, updatable = false)
     private AggregationHybridSelection aggregationHybridSelection;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "aggregation")
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "aggregation")
     @BatchSize(size = 100)
     private Set<AggregationReadGroup> aggregationReadGroups = new HashSet<>();
 
@@ -116,7 +119,7 @@ public class Aggregation {
     @Transient
     public SubmissionTuple getTuple() {
         // These aggregation metrics are specific to BAM files, so the BassFileType is always BAM.
-        return new SubmissionTuple(getProject(), getSample(), getVersion().toString());
+        return new SubmissionTuple(getProject(), getSample(), getVersion().toString(), getProcessingLocation());
     }
 
     public Double getQualityMetric() {
@@ -242,5 +245,62 @@ public class Aggregation {
 
     public void setLevelOfDetection(LevelOfDetection levelOfDetection) {
         this.levelOfDetection = levelOfDetection;
+    }
+
+    @Override
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+
+        if (o == null || (!OrmUtil.proxySafeIsInstance(o, Aggregation.class))) {
+            return false;
+        }
+
+        if (!(o instanceof Aggregation)) {
+            return false;
+        }
+
+        Aggregation that = OrmUtil.proxySafeCast(o, Aggregation.class);
+
+        return new EqualsBuilder()
+            .append(latest, that.latest)
+            .append(id, that.id)
+            .append(project, that.project)
+            .append(sample, that.sample)
+            .append(library, that.library)
+            .append(version, that.version)
+            .append(readGroupCount, that.readGroupCount)
+            .append(processingLocation, that.processingLocation)
+            .append(dataType, that.dataType)
+            .append(aggregationAlignments, that.aggregationAlignments)
+            .append(aggregationContam, that.aggregationContam)
+            .append(aggregationHybridSelection, that.aggregationHybridSelection)
+            .append(aggregationReadGroups, that.aggregationReadGroups)
+            .append(aggregationWgs, that.aggregationWgs)
+            .append(levelOfDetection, that.levelOfDetection)
+            .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+            .append(id)
+            .append(project)
+            .append(sample)
+            .append(library)
+            .append(version)
+            .append(readGroupCount)
+            .append(processingLocation)
+            .append(latest)
+            .append(dataType)
+            .append(aggregationAlignments)
+            .append(aggregationContam)
+            .append(aggregationHybridSelection)
+            .append(aggregationReadGroups)
+            .append(aggregationWgs)
+            .append(levelOfDetection)
+            .toHashCode();
     }
 }
