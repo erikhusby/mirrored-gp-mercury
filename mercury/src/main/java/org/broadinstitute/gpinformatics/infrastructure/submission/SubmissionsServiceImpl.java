@@ -114,7 +114,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
     }
 
     /**
-     * Defines the Rest call to post submissions fo`r sequenced sample results
+     * Defines the Rest call to post submissions for sequenced sample results
      * @param submissions   JAXB representation of all selected sample submission information
      * @return
      */
