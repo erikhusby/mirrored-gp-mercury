@@ -145,7 +145,6 @@
                 if (oTable == undefined) {
                     function renderCheckbox(data, type, row) {
                         if (type === 'display') {
-//                            debugger;
                             var status = row.<%=SubmissionField.SUBMITTED_STATUS %>;
                             var tagAttributes = {};
                             if (status.length === 0) {
