@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import org.broadinstitute.gpinformatics.infrastructure.submission.FileType;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioSampleBean;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.testng.Assert;
@@ -14,6 +15,7 @@ public class SubmissionTrackerTest {
 
     public static String testAccessionID = "SA-2342";
     public static String testProjectId = "P123";
+    public static String testProcessingLocation = SubmissionBioSampleBean.ON_PREM;
     public static FileType testFileType = FileType.BAM;
 
     public static String testVersion = "v1";
@@ -27,7 +29,6 @@ public class SubmissionTrackerTest {
         Assert.assertNotNull(tracker);
 
         Assert.assertEquals(tracker.getSubmittedSampleName(), testAccessionID);
-//        Assert.assertEquals(tracker.getFileType(), testFileType);
 
         Assert.assertEquals(tracker.getVersion(), testVersion);
 
@@ -64,12 +65,12 @@ public class SubmissionTrackerTest {
 
         public SubmissionTrackerStub(String project, String submittedSampleName, String version,
                                      FileType fileType) {
-            super(project, submittedSampleName, version, fileType);
+            super(project, submittedSampleName, version, fileType, SubmissionBioSampleBean.ON_PREM);
         }
 
         public SubmissionTrackerStub(Long submissionTrackerId, String project, String testAccessionID,
-                                     String testVersion, FileType fileType) {
-            super(submissionTrackerId, project, testAccessionID, testVersion, fileType);
+                                     String testVersion, FileType fileType, String processingLocation) {
+            super(submissionTrackerId, project, testAccessionID, testVersion, fileType, processingLocation);
         }
 
         @Override

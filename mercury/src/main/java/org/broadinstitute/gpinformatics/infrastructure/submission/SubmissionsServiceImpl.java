@@ -114,7 +114,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
     }
 
     /**
-     * Defines the Rest call to post submissions fo`r sequenced sample results
+     * Defines the Rest call to post submissions for sequenced sample results
      * @param submissions   JAXB representation of all selected sample submission information
      * @return
      */
@@ -125,7 +125,9 @@ public class SubmissionsServiceImpl implements SubmissionsService {
                         MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).entity(submissions)
                            .post(ClientResponse.class);
         validateResponseStatus("posting submissions", response);
-        return response.getEntity(SubmissionStatusResultBean.class).getSubmissionStatuses();
+        List<SubmissionStatusDetailBean> submissionStatuses =
+            response.getEntity(SubmissionStatusResultBean.class).getSubmissionStatuses();
+        return submissionStatuses;
     }
 
     @Override

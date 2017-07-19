@@ -16,6 +16,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -51,14 +52,14 @@ public class SubmissionTracker {
     @Enumerated(EnumType.STRING)
     private FileType fileType;
 
-//    @Column(name = "DATA_TYPE")
-//    private String dataType;
-
     /**
      * version of the data file created
      */
     @Column(name = "VERSION")
     private String version;
+
+    @Column(name = "PROCESSING_LOCATION")
+    private String processingLocation;
 
     /**
      * research project under which the submission has been made.
@@ -72,17 +73,19 @@ public class SubmissionTracker {
     protected SubmissionTracker() {
     }
 
-    SubmissionTracker(Long submissionTrackerId, String project, String submittedSampleName, String version, FileType fileType) {
+    SubmissionTracker(Long submissionTrackerId, String project, String submittedSampleName, String version,
+                      FileType fileType, String processingLocation) {
         this.submissionTrackerId = submissionTrackerId;
         this.submittedSampleName = submittedSampleName;
         this.project = project;
         this.fileType = fileType;
         this.version = version;
-        requestDate = new Date();
+        this.processingLocation = processingLocation;
+        this.requestDate = new Date();
     }
 
-    public SubmissionTracker(String project, String submittedSampleName, String version, FileType fileType) {
-        this(null, project, submittedSampleName, version, fileType);
+    public SubmissionTracker(String project, String submittedSampleName, String version, FileType fileType, String processingLocation) {
+        this(null, project, submittedSampleName, version, fileType, processingLocation);
     }
 
     /**
@@ -128,6 +131,14 @@ public class SubmissionTracker {
         this.fileType = fileType;
     }
 
+    public String getProcessingLocation() {
+        return processingLocation;
+    }
+
+    public void setProcessingLocation(String processingLocation) {
+        this.processingLocation = processingLocation;
+    }
+
     public String getVersion() {
         return version;
     }
@@ -152,16 +163,9 @@ public class SubmissionTracker {
         return requestDate;
     }
 
-//    public String getDataType() {
-//        return dataType;
-//    }
-//
-//    public void setDataType(String dataType) {
-//        this.dataType = dataType;
-//    }
-
     // todo: should be in interface?
+    @Transient
     public SubmissionTuple getTuple() {
-        return new SubmissionTuple(project, submittedSampleName, version);
+        return new SubmissionTuple(project, submittedSampleName, version, processingLocation);
     }
 }

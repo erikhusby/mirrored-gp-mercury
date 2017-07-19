@@ -91,7 +91,8 @@ public class ResearchProjectEjbSubmissionTest {
         SubmissionDto bApicard = getSubmissionDto(dummyProductOrder, "A", GCP, TEST_VERSION_1);
 
         SubmissionTracker stA =
-                new SubmissionTracker("P123", bA.getSampleName(), String.valueOf(bA.getVersion()), bA.getFileType());
+                new SubmissionTracker("P123", bA.getSampleName(), String.valueOf(bA.getVersion()), bA.getFileType(),
+                    bA.getProcessingLocation());
 
         List<Object[]> testCases = new ArrayList<>();
         testCases.add(new Object[]{"TEST-1", Collections.singletonList(bA), Collections.emptyList(), true});
@@ -124,7 +125,8 @@ public class ResearchProjectEjbSubmissionTest {
 
     public void testValidateSubmissionsDtoDiffersTupleEqual() throws Exception {
         SubmissionDto submissionDto = getSubmissionDto(dummyProductOrder, TEST_SAMPLE_1, ON_PREM, TEST_VERSION_1);
-        SubmissionDto submissionDto2 = getSubmissionDto(dummyProductOrder, TEST_SAMPLE_1, GCP, TEST_VERSION_1);
+        submissionDto.setUuid("Diff't Uuid");
+        SubmissionDto submissionDto2 = getSubmissionDto(dummyProductOrder, TEST_SAMPLE_1, ON_PREM, TEST_VERSION_1);
 
         SubmissionTrackerDao submissionTrackerDao = Mockito.mock(SubmissionTrackerDao.class);
         ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
@@ -159,7 +161,7 @@ public class ResearchProjectEjbSubmissionTest {
     private SubmissionDto getSubmissionDto(ProductOrder productOrder, String sample, String processingLocation, int version) {
         Aggregation aggregation = AggregationTestFactory
             .buildAggregation(productOrder.getResearchProject().getBusinessKey(), sample, version, null, null, null,
-                null, null, null, null);
+                null, null, null, processingLocation);
         SubmissionDto submissionDto = new SubmissionDto(aggregation, Collections.singleton(productOrder), null);
         return submissionDto;
     }

@@ -53,8 +53,11 @@ public class AggregationMetricsFetcher {
     @PersistenceContext(unitName = "metrics_pu", type = PersistenceContextType.EXTENDED)
     private EntityManager entityManager;
 
-    public List<Aggregation> fetch(String researchProject,
-                                   MessageReporter messageReporter) {
+    public List<Aggregation> fetch(String researchProject, Collection<SubmissionTuple> submissionTuples) {
+        return fetch(researchProject, submissionTuples, MessageReporter.UNUSED);
+    }
+
+    public List<Aggregation> fetch(String researchProject, MessageReporter messageReporter) {
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaQuery<Aggregation> criteriaQuery = criteriaBuilder.createQuery(Aggregation.class);
         Root<Aggregation> root = criteriaQuery.from(Aggregation.class);
@@ -101,11 +104,11 @@ public class AggregationMetricsFetcher {
             }
 
             Predicate projectPredicate = criteriaBuilder.equal(root.get(Aggregation_.project), researchProject);
-            Predicate latestPredicate = criteriaBuilder.equal(root.get(Aggregation_.latest), true);
+//            Predicate latestPredicate = criteriaBuilder.equal(root.get(Aggregation_.latest), true);
             criteriaQuery.where(criteriaBuilder
-                .and(projectPredicate, latestPredicate,
+                .and(projectPredicate, versionPredicate,
                     criteriaBuilder.isNull(root.get(Aggregation_.library)),
-                    getTupleExpression(new ArrayList<SubmissionTuple>(tuplesSublist), root)
+                    getTupleExpression(new ArrayList<>(tuplesSublist), root)
                 )
             );
 
@@ -139,7 +142,6 @@ public class AggregationMetricsFetcher {
         fetchLod(results);
         allResults.addAll(results);
     }
-//        results.addAll(results);
         return allResults;
     }
 
@@ -154,17 +156,6 @@ public class AggregationMetricsFetcher {
 
         return and;
     }
-
-//    private Collection<SubmissionTuple> collectTuples(List<ProductOrderSample> productOrderSamples) {
-//        return Collections2.transform(productOrderSamples,
-//                new Function<ProductOrderSample, SubmissionTuple>() {
-//                    @Override
-//                    public SubmissionTuple apply(@Nullable ProductOrderSample input) {
-//                        return new SubmissionTuple(input.getProductOrder().getResearchProject().getJiraTicketKey(),
-//                                input.getSampleData().getCollaboratorsSampleName(), null);
-//                    }
-//                });
-//    }
 
     @SuppressWarnings("unchecked")
     public void fetchLod(List<Aggregation> aggregations) {
@@ -193,11 +184,8 @@ public class AggregationMetricsFetcher {
         Expression<Double> minExpression = queryBuilder.min(root.get(PicardFingerprint_.lodExpectedSample));
         Expression<Double> maxExpression = queryBuilder.max(root.get(PicardFingerprint_.lodExpectedSample));
 
-        CriteriaQuery<Tuple> multiselect = tupleQuery.multiselect(
-                aggregationPath, minExpression, maxExpression)
-            .where(aggregationPath.in(aggregationIds))
-//                .where(queryBuilder.or(predicates.toArray(new Predicate[predicates.size()])))
-                .groupBy(aggregationPath);
+        CriteriaQuery<Tuple> multiselect = tupleQuery.multiselect(aggregationPath, minExpression, maxExpression)
+            .where(aggregationPath.in(aggregationIds)).groupBy(aggregationPath);
 
         List<Tuple> tuples = entityManager.createQuery(multiselect).getResultList();
         Map<Integer, LevelOfDetection> lodMap = new HashMap<>();
@@ -214,9 +202,5 @@ public class AggregationMetricsFetcher {
                 aggregation.setLevelOfDetection(lod);
             }
         }
-    }
-
-    public List<Aggregation> fetch(String researchProject, Collection<SubmissionTuple> submissionTuples) {
-        return fetch(researchProject, submissionTuples, MessageReporter.UNUSED);
     }
 }
