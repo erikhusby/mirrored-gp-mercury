@@ -38,14 +38,11 @@ public class SubmissionDtoTest {
     public static final double CONTAMINATION = 0.47;
     private static final String CONTAMINATION_STRING = "47%";
     public static final LevelOfDetection FINGERPRINT_LOD = new LevelOfDetection(-4.3d, -3.2d);
-//    private static final BassFileType BAM_ENUM = BassFileType.BAM;
-//    public static final String BAM_FILE = BAM_ENUM.getBassValue();
     private static final String DATA_TYPE = "Exome";
     private static final Double QUALITY_METRIC = 1.2;
     public static final String SUBMISSION_UUID = "1234";
 
     private Aggregation aggregation;
-//    private BassDTO bassDto;
     private List<ProductOrder> productOrders = new ArrayList<>();
     private SubmissionStatusDetailBean submissionStatus;
 
@@ -62,15 +59,12 @@ public class SubmissionDtoTest {
     public void testDtoForSampleWithConstructor() {
         SubmissionDto submissionDTO = new SubmissionDto(aggregation, productOrders, submissionStatus);
         assertThat(submissionDTO.getAggregation(), is(Matchers.notNullValue()));
-//        assertThat(submissionDTO.getBassDTO(), is(Matchers.notNullValue()));
 
         assertThat(submissionDTO.getSampleName(), equalTo(TEST_SAMPLE));
 //        assertThat(submissionDTO.getBioSample());
         assertThat(submissionDTO.getDataType(), equalTo(Aggregation.DATA_TYPE_EXOME));
         assertThat(submissionDTO.getProductOrders(), containsInAnyOrder(productOrders.toArray()));
         assertThat(submissionDTO.getAggregationProject(), equalTo(AGGREGATION_PROJECT));
-//        assertThat(submissionDTO.getFileTypeString(), equalTo(BAM_FILE));
-//        assertThat(submissionDTO.getFileType(), equalTo(BAM_ENUM));
         assertThat(submissionDTO.getVersion(), equalTo(VERSION));
         assertThat(submissionDTO.getQualityMetric(), equalTo(QUALITY_METRIC));
         assertThat(submissionDTO.getContamination(), equalTo(CONTAMINATION));

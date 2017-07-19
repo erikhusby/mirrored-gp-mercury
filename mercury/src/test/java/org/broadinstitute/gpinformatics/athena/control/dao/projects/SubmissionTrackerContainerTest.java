@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.control.dao.projects;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
 import org.broadinstitute.gpinformatics.infrastructure.submission.FileType;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioSampleBean;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
@@ -23,6 +24,7 @@ public class SubmissionTrackerContainerTest extends ContainerTest {
     private String jiraTicketId;
     private String testAccessionID;
     private static final FileType testFileType = FileType.BAM;
+    private static final String testProcessingLocation = SubmissionBioSampleBean.ON_PREM;
     private static final String testVersion = "v1";
     private ResearchProject testProject;
 
@@ -49,7 +51,7 @@ public class SubmissionTrackerContainerTest extends ContainerTest {
     }
 
     public void testTrackerConfiguration() throws Exception {
-        SubmissionTracker tracker = new SubmissionTracker(jiraTicketId, testAccessionID, testVersion, testFileType);
+        SubmissionTracker tracker = new SubmissionTracker(jiraTicketId, testAccessionID, testVersion, testFileType, testProcessingLocation);
         testProject.addSubmissionTracker(tracker);
         researchProjectDao.persist(testProject);
 
