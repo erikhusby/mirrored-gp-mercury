@@ -74,7 +74,7 @@ public class SubmissionDtoFetcherTest {
         // Prepare mocks
         aggregations = new ArrayList<>();
         Mockito
-            .when(aggregationMetricsFetcher.fetch(Mockito.anyCollectionOf(SubmissionTuple.class)))
+            .when(aggregationMetricsFetcher.fetch(Mockito.anyString(), Mockito.anyCollectionOf(SubmissionTuple.class), Mockito.any(MessageReporter.class)))
             .thenReturn(aggregations);
 
         // Create Mercury RP and PDO with one sample
