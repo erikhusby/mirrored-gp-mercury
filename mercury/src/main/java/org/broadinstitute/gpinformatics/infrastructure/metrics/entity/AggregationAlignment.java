@@ -23,7 +23,6 @@ import java.io.Serializable;
 
 @Entity
 @Table(name = "AGGREGATION_ALIGNMENT", schema = "METRICS")
-@BatchSize(size = 500)
 public class AggregationAlignment implements Serializable {
     @Id
     @Column(name = "AGGREGATION_ID", nullable = false, insertable = false, updatable = false)
