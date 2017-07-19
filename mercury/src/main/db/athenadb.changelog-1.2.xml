@@ -805,7 +805,7 @@
     <changeSet id="GPLIM-4750-1" author="scottmat">
         <createTable tableName="pdo_addon_price_adjustment" schemaName="athena">
             <column name="pdo_addon_price_adjustment_id" type="number(19,0)">
-                <constraints primaryKey="true" nullable="false" />
+                <constraints nullable="false" />
             </column>
             <column name="adjustment_value" type="number(19,2)" />
             <column name="price_adjustment_condition" type="varchar(255)" />
@@ -814,13 +814,16 @@
             </column>
         </createTable>
 
+        <addPrimaryKey tableName="pdo_addon_price_adjustment" schemaName="athena"
+                       constraintName="PK_PDO_ADDON_ADJUSTMENT" columnNames="pdo_addon_price_adjustment_id" />
+
         <createSequence sequenceName="SEQ_PDO_ADDON_PRICE_ADJUSTMENT" schemaName="athena" startValue="1" incrementBy="50" />
         <createIndex tableName="pdo_addon_price_adjustment" indexName="ix_pdo_add_on_price_adjustment" >
             <column name="add_on"/>
         </createIndex>
         <addForeignKeyConstraint baseTableSchemaName="athena" baseTableName="pdo_addon_price_adjustment"
                                  baseColumnNames="add_on" referencedTableSchemaName="athena"
-                                 referencedTableName="product_order_add_on" referencedColumnNames="add_on"
+                                 referencedTableName="product_order_add_on" referencedColumnNames="PRODUCT_ORDER_ADD_ON_ID"
                                  constraintName="FK_PDO_ADDON_ADJUSTMENT_PDO" />
     </changeSet>
 
@@ -840,7 +843,7 @@
         </createTable>
 
         <addPrimaryKey schemaName="athena" tableName="pdo_addon_price_adjustment_aud"
-                       columnNames="pdo_price_adjustment_id, rev" constraintName="PK_PDO_ADDON_ADJUSTMENT_AUD"/>
+                       columnNames="pdo_addon_price_adjustment_id, rev" constraintName="PK_PDO_ADDON_ADJUSTMENT_AUD"/>
         <addForeignKeyConstraint constraintName="fk_pdo_addon_adjustment_aud" baseTableSchemaName="athena"
                                  baseTableName="pdo_addon_price_adjustment_aud" baseColumnNames="rev"
                                  referencedTableSchemaName="mercury"
@@ -850,7 +853,7 @@
     <changeSet id="GPLIM-4750-3" author="scottmat">
         <createTable tableName="pdo_price_adjustment" schemaName="athena">
             <column name="pdo_price_adjustment_id" type="number(19,0)">
-                <constraints nullable="false" primaryKey="true" />
+                <constraints nullable="false"/>
             </column>
             <column name="adjustment_value" type="number(19,2)" />
             <column name="price_adjustment_condition" type="varchar(255)" />
@@ -858,7 +861,10 @@
                 <constraints nullable="false" />
             </column>
         </createTable>
-        
+
+        <addPrimaryKey tableName="pdo_price_adjustment" schemaName="athena"
+                       constraintName="PK_PDO_PRICE_ADJUSTMENT" columnNames="pdo_price_adjustment_id" />
+
         <addForeignKeyConstraint constraintName="FK_PDO_PRICE_ADJUSTMENT_PDO" baseTableName="pdo_price_adjustment"
                                  baseColumnNames="product_order" baseTableSchemaName="athena"
                                  referencedColumnNames="product_order_id" referencedTableName="product_order"
@@ -874,7 +880,7 @@
     <changeSet id="GPLIM-4750-4" author="scottmat">
         <createTable tableName="pdo_price_adjustment_aud" schemaName="athena">
             <column name="pdo_price_adjustment_id" type="number(19,0)">
-                <constraints nullable="false" primaryKey="true" />
+                <constraints nullable="false" />
             </column>
             <column name="rev" type="number(19,0)" >
                 <constraints nullable="false" />
@@ -897,7 +903,7 @@
 
     <changeSet id="GPLIM-4924-1" author="scottmat">
         <addColumn schemaName="athena" tableName="product">
-            <column name="EXTERNAL_PRODUCT_NAME" type="varchar 255" />
+            <column name="EXTERNAL_PRODUCT_NAME" type="varchar(255)" />
             <column name="external_price_item" type="number(19,0)" />
         </addColumn>
 
@@ -908,16 +914,14 @@
 
     <changeSet id="GPLIM-4924-2" author="scottmat">
         <addColumn schemaName="athena" tableName="product_aud">
-            <column name="EXTERNAL_PRODUCT_NAME" type="varchar 255" />
+            <column name="EXTERNAL_PRODUCT_NAME" type="varchar(255)" />
             <column name="external_price_item" type="number(19,0)" />
         </addColumn>
     </changeSet>
 
     <changeSet id="GPLIM-4748-1" author="scottmat">
         <addColumn schemaName="athena" tableName="product_order">
-            <column name="PRIOR_TOSAP1_5" type="number(1,0)" >
-                <constraints nullable="false" />
-            </column>
+            <column name="PRIOR_TOSAP1_5" type="number(1,0)" />
         </addColumn>
 
         <sql>
@@ -928,9 +932,7 @@
 
     <changeSet id="GPLIM-4748-2" author="scottmat">
         <addColumn schemaName="athena" tableName="product_order_aud">
-            <column name="PRIOR_TOSAP1_5" type="number(1,0)" >
-                <constraints nullable="false" />
-            </column>
+            <column name="PRIOR_TOSAP1_5" type="number(1,0)" />
         </addColumn>
 
         <sql>
