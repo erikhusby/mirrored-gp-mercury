@@ -222,7 +222,7 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     /**
      * Expression that provides list of constrained result column values
      */
-    private Evaluator<List<ConstrainedValue>> constrainedResultColumnExpression;
+    private Evaluator<List<ConstrainedValue>> constrainedResultParamsExpression;
 
     /**
      * Dynamic value type expression.
@@ -437,12 +437,12 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     /**
      * Allow user selection of one or more logically related result columns
      */
-    public Evaluator<List<ConstrainedValue>> getConstrainedResultColumnExpression() {
-        return constrainedResultColumnExpression;
+    public Evaluator<List<ConstrainedValue>> getConstrainedResultParamsExpression() {
+        return constrainedResultParamsExpression;
     }
 
-    public void setConstrainedResultColumnExpression(Evaluator<List<ConstrainedValue>> constrainedResultColumnExpression) {
-        this.constrainedResultColumnExpression = constrainedResultColumnExpression;
+    public void setConstrainedResultParamsExpression(Evaluator<List<ConstrainedValue>> constrainedResultParamsExpression) {
+        this.constrainedResultParamsExpression = constrainedResultParamsExpression;
     }
 
     /**
@@ -768,7 +768,11 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     @Override
     public Object evalViewHeaderExpression(Object entity, SearchContext context) {
         if (getViewHeaderExpression() == null) {
-            return getName();
+            if( context.getColumnParams() == null || context.getColumnParams().length() == 0 ) {
+                return getName();
+            } else {
+                return getName() + "{" + context.getColumnParams() + "}";
+            }
         } else {
             context = addTermToContext(context);
             return getViewHeaderExpression().evaluate(entity, context);

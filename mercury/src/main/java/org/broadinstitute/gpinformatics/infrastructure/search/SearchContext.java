@@ -38,6 +38,7 @@ public class SearchContext {
     private ResultCellTargetPlatform resultCellTargetPlatform = ResultCellTargetPlatform.TEXT;
     private String baseSearchURL;
     private PaginationUtil.Pagination pagination;
+    private String columnParams;
 
     /**
      * Avoid having to access EJB or web application context to get user data for display
@@ -214,5 +215,13 @@ public class SearchContext {
 
     public void setPagination(PaginationUtil.Pagination pagination) {
         this.pagination = pagination;
+    }
+
+    public void setColumnParams( String columnParams ) {
+        this.columnParams = columnParams;
+    }
+
+    public String getColumnParams(){
+        return columnParams;
     }
 }

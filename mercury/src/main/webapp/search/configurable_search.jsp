@@ -157,7 +157,8 @@ Move the mouse over the question marks to see details about each section.
         <stripes:button id="chooseColumnSetBtn" name="chooseColumnSetBtn" value="Choose Column Set" onclick="chooseColumnSet();" class="btn btn-primary"/>
         <stripes:layout-render name="/search/view_columns.jsp"
                                availableMapGroupToColumnNames="${actionBean.availableMapGroupToColumnNames}"
-                               predefinedViewColumns="${actionBean.searchInstance.predefinedViewColumns}"/>
+                               predefinedViewColumns="${actionBean.searchInstance.predefinedViewColumns}"
+                               viewColumnParamMap="${actionBean.searchInstance.viewColumnParamMap}"/>
 
     </fieldset>
     <div style="padding-left: 6px; margin-left: 2px; margin-top: 4px; border-bottom-width: 1px; margin-bottom: 25px;">

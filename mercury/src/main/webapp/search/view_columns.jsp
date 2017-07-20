@@ -7,6 +7,7 @@ buttons to move columns from one to the other --%>
 <%--@elvariable id="availableMapGroupToColumnNames" type="java.util.Map<java.lang.String, java.util.List<org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation>>"--%>
 <%-- list of columns that have already been chosen --%>
 <%--@elvariable id="predefinedViewColumns" type="java.util.List"--%>
+<%--@elvariable id="viewColumnParamMap" type="java.util.Map<java.lang.Integer,java.lang.String>"--%>
 <stripes:layout-definition>
     <script type="text/javascript">
         /**
@@ -111,24 +112,20 @@ buttons to move columns from one to the other --%>
             dialog.find( "#resultParamsBtn" )[0].onclick = function(event){
                 var parmOptions = dialog.find( "#resultParamsList" ).find("option").filter(":selected");
                 var chosenColumns = $j('#selectedColumnDefNames')[0];
-                var selectedColumnOptions = $j(chosenColumns).find("option");
                 var searchTermName = dialog.dialog("option", "searchTermName");
                 if( parmOptions ) {
+                    var delim = "";
+                    var newOption = document.createElement('option');
+                    var optionText = "";
                     for( var i = 0; i < parmOptions.length; i++ ) {
-                        var isNew = true;
-                        for( var j = 0; j < selectedColumnOptions.length; j++ ) {
-                            if( selectedColumnOptions[j].value === searchTermName + "|" + parmOptions[i].value ) {
-                                isNew = false;
-                                break;
-                            }
-                        }
-                        if( isNew ) {
-                            var newOption = document.createElement('option');
-                            newOption.text = searchTermName + ":" + parmOptions[i].text;
-                            newOption.value = searchTermName + "|" + parmOptions[i].value;
-                            chosenColumns.options[chosenColumns.options.length] = newOption;
-                        }
+                        optionText += delim;
+                        optionText += parmOptions[i].text;
+                        delim = ",";
                     }
+                    optionText = searchTermName + "{" + optionText + "}";
+                    newOption.text = optionText;
+                    newOption.value = optionText;
+                    chosenColumns.options[chosenColumns.options.length] = newOption;
                 }
                 dialog.dialog("close");
             };
@@ -238,7 +235,7 @@ buttons to move columns from one to the other --%>
         var columnsWithParams = [<c:set var="listDelim" value=""
         /><c:forEach items="${availableMapGroupToColumnNames}" var="entry" varStatus="iter"
             ><c:forEach items="${entry.value}" var="columnConfig"
-            ><c:if test="${not columnConfig.isExcludedFromResultColumns() and not empty columnConfig.constrainedResultColumnExpression}">"${columnConfig.name}"</c:if
+            ><c:if test="${not columnConfig.isExcludedFromResultColumns() and not empty columnConfig.constrainedResultParamsExpression}">"${columnConfig.name}"</c:if
         ></c:forEach
         ></c:forEach>];
 
@@ -342,8 +339,9 @@ buttons to move columns from one to the other --%>
                 <select name="searchInstance.predefinedViewColumns" id="selectedColumnDefNames"
                         multiple="true" size="10" style="width: 280px">
                     <c:if test="${not empty predefinedViewColumns}">
-                        <c:forEach items="${predefinedViewColumns}" var="entry">
-                            <option>${entry}</option>
+                        <c:forEach items="${predefinedViewColumns}" var="entry" varStatus="iter">
+                            <c:if test="${not empty viewColumnParamMap[iter.index]}"><option>${entry}{${viewColumnParamMap[iter.index]}}</option></c:if>
+                            <c:if test="${empty viewColumnParamMap[iter.index]}"><option>${entry}</option></c:if>
                         </c:forEach>
                     </c:if>
                 </select>

@@ -716,13 +716,43 @@ public class LabVesselSearchDefinition {
         // searchTerm.setDbSortPath("inPlaceLabEvents.labEventType");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public List<String> evaluate(Object entity, SearchContext context) {
-                List<String> labEventNames = new ArrayList<>();
-                labEventNames.add("Blah Blah Blah");
-                return labEventNames;
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                Set<String> results = new HashSet<>();
+                String columnParams = context.getColumnParams();
+                if( columnParams == null || columnParams.length() == 0 ) {
+                    results.add("(Event types required)");
+                    return results;
+                }
+                String[] types = columnParams.split(",");
+                if( types.length == 0 ) {
+                    results.add("(Event types required)");
+                    return results;
+                }
+                List<LabEventType> eventTypes = new ArrayList<>();
+                for( String displayName : types ) {
+                    LabEventType type = LabEventType.getByName(displayName);
+                    if( type == null ) {
+                        results.clear();
+                        results.add("(No event type for param: " + displayName + ")");
+                        return results;
+                    } else {
+                        eventTypes.add(type);
+                    }
+                }
+
+                LabVessel labVessel = (LabVessel) entity;
+
+                VesselsForEventTraverserCriteria eval = new VesselsForEventTraverserCriteria(eventTypes);
+                labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+
+                for(Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
+                        : eval.getPositions().asMap().entrySet()) {
+                    results.add(labVesselAndPositions.getKey().getLabel());
+                }
+                return results;
             }
         });
-        searchTerm.setConstrainedResultColumnExpression(new SearchDefinitionFactory.EventTypeValuesExpression());
+        searchTerm.setConstrainedResultParamsExpression(new SearchDefinitionFactory.EventTypeValuesExpression());
         searchTerms.add(searchTerm);
         /****  Result Criteria ****/
 

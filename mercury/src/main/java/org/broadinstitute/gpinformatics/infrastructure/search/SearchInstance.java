@@ -10,6 +10,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.athena.entity.preference.SearchInstanceList;
@@ -394,10 +395,10 @@ public class SearchInstance implements Serializable {
         }
 
         public Object evalHeaderExpression(Object root, SearchContext context) {
-            // If the header is an expression, evaluate it.
             if (getSearchTerm().getViewHeaderExpression() == null) {
-                return getSearchTerm().getName();
+                return getSearchTerm().evalViewHeaderExpression(root, context);
             } else {
+                // The header is an expression, evaluate it.
                 context = addValueToContext(context);
                 return getSearchTerm().getViewHeaderExpression().evaluate(root, context);
             }
@@ -748,6 +749,11 @@ public class SearchInstance implements Serializable {
     private List<String> predefinedViewColumns = new ArrayList<>();
 
     /**
+     * Map of view column indexes to any optional parameters associated
+     */
+    private Map<Integer,String> viewColumnParamMap = new HashMap<>();
+
+    /**
      * List of columns names that the user wants to download
      */
     private List<String> predefinedDownloadColumns = new ArrayList<>();
@@ -855,6 +861,15 @@ public class SearchInstance implements Serializable {
         return searchValue;
     }
 
+    private Pair<String,String> splitTermAndParams(String nameAndParams ) {
+        int index = nameAndParams.indexOf("{");
+        if (index <= 0) {
+            return Pair.of(nameAndParams, "");
+        } else {
+            return Pair.of(nameAndParams.substring(0, index), nameAndParams.substring(index + 1, nameAndParams.length() - 1) ) ;
+        }
+    }
+
     /**
      * A SearchInstance built top-down by Stripes, or one fetched from a preference,
      * doesn't have parent relationships or SearchTerms, so this method sets them up.
@@ -866,6 +881,14 @@ public class SearchInstance implements Serializable {
         buildTraversalOptions(configurableSearchDefinition);
         // Context as passed through processing needs a reference to the SearchInstance
         getEvalContext().setColumnEntityType(configurableSearchDefinition.getResultEntity());
+
+        for( int i = 0; i < predefinedViewColumns.size(); i++  ) {
+            Pair<String,String> nameAndParams = splitTermAndParams(predefinedViewColumns.get(i));
+            viewColumnParamMap.put( i, nameAndParams.getRight());
+            if( nameAndParams.getRight().length() > 0 ) {
+                predefinedViewColumns.set(i,nameAndParams.getLeft() );
+            }
+        }
     }
 
     /**
@@ -1156,6 +1179,10 @@ public class SearchInstance implements Serializable {
 
     public void setPredefinedViewColumns(List<String> predefinedViewColumns) {
         this.predefinedViewColumns = predefinedViewColumns;
+    }
+
+    public Map<Integer,String> getViewColumnParamMap() {
+        return viewColumnParamMap;
     }
 
     public List<String> getPredefinedDownloadColumns() {

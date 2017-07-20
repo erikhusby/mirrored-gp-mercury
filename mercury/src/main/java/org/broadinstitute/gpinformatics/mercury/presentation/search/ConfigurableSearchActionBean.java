@@ -180,11 +180,11 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
         if( searchTerm == null ) {
             return new ErrorResolution(500, "No search term named " + searchTermName);
         }
-        if( searchTerm.getConstrainedResultColumnExpression() == null ) {
+        if( searchTerm.getConstrainedResultParamsExpression() == null ) {
             return new ErrorResolution(500, "Search term " + searchTermName + " has no parameters configured");
         }
         try {
-            List<ConstrainedValue> options = searchTerm.getConstrainedResultColumnExpression().evaluate(null,null);
+            List<ConstrainedValue> options = searchTerm.getConstrainedResultParamsExpression().evaluate(null,null);
             ObjectMapper mapper = new ObjectMapper();
             optionJson = mapper.writeValueAsString(options);
         } catch (Exception e) {

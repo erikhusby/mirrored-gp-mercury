@@ -443,7 +443,9 @@ public class ConfigurableList {
             // evaluate expression to get ID
             Row row = new Row(columnEntity.getIdGetter().getId(entity));
             rows.add(row);
+            int colIndex = 0;
             for (ColumnTabulation columnTabulation : nonPluginTabulations) {
+                context.setColumnParams( context.getSearchInstance().getViewColumnParamMap().get(colIndex++) );
                 if( !columnTabulation.isNestedParent() ) {
                     recurseColumns(context, entity, row, columnTabulation, columnTabulation.getName());
                 } else {
