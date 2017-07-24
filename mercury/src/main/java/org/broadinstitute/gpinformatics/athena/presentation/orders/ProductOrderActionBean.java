@@ -2001,11 +2001,9 @@ public class ProductOrderActionBean extends CoreActionBean {
                     jsonGenerator.writeStartObject();
                     jsonGenerator.writeObjectField(ProductOrderSampleBean.RECORDS_TOTAL, samples.size());
                     jsonGenerator.writeArrayFieldStart(ProductOrderSampleBean.DATA_FIELD);
-                    int tableLength = state.getEnd();
-                    int end = tableLength < samples.size() ? tableLength : samples.size();
                     int rowsWithSampleData=0;
                     if (initialLoad){
-                        List<ProductOrderSample> firstPage = new ArrayList<>(samples.subList(state.getStart(), end));
+                        List<ProductOrderSample> firstPage = sampleSublistFromState(state, samples);
                         writeProductOrderSampleBean(jsonGenerator, firstPage, true, preferenceSaver);
                         rowsWithSampleData = firstPage.size();
                         List<ProductOrderSample> otherPages = new ArrayList<>(samples);
@@ -2051,6 +2049,27 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
         };
         return resolution;
+    }
+
+    /**
+     * Get a 'pages worth' of samples based on saved user preferences. The point of this method is to speed up the
+     * fetching of results by limiting the results to upper and lower bounds. Since Mercury does not currently do
+     * server-side sorting or filtering the subset of samples returned may not necessarily coincide with the current
+     * page in the UI so the page may show gaps. However, since these are batch fetches, the gaps will be filled in
+     * with subsequent calls.
+     */
+    static List<ProductOrderSample> sampleSublistFromState(State state, List<ProductOrderSample> samples) {
+        List<ProductOrderSample> results;
+        if (state.getLength() == State.ALL_RESULTS) {
+            results = samples;
+        } else {
+            int end = state.getStart() + state.getLength();
+            if (end > samples.size()) {
+                end = samples.size();
+            }
+            results = samples.subList(state.getStart(), end);
+        }
+        return results;
     }
 
     private void writeProductOrderSampleBean(JsonGenerator jsonGenerator, List<ProductOrderSample> productOrderSamples,
@@ -3321,4 +3340,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         return preferenceSaver.showColumn(columnName);
     }
 
+    protected void setState(State state) {
+        this.state = state;
+    }
 }
