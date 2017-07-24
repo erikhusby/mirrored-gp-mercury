@@ -480,6 +480,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2>{
             singleWorkflowBatch = allWorkflowBatches.get(0);
         }
 
+        // todo jmt need a collection that includes pending bucket entries
         // filter out bucket entries without a lab batch
         Set<BucketEntry> bucketEntries = new HashSet<>();
         for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {

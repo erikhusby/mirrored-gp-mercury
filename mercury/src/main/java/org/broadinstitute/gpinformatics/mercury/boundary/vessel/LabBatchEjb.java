@@ -559,15 +559,42 @@ public class LabBatchEjb {
     }
 
     /**
+     * Returned by validateRackScan method.
+     */
+    public static class ValidateRackScanReturn {
+        private List<LabVessel> controlTubes;
+        private List<LabVessel> addTubes;
+        private List<LabVessel> removeTubes;
+
+        ValidateRackScanReturn(List<LabVessel> controlTubes, List<LabVessel> addTubes,
+                List<LabVessel> removeTubes) {
+            this.controlTubes = controlTubes;
+            this.addTubes = addTubes;
+            this.removeTubes = removeTubes;
+        }
+
+        public List<LabVessel> getControlTubes() {
+            return controlTubes;
+        }
+
+        public List<LabVessel> getAddTubes() {
+            return addTubes;
+        }
+
+        public List<LabVessel> getRemoveTubes() {
+            return removeTubes;
+        }
+    }
+
+    /**
      * Finds in the controls in a scan of a new LCSET rack.
      * @param lcsetName LCSET-1234
      * @param rackScan map from rack position to barcode
      * @param messageCollection errors returned to ActionBean
-     * @return list of control barcodes
+     * @return tubes segregated by action
      */
-    public List<String> findControlsInRackScan(String lcsetName, Map<String, String> rackScan,
+    public ValidateRackScanReturn validateRackScan(String lcsetName, Map<String, String> rackScan,
             MessageCollection messageCollection) {
-        List<String> controlBarcodes = new ArrayList<>();
 
         Map<String, LabVessel> mapBarcodeToTube = tubeDao.findByBarcodes(new ArrayList<>(rackScan.values()));
         List<Control> controls = controlDao.findAllActive();
@@ -593,6 +620,8 @@ public class LabBatchEjb {
         }
         Map<String, SampleData> mapSampleNameToData = sampleDataFetcher.fetchSampleData(sampleNames);
 
+        List<LabVessel> controlTubes = new ArrayList<>();
+        List<LabVessel> addTubes = new ArrayList<>();
         for (Map.Entry<String, String> positionBarcodeEntry : rackScan.entrySet()) {
             LabVessel barcodedTube = mapBarcodeToTube.get(positionBarcodeEntry.getValue());
             if (barcodedTube != null) {
@@ -610,17 +639,26 @@ public class LabBatchEjb {
                         if (found) {
                             messageCollection.addWarning(barcodedTube.getLabel() +  " is already in this LCSET");
                         } else {
-                            controlBarcodes.add(barcodedTube.getLabel());
+                            controlTubes.add(barcodedTube);
                         }
                     } else {
                         if (!found) {
-                            messageCollection.addError(barcodedTube.getLabel() + " is not in this LCSET");
+                            addTubes.add(barcodedTube);
                         }
                     }
                 }
             }
         }
-        return controlBarcodes;
+
+        LabBatch labBatch = labBatchDao.findByBusinessKey(lcsetName);
+        List<LabVessel> removeTubes = new ArrayList<>();
+        for (BucketEntry bucketEntry : labBatch.getBucketEntries()) {
+            if (!mapBarcodeToTube.containsKey(bucketEntry.getLabVessel().getLabel())) {
+                removeTubes.add(bucketEntry.getLabVessel());
+            }
+        }
+
+        return new ValidateRackScanReturn(controlTubes, addTubes, removeTubes);
     }
 
     /**
