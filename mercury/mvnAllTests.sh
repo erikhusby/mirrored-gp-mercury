@@ -85,7 +85,7 @@ else
     GOALS="clean clover:setup verify"
     rm -rf clover/
     mkdir clover
-    BUILD_PROFILE="$BUILD_PROFILE,Clover.All -Dmaven.clover.licenseLocation=/prodinfolocal/BambooHome/clover.license"
+    BUILD_PROFILE="$BUILD_PROFILE,Clover.All -Dmaven.clover.licenseLocation=/prodinfolocal/BambooHome/clover.license -DmercuryCloverDatabase=clover/clover.db"
 fi
 
 OPTIONS="-PArquillian-JBossAS7-Remote,$BUILD_PROFILE -Djava.awt.headless=true --batch-mode -Dmaven.download.meter=silent "
