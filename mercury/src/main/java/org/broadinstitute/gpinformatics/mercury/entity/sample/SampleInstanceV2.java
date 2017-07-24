@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
@@ -504,7 +505,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         if (sampleInstanceEntity != null) {
             setIsPooledTube(true);
             MercurySample mercurySample = sampleInstanceEntity.getMercurySample();
-            mergeDevConditions(sampleInstanceEntity.getExperiment(), sampleInstanceEntity.getSubTasks());
+            mergePooledTubeDevConditions(sampleInstanceEntity.getExperiment(), sampleInstanceEntity.getSubTasks());
             mergeReagents(sampleInstanceEntity.getReagentDesign());
             mergeMolecularIndex(sampleInstanceEntity.getMolecularIndexingScheme());
             mergeRootSamples(sampleInstanceEntity.getRootSample());
@@ -513,6 +514,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             mergeReadLength(sampleInstanceEntity);
             mercurySamples.add(mercurySample);
         } else {
+            mergeDevConditions(labVessel);
             mercurySamples.addAll(labVessel.getMercurySamples());
         }
 
@@ -678,12 +680,28 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         return reagentsDesigns;
     }
 
-    private void mergeDevConditions(String experimentName, List<String> subTasks)
+    private void mergePooledTubeDevConditions(String experimentName, List<String> subTasks)
     {
         devConditions.addAll(subTasks);
         tzDevExperimentData = new TZDevExperimentData(experimentName,subTasks);
 
     }
+
+    private void mergeDevConditions(LabVessel labVessel)
+    {
+
+        for(JiraTicket ticket : labVessel.getJiraTickets()) {
+            if(ticket != null){
+                devConditions.add(ticket.getTicketId());
+            }
+        }
+        if(devConditions.size() > 0 ) {
+            //The experiment data will be populated from the parent Jira ticket.
+            tzDevExperimentData = new TZDevExperimentData(null, devConditions);
+        }
+
+    }
+
 
     public Date getLibraryCreationDate() {
         return getSingleBucketEntry().getLabVessel().getCreatedOn();

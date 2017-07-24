@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
@@ -83,6 +84,9 @@ public class ZimsIlluminaRunFactory {
     private FlowcellDesignationEjb flowcellDesignationEjb;
 
     private static final Log log = LogFactory.getLog(ZimsIlluminaRunFactory.class);
+
+    @Inject
+    private JiraService jiraService;
 
     @Inject
     public ZimsIlluminaRunFactory(SampleDataFetcher sampleDataFetcher,
@@ -540,7 +544,7 @@ public class ZimsIlluminaRunFactory {
                 strain, aligner, rrbsSizeRange, restrictionEnzyme, bait, labMeasuredInsertSize,
                 positiveControl, negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation,
                 catNames, productOrder, lcSet, sampleData, labWorkflow, libraryCreationDate, pdoSampleName,
-                metadataSourceForPipelineAPI, aggregationDataType, pooledTubeCollaboratorId);
+                metadataSourceForPipelineAPI, aggregationDataType, pooledTubeCollaboratorId, jiraService);
         if (isCrspLane) {
             crspPipelineUtils.setFieldsForCrsp(libraryBean, sampleData, bait);
         }

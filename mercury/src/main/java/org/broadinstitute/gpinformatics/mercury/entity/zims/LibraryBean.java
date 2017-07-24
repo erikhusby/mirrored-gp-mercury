@@ -11,8 +11,8 @@ import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-
 import org.codehaus.jackson.annotate.JsonProperty;
 
 import java.util.ArrayList;
@@ -222,14 +222,14 @@ public class LibraryBean {
     }
 
     public LibraryBean(String library, String initiative, Long workRequest, MolecularIndexingScheme indexingScheme,
-            Boolean hasIndexingRead, String expectedInsertSize, String analysisType,
-            String referenceSequence, String referenceSequenceVersion, String organism, String species,
-            String strain, String aligner, String rrbsSizeRange, String restrictionEnzyme, String bait,
-            double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl,
-            TZDevExperimentData devExperimentData, Collection<String> gssrBarcodes, String gssrSampleType,
-            Boolean doAggregation, Collection<String> customAmpliconSetNames, ProductOrder productOrder,
-            String lcSet, SampleData sampleData, String labWorkflow, String libraryCreationDate,
-            String productOrderSample, String metadataSource, String aggregationDataType, String pooledTubeCollaboratorId) {
+                       Boolean hasIndexingRead, String expectedInsertSize, String analysisType,
+                       String referenceSequence, String referenceSequenceVersion, String organism, String species,
+                       String strain, String aligner, String rrbsSizeRange, String restrictionEnzyme, String bait,
+                       double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl,
+                       TZDevExperimentData devExperimentData, Collection<String> gssrBarcodes, String gssrSampleType,
+                       Boolean doAggregation, Collection<String> customAmpliconSetNames, ProductOrder productOrder,
+                       String lcSet, SampleData sampleData, String labWorkflow, String libraryCreationDate,
+                       String productOrderSample, String metadataSource, String aggregationDataType, String pooledTubeCollaboratorId, JiraService jiraService) {
 
         // project was always null in the calls here, so don't send it through. Can add back later.
         this(library, null, initiative, workRequest, indexingScheme, hasIndexingRead, expectedInsertSize,
@@ -237,7 +237,7 @@ public class LibraryBean {
                 aligner, rrbsSizeRange, restrictionEnzyme, bait, null, labMeasuredInsertSize, positiveControl,
                 negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation, customAmpliconSetNames,
                 productOrder, lcSet, sampleData, labWorkflow, productOrderSample, libraryCreationDate, null, null,
-                metadataSource, aggregationDataType, pooledTubeCollaboratorId);
+                metadataSource, aggregationDataType, pooledTubeCollaboratorId, jiraService);
     }
 
     /**
@@ -294,7 +294,7 @@ public class LibraryBean {
             Boolean doAggregation, Collection<String> customAmpliconSetNames, ProductOrder productOrder,
             String lcSet, SampleData sampleData, String labWorkflow, String productOrderSample,
             String libraryCreationDate, String workRequestType, String workRequestDomain, String metadataSource,
-            String aggregationDataType, String pooledTubeCollaboratorId) {
+            String aggregationDataType, String pooledTubeCollaboratorId, JiraService jiraService) {
 
         this(sampleLSID, gssrSampleType, collaboratorSampleId, organism, species, strain, individual, sampleData,
                 labWorkflow, productOrderSample, libraryCreationDate,pooledTubeCollaboratorId);
@@ -318,7 +318,7 @@ public class LibraryBean {
         isPositiveControl = positiveControl;
         isNegativeControl = negativeControl;
         if (devExperimentData != null) {
-            this.devExperimentData = new DevExperimentDataBean(devExperimentData);
+            this.devExperimentData = new DevExperimentDataBean(devExperimentData, jiraService);
         }
         this.gssrBarcodes = gssrBarcodes;
         this.doAggregation = doAggregation;
