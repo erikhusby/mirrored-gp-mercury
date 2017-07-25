@@ -262,6 +262,11 @@ public class MercurySampleData implements SampleData {
     }
 
     @Override
+    public String getCollectionWithoutGroup() {
+        return "";
+    }
+
+    @Override
     public String getCollectionId() {
         return "";
     }

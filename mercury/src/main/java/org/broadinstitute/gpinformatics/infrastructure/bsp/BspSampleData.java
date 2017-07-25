@@ -292,6 +292,11 @@ public class BspSampleData implements SampleData {
     }
 
     @Override
+    public String getCollectionWithoutGroup() {
+        return getValue(BSPSampleSearchColumn.BSP_COLLECTION_NAME);
+    }
+
+    @Override
     public String getCollectionId() {
         return getValue(BSPSampleSearchColumn.BSP_COLLECTION_BARCODE);
     }
