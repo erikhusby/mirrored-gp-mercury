@@ -71,7 +71,6 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -86,6 +85,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
@@ -914,32 +914,33 @@ public class ProductOrderActionBeanTest {
 
         // But "fetch all" is represented as -1 so here the number of returned samples is 'totalSamples'.
         testCases.add(new Object[]{/*startRow*/ 0, /*pageLength*/ -1, /*totalSamples*/ 10, /*expectedReturned*/ 10});
+
         // even when the current page is not the first
         testCases.add(new Object[]{/*startRow*/ 2, /*pageLength*/ -1, /*totalSamples*/ 10, /*expectedReturned*/ 10});
-        testCases.add(new Object[]{/*startRow*/ 1, /*pageLength*/ 1, /*totalSamples*/ 1, /*expectedReturned*/ 0});
+        testCases.add(new Object[]{/*startRow*/ 1, /*pageLength*/ 1, /*totalSamples*/ 1, /*expectedReturned*/ 1});
+        testCases.add(new Object[]{/*startRow*/ 5, /*pageLength*/ 5, /*totalSamples*/ 5, /*expectedReturned*/ 5});
         testCases.add(new Object[]{/*startRow*/ 1, /*pageLength*/ 5, /*totalSamples*/ 10, /*expectedReturned*/ 5});
 
         return testCases.iterator();
     }
 
     @Test(dataProvider = "getSamplesForAjaxDataProvider")
-    public void testGetSamplesForAjax(int startRow, int pageLength, int totalSamples, int expectedReturned) throws IOException {
+    public void testGetPageOneSamples(int startRow, int pageLength, int totalSamples, int expectedReturned) throws Exception {
         State tableState = buildTestState(startRow, pageLength);
 
         actionBean.setState(tableState);
-        List<ProductOrderSample> samples =getInitializedSamples(totalSamples);
+        List<ProductOrderSample> samples =getInitializedSamples(totalSamples, "SM-");
 
         try {
-            List<ProductOrderSample> sampleList = ProductOrderActionBean.sampleSublistFromState(tableState, samples);
+            List<ProductOrderSample> sampleList = ProductOrderActionBean.getPageOneSamples(tableState, samples);
             assertThat(sampleList, hasSize(expectedReturned));
+            assertThat(sampleList.get(0), equalTo(samples.get(0)));
         } catch (IllegalArgumentException e) {
-                Assert.fail("should not have happened", e);
-            }
+            Assert.fail("should not have happened", e);
+        }
     }
 
     private State buildTestState(int startRow, int pageLength) {
-        List<ProductOrderSample> samples =getInitializedSamples(pageLength);
-
         Search search = new Search("foo", true, false, false);
         State tableState;
         tableState  = new State(new Date().getTime(), startRow, pageLength, Collections.<Map<Integer, State.Direction>>emptyList(), search,
@@ -947,13 +948,13 @@ public class ProductOrderActionBeanTest {
         return tableState;
     }
 
-    private List<ProductOrderSample> getInitializedSamples(int totalSamples) {
+    private List<ProductOrderSample> getInitializedSamples(int totalSamples, final String prefix) {
         if (totalSamples == 0) {
             return null;
         }
         List<ProductOrderSample> samples = new ArrayList<>();
         for (int sampleNum = 0; sampleNum < totalSamples; sampleNum++) {
-            String sampleName = "SM-" + sampleNum;
+            String sampleName = prefix + sampleNum;
             MercurySample mercurySample = new MercurySample(sampleName, Collections.<Metadata>emptySet());
             ProductOrderSample productOrderSample = new ProductOrderSample(sampleName);
             productOrderSample.setMercurySample(mercurySample);
