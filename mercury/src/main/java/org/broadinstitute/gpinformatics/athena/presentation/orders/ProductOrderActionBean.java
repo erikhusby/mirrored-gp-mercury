@@ -2060,7 +2060,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     /**
-     * Get the first page's worth of samples based on the current page length of the datatable. This method always
+     * Returns the first page's worth of samples based on the current page length of the datatable. This method always
      * returns  0 .. page length (or All, if that is what is selected).
      */
     static List<ProductOrderSample> getPageOneSamples(State state, List<ProductOrderSample> samples) {
