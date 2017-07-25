@@ -85,12 +85,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
+import static org.hamcrest.Matchers.isIn;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderActionBeanTest {
@@ -934,7 +935,10 @@ public class ProductOrderActionBeanTest {
         try {
             List<ProductOrderSample> sampleList = ProductOrderActionBean.getPageOneSamples(tableState, samples);
             assertThat(sampleList, hasSize(expectedReturned));
-            assertThat(sampleList.get(0), equalTo(samples.get(0)));
+
+            // all items from subset are included in original list.
+            assertThat(sampleList, everyItem(isIn(samples.toArray(new ProductOrderSample[samples.size()]))));
+
         } catch (IllegalArgumentException e) {
             Assert.fail("should not have happened", e);
         }
