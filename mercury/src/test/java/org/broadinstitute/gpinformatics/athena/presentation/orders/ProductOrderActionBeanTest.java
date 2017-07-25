@@ -909,7 +909,7 @@ public class ProductOrderActionBeanTest {
     public Iterator<Object[]> getSamplesForAjaxDataProvider() {
         List<Object[]> testCases = new ArrayList<>();
 
-        // The expected number of returned samples is 'pageLength' - 'startRow' or 'totalSamples', whichever is less.
+        // The expected number of returned samples is 'pageLength' or 'All' samples whcih is represented as -1 internally.
         testCases.add(new Object[]{/*startRow*/ 0, /*pageLength*/ 1, /*totalSamples*/ 1, /*expectedReturned*/ 1});
         testCases.add(new Object[]{/*startRow*/ 0, /*pageLength*/ 5, /*totalSamples*/ 10, /*expectedReturned*/ 5});
 
