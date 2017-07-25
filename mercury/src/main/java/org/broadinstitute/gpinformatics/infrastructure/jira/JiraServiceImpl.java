@@ -195,11 +195,18 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
                 JiraIssue issueResult = new JiraIssue(key, this);
                 issueResult.setSummary(data.summary);
                 issueResult.setStatus(data.status);
-                issueResult.setDescription(data.description);
-                issueResult.setDueDate(data.dueDate);
+                if( data.description != null ) {
+                    issueResult.setDescription(data.description);
+                }
+                if( data.dueDate != null ) {
+                    issueResult.setDueDate(data.dueDate);
+                }
                 issueResult.setCreated(data.created);
                 issueResult.setReporter(data.reporter);
-                issueResult.setSubTasks(data.subTasks);
+
+                if( data.subTasks != null ) {
+                    issueResult.setSubTasks(data.subTasks);
+                }
                 issueResult.setConditions(data.subTaskSummaries, data.subTaskKeys);
 
                 if (null != fields) {

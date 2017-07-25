@@ -74,12 +74,25 @@ public class FctCreateEtl extends GenericEntityEtl<LabBatchStartingVessel,LabBat
             lane = labBatchStartingVessel.getVesselPosition().toString().replace("LANE","");
         }
 
+        boolean poolTest = false;
+
         // Gets pool test from the designation if it exists. Otherwise assumes MiSeq runs are pool tests.
-        List<FlowcellDesignation> flowcellDesignations = flowcellDesignationEjb.getFlowcellDesignations(
-                Collections.singleton(labBatchStartingVessel.getLabVessel()));
-        boolean poolTest = CollectionUtils.isNotEmpty(flowcellDesignations) ?
-                flowcellDesignations.iterator().next().isPoolTest() :
-                labBatch.getLabBatchType() == LabBatch.LabBatchType.MISEQ;
+        if( labBatch.getLabBatchType() == LabBatch.LabBatchType.MISEQ ) {
+            poolTest = true;
+        } else if( labBatchStartingVessel.getFlowcellDesignation() != null ) {
+            poolTest = labBatchStartingVessel.getFlowcellDesignation().isPoolTest();
+        } else {
+            // Designations haven't been assigned to the FCT
+            //   - Use the latest designation created before the FCT batch was created
+            List<FlowcellDesignation> flowcellDesignations = flowcellDesignationEjb.getFlowcellDesignations(
+                    Collections.singleton(labBatchStartingVessel.getLabVessel()));
+            for( FlowcellDesignation flowcellDesignation :  flowcellDesignations ) {
+                if( flowcellDesignation.getCreatedOn().compareTo(labBatch.getCreatedOn()) < 0 ) {
+                    poolTest = flowcellDesignation.isPoolTest();
+                    break;
+                }
+            }
+        }
 
         return genericRecord(etlDateStr, isDelete,
                 labBatchStartingVessel.getBatchStartingVesselId(),

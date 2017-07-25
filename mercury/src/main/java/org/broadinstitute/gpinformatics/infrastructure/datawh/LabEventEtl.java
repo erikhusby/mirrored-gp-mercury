@@ -1,16 +1,12 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
-import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
-import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
@@ -240,65 +236,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     protected void processFixups(Collection<Long> deletedEntityIds,
                                  Collection<Long> modifiedEntityIds,
                                  String etlDateStr) throws Exception {
-
-
-        Set<Long> fixupEventIds = new HashSet<>(deletedEntityIds);
-        fixupEventIds.addAll(modifiedEntityIds);
-
-        // Gets the downstream events from first level vessels and their descendant vessels.
-        Set<LabVessel> firstLevelVessels = new HashSet<>();
-        for (Long entityId : fixupEventIds) {
-            LabEvent entity = dao.findById(LabEvent.class, entityId);
-            if (entity != null) {
-                firstLevelVessels.addAll(entity.getTargetLabVessels());
-                firstLevelVessels.add(entity.getInPlaceLabVessel());
-            } else {
-                loggingDeletedEventIds.add(entityId);
-            }
-        }
-
-        Set<LabVessel> directAndDescendantVessels = new HashSet<>();
-        for (LabVessel vessel : firstLevelVessels) {
-            if (vessel != null) {
-                directAndDescendantVessels.add(vessel);
-                Collection<LabVessel> vessels = vessel.getDescendantVessels();
-                if (!CollectionUtils.isEmpty(vessels)) {
-                    directAndDescendantVessels.addAll(vessels);
-                }
-            }
-        }
-
-        Set<Long> descendantEventIds = new HashSet<>();
-        Set<Long> descendantSequencingRunIds = new HashSet<>();
-
-        for (LabVessel vessel : directAndDescendantVessels) {
-            for (LabEvent event : vessel.getEvents()) {
-                descendantEventIds.add(event.getLabEventId());
-            }
-
-            // Collects sequencing run ids from flowcell descendent vessels.
-            if (vessel.getType().equals(LabVessel.ContainerType.FLOWCELL)) {
-                if (OrmUtil.proxySafeIsInstance(vessel, RunCartridge.class)) {
-                    RunCartridge runCartridge = (RunCartridge) vessel;
-                    for (SequencingRun seqRun : runCartridge.getSequencingRuns()) {
-                        descendantSequencingRunIds.add(seqRun.getSequencingRunId());
-                    }
-                }
-            }
-        }
-        // Adds all except the deleted events to the modified list.
-        modifiedEntityIds.addAll(descendantEventIds);
-        modifiedEntityIds.removeAll(deletedEntityIds);
-
-        if (descendantSequencingRunIds.size() > 0) {
-            // Creates a sequencingSampleFact .dat file that contains the possibly modified sequencing runs.
-            sequencingSampleFactEtl.writeEtlDataFileWrapper(
-                    Collections.<Long>emptyList(),
-                    descendantSequencingRunIds,
-                    Collections.<Long>emptyList(),
-                    Collections.<GenericEntityEtl<SequencingRun, SequencingRun>.RevInfoPair<SequencingRun>>emptyList(),
-                    etlDateStr);
-        }
+        // See GPLIM-4731 This didn't catch all the necessary downstream dependent events, etc. to do a full fixup
     }
 
 

@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.run;
 
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.envers.Audited;
@@ -14,7 +13,6 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.math.BigDecimal;
@@ -49,13 +47,6 @@ public class FlowcellDesignation {
     @ManyToOne
     @JoinColumn(name = "CHOSEN_LCSET" )
     private LabBatch chosenLcset;
-
-    /** The lab event that gave rise to the loading tube, typically normalization transfer, denature transfer,
-     * or pooling transfer */
-    @Nonnull
-    @OneToOne
-    @JoinColumn(name = "LOADING_TUBE_EVENT" )
-    private LabEvent loadingTubeEvent;
 
     @Enumerated(EnumType.STRING)
     private IndexType indexType;
@@ -148,13 +139,12 @@ public class FlowcellDesignation {
     public FlowcellDesignation() {
     }
 
-    public FlowcellDesignation(@Nonnull LabVessel loadingTube, LabBatch chosenLcset, @Nonnull LabEvent loadingTubeEvent,
-                               IndexType indexType, boolean poolTest, IlluminaFlowcell.FlowcellType sequencerModel,
-                               Integer numberLanes, Integer readLength, BigDecimal loadingConc, boolean pairedEndRead,
-                               Status status, Priority priority) {
+    public FlowcellDesignation(@Nonnull LabVessel loadingTube, LabBatch chosenLcset,
+            IndexType indexType, boolean poolTest, IlluminaFlowcell.FlowcellType sequencerModel,
+            Integer numberLanes, Integer readLength, BigDecimal loadingConc, boolean pairedEndRead,
+            Status status, Priority priority) {
         this.loadingTube = loadingTube;
         this.chosenLcset = chosenLcset;
-        this.loadingTubeEvent = loadingTubeEvent;
         this.createdOn = new Date();
         this.indexType = indexType;
         this.poolTest = poolTest;
@@ -183,15 +173,6 @@ public class FlowcellDesignation {
 
     public void setChosenLcset(LabBatch lcset) {
         this.chosenLcset = lcset;
-    }
-
-    @Nonnull
-    public LabEvent getLoadingTubeEvent() {
-        return loadingTubeEvent;
-    }
-
-    public void setLoadingTubeEvent(@Nonnull LabEvent loadingTubeEvent) {
-        this.loadingTubeEvent = loadingTubeEvent;
     }
 
     public Date getCreatedOn() {

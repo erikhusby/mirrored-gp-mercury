@@ -85,6 +85,13 @@ public class AttributeDefinition {
         return group;
     }
 
+    /**
+     * Fixup test requires access
+     */
+    public void setGroup( String group ) {
+        this.group = group;
+    }
+
     public DefinitionType getDefinitionType() {
         return definitionType;
     }
@@ -116,4 +123,5 @@ public class AttributeDefinition {
     public void setIsGroupAttribute(boolean isGroupAttribute) {
         this.isGroupAttribute = isGroupAttribute;
     }
+
 }

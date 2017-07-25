@@ -221,7 +221,7 @@ public class LabMetricSearchDefinition {
                 return results;
             }
         });
-        searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getLcsetInputConverter());
+        searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getBatchNameInputConverter());
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();

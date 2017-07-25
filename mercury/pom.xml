@@ -8,7 +8,7 @@
     file as well until such a time that we reconfigure the mercury structure to have a dependant project or something
      that can inherit this version setting. -->
 
-    <version>1.80-SNAPSHOT</version>
+    <version>1.81-SNAPSHOT</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
@@ -217,6 +217,8 @@
 
         <bspclient.version>[1.3,)</bspclient.version>
 
+	<mercuryCloverDatabase>${project.build.directory}/clover/clover.db</mercuryCloverDatabase>
+
     </properties>
 
     <profiles>
@@ -239,7 +241,7 @@
                         <groupId>com.atlassian.maven.plugins</groupId>
                         <artifactId>clover-maven-plugin</artifactId>
                         <configuration>
-                            <cloverDatabase>${project.build.directory}/clover/clover.db</cloverDatabase>
+                            <cloverDatabase>${mercuryCloverDatabase}</cloverDatabase>
                             <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
                             <includesAllSourceRoots>false</includesAllSourceRoots>
                             <targetPercentage>${clover.targetPercentage}</targetPercentage>
@@ -283,7 +285,7 @@
                         <groupId>com.atlassian.maven.plugins</groupId>
                         <artifactId>clover-maven-plugin</artifactId>
                         <configuration>
-                            <cloverDatabase>${project.build.directory}/clover/clover.db</cloverDatabase>
+                            <cloverDatabase>${mercuryCloverDatabase}</cloverDatabase>
                             <fullRunEvery>60</fullRunEvery>
                             <snapshot>${user.home}/.clover/${project.groupId}-${project.artifactId}/clover.snapshot
                             </snapshot>
@@ -313,7 +315,7 @@
                         <groupId>com.atlassian.maven.plugins</groupId>
                         <artifactId>clover-maven-plugin</artifactId>
                         <configuration>
-                            <cloverDatabase>${project.build.directory}/clover/clover.db</cloverDatabase>
+                            <cloverDatabase>${mercuryCloverDatabase}</cloverDatabase>
                             <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
                             <includesAllSourceRoots>false</includesAllSourceRoots>
                             <targetPercentage>${clover.targetPercentage}</targetPercentage>
@@ -340,7 +342,7 @@
                         <groupId>com.atlassian.maven.plugins</groupId>
                         <artifactId>clover-maven-plugin</artifactId>
                         <configuration>
-                            <cloverDatabase>${project.build.directory}/clover/clover.db</cloverDatabase>
+                            <cloverDatabase>${mercuryCloverDatabase}</cloverDatabase>
                             <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
                             <includesAllSourceRoots>false</includesAllSourceRoots>
                             <targetPercentage>${clover.targetPercentage}</targetPercentage>
@@ -380,7 +382,7 @@
                         <artifactId>clover-maven-plugin</artifactId>
                         <version>${clover.plugin.version}</version>
                         <configuration>
-                            <cloverDatabase>${project.build.directory}/clover/clover.db</cloverDatabase>
+                            <cloverDatabase>${mercuryCloverDatabase}</cloverDatabase>
                             <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
                             <generateHistorical>true</generateHistorical>
                             <generateHtml>true</generateHtml>

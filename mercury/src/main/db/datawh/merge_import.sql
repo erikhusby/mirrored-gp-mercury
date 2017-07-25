@@ -1051,6 +1051,7 @@ AS
               skip_regulatory_reason = new.skip_regulatory_reason,
               sap_order_number = new.sap_order_number,
               array_chip_type = new.array_chip_type,
+              call_rate_threshold = new.call_rate_threshold,
               etl_date = new.etl_date
             WHERE product_order_id = new.product_order_id;
 
@@ -1072,6 +1073,7 @@ AS
               skip_regulatory_reason,
               sap_order_number,
               array_chip_type,
+              call_rate_threshold,
               etl_date
             ) VALUES (
               new.product_order_id,
@@ -1088,6 +1090,7 @@ AS
               new.skip_regulatory_reason,
               new.sap_order_number,
               new.array_chip_type,
+              new.call_rate_threshold,
               new.etl_date );
 
             V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;

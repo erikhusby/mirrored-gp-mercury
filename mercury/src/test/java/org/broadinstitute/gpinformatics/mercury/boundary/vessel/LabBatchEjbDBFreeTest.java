@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
@@ -180,8 +181,8 @@ public class LabBatchEjbDBFreeTest {
         for (LabVessel tube : mapBarcodeToTube.values()) {
             VesselPosition lane =
                     IlluminaFlowcell.FlowcellType.HiSeqFlowcell.getVesselGeometry().getVesselPositions()[idx++];
-            vesselToLanesInfo.add(
-                    new LabBatch.VesselToLanesInfo(Collections.singletonList(lane), BigDecimal.TEN, tube));
+            vesselToLanesInfo.add(new LabBatch.VesselToLanesInfo(Collections.singletonList(lane), BigDecimal.TEN,
+                    tube, "LCSET-0004", "CP Human WES (80/20)", Collections.<FlowcellDesignation>emptyList()));
         }
         LabBatch testBatch = new LabBatch(testFCTKey, vesselToLanesInfo, LabBatch.LabBatchType.FCT,
                 IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell);

@@ -38,9 +38,9 @@
 
 <script type="text/javascript">
     atLeastOneChecked = function (name, form) {
-        var checkboxes = form.getInputs("checkbox", name);
+        var checkboxes = $j( ":checkbox", form );
         for (var i = 0; i < checkboxes.length; ++i) {
-            if (checkboxes[i].checked) {
+            if (checkboxes[i].name === name && checkboxes[i].checked) {
                 return true;
             }
         }

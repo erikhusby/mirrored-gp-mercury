@@ -77,8 +77,6 @@ import java.util.Map;
 import java.util.Random;
 
 import static org.broadinstitute.gpinformatics.Matchers.argThat;
-import static org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation_.loadingConc;
-import static org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation_.poolTest;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
@@ -394,7 +392,6 @@ public class ZimsIlluminaRunFactoryTest {
         boolean pairedRead = false;
 
         FlowcellDesignation flowcellDesignation = new FlowcellDesignation(denatureTube, null,
-                new LabEvent(LabEventType.DENATURE_TRANSFER, runDate, "location", 1L, 2L, "programName"),
                 FlowcellDesignation.IndexType.DUAL, false, IlluminaFlowcell.FlowcellType.HiSeqFlowcell, 8,
                 78, new BigDecimal(199), pairedRead, FlowcellDesignation.Status.IN_FCT,
                 FlowcellDesignation.Priority.NORMAL);

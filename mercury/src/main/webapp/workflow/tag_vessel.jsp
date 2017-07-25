@@ -1,12 +1,9 @@
-<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.workflow.TagVesselActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 <%@ taglib prefix='fn' uri='http://java.sun.com/jsp/jstl/functions' %>
 <%@ taglib uri="http://mercury.broadinstitute.org/Mercury/security" prefix="security" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
-<%@ page import="org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList" %>
-<%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean" %>
 
 <stripes:useActionBean var="actionBean" beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.TagVesselActionBean"/>
 <c:set var="conditionSummary" value="${actionBean.jiraIssues}"/>
@@ -168,13 +165,14 @@
                 $(position).attr('name', values);
                 if (position.checked) {
                     labelvar.innerHTML = text;
+                    $(position).prop('checked', true);
                 } else {
                     labelvar.innerHTML = "(no condition)";
                 }
             }
 
-            //This function creates the JSON objec that persists the entire select page state back to the action bean.
-            function allSelected()
+            //This function creates the JSON object that persists the entire select page state back to the action bean.
+            function submitSelectedItems()
             {
                 var results = [];
                 var selected = [];
@@ -188,7 +186,6 @@
                     selected.push($(this).attr('id'));
                     selectionResults.position = $(this).attr('id').replace("cells_","");
                     selectionResults.selection = $('label[for="' + $(this).attr('id') + '"]').html();
-                    $(this).attr('name',getDevConditionsID());
                     selectionResults.devCondition = $(this).attr('name');
                     results.push(selectionResults);
                 });
@@ -229,12 +226,14 @@
                     }
                     if(this.checked) {
                         $("[id^=label_]").text(text.toString());
-                    }
+                        $("[id^=cells_]").attr('name', values);
+                        $("[id^=cells_]").prop( "checked", true );
+                }
                     else {
                         $("[id^=label_]").text("(no condition.)");
+                        $("[id^=cells_]").attr('name', "");
+                        $("[id^=cells_]").prop( "checked", false);
                     }
-
-                    $("[id^=cells_]").prop('checked', this.checked);
 
                 });
 
@@ -316,7 +315,7 @@
             </div>
             </br>
             <label><h3>${actionBean.ticketSummary}</h3></label>
-            <label>${actionBean.displayCoditions}</label>
+            <label>${actionBean.displayConditions}</label>
             </br>
             <div style="clear: left;" id="searchInput">
                 <stripes:layout-render name="/vessel/rack_scanner_list_with_sim_part2.jsp" bean="${actionBean}"/>
@@ -379,7 +378,7 @@
                                             <c:set var="vesselLabel" value="${actionBean.getVesselLabelByPosition(positionTest)}"/>
                                             <c:if test="${vesselLabel.length() > 1}">
                                                 <c:set var="isTagged" value="${actionBean.isVesselTagged(positionTest)}"/>
-                                                <c:set var="devCondition" value="${actionBean.displayDevCondtions(positionTest)}"/>
+                                                <c:set var="devCondition" value="${actionBean.displayDevConditions(positionTest)}"/>
                                             </c:if>
                                             <td  align="left">
                                                 <c:if test="${vesselLabel.length() > 1}">
@@ -405,9 +404,9 @@
                                 </c:forEach>
                             </table>
                             </br>
-                            <stripes:submit id="submitSelection" name="tagVessel" value="Submit" onclick="allSelected()"
+                            <stripes:submit id="submitSelection" name="tagVessel" value="Submit" onclick="submitSelectedItems()"
                                             class="btn btn-primary"/>
-                            <stripes:submit id="submitSelection" name="createSpreadsheet"  onclick="allSelected()"
+                            <stripes:submit id="submitSelection" name="createSpreadsheet"  onclick="submitSelectedItems()"
                                             value="Create Spreadsheet" class="btn btn-primary"/>
                         </c:when>
                     </c:choose>

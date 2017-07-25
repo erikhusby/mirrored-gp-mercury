@@ -3,11 +3,13 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 import com.google.common.collect.HashMultimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
+import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
@@ -16,9 +18,11 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 
@@ -31,6 +35,7 @@ import javax.inject.Inject;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -128,11 +133,11 @@ public class BillingAdaptor implements Serializable {
         boolean errorsInBilling = false;
 
         List<BillingEjb.BillingResult> results = new ArrayList<>();
+        Quote quote;
 
         BillingSession billingSession = billingSessionAccessEjb.findAndLockSession(sessionKey);
         try {
-            List<QuoteImportItem> unBilledQuoteImportItems =
-                    null;
+            List<QuoteImportItem> unBilledQuoteImportItems = null;
             try {
                 unBilledQuoteImportItems = billingSession.getUnBilledQuoteImportItems(priceListCache);
             } catch (QuoteServerException e) {
@@ -144,19 +149,59 @@ public class BillingAdaptor implements Serializable {
                 throw new BillingException(BillingEjb.NO_ITEMS_TO_BILL_ERROR_TEXT);
             }
 
+            for(QuoteImportItem itemForPriceUpdate : unBilledQuoteImportItems) {
+                final List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(itemForPriceUpdate.getProductOrder());
+                final MessageCollection messageCollection = new MessageCollection();
+                List<String> effectivePricesForProducts;
+
+                try {
+                    quote = quoteService.getQuoteByAlphaId(itemForPriceUpdate.getQuoteId());
+                    ProductOrder.checkQuoteValidity(quote,
+                            DateUtils.truncate(itemForPriceUpdate.getWorkCompleteDate(), Calendar.DATE));
+
+                    //todo SGM is this call really necessary?  Is it just for DBFree tests?
+                    quote.setAlphanumericId(itemForPriceUpdate.getQuoteId());
+                    effectivePricesForProducts = priceListCache
+                            .getEffectivePricesForProducts(allProductsOrdered, quote);
+
+                    if(itemForPriceUpdate.getProductOrder().isSavedInSAP()) {
+                        if (!StringUtils.equals(itemForPriceUpdate.getProductOrder().latestSapOrderDetail().getOrderPricesHash(),
+                                TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ",")))
+                                ) {
+                            productOrderEjb.publishProductOrderToSAP(itemForPriceUpdate.getProductOrder(), messageCollection, true);
+                        }
+                    }
+                } catch (QuoteServerException|QuoteNotFoundException|InvalidProductException|SAPInterfaceException e) {
+                    BillingEjb.BillingResult result = new BillingEjb.BillingResult(itemForPriceUpdate);
+
+                    final String errorMessage = "Unable to Update pricing in SAP for " +itemForPriceUpdate.getProductOrder().getBusinessKey()+": "+e.getMessage();
+                    itemForPriceUpdate.setBillingMessages(errorMessage);
+                    result.setErrorMessage(errorMessage);
+                    errorsInBilling = true;
+
+                    results.add(result);
+
+                    log.error(errorMessage);
+                }
+            }
+
+            if(!results.isEmpty()) {
+                throw new BillingException("Pricing Update to SAP Failed.  Unable to complete Billing Session at this time");
+            }
+
             HashMultimap<String, String> quoteItemsByQuote = HashMultimap.create();
             for (QuoteImportItem item : unBilledQuoteImportItems) {
 
                 BillingEjb.BillingResult result = new BillingEjb.BillingResult(item);
                 results.add(result);
 
-                Quote quote = null;
+                quote = null;
                 String sapBillingId = null;
                 String workId = null;
-                final MessageCollection messageCollection = new MessageCollection();
                 try {
                     quote = quoteService.getQuoteByAlphaId(item.getQuoteId());
-                    ProductOrder.checkQuoteValidity(item.getProductOrder(), quote);
+                    ProductOrder.checkQuoteValidity(quote,
+                            DateUtils.truncate(item.getWorkCompleteDate(), Calendar.DATE));
 
                     //todo SGM is this call really necessary?  Is it just for DBFree tests?
                     quote.setAlphanumericId(item.getQuoteId());

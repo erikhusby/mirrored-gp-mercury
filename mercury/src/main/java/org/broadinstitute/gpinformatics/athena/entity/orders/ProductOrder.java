@@ -69,6 +69,7 @@ import java.text.MessageFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -1970,6 +1971,20 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return (filteredResults != null) ? Iterators.size(filteredResults.iterator()) : 0;
     }
 
+    public static double getUnbilledLaneCount(ProductOrder order, Product targetProduct) {
+        double existingCount = 0;
+
+        for (ProductOrderSample targetSample : order.getSamples()) {
+            for (LedgerEntry ledgerItem: targetSample.getLedgerItems()) {
+                if(ledgerItem.getPriceItem().equals(targetProduct.getPrimaryPriceItem())) {
+                    existingCount += ledgerItem.getQuantity();
+                }
+            }
+
+        }
+        return order.getLaneCount() - existingCount;
+    }
+
     public boolean isSavedInSAP() {
         return StringUtils.isNotBlank(getSapOrderNumber());
     }
@@ -2039,21 +2054,24 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         this.pipelineLocation = pipelineLocation;
     }
 
-    public static void checkQuoteValidity(ProductOrder productOrder, Quote quote) throws QuoteServerException {
-        for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel()) {
+    public static void checkQuoteValidity(Quote quote) throws QuoteServerException {
+        final Date todayTruncated = DateUtils.truncate(new Date(), Calendar.DATE);
+
+        checkQuoteValidity(quote, todayTruncated);
+    }
+
+    public static void checkQuoteValidity(Quote quote, Date todayTruncated) throws QuoteServerException {
+        for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel(true)) {
             for (Funding funding : fundingLevel.getFunding()) {
 
-                if(funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
-                    if(funding.getGrantEndDate() != null &&
-                       !funding.getGrantEndDate().after(new Date())) {
+                if (funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
+                    if (!FundingLevel.isGrantActiveForDate(todayTruncated, funding)) {
                         throw new QuoteServerException("The funding source " + funding.getGrantNumber() +
                                                        " has expired making this quote currently unfunded.");
                     }
                 }
             }
-
         }
-
     }
 
     /**
