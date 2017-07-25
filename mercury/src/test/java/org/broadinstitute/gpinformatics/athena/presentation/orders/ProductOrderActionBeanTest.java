@@ -912,7 +912,7 @@ public class ProductOrderActionBeanTest {
         testCases.add(new Object[]{/*startRow*/ 0, /*pageLength*/ 1, /*totalSamples*/ 1, /*expectedReturned*/ 1});
         testCases.add(new Object[]{/*startRow*/ 0, /*pageLength*/ 5, /*totalSamples*/ 10, /*expectedReturned*/ 5});
 
-        // But "fetch all" is represented as -1 so here the number of retuned samples is 'totalSamples'.
+        // But "fetch all" is represented as -1 so here the number of returned samples is 'totalSamples'.
         testCases.add(new Object[]{/*startRow*/ 0, /*pageLength*/ -1, /*totalSamples*/ 10, /*expectedReturned*/ 10});
         // even when the current page is not the first
         testCases.add(new Object[]{/*startRow*/ 2, /*pageLength*/ -1, /*totalSamples*/ 10, /*expectedReturned*/ 10});
