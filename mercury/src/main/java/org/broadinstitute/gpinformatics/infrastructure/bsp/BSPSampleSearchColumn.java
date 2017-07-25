@@ -21,6 +21,7 @@ public enum BSPSampleSearchColumn {
     ROOT_SAMPLE("Root Sample(s)"),
     COLLECTION("Collection"),
     BSP_COLLECTION_BARCODE("BSP Collection Barcode"),
+    BSP_COLLECTION_NAME("BSP Collection Name"),
     STOCK_SAMPLE("Stock Sample"),
     PARENT_SAMPLES("Parent Sample(s)"),
     CONTAINER_ID("Container"),
