@@ -92,10 +92,6 @@ public class SampleInstanceEntity {
 
     public void setReadLength(Integer readLength) { this.readLength = readLength;  }
 
-    public Integer getReadLength() { return readLength; }
-
-    public void setReadLength(Integer readLength) { this.readLength = readLength; }
-
     public MercurySample getRootSample() {  return rootSample;  }
 
     public void setRootSample(MercurySample rootSample) { this.rootSample = rootSample;  }
