@@ -57,6 +57,8 @@ public class SampleInstanceEntity {
 
     private String experiment;
 
+    private Integer readLength;
+
     public void removeSubTasks() {
         sampleInstanceEntityTsks.clear();
     }
@@ -82,6 +84,9 @@ public class SampleInstanceEntity {
        return subTask;
     }
 
+    public Integer getReadLength() { return readLength; }
+
+    public void setReadLength(Integer readLength) { this.readLength = readLength;  }
 
     public MercurySample getRootSample() {  return rootSample;  }
 
