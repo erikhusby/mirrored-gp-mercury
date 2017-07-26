@@ -1955,12 +1955,20 @@ public class ProductOrderActionBean extends CoreActionBean {
      * and sending it back.<br/>This method also takes into account several factors when deciding which data to return:
      * <ul>
      *     <li><b>preferenceSaver.visibleColumns()</b> <code>Collection&lt;String&gt;</code>: Return data only for visible columns</li>
-     *     <li>POST/GET Parameter <b>sampleIdsForGetBspData</b> <code>String[]</code>: Which PDO sampleIds to receive data for if specified otherwise,
+     *     <li>POST/GET Parameter <b>sampleIdsForGetBspData</b> <code>String[]</code>: Which PDO sampleIds to receive data for if specified. Otherwise,
      *     all PDO Samples for this PDO are returned</li>
      *     <li>POST/GET Parameter <b>initialLoad</b> <code>Boolean</code>, <br/><ul><li>If true it is the initial call populating the DataTable. When true, sample data is returned only for the first page (which is saved in the tableState preference)</li>
      *     <li>If false, all sample data is returned</li></ul></li>
      *     <li>POST/GET Parameter <b>includeSampleSummary</b> <code>Boolean</code>, If true, return sample summary information. It is included in this JSON in order to prevent extra call to BSP for sample data</li>
      * </ul>
+     *
+     * The point of this method is to speed up the fetching of results by including all data only for the first page.
+     * By limiting the data returned in the initial page load, the UI appears to be much snappier. Subsequent ajax calls
+     * must be made to load the reamaining data.
+     *
+     * Note: Since Mercury does not currently do server-side sorting or filtering the subset of samples returned may
+     * not necessarily coincide with the first page displayed in the UI so the page may show gaps. However, since these
+     * are batch fetches, the gaps will be filled in with subsequent calls.
      */
     @HandlesEvent(GET_SAMPLE_DATA)
     public Resolution getSampleData() {
@@ -2001,11 +2009,9 @@ public class ProductOrderActionBean extends CoreActionBean {
                     jsonGenerator.writeStartObject();
                     jsonGenerator.writeObjectField(ProductOrderSampleBean.RECORDS_TOTAL, samples.size());
                     jsonGenerator.writeArrayFieldStart(ProductOrderSampleBean.DATA_FIELD);
-                    int tableLength = state.getEnd();
-                    int end = tableLength < samples.size() ? tableLength : samples.size();
                     int rowsWithSampleData=0;
                     if (initialLoad){
-                        List<ProductOrderSample> firstPage = new ArrayList<>(samples.subList(state.getStart(), end));
+                        List<ProductOrderSample> firstPage = getPageOneSamples(state, samples);
                         writeProductOrderSampleBean(jsonGenerator, firstPage, true, preferenceSaver);
                         rowsWithSampleData = firstPage.size();
                         List<ProductOrderSample> otherPages = new ArrayList<>(samples);
@@ -2051,6 +2057,20 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
         };
         return resolution;
+    }
+
+    /**
+     * Returns the first page's worth of samples based on the current page length of the datatable. This method always
+     * returns  0 .. page length (or All, if that is what is selected).
+     */
+    static List<ProductOrderSample> getPageOneSamples(State state, List<ProductOrderSample> samples) {
+        List<ProductOrderSample> results;
+        if (state.getLength() == State.ALL_RESULTS) {
+            results = samples;
+        } else {
+            results = samples.subList(0, state.getLength());
+        }
+        return results;
     }
 
     private void writeProductOrderSampleBean(JsonGenerator jsonGenerator, List<ProductOrderSample> productOrderSamples,
@@ -3321,4 +3341,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         return preferenceSaver.showColumn(columnName);
     }
 
+    protected void setState(State state) {
+        this.state = state;
+    }
 }
