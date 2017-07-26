@@ -89,6 +89,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
 
 @Test(groups = TestGroups.DATABASE_FREE)
@@ -931,6 +932,8 @@ public class ProductOrderActionBeanTest {
         List<ProductOrderSample> fullSampleList = getInitializedSamples(totalSamples, "SM-");
 
         List<ProductOrderSample> sampleSubList = ProductOrderActionBean.getPageOneSamples(tableState, fullSampleList);
+        assertThat(sampleSubList, hasSize(expectedReturned));
+
         // all items from subset are included in original list.
         for (int index = 0; index < expectedReturned; index++) {
             assertThat(fullSampleList.get(index), equalTo(sampleSubList.get(index)));
