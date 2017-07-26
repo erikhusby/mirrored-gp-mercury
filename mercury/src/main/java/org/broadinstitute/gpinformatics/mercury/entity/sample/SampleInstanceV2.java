@@ -190,6 +190,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         depth = other.depth + 1;
         sampleInstanceEntity = other.getSampleInstanceEntity();
         tzDevExperimentData = other.getTzDevExperimentData();
+        devConditions = other.getDevConditions();
         reagentsDesigns = other.getReagentsDesigns();
         collaboratorParticipantId = other.getCollaboratorParticipantId();
         isPooledTube = other.getIsPooledTube();
@@ -647,6 +648,8 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             this.rootMercurySamples.add(mercurySample);
         }
     }
+
+    public List<String> getDevConditions() { return devConditions; }
 
     public boolean getIsPooledTube() {
         return isPooledTube;
