@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
@@ -20,18 +21,19 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEnti
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Date;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Stateful
 @RequestScoped
@@ -92,6 +94,7 @@ public class SampleInstanceEjb  {
             add(new Metadata(Metadata.Key.GENDER, gender.get(index)));
             add(new Metadata(Metadata.Key.LSID, lsid.get(index)));
             add(new Metadata(Metadata.Key.SPECIES, species.get(index)));
+            add(new Metadata(Metadata.Key.MATERIAL_TYPE, MaterialType.DNA.getDisplayName()));
         }};
     }
 
@@ -115,9 +118,7 @@ public class SampleInstanceEjb  {
             }
 
             //Add library size lab metric to to lab vessel.
-            if(vesselSpreadsheetProcessor.getFragmentSize().get(sampleIndex) != null) {
-                labVessel = addLibrarySize(labVessel, vesselSpreadsheetProcessor.getFragmentSize().get(sampleIndex)  );
-            }
+            addLibrarySize(labVessel,new BigDecimal(vesselSpreadsheetProcessor.getFragmentSize().get(sampleIndex)));
 
             SampleInstanceEntity sampleInstanceEntity = sampleInstanceEntityDao.findByName(vesselSpreadsheetProcessor.getSingleSampleLibraryName().get(sampleIndex));
             if (sampleInstanceEntity == null) {
@@ -158,9 +159,9 @@ public class SampleInstanceEjb  {
             sampleInstanceEntity.setReagentDesign(reagents.get(sampleIndex));
             sampleInstanceEntity.setMolecularIndexScheme(molecularIndexSchemes.get(sampleIndex));
             sampleInstanceEntity.setMercurySampleId(mercurySamples.get(sampleIndex));
-            sampleInstanceEntity.setReadLength(Integer.valueOf(vesselSpreadsheetProcessor.getReadLength().get(sampleIndex)));
-
-
+            if(!StringUtils.isEmpty(vesselSpreadsheetProcessor.getReadLength().get(sampleIndex).trim())) {
+                sampleInstanceEntity.setReadLength(Integer.valueOf(vesselSpreadsheetProcessor.getReadLength().get(sampleIndex)));
+            }
             if(mercuryRootSamples.size() >= sampleIndex) {
                 sampleInstanceEntity.setRootSample(mercuryRootSamples.get(sampleIndex));
             }
@@ -321,7 +322,7 @@ public class SampleInstanceEjb  {
             conditionIndex++;
         }
 
-        //Is the sample ID registred in Mercury? If not check for optional ID fields.
+        //Is the sample ID registered in Mercury? If not check for optional ID fields.
         int sampleIndex = 0;
         for (String sampleId : vesselSpreadsheetProcessor.getBroadSampleId()) {
             MercurySample mercurySample = mercurySampleDao.findBySampleKey(sampleId);
@@ -345,6 +346,14 @@ public class SampleInstanceEjb  {
                 mercurySamples.add(mercurySample);
                 sampleRegistrationFlag.add(true);
             }
+
+            //Validate if Fragment and Read Length exist that they are actual numbers.
+            validateNumber( vesselSpreadsheetProcessor.getFragmentSize().get(sampleIndex),
+                    VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE,sampleIndex,messageCollection, true);
+
+            validateNumber(vesselSpreadsheetProcessor.getReadLength().get(sampleIndex),
+                    VesselPooledTubesProcessor.Headers.READ_LENGTH,sampleIndex,messageCollection, false);
+
             ++sampleIndex;
         }
 
@@ -415,19 +424,46 @@ public class SampleInstanceEjb  {
     /**
      *  Add library size metric to the given labvessel.
      */
-    private LabVessel addLibrarySize(LabVessel labVessel, String librarySize)
+    private void addLibrarySize(LabVessel labVessel, BigDecimal librarySize)
     {
+
         //Don't continue to add the same value if it already exists for the that vessel.
         for(LabMetric labMetric: labVessel.getMetrics()) {
-            if(labMetric.getName() == LabMetric.MetricType.FINAL_LIBRARY_SIZE && labMetric.getValue().equals(new BigDecimal(librarySize)) ) {
-                return labVessel;
+            if(labMetric.getName() == LabMetric.MetricType.FINAL_LIBRARY_SIZE && labMetric.getValue().equals(librarySize)) {
+                return;
             }
         }
         LabMetric finalLibrarySizeMetric =
-                new LabMetric(new BigDecimal(librarySize), LabMetric.MetricType.FINAL_LIBRARY_SIZE, LabMetric.LabUnit.UG_PER_ML,
+                new LabMetric(librarySize, LabMetric.MetricType.FINAL_LIBRARY_SIZE, LabMetric.LabUnit.UG_PER_ML,
                         null, new Date());
         labVessel.addMetric(finalLibrarySizeMetric);
-        return labVessel;
     }
 
+    /**
+     *  Check for missing / invalid numeric fields.
+     */
+    private void validateNumber(String input, VesselPooledTubesProcessor.Headers headers, int index, MessageCollection messageCollection, Boolean required) {
+
+        //Check for fields that are not required, but if they are there, they must contain a valid number.
+        if(!required && StringUtils.isEmpty(input.trim())) {
+            return;
+        }
+        if(!required && !StringUtils.isEmpty(input.trim())) {
+            if(StringUtils.isNumeric(input)) {
+                return;
+            }
+            else {
+                messageCollection.addError("Invalid number:   " + input + " at column: " + headers.getText() + " at row: " + (index + 2));
+                return;
+            }
+        }
+
+        //Check for required fields
+        if(StringUtils.isNumeric(input)) {
+            return;
+        }
+        else {
+            messageCollection.addError("Invalid or missing number:   " + input + " at column: " + headers.getText() + " at row: " + (index + 2));
+        }
+    }
 }

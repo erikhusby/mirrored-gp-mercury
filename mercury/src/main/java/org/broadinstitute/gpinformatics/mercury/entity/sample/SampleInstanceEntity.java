@@ -88,6 +88,9 @@ public class SampleInstanceEntity {
        return subTask;
     }
 
+    public Integer getReadLength() { return readLength; }
+
+    public void setReadLength(Integer readLength) { this.readLength = readLength;  }
 
     public Integer getReadLength() { return readLength; }
 
