@@ -85,13 +85,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.everyItem;
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
-import static org.hamcrest.Matchers.isIn;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderActionBeanTest {
@@ -926,21 +924,16 @@ public class ProductOrderActionBeanTest {
     }
 
     @Test(dataProvider = "getSamplesForAjaxDataProvider")
-    public void testGetPageOneSamples(int startRow, int pageLength, int totalSamples, int expectedReturned) throws Exception {
+    public void testGetPageOneSamples(int startRow, int pageLength, int totalSamples, int expectedReturned)  {
         State tableState = buildTestState(startRow, pageLength);
 
         actionBean.setState(tableState);
-        List<ProductOrderSample> samples =getInitializedSamples(totalSamples, "SM-");
+        List<ProductOrderSample> fullSampleList = getInitializedSamples(totalSamples, "SM-");
 
-        try {
-            List<ProductOrderSample> sampleList = ProductOrderActionBean.getPageOneSamples(tableState, samples);
-            assertThat(sampleList, hasSize(expectedReturned));
-
-            // all items from subset are included in original list.
-            assertThat(sampleList, everyItem(isIn(samples.toArray(new ProductOrderSample[samples.size()]))));
-
-        } catch (IllegalArgumentException e) {
-            Assert.fail("should not have happened", e);
+        List<ProductOrderSample> sampleSubList = ProductOrderActionBean.getPageOneSamples(tableState, fullSampleList);
+        // all items from subset are included in original list.
+        for (int index = 0; index < expectedReturned; index++) {
+            assertThat(fullSampleList.get(index), equalTo(sampleSubList.get(index)));
         }
     }
 
