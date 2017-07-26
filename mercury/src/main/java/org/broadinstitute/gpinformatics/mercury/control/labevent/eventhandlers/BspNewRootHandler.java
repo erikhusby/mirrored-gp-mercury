@@ -98,7 +98,7 @@ public class BspNewRootHandler extends AbstractEventHandler {
         Map<String, BspSampleData> mapIdToSampleData = bspSampleDataFetcher.fetchSampleData(sampleNames,
                 BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID,
                 BSPSampleSearchColumn.ORIGINAL_MATERIAL_TYPE,  BSPSampleSearchColumn.GENDER,
-                BSPSampleSearchColumn.COLLECTION);
+                BSPSampleSearchColumn.BSP_COLLECTION_NAME);
 
         // Prepare data to send to web service
         Object[][] rows = new Object[labVessels.size() + 1][];
@@ -116,9 +116,7 @@ public class BspNewRootHandler extends AbstractEventHandler {
                 originalRoots.append(sampleInstanceV2.getRootOrEarliestMercurySampleName());
             }
             BspSampleData bspSampleData = mapIdToSampleData.get(sampleNames.get(i));
-            collection = bspSampleData.getCollection();
-            // "Collection" search result is actually Group / Collection, we want just Collection
-            collection = collection.substring(collection.lastIndexOf('/') + 2);
+            collection = bspSampleData.getCollectionWithoutGroup();
             rows[i + 1] = new Object[] {
                     bspSampleData.getCollaboratorsSampleName() + collabSampleSuffix,
                     bspSampleData.getCollaboratorParticipantId(),
