@@ -69,6 +69,7 @@ import java.text.MessageFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -279,12 +280,24 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
 
         if (shareSapOrder & toClone.isSavedInSAP()) {
-            cloned.addSapOrderDetail(toClone.latestSapOrderDetail());
+            cloned.addSapOrderDetail(new SapOrderDetail(toClone.latestSapOrderDetail().getSapOrderNumber(),
+                    toClone.latestSapOrderDetail().getPrimaryQuantity(), toClone.latestSapOrderDetail().getQuoteId(),
+                    toClone.latestSapOrderDetail().getCompanyCode(), toClone.latestSapOrderDetail().getOrderProductsHash(),toClone.latestSapOrderDetail().getOrderPricesHash()));
         }
 
         toClone.addChildOrder(cloned);
 
         return cloned;
+    }
+
+    public static List<Product> getAllProductsOrdered(ProductOrder order ) {
+        List<Product> orderedListOfProducts = new ArrayList<>();
+        orderedListOfProducts.add(order.getProduct());
+        for (ProductOrderAddOn addOn : order.getAddOns()) {
+            orderedListOfProducts.add(addOn.getAddOn());
+        }
+        Collections.sort(orderedListOfProducts);
+        return orderedListOfProducts;
     }
 
     /**
@@ -1953,6 +1966,20 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return (filteredResults != null) ? Iterators.size(filteredResults.iterator()) : 0;
     }
 
+    public static double getUnbilledLaneCount(ProductOrder order, Product targetProduct) {
+        double existingCount = 0;
+
+        for (ProductOrderSample targetSample : order.getSamples()) {
+            for (LedgerEntry ledgerItem: targetSample.getLedgerItems()) {
+                if(ledgerItem.getPriceItem().equals(targetProduct.getPrimaryPriceItem())) {
+                    existingCount += ledgerItem.getQuantity();
+                }
+            }
+
+        }
+        return order.getLaneCount() - existingCount;
+    }
+
     public boolean isSavedInSAP() {
         return StringUtils.isNotBlank(getSapOrderNumber());
     }
@@ -2022,17 +2049,24 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         this.pipelineLocation = pipelineLocation;
     }
 
-    public static void checkQuoteValidity(ProductOrder productOrder, Quote quote) throws QuoteServerException {
-        for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel()) {
-            if(fundingLevel.getFunding().getFundingType().equals(Funding.FUNDS_RESERVATION)) {
-                if(fundingLevel.getFunding().getGrantEndDate() != null &&
-                   !fundingLevel.getFunding().getGrantEndDate().after(new Date())) {
-                    throw new QuoteServerException("The funding source " + fundingLevel.getFunding().getGrantNumber() +
-                                                   " has expired making this quote currently unfunded.");
+    public static void checkQuoteValidity(Quote quote) throws QuoteServerException {
+        final Date todayTruncated = DateUtils.truncate(new Date(), Calendar.DATE);
+
+        checkQuoteValidity(quote, todayTruncated);
+    }
+
+    public static void checkQuoteValidity(Quote quote, Date todayTruncated) throws QuoteServerException {
+        for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel(true)) {
+            for (Funding funding : fundingLevel.getFunding()) {
+
+                if (funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
+                    if (!FundingLevel.isGrantActiveForDate(todayTruncated, funding)) {
+                        throw new QuoteServerException("The funding source " + funding.getGrantNumber() +
+                                                       " has expired making this quote currently unfunded.");
+                    }
                 }
             }
         }
-
     }
 
     /**
@@ -2097,4 +2131,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                 .equals(childOrder.getSapOrderNumber(), parentSAPOrderNumber);
     }
 
+
+    public void updateSapDetails(int sampleCount, String productListHash, String pricesForProducts) {
+        final SapOrderDetail sapOrderDetail = latestSapOrderDetail();
+        sapOrderDetail.setPrimaryQuantity(sampleCount);
+        sapOrderDetail.setOrderProductsHash(productListHash);
+        sapOrderDetail.setOrderPricesHash(pricesForProducts);
+    }
 }

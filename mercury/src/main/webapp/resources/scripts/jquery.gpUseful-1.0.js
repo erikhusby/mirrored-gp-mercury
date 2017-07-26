@@ -88,7 +88,7 @@
          */
         //pass the options variable to the function
         updateCheckCount:function (options) {
-            $('.' + options.countDisplayClass).text($("input." + options.checkboxClass + ":checked").size());
+            $('.' + options.countDisplayClass).text($("input." + options.checkboxClass + ":checked").length);
         },
 
         checkAll:function (input, options) {
@@ -339,5 +339,12 @@ jQuery.extend( jQuery.fn.dataTableExt.oSort, {
     }
 
 })(jQuery);
+
+String.prototype.escapeJson= function() {
+    return this.replace(/\n/g, "\\n")
+               .replace(/\&/g, "\\&")
+               .replace(/\r/g, "\\r")
+               .replace(/\t/g, "\\t")
+};
 
 

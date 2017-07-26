@@ -39,6 +39,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
@@ -637,36 +638,37 @@ public class LabBatchEjb {
     }
 
     /**
-     * Make FCT LabBatches and tickets, based on DTOs from the web page.
+     * Make FCT LabBatches and tickets, based on DTOs from the Create FCT Ticket web page.
      * @param createFctDtos information from web page
      * @param selectedFlowcellType holds number of lanes
      * @param userName for audit trail
      * @param messageReporter reference to the action bean
+     * @return the list of created flowcell batches.
      */
-    public void makeFcts(List<CreateFctDto> createFctDtos, IlluminaFlowcell.FlowcellType selectedFlowcellType,
-                         String userName, MessageReporter messageReporter) {
+    public List<LabBatch> makeFcts(List<CreateFctDto> createFctDtos,
+            IlluminaFlowcell.FlowcellType selectedFlowcellType, String userName, MessageReporter messageReporter) {
         // Collects all the selected createFctDtos and their loading tubes.
-        Collection<Pair<FctDto, LabVessel>> dtoVessels = new ArrayList<>();
+        Collection<Triple<FctDto, LabVessel, FlowcellDesignation>> dtoVessels = new ArrayList<>();
         for (CreateFctDto createFctDto : createFctDtos) {
             if (createFctDto.getNumberLanes() > 0) {
                 LabVessel labVessel = labVesselDao.findByIdentifier(createFctDto.getBarcode());
-                dtoVessels.add(Pair.of((FctDto)createFctDto, labVessel));
+                dtoVessels.add(Triple.of((FctDto)createFctDto, labVessel, (FlowcellDesignation)null));
             }
         }
+        List<LabBatch> createdFcts = Collections.emptyList();
         if (dtoVessels.isEmpty()) {
             messageReporter.addMessage("No lanes were selected.");
         } else {
-            Triple<List<LabBatch>, List<Set<String>>, FctDto> fctReturnTriple = makeFctDaoFree(dtoVessels,
-                    selectedFlowcellType, true);
-            if (fctReturnTriple.getLeft().isEmpty()) {
+            Pair<List<LabBatch>, FctDto> fctReturn = makeFctDaoFree(dtoVessels, selectedFlowcellType, true);
+            if (fctReturn.getLeft().isEmpty()) {
                 messageReporter.addMessage("No FCTs were created.");
             } else {
                 StringBuilder createdBatchLinks = new StringBuilder("<ol>");
                 // For each batch, pushes the FCT to JIRA, makes the parent-child JIRA links,
                 // and makes a UI message.
-                for (int idx = 0; idx < fctReturnTriple.getLeft().size(); ++idx) {
-                    LabBatch fctBatch = fctReturnTriple.getLeft().get(idx);
-                    Set<String> lcsetNames = fctReturnTriple.getMiddle().get(idx);
+                for (int idx = 0; idx < fctReturn.getLeft().size(); ++idx) {
+                    LabBatch fctBatch = fctReturn.getLeft().get(idx);
+                    Set<String> lcsetNames = new HashSet<>(laneToLinkedLcsets(fctBatch).values());
                     if (CollectionUtils.isEmpty(lcsetNames)) {
                         throw new RuntimeException("Found no LCSETs to link to the FCT");
                     }
@@ -681,10 +683,25 @@ public class LabBatchEjb {
                     createdBatchLinks.append("</a></li>");
                 }
                 createdBatchLinks.append("</ol>");
-                messageReporter.addMessage("Created {0} FCT tickets: {1}", fctReturnTriple.getLeft().size(),
+                messageReporter.addMessage("Created {0} FCT tickets: {1}", fctReturn.getLeft().size(),
                         createdBatchLinks.toString());
             }
+            createdFcts = fctReturn.getLeft();
         }
+        return createdFcts;
+    }
+
+    /**
+     * For FCT & MISEQ batches that were just created and still have the transient VesselToLanesInfo
+     * (i.e. not retreived from persistence), extracts a map of lane to linked lcsets, which are the
+     * workflow batch lcsets of the flowcell loading tube.
+     */
+    public static Multimap<String, String> laneToLinkedLcsets(LabBatch fctBatch) {
+        Multimap<String, String> map = HashMultimap.create();
+        for (LabBatchStartingVessel batchStartingVessel : fctBatch.getLabBatchStartingVessels()) {
+            map.put(batchStartingVessel.getVesselPosition().name(), batchStartingVessel.getLinkedLcset());
+        }
+        return map;
     }
 
     /**
@@ -701,12 +718,13 @@ public class LabBatchEjb {
         boolean hasError = false;
 
         // Validates dtos and groups them by how they are permitted to be combined on a flowcell.
-        Multimap<String, Pair<FctDto, LabVessel>> typeMap = HashMultimap.create();
+        Multimap<String, Triple<FctDto, LabVessel, FlowcellDesignation>> typeMap = HashMultimap.create();
         for (DesignationDto designationDto : designationDtos) {
             if (designationDto.isSelected()) {
                 if (isValidDto(designationDto, messageReporter)) {
-                    LabVessel labVessel = labVesselDao.findByIdentifier(designationDto.getBarcode());
-                    typeMap.put(designationDto.fctGrouping(), Pair.of((FctDto)designationDto, labVessel));
+                    typeMap.put(designationDto.fctGrouping(), Triple.of((FctDto)designationDto,
+                            labVesselDao.findByIdentifier(designationDto.getBarcode()),
+                            labVesselDao.findById(FlowcellDesignation.class, designationDto.getDesignationId())));
                 } else {
                     hasError = true;
                 }
@@ -719,19 +737,18 @@ public class LabBatchEjb {
         List<MutablePair<String, String>> fctUrls = new ArrayList<>();
         if (!hasError) {
             for (String fctGrouping : typeMap.keySet()) {
-                Collection<Pair<FctDto, LabVessel>> dtoVesselPairs = typeMap.get(fctGrouping);
+                Collection<Triple<FctDto, LabVessel, FlowcellDesignation>> dtoVessels = typeMap.get(fctGrouping);
                 int unallocatedLaneCount = 0;
                 int splitCount = 0;
-                DesignationDto firstDto = (DesignationDto)dtoVesselPairs.iterator().next().getLeft();
+                DesignationDto firstDto = (DesignationDto)dtoVessels.iterator().next().getLeft();
                 IlluminaFlowcell.FlowcellType flowcellType = firstDto.getSequencerModel();
 
                 // Allocates each designation dto to FctDto(s) depending on the designation's priority,
                 // number of lanes, and whether a full flowcell could be made or not.
-                Triple<List<LabBatch>, List<Set<String>>, FctDto> fctReturnTriple = makeFctDaoFree(dtoVesselPairs,
-                        flowcellType, false);
-                for (int idx = 0; idx < fctReturnTriple.getLeft().size(); ++idx) {
-                    LabBatch fctBatch = fctReturnTriple.getLeft().get(idx);
-                    Set<String> lcsetNames = fctReturnTriple.getMiddle().get(idx);
+                Pair<List<LabBatch>, FctDto> fctReturn = makeFctDaoFree(dtoVessels, flowcellType, false);
+                for (int idx = 0; idx < fctReturn.getLeft().size(); ++idx) {
+                    LabBatch fctBatch = fctReturn.getLeft().get(idx);
+                    Set<String> lcsetNames = new HashSet<>(laneToLinkedLcsets(fctBatch).values());
                     if (CollectionUtils.isEmpty(lcsetNames)) {
                         throw new RuntimeException("Found no LCSETs to link to the FCT");
                     }
@@ -742,8 +759,8 @@ public class LabBatchEjb {
                     }
                     fctUrls.add(MutablePair.of(fctBatch.getBatchName(), fctBatch.getJiraTicket().getBrowserUrl()));
                 }
-                for (Pair<FctDto, LabVessel> pair : dtoVesselPairs) {
-                    DesignationDto dto = (DesignationDto) pair.getLeft();
+                for (Triple<FctDto, LabVessel, FlowcellDesignation> triple : dtoVessels) {
+                    DesignationDto dto = (DesignationDto) triple.getLeft();
                     if (dto.isAllocated()) {
                         dto.setStatus(FlowcellDesignation.Status.IN_FCT);
                     } else {
@@ -751,7 +768,7 @@ public class LabBatchEjb {
                     }
                 }
                 // Any new split dto needs to be added to the UI's dto list and queues it.
-                DesignationDto dtoSplit = (DesignationDto) fctReturnTriple.getRight();
+                DesignationDto dtoSplit = (DesignationDto) fctReturn.getRight();
                 if (dtoSplit != null) {
                     dtoSplit.setStatus(FlowcellDesignation.Status.QUEUED);
                     designationDtos.add(dtoSplit);
@@ -819,10 +836,6 @@ public class LabBatchEjb {
             errorString += (isValid ? "" : "and ") + "pool test (null) ";
             isValid = false;
         }
-        if (designationDto.getTubeEventId() == null) {
-            errorString += (isValid ? "" : "and ") + "tube event (null) ";
-            isValid = false;
-        }
         if (StringUtils.isBlank(designationDto.getLcset())) {
             errorString += (isValid ? "" : "and ") + "lcset (null) ";
             isValid = false;
@@ -852,31 +865,30 @@ public class LabBatchEjb {
      * drives which dtos may be left over. Also if a large dto has some but not all of its lanes exactly
      * fit on flowcells, the dto will be split up into a fully allocated dto and a new, unallocated dto.
      *
-     * @param dtoLabVessels the loading tubes' dtos and corresponding lab vessels.
+     * @param dtoLabVessels the loading tubes' dto, corresponding lab vessel, and designation.
      *   After return, the dtos that were put in an FCT will be marked isAllocated.
      * @param flowcellType  the type of flowcells to create.
      * @param fillOrKill  If true, throws if all dtos will not exactly fit on flowcells. A dto is never split.
      *                    If false, fills as many complete flowcells as it can, and a split is possible.
-     * @return  Triple of the list of the fct batches to be persisted, the list of lcset names comprising each fct,
-     *   and the split dto, if any.
+     * @return  The list of the fct batches to be persisted and the split dto, if any.
      *   Fct batches will be in order of creation, which should put loading tubes on contiguous flowcell
      *   lanes across sequential fcts, provided the fcts get persisted in the order returned.
      *   Fct batch identity (i.e. equals, hashcode) is unstable (see GPLIM-4011).
      */
-    public Triple<List<LabBatch>, List<Set<String>>, FctDto> makeFctDaoFree(
-            Collection<Pair<FctDto, LabVessel>> dtoLabVessels, IlluminaFlowcell.FlowcellType flowcellType,
+    public Pair<List<LabBatch>, FctDto> makeFctDaoFree(
+            Collection<Triple<FctDto, LabVessel, FlowcellDesignation>> dtoLabVessels,
+            IlluminaFlowcell.FlowcellType flowcellType,
             boolean fillOrKill) {
 
         List<LabBatch> createdFcts = new ArrayList<>();
-        List<Set<String>> fctLcsets = new ArrayList<>();
         int lanesPerFlowcell = flowcellType.getVesselGeometry().getRowCount();
         // These are per-flowcell accumulations, for one or more loading vessels.
         int laneIndex = 0;
         List<LabBatch.VesselToLanesInfo> fctVesselLaneInfo = new ArrayList<>();
 
         int totalDtoLanes = 0;
-        for (Pair<FctDto, LabVessel> pair : dtoLabVessels) {
-            totalDtoLanes += pair.getLeft().getNumberLanes();
+        for (Triple<FctDto, LabVessel, FlowcellDesignation> triple : dtoLabVessels) {
+            totalDtoLanes += triple.getLeft().getNumberLanes();
         }
         int unallocatedDtoLanes = totalDtoLanes % lanesPerFlowcell;
         if (fillOrKill && unallocatedDtoLanes > 0) {
@@ -886,16 +898,16 @@ public class LabBatchEjb {
 
         // Orders the dtos by decreasing allocation order (priority) and within each priority group
         // decreasing number of lanes, which is intended to reduce the chance of a split.
-        List<Pair<FctDto, LabVessel>> orderedDtoVessels = new ArrayList<>();
+        List<Triple<FctDto, LabVessel, FlowcellDesignation>> orderedDtoVessels = new ArrayList<>();
         orderedDtoVessels.addAll(dtoLabVessels);
         Collections.sort(orderedDtoVessels, BY_ALLOCATION_ORDER);
 
         // Allocates dtos, and splits the last dto if its lanes would not be completely allocated.
         int remainingLaneCount = totalDtoLanes - unallocatedDtoLanes;
         FctDto splitDto = null;
-        for (Pair<FctDto, LabVessel> pair : orderedDtoVessels) {
+        for (Triple<FctDto, LabVessel, FlowcellDesignation> triple : orderedDtoVessels) {
             if (remainingLaneCount > 0) {
-                FctDto fctDto = pair.getLeft();
+                FctDto fctDto = triple.getLeft();
                 if (fctDto.getNumberLanes() > remainingLaneCount) {
                     splitDto = fctDto.split(remainingLaneCount);
                 }
@@ -906,21 +918,23 @@ public class LabBatchEjb {
 
         // For each dto, keeps allocating its lanes until the tube's requested Number of Lanes is fulfilled.
         // When enough lanes exist, an FCT is allocated and put in the return list.
-        Set<String> lcsetNames = new HashSet<>();
-        for (Pair<FctDto, LabVessel> pair : orderedDtoVessels) {
-            FctDto fctDto = pair.getLeft();
-            LabVessel loadingTube = pair.getRight();
 
+        for (Triple<FctDto, LabVessel, FlowcellDesignation> triple : orderedDtoVessels) {
+            FctDto fctDto = triple.getLeft();
+            LabVessel loadingTube = triple.getMiddle();
+            FlowcellDesignation flowcellDesignation = triple.getRight();
+
+            LabBatch.VesselToLanesInfo laneInfo = null;
             if (fctDto.isAllocated()) {
-                LabBatch.VesselToLanesInfo currentFct = null;
                 for (int i = 0; i < fctDto.getNumberLanes(); ++i) {
-                    if (currentFct == null) {
-                        currentFct = new LabBatch.VesselToLanesInfo(new ArrayList<VesselPosition>(),
-                                fctDto.getLoadingConc(), loadingTube);
-                        fctVesselLaneInfo.add(currentFct);
+                    if (laneInfo == null) {
+                        laneInfo = new LabBatch.VesselToLanesInfo(new ArrayList<VesselPosition>(),
+                                fctDto.getLoadingConc(), loadingTube, fctDto.getLcset(), fctDto.getProduct(),
+                                new ArrayList<FlowcellDesignation>());
+                        fctVesselLaneInfo.add(laneInfo);
                     }
-                    currentFct.getLanes().add(VESSEL_POSITIONS[laneIndex++]);
-                    lcsetNames.add(fctDto.getLcset());
+                    laneInfo.getLanes().add(VESSEL_POSITIONS[laneIndex++]);
+                    laneInfo.getDesignations().add(flowcellDesignation);
 
                     // Are there are enough lanes to make a new FCT?
                     if (laneIndex == lanesPerFlowcell) {
@@ -931,17 +945,15 @@ public class LabBatchEjb {
                                 flowcellType.getBatchType(), flowcellType);
                         fctBatch.setBatchDescription(fctDto.getBarcode() + " FCT ticket ");
                         createdFcts.add(fctBatch);
-                        fctLcsets.add(lcsetNames);
                         // Resets the accumulations.
                         laneIndex = 0;
                         fctVesselLaneInfo = new ArrayList<>();
-                        currentFct = null;
-                        lcsetNames = new HashSet<>();
+                        laneInfo = null;
                     }
                 }
             }
         }
-        return Triple.of(createdFcts, fctLcsets, splitDto);
+        return Pair.of(createdFcts, splitDto);
     }
 
     /*

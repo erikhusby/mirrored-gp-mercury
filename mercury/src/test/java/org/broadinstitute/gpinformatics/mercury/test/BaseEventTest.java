@@ -41,6 +41,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventRefDataFetcher;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.BspNewRootHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.DenatureToDilutionTubeHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.EventHandlerSelector;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.FlowcellLoadedHandler;
@@ -77,6 +78,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEnt
 import org.broadinstitute.gpinformatics.mercury.test.builders.IceEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.IceJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.InfiniumEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.InfiniumJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.MiSeqReagentKitEntityBuilder;
@@ -90,7 +92,6 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuil
 import org.broadinstitute.gpinformatics.mercury.test.builders.StoolTNAEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.TenXEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.TruSeqStrandSpecificEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.TruSeqStrandSpecificJaxbBuilder;
 import org.easymock.EasyMock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -221,7 +222,8 @@ public class BaseEventTest {
         flowcellLoadedHandler.setAppConfig(appConfig);
 
         EventHandlerSelector eventHandlerSelector = new EventHandlerSelector(new SonicAliquotHandler(),
-                new DenatureToDilutionTubeHandler(), flowcellMessageHandler, flowcellLoadedHandler);
+                new DenatureToDilutionTubeHandler(), flowcellMessageHandler, flowcellLoadedHandler,
+                new BspNewRootHandler());
         labEventFactory.setEventHandlerSelector(eventHandlerSelector);
 
         bucketEjb = new BucketEjb(labEventFactory, jiraService, null, null, null, null,
@@ -532,7 +534,20 @@ public class BaseEventTest {
      */
     public IceEntityBuilder runIceProcess(List<TubeFormation> pondRegRacks, String barcodeSuffix) {
         return new IceEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(), pondRegRacks,
-                barcodeSuffix, IceJaxbBuilder.PlexType.PLEX96).invoke();
+                barcodeSuffix, IceJaxbBuilder.PlexType.PLEX96, IceJaxbBuilder.PrepType.ICE).invoke();
+    }
+
+    /**
+     * Creates an entity graph for HyperPrep Illumina Content Exome.
+     *
+     * @param pondRegRacks         The pond registration racks coming out of the library construction process.
+     * @param barcodeSuffix       Makes unique the generated vessel barcodes. Don't use date if test quickly invoked twice.
+     *
+     * @return Returns the entity builder that contains the entities after this process has been invoked.
+     */
+    public IceEntityBuilder runHyperPrepIceProcess(List<TubeFormation> pondRegRacks, String barcodeSuffix) {
+        return new IceEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(), pondRegRacks,
+                barcodeSuffix, IceJaxbBuilder.PlexType.PLEX96, IceJaxbBuilder.PrepType.HYPER_PREP_ICE).invoke();
     }
 
     /**
@@ -657,11 +672,11 @@ public class BaseEventTest {
 
     public InfiniumEntityBuilder runInfiniumProcess(StaticPlate sourcePlate, String barcodeSuffix) {
         return runInfiniumProcessWithMethylation(sourcePlate, barcodeSuffix,
-                InfiniumEntityBuilder.IncludeMethylation.FALSE);
+                InfiniumJaxbBuilder.IncludeMethylation.FALSE);
     }
 
     public InfiniumEntityBuilder runInfiniumProcessWithMethylation(
-            StaticPlate sourcePlate, String barcodeSuffix, InfiniumEntityBuilder.IncludeMethylation includeMethylation) {
+            StaticPlate sourcePlate, String barcodeSuffix, InfiniumJaxbBuilder.IncludeMethylation includeMethylation) {
         return new InfiniumEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
                 sourcePlate, barcodeSuffix, includeMethylation).invoke();
     }

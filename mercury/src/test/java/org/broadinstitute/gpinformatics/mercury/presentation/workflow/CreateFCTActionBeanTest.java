@@ -21,12 +21,15 @@ import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb.laneToLinkedLcsets;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class CreateFCTActionBeanTest {
@@ -43,10 +46,16 @@ public class CreateFCTActionBeanTest {
     @Test
     public void testAllocationOf32x1() {
         Set<String> expectedLcsets = new HashSet<>();
-        Collection<Pair<FctDto, LabVessel>> dtoVessels = new ArrayList<>();
+        Collection<Triple<FctDto, LabVessel, FlowcellDesignation>> dtoVessels = new ArrayList<>();
         for (int i = 0; i < 32; ++i) {
             LabVessel tube = stbTubes.get(i);
-            dtoVessels.add(Pair.of((FctDto)new CreateFctDto(tube.getLabel(), "lcset" + i, conc, 1), tube));
+            CreateFctDto dto = new CreateFctDto(tube.getLabel(), "lcset" + i, conc, 1);
+            //  Tests the split/join in the getter/setter.
+            dto.setProduct("product 1" + DesignationDto.DELIMITER + "product 2");
+            Assert.assertEquals(dto.getProduct(), "product 1" + DesignationDto.DELIMITER + "product 2");
+            dto.setProduct("product 3");
+            Assert.assertEquals(dto.getProduct(), "product 3");
+            dtoVessels.add(Triple.of((FctDto)dto, tube, (FlowcellDesignation)null));
             expectedLcsets.add("lcset" + i);
         }
         for (IlluminaFlowcell.FlowcellType flowcellType : IlluminaFlowcell.FlowcellType.values()) {
@@ -60,10 +69,11 @@ public class CreateFCTActionBeanTest {
     @Test
     public void testAllocationOf32x8() {
         Set<String> expectedLcsets = new HashSet<>();
-        Collection<Pair<FctDto, LabVessel>> dtoVessels = new ArrayList<>();
+        Collection<Triple<FctDto, LabVessel, FlowcellDesignation>> dtoVessels = new ArrayList<>();
         for (int i = 0; i < 32; ++i) {
             LabVessel tube = stbTubes.get(i);
-            dtoVessels.add(Pair.of((FctDto)new CreateFctDto(tube.getLabel(), "lcset" + i, conc, 8), tube));
+            dtoVessels.add(Triple.of((FctDto)new CreateFctDto(tube.getLabel(), "lcset" + i, conc, 8), tube,
+                    (FlowcellDesignation)null));
             expectedLcsets.add("lcset" + i);
         }
         for (IlluminaFlowcell.FlowcellType flowcellType : IlluminaFlowcell.FlowcellType.values()) {
@@ -77,7 +87,7 @@ public class CreateFCTActionBeanTest {
     @Test
     public void testDesignationOf32x8() {
         Set<String> expectedLcsets = new HashSet<>();
-        Collection<Pair<FctDto, LabVessel>> dtoVessels = new ArrayList<>();
+        Collection<Triple<FctDto, LabVessel, FlowcellDesignation>> dtoVessels = new ArrayList<>();
         for (int i = 0; i < 32; ++i) {
             LabVessel tube = stbTubes.get(i);
 
@@ -87,9 +97,14 @@ public class CreateFCTActionBeanTest {
             dto.setNumberLanes(8);
             dto.setStatus(FlowcellDesignation.Status.QUEUED);
             dto.setLcset("lcset" + i / 9);
+            //  Tests the split/join in the getter/setter.
+            dto.setProductNames(Arrays.asList("product 1", "product 2"));
+            Assert.assertEquals(dto.getProduct(), "product 1" + DesignationDto.DELIMITER + "product 2");
+            dto.setProduct("product 3");
+            Assert.assertEquals(dto.getProduct(), "product 3");
             expectedLcsets.add(dto.getLcset());
 
-            dtoVessels.add(Pair.of((FctDto)dto, tube));
+            dtoVessels.add(Triple.of((FctDto)dto, tube, (FlowcellDesignation)null));
          }
         Assert.assertTrue(CollectionUtils.isEmpty(allocateAndTest(dtoVessels,
                 IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell, null, expectedLcsets)));
@@ -100,7 +115,7 @@ public class CreateFCTActionBeanTest {
         // Makes 4 designations having numberLanes of 1, 9, 10, and 11, same priority, but their
         // sizing should cause 11 and 10 to be fully allocated, 9 gets split, and 1 is unallocated.
         List<DesignationDto> designationDtos = new ArrayList<>();
-        Collection<Pair<FctDto, LabVessel>> dtoVessels = new ArrayList<>();
+        Collection<Triple<FctDto, LabVessel, FlowcellDesignation>> dtoVessels = new ArrayList<>();
         int[] numberLanes = {1, 9, 10, 11};
         final String[] lcsets = {"lcset1", "lcset9", "lcset10", "lcset11"};
         // Expects one lcset to be excluded.
@@ -121,7 +136,7 @@ public class CreateFCTActionBeanTest {
             dto.setLcset(lcsets[idx]);
 
             designationDtos.add(dto);
-            dtoVessels.add(Pair.of((FctDto) dto, tube));
+            dtoVessels.add(Triple.of((FctDto) dto, tube, (FlowcellDesignation)null));
         }
         // The 9 lane dto will get 3 lanes allocated and 6 lanes left as unallocated split dto.
         DesignationDto splitDto = new DesignationDto();
@@ -155,7 +170,7 @@ public class CreateFCTActionBeanTest {
         // Should make two flowcells of 8 lanes.
         // 9 lane dto should be fully allocated, 10 should get split, and 1 should be unallocated.
         List<DesignationDto> designationDtos = new ArrayList<>();
-        Collection<Pair<FctDto, LabVessel>> dtoVessels = new ArrayList<>();
+        Collection<Triple<FctDto, LabVessel, FlowcellDesignation>> dtoVessels = new ArrayList<>();
         int[] numberLanes = {1, 9, 10};
         for (int idx = 0; idx < numberLanes.length; ++idx) {
             LabVessel tube = stbTubes.get(idx);
@@ -175,7 +190,7 @@ public class CreateFCTActionBeanTest {
             expectedLcsets.add(dto.getLcset());
 
             designationDtos.add(dto);
-            dtoVessels.add(Pair.of((FctDto)dto, tube));
+            dtoVessels.add(Triple.of((FctDto)dto, tube, (FlowcellDesignation)null));
         }
 
         // dto[2] should be split into 7 lanes (allocated) and 3 lanes (unallocated).
@@ -208,7 +223,7 @@ public class CreateFCTActionBeanTest {
         Set<String> expectedLcsets = new HashSet<>();
         // Makes 2 designations having numberLanes of 2 and 1, neither of which will be allocated
         // since they won't fill an 8 lane flowcell.
-        Collection<Pair<FctDto, LabVessel>> dtoVessels = new ArrayList<>();
+        Collection<Triple<FctDto, LabVessel, FlowcellDesignation>> dtoVessels = new ArrayList<>();
         List<DesignationDto> designationDtos = new ArrayList<>();
         for (int i = 0; i < 2; ++i) {
             LabVessel tube = stbTubes.get(i);
@@ -222,7 +237,7 @@ public class CreateFCTActionBeanTest {
             dto.setLcset("lcset100");
 
             designationDtos.add(dto);
-            dtoVessels.add(Pair.of((FctDto)dto, tube));
+            dtoVessels.add(Triple.of((FctDto)dto, tube, (FlowcellDesignation)null));
         }
 
         List<String> unallocatedBarcodes = allocateAndTest(dtoVessels, IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell,
@@ -242,10 +257,11 @@ public class CreateFCTActionBeanTest {
     @Test
     public void testAllocationOf2x2OneLane() {
         Set<String> expectedLcsets = new HashSet<>();
-        Collection<Pair<FctDto, LabVessel>> dtoVessels = new ArrayList<>();
+        Collection<Triple<FctDto, LabVessel, FlowcellDesignation>> dtoVessels = new ArrayList<>();
         for (int i = 0; i < 2; ++i) {
             LabVessel tube = stbTubes.get(i);
-            dtoVessels.add(Pair.of((FctDto)new CreateFctDto(tube.getLabel(), "lcset" + i, conc, 2), tube));
+            dtoVessels.add(Triple.of((FctDto)new CreateFctDto(tube.getLabel(), "lcset" + i, conc, 2), tube,
+                    (FlowcellDesignation)null));
             expectedLcsets.add("lcset" + i);
         }
         Assert.assertTrue(CollectionUtils.isEmpty(allocateAndTest(dtoVessels,
@@ -255,21 +271,25 @@ public class CreateFCTActionBeanTest {
     @Test
     public void testSharedLcsets() {
         Set<String> expectedLcsets = new HashSet<>();
-        Collection<Pair<FctDto, LabVessel>> dtoVessels = new ArrayList<>();
+        Collection<Triple<FctDto, LabVessel, FlowcellDesignation>> dtoVessels = new ArrayList<>();
         LabVessel tube = stbTubes.get(0);
-        dtoVessels.add(Pair.of((FctDto)new CreateFctDto(tube.getLabel(), "lcset0", conc, 5), tube));
+        dtoVessels.add(Triple.of((FctDto)new CreateFctDto(tube.getLabel(), "lcset0", conc, 5), tube,
+                    (FlowcellDesignation)null));
         expectedLcsets.add("lcset0");
 
         tube = stbTubes.get(1);
-        dtoVessels.add(Pair.of((FctDto)new CreateFctDto(tube.getLabel(), "lcset1", conc, 6), tube));
+        dtoVessels.add(Triple.of((FctDto)new CreateFctDto(tube.getLabel(), "lcset1", conc, 6), tube,
+                    (FlowcellDesignation)null));
         expectedLcsets.add("lcset1");
 
         tube = stbTubes.get(2);
-        dtoVessels.add(Pair.of((FctDto)new CreateFctDto(tube.getLabel(), "lcset2", conc, 2), tube));
+        dtoVessels.add(Triple.of((FctDto)new CreateFctDto(tube.getLabel(), "lcset2", conc, 2), tube,
+                    (FlowcellDesignation)null));
         expectedLcsets.add("lcset2");
 
         tube = stbTubes.get(3);
-        dtoVessels.add(Pair.of((FctDto)new CreateFctDto(tube.getLabel(), "lcset3", conc, 3), tube));
+        dtoVessels.add(Triple.of((FctDto)new CreateFctDto(tube.getLabel(), "lcset3", conc, 3), tube,
+                    (FlowcellDesignation)null));
         expectedLcsets.add("lcset3");
 
         for (IlluminaFlowcell.FlowcellType flowcellType : IlluminaFlowcell.FlowcellType.values()) {
@@ -277,6 +297,28 @@ public class CreateFCTActionBeanTest {
                 continue;
             }
             Assert.assertTrue(CollectionUtils.isEmpty(allocateAndTest(dtoVessels, flowcellType, null, expectedLcsets)));
+        }
+    }
+
+    @Test
+    public void testMixedLaneCount() {
+        int[][] numberLanes = {{1, 3}, {1, 15}, {3}};
+        int testIdx = 0;
+        for (IlluminaFlowcell.FlowcellType flowcellType : Arrays.asList(
+                IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell,
+                IlluminaFlowcell.FlowcellType.HiSeqX10Flowcell,
+                IlluminaFlowcell.FlowcellType.MiSeqFlowcell
+        )) {
+            Set<String> expectedLcsets = new HashSet<>();
+            Collection<Triple<FctDto, LabVessel, FlowcellDesignation>> dtoVessels = new ArrayList<>();
+            for (int i = 0; i < numberLanes[testIdx].length; ++i) {
+                LabVessel tube = stbTubes.get(i);
+                dtoVessels.add(Triple.of((FctDto) new CreateFctDto(tube.getLabel(), "lcset" + i, conc,
+                        numberLanes[testIdx][i]), tube, (FlowcellDesignation)null));
+                expectedLcsets.add("lcset" + i);
+            }
+            Assert.assertTrue(CollectionUtils.isEmpty(allocateAndTest(dtoVessels, flowcellType, null, expectedLcsets)));
+            ++testIdx;
         }
     }
 
@@ -306,17 +348,17 @@ public class CreateFCTActionBeanTest {
      * Allocates and validates.
      * @return list of the unallocated tube barcodes.
      */
-    private List<String> allocateAndTest(Collection<Pair<FctDto, LabVessel>> dtoVessels,
+    private List<String> allocateAndTest(Collection<Triple<FctDto, LabVessel, FlowcellDesignation>> dtoVessels,
                                          IlluminaFlowcell.FlowcellType flowcellType, FctDto splitDto,
                                          Set<String> expectedLcsetNames) {
 
         int expectedLaneCount = 0;
         List<String> expectedBarcodeOnEachLane = new ArrayList<>();
-        for (Pair<FctDto, LabVessel> pair : dtoVessels) {
-            expectedLaneCount += pair.getLeft().getNumberLanes();
-            Assert.assertNotNull(pair.getLeft().getLcset());
-            for (int i = 0; i < pair.getLeft().getNumberLanes(); ++i) {
-                expectedBarcodeOnEachLane.add(pair.getRight().getLabel());
+        for (Triple<FctDto, LabVessel, FlowcellDesignation> triple : dtoVessels) {
+            expectedLaneCount += triple.getLeft().getNumberLanes();
+            Assert.assertNotNull(triple.getLeft().getLcset());
+            for (int i = 0; i < triple.getLeft().getNumberLanes(); ++i) {
+                expectedBarcodeOnEachLane.add(triple.getMiddle().getLabel());
             }
         }
         List<String> expectedBatchStartingVesselBarcodes = new ArrayList<>(expectedBarcodeOnEachLane);
@@ -325,21 +367,21 @@ public class CreateFCTActionBeanTest {
 
         int flowcellLaneCount = flowcellType.getVesselGeometry().getRowCount();
         if (!isDesignationDto) {
-            Assert.assertEquals(expectedLaneCount % flowcellLaneCount, 0, "Bad test setup");
+            Assert.assertEquals(expectedLaneCount % flowcellLaneCount, 0, "Bad test setup for " + flowcellType.name() +
+            " having barcodes " + StringUtils.join(expectedBarcodeOnEachLane, " "));
         }
         int expectedBatchCount = expectedLaneCount / flowcellLaneCount;
 
 
         // Does the starting vessel to FCT allocation.
-        Triple<List<LabBatch>, List<Set<String>>, FctDto> fctReturnTriple = testBean.makeFctDaoFree(dtoVessels,
-                        flowcellType, !isDesignationDto);
+        Pair<List<LabBatch>, FctDto> fctReturn = testBean.makeFctDaoFree(dtoVessels, flowcellType, !isDesignationDto);
 
         // Checks the split dto.
-        if (fctReturnTriple.getRight() == null) {
+        if (fctReturn.getRight() == null) {
             Assert.assertNull(splitDto);
         } else {
             Assert.assertTrue(isDesignationDto);
-            DesignationDto designationSplit = (DesignationDto)fctReturnTriple.getRight();
+            DesignationDto designationSplit = (DesignationDto)fctReturn.getRight();
             Assert.assertNotNull(splitDto);
             Assert.assertEquals(designationSplit.getAllocationOrder(), splitDto.getAllocationOrder());
             Assert.assertEquals(designationSplit.getBarcode(), splitDto.getBarcode());
@@ -351,12 +393,12 @@ public class CreateFCTActionBeanTest {
         }
 
         // Is the number of FCTs correct?
-        Assert.assertEquals(fctReturnTriple.getLeft().size(), expectedBatchCount, " On " + flowcellType.getDisplayName());
+        Assert.assertEquals(fctReturn.getLeft().size(), expectedBatchCount, " On " + flowcellType.getDisplayName());
 
         Set<String> foundLcsetNames = new HashSet<>();
-        for (int idx = 0; idx < fctReturnTriple.getLeft().size(); ++idx) {
-            LabBatch fctBatch = fctReturnTriple.getLeft().get(idx);
-            Set<String> lcsetNames = fctReturnTriple.getMiddle().get(idx);
+        for (int idx = 0; idx < fctReturn.getLeft().size(); ++idx) {
+            LabBatch fctBatch = fctReturn.getLeft().get(idx);
+            Set<String> lcsetNames = new HashSet<>(laneToLinkedLcsets(fctBatch).values());
 
             Assert.assertEquals(fctBatch.getLabBatchStartingVessels().size(), flowcellLaneCount);
 

@@ -735,11 +735,12 @@ public class ProductOrderActionBeanTest {
 
         final FundingLevel fundingLevel = new FundingLevel();
         Funding funding = new Funding(Funding.FUNDS_RESERVATION, "test", "c333");
-        fundingLevel.setFunding(funding);
+        fundingLevel.setFunding(Collections.singleton(funding));
         Collection<FundingLevel> fundingLevelCollection = Collections.singleton(fundingLevel);
         QuoteFunding quoteFunding = new QuoteFunding(fundingLevelCollection);
         final String testQuoteIdentifier = "testQuote";
         Quote testQuote = new Quote(testQuoteIdentifier, quoteFunding, ApprovalStatus.FUNDED);
+        testQuote.setExpired(Boolean.FALSE);
 
         Product primaryProduct = new Product();
         primaryProduct.setPartNumber("P-Test_primary");

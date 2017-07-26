@@ -1,12 +1,17 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.apache.commons.lang3.time.DateUtils;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
+import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -28,6 +33,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -362,7 +368,7 @@ public class ProductOrderTest {
         ProductOrder testParentOrder = new ProductOrder(TEST_CREATOR, "Test order with Abandoned Count",
                 sixMercurySamplesNoDupes, QUOTE, null, null);
         testParentOrder.addSapOrderDetail(new SapOrderDetail("testParentNumber", testParentOrder.getNonAbandonedCount(),
-                testParentOrder.getQuoteId(), SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode()));
+                testParentOrder.getQuoteId(), SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(), "", ""));
 
         Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL),6);
         Assert.assertEquals(testParentOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY),6);
@@ -473,10 +479,10 @@ public class ProductOrderTest {
 
         final String sapOrderNumber = "SAP_001";
         final SapOrderDetail orderDetail1 = new SapOrderDetail(sapOrderNumber, 5, QUOTE,
-                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode());
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(), "", "");
         orderDetail1.getUpdateData().setCreatedDate(new Date());
         final SapOrderDetail orderDetail2 = new SapOrderDetail(sapOrderNumber + "2", 5, QUOTE,
-                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode());
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(), "", "");
         orderDetail2.getUpdateData().setCreatedDate(new Date());
         testProductOrder.addSapOrderDetail(orderDetail1);
 
@@ -488,7 +494,7 @@ public class ProductOrderTest {
         assertThat(testProductOrder.getSapOrderNumber(), is(equalTo(sapOrderNumber+"2")));
     }
 
-    private void billSampleOut(ProductOrder productOrder, ProductOrderSample sample, int expected) {
+    public static void billSampleOut(ProductOrder productOrder, ProductOrderSample sample, int expected) {
 
         LedgerEntry primaryItemSampleEntry = new LedgerEntry(sample,
                 productOrder.getProduct().getPrimaryPriceItem(), new Date(), /*productOrder.getProduct(),*/ 1);
@@ -516,5 +522,46 @@ public class ProductOrderTest {
         Assert.assertEquals(productOrder.getUnbilledSampleCount(), expected);
         primaryItemSampleEntry.setBillingMessage(BillingSession.SUCCESS);
         billingSession.setBilledDate(new Date());
+    }
+
+    public void testQuoteGrantValidityWithUnallocatedFundingSources() throws Exception{
+        QuoteService stubbedQuoteService = QuoteServiceProducer.stubInstance();
+
+        Quote gp87Uquote = stubbedQuoteService.getQuoteByAlphaId("GP87U");
+
+        try {
+            ProductOrder.checkQuoteValidity(gp87Uquote);
+        } catch (Exception shouldNotHappen) {
+            Assert.fail();
+        }
+    }
+
+    public void testQuoteGrantValidityWithGrantExpiringNow() throws Exception{
+        QuoteService stubbedQuoteService = QuoteServiceProducer.stubInstance();
+
+        Quote expiringNowQuote = stubbedQuoteService.getQuoteByAlphaId("STCIL1");
+        for (FundingLevel fundingLevel : expiringNowQuote.getQuoteFunding().getFundingLevel()) {
+            for (Funding funding : fundingLevel.getFunding()) {
+
+                funding.setGrantEndDate( DateUtils.truncate(new Date(), Calendar.DATE));
+            }
+
+        }
+
+        try {
+            ProductOrder.checkQuoteValidity(expiringNowQuote);
+        } catch (Exception shouldNotHappen) {
+            Assert.fail();
+        }
+    }
+   public void testQuoteGrantValidityWithGrantExpired() throws Exception{
+        QuoteService stubbedQuoteService = QuoteServiceProducer.stubInstance();
+
+        Quote expiringNowQuote = stubbedQuoteService.getQuoteByAlphaId("STCIL1");
+        try {
+            ProductOrder.checkQuoteValidity(expiringNowQuote);
+            Assert.fail();
+        } catch (Exception shouldNotHappen) {
+        }
     }
 }

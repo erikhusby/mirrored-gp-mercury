@@ -56,12 +56,16 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
         var searchTerm = filterValue;
         if (searchTerm!=="") {
             if (selectType === "select") {
-                searchTerm = "^" + $j.fn.dataTable.util.escapeRegex(filterValue) + "$";
+                searchTerm = "^" + escape(filterValue) + "$";
             } else {
                 searchTerm = filterValue;
             }
         }
         return searchTerm;
+    }
+
+    function escape(text){
+        return $j.fn.dataTable.util.escapeRegex(text);
     }
 
     function updateFilter(column, filterValue, selectType = 'text') {
@@ -163,7 +167,7 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
     api.columns().every(function (index) {
         var column = api.column(index);
         var filteredRows = api.column(index, {search: 'none'}).data();
-        var savedFilterValue=column.search();
+        var savedFilterValue=unEscape(column.search());
 
         var header = $j(column.header());
         var headerLabel = header.text().trim();
@@ -273,9 +277,11 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                 })(column, this);
             });
         }
-        api.on('init.dt', function (event, settings) {
-            updateFilterInfo(column, cleanTitle, headerLabel, savedFilterValue);
-        });
+        if (filterColumn) {
+            api.on('init.dt', function (event, settings) {
+                updateFilterInfo(column, cleanTitle, headerLabel, savedFilterValue);
+            });
+        }
     });
 
     // do not sort column when input field is clicked.
@@ -297,12 +303,19 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                 uniqueValues.push(cell.trim());
             }
         }
-        uniqueValues.sort().forEach(function (thisOption) {
-            var items = $j("<option></option>", {value: thisOption, text: thisOption});
+        for (var option of uniqueValues.sort()) {
+            option = unEscape(option);
+            var items = $j("<option></option>", {value: option, text: option});
             $j(select).append(items);
-        });
+        }
         return $j(select);
     }
+
+    // unescape html encoded character`s such as '&amp;'
+    function unEscape(s) {
+        return $j("<textarea/>").html(s).text();
+    }
+
     function tableEmpty(settings){
         var api = $j.fn.dataTable.Api(settings);
         return api.data().length===0;
@@ -318,7 +331,7 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
 
     function updateSearchText(settings) {
         var api = $j.fn.dataTable.Api(settings);
-        var currentFullTextSearch = api.search();
+        var currentFullTextSearch = escape(api.search());
         if (currentFullTextSearch !== undefined) {
             var defaultText = "any text";
             var matchContent = defaultText;
@@ -341,5 +354,5 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
         $j('.chosen-drop, .chosen-container').css('min-width', '6em');
         $j(".search-field input").css("font-size", "smaller");
         $j('.chosen-drop,.chosen-results li, li.search-choice span').css("white-space", "nowrap");
-    };
+    }
 }

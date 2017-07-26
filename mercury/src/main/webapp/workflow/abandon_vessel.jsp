@@ -1,12 +1,9 @@
-<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.workflow.AbandonVesselActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 <%@ taglib prefix='fn' uri='http://java.sun.com/jsp/jstl/functions' %>
 <%@ taglib uri="http://mercury.broadinstitute.org/Mercury/security" prefix="security" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
-<%@ page import="org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList" %>
-<%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean" %>
 <stripes:useActionBean var="actionBean" beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.AbandonVesselActionBean"/>
 <c:set var="reasonCodes" value="${actionBean.reasonCodes}"/>
 <stripes:layout-render name="/layout.jsp" pageTitle="Abandon Vessel" sectionTitle="Abandon Vessel">
@@ -49,6 +46,10 @@
                 direction: ltr;
                 text-align:left;
                 text-overflow: ellipsis;
+            }
+
+            table, th, td {
+                border: 1px solid black;
             }
 
             fieldset{
@@ -241,7 +242,7 @@
                                     <tr>
                                         <td nowrap><div style="float:right;"></div> <div style="float:right;"></div></td>
                                         <c:forEach items="${geometry.columnNames}" var="columnName" varStatus="columnStatus">
-                                            <td nowrap><div style="float:left;">${columnName}</div> <div style="float:right;"> </div></td>
+                                            <td nowrap  style="text-align:center;" >${columnName}</td>
                                         </c:forEach>
                                     </tr>
                                 </c:if>

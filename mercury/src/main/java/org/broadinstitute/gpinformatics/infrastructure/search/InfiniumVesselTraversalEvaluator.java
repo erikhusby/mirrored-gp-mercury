@@ -250,25 +250,53 @@ public class InfiniumVesselTraversalEvaluator extends CustomTraversalEvaluator {
     }
 
     /**
-     * Given a LabVessel representing a DNA plate well, get details of the associated Infinium plate and position
+     * Given a LabVessel representing a DNA plate well, get details of the associated Infinium plate and position.  <br/>
+     * Only shows the latest chip details if a re-hyb occurs downstream of a plate well
      * @param dnaPlateWell The DNA plate well to get the downstream Infinium chip details for.
      * @param chipEventTypes The downstream event type(s) to capture to get Infinium chip details <br />
      *                       ( INFINIUM_HYBRIDIZATION, but allow for flexibility )
      * @param context SearchContext containing values associated with search instance
      * @return All downstream vessels and associated positions, if initial vessel not a plate well, ignore and return empty Map
      */
-    public static MultiValuedMap<LabVessel, VesselPosition> getChipDetailsForDnaWell(LabVessel dnaPlateWell,
-                                                                                     List<LabEventType> chipEventTypes, SearchContext context ) {
+    public static MultiValuedMap<LabVessel, VesselPosition> getChipDetailsForDnaWell(
+            LabVessel dnaPlateWell, List<LabEventType> chipEventTypes, SearchContext context ) {
 
         // Every Infinium event/vessel looks to descendant for chip barcode
         LabVesselSearchDefinition.VesselsForEventTraverserCriteria infiniumDescendantCriteria = new LabVesselSearchDefinition.VesselsForEventTraverserCriteria(
                 chipEventTypes, false, true);
 
+        // Set flag to present only the newest chip details for a DNA plate well if re-hybed
+        infiniumDescendantCriteria.captureLatestEventVesselsOnly();
+
+        // Evaluate non-container only.  If a container, don't evaluate and return empty collection
         if( dnaPlateWell.getContainerRole() == null ) {
             dnaPlateWell.evaluateCriteria(infiniumDescendantCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
-        } else {
-            dnaPlateWell.getContainerRole().applyCriteriaToAllPositions(infiniumDescendantCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
         }
+        // (Else throw IllegalStateException?)
+
+        return infiniumDescendantCriteria.getPositions();
+    }
+
+    /**
+     * Given a LabVessel representing a DNA plate, get details of ALL dowbstream Infinium chips (initial and re-hyb)
+     * @param dnaPlate The DNA plate to get the downstream Infinium chip details for.
+     * @param chipEventTypes The downstream event type(s) to capture to get Infinium chip details <br />
+     *                       ( INFINIUM_HYBRIDIZATION, but allow for flexibility )
+     * @param context SearchContext containing values associated with search instance
+     * @return All downstream Infinium chips and associated positions (positions ignored)
+     */
+    public static MultiValuedMap<LabVessel, VesselPosition> getChipDetailsForDnaPlate(
+            LabVessel dnaPlate, List<LabEventType> chipEventTypes, SearchContext context ) {
+
+        // Every Infinium event/vessel looks to descendant for chip barcode
+        LabVesselSearchDefinition.VesselsForEventTraverserCriteria infiniumDescendantCriteria = new LabVesselSearchDefinition.VesselsForEventTraverserCriteria(
+                chipEventTypes, false, true);
+
+        // Evaluate container only.  If not a container, don't evaluate and return empty collection
+        if( dnaPlate.getContainerRole() != null ) {
+            dnaPlate.getContainerRole().applyCriteriaToAllPositions(infiniumDescendantCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+        }
+        // (Else throw IllegalStateException?)
 
         return infiniumDescendantCriteria.getPositions();
     }

@@ -70,33 +70,36 @@ public class SapIntegrationServiceImplDBFreeTest {
         Funding fundingDefined = new Funding(Funding.PURCHASE_ORDER,null, null);
         fundingDefined.setPurchaseOrderContact(testUser);
         fundingDefined.setPurchaseOrderNumber("PO00Id8923");
-        FundingLevel fundingLevel = new FundingLevel("100",fundingDefined);
+        FundingLevel fundingLevel = new FundingLevel("100", Collections.singleton(fundingDefined));
 
         QuoteFunding quoteFunding = new QuoteFunding(Collections.singleton(fundingLevel));
 
         testSingleSourceQuote = new Quote(SINGLE_SOURCE_PO_QUOTE_ID, quoteFunding, ApprovalStatus.FUNDED);
+        testSingleSourceQuote.setExpired(Boolean.FALSE);
 
         Funding costObjectFundingDefined = new Funding(Funding.FUNDS_RESERVATION, "to researchStuff", "8823");
         costObjectFundingDefined.setFundsReservationNumber("FR11293");
-        FundingLevel coFundingLevel1 = new FundingLevel("100", costObjectFundingDefined);
+        FundingLevel coFundingLevel1 = new FundingLevel("100", Collections.singleton(costObjectFundingDefined));
         QuoteFunding costObjectQFunding = new QuoteFunding(Collections.singleton(coFundingLevel1));
 
         testSingleSourceFRQuote = new Quote(SINGLE_SOURCE_FUND_RES_QUOTE_ID, costObjectQFunding, ApprovalStatus.FUNDED);
+        testSingleSourceFRQuote.setExpired(Boolean.FALSE);
 
         Funding test3POFundingDefined = new Funding(Funding.PURCHASE_ORDER,null, null);
         test3POFundingDefined.setPurchaseOrderContact(testUser);
         test3POFundingDefined.setPurchaseOrderNumber("PO002394ID92");
-        FundingLevel test3PurchaseOrderFundingLevel = new FundingLevel("50",test3POFundingDefined);
+        FundingLevel test3PurchaseOrderFundingLevel = new FundingLevel("50", Collections.singleton(test3POFundingDefined));
 
         Funding test3PO2FundingDefined = new Funding(Funding.PURCHASE_ORDER, null, null);
         test3PO2FundingDefined.setPurchaseOrderContact("Second" + testUser);
         test3PO2FundingDefined.setPurchaseOrderNumber("PO3329EEK93");
-        FundingLevel test3PO2FundingLevel = new FundingLevel("50", test3PO2FundingDefined);
+        FundingLevel test3PO2FundingLevel = new FundingLevel("50", Collections.singleton(test3PO2FundingDefined));
 
         QuoteFunding test3Funding = new QuoteFunding(
                 Arrays.asList(new FundingLevel[]{test3PurchaseOrderFundingLevel,test3PO2FundingLevel}));
 
         testMultipleLevelQuote = new Quote(MULTIPLE_SOURCE_QUOTE_ID, test3Funding, ApprovalStatus.FUNDED);
+        testMultipleLevelQuote.setExpired(Boolean.FALSE);
 
         mockQuoteService = Mockito.mock(QuoteServiceImpl.class);
         Mockito.when(mockQuoteService.getQuoteByAlphaId(testSingleSourceQuote.getAlphanumericId())).thenReturn(testSingleSourceQuote);
@@ -202,14 +205,14 @@ public class SapIntegrationServiceImplDBFreeTest {
 
         conversionPdo.addSapOrderDetail(new SapOrderDetail("testsap001", conversionPdo.getTotalNonAbandonedCount(
                 ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY),
-                conversionPdo.getQuoteId(), integrationService.determineCompanyCode(conversionPdo).getCompanyCode()));
+                conversionPdo.getQuoteId(), integrationService.determineCompanyCode(conversionPdo).getCompanyCode(), "", ""));
 
         ProductOrder childOrder = ProductOrder.cloneProductOrder(conversionPdo, false);
         childOrder.setJiraTicketKey("PDO-CLONE1");
 
         childOrder.addSapOrderDetail(new SapOrderDetail("testchildsap001", childOrder.getTotalNonAbandonedCount(
                 ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY),
-                childOrder.getQuoteId(), integrationService.determineCompanyCode(childOrder).getCompanyCode()));
+                childOrder.getQuoteId(), integrationService.determineCompanyCode(childOrder).getCompanyCode(), "", ""));
 
         childOrder.setSamples(ProductOrderSampleTestFactory
                 .createDBFreeSampleList(MercurySample.MetadataSource.BSP,
