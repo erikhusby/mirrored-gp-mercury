@@ -582,64 +582,6 @@ public class EventEtlDbFreeTest {
         tst.processFixups(deletedEntityIds, modifiedEntityIds, etlDateStr);
     }
 
-    @Test(groups = TestGroups.DATABASE_FREE, enabled = true)
-    public void testFixups() throws Exception {
-        Long modEventId = 9L;
-        Long seqRunId = 8L;
-        Long cartridgeEventId = 7L;
-        String etlDateStr = "20130623182000";
-
-        Set<Long> deletedEntityIds = new HashSet<>();
-        Set<Long> modifiedEntityIds = new HashSet<>();
-
-        modifiedEntityIds.add(modEventId);
-
-        // modEvent is the modified event and it has one vessel, denature.
-        // Denature has one descendant vessel, cartridge, which has one event, cartridgeEvent.
-        //
-        // modEvent should cause cartridgeEvent to be put on the modifiedIds list.
-
-        EasyMock.expect(dao.findById(LabEvent.class, modEventId)).andReturn(modEvent);
-
-        EasyMock.expect(modEvent.getLabEventId()).andReturn(modEventId);
-        EasyMock.expect(modEvent.getTargetLabVessels()).andReturn(Collections.<LabVessel>emptySet());
-        EasyMock.expect(modEvent.getInPlaceLabVessel()).andReturn(denature);
-
-        Collection<LabVessel> cartridges = new ArrayList<>();
-        cartridges.add(cartridge);
-        EasyMock.expect(denature.getDescendantVessels()).andReturn(cartridges);
-
-        Set<LabEvent> denatureEvents = new HashSet<>();
-        denatureEvents.add(modEvent);
-        EasyMock.expect(denature.getEvents()).andReturn(denatureEvents);
-
-        Set<LabEvent> cartridgeEvents = new HashSet<>();
-        cartridgeEvents.add(cartridgeEvent);
-        EasyMock.expect(cartridge.getEvents()).andReturn(cartridgeEvents);
-        EasyMock.expect(cartridgeEvent.getLabEventId()).andReturn(cartridgeEventId);
-
-        EasyMock.expect(denature.getType()).andReturn(LabVessel.ContainerType.TUBE);
-        EasyMock.expect(cartridge.getType()).andReturn(LabVessel.ContainerType.FLOWCELL);
-
-        SequencingRun seqRun = new IlluminaSequencingRun(
-                flowcell, "runName", "runBarcode", "machine", 1234L, false, new Date(), "/tmp");
-        seqRun.setSequencingRunId(seqRunId);
-        Set<SequencingRun> seqRuns = new HashSet<>();
-        seqRuns.add(seqRun);
-
-        EasyMock.expect(cartridge.getSequencingRuns()).andReturn(seqRuns);
-
-        EasyMock.replay(mocks);
-
-        tst.processFixups(deletedEntityIds, modifiedEntityIds, etlDateStr);
-
-        Assert.assertEquals(deletedEntityIds.size(), 0);
-        Assert.assertEquals(modifiedEntityIds.size(), 2);
-
-        // (Does not need to verify mocks.)
-    }
-
-
     private void verifyRecord(String record, String eventName) {
         verifyRecord(record, eventName, labBatchName);
     }
