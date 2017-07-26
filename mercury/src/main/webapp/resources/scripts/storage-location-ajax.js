@@ -1,14 +1,17 @@
 $j(document).ready( function() {
+    $j("#error-dialog-ajax").hide();
 
     function displayNotification(errorText, clazz) {
-        $j("#error-dialog").removeClass("alert-error");
-        $j("#error-dialog").removeClass("alert-success");
-        $j("#error-dialog").addClass(clazz);
-        $j("#error-text").text(errorText);
-        $j("#error-dialog").show();
+        console.log("displayNotification " + errorText);
+        $j("#error-dialog-ajax").removeClass("alert-error");
+        $j("#error-dialog-ajax").removeClass("alert-success");
+        $j("#error-dialog-ajax").addClass(clazz);
+        $j("#error-text-ajax").text(errorText);
+        $j("#error-dialog-ajax").show();
     }
 
     function findLocationTrail(storageId) {
+        $j("#error-dialog-ajax").hide();
         $j.ajax({
             url: "/Mercury/storage/storage.action?findLocationTrail=&storageId=" + storageId,
             type: 'POST',
@@ -36,6 +39,7 @@ $j(document).ready( function() {
 
     $j("#searchTermAjaxSubmit").click(function (e) {
         e.preventDefault();
+        $j("#error-dialog-ajax").hide();
         var searchTerm = $j("#searchTermAjax").val();
         var oldPath = $j("#ajax-jstree").jstree(true).settings.core.data.url;
         var newPath = '/Mercury/storage/storage.action?searchNode=&searchTerm=' + searchTerm;
@@ -48,6 +52,7 @@ $j(document).ready( function() {
     });
 
     function initializeJsTreeNav() {
+        $j("#error-dialog-ajax").hide();
         $j('#ajax-jstree').jstree({
             plugins: ["types", "sort", "wholerow"],
             types : {
@@ -68,7 +73,6 @@ $j(document).ready( function() {
                 'data' : {
                     "url" : "/Mercury/storage/storage.action?loadTreeAjax=",
                     "data" : function (node) {
-                        console.log(node);
                         if (node.id == "#") {
                             return {"id": node.id};
                         } else {
@@ -77,16 +81,15 @@ $j(document).ready( function() {
                     },
                     "dataType" : "json",
                     'error': function (data) {
+                        console.log("Error occured when loading tree");
                         console.log(data);
-                        displayError("Failed to load storages.");
+                        displayNotification("Failed to find storage.", "alert-error");
+                        $j("#ajax-jstree").jstree(true).refresh();
                     }
                 }
             }
         }).bind("select_node.jstree", function (e, data) {
             var node = data.node;
-            console.log(">>>>");
-            console.log(node);
-            console.log("<<<");
             var typesLabVessels = ['SHELF', 'GAGERACK', 'BOX', 'SLOT'];
             if ($j.inArray(node.type, typesLabVessels) > -1) {
                 findLocationTrail(node.data.storageLocationId);
@@ -103,7 +106,7 @@ $j(document).ready( function() {
         title: "Select Storage Location",
         autoOpen: false,
         height: 600,
-        width: 450,
+        width: 600,
         modal: true,
         buttons: {
             "Ok": function() {

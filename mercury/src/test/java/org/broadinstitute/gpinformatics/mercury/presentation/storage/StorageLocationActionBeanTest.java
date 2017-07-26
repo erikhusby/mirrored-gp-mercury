@@ -62,9 +62,10 @@ public class StorageLocationActionBeanTest {
         freezerShelf1.setStorageLocationId(FREEZER_SHELF_ID);
         deliFridge = createNewStorage(StorageLocation.LocationType.REFRIGERATOR, "Deli Fridge", 2, 4);
         deliFridge.setStorageLocationId(FRIDGE_ID);
+        deliFridge.setBarcode("DeliFridgeBarcode");
         when(mockStorageLocationDao.findByLocationTypes(StorageLocation.LocationType.getTopLevelLocationTypes())).
                 thenReturn(Arrays.asList(freezer, deliFridge));
-        when(mockStorageLocationDao.findById(StorageLocation.class, FRIDGE_ID)).thenReturn(deliFridge);
+        when(mockStorageLocationDao.findByBarcode(deliFridge.getBarcode())).thenReturn(deliFridge);
         when(mockStorageLocationDao.findById(StorageLocation.class, FREEZER_ID)).thenReturn(freezer);
 
         gaugeRack = new StorageLocation("Gage Rack", StorageLocation.LocationType.GAUGERACK, null);
@@ -123,7 +124,7 @@ public class StorageLocationActionBeanTest {
 
     @Test
     public void testSearch() throws Exception {
-        actionBean.setSearchTerm(String.valueOf(FRIDGE_ID));
+        actionBean.setSearchTerm(deliFridge.getBarcode());
         StreamingResolution resolution = (StreamingResolution) actionBean.searchForNode();
         HttpServletRequest request = new MockHttpServletRequest("foo", "bar");
         MockHttpServletResponse response = new MockHttpServletResponse();

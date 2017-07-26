@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.container;
 
 import net.sourceforge.stripes.action.After;
-import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.DontValidate;
 import net.sourceforge.stripes.action.ForwardResolution;
@@ -50,6 +49,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -165,8 +165,6 @@ public class ContainerActionBean extends RackScanActionBean {
             staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
             storageLocation = staticPlate.getStorageLocation();
         } else {
-            rackOfTubes = OrmUtil.proxySafeCast(labVessel, RackOfTubes.class);
-            storageLocation = rackOfTubes.getStorageLocation();
             addValidationError(containerBarcode,
                     "Lab Vessel Type must be a Static Plate or a Rack Of Tubes: " + containerBarcode);
         }
@@ -174,11 +172,15 @@ public class ContainerActionBean extends RackScanActionBean {
 
     /**
      * Attempt to determine the position map of the container under the disclaimer that the RackOfTubes
+     * may not be accurate under rearrays.
      */
     @After(stages = LifecycleStage.CustomValidation, on = {VIEW_CONTAINER_ACTION, EDIT_ACTION, SAVE_ACTION,
             SAVE_LOCATION_ACTION, CANCEL_SAVE_ACTION, REMOVE_LOCATION_ACTION, VIEW_CONTAINER_AJAX_ACTION})
     public void buildPositionMapping() {
         mapPositionToVessel = new HashMap<>();
+        if (hasErrors()) {
+            return;
+        }
         if (rackOfTubes == null && staticPlate == null) {
             addValidationError("containerBarcode", "Failed to find lab vessel: " + containerBarcode);
             return;
@@ -197,6 +199,15 @@ public class ContainerActionBean extends RackScanActionBean {
                     foundRackOfTubesInEvent = isRackOfTubesInEvent( labEvent, inPlaceLabVessel, rackOfTubes.getLabel() );
                 }
                 for (LabVessel vessel : labEvent.getTargetLabVessels()) {
+                    if( OrmUtil.proxySafeIsInstance( vessel, TubeFormation.class )) {
+                        foundRackOfTubesInEvent = isRackOfTubesInEvent( labEvent, vessel, rackOfTubes.getLabel() );
+                    } else {
+                        if (vessel.getLabel().equals(rackOfTubes.getLabel())) {
+                            foundRackOfTubesInEvent = true;
+                        }
+                    }
+                }
+                for (LabVessel vessel : labEvent.getSourceLabVessels()) {
                     if( OrmUtil.proxySafeIsInstance( vessel, TubeFormation.class )) {
                         foundRackOfTubesInEvent = isRackOfTubesInEvent( labEvent, vessel, rackOfTubes.getLabel() );
                     } else {
@@ -228,6 +239,10 @@ public class ContainerActionBean extends RackScanActionBean {
                 for (VesselPosition vesselPosition : rackOfTubes.getVesselGeometry().getVesselPositions()) {
                     LabVessel barcodedTube = containerRole.getImmutableVesselAtPosition(vesselPosition);
                     if (barcodedTube != null) {
+                        if (rackOfTubes.getStorageLocation() != null && barcodedTube.getStorageLocation() != null
+                                && !barcodedTube.getStorageLocation().equals(rackOfTubes.getStorageLocation())) {
+                            return;
+                        }
                         LabEvent barcodesLatestEvent = barcodedTube.getLatestEvent();
                         if (barcodesLatestEvent.equals(latestEvent)) {
                             mapPositionToVessel.put(vesselPosition, barcodedTube);
@@ -295,7 +310,6 @@ public class ContainerActionBean extends RackScanActionBean {
 
     @HandlesEvent(VIEW_CONTAINER_AJAX_ACTION)
     public Resolution viewContainerAjax() {
-//        editLayout = true;
         ajaxRequest = true;
         return new ForwardResolution(CONTAINER_VIEW_SHIM_PAGE);
     }
@@ -307,6 +321,7 @@ public class ContainerActionBean extends RackScanActionBean {
     }
 
     private void savePositionMapToLocation(MessageCollection messageCollection, StorageLocation storageLocation) {
+        Set<String> barcodes = new HashSet<>();
         for (ReceptacleType receptacleType : receptacleTypes) {
             if (!StringUtils.isEmpty(receptacleType.getBarcode())) {
                 String barcode = receptacleType.getBarcode();
@@ -318,7 +333,15 @@ public class ContainerActionBean extends RackScanActionBean {
                 } else {
                     BarcodedTube barcodedTube = OrmUtil.proxySafeCast(labVessel, BarcodedTube.class);
                     barcodedTube.setStorageLocation(storageLocation);
+                    barcodes.add(barcode);
                 }
+            }
+        }
+
+        // Remove any tubes that are no longer in this storage location
+        for (LabVessel labVessel: mapPositionToVessel.values()) {
+            if (!barcodes.contains(labVessel.getLabel())) {
+                labVessel.setStorageLocation(null);
             }
         }
     }

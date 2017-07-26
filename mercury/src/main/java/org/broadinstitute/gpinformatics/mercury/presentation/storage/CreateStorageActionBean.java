@@ -135,7 +135,7 @@ public class CreateStorageActionBean extends CoreActionBean {
     private StorageLocation createNewRack() {
         StorageLocation rack = new StorageLocation(getName(), locationType, parentStorageLocation);
         for (int i = 1; i < getSlots(); i++) {
-            String slotName = " Slot " + i;
+            String slotName = "Slot " + i;
             StorageLocation slot = new StorageLocation(slotName, StorageLocation.LocationType.SLOT, rack);
             rack.getChildrenStorageLocation().add(slot);
         }

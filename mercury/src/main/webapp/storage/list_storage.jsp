@@ -27,37 +27,45 @@
                 $j("#error-dialog").hide();
                 var canCreate = ${actionBean.moveAllowed};
 
-                function displaySuccess(errorText) {
-                    displayNotification(errorText, "alert-success");
+                function displaySuccess(msg) {
+                    displayNotification(msg, "alert-success");
                 }
 
-                function displayError(displayErrerrorText) {
-                    displayNotification(errorText, "alert-error");
+                function displayError(msg) {
+                    displayNotification(msg, "alert-error");
                 }
 
-                function displayNotification(errorText, clazz) {
+                function displayNotification(msg, clazz) {
                     $j("#error-dialog").removeClass("alert-error");
                     $j("#error-dialog").removeClass("alert-success");
                     $j("#error-dialog").addClass(clazz);
-                    $j("#error-text").text(errorText);
+                    $j("#error-text").text(msg);
                     $j("#error-dialog").show();
                 }
 
                 function findContainer(containerBarcode, node) {
+                    $j("#error-dialog").hide();
                     var formData = new FormData();
                     formData.append("viewContainerAjax", "");
                     formData.append("containerBarcode", containerBarcode);
+                    var replaceDom = $j("#replaceMeWithStorageContents");
+                    replaceDom.addClass("show-loading-icon");
                     var nodeDom;
                     if (node) {
-                        $j("#replaceMeWithStorageContents").addClass("show-loading-icon");
+                        console.log("Adding to node");
+                        nodeDom = $j('#' + node.id);
+                        console.log(nodeDom);
+                        nodeDom.addClass("jstree-loading")
                     }
                     $j.ajax({
                         url: "${ctxpath}/container/container.action",
                         type: 'POST',
                         data: formData,
-                        async: false,
+                        async: true,
                         success: function (results) {
+                            replaceDom.removeClass("show-loading-icon");
                             if (node) {
+                                nodeDom.removeClass("jstree-loading");
                             }
                             $j("#replaceMeWithStorageContents").html(results);
                         },
@@ -65,7 +73,9 @@
                             console.log(results);
                             displayError("A server error occured.");
                             $j('#jstree').jstree("refresh");
+                            replaceDom.removeClass("show-loading-icon");
                             if (node) {
+                                nodeDom.removeClass("jstree-loading");
                             }
                         },
                         cache: false,
@@ -77,16 +87,12 @@
 
                 $j("#searchTermSubmit").click(function (e) {
                     e.preventDefault();
+                    $j("#error-dialog").hide();
                     var searchTerm = $j("#searchTerm").val();
                     var containerBarcode = $j("#containerBarcode").val();
-                    console.log("SearchTerm: " + searchTerm);
-                    console.log("container Barcode: " + containerBarcode);
                     if (containerBarcode) {
-                        console.log("CO call");
                         findContainer(containerBarcode);
-                    }
-                    else if (searchTerm) {
-                        console.log("Search called");
+                    } else if (searchTerm) {
                         var oldPath = $j("#jstree").jstree(true).settings.core.data.url;
                         var newPath = '${ctxpath}/storage/storage.action?searchNode=&searchTerm=' + searchTerm;
                         try {
@@ -109,12 +115,21 @@
                                 removeFromStorage(nodeData);
                             }
                         };
-                    } else if (type === "GAUGERACK" && canCreate) {
+                    } else if (canCreate && (type === "GAUGERACK" || type === "BOX" || type === "SHELF") ) {
                         items.renameItem = {
                             label: "Rename",
                             action: function () {
                                 var tree = $j("#jstree").jstree(true);
                                 tree.edit(node);
+                            }
+                        }
+                    }
+                    if (canCreate && type === "GAUGERACK") {
+                        items.editItem = {
+                            label: "Edit",
+                            action: function () {
+                                window.location.href = '${ctxpath}/storage/storage.action?edit=&storageId=' +
+                                        node.data.storageLocationId;
                             }
                         }
                     }
@@ -164,14 +179,23 @@
                             //Only allow LabManagers
                             if (!canCreate)
                                     return false;
-                            // Only Rename/Move Boxes and only move to shelves
-                            var acceptableTypes = ['GAUGERACK','BOX'];
-                            if (acceptableTypes.indexOf(node.type) == -1) {
-                                return false;
+                            // Can Rename Boxes, racks, and shelves, but only move boxes and racks
+                            var acceptableMoves = ['GAUGERACK','BOX'];
+                            if (op === "move_node") {
+                                if (acceptableMoves.indexOf(node.type) == -1) {
+                                    return false;
+                                }
+                            } else if (op === "rename_node") {
+                                acceptableMoves.push('SHELF');
+                                if (acceptableMoves.indexOf(node.type) == -1) {
+                                    return false;
+                                }
                             }
+
                             if((op === "move_node") && more && more.core && !confirm("Are you sure...?")) {
                                 return false;
                             }
+                            console.log("Where am I?");
                             if((op === "rename_node" && !confirm("Are you sure...?"))) {
                                 return false;
                             }
@@ -188,8 +212,8 @@
                             },
                             "dataType" : "json",
                             'error': function (data) {
-                                console.log(data);
-                                displayError("Failed to load storages.");
+                                displayError("Failed to find storage.");
+                                $j("#jstree").jstree(true).refresh();
                             }
                         }
                     }
@@ -233,6 +257,7 @@
                         findContainer(node.text, node);
                     }
                 }).bind("rename_node.jstree", function (e, data) {
+                    console.log("On Rename Called");
                     var formData = new FormData();
                     formData.append("nodeName", data.node.data.storageLocationId);
                     formData.append("storageName", data.node.text);
@@ -282,8 +307,8 @@
                 </stripes:form>
             </div>
             <div class="row-fluid">
-                <div id="jstree" class="span3"></div>
-                <div id="replaceMeWithStorageContents" class="span9">
+                <div id="jstree" class="span4"></div>
+                <div id="replaceMeWithStorageContents" class="span8">
 
                 </div>
             </div>

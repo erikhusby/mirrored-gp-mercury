@@ -32,6 +32,10 @@
 <script src="${ctxpath}/resources/scripts/storage-location-ajax.js"></script>
 
 <div id="storage_location_overlay">
+    <div class="alert" id="error-dialog-ajax">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <span id="error-text-ajax">defaul error message.</span>
+    </div>
     <div class="control-group">
         <div class="control">
             <input type="text" id="searchTermAjax" name="searchTerm" placeholder="storage barcode"/>

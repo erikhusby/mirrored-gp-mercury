@@ -1,11 +1,14 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.storage;
 
+import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
+import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
+import net.sourceforge.stripes.controller.LifecycleStage;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -33,7 +36,12 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @UrlBinding(StorageLocationActionBean.ACTION_BEAN_URL)
 public class StorageLocationActionBean extends CoreActionBean {
@@ -42,11 +50,14 @@ public class StorageLocationActionBean extends CoreActionBean {
     public static final String CREATE_STORAGE = "Create Storage Location";
     public static final String STORAGE_LIST_PAGE = "/storage/list_storage.jsp";
     public static final String CREATE_STORAGE_PAGE = "/storage/create_storage.jsp";
+    public static final String EDIT_STORAGE_PAGE = "/storage/edit_storage.jsp";
+    public static final String STORAGE_ID_PARAM = "storageId";
     public static final String LOAD_TREE_ACTION = "loadTree";
     public static final String LOAD_TREE_AJAX_ACTION = "loadTreeAjax";
     public static final String SEARCH_NODE_ACTION = "searchNode";
     public static final String MOVE_NODE_ACTION = "moveNodeAction";
     public static final String RENAME_NODE_ACTION = "renameNodeAction";
+    public static final String SAVE_BARCODES_ACTION = "saveStorageBarcodes";
     public static final String FIND_LOCATION_TRAIL_ACTION = "findLocationTrail";
     public static final String ROOT_NODE = "#";
 
@@ -75,6 +86,10 @@ public class StorageLocationActionBean extends CoreActionBean {
 
     //Node Search
     private String searchTerm;
+
+    private List<StorageLocation> childStorageLocations;
+    private Map<Long, String> mapIdToBarcode = new HashMap<>();
+    private Map<Long, StorageLocation> mapIdToStorageLocation = new LinkedHashMap<>();
 
     public StorageLocationActionBean() {
         super(CREATE_STORAGE, null, null);
@@ -117,8 +132,7 @@ public class StorageLocationActionBean extends CoreActionBean {
         ObjectNode currentNode = new ObjectMapper().createObjectNode();
         StorageLocation storageLocation = null;
         if (searchTerm != null) {
-            storageLocation = storageLocationDao.findById(
-                    StorageLocation.class, Long.valueOf(searchTerm));
+            storageLocation = storageLocationDao.findByBarcode(searchTerm);
             if (storageLocation != null) {
                 generateJSON(storageLocation, currentNode, true);
                 createOpenState(mapper, currentNode, false, true);
@@ -143,19 +157,23 @@ public class StorageLocationActionBean extends CoreActionBean {
             }
         }
 
-        //Add all other top level locations as well
-        List<StorageLocation> rootStorageLocations = storageLocationDao.findByLocationTypes(
-                StorageLocation.LocationType.getTopLevelLocationTypes());
-
         ArrayNode arrayNode = mapper.createArrayNode();
-        for (StorageLocation rootStorageLocation: rootStorageLocations) {
-            ObjectNode rootNode = null;
-            if (rootStorageLocation.getStorageLocationId().equals(storageLocation.getStorageLocationId())) {
-                rootNode = currentNode;
-            } else {
-                rootNode = generateJSON(rootStorageLocation, mapper.createObjectNode(), true);
+        if (storageLocation == null) {
+            throw new RuntimeException("Failed to find storage location with barcode: " + storageId);
+        } else {
+            //Add all other top level locations as well
+            List<StorageLocation> rootStorageLocations = storageLocationDao.findByLocationTypes(
+                    StorageLocation.LocationType.getTopLevelLocationTypes());
+
+            for (StorageLocation rootStorageLocation : rootStorageLocations) {
+                ObjectNode rootNode = null;
+                if (rootStorageLocation.getStorageLocationId().equals(storageLocation.getStorageLocationId())) {
+                    rootNode = currentNode;
+                } else {
+                    rootNode = generateJSON(rootStorageLocation, mapper.createObjectNode(), true);
+                }
+                arrayNode.add(rootNode);
             }
-            arrayNode.add(rootNode);
         }
 
         return new StreamingResolution("application/json", new StringReader(mapper.writeValueAsString(arrayNode)));
@@ -181,7 +199,7 @@ public class StorageLocationActionBean extends CoreActionBean {
             } else {
                 long nodeId = Long.parseLong(nodeName);
                 StorageLocation location = storageLocationDao.findById(StorageLocation.class, nodeId);
-                if (!location.getLocationType().isMoveable()) {
+                if (!location.getLocationType().canRename()) {
                     retObj.put("error", "Cannot rename location of this type: " + location.getLocationType().getDisplayName());
                     retObj.put("hasError", true);
                 } else {
@@ -269,6 +287,69 @@ public class StorageLocationActionBean extends CoreActionBean {
     @HandlesEvent(CREATE_ACTION)
     public Resolution createStorage() {
         return new ForwardResolution(CREATE_STORAGE_PAGE);
+    }
+
+
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {EDIT_ACTION, SAVE_BARCODES_ACTION})
+    public void editInit() {
+        String storageParam = getContext().getRequest().getParameter("storageId");
+        if (!StringUtils.isEmpty(storageParam)) {
+            storageId = Long.parseLong(storageParam);
+            storageLocation = storageLocationDao.findById(StorageLocation.class, storageId);
+            childStorageLocations = new ArrayList<>(storageLocation.getChildrenStorageLocation());
+            Collections.sort(childStorageLocations, new StorageLocation.StorageLocationLabelComparator());
+            for (StorageLocation storageLocation: childStorageLocations) {
+                mapIdToStorageLocation.put(storageLocation.getStorageLocationId(), storageLocation);
+            }
+        }
+    }
+
+    @HandlesEvent(EDIT_ACTION)
+    public Resolution editStorage() {
+        if (storageLocation == null) {
+            addValidationError(storageName, "Failed to find storage location with id " + storageId);
+            return new RedirectResolution(LOAD_TREE_AJAX_ACTION);
+        } else if (storageLocation.getLocationType() != StorageLocation.LocationType.GAUGERACK) {
+            addValidationError(storageName, "Can only edit Gauge Racks.");
+            return new RedirectResolution(LOAD_TREE_AJAX_ACTION);
+        }
+        return new ForwardResolution(EDIT_STORAGE_PAGE);
+    }
+
+    @HandlesEvent(SAVE_BARCODES_ACTION)
+    public Resolution saveBarcodesAction() {
+        Set<String> uniqueBarcodes = new HashSet<>();
+        if (mapIdToStorageLocation != null) {
+            for (Map.Entry<Long, StorageLocation> entry : mapIdToStorageLocation.entrySet()) {
+                StorageLocation storageLocation = entry.getValue();
+                String barcode = storageLocation.getBarcode();
+                if (!StringUtils.isEmpty(barcode)) {
+                    if (!uniqueBarcodes.add(barcode)) {
+                        addGlobalValidationError("All barcodes must be unique.");
+                        return new ForwardResolution(EDIT_STORAGE_PAGE).addParameter(STORAGE_ID_PARAM, storageId);
+                    }
+                }
+            }
+        }
+
+        List<StorageLocation> storageLocationList = storageLocationDao.findByListBarcodes(
+                new ArrayList<>(uniqueBarcodes));
+
+        for (StorageLocation storageLocation: storageLocationList) {
+            if (!mapIdToStorageLocation.containsKey(storageLocation.getStorageLocationId())) {
+                messageCollection.addError("Barcode is already in use: " + storageLocation.getBarcode());
+            }
+        }
+
+        if (messageCollection.hasErrors()) {
+            addMessages(messageCollection);
+            return new ForwardResolution(EDIT_STORAGE_PAGE).addParameter(STORAGE_ID_PARAM, storageId);
+        }
+
+        storageLocationDao.persistAll(mapIdToStorageLocation.values());
+        addMessage("Successfully updated barcodes.");
+        return new RedirectResolution(StorageLocationActionBean.class, EDIT_ACTION)
+                .addParameter(STORAGE_ID_PARAM, storageId);
     }
 
     @Override
@@ -452,6 +533,32 @@ public class StorageLocationActionBean extends CoreActionBean {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public List<StorageLocation> getChildStorageLocations() {
+        return childStorageLocations;
+    }
+
+    public void setChildStorageLocations(
+            List<StorageLocation> childStorageLocations) {
+        this.childStorageLocations = childStorageLocations;
+    }
+
+    public Map<Long, String> getMapIdToBarcode() {
+        return mapIdToBarcode;
+    }
+
+    public void setMapIdToBarcode(Map<Long, String> mapIdToBarcode) {
+        this.mapIdToBarcode = mapIdToBarcode;
+    }
+
+    public Map<Long, StorageLocation> getMapIdToStorageLocation() {
+        return mapIdToStorageLocation;
+    }
+
+    public void setMapIdToStorageLocation(
+            Map<Long, StorageLocation> mapIdToStorageLocation) {
+        this.mapIdToStorageLocation = mapIdToStorageLocation;
     }
 
     /** For testing. */

@@ -15,6 +15,19 @@ import java.util.List;
 @RequestScoped
 public class StorageLocationDao extends GenericDao {
 
+    public StorageLocation findByBarcode(final String barcode) {
+        return findSingle(StorageLocation.class, new GenericDaoCallback<StorageLocation>() {
+            @Override
+            public void callback(CriteriaQuery<StorageLocation> criteriaQuery, Root<StorageLocation> root) {
+                criteriaQuery.where(getCriteriaBuilder().equal(root.get(StorageLocation_.barcode), barcode));
+            }
+        });
+    }
+
+    public List<StorageLocation> findByListBarcodes(List<String> barcodes) {
+        return findListByList(StorageLocation.class, StorageLocation_.barcode, barcodes);
+    }
+
     public List<StorageLocation> findByLabel(final String label) {
         return findAll(StorageLocation.class, new GenericDaoCallback<StorageLocation>() {
             @Override

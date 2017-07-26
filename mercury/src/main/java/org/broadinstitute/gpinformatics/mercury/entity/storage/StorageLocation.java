@@ -34,7 +34,7 @@ import java.util.Set;
  */
 @Entity
 @Audited
-@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"barcode"}))
+@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(name = "U_STORAGE_BARCODE",columnNames = {"BARCODE"}))
 public class StorageLocation {
 
     public enum LocationType {
@@ -43,9 +43,9 @@ public class StorageLocation {
         SHELVINGUNIT("Shelving Unit", ExpectParentLocation.FALSE),
         CABINET("Cabinet", ExpectParentLocation.FALSE),
         SECTION("Section", ExpectParentLocation.TRUE, ExpectSlots.FALSE, Moveable.FALSE, CanCreate.FALSE),
-        SHELF("Shelf", ExpectParentLocation.TRUE),
-        GAUGERACK("Gauge Rack", ExpectParentLocation.TRUE, ExpectSlots.TRUE, Moveable.TRUE),
-        BOX("Box", ExpectParentLocation.TRUE, ExpectSlots.TRUE, Moveable.TRUE),
+        SHELF("Shelf", ExpectParentLocation.TRUE, CanRename.TRUE),
+        GAUGERACK("Gauge Rack", ExpectParentLocation.TRUE, ExpectSlots.TRUE, Moveable.TRUE, CanRename.TRUE),
+        BOX("Box", ExpectParentLocation.TRUE, ExpectSlots.TRUE, Moveable.TRUE, CanRename.TRUE),
         SLOT("Slot", ExpectParentLocation.TRUE, ExpectSlots.FALSE, Moveable.FALSE, CanCreate.FALSE);
 
         private enum CanCreate {
@@ -96,11 +96,23 @@ public class StorageLocation {
             }
         }
 
+        private enum CanRename {
+            TRUE(true),
+            FALSE(false);
+            private boolean value;
+
+            private CanRename(boolean value) {
+                this.value = value;
+            }
+        }
+
         private final String displayName;
         private final ExpectParentLocation expectParentLocation;
         private final ExpectSlots expectSlots;
         private final Moveable moveable;
         private final CanCreate canCreate;
+        private final CanRename canRename;
+
         private static final List<LocationType> LIST_TOP_LEVEL_LOCATION_TYPES = new
                 ArrayList<>(LocationType.values().length);
         private static final List<LocationType> LIST_CREATEABLE_LOCATION_TYPES = new
@@ -113,6 +125,10 @@ public class StorageLocation {
             this(displayName, expectParentLocation, ExpectSlots.FALSE, Moveable.FALSE);
         }
 
+        LocationType(String displayName, ExpectParentLocation expectParentLocation, CanRename canRename) {
+            this(displayName, expectParentLocation, ExpectSlots.FALSE, Moveable.FALSE, CanCreate.FALSE, canRename);
+        }
+
         LocationType(String displayName, ExpectParentLocation expectParentLocation, ExpectSlots expectSlots,
                      Moveable moveable) {
             this(displayName, expectParentLocation, expectSlots, moveable, CanCreate.TRUE);
@@ -120,11 +136,23 @@ public class StorageLocation {
 
         LocationType(String displayName, ExpectParentLocation expectParentLocation, ExpectSlots expectSlots,
                      Moveable moveable, CanCreate canCreate) {
+            this (displayName, expectParentLocation, expectSlots, moveable, canCreate, CanRename.FALSE);
+        }
+
+        LocationType(String displayName, ExpectParentLocation expectParentLocation, ExpectSlots expectSlots,
+                     Moveable moveable, CanRename canRename) {
+            this(displayName, expectParentLocation, expectSlots, moveable, CanCreate.TRUE, canRename);
+
+        }
+
+        LocationType(String displayName, ExpectParentLocation expectParentLocation, ExpectSlots expectSlots,
+                     Moveable moveable, CanCreate canCreate, CanRename canRename) {
             this.displayName = displayName;
             this.expectParentLocation = expectParentLocation;
             this.expectSlots = expectSlots;
             this.moveable = moveable;
             this.canCreate = canCreate;
+            this.canRename = canRename;
         }
 
         static {
@@ -149,6 +177,10 @@ public class StorageLocation {
 
         public boolean isMoveable() {
             return moveable == Moveable.TRUE;
+        }
+
+        public boolean canRename() {
+            return canRename == CanRename.TRUE;
         }
 
         public boolean isCreateable() {
@@ -288,6 +320,14 @@ public class StorageLocation {
             implements Comparator<StorageLocation> {
         @Override
         public int compare(StorageLocation storageLocation1, StorageLocation storageLocation2) {
+            boolean isNumbered = storageLocation1.getLabel().matches("[A-Za-z]+ \\d+");
+            if (storageLocation1.getLocationType() == LocationType.SLOT &&
+                storageLocation2.getLocationType() == LocationType.SLOT &&
+                isNumbered) {
+                Integer slotNumber = Integer.parseInt(storageLocation1.getLabel().replaceAll("\\D+",""));
+                Integer slot2Number = Integer.parseInt(storageLocation2.getLabel().replaceAll("\\D+",""));
+                return slotNumber.compareTo(slot2Number);
+            }
             return storageLocation1.getLabel()
                     .compareTo(storageLocation2.getLabel());
         }
