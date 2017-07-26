@@ -55,7 +55,7 @@ public class LibraryBeanTest {
         // send in some GSSR sample attributes in addition to bsp sample data to verify GSSR override.
         LibraryBean libraryBean = new LibraryBean(gssrLsid, gssrMaterialType, gssrCollabSampleId, gssrOrganism,
                 gssrSpecies, gssrStrain, gssrParticipant, sampleData, Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(),
-                LibraryBean.NO_PDO_SAMPLE, libraryCreationDate);
+                LibraryBean.NO_PDO_SAMPLE, libraryCreationDate,null);
 
         assertEquals(libraryBean.getPrimaryDisease(), sampleData.getPrimaryDisease());
         assertEquals(libraryBean.getLsid(),sampleData.getSampleLsid());
@@ -69,7 +69,7 @@ public class LibraryBeanTest {
         // new up sans bspSampleData to confirm gssr fields work.
         libraryBean = new LibraryBean(gssrLsid, gssrMaterialType, gssrCollabSampleId, gssrOrganism, gssrSpecies,
                 gssrStrain, gssrParticipant, null, Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(),
-                LibraryBean.NO_PDO_SAMPLE, libraryCreationDate);
+                LibraryBean.NO_PDO_SAMPLE, libraryCreationDate,null);
         assertEquals(libraryBean.getLsid(),gssrLsid);
         assertTrue(libraryBean.getIsGssrSample());
         assertEquals(libraryBean.getMaterialType(),gssrMaterialType);
@@ -99,7 +99,7 @@ public class LibraryBeanTest {
         SampleData sampleData = new BspSampleData(sampleAttributes);
 
         LibraryBean libraryBean = new LibraryBean(null, null, null, null, null, null, null, sampleData, null,
-                LibraryBean.NO_PDO_SAMPLE, null);
+                LibraryBean.NO_PDO_SAMPLE, null,null);
 
         assertEquals(libraryBean.getGender(), StringUtils.trimToNull(sampleData.getGender()));
         assertEquals(libraryBean.getLsid(), StringUtils.trimToNull(sampleData.getSampleLsid()));

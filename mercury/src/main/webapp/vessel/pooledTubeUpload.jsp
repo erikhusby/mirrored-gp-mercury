@@ -18,24 +18,24 @@
     </stripes:layout-component>
     <stripes:layout-component name="content">
         <stripes:form beanclass="${actionBean.class.name}" id="uploadForm">
-                <div class="form-horizontal">
-                    <div class="control-group">
-                        <div class="controls">
-                            <stripes:file name="pooledTubesSpreadsheet" id="pooledTubesSpreadsheet"/>
-                        </div>
-                        <div style="margin-left: 180px; width: auto;">
-                            <stripes:checkbox id="overWriteFlag" name="overWriteFlag"/>
-                            <stripes:label for="overWriteFlag">
-                                Overwrite previous upload
-                            </stripes:label>
-                        </div>
+            <div class="form-horizontal">
+                <div class="control-group">
+                    <div class="controls">
+                        <stripes:file name="pooledTubesSpreadsheet" id="pooledTubesSpreadsheet"/>
                     </div>
-                    <div class="control-group">
-                        <div class="controls">
-                            <stripes:submit name="uploadpooledTubes" value="Upload Pooled Tubes" class="btn btn-primary"/>
-                        </div>
+                    <div style="margin-left: 180px; width: auto;">
+                        <stripes:checkbox id="overWriteFlag" name="overWriteFlag"/>
+                        <stripes:label for="overWriteFlag">
+                            Overwrite previous upload
+                        </stripes:label>
                     </div>
                 </div>
+                <div class="control-group">
+                    <div class="controls">
+                        <stripes:submit name="uploadpooledTubes" value="Upload Pooled Tubes" class="btn btn-primary"/>
+                    </div>
+                </div>
+            </div>
         </stripes:form>
     </stripes:layout-component>
 </stripes:layout-render>
