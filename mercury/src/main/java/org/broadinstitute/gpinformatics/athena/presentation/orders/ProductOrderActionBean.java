@@ -2070,7 +2070,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             results = samples;
         } else {
             if (length > samples.size()) {
-                length=samples.size();
+                length = samples.size();
             }
             results = samples.subList(0, length);
         }
