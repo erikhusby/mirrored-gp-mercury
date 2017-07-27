@@ -133,7 +133,10 @@ public class ArraysSummaryFactory {
             // zCall
             printStream.print(arraysQc.getCallRatePct() + "\t");
             // Call Date
-            printStream.print(DATE_FORMAT.format(arraysQc.getAutocallDate()) + "\t");
+            if (arraysQc.getAutocallDate() != null) {
+                printStream.print(DATE_FORMAT.format(arraysQc.getAutocallDate()));
+            }
+            printStream.print("\t");
             // Aliquot
             printStream.print(sampleInstanceV2.getNearestMercurySampleName() + "\t");
             // Root Sample
