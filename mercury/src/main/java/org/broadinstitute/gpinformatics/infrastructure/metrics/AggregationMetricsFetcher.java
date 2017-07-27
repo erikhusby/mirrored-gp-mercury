@@ -15,7 +15,6 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardAnal
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardAnalysis_;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardFingerprint;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardFingerprint_;
-import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.hibernate.ejb.criteria.predicate.CompoundPredicate;
 
 import javax.ejb.Stateful;
@@ -53,36 +52,7 @@ public class AggregationMetricsFetcher {
     @PersistenceContext(unitName = "metrics_pu", type = PersistenceContextType.EXTENDED)
     private EntityManager entityManager;
 
-    public List<Aggregation> fetch(String researchProject, Collection<SubmissionTuple> submissionTuples) {
-        return fetch(researchProject, submissionTuples, MessageReporter.UNUSED);
-    }
-
-    public List<Aggregation> fetch(String researchProject, MessageReporter messageReporter) {
-        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
-        CriteriaQuery<Aggregation> criteriaQuery = criteriaBuilder.createQuery(Aggregation.class);
-        Root<Aggregation> root = criteriaQuery.from(Aggregation.class);
-        Predicate projectPredicate = criteriaBuilder.equal(root.get(Aggregation_.project), researchProject);
-            Predicate latestPredicate = criteriaBuilder.equal(root.get(Aggregation_.latest), true);
-        criteriaQuery.where(criteriaBuilder
-            .and(projectPredicate, latestPredicate,
-                criteriaBuilder.isNull(root.get(Aggregation_.library))
-            )
-        );
-
-
-        TypedQuery<Aggregation> query = entityManager.createQuery(criteriaQuery);
-        List<Aggregation> aggregations = new ArrayList<>();
-        try {
-            aggregations.addAll(query.getResultList());
-        } catch (NoResultException e) {
-            log.info("Unable to retrieve aggregations based on given criteria");
-        }
-
-        fetchLod(aggregations);
-        return aggregations;
-    }
-
-    public List<Aggregation> fetch(String researchProject, Collection<SubmissionTuple> tuples, MessageReporter messageReporter) {
+    public List<Aggregation> fetch(Collection<SubmissionTuple> tuples) {
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaQuery<Aggregation> criteriaQuery = criteriaBuilder.createQuery(Aggregation.class);
         Root<Aggregation> root = criteriaQuery.from(Aggregation.class);
@@ -103,7 +73,7 @@ public class AggregationMetricsFetcher {
                 versionPredicate = criteriaBuilder.equal(root.get(Aggregation_.version), aTuple.getVersion());
             }
 
-            Predicate projectPredicate = criteriaBuilder.equal(root.get(Aggregation_.project), researchProject);
+            Predicate projectPredicate = criteriaBuilder.equal(root.get(Aggregation_.project), aTuple.getProject());
 //            Predicate latestPredicate = criteriaBuilder.equal(root.get(Aggregation_.latest), true);
             criteriaQuery.where(criteriaBuilder
                 .and(projectPredicate, versionPredicate,
@@ -121,26 +91,8 @@ public class AggregationMetricsFetcher {
                 log.info("Unable to retrieve aggregations based on given criteria");
             }
 
-        List<Aggregation> results = new ArrayList<>();
-
-        for (Aggregation aggregation : aggregations) {
-            Map<String, Collection<SubmissionTuple>> tuplesBySample =
-                SubmissionTuple.sampleMap(tuples, aggregation.getTuple());
-            Collection<SubmissionTuple> foundTuples = tuplesBySample.get(aggregation.getSample());
-            if (foundTuples != null) {
-                if (foundTuples.size() > 1) {
-                    messageReporter
-                        .addMessage("Ambiguous tuple found for {1}: {2}", aggregation.getSample(), foundTuples);
-                } else if (!foundTuples.isEmpty()) {
-                    if (!results.contains(aggregation)) {
-                        results.add(aggregation);
-                    }
-                }
-            }
-        }
-
-        fetchLod(results);
-        allResults.addAll(results);
+        fetchLod(aggregations);
+        allResults.addAll(aggregations);
     }
         return allResults;
     }
@@ -149,7 +101,6 @@ public class AggregationMetricsFetcher {
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CompoundPredicate and = (CompoundPredicate) criteriaBuilder.conjunction();
 
-        Expression<String> sampleExpression = root.get(Aggregation_.sample);
         Predicate in = root.get(Aggregation_.sample).in(SubmissionTuple.samples(tuples));
 
         and.getExpressions().add(in);
