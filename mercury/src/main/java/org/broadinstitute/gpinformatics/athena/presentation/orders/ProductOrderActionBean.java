@@ -2065,10 +2065,14 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     static List<ProductOrderSample> getPageOneSamples(State state, List<ProductOrderSample> samples) {
         List<ProductOrderSample> results;
-        if (state.getLength() == State.ALL_RESULTS) {
+        int length = state.getLength();
+        if (length == State.ALL_RESULTS) {
             results = samples;
         } else {
-            results = samples.subList(0, state.getLength());
+            if (length > samples.size()) {
+                length = samples.size();
+            }
+            results = samples.subList(0, length);
         }
         return results;
     }

@@ -921,6 +921,9 @@ public class ProductOrderActionBeanTest {
         testCases.add(new Object[]{/*startRow*/ 5, /*pageLength*/ 5, /*totalSamples*/ 5, /*expectedReturned*/ 5});
         testCases.add(new Object[]{/*startRow*/ 1, /*pageLength*/ 5, /*totalSamples*/ 10, /*expectedReturned*/ 5});
 
+        // Test that pagelength > total sample size returns the correct number.
+        testCases.add(new Object[]{/*startRow*/ 0, /*pageLength*/ 5, /*totalSamples*/ 2, /*expectedReturned*/ 2});
+
         return testCases.iterator();
     }
 
