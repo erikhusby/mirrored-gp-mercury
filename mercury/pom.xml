@@ -160,8 +160,8 @@
 
     <properties>
         <!-- Clover -->
-        <clover.version>4.1.1</clover.version>
-        <clover.plugin.version>4.1.1</clover.plugin.version>
+        <clover.version>4.1.2</clover.version>
+        <clover.plugin.version>4.1.2</clover.plugin.version>
         <clover.targetPercentage>15%</clover.targetPercentage>
 
 
@@ -322,6 +322,7 @@
                             <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
                             <includesAllSourceRoots>false</includesAllSourceRoots>
                             <targetPercentage>${clover.targetPercentage}</targetPercentage>
+			    <flushPolicy>threaded</flushPolicy>
                             <generateHtml>true</generateHtml>
                             <generateXml>true</generateXml>
                         </configuration>
