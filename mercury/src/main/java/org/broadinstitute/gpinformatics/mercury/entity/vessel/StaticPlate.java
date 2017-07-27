@@ -446,6 +446,13 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         return plateType.getVesselGeometry();
     }
 
+    /**
+     * Needed for a fixup - use constructor only
+     * @param plateType
+     */
+    public void setPlateType(PlateType plateType) {
+        this.plateType = plateType;
+    }
 
     public PlateType getPlateType() {
         return plateType;
