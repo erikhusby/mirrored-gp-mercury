@@ -448,9 +448,9 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
 
     /**
      * Needed for a fixup - use constructor only
-     * @param plateType
+     * @param plateType Change existing persisted plate type to this value
      */
-    public void setPlateType(PlateType plateType) {
+    void setPlateType(PlateType plateType) {
         this.plateType = plateType;
     }
 
