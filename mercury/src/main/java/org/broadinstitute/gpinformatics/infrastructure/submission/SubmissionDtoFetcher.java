@@ -146,7 +146,7 @@ public class SubmissionDtoFetcher {
         }
         final Map<SubmissionTuple, Aggregation> aggregationMap = new HashMap<>();
         for (String projectName : projectSamples.keySet()) {
-            List<Aggregation> aggregations = aggregationMetricsFetcher.fetch(projectName, projectSamples.get(projectName), messageReporter);
+            List<Aggregation> aggregations = aggregationMetricsFetcher.fetch(projectSamples.get(projectName));
             for (final Aggregation aggregation : aggregations) {
                 aggregationMap.putAll(Maps.uniqueIndex(aggregations, new Function<Aggregation, SubmissionTuple>() {
                     @Override
