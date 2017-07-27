@@ -22,7 +22,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
-import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -90,10 +89,7 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
                 submissionTrackerDao.findSubmissionTrackers(Collections.singleton(submissionDto));
         assertThat(submissionTrackers, hasSize(1));
 
-        assertThat(submissionTrackers.iterator().next().getTuple(),
-                equalTo(null));
-
-        Assert.fail("is previous assertion valid?");
+        assertThat(submissionTrackers.iterator().next().getTuple(), equalTo(submissionTracker.getTuple()));
     }
 
     public void testFindSubmissionTrackersWithNewVersion() throws Exception {
