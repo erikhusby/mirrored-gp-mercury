@@ -48,7 +48,7 @@ public class AggregationMetricsFetcher {
 
     private static final Log log = LogFactory.getLog(AggregationMetricsFetcher.class);
 
-    private static final int MAX_AGGREGATION_FETCHER_QUERY_SIZE = 500;
+    private static final int MAX_AGGREGATION_FETCHER_QUERY_SIZE = 1000;
 
     @PersistenceContext(unitName = "metrics_pu", type = PersistenceContextType.EXTENDED)
     private EntityManager entityManager;
@@ -92,7 +92,7 @@ public class AggregationMetricsFetcher {
         }
 
         List<Aggregation> allResults = new ArrayList<>();
-        for (List<SubmissionTuple> tuplesSublist : Iterables.partition(tuples, 1000)) {
+        for (List<SubmissionTuple> tuplesSublist : Iterables.partition(tuples, MAX_AGGREGATION_FETCHER_QUERY_SIZE)) {
             List<Aggregation> aggregations = new ArrayList<>();
 
             SubmissionTuple aTuple = tuplesSublist.iterator().next();
