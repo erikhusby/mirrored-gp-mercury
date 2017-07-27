@@ -392,7 +392,7 @@ public class ZimsIlluminaRunFactory {
                     baitName, indexingSchemeEntity, catNames, sampleInstanceDto.getSampleInstance().getWorkflowName(),
                     indexingSchemeDto, mapNameToControl, sampleInstanceDto.getPdoSampleName(),
                     sampleInstanceDto.isCrspLane(), sampleInstanceDto.getMetadataSourceForPipelineAPI(), analysisTypes,
-                    referenceSequenceKeys, aggregationDataTypes, positiveControlResearchProjects, insertSizes, devExperimentData, sampleData.getOrganism(), sampleData.getSampleLsid(),pooledTubeCollaboratorId,isPooledTube ));
+                    referenceSequenceKeys, aggregationDataTypes, positiveControlResearchProjects, insertSizes, devExperimentData, pooledTubeCollaboratorId,isPooledTube ));
         }
 
         // Make order predictable.  Include library name because for ICE there are 8 ancestor catch tubes, all with
@@ -430,7 +430,7 @@ public class ZimsIlluminaRunFactory {
             Map<String, Control> mapNameToControl, String pdoSampleName,
             boolean isCrspLane, String metadataSourceForPipelineAPI, Set<String> analysisTypes,
             Set<String> referenceSequenceKeys, Set<String> aggregationDataTypes,
-            Set<ResearchProject> positiveControlProjects, Set<Integer> insertSizes, TZDevExperimentData devExperimentData, String species, String lsid, String pooledTubeCollaboratorId, boolean isPooledTube) {
+            Set<ResearchProject> positiveControlProjects, Set<Integer> insertSizes, TZDevExperimentData devExperimentData,  String pooledTubeCollaboratorId, boolean isPooledTube) {
 
         Format dateFormat = FastDateFormat.getInstance(ZimsIlluminaRun.DATE_FORMAT);
 
@@ -468,8 +468,12 @@ public class ZimsIlluminaRunFactory {
         String referenceSequence = null;
         String referenceSequenceVersion = null;
         String aggregationDataType = null;
+        String species = null;
+        String lsid = null;
         if (sampleData != null && productOrder == null) {
             Control control = mapNameToControl.get(sampleData.getCollaboratorParticipantId());
+            species = sampleData.getOrganism();
+            lsid = sampleData.getSampleLsid();
             if (control != null) {
                 switch (control.getType()) {
                 case POSITIVE:
