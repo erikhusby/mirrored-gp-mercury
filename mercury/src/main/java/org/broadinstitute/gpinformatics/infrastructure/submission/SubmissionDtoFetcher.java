@@ -104,22 +104,10 @@ public class SubmissionDtoFetcher {
          * support other file types in the future, the results will have to be split apart by file type so that
          * metrics can be conditionally fetched as appropriate for each type.
          */
-        Map<SubmissionTuple, Aggregation> aggregationMap = fetchAggregationDtos(productOrderSamples, messageReporter);
+        Map<SubmissionTuple, Aggregation> aggregationMap = fetchAggregationDtos(productOrderSamples);
 
         List<SubmissionDto> results = buildSubmissionDtosFromResults(sampleNameToPdos, sampleSubmissionMap, aggregationMap, researchProject, messageReporter);
         return results;
-    }
-
-    Map<String, SubmissionTuple> getTuplesForProject(Collection<ProductOrderSample> productOrderSamples, MessageReporter messageReporter) {
-        Map<String, SubmissionTuple> tupleMap = new HashMap<>();
-        for (ProductOrderSample productOrderSample : productOrderSamples) {
-            String sampleName = productOrderSample.getSampleData().getCollaboratorsSampleName();
-            tupleMap.put(sampleName,
-                    new SubmissionTuple(productOrderSample.getProductOrder().getResearchProject().getJiraTicketKey(),
-                            sampleName, null, SubmissionBioSampleBean.ON_PREM));
-        }
-
-        return tupleMap;
     }
 
     /**
@@ -132,7 +120,7 @@ public class SubmissionDtoFetcher {
      *
      * @return a map of submission tuple to aggregation data
      */
-    public Map<SubmissionTuple, Aggregation> fetchAggregationDtos(List<ProductOrderSample> productOrderSamples, MessageReporter messageReporter) {
+    public Map<SubmissionTuple, Aggregation> fetchAggregationDtos(List<ProductOrderSample> productOrderSamples) {
 
         Multimap<String, SubmissionTuple> projectSamples = HashMultimap.create();
         for (ProductOrderSample productOrderSample : productOrderSamples) {
@@ -140,7 +128,7 @@ public class SubmissionDtoFetcher {
             String sampleName = productOrderSample.getSampleData().getCollaboratorsSampleName();
             SubmissionTuple submissionTuple =
                 new SubmissionTuple(productOrderSample.getProductOrder().getResearchProject().getJiraTicketKey(),
-                    sampleName, null, SubmissionBioSampleBean.ON_PREM);
+                    sampleName, SubmissionTuple.VERSION_UNKNOWN, SubmissionTuple.PROCESSING_LOCATION_UNKNOWN);
             projectSamples.put(researchProject.getBusinessKey(), submissionTuple);
 
         }
