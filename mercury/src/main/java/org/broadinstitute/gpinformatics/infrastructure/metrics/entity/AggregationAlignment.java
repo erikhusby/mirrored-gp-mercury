@@ -11,8 +11,6 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 
-import org.hibernate.annotations.BatchSize;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
