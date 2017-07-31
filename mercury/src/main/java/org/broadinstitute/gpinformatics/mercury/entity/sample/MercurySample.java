@@ -49,7 +49,7 @@ import java.util.Set;
 @Entity
 @Audited
 @Table(schema = "mercury")
-
+@BatchSize(size = 100)
 public class MercurySample extends AbstractSample {
 
     public static final String OTHER_METADATA_SOURCE = "OTHER";
