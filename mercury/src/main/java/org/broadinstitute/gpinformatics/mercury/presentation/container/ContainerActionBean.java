@@ -150,7 +150,7 @@ public class ContainerActionBean extends RackScanActionBean {
     }
 
     @ValidationMethod(on = {VIEW_CONTAINER_ACTION, EDIT_ACTION, SAVE_ACTION, SAVE_LOCATION_ACTION,
-            CANCEL_SAVE_ACTION, FIRE_RACK_SCAN, REMOVE_LOCATION_ACTION, VIEW_CONTAINER_AJAX_ACTION})
+            CANCEL_SAVE_ACTION, FIRE_RACK_SCAN, REMOVE_LOCATION_ACTION})
     public void labVesselExist() {
         if (StringUtils.isEmpty(containerBarcode)) {
             addValidationError(containerBarcode, "Container Barcode is required.");
@@ -175,14 +175,10 @@ public class ContainerActionBean extends RackScanActionBean {
      * may not be accurate under rearrays.
      */
     @After(stages = LifecycleStage.CustomValidation, on = {VIEW_CONTAINER_ACTION, EDIT_ACTION, SAVE_ACTION,
-            SAVE_LOCATION_ACTION, CANCEL_SAVE_ACTION, REMOVE_LOCATION_ACTION, VIEW_CONTAINER_AJAX_ACTION})
+            SAVE_LOCATION_ACTION, CANCEL_SAVE_ACTION, REMOVE_LOCATION_ACTION})
     public void buildPositionMapping() {
         mapPositionToVessel = new HashMap<>();
-        if (hasErrors()) {
-            return;
-        }
         if (rackOfTubes == null && staticPlate == null) {
-            addValidationError("containerBarcode", "Failed to find lab vessel: " + containerBarcode);
             return;
         }
         if (isStaticPlate()){
@@ -311,6 +307,11 @@ public class ContainerActionBean extends RackScanActionBean {
     @HandlesEvent(VIEW_CONTAINER_AJAX_ACTION)
     public Resolution viewContainerAjax() {
         ajaxRequest = true;
+        labVesselExist();
+        buildPositionMapping();
+        if (hasErrors()) {
+            throw new RuntimeException("Failed to find lab vessel: " + containerBarcode);
+        }
         return new ForwardResolution(CONTAINER_VIEW_SHIM_PAGE);
     }
 
@@ -348,18 +349,31 @@ public class ContainerActionBean extends RackScanActionBean {
 
     @HandlesEvent(SAVE_ACTION)
     public Resolution saveContainer() {
-        // Save all new lab vessels to parents storage location
-        if (receptacleTypes == null) {
-            addValidationError("containerBarcode", "No tube barcodes found.");
+        MessageCollection messageCollection = new MessageCollection();
+        handleSaveContainer(messageCollection);
+        if (messageCollection.hasErrors()) {
+            addMessages(messageCollection);
             return new ForwardResolution(CONTAINER_VIEW_PAGE);
         }
+        return new RedirectResolution(ContainerActionBean.class, VIEW_CONTAINER_ACTION)
+                .addParameter(CONTAINER_PARAMETER, containerBarcode);
+    }
+
+    public void handleSaveContainer(MessageCollection messageCollection) {
+        // Save all new lab vessels to parents storage location
+        if (receptacleTypes == null) {
+            messageCollection.addError("No tube barcodes found.");
+            return;
+        }
         if (storageLocation != null) {
-            MessageCollection messageCollection = new MessageCollection();
             savePositionMapToLocation(messageCollection, storageLocation);
             if (messageCollection.hasErrors()) {
                 addMessages(messageCollection);
-                return new ForwardResolution(CONTAINER_VIEW_PAGE);
             }
+        }
+
+        if (messageCollection.hasErrors()) {
+            return;
         }
 
         for (Iterator<ReceptacleType> iterator = receptacleTypes.iterator(); iterator.hasNext();) {
@@ -381,8 +395,6 @@ public class ContainerActionBean extends RackScanActionBean {
         rackOfTubes.setStorageLocation(storageLocation);
         labEventDao.persist(labEvent);
         labEventDao.flush();
-        return new RedirectResolution(ContainerActionBean.class, VIEW_CONTAINER_ACTION)
-                .addParameter(CONTAINER_PARAMETER, containerBarcode);
     }
 
     @HandlesEvent(FIRE_RACK_SCAN)

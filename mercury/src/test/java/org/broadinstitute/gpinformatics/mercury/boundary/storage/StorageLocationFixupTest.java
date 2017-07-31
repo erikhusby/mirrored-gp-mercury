@@ -1,30 +1,23 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.storage;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.storage.StorageLocationDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.core.api.annotation.Inject;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
-import java.io.IOException;
+import javax.inject.Inject;
+import javax.transaction.UserTransaction;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
@@ -38,27 +31,35 @@ public class StorageLocationFixupTest extends Arquillian {
     @Inject
     StorageLocationDao storageLocationDao;
 
+    @Inject
+    private UserBean userBean;
+
+    @SuppressWarnings("CdiInjectionPointsInspection")
+    @Inject
+    private UserTransaction utx;
+
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
     /**
-     * This test reads its parameters from a file, mercury/src/test/resources/testdata/CreateStorageLocation.xml, so it can
-     * be used for other similar fixups, without writing a new test. The XML jaxb object is :
-     * GPLIM-4104
-     * InfiniumHybridization
-     * 1278705
-     * 1278706
-     * 1278707
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/CreateStorageLocation.json, so it can
+     * be used for other similar fixups, without writing a new test. The json object is the CreateStorageLocation.class:
      */
     @Test(enabled = false)
-    public void fixupGplim4178InitialStorageEntry() throws IOException {
+    public void fixupGplim4178InitialStorageEntry() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
         InputStream testResource = VarioskanParserTest.getTestResource("CreateStorageLocation.json");
         ObjectMapper mapper = new ObjectMapper();
-        StorageLocationDto[] dtos = mapper.readValue(testResource, StorageLocationDto[].class);
+        CreateStorageLocation createStorageLocation = mapper.readValue(testResource, CreateStorageLocation.class);
+        if (StringUtils.isEmpty(createStorageLocation.getFixupCommentary())) {
+            throw new RuntimeException("Must provide a fixup commentary");
+        }
         List<StorageLocation> topLevelLocations = new ArrayList<>();
-        for (StorageLocationDto dto: dtos) {
+        for (StorageLocationDto dto: createStorageLocation.getStorageLocations()) {
             StorageLocation.LocationType locationType = StorageLocation.LocationType.getByDisplayName(
                     dto.getLocationType());
             switch (locationType) {
@@ -74,14 +75,17 @@ public class StorageLocationFixupTest extends Arquillian {
             }
         }
 
-        storageLocationDao.persist(new FixupCommentary(""));
+        storageLocationDao.persist(new FixupCommentary(createStorageLocation.getFixupCommentary()));
         storageLocationDao.persistAll(topLevelLocations);
+        storageLocationDao.flush();
+        utx.commit();
     }
 
     private static StorageLocation buildStorageLocation(StorageLocation parent, StorageLocationDto dto) {
         StorageLocation.LocationType locationType = StorageLocation.LocationType.getByDisplayName(
                 dto.getLocationType());
         StorageLocation storageLocation = new StorageLocation(dto.getLabel(), locationType, parent);
+        storageLocation.setBarcode(dto.getBarcode());
         for (StorageLocationDto childDto: dto.getChildren()) {
             StorageLocation childStorageLocation = buildStorageLocation(storageLocation, childDto);
             storageLocation.getChildrenStorageLocation().add(childStorageLocation);
@@ -89,9 +93,32 @@ public class StorageLocationFixupTest extends Arquillian {
         return storageLocation;
     }
 
+    public static class CreateStorageLocation {
+        private String fixupCommentary;
+        private List<StorageLocationDto> storageLocations;
+
+        public String getFixupCommentary() {
+            return fixupCommentary;
+        }
+
+        public void setFixupCommentary(String fixupCommentary) {
+            this.fixupCommentary = fixupCommentary;
+        }
+
+        public List<StorageLocationDto> getStorageLocations() {
+            return storageLocations;
+        }
+
+        public void setStorageLocations(
+                List<StorageLocationDto> storageLocations) {
+            this.storageLocations = storageLocations;
+        }
+    }
+
     public static class StorageLocationDto {
         private String locationType;
         private String label;
+        private String barcode;
         private List<StorageLocationDto> children;
 
         public String getLocationType () {
@@ -108,6 +135,14 @@ public class StorageLocationFixupTest extends Arquillian {
 
         public void setLabel (String label) {
             this.label = label;
+        }
+
+        public String getBarcode() {
+            return barcode;
+        }
+
+        public void setBarcode(String barcode) {
+            this.barcode = barcode;
         }
 
         public List<StorageLocationDto> getChildren() {

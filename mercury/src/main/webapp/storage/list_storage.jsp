@@ -71,7 +71,7 @@
                         },
                         error: function(results){
                             console.log(results);
-                            displayError("A server error occured.");
+                            displayError("Failed to find container.");
                             $j('#jstree').jstree("refresh");
                             replaceDom.removeClass("show-loading-icon");
                             if (node) {
