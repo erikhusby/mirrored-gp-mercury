@@ -58,6 +58,7 @@ public class SubmissionTracker {
     @Column(name = "VERSION")
     private String version;
 
+    // OnPrem or GCP
     @Column(name = "PROCESSING_LOCATION")
     private String processingLocation;
 

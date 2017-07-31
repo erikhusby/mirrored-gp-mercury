@@ -24,10 +24,6 @@ public class SubmissionLibraryDescriptor implements Serializable {
     public static final String WHOLE_GENOME_NAME = "Whole Genome";
     public static final String WHOLE_GENOME_DESCRIPTION = "Human Whole Genome";
 
-    public static final SubmissionLibraryDescriptor RNA_SEQUENCING =
-        new SubmissionLibraryDescriptor("RNA Seq", "RNA Sequencing");
-
-
     @XmlElement
     private String name;
 

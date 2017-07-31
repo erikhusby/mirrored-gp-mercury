@@ -16,7 +16,7 @@ import java.util.List;
 /**
  * TODO scottmat fill in javadoc!!!
  */
-@XmlRootElement()
+@XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 public class SubmissionStatusResultBean implements Serializable {
     private static final long serialVersionUID = 9068748107416910212L;
