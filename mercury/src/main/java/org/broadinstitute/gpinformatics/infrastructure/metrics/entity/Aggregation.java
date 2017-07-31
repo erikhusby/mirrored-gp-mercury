@@ -87,6 +87,8 @@ public class Aggregation {
 
     @Transient
     private LevelOfDetection levelOfDetection;
+    @Transient
+    private SubmissionTuple submissionTuple;
 
     public Aggregation() {
     }
@@ -119,7 +121,11 @@ public class Aggregation {
     @Transient
     public SubmissionTuple getTuple() {
         // These aggregation metrics are specific to BAM files, so the BassFileType is always BAM.
-        return new SubmissionTuple(getProject(), getSample(), getVersion().toString(), getProcessingLocation());
+        if (submissionTuple == null) {
+            submissionTuple =
+                new SubmissionTuple(getProject(), getSample(), getVersion().toString(), getProcessingLocation());
+        }
+        return submissionTuple;
     }
 
     public Double getQualityMetric() {

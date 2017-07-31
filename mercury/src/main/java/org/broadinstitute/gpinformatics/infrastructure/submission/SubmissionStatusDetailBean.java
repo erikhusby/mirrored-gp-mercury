@@ -4,10 +4,10 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
 
+import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,6 +18,7 @@ import java.util.List;
  * TODO scottmat fill in javadoc!!!
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
+@XmlRootElement
 public class SubmissionStatusDetailBean implements Serializable {
     private static final long serialVersionUID = 6352810343445206054L;
 
@@ -26,7 +27,7 @@ public class SubmissionStatusDetailBean implements Serializable {
     @JsonProperty
     private Status status;
     @JsonProperty
-    private List<String> errors=new ArrayList<>();
+    private List<String> errors = new ArrayList<>();
     @JsonProperty
     private Date lastStatusUpdate;
     @JsonProperty
@@ -51,21 +52,25 @@ public class SubmissionStatusDetailBean implements Serializable {
         setErrors(Arrays.asList(errors));
     }
 
+    public SubmissionStatusDetailBean(String uuid, String status, String... errors) {
+        this(uuid, status, null, null, null, errors);
+    }
+
     public SubmissionStatusDetailBean(String uuid,
                                       String status, List<String> errors) {
         this(uuid, status, null, null, null, errors.toArray(new String[errors.size()]));
     }
 
-    public String getUuid () {
+    public String getUuid() {
         return uuid;
     }
 
-    public void setUuid (String uuid) {
+    public void setUuid(String uuid) {
         this.uuid = uuid;
     }
 
     public String getStatus() {
-        return (status != null)?status.getLabel():null;
+        return (status != null) ? status.getLabel() : null;
     }
 
     public void setStatus(String status) {
@@ -125,18 +130,18 @@ public class SubmissionStatusDetailBean implements Serializable {
 
         SubmissionStatusDetailBean castOther = OrmUtil.proxySafeCast(other, SubmissionStatusDetailBean.class);
         return new EqualsBuilder().append(getUuid(), castOther.getUuid()).append(getStatus(), castOther.getStatus())
-                                  .append(getErrors(), castOther.getErrors())
-                                  .append(getLastStatusUpdate().getTime(), castOther.getLastStatusUpdate().getTime())
-                                  .append(getBioProject(), castOther.getBioProject()).isEquals();
+            .append(getErrors(), castOther.getErrors())
+            .append(getLastStatusUpdate().getTime(), castOther.getLastStatusUpdate().getTime())
+            .append(getBioProject(), castOther.getBioProject()).isEquals();
     }
 
     @Override
     public int hashCode() {
         return new HashCodeBuilder().append(getUuid()).append(getStatus()).append(getErrors())
-                                    .append(getLastStatusUpdate()).append(getBioProject()).toHashCode();
+            .append(getLastStatusUpdate()).append(getBioProject()).toHashCode();
     }
 
-    @JsonIgnore
+
     public void setSubmittedVersion(String submittedVersion) {
         this.submittedVersion = submittedVersion;
     }
@@ -173,8 +178,8 @@ public class SubmissionStatusDetailBean implements Serializable {
         }
 
         public static Status fromKey(String status) {
-            for(Status testValue:values()) {
-                if(testValue.getKey().equals(status)) {
+            for (Status testValue : values()) {
+                if (testValue.getKey().equals(status)) {
                     return testValue;
                 }
             }
