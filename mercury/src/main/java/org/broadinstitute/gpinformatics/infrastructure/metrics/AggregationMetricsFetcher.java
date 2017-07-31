@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.metrics;
 
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -56,10 +55,6 @@ public class AggregationMetricsFetcher {
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaQuery<Aggregation> criteriaQuery = criteriaBuilder.createQuery(Aggregation.class);
         Root<Aggregation> root = criteriaQuery.from(Aggregation.class);
-        HashMultimap<String, SubmissionTuple> tuplesByProject = HashMultimap.create();
-        for (SubmissionTuple tuple : tuples) {
-            tuplesByProject.put(tuple.getProject(), tuple);
-        }
 
         List<Aggregation> allResults = new ArrayList<>();
         for (List<SubmissionTuple> tuplesSublist : Iterables.partition(tuples, MAX_AGGREGATION_FETCHER_QUERY_SIZE)) {
@@ -81,7 +76,6 @@ public class AggregationMetricsFetcher {
                     getTupleExpression(new ArrayList<>(tuplesSublist), root)
                 )
             );
-
 
             TypedQuery<Aggregation> query = entityManager.createQuery(criteriaQuery);
 
