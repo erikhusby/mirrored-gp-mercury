@@ -2058,8 +2058,25 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return priorToSAP1_5;
     }
 
+    public boolean isPriorToSAP1_5() { return getPriorToSAP1_5();}
+
     void setPriorToSAP1_5(Boolean priorToSAP1_5) {
         this.priorToSAP1_5 = priorToSAP1_5;
+    }
+
+    public Set<ProductOrderPriceAdjustment> getPriceAdjustments() {
+        return priceAdjustments;
+    }
+
+    public void setPriceAdjustments(Set<ProductOrderPriceAdjustment> priceAdjustments) {
+        for (ProductOrderPriceAdjustment priceAdjustment : priceAdjustments) {
+            addPriceAdjustment(priceAdjustment);
+        }
+    }
+
+    public void addPriceAdjustment(ProductOrderPriceAdjustment priceAdjustment) {
+        this.priceAdjustments.add(priceAdjustment);
+        priceAdjustment.setProductOrder(this);
     }
 
     public static void checkQuoteValidity(Quote quote) throws QuoteServerException {
