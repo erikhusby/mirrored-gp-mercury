@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.athena.entity.fixup;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
@@ -19,16 +18,12 @@ import javax.transaction.UserTransaction;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collections;
-import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.QA;
 
 /**
  *
@@ -130,7 +125,7 @@ public class ProductFixupTest extends Arquillian {
 
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void gplim4897CloneForQuicksilver() throws Exception {
 
         userBean.loginOSUser();
@@ -167,43 +162,17 @@ public class ProductFixupTest extends Arquillian {
 
         final List<Product> productsToClone = productDao.findByPartNumbers(new ArrayList<String>(partNumbersToClone.keySet()));
 
-        GregorianCalendar futureDate = new GregorianCalendar(2017, 12, 31);
-
         for (Product productToClone : productsToClone) {
-            Product clonedProduct = new Product(partNumbersToClone.get(productToClone.getPartNumber()).getRight(),
-                    productToClone.getProductFamily(), productToClone.getDescription(),
-                    partNumbersToClone.get(productToClone.getPartNumber()).getLeft(),
-                    futureDate.getTime(),null,
-                    productToClone.getExpectedCycleTimeSeconds(), productToClone.getGuaranteedCycleTimeSeconds(),
-                    productToClone.getSamplesPerWeek(),productToClone.getMinimumOrderSize(),
-                    productToClone.getInputRequirements(), productToClone.getDeliverables(),
-                    productToClone.isTopLevelProduct(), productToClone.getWorkflow(),
-                    productToClone.isPdmOrderableOnly(),productToClone.getAggregationDataType());
 
-            clonedProduct.setExternalOnlyProduct(productToClone.isExternalOnlyProduct());
+            final String productName = partNumbersToClone.get(productToClone.getPartNumber()).getRight();
+            final String partNumber = partNumbersToClone.get(productToClone.getPartNumber()).getLeft();
 
-            clonedProduct.setAggregationDataType(productToClone.getAggregationDataType());
-            clonedProduct.setAnalysisTypeKey(productToClone.getAnalysisTypeKey());
-            clonedProduct.setReagentDesignKey(productToClone.getReagentDesignKey());
-            clonedProduct.setPositiveControlResearchProject(productToClone.getPositiveControlResearchProject());
-            clonedProduct.setReadLength(productToClone.getReadLength());
-            clonedProduct.setInsertSize(productToClone.getInsertSize());
-            clonedProduct.setLoadingConcentration(productToClone.getLoadingConcentration());
-            clonedProduct.setPairedEndRead(productToClone.getPairedEndRead());
-
-            for (RiskCriterion riskCriterion : productToClone.getRiskCriteria()) {
-                clonedProduct.addRiskCriteria(riskCriterion);
-            }
-
-            for (Product product : productToClone.getAddOns()) {
-                clonedProduct.addAddOn(product);
-            }
-
-            clonedProduct.setPrimaryPriceItem(productToClone.getPrimaryPriceItem());
+            Product clonedProduct = Product.cloneProduct(productToClone, productName, partNumber);
 
             productDao.persist(clonedProduct);
         }
         productDao.persist(new FixupCommentary("GPLIM-4897 cloning exome products for Quicksilver"));
 
     }
+
 }

@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -37,6 +38,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -145,6 +147,50 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     public static final String DEFAULT_WORKFLOW_NAME = "";
     public static final Boolean DEFAULT_TOP_LEVEL = Boolean.TRUE;
+
+    /**
+     * Helper method to allow the quick creation of a new Product based on the contents of an existing product
+     *
+     * @param productToClone Existing product from which the content of the cloned product will be based.
+     * @param newProductName Title name to be given for the new Product
+     * @param newPartNumber New part number to be applied to the new product
+     * @return The newly created product to be saved
+     */
+    @NotNull
+    public static Product cloneProduct(Product productToClone, String newProductName, String newPartNumber) {
+        GregorianCalendar futureDate = new GregorianCalendar(2017, 12, 31);
+        Product clonedProduct = new Product(newProductName,
+                productToClone.getProductFamily(), productToClone.getDescription(),
+                newPartNumber,
+                futureDate.getTime(),null,
+                productToClone.getExpectedCycleTimeSeconds(), productToClone.getGuaranteedCycleTimeSeconds(),
+                productToClone.getSamplesPerWeek(),productToClone.getMinimumOrderSize(),
+                productToClone.getInputRequirements(), productToClone.getDeliverables(),
+                productToClone.isTopLevelProduct(), productToClone.getWorkflow(),
+                productToClone.isPdmOrderableOnly(),productToClone.getAggregationDataType());
+
+        clonedProduct.setExternalOnlyProduct(productToClone.isExternalOnlyProduct());
+
+        clonedProduct.setAggregationDataType(productToClone.getAggregationDataType());
+        clonedProduct.setAnalysisTypeKey(productToClone.getAnalysisTypeKey());
+        clonedProduct.setReagentDesignKey(productToClone.getReagentDesignKey());
+        clonedProduct.setPositiveControlResearchProject(productToClone.getPositiveControlResearchProject());
+        clonedProduct.setReadLength(productToClone.getReadLength());
+        clonedProduct.setInsertSize(productToClone.getInsertSize());
+        clonedProduct.setLoadingConcentration(productToClone.getLoadingConcentration());
+        clonedProduct.setPairedEndRead(productToClone.getPairedEndRead());
+
+        for (RiskCriterion riskCriterion : productToClone.getRiskCriteria()) {
+            clonedProduct.addRiskCriteria(riskCriterion);
+        }
+
+        for (Product product : productToClone.getAddOns()) {
+            clonedProduct.addAddOn(product);
+        }
+
+        clonedProduct.setPrimaryPriceItem(productToClone.getPrimaryPriceItem());
+        return clonedProduct;
+    }
 
     // Initialize our transient data after the object has been loaded from the database.
     @PostLoad
