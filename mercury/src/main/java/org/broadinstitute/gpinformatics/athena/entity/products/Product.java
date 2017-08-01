@@ -181,7 +181,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         clonedProduct.setPairedEndRead(productToClone.getPairedEndRead());
 
         for (RiskCriterion riskCriterion : productToClone.getRiskCriteria()) {
-            clonedProduct.addRiskCriteria(riskCriterion);
+            clonedProduct.addRiskCriteria(new RiskCriterion(riskCriterion.getType(), riskCriterion.getOperator(), riskCriterion.getValue()));
         }
 
         for (Product product : productToClone.getAddOns()) {
