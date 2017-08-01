@@ -35,6 +35,9 @@ public class BSPRestSender implements Serializable {
     public static final String BSP_TRANSFER_REST_URL = "plate/transfer";
     public static final String BSP_PLATE_EXISTS_URL = "plate/exists";
     public static final String BSP_UPLOAD_QUANT_URL = "quant/upload";
+    public static final String BSP_KIT_REST_URL = "kit";
+    public static final String BSP_CONTAINER_UPDATE_LAYOUT = "container/updateLayout";
+
     private static final Log logger = LogFactory.getLog(BSPRestSender.class);
 
     @Inject

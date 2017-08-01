@@ -8,20 +8,15 @@ import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.Validate;
 import org.broadinstitute.bsp.client.rackscan.ScannerException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
-import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
 
 import javax.inject.Inject;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -99,29 +94,7 @@ public class LcsetActionBean extends RackScanActionBean {
 
     @HandlesEvent(CONFIRM_CONTROLS_EVENT)
     public Resolution confirmControls() throws ScannerException {
-        // todo jmt move these to single method in EJB
-        labBatchEjb.addControlsToLcset(lcsetName, controlBarcodes);
-
-        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(addBarcodes);
-        List<Long> bucketEntryIds = new ArrayList<>();
-        String bucketName = null;
-        for (Map.Entry<String, BarcodedTube> barcodedTubeEntry : mapBarcodeToTube.entrySet()) {
-            SampleInstanceV2 sampleInstance = barcodedTubeEntry.getValue().getSampleInstancesV2().iterator().next();
-            for (BucketEntry bucketEntry : sampleInstance.getAllBucketEntries()) {
-                if (bucketEntry.getLabBatch() == null) {
-                    bucketEntryIds.add(bucketEntry.getBucketEntryId());
-                    bucketName = bucketEntry.getBucket().getBucketDefinitionName();
-                }
-            }
-        }
-        try {
-            labBatchEjb.addToLabBatch(lcsetName, bucketEntryIds, null, bucketName, this, null);
-        } catch (IOException | ValidationException e) {
-            throw new RuntimeException(e);
-        }
-
-//        labBatchEjb.removeFromLabBatch();
-//        autoExport
+        labBatchEjb.x(lcsetName, controlBarcodes);
         addMessage("Made modifications to LCSET");
         return new ForwardResolution(LCSET_PAGE);
     }

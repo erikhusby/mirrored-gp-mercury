@@ -50,7 +50,7 @@
                         </c:if>
                     </c:forEach>
                 </table>
-                Click Confirm to make the following changes:
+                Click Confirm to make the following changes:<br/>
                 Add the following controls to the LCSET:
                 <c:forEach items="${actionBean.controlBarcodes}" var="controlBarcode" varStatus="loop">
                     <div>

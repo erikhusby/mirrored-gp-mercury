@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.WebResource;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.Factory;
 import org.apache.commons.collections4.map.LazyMap;
@@ -16,17 +18,24 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
+import org.broadinstitute.gpinformatics.mercury.BSPRestClient;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.AbstractBatchJiraFieldFactory;
@@ -36,6 +45,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -55,6 +65,7 @@ import javax.annotation.Nullable;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -69,6 +80,7 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
+import static org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.BSPRestSender.BSP_CONTAINER_UPDATE_LAYOUT;
 import static org.broadinstitute.gpinformatics.mercury.presentation.run.FctDto.BY_ALLOCATION_ORDER;
 
 /**
@@ -91,6 +103,8 @@ public class LabBatchEjb {
     private JiraService jiraService;
 
     private LabVesselDao tubeDao;
+
+    private BarcodedTubeDao barcodedTubeDao;
 
     private BucketEntryDao bucketEntryDao;
 
@@ -604,6 +618,7 @@ public class LabBatchEjb {
         }
 
         List<String> sampleNames = new ArrayList<>();
+        Map<String, GetSampleDetails.SampleInfo> mapBarcodeToSampleInfo = new HashMap<>();
         for (Map.Entry<String, String> positionBarcodeEntry : rackScan.entrySet()) {
             LabVessel barcodedTube = mapBarcodeToTube.get(positionBarcodeEntry.getValue());
             if (barcodedTube == null) {
@@ -612,7 +627,14 @@ public class LabBatchEjb {
                 Set<SampleInstanceV2> sampleInstances = barcodedTube.getSampleInstancesV2();
                 if (sampleInstances.size() == 1) {
                     SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
-                    sampleNames.add(sampleInstance.getEarliestMercurySampleName());
+                    if (sampleInstance.getEarliestMercurySampleName() == null) {
+                        // Assume this is a control that has no history in Mercury, so fetch from BSP by barcode
+                        mapBarcodeToSampleInfo.putAll(sampleDataFetcher.fetchSampleDetailsByBarcode(
+                                Collections.singletonList(sampleInstance.getInitialLabVessel().getLabel())));
+                        sampleNames.add(mapBarcodeToSampleInfo.get(sampleInstance.getInitialLabVessel().getLabel()).getSampleId());
+                    } else {
+                        sampleNames.add(sampleInstance.getEarliestMercurySampleName());
+                    }
                 } else {
                     messageCollection.addError("Multiple samples in " + barcodedTube.getLabel());
                 }
@@ -628,7 +650,11 @@ public class LabBatchEjb {
                 Set<SampleInstanceV2> sampleInstances = barcodedTube.getSampleInstancesV2();
                 if (sampleInstances.size() == 1) {
                     SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
-                    SampleData sampleData = mapSampleNameToData.get(sampleInstance.getEarliestMercurySampleName());
+                    String earliestMercurySampleName = sampleInstance.getEarliestMercurySampleName();
+                    if (earliestMercurySampleName == null) {
+                        earliestMercurySampleName = mapBarcodeToSampleInfo.get(sampleInstance.getInitialLabVessel().getLabel()).getSampleId();
+                    }
+                    SampleData sampleData = mapSampleNameToData.get(earliestMercurySampleName);
                     boolean found = false;
                     for (LabBatch labBatch : sampleInstance.getAllWorkflowBatches()) {
                         if (labBatch.getBatchName().equals(lcsetName)) {
@@ -658,6 +684,8 @@ public class LabBatchEjb {
             }
         }
 
+        // todo jmt how to decide whether to export?  Add to search results or call ExportResource?
+        // Container may exist in BSP, but won't have control.  ContainerResource.updateLayout?
         return new ValidateRackScanReturn(controlTubes, addTubes, removeTubes);
     }
 
@@ -675,6 +703,42 @@ public class LabBatchEjb {
         }
     }
 
+    public void x(String lcsetName, List<String> controlBarcodes) {
+        addControlsToLcset(lcsetName, controlBarcodes);
+
+        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(addBarcodes);
+        List<Long> bucketEntryIds = new ArrayList<>();
+        String bucketName = null;
+        for (Map.Entry<String, BarcodedTube> barcodedTubeEntry : mapBarcodeToTube.entrySet()) {
+            SampleInstanceV2 sampleInstance = barcodedTubeEntry.getValue().getSampleInstancesV2().iterator().next();
+            for (BucketEntry bucketEntry : sampleInstance.getAllBucketEntries()) {
+                if (bucketEntry.getLabBatch() == null) {
+                    bucketEntryIds.add(bucketEntry.getBucketEntryId());
+                    bucketName = bucketEntry.getBucket().getBucketDefinitionName();
+                }
+            }
+        }
+        try {
+            labBatchEjb.addToLabBatch(lcsetName, bucketEntryIds, null, bucketName, this, null);
+        } catch (IOException | ValidationException e) {
+            throw new RuntimeException(e);
+        }
+        BSPRestClient bspRestClient;
+        WebResource webResource = bspRestClient.getWebResource(BSP_CONTAINER_UPDATE_LAYOUT);
+
+        PlateTransferEventType plateTransferEventType = new PlateTransferEventType();
+        PositionMapType positionMap = new PositionMapType();
+        plateTransferEventType.setPositionMap(positionMap);
+        PlateType plateType = new PlateType();
+        plateTransferEventType.setPlate(plateType);
+
+        BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
+        bettaLIMSMessage.getPlateTransferEvent().add(plateTransferEventType);
+
+        ClientResponse response = webResource.type(MediaType.APPLICATION_XML).post(ClientResponse.class, bettaLIMSMessage);
+//        labBatchEjb.removeFromLabBatch();
+//        autoExport
+    }
     /**
      * Make FCT LabBatches and tickets, based on DTOs from the Create FCT Ticket web page.
      * @param createFctDtos information from web page
