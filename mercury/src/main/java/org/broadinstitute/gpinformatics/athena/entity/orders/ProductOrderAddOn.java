@@ -58,6 +58,15 @@ public class ProductOrderAddOn {
         return productOrder;
     }
 
+    public Set<ProductOrderAddOnPriceAdjustment> getPriceAdjustments() {
+        return priceAdjustments;
+    }
+
+    public void setPriceAdjustments(
+            Set<ProductOrderAddOnPriceAdjustment> priceAdjustments) {
+        this.priceAdjustments = priceAdjustments;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

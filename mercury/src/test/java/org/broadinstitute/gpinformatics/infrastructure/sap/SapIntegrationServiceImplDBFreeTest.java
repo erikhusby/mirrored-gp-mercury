@@ -32,6 +32,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -197,9 +198,9 @@ public class SapIntegrationServiceImplDBFreeTest {
         for(SAPOrderItem item:convertedOrder.getOrderItems()) {
             assertThat(item.getSampleCount(), equalTo(conversionPdo.getSamples().size()));
             if(item.getProductIdentifier().equals(conversionPdo.getProduct().getPartNumber())) {
-                assertThat(item.getProductPrice(), equalTo("30.50"));
+                assertThat(item.getProductPrice(), equalTo(new BigDecimal("30.50")));
             } else {
-                assertThat(item.getProductPrice(), equalTo("20.50"));
+                assertThat(item.getProductPrice(), equalTo(new BigDecimal("20.50")));
             }
         }
 

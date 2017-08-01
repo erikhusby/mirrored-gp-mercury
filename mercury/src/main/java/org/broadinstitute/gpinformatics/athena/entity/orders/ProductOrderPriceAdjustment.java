@@ -46,19 +46,17 @@ public class ProductOrderPriceAdjustment {
     public ProductOrderPriceAdjustment() {
     }
 
-    public ProductOrderPriceAdjustment(ProductOrder productOrder) {
-        this.productOrder = productOrder;
-    }
-
-    public ProductOrderPriceAdjustment(ProductOrder productOrder,
-                                       Condition priceAdjustmentCondition, BigDecimal adjustmentValue) {
-        this(productOrder);
+    public ProductOrderPriceAdjustment(Condition priceAdjustmentCondition, BigDecimal adjustmentValue) {
         this.priceAdjustmentCondition = priceAdjustmentCondition;
         this.adjustmentValue = adjustmentValue;
     }
 
     public ProductOrder getProductOrder() {
         return productOrder;
+    }
+
+    public void setProductOrder(ProductOrder productOrder) {
+        this.productOrder = productOrder;
     }
 
     public Condition getPriceAdjustmentCondition() {

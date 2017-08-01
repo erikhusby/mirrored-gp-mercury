@@ -1,11 +1,14 @@
 package org.broadinstitute.gpinformatics.infrastructure.sap;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOnPriceAdjustment;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderPriceAdjustment;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -147,7 +150,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         SAPOrder newOrder =
                 new SAPOrder(SapIntegrationClientImpl.SystemIdentifier.MERCURY, determineCompanyCode(orderToUpdate),
-                        orderToUpdate.getQuoteId(), bspUserList.getUserFullName(orderToUpdate.getCreatedBy()));
+                        orderToUpdate.getQuoteId(), bspUserList.getUserFullName(orderToUpdate.getCreatedBy()),
+                        placedOrder.isPriorToSAP1_5());
 
         newOrder.setExternalOrderNumber(orderToUpdate.getJiraTicketKey());
 
@@ -202,11 +206,25 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     protected SAPOrderItem getOrderItem(ProductOrder placedOrder, Product product, Quote quote,
                                         int additionalSampleCount) throws SAPIntegrationException {
         try {
+            //TODO SGM:  This has to change!!!
             String price = priceListCache.getEffectivePrice(product.getPrimaryPriceItem(), quote);
 
-            return new SAPOrderItem(product.getPartNumber(),
-                    price,
-                    getSampleCount((ProductOrder) placedOrder, (Product) product, (int) additionalSampleCount));
+            final SAPOrderItem sapOrderItem = new SAPOrderItem(product.getPartNumber(),
+                    getSampleCount(placedOrder, product, additionalSampleCount));
+
+            if(placedOrder.isPriorToSAP1_5()) {
+                sapOrderItem.addCondition(Condition.MATERIAL_PRICE, new BigDecimal(price));
+            } else {
+                if(placedOrder.getProduct().equals(product)) {
+                    for (ProductOrderPriceAdjustment productOrderPriceAdjustment : placedOrder.getPriceAdjustments()) {
+                        sapOrderItem.addCondition(productOrderPriceAdjustment.getPriceAdjustmentCondition(), productOrderPriceAdjustment.getAdjustmentValue());
+                    }
+
+                }
+            }
+
+            return sapOrderItem;
+
         } catch (InvalidProductException e) {
             throw new SAPIntegrationException("For " + product.getPartNumber() + " " + e.getMessage());
         }
@@ -373,9 +391,23 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         final Set<SAPOrderItem> sapOrderItems = new HashSet<>();
         final Map<Condition, String> conditionStringMap = Collections.emptyMap();
-        sapOrderItems.add(getOrderItem(productOrder, productOrder.getProduct(), addedSampleCount));
+        final SAPOrderItem orderItem = getOrderItem(productOrder, productOrder.getProduct(), addedSampleCount);
+        for (ProductOrderPriceAdjustment productOrderPriceAdjustment : productOrder.getPriceAdjustments()) {
+            orderItem.addCondition(productOrderPriceAdjustment.getPriceAdjustmentCondition(),
+                    productOrderPriceAdjustment.getAdjustmentValue());
+        }
+
+        sapOrderItems.add(orderItem);
+
         for (ProductOrderAddOn productOrderAddOn : productOrder.getAddOns()) {
-            sapOrderItems.add(getOrderItem(productOrder, productOrderAddOn.getAddOn(), addedSampleCount));
+            final SAPOrderItem orderSubItem = getOrderItem(productOrder, productOrderAddOn.getAddOn(), addedSampleCount);
+            for (ProductOrderAddOnPriceAdjustment productOrderAddOnPriceAdjustment : productOrderAddOn
+                    .getPriceAdjustments()) {
+                orderItem.addCondition(productOrderAddOnPriceAdjustment.getPriceAdjustmentCondition(),
+                        productOrderAddOnPriceAdjustment.getAdjustmentValue());
+            }
+
+            sapOrderItems.add(orderSubItem);
         }
 
         Quote foundQuote = null;
@@ -402,7 +434,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         return new OrderCriteria(customerNumber,
                 //This will probably change with the implementation of the product/pricing caching and/or selling a product from both research and external
-                determineCompanyCode(productOrder), sapOrderItems, conditionStringMap);
+                determineCompanyCode(productOrder), sapOrderItems);
     }
 
     /**
