@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.QA;
 
 /**
@@ -53,7 +54,7 @@ public class ProductFixupTest extends Arquillian {
      */
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(QA, "QA");
+        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
     // Required for Arquillian tests so it should remain enabled for sprint4.
