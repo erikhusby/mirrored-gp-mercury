@@ -158,7 +158,9 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
      */
     @NotNull
     public static Product cloneProduct(Product productToClone, String newProductName, String newPartNumber) {
-        GregorianCalendar futureDate = new GregorianCalendar(2017, 12, 31);
+
+        GregorianCalendar futureDate = new GregorianCalendar();
+        futureDate.add(Calendar.MONTH, 6);
         Product clonedProduct = new Product(newProductName,
                 productToClone.getProductFamily(), productToClone.getDescription(),
                 newPartNumber,

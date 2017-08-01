@@ -129,6 +129,7 @@ public class ProductFixupTest extends Arquillian {
     public void gplim4897CloneForQuicksilver() throws Exception {
 
         userBean.loginOSUser();
+        utx.begin();
 
         final Map<String, Pair<String, String>> partNumbersToClone = new HashMap<>();
         partNumbersToClone.put("P-EX-0012", Pair.of("P-EX-0039","Express Somatic Human WES (Deep Coverage) v1.1"));
@@ -178,7 +179,7 @@ public class ProductFixupTest extends Arquillian {
             productDao.persist(clonedProduct);
         }
         productDao.persist(new FixupCommentary("GPLIM-4897 cloning exome products for Quicksilver"));
-
+        utx.commit();
     }
 
 }
