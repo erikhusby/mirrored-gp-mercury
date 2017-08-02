@@ -46,7 +46,7 @@ public class DeploymentBuilder {
         WebArchive war = ShrinkWrap.create(ExplodedImporter.class, MERCURY_WAR)
                 .importDirectory("src/main/webapp")
                 .as(WebArchive.class)
-                .addAsWebInfResource(new File("src/test/resources/" + "mercury-"
+                .addAsWebInfResource(new File("target/test-classes/" + "mercury-"
                                               + dataSourceEnvironment + "-ds.xml"))
                 .addAsWebInfResource(new File("src/test/resources/squid-" + dataSourceEnvironment + "-ds.xml"))
                 .addAsWebInfResource(new File("src/test/resources/metrics-" + dataSourceEnvironment + "-ds.xml"))
