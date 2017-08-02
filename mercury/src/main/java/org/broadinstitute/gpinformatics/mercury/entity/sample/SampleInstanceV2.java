@@ -87,7 +87,6 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     private List<MercurySample> mercurySamples = new ArrayList<>();
     private List<Reagent> reagents = new ArrayList<>();
     private List<ReagentDesign> reagentsDesigns = new ArrayList<>();
-    private String collaboratorParticipantId;
     private boolean isPooledTube;
     private String sampleLibraryName;
     private Integer readLength;
@@ -121,6 +120,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
      * Constructs a sample instance from a LabVessel.
      */
     public SampleInstanceV2(LabVessel labVessel) {
+        rootMercurySamples.addAll(labVessel.getMercurySamples());
         initiateSampleInstanceV2(labVessel);
         applyVesselChanges(labVessel, null);
     }
@@ -129,6 +129,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
      * Constructs a sample instance from a LabVessel and manually uploaded pooled tube(s).
      */
     public SampleInstanceV2(LabVessel labVessel, SampleInstanceEntity sampleInstanceEntity) {
+        rootMercurySamples.add(sampleInstanceEntity.getRootSample());
         initiateSampleInstanceV2(labVessel);
         applyVesselChanges(labVessel, sampleInstanceEntity);
     }
@@ -139,7 +140,6 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     private void initiateSampleInstanceV2(LabVessel labVessel)
     {
         initialLabVessel = labVessel;
-        rootMercurySamples.addAll(labVessel.getMercurySamples());
         if (LabVessel.DIAGNOSTICS) {
             String message = "Created sample instance ";
             if (!labVessel.getMercurySamples().isEmpty()) {
@@ -192,7 +192,6 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         tzDevExperimentData = other.getTzDevExperimentData();
         devConditions = other.getDevConditions();
         reagentsDesigns = other.getReagentsDesigns();
-        collaboratorParticipantId = other.getCollaboratorParticipantId();
         isPooledTube = other.getIsPooledTube();
         sampleLibraryName = other.getSampleLibraryName();
         readLength = other.getReadLength();
@@ -510,7 +509,6 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             mergeReagents(sampleInstanceEntity.getReagentDesign());
             mergeMolecularIndex(sampleInstanceEntity.getMolecularIndexingScheme());
             mergeRootSamples(sampleInstanceEntity.getRootSample());
-            mergeCollaboratorId(sampleInstanceEntity);
             mergeSampleLibraryName(sampleInstanceEntity.getSampleLibraryName());
             mergeReadLength(sampleInstanceEntity);
             mercurySamples.add(mercurySample);
@@ -623,23 +621,8 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         return materialType;
     }
 
-    public String getCollaboratorParticipantId() {
-        return collaboratorParticipantId;
-    }
-
     private void mergeReadLength(SampleInstanceEntity sampleInstanceEntity) {
         this.readLength = sampleInstanceEntity.getReadLength();
-    }
-
-    private void mergeCollaboratorId(SampleInstanceEntity sampleInstanceEntity) {
-
-       for (Metadata metadata : sampleInstanceEntity.getMercurySample().getMetadata())
-       {
-           //The collaborator ID is stored in sample_id in Metadata.
-           if(metadata.getKey().equals(Metadata.Key.SAMPLE_ID)) {
-               this.collaboratorParticipantId = metadata.getValue();
-           }
-       }
     }
 
     private void mergeRootSamples(MercurySample mercurySample)

@@ -24,9 +24,11 @@ import java.util.Set;
  */
 public class MercurySampleData implements SampleData {
     private MercurySample mercurySample;
+    private String rootSampleId;
     private String sampleId;
     private String collaboratorSampleId;
     private String patientId;
+    private String broadPatientId;
     private String gender;
     private String tumorNormal;
 
@@ -90,7 +92,8 @@ public class MercurySampleData implements SampleData {
             case LSID:
                 this.sampleLSID = value;
                 break;
-
+            case BROAD_PARTICIPANT_ID:
+                this.broadPatientId = value;
             }
         }
     }
@@ -257,12 +260,20 @@ public class MercurySampleData implements SampleData {
      */
     @Override
     public String getRootSample() {
-        return sampleId;
+        return rootSampleId == null ? sampleId : rootSampleId;
+    }
+
+    public void setRootSampleId(String rootSampleId) {
+        this.rootSampleId = rootSampleId;
     }
 
     @Override
     public String getStockSample() {
         return sampleId;
+    }
+
+    public void setSampleId(String sampleId) {
+        this.sampleId = sampleId;
     }
 
     @Override
@@ -292,7 +303,7 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public String getPatientId() {
-        return patientId;
+        return broadPatientId == null ? patientId : broadPatientId;
     }
 
     @Override
@@ -311,7 +322,7 @@ public class MercurySampleData implements SampleData {
     }
 
     /**
-     * For mercury samples, the patient id is the
+     * For clinical samples, the patient id is the
      * collaborator patient id because the only
      * patient id we know is the one given to us
      * by the collaborator.

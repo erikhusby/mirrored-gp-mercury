@@ -89,7 +89,7 @@ public class SampleInstanceEjb  {
     private Set<Metadata> collaboratorSampleIdMetadata(final int index) {
         return new HashSet<Metadata>() {{
             add(new Metadata(Metadata.Key.SAMPLE_ID, collaboratorSampleId.get(index)));
-            add(new Metadata(Metadata.Key.BROAD_SAMPLE_ID, broadParticipantId.get(index)));
+            add(new Metadata(Metadata.Key.BROAD_PARTICIPANT_ID, broadParticipantId.get(index)));
             add(new Metadata(Metadata.Key.PATIENT_ID, collaboratorParticipantId.get(index)));
             add(new Metadata(Metadata.Key.GENDER, gender.get(index)));
             add(new Metadata(Metadata.Key.LSID, lsid.get(index)));
