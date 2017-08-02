@@ -255,7 +255,7 @@ public class MercurySampleData implements SampleData {
     }
 
     /**
-     * For mercury samples, the root id is considered
+     * For clinical samples, the root id is considered
      * the same thing as the sample id.
      */
     @Override
