@@ -9,8 +9,9 @@ Usage: $0 [-t <test> ] [-b <build>] [-j <jboss> ]
 Where:
 	-h		Show this message
 	-t <test>	Specifies a particular test profile to be run. Defaults to the standard set.
-	-b <build>	Specifices a particular build profile to be used. Defaults to BUILD.
-	-j <jboss>	Specifieds a particular JBoss or Wildfly installation.
+	-b <build>	Specifies a particular build profile to be used. Defaults to BUILD.
+	-j <jboss>	Specifies a particular JBoss or Wildfly installation.
+	-m <maven>	Specifies additional Maven options.
 	-c 		Runs tests with Clover.
 
 The standard set of test profiles includes:
@@ -27,13 +28,16 @@ EOF
 TESTS="Tests.ArqSuite.Standard Tests.ArqSuite.Stubby Tests.Multithreaded Tests.DatabaseFree Tests.ExternalIntegration Tests.Alternatives"
 BUILD=
 CLOVER=0
-while getopts "hct:b:j:" OPTION; do
+ADDITIONAL_OPTIONS=
+
+while getopts "hct:b:j:m:" OPTION; do
     case $OPTION in
 	h) usage; exit 1;;
 	t) TESTS=$OPTARG;;
 	b) BUILD=$OPTARG;;
 	j) JBOSS_HOME=$OPTARG;;
 	c) CLOVER=1;;
+	m) ADDITIONAL_OPTIONS=$OPTARG;;
 	[?]) usage; exit 1;;
     esac
 done
@@ -85,10 +89,10 @@ else
     GOALS="clean clover:setup verify"
     rm -rf clover/
     mkdir clover
-    BUILD_PROFILE="$BUILD_PROFILE,Clover.All -Dmaven.clover.licenseLocation=/prodinfolocal/BambooHome/clover.license -DmercuryCloverDatabase=`pwd`clover/clover.db -Dannotation.outputDiagnostics=false"
+    BUILD_PROFILE="$BUILD_PROFILE,Clover.All -Dmaven.clover.licenseLocation=/prodinfolocal/BambooHome/clover.license -DmercuryCloverDatabase=`pwd`clover/clover.db"
 fi
 
-OPTIONS="-PArquillian-JBossAS7-Remote,$BUILD_PROFILE -Djava.awt.headless=true --batch-mode -Dmaven.download.meter=silent "
+OPTIONS="-PArquillian-JBossAS7-Remote,$BUILD_PROFILE -Djava.awt.headless=true --batch-mode  -Dannotation.outputDiagnostics=false -Dmaven.download.meter=silent $ADDITIONAL_OPTIONS"
 
 for TEST in $TESTS
 do
