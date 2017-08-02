@@ -54,7 +54,6 @@ public class SquidThriftLibraryConverter implements ThriftLibraryConverter {
                 zamboniLibrary.getWorkRequestDomain(),
                 null,
                 null,
-                null,
                 null);
     }
 }
