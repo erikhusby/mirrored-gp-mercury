@@ -58,7 +58,6 @@ import javax.annotation.Nullable;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -301,9 +300,9 @@ public class ResearchProjectEjb {
 
         SubmissionRequestBean requestBean = new SubmissionRequestBean(submissionBeans);
         try {
-            log.debug(MercuryStringUtils.serializeJsonBean(requestBean).toString());
-        } catch (JAXBException e) {
-            e.printStackTrace();
+            log.debug(MercuryStringUtils.serializeJsonBean(requestBean));
+        } catch (IOException e) {
+            log.error("Error serializing " + SubmissionRequestBean.class.getName(), e);
         }
 
         Collection<SubmissionStatusDetailBean> submissionResults = submissionsService.postSubmissions(requestBean);

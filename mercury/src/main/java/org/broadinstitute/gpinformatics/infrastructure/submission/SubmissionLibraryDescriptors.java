@@ -11,18 +11,28 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.annotate.JsonPropertyOrder;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import java.util.List;
 
+// setting the access order to alphabetical helps the tests pass more reliably.
+@JsonPropertyOrder(alphabetic = true)
+@XmlAccessorType(XmlAccessType.FIELD)
+@JsonSerialize(include=JsonSerialize.Inclusion.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown=true)
 public class SubmissionLibraryDescriptors {
+    @JsonProperty("submissiondatatypes")
     private List<SubmissionLibraryDescriptor> submissionLibraryDescriptors;
 
     public List<SubmissionLibraryDescriptor> getSubmissionLibraryDescriptors() {
         return submissionLibraryDescriptors;
     }
 
-    @JsonProperty("submissiondatatypes")
     public void setSubmissionLibraryDescriptors(List<SubmissionLibraryDescriptor> submissionLibraryDescriptors) {
         this.submissionLibraryDescriptors = submissionLibraryDescriptors;
     }

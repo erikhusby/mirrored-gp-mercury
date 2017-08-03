@@ -95,7 +95,7 @@ public class SubmissionsServiceMockTest extends MockServerTest {
         assertThat(submissionResult.size(), is(2));
 
         SubmissionStatusDetailBean statusDetailBean = submissionResult.iterator().next();
-        assertThat(statusDetailBean.getStatus(), is(SubmissionStatusDetailBean.Status.FAILURE.getLabel()));
+        assertThat(statusDetailBean.getStatus(), is(SubmissionStatusDetailBean.Status.FAILURE));
         assertThat(statusDetailBean.getErrors(), hasItem(startsWith("Unable to access")));
     }
 
