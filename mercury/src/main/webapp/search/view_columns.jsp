@@ -7,7 +7,7 @@ buttons to move columns from one to the other --%>
 <%--@elvariable id="availableMapGroupToColumnNames" type="java.util.Map<java.lang.String, java.util.List<org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation>>"--%>
 <%-- list of columns that have already been chosen --%>
 <%--@elvariable id="predefinedViewColumns" type="java.util.List"--%>
-<%--@elvariable id="viewColumnParamMap" type="java.util.Map<java.lang.Integer,java.lang.String>"--%>
+<%--@elvariable id="viewColumnParamMap" type="java.util.Map<java.lang.Integer,SearchTerm.ResultParams>"--%>
 <stripes:layout-definition>
     <script type="text/javascript">
         /**
@@ -63,20 +63,14 @@ buttons to move columns from one to the other --%>
                 searchTermName:"",
                 entityName:"",
                 autoOpen: false,
-                height: 340,
+                height: 400,
                 width: 320,
                 modal: true,
                 open: function(){
                     var entityName = $j( this ).dialog("option","entityName");
                     var searchTermName = $j( this ).dialog("option","searchTermName");
                     $j("#resultParamsPrompt").text("Column '" + searchTermName + "' options:");
-                    // ajax call is cached, de-select list
-                    var parmOptions = $j( this ).find( "#resultParamsList" ).find("option").filter(":selected");
-                    if( parmOptions ) {
-                        for (var i = 0; i < parmOptions.length; i++) {
-                            parmOptions[i].selected = false;
-                        }
-                    }
+                    dialog.dialog("option", "reset")();
                     $j.ajax({
                         url: '${ctxpath}/search/ConfigurableSearch.action',
                         data: { "paramsFetch":""
@@ -87,7 +81,7 @@ buttons to move columns from one to the other --%>
                         cache: true,
                         complete: function (returnData, status) {
                             if( status === "success" ) {
-                                var paramList = $j("#resultParamsList")[0];
+                                var paramList = $j("#paramOptions")[0];
                                 var params = returnData.responseJSON;
                                 for( var i = 0; i < params.length; i++ ) {
                                     var constrainedValue = params[i];
@@ -104,31 +98,52 @@ buttons to move columns from one to the other --%>
                             }
                         },
                     })
+                },
+                // Ajax call is cached - clears out any previous state
+                reset: function(){
+                    $j("#resultParamsError").text("").css('display','none');
+                    dialog.find( "#userColumnName" )[0].value = "";
+                    var parmOptions = dialog.find( "#paramOptions" ).find("option").filter(":selected");
+                    if( parmOptions ) {
+                        for (var i = 0; i < parmOptions.length; i++) {
+                            parmOptions[i].selected = false;
+                        }
+                    }
                 }
             });
-            dialog.find( "#resultParamsCancelBtn" )[0].onclick = function(event){
+            dialog.find( "#resultParamsCancelBtn" ).on( "click", function(event){
                 dialog.dialog("close");
-            };
-            dialog.find( "#resultParamsBtn" )[0].onclick = function(event){
-                var parmOptions = dialog.find( "#resultParamsList" ).find("option").filter(":selected");
+            });
+            dialog.find( "#resultParamsDoneBtn" ).on("click", function(event){
+                var parmOptions = dialog.find( "#paramOptions" ).find("option").filter(":selected");
+                if( !parmOptions || parmOptions.length === 0 ) {
+                    var errDiv = $j("#resultParamsError");
+                    errDiv.text("No option(s) selected");
+                    errDiv.css('display','block');
+                    return;
+                }
                 var chosenColumns = $j('#selectedColumnDefNames')[0];
-                var searchTermName = dialog.dialog("option", "searchTermName");
+                var userColumnName = dialog.find( "#userColumnName" )[0].value;
+                if( userColumnName === "" ) {
+                    var errDiv = $j("#resultParamsError");
+                    errDiv.text("Column name required");
+                    errDiv.css('display','block');
+                    return;
+                }
                 if( parmOptions ) {
-                    var delim = "";
-                    var newOption = document.createElement('option');
-                    var optionText = "";
+                    var optionValue = {"searchTermName": null, "userColumnName": null, "paramOptions":[]} ;
+                    optionValue.searchTermName = dialog.dialog("option", "searchTermName");
+                    optionValue.userColumnName = userColumnName;
                     for( var i = 0; i < parmOptions.length; i++ ) {
-                        optionText += delim;
-                        optionText += parmOptions[i].text;
-                        delim = ",";
+                        optionValue.paramOptions[i] = parmOptions[i].value;
                     }
-                    optionText = searchTermName + "{" + optionText + "}";
-                    newOption.text = optionText;
-                    newOption.value = optionText;
+                    var newOption = document.createElement('option');
+                    newOption.text = userColumnName;
+                    newOption.value = JSON.stringify(optionValue);
                     chosenColumns.options[chosenColumns.options.length] = newOption;
                 }
                 dialog.dialog("close");
-            };
+            });
         };
 
         /**
@@ -297,7 +312,6 @@ buttons to move columns from one to the other --%>
     </script>
     <br/>
     <!-- Allow user to choose individual result columns -->
-    <div id="resultOptions" style="display:none"></div>div>
     <table class="resultColumns">
         <tr>
             <td><label>Available</label></td>
@@ -340,7 +354,7 @@ buttons to move columns from one to the other --%>
                         multiple="true" size="10" style="width: 280px">
                     <c:if test="${not empty predefinedViewColumns}">
                         <c:forEach items="${predefinedViewColumns}" var="entry" varStatus="iter">
-                            <c:if test="${not empty viewColumnParamMap[iter.index]}"><option>${entry}{${viewColumnParamMap[iter.index]}}</option></c:if>
+                            <c:if test="${not empty viewColumnParamMap[iter.index]}"><option value='${viewColumnParamMap[iter.index]}'>${viewColumnParamMap[iter.index].userColumnName}</option></c:if>
                             <c:if test="${empty viewColumnParamMap[iter.index]}"><option>${entry}</option></c:if>
                         </c:forEach>
                     </c:if>
@@ -394,4 +408,13 @@ buttons to move columns from one to the other --%>
         <td style="width: 500px"><div id="pageSizeSlider"></div></td>
     </tr>
     </table>
+    <%-- Adds the overlay elements for selecting result column params --%>
+    <div id="resultParamsOverlay" style="display: none">
+        <div id="resultParamsError" style="color:red"></div>
+        <p>Column Name: <input type="text" name="userColumnName" id="userColumnName" style="width: 180px"></p>
+        <div id="resultParamsPrompt"></div>
+        <select name="paramOptions" id="paramOptions" class="termvalue"
+                multiple="true" size="14" style="width: 280px"></select>
+        <div style="margin-top: 6px"><input type="button" value="Cancel" name="resultParamsCancelBtn" id="resultParamsCancelBtn" class="btn btn-primary"/>&nbsp;&nbsp;<input type="button" value="Done" name="resultParamsDoneBtn" id="resultParamsDoneBtn" class="btn btn-primary"/></div>
+    </div>
 </stripes:layout-definition>

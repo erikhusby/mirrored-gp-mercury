@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.athena.entity.preference.SearchInstanceList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
+import org.codehaus.jackson.map.ObjectMapper;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -751,7 +752,7 @@ public class SearchInstance implements Serializable {
     /**
      * Map of view column indexes to any optional parameters associated
      */
-    private Map<Integer,String> viewColumnParamMap = new HashMap<>();
+    private Map<Integer,SearchTerm.ResultParams> viewColumnParamMap = new HashMap<>();
 
     /**
      * List of columns names that the user wants to download
@@ -861,12 +862,19 @@ public class SearchInstance implements Serializable {
         return searchValue;
     }
 
-    private Pair<String,String> splitTermAndParams(String nameAndParams ) {
+    private Pair<String,SearchTerm.ResultParams> splitTermAndParams(String nameAndParams ) {
+        // Quick JSON test
         int index = nameAndParams.indexOf("{");
-        if (index <= 0) {
-            return Pair.of(nameAndParams, "");
+        if (index < 0) {
+            return Pair.of(nameAndParams, null);
         } else {
-            return Pair.of(nameAndParams.substring(0, index), nameAndParams.substring(index + 1, nameAndParams.length() - 1) ) ;
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                SearchTerm.ResultParams resultParams = mapper.readValue( nameAndParams, SearchTerm.ResultParams.class );
+                return Pair.of(resultParams.getSearchTermName(), resultParams);
+            } catch( Exception je ) {
+                throw new RuntimeException( "Fail parsing result column options", je);
+            }
         }
     }
 
@@ -882,11 +890,14 @@ public class SearchInstance implements Serializable {
         // Context as passed through processing needs a reference to the SearchInstance
         getEvalContext().setColumnEntityType(configurableSearchDefinition.getResultEntity());
 
-        for( int i = 0; i < predefinedViewColumns.size(); i++  ) {
-            Pair<String,String> nameAndParams = splitTermAndParams(predefinedViewColumns.get(i));
-            viewColumnParamMap.put( i, nameAndParams.getRight());
-            if( nameAndParams.getRight().length() > 0 ) {
-                predefinedViewColumns.set(i,nameAndParams.getLeft() );
+        // Don't overwrite result params from any session SearchInstances (sorting)
+        if( viewColumnParamMap.size() == 0 ) {
+            for (int i = 0; i < predefinedViewColumns.size(); i++) {
+                Pair<String, SearchTerm.ResultParams> nameAndParams = splitTermAndParams(predefinedViewColumns.get(i));
+                viewColumnParamMap.put(i, nameAndParams.getRight());
+                if (nameAndParams.getRight() != null && nameAndParams.getRight().getUserColumnName() != null) {
+                    predefinedViewColumns.set(i, nameAndParams.getLeft());
+                }
             }
         }
     }
@@ -1181,7 +1192,7 @@ public class SearchInstance implements Serializable {
         this.predefinedViewColumns = predefinedViewColumns;
     }
 
-    public Map<Integer,String> getViewColumnParamMap() {
+    public Map<Integer,SearchTerm.ResultParams> getViewColumnParamMap() {
         return viewColumnParamMap;
     }
 

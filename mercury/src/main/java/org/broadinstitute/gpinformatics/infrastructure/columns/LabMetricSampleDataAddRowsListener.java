@@ -22,7 +22,7 @@ public class LabMetricSampleDataAddRowsListener implements ConfigurableList.AddR
     private Map<String, SampleData> mapSampleIdToData;
 
     @Override
-    public void addRows(List<?> entityList, SearchContext context, List<ColumnTabulation> nonPluginTabulations) {
+    public void addRows(List<?> entityList, SearchContext context, Map<Integer,ColumnTabulation> nonPluginTabulations) {
         List<LabMetric> labMetrics = (List<LabMetric>) entityList;
         Set<MercurySample> mercurySamples = new HashSet<>();
         for (LabMetric labMetric : labMetrics) {

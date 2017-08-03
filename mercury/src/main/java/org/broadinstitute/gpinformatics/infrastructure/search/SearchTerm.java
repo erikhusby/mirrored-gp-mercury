@@ -12,8 +12,11 @@ package org.broadinstitute.gpinformatics.infrastructure.search;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.infrastructure.columns.DisplayExpression;
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.map.ObjectMapper;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -170,6 +173,54 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     }
 
     /**
+     * User selectable result column configurations for when a constrainedResultParamsExpression is attached
+     */
+    public static class ResultParams {
+        private String searchTermName;
+        private String userColumnName;
+        private List<String> paramOptions;
+
+        @JsonIgnore
+        private static ObjectMapper JSON_MAPPER = new ObjectMapper();
+
+        public String getSearchTermName() {
+            return searchTermName;
+        }
+
+        public void setSearchTermName(String searchTermName) {
+            this.searchTermName = searchTermName;
+        }
+
+        public String getUserColumnName() {
+            return userColumnName;
+        }
+
+        public void setUserColumnName(String userColumnName) {
+            this.userColumnName = userColumnName;
+        }
+
+        public List<String> getParamOptions() {
+            if( paramOptions == null ) {
+                return Collections.emptyList();
+            }
+            return paramOptions;
+        }
+
+        public void setParamOptions(List<String> paramOptions) {
+            this.paramOptions = paramOptions;
+        }
+
+        @Override
+        public String toString(){
+            try {
+                return JSON_MAPPER.writeValueAsString(this);
+            } catch (IOException ioe) {
+                return ioe.getMessage();
+            }
+        }
+    }
+
+    /**
      * Name displayed in the user interface
      */
     private String name;
@@ -221,6 +272,7 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     /**
      * Expression that provides list of constrained result column values
+     * TODO JMS This might be better off as part of a list plugin as parameter configurations get more complicated
      */
     private Evaluator<List<ConstrainedValue>> constrainedResultParamsExpression;
 
@@ -768,10 +820,10 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     @Override
     public Object evalViewHeaderExpression(Object entity, SearchContext context) {
         if (getViewHeaderExpression() == null) {
-            if( context.getColumnParams() == null || context.getColumnParams().length() == 0 ) {
+            if( context.getColumnParams() == null ) {
                 return getName();
             } else {
-                return getName() + "{" + context.getColumnParams() + "}";
+                return context.getColumnParams().getUserColumnName();
             }
         } else {
             context = addTermToContext(context);

@@ -769,13 +769,5 @@ function chooseColumnSet() {
 <div id="rack_scan_overlay">
     <%@include file="/vessel/ajax_div_rack_scanner.jsp"%>
 </div>
-<%-- Adds the overlay elements for selecting result column params --%>
-<div id="resultParamsOverlay" style="display: none">
-    <div id="resultParamsError" style="color:red"></div><div id="resultParamsPrompt"></div>
-    <select name="resultParamsList" id="resultParamsList" class="termvalue"
-               multiple="true" size="14" style="width: 280px"></select>
-    <div style="margin-top: 6px"><input type="button" value="Cancel" name="resultParamsCancelBtn" id="resultParamsCancelBtn" class="btn btn-primary"/>&nbsp;&nbsp;<input type="button" value="Done" name="resultParamsBtn" id="resultParamsBtn" class="btn btn-primary"/></div>
-</div>
-
 </stripes:layout-component>
 </stripes:layout-render>

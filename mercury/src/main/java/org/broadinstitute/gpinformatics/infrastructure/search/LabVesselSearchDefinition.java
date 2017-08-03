@@ -718,22 +718,18 @@ public class LabVesselSearchDefinition {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
                 Set<String> results = new HashSet<>();
-                String columnParams = context.getColumnParams();
-                if( columnParams == null || columnParams.length() == 0 ) {
-                    results.add("(Event types required)");
-                    return results;
-                }
-                String[] types = columnParams.split(",");
-                if( types.length == 0 ) {
+                // TODO: JMS Subclass Evaluator and boiler plate the result params validation?
+                SearchTerm.ResultParams columnParams = context.getColumnParams();
+                if( columnParams == null || columnParams.getParamOptions().size() == 0 ) {
                     results.add("(Event types required)");
                     return results;
                 }
                 List<LabEventType> eventTypes = new ArrayList<>();
-                for( String displayName : types ) {
-                    LabEventType type = LabEventType.getByName(displayName);
+                for( String eventTypeString : columnParams.getParamOptions() ) {
+                    LabEventType type = LabEventType.valueOf(eventTypeString);
                     if( type == null ) {
                         results.clear();
-                        results.add("(No event type for param: " + displayName + ")");
+                        results.add("(No event type for param: " + eventTypeString + ")");
                         return results;
                     } else {
                         eventTypes.add(type);
