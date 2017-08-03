@@ -19,22 +19,23 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.submission.FileType;
 import org.codehaus.jackson.annotate.JsonCreator;
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.annotate.JsonPropertyOrder;
 import org.codehaus.jackson.map.ObjectMapper;
 
-import javax.xml.bind.annotation.XmlAccessOrder;
 import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorOrder;
 import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlTransient;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 
+// setting the access order to alphabetical helps the tests pass more reliably.
+@JsonPropertyOrder(alphabetic = true)
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlAccessorOrder(XmlAccessOrder.ALPHABETICAL)
+@JsonIgnoreProperties(ignoreUnknown=true)
 public class SubmissionTuple implements Serializable {
     private static final long serialVersionUID = 1262062294730627888L;
     public static final String PROCESSING_LOCATION_UNKNOWN = null;
@@ -53,7 +54,6 @@ public class SubmissionTuple implements Serializable {
     private String processingLocation;
 
     @JsonIgnore
-    @XmlTransient
     private ObjectMapper objectMapper=null;
     @JsonIgnore
     private String jsonValue;
