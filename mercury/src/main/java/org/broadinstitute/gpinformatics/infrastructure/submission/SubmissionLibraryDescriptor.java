@@ -13,21 +13,29 @@ package org.broadinstitute.gpinformatics.infrastructure.submission;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.annotate.JsonPropertyOrder;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlType;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import java.io.Serializable;
 
-@XmlType(name = "submissiondatatype")
+// setting the access order to alphabetical helps the tests pass more reliably.
+@JsonPropertyOrder(alphabetic = true)
+@XmlAccessorType(XmlAccessType.FIELD)
+@JsonSerialize(include=JsonSerialize.Inclusion.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown=true)
 public class SubmissionLibraryDescriptor implements Serializable {
     private static final long serialVersionUID = 2140289148823382712L;
     public static final String WHOLE_GENOME_NAME = "Whole Genome";
     public static final String WHOLE_GENOME_DESCRIPTION = "Human Whole Genome";
+    public static final String WHOLE_EXOME_NAME = "Whole Exome";
 
-    @XmlElement
+    @JsonProperty
     private String name;
-
-    @XmlElement
+    @JsonProperty
     private String description;
 
     public SubmissionLibraryDescriptor(String name, String description) {
