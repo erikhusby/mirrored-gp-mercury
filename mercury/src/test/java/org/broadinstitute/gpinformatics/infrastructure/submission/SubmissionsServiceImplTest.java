@@ -26,6 +26,7 @@ import org.testng.annotations.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.emptyCollectionOf;
@@ -43,11 +44,12 @@ public class SubmissionsServiceImplTest {
 
     private static int sequenceNumber = 1;
 
-    private static final String BIO_PROJECT_ACCESSION_ID = "PRJNA75723";
-    private static final String SAMPLE1_ID = "4304714212_K";
-    private static final String SAMPLE2_ID = "4377315018_E";
-    private static final String broadProject= "RP-418";
-    private static final String bamVersion ="v2";
+    private static final String BIO_PROJECT_ACCESSION_ID = "PRJNA325068";
+    private static final String SAMPLE1_ID = "ALCH-ABN1-NB1-A-1-0-D-A488-36";
+    private static final String SAMPLE2_ID = "ALCH-ABNA-TTP1-A-1-0-D-A488-36";
+    private static final String SAMPLE3_ID = "ALCH-ABBH-NB1-A-1-0-D-A485-36";
+    private static final String broadProject= "RP-1145";
+    private static final String bamVersion ="4";
 
     private SubmissionsService submissionsService;
 
@@ -62,8 +64,9 @@ public class SubmissionsServiceImplTest {
         contactBean =
                 new SubmissionContactBean("Jeff", "A", "Gentry", "jgentry@broadinstitute.org", "617-555-9292", "homer");
         submissionsService = new SubmissionsServiceImpl(SubmissionConfig.produce(Deployment.DEV));
-        submissionRepository = submissionsService.getSubmissionRepositories().iterator().next();
-        submissionLibraryDescriptor =submissionsService.getSubmissionLibraryDescriptors().iterator().next();
+        submissionRepository = submissionsService.findRepositoryByKey("GDC_PROTECTED");
+        submissionLibraryDescriptor =
+            submissionsService.findLibraryDescriptorTypeByKey(SubmissionLibraryDescriptor.WHOLE_EXOME_NAME);
     }
 
     public void testServerResponseBadRequest() {
@@ -103,7 +106,7 @@ public class SubmissionsServiceImplTest {
     }
 
     public void testGetSubmissionSamples() throws Exception {
-        String[] expectedSampleNames = {SAMPLE1_ID, SAMPLE2_ID, "4304714040_C"};
+        String[] expectedSampleNames = {SAMPLE1_ID, SAMPLE2_ID, SAMPLE3_ID};
 
         Collection<String> submissionSamples = submissionsService.getSubmissionSamples(bioProject);
         int minimumExpectedSizeOfResult = 300;
@@ -135,7 +138,7 @@ public class SubmissionsServiceImplTest {
         assertThat(submissionResult.size(), is(2));
         for (SubmissionStatusDetailBean submissionStatusDetailBean : submissionResult) {
             assertThat(submissionStatusDetailBean.getStatus(),
-                    is(SubmissionStatusDetailBean.Status.READY_FOR_SUBMISSION.getLabel()));
+                    is(SubmissionStatusDetailBean.Status.READY_FOR_SUBMISSION));
             assertThat(submissionStatusDetailBean.getErrors(), emptyCollectionOf(String.class));
             assertThat(DateUtils.convertDateTimeToString(submissionStatusDetailBean.getLastStatusUpdate()),
                     notNullValue());
@@ -148,7 +151,7 @@ public class SubmissionsServiceImplTest {
         assertThat(submissionStatus.size(), is(testUUIDs.length));
         for (SubmissionStatusDetailBean submissionStatusDetailBean : submissionStatus) {
             assertThat(testUUIDs, hasItemInArray(submissionStatusDetailBean.getUuid()));
-            assertThat(submissionStatusDetailBean.getStatus(), nullValue());
+            assertThat(submissionStatusDetailBean.getStatusString(), nullValue());
             assertThat(submissionStatusDetailBean.getErrors(), emptyCollectionOf(String.class));
             assertThat(submissionStatusDetailBean.getLastStatusUpdate(), nullValue());
         }
@@ -161,13 +164,13 @@ public class SubmissionsServiceImplTest {
         SubmissionBean submissionBean = new SubmissionBean(testUUID, "jgentry", bioProject,
                 new SubmissionBioSampleBean(SAMPLE1_ID, SubmissionBioSampleBean.ON_PREM, contactBean), submissionRepository,
                 submissionLibraryDescriptor, broadProject, bamVersion);
-        SubmissionRequestBean submissionRequestBean = new SubmissionRequestBean(Arrays.asList(submissionBean));
+        SubmissionRequestBean submissionRequestBean = new SubmissionRequestBean(Collections.singletonList(submissionBean));
         Collection<SubmissionStatusDetailBean> submissionResult =
                 submissionsService.postSubmissions(submissionRequestBean);
         assertThat(submissionResult.size(), is(1));
         SubmissionStatusDetailBean submissionStatusDetailBean = submissionResult.iterator().next();
         assertThat(submissionStatusDetailBean.getStatus(),
-                is(SubmissionStatusDetailBean.Status.READY_FOR_SUBMISSION.getLabel()));
+                is(SubmissionStatusDetailBean.Status.READY_FOR_SUBMISSION));
         assertThat(submissionStatusDetailBean.getErrors(), emptyCollectionOf(String.class));
         assertThat(DateUtils.convertDateTimeToString(submissionStatusDetailBean.getLastStatusUpdate()),
                 notNullValue());
@@ -176,7 +179,7 @@ public class SubmissionsServiceImplTest {
         assertThat(submissionResult.size(), is(1));
         submissionStatusDetailBean = submissionResult.iterator().next();
         assertThat(submissionStatusDetailBean.getStatus(),
-                is(SubmissionStatusDetailBean.Status.READY_FOR_SUBMISSION.getLabel()));
+                is(SubmissionStatusDetailBean.Status.READY_FOR_SUBMISSION));
         assertThat(submissionStatusDetailBean.getErrors(), emptyCollectionOf(String.class));
         assertThat(DateUtils.convertDateTimeToString(submissionStatusDetailBean.getLastStatusUpdate()),
                 notNullValue());
