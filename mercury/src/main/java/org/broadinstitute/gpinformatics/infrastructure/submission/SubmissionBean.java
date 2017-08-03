@@ -5,35 +5,37 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.annotate.JsonPropertyOrder;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 
-import javax.xml.bind.annotation.XmlAccessOrder;
 import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorOrder;
 import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
 import java.io.Serializable;
 
-@XmlAccessorType(XmlAccessType.FIELD)
-
 // setting the access order to alphabetical helps the tests pass more reliably.
-@XmlAccessorOrder(value= XmlAccessOrder.ALPHABETICAL)
+@JsonPropertyOrder(alphabetic = true)
+@XmlAccessorType(XmlAccessType.FIELD)
+@JsonSerialize(include=JsonSerialize.Inclusion.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown=true)
 public class SubmissionBean implements Serializable {
     private static final long serialVersionUID = 5575909517269494566L;
-    @XmlElement
+    @JsonProperty
     private String uuid;
-    @XmlElement
+    @JsonProperty
     private String studyContact;
-    @XmlElement
+    @JsonProperty
     private BioProject bioProject;
-    @XmlElement
+    @JsonProperty
     private SubmissionBioSampleBean submissionSample;
-    @XmlElement(name = "site")
+    @JsonProperty(value= "site")
     private String submissionRepository;
-    @XmlElement(name = "submissionDatatype")
+    @JsonProperty(value = "submissionDatatype")
     private String submissionDatatype;
-    @XmlElement
+    @JsonProperty
     private String broadProject;
-    @XmlElement
+    @JsonProperty
     private String bamVersion;
 
     public SubmissionBean() {
@@ -119,20 +121,20 @@ public class SubmissionBean implements Serializable {
 
     @Override
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
-    public boolean equals(Object o) {
-        if (this == o) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         }
 
-        if (o == null || (!OrmUtil.proxySafeIsInstance(o, SubmissionBean.class))) {
+        if (other == null || !OrmUtil.proxySafeIsInstance(other, SubmissionBean.class)) {
             return false;
         }
 
-        if (!(o instanceof SubmissionBean)) {
+        if (!(other instanceof SubmissionBean)) {
             return false;
         }
 
-        SubmissionBean that = OrmUtil.proxySafeCast(o, SubmissionBean.class);
+        SubmissionBean that = OrmUtil.proxySafeCast(other, SubmissionBean.class);
 
         return new EqualsBuilder()
             .append(getUuid(), that.getUuid())
