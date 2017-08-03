@@ -583,6 +583,33 @@ public class SubmissionDto implements ISubmissionTuple {
         public static final String PROCESSING_LOCATION = "processingLocation";
     }
 
+    public class SubmissionField {
+        public static final String SUBMISSION_TUPLE = "submissionTuple";
+        public static final String SAMPLE_NAME = "sampleName";
+        public static final String DATA_TYPE = "dataType";
+        public static final String RESEARCH_PROJECT = "researchProject";
+        public static final String AGGREGATION_PROJECT = "aggregationProject";
+        public static final String FILE_NAME = "fileName";
+        public static final String FILE_TYPE = "fileType";
+        public static final String VERSION = "version";
+        public static final String QUALITY_METRIC = "qualityMetric";
+        public static final String CONTAMINATION_STRING = "contaminationString";
+        public static final String FINGERPRINT_LOD_MIN = "fingerprintLodMin";
+        public static final String FINGERPRINT_LOD_MAX = "fingerprintLodMax";
+        public static final String LANES_IN_AGGREGATION = "lanesInAggregation";
+        public static final String SUBMITTED_VERSION = "submittedVersion";
+        public static final String SUBMITTED_STATUS = "submittedStatus";
+//        public static final String DATE_COMPLETED = "dateCompleted";
+        public static final String BIO_PROJECT = "bioProject";
+        public static final String PRODUCT_ORDERS = "productOrders";
+        public static final String SUBMITTED_ERRORS = "submittedErrors";
+        public static final String STATUS_DATE = "statusDate";
+        public static final String LIBRARY_DESCRIPTOR = "libraryDescriptor";
+        public static final String SUBMISSION_SITE = "site";
+        public static final String UUID = "uuid";
+        public static final String PROCESSING_LOCATION = "processingLocation";
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
