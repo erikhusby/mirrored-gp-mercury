@@ -4,10 +4,16 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.codehaus.jackson.annotate.JsonCreator;
+import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.annotate.JsonPropertyOrder;
+import org.codehaus.jackson.annotate.JsonValue;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,48 +23,100 @@ import java.util.List;
 /**
  * TODO scottmat fill in javadoc!!!
  */
-@JsonIgnoreProperties(ignoreUnknown = true)
-@XmlRootElement
+
+// setting the access order to alphabetical helps the tests pass more reliably.
+@JsonPropertyOrder(alphabetic = true)
+@XmlAccessorType(XmlAccessType.FIELD)
+@JsonSerialize(include=JsonSerialize.Inclusion.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown=true)
 public class SubmissionStatusDetailBean implements Serializable {
     private static final long serialVersionUID = 6352810343445206054L;
-
+    private static final String STATUS_FIELD = "status";
     @JsonProperty
-    private String uuid;
-    @JsonProperty
-    private Status status;
-    @JsonProperty
-    private List<String> errors = new ArrayList<>();
+    protected String uuid;
     @JsonProperty
     private Date lastStatusUpdate;
-    @JsonProperty
-    private BioProject bioProject;
     @JsonProperty
     private String site;
     @JsonProperty
     private String submissionDatatype;
     @JsonProperty
     private String submittedVersion;
+    @JsonProperty
+    private Status status;
+    @JsonProperty
+    private List<String> errors = new ArrayList<>();
+    @JsonProperty
+    private BioProject bioproject;
 
     public SubmissionStatusDetailBean() {
     }
 
-    public SubmissionStatusDetailBean(String uuid, String status, String site, String submissionDatatype,
+    public SubmissionStatusDetailBean(String uuid, Status status, String site, String submissionDatatype,
                                       Date lastStatusUpdate, String... errors) {
         this.uuid = uuid;
         this.site = site;
         this.submissionDatatype = submissionDatatype;
         this.lastStatusUpdate = lastStatusUpdate;
-        setStatus(status);
+        this.status = status;
         setErrors(Arrays.asList(errors));
     }
 
-    public SubmissionStatusDetailBean(String uuid, String status, String... errors) {
+    public SubmissionStatusDetailBean(String uuid, Status status, String... errors) {
         this(uuid, status, null, null, null, errors);
     }
 
     public SubmissionStatusDetailBean(String uuid,
-                                      String status, List<String> errors) {
+                                      Status status, List<String> errors) {
         this(uuid, status, null, null, null, errors.toArray(new String[errors.size()]));
+    }
+
+    public String getSite() {
+        return site;
+    }
+
+    public void setSite(String site) {
+        this.site = site;
+    }
+
+    public String getSubmissionDatatype() {
+        return submissionDatatype;
+    }
+
+    public void setSubmissionDatatype(String submissiondatatype) {
+        this.submissionDatatype = submissiondatatype;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+
+        if (other == null || !OrmUtil.proxySafeIsInstance(other, SubmissionStatusDetailBean.class)) {
+            return false;
+        }
+
+        SubmissionStatusDetailBean castOther = OrmUtil.proxySafeCast(other, SubmissionStatusDetailBean.class);
+        return new EqualsBuilder().append(getUuid(), castOther.getUuid()).append(getStatus(), castOther.getStatus())
+            .append(getErrors(), castOther.getErrors())
+            .append(getLastStatusUpdate().getTime(), castOther.getLastStatusUpdate().getTime())
+            .append(getBioproject(), castOther.getBioproject()).isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder().append(getUuid()).append(getStatus()).append(getErrors())
+            .append(getLastStatusUpdate()).append(getBioproject()).toHashCode();
+    }
+
+
+    public void setSubmittedVersion(String submittedVersion) {
+        this.submittedVersion = submittedVersion;
+    }
+
+    public String getSubmittedVersion() {
+        return submittedVersion;
     }
 
     public String getUuid() {
@@ -69,12 +127,17 @@ public class SubmissionStatusDetailBean implements Serializable {
         this.uuid = uuid;
     }
 
-    public String getStatus() {
+    @JsonIgnore
+    public String getStatusString() {
         return (status != null) ? status.getLabel() : null;
     }
 
-    public void setStatus(String status) {
-        this.status = Status.fromKey(status);
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
     }
 
     public List<String> getErrors() {
@@ -93,67 +156,18 @@ public class SubmissionStatusDetailBean implements Serializable {
         this.lastStatusUpdate = lastStatusUpdate;
     }
 
-    public BioProject getBioProject() {
-        return bioProject;
+    public BioProject getBioproject() {
+        return bioproject;
     }
 
-    public void setBioProject(BioProject bioProject) {
-        this.bioProject = bioProject;
-    }
-
-    public String getSite() {
-        return site;
-    }
-
-    public void setSite(String site) {
-        this.site = site;
-    }
-
-
-    public String getSubmissionDatatype() {
-        return submissionDatatype;
-    }
-
-    public void setSubmissionDatatype(String submissionDatatype) {
-        this.submissionDatatype = submissionDatatype;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) {
-            return true;
-        }
-
-        if (other == null || !OrmUtil.proxySafeIsInstance(other, SubmissionStatusDetailBean.class)) {
-            return false;
-        }
-
-        SubmissionStatusDetailBean castOther = OrmUtil.proxySafeCast(other, SubmissionStatusDetailBean.class);
-        return new EqualsBuilder().append(getUuid(), castOther.getUuid()).append(getStatus(), castOther.getStatus())
-            .append(getErrors(), castOther.getErrors())
-            .append(getLastStatusUpdate().getTime(), castOther.getLastStatusUpdate().getTime())
-            .append(getBioProject(), castOther.getBioProject()).isEquals();
-    }
-
-    @Override
-    public int hashCode() {
-        return new HashCodeBuilder().append(getUuid()).append(getStatus()).append(getErrors())
-            .append(getLastStatusUpdate()).append(getBioProject()).toHashCode();
-    }
-
-
-    public void setSubmittedVersion(String submittedVersion) {
-        this.submittedVersion = submittedVersion;
-    }
-
-    public String getSubmittedVersion() {
-        return submittedVersion;
+    public void setBioproject(BioProject bioproject) {
+        this.bioproject = bioproject;
     }
 
     /**
      * TODO scottmat fill in javadoc!!!
      */
-    public static enum Status {
+    public enum Status {
         IN_TRANSIT("InTransit", "In Transit"),
         SUBMITTED("Submitted", "Submitted"),
         FAILURE("Failure", "Failure"),
@@ -173,10 +187,12 @@ public class SubmissionStatusDetailBean implements Serializable {
             return key;
         }
 
+        @JsonValue
         public String getLabel() {
             return label;
         }
 
+        @JsonCreator
         public static Status fromKey(String status) {
             for (Status testValue : values()) {
                 if (testValue.getKey().equals(status)) {

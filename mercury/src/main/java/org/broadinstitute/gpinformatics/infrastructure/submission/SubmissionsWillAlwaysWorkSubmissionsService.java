@@ -27,7 +27,7 @@ public class SubmissionsWillAlwaysWorkSubmissionsService extends SubmissionsServ
         List<SubmissionStatusDetailBean> results = new ArrayList<>();
         for (SubmissionBean submissionBean : submission.getSubmissions()) {
             SubmissionStatusDetailBean bean = new SubmissionStatusDetailBean(submissionBean.getUuid(),
-                    SubmissionStatusDetailBean.Status.SUBMITTED.getKey(),
+                    SubmissionStatusDetailBean.Status.SUBMITTED,
                     SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR,
                     SubmissionLibraryDescriptor.WHOLE_GENOME_DESCRIPTION,
                     new Date());
@@ -48,7 +48,7 @@ public class SubmissionsWillAlwaysWorkSubmissionsService extends SubmissionsServ
         List<SubmissionStatusDetailBean> results = new ArrayList<>();
         for (String uuid : uuids) {
             SubmissionStatusDetailBean statusDetailBean = new SubmissionStatusDetailBean(uuid,
-                    SubmissionStatusDetailBean.Status.FAILURE.getKey(),
+                    SubmissionStatusDetailBean.Status.FAILURE,
                     SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR,
                     SubmissionLibraryDescriptor.WHOLE_GENOME_DESCRIPTION, new Date(), "error1", "error2");
             results.add(statusDetailBean);

@@ -107,7 +107,7 @@ public class SubmissionTupleTest {
 
     public void testToJsonString() {
         SubmissionTuple submissionTuple = buildTuple("p", "s", "v", "y", FileType.BAM);
-        assertThat(submissionTuple.toString(), equalTo("{\"project\":\"p\",\"sampleName\":\"s\",\"fileType\":\"BAM\",\"version\":\"v\",\"processingLocation\":\"y\"}"));
+        assertThat(submissionTuple.toString(), equalTo("{\"fileType\":\"BAM\",\"processingLocation\":\"y\",\"project\":\"p\",\"sampleName\":\"s\",\"version\":\"v\"}"));
     }
 
     private SubmissionTuple buildTuple(String project, String sampleName, String version, String processingLocation,
