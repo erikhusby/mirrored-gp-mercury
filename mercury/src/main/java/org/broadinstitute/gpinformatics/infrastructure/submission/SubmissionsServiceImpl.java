@@ -75,11 +75,11 @@ public class SubmissionsServiceImpl implements SubmissionsService {
             bioProjectMap.put(bioProject.getAccession(), bioProject);
         }
         for (SubmissionStatusDetailBean result : allResults) {
-            if (result.getBioProject() != null) {
-                String accession = result.getBioProject().getAccession();
+            if (result.getBioproject() != null) {
+                String accession = result.getBioproject().getAccession();
                 BioProject fullBioProject = bioProjectMap.get(accession);
                 if (fullBioProject != null) {
-                    result.setBioProject(fullBioProject);
+                    result.setBioproject(fullBioProject);
                 }
                 String site = result.getSite();
                 if (StringUtils.isNotBlank(site)) {
