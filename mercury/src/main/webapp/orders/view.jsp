@@ -95,7 +95,7 @@ $j(document).ready(function () {
             updateSampleInformation(samplesToFetch, table, true);
         }
     }
-
+    setupDialogs();
     var oTable = $j('#sampleData').dataTable({
         'dom': "<'row-fluid'<'span12'f>><'row-fluid'<'span5'l><'span2 sampleDataProgress'><'span5 pull-right'<'pull-right'B>>>rt<'row-fluid'<'span6'l><'span6 pull-right'p>>",
         'paging': true,
@@ -230,7 +230,6 @@ $j(document).ready(function () {
                 loadBspData(settings);
                 initColumnVisibility(settings);
                 updateFundsRemaining();
-                setupDialogs();
 
 //                postLoadSampleInfo();
                 // Only show the fill kit detail information for sample initiation PDOs. With the collaboration portal, there
@@ -540,8 +539,8 @@ function setupDialogs() {
     $j("#placeConfirmation").dialog({
         modal: true,
         autoOpen: false,
-        width: 600,
-        height: 260,
+        width: 850,
+        height: 400,
         buttons: [
             {
                 id: "placeOrderOKButton",
