@@ -29,6 +29,8 @@ import static org.hamcrest.Matchers.nullValue;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ResearchProjectSubmissionTrackerTest {
+    private static final String EXOME = "Exome";
+
     public void testGetSubmissionTracker() {
         ResearchProject testResearchProject = ResearchProjectTestFactory.createTestResearchProject();
         SubmissionTrackerStub tracker =
@@ -37,7 +39,7 @@ public class ResearchProjectSubmissionTrackerTest {
                 new SubmissionTrackerStub(testProjectId, testAccessionID + 2, testVersion + 2, FileType.PICARD);
         testResearchProject.addSubmissionTracker(tracker, tracker2);
         SubmissionTracker resultTracker = testResearchProject.getSubmissionTracker(new SubmissionTuple(testProjectId,
-                testAccessionID, testVersion, SubmissionBioSampleBean.ON_PREM));
+                testAccessionID, testVersion, SubmissionBioSampleBean.ON_PREM, EXOME));
         assertThat(tracker, equalTo(resultTracker));
     }
 
@@ -48,7 +50,7 @@ public class ResearchProjectSubmissionTrackerTest {
                 new SubmissionTrackerStub(testProjectId, testAccessionID, testVersion, testFileType);
         testResearchProject.addSubmissionTracker(tracker, tracker);
         SubmissionTracker resultTracker = testResearchProject.getSubmissionTracker(new SubmissionTuple(testProjectId,
-                testAccessionID, testVersion, SubmissionBioSampleBean.ON_PREM));
+                testAccessionID, testVersion, SubmissionBioSampleBean.ON_PREM, EXOME));
         assertThat(resultTracker, equalTo(resultTracker));
     }
 
@@ -58,7 +60,7 @@ public class ResearchProjectSubmissionTrackerTest {
         testResearchProject.addSubmissionTracker(tracker);
         SubmissionTracker resultTracker = testResearchProject
                 .getSubmissionTracker(new SubmissionTuple("other", "using", "arguments",
-                    SubmissionBioSampleBean.GCP));
+                    SubmissionBioSampleBean.GCP, EXOME));
         assertThat(resultTracker, nullValue());
     }
 

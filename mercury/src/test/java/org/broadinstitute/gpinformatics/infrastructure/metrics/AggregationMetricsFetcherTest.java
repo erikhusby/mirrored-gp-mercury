@@ -60,6 +60,7 @@ public class AggregationMetricsFetcherTest extends ContainerTest {
      * Version of aggregation on Squid project.
      */
     public static final int SQUID_AGGREGATION_VERSION = 1;
+    private static final String EXOME = "Exome";
 
     @Inject
     private AggregationMetricsFetcher fetcher;
@@ -69,7 +70,7 @@ public class AggregationMetricsFetcherTest extends ContainerTest {
     public void testFetchMetricsForSampleAggregatedByMercuryRP() {
         List<Aggregation> aggregationResults = fetcher.fetch(Collections.singletonList(
                 new SubmissionTuple(MERCURY_PROJECT, SAMPLE, Integer.toString(MERCURY_AGGREGATION_VERSION),
-                    SubmissionBioSampleBean.ON_PREM)));
+                    SubmissionBioSampleBean.ON_PREM, EXOME)));
 
         Aggregation aggregation = aggregationResults.get(0);
         assertThat(aggregation.getProject(), equalTo(MERCURY_PROJECT));
@@ -85,28 +86,28 @@ public class AggregationMetricsFetcherTest extends ContainerTest {
     public void testFetchMetricsWithBadProject() {
         List<Aggregation> aggregationResults = fetcher.fetch(Collections.singletonList(
                 new SubmissionTuple("BAD-" + MERCURY_PROJECT, SAMPLE, Integer.toString(MERCURY_AGGREGATION_VERSION),
-                    SubmissionBioSampleBean.ON_PREM)));
+                    SubmissionBioSampleBean.ON_PREM, EXOME)));
         assertThat(aggregationResults, Matchers.emptyIterableOf(Aggregation.class));
     }
 
     public void testFetchMetricsWithBadSample() {
         List<Aggregation> aggregationResults = fetcher.fetch(Collections.singletonList(
                 new SubmissionTuple(MERCURY_PROJECT, "BAD-" + SAMPLE, Integer.toString(MERCURY_AGGREGATION_VERSION),
-                    SubmissionBioSampleBean.ON_PREM)));
+                    SubmissionBioSampleBean.ON_PREM, EXOME)));
         assertThat(aggregationResults, Matchers.emptyIterableOf(Aggregation.class));
     }
 
     public void testFetchMetricsWithBadVersion() {
         List<Aggregation> aggregationResults = fetcher.fetch(Collections.singletonList(
                 new SubmissionTuple(MERCURY_PROJECT, SAMPLE, Integer.toString(MERCURY_AGGREGATION_VERSION * 100),
-                    SubmissionBioSampleBean.ON_PREM)));
+                    SubmissionBioSampleBean.ON_PREM, EXOME)));
         assertThat(aggregationResults, Matchers.emptyIterableOf(Aggregation.class));
     }
 
     public void testFetchMetricsForSampleAggregatedBySquidProject() {
         List<Aggregation> aggregationResults = fetcher.fetch(Collections.singletonList(
                 new SubmissionTuple(SQUID_PROJECT, SAMPLE, Integer.toString(SQUID_AGGREGATION_VERSION),
-                    SubmissionBioSampleBean.ON_PREM)));
+                    SubmissionBioSampleBean.ON_PREM, EXOME)));
         assertThat(aggregationResults, hasSize(1));
         Aggregation aggregation = aggregationResults.get(0);
         assertThat(aggregation.getProject(), equalTo(SQUID_PROJECT));
