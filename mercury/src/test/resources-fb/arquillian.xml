@@ -6,7 +6,7 @@
 
     <defaultProtocol type="Servlet 3.0">
         <!-- localhost is needed for osx 10.9, jdk7.  Otherwise it flames out trying to connect to 0.0.0.0 -->
-        <property name="host">localhost</property>
+        <property name="host">${jboss.managementAddress}</property>
     </defaultProtocol>
 
     <extension qualifier="selenium-server">
