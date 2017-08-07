@@ -77,11 +77,21 @@ fi
 
 EXIT_STATUS=0
 
+# Get rid of previous test results
 if [ -f "tests.log" ]
 then
     rm tests.log
 fi
 
+for TEST in $TESTS
+do
+    if [ -e "surefire-reports-$TEST" ]
+    then
+        rm -rf surefire-reports-$TEST
+    fi
+done
+
+# Setup the build options
 if [[ $CLOVER -eq 0 ]]
 then
     GOALS="clean test"
@@ -107,13 +117,15 @@ OPTIONS=$OPTIONS
 >>>> Executing test profile $TEST
 
 EOF
+
+# Run the current test set
     mvn $OPTIONS -P$TEST $GOALS | tee -a tests.log
     if [ ${PIPESTATUS[0]} -ne 0 ]
     then
         EXIT_STATUS=${PIPESTATUS[0]}
     fi
 
-#    echo -n 1>&2 "Press return to continue."; read CONTINUE
+# Save the test results outside of the target directory
     if [ -e "target/surefire-reports" ]
     then
         if [ -e "surefire-reports-$TEST" ]
