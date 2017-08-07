@@ -57,7 +57,7 @@
                     <stripes:label for="containerBarcode" class="control-label"/>
                     <div class="controls">
                         <stripes:text id="containerBarcode" name="containerBarcode"/>
-                        <stripes:submit name="viewContainer" value="Find" class="btn btn-primary"/>
+                        <stripes:submit id="searchForContainer" name="viewContainer" value="Find" class="btn btn-primary"/>
                     </div>
                 </div>
             </fieldset>

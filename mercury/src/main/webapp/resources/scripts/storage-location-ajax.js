@@ -84,6 +84,8 @@ $j(document).ready( function() {
                         console.log("Error occured when loading tree");
                         console.log(data);
                         displayNotification("Failed to find storage.", "alert-error");
+                        $j("#ajax-jstree").jstree(true).settings.core.data.url =
+                            "/Mercury/storage/storage.action?loadTreeAjax=";
                         $j("#ajax-jstree").jstree(true).refresh();
                     }
                 }
@@ -109,11 +111,15 @@ $j(document).ready( function() {
         width: 600,
         modal: true,
         buttons: {
-            "Ok": function() {
-                if ($j("#storageId").val().length > 0) {
-                    $j(this).dialog("close");
-                } else {
-                    alert("Please select a valid location before closing.");
+            "OK": {
+                text: "OK",
+                id: "okbtnid",
+                click: function () {
+                    if ($j("#storageId").val().length > 0) {
+                        $j(this).dialog("close");
+                    } else {
+                        alert("Please select a valid location before closing.");
+                    }
                 }
             },
             "Cancel": function() {

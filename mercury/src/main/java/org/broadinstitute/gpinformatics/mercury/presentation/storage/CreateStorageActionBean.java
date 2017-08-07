@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.presentation.storage;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
+import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import org.apache.commons.logging.Log;
@@ -30,6 +31,7 @@ public class CreateStorageActionBean extends CoreActionBean {
     private String name;
     private String storageUnitTypeName;
     private long storageId;
+    private Long createdStorageId;
     private StorageLocation parentStorageLocation;
     private StorageLocation.LocationType locationType;
     private int sections;
@@ -120,6 +122,8 @@ public class CreateStorageActionBean extends CoreActionBean {
                 storageLocation = createNewFreezer();
             }
             storageLocationDao.persist(storageLocation);
+            storageLocationDao.flush();
+            createdStorageId = storageLocation.getStorageLocationId();
         }
 
         addMessage("Successfully created new storage.");
@@ -129,7 +133,8 @@ public class CreateStorageActionBean extends CoreActionBean {
         slots = 0;
         readyForDetails = false;
 
-        return new ForwardResolution(VIEW_PAGE);
+        return new RedirectResolution(CreateStorageActionBean.class, VIEW_ACTION)
+                .flash(this);
     }
 
     private StorageLocation createNewRack() {
@@ -149,15 +154,15 @@ public class CreateStorageActionBean extends CoreActionBean {
                 String sectionName = String.valueOf((char)('A' + i));
                 StorageLocation section = new StorageLocation(sectionName, StorageLocation.LocationType.SECTION, freezer);
                 for (int j = 0; j < getShelves(); j++) {
-                    String shelfName = "Shelf " +  j;
+                    String shelfName = "Shelf " +  ( j + 1);
                     StorageLocation shelf = new StorageLocation(shelfName, StorageLocation.LocationType.SHELF, section);
                     section.getChildrenStorageLocation().add(shelf);
                 }
                 freezer.getChildrenStorageLocation().add(section);
             }
         } else {
-            for (int j = 1; j < getShelves(); j++) {
-                String shelfName = " Shelf " + j;
+            for (int j = 0; j < getShelves(); j++) {
+                String shelfName = " Shelf " + (j + 1);
                 StorageLocation shelf = new StorageLocation(shelfName, StorageLocation.LocationType.SHELF, freezer);
                 freezer.getChildrenStorageLocation().add(shelf);
             }
@@ -238,5 +243,13 @@ public class CreateStorageActionBean extends CoreActionBean {
     public void setCreatableLocationTypes(
             List<StorageLocation.LocationType> creatableLocationTypes) {
         this.creatableLocationTypes = creatableLocationTypes;
+    }
+
+    public Long getCreatedStorageId() {
+        return createdStorageId;
+    }
+
+    public void setCreatedStorageId(Long createdStorageId) {
+        this.createdStorageId = createdStorageId;
     }
 }

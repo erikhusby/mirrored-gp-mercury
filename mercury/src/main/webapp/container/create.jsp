@@ -21,7 +21,7 @@
             <div class="control-group">
                 <stripes:label for="storageUnitTypeName" name="Unit Type" class="control-label"/>
                 <div class="controls">
-                    <stripes:select name="rackType">
+                    <stripes:select id="containerType" name="rackType">
                         <stripes:options-enumeration
                                 enum="org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes.RackType"
                                 label="displayName"/>
@@ -30,7 +30,7 @@
             </div>
             <div class="control-group">
                 <div class="controls">
-                    <stripes:submit name="createContainer" value="Create" class="btn btn-primary"/>
+                    <stripes:submit id="createContainer" name="createContainer" value="Create" class="btn btn-primary"/>
                 </div>
             </div>
         </stripes:form>

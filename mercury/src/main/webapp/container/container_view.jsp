@@ -46,7 +46,7 @@
     <div id="ajax-jstree"></div>
 </div>
 <div class="row-fluid">
-    <strong>Container ${actionBean.viewVessel.label} Type: ${actionBean.containerTypeDisplayName}</strong>
+    <strong id="containerInfo">Container ${actionBean.viewVessel.label} Type: ${actionBean.containerTypeDisplayName}</strong>
     <c:if test="${actionBean.ajaxRequest}">
         <a title="Click to Edit Container" class="pull-right"
            href="${ctxpath}/container/container.action?edit=&amp;containerBarcode=${actionBean.containerBarcode}">
@@ -85,12 +85,14 @@
                     <td align="right">
                         <c:if test="${empty rowName}">${geometry.vesselPositions[receptacleIndex]}</c:if>
                         <input type="text"
+                               id="receptacleTypes[${receptacleIndex}].barcode"
                                name="receptacleTypes[${receptacleIndex}].barcode"
                                value="${actionBean.mapPositionToVessel[geometry.vesselPositions[receptacleIndex]].label}"
                                class="clearable smalltext unique" autocomplete="off"
                                <c:if test="${actionBean.editLayout}">placeholder="barcode"</c:if>
                                <c:if test="${not actionBean.editLayout or canRackScan}">readonly</c:if>/>
                         <input type="hidden"
+                               id="receptacleTypes[${receptacleIndex}].position"
                                name="receptacleTypes[${receptacleIndex}].position"
                                value="${geometry.vesselPositions[receptacleIndex]}"/>
                     </td>
@@ -101,8 +103,8 @@
     <c:if test="${actionBean.editLayout}">
         <div class="control-group top-buffer">
             <div class="controls">
-                <stripes:submit name="save" value="Update Layout" class="btn btn-primary"/>
-                <stripes:submit name="cancel" value="Cancel" class="btn"/>
+                <stripes:submit id="saveLayout" name="save" value="Update Layout" class="btn btn-primary"/>
+                <stripes:submit id="cancelUpdateLayout" name="cancel" value="Cancel" class="btn"/>
             </div>
         </div>
     </c:if>
@@ -116,14 +118,14 @@
                 <stripes:text id="storageName" name="storageName" value="${actionBean.locationTrail}" readonly="true"/>
                 <stripes:submit name="browse" id="browse" value="Browse"
                                 class="btn"/>
-                <stripes:submit name="saveLocation" value="Save To Location"
+                <stripes:submit id="saveStorageLocation" name="saveLocation" value="Save To Location"
                                 class="btn btn-primary"/>
             </div>
         </div>
         <c:if test="${not empty actionBean.storageLocation}">
             <div class="control-group">
                 <div class="controls">
-                    <stripes:submit name="removeLocation" value="Remove From Storage"
+                    <stripes:submit id="removeFromStorage" name="removeLocation" value="Remove From Storage"
                                     class="btn btn-danger"/>
                 </div>
             </div>

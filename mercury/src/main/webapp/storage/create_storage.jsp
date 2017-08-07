@@ -31,6 +31,7 @@
 
         <%--Step 1 Choose Storage Unit Type--%>
         <stripes:form beanclass="${actionBean.class.name}" id="createStorageForm">
+            <stripes:hidden id="createdStorageId" name="createdStorageId" value="${actionBean.createdStorageId}" />
             <div class="form-horizontal">
                 <div class="control-group">
                     <stripes:label for="storageUnitName" name="Unit Name" class="control-label"/>
@@ -41,7 +42,7 @@
                 <div class="control-group">
                     <stripes:label for="storageUnitTypeName" name="Unit Type" class="control-label"/>
                     <div class="controls">
-                        <stripes:select name="storageUnitTypeName">
+                        <stripes:select id="storageUnitTypeName" name="storageUnitTypeName">
                             <stripes:options-collection collection="${actionBean.creatableLocationTypes}"
                                                         label="displayName" value="displayName"/>
                         </stripes:select>
@@ -49,7 +50,7 @@
                 </div>
                 <div class="control-group">
                     <div class="controls">
-                        <stripes:submit name="chooseStorageType" value="Select Type" class="btn"/>
+                        <stripes:submit id="chooseStorageType" name="chooseStorageType" value="Select Type" class="btn"/>
                     </div>
                 </div>
 
@@ -90,7 +91,8 @@
                         <div class="controls">
                             <stripes:hidden id="storageId" name="storageId" value="${actionBean.storageId}" />
                             <stripes:hidden name="readyForDetails" value="${actionBean.readyForDetails}" />
-                            <stripes:submit name="chooseStorageUnit" value="Create" class="btn btn-primary"/>
+                            <stripes:submit id="createStorageUnit" name="chooseStorageUnit" value="Create"
+                                            class="btn btn-primary"/>
                         </div>
                     </div>
                 </c:if>

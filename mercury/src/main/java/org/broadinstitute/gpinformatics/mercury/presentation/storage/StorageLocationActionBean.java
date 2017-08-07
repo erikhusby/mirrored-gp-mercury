@@ -426,6 +426,7 @@ public class StorageLocationActionBean extends CoreActionBean {
         }
 
         ObjectMapper objectMapper = new ObjectMapper();
+        obN.put("id", storageLocation.getStorageLocationId());
         obN.put("text", storageLocation.getLabel());
         obN.put("type", storageLocation.getLocationType().name());
         ObjectNode dataNode = objectMapper.createObjectNode();

@@ -1545,7 +1545,9 @@ public class LabVesselSearchDefinition {
                         // On Failure at least return storage location w/o container
                         return labVessel.getStorageLocation().buildLocationTrail();
                     } else {
-                        return labVessel.getStorageLocation().buildLocationTrail();
+                        String location = labVessel.getStorageLocation().buildLocationTrail();
+                        location += " [" + labVessel.getLabel() + "]";
+                        return location;
                     }
                 }
                 return null;
@@ -1564,6 +1566,8 @@ public class LabVesselSearchDefinition {
                         );
                         return String
                                 .format("<a class=\"external\" target=\"new\" href=\"%s\">%s</a>", href, str);
+                    } else {
+                        return str;
                     }
                 }
                 return null;

@@ -23,7 +23,8 @@
                 </c:forEach>
                 <div class="control-group">
                     <div class="controls">
-                        <stripes:submit name="saveStorageBarcodes" value="Save" class="btn btn-primary"/>
+                        <stripes:submit id="saveStorageBarcodes" name="saveStorageBarcodes" value="Save"
+                                        class="btn btn-primary"/>
                     </div>
                 </div>
             </stripes:form>

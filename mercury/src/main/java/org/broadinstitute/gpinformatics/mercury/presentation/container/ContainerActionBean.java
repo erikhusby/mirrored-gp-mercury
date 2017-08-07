@@ -355,6 +355,7 @@ public class ContainerActionBean extends RackScanActionBean {
             addMessages(messageCollection);
             return new ForwardResolution(CONTAINER_VIEW_PAGE);
         }
+        addMessage("Successfully updated layout.");
         return new RedirectResolution(ContainerActionBean.class, VIEW_CONTAINER_ACTION)
                 .addParameter(CONTAINER_PARAMETER, containerBarcode);
     }
