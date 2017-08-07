@@ -4,6 +4,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.entity.preference.ColumnSetsPreference;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.search.ResultParams;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
@@ -62,7 +63,7 @@ public class ConfigurableList {
 
     /**
      Correlates custom result params with their associated ColumnTabluation **/
-    private final Map<Integer,SearchTerm.ResultParams> resultParamsMap = new HashMap<>();
+    private final Map<Integer,ResultParams> resultParamsMap = new HashMap<>();
 
     private final Map<Integer,ColumnTabulation> pluginTabulations = new HashMap<>();
 
@@ -163,8 +164,8 @@ public class ConfigurableList {
         DOWNLOAD
     }
 
-    public ConfigurableList(List<ColumnTabulation> columnTabulations,Map<Integer, SearchTerm.ResultParams> resultParamsMap, Integer sortColumnIndex,
-            String sortDirection, /*Boolean admin, */ @Nonnull ColumnEntity columnEntity) {
+    public ConfigurableList(List<ColumnTabulation> columnTabulations, Map<Integer, ResultParams> resultParamsMap, Integer sortColumnIndex,
+                            String sortDirection, /*Boolean admin, */ @Nonnull ColumnEntity columnEntity) {
         this( columnTabulations, resultParamsMap, sortColumnIndex, sortDirection, /*admin, */columnEntity,
                 DEFAULT_MULTI_VALUE_DELIMITER);
     }
@@ -176,7 +177,7 @@ public class ConfigurableList {
      * @param sortColumnIndexes The columns and sorting configurations
      * @param columnEntity The base entity of the search result
      */
-    public ConfigurableList(List<ColumnTabulation> columnTabulations, Map<Integer, SearchTerm.ResultParams> resultParamsMap, List<SortColumn> sortColumnIndexes,
+    public ConfigurableList(List<ColumnTabulation> columnTabulations, Map<Integer, ResultParams> resultParamsMap, List<SortColumn> sortColumnIndexes,
                             @Nonnull ColumnEntity columnEntity) {
 
         this( columnTabulations, resultParamsMap, null, null, /*admin, */columnEntity);
@@ -195,7 +196,7 @@ public class ConfigurableList {
      * @param columnEntity The base entity of the search result
      * @param multiValueDelimiter The text to use as the delimiter between values in a multi-valued field.
      */
-    public ConfigurableList(List<ColumnTabulation> columnTabulations, Map<Integer, SearchTerm.ResultParams> resultParamsMap, Integer sortColumnIndex,
+    public ConfigurableList(List<ColumnTabulation> columnTabulations, Map<Integer, ResultParams> resultParamsMap, Integer sortColumnIndex,
                             String sortDirection, /*Boolean admin, */ @Nonnull ColumnEntity columnEntity, String multiValueDelimiter) {
         this.columnEntity = columnEntity;
         this.multiValueDelimiter = multiValueDelimiter;
@@ -205,7 +206,7 @@ public class ConfigurableList {
             ColumnTabulation columnTabulation = columnTabulations.get(i);
             // Ignore header logic on nested table ColumnTabulation
             if( !columnTabulation.isNestedParent() ) {
-                SearchTerm.ResultParams resultParams = resultParamsMap.get(i);
+                ResultParams resultParams = resultParamsMap.get(i);
                 if( resultParams == null ) {
                     headerGroupMap.put(columnTabulation.getName(), new HeaderGroup(columnTabulation.getName()));
                 } else {

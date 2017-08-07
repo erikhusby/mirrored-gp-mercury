@@ -89,7 +89,6 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
     public static final String AJAX_SCAN_EVENT = "ajaxScan";
     public static final String RACK_SCAN_PAGE_TITLE = "Rack Scan Barcodes";
     public static final String DRILL_DOWN_EVENT = "drillDown";
-    public static final String AJAX_PARAMS_FETCH = "paramsFetch";
 
     @HandlesEvent(AJAX_SELECT_LAB_EVENT)
     public Resolution selectLab() {
@@ -160,42 +159,6 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
                 } else {
                     out.write(scannerData.toString().getBytes());
                 }
-                out.close();
-            }
-        };
-    }
-
-    /**
-     * Returns a result column parameter list <br />
-     * Required params:  <ul>
-     *     <li>entityType (ColumnEntity.entityName: "LabVessel", "LabEvent", etc.)</li>
-     *     <li>searchTermName</li></ul>
-     * @return
-     */
-    @HandlesEvent(AJAX_PARAMS_FETCH)
-    public Resolution fetchParams() {
-        configurableSearchDef = SearchDefinitionFactory.getForEntity( getEntityName() );
-        SearchTerm searchTerm = configurableSearchDef.getSearchTerm(searchTermName);
-        final String optionJson;
-        if( searchTerm == null ) {
-            return new ErrorResolution(500, "No search term named " + searchTermName);
-        }
-        if( searchTerm.getConstrainedResultParamsExpression() == null ) {
-            return new ErrorResolution(500, "Search term " + searchTermName + " has no parameters configured");
-        }
-        try {
-            List<ConstrainedValue> options = searchTerm.getConstrainedResultParamsExpression().evaluate(null,null);
-            ObjectMapper mapper = new ObjectMapper();
-            optionJson = mapper.writeValueAsString(options);
-        } catch (Exception e) {
-            return new ErrorResolution(500, e.getMessage() );
-        }
-
-        return new StreamingResolution("text/json") {
-            @Override
-            public void stream(HttpServletResponse response) throws Exception {
-                ServletOutputStream out = response.getOutputStream();
-                out.write(optionJson.getBytes());
                 out.close();
             }
         };

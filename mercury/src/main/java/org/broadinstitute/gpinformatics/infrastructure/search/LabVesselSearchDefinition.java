@@ -718,14 +718,13 @@ public class LabVesselSearchDefinition {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
                 Set<String> results = new HashSet<>();
-                // TODO: JMS Subclass Evaluator and boiler plate the result params validation?
-                SearchTerm.ResultParams columnParams = context.getColumnParams();
-                if( columnParams == null || columnParams.getParamOptions().size() == 0 ) {
+                ResultParams columnParams = context.getColumnParams();
+                if( columnParams == null || columnParams.getParamInputs().get("eventTypes") == null ) {
                     results.add("(Event types required)");
                     return results;
                 }
                 List<LabEventType> eventTypes = new ArrayList<>();
-                for( String eventTypeString : columnParams.getParamOptions() ) {
+                for(String eventTypeString : columnParams.getParamInputs().get("eventTypes").getValue() ) {
                     LabEventType type = LabEventType.valueOf(eventTypeString);
                     if( type == null ) {
                         results.clear();
@@ -736,9 +735,19 @@ public class LabVesselSearchDefinition {
                     }
                 }
 
+                boolean captureTarget = true;  // Default
+                if( columnParams.getParamInputs() != null && columnParams.getParamInputs().get("srcOrTarget") != null
+                        && "source".equals(columnParams.getParamInputs().get("srcOrTarget").getValue().get(0))){
+                    captureTarget = false;
+                };
+                boolean captureNearest = false; // Default
+                if( columnParams.getParamInputs() != null && columnParams.getParamInputs().get("captureNearest") != null ) {
+                    captureNearest = true;
+                }
+
                 LabVessel labVessel = (LabVessel) entity;
 
-                VesselsForEventTraverserCriteria eval = new VesselsForEventTraverserCriteria(eventTypes);
+                VesselsForEventTraverserCriteria eval = new VesselsForEventTraverserCriteria(eventTypes,captureNearest,captureTarget);
                 labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
 
                 for(Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
@@ -748,7 +757,28 @@ public class LabVesselSearchDefinition {
                 return results;
             }
         });
-        searchTerm.setConstrainedResultParamsExpression(new SearchDefinitionFactory.EventTypeValuesExpression());
+        searchTerm.setConstrainedResultParamsExpression(new SearchTerm.Evaluator<ResultParams>() {
+            @Override
+            public ResultParams evaluate(Object entity, SearchContext context) {
+                ResultParams resultParams = new ResultParams();
+
+                ResultParams.ParamInput captureNearestInput = new ResultParams.ParamInput("captureNearest", ResultParams.InputType.CHECKBOX, "Capture Vessel(s) for Nearest Event Only");
+                resultParams.addParamInput(captureNearestInput);
+
+                ResultParams.ParamInput srcTargetInput = new ResultParams.ParamInput("srcOrTarget", ResultParams.InputType.RADIO, "Capture");
+                List<ConstrainedValue> options = new ArrayList<>();
+                options.add(new ConstrainedValue("target", "Event Target Vessel(s)"));
+                options.add(new ConstrainedValue("source", "Event Source Vessel(s)"));
+                srcTargetInput.setOptionItems(options);
+                resultParams.addParamInput(srcTargetInput);
+
+                ResultParams.ParamInput eventTypeInput = new ResultParams.ParamInput("eventTypes", ResultParams.InputType.MULTI_PICKLIST, "Capture Vessel(s) for Event Type(s)");
+                eventTypeInput.setOptionItems(SearchDefinitionFactory.EventTypeValuesExpression.getConstrainedValues());
+                resultParams.addParamInput(eventTypeInput);
+
+                return resultParams;
+            }
+        });
         searchTerms.add(searchTerm);
         /****  Result Criteria ****/
 

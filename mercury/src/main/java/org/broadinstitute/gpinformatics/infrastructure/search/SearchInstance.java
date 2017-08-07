@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.athena.entity.preference.SearchInstanceList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
+import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -29,6 +30,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -752,7 +754,7 @@ public class SearchInstance implements Serializable {
     /**
      * Map of view column indexes to any optional parameters associated
      */
-    private Map<Integer,SearchTerm.ResultParams> viewColumnParamMap = new HashMap<>();
+    private Map<Integer,ResultParams> viewColumnParamMap = new HashMap<>();
 
     /**
      * List of columns names that the user wants to download
@@ -862,7 +864,7 @@ public class SearchInstance implements Serializable {
         return searchValue;
     }
 
-    private Pair<String,SearchTerm.ResultParams> splitTermAndParams(String nameAndParams ) {
+    private Pair<String,ResultParams> splitTermAndParams(String nameAndParams ) {
         // Quick JSON test
         int index = nameAndParams.indexOf("{");
         if (index < 0) {
@@ -870,7 +872,22 @@ public class SearchInstance implements Serializable {
         } else {
             try {
                 ObjectMapper mapper = new ObjectMapper();
-                SearchTerm.ResultParams resultParams = mapper.readValue( nameAndParams, SearchTerm.ResultParams.class );
+                JsonNode root = mapper.readTree(nameAndParams);
+                ResultParams resultParams = new ResultParams();
+                resultParams.setSearchTermName(root.get("searchTermName").getTextValue());
+                resultParams.setUserColumnName(root.get("userColumnName").getTextValue());
+                Map<String,ResultParams.ParamInput> paramInputs = resultParams.getParamInputs();
+                for(Iterator<JsonNode> iter = root.get("paramInputs").getElements(); iter.hasNext(); ) {
+                    JsonNode input = iter.next();
+                    String name = input.get("name").getTextValue();
+                    String value = input.get("value").getTextValue();
+                    ResultParams.ParamInput paramInput = paramInputs.get(name);
+                    if( paramInput == null ) {
+                        paramInput = new ResultParams.ParamInput(name);
+                        resultParams.addParamInput(paramInput);
+                    }
+                    paramInput.getValue().add(value);
+                }
                 return Pair.of(resultParams.getSearchTermName(), resultParams);
             } catch( Exception je ) {
                 throw new RuntimeException( "Fail parsing result column options", je);
@@ -893,7 +910,7 @@ public class SearchInstance implements Serializable {
         // Don't overwrite result params from any session SearchInstances (sorting)
         if( viewColumnParamMap.size() == 0 ) {
             for (int i = 0; i < predefinedViewColumns.size(); i++) {
-                Pair<String, SearchTerm.ResultParams> nameAndParams = splitTermAndParams(predefinedViewColumns.get(i));
+                Pair<String, ResultParams> nameAndParams = splitTermAndParams(predefinedViewColumns.get(i));
                 viewColumnParamMap.put(i, nameAndParams.getRight());
                 if (nameAndParams.getRight() != null && nameAndParams.getRight().getUserColumnName() != null) {
                     predefinedViewColumns.set(i, nameAndParams.getLeft());
@@ -1192,7 +1209,7 @@ public class SearchInstance implements Serializable {
         this.predefinedViewColumns = predefinedViewColumns;
     }
 
-    public Map<Integer,SearchTerm.ResultParams> getViewColumnParamMap() {
+    public Map<Integer,ResultParams> getViewColumnParamMap() {
         return viewColumnParamMap;
     }
 
