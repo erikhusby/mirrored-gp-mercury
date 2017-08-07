@@ -39,6 +39,7 @@ import java.util.List;
 public class SubmissionTuple implements Serializable {
     private static final long serialVersionUID = 1262062294730627888L;
     public static final String PROCESSING_LOCATION_UNKNOWN = null;
+    public static final String DATA_TYPE_UNKNOWN = null;
     public static final String VERSION_UNKNOWN = null;
     private static Log log = LogFactory.getLog(SubmissionTuple.class);
 
@@ -52,7 +53,8 @@ public class SubmissionTuple implements Serializable {
     private String version;
     @JsonProperty
     private String processingLocation;
-
+    @JsonProperty
+    private String dataType;
     @JsonIgnore
     private ObjectMapper objectMapper=null;
     @JsonIgnore
@@ -72,22 +74,25 @@ public class SubmissionTuple implements Serializable {
         SubmissionTuple tuple = null;
         try {
             tuple = getObjectMapper().readValue(jsonString, SubmissionTuple.class);
-            initSubmissionTuple(tuple.project, tuple.sampleName, tuple.version, tuple.processingLocation);
+            initSubmissionTuple(tuple.project, tuple.sampleName, tuple.version, tuple.processingLocation, tuple.dataType);
         } catch (IOException e) {
             log.info(String.format("Could not map JSON String [%s] to SubmissionTuple", jsonString), e);
         }
     }
 
-    public SubmissionTuple(String project, String sampleName, String version, String processingLocation) {
-        initSubmissionTuple(project, sampleName, version, processingLocation);
+    public SubmissionTuple(String project, String sampleName, String version, String processingLocation,
+                           String dataType) {
+        initSubmissionTuple(project, sampleName, version, processingLocation, dataType);
     }
 
-    private void initSubmissionTuple(String project, String sampleName, String version, String processingLocation) {
+    private void initSubmissionTuple(String project, String sampleName, String version, String processingLocation,
+                                     String dataType) {
         this.project = project;
         this.sampleName = sampleName;
         this.fileType = fileType;
         this.version = version;
         this.processingLocation = processingLocation;
+        this.dataType = dataType;
     }
 
     public String getProject() {
@@ -133,7 +138,8 @@ public class SubmissionTuple implements Serializable {
                 .append(this.project, that.project)
                 .append(this.fileType, that.fileType)
                 .append(this.processingLocation, that.processingLocation)
-                .append(this.version, that.version).isEquals();
+                .append(this.version, that.version)
+                .append(this.dataType, that.dataType).isEquals();
     }
 
     public static List<String> samples(List<SubmissionTuple> tuples) {
@@ -142,6 +148,14 @@ public class SubmissionTuple implements Serializable {
             samples.add(tuple.getSampleName());
         }
         return samples;
+    }
+
+    public String getDataType() {
+        return dataType;
+    }
+
+    public void setDataType(String dataType) {
+        this.dataType = dataType;
     }
 
     @Override
@@ -159,6 +173,6 @@ public class SubmissionTuple implements Serializable {
     @Override
     public int hashCode() {
         return new HashCodeBuilder().append(this.sampleName).append(project).append(this.fileType).append(this.version)
-            .append(this.processingLocation).hashCode();
+            .append(this.processingLocation).append(this.dataType).hashCode();
     }
 }

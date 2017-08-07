@@ -80,14 +80,16 @@ public class AggregationMetricsFetcher {
             TypedQuery<Aggregation> query = entityManager.createQuery(criteriaQuery);
 
             try {
-                aggregations.addAll(query.getResultList());
+                List<Aggregation> resultList = query.getResultList();
+                aggregations.addAll(resultList);
             } catch (NoResultException e) {
                 log.info("Unable to retrieve aggregations based on given criteria");
             }
-
-        fetchLod(aggregations);
-        allResults.addAll(aggregations);
-    }
+            allResults.addAll(aggregations);
+        }
+        for (List<Aggregation> aggregations : Iterables.partition(allResults, MAX_AGGREGATION_FETCHER_QUERY_SIZE)) {
+            fetchLod(aggregations);
+        }
         return allResults;
     }
 

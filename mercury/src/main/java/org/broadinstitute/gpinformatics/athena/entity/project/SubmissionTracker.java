@@ -62,6 +62,9 @@ public class SubmissionTracker {
     @Column(name = "PROCESSING_LOCATION")
     private String processingLocation;
 
+    @Column(name = "DATA_TYPE")
+    private String dataType;
+
     /**
      * research project under which the submission has been made.
      */
@@ -164,9 +167,17 @@ public class SubmissionTracker {
         return requestDate;
     }
 
+    public String getDataType() {
+        return dataType;
+    }
+
+    public void setDataType(String dataType) {
+        this.dataType = dataType;
+    }
+
     // todo: should be in interface?
     @Transient
     public SubmissionTuple getTuple() {
-        return new SubmissionTuple(project, submittedSampleName, version, processingLocation);
+        return new SubmissionTuple(project, submittedSampleName, version, processingLocation, dataType);
     }
 }
