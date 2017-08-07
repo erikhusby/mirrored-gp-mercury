@@ -128,7 +128,8 @@ public class SubmissionDtoFetcher {
             String sampleName = productOrderSample.getSampleData().getCollaboratorsSampleName();
             SubmissionTuple submissionTuple =
                 new SubmissionTuple(productOrderSample.getProductOrder().getResearchProject().getJiraTicketKey(),
-                    sampleName, SubmissionTuple.VERSION_UNKNOWN, SubmissionTuple.PROCESSING_LOCATION_UNKNOWN);
+                    sampleName, SubmissionTuple.VERSION_UNKNOWN, SubmissionTuple.PROCESSING_LOCATION_UNKNOWN,
+                    SubmissionTuple.DATA_TYPE_UNKNOWN);
             projectSamples.put(researchProject.getBusinessKey(), submissionTuple);
 
         }
