@@ -38,7 +38,10 @@ public class LcsetActionBean extends RackScanActionBean {
     /** Entered by the user. */
     @Validate(required = true, on = {SCAN_CONTROLS_EVENT, CONFIRM_CONTROLS_EVENT})
     private String lcsetName;
+    // todo jmt error if rack barcode is needed, and not supplied.
+    private String rackBarcode;
 
+    // todo jmt prevent these from accumulating barcodes for successive scans
     /** Ask the user to confirm that these should be added to the LCSET. */
     private List<String> controlBarcodes = new ArrayList<>();
     private List<String> addBarcodes = new ArrayList<>();
@@ -94,7 +97,7 @@ public class LcsetActionBean extends RackScanActionBean {
 
     @HandlesEvent(CONFIRM_CONTROLS_EVENT)
     public Resolution confirmControls() throws ScannerException {
-        labBatchEjb.x(lcsetName, controlBarcodes);
+        labBatchEjb.x(lcsetName, controlBarcodes, this, addBarcodes, rackScan, rackBarcode, userBean);
         addMessage("Made modifications to LCSET");
         return new ForwardResolution(LCSET_PAGE);
     }
@@ -117,6 +120,14 @@ public class LcsetActionBean extends RackScanActionBean {
     @SuppressWarnings("unused")
     public void setLcsetName(String lcsetName) {
         this.lcsetName = lcsetName;
+    }
+
+    public String getRackBarcode() {
+        return rackBarcode;
+    }
+
+    public void setRackBarcode(String rackBarcode) {
+        this.rackBarcode = rackBarcode;
     }
 
     public List<String> getControlBarcodes() {

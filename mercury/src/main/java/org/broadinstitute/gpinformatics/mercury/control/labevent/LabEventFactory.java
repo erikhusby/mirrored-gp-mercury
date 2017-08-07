@@ -462,7 +462,7 @@ public class LabEventFactory implements Serializable {
             LabEventType.ForwardMessage forwardMessage = labEvent.getLabEventType().getForwardMessage();
             switch (forwardMessage) {
                 case BSP:
-                    bspRestSender.postToBsp(bettaLIMSMessage,
+                    bspRestSender.postToBsp(bspRestSender.bspBettaLIMSMessage(bettaLIMSMessage),
                             bspRestSender.BSP_TRANSFER_REST_URL);
                     break;
                 case GAP:

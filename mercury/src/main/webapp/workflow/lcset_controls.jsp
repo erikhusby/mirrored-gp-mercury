@@ -20,6 +20,12 @@
                         <input type="text" id="lcsetText" name="lcsetName" value="${actionBean.lcsetName}"/>
                     </div>
                 </div>
+                <div class="control-group">
+                    <label for="rackBarcode" class="control-label">Rack Barcode</label>
+                    <div class="controls">
+                        <input type="text" id="rackBarcode" name="rackBarcode" value="${actionBean.rackBarcode}"/>
+                    </div>
+                </div>
                 <!-- Adds the dropdowns for lab and scanner, and possibly a file chooser. -->
                 <stripes:layout-render name="/vessel/rack_scanner_list_with_sim_part2.jsp" bean="${actionBean}"/>
                 <div class="controls">
@@ -76,6 +82,9 @@
                     <stripes:submit value="Confirm" id="confirmBtn" class="btn btn-primary"
                             name="<%= LcsetActionBean.CONFIRM_CONTROLS_EVENT %>"/>
                 </div>
+                <c:forEach items="${actionBean.rackScan}" var="entry">
+                    <input type="hidden" name="rackScan['${entry.key}']" value="${entry.value}">
+                </c:forEach>
             </c:if>
         </stripes:form>
     </stripes:layout-component>

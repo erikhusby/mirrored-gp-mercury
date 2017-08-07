@@ -19,6 +19,8 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.BSPExportsService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -30,6 +32,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMes
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
@@ -47,6 +50,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
@@ -55,6 +59,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowD
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationDto;
 import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationUtils;
 import org.broadinstitute.gpinformatics.mercury.presentation.run.FctDto;
@@ -121,6 +126,10 @@ public class LabBatchEjb {
     private LabVesselDao labVesselDao;
 
     private FlowcellDesignationEjb flowcellDesignationEjb;
+
+    private BSPRestClient bspRestClient;
+
+    private BSPExportsService bspExportsService;
 
     private static final VesselPosition[] VESSEL_POSITIONS = {VesselPosition.LANE1, VesselPosition.LANE2,
             VesselPosition.LANE3, VesselPosition.LANE4, VesselPosition.LANE5, VesselPosition.LANE6,
@@ -684,8 +693,6 @@ public class LabBatchEjb {
             }
         }
 
-        // todo jmt how to decide whether to export?  Add to search results or call ExportResource?
-        // Container may exist in BSP, but won't have control.  ContainerResource.updateLayout?
         return new ValidateRackScanReturn(controlTubes, addTubes, removeTubes);
     }
 
@@ -703,42 +710,71 @@ public class LabBatchEjb {
         }
     }
 
-    public void x(String lcsetName, List<String> controlBarcodes) {
+    public void x(String lcsetName, List<String> controlBarcodes, MessageReporter messageReporter,
+            Collection<String> addBarcodes, Map<String, String> rackScan, String rackBarcode, UserBean userBean) {
         addControlsToLcset(lcsetName, controlBarcodes);
 
-        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(addBarcodes);
+        // Add to batch
+        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(rackScan.values());
         List<Long> bucketEntryIds = new ArrayList<>();
         String bucketName = null;
-        for (Map.Entry<String, BarcodedTube> barcodedTubeEntry : mapBarcodeToTube.entrySet()) {
-            SampleInstanceV2 sampleInstance = barcodedTubeEntry.getValue().getSampleInstancesV2().iterator().next();
-            for (BucketEntry bucketEntry : sampleInstance.getAllBucketEntries()) {
+        for (String addBarcode : addBarcodes) {
+            BarcodedTube barcodedTube = mapBarcodeToTube.get(addBarcode);
+            SampleInstanceV2 sampleInstance = barcodedTube.getSampleInstancesV2().iterator().next();
+            for (BucketEntry bucketEntry : sampleInstance.getPendingBucketEntries()) {
                 if (bucketEntry.getLabBatch() == null) {
                     bucketEntryIds.add(bucketEntry.getBucketEntryId());
                     bucketName = bucketEntry.getBucket().getBucketDefinitionName();
                 }
             }
         }
+        // todo jmt error if didn't find a bucket entry for each add sample
         try {
-            labBatchEjb.addToLabBatch(lcsetName, bucketEntryIds, null, bucketName, this, null);
+            addToLabBatch(lcsetName, bucketEntryIds, Collections.<Long>emptyList(), bucketName, messageReporter,
+                    Collections.<String>emptyList());
         } catch (IOException | ValidationException e) {
             throw new RuntimeException(e);
         }
-        BSPRestClient bspRestClient;
-        WebResource webResource = bspRestClient.getWebResource(BSP_CONTAINER_UPDATE_LAYOUT);
 
+        //        labBatchEjb.removeFromLabBatch();
+
+        // Update rack in BSP, to add control
+        WebResource webResource = bspRestClient.getWebResource(bspRestClient.getUrl(BSP_CONTAINER_UPDATE_LAYOUT));
         PlateTransferEventType plateTransferEventType = new PlateTransferEventType();
         PositionMapType positionMap = new PositionMapType();
+        positionMap.setBarcode(rackBarcode);
         plateTransferEventType.setPositionMap(positionMap);
+        for (Map.Entry<String, String> positionBarcodeEntry : rackScan.entrySet()) {
+            ReceptacleType receptacleType = new ReceptacleType();
+            receptacleType.setPosition(positionBarcodeEntry.getKey());
+            receptacleType.setBarcode(positionBarcodeEntry.getValue());
+            positionMap.getReceptacle().add(receptacleType);
+        }
         PlateType plateType = new PlateType();
+        plateType.setBarcode(rackBarcode);
+        plateType.setPhysType(RackOfTubes.RackType.Matrix96.getDisplayName());
         plateTransferEventType.setPlate(plateType);
-
         BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
         bettaLIMSMessage.getPlateTransferEvent().add(plateTransferEventType);
-
         ClientResponse response = webResource.type(MediaType.APPLICATION_XML).post(ClientResponse.class, bettaLIMSMessage);
-//        labBatchEjb.removeFromLabBatch();
-//        autoExport
+
+        // Determine whether rack needs to be exported from BSP
+        IsExported.ExportResults exportResults = bspExportsService.findExportDestinations(
+                new HashSet<LabVessel>(mapBarcodeToTube.values()));
+        int needsExport = 0;
+        for (IsExported.ExportResult exportResult : exportResults.getExportResult()) {
+            Set<IsExported.ExternalSystem> externalSystems = exportResult.getExportDestinations();
+            if (CollectionUtils.isEmpty(externalSystems) || !externalSystems.contains(IsExported.ExternalSystem.Mercury)) {
+                needsExport++;
+            }
+        }
+
+        // todo jmt what if there's a mix of exported and unexported?
+        if (needsExport > 0) {
+            bspExportsService.export(rackBarcode, userBean.getLoginUserName());
+        }
     }
+
     /**
      * Make FCT LabBatches and tickets, based on DTOs from the Create FCT Ticket web page.
      * @param createFctDtos information from web page
@@ -1116,5 +1152,18 @@ public class LabBatchEjb {
         this.flowcellDesignationEjb = flowcellDesignationEjb;
     }
 
+    @Inject
+    public void setBarcodedTubeDao(BarcodedTubeDao barcodedTubeDao) {
+        this.barcodedTubeDao = barcodedTubeDao;
+    }
 
+    @Inject
+    public void setBspRestClient(BSPRestClient bspRestClient) {
+        this.bspRestClient = bspRestClient;
+    }
+
+    @Inject
+    public void setBspExportsService(BSPExportsService bspExportsService) {
+        this.bspExportsService = bspExportsService;
+    }
 }

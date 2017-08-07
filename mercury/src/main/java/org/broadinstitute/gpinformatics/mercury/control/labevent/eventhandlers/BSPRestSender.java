@@ -21,6 +21,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryP
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
@@ -45,11 +46,24 @@ public class BSPRestSender implements Serializable {
 
     public void postToBsp(BettaLIMSMessage message, String bspRestUrl) {
 
+        String urlString = bspRestClient.getUrl(bspRestUrl);
+        WebResource webResource = bspRestClient.getWebResource(urlString);
+
+        // Posts message to BSP using the specified REST url.
+        ClientResponse response = webResource.type(MediaType.APPLICATION_XML).post(ClientResponse.class, message);
+
+        // This is called in context of bettalims message handling which handles errors via RuntimeException.
+        if (response.getClientResponseStatus().getFamily() != Response.Status.Family.SUCCESSFUL) {
+            throw new RuntimeException("POST to " + urlString + " returned: " + response.getEntity(String.class));
+        }
+
+    }
+
+    @NotNull
+    public BettaLIMSMessage bspBettaLIMSMessage(BettaLIMSMessage message) {
         // Forward only the events that are for BSP, e.g. Blood Biopsy extraction from blood to plasma and buffy coat
         // is two events in one message, but only one is configured to forward to BSP.
         BettaLIMSMessage copy = new BettaLIMSMessage();
-        String urlString = bspRestClient.getUrl(bspRestUrl);
-        WebResource webResource = bspRestClient.getWebResource(urlString);
         for (PlateCherryPickEvent plateCherryPickEvent : message.getPlateCherryPickEvent()) {
             if(LabEventType.getByName(plateCherryPickEvent.getEventType()).getForwardMessage() ==
                     LabEventType.ForwardMessage.BSP) {
@@ -68,15 +82,7 @@ public class BSPRestSender implements Serializable {
                 copy.getReceptacleTransferEvent().add(receptacleTransferEventType);
             }
         }
-
-        // Posts message to BSP using the specified REST url.
-        ClientResponse response = webResource.type(MediaType.APPLICATION_XML).post(ClientResponse.class, copy);
-
-        // This is called in context of bettalims message handling which handles errors via RuntimeException.
-        if (response.getClientResponseStatus().getFamily() != Response.Status.Family.SUCCESSFUL) {
-            throw new RuntimeException("POST to " + urlString + " returned: " + response.getEntity(String.class));
-        }
-
+        return copy;
     }
 
     /**
