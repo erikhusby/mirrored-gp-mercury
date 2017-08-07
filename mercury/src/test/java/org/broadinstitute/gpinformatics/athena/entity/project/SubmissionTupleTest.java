@@ -21,98 +21,99 @@ import static org.hamcrest.Matchers.not;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class SubmissionTupleTest {
+    private static final String EXOME = "Exome";
     public void testNullSample() {
         SubmissionTuple tuple1 = null;
-        SubmissionTuple tuple2 = buildTuple("P123", "b", "c", "x", FileType.BAM);
+        SubmissionTuple tuple2 = buildTuple("P123", "b", "c", "x", FileType.BAM, EXOME);
         assertThat(tuple1, not(equalTo(tuple2)));
         assertThat(tuple2, not(equalTo(tuple1)));
     }
 
     public void testSampleNotEquals() {
-        SubmissionTuple tuple1 = buildTuple("P123", "a", "c", "x", FileType.BAM);
-        SubmissionTuple tuple2 = buildTuple("P123", "b", "c", "x", FileType.BAM);
+        SubmissionTuple tuple1 = buildTuple("P123", "a", "c", "x", FileType.BAM, EXOME);
+        SubmissionTuple tuple2 = buildTuple("P123", "b", "c", "x", FileType.BAM, EXOME);
         assertThat(tuple1, not(equalTo(tuple2)));
         assertThat(tuple2, not(equalTo(tuple1)));
     }
 
     public void testEquals() {
-        SubmissionTuple tuple1 = buildTuple("P123", "a", "c", "y", FileType.BAM);
-        SubmissionTuple tuple2 = buildTuple("P123", "a", "c", "y", FileType.BAM);
+        SubmissionTuple tuple1 = buildTuple("P123", "a", "c", "y", FileType.BAM, EXOME);
+        SubmissionTuple tuple2 = buildTuple("P123", "a", "c", "y", FileType.BAM, EXOME);
         assertThat(tuple1, equalTo(tuple2));
         assertThat(tuple2, equalTo(tuple1));
     }
 
     public void testFileNotEquals() {
-        SubmissionTuple tuple1 = buildTuple("P123", "a", "c", "x", FileType.BAM);
-        SubmissionTuple tuple2 = buildTuple("P123", "a", "c", "x", FileType.PICARD);
+        SubmissionTuple tuple1 = buildTuple("P123", "a", "c", "x", FileType.BAM, EXOME);
+        SubmissionTuple tuple2 = buildTuple("P123", "a", "c", "x", FileType.PICARD, EXOME);
         assertThat(tuple1, not(equalTo(tuple2)));
         assertThat(tuple2, not(equalTo(tuple1)));
     }
 
     public void testVersionNotEquals() {
-        SubmissionTuple tuple1 = buildTuple("P123", "a", "c", "y", FileType.BAM);
-        SubmissionTuple tuple2 = buildTuple("P123", "a", "d", "y", FileType.BAM);
+        SubmissionTuple tuple1 = buildTuple("P123", "a", "c", "y", FileType.BAM, EXOME);
+        SubmissionTuple tuple2 = buildTuple("P123", "a", "d", "y", FileType.BAM, EXOME);
         assertThat(tuple1, not(equalTo(tuple2)));
         assertThat(tuple2, not(equalTo(tuple1)));
     }
 
     public void testProcessingLocationNotEquals() {
-        SubmissionTuple tuple1 = buildTuple("P123", "a", "c", "x", FileType.BAM);
-        SubmissionTuple tuple2 = buildTuple("P123", "a", "c", "x", FileType.PICARD);
+        SubmissionTuple tuple1 = buildTuple("P123", "a", "c", "x", FileType.BAM, EXOME);
+        SubmissionTuple tuple2 = buildTuple("P123", "a", "c", "x", FileType.PICARD, EXOME);
         assertThat(tuple1, not(equalTo(tuple2)));
         assertThat(tuple2, not(equalTo(tuple1)));
     }
     
     public void testProjectNotEquals() {
-        SubmissionTuple tuple1 = buildTuple("P123", "a", "x", "x", FileType.BAM);
-        SubmissionTuple tuple2 = buildTuple("P456", "a", "c", "x", FileType.BAM);
+        SubmissionTuple tuple1 = buildTuple("P123", "a", "x", "x", FileType.BAM, EXOME);
+        SubmissionTuple tuple2 = buildTuple("P456", "a", "c", "x", FileType.BAM, EXOME);
         assertThat(tuple1, not(equalTo(tuple2)));
         assertThat(tuple2, not(equalTo(tuple1)));
     }
 
     public void testNullSampleNotEquals() {
-        SubmissionTuple tuple1 = buildTuple("P123", null, "c", "x", FileType.BAM);
-        SubmissionTuple tuple2 = buildTuple("P123", "a", "d", "x", FileType.BAM);
+        SubmissionTuple tuple1 = buildTuple("P123", null, "c", "x", FileType.BAM, EXOME);
+        SubmissionTuple tuple2 = buildTuple("P123", "a", "d", "x", FileType.BAM, EXOME);
         assertThat(tuple1, not(equalTo(tuple2)));
         assertThat(tuple2, not(equalTo(tuple1)));
     }
 
     public void testNullProjectNotEquals() {
-        SubmissionTuple tuple1 = buildTuple(null, "a", "c", "x", FileType.BAM);
-        SubmissionTuple tuple2 = buildTuple("P123", "a", "c", "x", FileType.BAM);
+        SubmissionTuple tuple1 = buildTuple(null, "a", "c", "x", FileType.BAM, EXOME);
+        SubmissionTuple tuple2 = buildTuple("P123", "a", "c", "x", FileType.BAM, EXOME);
         assertThat(tuple1, not(equalTo(tuple2)));
         assertThat(tuple2, not(equalTo(tuple1)));
     }
 
     public void testNullFileNotEquals() {
-        SubmissionTuple tuple1 = buildTuple("P123", "a", "c", null, FileType.BAM);
-        SubmissionTuple tuple2 = buildTuple("P123", "a", "d", "x", FileType.BAM);
+        SubmissionTuple tuple1 = buildTuple("P123", "a", "c", null, FileType.BAM, EXOME);
+        SubmissionTuple tuple2 = buildTuple("P123", "a", "d", "x", FileType.BAM, EXOME);
         assertThat(tuple1, not(equalTo(tuple2)));
         assertThat(tuple2, not(equalTo(tuple1)));
     }
 
     public void testNullVersionNotEquals() {
-        SubmissionTuple tuple1 = buildTuple("P123", "a", null, "x", FileType.BAM);
-        SubmissionTuple tuple2 = buildTuple("P123", "a", "d", "x", FileType.BAM);
+        SubmissionTuple tuple1 = buildTuple("P123", "a", null, "x", FileType.BAM, EXOME);
+        SubmissionTuple tuple2 = buildTuple("P123", "a", "d", "x", FileType.BAM, EXOME);
         assertThat(tuple1, not(equalTo(tuple2)));
         assertThat(tuple2, not(equalTo(tuple1)));
     }
 
     public void testTupleFromString() {
-        SubmissionTuple submissionTuple = buildTuple("p", "s", "v", "y", FileType.BAM);
+        SubmissionTuple submissionTuple = buildTuple("p", "s", "v", "y", FileType.BAM, EXOME);
         SubmissionTuple submissionTupleFromString = new SubmissionTuple("{\"project\":\"p\",\"sampleName\":\"s\",\"fileType\":\"BAM\",\"version\":\"v\",\"processingLocation\":\"y\"}");
 
         assertThat(submissionTuple, equalTo(submissionTupleFromString));
     }
 
     public void testToJsonString() {
-        SubmissionTuple submissionTuple = buildTuple("p", "s", "v", "y", FileType.BAM);
-        assertThat(submissionTuple.toString(), equalTo("{\"fileType\":\"BAM\",\"processingLocation\":\"y\",\"project\":\"p\",\"sampleName\":\"s\",\"version\":\"v\"}"));
+        SubmissionTuple submissionTuple = buildTuple("p", "s", "v", "y", FileType.BAM, EXOME);
+        assertThat(submissionTuple.toString(), equalTo("{\"dataType\":\"Exome\",\"fileType\":\"BAM\",\"processingLocation\":\"y\",\"project\":\"p\",\"sampleName\":\"s\",\"version\":\"v\"}"));
     }
 
     private SubmissionTuple buildTuple(String project, String sampleName, String version, String processingLocation,
-                                       FileType fileType) {
-        SubmissionTuple submissionTuple = new SubmissionTuple(project, sampleName, version, processingLocation);
+                                       FileType fileType, String dataType) {
+        SubmissionTuple submissionTuple = new SubmissionTuple(project, sampleName, version, processingLocation, dataType);
         submissionTuple.setFileType(fileType);
         return submissionTuple;
     }
