@@ -60,7 +60,7 @@ public class BassDTO {
 
     // todo: should be in interface?
     public SubmissionTuple getTuple() {
-        return new SubmissionTuple(getProject(), getSample(), getVersion().toString(), getFileTypeEnum());
+        return new SubmissionTuple(getProject(), getSample(), getVersion().toString(), getFileTypeEnum(), getDatatype());
     }
 
     private String getFilePath() {
@@ -307,7 +307,17 @@ public class BassDTO {
     }
 
     public String getDatatype() {
-        return getValue(BassResultColumn.datatype);
+        String datatype = getValue(BassResultColumn.datatype);
+        if (StringUtils.isEmpty(datatype)) {
+            if (getPath().contains(DATA_TYPE_EXOME)) {
+                datatype = DATA_TYPE_EXOME;
+            } else if (getPath().contains(DATA_TYPE_RNA)) {
+                datatype = DATA_TYPE_RNA;
+            } else if (getPath().contains(DATA_TYPE_WGS)) {
+                datatype = DATA_TYPE_WGS;
+            }
+        }
+        return datatype;
     }
 
     public String getRgChecksum() {
