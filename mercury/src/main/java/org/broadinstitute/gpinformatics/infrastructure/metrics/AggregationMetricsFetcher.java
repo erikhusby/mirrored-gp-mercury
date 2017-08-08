@@ -32,7 +32,6 @@ import javax.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -70,6 +69,9 @@ public class AggregationMetricsFetcher {
                 tuplePredicates.add(criteriaBuilder.equal(root.get(Aggregation_.project), tuple.getProject()));
                 tuplePredicates.add(criteriaBuilder.equal(root.get(Aggregation_.sample), tuple.getSampleName()));
                 tuplePredicates.add(criteriaBuilder.equal(root.get(Aggregation_.version), tuple.getVersion()));
+                if (tuple.getDataType() != null) {
+                    tuplePredicates.add(criteriaBuilder.equal(root.get(Aggregation_.dataType), tuple.getDataType()));
+                }
                 predicates.add(criteriaBuilder.and(tuplePredicates.toArray(new Predicate[tuplePredicates.size()])));
             }
 

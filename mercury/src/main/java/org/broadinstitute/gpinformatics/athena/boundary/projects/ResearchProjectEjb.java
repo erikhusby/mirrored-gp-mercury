@@ -273,7 +273,7 @@ public class ResearchProjectEjb {
         for (SubmissionDto submissionDto : submissionDtos) {
             SubmissionTracker tracker = new SubmissionTracker(submissionDto.getAggregationProject(),
                     submissionDto.getSampleName(), String.valueOf(submissionDto.getVersion()),
-                    submissionDto.getFileType());
+                    submissionDto.getFileType(), submissionDto.getDataType());
             submissionProject.addSubmissionTracker(tracker);
             submissionDtoMap.put(tracker, submissionDto);
         }

@@ -53,7 +53,7 @@ public class SubmissionDtoFetcherTest {
     private static final String TEST_SAMPLE = "SM-35BDA";
     private static final String COLLABORATOR_SAMPLE_ID = "BOT2365_T";
     private static final String RESEARCH_PROJECT_ID = "RP-YOMAMA";
-    private static final String DATA_TYPE = "Exome";
+    private static final String DATA_TYPE = BassDTO.DATA_TYPE_EXOME;
     private static final String NCBI_ERROR = "And error was returned from NCBI";
     private static final Double QUALITY_METRIC = 1.2;
     private static final double CONTAMINATION = 2.2d;
@@ -123,7 +123,7 @@ public class SubmissionDtoFetcherTest {
     public void testFetch() throws Exception {
         addBassFile(RESEARCH_PROJECT_ID, COLLABORATOR_SAMPLE_ID, 1);
         researchProject.addSubmissionTracker(new SubmissionTrackerTest.SubmissionTrackerStub(1234L, RESEARCH_PROJECT_ID,
-                COLLABORATOR_SAMPLE_ID, "1", BassFileType.BAM));
+                COLLABORATOR_SAMPLE_ID, "1", BassFileType.BAM, BassDTO.DATA_TYPE_EXOME));
 
         List<SubmissionDto> submissionDtoList = submissionDtoFetcher.fetch(researchProject, MessageReporter.UNUSED);
 
@@ -154,7 +154,7 @@ public class SubmissionDtoFetcherTest {
 
         // Record submission of one of the BAMs
         researchProject.addSubmissionTracker(new SubmissionTrackerTest.SubmissionTrackerStub(1234L,
-                submittedAggregationProjectId, COLLABORATOR_SAMPLE_ID, "1", BassFileType.BAM));
+                submittedAggregationProjectId, COLLABORATOR_SAMPLE_ID, "1", BassFileType.BAM, BassDTO.DATA_TYPE_EXOME));
 
         // Finally actually exercising the code under test
         List<SubmissionDto> submissionDtoList = submissionDtoFetcher.fetch(researchProject, MessageReporter.UNUSED);
@@ -200,7 +200,8 @@ public class SubmissionDtoFetcherTest {
      * @return the new BassDTO
      */
     private BassDTO addBassFile(String project, String sample, Integer version) {
-        BassDTO bassDTO = BassDtoTestFactory.buildBassResults(project, sample, version.toString(), RESEARCH_PROJECT_ID);
+        BassDTO bassDTO = BassDtoTestFactory.buildBassResults(project, sample, version.toString(), RESEARCH_PROJECT_ID,
+            BassDTO.DATA_TYPE_EXOME);
         bassDTOs.add(bassDTO);
         Aggregation aggregation = AggregationTestFactory
                 .buildAggregation(project, sample, version, CONTAMINATION, FINGERPRINT_LOD, DATA_TYPE, QUALITY_METRIC,

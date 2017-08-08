@@ -801,5 +801,15 @@
             <column name="order_prices_hash" type="varchar(255)" />
         </addColumn>
     </changeSet>
+    <changeSet id="GPLIM-5016-1" author="dryan">
+        <addColumn tableName="SUBMISSION_TRACKER" schemaName="athena">
+            <column name="DATA_TYPE" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-5016-2" author="dryan">
+        <addColumn tableName="SUBMISSION_TRACKER_AUD" schemaName="athena">
+            <column name="DATA_TYPE" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
 
 </databaseChangeLog>
