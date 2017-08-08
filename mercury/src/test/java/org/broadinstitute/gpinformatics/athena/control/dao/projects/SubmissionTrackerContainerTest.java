@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.control.dao.projects;
 
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
+import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -49,7 +50,8 @@ public class SubmissionTrackerContainerTest extends ContainerTest {
     }
 
     public void testTrackerConfiguration() throws Exception {
-        SubmissionTracker tracker = new SubmissionTracker(jiraTicketId, testAccessionID, testVersion, testFileType);
+        SubmissionTracker tracker = new SubmissionTracker(jiraTicketId, testAccessionID, testVersion, testFileType,
+            BassDTO.DATA_TYPE_EXOME);
         testProject.addSubmissionTracker(tracker);
         researchProjectDao.persist(testProject);
 

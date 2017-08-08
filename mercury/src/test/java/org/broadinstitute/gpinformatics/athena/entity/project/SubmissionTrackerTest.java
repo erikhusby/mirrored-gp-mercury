@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
+import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
@@ -15,6 +16,7 @@ public class SubmissionTrackerTest {
     public static String testAccessionID = "SA-2342";
     public static String testProjectId = "P123";
     public static BassFileType testFileType = BassFileType.BAM;
+    public static String testDataType = BassDTO.DATA_TYPE_EXOME;
 
     public static String testVersion = "v1";
 
@@ -22,7 +24,7 @@ public class SubmissionTrackerTest {
         Date testStartDate = new Date();
 
         SubmissionTrackerStub tracker =
-                new SubmissionTrackerStub(testProjectId, testAccessionID, testVersion, testFileType);
+                new SubmissionTrackerStub(testProjectId, testAccessionID, testVersion, testFileType, testDataType);
 
         Assert.assertNotNull(tracker);
 
@@ -63,13 +65,13 @@ public class SubmissionTrackerTest {
         }
 
         public SubmissionTrackerStub(String project, String submittedSampleName, String version,
-                                     BassFileType fileType) {
-            super(project, submittedSampleName, version, fileType);
+                                     BassFileType fileType, String dataType) {
+            super(project, submittedSampleName, version, fileType, dataType);
         }
 
         public SubmissionTrackerStub(Long submissionTrackerId, String project, String testAccessionID,
-                                     String testVersion, BassFileType fileType) {
-            super(submissionTrackerId, project, testAccessionID, testVersion, fileType);
+                                     String testVersion, BassFileType fileType, String dataType) {
+            super(submissionTrackerId, project, testAccessionID, testVersion, fileType, dataType);
         }
 
         @Override
