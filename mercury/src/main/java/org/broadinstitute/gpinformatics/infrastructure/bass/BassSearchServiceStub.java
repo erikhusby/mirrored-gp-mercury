@@ -61,7 +61,8 @@ public class BassSearchServiceStub implements BassSearchService {
     public List<BassDTO> runSearch(String researchProjectId, String... collaboratorSampleId) {
         List<BassDTO> bassDtoList = new ArrayList<>(collaboratorSampleId.length);
         for (String sampleId : collaboratorSampleId) {
-            bassDtoList.add(BassDtoTestFactory.buildBassResults(researchProjectId, sampleId, "1", researchProjectId));
+            bassDtoList.add(BassDtoTestFactory.buildBassResults(researchProjectId, sampleId, "1", researchProjectId,
+                BassDTO.DATA_TYPE_EXOME));
         }
         return bassDtoList;
     }

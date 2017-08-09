@@ -58,6 +58,8 @@ public class SubmissionTracker {
     @Column(name = "VERSION")
     private String version;
 
+    @Column(name = "DATA_TYPE")
+    private String dataType;
     /**
      * research project under which the submission has been made.
      */
@@ -71,17 +73,19 @@ public class SubmissionTracker {
     }
 
     SubmissionTracker(Long submissionTrackerId, String project, String submittedSampleName, String version,
-                      BassFileType fileType) {
+                      BassFileType fileType, String dataType) {
         this.submissionTrackerId = submissionTrackerId;
         this.submittedSampleName = submittedSampleName;
         this.project = project;
         this.fileType = fileType;
         this.version = version;
+        this.dataType = dataType;
         requestDate = new Date();
     }
 
-    public SubmissionTracker(String project, String submittedSampleName, String version, BassFileType fileType) {
-        this(null, project, submittedSampleName, version, fileType);
+    public SubmissionTracker(String project, String submittedSampleName, String version, BassFileType fileType,
+                             String dataType) {
+        this(null, project, submittedSampleName, version, fileType, dataType);
     }
 
     /**
@@ -154,6 +158,6 @@ public class SubmissionTracker {
     // todo: should be in interface?
     @Transient
     public SubmissionTuple getTuple() {
-        return new SubmissionTuple(project, submittedSampleName, version, fileType);
+        return new SubmissionTuple(project, submittedSampleName, version, fileType, dataType);
     }
 }
