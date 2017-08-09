@@ -44,10 +44,9 @@ public class SubmissionTrackerDao extends GenericDao {
         Collection<Predicate> predicates = new HashSet<>(submissionDtos.size());
         for (SubmissionDto submissionDto : submissionDtos) {
             predicates.add(submissionTrackerCriteria.and(
-                submissionTrackerCriteria.equal(root.get(SubmissionTracker_.project), submissionDto.getAggregationProject()),
-                submissionTrackerCriteria.equal(root.get(SubmissionTracker_.submittedSampleName), submissionDto.getSampleName()),
-                submissionTrackerCriteria.equal(root.get(SubmissionTracker_.fileType), submissionDto.getFileType()),
-                submissionTrackerCriteria.equal(root.get(SubmissionTracker_.dataType), submissionDto.getDataType())
+                    submissionTrackerCriteria.equal(root.get(SubmissionTracker_.project), submissionDto.getAggregationProject()),
+                    submissionTrackerCriteria.equal(root.get(SubmissionTracker_.submittedSampleName), submissionDto.getSampleName()),
+                    submissionTrackerCriteria.equal(root.get(SubmissionTracker_.fileType),submissionDto.getFileType())
 //                    submissionTrackerCriteria.equal(root.get(SubmissionTracker_.version), submissionDto.getVersion()),
             ));
         }

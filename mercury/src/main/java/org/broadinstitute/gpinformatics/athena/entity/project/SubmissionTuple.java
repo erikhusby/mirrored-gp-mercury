@@ -34,8 +34,6 @@ public class SubmissionTuple implements Serializable {
     private BassFileType fileType;
     @JsonProperty
     private String version;
-    @JsonProperty
-    private String dataType;
 
     /**
      * No-arg constructor needed for JSON deserialization.
@@ -43,13 +41,11 @@ public class SubmissionTuple implements Serializable {
     SubmissionTuple() {
     }
 
-    public SubmissionTuple(String project, String sampleName, String version, BassFileType fileType,
-                           String dataType) {
+    public SubmissionTuple(String project, String sampleName, String version, BassFileType fileType) {
         this.project = project;
         this.sampleName = sampleName;
         this.fileType = fileType;
         this.version = version;
-        this.dataType = dataType;
     }
 
     public String getProject() {
@@ -64,10 +60,6 @@ public class SubmissionTuple implements Serializable {
         return version;
     }
 
-    public String getDataType() {
-        return dataType;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -79,11 +71,10 @@ public class SubmissionTuple implements Serializable {
 
         SubmissionTuple that = (SubmissionTuple) o;
         return new EqualsBuilder()
-            .append(this.sampleName, that.sampleName)
-            .append(this.project, that.project)
-            .append(this.fileType, that.fileType)
-            .append(this.version, that.version)
-            .append(this.dataType, that.dataType).isEquals();
+                .append(this.sampleName, that.sampleName)
+                .append(this.project, that.project)
+                .append(this.fileType, that.fileType)
+                .append(this.version, that.version).isEquals();
     }
 
     /**
@@ -115,6 +106,6 @@ public class SubmissionTuple implements Serializable {
     @Override
     public int hashCode() {
         return new HashCodeBuilder().append(this.sampleName).append(project).append(this.fileType).append(this.version)
-            .append(this.dataType).hashCode();
+                .hashCode();
     }
 }

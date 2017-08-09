@@ -74,7 +74,7 @@ public class ResearchProjectEjbSubmissionTest {
         setupSubmissionTrackerMock(submissionTrackerDao, Collections.<SubmissionTracker>emptyList());
         ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
 
-        SubmissionDto submissionDto = getSubmissionDto("ABC1234", BassFileType.BAM, 9, "Exome");
+        SubmissionDto submissionDto = getSubmissionDto("ABC1234", BassFileType.BAM, 9);
 
         try {
             researchProjectEjb.validateSubmissionDto(Collections.singletonList(submissionDto));
@@ -89,9 +89,9 @@ public class ResearchProjectEjbSubmissionTest {
 
     public void testFileTypeVariationNoBassDTOFileType() throws Exception {
         // data setup for dao result.
-        SubmissionDto submissionDto = getSubmissionDto(dummyProductOrder, BassFileType.BAM, "/some/file", "Exome");
+        SubmissionDto submissionDto = getSubmissionDto(dummyProductOrder, BassFileType.BAM, "/some/file");
         SubmissionTracker submissionTracker = new SubmissionTracker("P123", submissionDto.getSampleName(),
-                String.valueOf(submissionDto.getVersion()), BassFileType.BAM, submissionDto.getDataType());
+                String.valueOf(submissionDto.getVersion()), BassFileType.BAM);
 
         SubmissionTrackerDao submissionTrackerDao = Mockito.mock(SubmissionTrackerDao.class);
         setupSubmissionTrackerMock(submissionTrackerDao, Collections.singletonList(submissionTracker));
@@ -99,7 +99,7 @@ public class ResearchProjectEjbSubmissionTest {
         ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
         try {
             // data setup for submission request.
-            SubmissionDto newSubmissionDto = getSubmissionDto(dummyProductOrder, null, "/some/file", "Exome");
+            SubmissionDto newSubmissionDto = getSubmissionDto(dummyProductOrder, null, "/some/file");
             researchProjectEjb.validateSubmissionDto(Collections.singletonList(newSubmissionDto));
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(e.getMessage().contains("No enum constant for"));
@@ -109,13 +109,12 @@ public class ResearchProjectEjbSubmissionTest {
     @SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
     @DataProvider(name = "manyDtosManyTrackers")
     public Iterator<Object[]> manyDtosManyTrackers() {
-        SubmissionDto bA = getSubmissionDto("A", BassFileType.BAM, TEST_VERSION_1, BassDTO.DATA_TYPE_EXOME);
-        SubmissionDto bA2 = getSubmissionDto("A", BassFileType.BAM, TEST_VERSION_2, BassDTO.DATA_TYPE_EXOME);
-        SubmissionDto bApicard = getSubmissionDto("A", BassFileType.PICARD, TEST_VERSION_1, BassDTO.DATA_TYPE_EXOME);
+        SubmissionDto bA = getSubmissionDto("A", BassFileType.BAM, TEST_VERSION_1);
+        SubmissionDto bA2 = getSubmissionDto("A", BassFileType.BAM, TEST_VERSION_2);
+        SubmissionDto bApicard = getSubmissionDto("A", BassFileType.PICARD, TEST_VERSION_1);
 
         SubmissionTracker stA =
-                new SubmissionTracker("P123", bA.getSampleName(), String.valueOf(bA.getVersion()), bA.getFileType(),
-                    bA.getDataType());
+                new SubmissionTracker("P123", bA.getSampleName(), String.valueOf(bA.getVersion()), bA.getFileType());
 
         List<Object[]> testCases = new ArrayList<>();
         testCases.add(new Object[]{"TEST-1", Collections.singletonList(bA), Collections.emptyList(), true});
@@ -148,7 +147,7 @@ public class ResearchProjectEjbSubmissionTest {
 
     public void testValidateSubmissionsDtoDiffersTupleEqual() throws Exception {
         SubmissionDto submissionDto =
-                getSubmissionDto(TEST_SAMPLE_1, BassFileType.BAM, TEST_VERSION_1, BassDTO.DATA_TYPE_EXOME);
+                getSubmissionDto(TEST_SAMPLE_1, BassFileType.BAM, TEST_VERSION_1);
 
         Map<BassDTO.BassResultColumn, String> bassInfo = new HashMap<>(submissionDto.getBassDTO().getColumnToValue());
         bassInfo.put(path, "not"+DEFAULT_FILE_PATH);
@@ -170,9 +169,9 @@ public class ResearchProjectEjbSubmissionTest {
 
     public void testValidateSubmissionsDtoEqual() throws Exception {
         SubmissionDto submissionDto =
-                getSubmissionDto(TEST_SAMPLE_1, BassFileType.BAM, TEST_VERSION_1, BassDTO.DATA_TYPE_EXOME);
+                getSubmissionDto(TEST_SAMPLE_1, BassFileType.BAM, TEST_VERSION_1);
         SubmissionDto submissionDto2 =
-                getSubmissionDto(TEST_SAMPLE_1, BassFileType.BAM, TEST_VERSION_1, BassDTO.DATA_TYPE_EXOME);
+                getSubmissionDto(TEST_SAMPLE_1, BassFileType.BAM, TEST_VERSION_1);
 
         SubmissionTrackerDao submissionTrackerDao = Mockito.mock(SubmissionTrackerDao.class);
         ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
@@ -192,8 +191,7 @@ public class ResearchProjectEjbSubmissionTest {
         return new SubmissionDto(new BassDTO(bassInfo), null, Collections.singleton(productOrder), null);
     }
 
-    private SubmissionDto getSubmissionDto(ProductOrder productOrder, BassFileType fileType, String bassFilePath,
-                                           String dataType) {
+    private SubmissionDto getSubmissionDto(ProductOrder productOrder, BassFileType fileType, String bassFilePath) {
         Map<BassDTO.BassResultColumn, String> bassInfo = new HashMap<>();
         bassInfo.put(path, bassFilePath);
         bassInfo.put(BassDTO.BassResultColumn.file_type, fileType == null ? null : fileType.getBassValue());
@@ -206,13 +204,12 @@ public class ResearchProjectEjbSubmissionTest {
 
     @SuppressWarnings("serial")
     public SubmissionDto getSubmissionDto(final String sampleName,
-                                          final BassFileType fileType, final int version, final String dataType) {
+                                          final BassFileType fileType, final int version) {
         ProductOrder productOrder = ProductOrderTestFactory.createDummyProductOrder(1, PDO_99999);
         return getSubmissionDto(productOrder, new HashMap<BassDTO.BassResultColumn, String>() {{
                     put(BassDTO.BassResultColumn.sample, sampleName);
                     put(BassDTO.BassResultColumn.file_type, fileType == null ? null : fileType.getBassValue());
                     put(BassDTO.BassResultColumn.version, String.valueOf(version));
-                    put(BassDTO.BassResultColumn.datatype, dataType);
                 }}
         );
     }
