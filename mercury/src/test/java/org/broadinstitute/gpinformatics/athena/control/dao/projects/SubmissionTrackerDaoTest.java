@@ -179,15 +179,13 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
                     put(BassDTO.BassResultColumn.file_type, fileType == null ? null : fileType.getBassValue());
                     put(BassDTO.BassResultColumn.version, String.valueOf(version));
                     put(BassDTO.BassResultColumn.path, path);
-                    put(BassDTO.BassResultColumn.datatype, BassDTO.DATA_TYPE_EXOME);
                 }}
         );
     }
 
     private SubmissionTracker addTracker(SubmissionDto submissionDto) {
         SubmissionTracker submissionTracker = new SubmissionTracker(submissionDto.getAggregationProject(),
-                submissionDto.getSampleName(), String.valueOf(submissionDto.getVersion()), submissionDto.getFileType(),
-            submissionDto.getDataType());
+                submissionDto.getSampleName(), String.valueOf(submissionDto.getVersion()), submissionDto.getFileType());
         submissionTracker.setResearchProject(researchProject);
         return submissionTracker;
     }

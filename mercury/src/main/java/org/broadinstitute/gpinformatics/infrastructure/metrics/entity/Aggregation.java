@@ -52,7 +52,7 @@ public class Aggregation {
     @Column(name="READ_GROUP_COUNT")
     private Integer readGroupCount;
 
-    @Column(name = "DATA_TYPE")
+    @Transient
     private String dataType;
 
     @OneToMany(fetch = FetchType.EAGER, mappedBy = "aggregation")
@@ -111,7 +111,7 @@ public class Aggregation {
 
     public SubmissionTuple getTuple() {
         // These aggregation metrics are specific to BAM files, so the BassFileType is always BAM.
-        return new SubmissionTuple(getProject(), getSample(), getVersion().toString(), BassFileType.BAM, dataType);
+        return new SubmissionTuple(getProject(), getSample(), getVersion().toString(), BassFileType.BAM);
     }
 
     public Double getQualityMetric(String dataType) {

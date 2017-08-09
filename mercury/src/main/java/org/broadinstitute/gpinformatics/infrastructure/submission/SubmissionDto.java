@@ -356,7 +356,7 @@ public class SubmissionDto implements Serializable {
 
     @JsonIgnore
     public SubmissionTuple getSubmissionTuple() {
-        return new SubmissionTuple(project, sample, String.valueOf(version), getFileType(), datatype);
+        return new SubmissionTuple(project, sample, String.valueOf(version), getFileType());
     }
 
     public void setStatusDetailBean(SubmissionStatusDetailBean statusDetailBean) {
