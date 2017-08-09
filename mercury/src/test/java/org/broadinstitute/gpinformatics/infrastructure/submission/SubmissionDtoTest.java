@@ -54,8 +54,7 @@ public class SubmissionDtoTest {
 
     @BeforeMethod
     public void setUp() throws Exception {
-        bassDto = BassDtoTestFactory.buildBassResults(RESEARCH_PROJECT, TEST_SAMPLE, "1", RESEARCH_PROJECT,
-            BassDTO.DATA_TYPE_EXOME);
+        bassDto = BassDtoTestFactory.buildBassResults(RESEARCH_PROJECT, TEST_SAMPLE, "1", RESEARCH_PROJECT);
         aggregation = AggregationTestFactory.buildAggregation(RESEARCH_PROJECT, TEST_SAMPLE, 1, CONTAMINATION,
                 FINGERPRINT_LOD, DATA_TYPE, QUALITY_METRIC, null, null);
         productOrders.add(ProductOrderTestFactory.createDummyProductOrder("PDO-1234"));
