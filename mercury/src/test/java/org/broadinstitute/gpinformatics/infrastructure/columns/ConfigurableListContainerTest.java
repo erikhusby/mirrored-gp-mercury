@@ -161,13 +161,17 @@ public class ConfigurableListContainerTest extends Arquillian {
         columnTabulations.add(configurableSearchDef.getSearchTerm("Barcode"));
         columnTabulations.add(configurableSearchDef.getSearchTerm("Nearest Sample ID"));
         columnTabulations.add(configurableSearchDef.getSearchTerm("Imported Sample ID"));
-        columnTabulations.add(configurableSearchDef.getSearchTerm("Imported Sample Tube Barcode"));
+        columnTabulations.add(configurableSearchDef.getSearchTerm("Event Vessel Barcodes"));
         columnTabulations.add(configurableSearchDef.getSearchTerm("Event Vessel Barcodes"));
         columnTabulations.add(configurableSearchDef.getSearchTerm("Event Vessel Barcodes"));
 
         Map<Integer,ResultParamValues> resultParamsMap = new HashMap<>();
 
         // Configure and map result params to "Event Vessel Barcodes" search terms
+        ResultParamValues sampleParams = new ResultParamValues("Event Vessel Barcodes", "Sample Barcode");
+        sampleParams.addParamValue("eventTypes", "SAMPLE_IMPORT");
+        resultParamsMap.put(new Integer(3), sampleParams );
+
         ResultParamValues shearingParams = new ResultParamValues("Event Vessel Barcodes", "Shearing Barcode");
         shearingParams.addParamValue("eventTypes", "SHEARING_TRANSFER");
         shearingParams.addParamValue("srcOrTarget", "source");
