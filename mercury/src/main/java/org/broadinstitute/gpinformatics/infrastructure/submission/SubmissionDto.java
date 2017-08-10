@@ -361,7 +361,7 @@ public class SubmissionDto implements Serializable {
     }
 
     public SubmissionTracker buildSubmissionTracker() {
-        return new SubmissionTracker(project, sample, String.valueOf(version), FileType.BAM, SubmissionBioSampleBean.ON_PREM);
+        return new SubmissionTracker(project, sample, String.valueOf(version), FileType.BAM, SubmissionBioSampleBean.ON_PREM, datatype);
     }
 
     public Set<String> getProductOrders() {
