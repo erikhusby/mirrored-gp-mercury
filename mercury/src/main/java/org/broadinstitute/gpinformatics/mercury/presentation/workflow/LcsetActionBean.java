@@ -97,7 +97,8 @@ public class LcsetActionBean extends RackScanActionBean {
 
     @HandlesEvent(CONFIRM_CONTROLS_EVENT)
     public Resolution confirmControls() throws ScannerException {
-        labBatchEjb.x(lcsetName, controlBarcodes, this, addBarcodes, rackScan, rackBarcode, userBean);
+        labBatchEjb.updateLcsetFromScan(lcsetName, controlBarcodes, this, addBarcodes, removeBarcodes, rackScan,
+                rackBarcode, userBean);
         addMessage("Made modifications to LCSET");
         return new ForwardResolution(LCSET_PAGE);
     }

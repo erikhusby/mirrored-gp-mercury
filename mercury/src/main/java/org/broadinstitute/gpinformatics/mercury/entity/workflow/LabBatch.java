@@ -586,6 +586,12 @@ public class LabBatch {
         bucketEntry.setLabBatch(this);
     }
 
+    public void removeBucketEntry(BucketEntry bucketEntry) {
+        bucketEntries.remove(bucketEntry);
+        bucketEntry.setLabBatch(null);
+        bucketEntry.setStatus(BucketEntry.Status.Active);
+    }
+
     public void setCreatedOn(Date createdOn) {
         this.createdOn = createdOn;
     }

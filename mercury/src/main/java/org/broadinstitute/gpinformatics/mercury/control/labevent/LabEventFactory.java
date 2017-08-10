@@ -462,8 +462,8 @@ public class LabEventFactory implements Serializable {
             LabEventType.ForwardMessage forwardMessage = labEvent.getLabEventType().getForwardMessage();
             switch (forwardMessage) {
                 case BSP:
-                    bspRestSender.postToBsp(bspRestSender.bspBettaLIMSMessage(bettaLIMSMessage),
-                            bspRestSender.BSP_TRANSFER_REST_URL);
+                    bspRestSender.postToBsp(bspRestSender.bspBettaLIMSMessage(bettaLIMSMessage, labEvents),
+                            BSPRestSender.BSP_TRANSFER_REST_URL);
                     break;
                 case GAP:
                     String forwardToGap = null;
@@ -590,6 +590,7 @@ public class LabEventFactory implements Serializable {
             labEvent = buildFromBettaLims(plateCherryPickEvent, mapBarcodeToVessel);
         }
 
+        labEvent.setStationEventType(plateCherryPickEvent);
         return labEvent;
     }
 
@@ -1030,6 +1031,7 @@ public class LabEventFactory implements Serializable {
                     plateEventType.getPositionMap()),
                     rackOfTubesDao.findByBarcode(plateEventType.getPlate().getBarcode()));
         }
+        labEvent.setStationEventType(plateEventType);
         return labEvent;
     }
 
@@ -1064,6 +1066,7 @@ public class LabEventFactory implements Serializable {
         }
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
         LabEvent labEvent = buildFromBettaLims(plateTransferEvent, mapBarcodeToVessel);
+        labEvent.setStationEventType(plateTransferEvent);
         return labEvent;
     }
 
@@ -1392,16 +1395,21 @@ public class LabEventFactory implements Serializable {
         LabEvent labEvent = buildVesselToSectionDbFree(receptaclePlateTransferEvent,
                 barcodedTubeDao.findByBarcode(receptaclePlateTransferEvent.getSourceReceptacle().getBarcode()),
                 destination, receptaclePlateTransferEvent.getDestinationPlate().getSection());
+        labEvent.setStationEventType(receptaclePlateTransferEvent);
         return labEvent;
     }
 
     public LabEvent buildFromBettaLims(ReceptacleEventType receptacleEventType) {
-        return buildReceptacleEventDbFree(receptacleEventType, labVesselDao.findByIdentifier(
+        LabEvent labEvent = buildReceptacleEventDbFree(receptacleEventType, labVesselDao.findByIdentifier(
                 receptacleEventType.getReceptacle().getBarcode()));
+        labEvent.setStationEventType(receptacleEventType);
+        return labEvent;
     }
 
     private LabEvent buildFromBettaLims(StationSetupEvent stationSetupEvent) {
-        return constructReferenceData(stationSetupEvent, labEventRefDataFetcher);
+        LabEvent labEvent = constructReferenceData(stationSetupEvent, labEventRefDataFetcher);
+        labEvent.setStationEventType(stationSetupEvent);
+        return labEvent;
     }
 
     /**
@@ -1428,7 +1436,9 @@ public class LabEventFactory implements Serializable {
         barcodes.add(receptacleTransferEventType.getSourceReceptacle().getBarcode());
         barcodes.add(receptacleTransferEventType.getReceptacle().getBarcode());
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
-        return buildReceptacleTransferEventDbFree(receptacleTransferEventType, mapBarcodeToVessel);
+        LabEvent labEvent = buildReceptacleTransferEventDbFree(receptacleTransferEventType, mapBarcodeToVessel);
+        labEvent.setStationEventType(receptacleTransferEventType);
+        return labEvent;
     }
 
     @DaoFree
@@ -1590,8 +1600,5 @@ public class LabEventFactory implements Serializable {
 
     public void setBspRestSender(BSPRestSender bspRestSender) {
         this.bspRestSender = bspRestSender;
-        if (eventHandlerSelector != null) {
-            eventHandlerSelector.setBspRestSender(bspRestSender);
-        }
     }
 }

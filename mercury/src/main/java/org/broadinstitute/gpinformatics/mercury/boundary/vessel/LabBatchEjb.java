@@ -500,8 +500,8 @@ public class LabBatchEjb {
      * @param messageReporter reference to action bean
      * @throws IOException This exception is thrown when the JIRA service can not be contacted.
      */
-    public void addToLabBatch(String businessKey, List<Long> bucketEntryIds, List<Long> reworkEntries,
-                              String bucketName, MessageReporter messageReporter, List<String> watchers)
+    public void updateLabBatch(String businessKey, List<Long> bucketEntryIds, List<Long> reworkEntries,
+            List<Long> removeBucketEntryIds, String bucketName, MessageReporter messageReporter, List<String> watchers)
             throws IOException, ValidationException {
         LabBatch batch = labBatchDao.findByBusinessKey(businessKey);
         if (batch == null) {
@@ -541,6 +541,15 @@ public class LabBatchEjb {
 
         batch.addReworks(reworkVessels);
         bucketEjb.moveFromBucketToBatch(reworkBucketEntries, batch);
+
+        List<BucketEntry> removeBucketEntries = bucketEntryDao.findByIds(removeBucketEntryIds);
+        for (BucketEntry removeBucketEntry : removeBucketEntries) {
+            removeBucketEntry.getLabVessel().removeFromBatch(removeBucketEntry.getLabBatch());
+            batch.removeBucketEntry(removeBucketEntry);
+            commentString.append(String.format("Removed vessel *%s* with material type *%s* from *%s*.\n",
+                    removeBucketEntry.getLabVessel().getLabel(),
+                    removeBucketEntry.getLabVessel().getLatestMaterialType().getDisplayName(), bucketName));
+        }
 
         CreateFields.ProjectType projectType = null;
         CreateFields.IssueType issueType=null;
@@ -701,7 +710,7 @@ public class LabBatchEjb {
      * @param lcsetName LCSET-1234
      * @param controlBarcodes list of barcodes that was confirmed by the user
      */
-    public void addControlsToLcset(String lcsetName, List<String> controlBarcodes) {
+    private void addControlsToLcset(String lcsetName, List<String> controlBarcodes) {
         LabBatch lcset = labBatchDao.findByName(lcsetName);
         Map<String, LabVessel> mapBarcodeToTube = tubeDao.findByBarcodes(controlBarcodes);
         for (Map.Entry<String, LabVessel> stringBarcodedTubeEntry : mapBarcodeToTube.entrySet()) {
@@ -710,12 +719,34 @@ public class LabBatchEjb {
         }
     }
 
-    public void x(String lcsetName, List<String> controlBarcodes, MessageReporter messageReporter,
-            Collection<String> addBarcodes, Map<String, String> rackScan, String rackBarcode, UserBean userBean) {
+    /**
+     * Updates an LCSET after it is scanned on the LCSET Controls page.  Actions are:
+     * <ul>
+     * <li>add control tubes</li>
+     * <li>add sample tubes (e.g. clinical samples that displaced research samples)</li>
+     * <li>remove sample tubes (e.g. research samples displaced by clinical samples)</li>
+     * <li>update rack layout in BSP (controls are not added through automation)</li>
+     * <li>auto-export from BSP to Mercury</li>
+     * </ul>
+     * @param lcsetName name of batch to update
+     * @param controlBarcodes positive and negative control tubes
+     * @param messageReporter action bean
+     * @param addBarcodes tubes added to the rack since the LCSET was created
+     * @param removeBarcodes tubes removed from the rack since the LCSET was created
+     * @param rackScan map from position to barcode
+     * @param rackBarcode needed to update layout in BSP
+     * @param userBean logged in user
+     */
+    public void updateLcsetFromScan(String lcsetName, List<String> controlBarcodes, MessageReporter messageReporter,
+            Collection<String> addBarcodes, List<String> removeBarcodes, Map<String, String> rackScan,
+            String rackBarcode, UserBean userBean) {
+
+        // Reflect addition of control tubes by re-array
         addControlsToLcset(lcsetName, controlBarcodes);
 
         // Add to batch
         Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(rackScan.values());
+        mapBarcodeToTube.putAll(barcodedTubeDao.findByBarcodes(removeBarcodes));
         List<Long> bucketEntryIds = new ArrayList<>();
         String bucketName = null;
         for (String addBarcode : addBarcodes) {
@@ -728,15 +759,25 @@ public class LabBatchEjb {
                 }
             }
         }
+
+        List<Long> removeBucketEntryIds = new ArrayList<>();
+        for (String removeBarcode : removeBarcodes) {
+            BarcodedTube barcodedTube = mapBarcodeToTube.get(removeBarcode);
+            SampleInstanceV2 sampleInstance = barcodedTube.getSampleInstancesV2().iterator().next();
+            for (BucketEntry bucketEntry : sampleInstance.getAllBucketEntries()) {
+                if (bucketEntry.getLabBatch().getBusinessKey().equals(lcsetName)) {
+                    removeBucketEntryIds.add(bucketEntry.getBucketEntryId());
+                }
+            }
+        }
+
         // todo jmt error if didn't find a bucket entry for each add sample
         try {
-            addToLabBatch(lcsetName, bucketEntryIds, Collections.<Long>emptyList(), bucketName, messageReporter,
-                    Collections.<String>emptyList());
+            updateLabBatch(lcsetName, bucketEntryIds, Collections.<Long>emptyList(), removeBucketEntryIds, bucketName,
+                    messageReporter, Collections.<String>emptyList());
         } catch (IOException | ValidationException e) {
             throw new RuntimeException(e);
         }
-
-        //        labBatchEjb.removeFromLabBatch();
 
         // Update rack in BSP, to add control
         WebResource webResource = bspRestClient.getWebResource(bspRestClient.getUrl(BSP_CONTAINER_UPDATE_LAYOUT));
