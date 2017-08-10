@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.preference;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDao;
 import org.broadinstitute.gpinformatics.infrastructure.common.SessionContextUtility;
 import org.broadinstitute.gpinformatics.infrastructure.search.LabVesselSearchDefinition;
@@ -55,6 +56,45 @@ public class SearchInstancePreferenceFixupTest extends Arquillian {
 
             preferenceDao.persist(new FixupCommentary("GPLIM-3955 Rename " + replaceCount
                     + " Saved Search Column/Term 'Mercury Sample ID' to 'Root Sample ID'"));
+
+            preferenceDao.flush();
+
+        } catch ( Exception e ) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Growing list of event specific search terms replaced by user configurable result column parameters
+     */
+    @Test(enabled = false)
+    public void modifyResultColumnNamesGPLIM4941() {
+        int replaceCount = 0;
+        try {
+            userBean.loginOSUser();
+
+            PreferenceType[] preferenceTypes = {
+                    PreferenceType.GLOBAL_LAB_VESSEL_SEARCH_INSTANCES,
+                    PreferenceType.USER_LAB_VESSEL_SEARCH_INSTANCES};
+
+            List<Pair<String,String>> swaps = new ArrayList<>();
+            swaps.add( Pair.of( "Imported Sample Tube Barcode", "{\"searchTermName\":\"Event Vessel Barcodes\",\"userColumnName\":\"Imported Sample Tube Barcode\",\"paramValues\":[{\"name\":\"userColumnName\",\"value\":\"Imported Sample Tube Barcode\"},{\"name\":\"eventTypes\",\"value\":\"SAMPLE_IMPORT\"},{\"name\":\"srcOrTarget\",\"value\":\"target\"},{\"name\":\"captureNearest\",\"value\":\"captureNearest\"}]}") );
+            swaps.add( Pair.of( "Imported Sample Position", "{\"searchTermName\":\"Event Vessel Positions\",\"userColumnName\":\"Imported Sample Position\",\"paramValues\":[{\"name\":\"userColumnName\",\"value\":\"Imported Sample Position\"},{\"name\":\"eventTypes\",\"value\":\"SAMPLE_IMPORT\"},{\"name\":\"srcOrTarget\",\"value\":\"target\"},{\"name\":\"captureNearest\",\"value\":\"captureNearest\"}]}") );
+            swaps.add( Pair.of( "Pond Tube Barcode", "{\"searchTermName\":\"Event Vessel Barcodes\",\"userColumnName\":\"Pond Tube Barcode\",\"paramValues\":[{\"name\":\"userColumnName\",\"value\":\"Pond Tube Barcode\"},{\"name\":\"eventTypes\",\"value\":\"POND_REGISTRATION\"},{\"name\":\"eventTypes\",\"value\":\"PCR_FREE_POND_REGISTRATION\"},{\"name\":\"eventTypes\",\"value\":\"PCR_PLUS_POND_REGISTRATION\"},{\"name\":\"srcOrTarget\",\"value\":\"target\"}]}") );
+            swaps.add( Pair.of( "Pond Sample Position", "{\"searchTermName\":\"Event Vessel Positions\",\"userColumnName\":\"Pond Sample Position\",\"paramValues\":[{\"name\":\"userColumnName\",\"value\":\"Pond Sample Position\"},{\"name\":\"eventTypes\",\"value\":\"POND_REGISTRATION\"},{\"name\":\"eventTypes\",\"value\":\"PCR_FREE_POND_REGISTRATION\"},{\"name\":\"eventTypes\",\"value\":\"PCR_PLUS_POND_REGISTRATION\"},{\"name\":\"srcOrTarget\",\"value\":\"target\"}]}") );
+            swaps.add( Pair.of( "Norm Pond Tube Barcode", "{\"searchTermName\":\"Event Vessel Barcodes\",\"userColumnName\":\"Norm Pond Tube Barcode\",\"paramValues\":[{\"name\":\"userColumnName\",\"value\":\"Norm Pond Tube Barcode\"},{\"name\":\"eventTypes\",\"value\":\"PCR_PLUS_POND_NORMALIZATION\"},{\"name\":\"srcOrTarget\",\"value\":\"target\"}]}") );
+            swaps.add( Pair.of( "Shearing Sample Position", "{\"searchTermName\":\"Event Vessel Positions\",\"userColumnName\":\"Shearing Sample Position\",\"paramValues\":[{\"name\":\"userColumnName\",\"value\":\"Shearing Sample Position\"},{\"name\":\"eventTypes\",\"value\":\"SHEARING_TRANSFER\"},{\"name\":\"srcOrTarget\",\"value\":\"source\"}]}") );
+            swaps.add( Pair.of( "Shearing Sample Barcode", "{\"searchTermName\":\"Event Vessel Barcodes\",\"userColumnName\":\"Shearing Sample Barcode\",\"paramValues\":[{\"name\":\"userColumnName\",\"value\":\"Shearing Sample Barcode\"},{\"name\":\"eventTypes\",\"value\":\"SHEARING_TRANSFER\"},{\"name\":\"srcOrTarget\",\"value\":\"source\"}]}") );
+            swaps.add( Pair.of( "Catch Sample Position", "{\"searchTermName\":\"Event Vessel Positions\",\"userColumnName\":\"Catch Sample Position\",\"paramValues\":[{\"name\":\"userColumnName\",\"value\":\"Catch Sample Position\"},{\"name\":\"eventTypes\",\"value\":\"ICE_CATCH_ENRICHMENT_CLEANUP\"},{\"name\":\"eventTypes\",\"value\":\"NORMALIZED_CATCH_REGISTRATION\"},{\"name\":\"srcOrTarget\",\"value\":\"source\"}]}") );
+            swaps.add( Pair.of( "Catch Tube Barcode", "{\"searchTermName\":\"Event Vessel Barcodes\",\"userColumnName\":\"Catch Tube Barcode\",\"paramValues\":[{\"name\":\"userColumnName\",\"value\":\"Catch Tube Barcode\"},{\"name\":\"eventTypes\",\"value\":\"ICE_CATCH_ENRICHMENT_CLEANUP\"},{\"name\":\"eventTypes\",\"value\":\"NORMALIZED_CATCH_REGISTRATION\"},{\"name\":\"srcOrTarget\",\"value\":\"source\"}]}") );
+            swaps.add( Pair.of( "Flowcell Barcode", "{\"searchTermName\":\"Event Vessel Barcodes\",\"userColumnName\":\"Flowcell Barcode\",\"paramValues\":[{\"name\":\"userColumnName\",\"value\":\"Flowcell Barcode\"},{\"name\":\"eventTypes\",\"value\":\"FLOWCELL_TRANSFER\"},{\"name\":\"eventTypes\",\"value\":\"DENATURE_TO_FLOWCELL_TRANSFER\"},{\"name\":\"eventTypes\",\"value\":\"DILUTION_TO_FLOWCELL_TRANSFER\"},{\"name\":\"srcOrTarget\",\"value\":\"source\"}]}") );
+
+            for( Pair<String,String> fromTo : swaps ) {
+                replaceCount += renameSavedResultColumn(fromTo.getLeft(), fromTo.getRight(), preferenceTypes);
+            }
+
+            preferenceDao.persist(new FixupCommentary("GPLIM-4941 Modified " + replaceCount
+                    + " Saved Search Columns to use result column parameters"));
 
             preferenceDao.flush();
 
