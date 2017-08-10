@@ -13,24 +13,24 @@ import java.util.Date;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class SubmissionTrackerTest {
 
-    public static String testAccessionID = "SA-2342";
-    public static String testProjectId = "P123";
-    public static String testProcessingLocation = SubmissionBioSampleBean.ON_PREM;
-    public static FileType testFileType = FileType.BAM;
-
-    public static String testVersion = "v1";
+    public static final String TEST_ACCESSION_ID = "SA-2342";
+    public static final String TEST_PROJECT_ID = "P123";
+    public static final String TEST_PROCESSING_LOCATION = SubmissionBioSampleBean.ON_PREM;
+    public static final String TEST_DATA_TYPE = "Exome";
+    public static final FileType TEST_FILE_TYPE = FileType.BAM;
+    public static final String TEST_VERSION = "v1";
 
     public void testBuildSubmissionTracker() {
         Date testStartDate = new Date();
 
         SubmissionTrackerStub tracker =
-                new SubmissionTrackerStub(testProjectId, testAccessionID, testVersion, testFileType);
+                new SubmissionTrackerStub(TEST_PROJECT_ID, TEST_ACCESSION_ID, TEST_VERSION, TEST_FILE_TYPE);
 
         Assert.assertNotNull(tracker);
 
-        Assert.assertEquals(tracker.getSubmittedSampleName(), testAccessionID);
+        Assert.assertEquals(tracker.getSubmittedSampleName(), TEST_ACCESSION_ID);
 
-        Assert.assertEquals(tracker.getVersion(), testVersion);
+        Assert.assertEquals(tracker.getVersion(), TEST_VERSION);
 
         Assert.assertTrue(tracker.getRequestDate().getTime() >= testStartDate.getTime(),
                 "SubmissionTracker's requestDate should be after the time that the test method started");
@@ -65,12 +65,13 @@ public class SubmissionTrackerTest {
 
         public SubmissionTrackerStub(String project, String submittedSampleName, String version,
                                      FileType fileType) {
-            super(project, submittedSampleName, version, fileType, SubmissionBioSampleBean.ON_PREM);
+            super(project, submittedSampleName, version, fileType, SubmissionBioSampleBean.ON_PREM, TEST_DATA_TYPE);
         }
 
         public SubmissionTrackerStub(Long submissionTrackerId, String project, String testAccessionID,
-                                     String testVersion, FileType fileType, String processingLocation) {
-            super(submissionTrackerId, project, testAccessionID, testVersion, fileType, processingLocation);
+                                     String TEST_VERSION, FileType fileType, String processingLocation) {
+            super(submissionTrackerId, project, testAccessionID, TEST_VERSION, fileType, processingLocation,
+                TEST_DATA_TYPE);
         }
 
         @Override
