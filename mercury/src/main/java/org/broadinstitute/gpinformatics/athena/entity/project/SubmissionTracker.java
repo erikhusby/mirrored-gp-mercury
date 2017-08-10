@@ -78,18 +78,19 @@ public class SubmissionTracker {
     }
 
     SubmissionTracker(Long submissionTrackerId, String project, String submittedSampleName, String version,
-                      FileType fileType, String processingLocation) {
+                      FileType fileType, String processingLocation, String dataType) {
         this.submissionTrackerId = submissionTrackerId;
         this.submittedSampleName = submittedSampleName;
         this.project = project;
         this.fileType = fileType;
         this.version = version;
         this.processingLocation = processingLocation;
+        this.dataType = dataType;
         this.requestDate = new Date();
     }
 
-    public SubmissionTracker(String project, String submittedSampleName, String version, FileType fileType, String processingLocation) {
-        this(null, project, submittedSampleName, version, fileType, processingLocation);
+    public SubmissionTracker(String project, String submittedSampleName, String version, FileType fileType, String processingLocation, String dataType) {
+        this(null, project, submittedSampleName, version, fileType, processingLocation, dataType);
     }
 
     /**
