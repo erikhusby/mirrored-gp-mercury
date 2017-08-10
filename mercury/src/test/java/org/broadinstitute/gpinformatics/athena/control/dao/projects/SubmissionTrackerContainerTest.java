@@ -47,8 +47,10 @@ public class SubmissionTrackerContainerTest extends ContainerTest {
     }
 
     public void testTrackerConfiguration() throws Exception {
-        SubmissionTracker tracker = new SubmissionTracker(jiraTicketId, testAccessionID, SubmissionTrackerTest.TEST_VERSION, SubmissionTrackerTest.TEST_FILE_TYPE,
-            SubmissionTrackerTest.TEST_PROCESSING_LOCATION, SubmissionTrackerTest.TEST_DATA_TYPE);
+        SubmissionTracker tracker =
+            new SubmissionTracker(jiraTicketId, testAccessionID, SubmissionTrackerTest.TEST_VERSION,
+                SubmissionTrackerTest.TEST_FILE_TYPE, SubmissionTrackerTest.TEST_PROCESSING_LOCATION,
+                SubmissionTrackerTest.TEST_DATA_TYPE);
         testProject.addSubmissionTracker(tracker);
         researchProjectDao.persist(testProject);
 
