@@ -101,7 +101,7 @@ public class SubmissionTupleTest {
 
     public void testTupleFromString() {
         SubmissionTuple submissionTuple = buildTuple("p", "s", "v", "y", FileType.BAM, EXOME);
-        SubmissionTuple submissionTupleFromString = new SubmissionTuple("{\"project\":\"p\",\"sampleName\":\"s\",\"fileType\":\"BAM\",\"version\":\"v\",\"processingLocation\":\"y\"}");
+        SubmissionTuple submissionTupleFromString = new SubmissionTuple("{\"dataType\":\"Exome\",\"project\":\"p\",\"sampleName\":\"s\",\"fileType\":\"BAM\",\"version\":\"v\",\"processingLocation\":\"y\"}");
 
         assertThat(submissionTuple, equalTo(submissionTupleFromString));
     }
