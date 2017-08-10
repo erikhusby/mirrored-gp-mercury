@@ -18,11 +18,12 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProje
 import org.testng.annotations.Test;
 
 import static org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTrackerTest.SubmissionTrackerStub;
-import static org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTrackerTest.testAccessionID;
-import static org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTrackerTest.testFileType;
-import static org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTrackerTest.testProjectId;
-import static org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTrackerTest.testVersion;
-import static org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTrackerTest.testProcessingLocation;
+import static org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTrackerTest.TEST_ACCESSION_ID;
+import static org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTrackerTest.TEST_DATA_TYPE;
+import static org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTrackerTest.TEST_FILE_TYPE;
+import static org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTrackerTest.TEST_PROJECT_ID;
+import static org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTrackerTest.TEST_PROCESSING_LOCATION;
+import static org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTrackerTest.TEST_VERSION;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
@@ -34,12 +35,12 @@ public class ResearchProjectSubmissionTrackerTest {
     public void testGetSubmissionTracker() {
         ResearchProject testResearchProject = ResearchProjectTestFactory.createTestResearchProject();
         SubmissionTrackerStub tracker =
-                new SubmissionTrackerStub(testProjectId, testAccessionID, testVersion, testFileType);
+                new SubmissionTrackerStub(TEST_PROJECT_ID, TEST_ACCESSION_ID, TEST_VERSION, TEST_FILE_TYPE);
         SubmissionTrackerStub tracker2 =
-                new SubmissionTrackerStub(testProjectId, testAccessionID + 2, testVersion + 2, FileType.PICARD);
+                new SubmissionTrackerStub(TEST_PROJECT_ID, TEST_ACCESSION_ID + 2, TEST_VERSION + 2, FileType.PICARD);
         testResearchProject.addSubmissionTracker(tracker, tracker2);
-        SubmissionTracker resultTracker = testResearchProject.getSubmissionTracker(new SubmissionTuple(testProjectId,
-                testAccessionID, testVersion, SubmissionBioSampleBean.ON_PREM, EXOME));
+        SubmissionTracker resultTracker = testResearchProject.getSubmissionTracker(new SubmissionTuple(TEST_PROJECT_ID,
+            TEST_ACCESSION_ID, TEST_VERSION, SubmissionBioSampleBean.ON_PREM, EXOME));
         assertThat(tracker, equalTo(resultTracker));
     }
 
@@ -47,16 +48,17 @@ public class ResearchProjectSubmissionTrackerTest {
     public void testGetSubmissionTrackerTwoResults() {
         ResearchProject testResearchProject = ResearchProjectTestFactory.createTestResearchProject();
         SubmissionTrackerStub tracker =
-                new SubmissionTrackerStub(testProjectId, testAccessionID, testVersion, testFileType);
+                new SubmissionTrackerStub(TEST_PROJECT_ID, TEST_ACCESSION_ID, TEST_VERSION, TEST_FILE_TYPE);
         testResearchProject.addSubmissionTracker(tracker, tracker);
-        SubmissionTracker resultTracker = testResearchProject.getSubmissionTracker(new SubmissionTuple(testProjectId,
-                testAccessionID, testVersion, SubmissionBioSampleBean.ON_PREM, EXOME));
+        SubmissionTracker resultTracker = testResearchProject.getSubmissionTracker(new SubmissionTuple(TEST_PROJECT_ID,
+            TEST_ACCESSION_ID, TEST_VERSION, SubmissionBioSampleBean.ON_PREM, EXOME));
         assertThat(resultTracker, equalTo(resultTracker));
     }
 
     public void testGetSubmissionTrackerNoResults() {
         ResearchProject testResearchProject = ResearchProjectTestFactory.createTestResearchProject();
-        SubmissionTracker tracker = new SubmissionTracker(testProjectId, testAccessionID, testVersion, testFileType, testProcessingLocation);
+        SubmissionTracker tracker = new SubmissionTracker(TEST_PROJECT_ID, TEST_ACCESSION_ID, TEST_VERSION,
+            TEST_FILE_TYPE, TEST_PROCESSING_LOCATION, TEST_DATA_TYPE);
         testResearchProject.addSubmissionTracker(tracker);
         SubmissionTracker resultTracker = testResearchProject
                 .getSubmissionTracker(new SubmissionTuple("other", "using", "arguments",

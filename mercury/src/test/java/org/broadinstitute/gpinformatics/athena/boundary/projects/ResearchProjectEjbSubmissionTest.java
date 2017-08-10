@@ -92,7 +92,7 @@ public class ResearchProjectEjbSubmissionTest {
 
         SubmissionTracker stA =
                 new SubmissionTracker("P123", bA.getSampleName(), String.valueOf(bA.getVersion()), bA.getFileType(),
-                    bA.getProcessingLocation());
+                    bA.getProcessingLocation(), bA.getDataType());
 
         List<Object[]> testCases = new ArrayList<>();
         testCases.add(new Object[]{"TEST-1", Collections.singletonList(bA), Collections.emptyList(), true});
