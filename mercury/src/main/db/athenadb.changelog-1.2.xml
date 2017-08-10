@@ -826,10 +826,4 @@
             <column name="DATA_TYPE" type="varchar2(255)" />
         </addColumn>
     </changeSet>
-
-    <!--<changeSet id="GPLIM-4923-4" author="dryan">-->
-        <!--<addUniqueConstraint tableName="SUBMISSION_TRACKER" constraintName="UNQ_SUBMISSION_TRACKER_TUPLE"-->
-                             <!--schemaName="ATHENA" columnNames="PROJECT, SUBMITTED_SAMPLE_NAME, FILE_TYPE, VERSION, PROCESSING_LOCATION" />-->
-    <!--</changeSet>-->
-
 </databaseChangeLog>
