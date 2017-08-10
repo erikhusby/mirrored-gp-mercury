@@ -4,8 +4,6 @@
 This Stripes layout displays a dynamically generated UI snippet to display in a modal dialog
   to choose custom parameter options for a result column --%>
 
-    <script type="text/javascript">
-    </script>
     <p>Column Name: <input type="text" name="userColumnName" id="userColumnName" style="width: 180px"></p>
         <c:forEach items="${actionBean.resultParams.paramInputs.values()}" var="inputParam" varStatus="row">
             <c:choose>
@@ -13,25 +11,27 @@ This Stripes layout displays a dynamically generated UI snippet to display in a 
                     <p>${inputParam.label} <input name="${inputParam.name}" id="${inputParam.name}" type="text"></p>
                 </c:when>
                 <c:when test="${inputParam.type eq 'CHECKBOX'}">
-                    <p>${inputParam.label} <input name="${inputParam.name}" id="${inputParam.name}" value="${inputParam.name}" type="checkbox"></p>
+                    <p>${inputParam.label} <input name="${inputParam.name}" id="${inputParam.name}" value="${inputParam.name}" <c:if test="${inputParam.name eq inputParam.defaultSingleValue}">checked="true"</c:if> type="checkbox"></p>
                 </c:when>
                 <c:when test="${inputParam.type eq 'CHECKBOX_GROUP'}">
                     <p>${inputParam.label}<br/>
                     <c:forEach items="${inputParam.optionItems}" var="option" varStatus="index">
-                        <input name="${inputParam.name}" id="${param.name}" value="${option.code}" type="checkbox">${option.label}
+                        <input name="${inputParam.name}" id="${param.name}" value="${option.code}" <c:if test="${option.code eq inputParam.defaultValues}">checked="true"</c:if> type="checkbox">${option.label}
                     </c:forEach></p>
                 </c:when>
                 <c:when test="${inputParam.type eq 'RADIO'}">
                     <p>${inputParam.label}<br/>
-                    <c:forEach items="${inputParam.optionItems}" var="option" varStatus="index">
-                        <c:if test="index > 1"><br/></c:if> <input name="${inputParam.name}" id="${inputParam.name}" value="${option.code}" type="radio">${option.label}
+                    <c:forEach
+                            items="${inputParam.optionItems}"
+                            var="option"
+                            varStatus="index"><c:if test="index > 1"><br/></c:if> <input name="${inputParam.name}" id="${inputParam.name}" value="${option.code}" <c:if test="${option.code eq inputParam.defaultSingleValue}">checked="true"</c:if> type="radio">${option.label}
                     </c:forEach></p>
                 </c:when>
                 <c:when test="${inputParam.type eq 'PICKLIST'}">
                     <p>${inputParam.label}<br/>
                     <select name="${inputParam.name}" id="${param.name}" size="16">
                         <c:forEach items="${inputParam.optionItems}" var="option" varStatus="index">
-                            <option value="${option.code}" >${option.label}</option>
+                            <option value="${option.code}" <c:if test="${option.code eq inputParam.defaultSingleValue}">selected="true"</c:if> >${option.label}</option>
                         </c:forEach>
                     </select></p>
                 </c:when>
@@ -39,7 +39,7 @@ This Stripes layout displays a dynamically generated UI snippet to display in a 
                     <p>${inputParam.label}<br/>
                     <select name="${inputParam.name}" id="${inputParam.name}" multiple="true" size="16">
                         <c:forEach items="${inputParam.optionItems}" var="option" varStatus="index">
-                            <option value="${option.code}" >${option.label}</option>
+                            <option value="${option.code}" <c:if test="${ inputParam.defaultValues.contains(option.code)}">selected="true"</c:if> >${option.label}</option>
                         </c:forEach>
                     </select></p>
                 </c:when>

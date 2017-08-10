@@ -38,7 +38,7 @@ public class SearchContext {
     private ResultCellTargetPlatform resultCellTargetPlatform = ResultCellTargetPlatform.TEXT;
     private String baseSearchURL;
     private PaginationUtil.Pagination pagination;
-    private ResultParams columnParams;
+    private ResultParamValues columnParams;
 
     /**
      * Avoid having to access EJB or web application context to get user data for display
@@ -217,11 +217,17 @@ public class SearchContext {
         this.pagination = pagination;
     }
 
-    public void setColumnParams( ResultParams columnParams ) {
+    /**
+     * Sets a copy of result column parameter values for use in generating output header and value
+     */
+    public void setColumnParams( ResultParamValues columnParams ) {
         this.columnParams = columnParams;
     }
 
-    public ResultParams getColumnParams(){
+    /**
+     * Gets a copy of result column parameter values for use in generating output header and value
+     */
+    public ResultParamValues getColumnParams(){
         return columnParams;
     }
 }

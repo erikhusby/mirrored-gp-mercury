@@ -52,7 +52,7 @@ buttons to move columns from one to the other --%>
             }
             var overlayDiv = $j( "#resultParamsOverlay" );
             overlayDiv.dialog("option","searchTermName", option.value);
-            overlayDiv.dialog("option","entityName", $j("#entityName")[0].value);
+            overlayDiv.dialog("option","entityName", $j("#entityName").val());
             overlayDiv.dialog("open");
 
         };
@@ -91,28 +91,31 @@ buttons to move columns from one to the other --%>
                         },
                     })
                 },
-                // Clears out any previous state
+                // Clears out any previous error message state
                 reset: function(){
                     $j("#resultParamsError").text("").css('display','none');
+                },
+                error: function(msg){
+                    $j("#resultParamsError").text(msg).css('display','block');
                 }
             });
             dialog.find( "form" ).on( "submit", function( event ) {
                 event.preventDefault();
-                var rsltParamVal = {searchTermName:null,userColumnName:null,paramInputs:[]};
+                dialog.dialog("option", "reset")();
+
+                var userColumnName = $( this ).find( "#userColumnName" ).val();
+                if( userColumnName.trim().length == 0 ) {
+                    dialog.dialog("option", "error")("User column name is required.");
+                    return;
+                }
+
+                // TODO: Dynamic validation
+
+                var rsltParamVal = {searchTermName:null,userColumnName:null,paramValues:[]};
                 rsltParamVal.searchTermName = dialog.dialog("option", "searchTermName");
-                var userColumnName = $( this ).find( "#userColumnName" )[0].value;
                 rsltParamVal.userColumnName = userColumnName;
                 var params = $( this ).serializeArray();
-                rsltParamVal.paramInputs = params;
-
-                // VALIDATE!!
-//                var parmOptions = dialog.find( "#paramOptions" ).find("option").filter(":selected");
-//                if( !parmOptions || parmOptions.length === 0 ) {
-//                    var errDiv = $j("#resultParamsError");
-//                    errDiv.text("No option(s) selected");
-//                    errDiv.css('display','block');
-//                    return;
-//                }
+                rsltParamVal.paramValues = params;
 
                 var chosenColumns = $j('#selectedColumnDefNames')[0];
                 var newOption = document.createElement('option');
@@ -228,9 +231,10 @@ buttons to move columns from one to the other --%>
          * Result columns with parameters need to be flagged as such by attaching data
          */
         var columnsWithParams = [<c:set var="listDelim" value=""
-        /><c:forEach items="${availableMapGroupToColumnNames}" var="entry" varStatus="iter"
+        /><c:forEach items="${availableMapGroupToColumnNames}" var="entry"
             ><c:forEach items="${entry.value}" var="columnConfig"
-            ><c:if test="${not columnConfig.isExcludedFromResultColumns() and not empty columnConfig.constrainedResultParamsExpression}">"${columnConfig.name}"</c:if
+            ><c:if test="${not columnConfig.isExcludedFromResultColumns() and not empty columnConfig.resultParamConfigurationExpression}"><c:out value ="${listDelim}"/><c:set var="listDelim" value=","
+        />"${columnConfig.name}"</c:if
         ></c:forEach
         ></c:forEach>];
 

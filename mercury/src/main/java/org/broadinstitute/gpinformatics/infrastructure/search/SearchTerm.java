@@ -223,7 +223,7 @@ public class SearchTerm implements Serializable, ColumnTabulation {
      * Expression that provides list of constrained result column values
      * TODO JMS This might be better off as part of a list plugin as parameter configurations get more complicated
      */
-    private Evaluator<ResultParams> constrainedResultParamsExpression;
+    private Evaluator<ResultParamConfiguration> resultParamConfigurationExpression;
 
     /**
      * Dynamic value type expression.
@@ -438,12 +438,12 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     /**
      * Allow user selection of one or more logically related result columns
      */
-    public Evaluator<ResultParams> getConstrainedResultParamsExpression() {
-        return constrainedResultParamsExpression;
+    public Evaluator<ResultParamConfiguration> getResultParamConfigurationExpression() {
+        return resultParamConfigurationExpression;
     }
 
-    public void setConstrainedResultParamsExpression(Evaluator<ResultParams> constrainedResultParamsExpression) {
-        this.constrainedResultParamsExpression = constrainedResultParamsExpression;
+    public void setResultParamConfigurationExpression(Evaluator<ResultParamConfiguration> resultParamConfigurationExpression) {
+        this.resultParamConfigurationExpression = resultParamConfigurationExpression;
     }
 
     /**

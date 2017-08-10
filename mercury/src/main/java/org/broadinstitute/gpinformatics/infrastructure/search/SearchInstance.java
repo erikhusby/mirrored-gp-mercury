@@ -754,7 +754,7 @@ public class SearchInstance implements Serializable {
     /**
      * Map of view column indexes to any optional parameters associated
      */
-    private Map<Integer,ResultParams> viewColumnParamMap = new HashMap<>();
+    private Map<Integer,ResultParamValues> viewColumnParamMap = new HashMap<>();
 
     /**
      * List of columns names that the user wants to download
@@ -864,7 +864,7 @@ public class SearchInstance implements Serializable {
         return searchValue;
     }
 
-    private Pair<String,ResultParams> splitTermAndParams(String nameAndParams ) {
+    private Pair<String,ResultParamValues> splitTermAndParams(String nameAndParams ) {
         // Quick JSON test
         int index = nameAndParams.indexOf("{");
         if (index < 0) {
@@ -873,20 +873,12 @@ public class SearchInstance implements Serializable {
             try {
                 ObjectMapper mapper = new ObjectMapper();
                 JsonNode root = mapper.readTree(nameAndParams);
-                ResultParams resultParams = new ResultParams();
-                resultParams.setSearchTermName(root.get("searchTermName").getTextValue());
-                resultParams.setUserColumnName(root.get("userColumnName").getTextValue());
-                Map<String,ResultParams.ParamInput> paramInputs = resultParams.getParamInputs();
-                for(Iterator<JsonNode> iter = root.get("paramInputs").getElements(); iter.hasNext(); ) {
+                ResultParamValues resultParams = new ResultParamValues(
+                        root.get("searchTermName").getTextValue(),
+                        root.get("userColumnName").getTextValue());
+                for(Iterator<JsonNode> iter = root.get("paramValues").getElements(); iter.hasNext(); ) {
                     JsonNode input = iter.next();
-                    String name = input.get("name").getTextValue();
-                    String value = input.get("value").getTextValue();
-                    ResultParams.ParamInput paramInput = paramInputs.get(name);
-                    if( paramInput == null ) {
-                        paramInput = new ResultParams.ParamInput(name);
-                        resultParams.addParamInput(paramInput);
-                    }
-                    paramInput.getValue().add(value);
+                    resultParams.addParamValue( input.get("name").getTextValue(), input.get("value").getTextValue() );
                 }
                 return Pair.of(resultParams.getSearchTermName(), resultParams);
             } catch( Exception je ) {
@@ -910,7 +902,7 @@ public class SearchInstance implements Serializable {
         // Don't overwrite result params from any session SearchInstances (sorting)
         if( viewColumnParamMap.size() == 0 ) {
             for (int i = 0; i < predefinedViewColumns.size(); i++) {
-                Pair<String, ResultParams> nameAndParams = splitTermAndParams(predefinedViewColumns.get(i));
+                Pair<String, ResultParamValues> nameAndParams = splitTermAndParams(predefinedViewColumns.get(i));
                 viewColumnParamMap.put(i, nameAndParams.getRight());
                 if (nameAndParams.getRight() != null && nameAndParams.getRight().getUserColumnName() != null) {
                     predefinedViewColumns.set(i, nameAndParams.getLeft());
@@ -1209,7 +1201,7 @@ public class SearchInstance implements Serializable {
         this.predefinedViewColumns = predefinedViewColumns;
     }
 
-    public Map<Integer,ResultParams> getViewColumnParamMap() {
+    public Map<Integer,ResultParamValues> getViewColumnParamMap() {
         return viewColumnParamMap;
     }
 

@@ -4,7 +4,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServic
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.PaginationUtil;
-import org.broadinstitute.gpinformatics.infrastructure.search.ResultParams;
+import org.broadinstitute.gpinformatics.infrastructure.search.ResultParamValues;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
@@ -165,29 +165,19 @@ public class ConfigurableListContainerTest extends Arquillian {
         columnTabulations.add(configurableSearchDef.getSearchTerm("Event Vessel Barcodes"));
         columnTabulations.add(configurableSearchDef.getSearchTerm("Event Vessel Barcodes"));
 
-        Map<Integer,ResultParams> resultParamsMap = new HashMap<>();
+        Map<Integer,ResultParamValues> resultParamsMap = new HashMap<>();
 
         // Configure and map result params to "Event Vessel Barcodes" search terms
-        ResultParams shearingParams = new ResultParams();
-        shearingParams.setSearchTermName("Event Vessel Barcodes");
-        shearingParams.setUserColumnName("Shearing Barcode");
-
-        ResultParams.ParamInput eventTypeParamInput = new ResultParams.ParamInput("eventTypes", ResultParams.InputType.MULTI_PICKLIST, "label");
-        eventTypeParamInput.setValue(Collections.singletonList("SHEARING_TRANSFER"));
-        shearingParams.addParamInput(eventTypeParamInput);
-
-        ResultParams.ParamInput srcTargetInput = new ResultParams.ParamInput("srcOrTarget", ResultParams.InputType.RADIO, "Capture");
-        srcTargetInput.setValue(Collections.singletonList("source"));
-        shearingParams.addParamInput(srcTargetInput);
-
+        ResultParamValues shearingParams = new ResultParamValues("Event Vessel Barcodes", "Shearing Barcode");
+        shearingParams.addParamValue("eventTypes", "SHEARING_TRANSFER");
+        shearingParams.addParamValue("srcOrTarget", "source");
         resultParamsMap.put(new Integer(4), shearingParams );
 
-        ResultParams flowcellParams = new ResultParams();
-        flowcellParams.setSearchTermName("Event Vessel Barcodes");
-        flowcellParams.setUserColumnName("Flowcell Barcode");
+        ResultParamValues flowcellParams = new ResultParamValues("Event Vessel Barcodes", "Flowcell Barcode");
 
-        eventTypeParamInput = new ResultParams.ParamInput("eventTypes", ResultParams.InputType.MULTI_PICKLIST, "label");
-        eventTypeParamInput.setValue(Arrays.asList("FLOWCELL_TRANSFER", "DENATURE_TO_FLOWCELL_TRANSFER", "DILUTION_TO_FLOWCELL_TRANSFER"));
+        flowcellParams.addParamValue("eventTypes", "FLOWCELL_TRANSFER" );
+        flowcellParams.addParamValue("eventTypes", "DENATURE_TO_FLOWCELL_TRANSFER");
+        flowcellParams.addParamValue("eventTypes", "DILUTION_TO_FLOWCELL_TRANSFER");
         resultParamsMap.put(new Integer(5), flowcellParams );
 
         ConfigurableList configurableList = new ConfigurableList(columnTabulations, resultParamsMap, 1, "ASC", ColumnEntity.LAB_VESSEL);

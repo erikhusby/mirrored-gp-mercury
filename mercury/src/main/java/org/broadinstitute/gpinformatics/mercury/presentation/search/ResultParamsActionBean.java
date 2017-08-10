@@ -7,7 +7,7 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
-import org.broadinstitute.gpinformatics.infrastructure.search.ResultParams;
+import org.broadinstitute.gpinformatics.infrastructure.search.ResultParamConfiguration;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -26,7 +26,7 @@ public class ResultParamsActionBean extends CoreActionBean {
 
     private String searchTermName;
 
-    private ResultParams resultParams;
+    private ResultParamConfiguration resultParams;
 
     /**
      * Returns a dynamically generated result column parameter input UI snippet <br />
@@ -44,11 +44,11 @@ public class ResultParamsActionBean extends CoreActionBean {
         if( searchTerm == null ) {
             return new ErrorResolution(500, "No search term named " + getSearchTermName());
         }
-        if( searchTerm.getConstrainedResultParamsExpression() == null ) {
+        if( searchTerm.getResultParamConfigurationExpression() == null ) {
             return new ErrorResolution(500, "Search term " + getSearchTermName() + " has no parameters configured");
         }
         try {
-            resultParams = searchTerm.getConstrainedResultParamsExpression().evaluate(null,null);
+            resultParams = searchTerm.getResultParamConfigurationExpression().evaluate(null,null);
         } catch (Exception e) {
             return new ErrorResolution(500, e.getMessage() );
         }
@@ -75,7 +75,7 @@ public class ResultParamsActionBean extends CoreActionBean {
         this.searchTermName = searchTermName;
     }
 
-    public ResultParams getResultParams() {
+    public ResultParamConfiguration getResultParams() {
         return resultParams;
     }
 
