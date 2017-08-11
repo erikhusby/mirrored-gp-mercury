@@ -47,6 +47,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -71,6 +72,7 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -83,6 +85,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.BSPRestSender.BSP_CONTAINER_UPDATE_LAYOUT;
@@ -619,7 +622,8 @@ public class LabBatchEjb {
     }
 
     /**
-     * Finds in the controls in a scan of a new LCSET rack.
+     * Finds the controls in a scan of a new LCSET rack.  Also find tubes that need to be added to and removed
+     * from the LCSET.
      * @param lcsetName LCSET-1234
      * @param rackScan map from rack position to barcode
      * @param messageCollection errors returned to ActionBean
@@ -635,6 +639,7 @@ public class LabBatchEjb {
             controlAliases.add(control.getCollaboratorParticipantId());
         }
 
+        // We need the collaborator participant IDs, to know if each tube is a control
         List<String> sampleNames = new ArrayList<>();
         Map<String, GetSampleDetails.SampleInfo> mapBarcodeToSampleInfo = new HashMap<>();
         for (Map.Entry<String, String> positionBarcodeEntry : rackScan.entrySet()) {
@@ -647,6 +652,7 @@ public class LabBatchEjb {
                     SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
                     if (sampleInstance.getEarliestMercurySampleName() == null) {
                         // Assume this is a control that has no history in Mercury, so fetch from BSP by barcode
+                        // todo jmt accumulate these and fetch in bulk?
                         mapBarcodeToSampleInfo.putAll(sampleDataFetcher.fetchSampleDetailsByBarcode(
                                 Collections.singletonList(sampleInstance.getInitialLabVessel().getLabel())));
                         sampleNames.add(mapBarcodeToSampleInfo.get(sampleInstance.getInitialLabVessel().getLabel()).getSampleId());
@@ -660,8 +666,10 @@ public class LabBatchEjb {
         }
         Map<String, SampleData> mapSampleNameToData = sampleDataFetcher.fetchSampleData(sampleNames);
 
+        // Check each tube to determine whether it's a control, and whether it needs to be added to the LCSET.
         List<LabVessel> controlTubes = new ArrayList<>();
         List<LabVessel> addTubes = new ArrayList<>();
+        Set<BucketEntry> bucketEntries = new HashSet<>();
         for (Map.Entry<String, String> positionBarcodeEntry : rackScan.entrySet()) {
             LabVessel barcodedTube = mapBarcodeToTube.get(positionBarcodeEntry.getValue());
             if (barcodedTube != null) {
@@ -670,13 +678,16 @@ public class LabBatchEjb {
                     SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
                     String earliestMercurySampleName = sampleInstance.getEarliestMercurySampleName();
                     if (earliestMercurySampleName == null) {
+                        // Assume this is a control that has no history in Mercury, so lookup by barcode
                         earliestMercurySampleName = mapBarcodeToSampleInfo.get(sampleInstance.getInitialLabVessel().getLabel()).getSampleId();
                     }
                     SampleData sampleData = mapSampleNameToData.get(earliestMercurySampleName);
                     boolean found = false;
-                    for (LabBatch labBatch : sampleInstance.getAllWorkflowBatches()) {
-                        if (labBatch.getBatchName().equals(lcsetName)) {
+                    for (BucketEntry bucketEntry : sampleInstance.getAllBucketEntries()) {
+                        if (Objects.equals(bucketEntry.getLabBatch().getBatchName(), lcsetName)) {
+                            bucketEntries.add(bucketEntry);
                             found = true;
+                            break;
                         }
                     }
                     if (controlAliases.contains(sampleData.getCollaboratorParticipantId())) {
@@ -694,10 +705,12 @@ public class LabBatchEjb {
             }
         }
 
+        // Any tubes that are in the LCSET, but not in the scan, will need to be removed
+        // todo jmt does this mess up malaria, which will have four racks per LCSET?
         LabBatch labBatch = labBatchDao.findByBusinessKey(lcsetName);
         List<LabVessel> removeTubes = new ArrayList<>();
         for (BucketEntry bucketEntry : labBatch.getBucketEntries()) {
-            if (!mapBarcodeToTube.containsKey(bucketEntry.getLabVessel().getLabel())) {
+            if (!bucketEntries.contains(bucketEntry)) {
                 removeTubes.add(bucketEntry.getLabVessel());
             }
         }
@@ -785,12 +798,24 @@ public class LabBatchEjb {
         PositionMapType positionMap = new PositionMapType();
         positionMap.setBarcode(rackBarcode);
         plateTransferEventType.setPositionMap(positionMap);
-        for (Map.Entry<String, String> positionBarcodeEntry : rackScan.entrySet()) {
+        // BSP requires an entry for every position, with an empty string barcode if no tube
+        for (VesselPosition vesselPosition : RackOfTubes.RackType.Matrix96.getVesselGeometry().getVesselPositions()) {
+            String scanBarcode = rackScan.get(vesselPosition.name());
             ReceptacleType receptacleType = new ReceptacleType();
-            receptacleType.setPosition(positionBarcodeEntry.getKey());
-            receptacleType.setBarcode(positionBarcodeEntry.getValue());
+            receptacleType.setPosition(vesselPosition.name());
+            String receptacleTypeBarcode = "";
+            if (scanBarcode != null) {
+                BarcodedTube barcodedTube = mapBarcodeToTube.get(scanBarcode);
+                SampleInstanceV2 sampleInstanceV2 = barcodedTube.getSampleInstancesV2().iterator().next();
+                MercurySample mercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
+                if (mercurySample == null || mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
+                    receptacleTypeBarcode = scanBarcode;
+                }
+            }
+            receptacleType.setBarcode(receptacleTypeBarcode);
             positionMap.getReceptacle().add(receptacleType);
         }
+
         PlateType plateType = new PlateType();
         plateType.setBarcode(rackBarcode);
         plateType.setPhysType(RackOfTubes.RackType.Matrix96.getDisplayName());
@@ -798,21 +823,25 @@ public class LabBatchEjb {
         BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
         bettaLIMSMessage.getPlateTransferEvent().add(plateTransferEventType);
         ClientResponse response = webResource.type(MediaType.APPLICATION_XML).post(ClientResponse.class, bettaLIMSMessage);
-
-        // Determine whether rack needs to be exported from BSP
-        IsExported.ExportResults exportResults = bspExportsService.findExportDestinations(
-                new HashSet<LabVessel>(mapBarcodeToTube.values()));
-        int needsExport = 0;
-        for (IsExported.ExportResult exportResult : exportResults.getExportResult()) {
-            Set<IsExported.ExternalSystem> externalSystems = exportResult.getExportDestinations();
-            if (CollectionUtils.isEmpty(externalSystems) || !externalSystems.contains(IsExported.ExternalSystem.Mercury)) {
-                needsExport++;
+        if (response.getStatus() == Response.Status.OK.getStatusCode()) {
+            // Determine whether rack needs to be exported from BSP
+            IsExported.ExportResults exportResults = bspExportsService.findExportDestinations(
+                    new HashSet<LabVessel>(mapBarcodeToTube.values()));
+            int needsExport = 0;
+            for (IsExported.ExportResult exportResult : exportResults.getExportResult()) {
+                Set<IsExported.ExternalSystem> externalSystems = exportResult.getExportDestinations();
+                if (CollectionUtils.isEmpty(externalSystems) || !externalSystems.contains(IsExported.ExternalSystem.Mercury)) {
+                    needsExport++;
+                }
             }
-        }
 
-        // todo jmt what if there's a mix of exported and unexported?
-        if (needsExport > 0) {
-            bspExportsService.export(rackBarcode, userBean.getLoginUserName());
+            // todo jmt what if there's a mix of exported and unexported?
+            if (needsExport > 0) {
+                bspExportsService.export(rackBarcode, userBean.getLoginUserName());
+            }
+        } else {
+            messageReporter.addMessage(response.getEntity(String.class));
+            throw new RuntimeException("Failed to update layout in BSP.");
         }
     }
 
