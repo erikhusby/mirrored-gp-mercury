@@ -154,7 +154,7 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
         researchProject.addProductOrder(productOrder);
 
         Aggregation aggregation = AggregationTestFactory
-            .buildAggregation(productOrderId, sampleName, version, null, null, null, null, null, null,
+            .buildAggregation(project, productOrderId, sampleName, version, null, null, null, null, null, null,
                 processingLocation);
         /*
          * TODO: Allow this relationship to be set for these tests.
@@ -169,7 +169,7 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
          * persisted product.
          */
 //        productOrder.setResearchProject(researchProject);
-        return new SubmissionDto(aggregation, Collections.singletonList(productOrder), null);
+        return new SubmissionDto(aggregation, null);
     }
 
     private SubmissionTracker addTracker(SubmissionDto submissionDto) {

@@ -15,29 +15,28 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.time.FastDateFormat;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationContam;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import java.io.Serializable;
 import java.text.NumberFormat;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @JsonSerialize(include = JsonSerialize.Inclusion.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -50,9 +49,6 @@ public class SubmissionDto implements Serializable {
     @JsonIgnore
     public static final FastDateFormat DATE_FORMAT =
             FastDateFormat.getDateTimeInstance(FastDateFormat.MEDIUM, FastDateFormat.SHORT);
-
-    @JsonIgnore
-    private Collection<ProductOrder> productOrders;
 
     @JsonIgnore
     private SubmissionStatusDetailBean statusDetailBean;
@@ -77,6 +73,9 @@ public class SubmissionDto implements Serializable {
 
     private SubmissionTuple submissionTuple;
 
+    @JsonProperty(value = SubmissionDto.SubmissionField.PRODUCT_ORDERS)
+    private Set<String> productOrders = new HashSet<>();
+
     @JsonProperty(value = SubmissionField.SUBMISSION_TUPLE)
     String getSubmissionTupleString() {
         String value = "";
@@ -94,9 +93,6 @@ public class SubmissionDto implements Serializable {
 
     @JsonProperty(value = SubmissionDto.SubmissionField.DATA_TYPE)
     private String datatype="";
-
-    @JsonProperty(value = SubmissionDto.SubmissionField.PRODUCT_ORDERS)
-    private Collection<String> productOrdersString;
 
     @JsonProperty(value = SubmissionDto.SubmissionField.AGGREGATION_PROJECT)
     private String project="";
@@ -158,11 +154,8 @@ public class SubmissionDto implements Serializable {
     public SubmissionDto() {
     }
 
-    public SubmissionDto(Aggregation aggregation,
-                         @Nonnull Collection<ProductOrder> productOrders,
-                         @Nullable SubmissionStatusDetailBean statusDetailBean) {
+    public SubmissionDto(Aggregation aggregation, @Nullable SubmissionStatusDetailBean statusDetailBean) {
         this.aggregation = aggregation;
-        this.productOrders = productOrders;
         this.statusDetailBean = statusDetailBean;
 
         numberFormat.setMinimumFractionDigits(2);
@@ -199,17 +192,12 @@ public class SubmissionDto implements Serializable {
             }
             readGroupCount = aggregation.getReadGroupCount();
             contaminationString = aggregation.getContaminationString();
+            for (AggregationReadGroup aggregationReadGroup : aggregation.getAggregationReadGroups()) {
+                productOrders.add(aggregationReadGroup.getReadGroupIndex().getProductOrderId());
+            }
         }
         initializeStatusDetailBean(statusDetailBean);
         submittedErrorsArray = submittedErrors.toArray(new String[submittedErrors.size()]);
-
-        productOrdersString = new HashSet<>();
-        if (productOrders != null) {
-            for (ProductOrder productOrder : productOrders) {
-                productOrdersString
-                        .add(String.format("%s: %s", productOrder.getJiraTicketKey(), productOrder.getTitle()));
-            }
-        }
     }
 
     private void initializeStatusDetailBean(SubmissionStatusDetailBean statusDetail) {
@@ -252,14 +240,6 @@ public class SubmissionDto implements Serializable {
 
     public String getDataType() {
         return datatype;
-    }
-
-    public Collection<String> getProductOrdersString() {
-        return productOrdersString;
-    }
-
-    public Collection<ProductOrder> getProductOrders() {
-        return productOrders;
     }
 
     public String getAggregationProject() {
@@ -382,6 +362,10 @@ public class SubmissionDto implements Serializable {
         return new SubmissionTracker(project, sample, String.valueOf(version), FileType.BAM, SubmissionBioSampleBean.ON_PREM, datatype);
     }
 
+    public Set<String> getProductOrders() {
+        return productOrders;
+    }
+
     public class SubmissionField {
         public static final String SUBMISSION_TUPLE = "submissionTuple";
         public static final String SAMPLE_NAME = "sampleName";
@@ -423,7 +407,6 @@ public class SubmissionDto implements Serializable {
 
         return new EqualsBuilder()
             .append(numberFormat, that.numberFormat)
-            .append(productOrders, that.productOrders)
             .append(statusDetailBean, that.statusDetailBean)
             .append(aggregation, that.aggregation)
             .append(qualityMetric, that.qualityMetric)
@@ -435,7 +418,6 @@ public class SubmissionDto implements Serializable {
             .append(uuid, that.uuid)
             .append(sample, that.sample)
             .append(datatype, that.datatype)
-            .append(productOrdersString, that.productOrdersString)
             .append(project, that.project)
             .append(fileTypeString, that.fileTypeString)
             .append(fileType, that.fileType)
@@ -462,7 +444,6 @@ public class SubmissionDto implements Serializable {
     public int hashCode() {
         return new HashCodeBuilder(17, 37)
             .append(numberFormat)
-            .append(productOrders)
             .append(statusDetailBean)
             .append(aggregation)
             .append(qualityMetric)
@@ -474,7 +455,6 @@ public class SubmissionDto implements Serializable {
             .append(uuid)
             .append(sample)
             .append(datatype)
-            .append(productOrdersString)
             .append(project)
             .append(fileTypeString)
             .append(fileType)
