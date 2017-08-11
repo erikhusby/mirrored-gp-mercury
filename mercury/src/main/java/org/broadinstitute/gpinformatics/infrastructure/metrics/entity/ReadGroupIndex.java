@@ -26,12 +26,6 @@ import java.io.Serializable;
 @Table(schema = "PICARD", name = "READ_GROUP_INDEX")
 public class ReadGroupIndex implements Serializable{
     private static final long serialVersionUID = -7596440076704597298L;
-    private static final String LIBRARY_TYPE_HYBRID_SELECTION = "HybridSelection";
-    private static final String LIBRARY_TYPE_WHOLE_GENOME_SHOTGUN = "WholeGenomeShotgun";
-    private static final String LIBRARY_TYPE_CDNA_SHOTGUN_READ_TWO_SENSE = "cDNAShotgunReadTwoSense";
-    private static final String LIBRARY_TYPE_CDNA_SHOTGUN_STRAND_AGNOSTIC = "cDNAShotgunStrandAgnostic";
-    private static final String ANALYSIS_TYPE_CDNA = "cDNA";
-    private static final String ANALYSIS_TYPE_ASSEMBLY_WITHOUT_REFERENCE = "AssemblyWithoutReference";
 
     @Id
     private Long id;
@@ -73,16 +67,15 @@ public class ReadGroupIndex implements Serializable{
 
 
     SubmissionLibraryDescriptor getLibraryType() {
-        if (libraryType.equals(LIBRARY_TYPE_HYBRID_SELECTION)) {
+        if (libraryType.equals("HybridSelection")) {
             return SubmissionLibraryDescriptor.WHOLE_EXOME;
         }
-        if (libraryType.equals(LIBRARY_TYPE_WHOLE_GENOME_SHOTGUN)) {
+        if (libraryType.equals("WholeGenomeShotgun")) {
             return SubmissionLibraryDescriptor.WHOLE_GENOME;
         }
-        if (libraryType.equals(LIBRARY_TYPE_CDNA_SHOTGUN_READ_TWO_SENSE) || libraryType.equals(
-            LIBRARY_TYPE_CDNA_SHOTGUN_STRAND_AGNOSTIC)
-            || analysisType.equals(ANALYSIS_TYPE_CDNA)) {
-            if (!analysisType.equals(ANALYSIS_TYPE_ASSEMBLY_WITHOUT_REFERENCE)) {
+        if (libraryType.equals("cDNAShotgunReadTwoSense") || libraryType.equals("cDNAShotgunStrandAgnostic")
+            || analysisType.equals("cDNA")) {
+            if (!analysisType.equals("AssemblyWithoutReference")) {
                 return SubmissionLibraryDescriptor.RNA_SEQ;
 
             }
