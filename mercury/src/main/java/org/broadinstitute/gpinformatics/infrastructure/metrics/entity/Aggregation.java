@@ -14,6 +14,7 @@ package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.hibernate.annotations.BatchSize;
 
@@ -308,5 +309,16 @@ public class Aggregation {
             .append(aggregationWgs)
             .append(levelOfDetection)
             .toHashCode();
+    }
+
+    public Set<SubmissionLibraryDescriptor> getLibraryTypes() {
+        Set<SubmissionLibraryDescriptor> submissionLibraryDescriptors = new HashSet<>();
+        for (AggregationReadGroup aggregationReadGroup : getAggregationReadGroups()) {
+            ReadGroupIndex readGroupIndex = aggregationReadGroup.getReadGroupIndex();
+            if (readGroupIndex != null) {
+                submissionLibraryDescriptors.add(readGroupIndex.getLibraryType());
+            }
+        }
+        return submissionLibraryDescriptors;
     }
 }

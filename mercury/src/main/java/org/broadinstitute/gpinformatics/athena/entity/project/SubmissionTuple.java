@@ -26,6 +26,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlTransient;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -55,9 +56,9 @@ public class SubmissionTuple implements Serializable {
     private String processingLocation;
     @JsonProperty
     private String dataType;
-    @JsonIgnore
+    @JsonIgnore @XmlTransient
     private ObjectMapper objectMapper=null;
-    @JsonIgnore
+    @JsonIgnore  @XmlTransient
     private String jsonValue;
 
     /**
@@ -76,7 +77,7 @@ public class SubmissionTuple implements Serializable {
             tuple = getObjectMapper().readValue(jsonString, SubmissionTuple.class);
             initSubmissionTuple(tuple.project, tuple.sampleName, tuple.version, tuple.processingLocation, tuple.dataType);
         } catch (IOException e) {
-            log.info(String.format("Could not map JSON String [%s] to SubmissionTuple", jsonString), e);
+            log.error(String.format("Could not map JSON String [%s] to SubmissionTuple", jsonString), e);
         }
     }
 
@@ -115,7 +116,7 @@ public class SubmissionTuple implements Serializable {
         this.fileType = fileType;
     }
 
-    public ObjectMapper getObjectMapper() {
+    private ObjectMapper getObjectMapper() {
         if (objectMapper == null) {
             objectMapper=new ObjectMapper();
         }

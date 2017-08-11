@@ -860,6 +860,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         if (accessRestriction.isEmpty()) {
             return true;
         }
+
         if (!supressValidationErrors) {
             addGlobalValidationError(
                     String.format("Data submissions are available for %s.", StringUtils.join(accessRestriction, " and ")));
@@ -943,16 +944,26 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
             addGlobalValidationError("You must select a submission site in order to post for submissions.");
             errors = true;
         }
+        List<SubmissionDto> selectedSubmissions = new ArrayList<>();
         if (!errors) {
-            List<SubmissionDto> selectedSubmissions = new ArrayList<>();
+
 
             for (SubmissionDto submissionDto : submissionDtoFetcher.fetch(editResearchProject, this)) {
+                Set<SubmissionLibraryDescriptor> libraryTypes = submissionDto.getAggregation().getLibraryTypes();
                 if (tupleToSampleMap.containsKey(submissionDto.getSubmissionTuple())) {
                     // All required data are in the submissionDto
                     selectedSubmissions.add(submissionDto);
+                    for (SubmissionLibraryDescriptor libraryType : libraryTypes) {
+                        if (!libraryType.getName().equals(selectedSubmissionLibraryDescriptor)) {
+                            addGlobalValidationError("Data selected for submission of ''{2}'' is ''{3}'' but library ''{4}'' was selected.",
+                                submissionDto.getSampleName(), libraryType.getName(), selectedSubmissionLibraryDescriptor);
+                            errors = true;
+                        }
+                    }
                 }
             }
-
+        }
+        if (!errors){
             try {
                 Collection<SubmissionStatusDetailBean> submissionStatuses =
                         researchProjectEjb
