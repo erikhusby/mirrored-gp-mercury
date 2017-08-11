@@ -66,7 +66,7 @@ public class ReadGroupIndex implements Serializable{
     }
 
 
-    SubmissionLibraryDescriptor getLibraryType() {
+    public SubmissionLibraryDescriptor getLibraryType() {
         if (libraryType.equals("HybridSelection")) {
             return SubmissionLibraryDescriptor.WHOLE_EXOME;
         }
