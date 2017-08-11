@@ -18,11 +18,13 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregatio
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationWgs;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.ReadGroupIndex;
 
 import java.util.Collections;
 
 public class AggregationTestFactory {
-    public static Aggregation buildAggregation(String project, String sample, int version, Double contamination,
+    public static Aggregation buildAggregation(String project, String productOrder, String sample,
+                                               int version, Double contamination,
                                                LevelOfDetection fingerprintLod, String dataType,
                                                Double pctTargetBases20X, Long totalReadsAlignedInPairs,
                                                Double meanCoverageWgs, String processingLocation) {
@@ -31,7 +33,9 @@ public class AggregationTestFactory {
         AggregationHybridSelection aggregationHybridSelection = new AggregationHybridSelection(pctTargetBases20X);
         AggregationAlignment aggregationAlignment = new AggregationAlignment(totalReadsAlignedInPairs, "PAIR");
         AggregationWgs aggregationWgs=new AggregationWgs(meanCoverageWgs);
-        AggregationReadGroup aggregationReadGroup = new AggregationReadGroup(null, 2, null);
+
+        AggregationReadGroup aggregationReadGroup = new AggregationReadGroup(null, 2, null,
+            new ReadGroupIndex(null, null, 2, null, project, sample, productOrder));
         Integer readGroupCount = 2;
 
         return new Aggregation(project, sample, null, version, readGroupCount, dataType,

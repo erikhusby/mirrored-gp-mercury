@@ -44,7 +44,7 @@ public class ResearchProjectEjbSubmissionTest {
 
     @SuppressWarnings("ConstantConditions")
     public void testValidateSubmissionsDtoHasNullsDto() throws Exception {
-        SubmissionDto submissionDto = new SubmissionDto(null, null, null);
+        SubmissionDto submissionDto = new SubmissionDto(null, null);
 
         ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(null);
 
@@ -160,9 +160,11 @@ public class ResearchProjectEjbSubmissionTest {
 
     private SubmissionDto getSubmissionDto(ProductOrder productOrder, String sample, String processingLocation, int version) {
         Aggregation aggregation = AggregationTestFactory
-            .buildAggregation(productOrder.getResearchProject().getBusinessKey(), sample, version, null, null, null,
-                null, null, null, processingLocation);
-        SubmissionDto submissionDto = new SubmissionDto(aggregation, Collections.singleton(productOrder), null);
+            .buildAggregation(productOrder.getResearchProject().getBusinessKey(), productOrder.getJiraTicketKey(),
+                sample,
+                version, null, null, null, null, null, null, processingLocation);
+
+        SubmissionDto submissionDto = new SubmissionDto(aggregation, null);
         return submissionDto;
     }
 

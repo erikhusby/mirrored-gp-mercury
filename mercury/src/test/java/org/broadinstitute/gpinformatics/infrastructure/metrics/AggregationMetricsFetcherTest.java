@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.metrics;
 
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioSampleBean;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
@@ -13,6 +14,7 @@ import javax.inject.Inject;
 import java.util.Collections;
 import java.util.List;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.closeTo;
 import static org.hamcrest.Matchers.equalTo;
@@ -79,7 +81,8 @@ public class AggregationMetricsFetcherTest extends ContainerTest {
         LevelOfDetection lod = aggregation.getLevelOfDetection();
         assertThat(lod.getMax(), equalTo(MAX_LOD));
         assertThat(lod.getMin(), equalTo(MIN_LOD));
-
+        AggregationReadGroup readGroup = aggregation.getAggregationReadGroups().iterator().next();
+        assertThat(readGroup.getReadGroupIndex().getProductOrderId(), is("PDO-3853"));
         assertThat(aggregation.getAggregationContam().getPctContamination(), closeTo(0.0002, 0.00001));
     }
 
