@@ -193,7 +193,9 @@ public class SubmissionDto implements Serializable {
             readGroupCount = aggregation.getReadGroupCount();
             contaminationString = aggregation.getContaminationString();
             for (AggregationReadGroup aggregationReadGroup : aggregation.getAggregationReadGroups()) {
-                productOrders.add(aggregationReadGroup.getReadGroupIndex().getProductOrderId());
+                if (aggregationReadGroup.getReadGroupIndex() != null) {
+                    productOrders.add(aggregationReadGroup.getReadGroupIndex().getProductOrderId());
+                }
             }
         }
         initializeStatusDetailBean(statusDetailBean);
