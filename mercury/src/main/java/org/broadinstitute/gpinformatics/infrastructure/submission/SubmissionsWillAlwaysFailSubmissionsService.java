@@ -31,7 +31,7 @@ public class SubmissionsWillAlwaysFailSubmissionsService extends SubmissionsServ
         for (SubmissionBean submissionBean : submission.getSubmissions()) {
             SubmissionStatusDetailBean bean = new SubmissionStatusDetailBean(submissionBean.getUuid(),
                     SubmissionStatusDetailBean.Status.FAILURE, SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR,
-                    SubmissionLibraryDescriptor.WHOLE_GENOME_DESCRIPTION, new Date(), errors);
+                    SubmissionLibraryDescriptor.WHOLE_GENOME.getDescription(), new Date(), errors);
             results.add(bean);
         }
         return results;
@@ -48,7 +48,7 @@ public class SubmissionsWillAlwaysFailSubmissionsService extends SubmissionsServ
         for (String uuid : uuids) {
             SubmissionStatusDetailBean statusDetailBean = new SubmissionStatusDetailBean(uuid,
                     SubmissionStatusDetailBean.Status.FAILURE, SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR,
-                    SubmissionLibraryDescriptor.WHOLE_GENOME_DESCRIPTION, new Date(), errors);
+                    SubmissionLibraryDescriptor.WHOLE_GENOME.getDescription(), new Date(), errors);
             results.add(statusDetailBean);
         }
         return results;

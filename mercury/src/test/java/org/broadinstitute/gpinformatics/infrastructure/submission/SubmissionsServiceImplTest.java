@@ -65,8 +65,7 @@ public class SubmissionsServiceImplTest {
                 new SubmissionContactBean("Jeff", "A", "Gentry", "jgentry@broadinstitute.org", "617-555-9292", "homer");
         submissionsService = new SubmissionsServiceImpl(SubmissionConfig.produce(Deployment.DEV));
         submissionRepository = submissionsService.findRepositoryByKey("GDC_PROTECTED");
-        submissionLibraryDescriptor =
-            submissionsService.findLibraryDescriptorTypeByKey(SubmissionLibraryDescriptor.WHOLE_EXOME_NAME);
+        submissionLibraryDescriptor = SubmissionLibraryDescriptor.WHOLE_EXOME;
     }
 
     public void testServerResponseBadRequest() {
@@ -212,7 +211,7 @@ public class SubmissionsServiceImplTest {
 
     public void testFindLibraryDescriptorTypeByKey() throws Exception {
         SubmissionLibraryDescriptor libraryDescriptorTypeByKey =
-                submissionsService.findLibraryDescriptorTypeByKey(SubmissionLibraryDescriptor.WHOLE_GENOME_NAME);
+                submissionsService.findLibraryDescriptorTypeByKey(SubmissionLibraryDescriptor.WHOLE_GENOME.getName());
 
         assertThat(libraryDescriptorTypeByKey, equalTo(ProductFamily.defaultLibraryDescriptor()));
     }
