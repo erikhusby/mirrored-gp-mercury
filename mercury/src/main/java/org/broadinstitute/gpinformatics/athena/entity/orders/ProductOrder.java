@@ -2055,8 +2055,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return processingLocation;
     }
 
-    public void setPipelineLocation(
-            PipelineLocation pipelineLocation) {
+    public void setPipelineLocation(PipelineLocation pipelineLocation) {
         this.pipelineLocation = pipelineLocation;
     }
 
