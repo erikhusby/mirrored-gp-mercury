@@ -47,6 +47,7 @@ public class SubmissionDtoFetcherTest {
     private static final String TEST_SAMPLE = "SM-35BDA";
     private static final String COLLABORATOR_SAMPLE_ID = "BOT2365_T";
     private static final String RESEARCH_PROJECT_ID = "RP-YOMAMA";
+    private static final String PRODUCT_ORDER_ID = "PD0-1EE";
     private static final String DATA_TYPE = "Exome";
     private static final String NCBI_ERROR = "And error was returned from NCBI";
     private static final Double QUALITY_METRIC = 1.2;
@@ -115,7 +116,7 @@ public class SubmissionDtoFetcherTest {
                 COLLABORATOR_SAMPLE_ID, "1", FileType.BAM, SubmissionBioSampleBean.ON_PREM));
 
         Aggregation aggregation = AggregationTestFactory
-                .buildAggregation(RESEARCH_PROJECT_ID, COLLABORATOR_SAMPLE_ID, 1, CONTAMINATION, FINGERPRINT_LOD, DATA_TYPE, QUALITY_METRIC,
+                .buildAggregation(RESEARCH_PROJECT_ID, PRODUCT_ORDER_ID, COLLABORATOR_SAMPLE_ID, 1, CONTAMINATION, FINGERPRINT_LOD, DATA_TYPE, QUALITY_METRIC,
                         null, null, SubmissionBioSampleBean.ON_PREM);
         aggregations.add(aggregation);
         List<SubmissionDto> submissionDtoList = submissionDtoFetcher.fetch(researchProject, MessageReporter.UNUSED);
@@ -126,7 +127,7 @@ public class SubmissionDtoFetcherTest {
             assertThat(submissionDto.getAggregationProject(), equalTo(RESEARCH_PROJECT_ID));
             assertThat(submissionDto.getResearchProject(), equalTo(RESEARCH_PROJECT_ID));
             assertThat(submissionDto.getFingerprintLOD(), equalTo(FINGERPRINT_LOD));
-            assertThat(submissionDto.getProductOrders(), containsInAnyOrder(productOrder));
+            assertThat(submissionDto.getProductOrders(), containsInAnyOrder(productOrder.getJiraTicketKey()));
             assertThat(submissionDto.getLanesInAggregation(), Matchers.equalTo(2));
             assertThat(submissionDto.getSubmittedStatus(),
                     Matchers.equalTo(SubmissionStatusDetailBean.Status.FAILURE.getKey()));
