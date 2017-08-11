@@ -13,6 +13,7 @@ package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 
 import javax.persistence.Column;
@@ -25,6 +26,13 @@ import java.io.Serializable;
 @Table(schema = "PICARD", name = "READ_GROUP_INDEX")
 public class ReadGroupIndex implements Serializable{
     private static final long serialVersionUID = -7596440076704597298L;
+    private static final String LIBRARY_TYPE_HYBRID_SELECTION = "HybridSelection";
+    private static final String LIBRARY_TYPE_WHOLE_GENOME_SHOTGUN = "WholeGenomeShotgun";
+    private static final String LIBRARY_TYPE_CDNA_SHOTGUN_READ_TWO_SENSE = "cDNAShotgunReadTwoSense";
+    private static final String LIBRARY_TYPE_CDNA_SHOTGUN_STRAND_AGNOSTIC = "cDNAShotgunStrandAgnostic";
+    private static final String ANALYSIS_TYPE_CDNA = "cDNA";
+    private static final String ANALYSIS_TYPE_ASSEMBLY_WITHOUT_REFERENCE = "AssemblyWithoutReference";
+
     @Id
     private Long id;
 
@@ -36,7 +44,10 @@ public class ReadGroupIndex implements Serializable{
 
     @Column(name = "LIBRARY_NAME", nullable = false, insertable = false, updatable = false)
     private String libraryName;
-
+    @Column(name = "LIBRARY_TYPE", nullable = false, insertable = false, updatable = false)
+    private String libraryType;
+    @Column(name = "ANALYSIS_TYPE", nullable = false, insertable = false, updatable = false)
+    private String analysisType;
     @Column(name = "RESEARCH_PROJECT_ID")
     private String project;
     @Column(name = "SAMPLE_ALIAS")
@@ -47,15 +58,36 @@ public class ReadGroupIndex implements Serializable{
     public ReadGroupIndex() {
     }
 
-    public ReadGroupIndex(Long id, String flowcellBarcode, long lane, String libraryName, String project,
-                          String sampleAlias, String productOrderId) {
+    public ReadGroupIndex(Long id, String flowcellBarcode, long lane, String libraryName, String libraryType,
+                          String analysisType, String project, String sampleAlias, String productOrderId) {
         this.id = id;
         this.flowcellBarcode = flowcellBarcode;
         this.lane = lane;
         this.libraryName = libraryName;
+        this.libraryType = libraryType;
+        this.analysisType = analysisType;
         this.project = project;
         this.sampleAlias = sampleAlias;
         this.productOrderId = productOrderId;
+    }
+
+
+    SubmissionLibraryDescriptor getLibraryType() {
+        if (libraryType.equals(LIBRARY_TYPE_HYBRID_SELECTION)) {
+            return SubmissionLibraryDescriptor.WHOLE_EXOME;
+        }
+        if (libraryType.equals(LIBRARY_TYPE_WHOLE_GENOME_SHOTGUN)) {
+            return SubmissionLibraryDescriptor.WHOLE_GENOME;
+        }
+        if (libraryType.equals(LIBRARY_TYPE_CDNA_SHOTGUN_READ_TWO_SENSE) || libraryType.equals(
+            LIBRARY_TYPE_CDNA_SHOTGUN_STRAND_AGNOSTIC)
+            || analysisType.equals(ANALYSIS_TYPE_CDNA)) {
+            if (!analysisType.equals(ANALYSIS_TYPE_ASSEMBLY_WITHOUT_REFERENCE)) {
+                return SubmissionLibraryDescriptor.RNA_SEQ;
+
+            }
+        }
+        return null;
     }
 
     public String getFlowcellBarcode() {
@@ -82,6 +114,10 @@ public class ReadGroupIndex implements Serializable{
         return productOrderId;
     }
 
+    public String getAnalysisType() {
+        return analysisType;
+    }
+
     @Override
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     public boolean equals(Object o) {
@@ -104,6 +140,8 @@ public class ReadGroupIndex implements Serializable{
             .append(id, that.id)
             .append(flowcellBarcode, that.flowcellBarcode)
             .append(libraryName, that.libraryName)
+            .append(libraryType, that.libraryType)
+            .append(analysisType, that.analysisType)
             .append(project, that.project)
             .append(sampleAlias, that.sampleAlias)
             .append(productOrderId, that.productOrderId)
@@ -117,6 +155,8 @@ public class ReadGroupIndex implements Serializable{
             .append(flowcellBarcode)
             .append(lane)
             .append(libraryName)
+            .append(libraryType)
+            .append(analysisType)
             .append(project)
             .append(sampleAlias)
             .append(productOrderId)

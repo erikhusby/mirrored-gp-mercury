@@ -29,9 +29,16 @@ import java.io.Serializable;
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class SubmissionLibraryDescriptor implements Serializable {
     private static final long serialVersionUID = 2140289148823382712L;
-    public static final String WHOLE_GENOME_NAME = "Whole Genome";
     public static final String WHOLE_GENOME_DESCRIPTION = "Human Whole Genome";
-    public static final String WHOLE_EXOME_NAME = "Whole Exome";
+
+
+    public static final SubmissionLibraryDescriptor WHOLE_EXOME =
+        new SubmissionLibraryDescriptor("Whole Exome", "Whole Exome Sequencing");
+    public static final SubmissionLibraryDescriptor WHOLE_GENOME =
+        new SubmissionLibraryDescriptor("Whole Genome", "Human Whole Genome");
+    public static final SubmissionLibraryDescriptor RNA_SEQ =
+        new SubmissionLibraryDescriptor("RNA Seq", "Whole Exome Sequencing");
+
 
     @JsonProperty
     private String name;
