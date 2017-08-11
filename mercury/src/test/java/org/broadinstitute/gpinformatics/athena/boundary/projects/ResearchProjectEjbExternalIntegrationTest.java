@@ -11,7 +11,6 @@
 
 package org.broadinstitute.gpinformatics.athena.boundary.projects;
 
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
@@ -25,7 +24,6 @@ import org.hamcrest.CoreMatchers;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -96,8 +94,8 @@ public class ResearchProjectEjbExternalIntegrationTest {
         List<SubmissionDto> results = new ArrayList<>(sampleNames.length);
         for (String sampleName : sampleNames) {
             Aggregation aggregation = AggregationTestFactory
-                .buildAggregation("RP-123", sampleName, 1, null, null, "WGA", null, null, null, "OnPremn");
-            results.add(new SubmissionDto(aggregation, Collections.<ProductOrder>emptyList(), null));
+                .buildAggregation("RP-123", "PDO-1234", sampleName, 1, null, null, "WGA", null, null, null, "OnPremn");
+            results.add(new SubmissionDto(aggregation, null));
         }
         return results;
     }

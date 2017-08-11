@@ -186,7 +186,6 @@
                                     href: "${ctxpath}/orders/order.action?view=&productOrder=" + pdoPair[0],
                                     class: "noWrap",
                                     text: pdoPair[0],
-                                    title: pdoPair[1]
                                 })[0].outerHTML);
                             }
                             return pdos.join(", ");
