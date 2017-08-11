@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.deployment;
 
+import org.broadinstitute.gpinformatics.mercury.control.LoginAndPassword;
+
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.io.Serializable;
@@ -9,7 +11,7 @@ import java.io.Serializable;
  */
 @SuppressWarnings("UnusedDeclaration")
 @ConfigKey("infiniumStarter")
-public class InfiniumStarterConfig extends AbstractConfig implements Serializable {
+public class InfiniumStarterConfig extends AbstractConfig implements LoginAndPassword, Serializable {
     private String dataPath;
     private long minimumIdatFileLength;
     private String jmsHost;
@@ -59,5 +61,15 @@ public class InfiniumStarterConfig extends AbstractConfig implements Serializabl
 
     public void setJmsQueue(String jmsQueue) {
         this.jmsQueue = jmsQueue;
+    }
+
+    @Override
+    public String getLogin() {
+        return null;
+    }
+
+    @Override
+    public String getPassword() {
+        return null;
     }
 }
