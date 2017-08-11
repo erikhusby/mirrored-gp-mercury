@@ -34,10 +34,10 @@ public class SubmissionStatusResultBeanTest {
         testUUID1 = "d835cc7-cd63-4cc6-9621-868155618745";
         detail1 = new SubmissionStatusDetailBean(testUUID1, SubmissionStatusDetailBean.Status.SUBMITTED,
                 SubmissionRepository.DEFAULT_REPOSITORY_NAME,
-                SubmissionLibraryDescriptor.WHOLE_GENOME_NAME, submissionUpdateDate);
+                SubmissionLibraryDescriptor.WHOLE_GENOME.getName(), submissionUpdateDate);
         testUUID2 = "d835cc7-cd63-4cc6-9621-868155618746";
         detail2 = new SubmissionStatusDetailBean(testUUID2, SubmissionStatusDetailBean.Status.FAILURE, SubmissionRepository.DEFAULT_REPOSITORY_NAME,
-                SubmissionLibraryDescriptor.WHOLE_GENOME_NAME, submissionUpdateDate,
+                SubmissionLibraryDescriptor.WHOLE_GENOME.getName(), submissionUpdateDate,
                 "And error was returned from NCBI");
 
         testJson = "{\n"
@@ -92,7 +92,7 @@ public class SubmissionStatusResultBeanTest {
         results = new SubmissionStatusResultBean();
         detail11 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618745",
                 SubmissionStatusDetailBean.Status.READY_FOR_SUBMISSION, SubmissionRepository.DEFAULT_REPOSITORY_NAME,
-                SubmissionLibraryDescriptor.WHOLE_GENOME_NAME, submissionUpdateDate);
+                SubmissionLibraryDescriptor.WHOLE_GENOME.getName(), submissionUpdateDate);
         statusUpdate = new GregorianCalendar();
         statusUpdate.set(Calendar.MILLISECOND, 0);
 
@@ -100,19 +100,19 @@ public class SubmissionStatusResultBeanTest {
         detail11.setLastStatusUpdate(statusUpdate.getTime());
 
         detail21 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618746", SubmissionStatusDetailBean.Status.READY_FOR_SUBMISSION,
-                SubmissionRepository.DEFAULT_REPOSITORY_NAME, SubmissionLibraryDescriptor.WHOLE_GENOME_NAME,
+                SubmissionRepository.DEFAULT_REPOSITORY_NAME, SubmissionLibraryDescriptor.WHOLE_GENOME.getName(),
                 submissionUpdateDate);
         detail3 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618749", SubmissionStatusDetailBean.Status.FAILURE,
-                SubmissionRepository.DEFAULT_REPOSITORY_NAME, SubmissionLibraryDescriptor.WHOLE_GENOME_NAME,
+                SubmissionRepository.DEFAULT_REPOSITORY_NAME, SubmissionLibraryDescriptor.WHOLE_GENOME.getName(),
                 submissionUpdateDate,
                 "No bioproject found matching submitted accession BlahBlahBlah",
                 "No biosample found matching submitted id BlahBlahBlah");
         detail4 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618748", SubmissionStatusDetailBean.Status.FAILURE,
-                SubmissionRepository.DEFAULT_REPOSITORY_NAME, SubmissionLibraryDescriptor.WHOLE_GENOME_NAME,
+                SubmissionRepository.DEFAULT_REPOSITORY_NAME, SubmissionLibraryDescriptor.WHOLE_GENOME.getName(),
                 submissionUpdateDate,
                 "No biosample found matching submitted id BlahBlahBlah");
         detail5 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618747", SubmissionStatusDetailBean.Status.FAILURE,
-                SubmissionRepository.DEFAULT_REPOSITORY_NAME, SubmissionLibraryDescriptor.WHOLE_GENOME_NAME,
+                SubmissionRepository.DEFAULT_REPOSITORY_NAME, SubmissionLibraryDescriptor.WHOLE_GENOME.getName(),
                 submissionUpdateDate,
                 "No bioproject found matching submitted accession BlahBlah");
 
