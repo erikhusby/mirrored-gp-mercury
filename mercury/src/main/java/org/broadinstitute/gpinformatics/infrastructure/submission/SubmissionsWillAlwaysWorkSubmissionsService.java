@@ -29,7 +29,7 @@ public class SubmissionsWillAlwaysWorkSubmissionsService extends SubmissionsServ
             SubmissionStatusDetailBean bean = new SubmissionStatusDetailBean(submissionBean.getUuid(),
                     SubmissionStatusDetailBean.Status.SUBMITTED,
                     SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR,
-                    SubmissionLibraryDescriptor.WHOLE_GENOME_DESCRIPTION,
+                    SubmissionLibraryDescriptor.WHOLE_GENOME.getDescription(),
                     new Date());
             results.add(bean);
         }
@@ -50,7 +50,7 @@ public class SubmissionsWillAlwaysWorkSubmissionsService extends SubmissionsServ
             SubmissionStatusDetailBean statusDetailBean = new SubmissionStatusDetailBean(uuid,
                     SubmissionStatusDetailBean.Status.FAILURE,
                     SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR,
-                    SubmissionLibraryDescriptor.WHOLE_GENOME_DESCRIPTION, new Date(), "error1", "error2");
+                    SubmissionLibraryDescriptor.WHOLE_GENOME.getDescription(), new Date(), "error1", "error2");
             results.add(statusDetailBean);
         }
         return results;
