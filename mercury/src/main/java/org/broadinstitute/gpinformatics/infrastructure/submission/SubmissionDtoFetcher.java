@@ -94,7 +94,6 @@ public class SubmissionDtoFetcher {
                 productOrderSampleDao.findSubmissionSamples(researchProject.getJiraTicketKey());
 
         ProductOrder.loadCollaboratorSampleName(productOrderSamples);
-        Map<String, Collection<ProductOrder>> sampleNameToPdos = getCollaboratorSampleNameToPdoMap(productOrderSamples, messageReporter);
 
         // Gather status for anything that has already been submitted
         Map<String, SubmissionStatusDetailBean> sampleSubmissionMap = buildSampleToSubmissionMap(researchProject);
@@ -106,7 +105,7 @@ public class SubmissionDtoFetcher {
          */
         Map<SubmissionTuple, Aggregation> aggregationMap = fetchAggregationDtos(productOrderSamples);
 
-        List<SubmissionDto> results = buildSubmissionDtosFromResults(sampleNameToPdos, sampleSubmissionMap, aggregationMap, researchProject, messageReporter);
+        List<SubmissionDto> results = buildSubmissionDtosFromResults(sampleSubmissionMap, aggregationMap, researchProject, messageReporter);
         return results;
     }
 
@@ -149,10 +148,11 @@ public class SubmissionDtoFetcher {
         return aggregationMap;
     }
 
-    public List<SubmissionDto> buildSubmissionDtosFromResults(Map<String, Collection<ProductOrder>> sampleNameToPdos,
-                                                              Map<String, SubmissionStatusDetailBean> sampleSubmissionMap,
-                                                              Map<SubmissionTuple, Aggregation>  aggregationMap,
-                                                              ResearchProject researchProject, MessageReporter messageReporter) {
+    public List<SubmissionDto> buildSubmissionDtosFromResults(
+        Map<String, SubmissionStatusDetailBean> sampleSubmissionMap,
+        Map<SubmissionTuple, Aggregation> aggregationMap,
+        ResearchProject researchProject,
+        MessageReporter messageReporter) {
         List<SubmissionDto> results = new ArrayList<>();
         List<String> errors = new ArrayList<>();
         for (SubmissionTuple tuple : aggregationMap.keySet()) {
@@ -165,8 +165,7 @@ public class SubmissionDtoFetcher {
             if (submissionTracker != null) {
                 statusDetailBean = sampleSubmissionMap.get(submissionTracker.createSubmissionIdentifier());
             }
-            results.add(new SubmissionDto(aggregation, sampleNameToPdos.get(tuple.getSampleName()),
-                    statusDetailBean));
+            results.add(new SubmissionDto(aggregation, statusDetailBean));
         }
         if (!errors.isEmpty()) {
             messageReporter.addMessage("Picard data not found for samples<ul><li>{0}</ul>", errors);

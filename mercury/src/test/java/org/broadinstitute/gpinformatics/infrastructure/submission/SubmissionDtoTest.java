@@ -11,18 +11,13 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.AggregationTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.hamcrest.Matchers;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
@@ -33,6 +28,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 public class SubmissionDtoTest {
     public static final String TEST_SAMPLE = "BOT2365_T";
     public static final String RESEARCH_PROJECT = "RP-12";
+    public static final String PRODUCT_ORDER_ID = "PDO-1234";
     public static final String AGGREGATION_PROJECT = "RP-12";
     public static final int VERSION = 1;
     public static final double CONTAMINATION = 0.47;
@@ -43,27 +39,24 @@ public class SubmissionDtoTest {
     public static final String SUBMISSION_UUID = "1234";
 
     private Aggregation aggregation;
-    private List<ProductOrder> productOrders = new ArrayList<>();
     private SubmissionStatusDetailBean submissionStatus;
 
     @BeforeMethod
     public void setUp() throws Exception {
-        aggregation = AggregationTestFactory.buildAggregation(RESEARCH_PROJECT, TEST_SAMPLE, 1, CONTAMINATION,
+        aggregation = AggregationTestFactory.buildAggregation(RESEARCH_PROJECT, PRODUCT_ORDER_ID, TEST_SAMPLE, 1, CONTAMINATION,
                 FINGERPRINT_LOD, DATA_TYPE, QUALITY_METRIC, null, null, "OnPrem");
-        productOrders.add(ProductOrderTestFactory.createDummyProductOrder("PDO-1234"));
-        productOrders.add(ProductOrderTestFactory.createDummyProductOrder("PDO-5678"));
         SubmissionsService submissionsService = new SubmissionsServiceStub();
         submissionStatus = submissionsService.getSubmissionStatus(SUBMISSION_UUID).iterator().next();
     }
 
     public void testDtoForSampleWithConstructor() {
-        SubmissionDto submissionDTO = new SubmissionDto(aggregation, productOrders, submissionStatus);
+        SubmissionDto submissionDTO = new SubmissionDto(aggregation, submissionStatus);
         assertThat(submissionDTO.getAggregation(), is(Matchers.notNullValue()));
 
         assertThat(submissionDTO.getSampleName(), equalTo(TEST_SAMPLE));
 //        assertThat(submissionDTO.getBioSample());
         assertThat(submissionDTO.getDataType(), equalTo(Aggregation.DATA_TYPE_EXOME));
-        assertThat(submissionDTO.getProductOrders(), containsInAnyOrder(productOrders.toArray()));
+        assertThat(submissionDTO.getProductOrders(), containsInAnyOrder(PRODUCT_ORDER_ID));
         assertThat(submissionDTO.getAggregationProject(), equalTo(AGGREGATION_PROJECT));
         assertThat(submissionDTO.getVersion(), equalTo(VERSION));
         assertThat(submissionDTO.getQualityMetric(), equalTo(QUALITY_METRIC));
