@@ -131,7 +131,7 @@ public class SubmissionDtoFetcherTest {
             assertThat(submissionDto.getLanesInAggregation(), Matchers.equalTo(2));
             assertThat(submissionDto.getSubmittedStatus(),
                     Matchers.equalTo(SubmissionStatusDetailBean.Status.FAILURE.getKey()));
-            assertThat(submissionDto.getSubmissionLibraryDescriptor(), equalTo(SubmissionLibraryDescriptor.WHOLE_GENOME_DESCRIPTION));
+            assertThat(submissionDto.getSubmissionLibraryDescriptor(), equalTo(SubmissionLibraryDescriptor.WHOLE_GENOME.getDescription()));
             assertThat(submissionDto.getSubmissionRepositoryName(), equalTo(SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR));
 
             assertThat(submissionDto.getStatusDate(), Matchers.notNullValue());

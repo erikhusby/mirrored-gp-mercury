@@ -63,8 +63,7 @@ public class SubmissionsServiceMockTest extends MockServerTest {
 
         submissionRepository = new SubmissionRepository(SubmissionRepository.DEFAULT_REPOSITORY_NAME,
             SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR);
-        submissionLibraryDescriptor = new SubmissionLibraryDescriptor(SubmissionLibraryDescriptor.WHOLE_GENOME_NAME,
-            SubmissionLibraryDescriptor.WHOLE_GENOME_DESCRIPTION);
+        submissionLibraryDescriptor = SubmissionLibraryDescriptor.WHOLE_GENOME;
     }
 
     @Test
