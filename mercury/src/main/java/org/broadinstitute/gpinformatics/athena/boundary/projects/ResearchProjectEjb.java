@@ -315,9 +315,7 @@ public class ResearchProjectEjb {
                     }
                 });
         List<String> errorMessages = new ArrayList<>();
-        if (submissionResults.isEmpty()) {
-            errorMessages.add("There was an error.");
-        }
+
         for (SubmissionStatusDetailBean status : submissionResults) {
             SubmissionTracker submissionTracker = submissionIdentifierToTracker.get(status.getUuid());
             if (CollectionUtils.isNotEmpty(status.getErrors())) {
