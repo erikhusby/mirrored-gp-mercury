@@ -118,6 +118,12 @@ public enum VesselGeometry {
             new String[]{"LANE1", "LANE2", "LANE3", "LANE4", "LANE5", "LANE6", "LANE7", "LANE8"},
             new VesselPosition[]{VesselPosition.LANE1, VesselPosition.LANE2, VesselPosition.LANE3, VesselPosition.LANE4, VesselPosition.LANE5, VesselPosition.LANE6, VesselPosition.LANE7, VesselPosition.LANE8}),
 
+    FLOWCELL1x4(
+            "1x4",
+            new String[]{""},
+            new String[]{"LANE1", "LANE2", "LANE3", "LANE4"},
+            new VesselPosition[]{VesselPosition.LANE1, VesselPosition.LANE2, VesselPosition.LANE3, VesselPosition.LANE4}),
+
     FLOWCELL1x2(
             "1x2",
             new String[]{""},
