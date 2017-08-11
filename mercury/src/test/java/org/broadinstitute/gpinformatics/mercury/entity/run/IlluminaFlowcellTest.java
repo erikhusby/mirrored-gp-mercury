@@ -67,8 +67,10 @@ public class IlluminaFlowcellTest {
                     {"CHYH5CALVI", IlluminaFlowcell.FlowcellType.HiSeqX10Flowcell},
                     {"CHYH5CDMXX", IlluminaFlowcell.FlowcellType.NovaSeqFlowcell},
                     {"CHYH5CDM67", IlluminaFlowcell.FlowcellType.NovaSeqFlowcell},
+                    {"CHYH5CDS67", IlluminaFlowcell.FlowcellType.NovaSeqS4Flowcell},
                     {"QQYH5CBBXX", IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell},
                     {"QQYH5CBB89", IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell},
+                    {"H2JLNBGX3", IlluminaFlowcell.FlowcellType.NextSeqFlowcell},
                     {"QQYH5CBB8", IlluminaFlowcell.FlowcellType.OtherFlowcell},
                     {"flowBcode123412341234123", IlluminaFlowcell.FlowcellType.OtherFlowcell}
             };
