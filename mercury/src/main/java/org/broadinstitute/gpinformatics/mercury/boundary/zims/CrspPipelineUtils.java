@@ -27,8 +27,10 @@ public class CrspPipelineUtils {
      * Returns true if all samples are considered
      * crsp samples.  Throws an exception if there's a
      * mix of crps and non-crsp samples.
+     * @param sampleInstances the sample instances for a lane
+     * @param mixedLaneOk whether the pipeline accepts mixtures of clinical and research samples; true for genomes
      */
-    public  boolean areAllSamplesForCrsp(Set<SampleInstanceV2> sampleInstances) {
+    public boolean areAllSamplesForCrsp(Set<SampleInstanceV2> sampleInstances, boolean mixedLaneOk) {
         boolean hasAtLeastOneCrspSample = false;
         boolean hasNonCrspSamples = false;
 
@@ -45,7 +47,7 @@ public class CrspPipelineUtils {
                 }
             }
         }
-        if (hasAtLeastOneCrspSample && hasNonCrspSamples) {
+        if (!mixedLaneOk && hasAtLeastOneCrspSample && hasNonCrspSamples) {
             throw new RuntimeException("Samples contain a mix of CRSP and non-CRSP samples.");
         }
         else {
