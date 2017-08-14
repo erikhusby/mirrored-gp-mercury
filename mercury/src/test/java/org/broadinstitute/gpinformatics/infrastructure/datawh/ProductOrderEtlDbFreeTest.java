@@ -5,6 +5,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -51,6 +52,7 @@ public class ProductOrderEtlDbFreeTest {
     private ProductOrderDao pdoDao = createMock(ProductOrderDao.class);
     private AttributeArchetypeDao archetypeDao = createMock(AttributeArchetypeDao.class);
     private GenotypingChip genotypingChip = createMock(GenotypingChip.class);
+    private GenotypingProductOrderMapping genotypingProductOrderMapping = createMock(GenotypingProductOrderMapping.class);
     private ProductOrder pdo = createMock(ProductOrder.class);
     private ResearchProject researchProject = createMock(ResearchProject.class);
     private Product product = createMock(Product.class);
@@ -59,12 +61,13 @@ public class ProductOrderEtlDbFreeTest {
     private RegulatoryInfo regulatoryInfo = createMock(RegulatoryInfo.class);
     private ProductEjb productEjb = createMock(ProductEjb.class);
 
-    private Object[] mocks = new Object[]{auditReader, pdoDao, archetypeDao, genotypingChip, pdo, researchProject, product, userList, owner,
+    private Object[] mocks = new Object[]{auditReader, pdoDao, archetypeDao, genotypingChip, genotypingProductOrderMapping, pdo, researchProject, product, userList, owner,
             regulatoryInfo, productEjb};
     private String sapMockOrderNumber = "1000084774";
     private String chipArchetypeGroup = "Infinium";
     private String arrayChipType = "PsychChipContrived";
-    private String callThreshold = "66";
+    private String callThreshold = "98";
+    private String callThresholdOverride = "66";
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
@@ -98,7 +101,7 @@ public class ProductOrderEtlDbFreeTest {
     public void testIncrementalEtl() throws Exception {
         expect(pdoDao.findById(ProductOrder.class, entityId)).andReturn(pdo);
 
-        expect(pdo.getProductOrderId()).andReturn(entityId);
+        expect(pdo.getProductOrderId()).andReturn(entityId).anyTimes();
         expect(pdo.getResearchProject()).andReturn(researchProject).times(2);
         expect(pdo.getProduct()).andReturn(product).times(2);
         expect(pdo.getOrderStatus()).andReturn(orderStatus);
@@ -106,7 +109,7 @@ public class ProductOrderEtlDbFreeTest {
         expect(pdo.getModifiedDate()).andReturn(modifiedDate);
         expect(pdo.getTitle()).andReturn(title);
         expect(pdo.getQuoteId()).andReturn(quoteId);
-        expect(pdo.getJiraTicketKey()).andReturn(jiraTicketKey);
+        expect(pdo.getJiraTicketKey()).andReturn(jiraTicketKey).anyTimes();
         expect(pdo.getCreatedBy()).andReturn(createdBy);
         expect(userList.getById(createdBy)).andReturn(owner);
         expect(owner.getUsername()).andReturn(ownerName);
@@ -121,6 +124,9 @@ public class ProductOrderEtlDbFreeTest {
         expect(productEjb.getGenotypingChip(pdo, createdDate)).andReturn(Pair.of(chipArchetypeGroup, arrayChipType));
         expect(archetypeDao.findGenotypingChip(chipArchetypeGroup, arrayChipType)).andReturn(genotypingChip);
         expect(genotypingChip.getAttribute("call_rate_threshold")).andReturn(new ArchetypeAttribute(genotypingChip, "call_rate_threshold", callThreshold));
+
+        expect(archetypeDao.findGenotypingProductOrderMapping(entityId)).andReturn(genotypingProductOrderMapping);
+        expect(genotypingProductOrderMapping.getAttributes()).andReturn(Collections.singleton(new ArchetypeAttribute(genotypingChip /* <-- ignored */, "call_rate_threshold", callThresholdOverride)));
 
         replay(mocks);
 
@@ -150,7 +156,7 @@ public class ProductOrderEtlDbFreeTest {
         assertEquals(parts[i++], "");
         assertEquals(parts[i++], sapMockOrderNumber);
         assertEquals(parts[i++], arrayChipType);
-        assertEquals(parts[i++], callThreshold);
+        assertEquals(parts[i++], callThresholdOverride);
         assertEquals(parts[i++], "");
         assertEquals(parts.length, i);
     }

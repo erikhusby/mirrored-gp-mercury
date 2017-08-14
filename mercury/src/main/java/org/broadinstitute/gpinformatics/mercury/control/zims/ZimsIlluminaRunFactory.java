@@ -51,6 +51,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
+import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 
 import javax.inject.Inject;
 import java.math.BigDecimal;
@@ -107,8 +108,9 @@ public class ZimsIlluminaRunFactory {
             LabVessel contextVessel = sampleInstance.getInitialLabVessel();
             if (contextVessel != null) {
                 if (contextVessel.getTransfersTo().isEmpty()) {
-                    if (contextVessel.getLabBatches().size() == 0)
+                    if (contextVessel.getLabBatches().size() == 0) {
                         return contextVessel;
+                    }
                     for (LabBatch labBatch : contextVessel.getLabBatches()) {
                         if (labBatch.getStartingBatchLabVessels().contains(contextVessel)) {
                             return contextVessel;
@@ -384,15 +386,20 @@ public class ZimsIlluminaRunFactory {
             }
 
             SampleData sampleData = mapSampleIdToDto.get(sampleInstanceDto.getSampleId());
-            String pooledTubeCollaboratorId  = sampleInstance.getCollaboratorParticipantId();
             Boolean isPooledTube = sampleInstance.getIsPooledTube();
+            if (isPooledTube && sampleData instanceof MercurySampleData) {
+                MercurySampleData mercurySampleData = (MercurySampleData) sampleData;
+                mercurySampleData.setRootSampleId(sampleInstance.getMercuryRootSampleName());
+                mercurySampleData.setSampleId(sampleInstance.getNearestMercurySampleName());
+            }
             TZDevExperimentData devExperimentData = sampleInstance.getTzDevExperimentData();
 
             libraryBeans.add(createLibraryBean(sampleInstanceDto, productOrder, sampleData, lcSet,
                     baitName, indexingSchemeEntity, catNames, sampleInstanceDto.getSampleInstance().getWorkflowName(),
                     indexingSchemeDto, mapNameToControl, sampleInstanceDto.getPdoSampleName(),
                     sampleInstanceDto.isCrspLane(), sampleInstanceDto.getMetadataSourceForPipelineAPI(), analysisTypes,
-                    referenceSequenceKeys, aggregationDataTypes, positiveControlResearchProjects, insertSizes, devExperimentData, pooledTubeCollaboratorId,isPooledTube ));
+                    referenceSequenceKeys, aggregationDataTypes, positiveControlResearchProjects, insertSizes,
+                    devExperimentData, isPooledTube));
         }
 
         // Make order predictable.  Include library name because for ICE there are 8 ancestor catch tubes, all with
@@ -430,7 +437,8 @@ public class ZimsIlluminaRunFactory {
             Map<String, Control> mapNameToControl, String pdoSampleName,
             boolean isCrspLane, String metadataSourceForPipelineAPI, Set<String> analysisTypes,
             Set<String> referenceSequenceKeys, Set<String> aggregationDataTypes,
-            Set<ResearchProject> positiveControlProjects, Set<Integer> insertSizes, TZDevExperimentData devExperimentData,  String pooledTubeCollaboratorId, boolean isPooledTube) {
+            Set<ResearchProject> positiveControlProjects, Set<Integer> insertSizes, TZDevExperimentData devExperimentData,
+            boolean isPooledTube) {
 
         Format dateFormat = FastDateFormat.getInstance(ZimsIlluminaRun.DATE_FORMAT);
 
@@ -548,7 +556,7 @@ public class ZimsIlluminaRunFactory {
                 strain, aligner, rrbsSizeRange, restrictionEnzyme, bait, labMeasuredInsertSize,
                 positiveControl, negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation,
                 catNames, productOrder, lcSet, sampleData, labWorkflow, libraryCreationDate, pdoSampleName,
-                metadataSourceForPipelineAPI, aggregationDataType, pooledTubeCollaboratorId, jiraService);
+                metadataSourceForPipelineAPI, aggregationDataType, jiraService);
         if (isCrspLane) {
             crspPipelineUtils.setFieldsForCrsp(libraryBean, sampleData, bait);
         }
