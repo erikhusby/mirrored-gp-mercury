@@ -331,7 +331,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private Map<String, AttributeDefinition> pdoSpecificDefinitions = null;
 
     private Map<String, String> attributes = new HashMap<>();
-    private HashMap<String, String> chipDefaults = new HashMap<>();
+    private Map<String, String> chipDefaults = new HashMap<>();
 
 
     /*
@@ -1592,6 +1592,13 @@ public class ProductOrderActionBean extends CoreActionBean {
                     if (foundChange) {
                         attributeArchetypeDao.persist(genotypingProductOrderMapping);
                     }
+                }
+            } else {
+                // Values for attributes are the same as the defaults - Delete any overrides
+                genotypingProductOrderMapping
+                        = productOrderEjb.findOrCreateGenotypingChipProductOrderMapping(editOrder.getProductOrderId());
+                if (genotypingProductOrderMapping != null) {
+                    attributeArchetypeDao.remove(genotypingProductOrderMapping);
                 }
             }
         }
@@ -3278,6 +3285,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         return false;
     }
 
+    /**
+     * These are PDO specific overrides of defaults for chips
+     */
     private Map<String, AttributeDefinition> getPdoAttributeDefinitions() {
         if (pdoSpecificDefinitions == null) {
             pdoSpecificDefinitions = attributeArchetypeDao.findAttributeGroupByTypeAndName(
@@ -3290,10 +3300,10 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Map<String, String> getAttributes() {
         return attributes;
     }
-
-    public HashMap<String, String> getChipDefaults() {
+    public Map<String, String> getChipDefaults() {
         return chipDefaults;
     }
+
     public String getPublishSAPAction() {return PUBLISH_PDO_TO_SAP;}
 
     public String getReplacementSampleList() {
