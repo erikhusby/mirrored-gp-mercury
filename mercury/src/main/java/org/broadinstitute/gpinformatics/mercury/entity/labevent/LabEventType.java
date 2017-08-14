@@ -265,6 +265,14 @@ public enum LabEventType {
                     build(),
             LibraryType.NONE_ASSIGNED),
 
+    // Dev Samples
+    DEV("DevCherryPick",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT, RackOfTubes.RackType.Matrix96Anonymous,
+                    RackOfTubes.RackType.Matrix96Anonymous).build(),
+            LibraryType.NONE_ASSIGNED),
+
     // HiSeq 2000
     FLOWCELL_TRANSFER("FlowcellTransfer",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.FALSE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
