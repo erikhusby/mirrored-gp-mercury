@@ -117,8 +117,6 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     @BatchSize(size = 100)
     Set<SampleReceiptValidation> sampleReceiptValidations = new HashSet<>();
 
-    // todo: Is this necessary?
-    @BatchSize(size = 100)
     @ManyToOne(cascade = CascadeType.PERSIST)
     private MercurySample mercurySample;
 
