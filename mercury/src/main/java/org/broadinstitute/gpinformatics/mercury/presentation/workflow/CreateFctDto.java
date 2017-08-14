@@ -114,6 +114,10 @@ public class CreateFctDto implements FctDto, Cloneable {
         return StringUtils.join(productNames, DesignationDto.DELIMITER);
     }
 
+    public List<String> getProductNames() {
+        return productNames;
+    }
+
     public void setProduct(String delimitedProductNames) {
         productNames = Arrays.asList(StringUtils.trimToEmpty(delimitedProductNames).split(DesignationDto.DELIMITER));
     }
