@@ -121,7 +121,7 @@ public class SubmissionDtoFetcher {
      */
     public Map<SubmissionTuple, Aggregation> fetchAggregationDtos(List<ProductOrderSample> productOrderSamples) {
 
-        Multimap<String, SubmissionTuple> projectSamples = HashMultimap.create();
+        Multimap<String, SubmissionTuple> tuplesBySample = HashMultimap.create();
         for (ProductOrderSample productOrderSample : productOrderSamples) {
             ResearchProject researchProject = productOrderSample.getProductOrder().getResearchProject();
             String sampleName = productOrderSample.getSampleData().getCollaboratorsSampleName();
@@ -129,12 +129,12 @@ public class SubmissionDtoFetcher {
                 new SubmissionTuple(productOrderSample.getProductOrder().getResearchProject().getJiraTicketKey(),
                     sampleName, SubmissionTuple.VERSION_UNKNOWN, SubmissionTuple.PROCESSING_LOCATION_UNKNOWN,
                     SubmissionTuple.DATA_TYPE_UNKNOWN);
-            projectSamples.put(researchProject.getBusinessKey(), submissionTuple);
+            tuplesBySample.put(researchProject.getBusinessKey(), submissionTuple);
 
         }
         final Map<SubmissionTuple, Aggregation> aggregationMap = new HashMap<>();
-        for (String projectName : projectSamples.keySet()) {
-            List<Aggregation> aggregations = aggregationMetricsFetcher.fetch(projectSamples.get(projectName));
+        for (String projectName : tuplesBySample.keySet()) {
+            List<Aggregation> aggregations = aggregationMetricsFetcher.fetch(tuplesBySample.get(projectName));
             for (final Aggregation aggregation : aggregations) {
                 aggregationMap.putAll(Maps.uniqueIndex(aggregations, new Function<Aggregation, SubmissionTuple>() {
                     @Override
@@ -204,7 +204,7 @@ public class SubmissionDtoFetcher {
         /** SubmissionTracker uses sampleName for accessionIdentifier
          @see: org/broadinstitute/gpinformatics/athena/boundary/projects/ ResearchProjectEjb.java:243 **/
         for (SubmissionTracker submissionTracker : researchProject.getSubmissionTrackers()) {
-            submissionIds.put(submissionTracker.createSubmissionIdentifier(), submissionTracker.getTuple());
+            submissionIds.put(submissionTracker.createSubmissionIdentifier(), submissionTracker.getSubmissionTuple());
         }
         return submissionIds;
     }
