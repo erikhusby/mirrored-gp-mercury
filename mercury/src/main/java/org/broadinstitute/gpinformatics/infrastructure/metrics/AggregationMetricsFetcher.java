@@ -69,7 +69,6 @@ public class AggregationMetricsFetcher {
             }
 
             Predicate projectPredicate = criteriaBuilder.equal(root.get(Aggregation_.project), aTuple.getProject());
-//            Predicate latestPredicate = criteriaBuilder.equal(root.get(Aggregation_.latest), true);
             criteriaQuery.where(criteriaBuilder
                 .and(projectPredicate, versionPredicate,
                     criteriaBuilder.isNull(root.get(Aggregation_.library)),
