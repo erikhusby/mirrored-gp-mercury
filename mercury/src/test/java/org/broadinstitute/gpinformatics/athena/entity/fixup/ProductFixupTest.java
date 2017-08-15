@@ -182,4 +182,55 @@ public class ProductFixupTest extends Arquillian {
         utx.commit();
     }
 
+    @Test(enabled = false)
+    public void support3237CloneProductsForHyperprep() throws Exception {
+
+        userBean.loginOSUser();
+        utx.begin();
+
+        final Map<String, Pair<String, String>> partNumbersToClone = new HashMap<>();
+        partNumbersToClone.put("P-WG-0048", Pair.of("P-WG-0079","PCR-Free Human WGS - 60x v1.1"));
+        partNumbersToClone.put("P-WG-0049", Pair.of("P-WG-0080","PCR+ Human WGS - 30x v1.1"));
+        partNumbersToClone.put("P-WG-0050", Pair.of("P-WG-0081","PCR+ Human WGS - 60x v1.1"));
+        partNumbersToClone.put("P-WG-0074", Pair.of("P-WG-0082","PCR+ Human WGS - 15x v1.1"));
+        partNumbersToClone.put("P-WG-0075", Pair.of("P-WG-0083","PCR-Free Human WGS - 15x v1.1"));
+        partNumbersToClone.put("P-WG-0076", Pair.of("P-WG-0084","PCR-Free Human WGS - 80x v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010300", Pair.of("XTNL-WGS-010322","WGS-010300 Genome, PCR-Free, 30X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010301", Pair.of("XTNL-WGS-010323","WGS-010301 Genome, PCR-Free, 30X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010302", Pair.of("XTNL-WGS-010324","WGS-010302 Genome, PCR-Free, 30X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010303", Pair.of("XTNL-WGS-010325","WGS-010303 Genome, PCR-Free, 30X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010304", Pair.of("XTNL-WGS-010326","WGS-010304 Genome, PCR-Free, 60X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010306", Pair.of("XTNL-WGS-010327","WGS-010306 Genome, PCR Plus, 60X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010307", Pair.of("XTNL-WGS-010328","WGS-010307 Genome, PCR Plus, 30X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010308", Pair.of("XTNL-WGS-010329","WGS-010308 Genome, PCR Plus, 30X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010309", Pair.of("XTNL-WGS-010330","WGS-010309 Genome, PCR Plus, 30X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010310", Pair.of("XTNL-WGS-010331","WGS-010310 Genome, PCR Plus, 30X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010311", Pair.of("XTNL-WGS-010332","WGS-010311 Genome, PCR-Free, 60X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010312", Pair.of("XTNL-WGS-010333","WGS-010312 Genome, PCR-Free, 60X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010313", Pair.of("XTNL-WGS-010334","WGS-010313 Genome, PCR-Free, 60X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010314", Pair.of("XTNL-WGS-010335","WGS-010314 Genome, PCR Plus, 60X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010315", Pair.of("XTNL-WGS-010336","WGS-010315 Genome, PCR Plus, 60X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010316", Pair.of("XTNL-WGS-010337","WGS-010316 Genome, PCR Plus, 60X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010317", Pair.of("XTNL-WGS-010338","WGS-010317 Genome, Unaligned, PCR-Free v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010318", Pair.of("XTNL-WGS-010339","WGS-010318 Genome, PCR-Free, 30X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010319", Pair.of("XTNL-WGS-010340","WGS-010319 Genome, PCR-Free, 60X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010320", Pair.of("XTNL-WGS-010341","WGS-010320 Genome, PCR Plus,  30X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010321", Pair.of("XTNL-WGS-010342","WGS-010321 Genome, PCR Plus,  60X v1.1"));
+
+        final List<Product> productsToClone = productDao.findByPartNumbers(new ArrayList<String>(partNumbersToClone.keySet()));
+
+        for (Product productToClone : productsToClone) {
+
+            final String productName = partNumbersToClone.get(productToClone.getPartNumber()).getRight();
+            final String partNumber = partNumbersToClone.get(productToClone.getPartNumber()).getLeft();
+
+            Product clonedProduct = Product.cloneProduct(productToClone, productName, partNumber);
+
+            productDao.persist(clonedProduct);
+        }
+        productDao.persist(new FixupCommentary("SUPPORT-3237 cloning exome products for HyperPrep Implementation"));
+        utx.commit();
+
+    }
+
 }
