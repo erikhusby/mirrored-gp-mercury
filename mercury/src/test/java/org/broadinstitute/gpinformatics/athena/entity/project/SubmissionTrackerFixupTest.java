@@ -55,6 +55,7 @@ public class SubmissionTrackerFixupTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
+// This test was commented to prevent compilation issues due to data submission api changes.
 //    @Test(enabled = false)
 //    public void gplim4091BackfillFileType() throws Exception {
 //        userBean.loginOSUser();
