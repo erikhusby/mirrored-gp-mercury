@@ -347,17 +347,7 @@ public class CreateFCTActionBean extends CoreActionBean {
                 }
                 if (!regulatoryDesignation.equals(createFctDto.getRegulatoryDesignation()) ||
                         regulatoryDesignation.equals(MIXED)) {
-                    // Mixed flowcells are permitted for genomes
-                    boolean mixedFlowcellOk = false;
-                    for (String productName : createFctDto.getProductNames()) {
-                        if (!productName.equals(CONTROLS)) {
-                            Product product = productDao.findByName(productName);
-                            if (Objects.equals(product.getAggregationDataType(), BassDTO.DATA_TYPE_WGS)) {
-                                mixedFlowcellOk = true;
-                                break;
-                            }
-                        }
-                    }
+                    boolean mixedFlowcellOk = labBatchEjb.isMixedFlowcellOk(createFctDto);
                     if (!mixedFlowcellOk) {
                         addGlobalValidationError("Cannot mix Clinical and Research on a flowcell.");
                         return new ForwardResolution(VIEW_PAGE);

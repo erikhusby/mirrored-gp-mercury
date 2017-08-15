@@ -15,9 +15,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.BSPExportsService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
@@ -89,6 +92,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.BSPRestSender.BSP_CONTAINER_UPDATE_LAYOUT;
+import static org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationActionBean.CONTROLS;
 import static org.broadinstitute.gpinformatics.mercury.presentation.run.FctDto.BY_ALLOCATION_ORDER;
 
 /**
@@ -119,6 +123,8 @@ public class LabBatchEjb {
     private BucketEjb bucketEjb;
 
     private ProductOrderDao productOrderDao;
+
+    private ProductDao productDao;
 
     private SampleDataFetcher sampleDataFetcher;
 
@@ -1048,17 +1054,35 @@ public class LabBatchEjb {
             errorString += (isValid ? "" : "and ") + "lcset (null) ";
             isValid = false;
         }
-        if (!DesignationUtils.RESEARCH.equals(designationDto.getRegulatoryDesignation()) &&
-            !DesignationUtils.CLINICAL.equals(designationDto.getRegulatoryDesignation())) {
-            errorString += (isValid ? "" : "and ") +
-                           "regulatory designation (" + designationDto.getRegulatoryDesignation() + ") ";
-            isValid = false;
+        boolean mixedFlowcellOk = isMixedFlowcellOk(designationDto);
+        if (!mixedFlowcellOk) {
+            if (!DesignationUtils.RESEARCH.equals(designationDto.getRegulatoryDesignation()) &&
+                    !DesignationUtils.CLINICAL.equals(designationDto.getRegulatoryDesignation())) {
+                errorString += (isValid ? "" : "and ") +
+                        "regulatory designation (" + designationDto.getRegulatoryDesignation() + ") ";
+                isValid = false;
+            }
         }
 
         if (!isValid) {
             messageReporter.addMessage(errorString);
         }
         return isValid;
+    }
+
+    public boolean isMixedFlowcellOk(FctDto designationDto) {
+        // Mixed flowcells are permitted for genomes
+        boolean mixedFlowcellOk = false;
+        for (String productName : designationDto.getProductNames()) {
+            if (!productName.equals(CONTROLS)) {
+                Product product = productDao.findByName(productName);
+                if (Objects.equals(product.getAggregationDataType(), BassDTO.DATA_TYPE_WGS)) {
+                    mixedFlowcellOk = true;
+                    break;
+                }
+            }
+        }
+        return mixedFlowcellOk;
     }
 
 
@@ -1195,6 +1219,11 @@ public class LabBatchEjb {
     @Inject
     public void setProductOrderDao(ProductOrderDao productOrderDao) {
         this.productOrderDao = productOrderDao;
+    }
+
+    @Inject
+    public void setProductDao(ProductDao productDao) {
+        this.productDao = productDao;
     }
 
     @Inject

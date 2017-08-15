@@ -66,10 +66,12 @@ public class CreateFctDto implements FctDto, Cloneable {
      * Split is used for partial dto allocation. This is unsupported since it should never happen, since
      * this type of dto is only used in the CreateFCT page that can only do complete flowcell fills.
      */
+    @Override
     public CreateFctDto split(int allocatedLanes) {
         throw new RuntimeException("Expected to only do complete flowcell fills.");
     }
 
+    @Override
     public String getBarcode() {
         return barcode;
     }
@@ -78,6 +80,7 @@ public class CreateFctDto implements FctDto, Cloneable {
         this.barcode = barcode;
     }
 
+    @Override
     public String getLcset() {
         return lcset;
     }
@@ -110,10 +113,12 @@ public class CreateFctDto implements FctDto, Cloneable {
         this.readLength = readLength;
     }
 
+    @Override
     public String getProduct() {
         return StringUtils.join(productNames, DesignationDto.DELIMITER);
     }
 
+    @Override
     public List<String> getProductNames() {
         return productNames;
     }
@@ -122,6 +127,7 @@ public class CreateFctDto implements FctDto, Cloneable {
         productNames = Arrays.asList(StringUtils.trimToEmpty(delimitedProductNames).split(DesignationDto.DELIMITER));
     }
 
+    @Override
     public BigDecimal getLoadingConc() {
         return loadingConc;
     }
@@ -130,6 +136,7 @@ public class CreateFctDto implements FctDto, Cloneable {
         this.loadingConc = loadingConc;
     }
 
+    @Override
     public Integer getNumberLanes() {
         return numberLanes;
     }
@@ -179,6 +186,7 @@ public class CreateFctDto implements FctDto, Cloneable {
     }
 
     /** Indicates if dto was allocated to a flowcell. */
+    @Override
     public boolean isAllocated() {
         return allocated;
     }
