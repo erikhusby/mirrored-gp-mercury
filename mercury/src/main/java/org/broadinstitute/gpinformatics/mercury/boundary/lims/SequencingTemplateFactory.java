@@ -520,7 +520,6 @@ public class SequencingTemplateFactory {
                              Set<Product> products, Set<Integer> readLengths, Set<Boolean> pairedEnds,
                              Set<String> molecularIndexReadStructures, Set<UMIReagent> umiReagents) {
 
-        //TODO This logic doesn't make sense, need this to be on a lane level
         for(SampleInstanceV2 sampleInstance: sampleInstances) {
             // Controls don't have bucket entries, but assumes that the non-control samples will be present.
             if (sampleInstance.getSingleBucketEntry() != null) {
