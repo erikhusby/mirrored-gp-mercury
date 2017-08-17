@@ -374,7 +374,7 @@ public class ResearchProjectEjb {
         List<SubmissionTracker> submissionTrackers = submissionTrackerDao.findSubmissionTrackers(submissionDtos);
 
         for (SubmissionTracker submissionTracker : submissionTrackers) {
-            errors.add(submissionTracker.getTuple().getSampleName());
+            errors.add(submissionTracker.getSubmissionTuple().getSampleName());
         }
         if (!errors.isEmpty()) {
             throw new ValidationException(String.format("Some samples have already been submitted: %s", errors));

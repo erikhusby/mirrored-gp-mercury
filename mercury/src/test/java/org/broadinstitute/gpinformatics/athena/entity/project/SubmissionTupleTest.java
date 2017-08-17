@@ -11,13 +11,27 @@
 
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationAlignment;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationHybridSelection;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
 import org.broadinstitute.gpinformatics.infrastructure.submission.FileType;
+import org.broadinstitute.gpinformatics.infrastructure.submission.ISubmissionTuple;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioSampleBean;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionStatusDetailBean;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.Test;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.core.Is.is;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class SubmissionTupleTest {
@@ -118,4 +132,28 @@ public class SubmissionTupleTest {
         return submissionTuple;
     }
 
+    public void testTupleEqual(){
+        SubmissionTracker tracker1 =
+            new SubmissionTracker(null, "p1", "s1", "1", FileType.BAM, SubmissionBioSampleBean.ON_PREM,
+                Aggregation.DATA_TYPE_RNA);
+        Set<AggregationAlignment> alignments = Collections.singleton(new AggregationAlignment(1l, "foo"));
+
+        SubmissionDto submissionDto = new SubmissionDto(
+            new Aggregation("p1", "s1", null, 1, 2, Aggregation.DATA_TYPE_RNA, alignments, null, null,
+                Collections.<AggregationReadGroup>emptySet(), null, null, SubmissionBioSampleBean.ON_PREM), new SubmissionStatusDetailBean());
+        assertThat(SubmissionTuple.hasTuple(Arrays.<ISubmissionTuple>asList(tracker1, submissionDto), tracker1), is(true));
+    }
+
+    public void testTupleNotEqual(){
+        SubmissionTracker tracker1 = new SubmissionTracker(null, "p2", "s1", "1", FileType.BAM, SubmissionBioSampleBean.ON_PREM, EXOME);
+        SubmissionTracker tracker2 = new SubmissionTracker(null, "p3", "s1", "1", FileType.BAM, SubmissionBioSampleBean.ON_PREM, EXOME);
+        Set<AggregationAlignment> alignments = Collections.singleton(new AggregationAlignment(1l, "foo"));
+
+        SubmissionDto submissionDto = new SubmissionDto(
+            new Aggregation("p1", "s1", null, 1, 2, EXOME, alignments, null, new AggregationHybridSelection(1d),
+                Collections.<AggregationReadGroup>emptySet(), null, null, SubmissionBioSampleBean.ON_PREM), new SubmissionStatusDetailBean());
+
+        List<? extends ISubmissionTuple> tuples = Arrays.asList(tracker1, submissionDto);
+        assertThat(SubmissionTuple.hasTuple(tuples, tracker2), not(true));
+    }
 }

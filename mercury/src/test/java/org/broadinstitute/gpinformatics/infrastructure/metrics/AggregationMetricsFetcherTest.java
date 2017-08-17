@@ -14,11 +14,10 @@ import javax.inject.Inject;
 import java.util.Collections;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.closeTo;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.core.Is.is;
 
 /**
  * Tests for the connection to the Picard aggregation metrics database as well as the JPA entity mappings.
@@ -50,7 +49,7 @@ public class AggregationMetricsFetcherTest extends ContainerTest {
     /**
      * Version of aggregation on Mercury research project.
      */
-    public static final int MERCURY_AGGREGATION_VERSION = 1;
+    public static final int MERCURY_AGGREGATION_VERSION = 2;
 
     /**
      * Squid project for which SAMPLE has been aggregated on. This is a good test case because, in the metrics database,
@@ -66,7 +65,7 @@ public class AggregationMetricsFetcherTest extends ContainerTest {
 
     @Inject
     private AggregationMetricsFetcher fetcher;
-    private static final double MIN_LOD = 53.437256;
+    private static final double MIN_LOD = 17.926603;
     private static final double MAX_LOD = 55.771678;
 
     public void testFetchMetricsForSampleAggregatedByMercuryRP() {
@@ -74,7 +73,7 @@ public class AggregationMetricsFetcherTest extends ContainerTest {
                 new SubmissionTuple(MERCURY_PROJECT, SAMPLE, Integer.toString(MERCURY_AGGREGATION_VERSION),
                     SubmissionBioSampleBean.ON_PREM, EXOME)));
 
-        Aggregation aggregation = aggregationResults.get(0);
+        Aggregation aggregation = aggregationResults.iterator().next();
         assertThat(aggregation.getProject(), equalTo(MERCURY_PROJECT));
         assertThat(aggregation.getSample(), equalTo(SAMPLE));
         assertThat(aggregation.getVersion(), equalTo(MERCURY_AGGREGATION_VERSION));
@@ -82,8 +81,7 @@ public class AggregationMetricsFetcherTest extends ContainerTest {
         assertThat(lod.getMax(), equalTo(MAX_LOD));
         assertThat(lod.getMin(), equalTo(MIN_LOD));
         AggregationReadGroup readGroup = aggregation.getAggregationReadGroups().iterator().next();
-        assertThat(readGroup.getReadGroupIndex().getProductOrderId(), is("PDO-3853"));
-        assertThat(aggregation.getAggregationContam().getPctContamination(), closeTo(0.0002, 0.00001));
+        assertThat(readGroup.getReadGroupIndex().getProductOrderId(), Matchers.either(is("PDO-3853")).or(is("PDO-3974")));
     }
 
     public void testFetchMetricsWithBadProject() {
@@ -96,13 +94,6 @@ public class AggregationMetricsFetcherTest extends ContainerTest {
     public void testFetchMetricsWithBadSample() {
         List<Aggregation> aggregationResults = fetcher.fetch(Collections.singletonList(
                 new SubmissionTuple(MERCURY_PROJECT, "BAD-" + SAMPLE, Integer.toString(MERCURY_AGGREGATION_VERSION),
-                    SubmissionBioSampleBean.ON_PREM, EXOME)));
-        assertThat(aggregationResults, Matchers.emptyIterableOf(Aggregation.class));
-    }
-
-    public void testFetchMetricsWithBadVersion() {
-        List<Aggregation> aggregationResults = fetcher.fetch(Collections.singletonList(
-                new SubmissionTuple(MERCURY_PROJECT, SAMPLE, Integer.toString(MERCURY_AGGREGATION_VERSION * 100),
                     SubmissionBioSampleBean.ON_PREM, EXOME)));
         assertThat(aggregationResults, Matchers.emptyIterableOf(Aggregation.class));
     }

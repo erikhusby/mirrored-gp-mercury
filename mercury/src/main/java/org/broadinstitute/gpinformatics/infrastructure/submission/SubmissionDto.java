@@ -28,9 +28,6 @@ import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import javax.annotation.Nullable;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import java.io.Serializable;
 import java.text.NumberFormat;
 import java.util.Collections;
 import java.util.Date;
@@ -40,8 +37,7 @@ import java.util.Set;
 
 @JsonSerialize(include = JsonSerialize.Inclusion.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@XmlAccessorType(XmlAccessType.FIELD)
-public class SubmissionDto implements Serializable {
+public class SubmissionDto implements ISubmissionTuple {
     private static final long serialVersionUID = 8359394045710346776L;
 
     @JsonIgnore
@@ -71,12 +67,12 @@ public class SubmissionDto implements Serializable {
     @JsonIgnore
     private String[] submittedErrorsArray;
 
+    @JsonProperty
     private SubmissionTuple submissionTuple;
 
     @JsonProperty(value = SubmissionDto.SubmissionField.PRODUCT_ORDERS)
     private Set<String> productOrders = new HashSet<>();
 
-    @JsonProperty(value = SubmissionField.SUBMISSION_TUPLE)
     String getSubmissionTupleString() {
         String value = "";
         if (submissionTuple != null) {
@@ -236,10 +232,12 @@ public class SubmissionDto implements Serializable {
         return aggregation;
     }
 
+    @Override
     public String getSampleName() {
         return sample;
     }
 
+    @Override
     public String getDataType() {
         return datatype;
     }
@@ -248,8 +246,14 @@ public class SubmissionDto implements Serializable {
         return project;
     }
 
+    @Override
     public FileType getFileType() {
         return fileType;
+    }
+
+    @Override
+    public String getVersionString(){
+        return String.valueOf(version);
     }
 
     public Integer getVersion() {
@@ -292,6 +296,11 @@ public class SubmissionDto implements Serializable {
         return rpid;
     }
 
+    @Override @JsonIgnore
+    public String getProject() {
+        return rpid;
+    }
+
     int getLanesInAggregation() {
         return readGroupCount;
     }
@@ -300,12 +309,9 @@ public class SubmissionDto implements Serializable {
         return fileName;
     }
 
+    @Override
     public String getProcessingLocation() {
         return processingLocation;
-    }
-
-    public void setProcessingLocation(String processingLocation) {
-        this.processingLocation = processingLocation;
     }
 
     public Integer getSubmittedVersion() {
@@ -340,6 +346,7 @@ public class SubmissionDto implements Serializable {
         return submissionSite;
     }
 
+    @Override
     public SubmissionTuple getSubmissionTuple() {
         return submissionTuple;
     }
@@ -354,10 +361,6 @@ public class SubmissionDto implements Serializable {
 
     public void setUuid(String uuid) {
         this.uuid = uuid;
-    }
-
-    public void setVersion(int version) {
-        this.version = version;
     }
 
     public SubmissionTracker buildSubmissionTracker() {

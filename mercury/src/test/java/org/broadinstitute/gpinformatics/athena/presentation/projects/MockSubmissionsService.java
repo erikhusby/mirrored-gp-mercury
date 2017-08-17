@@ -30,11 +30,7 @@ public class MockSubmissionsService extends SubmissionsServiceImpl {
         MockSubmissionConfig submissionConfig = new MockSubmissionConfig(mockServer);
         MockSubmissionsService mockSubmissionsService = new MockSubmissionsService(submissionConfig);
 
-//        Cookie sessionId = new Cookie("sessionId", String.format("%d", mockSubmissionsService.hashCode()));
-
-        mockServer.when(HttpRequest.request()
-//            .withCookies(sessionId)
-        ).respond(httpResponse);
+        mockServer.when(HttpRequest.request()).respond(httpResponse);
         return mockSubmissionsService;
     }
 }
