@@ -4,19 +4,16 @@ package org.broadinstitute.gpinformatics.infrastructure.submission;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.annotate.JsonPropertyOrder;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlTransient;
 import java.io.Serializable;
 
 // setting the access order to alphabetical helps the tests pass more reliably.
 @JsonPropertyOrder(alphabetic = true)
-@XmlAccessorType(XmlAccessType.FIELD)
 @JsonSerialize(include=JsonSerialize.Inclusion.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class SubmissionBioSampleBean implements Serializable {
@@ -28,9 +25,9 @@ public class SubmissionBioSampleBean implements Serializable {
     @JsonProperty
     private SubmissionContactBean contact;
 
-    @XmlTransient
+    @JsonIgnore
     public static final String GCP = "GCP";
-    @XmlTransient
+    @JsonIgnore
     public static final String ON_PREM = "OnPrem";
 
     public SubmissionBioSampleBean() {

@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.AggregationTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioSampleBean;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
@@ -72,7 +73,8 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
     }
 
     public void testFindSubmissionTrackersNoneExist() throws Exception {
-        SubmissionDto submissionDto = getSubmissionDto(PDO_ID, "P123", sampleName, 1, SubmissionBioSampleBean.ON_PREM);
+        SubmissionDto submissionDto = getSubmissionDto(PDO_ID, "P123", sampleName, 1, SubmissionBioSampleBean.ON_PREM,
+            Aggregation.DATA_TYPE_EXOME);
         List<SubmissionTracker> submissionTrackers =
                 submissionTrackerDao.findSubmissionTrackers(Collections.singleton(submissionDto));
         assertThat(submissionTrackers, emptyCollectionOf(SubmissionTracker.class));
@@ -80,7 +82,7 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
 
     public void testFindSubmissionTrackersWithResult() throws Exception {
         SubmissionDto submissionDto =
-                getSubmissionDto(PDO_ID, "P123", sampleName, DEFAULT_VERSION, null);
+                getSubmissionDto(PDO_ID, "P123", sampleName, DEFAULT_VERSION, null, Aggregation.DATA_TYPE_EXOME);
         SubmissionTracker submissionTracker = addTracker(submissionDto);
 
         persistTrackers(Collections.singleton(submissionTracker));
@@ -89,16 +91,19 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
                 submissionTrackerDao.findSubmissionTrackers(Collections.singleton(submissionDto));
         assertThat(submissionTrackers, hasSize(1));
 
-        assertThat(submissionTrackers.iterator().next().getTuple(), equalTo(submissionTracker.getTuple()));
+        assertThat(submissionTrackers.iterator().next().getSubmissionTuple(), equalTo(submissionTracker.getSubmissionTuple()));
     }
 
     public void testFindSubmissionTrackersWithNewVersion() throws Exception {
         SubmissionDto submissionDto1 =
-                getSubmissionDto(PDO_ID, "P123", sampleName, DEFAULT_VERSION, SubmissionBioSampleBean.ON_PREM);
+            getSubmissionDto(PDO_ID, "P123", sampleName, DEFAULT_VERSION, SubmissionBioSampleBean.ON_PREM,
+                Aggregation.DATA_TYPE_EXOME);
         SubmissionTracker submissionTracker1 = addTracker(submissionDto1);
 
         int newVersion = DEFAULT_VERSION + 1;
-        SubmissionDto submissionDto2 = getSubmissionDto(PDO_ID, "P123", sampleName, newVersion, SubmissionBioSampleBean.ON_PREM);
+        SubmissionDto submissionDto2 =
+            getSubmissionDto(PDO_ID, "P123", sampleName, newVersion, SubmissionBioSampleBean.ON_PREM,
+                Aggregation.DATA_TYPE_EXOME);
         SubmissionTracker submissionTracker2 = addTracker(submissionDto2);
 
         persistTrackers(Arrays.asList(submissionTracker1, submissionTracker2));
@@ -114,14 +119,31 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
         assertThat(submissionTracker1.getVersion(), not(equalTo(submissionTracker2.getVersion())));
     }
 
-    public void testFindSubmissionTrackersWithDifferentLocations() throws Exception {
+    public void testSubmissionTrackersWithDifferentDataTypes(){
         // SubmissionTracker 1
         SubmissionDto submissionDto1 = getSubmissionDto(PDO_ID, "P123", sampleName, DEFAULT_VERSION,
-            SubmissionBioSampleBean.ON_PREM);
+            SubmissionBioSampleBean.ON_PREM, Aggregation.DATA_TYPE_EXOME);
         SubmissionTracker submissionTracker1 = addTracker(submissionDto1);
 
         // SubmissionTracker 2
-        SubmissionDto submissionDto2 = getSubmissionDto(PDO_ID, "P123", sampleName, DEFAULT_VERSION,  SubmissionBioSampleBean.GCP);
+        SubmissionDto submissionDto2 =
+            getSubmissionDto(PDO_ID, "P123", sampleName, DEFAULT_VERSION,
+                SubmissionBioSampleBean.ON_PREM, Aggregation.DATA_TYPE_RNA);
+        SubmissionTracker submissionTracker2 = addTracker(submissionDto2);
+
+        persistTrackers(Arrays.asList(submissionTracker1, submissionTracker2));
+    }
+
+    public void testFindSubmissionTrackersWithDifferentLocations() throws Exception {
+        // SubmissionTracker 1
+        SubmissionDto submissionDto1 = getSubmissionDto(PDO_ID, "P123", sampleName, DEFAULT_VERSION,
+            SubmissionBioSampleBean.ON_PREM, Aggregation.DATA_TYPE_EXOME);
+        SubmissionTracker submissionTracker1 = addTracker(submissionDto1);
+
+        // SubmissionTracker 2
+        SubmissionDto submissionDto2 =
+            getSubmissionDto(PDO_ID, "P123", sampleName, DEFAULT_VERSION, SubmissionBioSampleBean.GCP,
+                Aggregation.DATA_TYPE_EXOME);
         SubmissionTracker submissionTracker2 = addTracker(submissionDto2);
 
         persistTrackers(Arrays.asList(submissionTracker1, submissionTracker2));
@@ -136,26 +158,27 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
         assertThat(submissionTrackers, hasSize(1));
         submissionTracker2 = submissionTrackers.get(0);
         // Tuples should be different.
-        assertThat(submissionTracker1.getTuple(), not(equalTo(submissionTracker2.getTuple())));
+        assertThat(submissionTracker1.getSubmissionTuple(), not(equalTo(submissionTracker2.getSubmissionTuple())));
     }
 
 
     private void persistTrackers(Collection<SubmissionTracker> submissionTrackers) {
         for (SubmissionTracker tracker : submissionTrackers) {
             submissionTrackerDao.persist(tracker);
+            submissionTrackerDao.flush();
         }
         submissionTrackerDao.clear();
     }
 
     private SubmissionDto getSubmissionDto(String productOrderId, final String project, final String sampleName,
-                                           final int version, String processingLocation) {
+                                           final int version, String processingLocation, String dataType) {
         ProductOrder productOrder = ProductOrderTestFactory.createDummyProductOrder(1, productOrderId);
         ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(project);
         researchProject.addProductOrder(productOrder);
 
         Aggregation aggregation = AggregationTestFactory
-            .buildAggregation(project, productOrderId, sampleName, version, null, null, null, null, null, null,
-                processingLocation);
+            .buildAggregation(project, productOrderId, sampleName, version, 1d, new LevelOfDetection(1d, 3d), dataType,
+                2d, 3l, 4d, processingLocation);
         /*
          * TODO: Allow this relationship to be set for these tests.
          * While it's not necessary for the current implementation of the behavior being tested here, this relationship
