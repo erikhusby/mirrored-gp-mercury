@@ -529,9 +529,9 @@ public class ProductOrderEjb {
                                                Quote orderQuote) throws InvalidProductException {
         boolean allItemsValid = true;
         QuotePriceItem primaryPriceItem;
-        if(CollectionUtils.isNotEmpty(productsToConsider)) {
-            for (Product product: productsToConsider) {
-                    try {
+        if (CollectionUtils.isNotEmpty(productsToConsider)) {
+            for (Product product : productsToConsider) {
+                try {
                     primaryPriceItem =
                             priceListCache.findByKeyFields(product.getPrimaryPriceItem().getPlatform(),
                                     product.getPrimaryPriceItem().getCategory(),
@@ -540,14 +540,15 @@ public class ProductOrderEjb {
                         allItemsValid = false;
                         break;
                     }
-            } catch (Exception e) {
-                allItemsValid = false;
-                break;
+                } catch (Exception e) {
+                    allItemsValid = false;
+                    break;
+                }
+
+                validateSAPAndQuoteServerPrices(orderQuote, product);
             }
 
-            validateSAPAndQuoteServerPrices(orderQuote, product);
         }
-
         return allItemsValid;
     }
 

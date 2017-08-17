@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.sap;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
@@ -425,11 +424,18 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                     "Unable to continue with SAP.  The associated quote has either too few or too many funding sources");
         }
 
-        String customerNumber;
-        if (fundingLevel.getFunding().getFundingType().equals(Funding.PURCHASE_ORDER)) {
-            customerNumber = findCustomer(determineCompanyCode(productOrder), fundingLevel);
-        } else {
-            customerNumber = SapIntegrationClientImpl.INTERNAL_ORDER_CUSTOMER_NUMBER;
+        String customerNumber = null;
+        if(fundingLevel.getFunding().size() >1) {
+            throw new SAPIntegrationException("This order is ineligible to save to SAP since there are multiple "
+                                              + "funding sources associated with the given quote " +
+                                              productOrder.getQuoteId());
+        }
+        for (Funding funding : fundingLevel.getFunding()) {
+            if (funding.getFundingType().equals(Funding.PURCHASE_ORDER)) {
+                customerNumber = findCustomer(determineCompanyCode(productOrder), fundingLevel);
+            } else {
+                customerNumber = SapIntegrationClientImpl.INTERNAL_ORDER_CUSTOMER_NUMBER;
+            }
         }
 
         return new OrderCriteria(customerNumber,
