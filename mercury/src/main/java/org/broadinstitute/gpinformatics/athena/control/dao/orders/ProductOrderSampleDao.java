@@ -187,7 +187,7 @@ public class ProductOrderSampleDao extends GenericDao {
                 criteriaBuilder.equal(researchProjectrJoin.get(ResearchProject_.jiraTicketKey), researchProjectKey);
 
         Predicate orderStatusPredicate = criteriaBuilder.not(productOrderJoin.get(ProductOrder_.orderStatus)
-                .in(ProductOrder.OrderStatus.Draft, ProductOrder.OrderStatus.Abandoned));
+                .in(ProductOrder.OrderStatus.Draft, ProductOrder.OrderStatus.Abandoned, ProductOrder.OrderStatus.Pending));
 
         criteriaQuery.where(predicate).having(orderStatusPredicate);
         criteriaQuery.orderBy(criteriaBuilder.desc(productOrderJoin.get(ProductOrder_.placedDate)));
