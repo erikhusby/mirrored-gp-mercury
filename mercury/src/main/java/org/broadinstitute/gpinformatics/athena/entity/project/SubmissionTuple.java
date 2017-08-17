@@ -11,12 +11,14 @@
 
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
-import org.apache.commons.lang3.StringUtils;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.submission.FileType;
+import org.broadinstitute.gpinformatics.infrastructure.submission.ISubmissionTuple;
 import org.codehaus.jackson.annotate.JsonCreator;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
@@ -24,20 +26,17 @@ import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.annotate.JsonPropertyOrder;
 import org.codehaus.jackson.map.ObjectMapper;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlTransient;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 
 // setting the access order to alphabetical helps the tests pass more reliably.
 @JsonPropertyOrder(alphabetic = true)
-@XmlAccessorType(XmlAccessType.FIELD)
 @JsonIgnoreProperties(ignoreUnknown=true)
-public class SubmissionTuple implements Serializable {
+public class SubmissionTuple implements ISubmissionTuple {
     private static final long serialVersionUID = 1262062294730627888L;
     public static final String PROCESSING_LOCATION_UNKNOWN = null;
     public static final String DATA_TYPE_UNKNOWN = null;
@@ -56,10 +55,8 @@ public class SubmissionTuple implements Serializable {
     private String processingLocation;
     @JsonProperty
     private String dataType;
-    @JsonIgnore @XmlTransient
+    @JsonIgnore
     private ObjectMapper objectMapper=null;
-    @JsonIgnore  @XmlTransient
-    private String jsonValue;
 
     /**
      * No-arg constructor needed for JSON deserialization.
@@ -90,30 +87,45 @@ public class SubmissionTuple implements Serializable {
                                      String dataType) {
         this.project = project;
         this.sampleName = sampleName;
-        this.fileType = fileType;
         this.version = version;
         this.processingLocation = processingLocation;
         this.dataType = dataType;
+
+        // We only support BAM files.
+        this.fileType = FileType.BAM;
     }
 
+    @Override
     public String getProject() {
         return project;
     }
 
+    @Override
     public String getSampleName() {
         return sampleName;
+    }
+
+    @Override
+    public String getVersionString() {
+        return version;
     }
 
     public String getVersion() {
         return version;
     }
 
+    @Override
     public FileType getFileType() {
         return fileType;
     }
 
     void setFileType(FileType fileType) {
         this.fileType = fileType;
+    }
+
+    @Override
+    public String getProcessingLocation() {
+        return processingLocation;
     }
 
     private ObjectMapper getObjectMapper() {
@@ -124,25 +136,6 @@ public class SubmissionTuple implements Serializable {
         return objectMapper;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-
-        SubmissionTuple that = (SubmissionTuple) o;
-        return new EqualsBuilder()
-                .append(this.sampleName, that.sampleName)
-                .append(this.project, that.project)
-                .append(this.fileType, that.fileType)
-                .append(this.processingLocation, that.processingLocation)
-                .append(this.version, that.version)
-                .append(this.dataType, that.dataType).isEquals();
-    }
-
     public static List<String> samples(List<SubmissionTuple> tuples) {
         List<String> samples = new ArrayList<>();
         for (SubmissionTuple tuple : tuples) {
@@ -151,6 +144,7 @@ public class SubmissionTuple implements Serializable {
         return samples;
     }
 
+    @Override
     public String getDataType() {
         return dataType;
     }
@@ -161,19 +155,72 @@ public class SubmissionTuple implements Serializable {
 
     @Override
     public String toString() {
-        if (StringUtils.isBlank(jsonValue)) {
-            try {
-                jsonValue = getObjectMapper().writeValueAsString(this);
-            } catch (IOException e) {
-                log.info("SubmissionTracker could not be converted to JSON String.", e);
+        try {
+            return getObjectMapper().writeValueAsString(this);
+        } catch (IOException e) {
+            log.info("SubmissionTracker could not be converted to JSON String.", e);
+        }
+        return null;
+    }
+
+    public static boolean hasTuple(List<? extends ISubmissionTuple> tuples, ISubmissionTuple tuple) {
+        boolean hasTuple = false;
+        for (ISubmissionTuple tupleItem : tuples) {
+            if (tuple.equals(tupleItem)) {
+                hasTuple = true;
             }
         }
-        return jsonValue;
+        return hasTuple;
+    }
+
+    protected boolean tupleEquals(ISubmissionTuple tuple){
+        return this.equals(tuple);
+    }
+
+    @Override
+    public SubmissionTuple getSubmissionTuple() {
+        return this;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        SubmissionTuple that = (SubmissionTuple) o;
+
+        return new EqualsBuilder()
+            .append(project, that.project)
+            .append(sampleName, that.sampleName)
+            .append(fileType, that.fileType)
+            .append(version, that.version)
+            .append(processingLocation, that.processingLocation)
+            .append(dataType, that.dataType)
+            .isEquals();
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(this.sampleName).append(project).append(this.fileType).append(this.version)
-            .append(this.processingLocation).append(this.dataType).hashCode();
+        return new HashCodeBuilder(17, 37)
+            .append(project)
+            .append(sampleName)
+            .append(fileType)
+            .append(version)
+            .append(processingLocation)
+            .append(dataType)
+            .toHashCode();
+    }
+
+    public static Map<String, Collection<SubmissionTuple>> byProject(Collection<SubmissionTuple> tuples) {
+        Multimap<String, SubmissionTuple> byProject = HashMultimap.create();
+        for (SubmissionTuple tuple : tuples) {
+            byProject.put(tuple.getProject(), tuple);
+        }
+        return byProject.asMap();
     }
 }

@@ -150,7 +150,7 @@
                             if (status.length === 0) {
                                 tagAttributes = {
                                     "name": "<%=ResearchProjectActionBean.SUBMISSION_TUPLES_PARAMETER%>",
-                                    "value": data,
+                                    "value": JSON.stringify(data),
                                     "type": "checkbox",
                                     "class": "shiftCheckbox"
                                 };
