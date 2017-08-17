@@ -14,10 +14,10 @@ import javax.inject.Inject;
 import java.util.Collections;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.core.Is.is;
 
 /**
  * Tests for the connection to the Picard aggregation metrics database as well as the JPA entity mappings.
@@ -94,13 +94,6 @@ public class AggregationMetricsFetcherTest extends ContainerTest {
     public void testFetchMetricsWithBadSample() {
         List<Aggregation> aggregationResults = fetcher.fetch(Collections.singletonList(
                 new SubmissionTuple(MERCURY_PROJECT, "BAD-" + SAMPLE, Integer.toString(MERCURY_AGGREGATION_VERSION),
-                    SubmissionBioSampleBean.ON_PREM, EXOME)));
-        assertThat(aggregationResults, Matchers.emptyIterableOf(Aggregation.class));
-    }
-
-    public void testFetchMetricsWithBadVersion() {
-        List<Aggregation> aggregationResults = fetcher.fetch(Collections.singletonList(
-                new SubmissionTuple(MERCURY_PROJECT, SAMPLE, Integer.toString(MERCURY_AGGREGATION_VERSION * 100),
                     SubmissionBioSampleBean.ON_PREM, EXOME)));
         assertThat(aggregationResults, Matchers.emptyIterableOf(Aggregation.class));
     }
