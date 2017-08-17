@@ -110,7 +110,7 @@ public class SubmissionDtoFetcher {
     }
 
     /**
-     * Fetch aggregation metrics for a set of files from Bass. This only applies to BAM files. Since Mercury is
+     * Fetch aggregation metrics given PDO samples. This only applies to BAM files. Since Mercury is
      * currently only dealing with BAM files, this is always done. However, if Mercury needs to support more file types
      * in the future (e.g., VCF), then this will need to be revisited.
      *
@@ -120,29 +120,24 @@ public class SubmissionDtoFetcher {
      * @return a map of submission tuple to aggregation data
      */
     public Map<SubmissionTuple, Aggregation> fetchAggregationDtos(List<ProductOrderSample> productOrderSamples) {
-
-        Multimap<String, SubmissionTuple> tuplesBySample = HashMultimap.create();
+        List<SubmissionTuple> tupleList = new ArrayList<>();
         for (ProductOrderSample productOrderSample : productOrderSamples) {
-            ResearchProject researchProject = productOrderSample.getProductOrder().getResearchProject();
             String sampleName = productOrderSample.getSampleData().getCollaboratorsSampleName();
             SubmissionTuple submissionTuple =
                 new SubmissionTuple(productOrderSample.getProductOrder().getResearchProject().getJiraTicketKey(),
                     sampleName, SubmissionTuple.VERSION_UNKNOWN, SubmissionTuple.PROCESSING_LOCATION_UNKNOWN,
                     SubmissionTuple.DATA_TYPE_UNKNOWN);
-            tuplesBySample.put(researchProject.getBusinessKey(), submissionTuple);
-
+            tupleList.add(submissionTuple);
         }
         final Map<SubmissionTuple, Aggregation> aggregationMap = new HashMap<>();
-        for (String projectName : tuplesBySample.keySet()) {
-            List<Aggregation> aggregations = aggregationMetricsFetcher.fetch(tuplesBySample.get(projectName));
-            for (final Aggregation aggregation : aggregations) {
-                aggregationMap.putAll(Maps.uniqueIndex(aggregations, new Function<Aggregation, SubmissionTuple>() {
-                    @Override
-                    public SubmissionTuple apply(@Nullable Aggregation aggregation) {
-                        return aggregation.getTuple();
-                    }
-                }));
-            }
+        List<Aggregation> aggregations = aggregationMetricsFetcher.fetch(tupleList);
+        for (final Aggregation aggregation : aggregations) {
+            aggregationMap.putAll(Maps.uniqueIndex(aggregations, new Function<Aggregation, SubmissionTuple>() {
+                @Override
+                public SubmissionTuple apply(@Nullable Aggregation aggregation) {
+                    return aggregation.getTuple();
+                }
+            }));
         }
 
         return aggregationMap;

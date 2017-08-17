@@ -8,9 +8,6 @@ import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.annotate.JsonPropertyOrder;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,10 +18,8 @@ import java.util.List;
  */
 // setting the access order to alphabetical helps the tests pass more reliably.
 @JsonPropertyOrder(alphabetic = true)
-@XmlAccessorType(XmlAccessType.FIELD)
 @JsonSerialize(include=JsonSerialize.Inclusion.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown=true)
-@XmlRootElement
 public class SubmissionStatusResultBean implements Serializable {
     private static final long serialVersionUID = 9068748107416910212L;
 
