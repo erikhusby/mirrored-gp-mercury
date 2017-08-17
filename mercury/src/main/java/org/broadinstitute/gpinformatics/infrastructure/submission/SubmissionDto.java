@@ -15,6 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
@@ -366,6 +367,9 @@ public class SubmissionDto implements ISubmissionTuple {
         return new SubmissionTracker(project, sample, String.valueOf(version), FileType.BAM, SubmissionBioSampleBean.ON_PREM, datatype);
     }
 
+    public Set<String> getProductOrders() {
+        return productOrders;
+    }
 
     public class SubmissionField {
         public static final String SUBMISSION_TUPLE = "submissionTuple";
