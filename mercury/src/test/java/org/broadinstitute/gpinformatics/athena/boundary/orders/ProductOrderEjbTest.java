@@ -654,7 +654,7 @@ public class ProductOrderEjbTest {
         Funding fundingDefined = new Funding(Funding.PURCHASE_ORDER,null, null);
         fundingDefined.setPurchaseOrderContact(testUser);
         fundingDefined.setPurchaseOrderNumber("PO00Id8923");
-        FundingLevel fundingLevel = new FundingLevel("100",fundingDefined);
+        FundingLevel fundingLevel = new FundingLevel("100", Collections.singleton(fundingDefined));
 
         QuoteFunding quoteFunding = new QuoteFunding(Collections.singleton(fundingLevel));
 
