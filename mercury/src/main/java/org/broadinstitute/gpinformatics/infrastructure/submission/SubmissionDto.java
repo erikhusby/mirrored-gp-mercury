@@ -367,6 +367,9 @@ public class SubmissionDto implements ISubmissionTuple {
         return new SubmissionTracker(project, sample, String.valueOf(version), FileType.BAM, SubmissionBioSampleBean.ON_PREM, datatype);
     }
 
+    public Set<String> getProductOrders() {
+        return productOrders;
+    }
 
     public class SubmissionField {
         public static final String SUBMISSION_TUPLE = "submissionTuple";
