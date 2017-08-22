@@ -559,8 +559,16 @@ public enum LabEventType {
 
     // Dried Blood Spot
     DBS_SAMPLE_PUNCH("DBSSamplePunch",
-            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
+                    RackOfTubes.RackType.SyntheticRack96,
+                    StaticPlate.PlateType.NinetySixDeepWell).
+                    targetSection(SBSSection.ALL96).
+                    sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.FTAPaper).
+                    sourceSection(SBSSection.ALL96).
+                    sourceContainerPrefix("DBS").
+                limsFile(true).build(),
             LibraryType.NONE_ASSIGNED),
     DBS_INCUBATION_MIX("DBSIncubationMix",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
@@ -585,6 +593,12 @@ public enum LabEventType {
     DBS_2ND_PURIFICATION("DBS2ndPurification",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
+                    StaticPlate.PlateType.NinetySixDeepWell,
+                    StaticPlate.PlateType.NinetySixDeepWell).
+                    targetSection(SBSSection.ALL96).
+                    sourceSection(SBSSection.ALL96).
+                    build(),
             LibraryType.NONE_ASSIGNED),
     DBS_ELUTION_BUFFER("DBSElutionBuffer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,

@@ -34,6 +34,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySample
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.DBSPuncherFileParser;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LimsFileType;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.QiagenRackFileParser;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -463,6 +464,33 @@ public class ManualTransferActionBean extends RackScanActionBean {
                         }
                     }
                 }
+                break;
+            case DBS_PUNCHER:
+                DBSPuncherFileParser dbsPuncherFileParser = new DBSPuncherFileParser();
+                DBSPuncherFileParser.DBSPuncherRun puncherRun =
+                        dbsPuncherFileParser.parseRun(limsFileStream, messageCollection);
+                Map<VesselPosition, String> mapPositionToSampleBarcode = puncherRun.getMapPositionToSampleBarcode();
+                if (mapPositionToSampleBarcode.size() == 0) {
+                    messageCollection.addError(
+                            "Failed to find any transfers in file: " + mapPositionToSampleBarcode.size());
+                } else {
+                    Iterator<StationEventType> eventIterator = stationEvents.iterator();
+                    PlateTransferEventType plateTransferEventTypeDbs =
+                            (PlateTransferEventType) eventIterator.next();
+                    plateTransferEventTypeDbs.getPlate().setBarcode(puncherRun.getPlateBarcode());
+                    PositionMapType sourcePositionMap = plateTransferEventTypeDbs.getSourcePositionMap();
+                    sourcePositionMap.setBarcode(plateTransferEventTypeDbs.getSourcePlate().getBarcode());
+                    for (Map.Entry<VesselPosition, String> entry: mapPositionToSampleBarcode.entrySet()) {
+                        ReceptacleType receptacleType = new ReceptacleType();
+                        receptacleType.setReceptacleType(manualTransferDetails.getSourceBarcodedTubeType().
+                                getAutomationName());
+                        receptacleType.setBarcode(entry.getValue());
+                        receptacleType.setPosition(entry.getKey().name());
+                        sourcePositionMap.getReceptacle().add(receptacleType);
+                    }
+                }
+
+                break;
             }
         } catch (IOException e) {
             log.error("IO Exception when parsing LIMS File", e);
