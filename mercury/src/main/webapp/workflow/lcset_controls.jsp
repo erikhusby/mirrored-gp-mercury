@@ -34,7 +34,7 @@
                 </div>
             </div>
 
-            <c:if test="${not empty actionBean.controlBarcodes}">
+            <c:if test="${not empty actionBean.controlBarcodes or not empty actionBean.addBarcodes or not empty actionBean.removeBarcodes}">
                 <table class="table simple">
                     <tr>
                         <th></th>
@@ -57,27 +57,33 @@
                     </c:forEach>
                 </table>
                 Click Confirm to make the following changes:<br/>
-                Add the following controls to the LCSET:
-                <c:forEach items="${actionBean.controlBarcodes}" var="controlBarcode" varStatus="loop">
-                    <div>
-                        ${controlBarcode}
-                        <input type="hidden" name="controlBarcodes[${loop.index}]" value="${controlBarcode}"/>
-                    </div>
-                </c:forEach>
-                Add the following samples to the LCSET:
-                <c:forEach items="${actionBean.addBarcodes}" var="addBarcode" varStatus="loop">
-                    <div>
-                        ${addBarcode}
-                        <input type="hidden" name="addBarcodes[${loop.index}]" value="${addBarcode}"/>
-                    </div>
-                </c:forEach>
-                Remove the following samples from the LCSET, and place them in the bucket:
-                <c:forEach items="${actionBean.removeBarcodes}" var="removeBarcode" varStatus="loop">
-                    <div>
-                        ${removeBarcode}
-                        <input type="hidden" name="removeBarcodes[${loop.index}]" value="${removeBarcode}"/>
-                    </div>
-                </c:forEach>
+                <c:if test="${not empty actionBean.controlBarcodes}">
+                    Add the following controls to the LCSET:
+                    <c:forEach items="${actionBean.controlBarcodes}" var="controlBarcode" varStatus="loop">
+                        <div>
+                            ${controlBarcode}
+                            <input type="hidden" name="controlBarcodes[${loop.index}]" value="${controlBarcode}"/>
+                        </div>
+                    </c:forEach>
+                </c:if>
+                <c:if test="${not empty actionBean.addBarcodes}">
+                    Add the following samples to the LCSET:
+                    <c:forEach items="${actionBean.addBarcodes}" var="addBarcode" varStatus="loop">
+                        <div>
+                                ${addBarcode}
+                            <input type="hidden" name="addBarcodes[${loop.index}]" value="${addBarcode}"/>
+                        </div>
+                    </c:forEach>
+                </c:if>
+                <c:if test="${not empty actionBean.removeBarcodes}">
+                    Remove the following samples from the LCSET, and place them in the bucket:
+                    <c:forEach items="${actionBean.removeBarcodes}" var="removeBarcode" varStatus="loop">
+                        <div>
+                                ${removeBarcode}
+                            <input type="hidden" name="removeBarcodes[${loop.index}]" value="${removeBarcode}"/>
+                        </div>
+                    </c:forEach>
+                </c:if>
                 <div class="controls">
                     <stripes:submit value="Confirm" id="confirmBtn" class="btn btn-primary"
                             name="<%= LcsetActionBean.CONFIRM_CONTROLS_EVENT %>"/>

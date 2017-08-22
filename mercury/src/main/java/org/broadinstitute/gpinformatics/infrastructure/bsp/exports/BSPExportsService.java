@@ -52,6 +52,11 @@ public class BSPExportsService implements Serializable {
         return resource.accept(MediaType.APPLICATION_XML_TYPE).get(IsExported.ExportResults.class);
     }
 
+    /**
+     * Initiates an export to Mercury.
+     * @param containerId CO-ID
+     * @param userId user initiating export
+     */
     public void export(String containerId, String userId) {
         WebResource resource = client.resource(bspConfig.getUrl("rest/exports")).
                 queryParam("containerId", containerId).
