@@ -3,6 +3,8 @@ package org.broadinstitute.gpinformatics.infrastructure.search;
 import org.apache.commons.collections4.MapIterator;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
+import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.gpinformatics.athena.control.dao.preference.SearchInstanceNameCache;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
@@ -15,6 +17,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetricPl
 import org.broadinstitute.gpinformatics.infrastructure.columns.SampleDataFetcherAddRowsListener;
 import org.broadinstitute.gpinformatics.infrastructure.columns.VesselLayoutPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.VesselMetricDetailsPlugin;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -341,6 +344,64 @@ public class LabVesselSearchDefinition {
                 return (String) context.getPagination().getIdExtraInfo().get(labVessel.getLabel());
             }
         });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Vessel Drill Downs");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                String label = ((LabVessel) entity).getLabel();
+
+                ResultParamValues columnParams = context.getColumnParams();
+                if( columnParams == null ) {
+                    return "(Params required)";
+                }
+
+                String drillDownString = null;
+                for(Pair<String,String> value : columnParams.getParamValues() ) {
+                    if (value.getLeft().equals("drillDown")) {
+                        drillDownString = value.getRight();
+                        break;
+                    }
+                }
+
+                if( drillDownString == null ) {
+                    return "(No drill down selected)";
+                }
+
+                SearchInstanceNameCache.DrillDownOption drillDownOption = SearchInstanceNameCache.DrillDownOption.buildFromString(drillDownString);
+
+                Map<String,String[]> terms = new HashMap<>();
+                String[] values = {label};
+                terms.put(drillDownOption.getSearchTermName(), values);
+
+                return SearchDefinitionFactory.buildDrillDownLink("", drillDownOption.getTargetEntity(), drillDownOption.getPreferenceScope().name() + "|" + drillDownOption.getPreferenceName() + "|" + drillDownOption.getSearchName(), terms, context);
+            }
+        });
+        searchTerm.setResultParamConfigurationExpression(
+            new SearchTerm.Evaluator<ResultParamConfiguration>() {
+
+                @Override
+                public ResultParamConfiguration evaluate(Object entity, SearchContext context) {
+                    ResultParamConfiguration drillDownConfiguration = new ResultParamConfiguration();
+                    ResultParamConfiguration.ParamInput searchNameInput =
+                            new ResultParamConfiguration.ParamInput("drillDown", ResultParamConfiguration.InputType.PICKLIST, "Select drill down search:");
+                    List<ConstrainedValue> options = new ArrayList<>();
+                    SearchInstanceNameCache instanceNameCache = ServiceAccessUtility.getBean(SearchInstanceNameCache.class);
+                    for( SearchInstanceNameCache.DrillDownOption drillDown : instanceNameCache.getDrillDowns(ColumnEntity.LAB_VESSEL.getEntityName()) ) {
+                        options.add(new ConstrainedValue(drillDown.toString(), drillDown.getSearchName() ));
+                    }
+                    if( options.size() == 0 ) {
+                        options.add(new ConstrainedValue("", "(None Available)" ));
+                    }
+                    searchNameInput.setOptionItems(options);
+                    drillDownConfiguration.addParamInput(searchNameInput);
+
+                    return drillDownConfiguration;
+                }
+            }
+        );
         searchTerms.add(searchTerm);
 
         return searchTerms;

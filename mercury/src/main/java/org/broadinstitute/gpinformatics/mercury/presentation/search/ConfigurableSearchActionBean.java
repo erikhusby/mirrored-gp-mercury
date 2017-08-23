@@ -10,7 +10,6 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.search;
 
 import net.sourceforge.stripes.action.DefaultHandler;
-import net.sourceforge.stripes.action.ErrorResolution;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
@@ -24,6 +23,7 @@ import org.broadinstitute.bsp.client.rackscan.ScannerException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceEjb;
+import org.broadinstitute.gpinformatics.athena.control.dao.preference.SearchInstanceNameCache;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
@@ -35,14 +35,12 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
-import org.broadinstitute.gpinformatics.infrastructure.search.ConstrainedValue;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConstrainedValueDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.PaginationUtil;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstanceEjb;
-import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.search.SearchRequestBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.search.SearchValueBean;
@@ -309,6 +307,9 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
     private SearchInstanceEjb searchInstanceEjb;
 
     @Inject
+    private SearchInstanceNameCache searchInstanceNameCache;
+
+    @Inject
     private BSPUserList bspUserList;
 
     @Inject
@@ -327,7 +328,7 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
     public Resolution entitySelectionPage() {
         allSearchInstances = new LinkedHashMap<>();
         try {
-            searchInstanceEjb.fetchAllInstances(allSearchInstances);
+            allSearchInstances = searchInstanceNameCache.fetchInstanceNames();
         } catch (Exception e) {
             addGlobalValidationError("Failed to retrieve search definitions");
         }
@@ -387,7 +388,7 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
         newSearchLevels = new HashMap<>();
         try {
             configurableSearchDef = SearchDefinitionFactory.getForEntity(entityType.getEntityName());
-
+            // TODO JMS Use SearchInstanceNameCache
             searchInstanceEjb.fetchInstances( entityType, preferenceMap,  searchInstanceNames, newSearchLevels );
         } catch (Exception e) {
             addGlobalValidationError("Failed to retrieve search definitions");
@@ -498,10 +499,13 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
                     .getAttribute(SEARCH_INSTANCE_PREFIX + sessionKey);
         }
 
-        // Handles search attempt without any terms
-        //    (see ConfigurableListFactory.getFirstResultsPage for more validations)
-        if (searchInstance == null || searchInstance.getSearchValues() == null
-            || searchInstance.getSearchValues().isEmpty()) {
+        if (searchInstance == null || searchInstance.getSearchValues() == null ) {
+            // Handles search attempt without any SearchInstance (Cause is questionable)
+            addGlobalValidationError("Search has no result columns or search terms");
+        } else if ( searchInstance.getSearchValues().isEmpty()) {
+            // Handles search attempt without any terms
+            //    (see ConfigurableListFactory.getFirstResultsPage for more validations)
+            searchInstance.establishRelationships(configurableSearchDef);
             addGlobalValidationError("You must add at least one search term");
         } else {
             searchInstance.establishRelationships(configurableSearchDef);
