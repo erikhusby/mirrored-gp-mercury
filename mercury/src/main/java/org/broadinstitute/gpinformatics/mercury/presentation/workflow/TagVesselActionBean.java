@@ -1,8 +1,14 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 
-import net.sourceforge.stripes.action.*;
+import net.sourceforge.stripes.action.DefaultHandler;
+import net.sourceforge.stripes.action.ForwardResolution;
+import net.sourceforge.stripes.action.HandlesEvent;
+import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.StreamingResolution;
+import net.sourceforge.stripes.action.UrlBinding;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
@@ -12,29 +18,28 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDa
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
-import org.apache.poi.ss.usermodel.Workbook;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 import org.codehaus.jettison.json.JSONObject;
 
+import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.LinkedHashSet;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import javax.inject.Inject;
 
 
 @UrlBinding(TagVesselActionBean.ACTIONBEAN_URL_BINDING)
@@ -138,7 +143,6 @@ public class TagVesselActionBean extends RackScanActionBean {
 
         String json = getJsonData();
         setTagVesselJsonData(json);
-        ObjectMapper mapper = new ObjectMapper();
 
         removeTags();
 
@@ -153,6 +157,7 @@ public class TagVesselActionBean extends RackScanActionBean {
             }
         }
 
+        labVesselDao.flush();
         addMessages(messageCollection);
         return displayResults();
     }
@@ -163,7 +168,7 @@ public class TagVesselActionBean extends RackScanActionBean {
      *
      */
     @HandlesEvent(CREATE_SPREADSHEET)
-    public Resolution downloadSpradsheet()
+    public Resolution downloadSpreadSheet()
     {
         try{
             // Makes the spreadsheet.
@@ -239,7 +244,7 @@ public class TagVesselActionBean extends RackScanActionBean {
      * Called by the .jsp page to get dev conditions based on position of vessel in the rack.
      *
      */
-    public String displayDevCondtions(String position)
+    public String displayDevConditions(String position)
     {
         List<LabVessel> labVessels = findAncestors(findAvailableVesslesByPosition(position));
         return displayBuilder(labVessels);
@@ -275,7 +280,7 @@ public class TagVesselActionBean extends RackScanActionBean {
                     }
                     String label = labVessel.getLabel();
                     if(experimentText != null)
-                        displayBuilder.append("<td><label>Expirements for:" + label + "</label><label>" + experimentText + "</label></td>");
+                        displayBuilder.append("<td><label>Experiments for:" + label + "</label><label>" + experimentText + "</label></td>");
                 }
             }
 
@@ -322,7 +327,6 @@ public class TagVesselActionBean extends RackScanActionBean {
                 vessel.removeJiraTickets();
             }
         }
-        labVesselDao.flush();
     }
 
     /**
@@ -367,7 +371,6 @@ public class TagVesselActionBean extends RackScanActionBean {
             else
                 vessel.getJiraTickets().add(existingTicket);
         }
-        labVesselDao.flush();
         messageCollection.addInfo("Successfully Added: " + getRackScan().get(position) + " to position: " + position);
 
     }
@@ -547,7 +550,7 @@ public class TagVesselActionBean extends RackScanActionBean {
         for(String displayItem : displayElements){
            stringBuilder.append(displayItem);
         }
-        setDisplayCoditions(stringBuilder.toString());
+        setDisplayConditions(stringBuilder.toString());
     }
 
     /**
@@ -673,9 +676,9 @@ public class TagVesselActionBean extends RackScanActionBean {
 
     public String getVesselLabelByPosition(String position) { return getRackScan().get(position);  }
 
-    public void setDisplayCoditions(String displayCoditions) { this.displayCoditions = displayCoditions; }
+    public void setDisplayConditions(String displayConditions) { this.displayCoditions = displayConditions; }
 
-    public String getDisplayCoditions() { return displayCoditions;}
+    public String getDisplayConditions() { return displayCoditions;}
 
     @Override
     public String getRackScanPageUrl() { return ACTIONBEAN_URL_BINDING; }

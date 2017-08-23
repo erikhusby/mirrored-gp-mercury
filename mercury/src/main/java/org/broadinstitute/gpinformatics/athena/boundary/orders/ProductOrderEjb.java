@@ -1591,11 +1591,11 @@ public class ProductOrderEjb {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    public GenotypingProductOrderMapping findOrCreateGenotypingChipProductOrderMapping(String productOrderJiraTicket) {
+    public GenotypingProductOrderMapping findOrCreateGenotypingChipProductOrderMapping(Long productOrderId) {
         GenotypingProductOrderMapping mapping =
-                attributeArchetypeDao.findGenotypingProductOrderMapping(productOrderJiraTicket);
+                attributeArchetypeDao.findGenotypingProductOrderMapping(productOrderId);
         if (mapping == null) {
-            mapping = new GenotypingProductOrderMapping(productOrderJiraTicket, null, null);
+            mapping = new GenotypingProductOrderMapping(productOrderId.toString(), null, null);
             attributeArchetypeDao.persist(mapping);
             attributeArchetypeDao.flush();
         }

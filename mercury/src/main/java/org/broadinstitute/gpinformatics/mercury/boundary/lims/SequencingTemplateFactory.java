@@ -475,7 +475,12 @@ public class SequencingTemplateFactory {
                 Product product = productOrder.getProduct();
                 if (product != null) {
                     products.add(product);
-                    if (product.getReadLength() != null) {
+                    //If this is a pooled tube override it with the uploaded read length.
+                    if (sampleInstance.getReadLength() != null) {
+                        readLengths.add(sampleInstance.getReadLength());
+                    }
+                    //Otherwise take the read length from the product.
+                    if(product.getReadLength() != null && sampleInstance.getReadLength() == null) {
                         readLengths.add(product.getReadLength());
                     }
                     if (product.getPairedEndRead() != null) {

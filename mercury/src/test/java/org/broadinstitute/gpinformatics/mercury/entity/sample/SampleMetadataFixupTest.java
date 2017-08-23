@@ -28,6 +28,7 @@ import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -223,6 +224,29 @@ public class SampleMetadataFixupTest extends Arquillian {
 
         String fixupComment = "see https://gpinfojira.broadinstitute.org:8443/jira/browse/CRSP-475";
         updateMetadataAndValidate(fixupItems, fixupComment);
+    }
+
+    /**
+     * "Tumor" was silently replaced with empty string, so add "Primary".
+     */
+    @Test(enabled = false)
+    public void testSupport3129Fixup() throws Exception {
+        List<MercurySample> mercurySamples = mercurySampleDao.findBySampleKeys(Arrays.asList(
+                "SM-B3LYZ",
+                "SM-B3LZO",
+                "SM-CEMGG",
+                "SM-CEMH5",
+                "SM-CEMHH",
+                "SM-CEMI5",
+                "SM-CEMI6"));
+        Map<MercurySample, MetaDataFixupItem> fixupItems = new HashMap<>();
+        for (MercurySample mercurySample : mercurySamples) {
+            MetaDataFixupItem fixupItem = new MetaDataFixupItem(mercurySample.getSampleKey(), Metadata.Key.TUMOR_NORMAL,
+                    "", "Primary");
+            fixupItems.put(mercurySample, fixupItem);
+        }
+        String fixupComment = "see https://gpinfojira.broadinstitute.org/jira/browse/SUPPORT-3129";
+        addMetadataAndValidate(fixupItems, fixupComment);
     }
 
     /**
