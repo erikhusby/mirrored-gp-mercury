@@ -96,9 +96,12 @@ public class BSPRestSender implements Serializable {
         destPlate.setPhysType(plateTransferEventType.getPlate().getPhysType());
         plateCherryPickEvent.getPlate().add(destPlate);
 
-        PositionMapType destPosMap = new PositionMapType();
-        destPosMap.setBarcode(plateTransferEventType.getPlate().getBarcode());
-        plateCherryPickEvent.getPositionMap().add(destPosMap);
+        PositionMapType destPosMap = null;
+        if (plateTransferEventType.getPositionMap() != null) {
+            destPosMap = new PositionMapType();
+            destPosMap.setBarcode(plateTransferEventType.getPlate().getBarcode());
+            plateCherryPickEvent.getPositionMap().add(destPosMap);
+        }
 
         LabEvent targetEvent = null;
         for (LabEvent labEvent : labEvents) {
@@ -118,8 +121,10 @@ public class BSPRestSender implements Serializable {
 
         // Allow random access to destination tubes by position
         Map<String, ReceptacleType> mapPositionToReceptacle = new HashMap<>();
-        for (ReceptacleType receptacleType : plateTransferEventType.getPositionMap().getReceptacle()) {
-            mapPositionToReceptacle.put(receptacleType.getPosition(), receptacleType);
+        if (plateTransferEventType.getPositionMap() != null) {
+            for (ReceptacleType receptacleType : plateTransferEventType.getPositionMap().getReceptacle()) {
+                mapPositionToReceptacle.put(receptacleType.getPosition(), receptacleType);
+            }
         }
 
         // Transfer tubes that are in BSP
@@ -140,12 +145,14 @@ public class BSPRestSender implements Serializable {
                 sourceRecep.setReceptacleType(receptacleType.getReceptacleType());
                 sourcePosMap.getReceptacle().add(sourceRecep);
 
-                ReceptacleType destRecep = new ReceptacleType();
-                destRecep.setBarcode(mapPositionToReceptacle.get(receptacleType.getPosition()).getBarcode());
-                destRecep.setPosition(receptacleType.getPosition());
-                destRecep.setVolume(mapPositionToReceptacle.get(receptacleType.getPosition()).getVolume());
-                destRecep.setReceptacleType(receptacleType.getReceptacleType());
-                destPosMap.getReceptacle().add(destRecep);
+                if (plateTransferEventType.getPositionMap() != null) {
+                    ReceptacleType destRecep = new ReceptacleType();
+                    destRecep.setBarcode(mapPositionToReceptacle.get(receptacleType.getPosition()).getBarcode());
+                    destRecep.setPosition(receptacleType.getPosition());
+                    destRecep.setVolume(mapPositionToReceptacle.get(receptacleType.getPosition()).getVolume());
+                    destRecep.setReceptacleType(receptacleType.getReceptacleType());
+                    destPosMap.getReceptacle().add(destRecep);
+                }
 
                 CherryPickSourceType cherryPickSourceType = new CherryPickSourceType();
                 cherryPickSourceType.setBarcode(sourcePlate.getBarcode());
