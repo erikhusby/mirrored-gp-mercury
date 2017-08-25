@@ -1167,16 +1167,17 @@ public class ProductOrderFixupTest extends Arquillian {
         utx.begin();
 
         List<ProductOrder> researchProductOrdersToUpdate = productOrderDao.findListByList(ProductOrder.class,
-                ProductOrder_.orderStatus, Arrays.asList(ProductOrder.OrderStatus.Completed,
-                        ProductOrder.OrderStatus.Submitted, ProductOrder.OrderStatus.Abandoned),
+                ProductOrder_.priorToSAP1_5, Collections.singleton(Boolean.TRUE),
                 new GenericDao.GenericDaoCallback<ProductOrder>() {
                     @Override
                     public void callback(CriteriaQuery<ProductOrder> criteriaQuery, Root<ProductOrder> root) {
                         Join<ProductOrder, Product> productOrderProductJoin = root.join(ProductOrder_.product);
                         CriteriaBuilder builder = productOrderDao.getEntityManager().getCriteriaBuilder();
 
-                        Predicate predicate = builder.equal(productOrderProductJoin.get(Product_.externalOnlyProduct), Boolean.FALSE);
-                        criteriaQuery.where(predicate);
+                        List<Predicate> predicates = new ArrayList<>();
+
+                        predicates.add(builder.equal(productOrderProductJoin.get(Product_.externalOnlyProduct), Boolean.FALSE));
+                        criteriaQuery.where(predicates.toArray(new Predicate[predicates.size()]));
                     }
                 });
 
@@ -1193,8 +1194,10 @@ public class ProductOrderFixupTest extends Arquillian {
                         Join<ProductOrder, Product> productOrderProductJoin = root.join(ProductOrder_.product);
                         CriteriaBuilder builder = productOrderDao.getEntityManager().getCriteriaBuilder();
 
-                        Predicate predicate = builder.equal(productOrderProductJoin.get(Product_.externalOnlyProduct), Boolean.TRUE);
-                        criteriaQuery.where(predicate);
+                        List<Predicate> predicates = new ArrayList<>();
+
+                        predicates.add(builder.equal(productOrderProductJoin.get(Product_.externalOnlyProduct), Boolean.TRUE));
+                        criteriaQuery.where(predicates.toArray(new Predicate[predicates.size()]));
                     }
                 });
 
