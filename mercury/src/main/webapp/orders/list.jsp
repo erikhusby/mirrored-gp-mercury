@@ -39,6 +39,7 @@
                         {"bSortable": false},                           // checkbox
                         {"bSortable": true, "sType": "html"},           // Name
                         {"bSortable": true, "sType": "title-jira"},     // ID
+                        {"bSortable": true},                            // Order Type
                         {"bSortable": true},                            // Product
                         {"bSortable": true},                            // Product Family
                         {"bSortable": true},                            // Status
@@ -274,6 +275,7 @@
                         </th>
                         <th>Name</th>
                         <th style="min-width: 55px;">ID</th>
+                        <th style="...">Order Type</th>
                         <th style="min-width: 80px;">Product</th>
                         <th>Product Family</th>
                         <th width="80">Status</th>
@@ -320,6 +322,7 @@
                                     </c:otherwise>
                                 </c:choose>
                             </td>
+                            <td>${order.orderType.displayName}</td>
                             <td>${order.productName}</td>
                             <td>${order.productFamilyName}</td>
                             <td>${order.orderStatus}</td>
