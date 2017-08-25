@@ -942,4 +942,16 @@
 
     </changeSet>
 
+    <changeSet id="GPLIM-4924-3" author="scottmat">
+        <addColumn schemaName="athena" tableName="product_order">
+            <column name="ORDER_TYPE" type="varchar(50)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-4924-4" author="scottmat">
+        <addColumn schemaName="athena" tableName="product_order_aud">
+            <column name="ORDER_TYPE" type="varchar(50)" />
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

@@ -796,6 +796,10 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         return isExternallyNamed() || isExternalOnlyProduct();
     }
 
+    public boolean hasExternalCounterpart() {
+        return StringUtils.isNotBlank(externalProductName);
+    }
+
     public boolean isExternallyNamed() {
         return getPartNumber().startsWith("XT");
     }
@@ -853,5 +857,21 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     public boolean canPublishToSAP() {
         return !isSavedInSAP() && !isExternalOnlyProduct();
+    }
+
+    public String getExternalProductName() {
+        return externalProductName;
+    }
+
+    public void setExternalProductName(String externalProductName) {
+        this.externalProductName = externalProductName;
+    }
+
+    public PriceItem getExternalPriceItem() {
+        return externalPriceItem;
+    }
+
+    public void setExternalPriceItem(PriceItem externalPriceItem) {
+        this.externalPriceItem = externalPriceItem;
     }
 }

@@ -6,6 +6,7 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderSampleBean" %>
+<%@ page import="static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderAccessType.*" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -1288,7 +1289,18 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
             <c:if test="${actionBean.editOrder.product != null}">
                 <stripes:link title="Product" href="${ctxpath}/products/product.action?view">
                     <stripes:param name="product" value="${actionBean.editOrder.product.partNumber}"/>
-                    ${actionBean.editOrder.product.productName}
+                    <c:if test="${actionBean.editOrder.orderType != null}">
+                        ${actionBean.editOrder.orderType.displayName} --
+                    </c:if>
+                    <c:choose>
+                        <c:when test="${actionBean.editOrder.researchOrder}">
+                            ${actionBean.editOrder.product.productName}
+                        </c:when>
+                        <c:otherwise>
+                            ${actionBean.editOrder.product.externalProductName}
+                        </c:otherwise>
+                    </c:choose>
+
                 </stripes:link>
             </c:if>
         </div>
