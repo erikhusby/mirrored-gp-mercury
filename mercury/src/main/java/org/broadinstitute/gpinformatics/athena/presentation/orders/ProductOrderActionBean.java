@@ -442,6 +442,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     private String prePopulatedOrganismId;
     private String prepopulatePostReceiveOptions;
 
+    private String orderType;
+
     /**
      * @return the required confirmation message for IRB attestation.
      */
@@ -1248,6 +1250,11 @@ public class ProductOrderActionBean extends CoreActionBean {
             ProductOrder.loadLabEventSampleData(editOrder.getSamples());
 
             sampleDataSourceResolver.populateSampleDataSources(editOrder);
+
+            if(editOrder.getOrderType() != null) {
+                orderType = editOrder.getOrderType().getDisplayName();
+            }
+
             populateAttributes(editOrder.getProductOrderId());
         }
     }
@@ -1568,6 +1575,10 @@ public class ProductOrderActionBean extends CoreActionBean {
         ProductOrder.SaveType saveType = ProductOrder.SaveType.UPDATING;
         if (isCreating()) {
             saveType = ProductOrder.SaveType.CREATING;
+        }
+
+        if(orderType != null) {
+            editOrder.setOrderType(ProductOrder.OrderAccessType.fromDisplayName(orderType));
         }
 
         if (editOrder.isRegulatoryInfoEditAllowed()) {
@@ -3402,5 +3413,17 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     protected void setState(State state) {
         this.state = state;
+    }
+
+    public String getOrderType() {
+        return orderType;
+    }
+
+    public void setOrderType(String orderType) {
+        this.orderType = orderType;
+    }
+
+    public List<ProductOrder.OrderAccessType> getOrderTypeDisplayNames() {
+        return Arrays.asList(ProductOrder.OrderAccessType.values());
     }
 }

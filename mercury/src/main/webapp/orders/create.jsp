@@ -1,5 +1,6 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.entity.products.Product" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
+<%@ page import="static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderAccessType.displayNames" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -1312,7 +1313,6 @@
                     </div>
                 </div>
 
-
                 <div class="control-group">
 
                     <stripes:label for="product" class="control-label">
@@ -1335,6 +1335,29 @@
                                               title="Enter the product name for this order"/>
                         </c:otherwise>
                     </c:choose>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <stripes:label for="orderType" class="control-label">
+                        Order Type <c:if test="${not actionBean.editOrder.draft}">*</c:if>
+                    </stripes:label>
+                    <div class="controls">
+                        <c:choose>
+                            <c:when test="${actionBean.editOrder.childOrder}">
+                                <c:if test="${actionBean.editOrder.orderType != null}" >
+                                    <stripes:hidden name="orderType" id="orderType"
+                                                    value="${actionBean.editOrder.orderType.displayName}" />
+                                </c:if>
+                            </c:when>
+                            <c:otherwise>
+                                <stripes:select name="orderType" id="orderType">
+                                    <stripes:option value="">Select a Product Family</stripes:option>
+                                    <stripes:options-collection collection="${actionBean.orderTypeDisplayNames}" label="displayName"
+                                                                value="displayName" />
+                                </stripes:select>
+                            </c:otherwise>
+                        </c:choose>
                     </div>
                 </div>
 

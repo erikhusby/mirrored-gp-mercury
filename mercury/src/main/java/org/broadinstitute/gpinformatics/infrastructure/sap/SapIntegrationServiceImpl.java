@@ -331,6 +331,13 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         SAPMaterial newMaterial = initializeSapMaterialObject(product);
 
         getClient().createMaterial(newMaterial);
+
+        if(product.hasExternalCounterpart()) {
+            newMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES);
+            newMaterial.setMaterialName(product.getExternalProductName());
+            getClient().createMaterial(newMaterial);
+        }
+
     }
 
     @NotNull
@@ -339,7 +346,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                 SapIntegrationClientImpl.SystemIdentifier.MERCURY, product.getAvailabilityDate(),
                 product.getAvailabilityDate());
         newMaterial.setCompanyCode(
-                product.isExternalProduct() ? SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES :
+//                product.isExternalProduct() ? SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES :
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         newMaterial.setMaterialName(product.getProductName());
         newMaterial.setDescription(product.getDescription());
@@ -360,16 +367,28 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         SAPMaterial existingMaterial = initializeSapMaterialObject(product);
 
         getClient().changeMaterialDetails(existingMaterial);
+
+        if(product.hasExternalCounterpart()) {
+            existingMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES);
+            existingMaterial.setMaterialName(product.getExternalProductName());
+            getClient().changeMaterialDetails(existingMaterial);
+        }
+
     }
 
     @Override
     public Set<SAPMaterial> findProductsInSap() throws SAPIntegrationException {
 
-        final Set<SAPMaterial> materials =
+        Set<SAPMaterial> materials = new HashSet<>();
+        Set<SAPMaterial> researchMaterials =
                 getClient().findMaterials(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getPlant(),
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getSalesOrganization());
-        materials.addAll(getClient().findMaterials(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getPlant(),
-                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES.getSalesOrganization()));
+        Set<SAPMaterial> externalMaterials =
+                getClient().findMaterials(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getPlant(),
+                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES
+                                .getSalesOrganization());
+        materials.addAll(researchMaterials);
+        materials.addAll(externalMaterials);
         return materials;
     }
 

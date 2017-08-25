@@ -241,6 +241,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     private Boolean priorToSAP1_5 = false;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "ORDER_TYPE")
+    private OrderAccessType orderType;
+
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.
      */
@@ -2079,6 +2083,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         priceAdjustment.setProductOrder(this);
     }
 
+    public OrderAccessType getOrderType() {
+        return orderType;
+    }
+
+    public void setOrderType(OrderAccessType orderType) {
+        this.orderType = orderType;
+    }
+
     public static void checkQuoteValidity(Quote quote) throws QuoteServerException {
         final Date todayTruncated = DateUtils.truncate(new Date(), Calendar.DATE);
 
@@ -2167,5 +2179,52 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         sapOrderDetail.setPrimaryQuantity(sampleCount);
         sapOrderDetail.setOrderProductsHash(productListHash);
         sapOrderDetail.setOrderPricesHash(pricesForProducts);
+    }
+
+    public boolean isResearchOrder () {
+        boolean result = true;
+        if(orderType != null) {
+            result = orderType == OrderAccessType.RESEARCH;
+        }
+        return result;
+    }
+
+    public enum OrderAccessType implements StatusType {
+        RESEARCH ("Research"),
+        CLINICAL_COMMERCIAL ("Commercial or Clinical");
+
+        private String displayName;
+
+        OrderAccessType(String displayName) {
+            this.displayName = displayName;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        public static List<String> displayNames() {
+
+            List<String> displayNames = new ArrayList<>();
+
+            for (OrderAccessType orderAccessType : values()) {
+                displayNames.add(orderAccessType.getDisplayName());
+            }
+            return displayNames;
+        }
+
+        public static OrderAccessType fromDisplayName(String displayName) {
+
+            OrderAccessType foundType = null;
+
+            for (OrderAccessType orderAccessType : values()) {
+                if(orderAccessType.getDisplayName().equals(displayName)) {
+                    foundType = orderAccessType;
+                    break;
+                }
+            }
+            return foundType;
+        }
     }
 }
