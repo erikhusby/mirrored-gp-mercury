@@ -1,6 +1,9 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.entity.products.Product" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ page import="static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderAccessType.displayNames" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
+
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -1338,6 +1341,8 @@
                     </div>
                 </div>
 
+                <security:authorizeBlock roles="<%= roles(GPProjectManager, PDM, Developer) %>">
+
                 <div class="control-group">
                     <stripes:label for="orderType" class="control-label">
                         Order Type <c:if test="${not actionBean.editOrder.draft}">*</c:if>
@@ -1360,6 +1365,7 @@
                         </c:choose>
                     </div>
                 </div>
+                </security:authorizeBlock>
 
                 <div class="control-group">
                     <stripes:label for="selectedAddOns" class="control-label">
