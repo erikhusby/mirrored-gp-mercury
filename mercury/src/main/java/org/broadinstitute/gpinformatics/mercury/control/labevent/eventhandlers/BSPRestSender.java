@@ -29,6 +29,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.jetbrains.annotations.NotNull;
 
@@ -111,12 +112,18 @@ public class BSPRestSender implements Serializable {
             }
         }
         assert targetEvent != null;
-        TubeFormation tubeFormation = (TubeFormation) targetEvent.getSourceLabVessels().iterator().next();
 
-        // Allow random access to source tubes
-        Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
-        for (LabVessel labVessel : tubeFormation.getContainerRole().getContainedVessels()) {
-            mapBarcodeToVessel.put(labVessel.getLabel(), labVessel);
+        StaticPlate staticPlate;
+        if (plateTransferEventType.getSourcePositionMap() == null) {
+            staticPlate = (StaticPlate) targetEvent.getSourceLabVessels().iterator().next();
+        } else {
+            TubeFormation tubeFormation = (TubeFormation) targetEvent.getSourceLabVessels().iterator().next();
+
+            // Allow random access to source tubes
+            Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
+            for (LabVessel labVessel : tubeFormation.getContainerRole().getContainedVessels()) {
+                mapBarcodeToVessel.put(labVessel.getLabel(), labVessel);
+            }
         }
 
         // Allow random access to destination tubes by position
@@ -129,8 +136,13 @@ public class BSPRestSender implements Serializable {
 
         // Transfer tubes that are in BSP
         for (ReceptacleType receptacleType : plateTransferEventType.getSourcePositionMap().getReceptacle()) {
-            LabVessel labVessel = mapBarcodeToVessel.get(receptacleType.getBarcode());
-            Set<SampleInstanceV2> sampleInstancesV2 = labVessel.getSampleInstancesV2();
+            Set<SampleInstanceV2> sampleInstancesV2 = null;
+            if () {
+                staticPlate.getContainerRole().getSampleInstancesAtPositionV2();
+            } else {
+                LabVessel labVessel = mapBarcodeToVessel.get(receptacleType.getBarcode());
+                sampleInstancesV2 = labVessel.getSampleInstancesV2();
+            }
             if (sampleInstancesV2.size() != 1) {
                 throw new RuntimeException("Expected 1 sample, found " + sampleInstancesV2.size());
             }

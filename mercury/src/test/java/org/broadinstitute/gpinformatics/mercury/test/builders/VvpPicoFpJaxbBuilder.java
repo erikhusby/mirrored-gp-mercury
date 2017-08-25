@@ -13,6 +13,7 @@ import java.util.List;
  */
 public class VvpPicoFpJaxbBuilder {
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
+    private String rackBarcode;
     private final List<String> tubeBarcodeList;
     private final String testPrefix;
 
@@ -20,44 +21,60 @@ public class VvpPicoFpJaxbBuilder {
     private PlateEventType volumeMeasurement;
     private PlateEventType volumeMeasurementAdd;
     private PlateTransferEventType picoDilutionTransfer;
-// ?   private PlateTransferEventType picoMicroflourTransfer;
+// ?   private PlateTransferEventType picoMicroflourTransfer; or PicoTransfer?
 // ?   private PlateEventType picoBufferAddition;
     private PlateTransferEventType fingerprintingAliquot;
     private PlateTransferEventType fingerprintingPlateSetup;
+    private PlateTransferEventType picoTransfer1;
+    private PlateTransferEventType picoTransfer2;
+    private String picoPlateBarcode1;
+    private String picoPlateBarcode2;
 
-    public VvpPicoFpJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, List<String> tubeBarcodeList,
-            String testPrefix) {
+    public VvpPicoFpJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String rackBarcode,
+            List<String> tubeBarcodeList, String testPrefix) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
+        this.rackBarcode = rackBarcode;
         this.tubeBarcodeList = tubeBarcodeList;
         this.testPrefix = testPrefix;
     }
 
     public VvpPicoFpJaxbBuilder invoke() {
-        String rackBarcode = testPrefix + "1";
-        volumeMeasurement = bettaLimsMessageTestFactory.buildPlateEvent("VolumeMeasurement", rackBarcode);
+        volumeMeasurement = bettaLimsMessageTestFactory.buildRackEvent("VolumeMeasurement", rackBarcode,
+                tubeBarcodeList);
         bettaLimsMessageTestFactory.addMessage(messageList, volumeMeasurement);
 
-        volumeMeasurementAdd = bettaLimsMessageTestFactory.buildPlateEvent("VolumeMeasurement", rackBarcode);
+        volumeMeasurementAdd = bettaLimsMessageTestFactory.buildRackEvent("VolumeMeasurement", rackBarcode,
+                tubeBarcodeList);
         bettaLimsMessageTestFactory.addMessage(messageList, volumeMeasurementAdd);
 
-        String picoPlateBarcode = testPrefix + "2";
-        picoDilutionTransfer = bettaLimsMessageTestFactory.buildRackToPlate("PicoDilutionTransfer", rackBarcode,
-                tubeBarcodeList, picoPlateBarcode);
+        String picoDilutionPlateBarcode = testPrefix + "PD";
+        picoDilutionTransfer = bettaLimsMessageTestFactory.buildRackToPlate("PicoDilutionTransferForwardBsp",
+                rackBarcode, tubeBarcodeList, picoDilutionPlateBarcode);
         bettaLimsMessageTestFactory.addMessage(messageList, picoDilutionTransfer);
 
-        String fpRackBarcode = testPrefix + "3";
         List<String> fpTubeBarcodes = new ArrayList<>();
         for (int i = 0; i < tubeBarcodeList.size(); i++) {
             fpTubeBarcodes.add(testPrefix + "FP" + i);
         }
-        fingerprintingAliquot = bettaLimsMessageTestFactory.buildPlateToRack("FingerprintingAliquot", picoPlateBarcode,
-                fpRackBarcode, fpTubeBarcodes);
+        String fpRackBarcode = testPrefix + "FPR";
+        fingerprintingAliquot = bettaLimsMessageTestFactory.buildPlateToRack("FingerprintingAliquot",
+                picoDilutionPlateBarcode, fpRackBarcode, fpTubeBarcodes);
         bettaLimsMessageTestFactory.addMessage(messageList, fingerprintingAliquot);
 
-        String fpPlateBarcode = testPrefix + "4";
+        String fpPlateBarcode = testPrefix + "FPS";
         fingerprintingPlateSetup = bettaLimsMessageTestFactory.buildRackToPlate("FingerprintingPlateSetup",
                 fpRackBarcode, fpTubeBarcodes, fpPlateBarcode);
         bettaLimsMessageTestFactory.addMessage(messageList, fingerprintingPlateSetup);
+
+        picoPlateBarcode1 = testPrefix + "1";
+        picoTransfer1 = bettaLimsMessageTestFactory.buildPlateToPlate("PicoTransfer", picoDilutionPlateBarcode,
+                picoPlateBarcode1);
+        bettaLimsMessageTestFactory.addMessage(messageList, picoTransfer1);
+
+        picoPlateBarcode2 = testPrefix + "2";
+        picoTransfer2 = bettaLimsMessageTestFactory.buildPlateToPlate("PicoTransfer", picoDilutionPlateBarcode,
+                picoPlateBarcode2);
+        bettaLimsMessageTestFactory.addMessage(messageList, picoTransfer2);
 
         return this;
     }
@@ -84,5 +101,13 @@ public class VvpPicoFpJaxbBuilder {
 
     public PlateTransferEventType getFingerprintingPlateSetup() {
         return fingerprintingPlateSetup;
+    }
+
+    public String getPicoPlateBarcode1() {
+        return picoPlateBarcode1;
+    }
+
+    public String getPicoPlateBarcode2() {
+        return picoPlateBarcode2;
     }
 }
