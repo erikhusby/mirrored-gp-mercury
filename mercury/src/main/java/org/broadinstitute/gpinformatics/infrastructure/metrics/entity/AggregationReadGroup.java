@@ -84,7 +84,4 @@ public class AggregationReadGroup implements Serializable {
         return readGroupIndex;
     }
 
-    public void setReadGroupIndex(ReadGroupIndex readGroupIndex) {
-        this.readGroupIndex = readGroupIndex;
-    }
 }

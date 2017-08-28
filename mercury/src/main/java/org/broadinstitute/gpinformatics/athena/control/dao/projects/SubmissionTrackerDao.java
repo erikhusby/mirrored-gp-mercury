@@ -16,9 +16,7 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
@@ -69,30 +67,5 @@ public class SubmissionTrackerDao extends GenericDao {
         criteriaQuery.where(orPredicate);
 
         return getEntityManager().createQuery(criteriaQuery).getResultList();
-    }
-
-    @Override
-    public void persist(Object entity) {
-        persistAll(Collections.singletonList(entity));
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public void persistAll(Collection<?> entities) {
-        Collection<SubmissionTracker> trackers = (Collection<SubmissionTracker>) entities;
-        List<SubmissionTracker> foundTrackers = findSubmissionTrackers(trackers);
-        if (!foundTrackers.isEmpty()) {
-            List<String> errors = new ArrayList<>(foundTrackers.size());
-            for (SubmissionTracker foundTracker : foundTrackers) {
-                if (SubmissionTuple.hasTuple((List<? extends ISubmissionTuple>) trackers, foundTracker)) {
-                    errors.add(foundTracker.getSubmissionTuple().toString());
-                }
-            }
-
-            if (!errors.isEmpty()) {
-                throw new RuntimeException(String.format("Submission(s) already exists for (%s).", errors));
-            }
-        }
-        super.persistAll(entities);
     }
 }
