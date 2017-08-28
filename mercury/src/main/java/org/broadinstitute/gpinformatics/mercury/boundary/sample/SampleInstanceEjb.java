@@ -88,7 +88,7 @@ public class SampleInstanceEjb  {
      */
     private Set<Metadata> collaboratorSampleIdMetadata(final int index, MercurySample mercurySample) {
 
-        doesMetaDataExist(mercurySample);
+        removeExistingMetadata(mercurySample);
         if(!collaboratorSampleId.get(index).isEmpty()) {
             return new HashSet<Metadata>() {{
                 add(new Metadata(Metadata.Key.SAMPLE_ID, collaboratorSampleId.get(index)));
@@ -106,7 +106,7 @@ public class SampleInstanceEjb  {
     /**
      *  Handle instances where metadata is updated / or deleted by an upload.
      */
-    private void doesMetaDataExist(MercurySample mercurySample) {
+    private void removeExistingMetadata(MercurySample mercurySample) {
 
         List<Metadata.Key> metadatas = new ArrayList<>();
         metadatas.add(Metadata.Key.SAMPLE_ID);
