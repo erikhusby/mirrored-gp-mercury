@@ -20,7 +20,6 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.submission.FileType;
 import org.broadinstitute.gpinformatics.infrastructure.submission.ISubmissionTuple;
 import org.codehaus.jackson.annotate.JsonCreator;
-import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.annotate.JsonPropertyOrder;
@@ -47,6 +46,8 @@ public class SubmissionTuple implements ISubmissionTuple {
     private String project;
     @JsonProperty
     private String sampleName;
+
+    // We only support BAM files.
     @JsonProperty
     private FileType fileType = FileType.BAM;
     @JsonProperty
@@ -55,8 +56,6 @@ public class SubmissionTuple implements ISubmissionTuple {
     private String processingLocation;
     @JsonProperty
     private String dataType;
-    @JsonIgnore
-    private ObjectMapper objectMapper=null;
 
     /**
      * No-arg constructor needed for JSON deserialization.
@@ -70,8 +69,9 @@ public class SubmissionTuple implements ISubmissionTuple {
     @JsonCreator
     public SubmissionTuple(String jsonString) {
         SubmissionTuple tuple = null;
+        ObjectMapper objectMapper=new ObjectMapper();
         try {
-            tuple = getObjectMapper().readValue(jsonString, SubmissionTuple.class);
+            tuple = objectMapper.readValue(jsonString, SubmissionTuple.class);
             initSubmissionTuple(tuple.project, tuple.sampleName, tuple.version, tuple.processingLocation, tuple.dataType);
         } catch (IOException e) {
             log.error(String.format("Could not map JSON String [%s] to SubmissionTuple", jsonString), e);
@@ -90,9 +90,6 @@ public class SubmissionTuple implements ISubmissionTuple {
         this.version = version;
         this.processingLocation = processingLocation;
         this.dataType = dataType;
-
-        // We only support BAM files.
-        this.fileType = FileType.BAM;
     }
 
     @Override
@@ -128,15 +125,7 @@ public class SubmissionTuple implements ISubmissionTuple {
         return processingLocation;
     }
 
-    private ObjectMapper getObjectMapper() {
-        if (objectMapper == null) {
-            objectMapper=new ObjectMapper();
-        }
-
-        return objectMapper;
-    }
-
-    public static List<String> samples(List<SubmissionTuple> tuples) {
+    public static List<String> extractSampleNames(List<SubmissionTuple> tuples) {
         List<String> samples = new ArrayList<>();
         for (SubmissionTuple tuple : tuples) {
             samples.add(tuple.getSampleName());
@@ -155,8 +144,9 @@ public class SubmissionTuple implements ISubmissionTuple {
 
     @Override
     public String toString() {
+        ObjectMapper objectMapper=new ObjectMapper();
         try {
-            return getObjectMapper().writeValueAsString(this);
+            return objectMapper.writeValueAsString(this);
         } catch (IOException e) {
             log.info("SubmissionTracker could not be converted to JSON String.", e);
         }

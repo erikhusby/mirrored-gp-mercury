@@ -69,7 +69,7 @@ public class AggregationMetricsFetcher {
                 predicates.add(criteriaBuilder.equal(root.get(Aggregation_.project), projectName));
                 predicates.add(criteriaBuilder.isNull(root.get(Aggregation_.library)));
                 predicates.add(criteriaBuilder.isTrue(root.get(Aggregation_.latest)));
-                predicates.add(root.get(Aggregation_.sample).in(SubmissionTuple.samples(tuplesSublist)));
+                predicates.add(root.get(Aggregation_.sample).in(SubmissionTuple.extractSampleNames(tuplesSublist)));
 
                 CriteriaQuery<Aggregation> whereClause =
                     criteriaQuery.where(predicates.toArray(new Predicate[predicates.size()]));
