@@ -1805,6 +1805,12 @@ nodePrinter.print(webapp)
                 </exclusion>
             </exclusions>
         </dependency>
+
+        <dependency>
+            <groupId>uk.com.robust-it</groupId>
+            <artifactId>cloning</artifactId>
+            <version>1.9.5</version>
+        </dependency>
     </dependencies>
 
     <build>

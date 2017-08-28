@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers;
 
+import com.rits.cloning.Cloner;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import org.apache.commons.logging.Log;
@@ -20,7 +21,6 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMes
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
@@ -29,8 +29,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Inject;
@@ -38,9 +38,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.InputStream;
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -49,7 +47,6 @@ import java.util.Set;
  */
 public class BSPRestSender implements Serializable {
     public static final String BSP_TRANSFER_REST_URL = "plate/transfer";
-    public static final String BSP_PLATE_EXISTS_URL = "plate/exists";
     public static final String BSP_UPLOAD_QUANT_URL = "quant/upload";
     public static final String BSP_KIT_REST_URL = "kit";
     public static final String BSP_CONTAINER_UPDATE_LAYOUT = "container/updateLayout";
@@ -75,35 +72,24 @@ public class BSPRestSender implements Serializable {
     }
 
     private PlateCherryPickEvent plateTransfer(PlateTransferEventType plateTransferEventType, List<LabEvent> labEvents) {
-        // Convert the section transfer to a cherry pick, because BSP doesn't require a matching source rack for
-        // cherry picks.
+        // Convert the section transfer to a cherry pick, because this gives us control over transferring
+        // individual positions (rather than an entire section)
+
+        // Clone plates and position maps
         PlateCherryPickEvent plateCherryPickEvent = new PlateCherryPickEvent();
         plateCherryPickEvent.setEventType(plateTransferEventType.getEventType());
         plateCherryPickEvent.setOperator(plateTransferEventType.getOperator());
-
-        PlateType sourcePlate = new PlateType();
-        sourcePlate.setBarcode(plateTransferEventType.getSourcePlate().getBarcode());
-        sourcePlate.setSection("ALL96");
-        sourcePlate.setPhysType(plateTransferEventType.getSourcePlate().getPhysType());
-        plateCherryPickEvent.getSourcePlate().add(sourcePlate);
-
-        PositionMapType sourcePosMap = new PositionMapType();
-        sourcePosMap.setBarcode(plateTransferEventType.getSourcePlate().getBarcode());
-        plateCherryPickEvent.getSourcePositionMap().add(sourcePosMap);
-
-        PlateType destPlate = new PlateType();
-        destPlate.setBarcode(plateTransferEventType.getPlate().getBarcode());
-        destPlate.setSection("ALL96");
-        destPlate.setPhysType(plateTransferEventType.getPlate().getPhysType());
-        plateCherryPickEvent.getPlate().add(destPlate);
-
-        PositionMapType destPosMap = null;
+        Cloner cloner = new Cloner();
+        plateCherryPickEvent.getSourcePlate().add(cloner.deepClone(plateTransferEventType.getSourcePlate()));
+        if (plateTransferEventType.getSourcePositionMap() != null) {
+            plateCherryPickEvent.getSourcePositionMap().add(cloner.deepClone(plateTransferEventType.getSourcePositionMap()));
+        }
+        plateCherryPickEvent.getPlate().add(cloner.deepClone(plateTransferEventType.getPlate()));
         if (plateTransferEventType.getPositionMap() != null) {
-            destPosMap = new PositionMapType();
-            destPosMap.setBarcode(plateTransferEventType.getPlate().getBarcode());
-            plateCherryPickEvent.getPositionMap().add(destPosMap);
+            plateCherryPickEvent.getPositionMap().add(cloner.deepClone(plateTransferEventType.getPositionMap()));
         }
 
+        // Find the corresponding event entity
         LabEvent targetEvent = null;
         for (LabEvent labEvent : labEvents) {
             if (Objects.equals(labEvent.getStationEventType(), plateTransferEventType)) {
@@ -113,68 +99,52 @@ public class BSPRestSender implements Serializable {
         }
         assert targetEvent != null;
 
-        StaticPlate staticPlate;
-        if (plateTransferEventType.getSourcePositionMap() == null) {
-            staticPlate = (StaticPlate) targetEvent.getSourceLabVessels().iterator().next();
-        } else {
-            TubeFormation tubeFormation = (TubeFormation) targetEvent.getSourceLabVessels().iterator().next();
-
-            // Allow random access to source tubes
-            Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
-            for (LabVessel labVessel : tubeFormation.getContainerRole().getContainedVessels()) {
-                mapBarcodeToVessel.put(labVessel.getLabel(), labVessel);
-            }
-        }
-
-        // Allow random access to destination tubes by position
-        Map<String, ReceptacleType> mapPositionToReceptacle = new HashMap<>();
-        if (plateTransferEventType.getPositionMap() != null) {
-            for (ReceptacleType receptacleType : plateTransferEventType.getPositionMap().getReceptacle()) {
-                mapPositionToReceptacle.put(receptacleType.getPosition(), receptacleType);
-            }
-        }
-
-        // Transfer tubes that are in BSP
-        for (ReceptacleType receptacleType : plateTransferEventType.getSourcePositionMap().getReceptacle()) {
-            Set<SampleInstanceV2> sampleInstancesV2 = null;
-            if () {
-                staticPlate.getContainerRole().getSampleInstancesAtPositionV2();
-            } else {
-                LabVessel labVessel = mapBarcodeToVessel.get(receptacleType.getBarcode());
-                sampleInstancesV2 = labVessel.getSampleInstancesV2();
-            }
-            if (sampleInstancesV2.size() != 1) {
-                throw new RuntimeException("Expected 1 sample, found " + sampleInstancesV2.size());
-            }
-            SampleInstanceV2 sampleInstanceV2 = sampleInstancesV2.iterator().next();
-            if (sampleInstanceV2.getRootMercurySamples().isEmpty() ||
-                    sampleInstanceV2.getRootMercurySamples().iterator().next().getMetadataSource() ==
-                            MercurySample.MetadataSource.BSP) {
-                ReceptacleType sourceRecep = new ReceptacleType();
-                sourceRecep.setBarcode(receptacleType.getBarcode());
-                sourceRecep.setPosition(receptacleType.getPosition());
-                sourceRecep.setVolume(receptacleType.getVolume());
-                sourceRecep.setReceptacleType(receptacleType.getReceptacleType());
-                sourcePosMap.getReceptacle().add(sourceRecep);
-
-                if (plateTransferEventType.getPositionMap() != null) {
-                    ReceptacleType destRecep = new ReceptacleType();
-                    destRecep.setBarcode(mapPositionToReceptacle.get(receptacleType.getPosition()).getBarcode());
-                    destRecep.setPosition(receptacleType.getPosition());
-                    destRecep.setVolume(mapPositionToReceptacle.get(receptacleType.getPosition()).getVolume());
-                    destRecep.setReceptacleType(receptacleType.getReceptacleType());
-                    destPosMap.getReceptacle().add(destRecep);
+        // Add source elements; remove tubes that don't have a BSP chain of custody
+        LabVessel sourceLabVessel = targetEvent.getSourceLabVessels().iterator().next();
+        SBSSection sourceSection = SBSSection.getBySectionName(plateTransferEventType.getSourcePlate().getSection());
+        SBSSection destSection = SBSSection.getBySectionName(plateTransferEventType.getPlate().getSection());
+        List<VesselPosition> wells = sourceSection.getWells();
+        for (int i = 0; i < wells.size(); i++) {
+            VesselPosition vesselPosition = wells.get(i);
+            VesselPosition destVesselPosition = destSection.getWells().get(i);
+            Set<SampleInstanceV2> sampleInstances = sourceLabVessel.getContainerRole().getSampleInstancesAtPositionV2(
+                    vesselPosition);
+            if (sampleInstances.size() > 1) {
+                throw new RuntimeException("Expected 1 sample, found " + sampleInstances.size());
+            } else if (sampleInstances.size() == 1) {
+                SampleInstanceV2 sampleInstanceV2 = sampleInstances.iterator().next();
+                Set<MercurySample> rootMercurySamples = sampleInstanceV2.getRootMercurySamples();
+                if (rootMercurySamples.isEmpty() ||
+                        rootMercurySamples.iterator().next().getMetadataSource() == MercurySample.MetadataSource.BSP) {
+                    // add source element
+                    CherryPickSourceType cherryPickSourceType = new CherryPickSourceType();
+                    cherryPickSourceType.setBarcode(plateTransferEventType.getSourcePlate().getBarcode());
+                    cherryPickSourceType.setWell(vesselPosition.name());
+                    cherryPickSourceType.setDestinationBarcode(plateTransferEventType.getPlate().getBarcode());
+                    cherryPickSourceType.setDestinationWell(destVesselPosition.name());
+                    plateCherryPickEvent.getSource().add(cherryPickSourceType);
+                } else {
+                    // remove tubes from position maps
+                    removeFromMap(vesselPosition, plateCherryPickEvent.getSourcePositionMap());
+                    removeFromMap(destVesselPosition, plateCherryPickEvent.getPositionMap());
                 }
-
-                CherryPickSourceType cherryPickSourceType = new CherryPickSourceType();
-                cherryPickSourceType.setBarcode(sourcePlate.getBarcode());
-                cherryPickSourceType.setWell(receptacleType.getPosition());
-                cherryPickSourceType.setDestinationBarcode(destPlate.getBarcode());
-                cherryPickSourceType.setDestinationWell(receptacleType.getPosition());
-                plateCherryPickEvent.getSource().add(cherryPickSourceType);
             }
         }
+
         return plateCherryPickEvent;
+    }
+
+    private void removeFromMap(VesselPosition vesselPosition, List<PositionMapType> sourcePositionMap) {
+        if (sourcePositionMap != null && !sourcePositionMap.isEmpty()) {
+            List<ReceptacleType> receptacle = sourcePositionMap.get(0).getReceptacle();
+            for (int i1 = 0; i1 < receptacle.size(); i1++) {
+                ReceptacleType receptacleType = receptacle.get(i1);
+                if (VesselPosition.getByName(receptacleType.getPosition()) == vesselPosition) {
+                    receptacle.remove(i1);
+                    break;
+                }
+            }
+        }
     }
 
     @NotNull
