@@ -143,17 +143,9 @@ public class SubmissionTracker implements ISubmissionTuple {
         return fileType;
     }
 
-    public void setFileType(FileType fileType) {
-        this.fileType = fileType;
-    }
-
     @Override
     public String getProcessingLocation() {
         return processingLocation;
-    }
-
-    public void setProcessingLocation(String processingLocation) {
-        this.processingLocation = processingLocation;
     }
 
     public String getVersion() {
@@ -169,7 +161,7 @@ public class SubmissionTracker implements ISubmissionTuple {
         return submissionTrackerId;
     }
 
-    protected void setSubmissionTrackerId(Long id) {
+    void setSubmissionTrackerId(Long id) {
         this.submissionTrackerId = id;
     }
 
@@ -188,10 +180,6 @@ public class SubmissionTracker implements ISubmissionTuple {
     @Override
     public String getDataType() {
         return dataType;
-    }
-
-    public void setDataType(String dataType) {
-        this.dataType = dataType;
     }
 
     @Override
