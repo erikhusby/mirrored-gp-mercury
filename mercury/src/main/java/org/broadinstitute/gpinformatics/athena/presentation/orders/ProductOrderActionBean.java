@@ -1577,8 +1577,13 @@ public class ProductOrderActionBean extends CoreActionBean {
             saveType = ProductOrder.SaveType.CREATING;
         }
 
-        if(orderType != null) {
-            editOrder.setOrderType(ProductOrder.OrderAccessType.fromDisplayName(orderType));
+        if(userBean.isPDMUser() || userBean.isGPPMUser() || userBean.isDeveloperUser()) {
+
+            if (orderType != null) {
+                editOrder.setOrderType(ProductOrder.OrderAccessType.fromDisplayName(orderType));
+            }
+        } else {
+            editOrder.setOrderType(ProductOrder.OrderAccessType.RESEARCH);
         }
 
         if (editOrder.isRegulatoryInfoEditAllowed()) {
