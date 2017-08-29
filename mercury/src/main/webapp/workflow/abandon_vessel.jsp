@@ -84,8 +84,7 @@
             }
 
             $j(document).ready(function () {
-
-                //Hide & Show page elemts based on results of searchs
+                //Hide & Show page elements based on results of searches
                 $(".control-group").removeClass("control-group");
                 $(".control-label").removeClass("control-label");
                 $(".controls").removeClass("controls");
@@ -210,7 +209,7 @@
                         <c:choose>
                             <c:when test="${actionBean.isVesselAbandoned()}">
                                 <security:authorizeBlock roles="<%= roles(Developer ,LabManager) %>">
-                                    <stripes:submit id="unAbandonVessel" name="unAbandonVessel" value="Unbandon All Positions" class="btn btn-primary"/>
+                                    <stripes:submit id="unAbandonVessel" name="unAbandonVessel" value="Unabandon All Positions" class="btn btn-primary"/>
                                 </security:authorizeBlock>
                             </c:when>
                             <c:otherwise>
@@ -253,11 +252,14 @@
                                             </c:choose>
                                             <select class="${actionBean.shrinkCss('ddl-xs')}" id="reason_${rowName}${columnName}" name="reasonDdl">
                                                 <c:forEach items="${reasonCodes}" var="reasonValue" varStatus="reasonStatus">
-                                                    <c:if test="${reasonStatus.count > 1}">
-                                                          <option value="${reasonValue}">${reasonValue.getDisplayName()}</option>
-                                                    </c:if>
+                                                        <c:set var="selectedValue" value="${actionBean.getAbandonReason(wellTest)}"/>
+                                                        <c:if test="${reasonValue.getDisplayName() != selectedValue}">
+                                                            <option value="${reasonValue}">${reasonValue.getDisplayName()}</option>
+                                                        </c:if>
+                                                        <c:if test="${reasonValue.getDisplayName() == selectedValue}">
+                                                            <option selected="SELECT">${actionBean.getAbandonReason(wellTest)}</option>
+                                                        </c:if>
                                                 </c:forEach>
-                                                <option selected="SELECT">${actionBean.getAbandonReason(wellTest)}</option>
                                             </select>
                                         </td>
                                     </c:forEach>
