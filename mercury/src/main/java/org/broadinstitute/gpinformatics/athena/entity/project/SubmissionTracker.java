@@ -206,7 +206,6 @@ public class SubmissionTracker implements ISubmissionTuple {
         SubmissionTracker that = OrmUtil.proxySafeCast(o, SubmissionTracker.class);
 
         return new EqualsBuilder()
-            .append(getSubmissionTrackerId(), that.getSubmissionTrackerId())
             .append(getProject(), that.getProject())
             .append(getSubmittedSampleName(), that.getSubmittedSampleName())
             .append(getFileType(), that.getFileType())
@@ -221,7 +220,6 @@ public class SubmissionTracker implements ISubmissionTuple {
     @Override
     public int hashCode() {
         return new HashCodeBuilder(17, 37)
-            .append(getSubmissionTrackerId())
             .append(getProject())
             .append(getSubmittedSampleName())
             .append(getFileType())
