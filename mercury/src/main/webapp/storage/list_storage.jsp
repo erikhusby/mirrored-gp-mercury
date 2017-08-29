@@ -138,7 +138,7 @@
                 }
 
                 $j('#jstree').jstree({
-                    plugins: ["dnd", "types", "sort", "wholerow", "contextmenu"],
+                    plugins: ["dnd", "types", "wholerow", "contextmenu"],
                     contextmenu: {items: customMenu},
                     types : {
                         '#': {
@@ -195,7 +195,6 @@
                             if((op === "move_node") && more && more.core && !confirm("Are you sure...?")) {
                                 return false;
                             }
-                            console.log("Where am I?");
                             if((op === "rename_node" && !confirm("Are you sure...?"))) {
                                 return false;
                             }

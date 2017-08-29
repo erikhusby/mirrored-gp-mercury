@@ -21,6 +21,7 @@ $j(document).ready( function() {
                 if( resultObj.hasErrors) {
                     displayNotification(resultObj.errors, "alert-error");
                 } else {
+                    console.log(resultObj);
                     $j("#storageName").val(resultObj.locationTrail);
                     $j("#storageId").val(storageId);
                     console.log("Set value of storage id to " + $j("#storageId").val());
@@ -54,7 +55,7 @@ $j(document).ready( function() {
     function initializeJsTreeNav() {
         $j("#error-dialog-ajax").hide();
         $j('#ajax-jstree').jstree({
-            plugins: ["types", "sort", "wholerow"],
+            plugins: ["types", "wholerow"],
             types : {
                 FREEZER: {
                 },
@@ -81,7 +82,7 @@ $j(document).ready( function() {
                     },
                     "dataType" : "json",
                     'error': function (data) {
-                        console.log("Error occured when loading tree");
+                        console.log("Error occurred when loading tree");
                         console.log(data);
                         displayNotification("Failed to find storage.", "alert-error");
                         $j("#ajax-jstree").jstree(true).settings.core.data.url =
@@ -95,10 +96,7 @@ $j(document).ready( function() {
             var typesLabVessels = ['SHELF', 'GAGERACK', 'BOX', 'SLOT'];
             if ($j.inArray(node.type, typesLabVessels) > -1) {
                 findLocationTrail(node.data.storageLocationId);
-            } else {
-                $j("#storageName").val("");
-                $j("#storageId").val("");
-            }
+            } 
         }).bind("refresh.jstree", function (){
             $j("#ajax-jstree").jstree(true).select_node("selected_node");
         });

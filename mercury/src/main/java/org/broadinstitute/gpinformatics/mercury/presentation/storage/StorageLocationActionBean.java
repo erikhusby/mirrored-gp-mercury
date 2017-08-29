@@ -112,8 +112,8 @@ public class StorageLocationActionBean extends CoreActionBean {
             long parentId = Long.parseLong(id);
             storageLocation = storageLocationDao.findById(StorageLocation.class, parentId);
             rootStorageLocations = new ArrayList<>(storageLocation.getChildrenStorageLocation());
-            Collections.sort(rootStorageLocations, new StorageLocation.StorageLocationLabelComparator());
         }
+        Collections.sort(rootStorageLocations, new StorageLocation.StorageLocationLabelComparator());
         String storageJson = generateJsonFromRoots(storageLocation, rootStorageLocations, true);
         return new StreamingResolution("text", new StringReader(storageJson));
     }

@@ -237,7 +237,7 @@ public class ContainerActionBean extends RackScanActionBean {
                     if (barcodedTube != null) {
                         if (rackOfTubes.getStorageLocation() != null && barcodedTube.getStorageLocation() != null
                                 && !barcodedTube.getStorageLocation().equals(rackOfTubes.getStorageLocation())) {
-                            return;
+                            continue;
                         }
                         LabEvent barcodesLatestEvent = barcodedTube.getLatestEvent();
                         if (barcodesLatestEvent.equals(latestEvent)) {
