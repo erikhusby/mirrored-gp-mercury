@@ -6,6 +6,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
@@ -93,7 +94,9 @@ public class TransferVisualizerV2 {
 
     public enum AlternativeIds {
         SAMPLE_ID("Sample Id"),
-        LCSET("LCSET");
+        SINGLE_LCSET("Single LCSET"),
+        ATTACHED_LCSETS("Attached LCSETs"),
+        ALL_LCSETS("All LCSETs");
 
         private String displayName;
 
@@ -135,6 +138,8 @@ public class TransferVisualizerV2 {
         private String startId;
         /** The IDs to add to each rect. */
         private List<AlternativeIds> alternativeIds;
+        /** Whether to include LCSET in event labels */
+        private boolean lcsetInEvent;
         /** Used to determine size of text elements. */
         private FontMetrics fontMetrics = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB).getGraphics().
                 getFontMetrics(new Font("SansSerif", Font.PLAIN, 12));
@@ -142,6 +147,11 @@ public class TransferVisualizerV2 {
         Traverser(Writer writer, List<AlternativeIds> alternativeIds) throws JSONException {
             this.writer = writer;
             this.alternativeIds = alternativeIds;
+            if (alternativeIds.contains(AlternativeIds.SINGLE_LCSET) ||
+                    alternativeIds.contains(AlternativeIds.ATTACHED_LCSETS) ||
+                    alternativeIds.contains(AlternativeIds.ALL_LCSETS)) {
+                lcsetInEvent = true;
+            }
             jsonWriter = new JSONWriter(writer);
             jsonWriter.object().key("nodes").array();
         }
@@ -243,6 +253,11 @@ public class TransferVisualizerV2 {
                 BspUser bspUser = bspUserList.getById(event.getEventOperator());
                 if (bspUser != null) {
                     labelBuilder.append(" ").append(bspUser.getFullName());
+                }
+            }
+            if (lcsetInEvent) {
+                for (LabBatch labBatch : event.getComputedLcSets()) {
+                    labelBuilder.append(" ").append(labBatch.getBatchName());
                 }
             }
             return labelBuilder.toString();
@@ -494,7 +509,7 @@ public class TransferVisualizerV2 {
                             dimensionsForAltId(dimensions, mapBarcodeToAlternativeIds, child, ids);
                         }
                         break;
-                    case LCSET:
+                    case SINGLE_LCSET: {
                         Set<LabBatch> labBatches = new HashSet<>();
                         for (SampleInstanceV2 sampleInstance : child.getSampleInstancesV2()) {
                             LabBatch singleBatch = sampleInstance.getSingleBatch();
@@ -502,18 +517,41 @@ public class TransferVisualizerV2 {
                                 labBatches.add(singleBatch);
                             }
                         }
-                        if (!labBatches.isEmpty()) {
-                            StringBuilder idsBuilder = new StringBuilder();
-                            for (LabBatch labBatch : labBatches) {
-                                if (idsBuilder.length() > 0) {
-                                    idsBuilder.append(", ");
-                                }
-                                idsBuilder.append(labBatch.getBatchName());
-                            }
-                            dimensionsForAltId(dimensions, mapBarcodeToAlternativeIds, child, idsBuilder.toString());
-                        }
+                        dimensionForBatches(dimensions, mapBarcodeToAlternativeIds, child, labBatches);
                         break;
+                    }
+                    case ATTACHED_LCSETS: {
+                        Set<LabBatch> labBatches = new HashSet<>();
+                        for (BucketEntry bucketEntry : child.getBucketEntries()) {
+                            if (bucketEntry.getLabBatch() != null) {
+                                labBatches.add(bucketEntry.getLabBatch());
+                            }
+                        }
+                        dimensionForBatches(dimensions, mapBarcodeToAlternativeIds, child, labBatches);
+                        break;
+                    }
+                    case ALL_LCSETS: {
+                        Set<LabBatch> labBatches = new HashSet<>();
+                        for (SampleInstanceV2 sampleInstance : child.getSampleInstancesV2()) {
+                            labBatches.addAll(sampleInstance.getAllWorkflowBatches());
+                        }
+                        dimensionForBatches(dimensions, mapBarcodeToAlternativeIds, child, labBatches);
+                        break;
+                    }
                 }
+            }
+        }
+
+        private void dimensionForBatches(Dimensions dimensions, Map<String, List<String>> mapBarcodeToAlternativeIds, LabVessel child, Set<LabBatch> labBatches) {
+            if (!labBatches.isEmpty()) {
+                StringBuilder idsBuilder = new StringBuilder();
+                for (LabBatch labBatch : labBatches) {
+                    if (idsBuilder.length() > 0) {
+                        idsBuilder.append(", ");
+                    }
+                    idsBuilder.append(labBatch.getBatchName());
+                }
+                dimensionsForAltId(dimensions, mapBarcodeToAlternativeIds, child, idsBuilder.toString());
             }
         }
 
