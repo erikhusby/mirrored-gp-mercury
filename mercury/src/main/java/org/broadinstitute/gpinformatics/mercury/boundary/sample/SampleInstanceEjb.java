@@ -88,7 +88,7 @@ public class SampleInstanceEjb  {
      */
     private Set<Metadata> collaboratorSampleIdMetadata(final int index, MercurySample mercurySample) {
 
-        doesMetaDataExist(mercurySample);
+        removeExistingMetadata(mercurySample);
         if(!collaboratorSampleId.get(index).isEmpty()) {
             return new HashSet<Metadata>() {{
                 add(new Metadata(Metadata.Key.SAMPLE_ID, collaboratorSampleId.get(index)));
@@ -106,7 +106,7 @@ public class SampleInstanceEjb  {
     /**
      *  Handle instances where metadata is updated / or deleted by an upload.
      */
-    private void doesMetaDataExist(MercurySample mercurySample) {
+    private void removeExistingMetadata(MercurySample mercurySample) {
 
         List<Metadata.Key> metadatas = new ArrayList<>();
         metadatas.add(Metadata.Key.SAMPLE_ID);
@@ -137,7 +137,7 @@ public class SampleInstanceEjb  {
         Map<String, MercurySample> mercurySampleMap = new HashMap<>();
         Map<String, MercurySample> mercuryRootSampleMap = new HashMap<>();
 
-                List<LabVessel> labVessels = new ArrayList<>();
+        List<LabVessel> labVessels = new ArrayList<>();
         for (String sampleId : vesselSpreadsheetProcessor.getBroadSampleId()) {
             LabVessel labVessel = mapBarcodeToVessel.get(vesselSpreadsheetProcessor.getBarcodes().get(sampleIndex));
             String rootSampleId = vesselSpreadsheetProcessor.getRootSampleId().get(sampleIndex);
@@ -172,13 +172,20 @@ public class SampleInstanceEjb  {
 
             if (mercuryRootSample == null) {
                 mercuryRootSample = new MercurySample(rootSampleId, MercurySample.MetadataSource.MERCURY);
-                mercuryRootSample.addMetadata(metadata);
+
+                if(mercuryRootSample.getMetadataSource().equals(MercurySample.MetadataSource.MERCURY)) {
+                    mercuryRootSample.addMetadata(metadata);
+                }
+
                 mercuryRootSample.addLabVessel(labVessel);
 
             }
-            mercurySample.addMetadata(metadata);
-            mercurySample.addLabVessel(labVessel);
 
+            if(mercurySample.getMetadataSource().equals(MercurySample.MetadataSource.MERCURY)) {
+                mercurySample.addMetadata(metadata);
+            }
+
+            mercurySample.addLabVessel(labVessel);
 
             mercurySamples.add(mercurySample);
             if(!mercuryRootSamples.contains(mercuryRootSample)) {
@@ -414,6 +421,18 @@ public class SampleInstanceEjb  {
                 this.gender.add(vesselSpreadsheetProcessor.getGender().get(sampleIndex));
                 this.species.add(vesselSpreadsheetProcessor.getSpecies().get(sampleIndex));
                 this.lsid.add(vesselSpreadsheetProcessor.getLsid().get(sampleIndex));
+
+                //If this is a BSP sample do not allow the user to modify the metadata in Mercury.
+                if(mercurySample.getMetadataSource().equals(MercurySample.MetadataSource.BSP)) {
+                    checkForMetadata(this.collaboratorSampleId.get(sampleIndex), VesselPooledTubesProcessor.Headers.COLLABORATOR_SAMPLE_ID, sampleIndex, messageCollection);
+                    checkForMetadata(this.collaboratorParticipantId.get(sampleIndex), VesselPooledTubesProcessor.Headers.COLLABORATOR_SAMPLE_ID, sampleIndex, messageCollection);
+                    checkForMetadata(this.broadParticipantId.get(sampleIndex), VesselPooledTubesProcessor.Headers.BROAD_PARTICIPANT_ID, sampleIndex, messageCollection);
+                    checkForMetadata(this.gender.get(sampleIndex), VesselPooledTubesProcessor.Headers.GENDER, sampleIndex, messageCollection);
+                    checkForMetadata(this.species.get(sampleIndex), VesselPooledTubesProcessor.Headers.SPECIES, sampleIndex, messageCollection);
+                    checkForMetadata(this.lsid.get(sampleIndex), VesselPooledTubesProcessor.Headers.LSID, sampleIndex, messageCollection);
+                }
+
+
                 mercurySamples.add(mercurySample);
                 sampleRegistrationFlag.add(true);
             }
@@ -443,6 +462,16 @@ public class SampleInstanceEjb  {
         if (isFieldEmpty(value)) {
             messageCollection.addError("No Valid Broad Sample ID found and column " + headers.getText()
                     + " was also missing at Row: " + (index + 2));
+        }
+    }
+
+    /**
+     *  This method creates errors when the user tries to update Metadata fields in Mercury for BSP samples.
+     */
+    private void checkForMetadata(String value, VesselPooledTubesProcessor.Headers headers, int index, MessageCollection messageCollection) {
+        if (!isFieldEmpty(value)) {
+            messageCollection.addError("This sample was registered in BSP.  " + headers.getText() + " cannot be updated via the pooled tube upload "
+                    + "at Row: " + (index + 2));
         }
     }
 
