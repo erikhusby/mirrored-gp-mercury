@@ -1208,6 +1208,7 @@ public class LabEventFactory implements Serializable {
         if (receptacleType.getReceptacleWeight() != null) {
             barcodedTube.setReceptacleWeight(receptacleType.getReceptacleWeight());
         }
+        barcodedTube.setStorageLocation(null);
     }
 
     @DaoFree

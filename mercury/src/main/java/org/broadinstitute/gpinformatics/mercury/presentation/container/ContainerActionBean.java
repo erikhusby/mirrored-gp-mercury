@@ -321,8 +321,9 @@ public class ContainerActionBean extends RackScanActionBean {
         return new ForwardResolution(CONTAINER_VIEW_PAGE);
     }
 
-    private void savePositionMapToLocation(MessageCollection messageCollection, StorageLocation storageLocation) {
+    private List<BarcodedTube> savePositionMapToLocation(MessageCollection messageCollection) {
         Set<String> barcodes = new HashSet<>();
+        List<BarcodedTube> tubesToAddToStorage = new ArrayList<>();
         for (ReceptacleType receptacleType : receptacleTypes) {
             if (!StringUtils.isEmpty(receptacleType.getBarcode())) {
                 String barcode = receptacleType.getBarcode();
@@ -333,7 +334,7 @@ public class ContainerActionBean extends RackScanActionBean {
                     messageCollection.addError("Barcode isn't a tube type: " + barcode);
                 } else {
                     BarcodedTube barcodedTube = OrmUtil.proxySafeCast(labVessel, BarcodedTube.class);
-                    barcodedTube.setStorageLocation(storageLocation);
+                    tubesToAddToStorage.add(barcodedTube);
                     barcodes.add(barcode);
                 }
             }
@@ -345,6 +346,7 @@ public class ContainerActionBean extends RackScanActionBean {
                 labVessel.setStorageLocation(null);
             }
         }
+        return tubesToAddToStorage;
     }
 
     @HandlesEvent(SAVE_ACTION)
@@ -366,8 +368,9 @@ public class ContainerActionBean extends RackScanActionBean {
             messageCollection.addError("No tube barcodes found.");
             return;
         }
+        List<BarcodedTube> barcodedTubesToAddToStorage = null;
         if (storageLocation != null) {
-            savePositionMapToLocation(messageCollection, storageLocation);
+            barcodedTubesToAddToStorage = savePositionMapToLocation(messageCollection);
             if (messageCollection.hasErrors()) {
                 addMessages(messageCollection);
             }
@@ -394,6 +397,9 @@ public class ContainerActionBean extends RackScanActionBean {
             }
         }
         rackOfTubes.setStorageLocation(storageLocation);
+        for (BarcodedTube barcodedTube: barcodedTubesToAddToStorage) {
+            barcodedTube.setStorageLocation(storageLocation);
+        }
         labEventDao.persist(labEvent);
         labEventDao.flush();
     }
@@ -465,10 +471,13 @@ public class ContainerActionBean extends RackScanActionBean {
             storageLocation = storageLocationDao.findById(StorageLocation.class, Long.valueOf(storageId));
             MessageCollection messageCollection = new MessageCollection();
             getViewVessel().setStorageLocation(storageLocation);
-            savePositionMapToLocation(messageCollection, storageLocation);
+            List<BarcodedTube> barcodedTubes = savePositionMapToLocation(messageCollection);
             if (messageCollection.hasErrors()) {
                 addMessages(messageCollection);
                 return new ForwardResolution(CONTAINER_VIEW_PAGE);
+            }
+            for (BarcodedTube barcodedTube: barcodedTubes) {
+                barcodedTube.setStorageLocation(storageLocation);
             }
             storageLocationDao.persist(getViewVessel());
             storageLocationDao.flush();
@@ -484,10 +493,13 @@ public class ContainerActionBean extends RackScanActionBean {
         MessageCollection messageCollection = new MessageCollection();
         if (storageLocation != null) {
             getViewVessel().setStorageLocation(null);
-            savePositionMapToLocation(messageCollection, null);
+            List<BarcodedTube> barcodedTubes = savePositionMapToLocation(messageCollection);
             if (messageCollection.hasErrors()) {
                 addMessages(messageCollection);
             } else {
+                for (BarcodedTube barcodedTube: barcodedTubes) {
+                    barcodedTube.setStorageLocation(null);
+                }
                 storageLocationDao.persist(getViewVessel());
                 storageLocationDao.flush();
                 storageLocation = null;
