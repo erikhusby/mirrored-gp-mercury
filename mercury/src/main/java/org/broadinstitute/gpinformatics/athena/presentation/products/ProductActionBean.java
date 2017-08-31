@@ -102,6 +102,9 @@ public class ProductActionBean extends CoreActionBean {
     private PriceItemTokenInput priceItemTokenInput;
 
     @Inject
+    private PriceItemTokenInput externalPriceItemTokenInput;
+
+    @Inject
     private PriceListCache priceListCache;
 
     @Inject
@@ -405,6 +408,11 @@ public class ProductActionBean extends CoreActionBean {
         if (primaryPriceItem != null) {
             priceItemTokenInput.setup(PriceItem.getPriceItemKeys(Collections.singletonList(primaryPriceItem)));
         }
+
+        PriceItem externalPriceItem = editProduct.getExternalPriceItem();
+        if(externalPriceItem != null) {
+            externalPriceItemTokenInput.setup(PriceItem.getPriceItemKeys(Collections.singletonList(externalPriceItem)));
+        }
     }
 
     @HandlesEvent("addOnsAutocomplete")
@@ -417,6 +425,13 @@ public class ProductActionBean extends CoreActionBean {
         return createTextResolution(priceItemTokenInput.getJsonString(getQ()));
     }
 
+
+    @HandlesEvent("externalPriceItemAutocomplete")
+    public Resolution externalPriceItemAutocomplete() throws Exception {
+        return createTextResolution(externalPriceItemTokenInput.getExternalJsonString(getQ()));
+    }
+
+
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() {
         // Sets paired end non-null when sequencing params are present.
@@ -424,7 +439,7 @@ public class ProductActionBean extends CoreActionBean {
             editProduct.setPairedEndRead(editProduct.getPairedEndRead());
         }
         productEjb.saveProduct(editProduct, addOnTokenInput, priceItemTokenInput, allLengthsMatch(),
-                criteria, operators, values, genotypingChipInfo);
+                criteria, operators, values, genotypingChipInfo, externalPriceItemTokenInput);
         addMessage("Product \"" + editProduct.getProductName() + "\" has been saved");
         if(editProduct.isSavedInSAP()) {
             try {
@@ -543,6 +558,15 @@ public class ProductActionBean extends CoreActionBean {
 
     public void setPriceItemTokenInput(PriceItemTokenInput priceItemTokenInput) {
         this.priceItemTokenInput = priceItemTokenInput;
+    }
+
+    public PriceItemTokenInput getExternalPriceItemTokenInput() {
+        return externalPriceItemTokenInput;
+    }
+
+    public void setExternalPriceItemTokenInput(
+            PriceItemTokenInput externalPriceItemTokenInput) {
+        this.externalPriceItemTokenInput = externalPriceItemTokenInput;
     }
 
     public ProductTokenInput getAddOnTokenInput() {

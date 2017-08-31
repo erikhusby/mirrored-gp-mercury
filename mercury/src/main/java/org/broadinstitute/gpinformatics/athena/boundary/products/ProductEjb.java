@@ -90,9 +90,9 @@ public class ProductEjb {
     public void saveProduct(
             Product product, ProductTokenInput addOnTokenInput, PriceItemTokenInput priceItemTokenInput,
             boolean allLengthsMatch, String[] criteria, String[] operators, String[] values,
-            List<Triple<String, String, String>> genotypingChipInfo) {
+            List<Triple<String, String, String>> genotypingChipInfo, PriceItemTokenInput externalPriceItemTokenInput) {
 
-        populateTokenListFields(product, addOnTokenInput, priceItemTokenInput);
+        populateTokenListFields(product, addOnTokenInput, priceItemTokenInput, externalPriceItemTokenInput);
         // If all lengths match, just send it.
         if (allLengthsMatch) {
             product.updateRiskCriteria(criteria, operators, values);
@@ -132,10 +132,12 @@ public class ProductEjb {
     }
 
     private void populateTokenListFields(Product product, ProductTokenInput addOnTokenInput,
-                                         PriceItemTokenInput priceItemTokenInput) {
+                                         PriceItemTokenInput priceItemTokenInput,
+                                         PriceItemTokenInput externalPriceItemTokenInput) {
         product.getAddOns().clear();
         product.getAddOns().addAll(addOnTokenInput.getTokenObjects());
         product.setPrimaryPriceItem(priceItemTokenInput.getItem());
+        product.setExternalPriceItem(externalPriceItemTokenInput.getItem());
     }
 
 

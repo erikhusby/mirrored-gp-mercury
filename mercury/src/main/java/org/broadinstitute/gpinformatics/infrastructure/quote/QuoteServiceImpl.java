@@ -31,6 +31,11 @@ import java.util.Set;
 @Impl
 public class QuoteServiceImpl extends AbstractJerseyClientService implements QuoteService {
     public static final String COMMUNICATION_ERROR = "Could not communicate with quote server at %s: %s";
+
+    public static final String EXTERNAL_PRICE_LIST_NAME = "GP External Price List";
+    public static final String CRSP_PRICE_LIST_NAME = "CRSP";
+    public static final String SSF_PRICE_LIST_NAME = "SSF Price List";
+
     private static final long serialVersionUID = 8458283723746937096L;
     @Inject
     private QuoteConfig quoteConfig;
@@ -60,7 +65,6 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         ALL_SSF_PRICE_ITEMS("/quotes/rest/price_list/10/true"),
         ALL_CRSP_PRICE_ITEMS("/quotes/rest/price_list/50/true"),
         ALL_GP_EXTERNAL_PRICE_ITEMS("/quotes/rest/price_list/60/true"),
-        ALL_GENOMICS_CP_PRICE_ITEMS("/quotes/rest/price_list/90/true"),
         ALL_FUNDINGS("/quotes/rest/sql_report/41"),
         REGISTER_WORK("/quotes/ws/portals/private/createworkitem"),
         ALL_QUOTES("/quotes/ws/portals/private/getquotes?with_funding=true"),
@@ -207,7 +211,6 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         PriceList allPriceItems = getPriceItemsByList(Endpoint.ALL_SSF_PRICE_ITEMS);
         allPriceItems.getQuotePriceItems().addAll(getPriceItemsByList(Endpoint.ALL_CRSP_PRICE_ITEMS).getQuotePriceItems());
         allPriceItems.getQuotePriceItems().addAll(getPriceItemsByList(Endpoint.ALL_GP_EXTERNAL_PRICE_ITEMS).getQuotePriceItems());
-        allPriceItems.getQuotePriceItems().addAll(getPriceItemsByList(Endpoint.ALL_GENOMICS_CP_PRICE_ITEMS).getQuotePriceItems());
         return allPriceItems;
     }
 

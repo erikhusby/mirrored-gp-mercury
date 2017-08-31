@@ -97,12 +97,28 @@ public class PriceListCache extends AbstractCache implements Serializable {
     }
 
 
-    public List<QuotePriceItem> searchPriceItems(String query) {
+    public List<QuotePriceItem> searchPriceItems(String query,
+                                                 PriceGrouping priceListFilter) {
         List<QuotePriceItem> results = new ArrayList<>();
         String lowerQuery = query.toLowerCase();
 
         // Currently searching all price items, not filtering by platform or anything else
         for (QuotePriceItem quotePriceItem : getQuotePriceItems()) {
+
+            switch (priceListFilter) {
+            case SSF_Only:
+                if(!quotePriceItem.getPriceListName().equals(QuoteServiceImpl.SSF_PRICE_LIST_NAME)) {
+                    continue;
+                }
+                break;
+            case External_Only:
+                if(!quotePriceItem.getPriceListName().equals(QuoteServiceImpl.EXTERNAL_PRICE_LIST_NAME) &&
+                   !quotePriceItem.getPriceListName().equals(QuoteServiceImpl.CRSP_PRICE_LIST_NAME)) {
+                    continue;
+                }
+                break;
+            }
+
             if (quotePriceItem != null &&
                 ((quotePriceItem.getPlatformName() != null && quotePriceItem.getPlatformName().toLowerCase().contains(lowerQuery)) ||
                  (quotePriceItem.getCategoryName() != null && quotePriceItem.getCategoryName().toLowerCase().contains(lowerQuery)) ||
@@ -239,5 +255,9 @@ public class PriceListCache extends AbstractCache implements Serializable {
         }
 
         return orderedPrices;
+    }
+
+    public enum PriceGrouping {
+        SSF_Only, External_Only, ALL;
     }
 }
