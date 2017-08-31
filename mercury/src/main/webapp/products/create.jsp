@@ -69,6 +69,18 @@
                         }
                     );
 
+                    $j("#externalPriceItem").tokenInput(
+                        "${ctxpath}/products/product.action?externalPriceItemAutocomplete=&product=${actionBean.editProduct.businessKey}", {
+                            hintText: "Type an External Price Item name",
+                            prePopulate: ${actionBean.ensureStringResult(actionBean.externalPriceItemTokenInput.completeData)},
+                            resultsFormatter: formatInput,
+                            tokenLimit: 1,
+                            tokenDelimiter: "${actionBean.externalPriceItemTokenInput.separator}",
+                            preventDuplicates: true,
+                            autoSelectFirstResult: true
+                        }
+                    );
+
                     $j("#addOns").tokenInput(
                         "${ctxpath}/products/product.action?addOnsAutocomplete=&product=${actionBean.editProduct.businessKey}", {
                             hintText: "Type a Product name",
@@ -293,10 +305,10 @@
                     <security:authorizeBlock roles="<%= roles(PDM, Developer) %>">
                         <div class="control-group">
                             <stripes:label for="externalOrderOnly" class="control-label">
-                                Clinical or Commercial Product
+                                Only offered as Clinical or Commercial Product
                             </stripes:label>
                             <div class="controls">
-                                <stripes:checkbox id="externalOrderOnly" disabled="${actionBean.editProduct.savedInSAP}" name="editProduct.externalOnlyProduct" style="margin-top: 10px;"/>
+                                <stripes:checkbox id="externalOrderOnly" name="editProduct.externalOnlyProduct" style="margin-top: 10px;"/>
                                 <c:if test="${actionBean.editProduct.savedInSAP}">
                                     <stripes:hidden name="editProduct.externalOnlyProduct" value="${editProduct.externalOnlyProduct}" />
                                 </c:if>
@@ -319,11 +331,21 @@
 
                 <div class="control-group">
                     <stripes:label for="productName" class="control-label">
-                        Product Name *
+                        Primary Product Name *
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="productName" name="editProduct.productName" class="defaultText input-xxlarge"
                             title="Enter the name of the new product"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <stripes:label for="externalProductName" class="control-label">
+                        Alternate (External) Product Name
+                    </stripes:label>
+                    <div class="controls">
+                        <stripes:text id="externalProductName" name="editProduct.externalProductName" class="defaultText input-xxlarge"
+                            title="Enter the Commercial/Clinical (External) name of the new product"/>
                     </div>
                 </div>
 
@@ -446,7 +468,18 @@
                     </div>
                 </div>
 
-                <div class="control-group">
+                    <div class="control-group">
+                        <stripes:label for="externalPriceItem" class="control-label">
+                            Alternate (External) Price Item
+                        </stripes:label>
+                        <div class="controls">
+                            <stripes:text id="externalPriceItem" name="externalPriceItemTokenInput.listOfKeys"
+                                          class="defaultText" title="Type to search for matching price items"/>
+                        </div>
+                    </div>
+
+
+                    <div class="control-group">
                     <stripes:label for="addOns" class="control-label">
                         Add-ons
                     </stripes:label>

@@ -591,6 +591,21 @@ public class ProductOrderActionBean extends CoreActionBean {
         // Whether we are draft or not, we should populate the proper edit fields for validation.
         updateTokenInputFields();
 
+        if(editOrder.getProduct() != null) {
+            if(ProductOrder.OrderAccessType.CLINICAL_COMMERCIAL.getDisplayName().equals(orderType) &&
+               !editOrder.getProduct().hasExternalCounterpart()) {
+                addGlobalValidationError("Selecting " +
+                                         ProductOrder.OrderAccessType.CLINICAL_COMMERCIAL.getDisplayName() +
+                                         " Is not valid since " + editOrder.getProduct().getDisplayName() +
+                                         " is not offered as either clinical or commercial");
+            } else if (ProductOrder.OrderAccessType.RESEARCH.getDisplayName().equals(orderType) &&
+                       !editOrder.getProduct().isExternalOnlyProduct()) {
+                addGlobalValidationError("Selecting " +
+                                         ProductOrder.OrderAccessType.RESEARCH.getDisplayName() +
+                                         " Is not valid since " + editOrder.getProduct().getDisplayName() +
+                                         " is not offered as research");
+            }
+        }
         /*
          * update or add to list of kit details
          * Due to the kit Details being stored as a set in the ProductOrderKit entity, it was currently not possible
