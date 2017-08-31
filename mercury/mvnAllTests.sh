@@ -9,8 +9,9 @@ Usage: $0 [-t <test> ] [-b <build>] [-j <jboss> ]
 Where:
 	-h		Show this message
 	-t <test>	Specifies a particular test profile to be run. Defaults to the standard set.
-	-b <build>	Specifices a particular build profile to be used. Defaults to BUILD.
-	-j <jboss>	Specifieds a particular JBoss or Wildfly installation.
+	-b <build>	Specifies a particular build profile to be used. Defaults to BUILD.
+	-j <jboss>	Specifies a particular JBoss or Wildfly installation.
+	-m <maven>	Specifies additional Maven options.
 	-c 		Runs tests with Clover.
 
 The standard set of test profiles includes:
@@ -27,13 +28,16 @@ EOF
 TESTS="Tests.ArqSuite.Standard Tests.ArqSuite.Stubby Tests.Multithreaded Tests.DatabaseFree Tests.ExternalIntegration Tests.Alternatives"
 BUILD=
 CLOVER=0
-while getopts "hct:b:j:" OPTION; do
+ADDITIONAL_OPTIONS=
+
+while getopts "hct:b:j:m:" OPTION; do
     case $OPTION in
 	h) usage; exit 1;;
 	t) TESTS=$OPTARG;;
 	b) BUILD=$OPTARG;;
 	j) JBOSS_HOME=$OPTARG;;
 	c) CLOVER=1;;
+	m) ADDITIONAL_OPTIONS=$OPTARG;;
 	[?]) usage; exit 1;;
     esac
 done
@@ -73,11 +77,21 @@ fi
 
 EXIT_STATUS=0
 
+# Get rid of previous test results
 if [ -f "tests.log" ]
 then
     rm tests.log
 fi
 
+for TEST in $TESTS
+do
+    if [ -e "surefire-reports-$TEST" ]
+    then
+        rm -rf surefire-reports-$TEST
+    fi
+done
+
+# Setup the build options
 if [[ $CLOVER -eq 0 ]]
 then
     GOALS="clean test"
@@ -85,10 +99,10 @@ else
     GOALS="clean clover:setup verify"
     rm -rf clover/
     mkdir clover
-    BUILD_PROFILE="$BUILD_PROFILE,Clover.All -Dmaven.clover.licenseLocation=/prodinfolocal/BambooHome/clover.license -DmercuryCloverDatabase=`pwd`clover/clover.db -Dannotation.outputDiagnostics=false"
+    BUILD_PROFILE="$BUILD_PROFILE,Clover.All -Dmaven.clover.licenseLocation=/prodinfolocal/BambooHome/clover.license -DmercuryCloverDatabase=`pwd`clover/clover.db"
 fi
 
-OPTIONS="-PArquillian-JBossAS7-Remote,$BUILD_PROFILE -Djava.awt.headless=true --batch-mode -Dmaven.download.meter=silent "
+OPTIONS="-PArquillian-JBossAS7-Remote,$BUILD_PROFILE -Djava.awt.headless=true --batch-mode  -Dannotation.outputDiagnostics=false -Dmaven.download.meter=silent $ADDITIONAL_OPTIONS"
 
 for TEST in $TESTS
 do
@@ -103,13 +117,15 @@ OPTIONS=$OPTIONS
 >>>> Executing test profile $TEST
 
 EOF
+
+# Run the current test set
     mvn $OPTIONS -P$TEST $GOALS | tee -a tests.log
     if [ ${PIPESTATUS[0]} -ne 0 ]
     then
         EXIT_STATUS=${PIPESTATUS[0]}
     fi
 
-#    echo -n 1>&2 "Press return to continue."; read CONTINUE
+# Save the test results outside of the target directory
     if [ -e "target/surefire-reports" ]
     then
         if [ -e "surefire-reports-$TEST" ]
