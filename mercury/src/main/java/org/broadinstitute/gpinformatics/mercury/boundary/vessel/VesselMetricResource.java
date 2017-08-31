@@ -10,10 +10,14 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -46,6 +50,42 @@ public class VesselMetricResource {
 
         return "Quant run persisted";
     }
+
+    @Path("fetchQuantForVessel")
+    @Produces("text/plain")
+    @GET
+    public BigDecimal fetchQuantForVessel(@QueryParam("metricType") LabMetric.MetricType metricType, @QueryParam("barcode") String barcode ) {
+        LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
+        BigDecimal value = null;
+        if( labVessel != null ) {
+            if( labVessel.getContainerRole() != null ) {
+                throw new RuntimeException("Resource does not handle container vessels");
+            }
+            ArrayList<LabMetric> metrics = new ArrayList<>();
+
+            for( LabMetric metric : labVessel.getMetrics() ) {
+                if( metric.getName() == metricType ) {
+                    metrics.add( metric );
+                }
+            }
+            if( metrics.size() > 0 ) {
+                // If more than 1, get latest only!
+                if( metrics.size() > 1 ) {
+                    Collections.sort(metrics);
+                }
+                value = metrics.get( metrics.size() - 1 ).getValue();
+            }
+        } else {
+            throw new RuntimeException("No LabVessel for barcode");
+        }
+        if( value != null ) {
+            return value;
+        } else {
+            throw new RuntimeException("No metrics for LabVessel");
+        }
+
+    }
+
 
     @DaoFree
     public LabMetricRun buildLabMetricRun(VesselMetricRunBean vesselMetricRunBean,
