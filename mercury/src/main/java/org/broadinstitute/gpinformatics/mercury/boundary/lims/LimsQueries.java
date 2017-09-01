@@ -285,7 +285,7 @@ public class LimsQueries {
      *
      * @return The double value of the quant we are looking for.
      */
-    public Double fetchQuantForTube(String tubeBarcode, String quantType) {
+    public Double fetchNearestQuantForTube(String tubeBarcode, String quantType) {
         LabVessel vessel = labVesselDao.findByIdentifier(tubeBarcode);
         if (vessel != null) {
             List<LabMetric> metrics = vessel.getNearestMetricsOfType(LabMetric.MetricType.getByDisplayName(quantType));
@@ -295,6 +295,50 @@ public class LimsQueries {
         }
         throw new RuntimeException(
                 "Tube or quant not found for barcode: " + tubeBarcode + ", quant type: " + quantType);
+    }
+
+    /**
+     * This method returns the double value of newest quant of type quantType directly on the vessel specified by the tubeBarcode.
+     *
+     * @param tubeBarcode The barcode of the tube to look up quants on.
+     * @param quantType   The type of quant we are looking for.
+     *
+     * @return The double value of the quant we are looking for.
+     * @throws RuntimeException on any invalid input or no metrics available
+     */
+    public Double fetchQuantForTube(String tubeBarcode, String quantType) {
+        LabMetric.MetricType metricType = LabMetric.MetricType.getByDisplayName(quantType);
+        if( metricType == null ) {
+            throw new RuntimeException("No metric type found for " + quantType );
+        }
+        LabVessel labVessel = labVesselDao.findByIdentifier(tubeBarcode);
+        Double value = null;
+        if( labVessel != null ) {
+            if( labVessel.getContainerRole() != null ) {
+                throw new RuntimeException("Resource does not handle container vessels");
+            }
+            ArrayList<LabMetric> metrics = new ArrayList<>();
+
+            for( LabMetric metric : labVessel.getMetrics() ) {
+                if( metric.getName() == metricType ) {
+                    metrics.add( metric );
+                }
+            }
+            if( metrics.size() > 0 ) {
+                // If more than 1, get latest only!
+                if( metrics.size() > 1 ) {
+                    Collections.sort(metrics);
+                }
+                value = metrics.get( metrics.size() - 1 ).getValue().doubleValue();
+            }
+        } else {
+            throw new RuntimeException("No LabVessel for barcode " + tubeBarcode);
+        }
+        if( value != null ) {
+            return value;
+        } else {
+            throw new RuntimeException("No " + metricType + " metrics for vessel barcode " + tubeBarcode);
+        }
     }
 
     /**

@@ -251,6 +251,9 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(getResponseContent(caught), equalTo("Plate not found for barcode: invalid_plate"));
     }
 
+    /**
+     * SQUID tube - thrift service proxy
+     */
     @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchQpcrForTube(@ArquillianResource URL baseUrl)
@@ -260,6 +263,30 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(result, equalTo("19.37698653"));
     }
 
+    /**
+     * MERCURY tube - LimsQueries CDI Bean
+     */
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFetchMercuryQpcrForTube(@ArquillianResource URL baseUrl)
+            throws Exception {
+        WebResource resource = makeWebResource(baseUrl, "fetchQpcrForTube")
+                .queryParam("tubeBarcode", "0212942357")
+                .queryParam("quantType", "VIIA QPCR");
+        String result = get(resource);
+        assertThat(result, equalTo("1.38"));
+
+        resource = makeWebResource(baseUrl, "fetchQpcrForTube")
+                .queryParam("tubeBarcode", "0212942357")
+                .queryParam("quantType", "VIIA QPCR")
+                .queryParam("onTubeOnly", "true");
+        result = get(resource);
+        assertThat(result, equalTo("1.38"));
+    }
+
+    /**
+     * SQUID tube - thrift service proxy
+     */
     @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void fetchQpcrForTubeAndType(@ArquillianResource URL baseUrl)
@@ -291,6 +318,9 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(getResponseContent(caught), equalTo("Tube or QPCR not found for barcode: 000001848862"));
     }
 
+    /**
+     * SQUID tube - thrift service proxy
+     */
     @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchQuantForTube(@ArquillianResource URL baseUrl)
@@ -313,6 +343,9 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
                 equalTo("Tube or quant not found for barcode: invalid_tube, quant type: Catch Pico"));
     }
 
+    /**
+     * SQUID tube - thrift service proxy
+     */
     @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchQuantForTubeUnknownQuant(@ArquillianResource URL baseUrl)
@@ -335,6 +368,27 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(caught.getResponse().getStatus(), equalTo(500));
         assertThat(getResponseContent(caught),
                 equalTo("Tube or quant not found for barcode: 000001859062, quant type: Catch Pico"));
+    }
+
+    /**
+     * MERCURY tube - LimsQueries CDI Bean
+     */
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFetchMercuryQuantForTube(@ArquillianResource URL baseUrl)
+            throws Exception {
+        WebResource resource = makeWebResource(baseUrl, "fetchQuantForTube")
+                .queryParam("tubeBarcode", "0212942357")
+                .queryParam("quantType", "VIIA QPCR");
+        String result = get(resource);
+        assertThat(result, equalTo("1.38"));
+
+        resource = makeWebResource(baseUrl, "fetchQuantForTube")
+                .queryParam("tubeBarcode", "0212942357")
+                .queryParam("quantType", "VIIA QPCR")
+                .queryParam("onTubeOnly", "true");
+        result = get(resource);
+        assertThat(result, equalTo("1.38"));
     }
 
     @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
