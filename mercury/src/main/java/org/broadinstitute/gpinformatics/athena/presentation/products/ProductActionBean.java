@@ -301,6 +301,14 @@ public class ProductActionBean extends CoreActionBean {
         if (priceItemTokenInput.getItem() == null) {
             addValidationError("token-input-primaryPriceItem", "Primary price item is required");
         }
+        if (StringUtils.isNotBlank(editProduct.getExternalProductName()) && externalPriceItemTokenInput.getItem() == null) {
+            addValidationError("token-input-externalPriceItem",
+                    "If setting an external product name, an external price item is required");
+        }
+        if (externalPriceItemTokenInput.getItem() != null && StringUtils.isBlank(editProduct.getExternalProductName())) {
+            addValidationError("token-input-externalPriceItem",
+                    "If setting an external price item, an external product name is required");
+        }
 
         checkValidCriteria();
 
