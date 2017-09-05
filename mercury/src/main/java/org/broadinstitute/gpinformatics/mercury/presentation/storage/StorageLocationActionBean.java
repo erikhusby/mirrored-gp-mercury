@@ -143,7 +143,10 @@ public class StorageLocationActionBean extends CoreActionBean {
                     generateJSON(parentLocation, parentNode, true);
                     createOpenState(mapper, parentNode, true, false);
                     ArrayNode arrayNode = mapper.createArrayNode();
-                    for (StorageLocation childLocation: parentLocation.getChildrenStorageLocation()) {
+                    Set<StorageLocation> childrenStorageLocation = parentLocation.getChildrenStorageLocation();
+                    List<StorageLocation> childrenStorageLocationList = new ArrayList<>(childrenStorageLocation);
+                    Collections.sort(childrenStorageLocationList, new StorageLocation.StorageLocationLabelComparator());
+                    for (StorageLocation childLocation: childrenStorageLocationList) {
                         if (childLocation.getStorageLocationId().equals(storageLocation.getStorageLocationId())) {
                             arrayNode.add(currentNode);
                         } else {
@@ -164,7 +167,7 @@ public class StorageLocationActionBean extends CoreActionBean {
             //Add all other top level locations as well
             List<StorageLocation> rootStorageLocations = storageLocationDao.findByLocationTypes(
                     StorageLocation.LocationType.getTopLevelLocationTypes());
-
+            Collections.sort(rootStorageLocations, new StorageLocation.StorageLocationLabelComparator());
             for (StorageLocation rootStorageLocation : rootStorageLocations) {
                 ObjectNode rootNode = null;
                 if (rootStorageLocation.getStorageLocationId().equals(storageLocation.getStorageLocationId())) {

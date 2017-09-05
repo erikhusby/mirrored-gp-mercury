@@ -67,40 +67,40 @@
                             name="rackScan"/>
         </div>
     </c:if>
-    <table>
-        <c:forEach items="${geometry.rowNames}" var="rowName" varStatus="rowStatus">
-            <c:if test="${rowStatus.first}">
+    <c:if test="${actionBean.showLayout}">
+        <table>
+            <c:forEach items="${geometry.rowNames}" var="rowName" varStatus="rowStatus">
+                <c:if test="${rowStatus.first}">
+                    <tr>
+                        <td></td>
+                        <c:forEach items="${geometry.columnNames}" var="columnName" varStatus="columnStatus">
+                            <td>${columnName}</td>
+                        </c:forEach>
+                    </tr>
+                </c:if>
                 <tr>
-                    <td></td>
+                    <td>${rowName}</td>
                     <c:forEach items="${geometry.columnNames}" var="columnName" varStatus="columnStatus">
-                        <td>${columnName}</td>
+                        <c:set var="receptacleIndex"
+                               value="${rowStatus.index * geometry.columnCount + columnStatus.index}"/>
+                        <td align="right">
+                            <c:if test="${empty rowName}">${geometry.vesselPositions[receptacleIndex]}</c:if>
+                            <input type="text"
+                                   id="receptacleTypes[${receptacleIndex}].barcode"
+                                   name="receptacleTypes[${receptacleIndex}].barcode"
+                                   value="${actionBean.mapPositionToVessel[geometry.vesselPositions[receptacleIndex]].label}"
+                                   class="clearable smalltext unique" autocomplete="off"
+                                   <c:if test="${actionBean.editLayout}">placeholder="barcode"</c:if>
+                                   <c:if test="${not actionBean.editLayout or canRackScan}">readonly</c:if>/>
+                            <input type="hidden"
+                                   id="receptacleTypes[${receptacleIndex}].position"
+                                   name="receptacleTypes[${receptacleIndex}].position"
+                                   value="${geometry.vesselPositions[receptacleIndex]}"/>
+                        </td>
                     </c:forEach>
                 </tr>
-            </c:if>
-            <tr>
-                <td>${rowName}</td>
-                <c:forEach items="${geometry.columnNames}" var="columnName" varStatus="columnStatus">
-                    <c:set var="receptacleIndex"
-                           value="${rowStatus.index * geometry.columnCount + columnStatus.index}"/>
-                    <td align="right">
-                        <c:if test="${empty rowName}">${geometry.vesselPositions[receptacleIndex]}</c:if>
-                        <input type="text"
-                               id="receptacleTypes[${receptacleIndex}].barcode"
-                               name="receptacleTypes[${receptacleIndex}].barcode"
-                               value="${actionBean.mapPositionToVessel[geometry.vesselPositions[receptacleIndex]].label}"
-                               class="clearable smalltext unique" autocomplete="off"
-                               <c:if test="${actionBean.editLayout}">placeholder="barcode"</c:if>
-                               <c:if test="${not actionBean.editLayout or canRackScan}">readonly</c:if>/>
-                        <input type="hidden"
-                               id="receptacleTypes[${receptacleIndex}].position"
-                               name="receptacleTypes[${receptacleIndex}].position"
-                               value="${geometry.vesselPositions[receptacleIndex]}"/>
-                    </td>
-                </c:forEach>
-            </tr>
-        </c:forEach>
-    </table>
-    <c:if test="${actionBean.editLayout}">
+            </c:forEach>
+        </table>
         <div class="control-group top-buffer">
             <div class="controls">
                 <stripes:submit id="saveLayout" name="save" value="Update Layout" class="btn btn-primary"/>

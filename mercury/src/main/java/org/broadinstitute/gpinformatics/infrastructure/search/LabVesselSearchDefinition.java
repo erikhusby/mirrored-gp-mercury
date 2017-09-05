@@ -1561,7 +1561,7 @@ public class LabVesselSearchDefinition {
                     if (str.contains("[")) {
                         String containerBarcode = str.substring(str.indexOf("[")+1,str.indexOf("]"));
                         String href = String.format(
-                                "/Mercury/container/container.action?containerBarcode=%s&viewContainer=",
+                                "/Mercury/container/container.action?containerBarcode=%s&viewContainerSearch=",
                                 containerBarcode
                         );
                         return String

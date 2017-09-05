@@ -72,8 +72,10 @@ public class ContainerActionBean extends RackScanActionBean {
     public static final String CONTAINER_VIEW_SHIM_PAGE = "/container/container_view.jsp";
     public static final String CREATE_CONTAINER_ACTION = "createContainer";
     public static final String VIEW_CONTAINER_ACTION = "viewContainer";
+    public static final String VIEW_CONTAINER_SEARCH_ACTION = "viewContainerSearch";
     public static final String VIEW_CONTAINER_AJAX_ACTION = "viewContainerAjax";
     public static final String CONTAINER_PARAMETER = "containerBarcode";
+    public static final String SHOW_LAYOUT_PARAMETER = "showLayout";
     public static final String SAVE_LOCATION_ACTION = "saveLocation";
     public static final String REMOVE_LOCATION_ACTION = "removeLocation";
     public static final String CANCEL_SAVE_ACTION = "cancel";
@@ -111,6 +113,7 @@ public class ContainerActionBean extends RackScanActionBean {
     private String storageId;
     private StaticPlate staticPlate;
     private boolean ajaxRequest;
+    private boolean showLayout;
 
     public ContainerActionBean() {
         super(CREATE_CONTAINER, EDIT_CONTAINER, CONTAINER_PARAMETER);
@@ -150,7 +153,7 @@ public class ContainerActionBean extends RackScanActionBean {
     }
 
     @ValidationMethod(on = {VIEW_CONTAINER_ACTION, EDIT_ACTION, SAVE_ACTION, SAVE_LOCATION_ACTION,
-            CANCEL_SAVE_ACTION, FIRE_RACK_SCAN, REMOVE_LOCATION_ACTION})
+            CANCEL_SAVE_ACTION, FIRE_RACK_SCAN, REMOVE_LOCATION_ACTION, VIEW_CONTAINER_SEARCH_ACTION})
     public void labVesselExist() {
         if (StringUtils.isEmpty(containerBarcode)) {
             addValidationError(containerBarcode, "Container Barcode is required.");
@@ -175,7 +178,7 @@ public class ContainerActionBean extends RackScanActionBean {
      * may not be accurate under rearrays.
      */
     @After(stages = LifecycleStage.CustomValidation, on = {VIEW_CONTAINER_ACTION, EDIT_ACTION, SAVE_ACTION,
-            SAVE_LOCATION_ACTION, CANCEL_SAVE_ACTION, REMOVE_LOCATION_ACTION})
+            SAVE_LOCATION_ACTION, CANCEL_SAVE_ACTION, REMOVE_LOCATION_ACTION, VIEW_CONTAINER_SEARCH_ACTION})
     public void buildPositionMapping() {
         mapPositionToVessel = new HashMap<>();
         if (rackOfTubes == null && staticPlate == null) {
@@ -240,7 +243,7 @@ public class ContainerActionBean extends RackScanActionBean {
                             continue;
                         }
                         LabEvent barcodesLatestEvent = barcodedTube.getLatestEvent();
-                        if (barcodesLatestEvent.equals(latestEvent)) {
+                        if (barcodesLatestEvent != null && barcodesLatestEvent.equals(latestEvent)) {
                             mapPositionToVessel.put(vesselPosition, barcodedTube);
                         }
                     }
@@ -301,6 +304,18 @@ public class ContainerActionBean extends RackScanActionBean {
 
     @HandlesEvent(VIEW_CONTAINER_ACTION)
     public Resolution viewContainer() {
+        if (rackOfTubes.getRackType().isRackScannable()) {
+            return new RedirectResolution(ContainerActionBean.class, EDIT_ACTION)
+                    .addParameter(CONTAINER_PARAMETER, containerBarcode)
+                    .addParameter(SHOW_LAYOUT_PARAMETER, false);
+        }
+        showLayout = true;
+        return new ForwardResolution(CONTAINER_VIEW_PAGE);
+    }
+
+    @HandlesEvent(VIEW_CONTAINER_SEARCH_ACTION)
+    public Resolution viewContainerSearch() {
+        showLayout = true;
         return new ForwardResolution(CONTAINER_VIEW_PAGE);
     }
 
@@ -318,6 +333,9 @@ public class ContainerActionBean extends RackScanActionBean {
     @HandlesEvent(EDIT_ACTION)
     public Resolution editContainer() {
         editLayout = true;
+        if (rackOfTubes != null && !rackOfTubes.getRackType().isRackScannable()) {
+            showLayout = true;
+        }
         return new ForwardResolution(CONTAINER_VIEW_PAGE);
     }
 
@@ -358,8 +376,9 @@ public class ContainerActionBean extends RackScanActionBean {
             return new ForwardResolution(CONTAINER_VIEW_PAGE);
         }
         addMessage("Successfully updated layout.");
-        return new RedirectResolution(ContainerActionBean.class, VIEW_CONTAINER_ACTION)
-                .addParameter(CONTAINER_PARAMETER, containerBarcode);
+        return new RedirectResolution(ContainerActionBean.class, VIEW_CONTAINER_SEARCH_ACTION)
+                .addParameter(CONTAINER_PARAMETER, containerBarcode)
+                .addParameter(SHOW_LAYOUT_PARAMETER, true);
     }
 
     public void handleSaveContainer(MessageCollection messageCollection) {
@@ -397,8 +416,10 @@ public class ContainerActionBean extends RackScanActionBean {
             }
         }
         rackOfTubes.setStorageLocation(storageLocation);
-        for (BarcodedTube barcodedTube: barcodedTubesToAddToStorage) {
-            barcodedTube.setStorageLocation(storageLocation);
+        if (barcodedTubesToAddToStorage != null) {
+            for (BarcodedTube barcodedTube : barcodedTubesToAddToStorage) {
+                barcodedTube.setStorageLocation(storageLocation);
+            }
         }
         labEventDao.persist(labEvent);
         labEventDao.flush();
@@ -407,6 +428,7 @@ public class ContainerActionBean extends RackScanActionBean {
     @HandlesEvent(FIRE_RACK_SCAN)
     public Resolution fireRackScan() throws ScannerException {
         scan();
+        showLayout = true;
         MessageCollection messageCollection = new MessageCollection();
         Map<VesselPosition, LabVessel> scanPositionToVessel = new HashMap<>();
         if(getRackScan() != null) {
@@ -619,6 +641,14 @@ public class ContainerActionBean extends RackScanActionBean {
 
     public void setStorageName(String storageName) {
         this.storageName = storageName;
+    }
+
+    public boolean isShowLayout() {
+        return showLayout;
+    }
+
+    public void setShowLayout(boolean showLayout) {
+        this.showLayout = showLayout;
     }
 
     /** For testing. **/
