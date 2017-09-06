@@ -16,9 +16,11 @@ import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.mercury.BSPRestClient;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.MetadataType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
@@ -31,14 +33,16 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
-import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -104,65 +108,101 @@ public class BSPRestSender implements Serializable {
         SBSSection sourceSection = SBSSection.getBySectionName(plateTransferEventType.getSourcePlate().getSection());
         SBSSection destSection = SBSSection.getBySectionName(plateTransferEventType.getPlate().getSection());
         List<VesselPosition> wells = sourceSection.getWells();
+        Map<VesselPosition, ReceptacleType> mapSourcePosToReceptacle = buildMapPosToReceptacle(plateCherryPickEvent.getSourcePositionMap());
+        Map<VesselPosition, ReceptacleType> mapDestPosToReceptacle = buildMapPosToReceptacle(plateCherryPickEvent.getPositionMap());
+        List<ReceptacleType> removeSources = new ArrayList<>();
+        List<ReceptacleType> removeDests = new ArrayList<>();
+        boolean atLeastOneTransfer = false;
+
         for (int i = 0; i < wells.size(); i++) {
-            VesselPosition vesselPosition = wells.get(i);
+            VesselPosition sourceVesselPosition = wells.get(i);
             VesselPosition destVesselPosition = destSection.getWells().get(i);
             Set<SampleInstanceV2> sampleInstances = sourceLabVessel.getContainerRole().getSampleInstancesAtPositionV2(
-                    vesselPosition);
+                    sourceVesselPosition);
             if (sampleInstances.size() > 1) {
                 throw new RuntimeException("Expected 1 sample, found " + sampleInstances.size());
             } else if (sampleInstances.size() == 1) {
                 SampleInstanceV2 sampleInstanceV2 = sampleInstances.iterator().next();
                 Set<MercurySample> rootMercurySamples = sampleInstanceV2.getRootMercurySamples();
-                if (rootMercurySamples.isEmpty() ||
+                if (!sampleInstanceV2.isReagentOnly() &&
                         rootMercurySamples.iterator().next().getMetadataSource() == MercurySample.MetadataSource.BSP) {
+                    atLeastOneTransfer = true;
                     // add source element
                     CherryPickSourceType cherryPickSourceType = new CherryPickSourceType();
                     cherryPickSourceType.setBarcode(plateTransferEventType.getSourcePlate().getBarcode());
-                    cherryPickSourceType.setWell(vesselPosition.name());
+                    cherryPickSourceType.setWell(sourceVesselPosition.name());
                     cherryPickSourceType.setDestinationBarcode(plateTransferEventType.getPlate().getBarcode());
                     cherryPickSourceType.setDestinationWell(destVesselPosition.name());
                     plateCherryPickEvent.getSource().add(cherryPickSourceType);
+                    // Set PDO
+                    // todo jmt make this conditional on a flag in LabEventType
+                    List<ProductOrderSample> allProductOrderSamples = sampleInstanceV2.getAllProductOrderSamples();
+                    if (!allProductOrderSamples.isEmpty()) {
+                        MetadataType metadataType = new MetadataType();
+                        metadataType.setName("PDO");
+                        // todo jmt if multiple, pick most recent?
+                        metadataType.setValue(allProductOrderSamples.iterator().next().getProductOrder().getBusinessKey());
+                        ReceptacleType receptacleType = mapDestPosToReceptacle.get(destVesselPosition);
+                        if (receptacleType != null) {
+                            receptacleType.getMetadata().add(metadataType);
+                        }
+                    }
                 } else {
-                    // remove tubes from position maps
-                    removeFromMap(vesselPosition, plateCherryPickEvent.getSourcePositionMap());
-                    removeFromMap(destVesselPosition, plateCherryPickEvent.getPositionMap());
+                    // Queue up tubes to remove from position maps
+                    ReceptacleType sourceReceptacleType = mapSourcePosToReceptacle.get(sourceVesselPosition);
+                    if (sourceReceptacleType != null) {
+                        removeSources.add(sourceReceptacleType);
+                    }
+                    ReceptacleType destReceptacleType = mapDestPosToReceptacle.get(destVesselPosition);
+                    if (destReceptacleType != null) {
+                        removeDests.add(destReceptacleType);
+                    }
                 }
             }
         }
 
-        return plateCherryPickEvent;
+        if (plateCherryPickEvent.getSourcePositionMap() != null && !plateCherryPickEvent.getSourcePositionMap().isEmpty()) {
+            plateCherryPickEvent.getSourcePositionMap().get(0).getReceptacle().removeAll(removeSources);
+        }
+        if (plateCherryPickEvent.getPositionMap() != null && !plateCherryPickEvent.getPositionMap().isEmpty()) {
+            plateCherryPickEvent.getPositionMap().get(0).getReceptacle().removeAll(removeDests);
+        }
+
+        return atLeastOneTransfer ? plateCherryPickEvent : null;
     }
 
-    private void removeFromMap(VesselPosition vesselPosition, List<PositionMapType> sourcePositionMap) {
-        if (sourcePositionMap != null && !sourcePositionMap.isEmpty()) {
-            List<ReceptacleType> receptacle = sourcePositionMap.get(0).getReceptacle();
-            for (int i1 = 0; i1 < receptacle.size(); i1++) {
-                ReceptacleType receptacleType = receptacle.get(i1);
-                if (VesselPosition.getByName(receptacleType.getPosition()) == vesselPosition) {
-                    receptacle.remove(i1);
-                    break;
-                }
+    private Map<VesselPosition, ReceptacleType> buildMapPosToReceptacle(List<PositionMapType> positionMaps) {
+        Map<VesselPosition, ReceptacleType> mapPosToReceptacle = new HashMap<>();
+        if (positionMaps != null && !positionMaps.isEmpty()) {
+            List<ReceptacleType> receptacles = positionMaps.get(0).getReceptacle();
+            for (ReceptacleType receptacle : receptacles) {
+                mapPosToReceptacle.put(VesselPosition.getByName(receptacle.getPosition()), receptacle);
             }
         }
+        return mapPosToReceptacle;
     }
 
-    @NotNull
     public BettaLIMSMessage bspBettaLIMSMessage(BettaLIMSMessage message, List<LabEvent> labEvents) {
         // Forward only the events that are for BSP, e.g. Blood Biopsy extraction from blood to plasma and buffy coat
         // is two events in one message, but only one is configured to forward to BSP.
         BettaLIMSMessage copy = new BettaLIMSMessage();
+        boolean atLeastOneEvent = false;
         for (PlateCherryPickEvent plateCherryPickEvent : message.getPlateCherryPickEvent()) {
             if(LabEventType.getByName(plateCherryPickEvent.getEventType()).getForwardMessage() ==
                     LabEventType.ForwardMessage.BSP) {
                 // todo jmt method to filter out clinical samples
                 copy.getPlateCherryPickEvent().add(plateCherryPickEvent);
+                atLeastOneEvent = true;
             }
         }
         for (PlateTransferEventType plateTransferEventType : message.getPlateTransferEvent()) {
             if(LabEventType.getByName(plateTransferEventType.getEventType()).getForwardMessage() ==
                     LabEventType.ForwardMessage.BSP) {
-                copy.getPlateCherryPickEvent().add(plateTransfer(plateTransferEventType, labEvents));
+                PlateCherryPickEvent plateCherryPickEvent = plateTransfer(plateTransferEventType, labEvents);
+                if (plateCherryPickEvent != null) {
+                    copy.getPlateCherryPickEvent().add(plateCherryPickEvent);
+                    atLeastOneEvent = true;
+                }
             }
         }
         for (ReceptacleTransferEventType receptacleTransferEventType : message.getReceptacleTransferEvent()) {
@@ -170,9 +210,10 @@ public class BSPRestSender implements Serializable {
                     LabEventType.ForwardMessage.BSP) {
                 // todo jmt method to filter out clinical samples
                 copy.getReceptacleTransferEvent().add(receptacleTransferEventType);
+                atLeastOneEvent = true;
             }
         }
-        return copy;
+        return atLeastOneEvent ? copy : null;
     }
 
     /**

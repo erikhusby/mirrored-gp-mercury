@@ -341,24 +341,27 @@ public class LabEventFactory implements Serializable {
         if (labVessel == null) {
             labVessel = labEvent.getSourceLabVessels().iterator().next();
         }
+        boolean isBsp = false;
         if (labEventType.getVolumeConcUpdate() == LabEventType.VolumeConcUpdate.BSP_AND_MERCURY) {
-            MercurySample mercurySample = null;
+            MercurySample mercurySample;
             if (labVessel.getContainerRole() != null) {
                 for (LabVessel testVessel : labVessel.getContainerRole().getContainedVessels()) {
                     mercurySample = extractSample(testVessel.getSampleInstancesV2());
-                    if (mercurySample != null) {
-                        break;
+                    if (mercurySample == null || mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
+                        isBsp = true;
                     }
                 }
             } else {
                 mercurySample = extractSample(labVessel.getSampleInstancesV2());
+                if (mercurySample == null || mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
+                    isBsp = true;
+                }
             }
             // If no mercury samples found, assumes samples are derived from old BSP samples that haven't
             // been exported to Mercury.  This is OK provided they are processed by Squid
             // CRSP/Buick samples are expected to be already accessioned and therefore have mercury samples.
-            return (mercurySample == null || mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP);
         }
-        return false;
+        return isBsp;
     }
 
     private MercurySample extractSample(Collection<SampleInstanceV2> sampleInstances) {
@@ -462,8 +465,11 @@ public class LabEventFactory implements Serializable {
             LabEventType.ForwardMessage forwardMessage = labEvent.getLabEventType().getForwardMessage();
             switch (forwardMessage) {
                 case BSP:
-                    bspRestSender.postToBsp(bspRestSender.bspBettaLIMSMessage(bettaLIMSMessage, labEvents),
-                            BSPRestSender.BSP_TRANSFER_REST_URL);
+                    BettaLIMSMessage bspBettaLIMSMessage = bspRestSender.bspBettaLIMSMessage(bettaLIMSMessage, labEvents);
+                    if (bspBettaLIMSMessage != null) {
+                        bspRestSender.postToBsp(bspBettaLIMSMessage,
+                                BSPRestSender.BSP_TRANSFER_REST_URL);
+                    }
                     break;
                 case GAP:
                     String forwardToGap = null;
@@ -502,7 +508,7 @@ public class LabEventFactory implements Serializable {
                     throw new RuntimeException("Unexpected forwardMessage " + forwardMessage.name());
             }
         }
-
+        // todo jmt this needs to ignore clinical samples
         updateVolumeConcentration(updateReceptacles.toArray(new ReceptacleType[updateReceptacles.size()]));
         return labEvents;
     }
