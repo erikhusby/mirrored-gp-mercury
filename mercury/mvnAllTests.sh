@@ -59,14 +59,13 @@ EOF
     exit 1
 fi
 
-MAVEN_OPTS="-Xms4g -XX:MaxPermSize=1g $SSL_OPTS"
-    
 if [ "x$SSL_OPTS" == "x" ]
 then
     KEYSTORE_FILE="../JBossConfig/src/main/resources/keystore/.keystore"
     KEYSTORE_PASSWORD="changeit"
     SSL_OPTS="-DkeystoreFile=$KEYSTORE_FILE -DkeystorePassword=$KEYSTORE_PASSWORD"
 fi
+MAVEN_OPTS="-Xms4g -XX:MaxPermSize=1g $SSL_OPTS"
 
 BUILD_PROFILE=$BUILD
 if [ "x$BUILD_PROFILE" == "x" ]
@@ -76,20 +75,6 @@ fi
 
 
 EXIT_STATUS=0
-
-# Get rid of previous test results
-if [ -f "tests.log" ]
-then
-    rm tests.log
-fi
-
-for TEST in $TESTS
-do
-    if [ -e "surefire-reports-$TEST" ]
-    then
-        rm -rf surefire-reports-$TEST
-    fi
-done
 
 # Setup the build options
 if [[ $CLOVER -eq 0 ]]
@@ -119,7 +104,7 @@ OPTIONS=$OPTIONS
 EOF
 
 # Run the current test set
-    mvn $OPTIONS -P$TEST $GOALS | tee -a tests.log
+    mvn $OPTIONS -P$TEST $GOALS | tee -a tests-$TEST.log
     if [ ${PIPESTATUS[0]} -ne 0 ]
     then
         EXIT_STATUS=${PIPESTATUS[0]}
@@ -145,14 +130,6 @@ EOF
 
 done
 
-if [[ $CLOVER -eq 1 ]]
-then
-    mvn $OPTIONS clover:aggregate clover:clover | tee -a tests.log
-    if [ ${PIPESTATUS[0]} -ne 0 ]
-    then
-	EXIT_STATUS=${PIPESTATUS[0]}
-    fi
-fi
 
 exit $EXIT_STATUS
 
