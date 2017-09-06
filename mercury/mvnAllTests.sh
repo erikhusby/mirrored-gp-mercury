@@ -38,7 +38,7 @@ while getopts "hct:b:j:m:" OPTION; do
 	b) BUILD_PROFILE=$OPTARG;;
 	j) JBOSS_HOME=$OPTARG;;
 	c) CLOVER=1;;
-	m) ADDITIONAL_OPTIONS="$ADDITIONAL_OPTION $OPTARGS";;
+	m) ADDITIONAL_OPTIONS="$ADDITIONAL_OPTIONS $OPTARG";;
 	[?]) usage; exit 1;;
     esac
 done
@@ -99,7 +99,7 @@ OPTIONS=$OPTIONS
 EOF
 
 # Run the current test set
-    mvn $OPTIONS -P$TEST $GOALS | tee -a tests-$TEST.log
+echo    mvn $OPTIONS -P$TEST $GOALS | tee -a tests-$TEST.log
     if [ ${PIPESTATUS[0]} -ne 0 ]
     then
         EXIT_STATUS=${PIPESTATUS[0]}

@@ -29,8 +29,6 @@ WILDFLY_SERVER=
 ADDITIONAL_OPTIONS=
 let A=0
 
-set -x
-
 while getopts "hcb:j:w:m:" OPTION; do
     case $OPTION in
 	h) usage
@@ -72,10 +70,10 @@ fi
 rm -v tests-*.log
 
 # Run the NonArquillian tests first
-for TEST in $TESTS_NONARQUILLIAN
-do
-    ./mvnAllTests.sh -t $TEST -b $BUILD $CLOVER $ADDITIONAL_OPTIONS
-done
+#for TEST in $TESTS_NONARQUILLIAN
+#do
+#    ./mvnAllTests.sh -t $TEST -b $BUILD $CLOVER $ADDITIONAL_OPTIONS
+#done
 
 server() {
     if [[ "x$JBOSS_SERVER" != "x" ]]
