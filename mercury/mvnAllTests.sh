@@ -99,7 +99,7 @@ OPTIONS=$OPTIONS
 EOF
 
 # Run the current test set
-echo    mvn $OPTIONS -P$TEST $GOALS | tee -a tests-$TEST.log
+    mvn $OPTIONS -P$TEST $GOALS | tee -a tests-$TEST.log
     if [ ${PIPESTATUS[0]} -ne 0 ]
     then
         EXIT_STATUS=${PIPESTATUS[0]}
