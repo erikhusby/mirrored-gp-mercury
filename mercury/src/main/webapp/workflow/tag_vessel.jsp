@@ -156,15 +156,18 @@
                 var labelId = position.id.replace("cells_","label_");
                 var labelvar = document.getElementById(labelId);
                 for (var i = 0; i < fld.options.length; i++) {
+                    if(i==0) {
+                        text.push("</br>");
+                    }
                     if (fld.options[i].selected) {
                         values.push(fld.options[i].value);
-                        text.push(fld.options[i].text);
+                        text.push(fld.options[i].text + "</br>");
                     }
                 }
 
                 $(position).attr('name', values);
                 if (position.checked) {
-                    labelvar.innerHTML = text;
+                    labelvar.innerHTML = text.join("");
                     $(position).prop('checked', true);
                 } else {
                     labelvar.innerHTML = "(no condition)";
@@ -208,7 +211,7 @@
                     resultQueue = JSON.parse(paresdJson);
                     $.each(resultQueue, function (index, value) {
                         $( "#cells_" + value.position ).prop( "checked", true );
-                        $( "#label_" + value.position ).text(value.selection);
+                        $( "#label_" + value.position ).html(value.selection);
                         $( "#label_" + value.position ).attr('name', value.devCondition);
                     });
                 }
@@ -221,11 +224,11 @@
                     for (var i = 0; i < fld.options.length; i++) {
                         if (fld.options[i].selected) {
                             values.push(fld.options[i].value);
-                            text.push(fld.options[i].text);
+                            text.push(fld.options[i].html);
                         }
                     }
                     if(this.checked) {
-                        $("[id^=label_]").text(text.toString());
+                        $("[id^=label_]").html(html.toString());
                         $("[id^=cells_]").attr('name', values);
                         $("[id^=cells_]").prop( "checked", true );
                 }
