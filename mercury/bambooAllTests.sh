@@ -2,7 +2,7 @@
 usage() {
     cat <<EOF
 
-     Usage: $0 [-j jboss_server] [-w wildfly_server] [-m MAVENOPTS]  [-c]
+     Usage: $0 [-j jboss_server] [-w wildfly_server] [-m MAVENOPTS]+  [-c] [-b PROFILE]
 
      Runs all the Mercury unit tests for a Bamboo build.
 
@@ -11,7 +11,7 @@ usage() {
         -w  Specifies the particular Wildfly installation
         -j  Specifies the particular JBoss installation,
         -c  Runs the tests with Clover.
-       	-m <maven>	Specifies additional Maven options.
+       	-m <maven>	Specifies additional Maven options. Can be mentioned more than once, they accumulate.
        	-b  Specifies a particular build profile to be used. Defaults to BUILD.
 
 Either the JBoss or Wildfly server must be specified.
@@ -29,6 +29,8 @@ WILDFLY_SERVER=
 ADDITIONAL_OPTIONS=
 let A=0
 
+set -x
+
 while getopts "hcb:j:w:m:" OPTION; do
     case $OPTION in
 	h) usage
@@ -44,7 +46,7 @@ while getopts "hcb:j:w:m:" OPTION; do
 	    ;;
 	c) CLOVER="-c"
 	    ;;
-	m) ADDITIONAL_OPTIONS=$OPTARG
+	m) ADDITIONAL_OPTIONS="$ADDITIONAL_OPTIONS -m $OPTARG "
 	    ;;
 	[?]) usage
 	    exit 1
@@ -72,7 +74,7 @@ rm -v tests-*.log
 # Run the NonArquillian tests first
 for TEST in $TESTS_NONARQUILLIAN
 do
-    ./mvnAllTests.sh -t $TEST -b $BUILD $CLOVER
+    ./mvnAllTests.sh -t $TEST -b $BUILD $CLOVER $ADDITIONAL_OPTIONS
 done
 
 server() {
@@ -91,11 +93,11 @@ server() {
 for TEST in $TESTS_ARQUILLIAN
 do
     server start
-    ./mvnAllTests.sh -t $TEST -b $BUILD $CLOVER
+    ./mvnAllTests.sh -t $TEST -b $BUILD $CLOVER $ADDITIONAL_OPTIONS
     server stop
 done
 
-
+# Aggregate the clover results if necessary
 if [[ "$CLOVER" == "-c" ]]
 then
     mvn $OPTIONS clover:aggregate clover:clover | tee tests-clover.log
