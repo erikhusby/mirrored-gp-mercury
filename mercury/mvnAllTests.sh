@@ -29,7 +29,6 @@ TESTS="Tests.ArqSuite.Standard Tests.ArqSuite.Stubby Tests.Multithreaded Tests.D
 BUILD_PROFILE="BUILD"
 CLOVER=0
 ADDITIONAL_OPTIONS=
-echo $*
 
 while getopts "hct:b:j:m:" OPTION; do
     case $OPTION in
