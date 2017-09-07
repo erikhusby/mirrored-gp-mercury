@@ -69,11 +69,11 @@ fi
 # Remove existing test logs
 rm -v tests-*.log
 
-# Run the NonArquillian tests first
-#for TEST in $TESTS_NONARQUILLIAN
-#do
-#    ./mvnAllTests.sh -t $TEST -b $BUILD $CLOVER $ADDITIONAL_OPTIONS
-#done
+ Run the NonArquillian tests first
+for TEST in $TESTS_NONARQUILLIAN
+do
+    ./mvnAllTests.sh -t $TEST -b $BUILD $CLOVER $ADDITIONAL_OPTIONS
+done
 
 server() {
     if [[ "x$JBOSS_SERVER" != "x" ]]
