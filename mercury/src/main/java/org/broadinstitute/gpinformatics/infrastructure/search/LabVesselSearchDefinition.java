@@ -671,6 +671,11 @@ public class LabVesselSearchDefinition {
         searchTerm.setDisplayExpression(DisplayExpression.RESEARCH_PROJECT);
         searchTerms.add(searchTerm);
 
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Regulatory Designation");
+        searchTerm.setDisplayExpression(DisplayExpression.REGULATORY_DESIGNATION);
+        searchTerms.add(searchTerm);
+
         // Product
         searchTerm = new SearchTerm();
         searchTerm.setName("Product");

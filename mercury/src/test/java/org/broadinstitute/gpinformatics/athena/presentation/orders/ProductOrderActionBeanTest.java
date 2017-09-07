@@ -51,8 +51,14 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderT
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBeanContext;
+import org.broadinstitute.gpinformatics.mercury.presentation.datatables.Column;
+import org.broadinstitute.gpinformatics.mercury.presentation.datatables.Search;
+import org.broadinstitute.gpinformatics.mercury.presentation.datatables.State;
+import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.easymock.EasyMock;
@@ -79,9 +85,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.hamcrest.Matchers.not;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
 
 @Test(groups = TestGroups.DATABASE_FREE)
@@ -895,4 +903,69 @@ public class ProductOrderActionBeanTest {
             return this.mockId;
         }
     }
+
+    @DataProvider(name = "getSamplesForAjaxDataProvider")
+    public Iterator<Object[]> getSamplesForAjaxDataProvider() {
+        List<Object[]> testCases = new ArrayList<>();
+
+        // The expected number of returned samples is 'pageLength' or 'All' samples whcih is represented as -1 internally.
+        testCases.add(new Object[]{/*startRow*/ 0, /*pageLength*/ 1, /*totalSamples*/ 1, /*expectedReturned*/ 1});
+        testCases.add(new Object[]{/*startRow*/ 0, /*pageLength*/ 5, /*totalSamples*/ 10, /*expectedReturned*/ 5});
+
+        // But "fetch all" is represented as -1 so here the number of returned samples is 'totalSamples'.
+        testCases.add(new Object[]{/*startRow*/ 0, /*pageLength*/ -1, /*totalSamples*/ 10, /*expectedReturned*/ 10});
+
+        // even when the current page is not the first
+        testCases.add(new Object[]{/*startRow*/ 2, /*pageLength*/ -1, /*totalSamples*/ 10, /*expectedReturned*/ 10});
+        testCases.add(new Object[]{/*startRow*/ 1, /*pageLength*/ 1, /*totalSamples*/ 1, /*expectedReturned*/ 1});
+        testCases.add(new Object[]{/*startRow*/ 5, /*pageLength*/ 5, /*totalSamples*/ 5, /*expectedReturned*/ 5});
+        testCases.add(new Object[]{/*startRow*/ 1, /*pageLength*/ 5, /*totalSamples*/ 10, /*expectedReturned*/ 5});
+
+        // Test that pagelength > total sample size returns the correct number.
+        testCases.add(new Object[]{/*startRow*/ 0, /*pageLength*/ 5, /*totalSamples*/ 2, /*expectedReturned*/ 2});
+
+        return testCases.iterator();
+    }
+
+    @Test(dataProvider = "getSamplesForAjaxDataProvider")
+    public void testGetPageOneSamples(int startRow, int pageLength, int totalSamples, int expectedReturned)  {
+        State tableState = buildTestState(startRow, pageLength);
+
+        actionBean.setState(tableState);
+        List<ProductOrderSample> fullSampleList = getInitializedSamples(totalSamples, "SM-");
+
+        List<ProductOrderSample> sampleSubList = ProductOrderActionBean.getPageOneSamples(tableState, fullSampleList);
+        assertThat(sampleSubList, hasSize(expectedReturned));
+
+        // all items from subset are included in original list.
+        for (int index = 0; index < expectedReturned; index++) {
+            assertThat(fullSampleList.get(index), equalTo(sampleSubList.get(index)));
+        }
+    }
+
+    private State buildTestState(int startRow, int pageLength) {
+        Search search = new Search("foo", true, false, false);
+        State tableState;
+        tableState  = new State(new Date().getTime(), startRow, pageLength, Collections.<Map<Integer, State.Direction>>emptyList(), search,
+                Collections.<Column>emptyList());
+        return tableState;
+    }
+
+    private List<ProductOrderSample> getInitializedSamples(int totalSamples, final String prefix) {
+        if (totalSamples == 0) {
+            return null;
+        }
+        List<ProductOrderSample> samples = new ArrayList<>();
+        for (int sampleNum = 0; sampleNum < totalSamples; sampleNum++) {
+            String sampleName = prefix + sampleNum;
+            MercurySample mercurySample = new MercurySample(sampleName, Collections.<Metadata>emptySet());
+            ProductOrderSample productOrderSample = new ProductOrderSample(sampleName);
+            productOrderSample.setMercurySample(mercurySample);
+            productOrderSample.setSampleData(new MercurySampleData(mercurySample));
+            samples.add(productOrderSample);
+        }
+        return samples;
+    }
+
+
 }

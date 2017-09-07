@@ -5,15 +5,8 @@ import net.sourceforge.stripes.validation.Validate;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjb;
-import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselEjb;
-import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleInstanceEntityDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VesselPooledTubesProcessor;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
@@ -36,24 +29,6 @@ public class PooledTubeUploadActionBean extends CoreActionBean {
 
     @Inject
     private SampleInstanceEjb sampleInstanceEjb;
-
-    @Inject
-    private VesselEjb vesselEjb;
-
-    @Inject
-    private MolecularIndexingSchemeDao molecularIndexingSchemeDao;
-
-    @Inject
-    private JiraService jiraService;
-
-    @Inject
-    private ReagentDesignDao reagentDesignDao;
-
-    @Inject
-    private LabVesselDao labVesselDao;
-
-    @Inject
-    private MercurySampleDao mercurySampleDao;
 
     @Validate(required = true, on = UPLOAD_TUBES)
     private FileBean pooledTubesSpreadsheet;

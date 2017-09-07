@@ -230,6 +230,10 @@ public enum LabEventType {
             new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT, RackOfTubes.RackType.Matrix96,
                     RackOfTubes.RackType.Matrix96).reagentNames(new String[]{"EB"}).build(),
             LibraryType.POOLED),
+    CALIBRATED_POOLING_TRANSFER("CalibratedPoolingTransfer",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.CALIBRATED_POOLED),
     ICE_POST_HYB_POOLING_TRANSFER("IcePostHybPoolingTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
@@ -305,6 +309,14 @@ public enum LabEventType {
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.MISEQ_FLOWCELL),
+
+    // Dev Samples
+    DEV("DevCherryPick",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT, RackOfTubes.RackType.Matrix96Anonymous,
+                    RackOfTubes.RackType.Matrix96Anonymous).build(),
+            LibraryType.NONE_ASSIGNED),
 
     // Sage
     SAGE_LOADING("SageLoading",
@@ -866,7 +878,7 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
     ERCC_SPIKE_IN("ERCCSpikeIn",
-            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
     DNASE("Dnase",
@@ -1971,6 +1983,7 @@ public enum LabEventType {
         NEXTERA_SPRI_CONCENTRATED_POOL("Nextera SPRI Concentrated Pool", "Pooled"),
         NEXOME_CATCH("Nexome Catch", "Catch"),
         POOLED("Pooled"),
+        CALIBRATED_POOLED("Calibrated Pooled"),
         MISEQ_FLOWCELL("MiSeq Flowcell"),
         NONE_ASSIGNED(""),
         NORMALIZED("Normalized"),

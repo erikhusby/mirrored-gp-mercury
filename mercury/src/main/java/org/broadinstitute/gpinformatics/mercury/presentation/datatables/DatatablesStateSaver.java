@@ -76,6 +76,8 @@ public class DatatablesStateSaver {
 
         } else {
             definitionValue = new NameValueDefinitionValue();
+            state = new State();
+            tableState = objectMapper.writeValueAsString(state);
         }
         List<String> tableStatePreferenceValue = definitionValue.getDataMap().get(TABLE_STATE_KEY);
         if (CollectionUtils.isNotEmpty(tableStatePreferenceValue)) {

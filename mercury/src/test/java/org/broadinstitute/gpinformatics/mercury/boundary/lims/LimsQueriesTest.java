@@ -233,7 +233,7 @@ public class LimsQueriesTest {
                 LabMetric.LabUnit.UG_PER_ML, "D04", gregorianCalendar.getTime());
         tube.addMetric(quantMetric);
 
-        Double quantValue = limsQueries.fetchQuantForTube("tube1", "Pond Pico");
+        Double quantValue = limsQueries.fetchNearestQuantForTube("tube1", "Pond Pico");
         assertThat(quantValue, equalTo(55.55));
     }
 
@@ -248,7 +248,7 @@ public class LimsQueriesTest {
                         "D04", new Date());
         tube.addMetric(quantMetric);
 
-        Double quantValue = limsQueries.fetchQuantForTube("tube1", LabMetric.MetricType.ECO_QPCR.getDisplayName());
+        Double quantValue = limsQueries.fetchNearestQuantForTube("tube1", LabMetric.MetricType.ECO_QPCR.getDisplayName());
         assertThat(quantValue, equalTo(55.55));
     }
 

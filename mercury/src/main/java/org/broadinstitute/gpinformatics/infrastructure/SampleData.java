@@ -58,6 +58,8 @@ public interface SampleData {
 
     String getCollection();
 
+    String getCollectionWithoutGroup();
+
     String getCollectionId();
 
     String getCollaboratorsSampleName();

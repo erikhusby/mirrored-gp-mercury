@@ -17,7 +17,11 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import java.util.*;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Audited
@@ -63,6 +67,8 @@ public class SampleInstanceEntity {
 
     private String experiment;
 
+    private Integer readLength;
+
     public void removeSubTasks() {
         sampleInstanceEntityTsks.clear();
     }
@@ -88,6 +94,9 @@ public class SampleInstanceEntity {
        return subTask;
     }
 
+    public Integer getReadLength() { return readLength; }
+
+    public void setReadLength(Integer readLength) { this.readLength = readLength;  }
 
     public MercurySample getRootSample() {  return rootSample;  }
 
@@ -95,19 +104,11 @@ public class SampleInstanceEntity {
 
     public void setLabVessel(LabVessel labVessel) { this.labVessel = labVessel; }
 
-    public LabVessel getBarodedTube() { return labVessel;  }
-
-    public String getSampleLibraryName() { return  sampleLibraryName; }
-
     public MolecularIndexingScheme getMolecularIndexingScheme() { return molecularIndexingScheme;  }
 
     public void setReagentDesign(ReagentDesign reagentDesign){ this.reagentDesign = reagentDesign; }
 
     public ReagentDesign getReagentDesign() { return this.reagentDesign; }
-
-    public void setSampleInstanceEntityId(Long sampleInstanceEntityId) {this.sampleInstanceEntityId = sampleInstanceEntityId; }
-
-    public Long getSampleInstanceEntityId() { return sampleInstanceEntityId; }
 
     public void setMolecularIndexScheme(MolecularIndexingScheme molecularIndexingScheme) { this.molecularIndexingScheme = molecularIndexingScheme; }
 
@@ -116,6 +117,8 @@ public class SampleInstanceEntity {
     public MercurySample getMercurySample() { return this.mercurySample;    }
 
     public void setSampleLibraryName(String sampleLibraryName) { this.sampleLibraryName = sampleLibraryName; }
+
+    public String getSampleLibraryName() { return sampleLibraryName;  }
 
     public void setUploadDate(){ this.uploadDate = new Date(); }
 

@@ -1117,7 +1117,7 @@ public class VesselContainer<T extends LabVessel> {
             // Apply vessel changes to clones
             if (labVessel != null) {
                 for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
-                    currentSampleInstance.applyVesselChanges(labVessel);
+                    currentSampleInstance.applyVesselChanges(labVessel,null);
                 }
             }
 

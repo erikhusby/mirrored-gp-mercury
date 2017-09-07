@@ -883,4 +883,16 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-4434-1870" author="dwilson">
+        <addColumn tableName="sample_instance_entity" schemaName="mercury">
+            <column name="read_length" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-4434-1871" author="dwilson">
+        <addColumn tableName="sample_instance_entity_aud" schemaName="mercury">
+            <column name="read_length" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

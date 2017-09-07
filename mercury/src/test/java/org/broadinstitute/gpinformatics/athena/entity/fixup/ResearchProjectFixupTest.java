@@ -281,4 +281,15 @@ public class ResearchProjectFixupTest extends Arquillian {
         utx.commit();
     }
 
+    @Test(enabled = false)
+    public void changeRegulatoryDesignationGplim5031() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        ResearchProject researchProject = rpDao.findByBusinessKey("RP-1467");
+        researchProject.setRegulatoryDesignation(ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS);
+        rpDao.persist(new FixupCommentary("GPLIM-5031 updating incorrectly selected regulatory designation."));
+        utx.commit();
+    }
+
+
 }
