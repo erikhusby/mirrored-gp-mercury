@@ -182,13 +182,13 @@ Move the mouse over the question marks to see details about each section.
 </fieldset>
 <script type="text/javascript">
 function validateNewSearch() {
-    if (document.getElementById('newSearchName').value.strip() == '') {
+    if (document.getElementById('newSearchName').value.trim().length == 0) {
         alert("You must enter a name for the new search");
         return false;
     }
     var newSearchLevelSelect = document.getElementById('newSearchLevel');
-    var newSearchLevel = newSearchLevelSelect.options[newSearchLevelSelect.selectedIndex].value;
-    if (newSearchLevel != 'USER') {
+    var newSearchLevel = newSearchLevelSelect.options[newSearchLevelSelect.selectedIndex].innerHTML;
+    if (newSearchLevel !== 'USER') {
         return confirm("Are you sure you want to save this search at " + newSearchLevel +
                 " level?  (If you want this search to be visible to you only, click " +
                 "Cancel and change the level to USER)");
