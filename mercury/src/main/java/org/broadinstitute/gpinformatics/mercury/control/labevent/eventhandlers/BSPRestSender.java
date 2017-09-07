@@ -14,6 +14,7 @@ package org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers;
 import com.rits.cloning.Cloner;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -39,7 +40,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.text.Format;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +59,8 @@ public class BSPRestSender implements Serializable {
     public static final String BSP_CONTAINER_UPDATE_LAYOUT = "container/updateLayout";
 
     private static final Log logger = LogFactory.getLog(BSPRestSender.class);
+
+    public static final Format PLATE_NAME_DATE_FORMAT = FastDateFormat.getInstance("MMddHHmm");
 
     @Inject
     private BSPRestClient bspRestClient;
@@ -113,6 +118,7 @@ public class BSPRestSender implements Serializable {
         List<ReceptacleType> removeSources = new ArrayList<>();
         List<ReceptacleType> removeDests = new ArrayList<>();
         boolean atLeastOneTransfer = false;
+        String messagePdo = null;
 
         for (int i = 0; i < wells.size(); i++) {
             VesselPosition sourceVesselPosition = wells.get(i);
@@ -134,17 +140,22 @@ public class BSPRestSender implements Serializable {
                     cherryPickSourceType.setDestinationBarcode(plateTransferEventType.getPlate().getBarcode());
                     cherryPickSourceType.setDestinationWell(destVesselPosition.name());
                     plateCherryPickEvent.getSource().add(cherryPickSourceType);
-                    // Set PDO
-                    // todo jmt make this conditional on a flag in LabEventType
-                    List<ProductOrderSample> allProductOrderSamples = sampleInstanceV2.getAllProductOrderSamples();
-                    if (!allProductOrderSamples.isEmpty()) {
-                        MetadataType metadataType = new MetadataType();
-                        metadataType.setName("PDO");
-                        // todo jmt if multiple, pick most recent?
-                        metadataType.setValue(allProductOrderSamples.iterator().next().getProductOrder().getBusinessKey());
-                        ReceptacleType receptacleType = mapDestPosToReceptacle.get(destVesselPosition);
-                        if (receptacleType != null) {
-                            receptacleType.getMetadata().add(metadataType);
+                    if (targetEvent.getLabEventType().getAddMetadataToBsp() == LabEventType.AddMetadataToBsp.PDO) {
+                        // Set PDO
+                        List<ProductOrderSample> allProductOrderSamples = sampleInstanceV2.getAllProductOrderSamples();
+                        if (!allProductOrderSamples.isEmpty()) {
+                            MetadataType metadataType = new MetadataType();
+                            metadataType.setName("PDO");
+                            // todo jmt if multiple, pick most recent?
+                            String pdoJiraId = allProductOrderSamples.iterator().next().getProductOrder().getBusinessKey();
+                            metadataType.setValue(pdoJiraId);
+                            if (messagePdo == null) {
+                                messagePdo = pdoJiraId;
+                            }
+                            ReceptacleType receptacleType = mapDestPosToReceptacle.get(destVesselPosition);
+                            if (receptacleType != null) {
+                                receptacleType.getMetadata().add(metadataType);
+                            }
                         }
                     }
                 } else {
@@ -160,6 +171,13 @@ public class BSPRestSender implements Serializable {
                 }
             }
         }
+        if (targetEvent.getLabEventType().getAddMetadataToBsp() == LabEventType.AddMetadataToBsp.PDO) {
+            MetadataType metadataType = new MetadataType();
+            metadataType.setName("PLATE_NAME");
+            metadataType.setValue(messagePdo + "_" + PLATE_NAME_DATE_FORMAT.format(new Date()));
+            plateCherryPickEvent.getMetadata().add(metadataType);
+        }
+
 
         if (plateCherryPickEvent.getSourcePositionMap() != null && !plateCherryPickEvent.getSourcePositionMap().isEmpty()) {
             plateCherryPickEvent.getSourcePositionMap().get(0).getReceptacle().removeAll(removeSources);

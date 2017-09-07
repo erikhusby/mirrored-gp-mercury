@@ -1123,7 +1123,7 @@ public enum LabEventType {
     FINGERPRINTING_PLATE_SETUP("FingerprintingPlateSetup",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED),
+            LibraryType.NONE_ASSIGNED, AddMetadataToBsp.PDO),
     EMERGE_VOLUME_TRANSFER("EmergeVolumeTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
@@ -2026,6 +2026,15 @@ public enum LabEventType {
 
     private String metadataValue;
 
+    /**
+     * Determines what metadata is added to messages forwarded to BSP.
+     */
+    public enum AddMetadataToBsp {
+        PDO
+    }
+
+    private AddMetadataToBsp addMetadataToBsp;
+
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class ManualTransferDetails {
         /** Determines layout of page and type of message built. */
@@ -2480,6 +2489,15 @@ public enum LabEventType {
     }
 
     LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
+            SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
+            PipelineTransformation pipelineTransformation, ForwardMessage forwardMessage,
+            VolumeConcUpdate volumeConcUpdate, LibraryType libraryType, AddMetadataToBsp addMetadataToBsp) {
+        this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
+                pipelineTransformation, forwardMessage, volumeConcUpdate, null, null, libraryType);
+        this.addMetadataToBsp = addMetadataToBsp;
+    }
+
+    LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
                  SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
                  PipelineTransformation pipelineTransformation, ForwardMessage forwardMessage,
                  VolumeConcUpdate volumeConcUpdate, ManualTransferDetails manualTransferDetails, LibraryType libraryType) {
@@ -2585,5 +2603,9 @@ public enum LabEventType {
 
     public String getMetadataValue() {
         return metadataValue;
+    }
+
+    public AddMetadataToBsp getAddMetadataToBsp() {
+        return addMetadataToBsp;
     }
 }
