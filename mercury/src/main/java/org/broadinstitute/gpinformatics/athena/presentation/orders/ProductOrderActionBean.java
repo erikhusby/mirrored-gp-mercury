@@ -411,6 +411,11 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     private String q;
 
+    private String customizableProducts;
+    private String customizedProductPrices;
+    private String customizedProductQuantities;
+    private String customizedProductNames;
+
     /**
      * The owner of the Product Order, stored as createdBy in ProductOrder and Reporter in JIRA
      */
@@ -3445,5 +3450,37 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public List<ProductOrder.OrderAccessType> getOrderTypeDisplayNames() {
         return Arrays.asList(ProductOrder.OrderAccessType.values());
+    }
+
+    public String getCustomizableProducts() {
+        return customizableProducts;
+    }
+
+    public void setCustomizableProducts(String customizableProducts) {
+        this.customizableProducts = customizableProducts;
+    }
+
+    public String getCustomizedProductPrices() {
+        return customizedProductPrices;
+    }
+
+    public void setCustomizedProductPrices(String customizedProductPrices) {
+        this.customizedProductPrices = customizedProductPrices;
+    }
+
+    public String getCustomizedProductQuantities() {
+        return customizedProductQuantities;
+    }
+
+    public void setCustomizedProductQuantities(String customizedProductQuantities) {
+        this.customizedProductQuantities = customizedProductQuantities;
+    }
+
+    public String getCustomizedProductNames() {
+        return customizedProductNames;
+    }
+
+    public void setCustomizedProductNames(String customizedProductNames) {
+        this.customizedProductNames = customizedProductNames;
     }
 }
