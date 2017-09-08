@@ -17,7 +17,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jettison.json.JSONObject;
-import org.jboss.weld.util.collections.ArraySet;
 
 import javax.inject.Inject;
 import java.util.Arrays;
@@ -526,7 +525,7 @@ public class AbandonVesselActionBean  extends RackScanActionBean {
             return;
           }
 
-         setFoundVessels(new ArraySet<LabVessel>(labVessels));
+         setFoundVessels(new HashSet<>(labVessels));
          resultsAvailable = true;
          isSearchDone = true;
     }
