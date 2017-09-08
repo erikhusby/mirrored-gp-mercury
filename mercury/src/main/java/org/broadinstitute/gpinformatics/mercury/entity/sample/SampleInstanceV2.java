@@ -659,7 +659,9 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
 
     private void mergeReagents(ReagentDesign reagentDesign)
     {
-        this.reagentsDesigns.add(reagentDesign);
+        if (reagentDesign != null) {
+            this.reagentsDesigns.add(reagentDesign);
+        }
     }
 
     public List<ReagentDesign> getReagentsDesigns() {
