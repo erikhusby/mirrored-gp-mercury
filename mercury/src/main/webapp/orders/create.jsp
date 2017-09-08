@@ -97,7 +97,14 @@
             }
         }
 
+        function CustomizationValue (priceValue, quantityValue, customNameValue) {
+            this.price = priceValue;
+            this.quantity = quantityValue;
+            this.customName = customNameValue;
+        }
+
         var regulatorySuggestionDT;
+        var customizationValues = {};
         $j(document).ready(
 
                 function () {
@@ -366,6 +373,47 @@
                                     $j(this).dialog("close");
                                 }
                             }
+                        ]
+                    });
+
+                    $j("#customizedProductSettings").dialog({
+                        modal: true,
+                        autoOpen: false,
+                        position: {my: "center top", at: "center top", of: window},
+                        buttons: [
+                            {
+                                id: "assignCustomizations",
+                                text: "Customize",
+                                click: function() {
+                                    $j(this).dialog("close");
+                                    customTable = $j(this).find("#customizedTable");
+                                    for(var rowIdx = 0, rowLength = customTable.rows.length; rowIdx < rowLength; rowIdx++) {
+
+                                        var row = customTable.rows[rowIdx];
+
+                                        var productNameIndex = row.find(".productName");
+                                        var quantity = row.find(".customQuantityValue");
+                                        var price = row.find(".customPriceValue");
+                                        var productName = row.find(".customProductNameValue");
+
+                                        customizationValues[productNameIndex] = new CustomizationValue(price, quantity, productName);
+
+//                                        for (var cellIdx, cellLength = row.cells.length; cellIdx < cellLength; cellIdx++) {
+//                                            var cell = row.cells[cellIdx];
+//
+//                                            place content in associative array
+//                                        }
+                                    }
+                                }
+                            },
+                            {
+                                id: "cancelAssignCustomizations",
+                                text: "Cancel",
+                                click: function () {
+                                    $j(this).dialog("close");
+                                }
+                            }
+
                         ]
                     });
 
@@ -957,6 +1005,46 @@
             $j("#idToDuplicate").val(id);
         }
 
+
+        function showCustomProductInfoDialog() {
+            $j('#customizedProductSettings').html('');
+
+            var productNames = $("#product").attr("value");
+            var first = true;
+
+            $j("input[id='addOnCheckboxes']:checked").each(function() {
+                if(!first) {
+                    productNames += "/,/";
+                }
+                productNames += $j(this).val();
+                first = false;
+            });
+
+            NOW
+            Loop through associative array
+            if product isn't in there, add it
+
+                then below, build input based on the associative array.
+
+                    also, make sure to have something that builds the associative array on page load.
+
+            $j.ajax({
+                url: '${ctxpath}/orders/order.action',
+                data: {
+                    'customizableProducts': "",
+                    'customizedProductPrices': "",
+                    'customizedProductQuantities': "",
+                    'customizedProductNames': ""
+                },
+                datatype: 'html',
+                success: function (html) {
+                    $j("#customizedProductSettings").html(html).dialog("open");
+                }
+            });
+
+//            $j("#initialValues").val(JSON.stringify(customizationValues));
+        }
+
         /**
          * addKitDefinitionInfo builds the template form fields for displaying the details for sample kits.  A sample
          * initiation request can have multiple sample kit details so this function can be called multiple times
@@ -1113,12 +1201,15 @@
 
     <stripes:layout-component name="content">
 
-    <div id="duplicateKitInfoDialog" style="width:500px;display:none;">
-        <p><label style="float:left;width:60px;" for="numDuplicatesId"># of kit duplicates to create?</label>
-            <input type="hidden" id="idToDuplicate" />
-            <input type="text" id="numDuplicatesId" name="numDuplicates" style="float:left;margin-right: 5px;"/>
-        </p>
-    </div>
+        <div id="duplicateKitInfoDialog" style="width:500px;display:none;">
+            <p><label style="float:left;width:60px;" for="numDuplicatesId"># of kit duplicates to create?</label>
+                <input type="hidden" id="idToDuplicate" />
+                <input type="text" id="numDuplicatesId" name="numDuplicates" style="float:left;margin-right: 5px;"/>
+            </p>
+        </div>
+
+        <div id="customizedProductSettings" title="Associate customized settings to order products" style="...">
+        </div>
 
         <stripes:form beanclass="${actionBean.class.name}" id="createForm">
             <div class="form-horizontal span6">
