@@ -373,18 +373,16 @@ public class SampleInstanceEjb  {
                 if (jiraSubTasks != null && devConditions.size() > 0) {
                     subTaskList = new ArrayList<String>(devCondition.values());
                     for (String subTask : subTaskList) {
-                        boolean foundFlag = false;
-                        for (String jiraSubTask : jiraSubTasks) {
-                            if (devCondition.containsKey(jiraSubTask)) {
-                                foundFlag = true;
-                                jiraSubTasks.remove(jiraSubTask);
+                        for(String key : devCondition.keySet()) {
+                            if (jiraSubTasks.contains(key)) {
                                 break;
                             }
+                            else {
+                                messageCollection.addError("Condition / Sub Task: " + key + " not found for Experiment: "
+                                        + experiment + " At Row: " + experimentIndex + " Column: " + VesselPooledTubesProcessor.Headers.CONDITIONS.getText());
+                            }
                         }
-                        if (!foundFlag) {
-                            messageCollection.addError("Condition / Sub Task: " + subTask + " not found for Experiment: "
-                                    + experiment + " At Row: " + experimentIndex + " Column: " + VesselPooledTubesProcessor.Headers.CONDITIONS.getText());
-                        }
+
                     }
                 }
             }
