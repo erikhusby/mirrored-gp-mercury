@@ -94,7 +94,7 @@ public class ManifestSessionFixupTest extends Arquillian {
         manifestSessionDao.flush();
     }
 
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void fix_GPLIM5058_samplesLinkedToWrongRCT() throws Exception {
         userBean.loginOSUser();
         utx.begin();
@@ -124,21 +124,20 @@ public class ManifestSessionFixupTest extends Arquillian {
         JiraIssue correctJiraIssue = manifestSessionEjb.findJiraIssue(correctSession);
         assertThat(correctJiraIssue, notNullValue());
 
-        // Find the receipt events for the original accessioning and update it.
         String eventLocation = manifestSessionEjb.buildEventLocationName(oldSession);
         BspUser correctReceiptUser = manifestSessionEjb.getBspUser(correctSession, correctJiraIssue);
-        for (ManifestRecord manifestRecord : recordsToMove) {
-            long disambiguator = manifestRecord.getSpreadsheetRowNumber();
-            LabEvent labEvent = labEventDao.findByLocationDateDisambiguator(eventLocation, originalJiraIssue.getCreated(), disambiguator);
+
+        List<MercurySample> mercurySamples = mercurySampleDao.findBySampleKeys(Arrays.asList(samplesToFix));
+        for (MercurySample mercurySample :mercurySamples) {
+
+            // Update original receipt event with corrected created information;
+            LabEvent labEvent = mercurySample.getReceiptEvent();
             assertThat(labEvent, notNullValue());
             if (labEvent!=null) {
                 LabEventFixup.fixupLabEvent(labEvent, correctReceiptUser, correctJiraIssue.getCreated(), eventLocation);
             }
-        }
 
-        // Update receipt metadata of sample to reflect the correct receipt record.
-        List<MercurySample> mercurySamples = mercurySampleDao.findBySampleKeys(Arrays.asList(samplesToFix));
-        for (MercurySample mercurySample :mercurySamples) {
+            // Update receipt metadata of sample to reflect the correct receipt record.
             for (Metadata metadata : mercurySample.getMetadata()) {
                 if (metadata.getKey() == Metadata.Key.RECEIPT_RECORD) {
                     metadata.setStringValue(correctSession.getReceiptTicket());
