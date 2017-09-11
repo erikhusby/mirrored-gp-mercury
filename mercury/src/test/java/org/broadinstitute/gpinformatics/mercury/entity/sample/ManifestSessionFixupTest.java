@@ -94,7 +94,7 @@ public class ManifestSessionFixupTest extends Arquillian {
         manifestSessionDao.flush();
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void fix_GPLIM5058_samplesLinkedToWrongRCT() throws Exception {
         userBean.loginOSUser();
         utx.begin();
