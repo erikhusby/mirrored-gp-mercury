@@ -396,12 +396,21 @@ public class LabEvent {
         return eventOperator;
     }
 
+
+    void setEventOperator(Long eventOperator) {
+        this.eventOperator = eventOperator;
+    }
+
     public String getProgramName() {
         return programName;
     }
 
     public Date getEventDate() {
         return eventDate;
+    }
+
+    void setEventDate(Date eventDate) {
+        this.eventDate = eventDate;
     }
 
     public Collection<Reagent> getReagents() {
