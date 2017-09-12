@@ -1,6 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.vessel;
 
-import net.sourceforge.stripes.action.*;
+import net.sourceforge.stripes.action.DefaultHandler;
+import net.sourceforge.stripes.action.FileBean;
+import net.sourceforge.stripes.action.ForwardResolution;
+import net.sourceforge.stripes.action.HandlesEvent;
+import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
@@ -39,6 +44,7 @@ public class PooledTubeUploadActionBean extends CoreActionBean {
     @HandlesEvent(UPLOAD_TUBES)
     public Resolution uploadTubes() {
         try {
+
             MessageCollection messageCollection = new MessageCollection();
 
             VesselPooledTubesProcessor vesselSpreadsheetProcessor = new VesselPooledTubesProcessor("Sheet1");

@@ -895,4 +895,55 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-4711-100" author="dwilson">
+        <addColumn schemaName="mercury" tableName="sample_instance_entity">
+            <column name="READ_LENGTH2"  type="varchar(255)"/>
+            <column name="INDEX_LENGTH"  type="varchar(255)"/>
+            <column name="INDEX_LENGTH2"  type="varchar(255)"/>
+            <column name="SUBMIT_DATE"  type="varchar(255)"/>
+            <column name="LAB_NAME"  type="varchar(255)"/>
+            <column name="READ_TYPE"  type="varchar(255)"/>
+            <column name="REFERENCE"  type="varchar(255)"/>
+            <column name="REFERENCE_VERSION"  type="number(5,0)"/>
+            <column name="FRAGMENT_SIZE"  type="number(5,0)"/>
+            <column name="IS_PHIX"  type="varchar(255)"/>
+            <column name="IS_PHIX_PERCENTAGE"  type="number(5,0)"/>
+            <column name="COMMENTS"  type="varchar(255)"/>
+            <column name="ENZYME"  type="varchar(255)"/>
+            <column name="FRAG_SIZE_RANGE"  type="varchar(255)"/>
+            <column name="STATUS"  type="varchar(255)"/>
+            <column name="FLOWCELL_LANE_DESIGNATED"  type="varchar(255)"/>
+            <column name="FLOWCELL_DESIGNATION"  type="varchar(255)"/>
+            <column name="LIBRARY_CONSTRUCTION_METHOD"  type="varchar(255)"/>
+            <column name="QUANTIFICATION_METHOD"  type="varchar(255)"/>
+            <column name="CONCENTRATION_UNIT"  type="varchar(255)"/>
+            <column name="LANE_QUANTITY"  type="number(5,0)"/>
+        </addColumn>
+
+        <addColumn schemaName="mercury" tableName="sample_instance_entity_aud">
+            <column name="READ_LENGTH2"  type="varchar(255)"/>
+            <column name="INDEX_LENGTH"  type="varchar(255)"/>
+            <column name="INDEX_LENGTH2"  type="varchar(255)"/>
+            <column name="SUBMIT_DATE"  type="varchar(255)"/>
+            <column name="LAB_NAME"  type="varchar(255)"/>
+            <column name="READ_TYPE"  type="varchar(255)"/>
+            <column name="REFERENCE"  type="varchar(255)"/>
+            <column name="REFERENCE_VERSION"  type="number(5,0)"/>
+            <column name="FRAGMENT_SIZE"  type="number(5,0)"/>
+            <column name="IS_PHIX"  type="varchar(255)"/>
+            <column name="PHIX_PERCENTAGE"  type="number(5,0)"/>
+            <column name="COMMENTS"  type="varchar(255)"/>
+            <column name="ENZYME"  type="varchar(255)"/>
+            <column name="FRAG_SIZE_RANGE"  type="varchar(255)"/>
+            <column name="STATUS"  type="varchar(255)"/>
+            <column name="FLOWCELL_LANE_DESIGNATED"  type="varchar(255)"/>
+            <column name="FLOWCELL_DESIGNATION"  type="varchar(255)"/>
+            <column name="LIBRARY_CONSTRUCTION_METHOD"  type="varchar(255)"/>
+            <column name="QUANTIFICATION_METHOD"  type="varchar(255)"/>
+            <column name="CONCENTRATION_UNIT"  type="varchar(255)"/>
+            <column name="LANE_QUANTITY"  type="number(5,0)"/>
+        </addColumn>
+    </changeSet>
+
+
 </databaseChangeLog>

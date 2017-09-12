@@ -129,6 +129,9 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
      * Constructs a sample instance from a LabVessel and manually uploaded pooled tube(s).
      */
     public SampleInstanceV2(LabVessel labVessel, SampleInstanceEntity sampleInstanceEntity) {
+        if(sampleInstanceEntity.getRootSample() == null) {
+            sampleInstanceEntity.setRootSample(sampleInstanceEntity.getMercurySample());
+        }
         rootMercurySamples.add(sampleInstanceEntity.getRootSample());
         initiateSampleInstanceV2(labVessel);
         applyVesselChanges(labVessel, sampleInstanceEntity);
