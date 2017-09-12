@@ -232,7 +232,7 @@ public class AbandonVesselActionBean  extends RackScanActionBean {
      *
      */
     @HandlesEvent(ABANDON_ALL_POSITIONS)
-    public RedirectResolution abandonAllPositions() throws Exception {
+    public Resolution abandonAllPositions() throws Exception {
         setSearchKey(vesselLabel);
         doSearch();
         String reason = getVesselPositionReason();
@@ -241,7 +241,11 @@ public class AbandonVesselActionBean  extends RackScanActionBean {
         if(reason.equals(AbandonVessel.Reason.SELECT.name())) {
             messageCollection.addError("Please select a reason for abandoning all wells.");
             addMessages(messageCollection);
-            return new RedirectResolution(SESSION_LIST_REDIRECT_PAGE);
+            setRackScanGeometry();
+            resultsAvailable = true;
+            isSearchDone = true;
+            isMultiplePositions = true;
+            return new ForwardResolution(SESSION_LIST_PAGE);
         }
 
         if(getRackScan() != null) {
