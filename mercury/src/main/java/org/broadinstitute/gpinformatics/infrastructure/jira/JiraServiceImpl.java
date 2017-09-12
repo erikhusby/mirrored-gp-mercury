@@ -255,8 +255,6 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         Map<?, ?> parentValue  = (Map<?, ?>) fields.get("parent");
         if (parentValue != null && parentValue.containsKey("key")) {
             parsedResults.parent = (String) parentValue.get("key");
-        } else {
-            log.error("Unable to parse the parent ticket for Jira Issue " + parsedResults.getKey());
         }
 
         Map<?, ?> statusValues  = (Map<?, ?>) fields.get("status");

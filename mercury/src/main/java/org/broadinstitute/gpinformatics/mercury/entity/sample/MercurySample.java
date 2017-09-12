@@ -316,13 +316,16 @@ public class MercurySample extends AbstractSample {
     }
 
     public Date getReceivedDate() {
+        return getReceiptEvent().getEventDate();
+    }
 
+    public LabEvent getReceiptEvent() {
         for(LabVessel currentVessel:labVessel) {
             Map<LabEvent, Set<LabVessel>> vesselsForEvent = currentVessel
                     .findVesselsForLabEventType(LabEventType.SAMPLE_RECEIPT, true,
                             EnumSet.of(TransferTraverserCriteria.TraversalDirection.Ancestors));
             if (!vesselsForEvent.isEmpty()) {
-                return vesselsForEvent.keySet().iterator().next().getEventDate();
+                return vesselsForEvent.keySet().iterator().next();
             }
         }
 

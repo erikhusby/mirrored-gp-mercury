@@ -66,6 +66,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -1057,6 +1058,7 @@ public abstract class LabVessel implements Serializable {
              */
             throw new RuntimeException("Vessel already contains an entry equal to: " + bucketEntry);
         }
+        bucketEntriesCount++;
         clearCaches();
     }
 
@@ -1067,6 +1069,18 @@ public abstract class LabVessel implements Serializable {
 
     public void addReworkLabBatch(LabBatch reworkLabBatch) {
         reworkLabBatches.add(reworkLabBatch);
+    }
+
+    public void removeFromBatch(LabBatch labBatch) {
+        for (LabBatchStartingVessel labBatchStartingVessel : labBatches) {
+            if (Objects.equals(labBatchStartingVessel.getLabBatch(), labBatch)) {
+                labBatchStartingVessel.setLabVessel(null);
+                labBatchStartingVessel.getLabBatch().getLabBatchStartingVessels().remove(labBatchStartingVessel);
+                labBatches.remove(labBatchStartingVessel);
+                break;
+            }
+        }
+        reworkLabBatches.remove(labBatch);
     }
 
     public Set<LabBatch> getLabBatches() {
