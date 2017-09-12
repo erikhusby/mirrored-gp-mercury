@@ -315,7 +315,11 @@ public class MercurySample extends AbstractSample {
     }
 
     public Date getReceivedDate() {
-        return getReceiptEvent().getEventDate();
+        LabEvent receiptEvent = getReceiptEvent();
+        if (receiptEvent != null) {
+            return receiptEvent.getEventDate();
+        }
+        return null;
     }
 
     public LabEvent getReceiptEvent() {
