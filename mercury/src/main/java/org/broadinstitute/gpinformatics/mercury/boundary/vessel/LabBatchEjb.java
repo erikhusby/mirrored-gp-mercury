@@ -795,6 +795,7 @@ public class LabBatchEjb {
             for (BucketEntry bucketEntry : sampleInstance.getAllBucketEntries()) {
                 if (bucketEntry.getLabBatch().getBusinessKey().equals(lcsetName)) {
                     removeBucketEntryIds.add(bucketEntry.getBucketEntryId());
+                    bucketName = bucketEntry.getBucket().getBucketDefinitionName();
                 }
             }
         }

@@ -88,6 +88,7 @@ public class BSPRestSender implements Serializable {
         PlateCherryPickEvent plateCherryPickEvent = new PlateCherryPickEvent();
         plateCherryPickEvent.setEventType(plateTransferEventType.getEventType());
         plateCherryPickEvent.setOperator(plateTransferEventType.getOperator());
+        plateCherryPickEvent.getMetadata().addAll(plateTransferEventType.getMetadata());
         Cloner cloner = new Cloner();
         plateCherryPickEvent.getSourcePlate().add(cloner.deepClone(plateTransferEventType.getSourcePlate()));
         if (plateTransferEventType.getSourcePositionMap() != null) {
@@ -129,9 +130,9 @@ public class BSPRestSender implements Serializable {
                 throw new RuntimeException("Expected 1 sample, found " + sampleInstances.size());
             } else if (sampleInstances.size() == 1) {
                 SampleInstanceV2 sampleInstanceV2 = sampleInstances.iterator().next();
-                Set<MercurySample> rootMercurySamples = sampleInstanceV2.getRootMercurySamples();
+                MercurySample rootMercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
                 if (!sampleInstanceV2.isReagentOnly() &&
-                        rootMercurySamples.iterator().next().getMetadataSource() == MercurySample.MetadataSource.BSP) {
+                        rootMercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
                     atLeastOneTransfer = true;
                     // add source element
                     CherryPickSourceType cherryPickSourceType = new CherryPickSourceType();
