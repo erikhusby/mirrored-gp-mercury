@@ -207,6 +207,9 @@ public class JiraIssue implements Serializable {
 
     private void copyFromJiraIssue(String fieldName) throws IOException {
         JiraIssue tempIssue = jiraService.getIssueInfo(key, fieldName);
+        if(tempIssue == null) {
+            return;
+        }
         extraFields.put(fieldName,tempIssue.getFieldValue(fieldName));
         summary = tempIssue.getSummary();
         description = tempIssue.getDescription();
