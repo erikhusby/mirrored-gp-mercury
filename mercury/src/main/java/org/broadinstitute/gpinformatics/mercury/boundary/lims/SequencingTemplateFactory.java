@@ -16,8 +16,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
@@ -507,7 +507,7 @@ public class SequencingTemplateFactory {
         }
         boolean mixedFlowcellOk = false;
         for (Product product : products) {
-            if (Objects.equals(product.getAggregationDataType(), Aggregation.DATA_TYPE_WGS)) {
+            if (Objects.equals(product.getAggregationDataType(), BassDTO.DATA_TYPE_WGS)) {
                 mixedFlowcellOk = true;
                 break;
             }
