@@ -294,6 +294,9 @@ public class TagVesselActionBean extends RackScanActionBean {
                             try {
                                 JiraIssue issue = getJiraDetails(ticket);
                                 jiraTicket = issue.getSummary();
+                                if(jiraTicket == null) {
+                                    jiraTicket = "Jira ticket  " + issue.getKey() + " does not exist.";
+                                }
                             } catch (IOException e) {
                             }
                             experimentText = idsBuilder.append(" " + "<a target =_blank href=" + ticket.getBrowserUrl() + ">" + ticket.getTicketId() + "</a>").append(" ").append(jiraTicket).toString();
