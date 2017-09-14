@@ -185,6 +185,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String ORDER_CREATE_PAGE = "/orders/create.jsp";
     private static final String ORDER_LIST_PAGE = "/orders/list.jsp";
     public static final String ORDER_VIEW_PAGE = "/orders/view.jsp";
+    public static final String CUSTOMIZE_PRODUCT_ASSOCIATIONS = "/orders/customize_product_associations.jsp";
 
     private static final String ADD_SAMPLES_ACTION = "addSamples";
     private static final String ABANDON_SAMPLES_ACTION = "abandonSamples";
@@ -206,11 +207,12 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String DATE = "date";
     private static final String OWNER = "owner";
     private static final String ADD_SAMPLES_TO_BUCKET = "addSamplesToBucket";
-    private static final String CHOSEN_ORGANISM = "chosenOrganism";
 
+    private static final String CHOSEN_ORGANISM = "chosenOrganism";
     private static final String KIT_DEFINITION_INDEX = "kitDefinitionQueryIndex";
     private static final String COULD_NOT_LOAD_SAMPLE_DATA = "Could not load sample data";
     public static final String GET_SAMPLE_DATA = "getSampleData";
+    public static final String OPEN_CUSTOM_VIEW_ACTION = "openCustomView";
     private String sampleSummary;
     private State state;
 
@@ -411,6 +413,8 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     private String q;
 
+    private String customizationJsonString;
+
     private String customizableProducts;
     private String customizedProductPrices;
     private String customizedProductQuantities;
@@ -448,6 +452,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     private String prepopulatePostReceiveOptions;
 
     private String orderType;
+
+    private List<CustomizationValues> productCustomizations = new ArrayList();
 
     /**
      * @return the required confirmation message for IRB attestation.
@@ -2578,6 +2584,31 @@ public class ProductOrderActionBean extends CoreActionBean {
         return new StreamingResolution("text", new StringReader(collectionAndOrganismsList.toString()));
     }
 
+    @HandlesEvent(OPEN_CUSTOM_VIEW_ACTION)
+    public Resolution openCustomView() throws Exception {
+        buildJsonObjectFromEditOrderProductCustomizations();
+
+        return new ForwardResolution(CUSTOMIZE_PRODUCT_ASSOCIATIONS);
+    }
+
+    private void buildJsonObjectFromEditOrderProductCustomizations() throws JSONException {
+        JSONObject customizationJson = new JSONObject(customizationJsonString);
+
+        final Iterator keys = customizationJson.keys();
+
+        while(keys.hasNext()) {
+            String productPartNumber = (String)keys.next();
+            JSONObject currentCustomization = (JSONObject) customizationJson.get(productPartNumber);
+
+            final CustomizationValues customizedProductInfo = new CustomizationValues(productPartNumber,
+                    (String) currentCustomization.get("quantity"),
+                    (String) currentCustomization.get("price"),
+                    (String) currentCustomization.get("customName"));
+            customizedProductInfo.setProductName(productDao.findByPartNumber(productPartNumber).getProductName());
+            productCustomizations.add(customizedProductInfo);
+        }
+    }
+
     public List<String> getAddOnKeys() {
         return addOnKeys;
     }
@@ -3482,5 +3513,22 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setCustomizedProductNames(String customizedProductNames) {
         this.customizedProductNames = customizedProductNames;
+    }
+
+    public List<CustomizationValues> getProductCustomizations() {
+        return productCustomizations;
+    }
+
+    public void setProductCustomizations(
+            List<CustomizationValues> productCustomizations) {
+        this.productCustomizations = productCustomizations;
+    }
+
+    public String getCustomizationJsonString() {
+        return customizationJsonString;
+    }
+
+    public void setCustomizationJsonString(String customizationJsonString) {
+        this.customizationJsonString = customizationJsonString;
     }
 }
