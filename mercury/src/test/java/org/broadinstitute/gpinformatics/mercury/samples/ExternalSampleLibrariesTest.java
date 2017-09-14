@@ -5,6 +5,7 @@ import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB;
@@ -13,6 +14,9 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.ExternalLibrarySampleInstanceEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
@@ -21,35 +25,67 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySample
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleInstanceEntityDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleKitRequestDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryMapped;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorEzPass;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorNonPooled;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorPooled;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorPooledMultiOrganism;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VesselPooledTubesProcessor;
+import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 import org.broadinstitute.gpinformatics.mercury.presentation.sample.ExternalLibraryUploadActionBean;
+import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
+import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
+import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
+import org.easymock.EasyMock;
 import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+
+import static org.broadinstitute.gpinformatics.mercury.test.LabEventTest.FCT_TICKET;
 
 
 @Test(groups = TestGroups.DATABASE_FREE)
-public class ExternalSampleLibrariesTest {
+public class ExternalSampleLibrariesTest extends BaseEventTest {
 
     @Inject
     ExternalLibraryUploadActionBean externalLibraryUploadActionBean;
@@ -69,6 +105,7 @@ public class ExternalSampleLibrariesTest {
         ExternalLibraryMapped externalLibraryMapped = new ExternalLibraryMapped();
         externalLibraryMapped.mapEzPass(spreadSheetProcessor);
         setParams(externalLibraryMapped,"EZPass upload", true, externalLibraryUploadActionBean.EZPASS_KIOSK);
+        testExomeExpressDBFree(externalLibraryMapped);
     }
 
 
@@ -262,6 +299,131 @@ public class ExternalSampleLibrariesTest {
         actionBean.verifyPooledTubes(spreadSheetProcessor, messageCollection, true);
 
         Assert.assertFalse(messageCollection.hasErrors(), "Unable to parse and verify Pooled Tube uploads.");
+
+    }
+
+
+
+
+
+    public void testExomeExpressDBFree(ExternalLibraryMapped externalLibraryMapped) {
+
+        Date runDate = new Date();
+        String pdo = "PDO-TEST123";
+        String lcsetSuffix = "1";
+        Workflow workflow = Workflow.AGILENT_EXOME_EXPRESS;
+
+        ProductOrder productOrder = ProductOrderTestFactory.createDummyProductOrder(1,pdo);
+            for(String sampleId : externalLibraryMapped.getSingleSampleLibraryName()) {
+                ProductOrderSample productOrderSample = new ProductOrderSample(sampleId);
+                productOrder.addSample(productOrderSample);
+        }
+
+        productOrder.setJiraTicketKey(pdo);
+        productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+        productOrder.getProduct().setWorkflow(workflow);
+        expectedRouting = SystemRouter.System.MERCURY;
+
+
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+
+        //Batch
+        LabBatch workflowBatch = new LabBatch("whole Genome Batch",
+                new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setWorkflow(workflow);
+
+
+        //Bucket
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, lcsetSuffix);
+
+
+        //Plating
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
+                "P", lcsetSuffix, true);
+
+        //Shearing
+        ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
+                runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
+                        picoPlatingEntityBuilder.getNormTubeFormation(),
+                        picoPlatingEntityBuilder.getNormalizationBarcode(), lcsetSuffix);
+        //Library
+        LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = runLibraryConstructionProcess(
+                exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
+                exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(),
+                exomeExpressShearingEntityBuilder.getShearingPlate(),
+                lcsetSuffix,
+                mapBarcodeToTube.size());
+        //Hyb
+        HybridSelectionEntityBuilder hybridSelectionEntityBuilder =
+                runHybridSelectionProcess(libraryConstructionEntityBuilder.getPondRegRack(),
+                        libraryConstructionEntityBuilder.getPondRegRackBarcode(),
+                        libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
+
+        Map<VesselPosition, BarcodedTube> mapBarcodeToDaughterTube = new EnumMap<>(VesselPosition.class);
+        TubeFormation tubeFormation = new TubeFormation(mapBarcodeToDaughterTube, RackOfTubes.RackType.Matrix96);
+        //tubeFormation.addRackOfTubes(lcsetSuffix,RackOfTubes.RackType.Matrix96);
+
+        QtpEntityBuilder qtpEntityBuilder = runQtpProcess(tubeFormation,
+                hybridSelectionEntityBuilder.getNormCatchBarcodes(),
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(),
+                "1");
+
+        LabVessel denatureSource =
+                qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
+        LabBatch fctBatch = new LabBatch(FCT_TICKET, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
+        HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder = runHiSeq2500FlowcellProcess(
+                qtpEntityBuilder.getDenatureRack(), "1", FCT_TICKET,
+                ProductionFlowcellPath.DILUTION_TO_FLOWCELL, "designation",
+                workflow);
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
+
+        File runPath = null;
+        try {
+            runPath = File.createTempFile("tempRun" + dateFormat.format(runDate), ".txt");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+
+        String flowcellBarcode = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell().getCartridgeBarcode();
+
+        String machineName = "Superman";
+        SolexaRunBean runBean = new SolexaRunBean(flowcellBarcode,
+                flowcellBarcode + dateFormat.format(runDate),
+                runDate, machineName,
+                runPath.getAbsolutePath(), null);
+
+
+        IlluminaSequencingRunFactory illuminaSequencingRunFactory =
+                new IlluminaSequencingRunFactory(EasyMock.createNiceMock(JiraCommentUtil.class));
+
+        // Register run
+        IlluminaSequencingRun run =
+                illuminaSequencingRunFactory.buildDbFree(runBean, hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell());
+
+
+        ZimsIlluminaRunFactory zimsIlluminaRunFactory = constructZimsIlluminaRunFactory(productOrder,
+                Collections.<FlowcellDesignation>emptyList());
+
+        ReadStructureRequest readStructureRequest = new ReadStructureRequest();
+        readStructureRequest.setRunBarcode(run.getRunBarcode());
+
+        illuminaSequencingRunFactory.storeReadsStructureDBFree(readStructureRequest, run);
+        //Run
+        ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(run);
+
+
+        //Parse results
+        Collection<ZimsIlluminaChamber> chambers = zimsIlluminaRun.getLanes();
+        Collection<LibraryBean> libraries = chambers.iterator().next().getLibraries();
+        libraries.iterator().next().getMolecularIndexingScheme();
+
+
+
+
+
 
     }
 
