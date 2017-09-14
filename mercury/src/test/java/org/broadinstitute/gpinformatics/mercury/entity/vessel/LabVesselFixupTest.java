@@ -1558,5 +1558,34 @@ public class LabVesselFixupTest extends Arquillian {
         utx.commit();
     }
 
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/UpdateVolumes.txt, so it can
+     * be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * GPLIM-4104
+     * 1125699673, 18.083
+     * 1125699623, 20.161
+     */
+    @Test(enabled = false)
+    public void fixupGplim5100() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("UpdateVolumes.txt"));
+        String jiraTicket = lines.get(0);
+
+        for (String line : lines.subList(1, lines.size())) {
+            String[] lineArray = line.split(",");
+            String tubeBarcode = lineArray[0].trim();
+            BigDecimal volume = new BigDecimal(lineArray[1].trim());
+            LabVessel labVessel = labVesselDao.findByIdentifier(tubeBarcode);
+            Assert.assertNotNull(labVessel);
+            labVessel.setVolume(volume);
+            System.out.println("Updating volume of: " + tubeBarcode + " to " + volume.toPlainString());
+        }
+
+        labVesselDao.persist(new FixupCommentary(jiraTicket + " updated volumes."));
+        labVesselDao.flush();
+        utx.commit();
+    }
 
 }
