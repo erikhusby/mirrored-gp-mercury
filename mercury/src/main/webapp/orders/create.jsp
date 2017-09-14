@@ -391,12 +391,12 @@
 
                                         var row = customTable.rows[rowIdx];
 
-                                        var productNameIndex = row.find(".productName");
+                                        var partnumberIndex = row.find(".partNumber");
                                         var quantity = row.find(".customQuantityValue");
                                         var price = row.find(".customPriceValue");
                                         var productName = row.find(".customProductNameValue");
 
-                                        customizationValues[productNameIndex] = new CustomizationValue(price, quantity, productName);
+                                        addCustomizationValue(partnumberIndex, price, quantity, productName);
 
 //                                        for (var cellIdx, cellLength = row.cells.length; cellIdx < cellLength; cellIdx++) {
 //                                            var cell = row.cells[cellIdx];
@@ -404,6 +404,7 @@
 //                                            place content in associative array
 //                                        }
                                     }
+                                    $j("#customizationJsonString").val(JSON.stringify(customizationValues));
                                 }
                             },
                             {
@@ -413,7 +414,6 @@
                                     $j(this).dialog("close");
                                 }
                             }
-
                         ]
                     });
 
@@ -456,8 +456,11 @@
                     <c:if test="${actionBean.editOrder.draft}">
                     $j('#samplesToAdd').bindWithDelay('input',reloadRegulatorySuggestions, 1000);
                     </c:if>
+                    $j('#showCustomizeWindow').click(function(event) {
+                        event.preventDefault();
+                        showCustomProductInfoDialog();
+                    });
                 }
-
         );
 
         function formatInput(item) {
@@ -538,10 +541,7 @@
 
                 postReceiveOption[${kitOption.key}]["${option}"] = true;
             </c:forEach>
-            <%--postReceiveOption[${kitOption.key}].length =${fn:length(kitOption.value)};--%>
         </c:forEach>
-
-        <%--postReceiveOption.length = ${fn:length(actionBean.postReceiveOptionKeys)};--%>
 
         function updateUIForProjectChoice(){
             var projectKey = $j("#researchProject").val();
@@ -1006,43 +1006,41 @@
         }
 
 
+        function addCustomizationValue(productPart, priceValue, quantityValue, customNameValue) {
+            customNameValue = customNameValue || "";
+            quantityValue = quantityValue || "";
+            priceValue = priceValue || "";
+            customizationValues[productPart] = new CustomizationValue(priceValue, quantityValue, customNameValue);
+        }
+
+        /**
+         * Method to bring up customization dialog will pass in any existing customizations currently defined.  If none
+         * exist, it will fill in with blank values to just have a place holder
+         */
         function showCustomProductInfoDialog() {
             $j('#customizedProductSettings').html('');
 
-            var productNames = $("#product").attr("value");
+            var primaryProductPart = $("#product").attr("value");
+            var productNames = new Array(primaryProductPart);
+            addCustomizationValue(primaryProductPart);
+
             var first = true;
 
             $j("input[id='addOnCheckboxes']:checked").each(function() {
-                if(!first) {
-                    productNames += "/,/";
-                }
-                productNames += $j(this).val();
-                first = false;
+                var productPartNumber = $j(this).val();
+                productNames.push(productPartNumber);
             });
 
-            NOW
-            Loop through associative array
-            if product isn't in there, add it
-
-                then below, build input based on the associative array.
-
-                    also, make sure to have something that builds the associative array on page load.
-
             $j.ajax({
-                url: '${ctxpath}/orders/order.action',
+                url: "${ctxpath}/orders/order.action?openCustomView=",
                 data: {
-                    'customizableProducts': "",
-                    'customizedProductPrices': "",
-                    'customizedProductQuantities': "",
-                    'customizedProductNames': ""
+                    'customizationJsonString': JSON.stringify(customizationValues)
                 },
                 datatype: 'html',
                 success: function (html) {
                     $j("#customizedProductSettings").html(html).dialog("open");
                 }
             });
-
-//            $j("#initialValues").val(JSON.stringify(customizationValues));
         }
 
         /**
@@ -1215,6 +1213,7 @@
             <div class="form-horizontal span6">
                 <stripes:hidden name="productOrder"/>
                 <stripes:hidden name="submitString"/>
+                <stripes:hidden name="customizationJsonString" id="customizationJsonString" />
                 <div class="control-group">
                     <stripes:label for="orderName" class="control-label">
                         Name <c:if test="${actionBean.editOrder.draft}">*</c:if>
@@ -1448,7 +1447,7 @@
                             </c:when>
                             <c:otherwise>
                                 <stripes:select name="orderType" id="orderType">
-                                    <stripes:option value="">Select a Product Family</stripes:option>
+                                    <stripes:option value="">Select an Order Type</stripes:option>
                                     <stripes:options-collection collection="${actionBean.orderTypeDisplayNames}" label="displayName"
                                                                 value="displayName" />
                                 </stripes:select>
@@ -1473,6 +1472,10 @@
                             <div id="addOnCheckboxes" class="controls controls-text"></div>
                         </c:otherwise>
                     </c:choose>
+                </div>
+                <div class="control-group">
+                    <div class="controls">
+                        <a href="#" id="showCustomizeWindow">Customize product and add-ons for this order</a></div>
                 </div>
 
                 <div id="numberOfLanesDiv" class="control-group" style="display: ${actionBean.editOrder.requiresLaneCount() ? 'block' : 'none'};">

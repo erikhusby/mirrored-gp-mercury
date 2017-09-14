@@ -2190,8 +2190,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public enum OrderAccessType implements StatusType {
-        RESEARCH ("Research"),
-        CLINICAL_COMMERCIAL ("Commercial or Clinical");
+        RESEARCH ("Research (1000)"),
+        CLINICAL_COMMERCIAL ("Commercial or Clinical (2000)");
 
         private String displayName;
 
