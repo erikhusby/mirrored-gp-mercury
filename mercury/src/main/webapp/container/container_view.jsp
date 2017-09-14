@@ -67,7 +67,7 @@
                             name="rackScan"/>
         </div>
     </c:if>
-    <c:if test="${actionBean.showLayout}">
+    <c:if test="${actionBean.showLayout and empty actionBean.staticPlate}">
         <table>
             <c:forEach items="${geometry.rowNames}" var="rowName" varStatus="rowStatus">
                 <c:if test="${rowStatus.first}">

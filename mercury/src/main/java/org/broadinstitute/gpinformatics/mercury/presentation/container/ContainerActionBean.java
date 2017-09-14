@@ -304,7 +304,7 @@ public class ContainerActionBean extends RackScanActionBean {
 
     @HandlesEvent(VIEW_CONTAINER_ACTION)
     public Resolution viewContainer() {
-        if (rackOfTubes.getRackType().isRackScannable()) {
+        if (rackOfTubes != null && rackOfTubes.getRackType().isRackScannable()) {
             return new RedirectResolution(ContainerActionBean.class, EDIT_ACTION)
                     .addParameter(CONTAINER_PARAMETER, containerBarcode)
                     .addParameter(SHOW_LAYOUT_PARAMETER, false);
@@ -322,6 +322,7 @@ public class ContainerActionBean extends RackScanActionBean {
     @HandlesEvent(VIEW_CONTAINER_AJAX_ACTION)
     public Resolution viewContainerAjax() {
         ajaxRequest = true;
+        showLayout = true;
         labVesselExist();
         buildPositionMapping();
         if (hasErrors()) {
@@ -341,6 +342,8 @@ public class ContainerActionBean extends RackScanActionBean {
 
     private List<BarcodedTube> savePositionMapToLocation(MessageCollection messageCollection) {
         Set<String> barcodes = new HashSet<>();
+        if (rackOfTubes == null)
+            return null;
         List<BarcodedTube> tubesToAddToStorage = new ArrayList<>();
         for (ReceptacleType receptacleType : receptacleTypes) {
             if (!StringUtils.isEmpty(receptacleType.getBarcode())) {
@@ -350,6 +353,8 @@ public class ContainerActionBean extends RackScanActionBean {
                     messageCollection.addError("Unrecognized barcode: " + barcode);
                 } else if (!OrmUtil.proxySafeIsInstance(labVessel, BarcodedTube.class)) {
                     messageCollection.addError("Barcode isn't a tube type: " + barcode);
+                } else if (barcodes.contains(barcode)) {
+                    messageCollection.addError("Duplicate tube barcode found: " + barcode);
                 } else {
                     BarcodedTube barcodedTube = OrmUtil.proxySafeCast(labVessel, BarcodedTube.class);
                     tubesToAddToStorage.add(barcodedTube);
@@ -373,6 +378,8 @@ public class ContainerActionBean extends RackScanActionBean {
         handleSaveContainer(messageCollection);
         if (messageCollection.hasErrors()) {
             addMessages(messageCollection);
+            showLayout = true;
+            editLayout = true;
             return new ForwardResolution(CONTAINER_VIEW_PAGE);
         }
         addMessage("Successfully updated layout.");
@@ -470,15 +477,19 @@ public class ContainerActionBean extends RackScanActionBean {
         plateEventType.setOperator(getUserBean().getLoginUserName());
         plateEventType.setProgram(LabEvent.UI_PROGRAM_NAME);
         plateEventType.setStation(LabEvent.UI_PROGRAM_NAME);
-        PositionMapType positionMapType = new PositionMapType();
-        positionMapType.getReceptacle().addAll(receptacleTypes);
-        plateEventType.setPositionMap(positionMapType);
-        positionMapType.setBarcode(rackOfTubes.getLabel());
         PlateType plateType = new PlateType();
         plateEventType.setPlate(plateType);
-        plateType.setBarcode(rackOfTubes.getLabel());
-        plateType.setPhysType(rackOfTubes.getRackType().getDisplayName());
+        plateType.setBarcode(getViewVessel().getLabel());
         plateType.setSection("ALL96");
+        if (rackOfTubes != null) {
+            PositionMapType positionMapType = new PositionMapType();
+            positionMapType.getReceptacle().addAll(receptacleTypes);
+            plateEventType.setPositionMap(positionMapType);
+            positionMapType.setBarcode(getViewVessel().getLabel());
+            plateType.setPhysType(rackOfTubes.getRackType().getDisplayName());
+        } else if (staticPlate != null) {
+            plateType.setPhysType(staticPlate.getAutomationName());
+        }
         return plateEventType;
     }
 
@@ -498,8 +509,10 @@ public class ContainerActionBean extends RackScanActionBean {
                 addMessages(messageCollection);
                 return new ForwardResolution(CONTAINER_VIEW_PAGE);
             }
-            for (BarcodedTube barcodedTube: barcodedTubes) {
-                barcodedTube.setStorageLocation(storageLocation);
+            if (barcodedTubes != null) {
+                for (BarcodedTube barcodedTube : barcodedTubes) {
+                    barcodedTube.setStorageLocation(storageLocation);
+                }
             }
             storageLocationDao.persist(getViewVessel());
             storageLocationDao.flush();
@@ -519,8 +532,10 @@ public class ContainerActionBean extends RackScanActionBean {
             if (messageCollection.hasErrors()) {
                 addMessages(messageCollection);
             } else {
-                for (BarcodedTube barcodedTube: barcodedTubes) {
-                    barcodedTube.setStorageLocation(null);
+                if (barcodedTubes != null) {
+                    for (BarcodedTube barcodedTube : barcodedTubes) {
+                        barcodedTube.setStorageLocation(null);
+                    }
                 }
                 storageLocationDao.persist(getViewVessel());
                 storageLocationDao.flush();
@@ -644,7 +659,14 @@ public class ContainerActionBean extends RackScanActionBean {
     }
 
     public boolean isShowLayout() {
+        if (staticPlate != null) {
+            return false;
+        }
         return showLayout;
+    }
+
+    public StaticPlate getStaticPlate() {
+        return staticPlate;
     }
 
     public void setShowLayout(boolean showLayout) {
