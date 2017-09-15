@@ -385,26 +385,19 @@
                                 id: "assignCustomizations",
                                 text: "Customize",
                                 click: function() {
-                                    $j(this).dialog("close");
-                                    customTable = $j(this).find("#customizedTable");
-                                    for(var rowIdx = 0, rowLength = customTable.rows.length; rowIdx < rowLength; rowIdx++) {
 
-                                        var row = customTable.rows[rowIdx];
+                                    $j("#customizationData > tbody > tr").each(function() {
 
-                                        var partnumberIndex = row.find(".partNumber");
-                                        var quantity = row.find(".customQuantityValue");
-                                        var price = row.find(".customPriceValue");
-                                        var productName = row.find(".customProductNameValue");
+                                        var partnumberIndex = $(this).find("input[class='partNumber']").val();
+                                        var quantity = $(this).find("input[class='customQuantityValue']").val();
+                                        var price = $(this).find("input[class='customPriceValue']").val();
+                                        var productName = $(this).find("input[class='customProductNameValue']").val();
 
                                         addCustomizationValue(partnumberIndex, price, quantity, productName);
 
-//                                        for (var cellIdx, cellLength = row.cells.length; cellIdx < cellLength; cellIdx++) {
-//                                            var cell = row.cells[cellIdx];
-//
-//                                            place content in associative array
-//                                        }
-                                    }
+                                    });
                                     $j("#customizationJsonString").val(JSON.stringify(customizationValues));
+                                    $j(this).dialog("close");
                                 }
                             },
                             {
