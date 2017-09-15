@@ -105,7 +105,7 @@ public class LcsetActionBean extends RackScanActionBean {
             }
         } catch (Exception e) {
             if (getContext().getMessages().isEmpty()) {
-                addMessage(e.getMessage());
+                addGlobalValidationError(e.getMessage());
             }
         }
         return new ForwardResolution(LCSET_PAGE);

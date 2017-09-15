@@ -44,6 +44,7 @@ import java.text.Format;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -124,15 +125,24 @@ public class BSPRestSender implements Serializable {
         for (int i = 0; i < wells.size(); i++) {
             VesselPosition sourceVesselPosition = wells.get(i);
             VesselPosition destVesselPosition = destSection.getWells().get(i);
+
+            // Blood Biopsy extraction creates a psuedo-pool of 2-3 samples, so we have to handle multiple SampleInstances.
             Set<SampleInstanceV2> sampleInstances = sourceLabVessel.getContainerRole().getSampleInstancesAtPositionV2(
                     sourceVesselPosition);
-            if (sampleInstances.size() > 1) {
-                throw new RuntimeException("Expected 1 sample, found " + sampleInstances.size());
-            } else if (sampleInstances.size() == 1) {
-                SampleInstanceV2 sampleInstanceV2 = sampleInstances.iterator().next();
-                MercurySample rootMercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
-                if (!sampleInstanceV2.isReagentOnly() &&
-                        rootMercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
+            Set<MercurySample.MetadataSource> metadataSources = new HashSet<>();
+            for (SampleInstanceV2 sampleInstance : sampleInstances) {
+                // NA12878 samples, that fill up partial fingerprint plates to 48 wells, are reagents
+                if (!sampleInstance.isReagentOnly()) {
+                    MercurySample rootMercurySample = sampleInstance.getRootOrEarliestMercurySample();
+                    metadataSources.add(rootMercurySample.getMetadataSource());
+                }
+            }
+
+            if (metadataSources.size() > 1) {
+                throw new RuntimeException("Expected 1 metadata source, found " + metadataSources.size());
+            } else if (metadataSources.size() == 1) {
+                MercurySample.MetadataSource metadataSource = metadataSources.iterator().next();
+                if (metadataSource == MercurySample.MetadataSource.BSP) {
                     atLeastOneTransfer = true;
                     // add source element
                     CherryPickSourceType cherryPickSourceType = new CherryPickSourceType();
@@ -142,7 +152,8 @@ public class BSPRestSender implements Serializable {
                     cherryPickSourceType.setDestinationWell(destVesselPosition.name());
                     plateCherryPickEvent.getSource().add(cherryPickSourceType);
                     if (targetEvent.getLabEventType().getAddMetadataToBsp() == LabEventType.AddMetadataToBsp.PDO) {
-                        // Set PDO
+                        // Set PDO.  If it's a psuedo-pool, assume all are in the same PDO
+                        SampleInstanceV2 sampleInstanceV2 = sampleInstances.iterator().next();
                         List<ProductOrderSample> allProductOrderSamples = sampleInstanceV2.getAllProductOrderSamples();
                         if (!allProductOrderSamples.isEmpty()) {
                             MetadataType metadataType = new MetadataType();
