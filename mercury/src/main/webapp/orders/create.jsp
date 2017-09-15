@@ -1022,13 +1022,18 @@
 
             var primaryProductPart = $("#product").attr("value");
             var productNames = new Array(primaryProductPart);
-            addCustomizationValue(primaryProductPart);
+            if(!(primaryProductPart in customizationValues)) {
+                addCustomizationValue(primaryProductPart);
+            }
 
             var first = true;
 
-            $j("input[id='addOnCheckboxes']:checked").each(function() {
+            $j("#addOnCheckboxes input:checked").each(function() {
                 var productPartNumber = $j(this).val();
                 productNames.push(productPartNumber);
+                if(!(productPartNumber in customizationValues)) {
+                    addCustomizationValue(productPartNumber);
+                }
             });
 
             $j.ajax({
@@ -1038,7 +1043,7 @@
                 },
                 datatype: 'html',
                 success: function (html) {
-                    $j("#customizedProductSettings").html(html).dialog("open");
+                    $j("#customizedProductSettings").html(html).dialog("open").dialog("option", "width", 1100).dialog("option", "height", 600);
                 }
             });
         }

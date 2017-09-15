@@ -27,11 +27,11 @@
         <c:forEach items="${actionBean.productCustomizations}" var="customization">
             <tr>
                 <td>${customization.productName}
-                <stripes:hidden name="${customization.productPartNumber}" class="partNumber" />
+                <input type="hidden" value="${customization.productPartNumber}" class="partNumber" />
                 </td>
-                <td><stripes:text name="${customization.price}" class="customPriceValue"/></td>
-                <td><stripes:text name="${customization.quantity}" class="customQuantityValue"/></td>
-                <td><stripes:text name="${customization.customName}" class="customProductNameValue"/></td>
+                <td><input type="text" value="${customization.price}" class="customPriceValue"/></td>
+                <td><input type="text" value="${customization.quantity}" class="customQuantityValue"/></td>
+                <td><input type="text" value="${customization.customName}" class="customProductNameValue"/></td>
             </tr>
         </c:forEach>
         </tbody>

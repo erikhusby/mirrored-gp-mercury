@@ -294,7 +294,8 @@
                 var filterIndex = filterIndexes[$target.attr('name')];
                 var filterFunction = window[$target.attr('value')];
                 var filterText = $target.text()
-                var pill = $target.parentsUntil('li.dropdown').siblings('a');
+                var pill = $target.parentsUntil('li.dropdown').siblings
+                ('a');
                 var check = $target.siblings('div');
                 var allChecks = $target.parentsUntil('li.dropdown', 'ul.dropdown-menu').find('.checkContainer');
                 pill.html(filterText + ' <b class="caret">');
