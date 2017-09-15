@@ -615,6 +615,7 @@
                 $j("#numberOfLanesDiv").fadeOut(duration);
                 $j("#skipQuoteDiv").hide();
                 $j("#quote").show();
+                $j("#showCustomizeWindow").hide();
 
             } else {
                 if (productKey == '<%= Product.SAMPLE_INITIATION_PART_NUMBER %>') {
@@ -629,7 +630,7 @@
                 $j.ajax({
                     url: "${ctxpath}/orders/order.action?getAddOns=&product=" + productKey,
                     dataType: 'json',
-                    success: setupAddonCheckboxes,
+                    success: selectedProductFollowup,
                     complete: detectNumberOfLanesVisibility
                 });
 
@@ -807,8 +808,17 @@
             }
         }
 
-        function setupAddonCheckboxes(data) {
-            var productTitle = $j("#product").val();
+        function selectedProductFollowup(data) {
+            var productKey = $j("#product").val();
+
+            setupAddonCheckboxes(data, productKey);
+            if ((productKey != null) && (productKey != "")) {
+                $j("#showCustomizeWindow").show();
+            }
+        }
+
+        function setupAddonCheckboxes(data, productTitle) {
+//            var productTitle = $j("#product").val();
 
             if (data.length == 0) {
                 $j("#addOnCheckboxes").text("The product '" + productTitle + "' has no Add-ons");
