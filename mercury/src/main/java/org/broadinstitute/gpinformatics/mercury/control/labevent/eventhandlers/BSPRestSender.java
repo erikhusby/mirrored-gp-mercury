@@ -131,6 +131,7 @@ public class BSPRestSender implements Serializable {
                     sourceVesselPosition);
             Set<MercurySample.MetadataSource> metadataSources = new HashSet<>();
             for (SampleInstanceV2 sampleInstance : sampleInstances) {
+                // NA12878 samples, that fill up partial fingerprint plates to 48 wells, are reagents
                 if (!sampleInstance.isReagentOnly()) {
                     MercurySample rootMercurySample = sampleInstance.getRootOrEarliestMercurySample();
                     metadataSources.add(rootMercurySample.getMetadataSource());
@@ -151,7 +152,7 @@ public class BSPRestSender implements Serializable {
                     cherryPickSourceType.setDestinationWell(destVesselPosition.name());
                     plateCherryPickEvent.getSource().add(cherryPickSourceType);
                     if (targetEvent.getLabEventType().getAddMetadataToBsp() == LabEventType.AddMetadataToBsp.PDO) {
-                        // Set PDO
+                        // Set PDO.  If it's a psuedo-pool, assume all are in the same PDO
                         SampleInstanceV2 sampleInstanceV2 = sampleInstances.iterator().next();
                         List<ProductOrderSample> allProductOrderSamples = sampleInstanceV2.getAllProductOrderSamples();
                         if (!allProductOrderSamples.isEmpty()) {
