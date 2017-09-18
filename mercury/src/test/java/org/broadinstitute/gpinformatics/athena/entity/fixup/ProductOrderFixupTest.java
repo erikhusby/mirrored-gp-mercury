@@ -1122,4 +1122,37 @@ public class ProductOrderFixupTest extends Arquillian {
         }
         productOrderDao.persist(new FixupCommentary("GPLIM-4823: Updating productOrders to Submitted which were not previously tranistioned as such"));
     }
+
+    @Test(enabled = false)
+    public void gplim4954SetOrdersToCompleted() throws Exception {
+        userBean.loginOSUser();
+        List <String> ordersToComplete = Arrays.asList("PDO-11934",
+                "PDO-11935",
+                "PDO-11981",
+                "PDO-11992",
+                "PDO-12215",
+                "PDO-12137",
+                "PDO-12070",
+                "PDO-12111",
+                "PDO-12119",
+                "PDO-12120",
+                "PDO-12150");
+
+        // Update the state of all PDOs affected by this billing session.
+        for (String key : ordersToComplete) {
+            try {
+                // Update the order status using the ProductOrderEjb with a version of the order status update
+                // method that does not mark transactions for rollback in the event that JIRA-related RuntimeExceptions
+                // are thrown.  It is still possible that this method will throw a checked exception,
+                // but these will not mark the transaction for rollback.
+                productOrderEjb.updateOrderStatusNoRollback(key);
+            } catch (Exception e) {
+                // Errors are just logged here because the current user doesn't work with PDOs, and wouldn't
+                // be able to resolve these issues.  Exceptions should only occur if a required resource,
+                // such as JIRA, is missing.
+                log.error("Failed to update PDO status after billing: " + key, e);
+            }
+        }
+        productOrderDao.persist(new FixupCommentary("GPLIM-4954: Updating productOrders to Submitted which were not previously tranistioned as such"));
+    }
 }

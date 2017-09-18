@@ -1005,10 +1005,10 @@ public class VesselEjb {
     }
 
     /**
-     * Parses the spreadsheet stream and removes rows containing specified cell names.
+     * Parses the spreadsheet stream and removes rows referring to cells that are to be excluded.
      * @return a stream of the filtered spreadsheet
      */
-    public static InputStream filterOutRows(InputStream quantStream, Set<VesselPosition> excludedPositions)
+    public static InputStream filterOutRows(InputStream quantStream, Set<VesselPosition> includedPositions)
             throws Exception {
         Workbook workbook = WorkbookFactory.create(quantStream);
         List<Row> toBeRemoved = new ArrayList<>();
@@ -1021,7 +1021,8 @@ public class VesselEjb {
             Row row = curveSheet.getRow(i);
             String well = (row != null && row.getCell(COLUMN_CONTAINING_VESSEL_POSITION) != null) ?
                     row.getCell(COLUMN_CONTAINING_VESSEL_POSITION).getStringCellValue().trim() : null;
-            if (StringUtils.isNotBlank(well) && excludedPositions.contains(VesselPosition.getByName(well))) {
+            VesselPosition wellPosition = VesselPosition.getByName(well);
+            if (wellPosition != null && !includedPositions.contains(wellPosition)) {
                 toBeRemoved.add(row);
             }
         }

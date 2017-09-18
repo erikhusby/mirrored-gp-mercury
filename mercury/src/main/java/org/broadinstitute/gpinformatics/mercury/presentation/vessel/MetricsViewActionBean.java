@@ -355,7 +355,7 @@ public class MetricsViewActionBean extends CoreActionBean {
             if (productOrders.size() == 1) {
                 ProductOrder productOrder = productOrders.iterator().next();
                 GenotypingProductOrderMapping genotypingProductOrderMapping =
-                        attributeArchetypeDao.findGenotypingProductOrderMapping(productOrder.getJiraTicketKey());
+                        attributeArchetypeDao.findGenotypingProductOrderMapping(productOrder.getProductOrderId());
                 if (genotypingProductOrderMapping != null) {
                     for (ArchetypeAttribute archetypeAttribute : genotypingProductOrderMapping.getAttributes()) {
                         if (chipAttributes.containsKey(archetypeAttribute.getAttributeName()) &&

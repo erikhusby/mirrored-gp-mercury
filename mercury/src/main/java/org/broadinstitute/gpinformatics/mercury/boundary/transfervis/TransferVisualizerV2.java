@@ -652,6 +652,7 @@ public class TransferVisualizerV2 {
                 }
             }
         } catch (Exception e) {
+            logger.error("Transfer visualizer error: " + e.getMessage(), e );
             if (traverser == null) {
                 throw new RuntimeException(e);
             }

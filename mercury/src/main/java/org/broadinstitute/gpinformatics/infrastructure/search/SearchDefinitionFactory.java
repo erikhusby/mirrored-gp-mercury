@@ -30,14 +30,17 @@ public class SearchDefinitionFactory {
     private static Map<String, ConfigurableSearchDefinition> MAP_NAME_TO_DEF = new HashMap<>();
 
     /**
-     * Convenience to allow users to just enter the number of the LCSET.
+     * Convenience to allow users to just enter the number or suffix of the batch name.  <br />
+     * Note:  Only works if the search term is the exact same as the batch prefix (FCT,ARRAY,SK, etc.) <br />
+     * TODO: JMS Handle lists of multiple values (e.g when BETWEEN, IN operators selected)
      */
-    private static SearchTerm.Evaluator<Object> lcsetConverter = new SearchTerm.Evaluator<Object>() {
+    private static SearchTerm.Evaluator<Object> batchNameInputConverter = new SearchTerm.Evaluator<Object>() {
         @Override
         public Object evaluate(Object entity, SearchContext context) {
+            String prefix = context.getSearchValue().getName();
             String value = context.getSearchValueString();
-            if( value.matches("[0-9]*")){
-                value = "LCSET-" + value;
+            if( !value.startsWith( prefix ) && context.getSearchValue().getOperator() != SearchInstance.Operator.LIKE ){
+                value = prefix + "-" + value;
             }
             return value;
         }
@@ -123,8 +126,8 @@ public class SearchDefinitionFactory {
         MAP_NAME_TO_DEF.put(ColumnEntity.LAB_METRIC_RUN.getEntityName(), configurableSearchDefinition);
     }
 
-    static SearchTerm.Evaluator<Object> getLcsetInputConverter(){
-        return lcsetConverter;
+    static SearchTerm.Evaluator<Object> getBatchNameInputConverter(){
+        return batchNameInputConverter;
     }
 
     static SearchTerm.Evaluator<Object> getPdoInputConverter(){

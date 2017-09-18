@@ -152,9 +152,10 @@ public class AttributeArchetypeDao extends GenericDao {
             return o1.getActiveDate().compareTo(o2.getActiveDate());
         }
     };
-    public GenotypingProductOrderMapping findGenotypingProductOrderMapping(String jiraTicketKey) {
+
+    public GenotypingProductOrderMapping findGenotypingProductOrderMapping(Long productOrderId) {
         return findSingle(GenotypingProductOrderMapping.class, GenotypingProductOrderMapping_.archetypeName,
-                jiraTicketKey);
+                productOrderId.toString());
     }
 
     public Map<String, AttributeDefinition> findAttributeGroupByTypeAndName(
