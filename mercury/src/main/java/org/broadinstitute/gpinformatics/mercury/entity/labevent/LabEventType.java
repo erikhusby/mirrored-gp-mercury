@@ -506,7 +506,7 @@ public enum LabEventType {
     PICO_DILUTION_TRANSFER_FORWARD_BSP("PicoDilutionTransferForwardBsp",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED),
+            LibraryType.NONE_ASSIGNED, TranslateBspMessage.SECTION_TO_CHERRY),
     PICO_BUFFER_ADDITION("PicoBufferAddition",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
@@ -1095,7 +1095,7 @@ public enum LabEventType {
     AUTO_DAUGHTER_PLATE_CREATION("AutomatedDaughterPlateCreation",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.TRUE,
             PlasticToValidate.BOTH, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED),
+            LibraryType.NONE_ASSIGNED, TranslateBspMessage.SECTION_TO_CHERRY),
     SONIC_DAUGHTER_PLATE_CREATION("SonicDaughterPlateCreation",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
@@ -1118,12 +1118,20 @@ public enum LabEventType {
             LibraryType.NONE_ASSIGNED),
     FINGERPRINTING_ALIQUOT("FingerprintingAliquot",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
-    FINGERPRINTING_PLATE_SETUP("FingerprintingPlateSetup",
+    FINGERPRINTING_ALIQUOT_FORWARD_BSP("FingerprintingAliquotForwardBsp",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED, AddMetadataToBsp.PDO),
+            LibraryType.NONE_ASSIGNED, TranslateBspMessage.SECTION_TO_CHERRY),
+    FINGERPRINTING_PLATE_SETUP("FingerprintingPlateSetup",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    FINGERPRINTING_PLATE_SETUP_FORWARD_BSP("FingerprintingPlateSetupForwardBsp",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED, AddMetadataToBsp.PDO, TranslateBspMessage.SECTION_TO_CHERRY),
     EMERGE_VOLUME_TRANSFER("EmergeVolumeTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
@@ -2035,6 +2043,13 @@ public enum LabEventType {
 
     private AddMetadataToBsp addMetadataToBsp;
 
+    public enum TranslateBspMessage {
+        SECTION_TO_CHERRY,
+        NONE
+    }
+
+    private TranslateBspMessage translateBspMessage = TranslateBspMessage.NONE;
+
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class ManualTransferDetails {
         /** Determines layout of page and type of message built. */
@@ -2491,10 +2506,21 @@ public enum LabEventType {
     LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
             SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
             PipelineTransformation pipelineTransformation, ForwardMessage forwardMessage,
-            VolumeConcUpdate volumeConcUpdate, LibraryType libraryType, AddMetadataToBsp addMetadataToBsp) {
+            VolumeConcUpdate volumeConcUpdate, LibraryType libraryType, TranslateBspMessage translateBspMessage) {
+        this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
+                pipelineTransformation, forwardMessage, volumeConcUpdate, null, null, libraryType);
+        this.translateBspMessage = translateBspMessage;
+    }
+
+    LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
+            SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
+            PipelineTransformation pipelineTransformation, ForwardMessage forwardMessage,
+            VolumeConcUpdate volumeConcUpdate, LibraryType libraryType, AddMetadataToBsp addMetadataToBsp,
+            TranslateBspMessage translateBspMessage) {
         this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
                 pipelineTransformation, forwardMessage, volumeConcUpdate, null, null, libraryType);
         this.addMetadataToBsp = addMetadataToBsp;
+        this.translateBspMessage = translateBspMessage;
     }
 
     LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
@@ -2607,5 +2633,9 @@ public enum LabEventType {
 
     public AddMetadataToBsp getAddMetadataToBsp() {
         return addMetadataToBsp;
+    }
+
+    public TranslateBspMessage getTranslateBspMessage() {
+        return translateBspMessage;
     }
 }

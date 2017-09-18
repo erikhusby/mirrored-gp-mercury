@@ -81,7 +81,8 @@ public class BSPRestSender implements Serializable {
 
     }
 
-    private PlateCherryPickEvent plateTransfer(PlateTransferEventType plateTransferEventType, List<LabEvent> labEvents) {
+    private PlateCherryPickEvent plateTransferToCherryPick(PlateTransferEventType plateTransferEventType,
+            List<LabEvent> labEvents) {
         // Convert the section transfer to a cherry pick, because this gives us control over transferring
         // individual positions (rather than an entire section)
 
@@ -226,11 +227,17 @@ public class BSPRestSender implements Serializable {
             }
         }
         for (PlateTransferEventType plateTransferEventType : message.getPlateTransferEvent()) {
-            if(LabEventType.getByName(plateTransferEventType.getEventType()).getForwardMessage() ==
-                    LabEventType.ForwardMessage.BSP) {
-                PlateCherryPickEvent plateCherryPickEvent = plateTransfer(plateTransferEventType, labEvents);
-                if (plateCherryPickEvent != null) {
-                    copy.getPlateCherryPickEvent().add(plateCherryPickEvent);
+            LabEventType labEventType = LabEventType.getByName(plateTransferEventType.getEventType());
+            if(labEventType.getForwardMessage() == LabEventType.ForwardMessage.BSP) {
+                if (labEventType.getTranslateBspMessage() == LabEventType.TranslateBspMessage.SECTION_TO_CHERRY) {
+                    PlateCherryPickEvent plateCherryPickEvent = plateTransferToCherryPick(plateTransferEventType,
+                            labEvents);
+                    if (plateCherryPickEvent != null) {
+                        copy.getPlateCherryPickEvent().add(plateCherryPickEvent);
+                        atLeastOneEvent = true;
+                    }
+                } else {
+                    copy.getPlateTransferEvent().add(plateTransferEventType);
                     atLeastOneEvent = true;
                 }
             }
