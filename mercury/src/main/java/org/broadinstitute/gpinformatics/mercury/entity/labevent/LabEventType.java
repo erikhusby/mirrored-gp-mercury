@@ -2043,8 +2043,16 @@ public enum LabEventType {
 
     private AddMetadataToBsp addMetadataToBsp;
 
+    /**
+     * Determines whether messages that are forwarded to BSP are translated to a different format.
+     */
     public enum TranslateBspMessage {
+        /** Translate section-based plate transfer to cherry pick transfer, to give finer grained control over
+         * sources and destinations.  This is necessary in some transfers that involve mixtures of Mercury and
+         * BSP samples.
+         */
         SECTION_TO_CHERRY,
+        /** Leave event as is. */
         NONE
     }
 
