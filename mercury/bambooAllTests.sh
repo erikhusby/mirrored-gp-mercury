@@ -70,7 +70,7 @@ fi
 rm -v tests-*.log
 rm -vrf surefire-reports*
 
- Run the NonArquillian tests first
+# Run the NonArquillian tests first
 for TEST in $TESTS_NONARQUILLIAN
 do
     ./mvnAllTests.sh -t $TEST -b $BUILD $CLOVER $ADDITIONAL_OPTIONS

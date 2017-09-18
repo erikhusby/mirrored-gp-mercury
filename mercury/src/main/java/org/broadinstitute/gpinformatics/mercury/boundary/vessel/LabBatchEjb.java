@@ -795,6 +795,7 @@ public class LabBatchEjb {
             for (BucketEntry bucketEntry : sampleInstance.getAllBucketEntries()) {
                 if (bucketEntry.getLabBatch().getBusinessKey().equals(lcsetName)) {
                     removeBucketEntryIds.add(bucketEntry.getBucketEntryId());
+                    bucketName = bucketEntry.getBucket().getBucketDefinitionName();
                 }
             }
         }
@@ -817,6 +818,9 @@ public class LabBatchEjb {
                 new HashSet<LabVessel>(mapBarcodeToTube.values()));
         int needsExport = 0;
         for (IsExported.ExportResult exportResult : exportResults.getExportResult()) {
+            if (exportResult.isError()) {
+                continue;
+            }
             Set<IsExported.ExternalSystem> externalSystems = exportResult.getExportDestinations();
             if (CollectionUtils.isEmpty(externalSystems) || !externalSystems.contains(IsExported.ExternalSystem.Mercury)) {
                 needsExport++;
