@@ -318,14 +318,6 @@ public enum LabEventType {
                     RackOfTubes.RackType.Matrix96Anonymous).build(),
             LibraryType.NONE_ASSIGNED),
 
-    // Dev Samples
-    DEV("DevCherryPick",
-            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT, RackOfTubes.RackType.Matrix96Anonymous,
-                    RackOfTubes.RackType.Matrix96Anonymous).build(),
-            LibraryType.NONE_ASSIGNED),
-
     // Sage
     SAGE_LOADING("SageLoading",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.FALSE, SystemOfRecord.SQUID, CreateSources.FALSE,
