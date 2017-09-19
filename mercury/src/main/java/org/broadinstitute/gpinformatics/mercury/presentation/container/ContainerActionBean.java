@@ -238,6 +238,11 @@ public class ContainerActionBean extends RackScanActionBean {
                 for (VesselPosition vesselPosition : rackOfTubes.getVesselGeometry().getVesselPositions()) {
                     LabVessel barcodedTube = containerRole.getImmutableVesselAtPosition(vesselPosition);
                     if (barcodedTube != null) {
+                        if (rackOfTubes.getStorageLocation() == null && barcodedTube.getStorageLocation() != null) {
+                            continue;
+                        } else if (rackOfTubes.getStorageLocation() == null && barcodedTube.getStorageLocation() != null) {
+                            continue;
+                        }
                         if (rackOfTubes.getStorageLocation() != null && barcodedTube.getStorageLocation() != null
                                 && !barcodedTube.getStorageLocation().equals(rackOfTubes.getStorageLocation())) {
                             continue;
