@@ -942,7 +942,51 @@
             <column name="QUANTIFICATION_METHOD"  type="varchar(255)"/>
             <column name="CONCENTRATION_UNIT"  type="varchar(255)"/>
             <column name="LANE_QUANTITY"  type="number(5,0)"/>
+            <column name="rev" type="number(19,0)" />
+            <column name="revtype" type="number(3,0)" />
         </addColumn>
+
+        <!-- What should be the primary key on this table?? -->
+        <createTable tableName="sample_kit_request" schemaName="mercury">
+            <column name="COLLABORATOR_NAME"  type="varchar(255)"/>
+            <column name="FIRST_NAME"  type="varchar(255)"/>
+            <column name="FIRST_NAME"  type="varchar(255)"/>
+            <column name="LAST_NAME"  type="varchar(255)"/>
+            <column name="ORGANIZATION"  type="varchar(255)"/>
+            <column name="ADDRESS"  type="varchar(255)"/>
+            <column name="CITY"  type="varchar(255)"/>
+            <column name="STATE"  type="varchar(255)"/>
+            <column name="POSTAL_CODE"  type="varchar(255)"/>
+            <column name="COUNTRY"  type="varchar(255)"/>
+            <column name="PHONE"  type="varchar(255)"/>
+            <column name="EMAIL"  type="varchar(255)"/>
+            <column name="COMMON_NAME"  type="varchar(255)"/>
+            <column name="GENUS"  type="varchar(255)"/>
+            <column name="SPECIES"  type="varchar(255)"/>
+            <column name="IRB_APPROVAL_REQUIRED"  type="varchar(255)"/>
+        </createTable>
+
+        <createTable tableName="sample_kit_request_aud" schemaName="mercury">
+            <column name="COLLABORATOR_NAME"  type="varchar(255)"/>
+            <column name="FIRST_NAME"  type="varchar(255)"/>
+            <column name="LAST_NAME"  type="varchar(255)"/>
+            <column name="ORGANIZATION"  type="varchar(255)"/>
+            <column name="ADDRESS"  type="varchar(255)"/>
+            <column name="CITY"  type="varchar(255)"/>
+            <column name="STATE"  type="varchar(255)"/>
+            <column name="POSTAL_CODE"  type="varchar(255)"/>
+            <column name="COUNTRY"  type="varchar(255)"/>
+            <column name="PHONE"  type="varchar(255)"/>
+            <column name="EMAIL"  type="varchar(255)"/>
+            <column name="COMMON_NAME"  type="varchar(255)"/>
+            <column name="GENUS"  type="varchar(255)"/>
+            <column name="SPECIES"  type="varchar(255)"/>
+            <column name="IRB_APPROVAL_REQUIRED"  type="varchar(255)"/>
+            <column name="rev" type="number(19,0)" />
+            <column name="revtype" type="number(3,0)" />
+        </createTable>
+
+        <createSequence sequenceName="seq_sample_kit_request" schemaName="mercury" startValue="1" incrementBy="50"/>
     </changeSet>
 
 
