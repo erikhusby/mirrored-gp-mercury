@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
@@ -40,6 +41,10 @@ public class CustomizationValues {
 
     public void setProductName(String productName) {
         this.productName = productName;
+    }
+
+    public boolean isEmpty() {
+        return StringUtils.isBlank(quantity) && StringUtils.isBlank(price) && StringUtils.isBlank(customName);
     }
 
     @Override

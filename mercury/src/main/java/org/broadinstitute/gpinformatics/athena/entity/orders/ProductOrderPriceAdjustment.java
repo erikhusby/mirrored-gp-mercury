@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.sap.entity.Condition;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
@@ -11,7 +10,6 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -32,23 +30,31 @@ public class ProductOrderPriceAdjustment {
     private Long ProductOrderPriceAdjustmentId;
 
     @Index(name = "ix_pdo_price_adjustment")
-    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @ManyToOne(optional = false)
     private ProductOrder productOrder;
 
     @Enumerated(EnumType.STRING)
+    @Column(name="price_adjustment_condition")
     private Condition priceAdjustmentCondition;
 
     // number(19,4)  ?
+    @Column(name="adjustment_value")
     private BigDecimal adjustmentValue;
 
+    @Column(name="custom_product_name")
     private String customProductName;
+
+    @Column(name = "adjustment_quantity")
+    private int adjustmentQuantity;
 
     public ProductOrderPriceAdjustment() {
     }
 
-    public ProductOrderPriceAdjustment(Condition priceAdjustmentCondition, BigDecimal adjustmentValue) {
+    public ProductOrderPriceAdjustment(Condition priceAdjustmentCondition, BigDecimal adjustmentValue,
+                                       int quantity) {
         this.priceAdjustmentCondition = priceAdjustmentCondition;
         this.adjustmentValue = adjustmentValue;
+        this.adjustmentQuantity = quantity;
     }
 
     public ProductOrder getProductOrder() {
@@ -73,6 +79,10 @@ public class ProductOrderPriceAdjustment {
 
     public void setCustomProductName(String customProductName) {
         this.customProductName = customProductName;
+    }
+
+    public int getAdjustmentQuantity() {
+        return adjustmentQuantity;
     }
 
     @Override

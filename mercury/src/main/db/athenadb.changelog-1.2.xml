@@ -808,6 +808,8 @@
                 <constraints nullable="false" />
             </column>
             <column name="adjustment_value" type="number(19,2)" />
+            <column name="adjustment_quantity" type="number(19,0)" />
+            <column name="custom_product_name" type="varchar(255)" />
             <column name="price_adjustment_condition" type="varchar(255)" />
             <column name="add_on" type="number(19,0)">
                 <constraints nullable="false" />
@@ -838,6 +840,8 @@
             <column name="revtype" type="number(3,0)" />
 
             <column name="adjustment_value" type="number(19,2)" />
+            <column name="adjustment_quantity" type="number(19,0)" />
+            <column name="custom_product_name" type="varchar(255)" />
             <column name="price_adjustment_condition" type="varchar(255)" />
             <column name="add_on" type="number(19,0)" />
         </createTable>
@@ -856,6 +860,8 @@
                 <constraints nullable="false"/>
             </column>
             <column name="adjustment_value" type="number(19,2)" />
+            <column name="adjustment_quantity" type="number(19,0)" />
+            <column name="custom_product_name" type="varchar(255)" />
             <column name="price_adjustment_condition" type="varchar(255)" />
             <column name="product_order" type="number(19,0)">
                 <constraints nullable="false" />
@@ -886,6 +892,8 @@
                 <constraints nullable="false" />
             </column>
             <column name="adjustment_value" type="number(19,2)" />
+            <column name="adjustment_quantity" type="number(19,0)" />
+            <column name="custom_product_name" type="varchar(255)" />
             <column name="price_adjustment_condition" type="varchar(255)" />
             <column name="product_order" type="number(19,0)">
                 <constraints nullable="false" />

@@ -1282,6 +1282,28 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
 
             populateAttributes(editOrder.getProductOrderId());
+
+            buildJsonCustomizationsFromProductOrder(editOrder);
+        }
+    }
+
+    private void buildJsonCustomizationsFromProductOrder(ProductOrder editOrder) {
+
+        if(editOrder.getSinglePriceAdjustment() != null) {
+            productCustomizations.add(new CustomizationValues(editOrder.getProduct().getPartNumber(),
+                    String.valueOf(editOrder.getSinglePriceAdjustment().getAdjustmentQuantity()),
+                    editOrder.getSinglePriceAdjustment().getAdjustmentValue().toString(),
+                    editOrder.getSinglePriceAdjustment().getCustomProductName()));
+        }
+
+        for (ProductOrderAddOn productOrderAddOn : editOrder.getAddOns()) {
+            if(productOrderAddOn.getSingleCustomPriceAdjustment() != null) {
+                productCustomizations.add(new CustomizationValues(productOrderAddOn.getAddOn().getPartNumber(),
+                        String.valueOf(productOrderAddOn.getSingleCustomPriceAdjustment().getAdjustmentQuantity()),
+                        productOrderAddOn.getSingleCustomPriceAdjustment().getAdjustmentValue().toString(),
+                        productOrderAddOn.getSingleCustomPriceAdjustment().getCustomProductName()
+                        ));
+            }
         }
     }
 
@@ -1615,10 +1637,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (editOrder.isRegulatoryInfoEditAllowed()) {
             updateRegulatoryInformation();
         }
+        buildJsonObjectFromEditOrderProductCustomizations();
+
         Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
         try {
             productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails,
-                    saveOrderMessageCollection);
+                    productCustomizations, saveOrderMessageCollection);
             if (isInfinium() && editOrder.getPipelineLocation() == null) {
                 editOrder.setPipelineLocation(ProductOrder.PipelineLocation.US_CLOUD);
                 productOrderDao.persist(editOrder);
