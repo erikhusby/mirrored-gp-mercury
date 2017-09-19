@@ -35,29 +35,35 @@ public class ProductOrderAddOnPriceAdjustment {
     private ProductOrderAddOn addOn;
 
     @Enumerated(EnumType.STRING)
+    @Column(name="price_adjustment_condition")
     private Condition priceAdjustmentCondition;
 
     // number(19,4)  ?
+    @Column(name="adjustment_value")
     private BigDecimal adjustmentValue;
 
+    @Column(name="custom_product_name")
     private String customProductName;
+
+    @Column(name = "adjustment_quantity")
+    private int adjustmentQuantity;
 
     public ProductOrderAddOnPriceAdjustment() {
     }
 
-    public ProductOrderAddOnPriceAdjustment(ProductOrderAddOn addOn) {
-        this.addOn = addOn;
-    }
-
-    public ProductOrderAddOnPriceAdjustment(ProductOrderAddOn addOn,
-                                            Condition priceAdjustmentCondition, BigDecimal adjustmentValue) {
-        this(addOn);
+    public ProductOrderAddOnPriceAdjustment(Condition priceAdjustmentCondition, BigDecimal adjustmentValue,
+                                            int quantity) {
         this.priceAdjustmentCondition = priceAdjustmentCondition;
         this.adjustmentValue = adjustmentValue;
+        this.adjustmentQuantity = quantity;
     }
 
     public ProductOrderAddOn getAddOn() {
         return addOn;
+    }
+
+    public void setAddOn(ProductOrderAddOn addOn) {
+        this.addOn = addOn;
     }
 
     public Condition getPriceAdjustmentCondition() {
@@ -74,6 +80,10 @@ public class ProductOrderAddOnPriceAdjustment {
 
     public void setCustomProductName(String customProductName) {
         this.customProductName = customProductName;
+    }
+
+    public int getAdjustmentQuantity() {
+        return adjustmentQuantity;
     }
 
     @Override

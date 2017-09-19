@@ -17,8 +17,10 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.presentation.orders.CustomizationValues;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDataFetcher;
@@ -235,9 +237,12 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Enumerated(EnumType.STRING)
     @Column(name = "PIPELINE_LOCATION", nullable = true)
     private PipelineLocation pipelineLocation;
+    
+    @OneToMany(mappedBy = "productOrder", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<ProductOrderPriceAdjustment> customPriceAdjustments = new HashSet<>();
 
-    @OneToMany(mappedBy = "productOrder", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
-    private Set<ProductOrderPriceAdjustment> priceAdjustments = new HashSet<>();
+    @Transient
+    private Set<ProductOrderPriceAdjustment> quotePriceMatchAdjustments = new HashSet<>();
 
     private Boolean priorToSAP1_5 = false;
 
@@ -2068,18 +2073,41 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         this.priorToSAP1_5 = priorToSAP1_5;
     }
 
-    public Set<ProductOrderPriceAdjustment> getPriceAdjustments() {
-        return priceAdjustments;
+    public Set<ProductOrderPriceAdjustment> getQuotePriceMatchAdjustments() {
+        return quotePriceMatchAdjustments;
     }
 
-    public void setPriceAdjustments(Set<ProductOrderPriceAdjustment> priceAdjustments) {
-        for (ProductOrderPriceAdjustment priceAdjustment : priceAdjustments) {
-            addPriceAdjustment(priceAdjustment);
+    public void setQuotePriceMatchAdjustments(Set<ProductOrderPriceAdjustment> quotePriceMatchAdjustments) {
+        this.quotePriceMatchAdjustments = quotePriceMatchAdjustments;
+    }
+
+    public Set<ProductOrderPriceAdjustment> getCustomPriceAdjustments() {
+        return customPriceAdjustments;
+    }
+
+    public ProductOrderPriceAdjustment getSinglePriceAdjustment() {
+        ProductOrderPriceAdjustment found = null;
+        if(!customPriceAdjustments.isEmpty()) {
+            found = customPriceAdjustments.iterator().next();
+        }
+
+        return found;
+    }
+
+    public void setCustomPriceAdjustments(Set<ProductOrderPriceAdjustment> customPriceAdjustments)
+            throws ValidationException {
+
+        if(customPriceAdjustments.size()>1) {
+            throw new ValidationException("There should only be one price adjustment per product");
+        }
+
+        for (ProductOrderPriceAdjustment priceAdjustment : customPriceAdjustments) {
+            addCustomPriceAdjustment(priceAdjustment);
         }
     }
 
-    public void addPriceAdjustment(ProductOrderPriceAdjustment priceAdjustment) {
-        this.priceAdjustments.add(priceAdjustment);
+    public void addCustomPriceAdjustment(ProductOrderPriceAdjustment priceAdjustment) {
+        this.customPriceAdjustments.add(priceAdjustment);
         priceAdjustment.setProductOrder(this);
     }
 
@@ -2227,4 +2255,5 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             return foundType;
         }
     }
+
 }

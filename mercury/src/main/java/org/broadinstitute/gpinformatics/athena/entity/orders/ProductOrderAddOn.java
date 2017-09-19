@@ -7,8 +7,17 @@ import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
-import javax.persistence.*;
-import java.util.Collection;
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -35,8 +44,12 @@ public class ProductOrderAddOn {
     @ManyToOne(cascade = CascadeType.PERSIST, optional = false)
     private Product addOn;
 
-    @OneToMany(mappedBy = "addOn", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
-    Set<ProductOrderAddOnPriceAdjustment> priceAdjustments = new HashSet<>();
+
+    @OneToMany(mappedBy = "addOn", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, fetch = FetchType.LAZY)
+    Set<ProductOrderAddOnPriceAdjustment> customPriceAdjustments = new HashSet<>();
+
+    @Transient
+    Set<ProductOrderAddOnPriceAdjustment> quotePriceAdjustments = new HashSet<>();
 
     protected ProductOrderAddOn() {
     }
@@ -58,13 +71,39 @@ public class ProductOrderAddOn {
         return productOrder;
     }
 
-    public Set<ProductOrderAddOnPriceAdjustment> getPriceAdjustments() {
-        return priceAdjustments;
+    public Set<ProductOrderAddOnPriceAdjustment> getQuotePriceAdjustments() {
+        return quotePriceAdjustments;
     }
 
-    public void setPriceAdjustments(
-            Set<ProductOrderAddOnPriceAdjustment> priceAdjustments) {
-        this.priceAdjustments = priceAdjustments;
+    public void setQuotePriceAdjustments(
+            Set<ProductOrderAddOnPriceAdjustment> quotePriceAdjustments) {
+        this.quotePriceAdjustments = quotePriceAdjustments;
+    }
+
+    public Set<ProductOrderAddOnPriceAdjustment> getCustomPriceAdjustments() {
+        return customPriceAdjustments;
+    }
+
+    public ProductOrderAddOnPriceAdjustment getSingleCustomPriceAdjustment() {
+        ProductOrderAddOnPriceAdjustment found = null;
+        if (!customPriceAdjustments.isEmpty()) {
+            found = customPriceAdjustments.iterator().next();
+        }
+
+        return found;
+    }
+
+    public void setCustomPriceAdjustments(
+            Set<ProductOrderAddOnPriceAdjustment> customPriceAdjustments) {
+        for (ProductOrderAddOnPriceAdjustment customPriceAdjustment : customPriceAdjustments) {
+            addCustomPriceAdjustment(customPriceAdjustment);
+        }
+
+    }
+
+    private void addCustomPriceAdjustment(ProductOrderAddOnPriceAdjustment customPriceAdjustment) {
+        this.customPriceAdjustments.add(customPriceAdjustment);
+        customPriceAdjustment.setAddOn(this);
     }
 
     @Override

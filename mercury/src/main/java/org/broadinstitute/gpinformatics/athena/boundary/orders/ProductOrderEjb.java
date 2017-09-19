@@ -23,7 +23,9 @@ import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOnPriceAdjustment;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderPriceAdjustment;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
@@ -31,6 +33,8 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.StaleLedgerUpdateEx
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
+import org.broadinstitute.gpinformatics.athena.presentation.orders.CustomizationValues;
+import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationWithRollbackException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
@@ -66,8 +70,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.sap.entity.Condition;
 import org.broadinstitute.sap.entity.SAPMaterial;
 import org.broadinstitute.sap.services.SAPIntegrationException;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -78,6 +84,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.persistence.LockModeType;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -224,18 +231,26 @@ public class ProductOrderEjb {
                                     @Nonnull Collection<ProductOrderKitDetail> kitDetailCollection)
             throws IOException, QuoteNotFoundException, SAPInterfaceException {
 
-        persistProductOrder(saveType, editedProductOrder, deletedIds, kitDetailCollection, new MessageCollection());
+        persistProductOrder(saveType, editedProductOrder, deletedIds, kitDetailCollection, Collections.<CustomizationValues>emptyList(), new MessageCollection());
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void persistProductOrder(ProductOrder.SaveType saveType, ProductOrder editedProductOrder,
                                     @Nonnull Collection<String> deletedIds,
                                     @Nonnull Collection<ProductOrderKitDetail> kitDetailCollection,
+                                    List<CustomizationValues> customizationValues,
                                     MessageCollection messageCollection)
             throws IOException, QuoteNotFoundException, SAPInterfaceException {
 
         kitDetailCollection.removeAll(Collections.singleton(null));
         deletedIds.removeAll(Collections.singleton(null));
+
+        try {
+            updateCustomSettings(editedProductOrder, customizationValues);
+        } catch (ValidationException e) {
+            log.error(e.getMessage(), e);
+            throw new InformaticsServiceException("Error setting customizations for products on the Product Order");
+        }
 
         editedProductOrder.prepareToSave(userBean.getBspUser(), saveType);
 
@@ -282,6 +297,81 @@ public class ProductOrderEjb {
 
         productOrderDao.persist(editedProductOrder);
     }
+
+    private void updateCustomSettings(ProductOrder orderToCustomize, List<CustomizationValues> productCustomizations)
+            throws ValidationException {
+
+        Map<String, CustomizationValues> mappedValues = new HashMap<>();
+        for (CustomizationValues productCustomization : productCustomizations) {
+            mappedValues.put(productCustomization.getProductPartNumber(), productCustomization);
+        }
+
+        if(orderToCustomize.getProduct() != null){
+            final Product product = orderToCustomize.getProduct();
+            final String primaryPartNumber = product.getPartNumber();
+            if(mappedValues.containsKey(primaryPartNumber) && !mappedValues.get(primaryPartNumber).isEmpty()) {
+                ProductOrderPriceAdjustment primaryAdjustment = determinePriceAdjustment(mappedValues, product);
+                orderToCustomize.setCustomPriceAdjustments(Collections.singleton(primaryAdjustment));
+            }
+        }
+
+        for (ProductOrderAddOn productOrderAddOn : orderToCustomize.getAddOns()) {
+            final Product addOnProduct = productOrderAddOn.getAddOn();
+            if(mappedValues.containsKey(addOnProduct.getPartNumber()) &&
+               !mappedValues.get(addOnProduct.getPartNumber()).isEmpty()) {
+                final ProductOrderAddOnPriceAdjustment productOrderAddOnPriceAdjustment =
+                        determineAddOnPriceAdjustment(mappedValues, addOnProduct);
+
+                productOrderAddOn.setCustomPriceAdjustments(Collections.singleton(productOrderAddOnPriceAdjustment));
+
+            }
+        }
+    }
+
+    @NotNull
+    private ProductOrderPriceAdjustment determinePriceAdjustment(Map<String, CustomizationValues> mappedValues,
+                                                                 Product product) {
+        final SAPMaterial primaryMaterial = productPriceCache.findByProduct(product);
+        BigDecimal basePrice = new BigDecimal(primaryMaterial.getBasePrice());
+        BigDecimal customPrice = new BigDecimal(mappedValues.get(product.getPartNumber()).getPrice());
+        BigDecimal adjustment;
+
+        Condition customPriceCondition = null;
+
+        if(customPrice.compareTo(basePrice) == -1) {
+            customPriceCondition = Condition.DOLLAR_DISCOUNT_LINE_ITEM;
+            adjustment = basePrice.subtract(customPrice);
+        } else {
+            customPriceCondition = Condition.MARK_UP_LINE_ITEM;
+            adjustment = customPrice.subtract(basePrice);
+        }
+
+        return new ProductOrderPriceAdjustment(customPriceCondition, adjustment,
+                Integer.valueOf(mappedValues.get(product.getPartNumber()).getQuantity()));
+    }
+
+    @NotNull
+    private ProductOrderAddOnPriceAdjustment determineAddOnPriceAdjustment(Map<String, CustomizationValues> mappedValues,
+                                                                      Product product) {
+        final SAPMaterial primaryMaterial = productPriceCache.findByProduct(product);
+        BigDecimal basePrice = new BigDecimal(primaryMaterial.getBasePrice());
+        BigDecimal customPrice = new BigDecimal(mappedValues.get(product.getPartNumber()).getPrice());
+        BigDecimal adjustment;
+
+        Condition customPriceCondition = null;
+
+        if(customPrice.compareTo(basePrice) == -1) {
+            customPriceCondition = Condition.DOLLAR_DISCOUNT_LINE_ITEM;
+            adjustment = basePrice.subtract(customPrice);
+        } else {
+            customPriceCondition = Condition.MARK_UP_LINE_ITEM;
+            adjustment = customPrice.subtract(basePrice);
+        }
+
+        return new ProductOrderAddOnPriceAdjustment(customPriceCondition, adjustment,
+                Integer.valueOf(mappedValues.get(product.getPartNumber()).getQuantity()));
+    }
+
 
     /**
      * Modified version of persistProductOrder to deal with the new concept of child ProductOrders introduced with the

@@ -215,7 +215,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                 sapOrderItem.addCondition(Condition.MATERIAL_PRICE, new BigDecimal(price));
             } else {
                 if(placedOrder.getProduct().equals(product)) {
-                    for (ProductOrderPriceAdjustment productOrderPriceAdjustment : placedOrder.getPriceAdjustments()) {
+                    for (ProductOrderPriceAdjustment productOrderPriceAdjustment : placedOrder.getQuotePriceMatchAdjustments()) {
                         sapOrderItem.addCondition(productOrderPriceAdjustment.getPriceAdjustmentCondition(), productOrderPriceAdjustment.getAdjustmentValue());
                     }
 
@@ -410,7 +410,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         final Set<SAPOrderItem> sapOrderItems = new HashSet<>();
         final Map<Condition, String> conditionStringMap = Collections.emptyMap();
         final SAPOrderItem orderItem = getOrderItem(productOrder, productOrder.getProduct(), addedSampleCount);
-        for (ProductOrderPriceAdjustment productOrderPriceAdjustment : productOrder.getPriceAdjustments()) {
+        for (ProductOrderPriceAdjustment productOrderPriceAdjustment : productOrder.getQuotePriceMatchAdjustments()) {
             orderItem.addCondition(productOrderPriceAdjustment.getPriceAdjustmentCondition(),
                     productOrderPriceAdjustment.getAdjustmentValue());
         }
@@ -420,7 +420,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         for (ProductOrderAddOn productOrderAddOn : productOrder.getAddOns()) {
             final SAPOrderItem orderSubItem = getOrderItem(productOrder, productOrderAddOn.getAddOn(), addedSampleCount);
             for (ProductOrderAddOnPriceAdjustment productOrderAddOnPriceAdjustment : productOrderAddOn
-                    .getPriceAdjustments()) {
+                    .getQuotePriceAdjustments()) {
                 orderItem.addCondition(productOrderAddOnPriceAdjustment.getPriceAdjustmentCondition(),
                         productOrderAddOnPriceAdjustment.getAdjustmentValue());
             }
