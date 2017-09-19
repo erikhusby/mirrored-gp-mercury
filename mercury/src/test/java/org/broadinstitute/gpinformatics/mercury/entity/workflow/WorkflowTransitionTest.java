@@ -344,6 +344,29 @@ public class WorkflowTransitionTest extends Arquillian {
         Assert.assertEquals(genomeIssue.getStatus(), "Norm and Pool");
     }
 
+    @Test
+    public void testShearingAliquotTransitionsToInPlating() throws IOException {
+        Assert.assertEquals(genomeIssue.getStatus(), "On Hold");
+        crspIssue.postTransition("Return to Open", null);
+
+        String sourceRackBarcode = "ShearingAliquotCrspTestSourceRack";
+        List<String> sourceTube = Collections.singletonList("1125699450");
+        String destRackBarcode = "ShearingAliquotCrspTest" + timestampFormat.format(new Date());
+        List<String> shearingAliquotTube = Arrays.asList("ShearingAliquotTubeCrspTest" +  timestampFormat.format(new Date()));
+
+        PlateTransferEventType plateTransferEventType = bettaLimsMessageTestFactory
+                .buildRackToRack(LabEventType.SHEARING_ALIQUOT.getName(), sourceRackBarcode, sourceTube,
+                        destRackBarcode, shearingAliquotTube);
+
+        BettaLIMSMessage message = new BettaLIMSMessage();
+        message.getPlateTransferEvent().add(plateTransferEventType);
+        List<LabEvent> labEvents = labEventFactory.buildFromBettaLims(message);
+        LabEvent labEvent = labEvents.get(0);
+        jiraCommentUtil.postUpdate(labEvent);
+        crspIssue = jiraService.getIssue(crspJiraTicket);
+        Assert.assertEquals(crspIssue.getStatus(), "In Plating");
+    }
+
     private JiraIssue resetJiraTicketState(String ticketKey) throws IOException {
         JiraIssue issue = jiraService.getIssue(ticketKey);
         Assert.assertNotNull(issue);
