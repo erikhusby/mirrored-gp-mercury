@@ -227,7 +227,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private String sapOrderNumber;
 
     @ManyToMany(cascade = CascadeType.PERSIST)
-    @JoinTable(schema = "athena", name = "product_order_sap_orders", joinColumns = {@JoinColumn(name = "reference_product_order")})
+    @JoinTable(schema = "athena", name = "product_order_sap_orders"
+            , joinColumns = {@JoinColumn(name = "REFERENCE_PRODUCT_ORDER", referencedColumnName = "PRODUCT_ORDER_ID")}
+            , inverseJoinColumns = {@JoinColumn(name = "SAP_REFERENCE_ORDERS", referencedColumnName = "SAP_ORDER_DETAIL_ID")})
     private List<SapOrderDetail> sapReferenceOrders = new ArrayList<>();
 
     @OneToMany(mappedBy = "parentOrder", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)

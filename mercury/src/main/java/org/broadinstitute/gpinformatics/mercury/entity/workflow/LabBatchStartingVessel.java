@@ -53,6 +53,7 @@ public class LabBatchStartingVessel {
     private VesselPosition vesselPosition;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "FLOWCELL_DESIGNATION")
     private FlowcellDesignation flowcellDesignation;
 
     @Transient
