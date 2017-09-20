@@ -919,7 +919,8 @@
             <column name="CONCENTRATION_UNIT"  type="varchar(255)"/>
             <column name="LANE_QUANTITY"  type="number(5,0)"/>
         </addColumn>
-
+    </changeSet>
+    <changeSet id="GPLIM-4711-101" author="dwilson">
         <addColumn schemaName="mercury" tableName="sample_instance_entity_aud">
             <column name="READ_LENGTH2"  type="varchar(255)"/>
             <column name="INDEX_LENGTH"  type="varchar(255)"/>
@@ -942,14 +943,12 @@
             <column name="QUANTIFICATION_METHOD"  type="varchar(255)"/>
             <column name="CONCENTRATION_UNIT"  type="varchar(255)"/>
             <column name="LANE_QUANTITY"  type="number(5,0)"/>
-            <column name="rev" type="number(19,0)" />
-            <column name="revtype" type="number(3,0)" />
         </addColumn>
-
-        <!-- What should be the primary key on this table?? -->
+    </changeSet>
+    <changeSet id="GPLIM-4711-102" author="dwilson">
         <createTable tableName="sample_kit_request" schemaName="mercury">
+            <column name="SAMPLE_KIT_REQUEST_ID"  type="number(19,0)"/>
             <column name="COLLABORATOR_NAME"  type="varchar(255)"/>
-            <column name="FIRST_NAME"  type="varchar(255)"/>
             <column name="FIRST_NAME"  type="varchar(255)"/>
             <column name="LAST_NAME"  type="varchar(255)"/>
             <column name="ORGANIZATION"  type="varchar(255)"/>
@@ -965,8 +964,10 @@
             <column name="SPECIES"  type="varchar(255)"/>
             <column name="IRB_APPROVAL_REQUIRED"  type="varchar(255)"/>
         </createTable>
-
+    </changeSet>
+    <changeSet id="GPLIM-4711-103" author="dwilson">
         <createTable tableName="sample_kit_request_aud" schemaName="mercury">
+            <column name="SAMPLE_KIT_REQUEST_ID"  type="number(19,0)"/>
             <column name="COLLABORATOR_NAME"  type="varchar(255)"/>
             <column name="FIRST_NAME"  type="varchar(255)"/>
             <column name="LAST_NAME"  type="varchar(255)"/>
@@ -985,8 +986,22 @@
             <column name="rev" type="number(19,0)" />
             <column name="revtype" type="number(3,0)" />
         </createTable>
-
+    </changeSet>
+    <changeSet id="GPLIM-4711-104" author="dwilson">
         <createSequence sequenceName="seq_sample_kit_request" schemaName="mercury" startValue="1" incrementBy="50"/>
+    </changeSet>
+    <changeSet id="GPLIM-4711-106" author="epolk">
+      <addPrimaryKey constraintName="pk_sample_kit_request" tableName="sample_kit_request"
+		     schemaName="mercury" columnNames="sample_kit_request_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-4711-107" author="epolk">
+        <addPrimaryKey constraintName="pk_sample_kit_request_aud" tableName="sample_kit_request_aud"
+                       schemaName="mercury" columnNames="rev,sample_kit_request_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-4711-108" author="epolk">
+        <createIndex tableName="sample_kit_request_aud" indexName="ix_sample_kit_request_aud">
+            <column name="sample_kit_request_id"/>
+        </createIndex>
     </changeSet>
 
 
