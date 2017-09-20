@@ -98,6 +98,55 @@ $j(document).ready(function () {
     }
 
     setupDialogs();
+    renderCustomizationSummary();
+
+    function renderCustomizationSummary() {
+        var customJSONString = $j("#customizationJsonString").val();
+        if(customJSONString !== null && customJSONString!==undefined && customJSONString !== "") {
+            var customSettings = JSON.parse(customJSONString);
+        }
+        $j("#customizationContent").html(function() {
+            var content = "";
+
+            for  (part in customSettings) {
+                content += part ;
+                var price = customSettings.get(part).get("price");
+                var quantity = customSettings.get(part).get("quantity");
+                var customName = customSettings.get(part).get("customName");
+
+                var firstSetting = true;
+
+                if (!(price === 'undefined') && !(price == null)) {
+
+                    if(firstSetting) {
+                        content += ": ";
+                        firstSetting = false;
+                    }
+
+                    content += "Custom Price -- " + price;
+                }
+                if (!(quantity === 'undefined') && !(quantity == null)) {
+                    if(firstSetting) {
+                        content += ": ";
+                        firstSetting = false;
+                    }
+
+                    content += "Custom Quantity -- " + quantity;
+                }
+                if (!(customName === 'undefined') && !(customName == null)) {
+                    if(firstSetting) {
+                        content += ": ";
+                        firstSetting = false;
+                    }
+
+                    content += "Custom Product Name -- " + customName;
+                }
+                content += "\n";
+            }
+            return content;
+        });
+
+    }
 
     var oTable = $j('#sampleData').dataTable({
         'dom': "<'row-fluid'<'span12'f>><'row-fluid'<'span5'l><'span2 sampleDataProgress'><'span5 pull-right'<'pull-right'B>>>rt<'row-fluid'<'span6'l><'span6 pull-right'p>>",
@@ -1114,6 +1163,7 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
     <stripes:hidden name="replacementSampleList" id="replacementSampleList" value="" />
 <%--<stripes:hidden id="unAbandonComment" name="unAbandonComment" value=""/>--%>
 <stripes:hidden id="attestationConfirmed" name="editOrder.attestationConfirmed" value=""/>
+<stripes:hidden name="customizationJsonString" id="customizationJsonString" />
 
 <div class="actionButtons">
     <c:choose>
@@ -1452,6 +1502,16 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
         <div class="form-value">${actionBean.editOrder.addOnList}</div>
     </div>
 </div>
+
+    <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+    <div class="view-control-group control-group">
+        <label class="control-label label-form">Order Customizations</label>
+
+        <div class="controls">
+            <div class="form-value" id="customizationContent"></div>
+        </div>
+    </div>
+    </security:authorizeBlock>
 
 <div class="view-control-group control-group">
     <label class="control-label label-form">Quote ID</label>

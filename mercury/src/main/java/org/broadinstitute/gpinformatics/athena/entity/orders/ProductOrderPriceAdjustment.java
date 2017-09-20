@@ -8,8 +8,6 @@ import org.hibernate.envers.Audited;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -33,10 +31,6 @@ public class ProductOrderPriceAdjustment {
     @ManyToOne(optional = false)
     private ProductOrder productOrder;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name="price_adjustment_condition")
-    private Condition priceAdjustmentCondition;
-
     // number(19,4)  ?
     @Column(name="adjustment_value")
     private BigDecimal adjustmentValue;
@@ -50,11 +44,10 @@ public class ProductOrderPriceAdjustment {
     public ProductOrderPriceAdjustment() {
     }
 
-    public ProductOrderPriceAdjustment(Condition priceAdjustmentCondition, BigDecimal adjustmentValue,
-                                       int quantity) {
-        this.priceAdjustmentCondition = priceAdjustmentCondition;
+    public ProductOrderPriceAdjustment(BigDecimal adjustmentValue, int quantity, String customProductName) {
         this.adjustmentValue = adjustmentValue;
         this.adjustmentQuantity = quantity;
+        this.customProductName = customProductName;
     }
 
     public ProductOrder getProductOrder() {
@@ -65,20 +58,12 @@ public class ProductOrderPriceAdjustment {
         this.productOrder = productOrder;
     }
 
-    public Condition getPriceAdjustmentCondition() {
-        return priceAdjustmentCondition;
-    }
-
     public BigDecimal getAdjustmentValue() {
         return adjustmentValue;
     }
 
     public String getCustomProductName() {
         return customProductName;
-    }
-
-    public void setCustomProductName(String customProductName) {
-        this.customProductName = customProductName;
     }
 
     public int getAdjustmentQuantity() {
@@ -99,7 +84,6 @@ public class ProductOrderPriceAdjustment {
 
         return new EqualsBuilder()
                 .append(getProductOrder(), that.getProductOrder())
-                .append(getPriceAdjustmentCondition(), that.getPriceAdjustmentCondition())
                 .append(getAdjustmentValue(), that.getAdjustmentValue())
                 .append(getCustomProductName(), that.getCustomProductName())
                 .isEquals();
@@ -109,7 +93,6 @@ public class ProductOrderPriceAdjustment {
     public int hashCode() {
         return new HashCodeBuilder(17, 37)
                 .append(getProductOrder())
-                .append(getPriceAdjustmentCondition())
                 .append(getAdjustmentValue())
                 .append(getCustomProductName())
                 .toHashCode();

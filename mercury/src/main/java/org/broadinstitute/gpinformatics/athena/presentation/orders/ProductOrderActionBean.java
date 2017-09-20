@@ -610,7 +610,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                                          " Is not valid since " + editOrder.getProduct().getDisplayName() +
                                          " is not offered as either clinical or commercial");
             } else if (ProductOrder.OrderAccessType.RESEARCH.getDisplayName().equals(orderType) &&
-                       !editOrder.getProduct().isExternalOnlyProduct()) {
+                       editOrder.getProduct().isExternalOnlyProduct()) {
                 addGlobalValidationError("Selecting " +
                                          ProductOrder.OrderAccessType.RESEARCH.getDisplayName() +
                                          " Is not valid since " + editOrder.getProduct().getDisplayName() +
@@ -1283,27 +1283,65 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             populateAttributes(editOrder.getProductOrderId());
 
-            buildJsonCustomizationsFromProductOrder(editOrder);
+            try {
+                buildJsonCustomizationsFromProductOrder(editOrder);
+            } catch (JSONException e) {
+                if(userBean.isGPPMUser() || userBean.isPDMUser() || userBean.isDeveloperUser()) {
+                    addGlobalValidationError("Unable to render the Previously Defined CustomizationValues");
+                }
+            }
+
         }
     }
 
-    private void buildJsonCustomizationsFromProductOrder(ProductOrder editOrder) {
+    private void buildJsonCustomizationsFromProductOrder(ProductOrder editOrder) throws JSONException {
+
+        JSONArray customizationOutput = new JSONArray();
 
         if(editOrder.getSinglePriceAdjustment() != null) {
-            productCustomizations.add(new CustomizationValues(editOrder.getProduct().getPartNumber(),
-                    String.valueOf(editOrder.getSinglePriceAdjustment().getAdjustmentQuantity()),
-                    editOrder.getSinglePriceAdjustment().getAdjustmentValue().toString(),
-                    editOrder.getSinglePriceAdjustment().getCustomProductName()));
+
+            CustomizationValues primaryCustomization =
+                    new CustomizationValues(editOrder.getProduct().getPartNumber(),
+                            String.valueOf(editOrder.getSinglePriceAdjustment().getAdjustmentQuantity()),
+                            editOrder.getSinglePriceAdjustment().getAdjustmentValue().toString(),
+                            editOrder.getSinglePriceAdjustment().getCustomProductName());
+//
+//            JSONObject primaryCustomizationValues = new JSONObject();
+//            primaryCustomizationValues.put("price", editOrder.getSinglePriceAdjustment().getAdjustmentValue().toString());
+//            primaryCustomizationValues.put("quantity", String.valueOf(editOrder.getSinglePriceAdjustment().getAdjustmentQuantity()));
+//            primaryCustomizationValues.put("customName", editOrder.getSinglePriceAdjustment().getCustomProductName());
+//
+//            JSONObject primaryCustomization = new JSONObject();
+//            primaryCustomization.put(editOrder.getProduct().getPartNumber(), primaryCustomizationValues);
+
+//            customizationOutput.put(primaryCustomization);
+            customizationOutput.put(primaryCustomization.toJson());
         }
 
         for (ProductOrderAddOn productOrderAddOn : editOrder.getAddOns()) {
             if(productOrderAddOn.getSingleCustomPriceAdjustment() != null) {
-                productCustomizations.add(new CustomizationValues(productOrderAddOn.getAddOn().getPartNumber(),
-                        String.valueOf(productOrderAddOn.getSingleCustomPriceAdjustment().getAdjustmentQuantity()),
-                        productOrderAddOn.getSingleCustomPriceAdjustment().getAdjustmentValue().toString(),
-                        productOrderAddOn.getSingleCustomPriceAdjustment().getCustomProductName()
-                        ));
+
+                CustomizationValues addonCustomization =
+                        new CustomizationValues(productOrderAddOn.getAddOn().getPartNumber(),
+                                String.valueOf(productOrderAddOn.getSingleCustomPriceAdjustment().getAdjustmentQuantity()),
+                                productOrderAddOn.getSingleCustomPriceAdjustment().getAdjustmentValue().toString(),
+                                productOrderAddOn.getSingleCustomPriceAdjustment().getCustomProductName());
+
+//                JSONObject addOnCustomizationValues = new JSONObject();
+//                addOnCustomizationValues.put("price", productOrderAddOn.getSingleCustomPriceAdjustment().getAdjustmentValue().toString());
+//                addOnCustomizationValues.put("quantity", productOrderAddOn.getSingleCustomPriceAdjustment().getAdjustmentQuantity());
+//                addOnCustomizationValues.put("customName", productOrderAddOn.getSingleCustomPriceAdjustment().getCustomProductName());
+//
+//                JSONObject addOnCustomization = new JSONObject();
+//                addOnCustomization.put(productOrderAddOn.getAddOn().getPartNumber(), addOnCustomizationValues);
+
+//                customizationOutput.put(addOnCustomization);
+                customizationOutput.put(addonCustomization.toJson());
             }
+        }
+
+        if(customizationOutput.length() > 0) {
+            customizationJsonString = customizationOutput.toString();
         }
     }
 
@@ -1631,6 +1669,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 editOrder.setOrderType(ProductOrder.OrderAccessType.fromDisplayName(orderType));
             }
         } else {
+            //TODO SGM  have to also determine if the Product is Clinical.  If so the order type must be set to Clinical/commercial
             editOrder.setOrderType(ProductOrder.OrderAccessType.RESEARCH);
         }
 

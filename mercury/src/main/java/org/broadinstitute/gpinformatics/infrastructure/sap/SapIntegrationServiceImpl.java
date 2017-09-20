@@ -216,9 +216,10 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             } else {
                 if(placedOrder.getProduct().equals(product)) {
                     for (ProductOrderPriceAdjustment productOrderPriceAdjustment : placedOrder.getQuotePriceMatchAdjustments()) {
-                        sapOrderItem.addCondition(productOrderPriceAdjustment.getPriceAdjustmentCondition(), productOrderPriceAdjustment.getAdjustmentValue());
+                        sapOrderItem.addCondition(null,
+                                productOrderPriceAdjustment.getAdjustmentValue());
+                        throw new RuntimeException("Figure out condition based on difference between adjusted value and price.  ALSO, add in primary product adjustements");
                     }
-
                 }
             }
 
@@ -411,8 +412,9 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         final Map<Condition, String> conditionStringMap = Collections.emptyMap();
         final SAPOrderItem orderItem = getOrderItem(productOrder, productOrder.getProduct(), addedSampleCount);
         for (ProductOrderPriceAdjustment productOrderPriceAdjustment : productOrder.getQuotePriceMatchAdjustments()) {
-            orderItem.addCondition(productOrderPriceAdjustment.getPriceAdjustmentCondition(),
+            orderItem.addCondition(null,
                     productOrderPriceAdjustment.getAdjustmentValue());
+            throw new RuntimeException("Figure out condition based on difference between adjusted value and price.  ALSO, add in primary product adjustements");
         }
 
         sapOrderItems.add(orderItem);
@@ -421,8 +423,9 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             final SAPOrderItem orderSubItem = getOrderItem(productOrder, productOrderAddOn.getAddOn(), addedSampleCount);
             for (ProductOrderAddOnPriceAdjustment productOrderAddOnPriceAdjustment : productOrderAddOn
                     .getQuotePriceAdjustments()) {
-                orderItem.addCondition(productOrderAddOnPriceAdjustment.getPriceAdjustmentCondition(),
+                orderItem.addCondition(null,
                         productOrderAddOnPriceAdjustment.getAdjustmentValue());
+                throw new RuntimeException("Figure out condition based on difference between adjusted value and price.  ALSO, add in primary product adjustements");
             }
 
             sapOrderItems.add(orderSubItem);

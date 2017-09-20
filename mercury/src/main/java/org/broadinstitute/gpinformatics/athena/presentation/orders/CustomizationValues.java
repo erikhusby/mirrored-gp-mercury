@@ -3,6 +3,8 @@ package org.broadinstitute.gpinformatics.athena.presentation.orders;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class CustomizationValues {
     private String productPartNumber;
@@ -75,5 +77,28 @@ public class CustomizationValues {
                 .append(getPrice())
                 .append(getCustomName())
                 .toHashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "CustomizationValues{" +
+               "productPartNumber='" + productPartNumber + '\'' +
+               ", quantity='" + quantity + '\'' +
+               ", price='" + price + '\'' +
+               ", customName='" + customName + '\'' +
+               ", productName='" + productName + '\'' +
+               '}';
+    }
+
+    public JSONObject toJson() throws JSONException {
+        JSONObject addOnCustomizationValues = new JSONObject();
+        addOnCustomizationValues.put("price", getPrice());
+        addOnCustomizationValues.put("quantity", getQuantity());
+        addOnCustomizationValues.put("customName", getCustomName());
+
+        JSONObject addOnCustomization = new JSONObject();
+        addOnCustomization.put(getProductPartNumber(), addOnCustomizationValues);
+
+        return addOnCustomization;
     }
 }

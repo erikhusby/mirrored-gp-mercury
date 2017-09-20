@@ -105,6 +105,17 @@
 
         var regulatorySuggestionDT;
         var customizationValues = {};
+        function initializeOrderCustomValues() {
+            var customJSONString = $j("#customizationJsonString").val();
+            if(customJSONString !== null && customJSONString!==undefined && customJSONString !== "") {
+                var customSettings = JSON.parse(customJSONString);
+            }
+            for  (part in customSettings) {
+                addCustomizationValue(part, customSettings[part]["price"],
+                    customSettings[part]["quantity"],customSettings[part]["customName"]
+                );
+            }
+        }
         $j(document).ready(
 
                 function () {
@@ -451,6 +462,7 @@
                     </c:if>
                     $j('#showCustomizeWindow').click(function(event) {
                         event.preventDefault();
+                        initializeOrderCustomValues();
                         showCustomProductInfoDialog();
                     });
                 }
