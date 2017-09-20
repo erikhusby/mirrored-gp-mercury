@@ -67,6 +67,7 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.Version;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.text.MessageFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -2187,6 +2188,40 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             returnOrder = productOrder;
         }
         return returnOrder;
+    }
+
+    public void updateCustomSettings(List<CustomizationValues> productCustomizations)
+            throws ValidationException {
+
+        Map<String, CustomizationValues> mappedValues = new HashMap<>();
+        for (CustomizationValues productCustomization : productCustomizations) {
+            mappedValues.put(productCustomization.getProductPartNumber(), productCustomization);
+        }
+
+        if(getProduct() != null){
+            final Product product = getProduct();
+            final String primaryPartNumber = product.getPartNumber();
+            if(mappedValues.containsKey(primaryPartNumber) && !mappedValues.get(primaryPartNumber).isEmpty()) {
+                ProductOrderPriceAdjustment primaryAdjustment =
+                        new ProductOrderPriceAdjustment(new BigDecimal(mappedValues.get(primaryPartNumber).getPrice()),
+                                Integer.valueOf(mappedValues.get(primaryPartNumber).getQuantity()),
+                                mappedValues.get(primaryPartNumber).getCustomName());
+                setCustomPriceAdjustments(Collections.singleton(primaryAdjustment));
+            }
+        }
+
+        for (ProductOrderAddOn productOrderAddOn : getAddOns()) {
+            final Product addOnProduct = productOrderAddOn.getAddOn();
+            if(mappedValues.containsKey(addOnProduct.getPartNumber()) &&
+               !mappedValues.get(addOnProduct.getPartNumber()).isEmpty()) {
+                final ProductOrderAddOnPriceAdjustment productOrderAddOnPriceAdjustment =
+                        new ProductOrderAddOnPriceAdjustment(new BigDecimal(mappedValues.get(addOnProduct.getPartNumber()).getPrice()),
+                                Integer.valueOf(mappedValues.get(addOnProduct.getPartNumber()).getQuantity()),
+                                mappedValues.get(addOnProduct.getPartNumber()).getCustomName());
+
+                productOrderAddOn.setCustomPriceAdjustments(Collections.singleton(productOrderAddOnPriceAdjustment));
+            }
+        }
     }
 
     /**
