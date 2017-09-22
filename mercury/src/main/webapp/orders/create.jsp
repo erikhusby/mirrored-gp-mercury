@@ -917,9 +917,10 @@
 
         function updateFundsRemaining() {
             var quoteIdentifier = $j("#quote").val();
+            var productOrderKey = $j("input[name='productOrder'").val();
             if ($j.trim(quoteIdentifier)) {
                 $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=" + quoteIdentifier,
+                    url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=" + quoteIdentifier + "&productOrder=" + productOrderKey,
                     dataType: 'json',
                     success: updateFunds
                 });

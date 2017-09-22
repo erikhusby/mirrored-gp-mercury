@@ -98,7 +98,7 @@ $j(document).ready(function () {
     }
 
     setupDialogs();
-    renderCustomizationSummary();
+//    renderCustomizationSummary();
 
     function renderCustomizationSummary() {
         var customJSONString = $j("#customizationJsonString").val();
@@ -789,9 +789,10 @@ function renderPico(data, type, row, meta) {
 
 function updateFundsRemaining() {
     var quoteIdentifier = '${actionBean.editOrder.quoteId}';
+    var productOrderKey = $j("input[name='productOrder'").val();
     if ($j.trim(quoteIdentifier)) {
         $j.ajax({
-            url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=${actionBean.editOrder.quoteId}",
+            url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=${actionBean.editOrder.quoteId}&productOrder=" + productOrderKey,,
             dataType: 'json',
             success: updateFunds
         });
