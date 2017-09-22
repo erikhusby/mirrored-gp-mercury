@@ -15,6 +15,7 @@ import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.math.BigDecimal;
 
 @Entity
@@ -41,6 +42,9 @@ public class ProductOrderAddOnPriceAdjustment {
 
     @Column(name = "adjustment_quantity")
     private int adjustmentQuantity;
+
+    @Transient
+    private Condition priceAdjustmentCondition;
 
     public ProductOrderAddOnPriceAdjustment() {
     }
@@ -69,6 +73,14 @@ public class ProductOrderAddOnPriceAdjustment {
 
     public int getAdjustmentQuantity() {
         return adjustmentQuantity;
+    }
+
+    public Condition getPriceAdjustmentCondition() {
+        return priceAdjustmentCondition;
+    }
+
+    public void setPriceAdjustmentCondition(Condition priceAdjustmentCondition) {
+        this.priceAdjustmentCondition = priceAdjustmentCondition;
     }
 
     @Override
