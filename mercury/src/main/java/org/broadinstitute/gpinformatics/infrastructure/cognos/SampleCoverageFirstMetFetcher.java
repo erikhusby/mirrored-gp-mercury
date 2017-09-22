@@ -4,7 +4,6 @@ import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.SampleCover
 import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.SampleCoverageFirstMet_;
 
 import javax.ejb.Stateful;
-import javax.enterprise.context.Dependent;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.criteria.CriteriaBuilder;
@@ -17,7 +16,6 @@ import java.util.Map;
 /**
  */
 @Stateful
-@Dependent
 public class SampleCoverageFirstMetFetcher {
 
     @PersistenceContext(unitName = "metrics_pu")

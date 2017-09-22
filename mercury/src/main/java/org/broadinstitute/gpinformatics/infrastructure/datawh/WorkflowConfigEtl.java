@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import javax.ejb.Stateful;
 import javax.ejb.TransactionManagement;
 import javax.ejb.TransactionManagementType;
-import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
@@ -22,7 +21,6 @@ import java.util.Set;
  * and because of this, ETL cannot update existing records, only add new records.
  */
 @Stateful
-@Dependent
 @TransactionManagement(TransactionManagementType.BEAN)
 public class WorkflowConfigEtl extends GenericEntityEtl<WorkflowConfig, Object> {
     private static Log logger = LogFactory.getLog(WorkflowConfigEtl.class);

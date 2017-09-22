@@ -12,7 +12,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.ejb.Stateless;
-import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,7 +27,6 @@ import java.util.Set;
  * This class creates plates containing molecular index reagents
  */
 @Stateless
-@Dependent
 public class IndexedPlateFactory {
     private static final Log LOG = LogFactory.getLog(IndexedPlateFactory.class);
     public static final int BARCODE_LENGTH = 12;

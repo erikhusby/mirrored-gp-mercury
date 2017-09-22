@@ -16,7 +16,6 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardFing
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardFingerprint_;
 
 import javax.ejb.Stateful;
-import javax.enterprise.context.Dependent;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -42,7 +41,6 @@ import java.util.Map;
  * Not a {@link GenericDao} because it uses a different persistence unit.
  */
 @Stateful
-@Dependent
 public class AggregationMetricsFetcher {
 
     private static final Log log = LogFactory.getLog(AggregationMetricsFetcher.class);

@@ -24,6 +24,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserC
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.PrintStream;
 import java.math.BigDecimal;
@@ -38,6 +39,7 @@ import java.util.Set;
  * Generates Summary.txt file for arrays.  Used by PMs to review Array projects, and sometimes delivered to
  * collaborators.
  */
+@Dependent
 public class ArraysSummaryFactory {
 
     private static final Format DATE_FORMAT = FastDateFormat.getInstance("MM/dd/yyyy hh:mm a");
