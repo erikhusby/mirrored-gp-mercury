@@ -95,10 +95,8 @@ public class CustomizationValues {
         addOnCustomizationValues.put("price", getPrice());
         addOnCustomizationValues.put("quantity", getQuantity());
         addOnCustomizationValues.put("customName", getCustomName());
+        addOnCustomizationValues.put("partNumber", getProductPartNumber());
 
-        JSONObject addOnCustomization = new JSONObject();
-        addOnCustomization.put(getProductPartNumber(), addOnCustomizationValues);
-
-        return addOnCustomization;
+        return addOnCustomizationValues;
     }
 }
