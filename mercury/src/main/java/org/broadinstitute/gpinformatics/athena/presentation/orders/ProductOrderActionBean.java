@@ -1296,7 +1296,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private void buildJsonCustomizationsFromProductOrder(ProductOrder editOrder) throws JSONException {
 
-        JSONArray customizationOutput = new JSONArray();
+        JSONObject customizationOutput = new JSONObject();
 
         if(editOrder.getSinglePriceAdjustment() != null) {
 
@@ -1305,17 +1305,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                             String.valueOf(editOrder.getSinglePriceAdjustment().getAdjustmentQuantity()),
                             editOrder.getSinglePriceAdjustment().getAdjustmentValue().toString(),
                             editOrder.getSinglePriceAdjustment().getCustomProductName());
-//
-//            JSONObject primaryCustomizationValues = new JSONObject();
-//            primaryCustomizationValues.put("price", editOrder.getSinglePriceAdjustment().getAdjustmentValue().toString());
-//            primaryCustomizationValues.put("quantity", String.valueOf(editOrder.getSinglePriceAdjustment().getAdjustmentQuantity()));
-//            primaryCustomizationValues.put("customName", editOrder.getSinglePriceAdjustment().getCustomProductName());
-//
-//            JSONObject primaryCustomization = new JSONObject();
-//            primaryCustomization.put(editOrder.getProduct().getPartNumber(), primaryCustomizationValues);
-
-//            customizationOutput.put(primaryCustomization);
-            customizationOutput.put(primaryCustomization.toJson());
+            customizationOutput.put(editOrder.getProduct().getPartNumber(), primaryCustomization.toJson());
         }
 
         for (ProductOrderAddOn productOrderAddOn : editOrder.getAddOns()) {
@@ -1327,16 +1317,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                                 productOrderAddOn.getSingleCustomPriceAdjustment().getAdjustmentValue().toString(),
                                 productOrderAddOn.getSingleCustomPriceAdjustment().getCustomProductName());
 
-//                JSONObject addOnCustomizationValues = new JSONObject();
-//                addOnCustomizationValues.put("price", productOrderAddOn.getSingleCustomPriceAdjustment().getAdjustmentValue().toString());
-//                addOnCustomizationValues.put("quantity", productOrderAddOn.getSingleCustomPriceAdjustment().getAdjustmentQuantity());
-//                addOnCustomizationValues.put("customName", productOrderAddOn.getSingleCustomPriceAdjustment().getCustomProductName());
-//
-//                JSONObject addOnCustomization = new JSONObject();
-//                addOnCustomization.put(productOrderAddOn.getAddOn().getPartNumber(), addOnCustomizationValues);
-
-//                customizationOutput.put(addOnCustomization);
-                customizationOutput.put(addonCustomization.toJson());
+                customizationOutput.put(productOrderAddOn.getAddOn().getPartNumber(),addonCustomization.toJson());
             }
         }
 

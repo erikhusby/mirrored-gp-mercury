@@ -98,7 +98,7 @@ $j(document).ready(function () {
     }
 
     setupDialogs();
-//    renderCustomizationSummary();
+    renderCustomizationSummary();
 
     function renderCustomizationSummary() {
         var customJSONString = $j("#customizationJsonString").val();
@@ -109,10 +109,10 @@ $j(document).ready(function () {
             var content = "";
 
             for  (part in customSettings) {
-                content += part ;
-                var price = customSettings.get(part).get("price");
-                var quantity = customSettings.get(part).get("quantity");
-                var customName = customSettings.get(part).get("customName");
+                content += "<P><b>"+part +"</b>";
+                var price = customSettings[part]["price"];
+                var quantity = customSettings[part]["quantity"];
+                var customName = customSettings[part]["customName"];
 
                 var firstSetting = true;
 
@@ -141,7 +141,7 @@ $j(document).ready(function () {
 
                     content += "Custom Product Name -- " + customName;
                 }
-                content += "\n";
+                content += "</P>";
             }
             return content;
         });
@@ -304,7 +304,6 @@ $j(document).ready(function () {
 
             }
 });
-//    }
 
     function renderRackscanMismatch(data, type, row, meta) {
         var result = data;
@@ -792,7 +791,7 @@ function updateFundsRemaining() {
     var productOrderKey = $j("input[name='productOrder'").val();
     if ($j.trim(quoteIdentifier)) {
         $j.ajax({
-            url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=${actionBean.editOrder.quoteId}&productOrder=" + productOrderKey,,
+            url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=${actionBean.editOrder.quoteId}&productOrder=" + productOrderKey,
             dataType: 'json',
             success: updateFunds
         });
