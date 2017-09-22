@@ -109,14 +109,14 @@ $j(document).ready(function () {
             var content = "";
 
             for  (part in customSettings) {
-                content += "<P><b>"+part +"</b>";
+                content += "<b>"+part +"</b>";
                 var price = customSettings[part]["price"];
                 var quantity = customSettings[part]["quantity"];
                 var customName = customSettings[part]["customName"];
 
                 var firstSetting = true;
 
-                if (!(price === 'undefined') && !(price == null)) {
+                if (!(price === 'undefined') && !(price === null)) {
 
                     if(firstSetting) {
                         content += ": ";
@@ -125,23 +125,29 @@ $j(document).ready(function () {
 
                     content += "Custom Price -- " + price;
                 }
-                if (!(quantity === 'undefined') && !(quantity == null)) {
+                if (!(quantity === 'undefined') && !(quantity === null)) {
                     if(firstSetting) {
                         content += ": ";
                         firstSetting = false;
+                    } else {
+
+                        content += ", ";
                     }
 
                     content += "Custom Quantity -- " + quantity;
                 }
-                if (!(customName === 'undefined') && !(customName == null)) {
+                if (!(customName === 'undefined') && !(customName === null)) {
                     if(firstSetting) {
                         content += ": ";
                         firstSetting = false;
+                    } else {
+
+                        content += ", ";
                     }
 
                     content += "Custom Product Name -- " + customName;
                 }
-                content += "</P>";
+                content += "<BR>";
             }
             return content;
         });
