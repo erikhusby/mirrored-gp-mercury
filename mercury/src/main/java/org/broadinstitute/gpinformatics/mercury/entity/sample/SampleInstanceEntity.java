@@ -1,7 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -18,11 +20,15 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import java.math.BigDecimal;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static org.hornetq.core.remoting.impl.invm.InVMConnector.log;
 
 @Entity
 @Audited
@@ -74,7 +80,7 @@ public class SampleInstanceEntity {
 
     private String restrictionEnzyme;
 
-    private String illumina_454_KitUsed;
+    private String illumina454KitUsed;
 
     private Date uploadDate;
 
@@ -100,7 +106,7 @@ public class SampleInstanceEntity {
 
     private Integer readLength;
 
-    private String submitDate;
+    private Date submitDate;
 
     private String labName;
 
@@ -114,13 +120,13 @@ public class SampleInstanceEntity {
 
     private String isPhix;
 
-    private Double phixPercentage;
+    private BigDecimal phixPercentage;
 
-    private String readLength2;
+    private Integer readLength2;
 
-    private String indexLength;
+    private Integer indexLength;
 
-    private String indexLength2;
+    private Integer indexLength2;
 
     private String comments;
 
@@ -159,8 +165,7 @@ public class SampleInstanceEntity {
      */
     public List<String> getSubTasks() {
        List<String> subTask = new ArrayList<>();
-       for(SampleInstanceEntityTsk task : sampleInstanceEntityTsks)
-       {
+       for(SampleInstanceEntityTsk task : sampleInstanceEntityTsks) {
            subTask.add(task.getSubTask());
        }
 
@@ -253,12 +258,12 @@ public class SampleInstanceEntity {
         return restrictionEnzyme;
     }
 
-    public String getIllumina_454_KitUsed() {
-        return illumina_454_KitUsed;
+    public String getIllumina454KitUsed() {
+        return illumina454KitUsed;
     }
 
-    public void setIllumina_454_KitUsed(String illumina_454_KitUsed) {
-        this.illumina_454_KitUsed = illumina_454_KitUsed;
+    public void setIllumina454KitUsed(String illumina454KitUsed) {
+        this.illumina454KitUsed = illumina454KitUsed;
     }
 
     public Date getUploadDate() {
@@ -305,12 +310,21 @@ public class SampleInstanceEntity {
         return readLength;
     }
 
-    public String getSubmitDate() {
+    public Date getSubmitDate() {
         return submitDate;
     }
 
     public void setSubmitDate(String submitDate) {
-        this.submitDate = submitDate;
+        try {
+            this.submitDate = DateUtils.convertStringToDateTime(submitDate);
+        } catch (ParseException e) {
+            try {
+                this.submitDate = DateUtils.convertStringToDateTime(StringUtils.substringBefore(submitDate, " "));
+            } catch (ParseException e1) {
+                log.error("Cannot convert '" + submitDate + "' to date.");
+                this.submitDate = new Date();
+            }
+        }
     }
 
     public String getLabName() {
@@ -361,35 +375,35 @@ public class SampleInstanceEntity {
         this.isPhix = isPhix;
     }
 
-    public Double getPhixPercentage() {
+    public BigDecimal getPhixPercentage() {
         return phixPercentage;
     }
 
-    public void setPhixPercentage(Double phixPercentage) {
+    public void setPhixPercentage(BigDecimal phixPercentage) {
         this.phixPercentage = phixPercentage;
     }
 
-    public String getReadLength2() {
+    public Integer getReadLength2() {
         return readLength2;
     }
 
-    public void setReadLength2(String readLength2) {
+    public void setReadLength2(Integer readLength2) {
         this.readLength2 = readLength2;
     }
 
-    public String getIndexLength() {
+    public Integer getIndexLength() {
         return indexLength;
     }
 
-    public void setIndexLength(String indexLength) {
+    public void setIndexLength(Integer indexLength) {
         this.indexLength = indexLength;
     }
 
-    public String getIndexLength2() {
+    public Integer getIndexLength2() {
         return indexLength2;
     }
 
-    public void setIndexLength2(String indexLength2) {
+    public void setIndexLength2(Integer indexLength2) {
         this.indexLength2 = indexLength2;
     }
 

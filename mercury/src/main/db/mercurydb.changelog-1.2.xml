@@ -897,9 +897,9 @@
 
     <changeSet id="GPLIM-4711-100" author="dwilson">
         <addColumn schemaName="mercury" tableName="sample_instance_entity">
-            <column name="READ_LENGTH2"  type="varchar(255)"/>
-            <column name="INDEX_LENGTH"  type="varchar(255)"/>
-            <column name="INDEX_LENGTH2"  type="varchar(255)"/>
+            <column name="READ_LENGTH2"  type="number(19,0)"/>
+            <column name="INDEX_LENGTH"  type="number(19,0)"/>
+            <column name="INDEX_LENGTH2"  type="number(19,0)"/>
             <column name="SUBMIT_DATE"  type="varchar(255)"/>
             <column name="LAB_NAME"  type="varchar(255)"/>
             <column name="READ_TYPE"  type="varchar(255)"/>
@@ -907,7 +907,6 @@
             <column name="REFERENCE_VERSION"  type="number(5,0)"/>
             <column name="FRAGMENT_SIZE"  type="number(5,0)"/>
             <column name="IS_PHIX"  type="varchar(255)"/>
-            <column name="IS_PHIX_PERCENTAGE"  type="number(5,0)"/>
             <column name="COMMENTS"  type="varchar(255)"/>
             <column name="ENZYME"  type="varchar(255)"/>
             <column name="FRAG_SIZE_RANGE"  type="varchar(255)"/>
@@ -918,13 +917,30 @@
             <column name="QUANTIFICATION_METHOD"  type="varchar(255)"/>
             <column name="CONCENTRATION_UNIT"  type="varchar(255)"/>
             <column name="LANE_QUANTITY"  type="number(5,0)"/>
+            <column name="phix_percentage" type="number(19,2)"/>
+            <column name="collaborator_sample_id" type="varchar(255)"/>
+            <column name="coverage" type="varchar(255)"/>
+            <column name="illumina_454_kit_used" type="varchar(255)"/>
+            <column name="insert_size_range" type="varchar(255)"/>
+            <column name="jump_size" type="number(19,0)"/>
+            <column name="library_size_range" type="varchar(255)"/>
+            <column name="library_type" type="varchar(255)"/>
+            <column name="pooled" type="varchar(255)"/>
+            <column name="reference_sequence" type="varchar(255)"/>
+            <column name="restriction_enzyme" type="varchar(255)"/>
+            <column name="sample_number" type="varchar(255)"/>
+            <column name="sample_tube_barcode" type="varchar(255)"/>
+            <column name="tissue_type" type="varchar(255)"/>
+            <column name="product_order" type="number(19,0)"/>
+            <column name="research_project" type="number(19,0)"/>
+            <column name="sample_kit_request" type="number(19,0)"/>
         </addColumn>
     </changeSet>
     <changeSet id="GPLIM-4711-101" author="dwilson">
         <addColumn schemaName="mercury" tableName="sample_instance_entity_aud">
-            <column name="READ_LENGTH2"  type="varchar(255)"/>
-            <column name="INDEX_LENGTH"  type="varchar(255)"/>
-            <column name="INDEX_LENGTH2"  type="varchar(255)"/>
+            <column name="READ_LENGTH2"  type="number(19,0)"/>
+            <column name="INDEX_LENGTH"  type="number(19,0)"/>
+            <column name="INDEX_LENGTH2"  type="number(19,0)"/>
             <column name="SUBMIT_DATE"  type="varchar(255)"/>
             <column name="LAB_NAME"  type="varchar(255)"/>
             <column name="READ_TYPE"  type="varchar(255)"/>
@@ -932,7 +948,6 @@
             <column name="REFERENCE_VERSION"  type="number(5,0)"/>
             <column name="FRAGMENT_SIZE"  type="number(5,0)"/>
             <column name="IS_PHIX"  type="varchar(255)"/>
-            <column name="PHIX_PERCENTAGE"  type="number(5,0)"/>
             <column name="COMMENTS"  type="varchar(255)"/>
             <column name="ENZYME"  type="varchar(255)"/>
             <column name="FRAG_SIZE_RANGE"  type="varchar(255)"/>
@@ -943,6 +958,23 @@
             <column name="QUANTIFICATION_METHOD"  type="varchar(255)"/>
             <column name="CONCENTRATION_UNIT"  type="varchar(255)"/>
             <column name="LANE_QUANTITY"  type="number(5,0)"/>
+            <column name="phix_percentage" type="number(19,2)"/>
+            <column name="collaborator_sample_id" type="varchar(255)"/>
+            <column name="coverage" type="varchar(255)"/>
+            <column name="illumina_454_kit_used" type="varchar(255)"/>
+            <column name="insert_size_range" type="varchar(255)"/>
+            <column name="jump_size" type="number(19,0)"/>
+            <column name="library_size_range" type="varchar(255)"/>
+            <column name="library_type" type="varchar(255)"/>
+            <column name="pooled" type="varchar(255)"/>
+            <column name="reference_sequence" type="varchar(255)"/>
+            <column name="restriction_enzyme" type="varchar(255)"/>
+            <column name="sample_number" type="varchar(255)"/>
+            <column name="sample_tube_barcode" type="varchar(255)"/>
+            <column name="tissue_type" type="varchar(255)"/>
+            <column name="product_order" type="number(19,0)"/>
+            <column name="research_project" type="number(19,0)"/>
+            <column name="sample_kit_request" type="number(19,0)"/>
         </addColumn>
     </changeSet>
     <changeSet id="GPLIM-4711-102" author="dwilson">
@@ -1003,6 +1035,5 @@
             <column name="sample_kit_request_id"/>
         </createIndex>
     </changeSet>
-
 
 </databaseChangeLog>

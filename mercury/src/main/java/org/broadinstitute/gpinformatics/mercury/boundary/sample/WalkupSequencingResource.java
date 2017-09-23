@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
 import clover.org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
@@ -130,17 +131,17 @@ public class WalkupSequencingResource {
         sampleInstanceEntity.setReadType(walkUpSequencing.getReadType());
         sampleInstanceEntity.setSubmitDate(walkUpSequencing.getSubmitDate());
         sampleInstanceEntity.setLabName(walkUpSequencing.getLabName());
-        sampleInstanceEntity.setIllumina_454_KitUsed(walkUpSequencing.getIlluminaTech());
+        sampleInstanceEntity.setIllumina454KitUsed(walkUpSequencing.getIlluminaTech());
         sampleInstanceEntity.setReference(walkUpSequencing.getReference());
         sampleInstanceEntity.setReferenceVersion(new Integer(isNumber(walkUpSequencing.getReferenceVersion())));
         sampleInstanceEntity.setFragmentSize(walkUpSequencing.getFragSizeRange());
         sampleInstanceEntity.setConcentrationUnit(walkUpSequencing.getConcentrationUnit());
         sampleInstanceEntity.setIsPhix(walkUpSequencing.getIsPhix());
-        sampleInstanceEntity.setPhixPercentage(new Double(isNumber(walkUpSequencing.getPhixPercentage())));
+        sampleInstanceEntity.setPhixPercentage(new BigDecimal(isNumber(walkUpSequencing.getPhixPercentage())));
         sampleInstanceEntity.setReadLength(new Integer(isNumber(walkUpSequencing.getReadLength())));
-        sampleInstanceEntity.setReadLength2(walkUpSequencing.getReadLength2());
-        sampleInstanceEntity.setIndexLength(walkUpSequencing.getIndexLength());
-        sampleInstanceEntity.setIndexLength2(walkUpSequencing.getIndexLength2());
+        sampleInstanceEntity.setReadLength2(NumberUtils.createInteger(walkUpSequencing.getReadLength2()));
+        sampleInstanceEntity.setIndexLength(NumberUtils.createInteger(walkUpSequencing.getIndexLength()));
+        sampleInstanceEntity.setIndexLength2(NumberUtils.createInteger(walkUpSequencing.getIndexLength2()));
         sampleInstanceEntity.setLaneQuantity(new Integer(isNumber(walkUpSequencing.getLaneQuantity())));
         sampleInstanceEntity.setComments(walkUpSequencing.getComments());
         sampleInstanceEntity.setEnzyme(walkUpSequencing.getEnzyme());
