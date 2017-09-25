@@ -9,6 +9,7 @@ import org.broadinstitute.bsp.client.workrequest.WorkRequestResponse;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
 /**
@@ -21,6 +22,7 @@ import javax.inject.Inject;
  * class, keeping it as a parent class makes the refactoring convenient. Once all of the actual web service client code
  * has been extracted, BSPPlatingRequestServiceImpl can use this class as a dependency instead of a parent class.
  */
+@Dependent
 public class BSPWorkRequestClientService extends AbstractJerseyClientService {
 
     private final Log log = LogFactory.getLog(BSPWorkRequestClientService.class);
