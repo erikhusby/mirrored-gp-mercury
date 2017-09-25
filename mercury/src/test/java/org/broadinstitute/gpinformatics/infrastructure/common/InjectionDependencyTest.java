@@ -156,6 +156,11 @@ public class InjectionDependencyTest {
 
         cdiLoop :
         for( ClassInfo type : cdiClasses) {
+            // Constructed as non-bean, extended as bean and non-bean, easier to ignore than code around
+            if( "org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPWorkRequestClientService".equals(type.name().toString())) {
+                continue;
+            }
+
             DotName injectedType = type.name();
             ClassInfo classInfo = index.getClassByName(injectedType);
             if( classInfo != null ) {
@@ -217,7 +222,11 @@ public class InjectionDependencyTest {
                     Type fieldType = fieldInfo.type();
                     ClassInfo fieldClassInfo = index.getClassByName(fieldType.name());
                     if( fieldClassInfo != null ) {
-                        cdiClasses.add(fieldClassInfo);
+//                        if( Modifier.isAbstract( fieldClassInfo.flags() ) ) {
+//                            cdiClasses.addAll( index.getAllKnownImplementors(fieldClassInfo.name()));
+//                        } else {
+                            cdiClasses.add(fieldClassInfo);
+//                        }
                     } else {
                         cdiExternalClasses.add(Class.forName(fieldType.name().toString()));
                     }
