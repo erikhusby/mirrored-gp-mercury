@@ -2247,14 +2247,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     public boolean isResearchOrder () {
         boolean result = true;
         if(orderType != null) {
-            result = orderType == OrderAccessType.RESEARCH;
+            result = orderType == OrderAccessType.BROAD_PI_ENGAGED_WORK;
         }
         return result;
     }
 
     public enum OrderAccessType implements StatusType {
-        RESEARCH ("Research (1000)"),
-        CLINICAL_COMMERCIAL ("Commercial or Clinical (2000)");
+        BROAD_PI_ENGAGED_WORK("Broad PI engaged Work (1000)"),
+        COMMERCIAL("Commercial (2000)");
 
         private String displayName;
 
@@ -2290,5 +2290,4 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             return foundType;
         }
     }
-
 }

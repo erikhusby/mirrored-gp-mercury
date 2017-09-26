@@ -305,12 +305,23 @@
                     <security:authorizeBlock roles="<%= roles(PDM, Developer) %>">
                         <div class="control-group">
                             <stripes:label for="externalOrderOnly" class="control-label">
-                                Only offered as Clinical or Commercial Product
+                                Only offered as Commercial Product
                             </stripes:label>
                             <div class="controls">
                                 <stripes:checkbox id="externalOrderOnly" name="editProduct.externalOnlyProduct" style="margin-top: 10px;"/>
                                 <c:if test="${actionBean.editProduct.savedInSAP}">
-                                    <stripes:hidden name="editProduct.externalOnlyProduct" value="${editProduct.externalOnlyProduct}" />
+                                    <stripes:hidden name="editProduct.externalOnlyProduct" value="${actionBean.editProduct.externalOnlyProduct}" />
+                                </c:if>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <stripes:label for="clinicalProduct" class="control-label">
+                                Clinical Product
+                            </stripes:label>
+                            <div class="controls">
+                                <stripes:checkbox id="clinicalProduct" name="editProduct.clinicalProduct" style="margin-top: 10px;"/>
+                                <c:if test="${actionBean.editProduct.savedInSAP}">
+                                    <stripes:hidden name="editProduct.clinicalProduct" value="${actionBean.editProduct.clinicalProduct}" />
                                 </c:if>
                             </div>
                         </div>

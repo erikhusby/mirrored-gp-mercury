@@ -910,6 +910,7 @@
         <addColumn schemaName="athena" tableName="product">
             <column name="EXTERNAL_PRODUCT_NAME" type="varchar(255)" />
             <column name="external_price_item" type="number(19,0)" />
+            <column name="CLINICAL_ONLY_PRODUCT" type="number(1,0)" />
         </addColumn>
 
         <addForeignKeyConstraint constraintName="FK_PRODUCT_EXT_PRICE_ITEM" baseTableSchemaName="athena" baseTableName="product"
@@ -921,6 +922,7 @@
         <addColumn schemaName="athena" tableName="product_aud">
             <column name="EXTERNAL_PRODUCT_NAME" type="varchar(255)" />
             <column name="external_price_item" type="number(19,0)" />
+            <column name="CLINICAL_ONLY_PRODUCT" type="number(1,0)" />
         </addColumn>
     </changeSet>
 
@@ -957,6 +959,68 @@
         <addColumn schemaName="athena" tableName="product_order_aud">
             <column name="ORDER_TYPE" type="varchar(50)" />
         </addColumn>
+    </changeSet>
+
+    <changeSet author="scottmat" id="GPLIM-5112-1" >
+        <sql>
+            update product pdt
+            set pdt.CLINICAL_ONLY_PRODUCT = 1
+            where pdt.PART_NUMBER in ('P-CLA-0005', 'P-CLA-0006', 'P-CLA-0004', 'P-CLA-0003', 'P-CLA-0007',
+                                      'P-VAL-0010', 'P-VAL-0016', 'P-WG-0054');
+        </sql>
+    </changeSet>
+
+    <changeSet author="scottmat" id="GPLIM-5112-2" >
+        <sql>
+            update product_aud pdt
+            set pdt.CLINICAL_ONLY_PRODUCT = 1
+            where pdt.PART_NUMBER in ('P-CLA-0005', 'P-CLA-0006', 'P-CLA-0004', 'P-CLA-0003', 'P-CLA-0007',
+                                      'P-VAL-0010', 'P-VAL-0016', 'P-WG-0054');
+        </sql>
+    </changeSet>
+
+    <changeSet author="scottmat" id="GPLIM-5112-3" >
+        <sql>
+            update product pdt
+            set pdt.CLINICAL_ONLY_PRODUCT = 0
+            where pdt.PART_NUMBER not in ('P-CLA-0005', 'P-CLA-0006', 'P-CLA-0004', 'P-CLA-0003', 'P-CLA-0007',
+            'P-VAL-0010', 'P-VAL-0016', 'P-WG-0054');
+        </sql>
+    </changeSet>
+
+    <changeSet author="scottmat" id="GPLIM-5112-4" >
+        <sql>
+            update product_aud pdt
+            set pdt.CLINICAL_ONLY_PRODUCT = 0
+            where pdt.PART_NUMBER not in ('P-CLA-0005', 'P-CLA-0006', 'P-CLA-0004', 'P-CLA-0003', 'P-CLA-0007',
+            'P-VAL-0010', 'P-VAL-0016', 'P-WG-0054');
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-4924-5" author="scottmat">
+        <sql>
+            update product_order pdo
+            set pdo.ORDER_TYPE = 'BROAD_PI_ENGAGED_WORK'
+            where pdo.PRODUCT_ORDER_ID in (
+                select pdo.PRODUCT_ORDER_ID from product_order pdo
+                join product pdt on pdt.PRODUCT_ID = pdo.PRODUCT
+                where pdt.EXTERNAL_ONLY_PRODUCT = 0
+                and pdt.CLINICAL_ONLY_PRODUCT != 1
+            );
+        </sql>
+    </changeSet>
+
+    <changeSet author="scottmat" id="GPLIM-4924-6">
+        <sql>
+            update product_order pdo
+            set pdo.ORDER_TYPE = 'COMMERCIAL'
+            where pdo.PRODUCT_ORDER_ID in (
+                select pdo.PRODUCT_ORDER_ID from product_order pdo
+                join product pdt on pdt.PRODUCT_ID = pdo.PRODUCT
+                where pdt.EXTERNAL_ONLY_PRODUCT = 1
+                or pdt.CLINICAL_ONLY_PRODUCT = 1
+            );
+        </sql>
     </changeSet>
 
 </databaseChangeLog>

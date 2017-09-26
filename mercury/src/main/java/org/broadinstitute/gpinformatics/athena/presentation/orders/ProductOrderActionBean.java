@@ -135,6 +135,7 @@ import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.hibernate.Hibernate;
+import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -603,16 +604,16 @@ public class ProductOrderActionBean extends CoreActionBean {
         updateTokenInputFields();
 
         if(editOrder.getProduct() != null) {
-            if(ProductOrder.OrderAccessType.CLINICAL_COMMERCIAL.getDisplayName().equals(orderType) &&
+            if(ProductOrder.OrderAccessType.COMMERCIAL.getDisplayName().equals(orderType) &&
                !editOrder.getProduct().hasExternalCounterpart()) {
                 addGlobalValidationError("Selecting " +
-                                         ProductOrder.OrderAccessType.CLINICAL_COMMERCIAL.getDisplayName() +
+                                         ProductOrder.OrderAccessType.COMMERCIAL.getDisplayName() +
                                          " Is not valid since " + editOrder.getProduct().getDisplayName() +
                                          " is not offered as either clinical or commercial");
-            } else if (ProductOrder.OrderAccessType.RESEARCH.getDisplayName().equals(orderType) &&
+            } else if (ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK.getDisplayName().equals(orderType) &&
                        editOrder.getProduct().isExternalOnlyProduct()) {
                 addGlobalValidationError("Selecting " +
-                                         ProductOrder.OrderAccessType.RESEARCH.getDisplayName() +
+                                         ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK.getDisplayName() +
                                          " Is not valid since " + editOrder.getProduct().getDisplayName() +
                                          " is not offered as research");
             }
@@ -1651,7 +1652,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
         } else {
             //TODO SGM  have to also determine if the Product is Clinical.  If so the order type must be set to Clinical/commercial
-            editOrder.setOrderType(ProductOrder.OrderAccessType.RESEARCH);
+            editOrder.setOrderType(ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
         }
 
         if (editOrder.isRegulatoryInfoEditAllowed()) {
@@ -1866,19 +1867,28 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("getAddOns")
     public Resolution getAddOns() throws Exception {
-        JSONArray itemList = new JSONArray();
+        Product product = null;
+        if(this.product != null) {
+            product = productDao.findByBusinessKey(this.product);
+        }
 
-        if (product != null) {
-            Product product = productDao.findByBusinessKey(this.product);
-            for (Product addOn : product.getAddOns(userBean)) {
-                    JSONObject item = new JSONObject();
-                    item.put("key", addOn.getBusinessKey());
-                    item.put("value", addOn.getProductName());
-
-                    itemList.put(item);
-                }
-            }
+        JSONArray itemList = supportsGetAddOns(product);
         return createTextResolution(itemList.toString());
+    }
+
+    @NotNull
+    private JSONArray supportsGetAddOns(Product product) throws JSONException {
+        JSONArray itemList = new JSONArray();
+        if (product != null) {
+            for (Product addOn : product.getAddOns(userBean)) {
+                JSONObject item = new JSONObject();
+                item.put("key", addOn.getBusinessKey());
+                item.put("value", addOn.getProductName());
+
+                itemList.put(item);
+            }
+        }
+        return itemList;
     }
 
     @HandlesEvent("getRegulatoryInfo")
@@ -2217,26 +2227,69 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("getSupportsSkippingQuote")
     public Resolution getSupportsSkippingQuote() throws Exception {
-        boolean supportsSkippingQuote = false;
         JSONObject item = new JSONObject();
+        Product productEntity = null;
+        if (!StringUtils.isEmpty(this.product)) {
+            productEntity = productDao.findByBusinessKey(this.product);
+        }
+        supportsGetSupportsSkippingQuote(item, productEntity);
+        return createTextResolution(item.toString());
+    }
+
+    private void supportsGetSupportsSkippingQuote(JSONObject item, Product productEntity) throws JSONException {
+        boolean supportsSkippingQuote = false;
         if (!StringUtils.isEmpty(product)) {
-            supportsSkippingQuote = productDao.findByBusinessKey(product).getSupportsSkippingQuote();
+            supportsSkippingQuote = productEntity.getSupportsSkippingQuote();
         }
         item.put(Product.SUPPORTS_SKIPPING_QUOTE, supportsSkippingQuote);
-        return createTextResolution(item.toString());
+    }
+
+    @HandlesEvent("getProductInfo")
+    public Resolution getProductInfo() throws Exception {
+        Product productEntity = null;
+        if(StringUtils.isNotEmpty(product)) {
+            productEntity = productDao.findByBusinessKey(product);
+        }
+
+        JSONObject productInfo = new JSONObject();
+
+        if (productEntity != null) {
+            supportGetSupportsNumberOfLanes(productInfo, productEntity);
+            supportsGetSupportsSkippingQuote(productInfo, productEntity);
+            productInfo.put("addOns", supportsGetAddOns(productEntity));
+
+            productInfo.put("clinicalProduct", productEntity.isClinicalProduct());
+            productInfo.put("externalProduct", productEntity.isExternalOnlyProduct());
+            productInfo.put("productName", productEntity.getName());
+        }
+
+        return createTextResolution(productInfo.toString());
     }
 
     @HandlesEvent("getSupportsNumberOfLanes")
     public Resolution getSupportsNumberOfLanes() throws Exception {
-        boolean supportsNumberOfLanes = false;
+        JSONObject item = new JSONObject();
+
+        if(StringUtils.isNotBlank(product)) {
+
+            Product productEntity = productDao.findByBusinessKey(product);
+
+            if (productEntity != null) {
+                supportGetSupportsNumberOfLanes(item, productEntity);
+            }
+        }
+
+        return createTextResolution(item.toString());
+    }
+
+    private void supportGetSupportsNumberOfLanes(JSONObject item, Product productToFind) throws JSONException {
         List<String> selectedOrderAddons = null;
         if(selectedAddOns != null) {
             selectedOrderAddons = Arrays.asList(StringUtils.split(selectedAddOns, "|@|"));
         }
-        JSONObject item = new JSONObject();
 
+        boolean supportsNumberOfLanes = false;
         if (product != null) {
-            final Product productToFind = productDao.findByBusinessKey(product);
             supportsNumberOfLanes = productToFind.getSupportsNumberOfLanes();
             if(selectedOrderAddons != null)
             for (String selectedOrderAddon : selectedOrderAddons) {
@@ -2249,8 +2302,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         item.put(BspSampleData.SUPPORTS_NUMBER_OF_LANES, supportsNumberOfLanes);
-
-        return createTextResolution(item.toString());
     }
 
     @ValidationMethod(on = "deleteOrder")
@@ -3574,5 +3625,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setCustomizationJsonString(String customizationJsonString) {
         this.customizationJsonString = customizationJsonString;
+    }
+
+    public String getClinicalAttestationMessage() {
+        return "By clicking this I acknowledge that I need to be, and have been, approved ahead of time to place orders for clinical products.";
     }
 }
