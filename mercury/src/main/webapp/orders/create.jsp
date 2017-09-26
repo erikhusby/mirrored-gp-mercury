@@ -628,6 +628,7 @@
                 $j("#skipQuoteDiv").hide();
                 $j("#quote").show();
                 $j("#showCustomizeWindow").hide();
+                $j("#clinicalAttestationDiv").hide();
 
             } else {
                 if (productKey == '<%= Product.SAMPLE_INITIATION_PART_NUMBER %>') {
@@ -640,7 +641,7 @@
                     $j("#sampleInitiationKitRequestEdit").hide();
                 }
                 $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getAddOns=&product=" + productKey,
+                    url: "${ctxpath}/orders/order.action?getProductInfo=&product=" + productKey,
                     dataType: 'json',
                     success: selectedProductFollowup,
                     complete: detectNumberOfLanesVisibility
@@ -650,11 +651,11 @@
                 // setting for the ajax call for getting addons.  This way the addons that are set can be input for
                 // determining visibility of the number of lanes field
 
-                $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getSupportsSkippingQuote=&product=" + productKey,
-                    dataType: 'json',
-                    success: updateSkipQuoteVisibility
-                });
+                <%--$j.ajax({--%>
+                    <%--url: "${ctxpath}/orders/order.action?getSupportsSkippingQuote=&product=" + productKey,--%>
+                    <%--dataType: 'json',--%>
+                    <%--success: updateSkipQuoteVisibility--%>
+                <%--});--%>
             }
         }
 
@@ -824,15 +825,21 @@
             var productKey = $j("#product").val();
 
             setupAddonCheckboxes(data, productKey);
-            if ((productKey != null) && (productKey != "")) {
+            if ((productKey !== null) && (productKey !== "") && (productKey !== undefined)) {
                 $j("#showCustomizeWindow").show();
+
+                if(data["clinicalProduct"]) {
+                    $j("#clinicalAttestationDiv").show();
+                }
+
             }
+            updateSkipQuoteVisibility(data);
         }
 
         function setupAddonCheckboxes(data, productTitle) {
 //            var productTitle = $j("#product").val();
 
-            if (data.length == 0) {
+            if (data["addOns"].length === 0) {
                 $j("#addOnCheckboxes").text("The product '" + productTitle + "' has no Add-ons");
                 return;
             }
@@ -840,7 +847,7 @@
             var checkboxText = "";
             var checked;
 
-            $j.each(data, function (index, val) {
+            $j.each(data["addOns"], function (index, val) {
                 // if this value is in the add on list, then check the checkbox
                 checked = '';
                 if (addOn[val.key]) {
@@ -1454,28 +1461,29 @@
 
                 <security:authorizeBlock roles="<%= roles(GPProjectManager, PDM, Developer) %>">
 
-                <div class="control-group">
-                    <stripes:label for="orderType" class="control-label">
-                        Order Type <c:if test="${not actionBean.editOrder.draft}">*</c:if>
-                    </stripes:label>
-                    <div class="controls">
-                        <c:choose>
-                            <c:when test="${actionBean.editOrder.childOrder}">
-                                <c:if test="${actionBean.editOrder.orderType != null}" >
-                                    <stripes:hidden name="orderType" id="orderType"
-                                                    value="${actionBean.editOrder.orderType.displayName}" />
-                                </c:if>
-                            </c:when>
-                            <c:otherwise>
-                                <stripes:select name="orderType" id="orderType">
-                                    <stripes:option value="">Select an Order Type</stripes:option>
-                                    <stripes:options-collection collection="${actionBean.orderTypeDisplayNames}" label="displayName"
-                                                                value="displayName" />
-                                </stripes:select>
-                            </c:otherwise>
-                        </c:choose>
+                    <div class="control-group">
+                        <stripes:label for="orderType" class="control-label">
+                            Order Type <c:if test="${not actionBean.editOrder.draft}">*</c:if>
+                        </stripes:label>
+                        <div class="controls">
+                            <c:choose>
+                                <c:when test="${actionBean.editOrder.childOrder}">
+                                    <c:if test="${actionBean.editOrder.orderType != null}">
+                                        <stripes:hidden name="orderType" id="orderType"
+                                                        value="${actionBean.editOrder.orderType.displayName}"/>
+                                    </c:if>
+                                </c:when>
+                                <c:otherwise>
+                                    <stripes:select name="orderType" id="orderType">
+                                        <stripes:option value="">Select an Order Type</stripes:option>
+                                        <stripes:options-collection collection="${actionBean.orderTypeDisplayNames}"
+                                                                    label="displayName"
+                                                                    value="displayName"/>
+                                    </stripes:select>
+                                </c:otherwise>
+                            </c:choose>
+                        </div>
                     </div>
-                </div>
                 </security:authorizeBlock>
 
                 <div class="control-group">
@@ -1494,10 +1502,20 @@
                         </c:otherwise>
                     </c:choose>
                 </div>
-                <div class="control-group">
-                    <div class="controls">
-                        <a href="#" id="showCustomizeWindow">Customize product and add-ons for this order</a></div>
+                <security:authorizeBlock roles="<%= roles(GPProjectManager, PDM, Developer) %>">
+                    <div class="control-group">
+                        <div class="controls">
+                            <a href="#" id="showCustomizeWindow">Customize product and add-ons for this order</a></div>
+                    </div>
+                </security:authorizeBlock>
+
+                <div id="clinicalAttestationDiv" class="controls controls-text">
+
+                    <stripes:checkbox name="editOrder.clinicalAttestationConfirmed"
+                                      id="clinicalAttestationConfirmed"/>
+                        ${actionBean.clinicalAttestationMessage}
                 </div>
+
 
                 <div id="numberOfLanesDiv" class="control-group" style="display: ${actionBean.editOrder.requiresLaneCount() ? 'block' : 'none'};">
                     <stripes:label for="numberOfLanes" class="control-label">

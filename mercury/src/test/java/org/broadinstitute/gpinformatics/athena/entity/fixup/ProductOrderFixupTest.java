@@ -1340,7 +1340,7 @@ public class ProductOrderFixupTest extends Arquillian {
                 });
 
         for (ProductOrder researchProductOrder : researchProductOrdersToUpdate) {
-            researchProductOrder.setOrderType(ProductOrder.OrderAccessType.RESEARCH);
+            researchProductOrder.setOrderType(ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
         }
 
         List<ProductOrder> externalProductOrdersToUpdate = productOrderDao.findListByList(ProductOrder.class,
@@ -1360,7 +1360,7 @@ public class ProductOrderFixupTest extends Arquillian {
                 });
 
         for (ProductOrder externalProductOrder : externalProductOrdersToUpdate) {
-            externalProductOrder.setOrderType(ProductOrder.OrderAccessType.CLINICAL_COMMERCIAL);
+            externalProductOrder.setOrderType(ProductOrder.OrderAccessType.COMMERCIAL);
         }
 
         productOrderDao.persist(new FixupCommentary("GPLIM 4924: Back filling the order type of existing orders to support the new setting"));

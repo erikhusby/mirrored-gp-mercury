@@ -210,16 +210,23 @@
 
             <security:authorizeBlock roles="<%= roles(PDM, Developer) %>">
                 <div class="view-control-group control-group">
-                    <label class="control-label label-form">Clinical or Commercial Product?</label>
+                    <label class="control-label label-form">Only offered as Commercial Product?</label>
                     <div class="controls">
                         <div class="form-value">
                                 ${actionBean.editProduct.externalOnlyProduct ? "Yes" : "No"}
                         </div>
                     </div>
                 </div>
-            </security:authorizeBlock>
 
-            <security:authorizeBlock roles="<%= roles(PDM, Developer) %>">
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Clinical Product?</label>
+                    <div class="controls">
+                        <div class="form-value">
+                                ${actionBean.editProduct.clinicalProduct ? "Yes" : "No"}
+                        </div>
+                    </div>
+                </div>
+
                 <div class="view-control-group control-group">
                     <label class="control-label label-form">Expect Initial Quant In Mercury</label>
                     <div class="controls">

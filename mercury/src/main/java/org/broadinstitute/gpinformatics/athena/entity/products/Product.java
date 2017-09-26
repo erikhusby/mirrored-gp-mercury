@@ -154,6 +154,43 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     public static final String DEFAULT_WORKFLOW_NAME = "";
     public static final Boolean DEFAULT_TOP_LEVEL = Boolean.TRUE;
 
+    // Initialize our transient data after the object has been loaded from the database.
+    @PostLoad
+    private void initialize() {
+        originalPartNumber = partNumber;
+    }
+
+    // True if this product/add-on supports automated billing.
+    @Column(name = "USE_AUTOMATED_BILLING", nullable = false)
+    private boolean useAutomatedBilling;
+
+    /** To determine if this product can be billed, the following criteria must be true. */
+    // Note that for now, there will only be one requirement. We use OneToMany to allow for lazy loading of the
+    // requirement.
+    @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @JoinColumn(name = "product", nullable = false)
+    @AuditJoinTable(name = "product_requirement_join_aud")
+    private List<BillingRequirement> requirements;
+
+    // The onRisk criteria that are associated with the Product. When creating new, default to empty list.
+    @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    @JoinColumn(name = "product", nullable = true)
+    @AuditJoinTable(name = "product_risk_criteria_join_aud")
+    private List<RiskCriterion> riskCriteria = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST})
+    @JoinColumn(name = "POSITIVE_CONTROL_RP_ID")
+    private ResearchProject positiveControlResearchProject;
+
+    @Column(name ="EXTERNAL_ONLY_PRODUCT")
+    private Boolean externalOnlyProduct = false;
+
+    @Column(name = "SAVED_IN_SAP")
+    private Boolean savedInSAP = false;
+
+    @Column(name="CLINICAL_ONLY_PRODUCT")
+    private Boolean clinicalProduct = false;
+
     /**
      * Helper method to allow the quick creation of a new Product based on the contents of an existing product
      *
@@ -199,40 +236,6 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         clonedProduct.setPrimaryPriceItem(productToClone.getPrimaryPriceItem());
         return clonedProduct;
     }
-
-    // Initialize our transient data after the object has been loaded from the database.
-    @PostLoad
-    private void initialize() {
-        originalPartNumber = partNumber;
-    }
-
-    // True if this product/add-on supports automated billing.
-    @Column(name = "USE_AUTOMATED_BILLING", nullable = false)
-    private boolean useAutomatedBilling;
-
-    /** To determine if this product can be billed, the following criteria must be true. */
-    // Note that for now, there will only be one requirement. We use OneToMany to allow for lazy loading of the
-    // requirement.
-    @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
-    @JoinColumn(name = "product", nullable = false)
-    @AuditJoinTable(name = "product_requirement_join_aud")
-    private List<BillingRequirement> requirements;
-
-    // The onRisk criteria that are associated with the Product. When creating new, default to empty list.
-    @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-    @JoinColumn(name = "product", nullable = true)
-    @AuditJoinTable(name = "product_risk_criteria_join_aud")
-    private List<RiskCriterion> riskCriteria = new ArrayList<>();
-
-    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST})
-    @JoinColumn(name = "POSITIVE_CONTROL_RP_ID")
-    private ResearchProject positiveControlResearchProject;
-
-    @Column(name ="EXTERNAL_ONLY_PRODUCT")
-    private Boolean externalOnlyProduct = false;
-
-    @Column(name = "SAVED_IN_SAP")
-    private Boolean savedInSAP = false;
 
     /**
      * Default no-arg constructor, also used when creating a new Product.
@@ -873,5 +876,13 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     public void setExternalPriceItem(PriceItem externalPriceItem) {
         this.externalPriceItem = externalPriceItem;
+    }
+
+    public void setClinicalProduct(Boolean clinicalProduct) {
+        this.clinicalProduct = clinicalProduct;
+    }
+
+    public boolean isClinicalProduct() {
+        return clinicalProduct;
     }
 }
