@@ -526,7 +526,9 @@ public class LabBatchEjb {
             labVessels.add(bucketEntry.getLabVessel());
             pdoKeys.add(bucketEntry.getProductOrder().getBusinessKey());
             bucketEntry.getBucket().removeEntry(bucketEntry);
-            commentString.append(String.format("Added vessel *%s* with material type *%s* from *%s*.\n", bucketEntry.getLabVessel().getLabel(),
+            String sampleName = getSample(bucketEntry);
+            commentString.append(String.format("Added vessel *%s / %s* with material type *%s* from *%s*.\n",
+                    bucketEntry.getLabVessel().getLabel(), sampleName,
                     bucketEntry.getLabVessel().getLatestMaterialType().getDisplayName(), bucketName));
         }
 
@@ -543,9 +545,10 @@ public class LabBatchEjb {
             reworkVessels.add(entry.getLabVessel());
             pdoKeys.add(entry.getProductOrder().getBusinessKey());
             entry.getBucket().removeEntry(entry);
-            commentString.append(String.format("Added rework for vessel %s with material type %s to %s.\n",
-                    entry.getLabVessel().getLabel(), entry.getLabVessel().getLatestMaterialType().getDisplayName(),
-                    bucketName));
+            String sampleName = getSample(entry);
+            commentString.append(String.format("Added rework for vessel %s / %s with material type %s to %s.\n",
+                    entry.getLabVessel().getLabel(), sampleName,
+                    entry.getLabVessel().getLatestMaterialType().getDisplayName(), bucketName));
 
         }
 
@@ -556,8 +559,9 @@ public class LabBatchEjb {
         for (BucketEntry removeBucketEntry : removeBucketEntries) {
             removeBucketEntry.getLabVessel().removeFromBatch(removeBucketEntry.getLabBatch());
             batch.removeBucketEntry(removeBucketEntry);
-            commentString.append(String.format("Removed vessel *%s* with material type *%s* from *%s*.\n",
-                    removeBucketEntry.getLabVessel().getLabel(),
+            String sampleName = getSample(removeBucketEntry);
+            commentString.append(String.format("Removed vessel *%s / %s* with material type *%s* from *%s*.\n",
+                    removeBucketEntry.getLabVessel().getLabel(), sampleName,
                     removeBucketEntry.getLabVessel().getLatestMaterialType().getDisplayName(), bucketName));
         }
 
@@ -589,6 +593,7 @@ public class LabBatchEjb {
 
         verifyAllowedValues(batchJiraTicketFields, messageReporter);
         JiraIssue jiraIssue = jiraService.getIssue(batch.getJiraTicket().getTicketName());
+        // todo jmt send email with commentString to jiraIssue.getReporter()
         jiraIssue.addWatchers(watchers);
         jiraIssue.addComment(commentString.toString());
         jiraIssue.updateIssue(batchJiraTicketFields);
@@ -598,6 +603,18 @@ public class LabBatchEjb {
             linkJiraBatchToTicket(pdoKey, batch);
         }
 
+    }
+
+    @org.jetbrains.annotations.Nullable
+    private String getSample(BucketEntry entry) {
+        String sampleName = null;
+        for (SampleInstanceV2 sampleInstanceV2 : entry.getLabVessel().getSampleInstancesV2()) {
+            sampleName = sampleInstanceV2.getNearestMercurySampleName();
+            if (sampleName != null) {
+                break;
+            }
+        }
+        return sampleName;
     }
 
     /**
