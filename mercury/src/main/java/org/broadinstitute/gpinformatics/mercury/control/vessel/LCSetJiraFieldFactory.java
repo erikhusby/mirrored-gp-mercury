@@ -116,7 +116,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
                 submissionFields.get(LabBatch.TicketFields.LIBRARY_QC_SEQUENCING_REQUIRED.getName()),
                 new CustomField.SelectOption(LIB_QC_SEQ_REQUIRED_DEFAULT)));
 
-        int sampleCount = batch.getStartingBatchLabVessels().size();
+        int sampleCount = batch.getBucketEntries().size();
 
         customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.GSSR_IDS,
                 buildSamplesListString(batch)));

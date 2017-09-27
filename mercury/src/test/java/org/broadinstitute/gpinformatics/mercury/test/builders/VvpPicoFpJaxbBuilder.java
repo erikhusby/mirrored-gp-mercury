@@ -62,12 +62,12 @@ public class VvpPicoFpJaxbBuilder {
             fpTubeBarcodes.add(testPrefix + "FP" + i);
         }
         String fpRackBarcode = testPrefix + "FPR";
-        fingerprintingAliquot = bettaLimsMessageTestFactory.buildPlateToRack("FingerprintingAliquot",
+        fingerprintingAliquot = bettaLimsMessageTestFactory.buildPlateToRack("FingerprintingAliquotForwardBsp",
                 picoDilutionPlateBarcode, fpRackBarcode, fpTubeBarcodes);
         bettaLimsMessageTestFactory.addMessage(messageList, fingerprintingAliquot);
 
         String fpPlateBarcode = testPrefix + "FPS";
-        fingerprintingPlateSetup = bettaLimsMessageTestFactory.buildRackToPlate("FingerprintingPlateSetup",
+        fingerprintingPlateSetup = bettaLimsMessageTestFactory.buildRackToPlate("FingerprintingPlateSetupForwardBsp",
                 fpRackBarcode, fpTubeBarcodes, fpPlateBarcode);
         fingerprintingPlateSetup.getPlate().setPhysType("Plate96Well200PCR");
         PositionMapType destinationPositionMap = new PositionMapType();
