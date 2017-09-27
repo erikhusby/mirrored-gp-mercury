@@ -1366,4 +1366,5 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderDao.persist(new FixupCommentary("GPLIM 4924: Back filling the order type of existing orders to support the new setting"));
         utx.commit();
     }
+
 }

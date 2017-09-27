@@ -22,6 +22,7 @@ public class QuotePriceItem {
     private String unit;
     private Date submittedDate;
     private Date effectiveDate;
+    private Date expirationDate;
     private String platformName;
     private String categoryName;
     private String priceItemStatus;
@@ -221,6 +222,15 @@ public class QuotePriceItem {
 
     public void setReplacementItems(ReplacementItems replacementItems) {
         this.replacementItems = replacementItems;
+    }
+
+    @XmlElement(name = "expirationDate")
+    public Date getExpirationDate() {
+        return expirationDate;
+    }
+
+    public void setExpirationDate(Date expirationDate) {
+        this.expirationDate = expirationDate;
     }
 
     @Override

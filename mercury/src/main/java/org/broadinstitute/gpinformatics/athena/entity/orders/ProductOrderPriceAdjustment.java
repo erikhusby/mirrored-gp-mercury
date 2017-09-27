@@ -45,6 +45,9 @@ public class ProductOrderPriceAdjustment {
     @Transient
     private Condition priceAdjustmentCondition;
 
+    @Transient
+    private BigDecimal listPrice;
+
     public ProductOrderPriceAdjustment() {
     }
 
@@ -82,6 +85,14 @@ public class ProductOrderPriceAdjustment {
         this.priceAdjustmentCondition = priceAdjustmentCondition;
     }
 
+    public BigDecimal getListPrice() {
+        return listPrice;
+    }
+
+    public void setListPrice(BigDecimal listPrice) {
+        this.listPrice = listPrice;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -108,5 +119,21 @@ public class ProductOrderPriceAdjustment {
                 .append(getAdjustmentValue())
                 .append(getCustomProductName())
                 .toHashCode();
+    }
+
+    public Condition deriveAdjustmentCondition() {
+        if(listPrice.compareTo(adjustmentValue) <0) {
+            return Condition.MARK_UP_LINE_ITEM;
+        } else {
+            return Condition.DOLLAR_DISCOUNT_LINE_ITEM;
+        }
+    }
+
+    public BigDecimal getAdjustmentDifference() {
+        if(listPrice.compareTo(adjustmentValue) <0) {
+            return adjustmentValue.subtract(listPrice);
+        } else {
+            return listPrice.subtract(adjustmentValue);
+        }
     }
 }

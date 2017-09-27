@@ -13,6 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
@@ -25,7 +26,9 @@ import javax.ws.rs.core.MultivaluedMap;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.Format;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 @Impl
@@ -35,6 +38,8 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
     public static final String EXTERNAL_PRICE_LIST_NAME = "GP External Price List";
     public static final String CRSP_PRICE_LIST_NAME = "CRSP";
     public static final String SSF_PRICE_LIST_NAME = "SSF Price List";
+
+    public static final String EFFECTIVE_DATE_FORMAT = "dd/MMM/yyyy";
 
     private static final long serialVersionUID = 8458283723746937096L;
     @Inject
@@ -70,7 +75,8 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         ALL_QUOTES("/quotes/ws/portals/private/getquotes?with_funding=true"),
         //TODO this next enum value will be removed soon.
         SINGLE_NUMERIC_QUOTE("/quotes/ws/portals/private/getquotes?with_funding=true&quote_ids="),
-        REGISTER_BLOCKED_WORK("/quotes/rest/create_blocked_work");
+        REGISTER_BLOCKED_WORK("/quotes/rest/create_blocked_work"),
+        PRICE_ITEM_DETAILS("/quotes/rest/getPriceITem");
 
         String suffixUrl;
 
@@ -79,8 +85,19 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         }
     }
 
-    private String url(Endpoint endpoint) {
-        return quoteConfig.getUrl() + endpoint.suffixUrl;
+    private String url(Endpoint endpoint, String... urlParameters) {
+        final StringBuilder constructedUrl = new StringBuilder(quoteConfig.getUrl() + endpoint.suffixUrl);
+
+        for (String urlParameter : urlParameters) {
+            if(constructedUrl.indexOf("?") == -1) {
+                constructedUrl.append("?");
+            } else {
+                constructedUrl.append("&");
+            }
+            constructedUrl.append(urlParameter);
+        }
+
+        return constructedUrl.toString();
     }
 
     @Override
@@ -362,5 +379,46 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
                     e.getLocalizedMessage()));
         }
 
+    }
+
+    @Override
+    public PriceList getPriceItemsForDate(List<QuoteImportItem> targetedPriceItemCriteria) throws QuoteServerException {
+
+        List<String> orderedPriceItemNames = new ArrayList<>();
+        List<String> orderedCategoryNames = new ArrayList<>();
+        List<String> orderedPlatformNames = new ArrayList<>();
+        List<String> orderedEffectiveDates = new ArrayList<>();
+
+        for (QuoteImportItem targetedPriceItemCriterion : targetedPriceItemCriteria) {
+            orderedPriceItemNames.add(targetedPriceItemCriterion.getProduct().getPrimaryPriceItem().getName());
+            orderedCategoryNames.add(targetedPriceItemCriterion.getProduct().getPrimaryPriceItem().getCategory());
+            orderedPlatformNames.add(targetedPriceItemCriterion.getProduct().getPrimaryPriceItem().getPlatform());
+            orderedEffectiveDates.add(FastDateFormat.getInstance(EFFECTIVE_DATE_FORMAT).format(targetedPriceItemCriterion.getWorkCompleteDate()));
+        }
+
+        final PriceList priceList;
+
+        final String effectiveDateCriteria = "effectiveDate=" + StringUtils.join(orderedEffectiveDates, ",");
+        final String priceItemNameCriteria = "priceitem_name=" + StringUtils.join(orderedPriceItemNames, ",");
+        final String platformNameCriteria = "platform_name=" + StringUtils.join(orderedPlatformNames, ",");
+        final String categoryNameCriteria = "category_name=" + StringUtils.join(orderedCategoryNames, ",");
+
+        final String urlString = url(Endpoint.PRICE_ITEM_DETAILS, effectiveDateCriteria, priceItemNameCriteria,
+                platformNameCriteria, categoryNameCriteria);
+
+        WebResource resource = getJerseyClient().resource( urlString);
+
+        try {
+            priceList = resource.accept(MediaType.APPLICATION_XML).get(PriceList.class);
+        } catch (UniformInterfaceException e) {
+            final String priceFindErrorMessage = "Could not find specific billing prices for the given work complete dates::";
+            log.error(priceFindErrorMessage+urlString, e);
+            throw new QuoteServerException(priceFindErrorMessage);
+        } catch (ClientHandlerException e) {
+            log.error("Communication error atempting to retrieve billing prices::" + urlString);
+            throw new QuoteServerException(String.format(COMMUNICATION_ERROR, urlString, e.getLocalizedMessage()));
+        }
+
+        return priceList;
     }
 }
