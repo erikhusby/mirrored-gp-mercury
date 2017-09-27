@@ -1,7 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
+import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
+
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -80,4 +83,6 @@ public interface QuoteService extends Serializable {
      *  Method to return a list of all quotes
      */
     public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException;
+
+    PriceList getPriceItemsForDate(List<QuoteImportItem> targetedPriceItemCriteria) throws QuoteServerException;
 }

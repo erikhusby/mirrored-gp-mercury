@@ -1160,52 +1160,5 @@ public class ProductOrderFixupTest extends Arquillian {
         }
         productOrderDao.persist(new FixupCommentary("GPLIM-4954: Updating productOrders to Submitted which were not previously tranistioned as such"));
     }
-
-    @Test(enabled = false)
-    public void gplim4924BackfillOrderType() throws Exception {
-        userBean.loginOSUser();
-        utx.begin();
-
-        List<ProductOrder> researchProductOrdersToUpdate = productOrderDao.findListByList(ProductOrder.class,
-                ProductOrder_.priorToSAP1_5, Collections.singleton(Boolean.TRUE),
-                new GenericDao.GenericDaoCallback<ProductOrder>() {
-                    @Override
-                    public void callback(CriteriaQuery<ProductOrder> criteriaQuery, Root<ProductOrder> root) {
-                        Join<ProductOrder, Product> productOrderProductJoin = root.join(ProductOrder_.product);
-                        CriteriaBuilder builder = productOrderDao.getEntityManager().getCriteriaBuilder();
-
-                        List<Predicate> predicates = new ArrayList<>();
-
-                        predicates.add(builder.equal(productOrderProductJoin.get(Product_.externalOnlyProduct), Boolean.FALSE));
-                        criteriaQuery.where(predicates.toArray(new Predicate[predicates.size()]));
-                    }
-                });
-
-        for (ProductOrder researchProductOrder : researchProductOrdersToUpdate) {
-            researchProductOrder.setOrderType(ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
-        }
-
-        List<ProductOrder> externalProductOrdersToUpdate = productOrderDao.findListByList(ProductOrder.class,
-                ProductOrder_.orderStatus, Arrays.asList(ProductOrder.OrderStatus.Completed,
-                        ProductOrder.OrderStatus.Submitted, ProductOrder.OrderStatus.Abandoned),
-                new GenericDao.GenericDaoCallback<ProductOrder>() {
-                    @Override
-                    public void callback(CriteriaQuery<ProductOrder> criteriaQuery, Root<ProductOrder> root) {
-                        Join<ProductOrder, Product> productOrderProductJoin = root.join(ProductOrder_.product);
-                        CriteriaBuilder builder = productOrderDao.getEntityManager().getCriteriaBuilder();
-
-                        List<Predicate> predicates = new ArrayList<>();
-
-                        predicates.add(builder.equal(productOrderProductJoin.get(Product_.externalOnlyProduct), Boolean.TRUE));
-                        criteriaQuery.where(predicates.toArray(new Predicate[predicates.size()]));
-                    }
-                });
-
-        for (ProductOrder externalProductOrder : externalProductOrdersToUpdate) {
-            externalProductOrder.setOrderType(ProductOrder.OrderAccessType.COMMERCIAL);
-        }
-
-        productOrderDao.persist(new FixupCommentary("GPLIM 4924: Back filling the order type of existing orders to support the new setting"));
-        utx.commit();
-    }
+    
 }

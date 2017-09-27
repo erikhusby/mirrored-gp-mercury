@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
@@ -149,26 +150,43 @@ public class BillingAdaptor implements Serializable {
                 throw new BillingException(BillingEjb.NO_ITEMS_TO_BILL_ERROR_TEXT);
             }
 
+
+            quoteService.getPriceItemsForDate(unBilledQuoteImportItems);
+
+
             for(QuoteImportItem itemForPriceUpdate : unBilledQuoteImportItems) {
+
                 final List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(itemForPriceUpdate.getProductOrder());
                 final MessageCollection messageCollection = new MessageCollection();
                 List<String> effectivePricesForProducts;
 
                 try {
+
+
                     quote = quoteService.getQuoteByAlphaId(itemForPriceUpdate.getQuoteId());
                     ProductOrder.checkQuoteValidity(quote,
                             DateUtils.truncate(itemForPriceUpdate.getWorkCompleteDate(), Calendar.DATE));
 
                     //todo SGM is this call really necessary?  Is it just for DBFree tests?
                     quote.setAlphanumericId(itemForPriceUpdate.getQuoteId());
-                    effectivePricesForProducts = priceListCache
-                            .getEffectivePricesForProducts(allProductsOrdered, quote);
 
                     if(itemForPriceUpdate.getProductOrder().isSavedInSAP()) {
-                        if (!StringUtils.equals(itemForPriceUpdate.getProductOrder().latestSapOrderDetail().getOrderPricesHash(),
-                                TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ",")))
-                                ) {
-                            productOrderEjb.publishProductOrderToSAP(itemForPriceUpdate.getProductOrder(), messageCollection, true);
+
+                    /* TODO SGM: Put in Logic to update orders based on price on effective date.
+                      for new  (Post SAP 1.5) orders, use this price to determine if price adjustments need to be added
+                       For old orders (pre 1.5) use this price to determine if a new order needs to be created to
+                       update the price.
+                       */
+
+                        if (itemForPriceUpdate.getProductOrder().isPriorToSAP1_5()) {
+                            effectivePricesForProducts = priceListCache  //Only needed for pre-1.5 orders
+                                    .getEffectivePricesForProducts(allProductsOrdered, quote);
+
+                            if (!StringUtils.equals(itemForPriceUpdate.getProductOrder().latestSapOrderDetail().getOrderPricesHash(),
+                                    TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ",")))
+                                    ) {
+                                productOrderEjb.publishProductOrderToSAP(itemForPriceUpdate.getProductOrder(), messageCollection, true);
+                            }
                         }
                     }
                 } catch (QuoteServerException|QuoteNotFoundException|InvalidProductException|SAPInterfaceException e) {
