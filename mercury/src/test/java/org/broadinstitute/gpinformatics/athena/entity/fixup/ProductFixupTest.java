@@ -233,4 +233,33 @@ public class ProductFixupTest extends Arquillian {
 
     }
 
-}
+
+    @Test(enabled = false)
+    public void support3393CloneProductsForHyperprep() throws Exception {
+
+        userBean.loginOSUser();
+        utx.begin();
+
+        final Map<String, Pair<String, String>> partNumbersToClone = new HashMap<>();
+        partNumbersToClone.put("P-WG-0071", Pair.of("P-WG-0086","PCR-Free Human WGS - 20x v1.1 (High Volume, >10,000 samples)"));
+        partNumbersToClone.put("P-WG-0069", Pair.of("P-WG-0087","PCR-Free Human WGS - 30x v1.1 (High Volume, >10,000 samples)"));
+        partNumbersToClone.put("P-WG-0079", Pair.of("P-WG-0088","PCR-Free Human WGS - 60x v1.1 (High Volume, >10,000 samples)"));
+        partNumbersToClone.put("P-WG-0084", Pair.of("P-WG-0089","PCR-Free Human WGS - 80x v1.1 (High Volume, >10,000 samples)"));
+        partNumbersToClone.put("XTNL-WGS-010339", Pair.of("XTNL-WGS-010343","WGS-010322 Genome, PCR-Free, 20X v1.1"));
+
+
+        final List<Product> productsToClone = productDao.findByPartNumbers(new ArrayList<String>(partNumbersToClone.keySet()));
+
+        for (Product productToClone : productsToClone) {
+
+            final String productName = partNumbersToClone.get(productToClone.getPartNumber()).getRight();
+            final String partNumber = partNumbersToClone.get(productToClone.getPartNumber()).getLeft();
+
+            Product clonedProduct = Product.cloneProduct(productToClone, productName, partNumber);
+
+            productDao.persist(clonedProduct);
+        }
+        productDao.persist(new FixupCommentary("SUPPORT-3393 cloning products for new WGS products"));
+        utx.commit();
+
+    }}
