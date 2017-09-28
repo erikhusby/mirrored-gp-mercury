@@ -139,8 +139,10 @@ public class BillingAdaptor implements Serializable {
         BillingSession billingSession = billingSessionAccessEjb.findAndLockSession(sessionKey);
         try {
             List<QuoteImportItem> unBilledQuoteImportItems = null;
+            final PriceList priceItemsForDate;
             try {
                 unBilledQuoteImportItems = billingSession.getUnBilledQuoteImportItems(priceListCache);
+                priceItemsForDate = quoteService.getPriceItemsForDate(unBilledQuoteImportItems);
             } catch (QuoteServerException e) {
                 throw new BillingException("Getting unbilled items failed because::" + e.getMessage(), e);
             }
@@ -151,7 +153,6 @@ public class BillingAdaptor implements Serializable {
             }
 
 
-            quoteService.getPriceItemsForDate(unBilledQuoteImportItems);
 
 
             for(QuoteImportItem itemForPriceUpdate : unBilledQuoteImportItems) {
@@ -229,6 +230,8 @@ public class BillingAdaptor implements Serializable {
 
                     // The price item that we are billing.
                     QuotePriceItem priceItemBeingBilled = QuotePriceItem.convertMercuryPriceItem(item.getPriceItem());
+
+                    //Replace with the New price list call for effective date
                     String price = priceListCache.getEffectivePrice(item.getPriceItem(), quote);
 
                     // Get the quote PriceItem that this is replacing, if it is a replacement.
