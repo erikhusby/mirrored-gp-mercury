@@ -76,8 +76,8 @@ public class VvpPicoFpJaxbBuilder {
             ReceptacleType destinationReceptacle = new ReceptacleType();
             destinationReceptacle.setReceptacleType("Well200");
             destinationReceptacle.setPosition(receptacleType.getPosition());
-            destinationReceptacle.setVolume(BigDecimal.valueOf(8));
-            destinationReceptacle.setConcentration(BigDecimal.valueOf(20));
+            destinationReceptacle.setVolume(new BigDecimal("8"));
+            destinationReceptacle.setConcentration(new BigDecimal("0.01"));
             destinationPositionMap.getReceptacle().add(destinationReceptacle);
         }
         fingerprintingPlateSetup.setPositionMap(destinationPositionMap);
