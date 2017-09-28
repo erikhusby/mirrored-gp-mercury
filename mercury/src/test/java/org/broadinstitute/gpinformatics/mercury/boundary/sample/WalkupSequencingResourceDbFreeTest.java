@@ -41,9 +41,8 @@ public class WalkupSequencingResourceDbFreeTest {
     @Inject
     private SampleKitRequestDao sampleKitRequestDao;
 
-
+    @Test
     public void testWalkupSequencing() {
-
         WalkUpSequencing walkUpSequencing = new WalkUpSequencing();
         walkUpSequencing.setLibraryName("TEST_LIBRARY");
         walkUpSequencing.setTubeBarcode("TEST_TUBE");
@@ -56,22 +55,12 @@ public class WalkupSequencingResourceDbFreeTest {
         setMocks(walkUpSequencing, walkupSequencingResource);
 
         String status = walkupSequencingResource.getJson(walkUpSequencing);
-        Assert.assertEquals(status, walkupSequencingResource.STATUS);
-
+        Assert.assertEquals(status, walkupSequencingResource.STATUS_SUCCESS);
     }
 
-
-
-    /**
-     * This is where we setup the initial Mocks for External Library testing.
-     */
-    public void setMocks(WalkUpSequencing walkUpSequencing, WalkupSequencingResource walkupSequencingResource  )
-    {
-
-
+    private void setMocks(WalkUpSequencing walkUpSequencing, WalkupSequencingResource walkupSequencingResource) {
         MercurySampleDao mercurySampleDao = Mockito.mock(MercurySampleDao.class);
         SampleKitRequestDao sampleKitRequestDao = Mockito.mock(SampleKitRequestDao.class);
-
 
         walkupSequencingResource.setSampleKitRequestDao(sampleKitRequestDao);
         walkupSequencingResource.setMercurySampleDao(mercurySampleDao);
@@ -89,21 +78,12 @@ public class WalkupSequencingResourceDbFreeTest {
                 }});
 
         walkupSequencingResource.setLabVesselDao(labVesselDao);
-
         reagentDesign.setDesignName(walkUpSequencing.getBaitSetName());
-
         Mockito.when(reagentDesignDao.findByBusinessKey(walkUpSequencing.getBaitSetName())).thenReturn(reagentDesign);
-
 
         walkupSequencingResource.setReagentDesignDao(reagentDesignDao);
 
         SampleInstanceEntityDao sampleInstanceEntityDao = Mockito.mock(SampleInstanceEntityDao.class);
         walkupSequencingResource.setSampleInstanceEntityDao(sampleInstanceEntityDao);
-
-
-
-
     }
-
-
 }

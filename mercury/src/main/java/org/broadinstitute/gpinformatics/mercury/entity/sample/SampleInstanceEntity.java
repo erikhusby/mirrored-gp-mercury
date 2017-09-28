@@ -12,6 +12,7 @@ import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -80,6 +81,7 @@ public class SampleInstanceEntity {
 
     private String restrictionEnzyme;
 
+    @Column(name = "illumina_454_kit_used")
     private String illumina454KitUsed;
 
     private Date uploadDate;
@@ -317,11 +319,10 @@ public class SampleInstanceEntity {
     public void setSubmitDate(String submitDate) {
         try {
             this.submitDate = DateUtils.convertStringToDateTime(submitDate);
-        } catch (ParseException e) {
+        } catch (Exception e) {
             try {
                 this.submitDate = DateUtils.convertStringToDateTime(StringUtils.substringBefore(submitDate, " "));
-            } catch (ParseException e1) {
-                log.error("Cannot convert '" + submitDate + "' to date.");
+            } catch (Exception e1) {
                 this.submitDate = new Date();
             }
         }
