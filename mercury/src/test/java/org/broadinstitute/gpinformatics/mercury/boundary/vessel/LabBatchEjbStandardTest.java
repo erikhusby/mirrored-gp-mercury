@@ -212,10 +212,10 @@ public class LabBatchEjbStandardTest extends Arquillian {
 
         LabVessel vessel = newMapBarcodeToTube.values().iterator().next();
 
-        labBatchEJB.addToLabBatch(testFind.getJiraTicket().getTicketId(),
+        labBatchEJB.updateLabBatch(testFind.getJiraTicket().getTicketId(),
                 Collections.singletonList(vessel.getBucketEntries().iterator().next().getBucketEntryId()),
-                Collections.<Long>emptyList(), LabBatchEJBTest.BUCKET_NAME, MessageReporter.UNUSED,
-                Collections.<String>emptyList());
+                Collections.<Long>emptyList(), Collections.<Long>emptyList(),LabBatchEJBTest.BUCKET_NAME,
+                MessageReporter.UNUSED, Collections.<String>emptyList());
 
         jiraIssue = jiraService.getIssue(testFind.getJiraTicket().getTicketName());
 
@@ -277,10 +277,10 @@ public class LabBatchEjbStandardTest extends Arquillian {
 
         LabVessel vessel = newMapBarcodeToTube.values().iterator().next();
 
-        labBatchEJB.addToLabBatch(testFind.getJiraTicket().getTicketId(),
+        labBatchEJB.updateLabBatch(testFind.getJiraTicket().getTicketId(),
                 Collections.singletonList(vessel.getBucketEntries().iterator().next().getBucketEntryId()),
-                Collections.<Long>emptyList(), LabBatchEJBTest.EXTRACTION_BUCKET, MessageReporter.UNUSED,
-                Collections.<String>emptyList());
+                Collections.<Long>emptyList(), Collections.<Long>emptyList(), LabBatchEJBTest.EXTRACTION_BUCKET,
+                MessageReporter.UNUSED, Collections.<String>emptyList());
 
         jiraIssue = jiraService.getIssue(testFind.getJiraTicket().getTicketName());
 

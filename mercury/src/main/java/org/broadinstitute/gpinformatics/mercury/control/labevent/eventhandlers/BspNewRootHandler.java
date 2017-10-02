@@ -33,13 +33,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.BSPRestSender.BSP_KIT_REST_URL;
+
 /**
  * Creates a new root sample in BSP, e.g. for Blood Biopsy plasma and buffy coat samples, so they can have
  * different collaborator sample ID suffixes.
  */
 public class BspNewRootHandler extends AbstractEventHandler {
-
-    private static final String BSP_KIT_REST_URL = "kit";
 
     @Inject
     private BSPRestClient bspRestClient;
