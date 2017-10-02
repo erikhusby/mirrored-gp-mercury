@@ -135,7 +135,9 @@ public class BSPRestSender implements Serializable {
                 // NA12878 samples, that fill up partial fingerprint plates to 48 wells, are reagents
                 if (!sampleInstance.isReagentOnly()) {
                     MercurySample rootMercurySample = sampleInstance.getRootOrEarliestMercurySample();
-                    metadataSources.add(rootMercurySample.getMetadataSource());
+                    // if root is null, assume it's an old BSP sample that was received before Mercury existed
+                    metadataSources.add(rootMercurySample == null ? MercurySample.MetadataSource.BSP :
+                            rootMercurySample.getMetadataSource());
                 }
             }
 
