@@ -16,8 +16,10 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quotes;
 
 import javax.enterprise.inject.Alternative;
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -32,6 +34,24 @@ class AcceptsAllWorkRegistrationsQuoteServiceStub implements QuoteService {
     private static int counter = 0;
 
     public static final String WORK_ITEM_PREPEND = "workItemId\t";
+
+    @Override
+    public String registerNewWorkWithPriceOverride(Quote quote, QuotePriceItem quotePriceItem,
+                                                   QuotePriceItem itemIsReplacing, Date reportedCompletionDate,
+                                                   double numWorkUnits, String callbackUrl,
+                                                   String callbackParameterName, String callbackParameterValue,
+                                                   BigDecimal priceAdjustment) {
+        return WORK_ITEM_PREPEND + (1000 + counter++);
+    }
+
+    @Override
+    public String registerNewSAPWorkWithPriceOverride(Quote quote, QuotePriceItem quotePriceItem,
+                                                      QuotePriceItem itemIsReplacing, Date reportedCompletionDate,
+                                                      double numWorkUnits, String callbackUrl,
+                                                      String callbackParameterName, String callbackParameterValue,
+                                                      BigDecimal priceAdjustment) {
+        return WORK_ITEM_PREPEND + (1000 + counter++);
+    }
 
     @Override
     public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
@@ -87,6 +107,12 @@ class AcceptsAllWorkRegistrationsQuoteServiceStub implements QuoteService {
     @Override
     public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException {
         return null;
+    }
+
+    @Override
+    public PriceList getPriceItemsForDate(List<QuoteImportItem> targetedPriceItemCriteria)
+            throws QuoteServerException, QuoteNotFoundException {
+        return getAllPriceItems();
     }
 
     @Override

@@ -1,9 +1,12 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
+import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
 import javax.enterprise.inject.Alternative;
+import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 @Stub
@@ -15,6 +18,24 @@ public class QuoteServiceStub implements QuoteService {
 
     public QuoteServiceStub() {
 
+    }
+
+    @Override
+    public String registerNewWorkWithPriceOverride(Quote quote, QuotePriceItem quotePriceItem,
+                                                   QuotePriceItem itemIsReplacing, Date reportedCompletionDate,
+                                                   double numWorkUnits, String callbackUrl,
+                                                   String callbackParameterName, String callbackParameterValue,
+                                                   BigDecimal priceAdjustment) {
+        return Integer.toString(workItemId++);
+    }
+
+    @Override
+    public String registerNewSAPWorkWithPriceOverride(Quote quote, QuotePriceItem quotePriceItem,
+                                                      QuotePriceItem itemIsReplacing, Date reportedCompletionDate,
+                                                      double numWorkUnits, String callbackUrl,
+                                                      String callbackParameterName, String callbackParameterValue,
+                                                      BigDecimal priceAdjustment) {
+        return Integer.toString(workItemId++);
     }
 
     @Override
@@ -46,8 +67,10 @@ public class QuoteServiceStub implements QuoteService {
 
 
     @Override
-    public String registerNewWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing, Date reportedCompletionDate,
-                                  double numWorkUnits, String callbackUrl, String callbackParameterName, String callbackParameterValue) {
+    public String registerNewWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
+                                  Date reportedCompletionDate,
+                                  double numWorkUnits, String callbackUrl, String callbackParameterName,
+                                  String callbackParameterValue) {
         return Integer.toString(workItemId++);
     }
 
@@ -84,6 +107,21 @@ public class QuoteServiceStub implements QuoteService {
     @Override
     public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException {
         return getAllSequencingPlatformQuotes();
+    }
+
+    @Override
+    public PriceList getPriceItemsForDate(List<QuoteImportItem> targetedPriceItemCriteria)
+            throws QuoteServerException, QuoteNotFoundException {
+        invocationCount++;
+        PriceList priceList;
+
+        try {
+            priceList = QuoteServerDataSnapshotter.readPriceListFromTestFile();
+        }
+        catch(Exception e) {
+            throw new RuntimeException("Failed to read price list from disk",e);
+        }
+        return priceList;
     }
 
     @Override

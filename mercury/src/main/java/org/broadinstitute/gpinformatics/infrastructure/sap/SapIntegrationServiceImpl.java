@@ -245,10 +245,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                         sapOrderItem.addCondition(productOrderAddOnPriceAdjustment.getPriceAdjustmentCondition(),
                                 productOrderAddOnPriceAdjustment.getAdjustmentValue());
                     }
-
                 }
             }
-
         }
     }
 

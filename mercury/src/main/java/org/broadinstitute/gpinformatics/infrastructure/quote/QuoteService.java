@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -12,6 +13,19 @@ import java.util.Set;
  * Service to talk to the quote server.
  */
 public interface QuoteService extends Serializable {
+    String registerNewWorkWithPriceOverride(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
+                                            Date reportedCompletionDate, double numWorkUnits,
+                                            String callbackUrl, String callbackParameterName,
+                                            String callbackParameterValue,
+                                            BigDecimal priceAdjustment);
+
+    String registerNewSAPWorkWithPriceOverride(Quote quote, QuotePriceItem quotePriceItem,
+                                               QuotePriceItem itemIsReplacing,
+                                               Date reportedCompletionDate, double numWorkUnits,
+                                               String callbackUrl, String callbackParameterName,
+                                               String callbackParameterValue,
+                                               BigDecimal priceAdjustment);
+
     public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException;
 
     public Quotes getAllSequencingPlatformQuotes() throws QuoteServerException, QuoteNotFoundException;
@@ -32,8 +46,8 @@ public interface QuoteService extends Serializable {
      * @return The work item id created by the quote server.
      */
     public String registerNewWork(
-        Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing, Date reportedCompletionDate,
-        double numWorkUnits, String callbackUrl, String callbackParameterName, String callbackParameterValue);
+            Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing, Date reportedCompletionDate,
+            double numWorkUnits, String callbackUrl, String callbackParameterName, String callbackParameterValue);
 
 
     public String registerNewSAPWork(
@@ -84,5 +98,6 @@ public interface QuoteService extends Serializable {
      */
     public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException;
 
-    PriceList getPriceItemsForDate(List<QuoteImportItem> targetedPriceItemCriteria) throws QuoteServerException;
+    PriceList getPriceItemsForDate(List<QuoteImportItem> targetedPriceItemCriteria)
+            throws QuoteServerException, QuoteNotFoundException;
 }

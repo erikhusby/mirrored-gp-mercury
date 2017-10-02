@@ -34,8 +34,10 @@ import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -183,6 +185,40 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
         public static int workItemNumber;
 
         @Override
+        public String registerNewWorkWithPriceOverride(Quote quote, QuotePriceItem quotePriceItem,
+                                                       QuotePriceItem itemIsReplacing, Date reportedCompletionDate,
+                                                       double numWorkUnits, String callbackUrl,
+                                                       String callbackParameterName, String callbackParameterValue,
+                                                       BigDecimal priceAdjustment) {
+            try {
+                // sleep here for a while to increase the likelihood that the vm really does try to call bill() at the same time
+                Thread.sleep(1000);
+            }
+            catch (InterruptedException e) {
+                // Do nothing with this exception
+            }
+            return Integer.toString(++workItemNumber);
+
+        }
+
+        @Override
+        public String registerNewSAPWorkWithPriceOverride(Quote quote, QuotePriceItem quotePriceItem,
+                                                          QuotePriceItem itemIsReplacing, Date reportedCompletionDate,
+                                                          double numWorkUnits, String callbackUrl,
+                                                          String callbackParameterName, String callbackParameterValue,
+                                                          BigDecimal priceAdjustment) {
+            try {
+                // sleep here for a while to increase the likelihood that the vm really does try to call bill() at the same time
+                Thread.sleep(1000);
+            }
+            catch (InterruptedException e) {
+                // Do nothing with this exception
+            }
+            return Integer.toString(++workItemNumber);
+
+        }
+
+        @Override
         public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
             return new PriceList();
         }
@@ -248,6 +284,12 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
 
         @Override
         public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException {
+            return null;
+        }
+
+        @Override
+        public PriceList getPriceItemsForDate(List<QuoteImportItem> targetedPriceItemCriteria)
+                throws QuoteServerException, QuoteNotFoundException {
             return null;
         }
 

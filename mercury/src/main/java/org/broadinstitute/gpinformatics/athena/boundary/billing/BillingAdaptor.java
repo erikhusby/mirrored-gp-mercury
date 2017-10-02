@@ -143,7 +143,7 @@ public class BillingAdaptor implements Serializable {
             try {
                 unBilledQuoteImportItems = billingSession.getUnBilledQuoteImportItems(priceListCache);
                 priceItemsForDate = quoteService.getPriceItemsForDate(unBilledQuoteImportItems);
-            } catch (QuoteServerException e) {
+            } catch (QuoteServerException | QuoteNotFoundException e) {
                 throw new BillingException("Getting unbilled items failed because::" + e.getMessage(), e);
             }
 
@@ -152,9 +152,6 @@ public class BillingAdaptor implements Serializable {
                 throw new BillingException(BillingEjb.NO_ITEMS_TO_BILL_ERROR_TEXT);
             }
 
-
-
-
             for(QuoteImportItem itemForPriceUpdate : unBilledQuoteImportItems) {
 
                 final List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(itemForPriceUpdate.getProductOrder());
@@ -162,7 +159,6 @@ public class BillingAdaptor implements Serializable {
                 List<String> effectivePricesForProducts;
 
                 try {
-
 
                     quote = quoteService.getQuoteByAlphaId(itemForPriceUpdate.getQuoteId());
                     ProductOrder.checkQuoteValidity(quote,
@@ -211,6 +207,8 @@ public class BillingAdaptor implements Serializable {
             HashMultimap<String, String> quoteItemsByQuote = HashMultimap.create();
             for (QuoteImportItem item : unBilledQuoteImportItems) {
 
+                updatePriceOnQuoteImportItem(item, priceItemsForDate);
+
                 BillingEjb.BillingResult result = new BillingEjb.BillingResult(item);
                 results.add(result);
 
@@ -229,14 +227,19 @@ public class BillingAdaptor implements Serializable {
                     sapBillingId = quote.isEligibleForSAP()? item.getSapItems(): NOT_ELIGIBLE_FOR_SAP_INDICATOR;
 
                     // The price item that we are billing.
+                    // todo need to set the price on the Price Item before this step
                     QuotePriceItem priceItemBeingBilled = QuotePriceItem.convertMercuryPriceItem(item.getPriceItem());
 
                     //Replace with the New price list call for effective date
-                    String price = priceListCache.getEffectivePrice(item.getPriceItem(), quote);
+                    String price = priceItemsForDate.getEffectivePrice(item.getPriceItem(), quote, item.getWorkCompleteDate());
 
                     // Get the quote PriceItem that this is replacing, if it is a replacement.
-                    QuotePriceItem primaryPriceItemIfReplacement = item.getPrimaryForReplacement(priceListCache);
-                    QuotePriceItem primaryPriceItemIfReplacementForSAP =item.getPrimaryForReplacement(priceListCache);
+                    // todo need to set the price on the Price Item before this step
+                    QuotePriceItem primaryPriceItemIfReplacement = item.getPrimaryForReplacement(priceItemsForDate,
+                            item.getWorkCompleteDate());
+                    // todo need to set the price on the Price Item before this step
+                    QuotePriceItem primaryPriceItemIfReplacementForSAP =item.getPrimaryForReplacement(priceItemsForDate,
+                            item.getWorkCompleteDate());
 
                     // Get the quote items on the quote, adding to the quote item cache, if not there.
                     Collection<String> quoteItemNames = getQuoteItems(quoteItemsByQuote, item.getQuoteId());
@@ -258,15 +261,32 @@ public class BillingAdaptor implements Serializable {
                     if(StringUtils.isBlank(workId)) {
                         if (productOrderEjb.isOrderEligibleForSAP(item.getProductOrder())
                             && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
-                            workId = quoteService
-                                    .registerNewSAPWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
-                                            item.getWorkCompleteDate(), item.getQuantity(),
-                                            pageUrl, "billingSession", sessionKey);
+                            if(item.getProductOrder().getSinglePriceAdjustment() == null) {
+                                workId = quoteService
+                                        .registerNewSAPWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
+                                                item.getWorkCompleteDate(), item.getQuantity(),
+                                                pageUrl, "billingSession", sessionKey);
+                            } else {
+                                workId = quoteService
+                                        .registerNewSAPWorkWithPriceOverride(quote, priceItemBeingBilled,
+                                                primaryPriceItemIfReplacement,
+                                                item.getWorkCompleteDate(), item.getQuantity(),
+                                                pageUrl, "billingSession", sessionKey,
+                                                item.getProductOrder().getSinglePriceAdjustment().getAdjustmentValue());
+                            }
                         } else {
-                            workId = quoteService
-                                    .registerNewWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
-                                            item.getWorkCompleteDate(), item.getQuantity(),
-                                            pageUrl, "billingSession", sessionKey);
+                            if(item.getProductOrder().getSinglePriceAdjustment() == null) {
+                                workId = quoteService
+                                        .registerNewWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
+                                                item.getWorkCompleteDate(), item.getQuantity(),
+                                                pageUrl, "billingSession", sessionKey);
+                            } else {
+                                workId = quoteService
+                                        .registerNewWorkWithPriceOverride(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
+                                                item.getWorkCompleteDate(), item.getQuantity(),
+                                                pageUrl, "billingSession", sessionKey,
+                                                item.getProductOrder().getSinglePriceAdjustment().getAdjustmentValue());
+                            }
                         }
 
                         billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacement, workId, sapBillingId,
@@ -345,6 +365,28 @@ public class BillingAdaptor implements Serializable {
         }
 
         return results;
+    }
+
+    private void updatePriceOnQuoteImportItem(QuoteImportItem item,
+                                              PriceList priceItemsForDate) {
+
+        if(item.getQuotePriceType().equals(LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.getQuoteType())) {
+            final QuotePriceItem replacedProductQuotePriceItem = priceItemsForDate
+                    .findByKeyFields(item.getProduct().getPrimaryPriceItem(), item.getWorkCompleteDate());
+
+            for (QuotePriceItem replacementPriceItem : replacedProductQuotePriceItem.getReplacementItems()
+                    .getQuotePriceItems()) {
+                if(replacementPriceItem.isMercuryPriceItemEqual(item.getPriceItem())) {
+                    item.getPriceItem().setPrice(replacementPriceItem.getPrice());
+                }
+            }
+
+        } else {
+            final QuotePriceItem quotePriceItem =
+                    priceItemsForDate.findByKeyFields(item.getPriceItem(), item.getWorkCompleteDate());
+
+            item.getPriceItem().setPrice(quotePriceItem.getPrice());
+        }
     }
 
     /**
