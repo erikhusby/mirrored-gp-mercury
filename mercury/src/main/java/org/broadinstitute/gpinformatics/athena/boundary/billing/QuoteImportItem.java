@@ -5,9 +5,8 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 
 import javax.annotation.Nonnull;
 import java.text.DecimalFormat;
@@ -226,17 +225,18 @@ public class QuoteImportItem {
      *
      * @param priceListCache The cache of the price list.
      *
+     * @param effectiveDate
      * @return null if this is not a replacement item or the primary price item if it is one.
      */
-    public QuotePriceItem getPrimaryForReplacement(PriceListCache priceListCache) {
+    public QuotePriceItem getPrimaryForReplacement(PriceList priceListCache, Date effectiveDate) {
         PriceItem primaryPriceItem = getPrimaryProduct().getPrimaryPriceItem();
 
         // If this is optional, then return the primary as the 'is replacing.' This is comparing the quote price item
         // to the values on the product's price item, so do the item by item compare.
-        for (QuotePriceItem optional : priceListCache.getReplacementPriceItems(primaryPriceItem)) {
+        for (QuotePriceItem optional : priceListCache.getReplacementPriceItems(primaryPriceItem, effectiveDate)) {
             if (optional.isMercuryPriceItemEqual(priceItem)) {
                 final QuotePriceItem priceItem = QuotePriceItem.convertMercuryPriceItem(primaryPriceItem);
-                priceItem.setPrice(priceListCache.findByKeyFields(primaryPriceItem).getPrice());
+                priceItem.setPrice(priceListCache.findByKeyFields(primaryPriceItem, effectiveDate).getPrice());
                 return priceItem;
             }
         }

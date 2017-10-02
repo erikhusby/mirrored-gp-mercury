@@ -24,6 +24,7 @@ import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.text.Format;
 import java.util.ArrayList;
@@ -85,17 +86,8 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         }
     }
 
-    private String url(Endpoint endpoint, String... urlParameters) {
+    private String url(Endpoint endpoint) {
         final StringBuilder constructedUrl = new StringBuilder(quoteConfig.getUrl() + endpoint.suffixUrl);
-
-        for (String urlParameter : urlParameters) {
-            if(constructedUrl.indexOf("?") == -1) {
-                constructedUrl.append("?");
-            } else {
-                constructedUrl.append("&");
-            }
-            constructedUrl.append(urlParameter);
-        }
 
         return constructedUrl.toString();
     }
@@ -107,23 +99,49 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
 
         return registerWorkHelper(quote, quotePriceItem, itemIsReplacing, reportedCompletionDate, numWorkUnits,
                 callbackUrl,
-                callbackParameterName, callbackParameterValue, Endpoint.REGISTER_WORK);
+                callbackParameterName, callbackParameterValue,null, Endpoint.REGISTER_WORK);
     }
 
     @Override
     public String registerNewSAPWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
-                                  Date reportedCompletionDate, double numWorkUnits,
-                                  String callbackUrl, String callbackParameterName, String callbackParameterValue) {
+                                     Date reportedCompletionDate, double numWorkUnits,
+                                     String callbackUrl, String callbackParameterName, String callbackParameterValue) {
 
         return registerWorkHelper(quote, quotePriceItem, itemIsReplacing, reportedCompletionDate, numWorkUnits,
                 callbackUrl,
-                callbackParameterName, callbackParameterValue, Endpoint.REGISTER_BLOCKED_WORK);
+                callbackParameterName, callbackParameterValue, null, Endpoint.REGISTER_BLOCKED_WORK);
+    }
+
+    @Override
+    public String registerNewWorkWithPriceOverride(Quote quote, QuotePriceItem quotePriceItem,
+                                                   QuotePriceItem itemIsReplacing,
+                                                   Date reportedCompletionDate, double numWorkUnits,
+                                                   String callbackUrl, String callbackParameterName,
+                                                   String callbackParameterValue,
+                                                   BigDecimal priceAdjustment) {
+
+        return registerWorkHelper(quote, quotePriceItem, itemIsReplacing, reportedCompletionDate, numWorkUnits,
+                callbackUrl,
+                callbackParameterName, callbackParameterValue, priceAdjustment, Endpoint.REGISTER_WORK);
+    }
+
+    @Override
+    public String registerNewSAPWorkWithPriceOverride(Quote quote, QuotePriceItem quotePriceItem,
+                                                      QuotePriceItem itemIsReplacing,
+                                                      Date reportedCompletionDate, double numWorkUnits,
+                                                      String callbackUrl, String callbackParameterName,
+                                                      String callbackParameterValue,
+                                                      BigDecimal priceAdjustment) {
+
+        return registerWorkHelper(quote, quotePriceItem, itemIsReplacing, reportedCompletionDate, numWorkUnits,
+                callbackUrl,
+                callbackParameterName, callbackParameterValue, priceAdjustment, Endpoint.REGISTER_BLOCKED_WORK);
     }
 
     private String registerWorkHelper(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
                                       Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
                                       String callbackParameterName, String callbackParameterValue,
-                                      Endpoint endpoint) {
+                                      BigDecimal priceAdjustment, Endpoint endpoint) {
         Format dateFormat = FastDateFormat.getInstance("MM/dd/yyyy");
 
         // see https://iwww.broadinstitute.org/blogs/quote/?page_id=272 for details.
@@ -152,6 +170,9 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         params.add("url", callbackUrl);
         params.add("object_type", callbackParameterName);
         params.add("object_value", callbackParameterValue);
+        if(priceAdjustment != null) {
+            params.add("price_adjustment", String.valueOf(priceAdjustment));
+        }
 
         WebResource resource = getJerseyClient().resource(url);
         resource.accept(MediaType.TEXT_PLAIN);
@@ -382,12 +403,14 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
     }
 
     @Override
-    public PriceList getPriceItemsForDate(List<QuoteImportItem> targetedPriceItemCriteria) throws QuoteServerException {
+    public PriceList getPriceItemsForDate(List<QuoteImportItem> targetedPriceItemCriteria)
+            throws QuoteServerException, QuoteNotFoundException {
 
         List<String> orderedPriceItemNames = new ArrayList<>();
         List<String> orderedCategoryNames = new ArrayList<>();
         List<String> orderedPlatformNames = new ArrayList<>();
         List<String> orderedEffectiveDates = new ArrayList<>();
+        MultivaluedMap<String, String> params = new MultivaluedMapImpl();
 
         for (QuoteImportItem targetedPriceItemCriterion : targetedPriceItemCriteria) {
             orderedPriceItemNames.add(targetedPriceItemCriterion.getProduct().getPrimaryPriceItem().getName());
@@ -398,18 +421,18 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
 
         final PriceList priceList;
 
-        final String effectiveDateCriteria = "effectiveDate=" + StringUtils.join(orderedEffectiveDates, ",");
-        final String priceItemNameCriteria = "priceitem_name=" + StringUtils.join(orderedPriceItemNames, ",");
-        final String platformNameCriteria = "platform_name=" + StringUtils.join(orderedPlatformNames, ",");
-        final String categoryNameCriteria = "category_name=" + StringUtils.join(orderedCategoryNames, ",");
+        params.add("effectiveDate", StringUtils.join(orderedEffectiveDates, ","));
+        params.add("priceitem_name", StringUtils.join(orderedPriceItemNames, ","));
+        params.add("platform_name", StringUtils.join(orderedPlatformNames, ","));
+        params.add("category_name=", StringUtils.join(orderedCategoryNames, ","));
 
-        final String urlString = url(Endpoint.PRICE_ITEM_DETAILS, effectiveDateCriteria, priceItemNameCriteria,
-                platformNameCriteria, categoryNameCriteria);
+        final String urlString = url(Endpoint.PRICE_ITEM_DETAILS);
 
         WebResource resource = getJerseyClient().resource( urlString);
 
         try {
             priceList = resource.accept(MediaType.APPLICATION_XML).get(PriceList.class);
+            resource.queryParams(params);
         } catch (UniformInterfaceException e) {
             final String priceFindErrorMessage = "Could not find specific billing prices for the given work complete dates::";
             log.error(priceFindErrorMessage+urlString, e);

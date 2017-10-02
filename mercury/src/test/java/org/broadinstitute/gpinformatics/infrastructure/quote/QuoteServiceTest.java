@@ -1,12 +1,11 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
-import org.broadinstitute.gpinformatics.infrastructure.quote.*;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Set;
