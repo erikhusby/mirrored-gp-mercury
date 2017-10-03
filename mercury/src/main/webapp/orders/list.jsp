@@ -322,7 +322,7 @@
                                     </c:otherwise>
                                 </c:choose>
                             </td>
-                            <td>${order.orderType.displayName}</td>
+                            <td>${order.orderTypeDisplay}</td>
                             <td>${order.productName}</td>
                             <td>${order.productFamilyName}</td>
                             <td>${order.orderStatus}</td>
