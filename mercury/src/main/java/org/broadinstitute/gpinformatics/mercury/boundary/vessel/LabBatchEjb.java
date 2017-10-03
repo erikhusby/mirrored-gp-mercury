@@ -79,6 +79,7 @@ import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -109,6 +110,8 @@ public class LabBatchEjb {
     public static final String DESIGNATION_ERROR_MSG = "Designated tube {0} has invalid ";
 
     private static final Log logger = LogFactory.getLog(LabBatchEjb.class);
+    // todo jmt add this to a Preference, or add a flag on Product
+    private static final List<String> ADD_AND_REMOVE_SAMPLE_PRODUCTS = Arrays.asList("P-CLA-0008");
 
     private LabBatchDao labBatchDao;
 
@@ -694,6 +697,7 @@ public class LabBatchEjb {
         List<LabVessel> controlTubes = new ArrayList<>();
         List<LabVessel> addTubes = new ArrayList<>();
         Set<BucketEntry> bucketEntries = new HashSet<>();
+        boolean addAndRemoveSamples = false;
         for (Map.Entry<String, String> positionBarcodeEntry : rackScan.entrySet()) {
             LabVessel barcodedTube = mapBarcodeToTube.get(positionBarcodeEntry.getValue());
             if (barcodedTube != null) {
@@ -710,6 +714,10 @@ public class LabBatchEjb {
                     for (BucketEntry bucketEntry : sampleInstance.getAllBucketEntries()) {
                         if (Objects.equals(bucketEntry.getLabBatch().getBatchName(), lcsetName)) {
                             bucketEntries.add(bucketEntry);
+                            if (ADD_AND_REMOVE_SAMPLE_PRODUCTS.contains(
+                                    bucketEntry.getProductOrder().getProduct().getPartNumber())) {
+                                addAndRemoveSamples = true;
+                            }
                             found = true;
                             break;
                         }
@@ -722,7 +730,11 @@ public class LabBatchEjb {
                         }
                     } else {
                         if (!found) {
-                            addTubes.add(barcodedTube);
+                            if (addAndRemoveSamples) {
+                                addTubes.add(barcodedTube);
+                            } else {
+                                messageCollection.addError(barcodedTube.getLabel() + " is not in this LCSET");
+                            }
                         }
                     }
                 }
@@ -730,15 +742,16 @@ public class LabBatchEjb {
         }
 
         // Any tubes that are in the LCSET, but not in the scan, will need to be removed
-        // todo jmt this will mess up malaria, which will have four racks per LCSET
         List<LabVessel> removeTubes = new ArrayList<>();
-        LabBatch labBatch = labBatchDao.findByBusinessKey(lcsetName);
-        if (labBatch == null) {
-            messageCollection.addError("Failed to find " + lcsetName);
-        } else {
-            for (BucketEntry bucketEntry : labBatch.getBucketEntries()) {
-                if (!bucketEntries.contains(bucketEntry)) {
-                    removeTubes.add(bucketEntry.getLabVessel());
+        if (addAndRemoveSamples) {
+            LabBatch labBatch = labBatchDao.findByBusinessKey(lcsetName);
+            if (labBatch == null) {
+                messageCollection.addError("Failed to find " + lcsetName);
+            } else {
+                for (BucketEntry bucketEntry : labBatch.getBucketEntries()) {
+                    if (!bucketEntries.contains(bucketEntry)) {
+                        removeTubes.add(bucketEntry.getLabVessel());
+                    }
                 }
             }
         }
