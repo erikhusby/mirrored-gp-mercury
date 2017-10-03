@@ -3628,6 +3628,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public String getClinicalAttestationMessage() {
-        return "By clicking this I acknowledge that I need to be, and have been, approved ahead of time to place orders for clinical products.";
+        return "I acknowledge that I have been properly trained in the handling of clinical projects, samples, and "
+               + "data per Broad Genomics requirements, including HIPAA and data security policies, in order to order "
+               + "clinical products";
     }
 }
