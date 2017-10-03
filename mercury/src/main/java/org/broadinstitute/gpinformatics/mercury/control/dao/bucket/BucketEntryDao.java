@@ -55,11 +55,38 @@ public class BucketEntryDao extends GenericDao {
         }
     }
 
+    public List<BucketEntry> findByProductOrder(ProductOrder productOrder) {
+
+        CriteriaBuilder vesselPOCriteria = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<BucketEntry> query = vesselPOCriteria.createQuery(BucketEntry.class);
+        Root<BucketEntry> root = query.from(BucketEntry.class);
+        query.where(vesselPOCriteria.equal(root.get(BucketEntry_.productOrder),
+                                                                productOrder));
+        try {
+            return getEntityManager().createQuery(query).getResultList();
+        } catch (NoResultException ignored) {
+            return null;
+        }
+    }
+
     public List<BucketEntry> findByVesselAndBatch(LabVessel vessel, LabBatch labBatch) {
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<BucketEntry> query = criteriaBuilder.createQuery(BucketEntry.class);
         Root<BucketEntry> root = query.from(BucketEntry.class);
         query.where(criteriaBuilder.and(criteriaBuilder.equal(root.get(BucketEntry_.labVessel), vessel),
+                criteriaBuilder.equal(root.get(BucketEntry_.labBatch), labBatch)));
+        try {
+            return getEntityManager().createQuery(query).getResultList();
+        } catch (NoResultException ignored) {
+            return Collections.emptyList();
+        }
+    }
+
+    public List<BucketEntry> findByVesselAndBatch(List<LabVessel> vessel, LabBatch labBatch) {
+        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<BucketEntry> query = criteriaBuilder.createQuery(BucketEntry.class);
+        Root<BucketEntry> root = query.from(BucketEntry.class);
+        query.where(criteriaBuilder.and(root.get(BucketEntry_.labVessel).in(vessel),
                 criteriaBuilder.equal(root.get(BucketEntry_.labBatch), labBatch)));
         try {
             return getEntityManager().createQuery(query).getResultList();
