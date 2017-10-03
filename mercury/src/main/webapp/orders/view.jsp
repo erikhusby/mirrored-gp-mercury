@@ -1346,7 +1346,7 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
                 <stripes:link title="Product" href="${ctxpath}/products/product.action?view">
                     <stripes:param name="product" value="${actionBean.editOrder.product.partNumber}"/>
                     <c:if test="${actionBean.editOrder.orderType != null}">
-                        ${actionBean.editOrder.orderType.displayName} --
+                        ${actionBean.editOrder.orderTypeDisplay} --
                     </c:if>
                     <c:choose>
                         <c:when test="${actionBean.editOrder.researchOrder}">

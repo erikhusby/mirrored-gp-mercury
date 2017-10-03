@@ -2120,6 +2120,17 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         this.orderType = orderType;
     }
 
+    public String getOrderTypeDisplay() {
+
+        String displayName = getOrderType().getDisplayName();
+
+        if (getProduct().isClinicalProduct()) {
+            displayName = "Clinical (2000)";
+        }
+
+        return displayName;
+    }
+
     public static void checkQuoteValidity(Quote quote) throws QuoteServerException {
         final Date todayTruncated = DateUtils.truncate(new Date(), Calendar.DATE);
 
