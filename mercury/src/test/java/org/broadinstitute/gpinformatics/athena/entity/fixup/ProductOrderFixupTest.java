@@ -4,6 +4,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
@@ -1166,6 +1167,43 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderEjb.updateOrderStatus(pdoToComplete, MessageReporter.UNUSED);
 
         productOrderDao.persist(new FixupCommentary("GPLIM-5054: Updating PDO-12069 to Completed."));
+        commitTransaction();
+    }
+
+    @Test(enabled = false)
+    public void support3399UnabandonSamples() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+        final String sampleComment = "Accidentally abandoned due to a mis-communication.";
+        Set<Long> productOrderSampleIDs = new HashSet<>();
+        String pdoTicket = "PDO-13210";
+
+        List<String> sampleKeys = Arrays.asList("SM-BY2PC", "SM-BY2XX", "SM-BY1ZL", "SM-BY3JV", "SM-BY11Y",
+                "SM-BY3IW", "SM-BY2Y1", "SM-BY2XF", "SM-BY3JD", "SM-BY2XD", "SM-BY3JQ", "SM-BY2X4", "SM-BY3KQ",
+                "SM-BY2KD", "SM-BY3K2", "SM-BY162", "SM-BY3IN", "SM-BY3KA", "SM-BY2XK", "SM-BY2LR", "SM-BY2KR",
+                "SM-BY3KC", "SM-BY161");
+
+        ProductOrder productOrder = productOrderDao.findByBusinessKey(pdoTicket);
+
+        for (ProductOrderSample sample : productOrder.getSamples()) {
+            if (sampleKeys.contains(sample.getSampleKey())) {
+                productOrderSampleIDs.add(sample.getProductOrderSampleId());
+            }
+        }
+
+        final MessageReporter testOnly = MessageReporter.UNUSED;
+        productOrderEjb.unAbandonSamples(pdoTicket, productOrderSampleIDs, sampleComment, testOnly);
+        productOrderEjb.updateOrderStatus(pdoTicket, testOnly);
+
+        final MessageCollection messageCollection = new MessageCollection();
+        productOrderEjb.publishProductOrderToSAP(productOrder, messageCollection, false);
+        if (messageCollection.hasErrors() || messageCollection.hasWarnings()) {
+            Assert.fail("Error occured attempting to update SAP in fixupTest");
+
+        }
+        productOrderDao.persist(new FixupCommentary("SUPPORT-3399: unabandonning samples since abandoning "
+                                                    + "these came by way of a communication mixup, the public feature "
+                                                    + "is removed and the new process would not satisfy this case"));
         commitTransaction();
     }
 }
