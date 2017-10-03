@@ -1219,7 +1219,7 @@ public class ProductOrderFixupTest extends Arquillian {
         commitTransaction();
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void support3407UpdatePDOAssociationsOnLCSET11965() throws Exception {
         userBean.loginOSUser();
         beginTransaction();
