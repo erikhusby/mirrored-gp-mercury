@@ -1222,18 +1222,25 @@ public class ProductOrderFixupTest extends Arquillian {
         userBean.loginOSUser();
         beginTransaction();
 
-        final List<String> samplesToUpdate = Arrays.asList("SM-F2QYA", "SM-F2QYB", "SM-F2QYC", "SM-F2QYD", "SM-F2QYE", "SM-F2QYF", "SM-F2QYG", "SM-F2QYH");
-        ProductOrder newProductOrder = productOrderDao.findByBusinessKey("PDO-13067");
-
-        ProductOrder oldProductOrder = productOrderDao.findByBusinessKey("PDO-13083");
-
+        final ProductOrder oldProductOrder = productOrderDao.findByBusinessKey("PDO-13083");
         final String labBatchBusinessKey = "LCSET-11965";
 
-        List<BucketEntry> bucketEntries = bucketEntryDao.findByProductOrder(oldProductOrder );
-        for (BucketEntry bucketEntry : bucketEntries) {
-            for (MercurySample mercurySample : bucketEntry.getLabVessel().getMercurySamples()) {
-                if(samplesToUpdate.contains(mercurySample.getSampleKey())) {
-                    bucketEntry.setProductOrder(newProductOrder);
+        final Map<String, List<String>> newPdoToSampleMap = new HashMap<>();
+
+        newPdoToSampleMap.put("PDO-13067", Arrays.asList("SM-F2QYA", "SM-F2QYB", "SM-F2QYC", "SM-F2QYD", "SM-F2QYE", "SM-F2QYF", "SM-F2QYG", "SM-F2QYH"));
+        newPdoToSampleMap.put("PDO-13101", Arrays.asList("SM-F2RLI", "SM-F2RLJ", "SM-F2RLK"));
+        newPdoToSampleMap.put("PDO-12910", Arrays.asList("SM-G9VS5", "SM-G9VS6", "SM-G9VS7", "SM-G9VS8", "SM-G9VS9", "SM-G9VSA"));
+
+        for (Map.Entry<String, List<String>> newPdoToSampleEntry : newPdoToSampleMap.entrySet()) {
+
+            ProductOrder newProductOrder = productOrderDao.findByBusinessKey(newPdoToSampleEntry.getKey());
+
+            List<BucketEntry> bucketEntries = bucketEntryDao.findByProductOrder(oldProductOrder);
+            for (BucketEntry bucketEntry : bucketEntries) {
+                for (MercurySample mercurySample : bucketEntry.getLabVessel().getMercurySamples()) {
+                    if (newPdoToSampleEntry.getValue().contains(mercurySample.getSampleKey())) {
+                        bucketEntry.setProductOrder(newProductOrder);
+                    }
                 }
             }
         }
