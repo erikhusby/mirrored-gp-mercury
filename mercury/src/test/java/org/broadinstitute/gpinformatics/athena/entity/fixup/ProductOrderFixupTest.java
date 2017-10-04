@@ -34,7 +34,11 @@ import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -137,6 +141,12 @@ public class ProductOrderFixupTest extends Arquillian {
 
     @Inject
     private BillingEjb billingEjb;
+
+    @Inject
+    private LabBatchDao labBatchDao;
+
+    @Inject
+    private BucketEntryDao bucketEntryDao;
 
     // When you run this on prod, change to PROD and prod.
     @Deployment
@@ -1206,4 +1216,31 @@ public class ProductOrderFixupTest extends Arquillian {
                                                     + "is removed and the new process would not satisfy this case"));
         commitTransaction();
     }
+
+    @Test(enabled = false)
+    public void support3407UpdatePDOAssociationsOnLCSET11965() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+
+        final List<String> samplesToUpdate = Arrays.asList("SM-F2QYA", "SM-F2QYB", "SM-F2QYC", "SM-F2QYD", "SM-F2QYE", "SM-F2QYF", "SM-F2QYG", "SM-F2QYH");
+        ProductOrder newProductOrder = productOrderDao.findByBusinessKey("PDO-13067");
+
+        ProductOrder oldProductOrder = productOrderDao.findByBusinessKey("PDO-13083");
+
+        final String labBatchBusinessKey = "LCSET-11965";
+
+        List<BucketEntry> bucketEntries = bucketEntryDao.findByProductOrder(oldProductOrder );
+        for (BucketEntry bucketEntry : bucketEntries) {
+            for (MercurySample mercurySample : bucketEntry.getLabVessel().getMercurySamples()) {
+                if(samplesToUpdate.contains(mercurySample.getSampleKey())) {
+                    bucketEntry.setProductOrder(newProductOrder);
+                }
+            }
+        }
+
+        productOrderDao.persist(new FixupCommentary("SUPPORT-3407: changing the PDO association on certain"
+                                                    + " samples found in LCSET-11965"));
+        commitTransaction();
+    }
+
 }
