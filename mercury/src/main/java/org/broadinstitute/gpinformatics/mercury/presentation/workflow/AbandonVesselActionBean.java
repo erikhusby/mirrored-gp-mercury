@@ -540,11 +540,12 @@ public class AbandonVesselActionBean  extends RackScanActionBean {
             messageCollection.addError("You must perform a rack scan to abandon tubes in a rack.");
             addMessages(messageCollection);
             return;
-        }
+          }
 
-        setFoundVessels(new ArraySet<LabVessel>(labVessels));
-        resultsAvailable = true;
-        isSearchDone = true;
+             setFoundVessels(new ArraySet<LabVessel>(labVessels));
+             resultsAvailable = true;
+
+         isSearchDone = true;
     }
 
     /**

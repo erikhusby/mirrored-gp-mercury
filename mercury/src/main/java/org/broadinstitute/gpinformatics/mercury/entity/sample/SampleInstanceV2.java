@@ -94,6 +94,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     private List<LabBatch> allWorkflowBatches = new ArrayList<>();
     private List<LabBatchDepth> allWorkflowBatchDepths = new ArrayList<>();
     private LabBatch singleWorkflowBatch;
+    private List<BucketEntry> pendingBucketEntries = new ArrayList<>();
     private List<BucketEntry> allBucketEntries = new ArrayList<>();
     private BucketEntry singleBucketEntry;
     // todo jmt this doesn't include reworks
@@ -179,6 +180,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             singleWorkflowBatch = other.singleWorkflowBatch;
         }
         allBucketEntries.addAll(other.allBucketEntries);
+        pendingBucketEntries.addAll(other.pendingBucketEntries);
         singleBucketEntry = other.singleBucketEntry;
 
         allProductOrderSamples.addAll(other.allProductOrderSamples);
@@ -333,6 +335,10 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     @Nullable
     public BucketEntry getSingleBucketEntry() {
         return singleBucketEntry;
+    }
+
+    public List<BucketEntry> getPendingBucketEntries() {
+        return pendingBucketEntries;
     }
 
     /**
@@ -532,10 +538,13 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             singleWorkflowBatch = allWorkflowBatches.get(0);
         }
 
+        // todo jmt need a collection that includes pending bucket entries
         // filter out bucket entries without a lab batch
         Set<BucketEntry> bucketEntries = new HashSet<>();
         for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
-            if (bucketEntry.getLabBatch() != null) {
+            if (bucketEntry.getLabBatch() == null) {
+                pendingBucketEntries.add(bucketEntry);
+            } else {
                 bucketEntries.add(bucketEntry);
             }
         }

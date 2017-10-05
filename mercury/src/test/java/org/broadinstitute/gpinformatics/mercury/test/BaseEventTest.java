@@ -46,7 +46,6 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.D
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.EventHandlerSelector;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.FlowcellLoadedHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.FlowcellMessageHandler;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.SonicAliquotHandler;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
 import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
@@ -221,7 +220,7 @@ public class BaseEventTest {
         flowcellLoadedHandler.setEmailSender(emailSender);
         flowcellLoadedHandler.setAppConfig(appConfig);
 
-        EventHandlerSelector eventHandlerSelector = new EventHandlerSelector(new SonicAliquotHandler(),
+        EventHandlerSelector eventHandlerSelector = new EventHandlerSelector(
                 new DenatureToDilutionTubeHandler(), flowcellMessageHandler, flowcellLoadedHandler,
                 new BspNewRootHandler());
         labEventFactory.setEventHandlerSelector(eventHandlerSelector);

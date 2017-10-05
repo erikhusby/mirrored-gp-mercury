@@ -94,6 +94,7 @@ public class DesignationDto implements Cloneable, FctDto {
      * @param allocatedLanes the new number of lanes on This.
      * @return  a new dto like This but with null entity id and a lane count of the unallocated number of lanes.
      */
+    @Override
     public DesignationDto split(int allocatedLanes) {
         try {
             DesignationDto splitDto = (DesignationDto)this.clone();
@@ -126,12 +127,18 @@ public class DesignationDto implements Cloneable, FctDto {
         return numberCycles;
     }
 
+    @Override
     public String getProduct() {
         return StringUtils.join(productNames, DELIMITER);
     }
 
     public void setProduct(String delimitedProductNames) {
         productNames = Arrays.asList(delimitedProductNames.split(DELIMITER));
+    }
+
+    @Override
+    public List<String> getProductNames() {
+        return productNames;
     }
 
     public boolean isSelected() {
@@ -176,6 +183,7 @@ public class DesignationDto implements Cloneable, FctDto {
                 priority == FlowcellDesignation.Priority.LOW ? -1 : 0);
     }
 
+    @Override
     public Integer getNumberLanes() {
         return numberLanes;
     }
@@ -192,6 +200,7 @@ public class DesignationDto implements Cloneable, FctDto {
         this.readLength = readLength;
     }
 
+    @Override
     public BigDecimal getLoadingConc() {
         return loadingConc;
     }
@@ -208,6 +217,7 @@ public class DesignationDto implements Cloneable, FctDto {
         this.poolTest = poolTest;
     }
 
+    @Override
     public String getBarcode() {
         return barcode;
     }
@@ -224,6 +234,7 @@ public class DesignationDto implements Cloneable, FctDto {
         this.lcsetUrl = lcsetUrl;
     }
 
+    @Override
     public String getLcset() {
         return lcset;
     }
@@ -292,6 +303,7 @@ public class DesignationDto implements Cloneable, FctDto {
         this.designationId = designationId;
     }
 
+    @Override
     public boolean isAllocated() {
         return allocated;
     }

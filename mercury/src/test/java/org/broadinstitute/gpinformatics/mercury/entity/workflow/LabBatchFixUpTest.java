@@ -1413,10 +1413,19 @@ public class LabBatchFixUpTest extends Arquillian {
         // Ran the test with rollback, and verified with SQL logging that batch_starting_vessels orphans were removed.
         for (int i = 1; i < lines.size(); ++i) {
             LabBatch labBatch = labBatchDao.findByName(lines.get(i));
+            Set<BucketEntry> badBucketEntries = labBatch.getBucketEntries();
+            Iterator<BucketEntry> badBucketEntryIter = badBucketEntries.iterator();
+            while (badBucketEntryIter.hasNext()) {
+                BucketEntry bucketEntry = badBucketEntryIter.next();
+                LabVessel labVessel = bucketEntry.getLabVessel();
+                System.out.println("Removing bucket entry " + bucketEntry + " from " + labBatch.getBatchName());
+                labVessel.getBucketEntries().remove(bucketEntry);
+            }
+
             for (LabEvent labEvent : labBatchDao.findListByList(LabEvent.class, LabEvent_.manualOverrideLcSet,
                     Collections.singletonList(labBatch))) {
                 System.out.println("Removing manual override of " + labBatch.getBatchName() + " from " +
-                        labEvent.getLabEventType().name() + " (labEventId " + labEvent.getLabEventId() + ")");
+                                   labEvent.getLabEventType().name() + " (labEventId " + labEvent.getLabEventId() + ")");
                 labEvent.setManualOverrideLcSet(null);
             }
             System.out.println("Deleting " + labBatch.getBatchName());
