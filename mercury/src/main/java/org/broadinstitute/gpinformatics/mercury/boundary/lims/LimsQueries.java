@@ -418,7 +418,7 @@ public class LimsQueries {
                     Set<LabMetric> metrics = labVessel.getConcentrationMetrics();
                     if (metrics != null && !metrics.isEmpty()) {
                         List<LabMetric> metricList = new ArrayList<>(metrics);
-                        Collections.sort(metricList, new LabMetric.LabMetricRunDateComparator());
+                        Collections.sort(metricList, Collections.reverseOrder());
                         LabMetric.MetricType metricType = metricList.get(0).getName();
                         for (LabMetric labMetric : metricList) {
                             if (labMetric.getName() != metricType) {

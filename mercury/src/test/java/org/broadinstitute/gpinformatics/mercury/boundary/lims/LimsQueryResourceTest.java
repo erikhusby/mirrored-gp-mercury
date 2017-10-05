@@ -282,6 +282,18 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
                 .queryParam("onTubeOnly", "true");
         result = get(resource);
         assertThat(result, equalTo("1.38"));
+
+        resource = makeWebResource(baseUrl, "fetchQpcrForTube")
+                .queryParam("tubeBarcode", "0212942357")
+                .queryParam("quantType", "Catch Pico");
+        UniformInterfaceException exception = getWithError(resource);
+        assertErrorResponse(exception, 500, "Tube or quant not found for barcode: 0212942357, quant type: Catch Pico");
+
+        resource = makeWebResource(baseUrl, "fetchQpcrForTube")
+                .queryParam("tubeBarcode", "1142063551")
+                .queryParam("quantType", "VIIA QPCR");
+        exception = getWithError(resource);
+        assertErrorResponse(exception, 500, "Tube or quant not found for barcode: 1142063551, quant type: VIIA QPCR");
     }
 
     /**

@@ -4,6 +4,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
@@ -33,7 +34,11 @@ import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -136,6 +141,12 @@ public class ProductOrderFixupTest extends Arquillian {
 
     @Inject
     private BillingEjb billingEjb;
+
+    @Inject
+    private LabBatchDao labBatchDao;
+
+    @Inject
+    private BucketEntryDao bucketEntryDao;
 
     // When you run this on prod, change to PROD and prod.
     @Deployment
@@ -1168,4 +1179,75 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderDao.persist(new FixupCommentary("GPLIM-5054: Updating PDO-12069 to Completed."));
         commitTransaction();
     }
+
+    @Test(enabled = false)
+    public void support3399UnabandonSamples() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+        final String sampleComment = "Accidentally abandoned due to a mis-communication.";
+        Set<Long> productOrderSampleIDs = new HashSet<>();
+        String pdoTicket = "PDO-13210";
+
+        List<String> sampleKeys = Arrays.asList("SM-BY2PC", "SM-BY2XX", "SM-BY1ZL", "SM-BY3JV", "SM-BY11Y",
+                "SM-BY3IW", "SM-BY2Y1", "SM-BY2XF", "SM-BY3JD", "SM-BY2XD", "SM-BY3JQ", "SM-BY2X4", "SM-BY3KQ",
+                "SM-BY2KD", "SM-BY3K2", "SM-BY162", "SM-BY3IN", "SM-BY3KA", "SM-BY2XK", "SM-BY2LR", "SM-BY2KR",
+                "SM-BY3KC", "SM-BY161");
+
+        ProductOrder productOrder = productOrderDao.findByBusinessKey(pdoTicket);
+
+        for (ProductOrderSample sample : productOrder.getSamples()) {
+            if (sampleKeys.contains(sample.getSampleKey())) {
+                productOrderSampleIDs.add(sample.getProductOrderSampleId());
+            }
+        }
+
+        final MessageReporter testOnly = MessageReporter.UNUSED;
+        productOrderEjb.unAbandonSamples(pdoTicket, productOrderSampleIDs, sampleComment, testOnly);
+        productOrderEjb.updateOrderStatus(pdoTicket, testOnly);
+
+        final MessageCollection messageCollection = new MessageCollection();
+        productOrderEjb.publishProductOrderToSAP(productOrder, messageCollection, false);
+        if (messageCollection.hasErrors() || messageCollection.hasWarnings()) {
+            Assert.fail("Error occured attempting to update SAP in fixupTest");
+
+        }
+        productOrderDao.persist(new FixupCommentary("SUPPORT-3399: unabandonning samples since abandoning "
+                                                    + "these came by way of a communication mixup, the public feature "
+                                                    + "is removed and the new process would not satisfy this case"));
+        commitTransaction();
+    }
+
+    @Test(enabled = false)
+    public void support3407UpdatePDOAssociationsOnLCSET11965() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+
+        final ProductOrder oldProductOrder = productOrderDao.findByBusinessKey("PDO-13083");
+        final String labBatchBusinessKey = "LCSET-11965";
+
+        final Map<String, List<String>> newPdoToSampleMap = new HashMap<>();
+
+        newPdoToSampleMap.put("PDO-13067", Arrays.asList("SM-F2QYA", "SM-F2QYB", "SM-F2QYC", "SM-F2QYD", "SM-F2QYE", "SM-F2QYF", "SM-F2QYG", "SM-F2QYH"));
+        newPdoToSampleMap.put("PDO-13101", Arrays.asList("SM-F2RLI", "SM-F2RLJ", "SM-F2RLK"));
+        newPdoToSampleMap.put("PDO-12910", Arrays.asList("SM-G9VS5", "SM-G9VS6", "SM-G9VS7", "SM-G9VS8", "SM-G9VS9", "SM-G9VSA"));
+
+        for (Map.Entry<String, List<String>> newPdoToSampleEntry : newPdoToSampleMap.entrySet()) {
+
+            ProductOrder newProductOrder = productOrderDao.findByBusinessKey(newPdoToSampleEntry.getKey());
+
+            List<BucketEntry> bucketEntries = bucketEntryDao.findByProductOrder(oldProductOrder);
+            for (BucketEntry bucketEntry : bucketEntries) {
+                for (MercurySample mercurySample : bucketEntry.getLabVessel().getMercurySamples()) {
+                    if (newPdoToSampleEntry.getValue().contains(mercurySample.getSampleKey())) {
+                        bucketEntry.setProductOrder(newProductOrder);
+                    }
+                }
+            }
+        }
+
+        productOrderDao.persist(new FixupCommentary("SUPPORT-3407: changing the PDO association on certain"
+                                                    + " samples found in LCSET-11965"));
+        commitTransaction();
+    }
+
 }
