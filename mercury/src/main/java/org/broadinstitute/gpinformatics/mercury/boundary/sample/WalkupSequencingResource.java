@@ -75,14 +75,6 @@ public class WalkupSequencingResource {
     @POST
     @Consumes({"application/json"})
     @Produces({"application/json"})
-    @Path("/testJson")
-    public String testJson(WalkUpSequencing walkUpSequencing) {
-        return STATUS_SUCCESS;
-    }
-
-    @POST
-    @Consumes({"application/json"})
-    @Produces({"application/json"})
     @Path("/postSequenceData")
     public String getJson(WalkUpSequencing walkUpSequencing) {
         messageCollection.clearAll();
@@ -100,8 +92,7 @@ public class WalkupSequencingResource {
         LabVessel labVessel = getLabVessel(walkUpSequencing.getTubeBarcode());
         labVessel.setVolume(new BigDecimal(asNumber(walkUpSequencing.getVolume())));
         labVessel.setConcentration(new BigDecimal(asNumber(walkUpSequencing.getConcentration())));
-        MercurySample mercurySample =
-                getMercurySample(walkUpSequencing.getLibraryName() + "_" + walkUpSequencing.getTubeBarcode());
+        MercurySample mercurySample = getMercurySample(walkUpSequencing.getLibraryName());
 
         mercurySample.addLabVessel(labVessel);
         mercurySampleDao.persist(mercurySample);
@@ -112,13 +103,13 @@ public class WalkupSequencingResource {
         sampleInstanceEntity.setLabName(walkUpSequencing.getLabName());
         sampleInstanceEntity.setIllumina454KitUsed(walkUpSequencing.getIlluminaTech());
         sampleInstanceEntity.setReference(walkUpSequencing.getReference());
-        sampleInstanceEntity.setReferenceVersion(new Integer(asNumber(walkUpSequencing.getReferenceVersion())));
+        sampleInstanceEntity.setReferenceVersion(asInteger(walkUpSequencing.getReferenceVersion()));
         sampleInstanceEntity.setConcentrationUnit(walkUpSequencing.getConcentrationUnit());
         sampleInstanceEntity.setFragmentSize(walkUpSequencing.getFragSizeRange());
         sampleInstanceEntity.setIsPhix(walkUpSequencing.getIsPhix());
         sampleInstanceEntity.setPhixPercentage(new BigDecimal(asNumber(walkUpSequencing.getPhixPercentage())));
         sampleInstanceEntity.setReadLength(new Integer(asNumber(walkUpSequencing.getReadLength())));
-        sampleInstanceEntity.setReadLength2(NumberUtils.createInteger(walkUpSequencing.getReadLength2()));
+        sampleInstanceEntity.setReadLength2(asInteger(walkUpSequencing.getReadLength2()));
         sampleInstanceEntity.setIndexLength(NumberUtils.createInteger(walkUpSequencing.getIndexLength()));
         sampleInstanceEntity.setIndexLength2(NumberUtils.createInteger(walkUpSequencing.getIndexLength2()));
         sampleInstanceEntity.setLaneQuantity(new Integer(asNumber(walkUpSequencing.getLaneQuantity())));
@@ -144,6 +135,11 @@ public class WalkupSequencingResource {
      */
     private String asNumber(@Nullable String input) {
         return StringUtils.isNumeric(StringUtils.trimToEmpty(input)) ? input : "0";
+    }
+
+    /** Use this when a null result is wanted for a blank input. */
+    private @Nullable Integer asInteger(@Nullable String input) {
+        return StringUtils.isBlank(input) ? null : new Integer(asNumber(input));
     }
 
     /**

@@ -900,7 +900,7 @@
             <column name="READ_LENGTH2"  type="number(19,0)"/>
             <column name="INDEX_LENGTH"  type="number(19,0)"/>
             <column name="INDEX_LENGTH2"  type="number(19,0)"/>
-            <column name="SUBMIT_DATE"  type="varchar(255)"/>
+            <column name="SUBMIT_DATE"  type="timestamp"/>
             <column name="LAB_NAME"  type="varchar(255)"/>
             <column name="READ_TYPE"  type="varchar(255)"/>
             <column name="REFERENCE"  type="varchar(255)"/>
@@ -941,7 +941,7 @@
             <column name="READ_LENGTH2"  type="number(19,0)"/>
             <column name="INDEX_LENGTH"  type="number(19,0)"/>
             <column name="INDEX_LENGTH2"  type="number(19,0)"/>
-            <column name="SUBMIT_DATE"  type="varchar(255)"/>
+            <column name="SUBMIT_DATE"  type="timestamp"/>
             <column name="LAB_NAME"  type="varchar(255)"/>
             <column name="READ_TYPE"  type="varchar(255)"/>
             <column name="REFERENCE"  type="varchar(255)"/>
