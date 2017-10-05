@@ -48,7 +48,7 @@ import java.util.Set;
  */
 public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLASS> {
     public static final String IN_CLAUSE_PLACEHOLDER = "__IN_CLAUSE__";
-    private static final int ONE_HOUR = 3600;
+    public static final int TRANSACTION_TIMEOUT = 2 * 60 * 60; // in seconds.
 
     /** The quote character for ETL values. */
     private static final String QUOTE = "\"";
@@ -187,7 +187,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
         try {
             if (utx != null) {
                 utx.begin();
-                utx.setTransactionTimeout(ONE_HOUR);
+                utx.setTransactionTimeout(TRANSACTION_TIMEOUT);
             }
             // Retrieves the Envers-formatted list of entity changes in the given revision range.
             // Subclass may add additional entity ids based on custom rev query.
@@ -248,7 +248,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
         try {
             if (utx != null) {
                 utx.begin();
-                utx.setTransactionTimeout(ONE_HOUR);
+                utx.setTransactionTimeout(TRANSACTION_TIMEOUT);
             }
 
             Collection<Long> auditClassDeletedIds = fetchDeletedEntityIds(startId, endId);
@@ -280,7 +280,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
                 // honor a long timeout setting.
                 utx.rollback();
                 utx.begin();
-                utx.setTransactionTimeout(ONE_HOUR);
+                utx.setTransactionTimeout(TRANSACTION_TIMEOUT);
             }
 
             int count =  writeEtlDataFile(deletedEntityIds, modifiedEntityIds, Collections.<Long>emptyList(),

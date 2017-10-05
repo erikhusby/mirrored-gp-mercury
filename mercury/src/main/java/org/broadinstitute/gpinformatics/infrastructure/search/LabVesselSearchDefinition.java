@@ -1,9 +1,9 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+import org.apache.commons.collections4.MapIterator;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
-import org.broadinstitute.gpinformatics.infrastructure.columns.SampleDataFetcherAddRowsListener;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselArrayMet
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselLatestEventPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetadataPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetricPlugin;
+import org.broadinstitute.gpinformatics.infrastructure.columns.SampleDataFetcherAddRowsListener;
 import org.broadinstitute.gpinformatics.infrastructure.columns.VesselLayoutPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.VesselMetricDetailsPlugin;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -22,6 +23,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -56,6 +59,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * Builds ConfigurableSearchDefinition for lab vessel user defined search logic
@@ -117,6 +121,9 @@ public class LabVesselSearchDefinition {
 
         List<SearchTerm> searchTerms = srchDef.buildLabVesselIds();
         mapGroupSearchTerms.put("IDs", searchTerms);
+
+        searchTerms = srchDef.buildLabVesselBatchTypes();
+        mapGroupSearchTerms.put("Lab Batch by Type", searchTerms);
 
         // Are there alternatives to search terms that aren't searchable?  Should they be in a different structure, then merged with search terms for display?
 
@@ -249,141 +256,13 @@ public class LabVesselSearchDefinition {
     private List<SearchTerm> buildLabVesselIds() {
         List<SearchTerm> searchTerms = new ArrayList<>();
 
-        // LCSET and XTR batches are filtered by workflow batches
-        SearchTerm.ImmutableTermFilter workflowOnlyFilter = new SearchTerm.ImmutableTermFilter(
-                "labBatchType", SearchInstance.Operator.EQUALS, LabBatch.LabBatchType.WORKFLOW);
-        // LCSET batches are filtered by name prefix = LCSET-
-        SearchTerm.ImmutableTermFilter lscetBatchFilter = new SearchTerm.ImmutableTermFilter(
-                "batchName", SearchInstance.Operator.LIKE, "LCSET-%");
-        // ARRAY batches are filtered by name prefix = ARRAY-
-        SearchTerm.ImmutableTermFilter arrayBatchFilter = new SearchTerm.ImmutableTermFilter(
-                "batchName", SearchInstance.Operator.LIKE, "ARRAY-%");
-        // XTR batches are filtered by name prefix = XTR-
-        SearchTerm.ImmutableTermFilter xtrBatchFilter = new SearchTerm.ImmutableTermFilter(
-                "batchName", SearchInstance.Operator.LIKE, "XTR-%");
-        // FCT batches are filtered by workflow batches
-        SearchTerm.ImmutableTermFilter fctOnlyFilter = new SearchTerm.ImmutableTermFilter(
-                "labBatchType", SearchInstance.Operator.IN, LabBatch.LabBatchType.FCT, LabBatch.LabBatchType.MISEQ);
-
-
-        // todo jmt look at search inputs, to show only LCSET that was searched on?
         SearchTerm searchTerm = new SearchTerm();
-        searchTerm.setName("LCSET");
-        searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getLcsetInputConverter());
-        searchTerm.setDisplayExpression(DisplayExpression.LCSET);
-
-        List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
-        // Non-reworks
-        SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList("labBatches", "labBatch"));
-        criteriaPath.setPropertyName("batchName");
-        criteriaPath.addImmutableTermFilter(workflowOnlyFilter);
-        criteriaPath.addImmutableTermFilter(lscetBatchFilter);
-        criteriaPath.setJoinFetch(Boolean.TRUE);
-        criteriaPaths.add(criteriaPath);
-        // Reworks
-        SearchTerm.CriteriaPath nestedCriteriaPath = new SearchTerm.CriteriaPath();
-        nestedCriteriaPath.setCriteria(Arrays.asList("reworkLabBatches"));
-        criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList("vesselById", "labVesselId"));
-        criteriaPath.setNestedCriteriaPath(nestedCriteriaPath);
-        criteriaPath.setPropertyName("batchName");
-        criteriaPath.setJoinFetch(Boolean.TRUE);
-        criteriaPath.addImmutableTermFilter(workflowOnlyFilter);
-        criteriaPath.addImmutableTermFilter(lscetBatchFilter);
-        criteriaPaths.add(criteriaPath);
-        searchTerm.setCriteriaPaths(criteriaPaths);
-        searchTerms.add(searchTerm);
-
-        searchTerm = new SearchTerm();
-        searchTerm.setName("ARRAY");
-        searchTerm.setDisplayExpression(DisplayExpression.ARRAY);
-
-        criteriaPaths = new ArrayList<>();
-        // Non-reworks (arrays don't get reworked)
-        criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList("labBatches", "labBatch"));
-        criteriaPath.setPropertyName("batchName");
-        criteriaPath.addImmutableTermFilter(workflowOnlyFilter);
-        criteriaPath.addImmutableTermFilter(arrayBatchFilter);
-        criteriaPath.setJoinFetch(Boolean.TRUE);
-        criteriaPaths.add(criteriaPath);
-        searchTerm.setCriteriaPaths(criteriaPaths);
-        searchTerms.add(searchTerm);
-
-        searchTerm = new SearchTerm();
-        searchTerm.setName("XTR");
-        searchTerm.setDisplayExpression(DisplayExpression.XTR);
-
-        criteriaPaths = new ArrayList<>();
-        // Non-reworks
-        criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList("labBatches", "labBatch"));
-        criteriaPath.setPropertyName("batchName");
-        criteriaPath.addImmutableTermFilter(workflowOnlyFilter);
-        criteriaPath.addImmutableTermFilter(xtrBatchFilter);
-        criteriaPath.setJoinFetch(Boolean.TRUE);
-        criteriaPaths.add(criteriaPath);
-        // Reworks
-        nestedCriteriaPath = new SearchTerm.CriteriaPath();
-        nestedCriteriaPath.setCriteria(Arrays.asList("reworkLabBatches"));
-        criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList("vesselById", "labVesselId"));
-        criteriaPath.setNestedCriteriaPath(nestedCriteriaPath);
-        criteriaPath.setPropertyName("batchName");
-        criteriaPath.setJoinFetch(Boolean.TRUE);
-        criteriaPath.addImmutableTermFilter(workflowOnlyFilter);
-        criteriaPath.addImmutableTermFilter(xtrBatchFilter);
-        criteriaPaths.add(criteriaPath);
-        searchTerm.setCriteriaPaths(criteriaPaths);
-        searchTerms.add(searchTerm);
-
-        searchTerm = new SearchTerm();
-        searchTerm.setName("FCT");
-        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public Set<String> evaluate(Object entity, SearchContext context) {
-                Set<String> results = null;
-                LabVessel labVessel = (LabVessel) entity;
-
-                VesselBatchTraverserCriteria downstreamBatchFinder = new VesselBatchTraverserCriteria();
-                if( labVessel.getContainerRole() != null ) {
-                    labVessel.getContainerRole().applyCriteriaToAllPositions(
-                            downstreamBatchFinder, TransferTraverserCriteria.TraversalDirection.Ancestors);
-                } else {
-                    labVessel.evaluateCriteria(
-                            downstreamBatchFinder, TransferTraverserCriteria.TraversalDirection.Ancestors);
-                }
-
-                for ( LabBatch labBatch : downstreamBatchFinder.getLabBatches() ) {
-                    if( labBatch.getLabBatchType() == LabBatch.LabBatchType.FCT
-                            || labBatch.getLabBatchType() == LabBatch.LabBatchType.MISEQ ) {
-                        (results==null?results = new HashSet<>():results).add(labBatch.getBatchName());
-                    }
-                }
-                return results;
-            }
-        });
-
-        criteriaPaths = new ArrayList<>();
-        // Non-reworks
-        criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList("labBatches", "labBatch"));
-        criteriaPath.setPropertyName("batchName");
-        criteriaPath.addImmutableTermFilter(fctOnlyFilter);
-        criteriaPath.setJoinFetch(Boolean.TRUE);
-        criteriaPaths.add(criteriaPath);
-        // No FCT reworks, another ticket is created
-        searchTerm.setCriteriaPaths(criteriaPaths);
-        searchTerms.add(searchTerm);
-
-        searchTerm = new SearchTerm();
         searchTerm.setName("Barcode");
         searchTerm.setIsDefaultResultColumn(Boolean.TRUE);
         searchTerm.setRackScanSupported(Boolean.TRUE);
         searchTerm.setDbSortPath("label");
-        criteriaPaths = new ArrayList<>();
-        criteriaPath = new SearchTerm.CriteriaPath();
+        List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
+        SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setPropertyName("label");
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
@@ -462,6 +341,186 @@ public class LabVesselSearchDefinition {
                 return (String) context.getPagination().getIdExtraInfo().get(labVessel.getLabel());
             }
         });
+        searchTerms.add(searchTerm);
+
+        return searchTerms;
+    }
+
+    private List<SearchTerm> buildLabVesselBatchTypes() {
+        List<SearchTerm> searchTerms = new ArrayList<>();
+
+        // LCSET and XTR batches are filtered by workflow batches
+        SearchTerm.ImmutableTermFilter workflowOnlyFilter = new SearchTerm.ImmutableTermFilter(
+                "labBatchType", SearchInstance.Operator.EQUALS, LabBatch.LabBatchType.WORKFLOW);
+        // LCSET batches are filtered by name prefix = LCSET-
+        SearchTerm.ImmutableTermFilter lscetBatchFilter = new SearchTerm.ImmutableTermFilter(
+                "batchName", SearchInstance.Operator.LIKE, "LCSET-%");
+        // ARRAY batches are filtered by name prefix = ARRAY-
+        SearchTerm.ImmutableTermFilter arrayBatchFilter = new SearchTerm.ImmutableTermFilter(
+                "batchName", SearchInstance.Operator.LIKE, "ARRAY-%");
+        // XTR batches are filtered by name prefix = XTR-
+        SearchTerm.ImmutableTermFilter xtrBatchFilter = new SearchTerm.ImmutableTermFilter(
+                "batchName", SearchInstance.Operator.LIKE, "XTR-%");
+        // FCT batches are filtered by type
+        SearchTerm.ImmutableTermFilter fctOnlyFilter = new SearchTerm.ImmutableTermFilter(
+                "labBatchType", SearchInstance.Operator.IN, LabBatch.LabBatchType.FCT, LabBatch.LabBatchType.MISEQ);
+        // SK (Sample Kit) batches are filtered by type
+        SearchTerm.ImmutableTermFilter skOnlyFilter = new SearchTerm.ImmutableTermFilter(
+                "labBatchType", SearchInstance.Operator.EQUALS, LabBatch.LabBatchType.SAMPLES_RECEIPT);
+
+
+        // todo jmt look at search inputs, to show only LCSET that was searched on?
+        SearchTerm searchTerm = new SearchTerm();
+        searchTerm.setName("LCSET");
+        searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getBatchNameInputConverter());
+        searchTerm.setDisplayExpression(DisplayExpression.LCSET);
+
+        List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
+        // Non-reworks
+        SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("labBatches", "labBatch"));
+        criteriaPath.setPropertyName("batchName");
+        criteriaPath.addImmutableTermFilter(workflowOnlyFilter);
+        criteriaPath.addImmutableTermFilter(lscetBatchFilter);
+        criteriaPath.setJoinFetch(Boolean.TRUE);
+        criteriaPaths.add(criteriaPath);
+        // Reworks
+        SearchTerm.CriteriaPath nestedCriteriaPath = new SearchTerm.CriteriaPath();
+        nestedCriteriaPath.setCriteria(Arrays.asList("reworkLabBatches"));
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("vesselById", "labVesselId"));
+        criteriaPath.setNestedCriteriaPath(nestedCriteriaPath);
+        criteriaPath.setPropertyName("batchName");
+        criteriaPath.setJoinFetch(Boolean.TRUE);
+        criteriaPath.addImmutableTermFilter(workflowOnlyFilter);
+        criteriaPath.addImmutableTermFilter(lscetBatchFilter);
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("ARRAY");
+        searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getBatchNameInputConverter());
+        searchTerm.setDisplayExpression(DisplayExpression.ARRAY);
+
+        criteriaPaths = new ArrayList<>();
+        // Non-reworks (arrays don't get reworked)
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("labBatches", "labBatch"));
+        criteriaPath.setPropertyName("batchName");
+        criteriaPath.addImmutableTermFilter(workflowOnlyFilter);
+        criteriaPath.addImmutableTermFilter(arrayBatchFilter);
+        criteriaPath.setJoinFetch(Boolean.TRUE);
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("XTR");
+        searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getBatchNameInputConverter());
+        searchTerm.setDisplayExpression(DisplayExpression.XTR);
+
+        criteriaPaths = new ArrayList<>();
+        // Non-reworks
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("labBatches", "labBatch"));
+        criteriaPath.setPropertyName("batchName");
+        criteriaPath.addImmutableTermFilter(workflowOnlyFilter);
+        criteriaPath.addImmutableTermFilter(xtrBatchFilter);
+        criteriaPath.setJoinFetch(Boolean.TRUE);
+        criteriaPaths.add(criteriaPath);
+        // Reworks
+        nestedCriteriaPath = new SearchTerm.CriteriaPath();
+        nestedCriteriaPath.setCriteria(Arrays.asList("reworkLabBatches"));
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("vesselById", "labVesselId"));
+        criteriaPath.setNestedCriteriaPath(nestedCriteriaPath);
+        criteriaPath.setPropertyName("batchName");
+        criteriaPath.setJoinFetch(Boolean.TRUE);
+        criteriaPath.addImmutableTermFilter(workflowOnlyFilter);
+        criteriaPath.addImmutableTermFilter(xtrBatchFilter);
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("FCT");
+        searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getBatchNameInputConverter());
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                Set<String> results = null;
+                LabVessel labVessel = (LabVessel) entity;
+
+                VesselBatchTraverserCriteria downstreamBatchFinder = new VesselBatchTraverserCriteria();
+                if( labVessel.getContainerRole() != null ) {
+                    labVessel.getContainerRole().applyCriteriaToAllPositions(
+                            downstreamBatchFinder, TransferTraverserCriteria.TraversalDirection.Ancestors);
+                } else {
+                    labVessel.evaluateCriteria(
+                            downstreamBatchFinder, TransferTraverserCriteria.TraversalDirection.Ancestors);
+                }
+
+                for ( LabBatch labBatch : downstreamBatchFinder.getLabBatches() ) {
+                    if( labBatch.getLabBatchType() == LabBatch.LabBatchType.FCT
+                            || labBatch.getLabBatchType() == LabBatch.LabBatchType.MISEQ ) {
+                        (results==null?results = new HashSet<>():results).add(labBatch.getBatchName());
+                    }
+                }
+                return results;
+            }
+        });
+
+        criteriaPaths = new ArrayList<>();
+        // Non-reworks
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("labBatches", "labBatch"));
+        criteriaPath.setPropertyName("batchName");
+        criteriaPath.addImmutableTermFilter(fctOnlyFilter);
+        criteriaPath.setJoinFetch(Boolean.TRUE);
+        criteriaPaths.add(criteriaPath);
+        // No FCT reworks, another ticket is created
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("SK");
+        searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getBatchNameInputConverter());
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                Set<String> results = null;
+                LabVessel labVessel = (LabVessel) entity;
+
+                // Only look for BSP sample kit as an ancestor of a mercury lab vessel
+                VesselBatchTraverserCriteria downstreamBatchFinder = new VesselBatchTraverserCriteria();
+                if( labVessel.getContainerRole() != null ) {
+                    labVessel.getContainerRole().applyCriteriaToAllPositions(
+                            downstreamBatchFinder, TransferTraverserCriteria.TraversalDirection.Ancestors);
+                } else {
+                    labVessel.evaluateCriteria(
+                            downstreamBatchFinder, TransferTraverserCriteria.TraversalDirection.Ancestors);
+                }
+
+                for ( LabBatch labBatch : downstreamBatchFinder.getLabBatches() ) {
+                    if( labBatch.getLabBatchType() == LabBatch.LabBatchType.SAMPLES_RECEIPT ) {
+                        (results==null?results = new HashSet<>():results).add(labBatch.getBatchName());
+                    }
+                }
+                return results;
+            }
+        });
+
+        criteriaPaths = new ArrayList<>();
+        // Non-reworks
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("labBatches", "labBatch"));
+        criteriaPath.setPropertyName("batchName");
+        criteriaPath.addImmutableTermFilter(skOnlyFilter);
+        criteriaPath.setJoinFetch(Boolean.TRUE);
+        criteriaPaths.add(criteriaPath);
+        // No SK reworks, another ticket is created
+        searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerms.add(searchTerm);
 
         return searchTerms;
@@ -787,6 +846,28 @@ public class LabVesselSearchDefinition {
                 for(Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
                         : eval.getPositions().asMap().entrySet()) {
                     (barcodes==null?barcodes = new HashSet<>():barcodes)
+                            .add(labVesselAndPositions.getKey().getLabel());
+                }
+                return barcodes;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Norm Pond Tube Barcode");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                LabVessel labVessel = (LabVessel) entity;
+
+                VesselsForEventTraverserCriteria eval = new VesselsForEventTraverserCriteria(Collections.singletonList(
+                        LabEventType.PCR_PLUS_POND_NORMALIZATION));
+                labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+
+                Set<String> barcodes = null;
+                for(Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
+                        : eval.getPositions().asMap().entrySet()) {
+                    (barcodes == null ? barcodes = new HashSet<>() : barcodes)
                             .add(labVesselAndPositions.getKey().getLabel());
                 }
                 return barcodes;
@@ -1686,7 +1767,7 @@ public class LabVesselSearchDefinition {
                     return null;
                 }
 
-                // DNA plate well event/vessel looks to descendant for chip well (1:1)
+                // DNA plate well event/vessel looks to (latest if rehyb-ed) descendant for chip well (1:1)
                 for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
                         : InfiniumVesselTraversalEvaluator.getChipDetailsForDnaWell(vessel, CHIP_EVENT_TYPES, context).asMap().entrySet()) {
                     result = labVesselAndPositions.getValue().iterator().next().toString();
@@ -1703,16 +1784,24 @@ public class LabVesselSearchDefinition {
         searchTerm.setCriteriaPaths(labelCriteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public String evaluate(Object entity, SearchContext context) {
-                String result = null;
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                Set<String> result = null;
                 LabVessel vessel = (LabVessel)entity;
 
-                for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
-                        : InfiniumVesselTraversalEvaluator.getChipDetailsForDnaWell(vessel, CHIP_EVENT_TYPES, context ).asMap().entrySet()) {
-                    result = labVesselAndPositions.getKey().getLabel();
-                    break;
+                // Plate well will only show latest chip in the case of a re-hyb
+                if( vessel.getType() == LabVessel.ContainerType.PLATE_WELL ) {
+                    for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
+                            : InfiniumVesselTraversalEvaluator.getChipDetailsForDnaWell(vessel, CHIP_EVENT_TYPES, context ).asMap().entrySet()) {
+                        (result == null?result = new HashSet<>():result).add(labVesselAndPositions.getKey().getLabel());
+                        break;
+                    }
+                } else {
+                    // Plate shows list of all chips, initial and re-hyb
+                    for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
+                            : InfiniumVesselTraversalEvaluator.getChipDetailsForDnaPlate(vessel, CHIP_EVENT_TYPES, context ).asMap().entrySet()) {
+                        (result == null?result = new HashSet<>():result).add(labVesselAndPositions.getKey().getLabel());
+                    }
                 }
-
                 return result;
             }
         });
@@ -1790,8 +1879,16 @@ public class LabVesselSearchDefinition {
                 List<String> result = null;
                 LabVessel vessel = (LabVessel)entity;
 
+                Map<LabVessel, Collection<VesselPosition>> vesselCollectionMap;
+
+                if( vessel.getType() == LabVessel.ContainerType.PLATE_WELL ) {
+                    vesselCollectionMap = InfiniumVesselTraversalEvaluator.getChipDetailsForDnaWell(vessel, CHIP_EVENT_TYPES, context ).asMap();
+                } else {
+                    vesselCollectionMap = InfiniumVesselTraversalEvaluator.getChipDetailsForDnaPlate(vessel, CHIP_EVENT_TYPES, context ).asMap();
+                }
+
                 for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
-                        : InfiniumVesselTraversalEvaluator.getChipDetailsForDnaWell(vessel, CHIP_EVENT_TYPES, context ).asMap().entrySet()) {
+                        : vesselCollectionMap.entrySet()) {
                     if( result == null ) {
                         result = new ArrayList<>();
                     }
@@ -1832,19 +1929,38 @@ public class LabVesselSearchDefinition {
         searchTerm.setName("Hyb Chamber");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public String evaluate(Object entity, SearchContext context) {
-                String result = null;
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                Set<String> results = null;
                 LabVessel vessel = (LabVessel)entity;
+
                 TransferTraverserCriteria.VesselForEventTypeCriteria traverserCriteria =
                         new TransferTraverserCriteria.VesselForEventTypeCriteria(Collections.singletonList(
                                 LabEventType.INFINIUM_HYB_CHAMBER_LOADED), true);
-                vessel.evaluateCriteria(traverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
-                for (LabEvent labEvent : traverserCriteria.getVesselsForLabEventType().keySet()) {
-                    result = labEvent.getEventLocation();
-                    break;
+
+                if( vessel.getType() == LabVessel.ContainerType.PLATE_WELL ) {
+                    vessel.evaluateCriteria(traverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+                    LabEvent latestEvent = null;
+                    for (LabEvent labEvent : traverserCriteria.getVesselsForLabEventType().keySet()) {
+                        // Re-hybs based upon a plate well as the row source need to show chamber of latest event
+                        if( latestEvent == null ) {
+                            latestEvent = labEvent;
+                        } else if ( labEvent.getEventDate().after(latestEvent.getEventDate())) {
+                            latestEvent = labEvent;
+                        }
+                    }
+
+                    if( latestEvent != null ) {
+                        (results==null?results=new HashSet<>():results).add( latestEvent.getEventLocation() );
+                    }
+                } else if ( vessel.getType() == LabVessel.ContainerType.STATIC_PLATE ) {
+                    vessel.getContainerRole().applyCriteriaToAllPositions(traverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+                    for (LabEvent labEvent : traverserCriteria.getVesselsForLabEventType().keySet()) {
+                        // Show all chambers downstream from a plate as row source
+                        (results==null?results=new HashSet<>():results).add( labEvent.getEventLocation() );
+                    }
                 }
 
-                return result;
+                return results;
             }
         });
         searchTerms.add(searchTerm);
@@ -1853,25 +1969,55 @@ public class LabVesselSearchDefinition {
         searchTerm.setName("Tecan Position");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public String evaluate(Object entity, SearchContext context) {
-                String result = null;
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                Set<String> results = null;
+
+                if(!InfiniumVesselTraversalEvaluator.isInfiniumSearch(context)) {
+                    return results;
+                }
+
                 LabVessel vessel = (LabVessel)entity;
                 TransferTraverserCriteria.VesselForEventTypeCriteria traverserCriteria =
                         new TransferTraverserCriteria.VesselForEventTypeCriteria(Collections.singletonList(
                                 LabEventType.INFINIUM_XSTAIN), true);
-                vessel.evaluateCriteria(traverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
 
-            events:
-                for (LabEvent labEvent : traverserCriteria.getVesselsForLabEventType().keySet()) {
-                    for (LabEventMetadata labEventMetadata : labEvent.getLabEventMetadatas()) {
-                        if (labEventMetadata.getLabEventMetadataType() ==
-                                LabEventMetadata.LabEventMetadataType.MessageNum) {
-                            result = labEventMetadata.getValue();
-                            break events;
+                if( vessel.getType() == LabVessel.ContainerType.PLATE_WELL ) {
+                    vessel.evaluateCriteria(traverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+                    LabEvent latestEvent = null;
+
+                    // Re-hybs based upon a plate well as the row source need to show data from latest event
+                    for (LabEvent labEvent : traverserCriteria.getVesselsForLabEventType().keySet()) {
+                        if( latestEvent == null ) {
+                            latestEvent = labEvent;
+                        } else if ( labEvent.getEventDate().after(latestEvent.getEventDate())) {
+                            latestEvent = labEvent;
+                        }
+                    }
+
+                    if( latestEvent != null ) {
+                        for (LabEventMetadata labEventMetadata : latestEvent.getLabEventMetadatas()) {
+                            if (labEventMetadata.getLabEventMetadataType() ==
+                                    LabEventMetadata.LabEventMetadataType.MessageNum) {
+                                (results == null ? results = new HashSet<>() : results).add(labEventMetadata.getValue());
+                                break;
+                            }
+                        }
+                    }
+                } else if ( vessel.getType() == LabVessel.ContainerType.STATIC_PLATE ) {
+                    vessel.getContainerRole().applyCriteriaToAllPositions(traverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+                    for (LabEvent labEvent : traverserCriteria.getVesselsForLabEventType().keySet()) {
+                        // Show all chambers downstream from a plate as row source
+                        for (LabEventMetadata labEventMetadata : labEvent.getLabEventMetadatas()) {
+                            if (labEventMetadata.getLabEventMetadataType() ==
+                                    LabEventMetadata.LabEventMetadataType.MessageNum) {
+                                (results == null ? results = new HashSet<>() : results).add(labEventMetadata.getValue());
+                                break;
+                            }
                         }
                     }
                 }
-                return result;
+
+                return results;
             }
         });
         searchTerms.add(searchTerm);
@@ -1881,17 +2027,41 @@ public class LabVesselSearchDefinition {
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
+                Set<String> results = null;
+
+                if(!InfiniumVesselTraversalEvaluator.isInfiniumSearch(context)) {
+                    return results;
+                }
+
                 LabVessel vessel = (LabVessel)entity;
                 TransferTraverserCriteria.VesselForEventTypeCriteria traverserCriteria =
                         new TransferTraverserCriteria.VesselForEventTypeCriteria(Collections.singletonList(
                                 LabEventType.INFINIUM_XSTAIN), true);
-                vessel.evaluateCriteria(traverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
 
-                Set<String> result = new HashSet<>();
-                for (LabEvent labEvent : traverserCriteria.getVesselsForLabEventType().keySet()) {
-                    result.add(labEvent.getEventLocation());
+                if( vessel.getType() == LabVessel.ContainerType.PLATE_WELL ) {
+                    vessel.evaluateCriteria(traverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+                    LabEvent latestEvent = null;
+                    // Re-hybs based upon a plate well as the row source need to show data from latest event
+                    for (LabEvent labEvent : traverserCriteria.getVesselsForLabEventType().keySet()) {
+                        if( latestEvent == null ) {
+                            latestEvent = labEvent;
+                        } else if ( labEvent.getEventDate().after(latestEvent.getEventDate())) {
+                            latestEvent = labEvent;
+                        }
+                    }
+
+                    if( latestEvent != null ) {
+                        (results == null ? results = new HashSet<>() : results).add(latestEvent.getEventLocation());
+                    }
+                } else if ( vessel.getType() == LabVessel.ContainerType.STATIC_PLATE ) {
+                    vessel.getContainerRole().applyCriteriaToAllPositions(traverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+                    for (LabEvent labEvent : traverserCriteria.getVesselsForLabEventType().keySet()) {
+                        // Show all chambers downstream from a plate as row source
+                        (results == null ? results = new HashSet<>() : results).add(labEvent.getEventLocation());
+                    }
                 }
-                return result;
+
+                return results;
             }
         });
         searchTerms.add(searchTerm);
@@ -1929,6 +2099,55 @@ public class LabVesselSearchDefinition {
         searchTerm = new SearchTerm();
         searchTerm.setName("Proceed if OOS");
         searchTerm.setDisplayExpression(DisplayExpression.PROCEED_IF_OOS);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Flowcell Pool Test Lane(s)");
+        searchTerm.setHelpText("Valid only when the row vessel is a flowcell");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public List<String> evaluate(Object entity, SearchContext context) {
+                List<String> poolTestLanes;
+
+                LabVessel labVessel = (LabVessel)entity;
+
+                // Quick exit
+                if( !OrmUtil.proxySafeIsInstance(labVessel, IlluminaFlowcell.class)) {
+                    return null;
+                }
+
+                IlluminaFlowcell flowcell = OrmUtil.proxySafeCast(labVessel, IlluminaFlowcell.class);
+
+                VesselBatchTraverserCriteria downstreamBatchFinder = new VesselBatchTraverserCriteria(true);
+                flowcell.getContainerRole().applyCriteriaToAllPositions(
+                            downstreamBatchFinder, TransferTraverserCriteria.TraversalDirection.Ancestors);
+
+                // Never more than one Flowcell ticket per flowcell
+                LabBatch fct = null;
+
+                for ( LabBatch labBatch : downstreamBatchFinder.getLabBatches() ) {
+                    if( labBatch.getLabBatchType() == LabBatch.LabBatchType.FCT ) {
+                        fct = labBatch;
+                        break;
+                    }
+                }
+
+                if( fct == null ) {
+                    return null;
+                }
+
+                poolTestLanes = new ArrayList<>();
+
+                for( LabBatchStartingVessel startingVessel : fct.getLabBatchStartingVessels() ) {
+                    FlowcellDesignation designation = startingVessel.getFlowcellDesignation();
+                    if( designation != null && designation.isPoolTest() ) {
+                        poolTestLanes.add( startingVessel.getVesselPosition().toString() );
+                    }
+                }
+
+                return poolTestLanes;
+            }
+        });
         searchTerms.add(searchTerm);
 
         return searchTerms;
@@ -2000,6 +2219,10 @@ public class LabVesselSearchDefinition {
         // Traversal data accumulator
         private MultiValuedMap<LabVessel, VesselPosition> positions = new HashSetValuedHashMap<>();
 
+        // Want to be able to find vessel for latest event if more than one event (e.g infinium rehyb chip)
+        private boolean captureLatestEventVesselsFlag = false;
+        private Map<LabEvent,LabVessel> eventMap;
+
         // Traversal state control
         private int previousHopCount = -1;
         private boolean stopTraversingBeforeNextHop = false;
@@ -2041,11 +2264,31 @@ public class LabVesselSearchDefinition {
         }
 
         /**
+         * Flags traversal process to return only the vessels associated with the latest event found. <br />
+         * <strong>NOTE: This logic will fail (miserably) if traversal is started on a container (e.g. VesselContainer#applyCriteriaToAllPositions)</strong>
+         */
+        public void captureLatestEventVesselsOnly() {
+            this.captureLatestEventVesselsFlag = true;
+            eventMap = new TreeMap<>(LabEvent.BY_EVENT_DATE);
+        }
+
+        /**
          * Obtains the outcome of the traversal
          * @return A set of barcode-position pairs.
          * Note:  If the vessel in the event of interest is not in a container, the position value will be null.
          */
         public MultiValuedMap<LabVessel, VesselPosition> getPositions(){
+            if( !positions.isEmpty() && captureLatestEventVesselsFlag ) {
+                LabVessel lastEventVessel = null;
+                for( Map.Entry<LabEvent,LabVessel> entry : eventMap.entrySet() ) {
+                    lastEventVessel = entry.getValue();
+                }
+                for(MapIterator<LabVessel,VesselPosition> iter = positions.mapIterator(); iter.hasNext();) {
+                    if( !iter.next().getLabel().equals(lastEventVessel.getLabel()) ) {
+                        iter.remove();
+                    }
+                }
+            }
             return positions;
         }
 
@@ -2073,6 +2316,10 @@ public class LabVesselSearchDefinition {
                     Map.Entry<LabVessel,VesselPosition> vesselPositionEntry = getTraversalVessel(context);
                     positions.put(vesselPositionEntry.getKey(), vesselPositionEntry.getValue() );
                     catchThisVessel = true;
+
+                    if(captureLatestEventVesselsFlag) {
+                        eventMap.put(eventNode.getLabEvent(),vesselPositionEntry.getKey());
+                    }
                 } else {
                     // Try in-place events
                     Map.Entry<LabVessel,VesselPosition> vesselPositionEntry = getTraversalVessel(context);
@@ -2081,6 +2328,10 @@ public class LabVesselSearchDefinition {
                         if (labEventTypes.contains(inPlaceEvent.getLabEventType())) {
                             positions.put(vesselPositionEntry.getKey(), vesselPositionEntry.getValue());
                             catchThisVessel = true;
+
+                            if(captureLatestEventVesselsFlag) {
+                                eventMap.put(eventNode.getLabEvent(),vesselPositionEntry.getKey());
+                            }
                             break;
                         }
                     }
@@ -2140,9 +2391,18 @@ public class LabVesselSearchDefinition {
 
         public VesselBatchTraverserCriteria( ) { }
 
+        /**
+         * For cases when looking in ancestry from a flowcell for FCT tickets where a huge amount of overhead
+         *   is saved by not traversing farther gathering all other batches
+         */
+        public VesselBatchTraverserCriteria( boolean isForFctBatchOnly ) {
+            this.isForFctBatchOnly = isForFctBatchOnly;
+        }
+
         private Set<LabBatch> labBatches = new HashSet<>();
         private LabVessel startingVessel = null;
         private boolean stopCollectingFctBatches = false;
+        private boolean isForFctBatchOnly = false;
 
         public Set<LabBatch> getLabBatches(){
             return labBatches;
@@ -2151,6 +2411,11 @@ public class LabVesselSearchDefinition {
         @Override
         public TraversalControl evaluateVesselPreOrder(
                 Context context ) {
+
+            // Save a ton of overhead by stopping if we're looking for an FCT batch and we found one
+            if( isForFctBatchOnly && stopCollectingFctBatches ) {
+                return TraversalControl.StopTraversing;
+            }
 
 
             // Ignore descendant batches for the starting vessel (context.getHopCount() == 0)

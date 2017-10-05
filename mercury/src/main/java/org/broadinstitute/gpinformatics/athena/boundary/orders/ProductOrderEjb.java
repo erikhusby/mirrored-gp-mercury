@@ -486,9 +486,9 @@ public class ProductOrderEjb {
 
         if(orderQuote != null && accessControl.isEnabled()) {
 
-            eligibilityResult = orderQuote.isEligibleForSAP() &&
-                                editedProductOrder.getProduct()
-                                        .getPrimaryPriceItem() != null &&
+            eligibilityResult = editedProductOrder.getProduct()!=null &&
+                                editedProductOrder.getProduct().getPrimaryPriceItem() != null &&
+                                orderQuote != null && orderQuote.isEligibleForSAP() &&
                                 !CollectionUtils.containsAny(accessControl.getDisabledItems(), priceItemNameList) ;
         }
 
@@ -502,8 +502,10 @@ public class ProductOrderEjb {
 
     public boolean arePriceItemsValid(ProductOrder editedProductOrder, Set<AccessItem> priceItemNameList) {
         Set<Product> productListFromOrder = new HashSet<>();
-        productListFromOrder.add(editedProductOrder.getProduct());
-        priceItemNameList.add(new AccessItem(editedProductOrder.getProduct().getPrimaryPriceItem().getName()));
+        if (editedProductOrder.getProduct() != null) {
+            productListFromOrder.add(editedProductOrder.getProduct());
+            priceItemNameList.add(new AccessItem(editedProductOrder.getProduct().getPrimaryPriceItem().getName()));
+        }
         for (ProductOrderAddOn productOrderAddOn : editedProductOrder.getAddOns()) {
             productListFromOrder.add(productOrderAddOn.getAddOn());
             priceItemNameList.add(new AccessItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getName()));
@@ -514,19 +516,23 @@ public class ProductOrderEjb {
     public boolean determinePriceItemValidity(Collection<Product> productsToConsider) {
         boolean allItemsValid = true;
         QuotePriceItem primaryPriceItem;
-        try {
-            for (Product product: productsToConsider) {
-               primaryPriceItem =
-                        priceListCache.findByKeyFields(product.getPrimaryPriceItem().getPlatform(),
-                                product.getPrimaryPriceItem().getCategory(),
-                                product.getPrimaryPriceItem().getName());
-                if(primaryPriceItem == null) {
-                    allItemsValid = false;
-                    break;
+        if(CollectionUtils.isNotEmpty(productsToConsider)) {
+            try {
+                for (Product product : productsToConsider) {
+                    primaryPriceItem =
+                            priceListCache.findByKeyFields(product.getPrimaryPriceItem().getPlatform(),
+                                    product.getPrimaryPriceItem().getCategory(),
+                                    product.getPrimaryPriceItem().getName());
+                    if (primaryPriceItem == null) {
+                        allItemsValid = false;
+                        break;
+                    }
                 }
-            }
 
-        } catch (Exception e) {
+            } catch (Exception e) {
+                allItemsValid = false;
+            }
+        } else {
             allItemsValid = false;
         }
 
@@ -1523,12 +1529,46 @@ public class ProductOrderEjb {
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void updateSampleLedgers(Map<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> ledgerUpdates)
-            throws ValidationWithRollbackException {
+            throws ValidationWithRollbackException, SAPInterfaceException, QuoteNotFoundException,
+            QuoteServerException, InvalidProductException {
         List<String> errorMessages = new ArrayList<>();
+
+        Map<String, Quote> usedQuotesMiniCache = new HashMap<>();
+
+        Map<String, Boolean> updatedOrderMap = new HashMap<>();
 
         for (Map.Entry<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> entry : ledgerUpdates
                 .entrySet()) {
             ProductOrderSample productOrderSample = entry.getKey();
+
+            if(!updatedOrderMap.containsKey(productOrderSample.getProductOrder().getBusinessKey()) ||
+               !updatedOrderMap.get(productOrderSample.getProductOrder().getBusinessKey())) {
+
+                Quote orderQuote = usedQuotesMiniCache.get(productOrderSample.getProductOrder().getQuoteId());
+
+                if(orderQuote == null) {
+                    orderQuote = quoteService.getQuoteByAlphaId(productOrderSample.getProductOrder().getQuoteId());
+                    usedQuotesMiniCache.put(orderQuote.getAlphanumericId(), orderQuote);
+                }
+
+
+                final List<Product> allProductsOrdered =
+                        ProductOrder.getAllProductsOrdered(productOrderSample.getProductOrder());
+                List<String> effectivePricesForProducts = priceListCache
+                        .getEffectivePricesForProducts(allProductsOrdered, orderQuote);
+
+                final MessageCollection messageCollection = new MessageCollection();
+                if (productOrderSample.getProductOrder().isSavedInSAP()) {
+                    if (!StringUtils
+                            .equals(productOrderSample.getProductOrder().latestSapOrderDetail().getOrderPricesHash(),
+                                    TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ",")))
+                            ) {
+                        publishProductOrderToSAP(productOrderSample.getProductOrder(), messageCollection, true);
+                    }
+                }
+                updatedOrderMap.put(productOrderSample.getProductOrder().getBusinessKey(), Boolean.TRUE);
+            }
+
             Collection<ProductOrderSample.LedgerUpdate> updates = entry.getValue();
             for (ProductOrderSample.LedgerUpdate update : updates) {
                 try {
@@ -1551,11 +1591,11 @@ public class ProductOrderEjb {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    public GenotypingProductOrderMapping findOrCreateGenotypingChipProductOrderMapping(String productOrderJiraTicket) {
+    public GenotypingProductOrderMapping findOrCreateGenotypingChipProductOrderMapping(Long productOrderId) {
         GenotypingProductOrderMapping mapping =
-                attributeArchetypeDao.findGenotypingProductOrderMapping(productOrderJiraTicket);
+                attributeArchetypeDao.findGenotypingProductOrderMapping(productOrderId);
         if (mapping == null) {
-            mapping = new GenotypingProductOrderMapping(productOrderJiraTicket, null, null);
+            mapping = new GenotypingProductOrderMapping(productOrderId.toString(), null, null);
             attributeArchetypeDao.persist(mapping);
             attributeArchetypeDao.flush();
         }
@@ -1578,6 +1618,7 @@ public class ProductOrderEjb {
         this.accessController = accessController;
     }
 
+    @Inject
     public void setSapConfig(SapConfig sapConfig) {
         this.sapConfig = sapConfig;
     }

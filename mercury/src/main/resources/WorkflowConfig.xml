@@ -65,7 +65,7 @@
         <name>Pico/Plating</name>
         <workflowProcessDefVersions>
             <version>1.0</version>
-            <effectiveDate>2014-10-19T21:03:24.085-04:00</effectiveDate>
+        <effectiveDate>2012-09-30T22:04:23.932-04:00</effectiveDate>
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
                 <name>Pico/Plating Bucket</name>
                 <labEventTypes>PICO_PLATING_BUCKET</labEventTypes>
@@ -504,6 +504,13 @@
             <version>1.0</version>
             <effectiveDate>2016-11-21T21:03:24.085-04:00</effectiveDate>
             <workflowStepDefs>
+                <name>PreEndRepairTransfer</name>
+                <labEventTypes>PRE_END_REPAIR_TRANSFER</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
                 <name>EndRepair_ABase</name>
                 <labEventTypes>END_REPAIR_ABASE</labEventTypes>
                 <optional>false</optional>
@@ -563,7 +570,7 @@
         <name>Regular Pond</name>
         <workflowProcessDefVersions>
             <version>1.0</version>
-            <effectiveDate>2016-07-01T21:03:24.085-04:00</effectiveDate>
+        <effectiveDate>2012-09-30T22:04:23.932-04:00</effectiveDate>
             <workflowStepDefs>
                 <name>Pond Registration</name>
                 <labEventTypes>POND_REGISTRATION</labEventTypes>
@@ -591,6 +598,11 @@
                 <labEventTypes>PCR_FREE_POND_REGISTRATION</labEventTypes>
                 <optional>false</optional>
                 <ancestryEtlFlag>true</ancestryEtlFlag>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>Norm and Pool</statusTransition>
+                    <endStatus>Norm and Pool</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Pond Pico</name>
@@ -609,6 +621,11 @@
                 <labEventTypes>PCR_PLUS_POND_REGISTRATION</labEventTypes>
                 <optional>false</optional>
                 <ancestryEtlFlag>true</ancestryEtlFlag>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>Norm and Pool</statusTransition>
+                    <endStatus>Norm and Pool</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Pond Pico</name>
@@ -637,6 +654,12 @@
                 <name>PCR Plus Pond Registration</name>
                 <labEventTypes>PCR_PLUS_POND_REGISTRATION</labEventTypes>
                 <optional>false</optional>
+                <ancestryEtlFlag>true</ancestryEtlFlag>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>Norm and Pool</statusTransition>
+                    <endStatus>Norm and Pool</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Pond Pico</name>
@@ -832,6 +855,7 @@
                     <materialTypes>DNA</materialTypes>
                     <materialTypes>DNA_DNA_GENOMIC</materialTypes>
                     <materialTypes>DNA_DNA_SOMATIC</materialTypes>
+                    <materialTypes>DNA_DNA_CELL_FREE</materialTypes>
                 </bucketEntryEvaluator>
                 </workflowStepDefs>
             <workflowStepDefs>
@@ -874,10 +898,32 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
+            <!-- next three are all in HyperPrep ICE -->
+            <workflowStepDefs>
+                <name>IceHyperPrep1stBaitPick</name>
+                <labEventTypes>ICE_HYPERPREP_1ST_BAIT_PICK</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>IceHyperPrep1stBaitAddition</name>
+                <labEventTypes>ICE_HYPERPREP_1ST_BAIT_ADDITION</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>IceHyperPrep1stHybridization</name>
+                <labEventTypes>ICE_HYPERPREP_1ST_HYBRIDIZATION</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
             <workflowStepDefs>
                 <name>Ice1stHybridization</name>
                 <labEventTypes>ICE_1ST_HYBRIDIZATION</labEventTypes>
-                <optional>false</optional>
+                <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
@@ -896,10 +942,11 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
+            <!-- not present in HyperPrep ICE -->
             <workflowStepDefs>
                 <name>PostIce1stHybridizationThermoCyclerLoaded</name>
                 <labEventTypes>POST_ICE_1ST_HYBRIDIZATION_THERMO_CYCLER_LOADED</labEventTypes>
-                <optional>false</optional>
+                <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
@@ -914,6 +961,21 @@
                 <name>PostIce1stCaptureThermoCyclerLoaded</name>
                 <labEventTypes>POST_ICE_1ST_CAPTURE_THERMO_CYCLER_LOADED</labEventTypes>
                 <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <!-- next two are both in HyperPrep ICE -->
+            <workflowStepDefs>
+                <name>IceHyperPrep2ndBaitPick</name>
+                <labEventTypes>ICE_HYPERPREP_2ND_BAIT_PICK</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>IceHyperPrep2ndBaitAddition</name>
+                <labEventTypes>ICE_HYPERPREP_2ND_BAIT_ADDITION</labEventTypes>
+                <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
@@ -939,10 +1001,11 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
+            <!-- not present in HyperPrep ICE -->
             <workflowStepDefs>
                 <name>PostIce2ndHybridizationThermoCyclerLoaded</name>
                 <labEventTypes>POST_ICE_2ND_HYBRIDIZATION_THERMO_CYCLER_LOADED</labEventTypes>
-                <optional>false</optional>
+                <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
@@ -2211,9 +2274,16 @@
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
             <workflowStepDefs>
+                <name>Index P5 Pond Enrichment TS</name>
+                <labEventTypes>INDEX_P5_POND_ENRICHMENT_TS</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
                 <name>EnrichmentTS</name>
                 <labEventTypes>ENRICHMENT_TS</labEventTypes>
-                <optional>false</optional>
+                <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
@@ -2425,8 +2495,8 @@
                 <reEntryPoint>false</reEntryPoint>
                 <jiraTransition>
                     <project>LCSET</project>
-                    <statusTransition>Norm And Pool</statusTransition>
-                    <endStatus>Norm And Pool</endStatus>
+                    <statusTransition>Norm and Pool</statusTransition>
+                    <endStatus>Norm and Pool</endStatus>
                 </jiraTransition>
                 <ancestryEtlFlag>true</ancestryEtlFlag>
             </workflowStepDefs>

@@ -104,7 +104,7 @@ public class FctLoadEtl extends GenericEntityEtl<LabEvent,LabEvent> {
                             format(flowcellAndSourceTubes.getLeft().getLabel())
                     ));
                 }
-            } else {
+            } else if (srcTube != null) {
                 // FCT logic is driven exclusively from vessels registered in LabBatchStartingVessel#dilutionVessel
                 // Older events with only denatured tubes registered in LabBatchStartingVessel#labVessel
                 //     produce non-deterministic flowcell barcodes
@@ -133,8 +133,16 @@ public class FctLoadEtl extends GenericEntityEtl<LabEvent,LabEvent> {
      */
     private Pair<IlluminaFlowcell,Set<LabVessel>> getFlowcellAndSourceTubes(LabEvent labEvent ) {
         LabEventType labEventType = labEvent.getLabEventType();
-        IlluminaFlowcell flowcell = OrmUtil.proxySafeCast(labEvent.getTargetLabVessels().iterator().next(),
-                IlluminaFlowcell.class);
+
+        LabVessel eventVessel = labEvent.getTargetLabVessels().iterator().next();
+        IlluminaFlowcell flowcell;
+        if( !OrmUtil.proxySafeIsInstance(eventVessel, IlluminaFlowcell.class)) {
+            // Process is only interested in Illumina flowcells
+            return null;
+        } else {
+            flowcell = OrmUtil.proxySafeCast(eventVessel, IlluminaFlowcell.class);
+        }
+
         Set<LabVessel> dilutionTubes = new HashSet<>();
 
         if( labEventType == LabEventType.REAGENT_KIT_TO_FLOWCELL_TRANSFER ) {

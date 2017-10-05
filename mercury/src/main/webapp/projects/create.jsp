@@ -1,4 +1,4 @@
-<%@ page import="org.broadinstitute.gpinformatics.infrastructure.common.TokenInput" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"

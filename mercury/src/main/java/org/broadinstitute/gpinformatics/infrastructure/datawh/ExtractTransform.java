@@ -16,10 +16,10 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfigu
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 
 import javax.annotation.Nonnull;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
+import javax.ejb.TransactionManagement;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.transaction.UserTransaction;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -40,6 +40,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.concurrent.Semaphore;
+
+import static javax.ejb.TransactionManagementType.BEAN;
 
 /**
  * Performs the extract and transform parts of ETL for the data warehouse.
@@ -62,7 +64,7 @@ import java.util.concurrent.Semaphore;
  */
 
 @RequestScoped
-@TransactionAttribute(TransactionAttributeType.SUPPORTS)
+@TransactionManagement(BEAN)
 public class ExtractTransform implements Serializable {
     private static final long serialVersionUID = 20130517L;
     /**
@@ -153,6 +155,10 @@ public class ExtractTransform implements Serializable {
     // A separate instance from one used by incremental etl.
     @Inject
     SequencingSampleFactEtl sequencingSampleFactEtlAnalysis;
+
+    /** This class uses Bean Managed Transactions in order to set a longer session timeout. */
+    @Inject
+    private UserTransaction utx;
 
     public ExtractTransform() {
     }
@@ -256,7 +262,6 @@ public class ExtractTransform implements Serializable {
      * @return count of records created, or -1 if could not run
      */
     public int incrementalEtl(String requestedStart, String requestedEnd) {
-
         // Bails if target directory is not defined, is missing or cannot read it.
         String dataDir = getDatafileDir();
         if (StringUtils.isBlank(dataDir)) {

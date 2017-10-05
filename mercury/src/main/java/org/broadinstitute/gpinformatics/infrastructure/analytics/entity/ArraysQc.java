@@ -24,7 +24,10 @@ public class ArraysQc {
     private Long analysisVersion;
     private Boolean isLatest;
     private String chipType;
+    /** zCall call rate*/
     private BigDecimal callRate;
+    private BigDecimal autocallCallRate;
+    private Long numAutocallCalls;
     private Boolean autocallPf;
     private Date autocallDate;
     private Date imagingDate;
@@ -32,7 +35,8 @@ public class ArraysQc {
     private Character autocallGender;
     private Character fpGender;
     private Character reportedGender;
-    private Boolean genderConcordancePf;
+    // See GPLIM-4863, this column needs 3 states so needs to be replaced with business logic until analytics changes
+    //private boolean genderConcordancePf;
     private BigDecimal hetPct;
     private BigDecimal hetHomvarRatio;
     private String clusterFileName;
@@ -98,6 +102,21 @@ public class ArraysQc {
         return callRate.multiply(BigDecimal.valueOf(100)).setScale(3, BigDecimal.ROUND_HALF_UP);
     }
 
+    public BigDecimal getAutocallCallRate() {
+        return autocallCallRate;
+    }
+
+    public BigDecimal getAutocallCallRatePct() {
+        if (autocallCallRate == null) {
+            return null;
+        }
+        return autocallCallRate.multiply(BigDecimal.valueOf(100)).setScale(3, BigDecimal.ROUND_HALF_UP);
+    }
+
+    public Long getNumAutocallCalls() {
+        return numAutocallCalls;
+    }
+
     public Boolean getAutocallPf() {
         return autocallPf;
     }
@@ -126,8 +145,17 @@ public class ArraysQc {
         return reportedGender;
     }
 
-    public Boolean getGenderConcordancePf() {
-        return genderConcordancePf;
+    /**
+     * Display logic for 3 potential states  See GPLIM-4863
+     */
+    public String getGenderConcordancePf() {
+        if( getAutocallGender() == null || 'U' == getReportedGender() ) {
+            return "N/A";
+        }
+        if( getAutocallGender().equals(getReportedGender() )) {
+            return "Pass";
+        }
+        return "Fail";
     }
 
     public BigDecimal getHetPct() {
