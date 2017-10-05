@@ -79,7 +79,6 @@ import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -110,8 +109,6 @@ public class LabBatchEjb {
     public static final String DESIGNATION_ERROR_MSG = "Designated tube {0} has invalid ";
 
     private static final Log logger = LogFactory.getLog(LabBatchEjb.class);
-    // todo jmt add this to a Preference, or add a flag on Product
-    private static final List<String> ADD_AND_REMOVE_SAMPLE_PRODUCTS = Arrays.asList("P-CLA-0008");
 
     private LabBatchDao labBatchDao;
 
@@ -714,8 +711,10 @@ public class LabBatchEjb {
                     for (BucketEntry bucketEntry : sampleInstance.getAllBucketEntries()) {
                         if (Objects.equals(bucketEntry.getLabBatch().getBatchName(), lcsetName)) {
                             bucketEntries.add(bucketEntry);
-                            if (ADD_AND_REMOVE_SAMPLE_PRODUCTS.contains(
-                                    bucketEntry.getProductOrder().getProduct().getPartNumber())) {
+                            // Exome Express currently does strange things with multiple LCSETs at shearing, so
+                            // limit this logic to WGS.
+                            if (Objects.equals(bucketEntry.getProductOrder().getProduct().getAggregationDataType(),
+                                    BassDTO.DATA_TYPE_WGS)) {
                                 addAndRemoveSamples = true;
                             }
                             found = true;
