@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary_;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
@@ -204,6 +205,9 @@ public class FixUpEtl extends GenericEntityEtl<FixupCommentary, FixupCommentary>
                     ProductOrderSample auditPdoSample = OrmUtil.proxySafeCast(entity, ProductOrderSample.class);
                     MercurySample auditSample = auditPdoSample.getMercurySample();
                     getCoreEventsFromAudit( auditSample, revType, currentRevision, auditReader, coreAuditEvents );
+                } else if ( OrmUtil.proxySafeIsInstance(entity, BucketEntry.class) ) {
+                    BucketEntry auditBucketEntry = OrmUtil.proxySafeCast(entity, BucketEntry.class);
+                    getCoreEventsFromAudit( auditBucketEntry, revType, currentRevision, auditReader, coreAuditEvents );
                 }
             }
         }
@@ -248,26 +252,17 @@ public class FixUpEtl extends GenericEntityEtl<FixupCommentary, FixupCommentary>
      */
     private void getCoreEventsFromAudit( LabEvent auditEvent, RevisionType revType
             , long currentRevision, AuditReader auditReader, Set<LabEvent> coreEvents ) {
-        switch (revType) {
-            case ADD:
+        // Add point in time batch vessel data
+        if( revType == RevisionType.ADD || revType == RevisionType.MOD ) {
                 // Events may be created by a fix-up somewhere in the middle of transfer history
                 coreEvents.add(auditEvent);
-                break;
-            case MOD:
-                // Event update needs current and prior event versions
-                coreEvents.add(auditEvent);
-                LabEvent priorEvent = getPreviousEntityRevision(LabEvent.class, auditReader, auditEvent.getLabEventId(), currentRevision);
-                if (OrmUtil.proxySafeIsInstance(priorEvent, LabEvent.class)) {
-                    coreEvents.add(OrmUtil.proxySafeCast(priorEvent, LabEvent.class));
-                }
-                break;
-            case DEL:
-                // Deletion needs prior version
-                LabEvent deletedEvent = getPreviousEntityRevision(LabEvent.class, auditReader, auditEvent.getLabEventId(), currentRevision);
-                if (OrmUtil.proxySafeIsInstance(deletedEvent, LabEvent.class)) {
-                    coreEvents.add(OrmUtil.proxySafeCast(deletedEvent, LabEvent.class));
-                }
-                break;
+        }
+        // Modify or Deletion needs prior version
+        if( revType == RevisionType.MOD || revType == RevisionType.DEL ) {
+            LabEvent priorEvent = getPreviousEntityRevision(LabEvent.class, auditReader, auditEvent.getLabEventId(), currentRevision);
+            if (OrmUtil.proxySafeIsInstance(priorEvent, LabEvent.class)) {
+                coreEvents.add(OrmUtil.proxySafeCast(priorEvent, LabEvent.class));
+            }
         }
     }
 
@@ -280,38 +275,23 @@ public class FixUpEtl extends GenericEntityEtl<FixupCommentary, FixupCommentary>
 
         Set<LabVessel> auditVessels = new HashSet<>();
         LabBatchStartingVessel priorAuditBatchVessel;
-        switch (revType) {
-            case ADD:
-                // Add a vessel to a batch is simplest - get all downstream events for the batch vessels
-                // Point in time batch vessel data from audit is acceptable
-                for( LabBatchStartingVessel auditBatchVessel : baseAuditBatchVessel.getLabBatch().getLabBatchStartingVessels() ) {
+        // Add point in time batch vessel data
+        if( revType == RevisionType.ADD || revType == RevisionType.MOD ) {
+            for (LabBatchStartingVessel auditBatchVessel : baseAuditBatchVessel.getLabBatch()
+                    .getLabBatchStartingVessels()) {
+                auditVessels.add(auditBatchVessel.getLabVessel());
+            }
+        }
+
+        if( revType == RevisionType.MOD || revType == RevisionType.DEL ) {
+            // Add previous revision vessels
+            priorAuditBatchVessel = getPreviousEntityRevision(
+                    LabBatchStartingVessel.class, auditReader, baseAuditBatchVessel.getBatchStartingVesselId(), currentRevision);
+            if (OrmUtil.proxySafeIsInstance(priorAuditBatchVessel, LabBatchStartingVessel.class)) {
+                for( LabBatchStartingVessel auditBatchVessel : priorAuditBatchVessel.getLabBatch().getLabBatchStartingVessels() ) {
                     auditVessels.add(auditBatchVessel.getLabVessel());
                 }
-                break;
-            case MOD:
-                // Point in time batch vessel data from audit
-                for( LabBatchStartingVessel auditBatchVessel : baseAuditBatchVessel.getLabBatch().getLabBatchStartingVessels() ) {
-                    auditVessels.add(auditBatchVessel.getLabVessel());
-                }
-                // Add previous revision vessels
-                priorAuditBatchVessel = getPreviousEntityRevision(
-                        LabBatchStartingVessel.class, auditReader, baseAuditBatchVessel.getBatchStartingVesselId(), currentRevision);
-                if (OrmUtil.proxySafeIsInstance(priorAuditBatchVessel, LabBatchStartingVessel.class)) {
-                    for( LabBatchStartingVessel auditBatchVessel : priorAuditBatchVessel.getLabBatch().getLabBatchStartingVessels() ) {
-                        auditVessels.add(auditBatchVessel.getLabVessel());
-                    }
-                }
-                break;
-            case DEL:
-                // Add previous revision vessels
-                priorAuditBatchVessel = getPreviousEntityRevision(
-                        LabBatchStartingVessel.class, auditReader, baseAuditBatchVessel.getBatchStartingVesselId(), currentRevision);
-                if (OrmUtil.proxySafeIsInstance(priorAuditBatchVessel, LabBatchStartingVessel.class)) {
-                    for( LabBatchStartingVessel auditBatchVessel : priorAuditBatchVessel.getLabBatch().getLabBatchStartingVessels() ) {
-                        auditVessels.add(auditBatchVessel.getLabVessel());
-                    }
-                }
-                break;
+            }
         }
 
         for( LabVessel auditVessel : auditVessels ) {
@@ -330,31 +310,50 @@ public class FixUpEtl extends GenericEntityEtl<FixupCommentary, FixupCommentary>
 
         Set<LabVessel> auditVessels = new HashSet<>();
         MercurySample priorMercurySample;
-        switch (revType) {
-            case ADD:
-                // Add a vessel to a batch is simplest - get all downstream events for the batch vessels
-                // Point in time batch vessel data from audit is acceptable
-                auditVessels.addAll(baseMercurySample.getLabVessel());
-                break;
-            case MOD:
-                // Point in time batch vessel data from audit
-                auditVessels.addAll(baseMercurySample.getLabVessel());
-                // Add previous revision vessels
-                priorMercurySample = getPreviousEntityRevision(
+        // Add point in time batch vessel data
+        if( revType == RevisionType.ADD || revType == RevisionType.MOD ) {
+            auditVessels.addAll(baseMercurySample.getLabVessel());
+        }
+        if( revType == RevisionType.MOD || revType == RevisionType.DEL ) {
+            // Add previous revision vessels
+            priorMercurySample = getPreviousEntityRevision(
                         MercurySample.class, auditReader, baseMercurySample.getMercurySampleId(), currentRevision);
 
-                if (OrmUtil.proxySafeIsInstance(priorMercurySample, MercurySample.class)) {
-                    auditVessels.addAll(priorMercurySample.getLabVessel());
-                }
-                break;
-            case DEL:
-                // Add previous revision vessels
-                priorMercurySample = getPreviousEntityRevision(
-                        MercurySample.class, auditReader, baseMercurySample.getMercurySampleId(), currentRevision);
-                if (OrmUtil.proxySafeIsInstance(priorMercurySample, MercurySample.class)) {
-                    auditVessels.addAll(priorMercurySample.getLabVessel());
-                }
-                break;
+            if (OrmUtil.proxySafeIsInstance(priorMercurySample, MercurySample.class)) {
+                auditVessels.addAll(priorMercurySample.getLabVessel());
+            }
+        }
+
+        for( LabVessel auditVessel : auditVessels ) {
+            coreEvents.addAll(auditVessel.getInPlaceLabEvents());
+            coreEvents.addAll(auditVessel.getTransfersFrom());
+            coreEvents.addAll(auditVessel.getTransfersToWithReArrays());
+        }
+    }
+
+    /**
+     * Given a BucketEntry that was part of a fixup, get any events out of audit to use as a source to
+     *   determine which events in production need to be refreshed
+     */
+    private void getCoreEventsFromAudit( BucketEntry baseBucketEntry, RevisionType revType
+            , long currentRevision, AuditReader auditReader, Set<LabEvent> coreEvents ) {
+
+        Set<LabVessel> auditVessels = new HashSet<>();
+        BucketEntry priorBucketEntry;
+
+        // Add point in time batch vessel data
+        if( revType == RevisionType.ADD || revType == RevisionType.MOD ) {
+            auditVessels.add(baseBucketEntry.getLabVessel());
+        }
+
+        if( revType == RevisionType.MOD || revType == RevisionType.DEL ) {
+           // Add previous revision vessels
+            priorBucketEntry = getPreviousEntityRevision(
+                    BucketEntry.class, auditReader, baseBucketEntry.getBucketEntryId(), currentRevision);
+
+            if (OrmUtil.proxySafeIsInstance(priorBucketEntry, BucketEntry.class)) {
+                auditVessels.add(priorBucketEntry.getLabVessel());
+            }
         }
 
         for( LabVessel auditVessel : auditVessels ) {
