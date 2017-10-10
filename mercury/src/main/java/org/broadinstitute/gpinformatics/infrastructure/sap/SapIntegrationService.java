@@ -10,6 +10,7 @@ import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.Set;
 
 /**
@@ -57,10 +58,11 @@ public interface SapIntegrationService {
      * @param item A structure previously utilized by logging information to the quote server which aggregates work
      *             by Quote, Product order, PDO and finally amount done.
      * @param quantityOverride
+     * @param workCompleteDate
      * @return A unique identifier associated with the recorded record of work in SAP
      * @throws SAPIntegrationException
      */
-    String billOrder(QuoteImportItem item, BigDecimal quantityOverride) throws SAPIntegrationException;
+    String billOrder(QuoteImportItem item, BigDecimal quantityOverride, Date workCompleteDate) throws SAPIntegrationException;
 
     /**
      * With the introduction of a direct communication to SAP from Mercury, we will do away with Price Items for a

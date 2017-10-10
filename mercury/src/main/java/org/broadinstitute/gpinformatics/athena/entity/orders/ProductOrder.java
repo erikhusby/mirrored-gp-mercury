@@ -251,6 +251,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Column(name = "ORDER_TYPE")
     private OrderAccessType orderType;
 
+    @Column(name = "CLINICAL_ATTESTATION_CONFIRMED")
+    private Boolean clinicalAttestationConfirmed = false;
+
+
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.
      */
@@ -2129,6 +2133,21 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
 
         return displayName;
+    }
+
+    public boolean isClinicalAttestationConfirmed() {
+        return isChildOrder() ? parentOrder.getClinicalAttestationConfirmed() : getClinicalAttestationConfirmed();
+    }
+
+    public Boolean getClinicalAttestationConfirmed() {
+        if (clinicalAttestationConfirmed == null) {
+            clinicalAttestationConfirmed = false;
+        }
+        return clinicalAttestationConfirmed;
+    }
+
+    public void setClinicalAttestationConfirmed(Boolean clinicalAttestationConfirmed) {
+        this.clinicalAttestationConfirmed = clinicalAttestationConfirmed;
     }
 
     public static void checkQuoteValidity(Quote quote) throws QuoteServerException {

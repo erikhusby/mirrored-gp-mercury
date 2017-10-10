@@ -322,7 +322,18 @@
                                     </c:otherwise>
                                 </c:choose>
                             </td>
-                            <td>${order.orderTypeDisplay}</td>
+                            <td>
+                                <c:if test="${order.product != null}">
+                                    <c:choose>
+                                        <c:when test="${order.product.clinicalProduct}">
+                                            Clinical (2000)
+                                        </c:when>
+                                        <c:otherwise>
+                                            ${order.orderType.displayName}
+                                        </c:otherwise>
+                                    </c:choose>
+                                </c:if>
+                            </td>
                             <td>${order.productName}</td>
                             <td>${order.productFamilyName}</td>
                             <td>${order.orderStatus}</td>

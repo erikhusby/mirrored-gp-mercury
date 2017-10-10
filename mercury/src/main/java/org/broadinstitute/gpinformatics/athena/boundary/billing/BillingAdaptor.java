@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessio
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
@@ -38,6 +39,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -139,11 +141,10 @@ public class BillingAdaptor implements Serializable {
         BillingSession billingSession = billingSessionAccessEjb.findAndLockSession(sessionKey);
         try {
             List<QuoteImportItem> unBilledQuoteImportItems = null;
-            final PriceList priceItemsForDate;
+            PriceList priceItemsForDate;
             try {
                 unBilledQuoteImportItems = billingSession.getUnBilledQuoteImportItems(priceListCache);
-                priceItemsForDate = quoteService.getPriceItemsForDate(unBilledQuoteImportItems);
-            } catch (QuoteServerException | QuoteNotFoundException e) {
+            } catch (QuoteServerException e) {
                 throw new BillingException("Getting unbilled items failed because::" + e.getMessage(), e);
             }
 
@@ -159,6 +160,7 @@ public class BillingAdaptor implements Serializable {
                 List<String> effectivePricesForProducts;
 
                 try {
+                    priceItemsForDate = quoteService.getPriceItemsForDate(Collections.singletonList(itemForPriceUpdate));
 
                     quote = quoteService.getQuoteByAlphaId(itemForPriceUpdate.getQuoteId());
                     ProductOrder.checkQuoteValidity(quote,
@@ -175,15 +177,17 @@ public class BillingAdaptor implements Serializable {
                        update the price.
                        */
 
+                        effectivePricesForProducts = getEffectivePricesForProducts(allProductsOrdered, quote, priceItemsForDate);
                         if (itemForPriceUpdate.getProductOrder().isPriorToSAP1_5()) {
-                            effectivePricesForProducts = priceListCache  //Only needed for pre-1.5 orders
-                                    .getEffectivePricesForProducts(allProductsOrdered, quote);
 
                             if (!StringUtils.equals(itemForPriceUpdate.getProductOrder().latestSapOrderDetail().getOrderPricesHash(),
                                     TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ",")))
                                     ) {
                                 productOrderEjb.publishProductOrderToSAP(itemForPriceUpdate.getProductOrder(), messageCollection, true);
                             }
+                        } else {
+                            //todo SGM set Quote adjustments if on the effective date quoted price is lower than 
+                            // listed price AND the quote has not expired
                         }
                     }
                 } catch (QuoteServerException|QuoteNotFoundException|InvalidProductException|SAPInterfaceException e) {
@@ -207,8 +211,6 @@ public class BillingAdaptor implements Serializable {
             HashMultimap<String, String> quoteItemsByQuote = HashMultimap.create();
             for (QuoteImportItem item : unBilledQuoteImportItems) {
 
-                updatePriceOnQuoteImportItem(item, priceItemsForDate);
-
                 BillingEjb.BillingResult result = new BillingEjb.BillingResult(item);
                 results.add(result);
 
@@ -216,6 +218,8 @@ public class BillingAdaptor implements Serializable {
                 String sapBillingId = null;
                 String workId = null;
                 try {
+                    priceItemsForDate = quoteService.getPriceItemsForDate(Collections.singletonList(item));
+                    updatePriceOnQuoteImportItem(item, priceItemsForDate);
                     quote = quoteService.getQuoteByAlphaId(item.getQuoteId());
                     ProductOrder.checkQuoteValidity(quote,
                             DateUtils.truncate(item.getWorkCompleteDate(), Calendar.DATE));
@@ -231,7 +235,7 @@ public class BillingAdaptor implements Serializable {
                     QuotePriceItem priceItemBeingBilled = QuotePriceItem.convertMercuryPriceItem(item.getPriceItem());
 
                     //Replace with the New price list call for effective date
-                    String price = priceItemsForDate.getEffectivePrice(item.getPriceItem(), quote, item.getWorkCompleteDate());
+                    String price = priceItemsForDate.getEffectivePrice(item.getPriceItem(), quote);
 
                     // Get the quote PriceItem that this is replacing, if it is a replacement.
                     // todo need to set the price on the Price Item before this step
@@ -307,7 +311,7 @@ public class BillingAdaptor implements Serializable {
                         && StringUtils.isBlank(item.getSapItems()))
                     {
                         if(item.getQuantityForSAP() != 0) {
-                            sapBillingId = sapService.billOrder(item, replacementMultiplier);
+                            sapBillingId = sapService.billOrder(item, replacementMultiplier, item.getWorkCompleteDate());
                         }
                         result.setSAPBillingId(sapBillingId);
                         billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacementForSAP, workId, sapBillingId,
@@ -372,7 +376,7 @@ public class BillingAdaptor implements Serializable {
 
         if(item.getQuotePriceType().equals(LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.getQuoteType())) {
             final QuotePriceItem replacedProductQuotePriceItem = priceItemsForDate
-                    .findByKeyFields(item.getProduct().getPrimaryPriceItem(), item.getWorkCompleteDate());
+                    .findByKeyFields(item.getProduct().getPrimaryPriceItem());
 
             for (QuotePriceItem replacementPriceItem : replacedProductQuotePriceItem.getReplacementItems()
                     .getQuotePriceItems()) {
@@ -383,7 +387,7 @@ public class BillingAdaptor implements Serializable {
 
         } else {
             final QuotePriceItem quotePriceItem =
-                    priceItemsForDate.findByKeyFields(item.getPriceItem(), item.getWorkCompleteDate());
+                    priceItemsForDate.findByKeyFields(item.getPriceItem());
 
             item.getPriceItem().setPrice(quotePriceItem.getPrice());
         }
@@ -467,6 +471,50 @@ public class BillingAdaptor implements Serializable {
                 log.error("Failed to update PDO status after billing: " + key, e);
             }
         }
+    }
+
+    /**
+     * Given a price item, this method will compare the price of the price item on the price list with the Quote
+     * line item (if one exists) on a given quote to see which price is lower.  The lower of the two is returned
+     *
+     * @param primaryPriceItem Price item defined on a product
+     * @param orderQuote       Quote associated with the product order from which the product that defined the
+     *                         price item is associated
+     * @return Lowest price between the pricelist item and the quote item (if one exists)
+     * @throws InvalidProductException   Thrown if the price item from the product orders product is not found on the
+     * price list
+     */
+    public String getEffectivePrice(PriceItem primaryPriceItem, Quote orderQuote, PriceList sourceOfPrices) throws InvalidProductException {
+
+        final QuotePriceItem cachedPriceItem = sourceOfPrices.findByKeyFields(primaryPriceItem);
+        if(cachedPriceItem == null) {
+            throw new InvalidProductException("The price item "+primaryPriceItem.getDisplayName()+" does not exist");
+        }
+        return getEffectivePrice(cachedPriceItem, orderQuote);
+    }
+
+    public String getEffectivePrice(QuotePriceItem cachedPriceItem, Quote orderQuote) {
+        String price = cachedPriceItem.getPrice();
+        QuoteItem foundMatchingQuoteItem = orderQuote.findCachedQuoteItem(cachedPriceItem.getPlatformName(),
+                cachedPriceItem.getCategoryName(), cachedPriceItem.getName());
+        if (foundMatchingQuoteItem  != null && !orderQuote.getExpired()) {
+            if (new BigDecimal(foundMatchingQuoteItem .getPrice()).compareTo(new BigDecimal(cachedPriceItem.getPrice())) < 0) {
+                price = foundMatchingQuoteItem .getPrice();
+            }
+        }
+        return price;
+    }
+
+    public List<String> getEffectivePricesForProducts(List<Product> products, Quote orderQuote,
+                                                      PriceList sourceOfPrices)
+            throws InvalidProductException {
+        List<String> orderedPrices = new ArrayList<>();
+
+        for (Product product : products) {
+            orderedPrices.add(getEffectivePrice(product.getPrimaryPriceItem(), orderQuote, sourceOfPrices));
+        }
+
+        return orderedPrices;
     }
 
     @Inject

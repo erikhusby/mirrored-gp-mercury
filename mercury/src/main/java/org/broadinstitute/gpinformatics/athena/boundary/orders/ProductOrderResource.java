@@ -307,6 +307,9 @@ public class ProductOrderResource {
             productOrder.setCreatedBy(user.getUserId());
             productOrder.prepareToSave(user, ProductOrder.SaveType.CREATING);
             productOrder.setOrderStatus(ProductOrder.OrderStatus.Pending);
+            if(productOrder.getProduct().isClinicalProduct()) {
+                productOrder.setClinicalAttestationConfirmed(true);
+            }
 
             // The PDO's IRB information is copied from its RP. For Collaboration PDOs, we require that there
             // is only one IRB on the RP.

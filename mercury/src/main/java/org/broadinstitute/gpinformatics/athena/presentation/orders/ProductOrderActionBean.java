@@ -617,6 +617,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                                          " Is not valid since " + editOrder.getProduct().getDisplayName() +
                                          " is not offered as research");
             }
+
         }
         /*
          * update or add to list of kit details
@@ -752,6 +753,13 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (editOrder.getProduct() != null && editOrder.getProduct().getSupportsNumberOfLanes()) {
             requireField(editOrder.getLaneCount() > 0, "a specified number of lanes", action);
         }
+
+        if(action.equals(PLACE_ORDER_ACTION) && editOrder.getProduct().isClinicalProduct()) {
+            requireField(editOrder.isClinicalAttestationConfirmed(),
+                    "the checkbox that confirms you have completed requirements to place a clinical order",
+                    action);
+        }
+
 
         String quoteId = editOrder.getQuoteId();
         Quote quote = validateQuoteId(quoteId);
@@ -1654,6 +1662,11 @@ public class ProductOrderActionBean extends CoreActionBean {
             //TODO SGM  have to also determine if the Product is Clinical.  If so the order type must be set to Clinical/commercial
             editOrder.setOrderType(ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
         }
+
+        if(editOrder.getProduct().isClinicalProduct()) {
+            editOrder.setOrderType(ProductOrder.OrderAccessType.COMMERCIAL);
+        }
+        
 
         if (editOrder.isRegulatoryInfoEditAllowed()) {
             updateRegulatoryInformation();

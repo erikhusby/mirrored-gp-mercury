@@ -409,6 +409,7 @@
                                     });
                                     $j("#customizationJsonString").val(JSON.stringify(customizationValues));
                                     $j(this).dialog("close");
+                                    renderCustomizationSummary();
                                 }
                             },
                             {
@@ -629,6 +630,7 @@
                 $j("#quote").show();
                 $j("#showCustomizeWindow").hide();
                 $j("#clinicalAttestationDiv").hide();
+                $j("#customizationContent").hide();
 
             } else {
                 if (productKey == '<%= Product.SAMPLE_INITIATION_PART_NUMBER %>') {
@@ -827,7 +829,7 @@
             setupAddonCheckboxes(data, productKey);
             if ((productKey !== null) && (productKey !== "") && (productKey !== undefined)) {
                 $j("#showCustomizeWindow").show();
-
+                renderCustomizationSummary();
                 if(data["clinicalProduct"]) {
                     $j("#clinicalAttestationDiv").show();
                 }
@@ -1222,6 +1224,60 @@
             return postReceivePrePopulates;
         }
 
+        function renderCustomizationSummary() {
+            var customJSONString = $j("#customizationJsonString").val();
+            if(customJSONString !== null && customJSONString!==undefined && customJSONString !== "") {
+                var customSettings = JSON.parse(customJSONString);
+            }
+            $j("#customizationContent").html(function() {
+                var content = "";
+
+                for  (part in customSettings) {
+                    content += "<b>"+part +"</b>";
+                    var price = customSettings[part]["price"];
+                    var quantity = customSettings[part]["quantity"];
+                    var customName = customSettings[part]["customName"];
+
+                    var firstSetting = true;
+
+                    if (!(price === 'undefined') && !(price === null)) {
+
+                        if(firstSetting) {
+                            content += ": ";
+                            firstSetting = false;
+                        }
+
+                        content += "Custom Price -- " + price;
+                    }
+                    if (!(quantity === 'undefined') && !(quantity === null)) {
+                        if(firstSetting) {
+                            content += ": ";
+                            firstSetting = false;
+                        } else {
+
+                            content += ", ";
+                        }
+
+                        content += "Custom Quantity -- " + quantity;
+                    }
+                    if (!(customName === 'undefined') && !(customName === null)) {
+                        if(firstSetting) {
+                            content += ": ";
+                            firstSetting = false;
+                        } else {
+
+                            content += ", ";
+                        }
+
+                        content += "Custom Product Name -- " + customName;
+                    }
+                    content += "<BR>";
+                }
+                return content;
+            });
+
+        }
+
         </script>
     </stripes:layout-component>
 
@@ -1458,6 +1514,16 @@
                     </c:choose>
                     </div>
                 </div>
+
+                <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager) %>">
+                    <div class="view-control-group control-group">
+                        <label class="control-label label-form">Order Customizations</label>
+
+                        <div class="controls">
+                            <div class="form-value" id="customizationContent"></div>
+                        </div>
+                    </div>
+                </security:authorizeBlock>
 
                 <security:authorizeBlock roles="<%= roles(GPProjectManager, PDM, Developer) %>">
 
