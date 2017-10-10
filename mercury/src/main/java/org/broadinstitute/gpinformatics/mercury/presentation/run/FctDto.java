@@ -1,10 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.run;
 
-import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import java.math.BigDecimal;
 import java.util.Comparator;
+import java.util.List;
 
 /** This interface defines the subset of Dto data needed to create an FCT. */
 public interface FctDto {
@@ -16,12 +18,15 @@ public interface FctDto {
     public void setAllocated(boolean wasAllocated);
     public int getAllocationOrder();
     public FctDto split(int numberLanes);
+    public String getProduct();
+    public List<String> getProductNames();
 
 
-    public static final Comparator<Pair<FctDto, LabVessel>> BY_ALLOCATION_ORDER =
-            new Comparator<Pair<FctDto, LabVessel>>() {
+    public static final Comparator<Triple<FctDto, LabVessel, FlowcellDesignation>> BY_ALLOCATION_ORDER =
+            new Comparator<Triple<FctDto, LabVessel, FlowcellDesignation>>() {
                 @Override
-                public int compare(Pair<FctDto, LabVessel> o1, Pair<FctDto, LabVessel> o2) {
+                public int compare(Triple<FctDto, LabVessel, FlowcellDesignation> o1,
+                        Triple<FctDto, LabVessel, FlowcellDesignation> o2) {
                     // Puts highest allocationOrder first. If it's a tie, puts highest numberLanes first.
                     if (o2.getLeft().getAllocationOrder() != o1.getLeft().getAllocationOrder()) {
                         return o2.getLeft().getAllocationOrder() - o1.getLeft().getAllocationOrder();

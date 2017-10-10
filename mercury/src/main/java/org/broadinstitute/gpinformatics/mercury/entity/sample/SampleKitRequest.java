@@ -1,18 +1,14 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-
 
 @Entity
 @Audited
@@ -55,6 +51,15 @@ public class SampleKitRequest {
 
     private String irbApprovalRequired;
 
+
+    public Long getSampleKitRequest() {
+        return sampleKitRequestId;
+    }
+
+    public void setSampleKitRequest(Long sampleKitRequestId) {
+        this.sampleKitRequestId = sampleKitRequestId;
+    }
+
     public String getFirstName() {
         return firstName;
     }
@@ -87,6 +92,10 @@ public class SampleKitRequest {
         this.address = address;
     }
 
+    public String getCity() {
+        return city;
+    }
+
     public void setCity(String city) {
         this.city = city;
     }
@@ -99,8 +108,16 @@ public class SampleKitRequest {
         this.state = state;
     }
 
+    public String getPostalCode() {
+        return postalCode;
+    }
+
     public void setPostalCode(String postalCode) {
         this.postalCode = postalCode;
+    }
+
+    public String getCountry() {
+        return country;
     }
 
     public void setCountry(String country) {
@@ -123,8 +140,16 @@ public class SampleKitRequest {
         this.email = email;
     }
 
+    public String getCommonName() {
+        return commonName;
+    }
+
     public void setCommonName(String commonName) {
         this.commonName = commonName;
+    }
+
+    public String getGenus() {
+        return genus;
     }
 
     public void setGenus(String genus) {
@@ -145,6 +170,10 @@ public class SampleKitRequest {
 
     public void setCollaboratorName(String collaboratorName) {
         this.collaboratorName = collaboratorName;
+    }
+
+    public String getIrbApprovalRequired() {
+        return irbApprovalRequired;
     }
 
     public void setIrbApprovalRequired(String irbApprovalRequired) {

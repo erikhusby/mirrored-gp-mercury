@@ -142,6 +142,29 @@ public enum DisplayExpression {
             return results;
         }
     }),
+    REGULATORY_DESIGNATION(SampleInstanceV2.class, new SearchTerm.Evaluator<List<String>>() {
+        @Override
+        public List<String> evaluate(Object entity, SearchContext context) {
+            List<String> results = new ArrayList<>();
+            SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
+            ProductOrderSample singleProductOrderSample = sampleInstanceV2.getSingleProductOrderSample();
+            if (singleProductOrderSample != null) {
+                if (singleProductOrderSample.getProductOrder() != null &&
+                    singleProductOrderSample.getProductOrder().getResearchProject() != null) {
+                    results.add(singleProductOrderSample.getProductOrder().getResearchProject()
+                            .getRegulatoryDesignationCodeForPipeline());
+                    return results;
+                }
+            }
+            for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples() ) {
+                if( productOrderSample.getProductOrder().getResearchProject() != null) {
+                    results.add(productOrderSample.getProductOrder().getResearchProject()
+                            .getRegulatoryDesignationCodeForPipeline());
+                }
+            }
+            return results;
+        }
+    }),
     PRODUCT_NAME(SampleInstanceV2.class, new SearchTerm.Evaluator<List<String>>() {
         @Override
         public List<String> evaluate(Object entity, SearchContext context) {
@@ -259,7 +282,7 @@ public enum DisplayExpression {
      * @return list of T classes, must be in same order for repeated calls
      */
     public static <T> List<T> rowObjectToExpressionObject(@Nonnull Object rowObject, Class<T> expressionClass,
-            SearchContext context) {
+                                                          SearchContext context) {
         if (OrmUtil.proxySafeIsInstance(rowObject, LabVessel.class) && expressionClass.isAssignableFrom(SampleInstanceV2.class)) {
             // LabVessel to SampleInstance
             LabVessel labVessel = (LabVessel) rowObject;
@@ -331,15 +354,15 @@ public enum DisplayExpression {
             Set<LabVessel> labVessels;
             LabEventType.PlasticToValidate plasticToValidate = labEvent.getLabEventType().getPlasticToValidate();
             switch (plasticToValidate) {
-                case BOTH:
-                case SOURCE:
-                    labVessels = labEvent.getSourceLabVessels();
-                    break;
-                case TARGET:
-                    labVessels = labEvent.getTargetLabVessels();
-                    break;
-                default:
-                    throw new RuntimeException("Unexpected enum " + plasticToValidate);
+            case BOTH:
+            case SOURCE:
+                labVessels = labEvent.getSourceLabVessels();
+                break;
+            case TARGET:
+                labVessels = labEvent.getTargetLabVessels();
+                break;
+            default:
+                throw new RuntimeException("Unexpected enum " + plasticToValidate);
             }
             Set<SampleInstanceV2> sampleInstances = new TreeSet<>();
             for (LabVessel vessel : labVessels) {

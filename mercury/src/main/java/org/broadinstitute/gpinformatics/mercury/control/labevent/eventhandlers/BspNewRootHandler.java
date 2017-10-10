@@ -33,13 +33,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.BSPRestSender.BSP_KIT_REST_URL;
+
 /**
  * Creates a new root sample in BSP, e.g. for Blood Biopsy plasma and buffy coat samples, so they can have
  * different collaborator sample ID suffixes.
  */
 public class BspNewRootHandler extends AbstractEventHandler {
-
-    private static final String BSP_KIT_REST_URL = "kit";
 
     @Inject
     private BSPRestClient bspRestClient;
@@ -98,13 +98,13 @@ public class BspNewRootHandler extends AbstractEventHandler {
         Map<String, BspSampleData> mapIdToSampleData = bspSampleDataFetcher.fetchSampleData(sampleNames,
                 BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID,
                 BSPSampleSearchColumn.ORIGINAL_MATERIAL_TYPE,  BSPSampleSearchColumn.GENDER,
-                BSPSampleSearchColumn.COLLECTION);
+                BSPSampleSearchColumn.BSP_COLLECTION_NAME);
 
         // Prepare data to send to web service
         Object[][] rows = new Object[labVessels.size() + 1][];
         rows[0] = new Object[] {"Collaborator Sample ID", "Collaborator Patient ID", "Submitted Material Type",
                 "Original Material Type", "Sample Type", "Patient Gender",
-                "External ID", "Original Root"};
+                "External ID", "Original Root", "Sample Volume"};
         String collection = null;
         for (int i = 0; i < labVessels.size(); i++) {
             LabVessel labVessel = labVessels.get(i);
@@ -116,9 +116,7 @@ public class BspNewRootHandler extends AbstractEventHandler {
                 originalRoots.append(sampleInstanceV2.getRootOrEarliestMercurySampleName());
             }
             BspSampleData bspSampleData = mapIdToSampleData.get(sampleNames.get(i));
-            collection = bspSampleData.getCollection();
-            // "Collection" search result is actually Group / Collection, we want just Collection
-            collection = collection.substring(collection.lastIndexOf('/') + 2);
+            collection = bspSampleData.getCollectionWithoutGroup();
             rows[i + 1] = new Object[] {
                     bspSampleData.getCollaboratorsSampleName() + collabSampleSuffix,
                     bspSampleData.getCollaboratorParticipantId(),
@@ -127,7 +125,8 @@ public class BspNewRootHandler extends AbstractEventHandler {
                     tumorNormal,
                     bspSampleData.getGender(),
                     labVessel.getLabel(),
-                    originalRoots.toString()};
+                    originalRoots.toString(),
+                    labVessel.getVolume() == null ? "" : labVessel.getVolume()};
         }
 
         // Call BSP KitResource web service

@@ -20,12 +20,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.text.Format;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Generic metadata storage class with String keys and values.
@@ -255,21 +250,19 @@ public class Metadata {
          */
         BUICK_COLLECTION_DATE(Category.SAMPLE, DataType.STRING, "Buick Collection Date", Visibility.USER),
         BUICK_VISIT(Category.SAMPLE, DataType.STRING, "Visit", Visibility.USER),
-
+        RECEIPT_RECORD(Category.SAMPLE, DataType.STRING, "Receipt Record", Visibility.NONE),
+        LSID(Category.SAMPLE, DataType.STRING, "Life Science Identifier", Visibility.USER),
+        SPECIES(Category.SAMPLE, DataType.STRING, "Species", Visibility.USER),
+        BROAD_PARTICIPANT_ID(Category.SAMPLE, DataType.STRING, "Broad Participant ID", Visibility.USER),
         CORRELATION_COEFFICIENT_R2(Category.LAB_METRIC_RUN, DataType.STRING, "R Squared Correlation Coefficient",
                 Visibility.USER),
         INSTRUMENT_NAME(Category.LAB_METRIC_RUN, DataType.STRING, "Instrument Name", Visibility.USER),
         INSTRUMENT_SERIAL_NUMBER(Category.LAB_METRIC_RUN, DataType.STRING, "Serial Number", Visibility.USER),
-
         TOTAL_NG(Category.LAB_METRIC, DataType.NUMBER, "Total ng", Visibility.USER),
-        RECEIPT_RECORD(Category.SAMPLE, DataType.STRING, "Receipt Record", Visibility.NONE),
-
         DV_200(Category.LAB_METRIC, DataType.NUMBER, "DV200", Visibility.USER),
         LOWER_MARKER_TIME(Category.LAB_METRIC, DataType.NUMBER, "Lower Marker Time", Visibility.USER),
         NA(Category.LAB_METRIC, DataType.STRING, "NA", Visibility.USER),
         BAIT_WELL(Category.REAGENT, DataType.STRING, "Bait Well", Visibility.USER),
-        LSID(Category.SAMPLE, DataType.STRING, "Life Science Identifier", Visibility.USER),
-        SPECIES(Category.SAMPLE, DataType.STRING, "Species", Visibility.USER),
         CELL_LINE(Category.SAMPLE, DataType.STRING, "Cell Line", Visibility.USER),
         TISSUE_TYPE(Category.SAMPLE, DataType.STRING, "Tissue Type", Visibility.USER),
         INDIVIDUAL_NAME(Category.SAMPLE, DataType.STRING, "Individual Name", Visibility.USER),

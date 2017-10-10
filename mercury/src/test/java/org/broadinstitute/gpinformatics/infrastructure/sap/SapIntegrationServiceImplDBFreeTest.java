@@ -70,7 +70,7 @@ public class SapIntegrationServiceImplDBFreeTest {
         Funding fundingDefined = new Funding(Funding.PURCHASE_ORDER,null, null);
         fundingDefined.setPurchaseOrderContact(testUser);
         fundingDefined.setPurchaseOrderNumber("PO00Id8923");
-        FundingLevel fundingLevel = new FundingLevel("100",fundingDefined);
+        FundingLevel fundingLevel = new FundingLevel("100", Collections.singleton(fundingDefined));
 
         QuoteFunding quoteFunding = new QuoteFunding(Collections.singleton(fundingLevel));
 
@@ -79,7 +79,7 @@ public class SapIntegrationServiceImplDBFreeTest {
 
         Funding costObjectFundingDefined = new Funding(Funding.FUNDS_RESERVATION, "to researchStuff", "8823");
         costObjectFundingDefined.setFundsReservationNumber("FR11293");
-        FundingLevel coFundingLevel1 = new FundingLevel("100", costObjectFundingDefined);
+        FundingLevel coFundingLevel1 = new FundingLevel("100", Collections.singleton(costObjectFundingDefined));
         QuoteFunding costObjectQFunding = new QuoteFunding(Collections.singleton(coFundingLevel1));
 
         testSingleSourceFRQuote = new Quote(SINGLE_SOURCE_FUND_RES_QUOTE_ID, costObjectQFunding, ApprovalStatus.FUNDED);
@@ -88,12 +88,12 @@ public class SapIntegrationServiceImplDBFreeTest {
         Funding test3POFundingDefined = new Funding(Funding.PURCHASE_ORDER,null, null);
         test3POFundingDefined.setPurchaseOrderContact(testUser);
         test3POFundingDefined.setPurchaseOrderNumber("PO002394ID92");
-        FundingLevel test3PurchaseOrderFundingLevel = new FundingLevel("50",test3POFundingDefined);
+        FundingLevel test3PurchaseOrderFundingLevel = new FundingLevel("50", Collections.singleton(test3POFundingDefined));
 
         Funding test3PO2FundingDefined = new Funding(Funding.PURCHASE_ORDER, null, null);
         test3PO2FundingDefined.setPurchaseOrderContact("Second" + testUser);
         test3PO2FundingDefined.setPurchaseOrderNumber("PO3329EEK93");
-        FundingLevel test3PO2FundingLevel = new FundingLevel("50", test3PO2FundingDefined);
+        FundingLevel test3PO2FundingLevel = new FundingLevel("50", Collections.singleton(test3PO2FundingDefined));
 
         QuoteFunding test3Funding = new QuoteFunding(
                 Arrays.asList(new FundingLevel[]{test3PurchaseOrderFundingLevel,test3PO2FundingLevel}));

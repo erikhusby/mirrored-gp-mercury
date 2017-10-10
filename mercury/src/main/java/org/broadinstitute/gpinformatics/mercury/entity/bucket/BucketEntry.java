@@ -86,7 +86,7 @@ public class BucketEntry {
     private Long bucketEntryId;
 
     // FetchType.EAGER is a temporary fix for org.hibernate.PropertyNotFoundException: field [tubeType] not found on
-    // ... LabVessel_$$_javassist_33 in LabBatchEjb.addToLabBatch
+    // ... LabVessel_$$_javassist_33 in LabBatchEjb.updateLabBatch
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
     @JoinColumn(name = "lab_vessel_id")
     private LabVessel labVessel;

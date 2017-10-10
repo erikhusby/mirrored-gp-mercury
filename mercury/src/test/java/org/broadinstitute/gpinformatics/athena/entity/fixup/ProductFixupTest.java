@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -19,11 +19,11 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_.product;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.QA;
 
 /**
  *
@@ -50,7 +50,7 @@ public class ProductFixupTest extends Arquillian {
      */
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(QA, "QA");
+        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
     // Required for Arquillian tests so it should remain enabled for sprint4.
@@ -124,4 +124,142 @@ public class ProductFixupTest extends Arquillian {
         productDao.persist(new FixupCommentary("GPLIM-3614 initialized external indicator and saved in SAP indicator for all products"));
 
     }
-}
+
+    @Test(enabled = false)
+    public void gplim4897CloneForQuicksilver() throws Exception {
+
+        userBean.loginOSUser();
+        utx.begin();
+
+        final Map<String, Pair<String, String>> partNumbersToClone = new HashMap<>();
+        partNumbersToClone.put("P-EX-0012", Pair.of("P-EX-0039","Express Somatic Human WES (Deep Coverage) v1.1"));
+        partNumbersToClone.put("P-EX-0013", Pair.of("P-EX-0040","Express Somatic Human WES (Standard Coverage) v1.1"));
+        partNumbersToClone.put("P-EX-0028", Pair.of("P-EX-0041","Somatic Human WES (Deep Coverage) v1.1"));
+        partNumbersToClone.put("P-EX-0029", Pair.of("P-EX-0042","Somatic Human WES (Standard Coverage) v1.1"));
+        partNumbersToClone.put("P-EX-0036", Pair.of("P-EX-0044","Human WES - Normal (150xMTC) v1.1"));
+        partNumbersToClone.put("P-EX-0037", Pair.of("P-EX-0045","Human WES - Tumor (150xMTC) v1.1"));
+        partNumbersToClone.put("XTNL-WES-010204", Pair.of("XTNL-WES-010252","WES-010204 Express Somatic Human WES (Standard Coverage) v1.1"));
+        partNumbersToClone.put("XTNL-WES-010205", Pair.of("XTNL-WES-010253","WES-010205 Express Somatic Human WES (Standard Coverage) v1.1"));
+        partNumbersToClone.put("XTNL-WES-010206", Pair.of("XTNL-WES-010254","WES-010206 Express Somatic Human WES (Standard Coverage) v1.1"));
+        partNumbersToClone.put("XTNL-WES-010207", Pair.of("XTNL-WES-010255","WES-010207 Express Somatic Human WES (Deep Coverage) v1.1"));
+        partNumbersToClone.put("XTNL-WES-010208", Pair.of("XTNL-WES-010256","WES-010208 Express Somatic Human WES (Deep Coverage) v1.1"));
+        partNumbersToClone.put("XTNL-WES-010209", Pair.of("XTNL-WES-010257","WES-010209 Express Somatic Human WES (Deep Coverage) v1.1"));
+        partNumbersToClone.put("XTNL-WES-010218", Pair.of("XTNL-WES-010258","WES-010218 Somatic Human WES (Deep Coverage) v1.1"));
+        partNumbersToClone.put("XTNL-WES-010219", Pair.of("XTNL-WES-010259","WES-010219 Somatic Human WES (Standard Coverage) v1.1"));
+        partNumbersToClone.put("XTNL-WES-010220", Pair.of("XTNL-WES-010260","WES-010220 Somatic Human WES (Standard Coverage) v1.1"));
+        partNumbersToClone.put("XTNL-WES-010221", Pair.of("XTNL-WES-010261","WES-010221 Somatic Human WES (Standard Coverage) v1.1"));
+        partNumbersToClone.put("XTNL-WES-010222", Pair.of("XTNL-WES-010262","WES-010222 Express FFPE Somatic Human WES (Deep Coverage) v1.1"));
+        partNumbersToClone.put("XTNL-WES-010223", Pair.of("XTNL-WES-010263","WES-010223 Express FFPE Somatic Human WES (Deep Coverage) v1.1"));
+        partNumbersToClone.put("XTNL-WES-010224", Pair.of("XTNL-WES-010264","WES-010224 Express FFPE Somatic Human WES (Deep Coverage) v1.1"));
+        partNumbersToClone.put("XTNL-WES-010225", Pair.of("XTNL-WES-010265","WES-010225 FFPE Somatic Human WES (Deep Coverage) v1.1"));
+        partNumbersToClone.put("XTNL-WES-010226", Pair.of("XTNL-WES-010266","WES-010226 FFPE Somatic Human WES (Deep Coverage) v1.1"));
+        partNumbersToClone.put("XTNL-WES-010227", Pair.of("XTNL-WES-010267","WES-010227 FFPE Somatic Human WES (Deep Coverage) v1.1"));
+        partNumbersToClone.put("XTNL-WES-010237", Pair.of("XTNL-WES-010268","WES-010237 Express Somatic Human WES (Standard Coverage) v1.1"));
+        partNumbersToClone.put("XTNL-WES-010238", Pair.of("XTNL-WES-010269","WES-010238 Express Somatic Human WES (Standard Coverage) v1.1"));
+        partNumbersToClone.put("XTNL-WES-010239", Pair.of("XTNL-WES-010270","WES-010239 Express Somatic Human WES (Standard Coverage) v1.1"));
+        partNumbersToClone.put("XTNL-WES-010240", Pair.of("XTNL-WES-010271","WES-010240 Express Somatic Human WES (Deep Coverage) v1.1"));
+        partNumbersToClone.put("XTNL-WES-010241", Pair.of("XTNL-WES-010272","WES-010241 Express Somatic Human WES (Deep Coverage) v1.1"));
+        partNumbersToClone.put("XTNL-WES-010242", Pair.of("XTNL-WES-010273","WES-010242 Express Somatic Human WES (Deep Coverage) v1.1"));
+        partNumbersToClone.put("XTNL-WES-010243", Pair.of("XTNL-WES-010274","WES-010243 Somatic Human WES (Standard Coverage) v1.1"));
+        partNumbersToClone.put("XTNL-WES-010244", Pair.of("XTNL-WES-010275","WES-010244 Somatic Human WES (Standard Coverage) v1.1"));
+        partNumbersToClone.put("XTNL-WES-010245", Pair.of("XTNL-WES-010276","WES-010245 Somatic Human WES (Standard Coverage) v1.1"));
+        partNumbersToClone.put("XTNL-WES-010246", Pair.of("XTNL-WES-010277","WES-010246 Somatic Human WES (Deep Coverage) v1.1"));
+        partNumbersToClone.put("XTNL-WES-010247", Pair.of("XTNL-WES-010278","WES-010247 Somatic Human WES (Deep Coverage) v1.1"));
+        partNumbersToClone.put("XTNL-WES-010248", Pair.of("XTNL-WES-010279","WES-010248 Somatic Human WES (Deep Coverage) v1.1"));
+
+        final List<Product> productsToClone = productDao.findByPartNumbers(new ArrayList<String>(partNumbersToClone.keySet()));
+
+        for (Product productToClone : productsToClone) {
+
+            final String productName = partNumbersToClone.get(productToClone.getPartNumber()).getRight();
+            final String partNumber = partNumbersToClone.get(productToClone.getPartNumber()).getLeft();
+
+            Product clonedProduct = Product.cloneProduct(productToClone, productName, partNumber);
+
+            productDao.persist(clonedProduct);
+        }
+        productDao.persist(new FixupCommentary("GPLIM-4897 cloning exome products for Quicksilver"));
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void support3237CloneProductsForHyperprep() throws Exception {
+
+        userBean.loginOSUser();
+        utx.begin();
+
+        final Map<String, Pair<String, String>> partNumbersToClone = new HashMap<>();
+        partNumbersToClone.put("P-WG-0048", Pair.of("P-WG-0079","PCR-Free Human WGS - 60x v1.1"));
+        partNumbersToClone.put("P-WG-0049", Pair.of("P-WG-0080","PCR+ Human WGS - 30x v1.1"));
+        partNumbersToClone.put("P-WG-0050", Pair.of("P-WG-0081","PCR+ Human WGS - 60x v1.1"));
+        partNumbersToClone.put("P-WG-0074", Pair.of("P-WG-0082","PCR+ Human WGS - 15x v1.1"));
+        partNumbersToClone.put("P-WG-0075", Pair.of("P-WG-0083","PCR-Free Human WGS - 15x v1.1"));
+        partNumbersToClone.put("P-WG-0076", Pair.of("P-WG-0084","PCR-Free Human WGS - 80x v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010300", Pair.of("XTNL-WGS-010322","WGS-010300 Genome, PCR-Free, 30X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010301", Pair.of("XTNL-WGS-010323","WGS-010301 Genome, PCR-Free, 30X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010302", Pair.of("XTNL-WGS-010324","WGS-010302 Genome, PCR-Free, 30X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010303", Pair.of("XTNL-WGS-010325","WGS-010303 Genome, PCR-Free, 30X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010304", Pair.of("XTNL-WGS-010326","WGS-010304 Genome, PCR-Free, 60X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010306", Pair.of("XTNL-WGS-010327","WGS-010306 Genome, PCR Plus, 60X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010307", Pair.of("XTNL-WGS-010328","WGS-010307 Genome, PCR Plus, 30X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010308", Pair.of("XTNL-WGS-010329","WGS-010308 Genome, PCR Plus, 30X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010309", Pair.of("XTNL-WGS-010330","WGS-010309 Genome, PCR Plus, 30X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010310", Pair.of("XTNL-WGS-010331","WGS-010310 Genome, PCR Plus, 30X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010311", Pair.of("XTNL-WGS-010332","WGS-010311 Genome, PCR-Free, 60X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010312", Pair.of("XTNL-WGS-010333","WGS-010312 Genome, PCR-Free, 60X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010313", Pair.of("XTNL-WGS-010334","WGS-010313 Genome, PCR-Free, 60X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010314", Pair.of("XTNL-WGS-010335","WGS-010314 Genome, PCR Plus, 60X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010315", Pair.of("XTNL-WGS-010336","WGS-010315 Genome, PCR Plus, 60X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010316", Pair.of("XTNL-WGS-010337","WGS-010316 Genome, PCR Plus, 60X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010317", Pair.of("XTNL-WGS-010338","WGS-010317 Genome, Unaligned, PCR-Free v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010318", Pair.of("XTNL-WGS-010339","WGS-010318 Genome, PCR-Free, 30X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010319", Pair.of("XTNL-WGS-010340","WGS-010319 Genome, PCR-Free, 60X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010320", Pair.of("XTNL-WGS-010341","WGS-010320 Genome, PCR Plus,  30X v1.1"));
+        partNumbersToClone.put("XTNL-WGS-010321", Pair.of("XTNL-WGS-010342","WGS-010321 Genome, PCR Plus,  60X v1.1"));
+
+        final List<Product> productsToClone = productDao.findByPartNumbers(new ArrayList<String>(partNumbersToClone.keySet()));
+
+        for (Product productToClone : productsToClone) {
+
+            final String productName = partNumbersToClone.get(productToClone.getPartNumber()).getRight();
+            final String partNumber = partNumbersToClone.get(productToClone.getPartNumber()).getLeft();
+
+            Product clonedProduct = Product.cloneProduct(productToClone, productName, partNumber);
+
+            productDao.persist(clonedProduct);
+        }
+        productDao.persist(new FixupCommentary("SUPPORT-3237 cloning exome products for HyperPrep Implementation"));
+        utx.commit();
+
+    }
+
+
+    @Test(enabled = false)
+    public void support3393CloneProductsForHyperprep() throws Exception {
+
+        userBean.loginOSUser();
+        utx.begin();
+
+        final Map<String, Pair<String, String>> partNumbersToClone = new HashMap<>();
+        partNumbersToClone.put("P-WG-0071", Pair.of("P-WG-0086","PCR-Free Human WGS - 20x v1.1 (High Volume, >10,000 samples)"));
+        partNumbersToClone.put("P-WG-0069", Pair.of("P-WG-0087","PCR-Free Human WGS - 30x v1.1 (High Volume, >10,000 samples)"));
+        partNumbersToClone.put("P-WG-0079", Pair.of("P-WG-0088","PCR-Free Human WGS - 60x v1.1 (High Volume, >10,000 samples)"));
+        partNumbersToClone.put("P-WG-0084", Pair.of("P-WG-0089","PCR-Free Human WGS - 80x v1.1 (High Volume, >10,000 samples)"));
+        partNumbersToClone.put("XTNL-WGS-010339", Pair.of("XTNL-WGS-010343","WGS-010322 Genome, PCR-Free, 20X v1.1"));
+
+
+        final List<Product> productsToClone = productDao.findByPartNumbers(new ArrayList<String>(partNumbersToClone.keySet()));
+
+        for (Product productToClone : productsToClone) {
+
+            final String productName = partNumbersToClone.get(productToClone.getPartNumber()).getRight();
+            final String partNumber = partNumbersToClone.get(productToClone.getPartNumber()).getLeft();
+
+            Product clonedProduct = Product.cloneProduct(productToClone, productName, partNumber);
+
+            productDao.persist(clonedProduct);
+        }
+        productDao.persist(new FixupCommentary("SUPPORT-3393 cloning products for new WGS products"));
+        utx.commit();
+
+    }}

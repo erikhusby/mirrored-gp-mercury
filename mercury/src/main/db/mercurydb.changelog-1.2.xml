@@ -868,51 +868,119 @@
         </addColumn>
     </changeSet>
 
-    <changeSet id="GPLIM-4712-1871" author="dwilson">
+    <changeSet id="GPLIM-4820-1" author="epolk">
+      <dropForeignKeyConstraint baseTableName="FLOWCELL_DESIGNATION" constraintName="FK_FLOWCELL_DESIG_EVENT"/>
+      <dropColumn tableName="FLOWCELL_DESIGNATION" columnName="loading_tube_event"/>
+      <dropColumn tableName="FLOWCELL_DESIGNATION_AUD" columnName="loading_tube_event"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-4582-1" author="jsacco">
+        <addColumn schemaName="mercury" tableName="batch_starting_vessels">
+            <column name="flowcell_designation" type="number(19,0)"/>
+        </addColumn>
+        <addColumn schemaName="mercury" tableName="batch_starting_vessels_aud">
+            <column name="flowcell_designation" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-4434-1870" author="dwilson">
+        <addColumn tableName="sample_instance_entity" schemaName="mercury">
+            <column name="read_length" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-4434-1871" author="dwilson">
+        <addColumn tableName="sample_instance_entity_aud" schemaName="mercury">
+            <column name="read_length" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-4711-100" author="dwilson">
         <addColumn schemaName="mercury" tableName="sample_instance_entity">
-            <column name="READ_LENGTH"  type="varchar(255)"/>
-            <column name="REFERENCE_SEQUENCE"  type="varchar(255)"/>
-            <column name="COVERAGE"  type="varchar(255)"/>
-            <column name="RESTRICTION_ENZYME"  type="varchar(255)"/>
-            <column name="ILLUMINA_454_KIT_USED"  type="varchar(255)"/>
-            <column name="JUMP_SIZE"  type="varchar(255)"/>
-            <column name="LIBRARY_SIZE_RANGE"  type="varchar(255)"/>
-            <column name="INSERT_SIZE_RANGE"  type="varchar(255)"/>
-            <column name="POOLED"  type="varchar(255)"/>
-            <column name="LIBRARY_TYPE"  type="varchar(255)"/>
-            <column name="COLLABORATOR_SAMPLE_ID"  type="varchar(255)"/>
-            <column name="TISSUE_TYPE"  type="varchar(255)"/>
-            <column name="SAMPLE_TUBE_BARCODE"  type="varchar(255)"/>
-            <column name="SAMPLE_NUMBER"  type="varchar(255)"/>
-            <column name="PRODUCT_ORDER"  type="number(19,0)"/>
-            <column name="RESEARCH_PROJECT"  type="number(19,0)"/>
-            <column name="SAMPLE_KIT_REQUEST"  type="number(19,0)"/>
+            <column name="READ_LENGTH2"  type="number(19,0)"/>
+            <column name="INDEX_LENGTH"  type="number(19,0)"/>
+            <column name="INDEX_LENGTH2"  type="number(19,0)"/>
+            <column name="SUBMIT_DATE"  type="timestamp"/>
+            <column name="LAB_NAME"  type="varchar(255)"/>
+            <column name="READ_TYPE"  type="varchar(255)"/>
+            <column name="REFERENCE"  type="varchar(255)"/>
+            <column name="REFERENCE_VERSION"  type="number(5,0)"/>
+            <column name="FRAGMENT_SIZE"  type="number(5,0)"/>
+            <column name="IS_PHIX"  type="varchar(255)"/>
+            <column name="COMMENTS"  type="varchar(255)"/>
+            <column name="ENZYME"  type="varchar(255)"/>
+            <column name="FRAG_SIZE_RANGE"  type="varchar(255)"/>
+            <column name="STATUS"  type="varchar(255)"/>
+            <column name="FLOWCELL_LANE_DESIGNATED"  type="varchar(255)"/>
+            <column name="FLOWCELL_DESIGNATION"  type="varchar(255)"/>
+            <column name="LIBRARY_CONSTRUCTION_METHOD"  type="varchar(255)"/>
+            <column name="QUANTIFICATION_METHOD"  type="varchar(255)"/>
+            <column name="CONCENTRATION_UNIT"  type="varchar(255)"/>
+            <column name="LANE_QUANTITY"  type="number(5,0)"/>
+            <column name="phix_percentage" type="number(19,2)"/>
+            <column name="collaborator_sample_id" type="varchar(255)"/>
+            <column name="coverage" type="varchar(255)"/>
+            <column name="illumina_454_kit_used" type="varchar(255)"/>
+            <column name="insert_size_range" type="varchar(255)"/>
+            <column name="jump_size" type="number(19,0)"/>
+            <column name="library_size_range" type="varchar(255)"/>
+            <column name="library_type" type="varchar(255)"/>
+            <column name="pooled" type="varchar(255)"/>
+            <column name="reference_sequence" type="varchar(255)"/>
+            <column name="restriction_enzyme" type="varchar(255)"/>
+            <column name="sample_number" type="varchar(255)"/>
+            <column name="sample_tube_barcode" type="varchar(255)"/>
+            <column name="tissue_type" type="varchar(255)"/>
+            <column name="product_order" type="number(19,0)"/>
+            <column name="research_project" type="number(19,0)"/>
+            <column name="sample_kit_request" type="number(19,0)"/>
         </addColumn>
-
+    </changeSet>
+    <changeSet id="GPLIM-4711-101" author="dwilson">
         <addColumn schemaName="mercury" tableName="sample_instance_entity_aud">
-            <column name="READ_LENGTH"  type="varchar(255)"/>
-            <column name="REFERENCE_SEQUENCE"  type="varchar(255)"/>
-            <column name="COVERAGE"  type="varchar(255)"/>
-            <column name="RESTRICTION_ENZYME"  type="varchar(255)"/>
-            <column name="ILLUMINA_454_KIT_USED"  type="varchar(255)"/>
-            <column name="JUMP_SIZE"  type="varchar(255)"/>
-            <column name="LIBRARY_SIZE_RANGE"  type="varchar(255)"/>
-            <column name="INSERT_SIZE_RANGE"  type="varchar(255)"/>
-            <column name="POOLED"  type="varchar(255)"/>
-            <column name="LIBRARY_TYPE"  type="varchar(255)"/>
-            <column name="COLLABORATOR_SAMPLE_ID"  type="varchar(255)"/>
-            <column name="TISSUE_TYPE"  type="varchar(255)"/>
-            <column name="SAMPLE_TUBE_BARCODE"  type="varchar(255)"/>
-            <column name="SAMPLE_NUMBER"  type="varchar(255)"/>
-            <column name="PRODUCT_ORDER"  type="number(19,0)"/>
-            <column name="RESEARCH_PROJECT"  type="number(19,0)"/>
-            <column name="SAMPLE_KIT_REQUEST"  type="number(19,0)"/>
+            <column name="READ_LENGTH2"  type="number(19,0)"/>
+            <column name="INDEX_LENGTH"  type="number(19,0)"/>
+            <column name="INDEX_LENGTH2"  type="number(19,0)"/>
+            <column name="SUBMIT_DATE"  type="timestamp"/>
+            <column name="LAB_NAME"  type="varchar(255)"/>
+            <column name="READ_TYPE"  type="varchar(255)"/>
+            <column name="REFERENCE"  type="varchar(255)"/>
+            <column name="REFERENCE_VERSION"  type="number(5,0)"/>
+            <column name="FRAGMENT_SIZE"  type="number(5,0)"/>
+            <column name="IS_PHIX"  type="varchar(255)"/>
+            <column name="COMMENTS"  type="varchar(255)"/>
+            <column name="ENZYME"  type="varchar(255)"/>
+            <column name="FRAG_SIZE_RANGE"  type="varchar(255)"/>
+            <column name="STATUS"  type="varchar(255)"/>
+            <column name="FLOWCELL_LANE_DESIGNATED"  type="varchar(255)"/>
+            <column name="FLOWCELL_DESIGNATION"  type="varchar(255)"/>
+            <column name="LIBRARY_CONSTRUCTION_METHOD"  type="varchar(255)"/>
+            <column name="QUANTIFICATION_METHOD"  type="varchar(255)"/>
+            <column name="CONCENTRATION_UNIT"  type="varchar(255)"/>
+            <column name="LANE_QUANTITY"  type="number(5,0)"/>
+            <column name="phix_percentage" type="number(19,2)"/>
+            <column name="collaborator_sample_id" type="varchar(255)"/>
+            <column name="coverage" type="varchar(255)"/>
+            <column name="illumina_454_kit_used" type="varchar(255)"/>
+            <column name="insert_size_range" type="varchar(255)"/>
+            <column name="jump_size" type="number(19,0)"/>
+            <column name="library_size_range" type="varchar(255)"/>
+            <column name="library_type" type="varchar(255)"/>
+            <column name="pooled" type="varchar(255)"/>
+            <column name="reference_sequence" type="varchar(255)"/>
+            <column name="restriction_enzyme" type="varchar(255)"/>
+            <column name="sample_number" type="varchar(255)"/>
+            <column name="sample_tube_barcode" type="varchar(255)"/>
+            <column name="tissue_type" type="varchar(255)"/>
+            <column name="product_order" type="number(19,0)"/>
+            <column name="research_project" type="number(19,0)"/>
+            <column name="sample_kit_request" type="number(19,0)"/>
         </addColumn>
-
-        <!-- What should be the primary key on this table?? -->
+    </changeSet>
+    <changeSet id="GPLIM-4711-102" author="dwilson">
         <createTable tableName="sample_kit_request" schemaName="mercury">
+            <column name="SAMPLE_KIT_REQUEST_ID"  type="number(19,0)"/>
             <column name="COLLABORATOR_NAME"  type="varchar(255)"/>
-            <column name="FIRST_NAME"  type="varchar(255)"/>
             <column name="FIRST_NAME"  type="varchar(255)"/>
             <column name="LAST_NAME"  type="varchar(255)"/>
             <column name="ORGANIZATION"  type="varchar(255)"/>
@@ -928,8 +996,10 @@
             <column name="SPECIES"  type="varchar(255)"/>
             <column name="IRB_APPROVAL_REQUIRED"  type="varchar(255)"/>
         </createTable>
-
+    </changeSet>
+    <changeSet id="GPLIM-4711-103" author="dwilson">
         <createTable tableName="sample_kit_request_aud" schemaName="mercury">
+            <column name="SAMPLE_KIT_REQUEST_ID"  type="number(19,0)"/>
             <column name="COLLABORATOR_NAME"  type="varchar(255)"/>
             <column name="FIRST_NAME"  type="varchar(255)"/>
             <column name="LAST_NAME"  type="varchar(255)"/>
@@ -948,8 +1018,22 @@
             <column name="rev" type="number(19,0)" />
             <column name="revtype" type="number(3,0)" />
         </createTable>
-
+    </changeSet>
+    <changeSet id="GPLIM-4711-104" author="dwilson">
         <createSequence sequenceName="seq_sample_kit_request" schemaName="mercury" startValue="1" incrementBy="50"/>
+    </changeSet>
+    <changeSet id="GPLIM-4711-106" author="epolk">
+      <addPrimaryKey constraintName="pk_sample_kit_request" tableName="sample_kit_request"
+		     schemaName="mercury" columnNames="sample_kit_request_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-4711-107" author="epolk">
+        <addPrimaryKey constraintName="pk_sample_kit_request_aud" tableName="sample_kit_request_aud"
+                       schemaName="mercury" columnNames="rev,sample_kit_request_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-4711-108" author="epolk">
+        <createIndex tableName="sample_kit_request_aud" indexName="ix_sample_kit_request_aud">
+            <column name="sample_kit_request_id"/>
+        </createIndex>
     </changeSet>
 
 </databaseChangeLog>

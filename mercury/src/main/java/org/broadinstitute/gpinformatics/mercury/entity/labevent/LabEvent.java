@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -87,6 +88,9 @@ public class LabEvent {
     public static final String UI_EVENT_LOCATION = "User Interface";
     public static final String UI_PROGRAM_NAME = "Mercury";
 
+    /**
+     * Sort by ascending date, ascending disambiguator
+     */
     public static final Comparator<LabEvent> BY_EVENT_DATE = new Comparator<LabEvent>() {
         @Override
         public int compare(LabEvent o1, LabEvent o2) {
@@ -210,6 +214,10 @@ public class LabEvent {
     private String workflowQualifier;
 
     private static Set<LabEventType> eventTypesThatCanFollowBucket = new HashSet<>();
+
+    /** The station event from which this lab event was created by LabEventFactory. */
+    @Transient
+    private StationEventType stationEventType;
 
     /**
      * For JPA
@@ -388,12 +396,21 @@ public class LabEvent {
         return eventOperator;
     }
 
+
+    void setEventOperator(Long eventOperator) {
+        this.eventOperator = eventOperator;
+    }
+
     public String getProgramName() {
         return programName;
     }
 
     public Date getEventDate() {
         return eventDate;
+    }
+
+    void setEventDate(Date eventDate) {
+        this.eventDate = eventDate;
     }
 
     public Collection<Reagent> getReagents() {
@@ -500,6 +517,14 @@ todo jmt adder methods
 
     public void setWorkflowQualifier(String workflowQualifier) {
         this.workflowQualifier = workflowQualifier;
+    }
+
+    public StationEventType getStationEventType() {
+        return stationEventType;
+    }
+
+    public void setStationEventType(StationEventType stationEventType) {
+        this.stationEventType = stationEventType;
     }
 
     /**

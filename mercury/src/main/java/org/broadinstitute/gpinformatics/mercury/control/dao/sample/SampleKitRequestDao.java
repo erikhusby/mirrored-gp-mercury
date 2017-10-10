@@ -13,4 +13,8 @@ public class SampleKitRequestDao  extends GenericDao {
     public SampleKitRequest findByOrganization(String organization) {
         return findSingle(SampleKitRequest.class, SampleKitRequest_.Organization, organization);
     }
+
+    public SampleKitRequest findByEmail(String organization) {
+        return findSingle(SampleKitRequest.class, SampleKitRequest_.email, organization);
+    }
 }

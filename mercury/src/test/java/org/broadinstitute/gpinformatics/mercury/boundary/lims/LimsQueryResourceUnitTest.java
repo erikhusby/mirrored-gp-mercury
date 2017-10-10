@@ -327,7 +327,7 @@ public class LimsQueryResourceUnitTest {
         expect(mockThriftService.fetchQpcrForTube("barcode")).andReturn(1.23);
         replayAll();
 
-        double result = resource.fetchQpcrForTube("barcode", LabMetric.MetricType.ECO_QPCR.getDisplayName());
+        double result = resource.fetchQpcrForTube("barcode", LabMetric.MetricType.ECO_QPCR.getDisplayName(), false);
         assertThat(result, equalTo(1.23));
 
         verifyAll();
@@ -343,7 +343,7 @@ public class LimsQueryResourceUnitTest {
         expect(mockThriftService.fetchQuantForTube("barcode", "test")).andReturn(1.23);
         replayAll();
 
-        double result = resource.fetchQuantForTube("barcode", "test");
+        double result = resource.fetchQuantForTube("barcode", "test", false);
         assertThat(result, equalTo(1.23));
 
         verifyAll();

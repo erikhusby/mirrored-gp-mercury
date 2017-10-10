@@ -35,7 +35,8 @@ public class ArraysQc {
     private Character autocallGender;
     private Character fpGender;
     private Character reportedGender;
-    private Boolean genderConcordancePf;
+    // See GPLIM-4863, this column needs 3 states so needs to be replaced with business logic until analytics changes
+    //private boolean genderConcordancePf;
     private BigDecimal hetPct;
     private BigDecimal hetHomvarRatio;
     private String clusterFileName;
@@ -144,8 +145,17 @@ public class ArraysQc {
         return reportedGender;
     }
 
-    public Boolean getGenderConcordancePf() {
-        return genderConcordancePf;
+    /**
+     * Display logic for 3 potential states  See GPLIM-4863
+     */
+    public String getGenderConcordancePf() {
+        if( getAutocallGender() == null || 'U' == getReportedGender() ) {
+            return "N/A";
+        }
+        if( getAutocallGender().equals(getReportedGender() )) {
+            return "Pass";
+        }
+        return "Fail";
     }
 
     public BigDecimal getHetPct() {

@@ -1,7 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -10,6 +12,7 @@ import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -18,12 +21,12 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 
 @Entity
 @Audited
@@ -74,7 +77,8 @@ public class SampleInstanceEntity {
 
     private String restrictionEnzyme;
 
-    private String illumina_454_KitUsed;
+    @Column(name = "illumina_454_kit_used")
+    private String illumina454KitUsed;
 
     private Date uploadDate;
 
@@ -98,7 +102,49 @@ public class SampleInstanceEntity {
 
     private String sampleNumber;
 
-    private String readLength;
+    private Integer readLength;
+
+    private Date submitDate;
+
+    private String labName;
+
+    private String readType;
+
+    private String reference;
+
+    private Integer referenceVersion;
+
+    private String fragmentSize;
+
+    private String isPhix;
+
+    private BigDecimal phixPercentage;
+
+    private Integer readLength2;
+
+    private Integer indexLength;
+
+    private Integer indexLength2;
+
+    private String comments;
+
+    private String enzyme;
+
+    private String fragSizeRange;
+
+    private String status;
+
+    private String flowcellLaneDesignated;
+
+    private String flowcellDesignation;
+
+    private String libraryConstructionMethod;
+
+    private String quantificationMethod;
+
+    private String concentrationUnit;
+
+    private Integer laneQuantity;
 
     public void removeSubTasks() {
         sampleInstanceEntityTsks.clear();
@@ -117,14 +163,14 @@ public class SampleInstanceEntity {
      */
     public List<String> getSubTasks() {
        List<String> subTask = new ArrayList<>();
-       for(SampleInstanceEntityTsk task : sampleInstanceEntityTsks)
-       {
+       for(SampleInstanceEntityTsk task : sampleInstanceEntityTsks) {
            subTask.add(task.getSubTask());
        }
 
        return subTask;
     }
 
+    public void setReadLength(Integer readLength) { this.readLength = readLength;  }
 
     public MercurySample getRootSample() {  return rootSample;  }
 
@@ -182,7 +228,7 @@ public class SampleInstanceEntity {
 
     public void setTissueType(String tissueType) { this.tissueType = tissueType;}
 
-    public void setDesiredReadLength(String readLength) { this.readLength = readLength;}
+    public void setDesiredReadLength(Integer readLength) { this.readLength = readLength;}
 
     public void setSampleKitRequest(SampleKitRequest sampleKitRequest) { this.sampleKitRequest = sampleKitRequest; }
 
@@ -193,4 +239,240 @@ public class SampleInstanceEntity {
     public ProductOrder getProductOrder() { return productOrder; }
 
     public void setProductOrder(ProductOrder productOrder) { this.productOrder = productOrder; }
+
+    public void setMolecularIndexingScheme(MolecularIndexingScheme molecularIndexingScheme) {
+        this.molecularIndexingScheme = molecularIndexingScheme;
+    }
+
+    public String getRestrictionEnzyme() {
+        return restrictionEnzyme;
+    }
+
+    public String getIllumina454KitUsed() {
+        return illumina454KitUsed;
+    }
+
+    public void setIllumina454KitUsed(String illumina454KitUsed) {
+        this.illumina454KitUsed = illumina454KitUsed;
+    }
+
+    public Date getUploadDate() {
+        return uploadDate;
+    }
+
+    public void setUploadDate(Date uploadDate) {
+        this.uploadDate = uploadDate;
+    }
+
+    public String getLibrarySizeRange() {
+        return librarySizeRange;
+    }
+
+    public String getJumpSize() {
+        return jumpSize;
+    }
+
+    public String getInsertSizeRange() {
+        return insertSizeRange;
+    }
+
+    public String getTissueType() {
+        return tissueType;
+    }
+
+    public String getSampleTubeBarcode() {
+        return sampleTubeBarcode;
+    }
+
+    public void setSampleTubeBarcode(String sampleTubeBarcode) {
+        this.sampleTubeBarcode = sampleTubeBarcode;
+    }
+
+    public String getSampleNumber() {
+        return sampleNumber;
+    }
+
+    public void setSampleNumber(String sampleNumber) {
+        this.sampleNumber = sampleNumber;
+    }
+
+    public Integer getReadLength() {
+        return readLength;
+    }
+
+    public Date getSubmitDate() {
+        return submitDate;
+    }
+
+    public void setSubmitDate(String submitDate) {
+        try {
+            this.submitDate = DateUtils.convertStringToDateTime(submitDate);
+        } catch (Exception e) {
+            try {
+                this.submitDate = DateUtils.convertStringToDateTime(StringUtils.substringBefore(submitDate, " "));
+            } catch (Exception e1) {
+                this.submitDate = new Date();
+            }
+        }
+    }
+
+    public String getLabName() {
+        return labName;
+    }
+
+    public void setLabName(String labName) {
+        this.labName = labName;
+    }
+
+    public String getReadType() {
+        return readType;
+    }
+
+    public void setReadType(String readType) {
+        this.readType = readType;
+    }
+
+    public String getReference() {
+        return reference;
+    }
+
+    public void setReference(String reference) {
+        this.reference = reference;
+    }
+
+    public Integer getReferenceVersion() {
+        return referenceVersion;
+    }
+
+    public void setReferenceVersion(Integer referenceVersion) {
+        this.referenceVersion = referenceVersion;
+    }
+
+    public String getFragmentSize() {
+        return fragmentSize;
+    }
+
+    public void setFragmentSize(String fragmentSize) {
+        this.fragmentSize = fragmentSize;
+    }
+
+    public String getIsPhix() {
+        return isPhix;
+    }
+
+    public void setIsPhix(String isPhix) {
+        this.isPhix = isPhix;
+    }
+
+    public BigDecimal getPhixPercentage() {
+        return phixPercentage;
+    }
+
+    public void setPhixPercentage(BigDecimal phixPercentage) {
+        this.phixPercentage = phixPercentage;
+    }
+
+    public Integer getReadLength2() {
+        return readLength2;
+    }
+
+    public void setReadLength2(Integer readLength2) {
+        this.readLength2 = readLength2;
+    }
+
+    public Integer getIndexLength() {
+        return indexLength;
+    }
+
+    public void setIndexLength(Integer indexLength) {
+        this.indexLength = indexLength;
+    }
+
+    public Integer getIndexLength2() {
+        return indexLength2;
+    }
+
+    public void setIndexLength2(Integer indexLength2) {
+        this.indexLength2 = indexLength2;
+    }
+
+    public String getComments() {
+        return comments;
+    }
+
+    public void setComments(String comments) {
+        this.comments = comments;
+    }
+
+    public String getEnzyme() {
+        return enzyme;
+    }
+
+    public void setEnzyme(String enzyme) {
+        this.enzyme = enzyme;
+    }
+
+    public String getFragSizeRange() {
+        return fragSizeRange;
+    }
+
+    public void setFragSizeRange(String fragSizeRange) {
+        this.fragSizeRange = fragSizeRange;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getFlowcellLaneDesignated() {
+        return flowcellLaneDesignated;
+    }
+
+    public void setFlowcellLaneDesignated(String flowcellLaneDesignated) {
+        this.flowcellLaneDesignated = flowcellLaneDesignated;
+    }
+
+    public String getFlowcellDesignation() {
+        return flowcellDesignation;
+    }
+
+    public void setFlowcellDesignation(String flowcellDesignation) {
+        this.flowcellDesignation = flowcellDesignation;
+    }
+
+    public String getLibraryConstructionMethod() {
+        return libraryConstructionMethod;
+    }
+
+    public void setLibraryConstructionMethod(String libraryConstructionMethod) {
+        this.libraryConstructionMethod = libraryConstructionMethod;
+    }
+
+    public String getQuantificationMethod() {
+        return this.quantificationMethod;
+    }
+
+    public void setQuantificationMethod(String quantificationMethod) {
+        this.quantificationMethod = quantificationMethod;
+    }
+
+    public Integer getLaneQuantity() {
+        return laneQuantity;
+    }
+
+    public void setLaneQuantity(Integer laneQuantity) {
+        this.laneQuantity = laneQuantity;
+    }
+
+    public String getConcentrationUnit() {
+        return concentrationUnit;
+    }
+
+    public void setConcentrationUnit(String concentrationUnit) {
+        this.concentrationUnit = concentrationUnit;
+    }
 }
