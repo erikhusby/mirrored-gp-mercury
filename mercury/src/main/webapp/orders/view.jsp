@@ -3,9 +3,9 @@
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderSampleBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver" %>
-<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderSampleBean" %>
 <%@ page import="static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderAccessType.*" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
@@ -1348,15 +1348,7 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
                     <c:if test="${actionBean.editOrder.orderType != null}">
                         ${actionBean.editOrder.orderTypeDisplay} --
                     </c:if>
-                    <c:choose>
-                        <c:when test="${actionBean.editOrder.researchOrder}">
-                            ${actionBean.editOrder.product.productName}
-                        </c:when>
-                        <c:otherwise>
-                            ${actionBean.editOrder.product.externalProductName}
-                        </c:otherwise>
-                    </c:choose>
-
+                    ${actionBean.editOrder.product.productName}
                 </stripes:link>
             </c:if>
         </div>
@@ -1509,7 +1501,7 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
     </div>
 </div>
 
-    <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+    <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager) %>">
     <div class="view-control-group control-group">
         <label class="control-label label-form">Order Customizations</label>
 

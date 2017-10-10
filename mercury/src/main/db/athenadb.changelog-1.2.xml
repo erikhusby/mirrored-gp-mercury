@@ -908,7 +908,7 @@
 
     <changeSet id="GPLIM-4924-1" author="scottmat">
         <addColumn schemaName="athena" tableName="product">
-            <column name="EXTERNAL_PRODUCT_NAME" type="varchar(255)" />
+            <column name="ALTERNATE_EXTERNAL_NAME" type="varchar(255)" />
             <column name="external_price_item" type="number(19,0)" />
             <column name="CLINICAL_ONLY_PRODUCT" type="number(1,0)" />
         </addColumn>
@@ -920,7 +920,7 @@
 
     <changeSet id="GPLIM-4924-2" author="scottmat">
         <addColumn schemaName="athena" tableName="product_aud">
-            <column name="EXTERNAL_PRODUCT_NAME" type="varchar(255)" />
+            <column name="ALTERNATE_EXTERNAL_NAME" type="varchar(255)" />
             <column name="external_price_item" type="number(19,0)" />
             <column name="CLINICAL_ONLY_PRODUCT" type="number(1,0)" />
         </addColumn>
@@ -952,12 +952,14 @@
     <changeSet id="GPLIM-4924-3" author="scottmat">
         <addColumn schemaName="athena" tableName="product_order">
             <column name="ORDER_TYPE" type="varchar(50)" />
+            <column name="CLINICAL_ATTESTATION_CONFIRMED" type="number(1,0)" />
         </addColumn>
     </changeSet>
 
     <changeSet id="GPLIM-4924-4" author="scottmat">
         <addColumn schemaName="athena" tableName="product_order_aud">
             <column name="ORDER_TYPE" type="varchar(50)" />
+            <column name="CLINICAL_ATTESTATION_CONFIRMED" type="number(1,0)" />
         </addColumn>
     </changeSet>
 

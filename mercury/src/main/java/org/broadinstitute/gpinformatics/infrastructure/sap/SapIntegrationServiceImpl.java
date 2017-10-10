@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -333,13 +334,13 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     @Override
-    public String billOrder(QuoteImportItem quoteItemForBilling, BigDecimal quantityOverride)
+    public String billOrder(QuoteImportItem quoteItemForBilling, BigDecimal quantityOverride, Date workCompleteDate)
             throws SAPIntegrationException {
 
         SAPDeliveryDocument deliveryDocument =
                 new SAPDeliveryDocument(SapIntegrationClientImpl.SystemIdentifier.MERCURY,
                         determineCompanyCode(quoteItemForBilling.getProductOrder()),
-                        quoteItemForBilling.getProductOrder().getSapOrderNumber());
+                        quoteItemForBilling.getProductOrder().getSapOrderNumber(), workCompleteDate);
 
         SAPDeliveryItem lineItem =
                 new SAPDeliveryItem(quoteItemForBilling.getProduct().getPartNumber(),
@@ -358,7 +359,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         if(product.hasExternalCounterpart()) {
             newMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES);
-            newMaterial.setMaterialName(product.getExternalProductName());
+            newMaterial.setMaterialName(product.getAlternateExternalName());
             getClient().createMaterial(newMaterial);
         }
 
@@ -394,7 +395,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         if(product.hasExternalCounterpart()) {
             existingMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES);
-            existingMaterial.setMaterialName(product.getExternalProductName());
+            existingMaterial.setMaterialName(product.getAlternateExternalName());
             getClient().changeMaterialDetails(existingMaterial);
         }
 

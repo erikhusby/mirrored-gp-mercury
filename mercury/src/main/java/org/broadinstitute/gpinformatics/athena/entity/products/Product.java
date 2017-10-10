@@ -76,8 +76,8 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     @Column(name = "PRODUCT_NAME", length = 255)
     private String productName;
 
-    @Column(name = "EXTERNAL_PRODUCT_NAME", length = 255)
-    private String externalProductName;
+    @Column(name = "ALTERNATE_EXTERNAL_NAME", length = 255)
+    private String alternateExternalName;
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST}, optional = false)
     private ProductFamily productFamily;
@@ -461,7 +461,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         for (Product addOn : addOns) {
             if (!addOn.isPdmOrderableOnly()) {
                 filteredAddOns.add(addOn);
-            } else if (roles.contains(Role.PDM) || roles.contains(Role.Developer)) {
+            } else if (roles.contains(Role.PDM) || roles.contains(Role.Developer) || (roles.contains(Role.GPProjectManager) && this.isExternalOnlyProduct())) {
                 filteredAddOns.add(addOn);
             }
         }
@@ -800,7 +800,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     }
 
     public boolean hasExternalCounterpart() {
-        return StringUtils.isNotBlank(externalProductName);
+        return StringUtils.isNotBlank(alternateExternalName);
     }
 
     public boolean isExternallyNamed() {
@@ -862,12 +862,12 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         return !isSavedInSAP() && !isExternalOnlyProduct();
     }
 
-    public String getExternalProductName() {
-        return externalProductName;
+    public String getAlternateExternalName() {
+        return alternateExternalName;
     }
 
-    public void setExternalProductName(String externalProductName) {
-        this.externalProductName = externalProductName;
+    public void setAlternateExternalName(String externalProductName) {
+        this.alternateExternalName = externalProductName;
     }
 
     public PriceItem getExternalPriceItem() {

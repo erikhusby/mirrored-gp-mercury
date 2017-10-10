@@ -36,11 +36,8 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Produ
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
@@ -301,11 +298,11 @@ public class ProductActionBean extends CoreActionBean {
         if (priceItemTokenInput.getItem() == null) {
             addValidationError("token-input-primaryPriceItem", "Primary price item is required");
         }
-        if (StringUtils.isNotBlank(editProduct.getExternalProductName()) && externalPriceItemTokenInput.getItem() == null) {
+        if (StringUtils.isNotBlank(editProduct.getAlternateExternalName()) && externalPriceItemTokenInput.getItem() == null) {
             addValidationError("token-input-externalPriceItem",
                     "If setting an external product name, an external price item is required");
         }
-        if (externalPriceItemTokenInput.getItem() != null && StringUtils.isBlank(editProduct.getExternalProductName())) {
+        if (externalPriceItemTokenInput.getItem() != null && StringUtils.isBlank(editProduct.getAlternateExternalName())) {
             addValidationError("token-input-externalPriceItem",
                     "If setting an external price item, an external product name is required");
         }

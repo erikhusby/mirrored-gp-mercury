@@ -18,6 +18,7 @@ import javax.enterprise.inject.Alternative;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -45,7 +46,7 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
     }
 
     @Override
-    public String billOrder(QuoteImportItem item, BigDecimal quantityOverride) throws SAPIntegrationException {
+    public String billOrder(QuoteImportItem item, BigDecimal quantityOverride, Date workCompleteDate) throws SAPIntegrationException {
         return TEST_DELIVERY_DOCUMENT_ID;
     }
 

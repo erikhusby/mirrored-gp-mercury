@@ -14,6 +14,7 @@ import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
@@ -413,10 +414,18 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         MultivaluedMap<String, String> params = new MultivaluedMapImpl();
 
         for (QuoteImportItem targetedPriceItemCriterion : targetedPriceItemCriteria) {
-            orderedPriceItemNames.add(targetedPriceItemCriterion.getProduct().getPrimaryPriceItem().getName());
-            orderedCategoryNames.add(targetedPriceItemCriterion.getProduct().getPrimaryPriceItem().getCategory());
-            orderedPlatformNames.add(targetedPriceItemCriterion.getProduct().getPrimaryPriceItem().getPlatform());
+
+            orderedPriceItemNames.add(targetedPriceItemCriterion.getProductOrder().getProduct().getPrimaryPriceItem().getName());
+            orderedCategoryNames.add(targetedPriceItemCriterion.getProductOrder().getProduct().getPrimaryPriceItem().getCategory());
+            orderedPlatformNames.add(targetedPriceItemCriterion.getProductOrder().getProduct().getPrimaryPriceItem().getPlatform());
             orderedEffectiveDates.add(FastDateFormat.getInstance(EFFECTIVE_DATE_FORMAT).format(targetedPriceItemCriterion.getWorkCompleteDate()));
+
+            for (ProductOrderAddOn productOrderAddOn : targetedPriceItemCriterion.getProductOrder().getAddOns()) {
+                orderedPriceItemNames.add(productOrderAddOn.getAddOn().getPrimaryPriceItem().getName());
+                orderedCategoryNames.add(productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory());
+                orderedPlatformNames.add(productOrderAddOn.getAddOn().getPrimaryPriceItem().getPlatform());
+                orderedEffectiveDates.add(FastDateFormat.getInstance(EFFECTIVE_DATE_FORMAT).format(targetedPriceItemCriterion.getWorkCompleteDate()));
+            }
         }
 
         final PriceList priceList;

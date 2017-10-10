@@ -52,8 +52,8 @@ public class PriceList {
         return foundItem;
     }
 
-    public QuotePriceItem findByKeyFields(PriceItem priceItem, Date effectiveDate) {
-        return findByKeyFields(priceItem.getPlatform(), priceItem.getCategory(), priceItem.getName(), effectiveDate);
+    public QuotePriceItem findByKeyFields(PriceItem priceItem) {
+        return findByKeyFields(priceItem.getPlatform(), priceItem.getCategory(), priceItem.getName());
     }
 
 
@@ -65,14 +65,13 @@ public class PriceList {
      * @param primaryPriceItem Price item defined on a product
      * @param orderQuote       Quote associated with the product order from which the product that defined the
      *                         price item is associated
-     * @param effectiveDate
      * @return Lowest price between the pricelist item and the quote item (if one exists)
      * @throws InvalidProductException   Thrown if the price item from the product orders product is not found on the
      * price list
      */
-    public String getEffectivePrice(PriceItem primaryPriceItem, Quote orderQuote, Date effectiveDate) throws InvalidProductException {
+    public String getEffectivePrice(PriceItem primaryPriceItem, Quote orderQuote) throws InvalidProductException {
 
-        final QuotePriceItem cachedPriceItem = findByKeyFields(primaryPriceItem, effectiveDate);
+        final QuotePriceItem cachedPriceItem = findByKeyFields(primaryPriceItem);
         if(cachedPriceItem == null) {
             throw new InvalidProductException("The price item "+primaryPriceItem.getDisplayName()+" does not exist");
         }
@@ -91,13 +90,13 @@ public class PriceList {
         return price;
     }
 
-    public Collection<QuotePriceItem> getReplacementPriceItems(Product product, Date effectiveDate) {
-        return getReplacementPriceItems(product.getPrimaryPriceItem(), effectiveDate);
+    public Collection<QuotePriceItem> getReplacementPriceItems(Product product) {
+        return getReplacementPriceItems(product.getPrimaryPriceItem());
     }
 
-    public Collection<QuotePriceItem> getReplacementPriceItems(PriceItem primaryPriceItem, Date effectiveDate) {
+    public Collection<QuotePriceItem> getReplacementPriceItems(PriceItem primaryPriceItem) {
         try {
-            QuotePriceItem quotePriceItem = findByKeyFields(primaryPriceItem, effectiveDate);
+            QuotePriceItem quotePriceItem = findByKeyFields(primaryPriceItem);
 
             return quotePriceItem.getReplacementItems().getQuotePriceItems();
         } catch (Throwable t) {
