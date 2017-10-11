@@ -843,16 +843,26 @@ public class LabBatchEjb {
         }
 
         // Determine whether rack needs to be exported from BSP
-        IsExported.ExportResults exportResults = bspExportsService.findExportDestinations(
-                new HashSet<LabVessel>(mapBarcodeToTube.values()));
-        int needsExport = 0;
-        for (IsExported.ExportResult exportResult : exportResults.getExportResult()) {
-            if (exportResult.isError()) {
-                continue;
+        List<LabVessel> bspTubes = new ArrayList<>();
+        for (BarcodedTube barcodedTube : mapBarcodeToTube.values()) {
+            SampleInstanceV2 sampleInstanceV2 = barcodedTube.getSampleInstancesV2().iterator().next();
+            MercurySample mercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
+            if (mercurySample == null || mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
+                bspTubes.add(barcodedTube);
             }
-            Set<IsExported.ExternalSystem> externalSystems = exportResult.getExportDestinations();
-            if (CollectionUtils.isEmpty(externalSystems) || !externalSystems.contains(IsExported.ExternalSystem.Mercury)) {
-                needsExport++;
+        }
+
+        int needsExport = 0;
+        if (!bspTubes.isEmpty()) {
+            IsExported.ExportResults exportResults = bspExportsService.findExportDestinations(bspTubes);
+            for (IsExported.ExportResult exportResult : exportResults.getExportResult()) {
+                if (exportResult.isError()) {
+                    continue;
+                }
+                Set<IsExported.ExternalSystem> externalSystems = exportResult.getExportDestinations();
+                if (CollectionUtils.isEmpty(externalSystems) || !externalSystems.contains(IsExported.ExternalSystem.Mercury)) {
+                    needsExport++;
+                }
             }
         }
 
