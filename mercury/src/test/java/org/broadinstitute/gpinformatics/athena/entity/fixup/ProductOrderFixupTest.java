@@ -1181,6 +1181,20 @@ public class ProductOrderFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
+    public void support3427CompleteOrders() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+        List<String> pdosToComplete = Arrays.asList("PDO-12890", "PDO-12581", "PDO-12947", "PDO-13129");
+
+        for (String pdoToComplete : pdosToComplete) {
+            productOrderEjb.updateOrderStatus(pdoToComplete, MessageReporter.UNUSED);
+        }
+
+        productOrderDao.persist(new FixupCommentary("SUPPORT-3427: Updating " + pdosToComplete + " to Completed."));
+        commitTransaction();
+    }
+
+    @Test(enabled = false)
     public void support3399UnabandonSamples() throws Exception {
         userBean.loginOSUser();
         beginTransaction();
