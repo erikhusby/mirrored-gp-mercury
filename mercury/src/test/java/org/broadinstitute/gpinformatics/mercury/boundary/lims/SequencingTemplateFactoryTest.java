@@ -22,6 +22,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
@@ -47,6 +48,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -100,6 +102,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
     private IlluminaFlowcell flowcellHiSeq4000;
     private LabBatch workflowBatch;
     private final List<FlowcellDesignation> flowcellDesignations = new ArrayList<>();
+    private ProductOrder productOrder;
     private ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder;
 
     @Override
@@ -124,8 +127,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         });
         flowcellDesignations.clear();
 
-        final ProductOrder
-                productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
+        productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         runDate = new Date();
         Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         workflowBatch = new LabBatch("Exome Express Batch",
@@ -213,10 +215,12 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         List<LabBatch.VesselToLanesInfo> vesselToLanesInfos = new ArrayList<>();
 
         vesselToLanesInfo = new LabBatch.VesselToLanesInfo(
-                vesselPositions1, new BigDecimal("16.22"), denatureTube2000);
+                vesselPositions1, new BigDecimal("16.22"), denatureTube2000, workflowBatch.getBatchName(),
+                productOrder.getProduct().getProductName(), Collections.<FlowcellDesignation>emptyList());
 
         vesselToLanesInfo2 = new LabBatch.VesselToLanesInfo(
-                vesselPositions2, BIG_DECIMAL_12_33, denatureTube4000);
+                vesselPositions2, BIG_DECIMAL_12_33, denatureTube4000, workflowBatch.getBatchName(),
+                productOrder.getProduct().getProductName(), Collections.<FlowcellDesignation>emptyList());
 
         vesselToLanesInfos.add(vesselToLanesInfo);
         vesselToLanesInfos.add(vesselToLanesInfo2);
@@ -500,7 +504,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         for (boolean poolTest : new boolean[]{false, true}) {
 
             FlowcellDesignation designation = new FlowcellDesignation(dilutionTube2500, workflowBatch,
-                    denatureTube2500.getLatestEvent(), FlowcellDesignation.IndexType.DUAL, poolTest,
+                    FlowcellDesignation.IndexType.DUAL, poolTest,
                     IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, 4, 99, BIG_DECIMAL_7_77, true,
                     FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL);
             flowcellDesignations.clear();
@@ -541,7 +545,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         for (boolean poolTest : new boolean[]{false, true}) {
 
             FlowcellDesignation designation = new FlowcellDesignation(dilutionTube2500, workflowBatch,
-                    denatureTube2500.getLatestEvent(), FlowcellDesignation.IndexType.DUAL, poolTest,
+                    FlowcellDesignation.IndexType.DUAL, poolTest,
                     IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, 4, 99, BIG_DECIMAL_7_77, true,
                     FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL);
             flowcellDesignations.clear();
@@ -578,7 +582,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         for (boolean poolTest : new boolean[]{false, true}) {
 
             FlowcellDesignation designation = new FlowcellDesignation(dilutionTube2500, workflowBatch,
-                    denatureTube2500.getLatestEvent(), FlowcellDesignation.IndexType.DUAL, poolTest,
+                    FlowcellDesignation.IndexType.DUAL, poolTest,
                     IlluminaFlowcell.FlowcellType.MiSeqFlowcell, 4, 100, BIG_DECIMAL_7_77, true,
                     FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL);
             flowcellDesignations.clear();
@@ -609,18 +613,24 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         BigDecimal denature4000Conc = new BigDecimal("8.88");
         BigDecimal denature2500Conc = new BigDecimal("13.33");
         FlowcellDesignation designation = new FlowcellDesignation(denatureTube4000, fctBatchHiSeq4000,
-                denatureTube4000.getLatestEvent(), FlowcellDesignation.IndexType.DUAL, false,
+                FlowcellDesignation.IndexType.DUAL, false,
                 IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, 4, 99, denature4000Conc, true,
                 FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL);
 
         FlowcellDesignation designation2 = new FlowcellDesignation(denatureTube2500, fctBatchHiSeq4000,
-                denatureTube2500.getLatestEvent(), FlowcellDesignation.IndexType.DUAL, false,
+                FlowcellDesignation.IndexType.DUAL, false,
                 IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, 4, 99, denature2500Conc, true,
                 FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL);
 
         flowcellDesignations.clear();
         flowcellDesignations.add(designation);
         flowcellDesignations.add(designation2);
+
+        // Verifies the transient fields are correct.
+        for (LabBatchStartingVessel labBatchStartingVessel : fctBatchHiSeq4000.getLabBatchStartingVessels()) {
+            Assert.assertEquals(labBatchStartingVessel.getLinkedLcset(), workflowBatch.getBatchName());
+            Assert.assertEquals(labBatchStartingVessel.getProductNames(), productOrder.getProduct().getProductName());
+        }
 
         template = factory.getSequencingTemplate(fctBatchHiSeq4000, false);
         for (SequencingTemplateLaneType laneType: template.getLanes()) {

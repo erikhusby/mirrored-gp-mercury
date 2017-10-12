@@ -16,6 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
@@ -56,6 +57,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -528,7 +530,12 @@ public class SequencingTemplateFactory {
                 Product product = productOrder.getProduct();
                 if (product != null) {
                     products.add(product);
-                    if (product.getReadLength() != null) {
+                    //If this is a pooled tube override it with the uploaded read length.
+                    if (sampleInstance.getReadLength() != null) {
+                        readLengths.add(sampleInstance.getReadLength());
+                    }
+                    //Otherwise take the read length from the product.
+                    if(product.getReadLength() != null && sampleInstance.getReadLength() == null) {
                         readLengths.add(product.getReadLength());
                     }
                     if (product.getPairedEndRead() != null) {
@@ -557,13 +564,22 @@ public class SequencingTemplateFactory {
     private void validateCollections(Set<String> designations, Set<Product> products, Set<String> structures) {
         if (designations.isEmpty()) {
             throw new InformaticsServiceException("Could not find regulatory designation.");
-        } else if(designations.contains(ResearchProject.RegulatoryDesignation.RESEARCH_ONLY.name())
-                && (designations.contains(ResearchProject.RegulatoryDesignation.GENERAL_CLIA_CAP.name()) ||
-                    designations.contains(ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS.name()))){
-            throw new InformaticsServiceException("Template tube has mix of Research and Clinical regulatory designations");
         }
         if (products.isEmpty()) {
             throw new InformaticsServiceException("Could not find any products.");
+        }
+        boolean mixedFlowcellOk = false;
+        for (Product product : products) {
+            if (Objects.equals(product.getAggregationDataType(), BassDTO.DATA_TYPE_WGS)) {
+                mixedFlowcellOk = true;
+                break;
+            }
+        }
+        if(!mixedFlowcellOk &&
+                designations.contains(ResearchProject.RegulatoryDesignation.RESEARCH_ONLY.name())
+                && (designations.contains(ResearchProject.RegulatoryDesignation.GENERAL_CLIA_CAP.name()) ||
+                    designations.contains(ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS.name()))){
+            throw new InformaticsServiceException("Template tube has mix of Research and Clinical regulatory designations");
         }
         if (structures.size() > 1) {
             throw new InformaticsServiceException("Found mix of different index lengths.");

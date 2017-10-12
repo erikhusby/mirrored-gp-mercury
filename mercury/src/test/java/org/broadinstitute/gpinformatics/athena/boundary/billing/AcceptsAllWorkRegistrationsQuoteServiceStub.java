@@ -59,7 +59,7 @@ class AcceptsAllWorkRegistrationsQuoteServiceStub implements QuoteService {
 
     @Override
     public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
-        FundingLevel level = new FundingLevel("100", new Funding(Funding.PURCHASE_ORDER,null, null));
+        FundingLevel level = new FundingLevel("100", Collections.singleton(new Funding(Funding.PURCHASE_ORDER,null, null)));
         QuoteFunding funding = new QuoteFunding(Collections.singleton(level));
         final Quote quote = new Quote("test1", funding, ApprovalStatus.FUNDED);
 
@@ -68,7 +68,7 @@ class AcceptsAllWorkRegistrationsQuoteServiceStub implements QuoteService {
 
     @Override
     public Quote getQuoteWithPriceItems(String alphaId) throws QuoteServerException, QuoteNotFoundException {
-        FundingLevel level = new FundingLevel("100", new Funding(Funding.PURCHASE_ORDER,null, null));
+        FundingLevel level = new FundingLevel("100", Collections.singleton(new Funding(Funding.PURCHASE_ORDER,null, null)));
         QuoteFunding funding = new QuoteFunding(Collections.singleton(level));
         final Quote quote = new Quote("test1", funding, ApprovalStatus.FUNDED);
 

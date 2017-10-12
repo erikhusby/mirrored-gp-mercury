@@ -11,7 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventTy
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.SamplesDaughterPlateHandler;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.BSPRestSender;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -74,7 +74,7 @@ public class WorkflowTransitionTest extends Arquillian {
 
     private JiraIssue exexIssue;
 
-    private SamplesDaughterPlateHandler mockBspHandler;
+    private BSPRestSender mockBspHandler;
 
     private BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
 
@@ -91,9 +91,9 @@ public class WorkflowTransitionTest extends Arquillian {
             exexIssue = resetJiraTicketState(exexJiraTicket);
         }
         if (labEventFactory != null && mockBspHandler == null){
-            mockBspHandler = mock(SamplesDaughterPlateHandler.class);
+            mockBspHandler = mock(BSPRestSender.class);
             doNothing().when(mockBspHandler).postToBsp(any(BettaLIMSMessage.class), any(String.class));
-            labEventFactory.setSamplesDaughterPlateHandler(mockBspHandler);
+            labEventFactory.setBspRestSender(mockBspHandler);
             bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
         }
     }
@@ -320,6 +320,28 @@ public class WorkflowTransitionTest extends Arquillian {
         jiraCommentUtil.postUpdate(labEvent);
         exexIssue = jiraService.getIssue(exexJiraTicket);
         Assert.assertEquals(exexIssue.getStatus(), "In Sequencing");
+    }
+
+    @Test
+    public void testPcrFreePondRegistration() throws IOException {
+        Assert.assertEquals(genomeIssue.getStatus(), "On Hold");
+        genomeIssue.postTransition("In LC", null);
+
+        String sourcePlateBarcode = "000009184173";
+        String destRackBarcode = "PondRegistrationBarcodeGenomeTest" + timestampFormat.format(new Date());
+        List<String> pondTube = Arrays.asList("PondTubeWorkflowtest" +  timestampFormat.format(new Date()));
+
+        PlateTransferEventType plateTransferEventType = bettaLimsMessageTestFactory
+                .buildPlateToRack(LabEventType.PCR_FREE_POND_REGISTRATION.getName(), sourcePlateBarcode,
+                        destRackBarcode, pondTube);
+
+        BettaLIMSMessage message = new BettaLIMSMessage();
+        message.getPlateTransferEvent().add(plateTransferEventType);
+        List<LabEvent> labEvents = labEventFactory.buildFromBettaLims(message);
+        LabEvent labEvent = labEvents.get(0);
+        jiraCommentUtil.postUpdate(labEvent);
+        genomeIssue = jiraService.getIssue(genomeJiraTicket);
+        Assert.assertEquals(genomeIssue.getStatus(), "Norm and Pool");
     }
 
     private JiraIssue resetJiraTicketState(String ticketKey) throws IOException {

@@ -1,10 +1,17 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationDto;
 import org.broadinstitute.gpinformatics.mercury.presentation.run.FctDto;
 
 import javax.annotation.Nonnull;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
+
+import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_.product;
 
 /**
  * Represents a table row in Create FCT page.
@@ -17,7 +24,7 @@ public class CreateFctDto implements FctDto, Cloneable {
     private BigDecimal loadingConc;
     private String eventDate;
     private int readLength = 1;
-    private String product;
+    private List<String> productNames = new ArrayList<>();
     private String startingBatchVessels;
     private String tubeType;
     private String lcsetUrl;
@@ -30,15 +37,15 @@ public class CreateFctDto implements FctDto, Cloneable {
     }
 
     public CreateFctDto(@Nonnull String barcode, @Nonnull String lcset, String additionalLcsets,
-                        @Nonnull String eventDate,
-                        @Nonnull String product, @Nonnull String startingBatchVessels, @Nonnull String tubeType,
+                        @Nonnull String eventDate, @Nonnull List<String> productNames,
+                        @Nonnull String startingBatchVessels, @Nonnull String tubeType,
                         @Nonnull BigDecimal loadingConc, String lcsetUrl, @Nonnull String regulatoryDesignation,
                         int numberSamples) {
         this.barcode = barcode;
         this.lcset = lcset;
         this.additionalLcsets = additionalLcsets;
         this.eventDate = eventDate;
-        this.product = product;
+        this.productNames.addAll(productNames);
         this.startingBatchVessels = startingBatchVessels;
         this.tubeType = tubeType;
         this.loadingConc = loadingConc;
@@ -59,10 +66,12 @@ public class CreateFctDto implements FctDto, Cloneable {
      * Split is used for partial dto allocation. This is unsupported since it should never happen, since
      * this type of dto is only used in the CreateFCT page that can only do complete flowcell fills.
      */
+    @Override
     public CreateFctDto split(int allocatedLanes) {
         throw new RuntimeException("Expected to only do complete flowcell fills.");
     }
 
+    @Override
     public String getBarcode() {
         return barcode;
     }
@@ -71,6 +80,7 @@ public class CreateFctDto implements FctDto, Cloneable {
         this.barcode = barcode;
     }
 
+    @Override
     public String getLcset() {
         return lcset;
     }
@@ -103,14 +113,21 @@ public class CreateFctDto implements FctDto, Cloneable {
         this.readLength = readLength;
     }
 
+    @Override
     public String getProduct() {
-        return product;
+        return StringUtils.join(productNames, DesignationDto.DELIMITER);
     }
 
-    public void setProduct(String product) {
-        this.product = product;
+    @Override
+    public List<String> getProductNames() {
+        return productNames;
     }
 
+    public void setProduct(String delimitedProductNames) {
+        productNames = Arrays.asList(StringUtils.trimToEmpty(delimitedProductNames).split(DesignationDto.DELIMITER));
+    }
+
+    @Override
     public BigDecimal getLoadingConc() {
         return loadingConc;
     }
@@ -119,6 +136,7 @@ public class CreateFctDto implements FctDto, Cloneable {
         this.loadingConc = loadingConc;
     }
 
+    @Override
     public Integer getNumberLanes() {
         return numberLanes;
     }
@@ -168,6 +186,7 @@ public class CreateFctDto implements FctDto, Cloneable {
     }
 
     /** Indicates if dto was allocated to a flowcell. */
+    @Override
     public boolean isAllocated() {
         return allocated;
     }
@@ -213,7 +232,7 @@ public class CreateFctDto implements FctDto, Cloneable {
         if (!tubeType.equals(createFctDto.tubeType)) {
             return false;
         }
-        return product.equals(createFctDto.product);
+        return getProduct().equals(createFctDto.getProduct());
 
     }
 

@@ -35,7 +35,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkDetail;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -75,6 +77,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -82,6 +85,8 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 
 @Test(groups = TestGroups.FIXUP)
 public class LabBatchFixUpTest extends Arquillian {
+
+    private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s");
 
     @Inject
     private LabBatchDao labBatchDao;
@@ -579,8 +584,9 @@ public class LabBatchFixUpTest extends Arquillian {
             CreateFields.IssueType issueType = selectedType.getIssueType();
 
             LabVessel startingTube = labVesselDao.findByIdentifier(startingTubeLabel);
-            LabBatch batch = new LabBatch(startingTubeLabel + " FCT ticket", Collections.singletonList(
-                    new LabBatch.VesselToLanesInfo(Arrays.asList(lanes), loadingConc, startingTube)),
+            LabBatch batch = new LabBatch(startingTubeLabel + " FCT ticket",
+                    Collections.singletonList(new LabBatch.VesselToLanesInfo(Arrays.asList(lanes), loadingConc,
+                            startingTube, null, null, Collections.<FlowcellDesignation>emptyList())),
                     batchType, selectedType);
             batch.setBatchDescription(batch.getBatchName());
             labBatchEjb.createLabBatch(batch, userBean.getLoginUserName(), issueType);
@@ -1336,5 +1342,99 @@ public class LabBatchFixUpTest extends Arquillian {
         }
         labBatchDao.persist(new FixupCommentary("IPI-61789 change batch membership"));
         labBatchDao.flush();
+    }
+
+    /**
+     * This test reads its parameters from a file, testdata/ChangeBucketEntries.txt, so it can be used for other similar fixups,
+     * without writing a new test.  Example contents of the file are:
+     * LCSET-10923
+     * GPLIM-4797
+     * 0221477796 0221477790
+     * 0221477798 0221477792
+     */
+    @Test(enabled = false)
+    public void fixupGplim4797() throws Exception {
+        userBean.loginOSUser();
+        userTransaction.begin();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("ChangeBucketEntries.txt"));
+        String batchName = lines.get(0);
+        String fixupTicketId = lines.get(1);
+        Map<String, String> mapOldBarcodeToNew = new HashMap<>();
+        for (int i = 2; i < lines.size(); i++) {
+            String[] fields = WHITESPACE_PATTERN.split(lines.get(i));
+            if (fields.length != 2) {
+                throw new RuntimeException("Expected two white-space separated fields in " + lines.get(i));
+            }
+            mapOldBarcodeToNew.put(fields[0], fields[1]);
+        }
+
+        LabBatch labBatch = labBatchDao.findByName(batchName);
+        for (LabBatchStartingVessel labBatchStartingVessel : labBatch.getLabBatchStartingVessels()) {
+            String newBarcode = mapOldBarcodeToNew.get(labBatchStartingVessel.getLabVessel().getLabel());
+            if (newBarcode != null) {
+                LabVessel newLabVessel = labVesselDao.findByIdentifier(newBarcode);
+                System.out.println("Replacing LBSV " + labBatchStartingVessel.getLabVessel().getLabel() + " with " +
+                        newLabVessel.getLabel());
+                labBatchStartingVessel.setLabVessel(newLabVessel);
+            }
+        }
+        for (BucketEntry bucketEntry : labBatch.getBucketEntries()) {
+            String newBarcode = mapOldBarcodeToNew.get(bucketEntry.getLabVessel().getLabel());
+            if (newBarcode != null) {
+                LabVessel newLabVessel = labVesselDao.findByIdentifier(newBarcode);
+                System.out.println("Replacing BE " + bucketEntry.getLabVessel().getLabel() + " with " +
+                        newLabVessel.getLabel());
+                bucketEntry.setLabVessel(newLabVessel);
+            }
+        }
+
+        labBatchDao.persist(new FixupCommentary(fixupTicketId + " replace vessels in batch"));
+        labBatchDao.flush();
+        userTransaction.commit();
+    }
+
+    /*
+     * This test is used to delete LCSETs that are canceled in JIRA.  It reads its parameters from a file,
+     * testdata/DeleteLabBatch.txt, so it can be used for other similar fixups, without writing a new test.
+     * Example contents of the file are:
+     * PO-9128
+     * LCSET-11312
+     * LCSET-11553
+     * ...
+     */
+    @Test(enabled = false)
+    public void fixupPo9128() throws Exception {
+        userBean.loginOSUser();
+        userTransaction.begin();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("DeleteLabBatch.txt"));
+        // From database queries, found that there were batch_starting_vessels for this LCSET, but no bucket entries.
+        // Ran the test with rollback, and verified with SQL logging that batch_starting_vessels orphans were removed.
+        for (int i = 1; i < lines.size(); ++i) {
+            LabBatch labBatch = labBatchDao.findByName(lines.get(i));
+            Set<BucketEntry> badBucketEntries = labBatch.getBucketEntries();
+            Iterator<BucketEntry> badBucketEntryIter = badBucketEntries.iterator();
+            while (badBucketEntryIter.hasNext()) {
+                BucketEntry bucketEntry = badBucketEntryIter.next();
+                LabVessel labVessel = bucketEntry.getLabVessel();
+                System.out.println("Removing bucket entry " + bucketEntry + " from " + labBatch.getBatchName());
+                labVessel.getBucketEntries().remove(bucketEntry);
+            }
+
+            for (LabEvent labEvent : labBatchDao.findListByList(LabEvent.class, LabEvent_.manualOverrideLcSet,
+                    Collections.singletonList(labBatch))) {
+                System.out.println("Removing manual override of " + labBatch.getBatchName() + " from " +
+                                   labEvent.getLabEventType().name() + " (labEventId " + labEvent.getLabEventId() + ")");
+                labEvent.setManualOverrideLcSet(null);
+            }
+            System.out.println("Deleting " + labBatch.getBatchName());
+            labBatchDao.remove(labBatch.getJiraTicket());
+            labBatch.getReworks().clear();
+            labBatchDao.remove(labBatch);
+        }
+        labBatchDao.persist(new FixupCommentary(lines.get(0) + " delete cancelled LCSET"));
+        labBatchDao.flush();
+        userTransaction.commit();
     }
 }

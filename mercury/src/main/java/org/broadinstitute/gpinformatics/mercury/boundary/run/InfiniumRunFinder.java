@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.annotation.Resource;
@@ -29,6 +30,7 @@ import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -132,7 +134,7 @@ public class InfiniumRunFinder implements Serializable {
         boolean allComplete = true;
         for (VesselPosition vesselPosition : chipWellResults.getPositionWithSampleInstance()) {
             //Check to see if any of the wells in the chip are abandoned.
-            if(!staticPlate.isPositionAbandoned(vesselPosition.toString())) {
+            if(!isAbandoned(staticPlate,vesselPosition)) {
                 boolean autocallStarted = false;
                 for (LabEventMetadata metadata : labEventMetadata) {
                     if (metadata.getLabEventMetadataType() ==
@@ -157,7 +159,7 @@ public class InfiniumRunFinder implements Serializable {
         boolean starterCalledOnAllWells = true;
         for (VesselPosition vesselPosition: staticPlate.getVesselGeometry().getVesselPositions()) {
             //Check to see if any of the wells in the chip are abandoned.
-            if(!staticPlate.isPositionAbandoned(vesselPosition.toString())) {
+            if(!isAbandoned(staticPlate,vesselPosition)) {
                 Set<SampleInstanceV2> sampleInstancesAtPositionV2 =
                         staticPlate.getContainerRole().getSampleInstancesAtPositionV2(vesselPosition);
                 if (sampleInstancesAtPositionV2 != null && !sampleInstancesAtPositionV2.isEmpty()) {
@@ -185,6 +187,20 @@ public class InfiniumRunFinder implements Serializable {
                 sendFailedToFindScannerNameEmail(staticPlate);
             }
         }
+    }
+
+
+    /**
+     *  Check to see if the any position on the current chip or any ancestor plates or vessels are abandoned.
+     */
+    private boolean isAbandoned(StaticPlate staticPlate, VesselPosition vesselPosition) {
+        TransferTraverserCriteria.AbandonedLabVesselAncestorCriteria abandonedLabVesselAncestorCriteria =
+                new TransferTraverserCriteria.AbandonedLabVesselAncestorCriteria();
+        staticPlate.getContainerRole().evaluateCriteria(vesselPosition, abandonedLabVesselAncestorCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors, 0);
+        if(abandonedLabVesselAncestorCriteria.isAncestorAbandoned()) {
+            return true;
+        }
+        return false;
     }
 
     public boolean start(StaticPlate staticPlate, VesselPosition vesselPosition, LabEvent someStartedEvent) {

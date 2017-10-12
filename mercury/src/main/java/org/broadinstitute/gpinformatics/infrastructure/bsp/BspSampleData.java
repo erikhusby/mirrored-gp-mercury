@@ -9,10 +9,12 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -290,6 +292,11 @@ public class BspSampleData implements SampleData {
     }
 
     @Override
+    public String getCollectionWithoutGroup() {
+        return getValue(BSPSampleSearchColumn.BSP_COLLECTION_NAME);
+    }
+
+    @Override
     public String getCollectionId() {
         return getValue(BSPSampleSearchColumn.BSP_COLLECTION_BARCODE);
     }
@@ -509,6 +516,25 @@ public class BspSampleData implements SampleData {
                         FastDateFormat.getInstance(BSP_DATE_FORMAT_STRING).format(quantData.getPicoRunDate()));
             }
             columnToValue.put(BSPSampleSearchColumn.TOTAL_DNA, String.valueOf(quantData.getTotalDna()));
+        }
+    }
+
+    public void overrideWithQuants(Collection<LabMetric> labMetrics) {
+        for (LabMetric labMetric : labMetrics) {
+            if (labMetric.getUnits() == LabMetric.LabUnit.NG_PER_UL ||
+                    labMetric.getUnits() == LabMetric.LabUnit.UG_PER_ML) {
+                columnToValue.put(BSPSampleSearchColumn.CONCENTRATION, String.valueOf(labMetric.getValue()));
+            } else if (labMetric.getUnits() == LabMetric.LabUnit.ML) {
+                columnToValue.put(BSPSampleSearchColumn.VOLUME, String.valueOf(labMetric.getValue()));
+            } else if (labMetric.getUnits() == LabMetric.LabUnit.UG ||
+                    labMetric.getUnits() == LabMetric.LabUnit.MG) {
+                columnToValue.put(BSPSampleSearchColumn.TOTAL_DNA, String.valueOf(labMetric.getTotalNg()));
+            }
+            if (labMetric.getLabMetricRun() != null) {
+                columnToValue.put(BSPSampleSearchColumn.PICO_RUN_DATE,
+                        FastDateFormat.getInstance(BSP_DATE_FORMAT_STRING)
+                                .format(labMetric.getLabMetricRun().getRunDate()));
+            }
         }
     }
 }

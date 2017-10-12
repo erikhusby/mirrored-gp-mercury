@@ -5,16 +5,14 @@ import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtil
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 /**
  * Represents the UI data table row.
@@ -43,11 +41,10 @@ public class DesignationDto implements Cloneable, FctDto {
     private int numberSamples;
 
     private Long designationId;
-    private Long tubeEventId;
     private boolean allocated = false;
     private int allocationOrder = 0;
 
-    private final static String DELIMITER = "<br/>";
+    public final static String DELIMITER = "<br/>";
 
     public DesignationDto() {
         createdOn = new Date();
@@ -73,25 +70,21 @@ public class DesignationDto implements Cloneable, FctDto {
             setDesignationId(flowcellDesignation.getDesignationId());
             setPriority(flowcellDesignation.getPriority());
             setBarcode(flowcellDesignation.getLoadingTube().getLabel());
-            setEvents(Collections.singletonList(flowcellDesignation.getLoadingTubeEvent()));
         }
     }
 
     /**
-     * Updates the tube type and tube date based on the relevant lab events for the tube and lcset.
-     * There should be only one tube event of the relevant type, but if there are multiple, shows all
-     * event dates and keeps only the latest event id.
+     * Updates the tube type and tube date from the first transfer-to lab event for the tube.
      */
-    public void setEvents(Collection<LabEvent> labEvents) {
-        SortedSet<String> tubeDates = new TreeSet<>();
-        for (LabEvent labEvent : labEvents) {
-            tubeDates.add(DateUtils.convertDateTimeToString(labEvent.getEventDate()));
-            if (getTubeEventId() == null || labEvent.getLabEventId() > getTubeEventId()) {
-                tubeType = labEvent.getLabEventType().getName().replaceAll("Transfer", "");
-                setTubeEventId(labEvent.getLabEventId());
-            }
+    public void setTypeAndDate(LabVessel loadingTube) {
+        // Collects transfer events targeting the tube, oldest first.
+        List<LabEvent> events = new ArrayList<>(loadingTube.getTransfersTo());
+        if (!events.isEmpty()) {
+            Collections.sort(events, LabEvent.BY_EVENT_DATE);
+            LabEvent preferredEvent = events.get(0);
+            tubeType = preferredEvent.getLabEventType().getName().replaceAll("Transfer", "");
+            tubeDate = DateUtils.convertDateTimeToString(preferredEvent.getEventDate());
         }
-        this.tubeDate = StringUtils.join(tubeDates, "<br/>");
     }
 
     /**
@@ -101,6 +94,7 @@ public class DesignationDto implements Cloneable, FctDto {
      * @param allocatedLanes the new number of lanes on This.
      * @return  a new dto like This but with null entity id and a lane count of the unallocated number of lanes.
      */
+    @Override
     public DesignationDto split(int allocatedLanes) {
         try {
             DesignationDto splitDto = (DesignationDto)this.clone();
@@ -133,12 +127,18 @@ public class DesignationDto implements Cloneable, FctDto {
         return numberCycles;
     }
 
-    public String getProductNameJoin() {
+    @Override
+    public String getProduct() {
         return StringUtils.join(productNames, DELIMITER);
     }
 
-    public void setProductNameJoin(String delimitedProductNames) {
+    public void setProduct(String delimitedProductNames) {
         productNames = Arrays.asList(delimitedProductNames.split(DELIMITER));
+    }
+
+    @Override
+    public List<String> getProductNames() {
+        return productNames;
     }
 
     public boolean isSelected() {
@@ -183,6 +183,7 @@ public class DesignationDto implements Cloneable, FctDto {
                 priority == FlowcellDesignation.Priority.LOW ? -1 : 0);
     }
 
+    @Override
     public Integer getNumberLanes() {
         return numberLanes;
     }
@@ -199,6 +200,7 @@ public class DesignationDto implements Cloneable, FctDto {
         this.readLength = readLength;
     }
 
+    @Override
     public BigDecimal getLoadingConc() {
         return loadingConc;
     }
@@ -215,6 +217,7 @@ public class DesignationDto implements Cloneable, FctDto {
         this.poolTest = poolTest;
     }
 
+    @Override
     public String getBarcode() {
         return barcode;
     }
@@ -231,16 +234,13 @@ public class DesignationDto implements Cloneable, FctDto {
         this.lcsetUrl = lcsetUrl;
     }
 
+    @Override
     public String getLcset() {
         return lcset;
     }
 
     public void setLcset(String lcset) {
         this.lcset = lcset;
-    }
-
-    public List<String> getProductNames() {
-        return productNames;
     }
 
     public void setProductNames(List<String> productNames) {
@@ -303,14 +303,7 @@ public class DesignationDto implements Cloneable, FctDto {
         this.designationId = designationId;
     }
 
-    public Long getTubeEventId() {
-        return tubeEventId;
-    }
-
-    public void setTubeEventId(Long tubeEventId) {
-        this.tubeEventId = tubeEventId;
-    }
-
+    @Override
     public boolean isAllocated() {
         return allocated;
     }
@@ -392,8 +385,7 @@ public class DesignationDto implements Cloneable, FctDto {
                 that.getDesignationId() != null) {
             return false;
         }
-        return getTubeEventId() != null ? getTubeEventId().equals(that.getTubeEventId()) :
-                that.getTubeEventId() == null;
+        return true;
     }
 
     @Override
@@ -410,7 +402,6 @@ public class DesignationDto implements Cloneable, FctDto {
         result = 31 * result + (getBarcode() != null ? getBarcode().hashCode() : 0);
         result = 31 * result + (getLcset() != null ? getLcset().hashCode() : 0);
         result = 31 * result + (getDesignationId() != null ? getDesignationId().hashCode() : 0);
-        result = 31 * result + (getTubeEventId() != null ? getTubeEventId().hashCode() : 0);
         return result;
     }
 

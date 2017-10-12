@@ -16,6 +16,8 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
@@ -50,6 +52,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
+import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 
 import javax.inject.Inject;
 import java.math.BigDecimal;
@@ -64,6 +67,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -86,6 +90,9 @@ public class ZimsIlluminaRunFactory {
     private static final Log log = LogFactory.getLog(ZimsIlluminaRunFactory.class);
 
     @Inject
+    private JiraService jiraService;
+
+    @Inject
     public ZimsIlluminaRunFactory(SampleDataFetcher sampleDataFetcher,
                                   ControlDao controlDao, SequencingTemplateFactory sequencingTemplateFactory,
                                   ProductOrderDao productOrderDao,
@@ -99,6 +106,24 @@ public class ZimsIlluminaRunFactory {
         this.flowcellDesignationEjb = flowcellDesignationEjb;
     }
 
+    private LabVessel getContextVessel(SampleInstanceV2 sampleInstance) {
+        if(sampleInstance.getFirstPcrVessel() == null) {
+            LabVessel contextVessel = sampleInstance.getInitialLabVessel();
+            if (contextVessel != null) {
+                if (contextVessel.getTransfersTo().isEmpty()) {
+                    if (contextVessel.getLabBatches().size() == 0) {
+                        return contextVessel;
+                    }
+                    for (LabBatch labBatch : contextVessel.getLabBatches()) {
+                        if (labBatch.getStartingBatchLabVessels().contains(contextVessel)) {
+                            return contextVessel;
+                        }
+                    }
+                }
+            }
+        }
+        return sampleInstance.getFirstPcrVessel();
+    }
     public ZimsIlluminaRun makeZimsIlluminaRun(IlluminaSequencingRun illuminaRun) {
         RunCartridge flowcell = illuminaRun.getSampleCartridge();
         FlowcellDesignation flowcellDesignation = null;
@@ -115,69 +140,71 @@ public class ZimsIlluminaRunFactory {
             perLaneSampleInstanceDtos.add(sampleInstanceDtos);
             String positionName = positionNames.next();
             VesselPosition vesselPosition = VesselPosition.getByName(positionName);
-            // todo jmt delete this code, and determine if remainder can be simplified
-//            PipelineTransformationCriteria criteria = new PipelineTransformationCriteria();
-//            flowcell.getContainerRole().evaluateCriteria(vesselPosition, criteria, Ancestors, null, 0);
-//            Map<SampleInstanceV2, SampleInstanceV2> laneSampleInstances = new HashMap<>();
+
+            boolean mixedLaneOk = false;
+            for (SampleInstanceV2 sampleInstance : flowcell.getContainerRole().getSampleInstancesAtPositionV2(
+                    vesselPosition)) {
+                BucketEntry singleBucketEntry = sampleInstance.getSingleBucketEntry();
+                if (singleBucketEntry != null) {
+                    if (Objects.equals(singleBucketEntry.getProductOrder().getProduct().getAggregationDataType(),
+                            BassDTO.DATA_TYPE_WGS)) {
+                        mixedLaneOk = true;
+                        break;
+                    }
+                }
+            }
+
             for (SampleInstanceV2 laneSampleInstance :
-                    flowcell.getContainerRole().getSampleInstancesAtPositionV2(vesselPosition)) {
-//                laneSampleInstances.put(sampleInstanceV2, sampleInstanceV2);
-//            }
-//
-//            for (LabVessel labVessel : criteria.getNearestLabVessels()) {
-//                Set<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
-//                for (SampleInstanceV2 sampleInstance : sampleInstances) {
-//                    // Must use equivalent sample instance in the lane, to reflect any rework LCSET since the catch.
-//                    SampleInstanceV2 laneSampleInstance = laneSampleInstances.get(sampleInstance);
-//                    if (laneSampleInstance == null) {
-//                        throw new RuntimeException("Failed to find " + sampleInstance.getMercuryRootSampleName() +
-//                                " in lane " + laneNum);
-//                    }
-                    BucketEntry singleBucketEntry = laneSampleInstance.getSingleBucketEntry();
-                    String productOrderKey = null;
-                    if (singleBucketEntry != null) {
-                        productOrderKey = singleBucketEntry.getPoBusinessKey();
-                        productOrderKeys.add(productOrderKey);
+                flowcell.getContainerRole().getSampleInstancesAtPositionV2(vesselPosition)) {
+                BucketEntry singleBucketEntry = laneSampleInstance.getSingleBucketEntry();
+                String productOrderKey = null;
+                if (singleBucketEntry != null) {
+                    productOrderKey = singleBucketEntry.getPoBusinessKey();
+                    productOrderKeys.add(productOrderKey);
+                }
+                // todo jmt root may be null
+                String pdoSampleName;
+                ProductOrderSample productOrderSample = laneSampleInstance.getSingleProductOrderSample();
+                if (productOrderSample != null) {
+                    pdoSampleName = productOrderSample.getSampleKey();
+                } else {
+                    // Controls won't have a ProductOrderSample, so use root sample ID.
+                    pdoSampleName = laneSampleInstance.getMercuryRootSampleName();
+                }
+                String sampleId = laneSampleInstance.getMercuryRootSampleName();
+                LabBatchStartingVessel importLbsv = laneSampleInstance.getSingleBatchVessel(LabBatch.LabBatchType.SAMPLES_IMPORT);
+                if (importLbsv != null) {
+                    Collection<MercurySample> mercurySamples = importLbsv.getLabVessel().getMercurySamples();
+                    if (!mercurySamples.isEmpty()) {
+                        sampleId = mercurySamples.iterator().next().getSampleKey();
                     }
-                    // todo jmt root may be null
-                    String pdoSampleName;
-                    ProductOrderSample productOrderSample = laneSampleInstance.getSingleProductOrderSample();
-                    if (productOrderSample != null) {
-                        pdoSampleName = productOrderSample.getSampleKey();
-                    } else {
-                        // Controls won't have a ProductOrderSample, so use root sample ID.
-                        pdoSampleName = laneSampleInstance.getMercuryRootSampleName();
+                }
+                sampleIds.add(sampleId);
+                LabVessel libraryVessel = flowcell.getNearestTubeAncestorsForLanes().get(vesselPosition);
+                if (flowcellDesignation == null) {
+                    // Only need one designation since all of them constituting this flowcell will have been
+                    // grouped by and therefore have the same flowcell parameters.
+                    List<FlowcellDesignation> flowcellDesignations =
+                            flowcellDesignationEjb.getFlowcellDesignations(Collections.singleton(libraryVessel));
+                    if (CollectionUtils.isNotEmpty(flowcellDesignations)) {
+                        flowcellDesignation = flowcellDesignations.get(0);
                     }
-                    String sampleId = laneSampleInstance.getMercuryRootSampleName();
-                    LabBatchStartingVessel importLbsv = laneSampleInstance.getSingleBatchVessel(LabBatch.LabBatchType.SAMPLES_IMPORT);
-                    if (importLbsv != null) {
-                        Collection<MercurySample> mercurySamples = importLbsv.getLabVessel().getMercurySamples();
-                        if (!mercurySamples.isEmpty()) {
-                            sampleId = mercurySamples.iterator().next().getSampleKey();
-                        }
-                    }
-                    sampleIds.add(sampleId);
-                    LabVessel libraryVessel = flowcell.getNearestTubeAncestorsForLanes().get(vesselPosition);
-                    if (flowcellDesignation == null) {
-                        // Only need one designation since all of them constituting this flowcell will have been
-                        // grouped by and therefore have the same flowcell parameters.
-                        List<FlowcellDesignation> flowcellDesignations =
-                                flowcellDesignationEjb.getFlowcellDesignations(Collections.singleton(libraryVessel));
-                        if (CollectionUtils.isNotEmpty(flowcellDesignations)) {
-                            flowcellDesignation = flowcellDesignations.get(0);
-                        }
-                    }
-                    boolean isCrspLane = crspPipelineUtils.areAllSamplesForCrsp(
-                            libraryVessel.getSampleInstancesV2());
+                }
+                boolean isCrspLane;
+                if (mixedLaneOk && singleBucketEntry != null) {
+                    isCrspLane = singleBucketEntry.getProductOrder().getResearchProject().getRegulatoryDesignation().
+                            isClinical();
+                } else {
+                    isCrspLane = crspPipelineUtils.areAllSamplesForCrsp(
+                            libraryVessel.getSampleInstancesV2(), mixedLaneOk);
+                }
 
-                    String libraryName = libraryVessel.getLabel();
-                    String metadataSource = laneSampleInstance.getMetadataSourceForPipelineAPI();
-
-                    sampleInstanceDtos.add(new SampleInstanceDto(laneNum, laneSampleInstance.getFirstPcrVessel(),
-                            laneSampleInstance, sampleId, productOrderKey, libraryName, libraryVessel.getCreatedOn(),
-                            pdoSampleName, isCrspLane, metadataSource));
-
-//                }
+                String libraryName = libraryVessel.getLabel();
+                String metadataSource = laneSampleInstance.getMetadataSourceForPipelineAPI();
+                    LabVessel contextVessel = getContextVessel(laneSampleInstance);
+                sampleInstanceDtos.add(new SampleInstanceDto(laneNum, contextVessel,
+                        laneSampleInstance, sampleId, productOrderKey, libraryName, libraryVessel.getCreatedOn(),
+                        pdoSampleName, isCrspLane, metadataSource));
             }
         }
         int numberOfLanes = laneNum;
@@ -327,21 +354,35 @@ public class ZimsIlluminaRunFactory {
             MolecularIndexingScheme indexingSchemeEntity = null;
             String baitName = null;
             List<String> catNames = new ArrayList<>();
-            for (Reagent reagent : sampleInstance.getReagents()) {
-                if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
-                    indexingSchemeEntity =
-                            OrmUtil.proxySafeCast(reagent, MolecularIndexReagent.class).getMolecularIndexingScheme();
-                } else if (OrmUtil.proxySafeIsInstance(reagent, DesignedReagent.class)) {
-                    DesignedReagent designedReagent = OrmUtil.proxySafeCast(reagent, DesignedReagent.class);
-                    ReagentDesign.ReagentType reagentType = designedReagent.getReagentDesign().getReagentType();
-                    if (reagentType == ReagentDesign.ReagentType.BAIT) {
-                        baitName = designedReagent.getReagentDesign().getDesignName();
-                    } else if (reagentType == ReagentDesign.ReagentType.CAT) {
-                        catNames.add(designedReagent.getReagentDesign().getDesignName());
+
+            //If this is an uploaded pooled tube we already have the reagent design
+            if(!sampleInstance.getReagentsDesigns().isEmpty())            {
+                for (ReagentDesign reagentDesign : sampleInstance.getReagentsDesigns()) {
+                    indexingSchemeEntity = sampleInstance.getMolecularIndexingScheme();
+                    ReagentDesign.ReagentType reagentType = reagentDesign.getReagentType();
+                        if (reagentType == ReagentDesign.ReagentType.BAIT) {
+                            baitName = reagentDesign.getDesignName();
+                        } else if (reagentType == ReagentDesign.ReagentType.CAT) {
+                            catNames.add(reagentDesign.getDesignName());
+                        }
+                    }
+            }
+            else {
+                for (Reagent reagent : sampleInstance.getReagents()) {
+                    if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
+                        indexingSchemeEntity =
+                                OrmUtil.proxySafeCast(reagent, MolecularIndexReagent.class).getMolecularIndexingScheme();
+                    } else if (OrmUtil.proxySafeIsInstance(reagent, DesignedReagent.class)) {
+                        DesignedReagent designedReagent = OrmUtil.proxySafeCast(reagent, DesignedReagent.class);
+                        ReagentDesign.ReagentType reagentType = designedReagent.getReagentDesign().getReagentType();
+                        if (reagentType == ReagentDesign.ReagentType.BAIT) {
+                            baitName = designedReagent.getReagentDesign().getDesignName();
+                        } else if (reagentType == ReagentDesign.ReagentType.CAT) {
+                            catNames.add(designedReagent.getReagentDesign().getDesignName());
+                        }
                     }
                 }
             }
-
             edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme indexingSchemeDto = null;
             if (indexingSchemeEntity != null) {
                 Map<IndexPosition, String> positionSequenceMap = new HashMap<>();
@@ -360,12 +401,20 @@ public class ZimsIlluminaRunFactory {
             }
 
             SampleData sampleData = mapSampleIdToDto.get(sampleInstanceDto.getSampleId());
+            Boolean isPooledTube = sampleInstance.getIsPooledTube();
+            if (isPooledTube && sampleData instanceof MercurySampleData) {
+                MercurySampleData mercurySampleData = (MercurySampleData) sampleData;
+                mercurySampleData.setRootSampleId(sampleInstance.getMercuryRootSampleName());
+                mercurySampleData.setSampleId(sampleInstance.getNearestMercurySampleName());
+            }
+            TZDevExperimentData devExperimentData = sampleInstance.getTzDevExperimentData();
 
-            libraryBeans.add(createLibraryBean(sampleInstanceDto.getLabVessel(), productOrder, sampleData, lcSet,
+            libraryBeans.add(createLibraryBean(sampleInstanceDto, productOrder, sampleData, lcSet,
                     baitName, indexingSchemeEntity, catNames, sampleInstanceDto.getSampleInstance().getWorkflowName(),
                     indexingSchemeDto, mapNameToControl, sampleInstanceDto.getPdoSampleName(),
                     sampleInstanceDto.isCrspLane(), sampleInstanceDto.getMetadataSourceForPipelineAPI(), analysisTypes,
-                    referenceSequenceKeys, aggregationDataTypes, positiveControlResearchProjects, insertSizes));
+                    referenceSequenceKeys, aggregationDataTypes, positiveControlResearchProjects, insertSizes,
+                    devExperimentData, isPooledTube));
         }
 
         // Make order predictable.  Include library name because for ICE there are 8 ancestor catch tubes, all with
@@ -376,8 +425,15 @@ public class ZimsIlluminaRunFactory {
         SortedSet<String> previouslySeenSampleAndMis = new TreeSet<>();
         for (Iterator<LibraryBean> iter = libraryBeans.iterator(); iter.hasNext(); ) {
             LibraryBean libraryBean = iter.next();
+
+            //In certain cases no moleclular indexing scheme will be preset.
+            String molIndexSecheme = "";
+            if(libraryBean.getMolecularIndexingScheme() != null) {
+                molIndexSecheme = libraryBean.getMolecularIndexingScheme().getName();
+            }
+
             String consolidationKey =
-                    makeConsolidationKey(libraryBean.getSampleId(), libraryBean.getMolecularIndexingScheme().getName());
+                    makeConsolidationKey(libraryBean.getSampleId(), molIndexSecheme);
             if (!previouslySeenSampleAndMis.add(consolidationKey)) {
                 iter.remove();
             }
@@ -390,31 +446,42 @@ public class ZimsIlluminaRunFactory {
     }
 
     private LibraryBean createLibraryBean(
-            LabVessel labVessel, ProductOrder productOrder, SampleData sampleData, String lcSet, String baitName,
+            SampleInstanceDto sampleInstanceDto, ProductOrder productOrder, SampleData sampleData, String lcSet, String baitName,
             MolecularIndexingScheme indexingSchemeEntity, List<String> catNames, String labWorkflow,
             edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme indexingSchemeDto,
             Map<String, Control> mapNameToControl, String pdoSampleName,
             boolean isCrspLane, String metadataSourceForPipelineAPI, Set<String> analysisTypes,
             Set<String> referenceSequenceKeys, Set<String> aggregationDataTypes,
-            Set<ResearchProject> positiveControlProjects, Set<Integer> insertSizes) {
+            Set<ResearchProject> positiveControlProjects, Set<Integer> insertSizes, TZDevExperimentData devExperimentData,
+            boolean isPooledTube) {
 
         Format dateFormat = FastDateFormat.getInstance(ZimsIlluminaRun.DATE_FORMAT);
 
-        String library =
-                labVessel.getLabel() + (indexingSchemeEntity == null ? "" : "_" + indexingSchemeEntity.getName());
+        String label = "";
+        String libraryCreationDate = "";
+
+        //If this is an uploaded pooled tube, create the label based on the provided library name.
+        if(isPooledTube) {
+            label = sampleInstanceDto.getSampleInstance().getSampleLibraryName();
+            libraryCreationDate = dateFormat.format(sampleInstanceDto.getSampleInstance().getLibraryCreationDate());
+        }
+        else {
+            label = sampleInstanceDto.labVessel.getLabel();
+            libraryCreationDate = dateFormat.format(sampleInstanceDto.labVessel.getCreatedOn());
+        }
+
+        String library = label + (indexingSchemeEntity == null ? "" : "_" + indexingSchemeEntity.getName());
         String initiative = null;
         Long workRequest = null;
         Boolean hasIndexingRead = null;
         String expectedInsertSize = null;
         String organism = null;
-        String species = null;
         String strain = null;
         String rrbsSizeRange = null;
         String restrictionEnzyme = null;
         double labMeasuredInsertSize = 0.0;
         Boolean positiveControl = null;
         Boolean negativeControl = null;
-        TZDevExperimentData devExperimentData = null;
         Collection<String> gssrBarcodes = null;
         String gssrSampleType = null;
         Boolean doAggregation = Boolean.TRUE;
@@ -424,8 +491,12 @@ public class ZimsIlluminaRunFactory {
         String referenceSequence = null;
         String referenceSequenceVersion = null;
         String aggregationDataType = null;
+        String species = null;
+        String lsid = null;
         if (sampleData != null && productOrder == null) {
             Control control = mapNameToControl.get(sampleData.getCollaboratorParticipantId());
+            species = sampleData.getOrganism();
+            lsid = sampleData.getSampleLsid();
             if (control != null) {
                 switch (control.getType()) {
                 case POSITIVE:
@@ -492,7 +563,7 @@ public class ZimsIlluminaRunFactory {
                 referenceSequenceVersion = null;
             }
         }
-        String libraryCreationDate = dateFormat.format(labVessel.getCreatedOn());
+
 
         LibraryBean libraryBean = new LibraryBean(
                 library, initiative, workRequest, indexingSchemeDto, hasIndexingRead, expectedInsertSize,
@@ -500,7 +571,7 @@ public class ZimsIlluminaRunFactory {
                 strain, aligner, rrbsSizeRange, restrictionEnzyme, bait, labMeasuredInsertSize,
                 positiveControl, negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation,
                 catNames, productOrder, lcSet, sampleData, labWorkflow, libraryCreationDate, pdoSampleName,
-                metadataSourceForPipelineAPI, aggregationDataType);
+                metadataSourceForPipelineAPI, aggregationDataType, jiraService);
         if (isCrspLane) {
             crspPipelineUtils.setFieldsForCrsp(libraryBean, sampleData, bait);
         }

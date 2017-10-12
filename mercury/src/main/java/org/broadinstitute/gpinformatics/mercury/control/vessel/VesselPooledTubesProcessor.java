@@ -26,6 +26,10 @@ public class VesselPooledTubesProcessor extends TableProcessor {
     private List<String> gender = new ArrayList<>();
     private List<String> species = new ArrayList<>();
     private List<String> lsid = new ArrayList<>();
+    private List<String> volume = new ArrayList<>();
+    private List<String> fragmentSize = new ArrayList<>();
+    private List<String> readLength = new ArrayList<>();
+
 
     public VesselPooledTubesProcessor(String sheetName) {
         super(sheetName, TableProcessor.IgnoreTrailingBlankLines.YES);
@@ -59,6 +63,10 @@ public class VesselPooledTubesProcessor extends TableProcessor {
         gender.add(dataRow.get(Headers.GENDER.getText()));
         species.add(dataRow.get(Headers.SPECIES.getText()));
         lsid.add(dataRow.get(Headers.LSID.getText()));
+        volume.add(dataRow.get(Headers.VOLUME.getText()));
+        fragmentSize.add(dataRow.get(Headers.FRAGMENT_SIZE.getText()));
+        readLength.add(dataRow.get(Headers.READ_LENGTH.getText()));
+
 
     }
 
@@ -84,6 +92,9 @@ public class VesselPooledTubesProcessor extends TableProcessor {
         BROAD_PARTICIPANT_ID("Broad participant ID", ColumnHeader.OPTIONAL_HEADER, true),
         GENDER("Gender", ColumnHeader.OPTIONAL_HEADER, true),
         SPECIES("Species", ColumnHeader.OPTIONAL_HEADER, true),
+        VOLUME("Volume", ColumnHeader.OPTIONAL_HEADER, true),
+        FRAGMENT_SIZE("Fragment Size", ColumnHeader.OPTIONAL_HEADER, true),
+        READ_LENGTH("Read Length", ColumnHeader.OPTIONAL_HEADER, true),
         LSID("Lsid", ColumnHeader.OPTIONAL_HEADER, true);
 
 
@@ -167,4 +178,9 @@ public class VesselPooledTubesProcessor extends TableProcessor {
 
     public List<String> getLsid() { return lsid; }
 
+    public List<String> getVolume() { return volume; }
+
+    public List<String> getFragmentSize() { return fragmentSize; }
+
+    public List<String> getReadLength() { return readLength;  }
 }

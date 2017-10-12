@@ -1558,5 +1558,26 @@ public class LabVesselFixupTest extends Arquillian {
         utx.commit();
     }
 
+    @Test(enabled = false)
+    public void fixupGplim5001() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<StaticPlate> plates = staticPlateDao.findListByList(StaticPlate.class, StaticPlate_.label, Arrays.asList(
+                "000001827023",
+                "000001811023", "000001828323", "000001808923", "000001806223", "000001800423", "000001824523",
+                "000001801023", "000001812523", "000001829823", "000001806023", "000001804123", "000001819223",
+                "000001802123", "000001814423-GPLIM-3164", "000001816023"));
+
+        for (StaticPlate plate : plates) {
+            plate.setPlateType(StaticPlate.PlateType.IndexedAdapterPlate96);
+        }
+
+        FixupCommentary fixupCommentary = new FixupCommentary("GPLIM-5001 - Assign missing plate types to static plates");
+        barcodedTubeDao.persist(fixupCommentary);
+        barcodedTubeDao.flush();
+
+        utx.commit();
+    }
 
 }

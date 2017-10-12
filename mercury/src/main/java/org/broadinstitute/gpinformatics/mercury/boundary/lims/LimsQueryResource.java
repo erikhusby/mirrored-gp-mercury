@@ -376,10 +376,15 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchQpcrForTube")
     public Double fetchQpcrForTube(@QueryParam("tubeBarcode") String tubeBarcode,
-                                   @QueryParam("quantType") String quantType) {
+                                   @QueryParam("quantType") String quantType,
+                                   @DefaultValue("false") @QueryParam("onTubeOnly") boolean onTubeOnly ) {
         switch (systemRouter.getSystemOfRecordForVessel(tubeBarcode)) {
         case MERCURY:
-            return limsQueries.fetchQuantForTube(tubeBarcode, quantType);
+            if( !onTubeOnly ) {
+                return limsQueries.fetchNearestQuantForTube(tubeBarcode, quantType);
+            } else {
+                return limsQueries.fetchQuantForTube(tubeBarcode, quantType);
+            }
         case SQUID:
             return thriftService.fetchQpcrForTube(tubeBarcode);
         default:
@@ -410,10 +415,15 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchQuantForTube")
     public Double fetchQuantForTube(@QueryParam("tubeBarcode") String tubeBarcode,
-                                    @QueryParam("quantType") String quantType) {
+                                    @QueryParam("quantType") String quantType,
+                                    @DefaultValue("false") @QueryParam("onTubeOnly") boolean onTubeOnly ) {
         switch (systemRouter.getSystemOfRecordForVessel(tubeBarcode)) {
         case MERCURY:
-            return limsQueries.fetchQuantForTube(tubeBarcode, quantType);
+            if( !onTubeOnly ) {
+                return limsQueries.fetchNearestQuantForTube(tubeBarcode, quantType);
+            } else {
+                return limsQueries.fetchQuantForTube(tubeBarcode, quantType);
+            }
         case SQUID:
             return thriftService.fetchQuantForTube(tubeBarcode, quantType);
         default:
