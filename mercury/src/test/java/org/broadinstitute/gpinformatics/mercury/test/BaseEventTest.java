@@ -515,16 +515,17 @@ public class BaseEventTest {
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public LibraryConstructionEntityBuilder runLibraryConstructionProcessWithUMI(StaticPlate shearingCleanupPlate,
-                                                                          String shearCleanPlateBarcode,
-                                                                          StaticPlate shearingPlate,
-                                                                          String barcodeSuffix,
-                                                                          LibraryConstructionJaxbBuilder.PondType pondType,
-                                                                          LibraryConstructionEntityBuilder.Indexing indexing) {
+                                                                                 String shearCleanPlateBarcode,
+                                                                                 StaticPlate shearingPlate,
+                                                                                 String barcodeSuffix,
+                                                                                 LibraryConstructionJaxbBuilder.PondType pondType,
+                                                                                 LibraryConstructionEntityBuilder.Indexing indexing,
+                                                                                 LibraryConstructionEntityBuilder.Umi umi) {
         LibraryConstructionEntityBuilder builder = new LibraryConstructionEntityBuilder(
                 bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
                 shearingCleanupPlate, shearCleanPlateBarcode, shearingPlate, NUM_POSITIONS_IN_RACK, barcodeSuffix,
                 indexing,
-                pondType);
+                pondType, umi);
         builder.setIncludeUmi(true);
         return builder.invoke();
     }

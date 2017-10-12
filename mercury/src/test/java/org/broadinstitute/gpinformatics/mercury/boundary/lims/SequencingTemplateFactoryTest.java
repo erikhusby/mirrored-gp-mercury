@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.UMIReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
@@ -635,7 +636,33 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         }
     }
 
-    public void testUniqueMolecularIdentifierMultiDesignations() {
+    public void testSingleUmiMultiDesignations() {
+        UMIReagent umiReagent = LabEventTest.createUmi(6, 3, UMIReagent.UMILocation.BEFORE_SECOND_INDEX_READ);
+        StaticPlate umiPlate = LabEventTest.buildUmiPlate("UMITestPlate0101", umiReagent);
+        testUniqueMolecularIdentifierMultiDesignations(umiPlate, "99T8B6M3S8B99T", LibraryConstructionEntityBuilder.Umi.SINGLE);
+    }
+
+    public void testDoubleUMIMultiDesignations() {
+        UMIReagent umiReagent = LabEventTest.createUmi(3, 2, UMIReagent.UMILocation.BEFORE_FIRST_READ);
+        UMIReagent umiReagent2 = LabEventTest.createUmi(3, 2, UMIReagent.UMILocation.BEFORE_SECOND_READ);
+        StaticPlate umiPlate = LabEventTest.buildUmiPlate("UMITestPlate0101", umiReagent);
+        LabEventTest.attachUMIToPlate(umiReagent2, umiPlate);
+        testUniqueMolecularIdentifierMultiDesignations(umiPlate, "3M2S99T8B8B3M2S99T",
+                LibraryConstructionEntityBuilder.Umi.DUAL);
+    }
+
+    public void testDoubleUMIFromTubeMultiDesignations() {
+        UMIReagent umiReagent = LabEventTest.createUmi(3, 2, UMIReagent.UMILocation.BEFORE_FIRST_READ);
+        UMIReagent umiReagent2 = LabEventTest.createUmi(3, 2, UMIReagent.UMILocation.BEFORE_SECOND_READ);
+        BarcodedTube barcodedTube = new BarcodedTube("UmiTestTube01232", BarcodedTube.BarcodedTubeType.MatrixTube075);
+        barcodedTube.addReagent(umiReagent);
+        barcodedTube.addReagent(umiReagent2);
+        testUniqueMolecularIdentifierMultiDesignations(barcodedTube, "3M2S99T8B8B3M2S99T",
+                LibraryConstructionEntityBuilder.Umi.DUAL);
+    }
+
+    private void testUniqueMolecularIdentifierMultiDesignations(LabVessel umiPlate, String UMIReadStructure,
+                                                                LibraryConstructionEntityBuilder.Umi umiType) {
         final ProductOrder
                 productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         runDate = new Date();
@@ -659,11 +686,16 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
 
         shearingCleanupPlate = exomeExpressShearingEntityBuilder.getShearingCleanupPlate();
         shearingCleanupPlate.clearCaches();
-        StaticPlate umiPlate = LabEventTest.buildUmiPlate("UMITestPlate0101", null);
-        LabEventTestFactory.doSectionTransfer(LabEventType.UMI_ADDITION, umiPlate, shearingCleanupPlate);
+        if (umiPlate instanceof StaticPlate) {
+            LabEventTestFactory.doSectionTransfer(LabEventType.UMI_ADDITION, umiPlate, shearingCleanupPlate);
+        } else if (umiPlate instanceof BarcodedTube) {
+            LabEvent labEvent = new LabEvent(LabEventType.UMI_ADDITION, new Date(), "Mercury", 1L, 1L, "SeqTestFactory");
+            labEvent.getVesselToSectionTransfers().add(new VesselToSectionTransfer(umiPlate, SBSSection.ALL96,
+                    shearingCleanupPlate.getContainerRole(), shearingCleanupPlate, labEvent));
+        }
 
         QtpEntityBuilder qtpEntityBuilder = runUpToQTP(exomeExpressShearingEntityBuilder, "UMI1010",
-                LibraryConstructionEntityBuilder.Indexing.DUAL);
+                LibraryConstructionEntityBuilder.Indexing.DUAL, umiType);
 
         BarcodedTube denatureTubeUmi = qtpEntityBuilder.getDenatureRack().getContainerRole()
                 .getVesselAtPosition(VesselPosition.A01);
@@ -711,7 +743,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
                 assertThat(laneType.getReadStructure(), is("99T8B8B99T"));
             } else if (laneType.getDerivedVesselLabel().equals(denatureTubeUmi.getLabel())) {
                 assertThat(laneType.getLoadingConcentration(), is(denatureTubeUmiConc));
-                assertThat(laneType.getReadStructure(), is("99T8B6M8B99T"));
+                assertThat(laneType.getReadStructure(), is(UMIReadStructure));
             } else {
                 String failMsg = String.format("Expected to only find tubes %s and %s but found %s",
                         denatureTube2000.getLabel(), denatureTubeUmi.getLabel(), laneType.getDerivedVesselLabel());
@@ -721,12 +753,13 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
     }
 
     private QtpEntityBuilder runUpToQTP(ExomeExpressShearingEntityBuilder shearingEntityBuilder, String qtpSuffix,
-                                        LibraryConstructionEntityBuilder.Indexing indexing) {
+                                        LibraryConstructionEntityBuilder.Indexing indexing,
+                                        LibraryConstructionEntityBuilder.Umi umiType) {
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
                 runLibraryConstructionProcessWithUMI(shearingEntityBuilder.getShearingCleanupPlate(),
                         shearingEntityBuilder.getShearCleanPlateBarcode(),
                         shearingEntityBuilder.getShearingPlate(), BARCODE_SUFFIX,
-                        LibraryConstructionJaxbBuilder.PondType.REGULAR, indexing);
+                        LibraryConstructionJaxbBuilder.PondType.REGULAR, indexing, umiType);
         HybridSelectionEntityBuilder hybridSelectionEntityBuilder =
                 runHybridSelectionProcess(libraryConstructionEntityBuilder.getPondRegRack(),
                         libraryConstructionEntityBuilder.getPondRegRackBarcode(),

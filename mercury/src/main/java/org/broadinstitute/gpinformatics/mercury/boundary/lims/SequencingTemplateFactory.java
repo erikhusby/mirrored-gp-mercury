@@ -213,8 +213,8 @@ public class SequencingTemplateFactory {
             Set<UMIReagent> umiReagents = new HashSet<>();
             extractInfo(startingVessel.getLabVessel().getSampleInstancesV2(), regulatoryDesignations, products,
                     productReadLengths, productPairedEnds, molecularIndexReadStructures, umiReagents);
-            if (umiReagents.size() > 1) {
-                throw new InformaticsServiceException("More than one UMI Reagent found for lab batch " +
+            if (umiReagents.size() > 2) {
+                throw new InformaticsServiceException("More than two UMI Reagent found for lab batch " +
                                                       startingVessel.getLabBatch().getBatchName());
             }
 
@@ -574,6 +574,7 @@ public class SequencingTemplateFactory {
                                      @Nonnull Boolean isPairedEnd, Set<UMIReagent> umiReagents) {
         String strandCode = (readLength != null && !isPoolTest) ? readLength.intValue() + "T" : "";
         String indexCode = molecularIndexReadStructures.isEmpty() ? "" : molecularIndexReadStructures.iterator().next();
+
         if (umiReagents == null || umiReagents.isEmpty()) {
             return strandCode + indexCode + (isPairedEnd  ? strandCode : "");
         }
@@ -589,15 +590,20 @@ public class SequencingTemplateFactory {
         for (UMIReagent umiReagent: umiReagentsList) {
             umiLocationUMIReagentMap.put(umiReagent.getUmiLocation(), umiReagent);
         }
+
         String readStructure = "";
+        if (umiLocationUMIReagentMap.containsKey(UMIReagent.UMILocation.BEFORE_FIRST_READ)) {
+            UMIReagent umiReagent = umiLocationUMIReagentMap.get(UMIReagent.UMILocation.BEFORE_FIRST_READ);
+            readStructure = umiReagent.getUmiLength() + "M" + umiReagent.getSpacerLength() + "S";
+        }
         if (umiLocationUMIReagentMap.containsKey(UMIReagent.UMILocation.INLINE_FIRST_READ)) {
             UMIReagent umiReagent = umiLocationUMIReagentMap.get(UMIReagent.UMILocation.INLINE_FIRST_READ);
-            readStructure = readStructure + umiReagent.getUmiLength() + "M";
+            readStructure = readStructure + umiReagent.getUmiLength() + "M" + umiReagent.getSpacerLength() + "S";
         }
         readStructure = readStructure + strandCode; //Now Either 8M76T ot 76T
         if (umiLocationUMIReagentMap.containsKey(UMIReagent.UMILocation.BEFORE_FIRST_INDEX_READ)) {
             UMIReagent umiReagent = umiLocationUMIReagentMap.get(UMIReagent.UMILocation.BEFORE_FIRST_INDEX_READ);
-            readStructure = readStructure + umiReagent.getUmiLength() + "M";
+            readStructure = readStructure + umiReagent.getUmiLength() + "M" + umiReagent.getSpacerLength() + "S";
         }
 
         //Add first index if any
@@ -615,7 +621,7 @@ public class SequencingTemplateFactory {
                         if (umiLocationUMIReagentMap.containsKey(UMIReagent.UMILocation.BEFORE_SECOND_INDEX_READ)) {
                             UMIReagent umiReagent =
                                     umiLocationUMIReagentMap.get(UMIReagent.UMILocation.BEFORE_SECOND_INDEX_READ);
-                            readStructure += umiReagent.getUmiLength() + "M";
+                            readStructure += umiReagent.getUmiLength() + "M" + umiReagent.getSpacerLength() + "S";
                         }
                         readStructure += indexCode;
                     } else {
@@ -629,12 +635,16 @@ public class SequencingTemplateFactory {
             }
         }
 
-        if (umiLocationUMIReagentMap.containsKey(UMIReagent.UMILocation.INLINE_SECOND_READ)) {
-            UMIReagent umiReagent = umiLocationUMIReagentMap.get(UMIReagent.UMILocation.INLINE_SECOND_READ);
-            readStructure = readStructure + umiReagent.getUmiLength() + "M";
+        if (umiLocationUMIReagentMap.containsKey(UMIReagent.UMILocation.BEFORE_SECOND_READ)) {
+            UMIReagent umiReagent = umiLocationUMIReagentMap.get(UMIReagent.UMILocation.BEFORE_SECOND_READ);
+            readStructure = readStructure + umiReagent.getUmiLength() + "M" + umiReagent.getSpacerLength() + "S";
         }
 
         readStructure = readStructure + (isPairedEnd ? strandCode : "");
+        if (umiLocationUMIReagentMap.containsKey(UMIReagent.UMILocation.INLINE_SECOND_READ)) {
+            UMIReagent umiReagent = umiLocationUMIReagentMap.get(UMIReagent.UMILocation.INLINE_SECOND_READ);
+            readStructure = readStructure + umiReagent.getUmiLength() + "M" + umiReagent.getSpacerLength() + "S";
+        }
         return readStructure;
     }
 
