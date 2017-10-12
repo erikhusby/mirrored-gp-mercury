@@ -12,10 +12,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.UMIReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselTypeGeometry;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -26,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import static org.broadinstitute.gpinformatics.mercury.control.vessel.IndexedPlateFactory.BARCODE_LENGTH;
 
@@ -46,29 +49,38 @@ public class UniqueMolecularIdentifierReagentFactory {
      * @param messageCollection errors are added to this
      * @return list of entities
      */
-    public List<StaticPlate> buildUMIFromSpreadsheet(InputStream spreadsheetStream,
-                                                     MessageCollection messageCollection) {
+    public List<LabVessel> buildUMIFromSpreadsheet(InputStream spreadsheetStream,
+                                                   MessageCollection messageCollection) {
         try {
             UniqueMolecularIdentifierReagentProcessor processor = new UniqueMolecularIdentifierReagentProcessor("Sheet1");
             messageCollection.addErrors(PoiSpreadsheetParser.processSingleWorksheet(spreadsheetStream,
                     processor));
-            Map<String, UniqueMolecularIdentifierReagentProcessor.UniqueMolecularIdentifierDto> mapBarcodeToReagent =
-                    processor.getMapBarcodeToReagentDto();
+            Map<String, List<UniqueMolecularIdentifierReagentProcessor.UniqueMolecularIdentifierDto>>
+                    mapBarcodeToReagent = processor.getMapBarcodeToReagentDto();
             Map<String, LabVessel> mapBarcodeToPlate =
                     labVesselDao.findByBarcodes(new ArrayList<>(mapBarcodeToReagent.keySet()));
 
-            Map<String, UMIReagent> mapPlateToUMI = new HashMap<>();
-            Set<Map.Entry<String, UniqueMolecularIdentifierReagentProcessor.UniqueMolecularIdentifierDto>> entrySet =
+            Map<String, List<UMIReagent>> mapPlateToUMI = new HashMap<>();
+            Set<Map.Entry<String, List<UniqueMolecularIdentifierReagentProcessor.UniqueMolecularIdentifierDto>>>
+                    entrySet =
                     mapBarcodeToReagent.entrySet();
-            for (Map.Entry<String, UniqueMolecularIdentifierReagentProcessor.UniqueMolecularIdentifierDto> entry: entrySet)
+            for (Map.Entry<String, List<UniqueMolecularIdentifierReagentProcessor.UniqueMolecularIdentifierDto>> entry: entrySet)
             {
                 String plateBarcode = entry.getKey();
-                UniqueMolecularIdentifierReagentProcessor.UniqueMolecularIdentifierDto dto = entry.getValue();
-                UMIReagent umiReagent =
-                        uniqueMolecularIdentifierReagentDao.findByLocationAndLength(dto.getLocation(), dto.getLength());
-                mapPlateToUMI.put(plateBarcode, umiReagent);
+                List<UniqueMolecularIdentifierReagentProcessor.UniqueMolecularIdentifierDto> dtos = entry.getValue();
+                for (UniqueMolecularIdentifierReagentProcessor.UniqueMolecularIdentifierDto dto: dtos) {
+                    UMIReagent umiReagent =
+                            uniqueMolecularIdentifierReagentDao
+                                    .findByLocationAndLength(dto.getLocation(), dto.getLength(), dto.getSpacerLength());
+                    if (umiReagent != null) {
+                        if (mapPlateToUMI.get(plateBarcode) == null) {
+                            mapPlateToUMI.put(plateBarcode, new ArrayList<UMIReagent>());
+                        }
+                        mapPlateToUMI.get(plateBarcode).add(umiReagent);
+                    }
+                }
             }
-            List<StaticPlate> staticPlates =
+            List<LabVessel> staticPlates =
                     buildPlates(mapBarcodeToReagent, messageCollection, mapBarcodeToPlate, mapPlateToUMI);
             if (!messageCollection.hasErrors()) {
                 labVesselDao.persistAll(staticPlates);
@@ -83,73 +95,109 @@ public class UniqueMolecularIdentifierReagentFactory {
      * Builds UMI reagent entities.
      * @param mapBarcodeToUMI DTOs from spreadsheet
      * @param messageCollection errors are added to this
-     * @param mapBarcodeToPlate from database, error if they exist
+     * @param mapBarcodeToLabVessel from database, error if they exist
      * @param mapBarcodeToReagent from database, created if they don't exist
      * @return list of entities
      */
     @DaoFree
-    public List<StaticPlate> buildPlates(
-            Map<String, UniqueMolecularIdentifierReagentProcessor.UniqueMolecularIdentifierDto> mapBarcodeToUMI,
-            MessageCollection messageCollection, Map<String, LabVessel> mapBarcodeToPlate,
-            Map<String, UMIReagent> mapBarcodeToReagent) {
-        List<StaticPlate> plates = new ArrayList<>();
-        for (Map.Entry<String, UniqueMolecularIdentifierReagentProcessor.UniqueMolecularIdentifierDto> umiDtoEntry :
+    public List<LabVessel> buildPlates(
+            Map<String, List<UniqueMolecularIdentifierReagentProcessor.UniqueMolecularIdentifierDto>> mapBarcodeToUMI,
+            MessageCollection messageCollection, Map<String, LabVessel> mapBarcodeToLabVessel,
+            Map<String, List<UMIReagent>> mapBarcodeToReagent) {
+        Map<String, LabVessel> mapBarcodeToNewLabVessel = new TreeMap<>();
+        for (Map.Entry<String, List<UniqueMolecularIdentifierReagentProcessor.UniqueMolecularIdentifierDto>> umiDtoEntry :
                 mapBarcodeToUMI.entrySet()) {
-            String plateBarcode = umiDtoEntry.getKey();
-            UniqueMolecularIdentifierReagentProcessor.UniqueMolecularIdentifierDto umiDto = umiDtoEntry.getValue();
+            String vesselBarcode = umiDtoEntry.getKey();
+            List<UniqueMolecularIdentifierReagentProcessor.UniqueMolecularIdentifierDto> umiDtos = umiDtoEntry.getValue();
+            for (UniqueMolecularIdentifierReagentProcessor.UniqueMolecularIdentifierDto umiDto: umiDtos) {
 
-            if (mapBarcodeToPlate.get(plateBarcode) != null) {
-                LabVessel labVessel = mapBarcodeToPlate.get(plateBarcode);
-                if (OrmUtil.proxySafeIsInstance(labVessel, StaticPlate.class)) {
-                    StaticPlate staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
-                    if (staticPlate.getPlateType() == StaticPlate.PlateType.IndexedAdapterPlate96 ||
-                        staticPlate.getPlateType() == StaticPlate.PlateType.IndexedAdapterPlate384) {
-                        Set<SampleInstanceV2> sampleInstances =
-                                staticPlate.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.A01);
-                        if (sampleInstances != null && sampleInstances.size() > 0) {
-                            boolean foundUmiReagent = false;
-                            SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
-                            for (Reagent reagent: sampleInstance.getReagents()) {
-                                if (OrmUtil.proxySafeIsInstance(reagent, UMIReagent.class)) {
-                                    foundUmiReagent = true;
-                                    break;
+                if (mapBarcodeToLabVessel.get(vesselBarcode) != null) {
+                    LabVessel labVessel = mapBarcodeToLabVessel.get(vesselBarcode);
+
+                    // Can add to pre-existing plates if they are index plates and have no UMI
+                    if (OrmUtil.proxySafeIsInstance(labVessel, StaticPlate.class)) {
+                        StaticPlate staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
+                        if (staticPlate.getPlateType() == StaticPlate.PlateType.IndexedAdapterPlate96 ||
+                            staticPlate.getPlateType() == StaticPlate.PlateType.IndexedAdapterPlate384) {
+                            Set<SampleInstanceV2> sampleInstances =
+                                    staticPlate.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.A01);
+                            if (sampleInstances != null && sampleInstances.size() > 0) {
+                                boolean foundUmiReagent = false;
+                                SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
+                                for (Reagent reagent : sampleInstance.getReagents()) {
+                                    if (OrmUtil.proxySafeIsInstance(reagent, UMIReagent.class)) {
+                                        foundUmiReagent = true;
+                                        break;
+                                    }
+                                }
+                                if (foundUmiReagent) {
+                                    messageCollection
+                                            .addError("Index Plate already has an associated UMI " + vesselBarcode);
                                 }
                             }
-                            if (foundUmiReagent) {
-                                messageCollection.addError("Index Plate already has an associated UMI " + plateBarcode);
-                            }
+                        } else {
+                            messageCollection.addError("Plate is already in the database: " + vesselBarcode);
+                            continue;
                         }
                     } else {
-                        messageCollection.addError("Plate is already in the database: " + plateBarcode);
-                        continue;
+                        messageCollection.addError("Barcoded tube is already in the database " + vesselBarcode);
                     }
                 }
-            }
 
-            String formattedBarcode = StringUtils.leftPad(plateBarcode, BARCODE_LENGTH, '0');
-            StaticPlate plate =
-                    new StaticPlate(formattedBarcode, StaticPlate.PlateType.UniqueMolecularIdentifierPlate96);
-            plate.setCreatedOn(new Date());
+                LabVessel labVessel = mapBarcodeToNewLabVessel.get(vesselBarcode);
+                boolean isPlate = false;
+                if (labVessel == null) {
+                    if (umiDto.getVesselTypeGeometry() instanceof BarcodedTube.BarcodedTubeType) {
+                        labVessel = new BarcodedTube(vesselBarcode,
+                                (BarcodedTube.BarcodedTubeType) umiDto.getVesselTypeGeometry());
+                        labVessel.setCreatedOn(new Date());
+                    } else if (umiDto.getVesselTypeGeometry() instanceof StaticPlate.PlateType) {
+                        labVessel =
+                                new StaticPlate(vesselBarcode, (StaticPlate.PlateType) umiDto.getVesselTypeGeometry());
+                        labVessel.setCreatedOn(new Date());
+                        isPlate = true;
+                    } else {
+                        messageCollection.addError("Failed to create lab vessel for " + vesselBarcode);
+                        return null;
+                    }
+                    mapBarcodeToNewLabVessel.put(vesselBarcode, labVessel);
+                }
 
-            UMIReagent umiReagent = mapBarcodeToReagent.get(plateBarcode);
-            if (umiReagent == null) {
-                umiReagent = new UMIReagent(umiDto.getLocation(), umiDto.getLength());
-            }
+                UMIReagent umiReagent = null;
+                List<UMIReagent> umiReagentList = mapBarcodeToReagent.get(vesselBarcode);
+                if (umiReagentList != null) {
+                    for (UMIReagent umi : umiReagentList) {
+                        if (umi.getSpacerLength() == umiDto.getSpacerLength() &&
+                            umi.getUmiLength() == umiDto.getLength() && umi.getUmiLocation() == umiDto.getLocation()) {
+                            umiReagent = umi;
+                            break;
+                        }
+                    }
+                }
+                if (umiReagent == null) {
+                    umiReagent = new UMIReagent(umiDto.getLocation(), umiDto.getLength(), umiDto.getSpacerLength());
+                }
 
-            // Previously registered Index Plates may already have Plate Wells associated to each Vessel Position.
-            Map<VesselPosition, PlateWell> mapPositionToVessel = plate.getContainerRole().getMapPositionToVessel();
-            for (VesselPosition vesselPosition: plate.getVesselGeometry().getVesselPositions()) {
-                if (mapPositionToVessel != null && mapPositionToVessel.containsKey(vesselPosition)) {
-                    PlateWell plateWell = mapPositionToVessel.get(vesselPosition);
-                    plateWell.addReagent(umiReagent);
+                // Previously registered Index Plates may already have Plate Wells associated to each Vessel Position.
+                if (isPlate) {
+                    StaticPlate plate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
+                    Map<VesselPosition, PlateWell> mapPositionToVessel =
+                            plate.getContainerRole().getMapPositionToVessel();
+                    for (VesselPosition vesselPosition : plate.getVesselGeometry().getVesselPositions()) {
+                        if (mapPositionToVessel != null && mapPositionToVessel.containsKey(vesselPosition)) {
+                            PlateWell plateWell = mapPositionToVessel.get(vesselPosition);
+                            plateWell.addReagent(umiReagent);
+                        } else {
+                            PlateWell plateWell = new PlateWell(plate, vesselPosition);
+                            plateWell.addReagent(umiReagent);
+                            plate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
+                        }
+                    }
                 } else {
-                    PlateWell plateWell = new PlateWell(plate, vesselPosition);
-                    plateWell.addReagent(umiReagent);
-                    plate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
+                    labVessel.addReagent(umiReagent);
                 }
             }
-            plates.add(plate);
         }
-        return plates;
+        return new ArrayList<>(mapBarcodeToNewLabVessel.values());
     }
 }

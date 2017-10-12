@@ -2053,11 +2053,13 @@ public class LabEventTest extends BaseEventTest {
         // Grab denature tube from one UMI LC set and build another without
         Pair<Map<String, BarcodedTube>, QtpEntityBuilder> pairUmi =
                 testUpToBooking(productOrder, LibraryConstructionJaxbBuilder.PondType.PCR_PLUS,
-                        Workflow.PCR_PLUS, "1_UMI", true, LibraryConstructionEntityBuilder.Indexing.DUAL);
+                        Workflow.PCR_PLUS, "1_UMI", LibraryConstructionEntityBuilder.Indexing.DUAL,
+                        LibraryConstructionEntityBuilder.Umi.SINGLE);
 
         Pair<Map<String, BarcodedTube>, QtpEntityBuilder> pair =
                 testUpToBooking(productOrder, LibraryConstructionJaxbBuilder.PondType.PCR_PLUS,
-                        Workflow.PCR_PLUS, "1", false, LibraryConstructionEntityBuilder.Indexing.DUAL);
+                        Workflow.PCR_PLUS, "1", LibraryConstructionEntityBuilder.Indexing.DUAL,
+                        LibraryConstructionEntityBuilder.Umi.NONE);
 
         QtpEntityBuilder qtpEntityBuilderUMI = pairUmi.getRight();
         QtpEntityBuilder qtpEntityBuilder = pair.getRight();
@@ -2139,7 +2141,7 @@ public class LabEventTest extends BaseEventTest {
             if (zimsIlluminaChamber.getSequencedLibrary().equals(denatureTube.getLabel())) {
                 Assert.assertEquals(zimsIlluminaChamber.getSetupReadStructure(), "76T8B8B76T");
             } else if (zimsIlluminaChamber.getSequencedLibrary().equals(denatureTubeUMI.getLabel())) {
-                Assert.assertEquals(zimsIlluminaChamber.getSetupReadStructure(), "76T8B6M8B76T");
+                Assert.assertEquals(zimsIlluminaChamber.getSetupReadStructure(), "6M3S76T8B8B76T");
             } else {
                 Assert.fail("Wrong sequencing library found " + zimsIlluminaChamber.getSequencedLibrary());
             }
@@ -2155,7 +2157,8 @@ public class LabEventTest extends BaseEventTest {
         // Grab denature tube from one UMI LC set and build another without
         Pair<Map<String, BarcodedTube>, QtpEntityBuilder> pairUmi =
                 testUpToBooking(productOrder, LibraryConstructionJaxbBuilder.PondType.PCR_PLUS,
-                        Workflow.PCR_PLUS, "1_UMIDualIndex", true, LibraryConstructionEntityBuilder.Indexing.DUAL_UMI);
+                        Workflow.PCR_PLUS, "1_UMIDualIndex", LibraryConstructionEntityBuilder.Indexing.DUAL,
+                        LibraryConstructionEntityBuilder.Umi.DUAL);
 
         QtpEntityBuilder qtpEntityBuilderUMI = pairUmi.getRight();
 
@@ -2216,7 +2219,7 @@ public class LabEventTest extends BaseEventTest {
         System.out.println(zimsIlluminaRun);
         for (ZimsIlluminaChamber zimsIlluminaChamber: zimsIlluminaRun.getLanes()) {
             if (zimsIlluminaChamber.getSequencedLibrary().equals(denatureTubeUMI.getLabel())) {
-                Assert.assertEquals(zimsIlluminaChamber.getSetupReadStructure(), "76T3M8B3M8B76T");
+                Assert.assertEquals(zimsIlluminaChamber.getSetupReadStructure(), "6M3S76T8B8B6M3S76T");
             } else {
                 Assert.fail("Wrong sequencing library found " + zimsIlluminaChamber.getSequencedLibrary());
             }
@@ -2232,8 +2235,8 @@ public class LabEventTest extends BaseEventTest {
                                                 String[] expectedEventNames, Workflow workflow, String barcodeSuffix,
                                                 boolean includeUMI) {
         Pair<Map<String, BarcodedTube>, QtpEntityBuilder> pair =
-                testUpToBooking(productOrder, pondType, workflow, barcodeSuffix, includeUMI,
-                        LibraryConstructionEntityBuilder.Indexing.DUAL);
+                testUpToBooking(productOrder, pondType, workflow, barcodeSuffix,
+                        LibraryConstructionEntityBuilder.Indexing.DUAL, LibraryConstructionEntityBuilder.Umi.NONE);
         QtpEntityBuilder qtpEntityBuilder = pair.getRight();
         Map<String, BarcodedTube> mapBarcodeToTube = pair.getLeft();
         int numSeqReagents = 1;
@@ -2271,8 +2274,9 @@ public class LabEventTest extends BaseEventTest {
     }
 
     private Pair<Map<String, BarcodedTube>, QtpEntityBuilder> testUpToBooking(ProductOrder productOrder, LibraryConstructionJaxbBuilder.PondType pondType,
-                                                                              Workflow workflow, String barcodeSuffix, boolean includeUMI,
-                                                                              LibraryConstructionEntityBuilder.Indexing indexing) {
+                                                                              Workflow workflow, String barcodeSuffix,
+                                                                              LibraryConstructionEntityBuilder.Indexing indexing,
+                                                                              LibraryConstructionEntityBuilder.Umi umi) {
         expectedRouting = SystemRouter.System.MERCURY;
 
         Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
@@ -2299,13 +2303,11 @@ public class LabEventTest extends BaseEventTest {
                         picoPlatingEntityBuilder.getNormalizationBarcode(), lcsetSuffix);
 
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder;
-        if (includeUMI) {
-            if (indexing != LibraryConstructionEntityBuilder.Indexing.DUAL_UMI) {
-                StaticPlate shearingCleanupPlate = exomeExpressShearingEntityBuilder.getShearingCleanupPlate();
-                shearingCleanupPlate.clearCaches();
-                StaticPlate umiPlate = LabEventTest.buildUmiPlate("UMITestPlate0101", null);
-                LabEventTestFactory.doSectionTransfer(LabEventType.UMI_ADDITION, umiPlate, shearingCleanupPlate);
-            }
+        if (umi == LibraryConstructionEntityBuilder.Umi.SINGLE) {
+            StaticPlate shearingCleanupPlate = exomeExpressShearingEntityBuilder.getShearingCleanupPlate();
+            UMIReagent umiReagent = new UMIReagent(UMIReagent.UMILocation.BEFORE_FIRST_READ, 6L, 3L);
+            StaticPlate umiPlate = LabEventTest.buildUmiPlate("UMITestPlate0101", umiReagent);
+            LabEventTestFactory.doSectionTransfer(LabEventType.UMI_ADDITION, umiPlate, shearingCleanupPlate);
 
             libraryConstructionEntityBuilder = runLibraryConstructionProcessWithUMI(
                     exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
@@ -2313,7 +2315,22 @@ public class LabEventTest extends BaseEventTest {
                     exomeExpressShearingEntityBuilder.getShearingPlate(),
                     lcsetSuffix,
                     pondType,
-                    indexing);
+                    indexing, LibraryConstructionEntityBuilder.Umi.SINGLE);
+        } else if (umi == LibraryConstructionEntityBuilder.Umi.DUAL) {
+            StaticPlate shearingCleanupPlate = exomeExpressShearingEntityBuilder.getShearingCleanupPlate();
+            UMIReagent umiReagent = new UMIReagent(UMIReagent.UMILocation.BEFORE_FIRST_READ, 6L, 3L);
+            UMIReagent umiReagent2 = new UMIReagent(UMIReagent.UMILocation.BEFORE_SECOND_READ, 6L, 3L);
+            StaticPlate umiPlate = LabEventTest.buildUmiPlate("UMITestPlate0101", umiReagent);
+            LabEventTest.attachUMIToPlate(umiReagent2, umiPlate);
+            LabEventTestFactory.doSectionTransfer(LabEventType.UMI_ADDITION, umiPlate, shearingCleanupPlate);
+
+            libraryConstructionEntityBuilder = runLibraryConstructionProcessWithUMI(
+                    exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
+                    exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(),
+                    exomeExpressShearingEntityBuilder.getShearingPlate(),
+                    lcsetSuffix,
+                    pondType,
+                    indexing, LibraryConstructionEntityBuilder.Umi.DUAL);
         } else {
             libraryConstructionEntityBuilder = runLibraryConstructionProcess(
                     exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
@@ -2591,18 +2608,28 @@ public class LabEventTest extends BaseEventTest {
         return baitTube;
     }
 
+    public static UMIReagent createUmi(long length, long spacerLength, UMIReagent.UMILocation umiLocation) {
+        return new UMIReagent(umiLocation, length, spacerLength);
+    }
+
     public static StaticPlate buildUmiPlate(String plateBarcode, UMIReagent umiReagent) {
         StaticPlate umiPlate = new StaticPlate(plateBarcode, StaticPlate.PlateType.UniqueMolecularIdentifierPlate96);
-        if (umiReagent == null) {
-            umiReagent = new UMIReagent(UMIReagent.UMILocation.BEFORE_SECOND_INDEX_READ, 6L);
-            for (VesselPosition vesselPosition: umiPlate.getVesselGeometry().getVesselPositions()) {
-                PlateWell plateWell = new PlateWell(umiPlate, vesselPosition);
-                plateWell.addReagent(umiReagent);
-                umiPlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
-            }
-        }
-        umiPlate.addReagent(umiReagent);
+        attachUMIToPlate(umiReagent, umiPlate);
         return umiPlate;
+    }
+
+    public static void attachUMIToPlate(UMIReagent umiReagent, StaticPlate staticPlate) {
+        for (VesselPosition vesselPosition: staticPlate.getVesselGeometry().getVesselPositions()) {
+            PlateWell plateWell = null;
+            if (staticPlate.getContainerRole().getMapPositionToVessel().get(vesselPosition) == null) {
+                plateWell = new PlateWell(staticPlate, vesselPosition);
+            } else {
+                plateWell = staticPlate.getContainerRole().getMapPositionToVessel().get(vesselPosition);
+            }
+            plateWell.addReagent(umiReagent);
+            staticPlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
+        }
+        staticPlate.addReagent(umiReagent);
     }
 
     public static List<StaticPlate> buildSamplePlates(ProductOrder productOrder, String platePrefix) {
