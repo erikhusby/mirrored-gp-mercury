@@ -39,6 +39,12 @@ public class LibraryConstructionEntityBuilder {
         DUAL_UMI
     }
 
+    public enum Umi {
+        NONE,
+        SINGLE,
+        DUAL
+    }
+
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
     private final LabEventFactory             labEventFactory;
     private final LabEventHandler             labEventHandler;
@@ -55,15 +61,24 @@ public class LibraryConstructionEntityBuilder {
     private String testPrefix;
     private Indexing indexing;
     private LibraryConstructionJaxbBuilder.PondType pondType;
+    private final Umi umi;
 
     private final Map<String, BarcodedTube> mapBarcodeToPondRegTubes = new HashMap<>();
     private final Map<String, BarcodedTube> mapBarcodeToPondNormTubes = new HashMap<>();
     private boolean includeUmi = false;
 
     public LibraryConstructionEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
+                                            LabEventFactory labEventFactory, LabEventHandler labEventHandler, StaticPlate shearingCleanupPlate,
+                                            String shearCleanPlateBarcode, StaticPlate shearingPlate, int numSamples, String testPrefix,
+                                            Indexing indexing, LibraryConstructionJaxbBuilder.PondType pondType) {
+        this(bettaLimsMessageTestFactory, labEventFactory, labEventHandler, shearingCleanupPlate, shearCleanPlateBarcode,
+                shearingPlate, numSamples, testPrefix, indexing, pondType, Umi.SINGLE);
+    }
+
+    public LibraryConstructionEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
             LabEventFactory labEventFactory, LabEventHandler labEventHandler, StaticPlate shearingCleanupPlate,
             String shearCleanPlateBarcode, StaticPlate shearingPlate, int numSamples, String testPrefix,
-            Indexing indexing, LibraryConstructionJaxbBuilder.PondType pondType) {
+            Indexing indexing, LibraryConstructionJaxbBuilder.PondType pondType, Umi umi) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.labEventFactory = labEventFactory;
         this.labEventHandler = labEventHandler;
@@ -74,6 +89,7 @@ public class LibraryConstructionEntityBuilder {
         this.testPrefix = testPrefix;
         this.indexing = indexing;
         this.pondType = pondType;
+        this.umi = umi;
     }
 
     public List<String> getPondRegTubeBarcodes() {
@@ -216,7 +232,8 @@ public class LibraryConstructionEntityBuilder {
         List<Reagent> reagents = sampleInstance.getReagents();
         MolecularIndexReagent molecularIndexReagent = null;
         if (includeUmi) {
-            Assert.assertEquals(reagents.size(), 2, "Wrong number of reagents");
+            int reagentCount = umi == Umi.SINGLE ? 2: 3;
+            Assert.assertEquals(reagents.size(), reagentCount, "Wrong number of reagents");
             molecularIndexReagent = findIndexReagent(reagents);
             Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P7-Habab",
                     "Wrong index");
@@ -348,7 +365,7 @@ public class LibraryConstructionEntityBuilder {
                 "Wrong sample");
         reagents = pondRegSampleInstance.getReagents();
         if (includeUmi) {
-            if (indexing == Indexing.DUAL_UMI) {
+            if (umi == Umi.DUAL) {
                 Assert.assertEquals(reagents.size(), 3, "Wrong number of reagents");
             } else {
                 Assert.assertEquals(reagents.size(), 2, "Wrong number of reagents");
@@ -377,7 +394,7 @@ public class LibraryConstructionEntityBuilder {
     }
 
     private void attachUmiToIndexPlate(StaticPlate indexPlate, UMIReagent.UMILocation umiLocation) {
-        UMIReagent umiReagent = new UMIReagent(umiLocation, 3L);
+        UMIReagent umiReagent = new UMIReagent(umiLocation, 3L, 2L);
         Map<VesselPosition, PlateWell> mapPositionToVessel = indexPlate.getContainerRole().getMapPositionToVessel();
         for (VesselPosition vesselPosition: indexPlate.getVesselGeometry().getVesselPositions()) {
             PlateWell plateWell;

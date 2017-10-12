@@ -72,7 +72,7 @@ public class ReagentActionBean extends CoreActionBean {
                 uploadCount = barcodedTubes.size();
                 break;
             case UMI:
-                List<StaticPlate> staticPlates =
+                List<LabVessel> staticPlates =
                         umiReagentFactory.buildUMIFromSpreadsheet(reagentsFile.getInputStream(), messageCollection);
                 uploadCount = staticPlates.size();
                 break;

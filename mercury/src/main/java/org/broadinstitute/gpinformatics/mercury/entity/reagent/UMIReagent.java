@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.hibernate.envers.Audited;
 
@@ -17,9 +19,11 @@ import java.util.Map;
 public class UMIReagent extends Reagent {
 
     public enum UMILocation {
+        BEFORE_FIRST_READ("Before First Read"),
         INLINE_FIRST_READ("Inline First Read"),
         BEFORE_FIRST_INDEX_READ("Before First Index Read"),
         BEFORE_SECOND_INDEX_READ("Before Second Index Read"),
+        BEFORE_SECOND_READ("Before Second Read"),
         INLINE_SECOND_READ("Inline Second Read");
 
         private final String displayName;
@@ -50,15 +54,17 @@ public class UMIReagent extends Reagent {
     private UMILocation umiLocation;
 
     private Long umiLength;
+    private Long spacerLength;
 
     /** For JPA. */
     public UMIReagent() {
     }
 
-    public UMIReagent(UMILocation umiLocation, Long umiLength) {
+    public UMIReagent(UMILocation umiLocation, Long umiLength, long spacerLength) {
         super(null, null, null);
         this.umiLocation = umiLocation;
         this.umiLength = umiLength;
+        this.spacerLength = spacerLength;
     }
 
     public UMILocation getUmiLocation() {
@@ -76,5 +82,37 @@ public class UMIReagent extends Reagent {
 
     public void setUmiLength(Long umiLength) {
         this.umiLength = umiLength;
+    }
+
+    public Long getSpacerLength() {
+        return spacerLength;
+    }
+
+    public void setSpacerLength(Long spacerLength) {
+        this.spacerLength = spacerLength;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        UMIReagent umi = (UMIReagent) o;
+
+        EqualsBuilder equalsBuilder = new EqualsBuilder().append(umiLocation, umi.getUmiLocation());
+        equalsBuilder.append(umiLength, umi.getUmiLength());
+        equalsBuilder.append(spacerLength, umi.getSpacerLength());
+        return equalsBuilder.isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        HashCodeBuilder hashCodeBuilder = new HashCodeBuilder().append(umiLocation)
+                .append(umiLength).append(spacerLength);
+        return hashCodeBuilder.hashCode();
     }
 }
