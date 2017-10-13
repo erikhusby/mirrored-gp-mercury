@@ -244,7 +244,7 @@ public class ManifestSessionFixupTest extends Arquillian {
                 for (String line : lines.subList(2, lines.size())) {
                     String[] fields = TAB_PATTERN.split(line);
                     if (fields.length != 3) {
-                        throw new RuntimeException("Expected four tab separated fields in " + line);
+                        throw new RuntimeException("Expected three tab separated fields in " + line);
                     }
                     ManifestRecord manifestRecord = manifestSession.getRecordWithMatchingValueForKey(
                             Metadata.Key.SAMPLE_ID, fields[0]);
