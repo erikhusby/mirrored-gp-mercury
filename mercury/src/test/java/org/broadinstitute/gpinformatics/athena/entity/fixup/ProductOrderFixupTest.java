@@ -1174,7 +1174,7 @@ public class ProductOrderFixupTest extends Arquillian {
         String pdoToComplete = "PDO-12069";
 
         
-        productOrderEjb.updateOrderStatus(pdoToComplete, MessageReporter.UNUSED);
+        productOrderEjb.updateOrderStatusNoRollback(pdoToComplete);
 
         productOrderDao.persist(new FixupCommentary("GPLIM-5054: Updating PDO-12069 to Completed."));
         commitTransaction();
