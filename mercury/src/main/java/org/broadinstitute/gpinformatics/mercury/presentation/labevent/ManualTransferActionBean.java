@@ -811,7 +811,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
                     VesselTypeGeometry targetVesselTypeGeometry = manualTransferDetails.getTargetVesselTypeGeometry();
                     assignSyntheticBarcode(plateTransferEventType.getPlate(), targetVesselTypeGeometry,
-                            manualTransferDetails.getSourceContainerPrefix());
+                            manualTransferDetails.getTargetContainerPrefix());
                     break;
                 case PLATE_CHERRY_PICK_EVENT:
                     LabEventType.ManualTransferDetails localManualTransferDetails =
