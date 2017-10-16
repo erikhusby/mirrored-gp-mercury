@@ -584,8 +584,8 @@
                 var name = $quantityInput.attr('name');
                 if (name != inputName) {
                     $quantityInput.hSpinner(action, value);
+                    updateUnbilledStatus($j('#' + escapeForSelector(name)));
                 }
-                updateUnbilledStatus($j('#' + escapeForSelector(name)));
             }
         }
 
