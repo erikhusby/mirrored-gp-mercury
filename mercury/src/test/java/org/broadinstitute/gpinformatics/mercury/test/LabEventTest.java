@@ -2085,10 +2085,12 @@ public class LabEventTest extends BaseEventTest {
         List<VesselPosition> vesselPositions2 = partition.get(1);
 
         LabBatch.VesselToLanesInfo vesselToLanesInfoUMI = new LabBatch.VesselToLanesInfo(
-                vesselPositions1, new BigDecimal("16.22"), denatureTubeUMI);
+                vesselPositions1, new BigDecimal("16.22"), denatureTubeUMI, null,
+                productOrder.getProduct().getProductName(), Collections.<FlowcellDesignation>emptyList());
 
         LabBatch.VesselToLanesInfo vesselToLanesInfo = new LabBatch.VesselToLanesInfo(
-                vesselPositions2, new BigDecimal("12.33"), denatureTube);
+                vesselPositions2, new BigDecimal("12.33"), denatureTube, null,
+                productOrder.getProduct().getProductName(), Collections.<FlowcellDesignation>emptyList());
         List<LabBatch.VesselToLanesInfo> vesselToLanesInfos = Arrays.asList(vesselToLanesInfoUMI, vesselToLanesInfo);
 
         LabBatch fctBatchHiSeq4000 = new LabBatch("FCT-543", vesselToLanesInfos,
@@ -2170,7 +2172,8 @@ public class LabEventTest extends BaseEventTest {
                 IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell.getVesselGeometry().getVesselPositions();
 
         LabBatch.VesselToLanesInfo vesselToLanesInfoUMI = new LabBatch.VesselToLanesInfo(
-                Arrays.asList(hiseq4000VesselPositions), new BigDecimal("16.22"), denatureTubeUMI);
+                Arrays.asList(hiseq4000VesselPositions), new BigDecimal("16.22"), denatureTubeUMI,
+                null, productOrder.getProduct().getProductName(), Collections.<FlowcellDesignation>emptyList());
 
         LabBatch fctBatchHiSeq4000 = new LabBatch("FCT-543", Collections.singletonList(vesselToLanesInfoUMI),
                 LabBatch.LabBatchType.FCT, IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell);
@@ -2251,7 +2254,8 @@ public class LabEventTest extends BaseEventTest {
                 IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell.getVesselGeometry().getVesselPositions();
         List<VesselPosition> vesselPositionList = Arrays.asList(hiseq4000VesselPositions);
         LabBatch.VesselToLanesInfo vesselToLanesInfo = new LabBatch.VesselToLanesInfo(
-                vesselPositionList, new BigDecimal("16.22"), denatureSource);
+                vesselPositionList, new BigDecimal("16.22"), denatureSource, null,
+                productOrder.getProduct().getProductName(), Collections.<FlowcellDesignation>emptyList());
         LabBatch fctBatch = new LabBatch(FCT_TICKET, Collections.singletonList(vesselToLanesInfo),
                 LabBatch.LabBatchType.FCT, IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell);
         HiSeq4000FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder = runHiSeq4000FlowcellProcess(

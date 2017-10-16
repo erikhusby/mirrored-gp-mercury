@@ -717,11 +717,13 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         List<VesselPosition> vesselPositions1 = partition.get(0);
         List<VesselPosition> vesselPositions2 = partition.get(1);
 
-        vesselToLanesInfo = new LabBatch.VesselToLanesInfo(
-                vesselPositions1, new BigDecimal("16.22"), denatureTube2000);
+        vesselToLanesInfo = new LabBatch.VesselToLanesInfo(vesselPositions1, new BigDecimal("16.22"), denatureTube2000,
+                workflowBatch.getBatchName(),
+                productOrder.getProduct().getProductName(), Collections.<FlowcellDesignation>emptyList());
 
-        vesselToLanesInfo2 = new LabBatch.VesselToLanesInfo(
-                vesselPositions2, BIG_DECIMAL_12_33, denatureTubeUmi);
+        vesselToLanesInfo2 = new LabBatch.VesselToLanesInfo(vesselPositions2, BIG_DECIMAL_12_33, denatureTubeUmi,
+                workflowBatch.getBatchName(),
+                productOrder.getProduct().getProductName(), Collections.<FlowcellDesignation>emptyList());
         List<LabBatch.VesselToLanesInfo> vesselToLanesInfos = new ArrayList<>();
 
         vesselToLanesInfos.add(vesselToLanesInfo);
@@ -732,13 +734,14 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
 
         BigDecimal denatureTubeUmiConc = new BigDecimal("8.88");
         BigDecimal denature2500Conc = new BigDecimal("13.33");
+
         FlowcellDesignation designation = new FlowcellDesignation(denatureTubeUmi, fctBatchHiSeq4000,
-                denatureTubeUmi.getLatestEvent(), FlowcellDesignation.IndexType.DUAL, false,
+                FlowcellDesignation.IndexType.DUAL, false,
                 IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, 4, 99, denatureTubeUmiConc, true,
                 FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL);
 
         FlowcellDesignation designation2 = new FlowcellDesignation(denatureTube2500, fctBatchHiSeq4000,
-                denatureTube2500.getLatestEvent(), FlowcellDesignation.IndexType.DUAL, false,
+                FlowcellDesignation.IndexType.DUAL, false,
                 IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, 4, 99, denature2500Conc, true,
                 FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL);
 
