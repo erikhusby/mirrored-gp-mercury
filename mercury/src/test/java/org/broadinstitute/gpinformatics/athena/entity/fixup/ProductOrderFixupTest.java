@@ -1174,9 +1174,23 @@ public class ProductOrderFixupTest extends Arquillian {
         String pdoToComplete = "PDO-12069";
 
         
-        productOrderEjb.updateOrderStatus(pdoToComplete, MessageReporter.UNUSED);
+        productOrderEjb.updateOrderStatusNoRollback(pdoToComplete);
 
         productOrderDao.persist(new FixupCommentary("GPLIM-5054: Updating PDO-12069 to Completed."));
+        commitTransaction();
+    }
+
+    @Test(enabled = false)
+    public void support3427CompleteOrders() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+        List<String> pdosToComplete = Arrays.asList("PDO-12890", "PDO-12581", "PDO-12947", "PDO-13129");
+
+        for (String pdoToComplete : pdosToComplete) {
+            productOrderEjb.updateOrderStatus(pdoToComplete, MessageReporter.UNUSED);
+        }
+
+        productOrderDao.persist(new FixupCommentary("SUPPORT-3427: Updating " + pdosToComplete + " to Completed."));
         commitTransaction();
     }
 
