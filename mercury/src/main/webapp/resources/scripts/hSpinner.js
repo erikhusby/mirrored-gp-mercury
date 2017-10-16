@@ -45,6 +45,7 @@ $j.widget('mercury.hSpinner', {
         if (isNaN(currentValue)) {
             currentValue = 0;
         }
+        this.additionalChangedSelector = this.options.additionalChangedSelector;
 
         // Capture the original value to enable applying a CSS class if the value is changed.
         if ($j.isFunction(this.options.originalValue)) {
@@ -137,6 +138,9 @@ $j.widget('mercury.hSpinner', {
         var currentValue = this.element.val();
         var changed = parseFloat(currentValue) != this.originalValue;
         this.element.toggleClass('changed', changed);
+        if (this.additionalChangedSelector) {
+            this.element.closest(this.additionalChangedSelector).toggleClass('changed', changed);
+        }
         this.$decButton.prop('disabled', currentValue == 0);
     },
 
@@ -181,5 +185,9 @@ $j.widget('mercury.hSpinner', {
     increment: function () {
         var oldValue = parseFloat(this.element.val());
         this.setValue((oldValue + 1.0).toString());
-    }
+    },
+    /**
+     * Apply additional additional 'changed' class to this selector.
+     */
+    additionalChangedSelector: ""
 });

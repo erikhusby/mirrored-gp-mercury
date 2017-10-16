@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -1693,12 +1694,13 @@ public class ProductOrderEjb {
             }
 
             Collection<ProductOrderSample.LedgerUpdate> updates = entry.getValue();
-            for (ProductOrderSample.LedgerUpdate update : updates) {
-                try {
+            try {
+                LedgerEntry.validateWorkCompletedDates(updates);
+                for (ProductOrderSample.LedgerUpdate update : updates) {
                     productOrderSample.applyLedgerUpdate(update);
-                } catch (Exception e) {
-                    errorMessages.add(e.getMessage());
                 }
+            } catch (Exception e) {
+                errorMessages.add(e.getMessage());
             }
         }
 
