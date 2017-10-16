@@ -22,7 +22,10 @@ import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * This handles the billing ledger items for product order samples
@@ -269,6 +272,21 @@ public class LedgerEntry implements Serializable {
 
     public Date getBucketDate() {
         return billingSession.getBucketDate(workCompleteDate);
+    }
+
+    public static void validateWorkCompletedDates(Collection<ProductOrderSample.LedgerUpdate> updates) {
+        Set<String> samplesMissingDates = new HashSet<>();
+        for (ProductOrderSample.LedgerUpdate ledgerUpdate : updates) {
+            if (ledgerUpdate.getWorkCompleteDate() == null) {
+                samplesMissingDates.add(ledgerUpdate.getSampleName());
+            }
+        }
+        // Validate work complete date.
+        if (!samplesMissingDates.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Work complete date is missing for samples " + samplesMissingDates);
+        }
+
     }
 
     /**

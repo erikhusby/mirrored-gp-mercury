@@ -211,28 +211,48 @@
                     {'bSortable': true, 'sType': 'title-string'}    // billed
                 ],
                 fnInitComplete: function(){
+                    function deferAppliedAction(func){
+                        console.time();
+                        var deferred = $j.Deferred();
+                        deferred.then(func).then(function () {
+                            updateSubmitButton();
+                        }).done(function() {
+                            console.timeEnd();
+                        });
+                        deferred.resolve();
+                    }
                     /*
                      * Set up hSpinner widgets for controlling ledger quantities.
                      */
                     ledgerQuantities.hSpinner({
+                        additionalChangedSelector: "tr",
                         originalValue: function(element) {
                             return $j(element).siblings().filter('input:hidden').eq(0).val();
                         },
                         incremented: function(event, inputName) {
-                            updateUnbilledStatus($j('#' + escapeForSelector(inputName)));
-                            applyToSelected(inputName, 'increment');
-                            updateSubmitButton();
+                            var escaped = escapeForSelector(inputName);
+                            deferAppliedAction(function () {
+                                updateUnbilledStatus($j('#' + escaped));
+                                applyToSelected(inputName, escaped, 'increment')
+                            });
+
                         },
                         decremented: function(event, inputName) {
-                            updateUnbilledStatus($j('#' + escapeForSelector(inputName)));
-                            applyToSelected(inputName, 'decrement');
-                            updateSubmitButton();
+                            var escaped = escapeForSelector(inputName);
+
+                            deferAppliedAction(function () {
+                                updateUnbilledStatus($j('#' + escaped));
+                                applyToSelected(inputName, escaped, 'decrement')
+                            });
                         },
                         // hSpinner widget "input" event, not to be confused with the browser built-in DOM "input" event.
                         input: function(event, inputName) {
-                            updateUnbilledStatus($j('#' + escapeForSelector(inputName)));
-                            applyToSelected(inputName, 'setValue');
-                            updateSubmitButton();
+                            var escaped = escapeForSelector(inputName);
+
+                            deferAppliedAction(function () {
+                                updateUnbilledStatus($j('#' + escaped));
+                                applyToSelected(inputName, escaped, 'setValue')
+                            });
                         }
                     });
                     /**
@@ -251,12 +271,14 @@
                                     $selectedInput.val(value);
                                     var changed = value != $selectedInput.attr('originalValue');
                                     $selectedInput.toggleClass('changed', changed);
+                                    $selectedInput.closest("tr").toggleClass('changed', changed);
                                     updateDateCompleteValidation($selectedInput);
                                 }
                             }
                         }
                         var changed = value != $input.attr('originalValue');
                         $input.toggleClass('changed', changed);
+                        $input.closest("tr").toggleClass('changed', changed);
                         updateDateCompleteValidation($input);
 
                         updateSubmitButton();
@@ -336,19 +358,32 @@
             /*
              * Handle enable/disable of row inputs based on checkboxes.
              */
-            $j('#ledger').on('click', 'input:checkbox', function() {
-                var allRows = $j('#ledger tbody tr');
+            $j('#ledger').on('click', 'input:checkbox', function () {
+                console.time("onClick input:checkbox");
                 var selectedRows = getSelectedRows();
+                var unselectedRows = $j("#ledger tbody tr").not(selectedRows);
                 if (selectedRows.length > 0) {
-                    allRows.find('input.dateComplete').datepicker().datepicker('disable');
-                    allRows.find('input.ledgerQuantity').hSpinner().hSpinner('disable');
-                    selectedRows.find('input.dateComplete.pending').datepicker().datepicker('enable');
-                    selectedRows.find('input.ledgerQuantity').hSpinner().hSpinner('enable');
+                    unselectedRows.filter(".dateComplete").datepicker().datepicker('disable')
+                    unselectedRows.filter(".ledgerQuantity").hSpinner().hSpinner('disable')
+                    var isChecked = function () {
+                        $j(this).closest("tr").filter("input[name=selectedProductOrderSampleIds]:checked") != 0;
+                    };
+                    $j('input.dateComplete.pending').filter(isChecked()).datepicker().datepicker('enable');
+                    $j('input.ledgerQuantity').filter(isChecked()).hSpinner().hSpinner('enable');
                 } else {
-                    allRows.find('input.dateComplete.pending').datepicker().datepicker('enable');
-                    allRows.find('input.ledgerQuantity').hSpinner().hSpinner('enable');
+                    var inputs = unselectedRows.find("input");
+                    inputs.filter(".dateComplete.pending").datepicker().datepicker('enable')
+                    inputs.filter(".ledgerQuantity").datepicker().datepicker('enable');
                 }
+                console.timeEnd("onClick input:checkbox");
             });
+
+            function timeIt(name, func){
+                console.time(name);
+                var res = func();
+                console.timeEnd(name);
+                return res;
+            }
 
             /*
              * This page's DataTable reserves a spot, #dtButtonHolder (see its sDom property), above the table between
@@ -363,19 +398,22 @@
             });
 
             $j('#ledgerForm').submit(function (event) {
+                console.log("beginning");
+                console.time("submit")
                 var changedInputs;
-                var originalState;
-                var hiddenInputContainer = $j('#hiddenRowInputs');
+                var hiddenInputContainer = document.getElementById('hiddenRowInputs');
                 try {
-                    originalState = $j(ledgerTable.fnGetNodes()).find('input').not(":disabled").prop("disabled",true);
-                    $j(ledgerTable.fnGetNodes()).find('input').prop('disabled', true);
-
-                    // Find and enable (un-disable?) table rows that have changed inputs.
-                    changedInputs = $j(ledgerTable.fnGetNodes()).filter(function(){
-                        return $j(this).find("input.changed").length > 0;
-                    }).find('input').prop('disabled', false);
-
-                    hiddenInputContainer.append(changedInputs);
+                    var changedRows = $j(ledgerTable.fnGetNodes()).filter('.changed');
+                    var dom = changedRows.find("input").filter("[name^='ld']").get();
+                    console.time("copy inputs");
+                    for (var i = dom.length-1; i >= 0; i--) {
+                        var input = document.createElement("input");
+                        input.type="hidden";
+                        input.name=dom[i].name;
+                        input.value=dom[i].value;
+                        hiddenInputContainer.appendChild(input);
+                    }
+                    console.time("copy inputs");
                 } catch (e) {
                     var errorMessage = "Error collecting ledger entries: '" + e + "'";
                     console.log(errorMessage);
@@ -385,12 +423,16 @@
                         'class': 'text-error',
                         css: 'font-weight: bold; margin-left: 50px'
                     }));
-                    originalState.prop('disabled', false);
-                    changedInputs.prop('disabled', true);
-                    hiddenInputContainer.empty();
+
+                    while (hiddenInputContainer.hasChildNodes()){
+                        hiddenInputContainer.removeChild(hiddenInputContainer.lastChild)
+                    }
+
                     errorBlock.appendTo(document.body);
                     event.preventDefault();
                 }
+                console.timeEnd("submit")
+                debugger;
             });
 
             $j('#helpButton').click(function() {
@@ -412,43 +454,43 @@
             updateSubmitButton();
 
             // Last thing to do on document-ready: AJAX-fetch ledger details
-            $j.ajax({
-                url: '${ctxpath}/orders/ledger.action',
-                data: {
-                    ledgerDetails: '',
-                    orderId: '${actionBean.productOrder.businessKey}'
-                },
-                dataType: 'json',
-                success: function (data) {
-                    ledgerDetails = data;
+            <%--$j.ajax({--%>
+                <%--url: '${ctxpath}/orders/ledger.action',--%>
+                <%--data: {--%>
+                    <%--ledgerDetails: '',--%>
+                    <%--orderId: '${actionBean.productOrder.businessKey}'--%>
+                <%--},--%>
+                <%--dataType: 'json',--%>
+                <%--success: function (data) {--%>
+                    <%--ledgerDetails = data;--%>
 
-                    /*
-                     * Set up ledger detail expand buttons.
-                     */
-                    $j('#ledger').on('click', 'td.expand', function() {
-                        var parentRow = this.parentNode;
-                        var icon = $j('i', this);
-                        if (ledgerTable.fnIsOpen(parentRow)) {
-                            ledgerTable.fnClose(parentRow);
-                            icon.removeClass('icon-minus-sign');
-                            icon.addClass('icon-plus-sign');
-                        } else {
-                            var position = $j(parentRow.children[1]).text();
-                            var detailTable = $j('<table class="subTable" style="width: 100%;"><thead><tr><th>Price Item</th><th>Quantity</th><th>Quote</th><th>Work Complete</th><th>Billing Session</th><th>Billed Date</th><th>Billing Message</th></tr></thead><tbody></tbody></table>');
-                            detailTable.dataTable({
-                                aaData: ledgerDetails[position - 1],
-                                "aaSorting": [[5, 'asc']]
-                            });
-                            var detailRow = ledgerTable.fnOpen(parentRow, detailTable, 'ledgerDetail');
-                            $j(detailRow).addClass(parentRow.className);
-                            icon.removeClass('icon-plus-sign');
-                            icon.addClass('icon-minus-sign');
-                        }
-                    });
+                    <%--/*--%>
+                     <%--* Set up ledger detail expand buttons.--%>
+                     <%--*/--%>
+                    <%--$j('#ledger').on('click', 'td.expand', function() {--%>
+                        <%--var parentRow = this.parentNode;--%>
+                        <%--var icon = $j('i', this);--%>
+                        <%--if (ledgerTable.fnIsOpen(parentRow)) {--%>
+                            <%--ledgerTable.fnClose(parentRow);--%>
+                            <%--icon.removeClass('icon-minus-sign');--%>
+                            <%--icon.addClass('icon-plus-sign');--%>
+                        <%--} else {--%>
+                            <%--var position = $j(parentRow.children[1]).text();--%>
+                            <%--var detailTable = $j('<table class="subTable" style="width: 100%;"><thead><tr><th>Price Item</th><th>Quantity</th><th>Quote</th><th>Work Complete</th><th>Billing Session</th><th>Billed Date</th><th>Billing Message</th></tr></thead><tbody></tbody></table>');--%>
+                            <%--detailTable.dataTable({--%>
+                                <%--aaData: ledgerDetails[position - 1],--%>
+                                <%--"aaSorting": [[5, 'asc']]--%>
+                            <%--});--%>
+                            <%--var detailRow = ledgerTable.fnOpen(parentRow, detailTable, 'ledgerDetail');--%>
+                            <%--$j(detailRow).addClass(parentRow.className);--%>
+                            <%--icon.removeClass('icon-plus-sign');--%>
+                            <%--icon.addClass('icon-minus-sign');--%>
+                        <%--}--%>
+                    <%--});--%>
 
-                    $j('#ledger').find('td.expand').removeClass('loading');
-                }
-            });
+                    <%--$j('#ledger').find('td.expand').removeClass('loading');--%>
+                <%--}--%>
+            <%--});--%>
         });
 
         /*
@@ -497,12 +539,13 @@
              * Therefore, we need to look at the actual rows to extract the current value.
              */
             var row = oSettings.oApi._fnGetTrNodes(oSettings)[iDataIndex];
+            var $children = $j(row).children();
 
             for (var i = 0; i < numPriceItems; i++) {
                 // aData has all data, including hidden cells, so a little math is needed.
                 var original = parseFloat(aData[10 + i*2]);
                 // cells contains only the visible cells, so no need to skip over the hidden ones.
-                var current = parseFloat($j(row).children().eq(9 + i).find('input:text').val());
+                var current = parseFloat($children.eq(9 + i).find('input:text').val());
                 if (original != current) {
                     return true;
                 }
@@ -522,16 +565,16 @@
         }
 
         function getSelectedRows() {
-            return $j('input[name=selectedProductOrderSampleIds]:checked').parentsUntil('tbody', 'tr');
+            return $j('#ledger tbody input[name=selectedProductOrderSampleIds]:checked').closest("tr");
         }
 
-        function applyToSelected(inputName, action) {
+        function applyToSelected(inputName, escaped, action) {
             /*
              * Select starting with the checked samples, find the parent rows, find the child inputs for the
              * same price item, but not the current input, and apply the action.
              */
             var selectedRows = getSelectedRows();
-            var input = $j('#' + escapeForSelector(inputName));
+            var input = $j('#' + escaped);
             var priceItemId = input.attr('priceItemId');
             var value = input.val();
             var $quantityInputs = selectedRows.find('input.ledgerQuantity[priceItemId=' + priceItemId + ']');
@@ -795,7 +838,7 @@
         <div id="dtButtons" style="text-align: right; display: none;">
             <button id="autoFillButton" class="btn btn-mini">Auto Fill</button>
         </div>
-
+    </stripes:form>
         <%-- The actual ledger table. Initially hidden to avoid rendering the table before the datatable widget is
              ready. --%>
         <table id="ledger" class="table simple" style="display: none">
@@ -845,7 +888,7 @@
                     <td>
                         ${info.sample.name}
                         <input type="hidden"
-                               name="ledgerData[${info.sample.samplePosition}].sampleName"
+                               name="ld[${info.sample.samplePosition}].sn"
                                value="${info.sample.name}"/>
                     </td>
                     <td>
@@ -866,10 +909,10 @@
                     </td>
                     <td style="text-align: center">
                         <c:set var="submittedCompleteDate"
-                               value="${actionBean.ledgerData[info.sample.samplePosition].completeDateFormatted}"/>
+                               value="${actionBean.ld[info.sample.samplePosition].completeDateFormatted}"/>
                         <c:set var="currentValue"
                                value="${submittedCompleteDate != null ? submittedCompleteDate : info.dateCompleteFormatted}"/>
-                        <input name="ledgerData[${info.sample.samplePosition}].workCompleteDate"
+                        <input name="ld[${info.sample.samplePosition}].wcd"
                                value="${currentValue}"
                                originalValue="${info.dateCompleteFormatted}"
                                class="dateComplete ${currentValue != info.dateCompleteFormatted ? 'changed' : ''}">
@@ -881,11 +924,11 @@
                         </td>
                         <td style="text-align: center">
                             <input type="hidden"
-                                   name="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].originalQuantity"
+                                   name="ld[${info.sample.samplePosition}].q[${priceItem.priceItemId}].oc"
                                    value="${info.getTotalForPriceItem(priceItem)}"/>
-                            <c:set var="submittedQuantity" value="${actionBean.ledgerData[info.sample.samplePosition].quantities[priceItem.priceItemId].submittedQuantity}"/>
-                            <input id="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].submittedQuantity"
-                                   name="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].submittedQuantity"
+                            <c:set var="submittedQuantity" value="${actionBean.ld[info.sample.samplePosition].q[priceItem.priceItemId].submittedQuantity}"/>
+                            <input id="ld[${info.sample.samplePosition}].q[${priceItem.priceItemId}].sq"
+                                   name="ld[${info.sample.samplePosition}].q[${priceItem.priceItemId}].sq"
                                    value="${submittedQuantity != null ? submittedQuantity : info.getTotalForPriceItem(priceItem)}"
                                    class="ledgerQuantity"
                                    priceItemId="${priceItem.priceItemId}"
@@ -909,7 +952,6 @@
             </c:forEach>
         </tbody>
     </table>
-    </stripes:form>
 
 </stripes:layout-component>
 </stripes:layout-render>
