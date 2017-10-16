@@ -134,11 +134,13 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
      * All delete records go in event fact table.  <br/>
      * Last character of line for update/insert records determines which file the record is written to: <br/>
      * "E" is an event fact record <br/>
-     * "A" is an ancestry fact record
+     * "A" is an ancestry fact record <br/>
+     * Scope relaxed from protected to public to allow a backfill service hook
+     *
      */
     @DaoFree
     @Override
-    protected int writeRecords(Collection<LabEvent> entities,
+    public int writeRecords(Collection<LabEvent> entities,
                                Collection<Long>deletedEntityIds,
                                String etlDateStr) {
 
