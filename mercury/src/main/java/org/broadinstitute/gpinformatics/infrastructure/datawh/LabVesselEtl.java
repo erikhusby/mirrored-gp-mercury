@@ -116,6 +116,7 @@ public class LabVesselEtl extends GenericEntityEtl<LabVessel, LabVessel> {
                 // Extract entire set of data from attached entities
                 recordCount += labEventEtl.writeRecords(descendantEvents, Collections.EMPTY_SET, etlDateStr);
             } else {
+                int eventLinecount = 0;
                 // Break up list of Ids and clear hibernate session to avoid high resource consumption
                 List<Long> modifiedEntityIds = new ArrayList<>();
                 for( LabEvent evt : descendantEvents ) {
@@ -128,14 +129,14 @@ public class LabVesselEtl extends GenericEntityEtl<LabVessel, LabVessel> {
                         endDex = modifiedEntityIds.size();
                     }
                     dao.clear();
-                    recordCount += labEventEtl.writeRecords(Collections.EMPTY_SET,
+                    eventLinecount = labEventEtl.writeRecords(Collections.EMPTY_SET,
                             modifiedEntityIds.subList(startDex, endDex),
                             Collections.EMPTY_SET,
                             Collections.EMPTY_SET, // Collection<RevInfoPair<LabEvent>> not used
                             etlDateStr);
                     startDex = endDex;
                 }
-
+                recordCount += eventLinecount;
             }
 
             countDateException.setLeft(recordCount);
