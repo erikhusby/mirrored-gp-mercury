@@ -69,20 +69,20 @@ public class PriceList {
      * @throws InvalidProductException   Thrown if the price item from the product orders product is not found on the
      * price list
      */
-    public String getEffectivePrice(PriceItem primaryPriceItem, Quote orderQuote) throws InvalidProductException {
+    public String getEffectivePrice(PriceItem primaryPriceItem, Quote orderQuote, Date workCompleteDate) throws InvalidProductException {
 
         final QuotePriceItem cachedPriceItem = findByKeyFields(primaryPriceItem);
         if(cachedPriceItem == null) {
             throw new InvalidProductException("The price item "+primaryPriceItem.getDisplayName()+" does not exist");
         }
-        return getEffectivePrice(cachedPriceItem, orderQuote);
+        return getEffectivePrice(cachedPriceItem, orderQuote, workCompleteDate);
     }
 
-    public String getEffectivePrice(QuotePriceItem cachedPriceItem, Quote orderQuote) {
+    private String getEffectivePrice(QuotePriceItem cachedPriceItem, Quote orderQuote, Date workCompleteDate) {
         String price = cachedPriceItem.getPrice();
         QuoteItem foundMatchingQuoteItem = orderQuote.findCachedQuoteItem(cachedPriceItem.getPlatformName(),
                 cachedPriceItem.getCategoryName(), cachedPriceItem.getName());
-        if (foundMatchingQuoteItem  != null && !orderQuote.getExpired()) {
+        if (foundMatchingQuoteItem != null && workCompleteDate.before(orderQuote.getExpirationDate())) {
             if (new BigDecimal(foundMatchingQuoteItem .getPrice()).compareTo(new BigDecimal(cachedPriceItem.getPrice())) < 0) {
                 price = foundMatchingQuoteItem .getPrice();
             }
@@ -105,6 +105,5 @@ public class PriceList {
         }
 
     }
-
 
 }

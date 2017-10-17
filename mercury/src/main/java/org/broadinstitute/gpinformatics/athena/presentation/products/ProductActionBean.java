@@ -36,6 +36,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Produ
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
@@ -115,6 +116,9 @@ public class ProductActionBean extends CoreActionBean {
 
     @Inject
     private WorkflowConfig workflowConfig;
+
+    @Inject
+    private SAPProductPriceCache productPriceCache;
 
     // Data needed for displaying the view.
     private List<ProductFamily> productFamilies;
@@ -446,13 +450,11 @@ public class ProductActionBean extends CoreActionBean {
         productEjb.saveProduct(editProduct, addOnTokenInput, priceItemTokenInput, allLengthsMatch(),
                 criteria, operators, values, genotypingChipInfo, externalPriceItemTokenInput);
         addMessage("Product \"" + editProduct.getProductName() + "\" has been saved");
-        if(editProduct.isSavedInSAP()) {
             try {
                 productEjb.publishProductToSAP(editProduct);
             } catch (SAPIntegrationException e) {
                 addGlobalValidationError("Unable to update the product in SAP. " + e.getMessage());
             }
-        }
 
         return new RedirectResolution(ProductActionBean.class, VIEW_ACTION).addParameter(PRODUCT_PARAMETER,
                 editProduct.getPartNumber());
@@ -718,6 +720,10 @@ public class ProductActionBean extends CoreActionBean {
         return workflows;
     }
 
+    public boolean productInSAP(String partNumber) {
+        return productPriceCache.productExists(partNumber);
+    }
+
     public ProductDao.Availability getAvailability() {
         return availability;
     }
@@ -781,5 +787,9 @@ public class ProductActionBean extends CoreActionBean {
 
     public void setSelectedProductPartNumbers(List<String> selectedProductPartNumbers) {
         this.selectedProductPartNumbers = selectedProductPartNumbers;
+    }
+
+    public SAPProductPriceCache getProductPriceCache() {
+        return productPriceCache;
     }
 }

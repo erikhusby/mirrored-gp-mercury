@@ -27,6 +27,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.sap.entity.Condition;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -161,21 +162,17 @@ public class BillingAdaptor implements Serializable {
 
                 try {
                     priceItemsForDate = quoteService.getPriceItemsForDate(Collections.singletonList(itemForPriceUpdate));
+                    itemForPriceUpdate.setPriceOnWorkDate(priceItemsForDate);
 
                     quote = quoteService.getQuoteByAlphaId(itemForPriceUpdate.getQuoteId());
+                    //todo SGM is this call really necessary?  Is it just for DBFree tests?
+                    quote.setAlphanumericId(itemForPriceUpdate.getQuoteId());
+                    itemForPriceUpdate.setQuote(quote);
                     ProductOrder.checkQuoteValidity(quote,
                             DateUtils.truncate(itemForPriceUpdate.getWorkCompleteDate(), Calendar.DATE));
 
-                    //todo SGM is this call really necessary?  Is it just for DBFree tests?
-                    quote.setAlphanumericId(itemForPriceUpdate.getQuoteId());
 
                     if(itemForPriceUpdate.getProductOrder().isSavedInSAP()) {
-
-                    /* TODO SGM: Put in Logic to update orders based on price on effective date.
-                      for new  (Post SAP 1.5) orders, use this price to determine if price adjustments need to be added
-                       For old orders (pre 1.5) use this price to determine if a new order needs to be created to
-                       update the price.
-                       */
 
                         effectivePricesForProducts = getEffectivePricesForProducts(allProductsOrdered, quote, priceItemsForDate);
                         if (itemForPriceUpdate.getProductOrder().isPriorToSAP1_5()) {
@@ -186,8 +183,18 @@ public class BillingAdaptor implements Serializable {
                                 productOrderEjb.publishProductOrderToSAP(itemForPriceUpdate.getProductOrder(), messageCollection, true);
                             }
                         } else {
-                            //todo SGM set Quote adjustments if on the effective date quoted price is lower than 
-                            // listed price AND the quote has not expired
+                            final String price =
+                                    priceListCache.findByKeyFields(itemForPriceUpdate.getPriceItem()).getPrice();
+
+                            BigDecimal listPrice = new BigDecimal(price);
+                            BigDecimal effectivePrice = new BigDecimal(itemForPriceUpdate.getEffectivePrice());
+                            Condition adjustmentCondition = null;
+                            BigDecimal adjustmentDifference = null;
+
+                            if(!itemForPriceUpdate.getProductOrder().needsCustomization(itemForPriceUpdate.getProduct()) && listPrice.compareTo(effectivePrice) !=0) {
+                                itemForPriceUpdate.getProductOrder().addQuoteAdjustment(itemForPriceUpdate.getProduct(), effectivePrice, listPrice);
+                            }
+                            productOrderEjb.publishProductOrderToSAP(itemForPriceUpdate.getProductOrder(), messageCollection, false);
                         }
                     }
                 } catch (QuoteServerException|QuoteNotFoundException|InvalidProductException|SAPInterfaceException e) {
@@ -218,14 +225,13 @@ public class BillingAdaptor implements Serializable {
                 String sapBillingId = null;
                 String workId = null;
                 try {
-                    priceItemsForDate = quoteService.getPriceItemsForDate(Collections.singletonList(item));
-                    updatePriceOnQuoteImportItem(item, priceItemsForDate);
-                    quote = quoteService.getQuoteByAlphaId(item.getQuoteId());
+                    priceItemsForDate = item.getPriceOnWorkDate();
+                    quote = item.getQuote();
                     ProductOrder.checkQuoteValidity(quote,
                             DateUtils.truncate(item.getWorkCompleteDate(), Calendar.DATE));
 
-                    //todo SGM is this call really necessary?  Is it just for DBFree tests?
-                    quote.setAlphanumericId(item.getQuoteId());
+//                    //todo SGM is this call really necessary?  Is it just for DBFree tests?
+//                    quote.setAlphanumericId(item.getQuoteId());
 
                     workId = CollectionUtils.isEmpty(item.getWorkItems())?null:item.getWorkItems().toArray(new String[item.getWorkItems().size()])[0];
                     sapBillingId = quote.isEligibleForSAP()? item.getSapItems(): NOT_ELIGIBLE_FOR_SAP_INDICATOR;
@@ -235,7 +241,7 @@ public class BillingAdaptor implements Serializable {
                     QuotePriceItem priceItemBeingBilled = QuotePriceItem.convertMercuryPriceItem(item.getPriceItem());
 
                     //Replace with the New price list call for effective date
-                    String price = priceItemsForDate.getEffectivePrice(item.getPriceItem(), quote);
+                    String price = item.getEffectivePrice();
 
                     // Get the quote PriceItem that this is replacing, if it is a replacement.
                     // todo need to set the price on the Price Item before this step
@@ -269,10 +275,10 @@ public class BillingAdaptor implements Serializable {
                                 workId = quoteService
                                         .registerNewSAPWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
                                                 item.getWorkCompleteDate(), item.getQuantity(),
-                                                pageUrl, "billingSession", sessionKey);
+                                                pageUrl, "billingSession", sessionKey, null);
                             } else {
                                 workId = quoteService
-                                        .registerNewSAPWorkWithPriceOverride(quote, priceItemBeingBilled,
+                                        .registerNewSAPWork(quote, priceItemBeingBilled,
                                                 primaryPriceItemIfReplacement,
                                                 item.getWorkCompleteDate(), item.getQuantity(),
                                                 pageUrl, "billingSession", sessionKey,
@@ -283,10 +289,10 @@ public class BillingAdaptor implements Serializable {
                                 workId = quoteService
                                         .registerNewWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
                                                 item.getWorkCompleteDate(), item.getQuantity(),
-                                                pageUrl, "billingSession", sessionKey);
+                                                pageUrl, "billingSession", sessionKey, null);
                             } else {
                                 workId = quoteService
-                                        .registerNewWorkWithPriceOverride(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
+                                        .registerNewWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
                                                 item.getWorkCompleteDate(), item.getQuantity(),
                                                 pageUrl, "billingSession", sessionKey,
                                                 item.getProductOrder().getSinglePriceAdjustment().getAdjustmentValue());
@@ -369,28 +375,6 @@ public class BillingAdaptor implements Serializable {
         }
 
         return results;
-    }
-
-    private void updatePriceOnQuoteImportItem(QuoteImportItem item,
-                                              PriceList priceItemsForDate) {
-
-        if(item.getQuotePriceType().equals(LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.getQuoteType())) {
-            final QuotePriceItem replacedProductQuotePriceItem = priceItemsForDate
-                    .findByKeyFields(item.getProduct().getPrimaryPriceItem());
-
-            for (QuotePriceItem replacementPriceItem : replacedProductQuotePriceItem.getReplacementItems()
-                    .getQuotePriceItems()) {
-                if(replacementPriceItem.isMercuryPriceItemEqual(item.getPriceItem())) {
-                    item.getPriceItem().setPrice(replacementPriceItem.getPrice());
-                }
-            }
-
-        } else {
-            final QuotePriceItem quotePriceItem =
-                    priceItemsForDate.findByKeyFields(item.getPriceItem());
-
-            item.getPriceItem().setPrice(quotePriceItem.getPrice());
-        }
     }
 
     /**

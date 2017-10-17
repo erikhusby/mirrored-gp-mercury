@@ -36,24 +36,6 @@ class AcceptsAllWorkRegistrationsQuoteServiceStub implements QuoteService {
     public static final String WORK_ITEM_PREPEND = "workItemId\t";
 
     @Override
-    public String registerNewWorkWithPriceOverride(Quote quote, QuotePriceItem quotePriceItem,
-                                                   QuotePriceItem itemIsReplacing, Date reportedCompletionDate,
-                                                   double numWorkUnits, String callbackUrl,
-                                                   String callbackParameterName, String callbackParameterValue,
-                                                   BigDecimal priceAdjustment) {
-        return WORK_ITEM_PREPEND + (1000 + counter++);
-    }
-
-    @Override
-    public String registerNewSAPWorkWithPriceOverride(Quote quote, QuotePriceItem quotePriceItem,
-                                                      QuotePriceItem itemIsReplacing, Date reportedCompletionDate,
-                                                      double numWorkUnits, String callbackUrl,
-                                                      String callbackParameterName, String callbackParameterValue,
-                                                      BigDecimal priceAdjustment) {
-        return WORK_ITEM_PREPEND + (1000 + counter++);
-    }
-
-    @Override
     public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
         return new PriceList();
     }
@@ -66,14 +48,16 @@ class AcceptsAllWorkRegistrationsQuoteServiceStub implements QuoteService {
     @Override
     public String registerNewWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
                                   Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
-                                  String callbackParameterName, String callbackParameterValue) {
+                                  String callbackParameterName, String callbackParameterValue,
+                                  BigDecimal priceAdjustment) {
         return WORK_ITEM_PREPEND + (1000 + counter++);
     }
 
     @Override
     public String registerNewSAPWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
                                      Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
-                                     String callbackParameterName, String callbackParameterValue) {
+                                     String callbackParameterName, String callbackParameterValue,
+                                     BigDecimal priceAdjustment) {
         return WORK_ITEM_PREPEND + (1000 + counter++);
     }
 

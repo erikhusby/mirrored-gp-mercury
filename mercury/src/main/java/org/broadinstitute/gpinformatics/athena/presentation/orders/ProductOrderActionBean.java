@@ -131,6 +131,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchAction
 import org.broadinstitute.sap.entity.OrderCalculatedValues;
 import org.broadinstitute.sap.entity.OrderValue;
 import org.broadinstitute.sap.services.SAPIntegrationException;
+import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -862,7 +863,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         double fundsRemaining = Double.parseDouble(quote.getQuoteFunding().getFundsRemaining());
-        double outstandingEstimate = estimateOutstandingOrders(quote, additionalSampleCount);
+        double outstandingEstimate = estimateOutstandingOrders(quote, additionalSampleCount, (editOrder.isChildOrder())?editOrder.getParentOrder():editOrder);
         double valueOfCurrentOrder = 0;
 
         if (fundsRemaining <= 0d ||
@@ -892,13 +893,13 @@ public class ProductOrderActionBean extends CoreActionBean {
      * Retrieves and determines the monitary value of a subset of Open Orders within Mercury
      * @return total dollar amount of the monitary value of orders associated with the given quote
      */
-    double estimateOutstandingOrders(Quote foundQuote, int addedSampleCount)
+    double estimateOutstandingOrders(Quote foundQuote, int addedSampleCount, ProductOrder productOrder)
             throws InvalidProductException, SAPIntegrationException {
 
         List<ProductOrder> ordersWithCommonQuote = productOrderDao.findOrdersWithCommonQuote(foundQuote.getAlphanumericId());
 
         final OrderCalculatedValues calculatedValues = sapService
-                .calculateOpenOrderValues((editOrder.isChildOrder()) ? editOrder.getParentOrder() : editOrder, addedSampleCount);
+                .calculateOpenOrderValues(addedSampleCount, foundQuote.getAlphanumericId(), productOrder);
 
         Set<String> sapOrderIDsToExclude = new HashSet<>();
 
@@ -907,7 +908,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         value += calculatedValues.getPotentialOrderValue().doubleValue();
 
         for (OrderValue orderValue : calculatedValues.getValue()) {
-            if(!StringUtils.equals(orderValue.getSapOrderID(), editOrder.getSapOrderNumber())) {
+            if(productOrder != null && !StringUtils.equals(orderValue.getSapOrderID(), productOrder.getSapOrderNumber())) {
                 value += orderValue.getValue().doubleValue();
             }
             sapOrderIDsToExclude.add(orderValue.getSapOrderID());
@@ -966,13 +967,13 @@ public class ProductOrderActionBean extends CoreActionBean {
                 final Product product = testOrder.getProduct();
                 double productValue =
                         getProductValue((product.getSupportsNumberOfLanes())?(int)ProductOrder.getUnbilledLaneCount(testOrder, product):sampleCount, product,
-                                quote);
+                                quote, testOrder);
                 value += productValue;
                 for (ProductOrderAddOn testOrderAddon : testOrder.getAddOns()) {
                     final Product addOn = testOrderAddon.getAddOn();
                     double addOnValue =
                             getProductValue((addOn.getSupportsNumberOfLanes())?(int)ProductOrder.getUnbilledLaneCount(testOrder, product):sampleCount, addOn,
-                                    quote);
+                                    quote, testOrder);
                     value += addOnValue;
                 }
             } catch (InvalidProductException e) {
@@ -990,13 +991,15 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @param unbilledCount count of samples that have not yet been billed
      * @param product       Product from which the price can be determined
      * @param quote         Quote used in the order for which this price is being derived
+     * @param productOrder
      * @return Derived value of the Product price multiplied by the number of unbilled samples
      */
-    double getProductValue(int unbilledCount, Product product, Quote quote) throws InvalidProductException {
+    double getProductValue(int unbilledCount, Product product, Quote quote,
+                           ProductOrder productOrder) throws InvalidProductException {
         double productValue = 0d;
         String foundPrice;
         try {
-            foundPrice = productOrderEjb.validateSAPAndQuoteServerPrices(quote,product);
+            foundPrice = productOrderEjb.validateSAPAndQuoteServerPrices(quote,product, productOrder);
         } catch (InvalidProductException e) {
             throw new InvalidProductException("For '" + product.getDisplayName() + "' " + e.getMessage(), e);
         }
@@ -1353,7 +1356,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 item.put("fundsRemaining", NumberFormat.getCurrencyInstance().format(fundsRemaining));
                 item.put("status", quote.getApprovalStatus().getValue());
 
-                double outstandingOrdersValue = estimateOutstandingOrders(quote, 0);
+                double outstandingOrdersValue = estimateOutstandingOrders(quote, 0, null);
                 item.put("outstandingEstimate",  NumberFormat.getCurrencyInstance().format(
                         outstandingOrdersValue));
                 JSONArray fundingDetails = new JSONArray();
@@ -1659,14 +1662,12 @@ public class ProductOrderActionBean extends CoreActionBean {
                 editOrder.setOrderType(ProductOrder.OrderAccessType.fromDisplayName(orderType));
             }
         } else {
-            //TODO SGM  have to also determine if the Product is Clinical.  If so the order type must be set to Clinical/commercial
-            editOrder.setOrderType(ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
+            if(editOrder.getProduct().isClinicalProduct()) {
+                editOrder.setOrderType(ProductOrder.OrderAccessType.COMMERCIAL);
+            } else {
+                editOrder.setOrderType(ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
+            }
         }
-
-        if(editOrder.getProduct().isClinicalProduct()) {
-            editOrder.setOrderType(ProductOrder.OrderAccessType.COMMERCIAL);
-        }
-        
 
         if (editOrder.isRegulatoryInfoEditAllowed()) {
             updateRegulatoryInformation();
@@ -1790,7 +1791,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         Product product = tokenProduct != null ? productDao.findByPartNumber(tokenProduct.getPartNumber()) : null;
 
         if(editOrder.isSavedInSAP() && !editOrder.latestSapOrderDetail().getCompanyCode().equals(
-                SapIntegrationServiceImpl.getSapCompanyConfigurationForProduct(product).getCompanyCode())) {
+                SapIntegrationServiceImpl.getSapCompanyConfigurationForProduct(product, editOrder).getCompanyCode())) {
             addGlobalValidationError("Unable to update the order in SAP.  This combination of Product and Order is "
                                      + "attempting to change the company code to which this order will be associated.");
         }
@@ -1897,6 +1898,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                 JSONObject item = new JSONObject();
                 item.put("key", addOn.getBusinessKey());
                 item.put("value", addOn.getProductName());
+                item.put("researchListPrice", productPriceCache.findByProduct(addOn, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD));
+                item.put("externalListPrice", productPriceCache.findByProduct(addOn, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES));
 
                 itemList.put(item);
             }
@@ -2274,6 +2277,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             productInfo.put("clinicalProduct", productEntity.isClinicalProduct());
             productInfo.put("externalProduct", productEntity.isExternalOnlyProduct());
             productInfo.put("productName", productEntity.getName());
+            productInfo.put("researchListPrice", productPriceCache.findByProduct(productEntity, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD));
+            productInfo.put("externalListPrice", productPriceCache.findByProduct(productEntity, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES));
         }
 
         return createTextResolution(productInfo.toString());

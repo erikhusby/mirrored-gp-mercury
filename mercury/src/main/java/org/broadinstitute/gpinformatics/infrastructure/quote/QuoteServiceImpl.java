@@ -96,43 +96,19 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
     @Override
     public String registerNewWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
                                   Date reportedCompletionDate, double numWorkUnits,
-                                  String callbackUrl, String callbackParameterName, String callbackParameterValue) {
+                                  String callbackUrl, String callbackParameterName, String callbackParameterValue,
+                                  BigDecimal priceAdjustment) {
 
         return registerWorkHelper(quote, quotePriceItem, itemIsReplacing, reportedCompletionDate, numWorkUnits,
                 callbackUrl,
-                callbackParameterName, callbackParameterValue,null, Endpoint.REGISTER_WORK);
+                callbackParameterName, callbackParameterValue,priceAdjustment, Endpoint.REGISTER_WORK);
     }
 
     @Override
     public String registerNewSAPWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
                                      Date reportedCompletionDate, double numWorkUnits,
-                                     String callbackUrl, String callbackParameterName, String callbackParameterValue) {
-
-        return registerWorkHelper(quote, quotePriceItem, itemIsReplacing, reportedCompletionDate, numWorkUnits,
-                callbackUrl,
-                callbackParameterName, callbackParameterValue, null, Endpoint.REGISTER_BLOCKED_WORK);
-    }
-
-    @Override
-    public String registerNewWorkWithPriceOverride(Quote quote, QuotePriceItem quotePriceItem,
-                                                   QuotePriceItem itemIsReplacing,
-                                                   Date reportedCompletionDate, double numWorkUnits,
-                                                   String callbackUrl, String callbackParameterName,
-                                                   String callbackParameterValue,
-                                                   BigDecimal priceAdjustment) {
-
-        return registerWorkHelper(quote, quotePriceItem, itemIsReplacing, reportedCompletionDate, numWorkUnits,
-                callbackUrl,
-                callbackParameterName, callbackParameterValue, priceAdjustment, Endpoint.REGISTER_WORK);
-    }
-
-    @Override
-    public String registerNewSAPWorkWithPriceOverride(Quote quote, QuotePriceItem quotePriceItem,
-                                                      QuotePriceItem itemIsReplacing,
-                                                      Date reportedCompletionDate, double numWorkUnits,
-                                                      String callbackUrl, String callbackParameterName,
-                                                      String callbackParameterValue,
-                                                      BigDecimal priceAdjustment) {
+                                     String callbackUrl, String callbackParameterName, String callbackParameterValue,
+                                     BigDecimal priceAdjustment) {
 
         return registerWorkHelper(quote, quotePriceItem, itemIsReplacing, reportedCompletionDate, numWorkUnits,
                 callbackUrl,

@@ -37,6 +37,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundExcept
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.json.JSONArray;
 import org.json.JSONException;
 
@@ -200,9 +201,9 @@ public class BillingLedgerActionBean extends CoreActionBean {
             } catch (ValidationException e) {
                 logger.error(e);
                 addGlobalValidationErrors(e.getValidationMessages());
-            } catch ( QuoteNotFoundException | QuoteServerException  otherEs) {
-                logger.error(otherEs);
-                addGlobalValidationError(otherEs.getMessage());
+            } catch (SAPIntegrationException | QuoteNotFoundException | QuoteServerException e) {
+                logger.error(e);
+                addGlobalValidationError(e.getMessage());
             } catch (SAPInterfaceException sie) {
                 String errorMessage = "While updating this order in SAP an error occurred:  ";
                 logger.error(sie);

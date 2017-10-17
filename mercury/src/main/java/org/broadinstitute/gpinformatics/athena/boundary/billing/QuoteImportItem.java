@@ -1,11 +1,13 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 
 import javax.annotation.Nonnull;
@@ -34,6 +36,9 @@ public class QuoteImportItem {
     private String sapItems;
     private Product product;
     private ProductOrder productOrder;
+
+    private PriceList priceOnWorkDate;
+    private Quote quote;
 
     public QuoteImportItem(
             String quoteId, PriceItem priceItem, String quotePriceType, List<LedgerEntry> ledgerItems, Date billToDate,
@@ -233,10 +238,10 @@ public class QuoteImportItem {
 
         // If this is optional, then return the primary as the 'is replacing.' This is comparing the quote price item
         // to the values on the product's price item, so do the item by item compare.
-        for (QuotePriceItem optional : priceListCache.getReplacementPriceItems(primaryPriceItem, effectiveDate)) {
+        for (QuotePriceItem optional : priceListCache.getReplacementPriceItems(primaryPriceItem)) {
             if (optional.isMercuryPriceItemEqual(priceItem)) {
                 final QuotePriceItem priceItem = QuotePriceItem.convertMercuryPriceItem(primaryPriceItem);
-                priceItem.setPrice(priceListCache.findByKeyFields(primaryPriceItem, effectiveDate).getPrice());
+                priceItem.setPrice(priceListCache.findByKeyFields(primaryPriceItem).getPrice());
                 return priceItem;
             }
         }
@@ -290,5 +295,48 @@ public class QuoteImportItem {
             workItem = workItems.iterator().next();
         }
         return workItem;
+    }
+
+    public PriceList getPriceOnWorkDate() {
+        return priceOnWorkDate;
+    }
+
+    public void setPriceOnWorkDate(PriceList priceOnWorkDate) {
+        this.priceOnWorkDate = priceOnWorkDate;
+        updatePriceOnQuoteImportItem();
+    }
+
+    public Quote getQuote() {
+        return quote;
+    }
+
+    public void setQuote(Quote quote) {
+        this.quote = quote;
+    }
+
+    void updatePriceOnQuoteImportItem() {
+
+        PriceList priceItemsForDate = getPriceOnWorkDate();
+        if(getQuotePriceType().equals(LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.getQuoteType())) {
+            final QuotePriceItem replacedProductQuotePriceItem = priceItemsForDate
+                    .findByKeyFields(getProduct().getPrimaryPriceItem());
+
+            for (QuotePriceItem replacementPriceItem : replacedProductQuotePriceItem.getReplacementItems()
+                    .getQuotePriceItems()) {
+                if(replacementPriceItem.isMercuryPriceItemEqual(getPriceItem())) {
+                    getPriceItem().setPrice(replacementPriceItem.getPrice());
+                }
+            }
+
+        } else {
+            final QuotePriceItem quotePriceItem =
+                    priceItemsForDate.findByKeyFields(getPriceItem());
+
+            getPriceItem().setPrice(quotePriceItem.getPrice());
+        }
+    }
+
+    public String getEffectivePrice() throws InvalidProductException {
+        return this.priceOnWorkDate.getEffectivePrice(this.priceItem, this.quote, this.getWorkCompleteDate());
     }
 }

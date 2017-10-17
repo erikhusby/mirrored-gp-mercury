@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
@@ -33,8 +34,9 @@ public class ProductEjbDBFreeTest {
         final AuditReaderDao mockAuditReaderDao = Mockito.mock(AuditReaderDao.class);
         final SapIntegrationService mockSapService = Mockito.mock(SapIntegrationService.class);
         final ProductDao mockProductDao = Mockito.mock(ProductDao.class);
+        SAPProductPriceCache productPriceCache = Mockito.mock(SAPProductPriceCache.class);
         ProductEjb testEjb = new ProductEjb(mockProductDao, mockSapService, mockAuditReaderDao,
-                mockAttributeArchetypeDao, mockSapAccessControl);
+                mockAttributeArchetypeDao, mockSapAccessControl, productPriceCache);
 
         SAPAccessControl noControl = new SAPAccessControl();
         SAPAccessControl blockControl = new SAPAccessControl();
@@ -56,6 +58,7 @@ public class ProductEjbDBFreeTest {
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(noControl);
         testEjb.publishProductToSAP(testProduct);
+
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockSapService, Mockito.times(1)).createProductInSAP(testProduct);
 

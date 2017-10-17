@@ -139,6 +139,7 @@ public class SapIntegrationServiceImplDBFreeTest {
 
         String jiraTicketKey= "PDO-SAP-test";
         ProductOrder conversionPdo = ProductOrderTestFactory.createDummyProductOrder(10, jiraTicketKey);
+        conversionPdo.setPriorToSAP1_5(true);
         conversionPdo.setQuoteId(testSingleSourceQuote.getAlphanumericId());
         conversionPdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
@@ -198,6 +199,8 @@ public class SapIntegrationServiceImplDBFreeTest {
         for(SAPOrderItem item:convertedOrder.getOrderItems()) {
             assertThat(item.getSampleCount(), equalTo(conversionPdo.getSamples().size()));
             if(item.getProductIdentifier().equals(conversionPdo.getProduct().getPartNumber())) {
+
+                //TODO sgm must add in productPriceCache to make this work
                 assertThat(item.getProductPrice(), equalTo(new BigDecimal("30.50")));
             } else {
                 assertThat(item.getProductPrice(), equalTo(new BigDecimal("20.50")));

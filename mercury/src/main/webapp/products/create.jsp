@@ -309,7 +309,7 @@
                             </stripes:label>
                             <div class="controls">
                                 <stripes:checkbox id="externalOrderOnly" name="editProduct.externalOnlyProduct" style="margin-top: 10px;"/>
-                                <c:if test="${actionBean.editProduct.savedInSAP}">
+                                <c:if test="${!actionBean.productInSAP(editProduct.partNumber)}">
                                     <stripes:hidden name="editProduct.externalOnlyProduct" value="${actionBean.editProduct.externalOnlyProduct}" />
                                 </c:if>
                             </div>
@@ -320,7 +320,7 @@
                             </stripes:label>
                             <div class="controls">
                                 <stripes:checkbox id="clinicalProduct" name="editProduct.clinicalProduct" style="margin-top: 10px;"/>
-                                <c:if test="${actionBean.editProduct.savedInSAP}">
+                                <c:if test="${!actionBean.productInSAP(editProduct.partNumber)}">
                                     <stripes:hidden name="editProduct.clinicalProduct" value="${actionBean.editProduct.clinicalProduct}" />
                                 </c:if>
                             </div>
@@ -376,7 +376,7 @@
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="partNumber" name="editProduct.partNumber" class="defaultText input-xxlarge"
-                            title="Enter the part number of the new product" readonly="${actionBean.editProduct.savedInSAP}"/>
+                            title="Enter the part number of the new product" readonly="${!actionBean.productInSAP(editProduct.partNumber)}"/>
                     </div>
                 </div>
 

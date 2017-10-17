@@ -1,9 +1,11 @@
 package org.broadinstitute.gpinformatics.infrastructure.sap;
 
+import clover.org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOnPriceAdjustment;
@@ -20,6 +22,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundExcept
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.sap.entity.Condition;
+import org.broadinstitute.sap.entity.DeliveryCondition;
 import org.broadinstitute.sap.entity.OrderCalculatedValues;
 import org.broadinstitute.sap.entity.OrderCriteria;
 import org.broadinstitute.sap.entity.SAPDeliveryDocument;
@@ -33,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Inject;
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -228,23 +232,29 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     private void defineConditionsForOrderItem(ProductOrder placedOrder, Product product, SAPOrderItem sapOrderItem) {
         if(placedOrder.getProduct().equals(product)) {
 
-            sapOrderItem.addCondition(placedOrder.getSinglePriceAdjustment().deriveAdjustmentCondition(), placedOrder.getSinglePriceAdjustment().getAdjustmentDifference());
+            if(placedOrder.getSinglePriceAdjustment() != null) {
+                sapOrderItem.addCondition(placedOrder.getSinglePriceAdjustment().deriveAdjustmentCondition(),
+                        placedOrder.getSinglePriceAdjustment().getAdjustmentDifference());
+            }
 
             for (ProductOrderPriceAdjustment productOrderPriceAdjustment : placedOrder.getQuotePriceMatchAdjustments()) {
-                sapOrderItem.addCondition(productOrderPriceAdjustment.getPriceAdjustmentCondition(),
-                        productOrderPriceAdjustment.getAdjustmentValue());
+                sapOrderItem.addCondition(productOrderPriceAdjustment.deriveAdjustmentCondition(),
+                        productOrderPriceAdjustment.getAdjustmentDifference());
             }
         } else {
             for (ProductOrderAddOn productOrderAddOn : placedOrder.getAddOns()) {
                 if(productOrderAddOn.getAddOn().equals(product)) {
 
-                    sapOrderItem.addCondition(productOrderAddOn.getSingleCustomPriceAdjustment().deriveAdjustmentCondition(),
-                            productOrderAddOn.getSingleCustomPriceAdjustment().getAdjustmentDifference());
+                    if(productOrderAddOn.getSingleCustomPriceAdjustment() != null) {
+                        sapOrderItem.addCondition(
+                                productOrderAddOn.getSingleCustomPriceAdjustment().deriveAdjustmentCondition(),
+                                productOrderAddOn.getSingleCustomPriceAdjustment().getAdjustmentDifference());
+                    }
 
                     for (ProductOrderAddOnPriceAdjustment productOrderAddOnPriceAdjustment : productOrderAddOn
                             .getQuotePriceAdjustments()) {
-                        sapOrderItem.addCondition(productOrderAddOnPriceAdjustment.getPriceAdjustmentCondition(),
-                                productOrderAddOnPriceAdjustment.getAdjustmentValue());
+                        sapOrderItem.addCondition(productOrderAddOnPriceAdjustment.deriveAdjustmentCondition(),
+                                productOrderAddOnPriceAdjustment.getAdjustmentDifference());
                     }
                 }
             }
@@ -345,8 +355,13 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         SAPDeliveryItem lineItem =
                 new SAPDeliveryItem(quoteItemForBilling.getProduct().getPartNumber(),
                         (quantityOverride == null)?new BigDecimal(quoteItemForBilling.getQuantityForSAP()):quantityOverride);
-        deliveryDocument.addDeliveryItem(lineItem);
 
+        if(Arrays.asList("P-EX-0028", "P-EX-0029").contains(quoteItemForBilling.getProduct().getPartNumber()) &&
+           StringUtils.equals(quoteItemForBilling.getQuotePriceType(), LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.getQuoteType())) {
+            lineItem.addCondition(DeliveryCondition.LATE_DELIVERY_DISCOUNT);
+        }
+
+        deliveryDocument.addDeliveryItem(lineItem);
 
         return getClient().createDeliveryDocument(deliveryDocument);
     }
@@ -357,9 +372,9 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         getClient().createMaterial(newMaterial);
 
-        if(product.hasExternalCounterpart()) {
+        if(product.hasExternalCounterpart() || product.isClinicalProduct() || product.isExternalOnlyProduct()) {
             newMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES);
-            newMaterial.setMaterialName(product.getAlternateExternalName());
+            newMaterial.setMaterialName(StringUtils.isNotBlank(product.getAlternateExternalName())?product.getAlternateExternalName():product.getName());
             getClient().createMaterial(newMaterial);
         }
 
@@ -371,7 +386,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                 SapIntegrationClientImpl.SystemIdentifier.MERCURY, product.getAvailabilityDate(),
                 product.getAvailabilityDate());
         newMaterial.setCompanyCode(
-//                product.isExternalProduct() ? SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES :
+//                product.isExternalOnlyProduct() ? SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES :
                         SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         newMaterial.setMaterialName(product.getProductName());
         newMaterial.setDescription(product.getDescription());
@@ -393,9 +408,9 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         getClient().changeMaterialDetails(existingMaterial);
 
-        if(product.hasExternalCounterpart()) {
+        if(product.hasExternalCounterpart() || product.isClinicalProduct() || product.isExternalOnlyProduct()) {
             existingMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES);
-            existingMaterial.setMaterialName(product.getAlternateExternalName());
+            existingMaterial.setMaterialName(StringUtils.isNotBlank(product.getAlternateExternalName())?product.getAlternateExternalName():product.getName());
             getClient().changeMaterialDetails(existingMaterial);
         }
 
@@ -418,10 +433,13 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     @Override
-    public OrderCalculatedValues calculateOpenOrderValues(ProductOrder productOrder, int addedSampleCount) throws SAPIntegrationException {
+    public OrderCalculatedValues calculateOpenOrderValues(int addedSampleCount, String quoteId,
+                                                          ProductOrder productOrder) throws SAPIntegrationException {
         OrderCriteria potentialOrderCriteria = null;
+        if (productOrder != null) {
             potentialOrderCriteria = generateOrderCriteria(productOrder, addedSampleCount);
-        return getClient().calculateOrderValues(productOrder.getQuoteId(),
+        }
+        return getClient().calculateOrderValues(quoteId,
                 SapIntegrationClientImpl.SystemIdentifier.MERCURY, potentialOrderCriteria);
     }
 
@@ -485,13 +503,12 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     public static SapIntegrationClientImpl.SAPCompanyConfiguration determineCompanyCode(ProductOrder companyProductOrder)
             throws SAPIntegrationException {
         SapIntegrationClientImpl.SAPCompanyConfiguration companyCode =
-                getSapCompanyConfigurationForProduct(companyProductOrder.getProduct());
+                getSapCompanyConfigurationForProduct(companyProductOrder.getProduct(), companyProductOrder);
 
         final SapOrderDetail latestSapOrderDetail = companyProductOrder.latestSapOrderDetail();
         if(latestSapOrderDetail != null && latestSapOrderDetail.getCompanyCode()!= null
            && !latestSapOrderDetail.getCompanyCode().equals(companyCode.getCompanyCode())) {
-            throw new SAPIntegrationException("Unable to update the order in SAP.  "
-                                              + "This combination of Product and Order is attempting to change the "
+            throw new SAPIntegrationException("This combination of Product and Order is attempting to change the "
                                               + "company code to which this order will be associated.");
         }
 
@@ -499,9 +516,10 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     @NotNull
-    public static SapIntegrationClientImpl.SAPCompanyConfiguration getSapCompanyConfigurationForProduct(Product product) {
+    public static SapIntegrationClientImpl.SAPCompanyConfiguration getSapCompanyConfigurationForProduct(Product product,
+                                                                                                        ProductOrder order) {
         SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
-        if (product.isExternalProduct()) {
+        if ((order.getOrderType() == ProductOrder.OrderAccessType.COMMERCIAL)) {
             companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES;
         }
         return companyCode;

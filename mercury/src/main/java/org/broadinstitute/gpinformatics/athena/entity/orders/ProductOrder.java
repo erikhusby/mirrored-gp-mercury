@@ -2074,7 +2074,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public boolean isPriorToSAP1_5() { return getPriorToSAP1_5();}
 
-    void setPriorToSAP1_5(Boolean priorToSAP1_5) {
+    public void setPriorToSAP1_5(Boolean priorToSAP1_5) {
         this.priorToSAP1_5 = priorToSAP1_5;
     }
 
@@ -2099,16 +2099,15 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return found;
     }
 
-    public void setCustomPriceAdjustments(Set<ProductOrderPriceAdjustment> customPriceAdjustments)
+    public void setCustomPriceAdjustment(ProductOrderPriceAdjustment customPriceAdjustment)
             throws ValidationException {
 
         if(customPriceAdjustments.size()>1) {
             throw new ValidationException("There should only be one price adjustment per product");
         }
 
-        for (ProductOrderPriceAdjustment priceAdjustment : customPriceAdjustments) {
-            addCustomPriceAdjustment(priceAdjustment);
-        }
+        this.customPriceAdjustments.clear();
+        addCustomPriceAdjustment(customPriceAdjustment);
     }
 
     public void addCustomPriceAdjustment(ProductOrderPriceAdjustment priceAdjustment) {
@@ -2236,7 +2235,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                         new ProductOrderPriceAdjustment(new BigDecimal(mappedValues.get(primaryPartNumber).getPrice()),
                                 Integer.valueOf(mappedValues.get(primaryPartNumber).getQuantity()),
                                 mappedValues.get(primaryPartNumber).getCustomName());
-                setCustomPriceAdjustments(Collections.singleton(primaryAdjustment));
+                setCustomPriceAdjustment(primaryAdjustment);
             }
         }
 
@@ -2318,6 +2317,40 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                 }
             }
             return foundType;
+        }
+    }
+    public boolean needsCustomization(Product product) {
+        if(getProduct().equals(product)) {
+            return getSinglePriceAdjustment() != null;
+        } else {
+            for (ProductOrderAddOn productOrderAddOn : getAddOns()) {
+                if(productOrderAddOn.getAddOn().equals(product)) {
+                    return productOrderAddOn.getSingleCustomPriceAdjustment() != null;
+                }
+            }
+
+        }
+        return false;
+    }
+
+    public void addQuoteAdjustment(Product product, BigDecimal effectivePrice, BigDecimal listPrice) {
+
+        if(getProduct().equals(product)) {
+            final ProductOrderPriceAdjustment quoteAdjustment = new ProductOrderPriceAdjustment();
+            quoteAdjustment.setListPrice(listPrice);
+            quoteAdjustment.setAdjustmentValue(effectivePrice);
+
+            quotePriceMatchAdjustments.add(quoteAdjustment);
+        } else {
+            for (ProductOrderAddOn productOrderAddOn : getAddOns()) {
+                if(productOrderAddOn.getAddOn().equals(product)) {
+                    final ProductOrderAddOnPriceAdjustment quoteAdjustment = new ProductOrderAddOnPriceAdjustment();
+                    quoteAdjustment.setListPrice(listPrice);
+                    quoteAdjustment.setAdjustmentValue(effectivePrice);
+
+                    productOrderAddOn.getQuotePriceAdjustments().add(quoteAdjustment);
+                }
+            }
         }
     }
 }

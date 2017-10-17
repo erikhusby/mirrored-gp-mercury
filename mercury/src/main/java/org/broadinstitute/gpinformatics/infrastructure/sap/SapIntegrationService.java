@@ -84,5 +84,5 @@ public interface SapIntegrationService {
 
     Set<SAPMaterial> findProductsInSap() throws SAPIntegrationException;
 
-    OrderCalculatedValues calculateOpenOrderValues(ProductOrder productOrder, int addedSampleCount) throws SAPIntegrationException;
+    OrderCalculatedValues calculateOpenOrderValues(int addedSampleCount, String quoteId, ProductOrder productOrder) throws SAPIntegrationException;
 }

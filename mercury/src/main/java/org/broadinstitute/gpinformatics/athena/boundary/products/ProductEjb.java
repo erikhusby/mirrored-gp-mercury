@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.PriceItemTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
@@ -64,14 +65,18 @@ public class ProductEjb {
 
     private SAPAccessControlEjb accessController;
 
+    private SAPProductPriceCache productPriceCache;
+
     @Inject
     public ProductEjb(ProductDao productDao, SapIntegrationService sapService, AuditReaderDao auditReaderDao,
-                      AttributeArchetypeDao attributeArchetypeDao, SAPAccessControlEjb accessController) {
+                      AttributeArchetypeDao attributeArchetypeDao, SAPAccessControlEjb accessController,
+                      SAPProductPriceCache productPriceCache) {
         this.productDao = productDao;
         this.attributeArchetypeDao = attributeArchetypeDao;
         this.auditReaderDao = auditReaderDao;
         this.sapService = sapService;
         this.accessController = accessController;
+        this.productPriceCache = productPriceCache;
     }
 
     /**
@@ -324,24 +329,19 @@ public class ProductEjb {
         Set<String> errorMessages = new HashSet<>();
         SAPAccessControl control = accessController.getCurrentControlDefinitions();
         for (Product productToPublish : productsToPublish) {
-            if(!CollectionUtils.containsAll(control.getDisabledItems(),
-                                            Collections.singleton(new AccessItem(productToPublish.getPrimaryPriceItem().getName())))
-                    && control.isEnabled()) {
-                if (!productToPublish.isExternalOnlyProduct()) {
-                    try {
-                        if (productToPublish.isSavedInSAP()) {
-                            sapService.changeProductInSAP(productToPublish);
-                        } else {
-                            sapService.createProductInSAP(productToPublish);
-                        }
-                        productToPublish.setSavedInSAP(true);
-
-                    } catch (SAPIntegrationException e) {
-                        errorMessages.add(e.getMessage());
+            if (!CollectionUtils.containsAll(control.getDisabledItems(),
+                    Collections.singleton(new AccessItem(productToPublish.getPrimaryPriceItem().getName())))
+                && control.isEnabled()) {
+                try {
+                    if (productPriceCache.productExists(productToPublish)) {
+                        sapService.changeProductInSAP(productToPublish);
+                    } else {
+                        sapService.createProductInSAP(productToPublish);
                     }
-                } else {
-                    errorMessages.add(productToPublish.getName() + " Cannot be published to SAP since it is either a "
-                                      + "Clinical or Commercial product");
+                    productToPublish.setSavedInSAP(true);
+
+                } catch (SAPIntegrationException e) {
+                    errorMessages.add(e.getMessage());
                 }
             } else {
                 errorMessages.add(productToPublish.getName() +

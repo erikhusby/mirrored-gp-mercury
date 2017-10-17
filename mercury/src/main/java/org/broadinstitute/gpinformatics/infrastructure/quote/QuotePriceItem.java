@@ -225,6 +225,7 @@ public class QuotePriceItem {
     }
 
     @XmlElement(name = "expirationDate")
+    @XmlJavaTypeAdapter(DateAdapter.class)
     public Date getExpirationDate() {
         return expirationDate;
     }
