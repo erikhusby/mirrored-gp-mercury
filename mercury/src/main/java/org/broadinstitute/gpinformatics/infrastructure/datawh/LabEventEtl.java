@@ -136,7 +136,6 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
      * "E" is an event fact record <br/>
      * "A" is an ancestry fact record <br/>
      * Scope relaxed from protected to public to allow a backfill service hook
-     *
      */
     @DaoFree
     @Override
@@ -194,10 +193,11 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
     /**
      * Overridden to gather LabEvent objects for entity ids and pass to writer so the file writes are forked
-     * into event or ancestry file
+     * into event or ancestry file <br/>
+     * Scope relaxed from protected to public to allow a backfill service hook
      */
     @Override
-    protected int writeRecords(Collection<Long> deletedEntityIds,
+    public int writeRecords(Collection<Long> deletedEntityIds,
                                Collection<Long> modifiedEntityIds,
                                Collection<Long> addedEntityIds,
                                Collection<RevInfoPair<LabEvent>> revInfoPairs,

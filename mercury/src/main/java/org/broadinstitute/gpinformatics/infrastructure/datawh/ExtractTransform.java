@@ -515,8 +515,7 @@ public class ExtractTransform implements Serializable {
     }
 
     /**
-     * Does ETL for event_fact and sequencing_sample_fact for any downstream data related to a vessel
-     * <p/>
+     * Does ETL for event_fact and sequencing_sample_fact for any downstream data related to a vessel <br/>
      * Backfill ETL can run independently of periodic incremental ETL, and doesn't affect its state.
      * The generated standard sqlLoader data file should be picked up and processed normally by the
      * periodic cron job.
@@ -535,7 +534,7 @@ public class ExtractTransform implements Serializable {
         log.debug(msg);
         long backfillStartTime = System.currentTimeMillis();
 
-        final MutableTriple<Integer, String, Exception> countDateException = new MutableTriple<>(null, null, null);
+        final MutableTriple<Integer, String, Exception> countDateException = new MutableTriple<>();
 
         sessionContextUtility.executeInContext(new SessionContextUtility.Function() {
             @Override
@@ -547,59 +546,21 @@ public class ExtractTransform implements Serializable {
                         utx.setTransactionTimeout(GenericEntityEtl.TRANSACTION_TIMEOUT);
                     }
 
-                    int recordCount = 0;
-                    // The one of these that matches the entityClass will make ETL records, others are no-ops.
                     String etlDateStr = formatTimestamp(new Date());
 
-                    LabVessel labVessel = auditReaderDao.findSingleSafely( LabVessel.class, LabVessel_.label, barcode, LockModeType.NONE);
-                    if( labVessel == null ) {
-                        countDateException.setRight(new Exception("No vessel found for barcode " + barcode) );
-                        return;
-                    }
-
-                    Set<LabEvent> descendantEvents = new HashSet<>();
-                    descendantEvents.addAll(labVessel.getInPlaceAndTransferToEvents());
-                    descendantEvents.addAll(labVessel.getTransfersFrom());
-
-                    TransferTraverserCriteria.LabEventDescendantCriteria eventCriteria = new TransferTraverserCriteria.LabEventDescendantCriteria();
-                    if( labVessel.getContainerRole() != null ) {
-                        labVessel.getContainerRole().applyCriteriaToAllPositions(eventCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
-                    } else {
-                        labVessel.evaluateCriteria(eventCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
-                    }
-
-                    descendantEvents.addAll(eventCriteria.getAllEvents());
-
-                    // ETL events
+                    LabVesselEtl labVesselEtl = (LabVesselEtl) getEtlInstance(LabVesselEtl.class.getCanonicalName());
                     LabEventEtl labEventEtl = (LabEventEtl) getEtlInstance(LabEventEtl.class.getCanonicalName());
-                    recordCount += labEventEtl.writeRecords(descendantEvents, Collections.EMPTY_SET, etlDateStr);
+                    SequencingSampleFactEtl seqRunEtl = (SequencingSampleFactEtl) getEtlInstance(
+                            SequencingSampleFactEtl.class.getCanonicalName());
 
-                    Set<SequencingRun> sequencingRunsToRefresh = new HashSet<>();
+                    MutableTriple<Integer, String, Exception> etlCountDateException =
+                            labVesselEtl.backfillEtlForVessel(barcode, etlDateStr, labEventEtl, seqRunEtl );
 
-                    for( LabEvent labEvent : descendantEvents) {
-                        // Capture sequencing runs in order to refresh sequencing sample fact data
-                        LabVessel flowcell = null;
-                        if(labEvent.getLabEventType() == LabEventType.FLOWCELL_TRANSFER ||
-                           labEvent.getLabEventType() == LabEventType.DILUTION_TO_FLOWCELL_TRANSFER ||
-                           labEvent.getLabEventType() == LabEventType.DENATURE_TO_FLOWCELL_TRANSFER ) {
-                            flowcell = labEvent.getTargetLabVessels().iterator().next();
-                        } else if( labEvent.getLabEventType() == LabEventType.FLOWCELL_LOADED ) {
-                            flowcell = labEvent.getInPlaceLabVessel();
-                        }
-                        // Collects sequencing runs and build sequencing sample fact data from any descendant flowcells.
-                        if (OrmUtil.proxySafeIsInstance(flowcell, RunCartridge.class)) {
-                            RunCartridge runCartridge = OrmUtil.proxySafeCast(flowcell, RunCartridge.class );
-                            sequencingRunsToRefresh.addAll(runCartridge.getSequencingRuns());
-                        }
-                    }
-                    if( sequencingRunsToRefresh.size() > 0 ) {
-                        SequencingSampleFactEtl seqRunEtl = (SequencingSampleFactEtl) getEtlInstance(
-                                SequencingSampleFactEtl.class.getCanonicalName());
-                        recordCount += seqRunEtl.writeRecords(sequencingRunsToRefresh, Collections.EMPTY_SET, etlDateStr);
-                    }
+                    countDateException.setLeft(etlCountDateException.getLeft());
+                    countDateException.setMiddle(etlCountDateException.getMiddle());
+                    countDateException.setRight(etlCountDateException.getRight());
 
-                    countDateException.setLeft(recordCount);
-                    countDateException.setMiddle(etlDateStr);
+
                 } catch (Exception e) {
                     countDateException.setRight(e);
                 } finally {
