@@ -13,19 +13,6 @@ import java.util.Set;
  * Service to talk to the quote server.
  */
 public interface QuoteService extends Serializable {
-    String registerNewWorkWithPriceOverride(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
-                                            Date reportedCompletionDate, double numWorkUnits,
-                                            String callbackUrl, String callbackParameterName,
-                                            String callbackParameterValue,
-                                            BigDecimal priceAdjustment);
-
-    String registerNewSAPWorkWithPriceOverride(Quote quote, QuotePriceItem quotePriceItem,
-                                               QuotePriceItem itemIsReplacing,
-                                               Date reportedCompletionDate, double numWorkUnits,
-                                               String callbackUrl, String callbackParameterName,
-                                               String callbackParameterValue,
-                                               BigDecimal priceAdjustment);
-
     public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException;
 
     public Quotes getAllSequencingPlatformQuotes() throws QuoteServerException, QuoteNotFoundException;
@@ -47,12 +34,14 @@ public interface QuoteService extends Serializable {
      */
     public String registerNewWork(
             Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing, Date reportedCompletionDate,
-            double numWorkUnits, String callbackUrl, String callbackParameterName, String callbackParameterValue);
+            double numWorkUnits, String callbackUrl, String callbackParameterName, String callbackParameterValue,
+            BigDecimal priceAdjustment);
 
 
     public String registerNewSAPWork(
             Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing, Date reportedCompletionDate,
-            double numWorkUnits, String callbackUrl, String callbackParameterName, String callbackParameterValue);
+            double numWorkUnits, String callbackUrl, String callbackParameterName, String callbackParameterValue,
+            BigDecimal priceAdjustment);
     /**
      * Get the quote for a particular quote identifier.
      *

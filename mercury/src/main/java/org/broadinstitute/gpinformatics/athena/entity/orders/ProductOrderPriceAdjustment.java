@@ -32,6 +32,10 @@ public class ProductOrderPriceAdjustment {
     @ManyToOne(optional = false)
     private ProductOrder productOrder;
 
+    public void setAdjustmentValue(BigDecimal adjustmentValue) {
+        this.adjustmentValue = adjustmentValue;
+    }
+
     // number(19,4)  ?
     @Column(name="adjustment_value")
     private BigDecimal adjustmentValue;

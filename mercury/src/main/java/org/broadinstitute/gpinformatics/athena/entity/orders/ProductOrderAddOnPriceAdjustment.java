@@ -94,6 +94,10 @@ public class ProductOrderAddOnPriceAdjustment {
         this.listPrice = listPrice;
     }
 
+    public void setAdjustmentValue(BigDecimal adjustmentValue) {
+        this.adjustmentValue = adjustmentValue;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

@@ -800,7 +800,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     }
 
     public boolean hasExternalCounterpart() {
-        return StringUtils.isNotBlank(alternateExternalName);
+        return StringUtils.isNotBlank(alternateExternalName) || externalPriceItem != null;
     }
 
     public boolean isExternallyNamed() {
@@ -858,7 +858,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         this.savedInSAP = savedInSAP;
     }
 
-    public boolean canPublishToSAP() {
+    public boolean nocanPublishToSAP() {
         return !isSavedInSAP() && !isExternalOnlyProduct();
     }
 

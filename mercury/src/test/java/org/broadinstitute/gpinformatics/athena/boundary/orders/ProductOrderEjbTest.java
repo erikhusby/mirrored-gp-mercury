@@ -662,6 +662,7 @@ public class ProductOrderEjbTest {
         testSingleSourceQuote.setExpired(false);
 
         ProductOrder conversionPdo = ProductOrderTestFactory.createDummyProductOrder(10, jiraTicketKey);
+        conversionPdo.setPriorToSAP1_5(true);
         conversionPdo.setQuoteId(testSingleSourceQuote.getAlphanumericId() );
         conversionPdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 

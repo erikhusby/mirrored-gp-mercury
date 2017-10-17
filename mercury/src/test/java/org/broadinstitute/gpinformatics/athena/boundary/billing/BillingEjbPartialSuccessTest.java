@@ -155,76 +155,6 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         private Log log = LogFactory.getLog(QuoteFundingList.class);
 
         @Override
-        public String registerNewWorkWithPriceOverride(Quote quote, QuotePriceItem quotePriceItem,
-                                                       QuotePriceItem itemIsReplacing, Date reportedCompletionDate,
-                                                       double numWorkUnits, String callbackUrl,
-                                                       String callbackParameterName, String callbackParameterValue,
-                                                       BigDecimal priceAdjustment) {
-            // Simulate failure only for one particular PriceItem.
-            log.debug("In register New work");
-            if (FAILING_PRICE_ITEM_NAME.equals(quotePriceItem.getName())) {
-                throw new RuntimeException("Intentional Work Registration Failure!");
-            }
-            String workId = GOOD_WORK_ID;
-
-            if (cycleFails) {
-                switch (lastResult) {
-                case FAIL:
-                    lastResult = Result.SUCCESS;
-                    workId = "workItemID" + (new Date()).getTime();
-                    break;
-
-                case SUCCESS:
-                    lastResult = Result.FAIL;
-                    throw new RuntimeException("Intentional Work Registration Failure");
-                }
-            }
-            synchronized (lockBox) {
-                quoteCount++;
-                /*log.debug*/
-                log.debug("Quote count is now " + quoteCount);
-                assertThat(quoteCount, is(lessThanOrEqualTo(totalItems)));
-            }
-            return workId;
-
-        }
-
-        @Override
-        public String registerNewSAPWorkWithPriceOverride(Quote quote, QuotePriceItem quotePriceItem,
-                                                          QuotePriceItem itemIsReplacing, Date reportedCompletionDate,
-                                                          double numWorkUnits, String callbackUrl,
-                                                          String callbackParameterName, String callbackParameterValue,
-                                                          BigDecimal priceAdjustment) {
-            // Simulate failure only for one particular PriceItem.
-            log.debug("In register New work");
-            if (FAILING_PRICE_ITEM_NAME.equals(quotePriceItem.getName())) {
-                throw new RuntimeException("Intentional Work Registration Failure!");
-            }
-            String workId = GOOD_WORK_ID;
-
-            if (cycleFails) {
-                switch (lastResult) {
-                case FAIL:
-                    lastResult = Result.SUCCESS;
-                    workId = "workItemID" + (new Date()).getTime();
-                    break;
-
-                case SUCCESS:
-                    lastResult = Result.FAIL;
-                    throw new RuntimeException("Intentional Work Registration Failure");
-                }
-            }
-            synchronized (lockBox) {
-                quoteCount++;
-                /*log.debug*/
-                log.debug("Quote count is now " + quoteCount);
-                assertThat(quoteCount, is(lessThanOrEqualTo(totalItems)));
-            }
-            return workId;
-
-        }
-
-        @Override
         public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
             return new PriceList();
         }
@@ -240,7 +170,8 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                                       QuotePriceItem itemIsReplacing,
                                       Date reportedCompletionDate,
                                       double numWorkUnits,
-                                      String callbackUrl, String callbackParameterName, String callbackParameterValue) {
+                                      String callbackUrl, String callbackParameterName, String callbackParameterValue,
+                                      BigDecimal priceAdjustment) {
             // Simulate failure only for one particular PriceItem.
             log.debug("In register New work");
             if (FAILING_PRICE_ITEM_NAME.equals(quotePriceItem.getName())) {
@@ -272,7 +203,8 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         @Override
         public String registerNewSAPWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
                                          Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
-                                         String callbackParameterName, String callbackParameterValue) {
+                                         String callbackParameterName, String callbackParameterValue,
+                                         BigDecimal priceAdjustment) {
             // Simulate failure only for one particular PriceItem.
             log.debug("In register New work");
             if (FAILING_PRICE_ITEM_NAME.equals(quotePriceItem.getName())) {

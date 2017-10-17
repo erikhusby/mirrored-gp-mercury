@@ -33,7 +33,7 @@ public class QuoteServiceTest {
         System.out.println(fetchedQuote.getQuoteFunding().getFundsRemaining());
         String workBatchId =
             service.registerNewWork(quote, quotePriceItem, null, new Date(), 0.0001,
-                    "http://www.MercuryTesting", "paramName", "paramValue");
+                    "http://www.MercuryTesting", "paramName", "paramValue", null);
         System.out.println(fetchedQuote.getQuoteFunding().getFundsRemaining());
 
         Assert.assertNotNull(workBatchId);

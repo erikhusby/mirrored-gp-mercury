@@ -632,6 +632,8 @@
                 $j("#clinicalAttestationDiv").hide();
                 $j("#customizationContent").hide();
 
+                // TODO SGM Add div for main product list price.  Update it with the list price when the Product is selected.
+
             } else {
                 if (productKey == '<%= Product.SAMPLE_INITIATION_PART_NUMBER %>') {
                     // Product is Sample Initiation "P-ESH-0001".
@@ -858,7 +860,11 @@
 
                 var addOnId = "addOnCheckbox-" + index;
                 checkboxText += '  <input id="' + addOnId + '" type="checkbox"' + checked + ' name="addOnKeys" value="' + val.key + '" onchange="registerChangeForAddon()" />';
-                checkboxText += '  <label style="font-size: x-small;" for="' + addOnId + '">' + val.value + ' [' + val.key + ']</label>';
+                checkboxText += '  <label style="font-size: x-small;" for="' + addOnId + '">' + val.value + ' [' + val.key;
+                <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager) %>">
+                checkboxText += ' (research list price: ' + val.researchListPrice + ', external list price: ' + val.externalListPrice + ')';
+                </security:authorizeBlock>
+                checkboxText += ']</label>';
                 checkboxText += '  <br>';
             });
 

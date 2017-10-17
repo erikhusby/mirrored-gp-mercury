@@ -20,24 +20,6 @@ import java.util.Set;
 public class HappyQuoteServiceMock implements QuoteService {
 
     @Override
-    public String registerNewWorkWithPriceOverride(Quote quote, QuotePriceItem quotePriceItem,
-                                                   QuotePriceItem itemIsReplacing, Date reportedCompletionDate,
-                                                   double numWorkUnits, String callbackUrl,
-                                                   String callbackParameterName, String callbackParameterValue,
-                                                   BigDecimal priceAdjustment) {
-        throw new RuntimeException("happy mock can't do this");
-    }
-
-    @Override
-    public String registerNewSAPWorkWithPriceOverride(Quote quote, QuotePriceItem quotePriceItem,
-                                                      QuotePriceItem itemIsReplacing, Date reportedCompletionDate,
-                                                      double numWorkUnits, String callbackUrl,
-                                                      String callbackParameterName, String callbackParameterValue,
-                                                      BigDecimal priceAdjustment) {
-        throw new RuntimeException("happy mock can't do this");
-    }
-
-    @Override
     public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
         return new PriceList();
     }
@@ -50,14 +32,14 @@ public class HappyQuoteServiceMock implements QuoteService {
     @Override
     public String registerNewWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
                                   Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
-                                  String callbackParameterName, String callbackParameterValue) {
+                                  String callbackParameterName, String callbackParameterValue, BigDecimal priceAdjustment) {
         throw new RuntimeException("happy mock can't do this");
     }
 
     @Override
     public String registerNewSAPWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
                                      Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
-                                     String callbackParameterName, String callbackParameterValue) {
+                                     String callbackParameterName, String callbackParameterValue, BigDecimal priceAdjustment) {
         throw new RuntimeException("happy mock can't do this");
     }
 

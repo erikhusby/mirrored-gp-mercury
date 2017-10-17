@@ -185,40 +185,6 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
         public static int workItemNumber;
 
         @Override
-        public String registerNewWorkWithPriceOverride(Quote quote, QuotePriceItem quotePriceItem,
-                                                       QuotePriceItem itemIsReplacing, Date reportedCompletionDate,
-                                                       double numWorkUnits, String callbackUrl,
-                                                       String callbackParameterName, String callbackParameterValue,
-                                                       BigDecimal priceAdjustment) {
-            try {
-                // sleep here for a while to increase the likelihood that the vm really does try to call bill() at the same time
-                Thread.sleep(1000);
-            }
-            catch (InterruptedException e) {
-                // Do nothing with this exception
-            }
-            return Integer.toString(++workItemNumber);
-
-        }
-
-        @Override
-        public String registerNewSAPWorkWithPriceOverride(Quote quote, QuotePriceItem quotePriceItem,
-                                                          QuotePriceItem itemIsReplacing, Date reportedCompletionDate,
-                                                          double numWorkUnits, String callbackUrl,
-                                                          String callbackParameterName, String callbackParameterValue,
-                                                          BigDecimal priceAdjustment) {
-            try {
-                // sleep here for a while to increase the likelihood that the vm really does try to call bill() at the same time
-                Thread.sleep(1000);
-            }
-            catch (InterruptedException e) {
-                // Do nothing with this exception
-            }
-            return Integer.toString(++workItemNumber);
-
-        }
-
-        @Override
         public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
             return new PriceList();
         }
@@ -231,7 +197,7 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
         @Override
         public String registerNewWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
                                       Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
-                                      String callbackParameterName, String callbackParameterValue) {
+                                      String callbackParameterName, String callbackParameterValue, BigDecimal priceAdjustment) {
 
             try {
                 // sleep here for a while to increase the likelihood that the vm really does try to call bill() at the same time
@@ -246,7 +212,7 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
         @Override
         public String registerNewSAPWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
                                          Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
-                                         String callbackParameterName, String callbackParameterValue) {
+                                         String callbackParameterName, String callbackParameterValue, BigDecimal priceAdjustment) {
             try {
                 // sleep here for a while to increase the likelihood that the vm really does try to call bill() at the same time
                 Thread.sleep(1000);

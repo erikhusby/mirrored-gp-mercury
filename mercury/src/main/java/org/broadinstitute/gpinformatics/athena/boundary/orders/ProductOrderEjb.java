@@ -29,6 +29,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.StaleLedgerUpdateException;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.CustomizationValues;
@@ -70,6 +71,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.sap.entity.SAPMaterial;
 import org.broadinstitute.sap.services.SAPIntegrationException;
+import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -352,8 +354,8 @@ public class ProductOrderEjb {
             if (isOrderEligibleForSAP(orderToPublish)
                 && !orderToPublish.getOrderStatus().canPlace()) {
 
-                final List<String> effectivePricesForProducts = priceListCache
-                        .getEffectivePricesForProducts(allProductsOrdered,
+                final List<String> effectivePricesForProducts = productPriceCache
+                        .getEffectivePricesForProducts(allProductsOrdered,editedProductOrder,
                                 quoteService.getQuoteByAlphaId(orderToPublish.getQuoteId()));
 
                 final boolean quoteIdChange = orderToPublish.isSavedInSAP() &&
@@ -533,20 +535,25 @@ public class ProductOrderEjb {
             productListFromOrder.add(productOrderAddOn.getAddOn());
             priceItemNameList.add(new AccessItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getName()));
         }
-        return determinePriceItemValidity(productListFromOrder, orderQuote);
+        return determinePriceItemValidity(productListFromOrder, orderQuote, editedProductOrder);
     }
 
     private boolean determinePriceItemValidity(Collection<Product> productsToConsider,
-                                               Quote orderQuote) throws InvalidProductException {
+                                               Quote orderQuote, ProductOrder productOrder) throws InvalidProductException {
         boolean allItemsValid = true;
         QuotePriceItem primaryPriceItem;
         if (CollectionUtils.isNotEmpty(productsToConsider)) {
             for (Product product : productsToConsider) {
                 try {
+                    PriceItem priceItem = product.getPrimaryPriceItem();
+                    if(productOrder.getOrderType() == ProductOrder.OrderAccessType.COMMERCIAL &&
+                            product.getExternalPriceItem()!= null) {
+                        priceItem = product.getExternalPriceItem();
+                    }
                     primaryPriceItem =
-                            priceListCache.findByKeyFields(product.getPrimaryPriceItem().getPlatform(),
-                                    product.getPrimaryPriceItem().getCategory(),
-                                    product.getPrimaryPriceItem().getName());
+                            priceListCache.findByKeyFields(priceItem.getPlatform(),
+                                    priceItem.getCategory(),
+                                    priceItem.getName());
                     if (primaryPriceItem == null) {
                         allItemsValid = false;
                         break;
@@ -556,17 +563,28 @@ public class ProductOrderEjb {
                     break;
                 }
 
-                validateSAPAndQuoteServerPrices(orderQuote, product);
+                validateSAPAndQuoteServerPrices(orderQuote, product, productOrder);
             }
 
         }
         return allItemsValid;
     }
 
-    public String validateSAPAndQuoteServerPrices(Quote orderQuote, Product product)
+    public String validateSAPAndQuoteServerPrices(Quote orderQuote, Product product,
+                                                  ProductOrder productOrder)
             throws InvalidProductException {
-        SAPMaterial sapMaterial = productPriceCache.findByProduct(product);
-        final QuotePriceItem priceListItem = priceListCache.findByKeyFields(product.getPrimaryPriceItem());
+        SAPMaterial sapMaterial = null;
+        SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = null;
+        try {
+            companyCode = SapIntegrationServiceImpl.determineCompanyCode(
+                    productOrder);
+        } catch (SAPIntegrationException e) {
+            throw new InvalidProductException(e);
+        }
+        sapMaterial = productPriceCache.findByProduct(product, companyCode);
+
+        PriceItem priceItem = SAPProductPriceCache.getDeterminePriceItemByCompanyCode(product, companyCode);
+        final QuotePriceItem priceListItem = priceListCache.findByKeyFields(priceItem);
         final String effectivePrice = priceListItem.getPrice();
         if (sapMaterial == null) {
             throw new InvalidProductException("Unable to continue since the product " + product.getDisplayName()
@@ -575,7 +593,7 @@ public class ProductOrderEjb {
             throw new InvalidProductException("Unable to continue since the price for the product " +
                                               product.getDisplayName() + " has not been properly set up in SAP");
         }
-        return priceListCache.getEffectivePrice(product.getPrimaryPriceItem(), orderQuote);
+        return productPriceCache.getEffectivePrice(product,companyCode, orderQuote);
     }
 
     /**
@@ -1569,7 +1587,7 @@ public class ProductOrderEjb {
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void updateSampleLedgers(Map<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> ledgerUpdates)
             throws ValidationWithRollbackException, SAPInterfaceException, QuoteNotFoundException,
-            QuoteServerException, InvalidProductException {
+            QuoteServerException, InvalidProductException, SAPIntegrationException {
         List<String> errorMessages = new ArrayList<>();
 
         Map<String, Quote> usedQuotesMiniCache = new HashMap<>();
@@ -1593,8 +1611,9 @@ public class ProductOrderEjb {
 
                 final List<Product> allProductsOrdered =
                         ProductOrder.getAllProductsOrdered(productOrderSample.getProductOrder());
-                List<String> effectivePricesForProducts = priceListCache
-                        .getEffectivePricesForProducts(allProductsOrdered, orderQuote);
+                List<String> effectivePricesForProducts =
+                        productPriceCache.getEffectivePricesForProducts(allProductsOrdered,
+                                productOrderSample.getProductOrder(), orderQuote);
 
                 final MessageCollection messageCollection = new MessageCollection();
                 if (productOrderSample.getProductOrder().isSavedInSAP()) {
