@@ -277,7 +277,7 @@ public class ProductFixupTest extends Arquillian {
      * P-EX-1124[\t]P-EX-1135[\t]new cloned product for the other old product
      *
      */
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void supportCloneProductsToNew() throws Exception {
         userBean.loginOSUser();
         utx.begin();
