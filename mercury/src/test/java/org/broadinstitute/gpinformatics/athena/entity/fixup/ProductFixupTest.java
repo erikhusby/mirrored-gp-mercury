@@ -266,6 +266,15 @@ public class ProductFixupTest extends Arquillian {
 
     }
 
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/PDOsToBeClosed.txt, so it
+     * can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * SUPPORT-XXXX auto creating new products as clones of previous products
+     * P-EX-1123[\t]P-EX-1134[\t]new cloned product for the old product
+     * P-EX-1124[\t]P-EX-1135[\t]new cloned product for the other old product
+     *
+     */
+
     @Test(enabled = false)
     public void supportCloneProductsToNew() throws Exception {
         List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("ProductCloningInfo.txt"));
