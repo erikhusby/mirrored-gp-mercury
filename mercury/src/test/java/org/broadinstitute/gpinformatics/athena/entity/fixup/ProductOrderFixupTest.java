@@ -1275,6 +1275,9 @@ public class ProductOrderFixupTest extends Arquillian {
      */
     @Test(enabled = false)
     public void supportTransitionPdosToClosed() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+
         List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource("PDOsToBeClosed.txt"));
         Assert.assertTrue(CollectionUtils.isNotEmpty(fixupLines), "The file PDOsToBeClosed.txt has no content.");
         String fixupReason = fixupLines.get(0);
