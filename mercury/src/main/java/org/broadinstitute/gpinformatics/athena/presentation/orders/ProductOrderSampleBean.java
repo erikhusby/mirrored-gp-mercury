@@ -119,12 +119,14 @@ public class ProductOrderSampleBean {
 
     private ProductOrderSample sample;
     private boolean includeSampleData;
+    private boolean initialLoad;
     private DatatablesStateSaver preferenceSaver;
     private SampleLink sampleLink;
 
     public ProductOrderSampleBean(ProductOrderSample sample, boolean includeSampleData,
-                                  DatatablesStateSaver preferenceSaver, SampleLink sampleLink) {
+                                  boolean initialLoad, DatatablesStateSaver preferenceSaver, SampleLink sampleLink) {
         this.sample = sample;
+        this.initialLoad = initialLoad;
         this.preferenceSaver = preferenceSaver;
         this.sampleLink = sampleLink;
         this.includeSampleData = includeSampleData;
@@ -149,13 +151,20 @@ public class ProductOrderSampleBean {
         if (preferenceSaver.showColumn(POSITION)) {
             position = sample.getSamplePosition() + 1;
         }
+        if (initialLoad) {
+            if (preferenceSaver.showColumn(BILLED)) {
+                completelyBilled = sample.isCompletelyBilled();
+            }
+            if (preferenceSaver.showColumn(ON_RISK)) {
+                onRisk = sample.isOnRisk();
+                riskString = onRisk ? buildRiskDiv(sample) : "";
+            }
+        }
+
         if (!includeSampleData) {
             return;
         }
 
-        if (preferenceSaver.showColumn(BILLED)) {
-            completelyBilled = sample.isCompletelyBilled();
-        }
         if (preferenceSaver.showColumn(COMMENT)) {
             comment = sample.getSampleComment();
         }
@@ -166,10 +175,6 @@ public class ProductOrderSampleBean {
         }
         if (preferenceSaver.showColumn(STATUS)) {
             status = sample.getDeliveryStatus().getDisplayName();
-        }
-        if (preferenceSaver.showColumn(ON_RISK)) {
-            onRisk = sample.isOnRisk();
-            riskString = onRisk ? buildRiskDiv(sample) : "";
         }
 
         if (preferenceSaver.showColumn(SHIPPED_DATE)) {
