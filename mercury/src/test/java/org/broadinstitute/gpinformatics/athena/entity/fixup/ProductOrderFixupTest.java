@@ -1291,7 +1291,8 @@ public class ProductOrderFixupTest extends Arquillian {
             productOrderEjb.updateOrderStatusNoRollback(pdoToComplete);
         }
 
-        productOrderDao.persist(new FixupCommentary(fixupReason));
+        productOrderDao.persist(new FixupCommentary(fixupReason + ".  Changes made for orders " +
+                                                    StringUtils.join(pdosToComplete, ",")));
         commitTransaction();
     }
 }
