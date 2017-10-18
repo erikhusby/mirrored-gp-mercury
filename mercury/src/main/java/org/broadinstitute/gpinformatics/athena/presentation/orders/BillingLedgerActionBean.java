@@ -170,8 +170,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
      * the ledger details (from an AJAX request).
      */
     @Before(stages = LifecycleStage.EventHandling, on = { "ledgerDetails" })
-    public void loadProductOrder() {
-        productOrder = productOrderDao.findByBusinessKey(orderId, ProductOrderDao.FetchSpec.RISK_ITEMS);
+    public void loadProductOrder() { productOrder = productOrderDao.findByBusinessKey(orderId);
     }
 
     /**
@@ -475,6 +474,14 @@ public class BillingLedgerActionBean extends CoreActionBean {
         return ledgerData;
     }
 
+    public List<LedgerData> getLd(){
+        return getLedgerData();
+    }
+
+    public void setLd(List<LedgerData> ledgerData){
+        setLedgerData(ledgerData);
+    }
+
     public void setLedgerData(List<LedgerData> ledgerData) {
         this.ledgerData = ledgerData;
     }
@@ -584,9 +591,27 @@ public class BillingLedgerActionBean extends CoreActionBean {
         public Date getWorkCompleteDate() {
             return workCompleteDate;
         }
-
+        public Date getWcd() {
+            return getWorkCompleteDate();
+        }
+        public void setWcd(Date d){
+            setWorkCompleteDate(d);
+        }
         public String getCompleteDateFormatted() {
             return workCompleteDate != null ? new SimpleDateFormat(DATE_FORMAT).format(workCompleteDate) : null;
+        }
+
+        public String getCdf(){
+            return getCompleteDateFormatted();
+        }
+
+        public String getSn(){
+            return getSampleName();
+        }
+
+
+        public void setSn(String sn) {
+            setSampleName(sn);
         }
 
         public void setWorkCompleteDate(Date workCompleteDate) {
@@ -599,6 +624,15 @@ public class BillingLedgerActionBean extends CoreActionBean {
 
         public void setQuantities(Map<Long, ProductOrderSampleQuantities> quantities) {
             this.quantities = quantities;
+        }
+
+        public Map<Long, ProductOrderSampleQuantities> getQ() {
+            return getQuantities();
+        }
+
+        public void setQ(
+            Map<Long, ProductOrderSampleQuantities> q) {
+            setQuantities(q);
         }
     }
 
@@ -623,6 +657,22 @@ public class BillingLedgerActionBean extends CoreActionBean {
 
         public void setSubmittedQuantity(double submittedQuantity) {
             this.submittedQuantity = submittedQuantity;
+        }
+
+        public double getOc() {
+            return originalQuantity;
+        }
+
+        public double getSq() {
+            return submittedQuantity;
+        }
+
+        public void setOc(double oc) {
+            setOriginalQuantity(oc);
+        }
+
+        public void setSq(double sq) {
+            setSubmittedQuantity(sq);
         }
     }
     
