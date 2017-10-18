@@ -1,10 +1,12 @@
 package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -262,4 +264,13 @@ public class ProductFixupTest extends Arquillian {
         productDao.persist(new FixupCommentary("SUPPORT-3393 cloning products for new WGS products"));
         utx.commit();
 
-    }}
+    }
+
+    @Test(enabled = false)
+    public void supportCloneProductsToNew() throws Exception {
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("ProductCloningInfo.txt"));
+        String fixupReason = lines.get(0);
+        removeOrphanedSamplesHelper(lines.subList(1, lines.size()), fixupReason);
+
+    }
+}
