@@ -678,7 +678,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
             }
             lineCount++;
             if (writer == null) {
-                writer = new BufferedWriter(new FileWriter(filename));
+                writer = new BufferedWriter(new FileWriter(filename, true));
             }
             writer.write(lineCount + ExtractTransform.DELIMITER + record);
             writer.newLine();
