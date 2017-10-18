@@ -1289,11 +1289,9 @@ public class ProductOrderFixupTest extends Arquillian {
 
         for (String pdoToComplete : pdosToComplete) {
             productOrderEjb.updateOrderStatusNoRollback(pdoToComplete);
+            System.out.println("Updated order status for: " + pdoToComplete);
         }
 
-        final String loggingVerification = "Orders transitioned to closed are " +
-                                           StringUtils.join(pdosToComplete, ",");
-        System.out.println("Proving that the fixup was executed:  " + loggingVerification);
         productOrderDao.persist(new FixupCommentary(fixupReason ));
         commitTransaction();
     }
