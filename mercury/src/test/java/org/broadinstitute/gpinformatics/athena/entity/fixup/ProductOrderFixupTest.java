@@ -1266,6 +1266,13 @@ public class ProductOrderFixupTest extends Arquillian {
         commitTransaction();
     }
 
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/PDOsToBeClosed.txt, so it
+     * can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * SUPPORT-XXXX transitioning pdos to Closed which did not happen during billing
+     * PDO-123
+     * PDO-456
+     */
     @Test(enabled = false)
     public void supportTransitionPdosToClosed() throws Exception {
         List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource("PDOsToBeClosed.txt"));
