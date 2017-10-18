@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -274,12 +275,39 @@ public class ProductFixupTest extends Arquillian {
      * P-EX-1124[\t]P-EX-1135[\t]new cloned product for the other old product
      *
      */
-
     @Test(enabled = false)
     public void supportCloneProductsToNew() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
         List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("ProductCloningInfo.txt"));
         String fixupReason = lines.get(0);
-        removeOrphanedSamplesHelper(lines.subList(1, lines.size()), fixupReason);
+        final List<String> cloningProductsLines = lines.subList(1, lines.size());
+        final List<String> newProducts = new ArrayList<>();
+
+        final Map<String, Pair<String, String>> partNumbersToClone = new HashMap<>();
+
+        for (String cloningProduct : cloningProductsLines) {
+            final String[] splitLine = cloningProduct.split("\t");
+            partNumbersToClone.put(splitLine[0], Pair.of(splitLine[1], splitLine[2]));
+            newProducts.add(splitLine[1]);
+        }
+
+        final List<Product> productsToClone = productDao.findByPartNumbers(new ArrayList<String>(partNumbersToClone.keySet()));
+
+        for (Product productToClone : productsToClone) {
+
+            final String productName = partNumbersToClone.get(productToClone.getPartNumber()).getRight();
+            final String partNumber = partNumbersToClone.get(productToClone.getPartNumber()).getLeft();
+
+            Product clonedProduct = Product.cloneProduct(productToClone, productName, partNumber);
+
+            productDao.persist(clonedProduct);
+        }
+
+        productDao.persist(new FixupCommentary(fixupReason + ".  Adding: " + newProducts + " from: " +
+                                               StringUtils.join(partNumbersToClone.keySet(), ",")));
+        utx.commit();
 
     }
 }
