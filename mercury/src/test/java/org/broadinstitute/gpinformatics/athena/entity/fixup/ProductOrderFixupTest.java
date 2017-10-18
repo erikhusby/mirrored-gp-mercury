@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -36,6 +37,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -1264,4 +1266,33 @@ public class ProductOrderFixupTest extends Arquillian {
         commitTransaction();
     }
 
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/PDOsToBeClosed.txt, so it
+     * can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * SUPPORT-XXXX transitioning pdos to Closed which did not happen during billing
+     * PDO-123
+     * PDO-456
+     */
+    @Test(enabled = false)
+    public void supportTransitionPdosToClosed() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+
+        List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource("PDOsToBeClosed.txt"));
+        Assert.assertTrue(CollectionUtils.isNotEmpty(fixupLines), "The file PDOsToBeClosed.txt has no content.");
+        String fixupReason = fixupLines.get(0);
+
+        Assert.assertTrue(StringUtils.isNotBlank(fixupReason), "A fixup reason is necessary in order to record the fixup.");
+
+        List<String> pdosToComplete = fixupLines.subList(1, fixupLines.size());
+        Assert.assertTrue(CollectionUtils.isNotEmpty(pdosToComplete), "No PDOs have been provided to close");
+
+        for (String pdoToComplete : pdosToComplete) {
+            productOrderEjb.updateOrderStatusNoRollback(pdoToComplete);
+            System.out.println("Updated order status for: " + pdoToComplete);
+        }
+
+        productOrderDao.persist(new FixupCommentary(fixupReason ));
+        commitTransaction();
+    }
 }
