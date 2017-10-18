@@ -88,12 +88,12 @@ $j(document).ready(function () {
         var table = new $j.fn.dataTable.Api(settings).table();
 
         // When there are greater than 1000 samples split the call to updateSampleInformation
-        if (pdoSampleCount > 1000) {
-            fetchSize = Math.ceil(pdoSampleCount / 2);
-            updateSampleInformation(samplesToFetch.splice(0, fetchSize), table, true);
-            updateSampleInformation(samplesToFetch.splice(0, fetchSize), table, false);
-        } else {
-            updateSampleInformation(samplesToFetch, table, true);
+
+        fetchSize = pdoSampleCount > 2000 ? 2000: pdoSampleCount;
+        while (samplesToFetch.length > 0) {
+            (function (samples) {
+                updateSampleInformation(samples, table, false);
+            }(samplesToFetch.splice(0, fetchSize)));
         }
     }
 

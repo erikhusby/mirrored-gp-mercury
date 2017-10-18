@@ -12,6 +12,7 @@ import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
+import net.sourceforge.stripes.action.HttpCache;
 import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.StreamingResolution;
@@ -162,13 +163,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderSampleBean.RECEIVED_DATE;
 import static org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderSampleBean.SAMPLE_TYPE;
+import static org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderSampleBean.SHIPPED_DATE;
 import static org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver.SAVE_SEARCH_DATA;
 
 /**
  * This handles all the needed interface processing elements.
  */
 @SuppressWarnings("unused")
+@HttpCache
 @UrlBinding(ProductOrderActionBean.ACTIONBEAN_URL_BINDING)
 public class ProductOrderActionBean extends CoreActionBean {
 
@@ -1313,7 +1317,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     // All actions that can result in the view page loading (either by a validation error or view itself)
     @After(stages = LifecycleStage.BindingAndValidation,
-            on = {EDIT_ACTION, VIEW_ACTION, GET_SAMPLE_DATA, ADD_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK, ABANDON_SAMPLES_ACTION,
+            on = {EDIT_ACTION, GET_SAMPLE_DATA, ADD_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK, ABANDON_SAMPLES_ACTION,
                     DELETE_SAMPLES_ACTION, PLACE_ORDER_ACTION, VALIDATE_ORDER, UNABANDON_SAMPLES_ACTION, REPLACE_SAMPLES})
     public void entryInit() {
         if (editOrder != null) {
@@ -2222,7 +2226,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                         ProductOrderSampleBean.SHIPPED_DATE, ProductOrderSampleBean.CONCENTRATION,
                         ProductOrderSampleBean.RIN, ProductOrderSampleBean.RQS,
                         ProductOrderSampleBean.DV2000, ProductOrderSampleBean.PICO_RUN_DATE,
-                        ProductOrderSampleBean.RACKSCAN_MISMATCH, ProductOrderSampleBean.RECEIVED_DATE);
+                        ProductOrderSampleBean.RACKSCAN_MISMATCH, RECEIVED_DATE);
 
                 boolean withSampleData = false;
                 for (String visibleColumn : allVisibleColumns) {
@@ -2244,18 +2248,18 @@ public class ProductOrderActionBean extends CoreActionBean {
                     int rowsWithSampleData=0;
                     if (initialLoad){
                         List<ProductOrderSample> firstPage = getPageOneSamples(state, samples);
-                        writeProductOrderSampleBean(jsonGenerator, firstPage, true, preferenceSaver);
+                        writeProductOrderSampleBean(jsonGenerator, firstPage, true, initialLoad, preferenceSaver);
                         rowsWithSampleData = firstPage.size();
                         List<ProductOrderSample> otherPages = new ArrayList<>(samples);
                         otherPages.removeAll(firstPage);
                         if (CollectionUtils.isNotEmpty(otherPages)) {
-                            writeProductOrderSampleBean(jsonGenerator, otherPages, false, preferenceSaver);
+                            writeProductOrderSampleBean(jsonGenerator, otherPages, false, initialLoad, preferenceSaver);
                         }
                     } else {
                         if (withSampleData) {
                             rowsWithSampleData = samples.size();
                         }
-                        writeProductOrderSampleBean(jsonGenerator, samples, withSampleData, preferenceSaver);
+                        writeProductOrderSampleBean(jsonGenerator, samples, withSampleData, true, preferenceSaver);
                     }
                     jsonGenerator.writeEndArray();
                     jsonGenerator.writeObjectField(ProductOrderSampleBean.SAMPLE_DATA_ROW_COUNT, rowsWithSampleData);
@@ -2310,10 +2314,13 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     private void writeProductOrderSampleBean(JsonGenerator jsonGenerator, List<ProductOrderSample> productOrderSamples,
-                                             final boolean includeSampleData,
+                                             final boolean includeSampleData, boolean initialLoad,
                                              final DatatablesStateSaver preferenceSaver) throws IOException {
         if (includeSampleData) {
             ProductOrder.loadSampleData(productOrderSamples);
+            if (preferenceSaver.showColumn(SHIPPED_DATE) || preferenceSaver.showColumn(RECEIVED_DATE)) {
+                ProductOrder.loadLabEventSampleData(productOrderSamples);
+            }
         }
         for (ProductOrderSample sample : productOrderSamples) {
             SampleLink sampleLink = null;
@@ -2325,7 +2332,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 }
             }
             ProductOrderSampleBean bean =
-                    new ProductOrderSampleBean(sample, includeSampleData, preferenceSaver, sampleLink);
+                new ProductOrderSampleBean(sample, includeSampleData, initialLoad, preferenceSaver, sampleLink);
             jsonGenerator.writeObject(bean);
 
         }
