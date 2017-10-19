@@ -120,7 +120,7 @@ $j(document).ready(function () {
                     }
                 }],
             }, standardButtons()],
-            order: [[ 1, 'desc' ]],
+            order: [[ 1, 'asc' ]],
             ajax: {
                 url: "${ctxpath}/orders/order.action?<%= ProductOrderActionBean.GET_SAMPLE_DATA %>",
                 method: 'POST',
