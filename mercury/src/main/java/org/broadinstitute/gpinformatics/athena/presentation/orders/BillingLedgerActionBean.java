@@ -109,12 +109,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
      */
     private List<PriceItem> priceItems = new ArrayList<>();
 
-    /**
-     * List of sample names for this product order. This is saved into the form and checked against current data when
-     * the form is submitted to make sure that nothing changed between rendering and submitting the form. Used for both
-     * rendering the JSP and capturing the values submitted from hidden elements in the form.
-     */
-    private List<String> renderedSampleNames;
+    private Date changedDate;
 
     /**
      * List of price item names for this product order. This is saved into the form and checked against current data
@@ -270,7 +265,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
         productOrderSampleLedgerInfos = gatherSampleInfo();
 
         // Capture data to render into the form to verify that nothing changed when the form is submitted
-        renderedSampleNames = buildSampleNameList();
+        changedDate = productOrder.getModifiedDate();
         renderedPriceItemNames = buildPriceItemNameList();
     }
 
@@ -301,21 +296,6 @@ public class BillingLedgerActionBean extends CoreActionBean {
     }
 
     /**
-     * Build a list of all of the sample names on this product order. This is done both when rendering the form and when
-     * the form is submitted. The results are compared and an error is thrown if they are different, indicating that a
-     * change has been made that may make it unsafe to apply the requested ledger updates.
-     *
-     * @return a list of sample names on the product order
-     */
-    private ArrayList<String> buildSampleNameList() {
-        ArrayList<String> sampleNames = new ArrayList<>();
-        for (ProductOrderSample sample : productOrder.getSamples()) {
-            sampleNames.add(sample.getName());
-        }
-        return sampleNames;
-    }
-
-    /**
      * Build a list of all of the price item names for this product order.  This is done both when rendering the form
      * and when the form is submitted. The results are compared and an error is thrown if they are different, indicating
      * that a change has been made that may make it unsafe to apply the requested ledger updates.
@@ -337,8 +317,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
      * @return true if the sample names have not changed; false otherwise
      */
     private boolean isSubmittedSampleListValid() {
-        List<String> sampleNames = buildSampleNameList();
-        if (!sampleNames.equals(renderedSampleNames)) {
+        if (!productOrder.getModifiedDate().equals(changedDate)) {
             addGlobalValidationError(
                     "The sample list has changed since loading the page. Changes have not been saved. Please reevaluate your billing decisions and reapply your changes as appropriate.");
             return false;
@@ -450,12 +429,12 @@ public class BillingLedgerActionBean extends CoreActionBean {
         return priceItems;
     }
 
-    public List<String> getRenderedSampleNames() {
-        return renderedSampleNames;
+    public Date getChangedDate() {
+        return changedDate;
     }
 
-    public void setRenderedSampleNames(List<String> renderedSampleNames) {
-        this.renderedSampleNames = renderedSampleNames;
+    public void setChangedDate(Date changedDate) {
+        this.changedDate = changedDate;
     }
 
     public List<String> getRenderedPriceItemNames() {
@@ -474,11 +453,11 @@ public class BillingLedgerActionBean extends CoreActionBean {
         return ledgerData;
     }
 
-    public List<LedgerData> getLd(){
+    public List<LedgerData> getL(){
         return getLedgerData();
     }
 
-    public void setLd(List<LedgerData> ledgerData){
+    public void setL(List<LedgerData> ledgerData){
         setLedgerData(ledgerData);
     }
 
@@ -591,27 +570,27 @@ public class BillingLedgerActionBean extends CoreActionBean {
         public Date getWorkCompleteDate() {
             return workCompleteDate;
         }
-        public Date getWcd() {
+        public Date getC() {
             return getWorkCompleteDate();
         }
-        public void setWcd(Date d){
+        public void setC(Date d){
             setWorkCompleteDate(d);
         }
         public String getCompleteDateFormatted() {
             return workCompleteDate != null ? new SimpleDateFormat(DATE_FORMAT).format(workCompleteDate) : null;
         }
 
-        public String getCdf(){
+        public String getF(){
             return getCompleteDateFormatted();
         }
 
-        public String getSn(){
+        public String getS(){
             return getSampleName();
         }
 
 
-        public void setSn(String sn) {
-            setSampleName(sn);
+        public void setS(String s) {
+            setSampleName(s);
         }
 
         public void setWorkCompleteDate(Date workCompleteDate) {
@@ -659,19 +638,19 @@ public class BillingLedgerActionBean extends CoreActionBean {
             this.submittedQuantity = submittedQuantity;
         }
 
-        public double getOc() {
+        public double getQ() {
             return originalQuantity;
         }
 
-        public double getSq() {
+        public double getS() {
             return submittedQuantity;
         }
 
-        public void setOc(double oc) {
+        public void setQ(double oc) {
             setOriginalQuantity(oc);
         }
 
-        public void setSq(double sq) {
+        public void setS(double sq) {
             setSubmittedQuantity(sq);
         }
     }

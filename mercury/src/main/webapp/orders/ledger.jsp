@@ -405,7 +405,7 @@
                 var hiddenInputContainer = document.getElementById('hiddenRowInputs');
                 try {
                     var changedRows = $j(ledgerTable.fnGetNodes()).filter('.changed');
-                    var dom = changedRows.find("input").filter("[name^='ld']").get();
+                    var dom = changedRows.find("input").filter("[name^='l']").get();
                     console.time("copy inputs");
                     for (var i = dom.length-1; i >= 0; i--) {
                         var input = document.createElement("input");
@@ -768,7 +768,7 @@
              submitted, inputs from hidden rows will be gathered and moved into this div. --%>
         <div id="hiddenRowInputs" style="display: none;"></div>
 
-        <stripes:hidden name="renderedSampleNames"/>
+        <stripes:hidden name="changedDate"/>
         <stripes:hidden name="renderedPriceItemNames"/>
 
         <%-- Datatable filters --%>
@@ -889,7 +889,7 @@
                     <td>
                         ${info.sample.name}
                         <input type="hidden"
-                               name="ld[${info.sample.samplePosition}].sn"
+                               name="l[${info.sample.samplePosition}].s"
                                value="${info.sample.name}"/>
                     </td>
                     <td>
@@ -910,10 +910,10 @@
                     </td>
                     <td style="text-align: center">
                         <c:set var="submittedCompleteDate"
-                               value="${actionBean.ld[info.sample.samplePosition].completeDateFormatted}"/>
+                               value="${actionBean.l[info.sample.samplePosition].completeDateFormatted}"/>
                         <c:set var="currentValue"
                                value="${submittedCompleteDate != null ? submittedCompleteDate : info.dateCompleteFormatted}"/>
-                        <input name="ld[${info.sample.samplePosition}].wcd"
+                        <input name="l[${info.sample.samplePosition}].c"
                                value="${currentValue}"
                                originalValue="${info.dateCompleteFormatted}"
                                class="dateComplete ${currentValue != info.dateCompleteFormatted ? 'changed' : ''}">
@@ -925,11 +925,11 @@
                         </td>
                         <td style="text-align: center">
                             <input type="hidden"
-                                   name="ld[${info.sample.samplePosition}].q[${priceItem.priceItemId}].oc"
+                                   name="l[${info.sample.samplePosition}].q[${priceItem.priceItemId}].q"
                                    value="${info.getTotalForPriceItem(priceItem)}"/>
-                            <c:set var="submittedQuantity" value="${actionBean.ld[info.sample.samplePosition].q[priceItem.priceItemId].submittedQuantity}"/>
-                            <input id="ld[${info.sample.samplePosition}].q[${priceItem.priceItemId}].sq"
-                                   name="ld[${info.sample.samplePosition}].q[${priceItem.priceItemId}].sq"
+                            <c:set var="submittedQuantity" value="${actionBean.l[info.sample.samplePosition].q[priceItem.priceItemId].submittedQuantity}"/>
+                            <input id="l[${info.sample.samplePosition}].q[${priceItem.priceItemId}].s"
+                                   name="l[${info.sample.samplePosition}].q[${priceItem.priceItemId}].s"
                                    value="${submittedQuantity != null ? submittedQuantity : info.getTotalForPriceItem(priceItem)}"
                                    class="ledgerQuantity"
                                    priceItemId="${priceItem.priceItemId}"
