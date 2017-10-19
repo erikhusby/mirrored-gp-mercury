@@ -32,6 +32,7 @@ public enum Workflow {
     DNA_RNA_EXTRACTION_CELL_PELLETS("DNA and RNA from Cell Pellets"),
     TRU_SEQ_STRAND_SPECIFIC_CRSP("TruSeq Strand Specific CRSP"),
     TEN_X("10X"),
+    FINGERPRINTING("Fingerprinting"),
     INFINIUM("Infinium"),
     INFINIUM_METHYLATION("Infinium Methylation"),
     /** Use this to indicate that no workflow is associated. */
