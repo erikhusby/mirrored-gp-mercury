@@ -370,7 +370,9 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     public void createProductInSAP(Product product) throws SAPIntegrationException {
         SAPMaterial newMaterial = initializeSapMaterialObject(product);
 
-        getClient().createMaterial(newMaterial);
+        if(!product.isExternalOnlyProduct()) {
+            getClient().createMaterial(newMaterial);
+        }
 
         if(product.hasExternalCounterpart() || product.isClinicalProduct() || product.isExternalOnlyProduct()) {
             newMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES);

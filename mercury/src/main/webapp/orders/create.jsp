@@ -631,6 +631,7 @@
                 $j("#showCustomizeWindow").hide();
                 $j("#clinicalAttestationDiv").hide();
                 $j("#customizationContent").hide();
+                $j("#primaryProductListPrice").hide();
 
                 // TODO SGM Add div for main product list price.  Update it with the list price when the Product is selected.
 
@@ -828,11 +829,15 @@
         function selectedProductFollowup(data) {
             var productKey = $j("#product").val();
 
+            <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager) %>">
+            $j("#primaryProductListPrice").text("research list price: $" + data.researchListPrice + ", external list price: $" +data.externalListPrice);
+            </security:authorizeBlock>
+
             setupAddonCheckboxes(data, productKey);
             if ((productKey !== null) && (productKey !== "") && (productKey !== undefined)) {
                 $j("#showCustomizeWindow").show();
                 renderCustomizationSummary();
-                if(data["clinicalProduct"]) {
+                if(data["clinicalProduct"] == true) {
                     $j("#clinicalAttestationDiv").show();
                 }
 
@@ -862,7 +867,7 @@
                 checkboxText += '  <input id="' + addOnId + '" type="checkbox"' + checked + ' name="addOnKeys" value="' + val.key + '" onchange="registerChangeForAddon()" />';
                 checkboxText += '  <label style="font-size: x-small;" for="' + addOnId + '">' + val.value + ' [' + val.key;
                 <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager) %>">
-                checkboxText += ' (research list price: ' + val.researchListPrice + ', external list price: ' + val.externalListPrice + ')';
+                checkboxText += ' (research list price: $' + val.researchListPrice + ', external list price: $' + val.externalListPrice + ')';
                 </security:authorizeBlock>
                 checkboxText += ']</label>';
                 checkboxText += '  <br>';
@@ -1518,6 +1523,7 @@
                                               title="Enter the product name for this order"/>
                         </c:otherwise>
                     </c:choose>
+                        <div id="primaryProductListPrice" />
                     </div>
                 </div>
 
@@ -1529,9 +1535,6 @@
                             <div class="form-value" id="customizationContent"></div>
                         </div>
                     </div>
-                </security:authorizeBlock>
-
-                <security:authorizeBlock roles="<%= roles(GPProjectManager, PDM, Developer) %>">
 
                     <div class="control-group">
                         <stripes:label for="orderType" class="control-label">
