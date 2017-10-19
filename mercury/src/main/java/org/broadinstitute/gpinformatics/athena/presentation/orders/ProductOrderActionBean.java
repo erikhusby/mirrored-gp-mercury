@@ -1898,8 +1898,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                 JSONObject item = new JSONObject();
                 item.put("key", addOn.getBusinessKey());
                 item.put("value", addOn.getProductName());
-                item.put("researchListPrice", productPriceCache.findByProduct(addOn, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD));
-                item.put("externalListPrice", productPriceCache.findByProduct(addOn, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES));
+                item.put("researchListPrice", productPriceCache.findByProduct(addOn, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD).getBasePrice() );
+                item.put("externalListPrice", productPriceCache.findByProduct(addOn, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES).getBasePrice());
 
                 itemList.put(item);
             }
@@ -2277,8 +2277,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             productInfo.put("clinicalProduct", productEntity.isClinicalProduct());
             productInfo.put("externalProduct", productEntity.isExternalOnlyProduct());
             productInfo.put("productName", productEntity.getName());
-            productInfo.put("researchListPrice", productPriceCache.findByProduct(productEntity, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD));
-            productInfo.put("externalListPrice", productPriceCache.findByProduct(productEntity, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES));
+            productInfo.put("researchListPrice", productPriceCache.findByProduct(productEntity, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD).getBasePrice());
+            productInfo.put("externalListPrice", productPriceCache.findByProduct(productEntity, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES).getBasePrice());
         }
 
         return createTextResolution(productInfo.toString());
