@@ -124,6 +124,7 @@ public class ProductOrderSampleBean {
     private String onRiskDetails = "";
 
     private ProductOrderSample sample;
+    @JsonProperty("includeSampleData")
     private boolean includeSampleData;
     private boolean initialLoad;
     private DatatablesStateSaver preferenceSaver;
