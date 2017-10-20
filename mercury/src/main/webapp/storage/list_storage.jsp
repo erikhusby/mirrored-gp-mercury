@@ -151,16 +151,16 @@
                             valid_children: ["SECTION", "SHELF"]
                         },
                         SHELF: {
-                            valid_children: ["GAUGERACK", "BOX"]
+                            valid_children: ["GAUGERACK", "BOX", "RackOfTubes", "StaticPlate"]
                         },
                         BOX: {
-                            valid_children: ["GAUGERACK", "BOX"]
+                            valid_children: ["GAUGERACK", "BOX", "RackOfTubes", "StaticPlate"]
                         },
                         SECTION: {
                             valid_children: ["SHELF"]
                         },
                         GAUGERACK: {
-                            valid_children: ["slot"],
+                            valid_children: ["slot", "RackOfTubes", "StaticPlate"],
                             "max_depth" : 2
                         },
                         SLOT: {
@@ -182,6 +182,7 @@
                             // Can Rename Boxes, racks, and shelves, but only move boxes and racks
                             var acceptableMoves = ['GAUGERACK','BOX'];
                             if (op === "move_node") {
+                                console.log("Move node? " + node.type);
                                 if (acceptableMoves.indexOf(node.type) == -1) {
                                     return false;
                                 }
@@ -192,6 +193,7 @@
                                 }
                             }
 
+                            console.log(more);
                             if((op === "move_node") && more && more.core && !confirm("Are you sure...?")) {
                                 return false;
                             }
@@ -306,8 +308,8 @@
                 </stripes:form>
             </div>
             <div class="row-fluid">
-                <div id="jstree" class="span4"></div>
-                <div id="replaceMeWithStorageContents" class="span8">
+                <div id="jstree" class="span3"></div>
+                <div id="replaceMeWithStorageContents" class="span9">
 
                 </div>
             </div>

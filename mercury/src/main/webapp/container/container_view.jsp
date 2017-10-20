@@ -101,12 +101,14 @@
                 </tr>
             </c:forEach>
         </table>
-        <div class="control-group top-buffer">
-            <div class="controls">
-                <stripes:submit id="saveLayout" name="save" value="Update Layout" class="btn btn-primary"/>
-                <stripes:submit id="cancelUpdateLayout" name="cancel" value="Cancel" class="btn"/>
+        <c:if test="${actionBean.editLayout}">
+            <div class="control-group top-buffer">
+                <div class="controls">
+                    <stripes:submit id="saveLayout" name="save" value="Update Layout" class="btn btn-primary"/>
+                    <stripes:submit id="cancelUpdateLayout" name="cancel" value="Cancel" class="btn"/>
+                </div>
             </div>
-        </div>
+        </c:if>
     </c:if>
     <fieldset>
         <legend>Manage Storage Location</legend>

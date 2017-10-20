@@ -156,7 +156,8 @@ public class ContainerActionBean extends RackScanActionBean {
             CANCEL_SAVE_ACTION, FIRE_RACK_SCAN, REMOVE_LOCATION_ACTION, VIEW_CONTAINER_SEARCH_ACTION})
     public void labVesselExist() {
         if (StringUtils.isEmpty(containerBarcode)) {
-            addValidationError(containerBarcode, "Container Barcode is required.");
+            addValidationError("containerBarcode", "Container Barcode is required.");
+            return;
         }
         LabVessel labVessel = labVesselDao.findByIdentifier(containerBarcode);
         if (labVessel == null) {
@@ -433,6 +434,7 @@ public class ContainerActionBean extends RackScanActionBean {
                 barcodedTube.setStorageLocation(storageLocation);
             }
         }
+        showLayout = true;
         labEventDao.persist(labEvent);
         labEventDao.flush();
     }
@@ -464,6 +466,7 @@ public class ContainerActionBean extends RackScanActionBean {
         }
 
         if (messageCollection.hasErrors()) {
+            showLayout = false;
             addMessages(messageCollection);
         } else {
             mapPositionToVessel = scanPositionToVessel;
@@ -521,6 +524,7 @@ public class ContainerActionBean extends RackScanActionBean {
             }
             storageLocationDao.persist(getViewVessel());
             storageLocationDao.flush();
+            showLayout = true;
             addMessage("Successfully added to storage.");
         } else {
             addValidationError("storageName","Storage Location Required.");
