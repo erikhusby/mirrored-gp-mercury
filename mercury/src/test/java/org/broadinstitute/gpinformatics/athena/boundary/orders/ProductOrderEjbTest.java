@@ -368,6 +368,7 @@ public class ProductOrderEjbTest {
         ProductOrder conversionPdo = ProductOrderTestFactory.createDummyProductOrder(10, jiraTicketKey);
         conversionPdo.setQuoteId(testSingleSourceQuote.getAlphanumericId() );
         conversionPdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+        conversionPdo.setPriorToSAP1_5(Boolean.TRUE);
 
         Mockito.when(productOrderDaoMock.findByBusinessKey(jiraTicketKey)).thenReturn(conversionPdo);
 
@@ -415,6 +416,7 @@ public class ProductOrderEjbTest {
         testSingleSourceQuote3.setQuoteItems(quoteItems);
 
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
+        productPriceCache.refreshCache();
         Mockito.when(mockSapService.findProductsInSap()).thenReturn(returnMaterials);
 
         MessageCollection messageCollection = new MessageCollection();

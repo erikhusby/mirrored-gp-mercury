@@ -93,12 +93,11 @@ public class ProductOrderAddOn {
         return found;
     }
 
-    public void setCustomPriceAdjustments(
-            Set<ProductOrderAddOnPriceAdjustment> customPriceAdjustments) {
-        for (ProductOrderAddOnPriceAdjustment customPriceAdjustment : customPriceAdjustments) {
-            addCustomPriceAdjustment(customPriceAdjustment);
-        }
+    public void setCustomPriceAdjustment(ProductOrderAddOnPriceAdjustment customPriceAdjustment) {
 
+        this.customPriceAdjustments.clear();
+
+        addCustomPriceAdjustment(customPriceAdjustment);
     }
 
     private void addCustomPriceAdjustment(ProductOrderAddOnPriceAdjustment customPriceAdjustment) {

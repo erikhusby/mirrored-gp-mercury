@@ -53,7 +53,7 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
     }
 
     public SAPProductPriceCache(Set<SAPMaterial> sapMaterials) {
-        this.sapMaterials = sapMaterials;
+        setMaterials(sapMaterials);
     }
 
 
@@ -63,12 +63,16 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
             Set<SAPMaterial> tempSet = sapService.findProductsInSap();
 
             if(!CollectionUtils.isEmpty(tempSet)) {
-                sapMaterials = tempSet;
+                setMaterials(tempSet);
             }
         } catch (SAPIntegrationException e) {
             logger.error("Could not refresh the SAP Product Price Cache", e);
         }
 
+    }
+
+    public void setMaterials(Set<SAPMaterial> tempSet) {
+        sapMaterials = tempSet;
     }
 
     public Collection<SAPMaterial> getSapMaterials()

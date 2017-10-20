@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
+import clover.org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
@@ -184,9 +185,9 @@ public class PriceListCache extends AbstractCache implements Serializable {
         QuotePriceItem foundItem = null;
 
         for (QuotePriceItem quotePriceItem : getQuotePriceItems()) {
-            if (quotePriceItem.getPlatformName().equals(platform) &&
-                quotePriceItem.getCategoryName().equals(category) &&
-                quotePriceItem.getName().equals(name)) {
+            if (StringUtils.equals(quotePriceItem.getPlatformName(),platform) &&
+                StringUtils.equals(quotePriceItem.getCategoryName(),category) &&
+                StringUtils.equals(quotePriceItem.getName(),name)) {
                 foundItem = quotePriceItem;
             }
         }

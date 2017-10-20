@@ -21,7 +21,7 @@ import java.math.BigDecimal;
 @Entity
 @Audited
 @Table(name = "PDO_ADDON_PRICE_ADJUSTMENT", schema = "athena")
-public class ProductOrderAddOnPriceAdjustment {
+public class ProductOrderAddOnPriceAdjustment implements PriceAdjustment{
 
     @Id
     @Column(name = "pdo_addon_price_adjustment_id")
@@ -41,7 +41,7 @@ public class ProductOrderAddOnPriceAdjustment {
     private String customProductName;
 
     @Column(name = "adjustment_quantity")
-    private int adjustmentQuantity;
+    private Integer adjustmentQuantity;
 
     @Transient
     private Condition priceAdjustmentCondition;
@@ -52,7 +52,7 @@ public class ProductOrderAddOnPriceAdjustment {
     public ProductOrderAddOnPriceAdjustment() {
     }
 
-    public ProductOrderAddOnPriceAdjustment(BigDecimal adjustmentValue, int quantity, String customProductName) {
+    public ProductOrderAddOnPriceAdjustment(BigDecimal adjustmentValue, Integer quantity, String customProductName) {
         this.adjustmentValue = adjustmentValue;
         this.adjustmentQuantity = quantity;
         this.customProductName = customProductName;
@@ -66,15 +66,18 @@ public class ProductOrderAddOnPriceAdjustment {
         this.addOn = addOn;
     }
 
+    @Override
     public BigDecimal getAdjustmentValue() {
         return adjustmentValue;
     }
 
+    @Override
     public String getCustomProductName() {
         return customProductName;
     }
 
-    public int getAdjustmentQuantity() {
+    @Override
+    public Integer getAdjustmentQuantity() {
         return adjustmentQuantity;
     }
 
@@ -86,6 +89,7 @@ public class ProductOrderAddOnPriceAdjustment {
         this.priceAdjustmentCondition = priceAdjustmentCondition;
     }
 
+    @Override
     public BigDecimal getListPrice() {
         return listPrice;
     }

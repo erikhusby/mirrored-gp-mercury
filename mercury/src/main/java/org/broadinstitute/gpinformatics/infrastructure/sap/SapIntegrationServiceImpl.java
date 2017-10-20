@@ -235,6 +235,9 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             if(placedOrder.getSinglePriceAdjustment() != null) {
                 sapOrderItem.addCondition(placedOrder.getSinglePriceAdjustment().deriveAdjustmentCondition(),
                         placedOrder.getSinglePriceAdjustment().getAdjustmentDifference());
+                if(StringUtils.isNotBlank(placedOrder.getSinglePriceAdjustment().getCustomProductName())) {
+                    sapOrderItem.setProductAlias(placedOrder.getSinglePriceAdjustment().getCustomProductName());
+                }
             }
 
             for (ProductOrderPriceAdjustment productOrderPriceAdjustment : placedOrder.getQuotePriceMatchAdjustments()) {
@@ -249,6 +252,9 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                         sapOrderItem.addCondition(
                                 productOrderAddOn.getSingleCustomPriceAdjustment().deriveAdjustmentCondition(),
                                 productOrderAddOn.getSingleCustomPriceAdjustment().getAdjustmentDifference());
+                        if(StringUtils.isNotBlank(productOrderAddOn.getSingleCustomPriceAdjustment().getCustomProductName())) {
+                            sapOrderItem.setProductAlias(productOrderAddOn.getSingleCustomPriceAdjustment().getCustomProductName());
+                        }
                     }
 
                     for (ProductOrderAddOnPriceAdjustment productOrderAddOnPriceAdjustment : productOrderAddOn
@@ -277,6 +283,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
     public static int getSampleCount(ProductOrder placedOrder, Product product, int additionalSampleCount) {
         int sampleCount = 0;
+
+        //todo SGM must account for override quantity when determining sample count
 
         if (product.getSupportsNumberOfLanes() && placedOrder.getLaneCount() > 0) {
             sampleCount += placedOrder.getLaneCount();
@@ -535,7 +543,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         this.bspUserList = bspUserList;
     }
 
-    protected void setWrappedClient(SapIntegrationClientImpl wrappedClient) {
+    public void setWrappedClient(SapIntegrationClientImpl wrappedClient) {
         this.wrappedClient = wrappedClient;
     }
 
