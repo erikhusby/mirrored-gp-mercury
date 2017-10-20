@@ -39,7 +39,7 @@ public class WallacPlateProcessor  extends TableProcessor {
     }
 
     @Override
-    public void processRowDetails(Map<String, String> dataRow, int dataRowIndex) {
+    public void processRowDetails(Map<String, String> dataRow, int dataRowNumber) {
         String group = dataRow.get(Headers.GROUP.getText());
         String plate = dataRow.get(Headers.PLATE.getText());
         String well = dataRow.get(Headers.WELL.getText());
@@ -54,7 +54,7 @@ public class WallacPlateProcessor  extends TableProcessor {
                 if (plateBarcode != null) {
                     VesselPosition vesselPosition = VesselPosition.getByName(well.trim());
                     if (vesselPosition == null) {
-                        addDataMessage("Failed to find position " + well, dataRowIndex);
+                        addDataMessage("Failed to find position " + well, dataRowNumber);
                     }
                     try {
                         BigDecimal bigDecimal = new BigDecimal(value);
@@ -62,7 +62,7 @@ public class WallacPlateProcessor  extends TableProcessor {
                         plateWellResults.add(
                                 new VarioskanPlateProcessor.PlateWellResult(plateBarcode, vesselPosition, bigDecimal));
                     } catch (NumberFormatException e) {
-                        addDataMessage("Failed to parse number " + value, dataRowIndex);
+                        addDataMessage("Failed to parse number " + value, dataRowNumber);
                     }
                 }
             }

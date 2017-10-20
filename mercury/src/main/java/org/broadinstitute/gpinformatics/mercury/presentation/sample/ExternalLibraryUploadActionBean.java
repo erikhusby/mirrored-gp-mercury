@@ -12,7 +12,6 @@ import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.ExternalLibrarySampleInstanceEjb;
-import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryMapped;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorEzPass;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorNonPooled;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorPooled;
@@ -22,7 +21,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
 import java.io.IOException;
-
 
 @UrlBinding(value = "/sample/ExternalLibraryUpload.action")
 public class ExternalLibraryUploadActionBean extends CoreActionBean {
@@ -35,14 +33,6 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
     public static final String MULTI_ORG = "multi-org";
     private static final String SESSION_LIST_PAGE = "/sample/externalLibraryUpload.jsp";
     private boolean overWriteFlag;
-    public static final int externalLibraryRowOffset = 25;
-    public static final int ezPassRowOffset = 28;
-
-    @DefaultHandler
-    @HandlesEvent(VIEW_ACTION)
-    public Resolution view() {
-        return new ForwardResolution(SESSION_LIST_PAGE);
-    }
 
     @Validate(required = true, on = UPLOAD_SAMPLES)
     private ExternalLibraryUploadActionBean.SpreadsheetType spreadsheetType;
@@ -53,34 +43,37 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
     @Validate(required = true, on = UPLOAD_SAMPLES)
     private FileBean samplesSpreadsheet;
 
+    @DefaultHandler
+    @HandlesEvent(VIEW_ACTION)
+    public Resolution view() {
+        return new ForwardResolution(SESSION_LIST_PAGE);
+    }
 
     /**
      * Entry point for initial upload of spreadsheet.
      */
     @HandlesEvent(UPLOAD_SAMPLES)
     public Resolution uploadTubes() {
-
         switch (spreadsheetType) {
-            case EZ_PASS:
-                uploadEzPassLibraries(false);
-                break;
-            case EZ_PASS_KIOSK:
-                uploadEzPassLibraries(true);
-                break;
-            case EXTERNAL_LIBRARY_POOLED_TUBES:
-                uploadPooledLibrary();
-                break;
-            case EXTERNAL_LIBRARY_NON_POOLED_TUBES:
-                uploadNonPooledLibrary();
-                break;
-            case EXTERNAL_LIBRARY_MULTIPLE_ORGANISM:
-                uploadMultipleOrganismLibrary();
-                break;
-            case POOLED_TUBES:
-                uploadPooledTubes();
-                break;
+        case EZ_PASS:
+            uploadEzPassLibraries(false);
+            break;
+        case EZ_PASS_KIOSK:
+            uploadEzPassLibraries(true);
+            break;
+        case EXTERNAL_LIBRARY_POOLED_TUBES:
+            uploadPooledLibrary();
+            break;
+        case EXTERNAL_LIBRARY_NON_POOLED_TUBES:
+            uploadNonPooledLibrary();
+            break;
+        case EXTERNAL_LIBRARY_MULTIPLE_ORGANISM:
+            uploadMultipleOrganismLibrary();
+            break;
+        case POOLED_TUBES:
+            uploadPooledTubes();
+            break;
         }
-
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
 
@@ -90,65 +83,44 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
     public void uploadPooledTubes() {
         try {
             MessageCollection messageCollection = new MessageCollection();
-
             VesselPooledTubesProcessor vesselSpreadsheetProcessor = new VesselPooledTubesProcessor("Sheet1");
-
-            PoiSpreadsheetParser.processSingleWorksheet(samplesSpreadsheet.getInputStream(), vesselSpreadsheetProcessor);
-            externalLibrarySampleInstanceEjb.verifyPooledTubes(vesselSpreadsheetProcessor, messageCollection, overWriteFlag);
-
+            PoiSpreadsheetParser.processSingleWorksheet(samplesSpreadsheet.getInputStream(),
+                    vesselSpreadsheetProcessor);
+            externalLibrarySampleInstanceEjb.verifyPooledTubes(vesselSpreadsheetProcessor, messageCollection,
+                    overWriteFlag);
             addMessages(messageCollection);
-
         } catch (InvalidFormatException | IOException | ValidationException e) {
             addValidationError("samplesSpreadsheet", e.getMessage());
         }
     }
-
 
     /**
      * EZ Pass samples
      */
     public void uploadEzPassLibraries(Boolean isKiosk) {
         try {
-
             MessageCollection messageCollection = new MessageCollection();
-
-            ExternalLibraryProcessorEzPass spreadSheetProcessor = new ExternalLibraryProcessorEzPass("Sheet1");
-
-            spreadSheetProcessor.setHeaderRowIndex(ezPassRowOffset);
-            PoiSpreadsheetParser.processSingleWorksheet(samplesSpreadsheet.getInputStream(), spreadSheetProcessor);
-            ExternalLibraryMapped externalLibraryMapped = new ExternalLibraryMapped();
-            externalLibraryMapped.mapEzPass(spreadSheetProcessor);
-            if(isKiosk) {
-                externalLibrarySampleInstanceEjb.verifyExternalLibrary(externalLibraryMapped, messageCollection, overWriteFlag, EZPASS_KIOSK);
-            }
-            else {
-                externalLibrarySampleInstanceEjb.verifyExternalLibrary(externalLibraryMapped, messageCollection, overWriteFlag, EZPASS_NON_KIOSK);
-            }
-
-
+            ExternalLibraryProcessorEzPass processor = new ExternalLibraryProcessorEzPass("Sheet1");
+            PoiSpreadsheetParser.processSingleWorksheet(samplesSpreadsheet.getInputStream(), processor);
+            externalLibrarySampleInstanceEjb.verifyExternalLibrary(processor, messageCollection,
+                    overWriteFlag, isKiosk ? EZPASS_KIOSK : EZPASS_NON_KIOSK);
             addMessages(messageCollection);
         } catch (InvalidFormatException | IOException | ValidationException e) {
             addValidationError("samplesSpreadsheet", e.getMessage());
         }
     }
 
-
     /**
      * External library multi organism
      */
     public void uploadMultipleOrganismLibrary() {
         try {
-
             MessageCollection messageCollection = new MessageCollection();
-
-            ExternalLibraryProcessorPooledMultiOrganism spreadSheetProcessor = new ExternalLibraryProcessorPooledMultiOrganism("Sheet1");
-
-            spreadSheetProcessor.setHeaderRowIndex(externalLibraryRowOffset);
-            PoiSpreadsheetParser.processSingleWorksheet(samplesSpreadsheet.getInputStream(), spreadSheetProcessor);
-            ExternalLibraryMapped externalLibraryMapped = new ExternalLibraryMapped();
-            externalLibraryMapped.mapPooledMultiOrg(spreadSheetProcessor);
-            externalLibrarySampleInstanceEjb.verifyExternalLibrary(externalLibraryMapped, messageCollection, overWriteFlag, MULTI_ORG);
-
+            ExternalLibraryProcessorPooledMultiOrganism processor =
+                    new ExternalLibraryProcessorPooledMultiOrganism("Sheet1");
+            PoiSpreadsheetParser.processSingleWorksheet(samplesSpreadsheet.getInputStream(), processor);
+            externalLibrarySampleInstanceEjb.verifyExternalLibrary(processor, messageCollection,
+                    overWriteFlag, MULTI_ORG);
             addMessages(messageCollection);
         } catch (InvalidFormatException | IOException | ValidationException e) {
             addValidationError("samplesSpreadsheet", e.getMessage());
@@ -160,19 +132,12 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
      */
     public void uploadPooledLibrary() {
         try {
-
             MessageCollection messageCollection = new MessageCollection();
-
-            ExternalLibraryProcessorPooled spreadSheetProcessor = new ExternalLibraryProcessorPooled("Sheet1");
-
-            spreadSheetProcessor.setHeaderRowIndex(externalLibraryRowOffset);
-            PoiSpreadsheetParser.processSingleWorksheet(samplesSpreadsheet.getInputStream(), spreadSheetProcessor);
-            ExternalLibraryMapped externalLibraryMapped = new ExternalLibraryMapped();
-            externalLibraryMapped.mapPooled(spreadSheetProcessor);
-            externalLibrarySampleInstanceEjb.verifyExternalLibrary(externalLibraryMapped, messageCollection, overWriteFlag, POOLED);
-
+            ExternalLibraryProcessorPooled processor = new ExternalLibraryProcessorPooled("Sheet1");
+            PoiSpreadsheetParser.processSingleWorksheet(samplesSpreadsheet.getInputStream(), processor);
+            externalLibrarySampleInstanceEjb.verifyExternalLibrary(processor, messageCollection,
+                    overWriteFlag, POOLED);
             addMessages(messageCollection);
-
         } catch (InvalidFormatException | IOException | ValidationException e) {
             addValidationError("samplesSpreadsheet", e.getMessage());
         }
@@ -183,24 +148,27 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
      */
     public void uploadNonPooledLibrary() {
         try {
-
             MessageCollection messageCollection = new MessageCollection();
-
-            ExternalLibraryProcessorNonPooled spreadSheetProcessor = new ExternalLibraryProcessorNonPooled("Sheet1");
-
-            spreadSheetProcessor.setHeaderRowIndex(externalLibraryRowOffset);
-            PoiSpreadsheetParser.processSingleWorksheet(samplesSpreadsheet.getInputStream(), spreadSheetProcessor);
-
-            ExternalLibraryMapped externalLibraryMapped = new ExternalLibraryMapped();
-            externalLibraryMapped.mapNonPooled(spreadSheetProcessor);
-            externalLibrarySampleInstanceEjb.verifyExternalLibrary(externalLibraryMapped, messageCollection, overWriteFlag, NON_POOLED);
-
+            ExternalLibraryProcessorNonPooled processor = new ExternalLibraryProcessorNonPooled("Sheet1");
+            PoiSpreadsheetParser.processSingleWorksheet(samplesSpreadsheet.getInputStream(), processor);
+            externalLibrarySampleInstanceEjb.verifyExternalLibrary(processor, messageCollection,
+                    overWriteFlag, NON_POOLED);
             addMessages(messageCollection);
-
         } catch (InvalidFormatException | IOException | ValidationException e) {
             addValidationError("samplesSpreadsheet", e.getMessage());
         }
+    }
 
+    public void setSpreadsheetType(ExternalLibraryUploadActionBean.SpreadsheetType spreadsheetType) {
+        this.spreadsheetType = spreadsheetType;
+    }
+
+    public void setSamplesSpreadsheet(FileBean spreadsheet) {
+        this.samplesSpreadsheet = spreadsheet;
+    }
+
+    public void setOverWriteFlag(boolean overWriteFlag) {
+        this.overWriteFlag = overWriteFlag;
     }
 
     @UrlBinding(value = "/sample/ExternalLibraryUpload.action")
@@ -221,18 +189,6 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
         public String getDisplayName() {
             return displayName;
         }
-    }
-
-    public void setSpreadsheetType(ExternalLibraryUploadActionBean.SpreadsheetType spreadsheetType) {
-        this.spreadsheetType = spreadsheetType;
-    }
-
-    public void setSamplesSpreadsheet(FileBean spreadsheet) {
-        this.samplesSpreadsheet = spreadsheet;
-    }
-
-    public void setOverWriteFlag(boolean overWriteFlag) {
-        this.overWriteFlag = overWriteFlag;
     }
 
 }

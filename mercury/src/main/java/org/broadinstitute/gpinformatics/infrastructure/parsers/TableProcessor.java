@@ -1,6 +1,9 @@
 package org.broadinstitute.gpinformatics.infrastructure.parsers;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.jvnet.inflector.Noun;
 
@@ -8,10 +11,14 @@ import javax.annotation.Nonnull;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser.getCellValues;
 
 /**
  * This abstract class provides spreadsheet/table parsers with the logic for turning rows of data into objects and
@@ -32,42 +39,30 @@ public abstract class TableProcessor implements Serializable {
     private static final long serialVersionUID = 8122298462727182883L;
     public static final String REQUIRED_VALUE_IS_MISSING = "Required value for %s is missing.";
 
-    private final List<String> validationMessages = new ArrayList<>();
+    protected final List<String> validationMessages = new ArrayList<>();
     private int headerRowIndex;
     private final Set<String> warnings = new LinkedHashSet<>();
+    protected Map<String, Integer> headerToColumnIndex = new HashMap<>();
 
     private final String sheetName;
 
     private final IgnoreTrailingBlankLines ignoreTrailingBlankLines;
 
     /**
-     * Legacy constructor that creates a TableProcessor with TolerateBlankLines.NO, so blank lines in the
-     * spreadsheet will generate errors.
+     * Constructor that creates a TableProcessor that will complain if there are blank rows
+     * at the bottom the spreadsheet.
      */
     protected TableProcessor(String sheetName) {
         this(sheetName, IgnoreTrailingBlankLines.NO);
     }
 
     /**
-     * Constructor that allows for specification of whether trailing blank lines are ignored.
+     * Constructor.
+     * @param ignoreTrailingBlankLines if true, will silently ignore trailing rows of all-blank cells.
      */
     protected TableProcessor(String sheetName, @Nonnull IgnoreTrailingBlankLines ignoreTrailingBlankLines) {
         this.sheetName = sheetName;
         this.ignoreTrailingBlankLines = ignoreTrailingBlankLines;
-    }
-
-    /**
-     * The number of rows that will be on the parser's spreadsheet. Tells the parser how many lines to send to process
-     * header. The default is to have one row of headers.
-     *
-     * @return The number of header rows
-     */
-    public int getNumHeaderRows() {
-        return 1;
-    }
-
-    public int columnOffset() {
-        return 0;
     }
 
     public void processSubHeaders(List<String> headers) {
@@ -94,23 +89,19 @@ public abstract class TableProcessor implements Serializable {
      * header enums. We often have columns that are data specific (Like price items on products in the tracker).
      *
      * @param headers The header strings in this row
-     * @param row     The row
+     * @param row     The 0-based row index of the row being processed.
      */
     public abstract void processHeader(List<String> headers, int row);
 
     /**
-     * The primary header row is the one that is validated in hasRequiredHeaders.
-     *
-     * @return By default it is 0, but any header row could be the primary.
+     * If all required values are present, processes the row.
+     * @param dataRow Map of column name to value.
+     * @param dataRowNumber The 1-based row number.
      */
-    public int getPrimaryHeaderRow() {
-        return 0;
-    }
-
-    public final void processRow(Map<String, String> dataRow, int dataRowIndex) {
+    public final void processRow(Map<String, String> dataRow, int dataRowNumber) {
         // Validate the required fields.
-        if (hasRequiredValues(dataRow, dataRowIndex)) {
-            processRowDetails(dataRow, dataRowIndex);
+        if (hasRequiredValues(dataRow, dataRowNumber)) {
+            processRowDetails(dataRow, dataRowNumber);
         }
     }
 
@@ -119,25 +110,31 @@ public abstract class TableProcessor implements Serializable {
      * be responsible for constructing any  necessary entities to represent the data found in this table row.
      *
      * @param dataRow      The row of data mapped by header name.
-     * @param dataRowIndex The current row of data we are working with.
+     * @param dataRowNumber The 1-based row number.
      */
-    public abstract void processRowDetails(Map<String, String> dataRow, int dataRowIndex);
+    public abstract void processRowDetails(Map<String, String> dataRow, int dataRowNumber);
 
-    public final boolean validateColumnHeaders(List<String> headers) {
+    /**
+     * Returns true if the given cell contents constitute a valid header row.
+     *
+     * @param cellContent strings that were modified by adjustHeaderCells().
+     */
+    public final boolean validateColumnHeaders(List<String> cellContent) {
 
-        // If any of the required headers are NOT in the header list, then return false.
+        // If any of the required headers missing, then return false.
         List<String> missingHeaders = new ArrayList<>();
         for (ColumnHeader header : getColumnHeaders()) {
-            if (header.isRequiredHeader() && !headers.contains(header.getText())) {
-                missingHeaders.add(header.getText());
+            String adjustedHeader = adjustHeaderCell(header.getText());
+            if (header.isRequiredHeader() && !cellContent.contains(adjustedHeader)) {
+                missingHeaders.add(adjustedHeader);
             }
         }
         if (!missingHeaders.isEmpty()) {
             validationMessages.add(
-                    String.format("Required %s missing: %s.", Noun.pluralOf("header", missingHeaders.size()),
-                            StringUtils.join(missingHeaders, ", ")));
+                    String.format("Required %s missing: '%s'.", Noun.pluralOf("header", missingHeaders.size()),
+                            StringUtils.join(missingHeaders, "', '")));
         }
-        validateHeaderRow(headers);
+        validateHeaderRow(cellContent);
         return validationMessages.isEmpty();
     }
 
@@ -175,6 +172,40 @@ public abstract class TableProcessor implements Serializable {
 
     public abstract void close();
 
+    /**
+     * Returns the 0-based index of the horizontal header row, which is the first row
+     * that contains all of the required ColumnHeader strings.
+     */
+    public int findHeaderRow(Sheet worksheet) {
+        int bestGuess = 0;
+        int leastError = Integer.MAX_VALUE;
+        for (Iterator<Row> rowIter = worksheet.rowIterator(); rowIter.hasNext(); ) {
+            Row row = rowIter.next();
+            List<String> theCells = new ArrayList<>();
+            for (Iterator<Cell> cellIter = row.cellIterator(); cellIter.hasNext(); ) {
+                // Headers are always strings, and possibly made more uniform for the match.
+                String cell = adjustHeaderCell(getCellValues(cellIter.next(), false, true));
+                if (StringUtils.isNotBlank(cell)) {
+                    theCells.add(cell);
+                }
+            }
+            if (validateColumnHeaders(theCells)) {
+                return row.getRowNum();
+            }
+            if (StringUtils.join(validationMessages).length() < leastError) {
+                leastError = StringUtils.join(validationMessages).length();
+                bestGuess = row.getRowNum();
+            }
+            validationMessages.clear();
+        }
+        return bestGuess;
+    }
+
+    /** Allows a processor to modify the header cell (trim, lower case, etc.) before matching it with Header text. */
+    public String adjustHeaderCell(String headerCell) {
+        return headerCell;
+    }
+
     public List<String> getMessages() {
         return validationMessages;
     }
@@ -200,9 +231,8 @@ public abstract class TableProcessor implements Serializable {
         warnings.add(getPrefixedMessage(message, dataRowIndex));
     }
 
-    public boolean isDateColumn(int columnIndex) {
-        String headerNameAtIndex = getHeaderNames().get(columnIndex);
-        ColumnHeader columnHeader = findColumnHeaderByName(headerNameAtIndex);
+    public boolean isDateColumn(String headerName) {
+        ColumnHeader columnHeader = findColumnHeaderByName(headerName);
         return columnHeader != null && columnHeader.isDateColumn();
     }
 
@@ -210,17 +240,14 @@ public abstract class TableProcessor implements Serializable {
      * This is used for columns that might show up as numeric but REALLY MUST be treated as a string. This is to
      * get around odd formatting problems of scientific notation that Excel may cause.
      *
-     * @param columnIndex The index of the column being checked.
-     *
      * @return Whether this MUST be a string.
      */
-    public boolean isStringColumn(int columnIndex) {
-        String headerNameAtIndex = getHeaderNames().get(columnIndex);
-        ColumnHeader columnHeader = findColumnHeaderByName(headerNameAtIndex);
+    public boolean isStringColumn(String headerName) {
+        ColumnHeader columnHeader = findColumnHeaderByName(headerName);
         return columnHeader != null && columnHeader.isStringColumn();
     }
 
-    protected ColumnHeader findColumnHeaderByName(String headerName) {
+    public ColumnHeader findColumnHeaderByName(String headerName) {
         for (ColumnHeader columnHeader : getColumnHeaders()) {
             if (headerName.equals(columnHeader.getText())) {
                 return columnHeader;
@@ -242,5 +269,9 @@ public abstract class TableProcessor implements Serializable {
 
     public boolean shouldIgnoreTrailingBlankLines() {
         return ignoreTrailingBlankLines == IgnoreTrailingBlankLines.YES;
+    }
+
+    public Map<String, Integer> getHeaderToColumnIndex() {
+        return headerToColumnIndex;
     }
 }

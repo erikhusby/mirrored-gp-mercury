@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class VesselPooledTubesProcessor extends TableProcessor {
-
     private List<String> headers;
     private List<String> barcodes = new ArrayList<>();
     private List<String> singleSampleLibraryName = new ArrayList<>();
@@ -30,24 +29,19 @@ public class VesselPooledTubesProcessor extends TableProcessor {
     private List<String> fragmentSize = new ArrayList<>();
     private List<String> readLength = new ArrayList<>();
 
-
     public VesselPooledTubesProcessor(String sheetName) {
         super(sheetName, TableProcessor.IgnoreTrailingBlankLines.YES);
     }
-
 
     public List<String> getHeaderNames() {
         return headers;
     }
 
-
     public void processHeader(List<String> headers, int row) {
         this.headers = headers;
     }
 
-
-    public void processRowDetails(Map<String, String> dataRow, int dataRowIndex) {
-
+    public void processRowDetails(Map<String, String> dataRow, int dataRowNumber) {
         barcodes.add(dataRow.get(Headers.TUBE_BARCODE.getText()));
         singleSampleLibraryName.add(dataRow.get(Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText()));
         broadSampleId.add(dataRow.get(Headers.BROAD_SAMPLE_ID.getText()));
@@ -66,8 +60,6 @@ public class VesselPooledTubesProcessor extends TableProcessor {
         volume.add(dataRow.get(Headers.VOLUME.getText()));
         fragmentSize.add(dataRow.get(Headers.FRAGMENT_SIZE.getText()));
         readLength.add(dataRow.get(Headers.READ_LENGTH.getText()));
-
-
     }
 
     protected ColumnHeader[] getColumnHeaders() {

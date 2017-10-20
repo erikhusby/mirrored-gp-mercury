@@ -28,12 +28,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Represents a pre-processed sample and its vessel that is pushed into Mercury from an
+ * outside source (i.e. not from BSP nor accessioned by Mercury). Enough info must be
+ * provided so that this entity can be used as a starting point of a chain of custody.
+ * It can more or less stand in for a computed SampleInstance, hence the name.
+ */
 @Entity
 @Audited
 @Table(schema = "mercury", name = "sample_instance_entity")
 @BatchSize(size = 50)
 public class SampleInstanceEntity {
-
 
     @SequenceGenerator(name = "seq_sample_instance_entity", schema = "mercury",  sequenceName = "seq_sample_instance_entity")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_sample_instance_entity")
@@ -155,97 +160,139 @@ public class SampleInstanceEntity {
         subTasks.setSampleInstanceEntity(this);
     }
 
-    /**
-     *
-     * Returns the Jira dev sub tasks in the order they were created. It concatenates them
-     * into a single string for user-defined search.
-     *
-     */
+    /** Returns the Jira dev sub tasks in the order they were created. */
     public List<String> getSubTasks() {
        List<String> subTask = new ArrayList<>();
        for(SampleInstanceEntityTsk task : sampleInstanceEntityTsks) {
            subTask.add(task.getSubTask());
        }
-
        return subTask;
     }
 
-    public void setReadLength(Integer readLength) { this.readLength = readLength;  }
-
     public MercurySample getRootSample() {  return rootSample;  }
 
-    public void setRootSample(MercurySample rootSample) { this.rootSample = rootSample;  }
+    public void setRootSample(MercurySample rootSample) {
+        this.rootSample = rootSample;
+    }
 
-    public void setLabVessel(LabVessel labVessel) { this.labVessel = labVessel; }
+    public void setLabVessel(LabVessel labVessel) {
+        this.labVessel = labVessel;
+    }
 
-    public MolecularIndexingScheme getMolecularIndexingScheme() { return molecularIndexingScheme;  }
-
-    public void setReagentDesign(ReagentDesign reagentDesign){ this.reagentDesign = reagentDesign; }
-
-    public ReagentDesign getReagentDesign() { return this.reagentDesign; }
-
-    public void setMolecularIndexScheme(MolecularIndexingScheme molecularIndexingScheme) { this.molecularIndexingScheme = molecularIndexingScheme; }
-
-    public void setMercurySampleId(MercurySample mercurySample){ this.mercurySample = mercurySample; }
-
-    public MercurySample getMercurySample() { return this.mercurySample;    }
-
-    public void setSampleLibraryName(String sampleLibraryName) { this.sampleLibraryName = sampleLibraryName; }
-
-    public void setUploadDate(){ this.uploadDate = new Date(); }
-
-    public void setExperiment(String experiment) { this.experiment = experiment;  }
-
-    public String getExperiment() { return this.experiment; }
-
-    public String getReferenceSequence() { return this.referenceSequence; }
-
-    public void setReferenceSequence(String referenceSequence) {this.referenceSequence = referenceSequence;}
-
-    public String getCoverage() { return this.coverage; }
-
-    public void setCoverage(String coverage) { this.coverage = coverage;}
-
-    public void setRestrictionEnzyme(String restrictionEnzyme) {this.restrictionEnzyme = restrictionEnzyme;}
-
-    public void setJumpSize(String jumpSize) {this.jumpSize = jumpSize; }
-
-    public void setLibrarySizeRange(String librarySizeRange) { this.librarySizeRange = librarySizeRange;}
-
-    public void setInsertSizeRange(String insertSizeRange) { this.insertSizeRange = insertSizeRange;}
-
-    public String getPooled() { return this.pooled; }
-
-    public void setPooled(String pooled) { this.pooled = pooled; }
-
-    public String getLibraryType() { return  this.libraryType; }
-
-    public void setLibraryType(String libraryType) { this.libraryType = libraryType; }
-
-    public String getCollaboratorSampleId() { return this.collaboratorSampleId; }
-
-    public void setCollaboratorSampleId(String collaboratorSampleId) { this.collaboratorSampleId = collaboratorSampleId;}
-
-    public void setTissueType(String tissueType) { this.tissueType = tissueType;}
-
-    public void setDesiredReadLength(Integer readLength) { this.readLength = readLength;}
-
-    public void setSampleKitRequest(SampleKitRequest sampleKitRequest) { this.sampleKitRequest = sampleKitRequest; }
-
-    public ResearchProject getResearchProject() { return researchProject;  }
-
-    public void setResearchProject(ResearchProject researchProject) { this.researchProject = researchProject; }
-
-    public ProductOrder getProductOrder() { return productOrder; }
-
-    public void setProductOrder(ProductOrder productOrder) { this.productOrder = productOrder; }
+    public MolecularIndexingScheme getMolecularIndexingScheme() {
+        return molecularIndexingScheme;
+    }
 
     public void setMolecularIndexingScheme(MolecularIndexingScheme molecularIndexingScheme) {
         this.molecularIndexingScheme = molecularIndexingScheme;
     }
 
+    public ReagentDesign getReagentDesign() {
+        return this.reagentDesign;
+    }
+
+    public void setReagentDesign(ReagentDesign reagentDesign) {
+        this.reagentDesign = reagentDesign;
+    }
+
+    public void setMolecularIndexScheme(MolecularIndexingScheme molecularIndexingScheme) {
+        this.molecularIndexingScheme = molecularIndexingScheme;
+    }
+
+    public void setMercurySampleId(MercurySample mercurySample) {
+        this.mercurySample = mercurySample;
+    }
+
+    public MercurySample getMercurySample() {
+        return this.mercurySample;
+    }
+
+    public void setSampleLibraryName(String sampleLibraryName) {
+        this.sampleLibraryName = sampleLibraryName;
+    }
+
+    public void setUploadDate() {
+        this.uploadDate = new Date();
+    }
+
+    public String getExperiment() {
+        return this.experiment;
+    }
+
+    public void setExperiment(String experiment) {
+        this.experiment = experiment;
+    }
+
+    public String getReferenceSequence() {
+        return this.referenceSequence;
+    }
+
+    public void setReferenceSequence(String referenceSequence) {
+        this.referenceSequence = referenceSequence;
+    }
+
+    public String getCoverage() {
+        return this.coverage;
+    }
+
+    public void setCoverage(String coverage) {
+        this.coverage = coverage;
+    }
+
+    public String getPooled() {
+        return this.pooled;
+    }
+
+    public void setPooled(String pooled) {
+        this.pooled = pooled;
+    }
+
+    public String getLibraryType() {
+        return this.libraryType;
+    }
+
+    public void setLibraryType(String libraryType) {
+        this.libraryType = libraryType;
+    }
+
+    public String getCollaboratorSampleId() {
+        return this.collaboratorSampleId;
+    }
+
+    public void setCollaboratorSampleId(String collaboratorSampleId) {
+        this.collaboratorSampleId = collaboratorSampleId;
+    }
+
+    public void setDesiredReadLength(Integer readLength) {
+        this.readLength = readLength;
+    }
+
+    public void setSampleKitRequest(SampleKitRequest sampleKitRequest) {
+        this.sampleKitRequest = sampleKitRequest;
+    }
+
+    public ResearchProject getResearchProject() {
+        return researchProject;
+    }
+
+    public void setResearchProject(ResearchProject researchProject) {
+        this.researchProject = researchProject;
+    }
+
+    public ProductOrder getProductOrder() {
+        return productOrder;
+    }
+
+    public void setProductOrder(ProductOrder productOrder) {
+        this.productOrder = productOrder;
+    }
+
     public String getRestrictionEnzyme() {
         return restrictionEnzyme;
+    }
+
+    public void setRestrictionEnzyme(String restrictionEnzyme) {
+        this.restrictionEnzyme = restrictionEnzyme;
     }
 
     public String getIllumina454KitUsed() {
@@ -268,16 +315,32 @@ public class SampleInstanceEntity {
         return librarySizeRange;
     }
 
+    public void setLibrarySizeRange(String librarySizeRange) {
+        this.librarySizeRange = librarySizeRange;
+    }
+
     public String getJumpSize() {
         return jumpSize;
+    }
+
+    public void setJumpSize(String jumpSize) {
+        this.jumpSize = jumpSize;
     }
 
     public String getInsertSizeRange() {
         return insertSizeRange;
     }
 
+    public void setInsertSizeRange(String insertSizeRange) {
+        this.insertSizeRange = insertSizeRange;
+    }
+
     public String getTissueType() {
         return tissueType;
+    }
+
+    public void setTissueType(String tissueType) {
+        this.tissueType = tissueType;
     }
 
     public String getSampleTubeBarcode() {
@@ -298,6 +361,10 @@ public class SampleInstanceEntity {
 
     public Integer getReadLength() {
         return readLength;
+    }
+
+    public void setReadLength(Integer readLength) {
+        this.readLength = readLength;
     }
 
     public Date getSubmitDate() {
@@ -474,5 +541,26 @@ public class SampleInstanceEntity {
 
     public void setConcentrationUnit(String concentrationUnit) {
         this.concentrationUnit = concentrationUnit;
+    }
+
+    public Long getSampleInstanceEntityId() {
+        return sampleInstanceEntityId;
+    }
+
+    @Nonnull
+    public LabVessel getLabVessel() {
+        return labVessel;
+    }
+
+    public SampleKitRequest getSampleKitRequest() {
+        return sampleKitRequest;
+    }
+
+    public String getSampleLibraryName() {
+        return sampleLibraryName;
+    }
+
+    public Set<SampleInstanceEntityTsk> getSampleInstanceEntityTsks() {
+        return sampleInstanceEntityTsks;
     }
 }

@@ -136,7 +136,7 @@ public class BillingTrackerProcessor extends TableProcessor {
     }
 
     @Override
-    public void processRowDetails(Map<String, String> dataRow, int dataRowIndex) {
+    public void processRowDetails(Map<String, String> dataRow, int dataRowNumber) {
 
         // Increment to start because when there is a new row (and first) the addSummaryToChargesMap will set to 0.
         // All error messages want the right row AND then return, so need this to be incremented.
@@ -149,7 +149,7 @@ public class BillingTrackerProcessor extends TableProcessor {
         Map<BillableRef, OrderBillSummaryStat> pdoSummaryStatsMap = chargesMapByPdo.get(rowPdoIdStr);
         if (pdoSummaryStatsMap == null) {
             // Update the charges map.
-            addSummaryToChargesMap(dataRowIndex, rowPdoIdStr);
+            addSummaryToChargesMap(dataRowNumber, rowPdoIdStr);
             if (!getMessages().isEmpty()) {
                 return;
             }
@@ -165,19 +165,19 @@ public class BillingTrackerProcessor extends TableProcessor {
 
         // Must have a product order or product at this point. If not, it is an error.
         if ((currentProductOrder == null) || (currentProduct == null)) {
-            addDataMessage("Sample " + currentSampleName + " cannot find PDO: " + rowPdoIdStr, dataRowIndex);
+            addDataMessage("Sample " + currentSampleName + " cannot find PDO: " + rowPdoIdStr, dataRowNumber);
             return;
         }
 
         // Verify the sample information.
-        checkSample(dataRowIndex, rowPdoIdStr, currentSampleName,
+        checkSample(dataRowNumber, rowPdoIdStr, currentSampleName,
                 dataRow.get(BillingTrackerHeader.AUTO_LEDGER_TIMESTAMP.getText()));
         if (!getMessages().isEmpty()) {
             return;
         }
 
         // Now that everything else has been set up, parse and process it.
-        parseRowForSummaryMap(dataRow, dataRowIndex, rowPdoIdStr);
+        parseRowForSummaryMap(dataRow, dataRowNumber, rowPdoIdStr);
     }
 
     private void checkSample(int dataRowIndex, String rowPdoIdStr, String currentSampleName, String autoLedgerString) {
