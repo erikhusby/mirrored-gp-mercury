@@ -844,7 +844,8 @@ public class LabBatchEjb {
 
         // Determine whether rack needs to be exported from BSP
         List<LabVessel> bspTubes = new ArrayList<>();
-        for (BarcodedTube barcodedTube : mapBarcodeToTube.values()) {
+        for (String barcode : rackScan.values()) {
+            BarcodedTube barcodedTube = mapBarcodeToTube.get(barcode);
             SampleInstanceV2 sampleInstanceV2 = barcodedTube.getSampleInstancesV2().iterator().next();
             MercurySample mercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
             if (mercurySample == null || mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
