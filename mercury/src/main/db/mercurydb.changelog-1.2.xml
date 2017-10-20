@@ -1141,4 +1141,54 @@
             <column name="lab_vessel"/>
         </createIndex>
     </changeSet>
+
+    <changeSet id="GPLIM-5122-1" author="thompson">
+        <createTable tableName="fingerprint" schemaName="mercury">
+            <column name="fingerprint_id" type="number(19,0)">
+                <constraints primaryKey="true" primaryKeyName="PK_FINGERPRINT"/>
+            </column>
+            <column name="call_confidences" type="varchar2(500)"/>
+            <column name="date_generated" type="timestamp"/>
+            <column name="disposition" type="varchar2(255)"/>
+            <column name="gender" type="varchar2(255)"/>
+            <column name="gender" type="varchar2(255)"/>
+            <column name="genome_build" type="varchar2(255)"/>
+            <column name="genotypes" type="varchar2(500)"/>
+            <column name="match" type="number(1,0)"/>
+            <column name="platform" type="varchar2(255)"/>
+            <column name="mercury_sample" type="number(19,0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="GPLIM-5122-2" author="thompson">
+        <createTable tableName="fingerprint_aud" schemaName="mercury">
+            <column name="rev" type="number(19,0)"/>
+            <column name="fingerprint_id" type="number(19,0)"/>
+            <column name="call_confidences" type="varchar2(500)"/>
+            <column name="date_generated" type="timestamp"/>
+            <column name="disposition" type="varchar2(255)"/>
+            <column name="gender" type="varchar2(255)"/>
+            <column name="gender" type="varchar2(255)"/>
+            <column name="genome_build" type="varchar2(255)"/>
+            <column name="genotypes" type="varchar2(500)"/>
+            <column name="match" type="number(1,0)"/>
+            <column name="platform" type="varchar2(255)"/>
+            <column name="mercury_sample" type="number(19,0)"/>
+        </createTable>
+        <addPrimaryKey tableName="fingerprint_aud" schemaName="mercury" columnNames="rev, fingerprint_id"
+                       constraintName="PK_FINGERPRINT_AUD"/>
+    </changeSet>
+    <changeSet id="GPLIM-5122-3" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_FP_MERCURY_SAMPLE"
+                                 baseTableName="fingerprint" baseColumnNames="mercury_sample"
+                                 referencedTableName="mercury_sample" referencedColumnNames="mercury_sample_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-5122-4" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_FPA_REV_INFO"
+                                 baseTableName="fingerprint_aud" baseColumnNames="rev"
+                                 referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-5122-5" author="thompson">
+        <createSequence sequenceName="SEQ_FINGERPRINT" schemaName="mercury" startValue="1" incrementBy="50"/>
+    </changeSet>
+
 </databaseChangeLog>
