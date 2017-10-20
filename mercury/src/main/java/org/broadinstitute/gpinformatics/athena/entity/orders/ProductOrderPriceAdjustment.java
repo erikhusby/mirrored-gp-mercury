@@ -20,7 +20,7 @@ import java.math.BigDecimal;
 @Entity
 @Audited
 @Table(name = "PDO_PRICE_ADJUSTMENT", schema = "athena")
-public class ProductOrderPriceAdjustment {
+public class ProductOrderPriceAdjustment implements PriceAdjustment{
 
     @Id
     @Column(name = "pdo_price_adjustment_id")
@@ -44,7 +44,7 @@ public class ProductOrderPriceAdjustment {
     private String customProductName;
 
     @Column(name = "adjustment_quantity")
-    private int adjustmentQuantity;
+    private Integer adjustmentQuantity;
 
     @Transient
     private Condition priceAdjustmentCondition;
@@ -55,7 +55,7 @@ public class ProductOrderPriceAdjustment {
     public ProductOrderPriceAdjustment() {
     }
 
-    public ProductOrderPriceAdjustment(BigDecimal adjustmentValue, int quantity, String customProductName) {
+    public ProductOrderPriceAdjustment(BigDecimal adjustmentValue, Integer quantity, String customProductName) {
         this.adjustmentValue = adjustmentValue;
         this.adjustmentQuantity = quantity;
         this.customProductName = customProductName;
@@ -69,15 +69,18 @@ public class ProductOrderPriceAdjustment {
         this.productOrder = productOrder;
     }
 
+    @Override
     public BigDecimal getAdjustmentValue() {
         return adjustmentValue;
     }
 
+    @Override
     public String getCustomProductName() {
         return customProductName;
     }
 
-    public int getAdjustmentQuantity() {
+    @Override
+    public Integer getAdjustmentQuantity() {
         return adjustmentQuantity;
     }
 
@@ -89,6 +92,7 @@ public class ProductOrderPriceAdjustment {
         this.priceAdjustmentCondition = priceAdjustmentCondition;
     }
 
+    @Override
     public BigDecimal getListPrice() {
         return listPrice;
     }

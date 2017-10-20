@@ -824,7 +824,8 @@ public class ProductOrderActionBeanTest {
         addonNonSeqProduct.setProductFamily(new ProductFamily(ProductFamily.ProductFamilyInfo.ALTERNATE_LIBRARY_PREP_DEVELOPMENT.getFamilyName()));
         returnMaterials.add(new SAPMaterial(addonNonSeqProduct.getPartNumber(),"1573", Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet()));
 
-        addPriceItemForProduct(testQuoteIdentifier, priceList, quoteItems, addonNonSeqProduct, "1573", "2000", "573");
+        addPriceItemForProduct(testQuoteIdentifier, priceList, quoteItems, addonNonSeqProduct, "1573", "2000", "573"
+        );
 
 
         testOrder.updateAddOnProducts(Collections.singletonList(addonNonSeqProduct));
@@ -845,11 +846,30 @@ public class ProductOrderActionBeanTest {
                 "Put it on the sequencer"));
         seqProduct.setProductFamily(new ProductFamily(ProductFamily.ProductFamilyInfo.SEQUENCE_ONLY.getFamilyName()));
 
-        returnMaterials.add(new SAPMaterial(seqProduct.getPartNumber(),"3500", Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet()));
+        final SAPMaterial seqMaterial= new SAPMaterial(seqProduct.getPartNumber(), "3500", Collections.<Condition>emptySet(),
+                Collections.<DeliveryCondition>emptySet());
+        seqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        returnMaterials.add(seqMaterial);
 
-        addPriceItemForProduct(testQuoteIdentifier, priceList, quoteItems, seqProduct, "3500", "2000", "2500");
+
+        final SAPMaterial primaryMaterial =
+                new SAPMaterial(testOrder.getProduct().getPartNumber(), "2000", Collections.<Condition>emptySet(),
+                        Collections.<DeliveryCondition>emptySet());
+        primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        returnMaterials.add(
+                primaryMaterial);
+        final SAPMaterial nonSeqMaterial =
+                new SAPMaterial(addonNonSeqProduct.getPartNumber(), "1573", Collections.<Condition>emptySet(),
+                        Collections.<DeliveryCondition>emptySet());
+        nonSeqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        returnMaterials.add(
+                nonSeqMaterial);
+
+
+        addPriceItemForProduct(testQuoteIdentifier, priceList, quoteItems, seqProduct, "3500", "2000", "2500"
+        );
         Mockito.when(mockSAPService.findProductsInSap()).thenReturn(returnMaterials);
-
+        stubProductPriceCache.refreshCache();
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
         Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuoteIdentifier)).thenReturn(testQuote);
 
@@ -961,12 +981,26 @@ public class ProductOrderActionBeanTest {
         addPriceItemForProduct(testQuoteIdentifier, priceList, quoteItems, seqProduct, "3500", "2000", "2500");
 
 
-        returnMaterials.add(new SAPMaterial(testOrder.getProduct().getPartNumber(),"2000", Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet()));
-        returnMaterials.add(new SAPMaterial(addonNonSeqProduct.getPartNumber(),"1573", Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet()));
-        returnMaterials.add(new SAPMaterial(seqProduct.getPartNumber(),"3500", Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet()));
+        final SAPMaterial primaryMaterial =
+                new SAPMaterial(testOrder.getProduct().getPartNumber(), "2000", Collections.<Condition>emptySet(),
+                        Collections.<DeliveryCondition>emptySet());
+        primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        returnMaterials.add(
+                primaryMaterial);
+        final SAPMaterial nonSeqMaterial =
+                new SAPMaterial(addonNonSeqProduct.getPartNumber(), "1573", Collections.<Condition>emptySet(),
+                        Collections.<DeliveryCondition>emptySet());
+        nonSeqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        returnMaterials.add(
+                nonSeqMaterial);
+        final SAPMaterial seqMaterial = new SAPMaterial(seqProduct.getPartNumber(), "3500", Collections.<Condition>emptySet(),
+                Collections.<DeliveryCondition>emptySet());
+        seqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        returnMaterials.add(seqMaterial);
 
 
         Mockito.when(mockSAPService.findProductsInSap()).thenReturn(returnMaterials);
+        stubProductPriceCache.refreshCache();
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
         Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuoteIdentifier)).thenReturn(testQuote);
 
@@ -1082,16 +1116,32 @@ public class ProductOrderActionBeanTest {
 
         addPriceItemForProduct(testQuoteIdentifier, priceList, quoteItems, testOrder.getProduct(), "2000", "2000",
                 "1000");
-        addPriceItemForProduct(testQuoteIdentifier, priceList, quoteItems, addonNonSeqProduct, "1573", "2000", "573");
-        addPriceItemForProduct(testQuoteIdentifier, priceList, quoteItems, seqProduct, "3500", "2000", "2500");
+        addPriceItemForProduct(testQuoteIdentifier, priceList, quoteItems, addonNonSeqProduct, "1573", "2000", "573"
+        );
+        addPriceItemForProduct(testQuoteIdentifier, priceList, quoteItems, seqProduct, "3500", "2000", "2500"
+        );
 
 
-        returnMaterials.add(new SAPMaterial(testOrder.getProduct().getPartNumber(),"2000", Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet()));
-        returnMaterials.add(new SAPMaterial(addonNonSeqProduct.getPartNumber(),"1573", Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet()));
-        returnMaterials.add(new SAPMaterial(seqProduct.getPartNumber(),"3500", Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet()));
+        final SAPMaterial primaryMaterial =
+                new SAPMaterial(testOrder.getProduct().getPartNumber(), "2000", Collections.<Condition>emptySet(),
+                        Collections.<DeliveryCondition>emptySet());
+        primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        returnMaterials.add(
+                primaryMaterial);
+        final SAPMaterial nonSeqMaterial =
+                new SAPMaterial(addonNonSeqProduct.getPartNumber(), "1573", Collections.<Condition>emptySet(),
+                        Collections.<DeliveryCondition>emptySet());
+        nonSeqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        returnMaterials.add(
+                nonSeqMaterial);
+        final SAPMaterial seqMaterial = new SAPMaterial(seqProduct.getPartNumber(), "3500", Collections.<Condition>emptySet(),
+                Collections.<DeliveryCondition>emptySet());
+        seqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        returnMaterials.add(seqMaterial);
 
 
         Mockito.when(mockSAPService.findProductsInSap()).thenReturn(returnMaterials);
+        stubProductPriceCache.refreshCache();
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
         Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuoteIdentifier)).thenReturn(testQuote);
 
@@ -1112,7 +1162,6 @@ public class ProductOrderActionBeanTest {
                 testCalculatedValues);
 
         actionBean.setEditOrder(testOrder);
-
 
         Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, null),
                 (double) (1573 * testOrder.getSamples().size() + 2000 * testOrder.getSamples().size()) + 82);
@@ -1220,12 +1269,24 @@ public class ProductOrderActionBeanTest {
         addPriceItemForProduct(testQuoteIdentifier, priceList, quoteItems, seqProduct, "3500", "2000", "2500");
 
 
-        returnMaterials.add(new SAPMaterial(testOrder.getProduct().getPartNumber(),"2000", Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet()));
-        returnMaterials.add(new SAPMaterial(addonNonSeqProduct.getPartNumber(),"1573", Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet()));
-        returnMaterials.add(new SAPMaterial(seqProduct.getPartNumber(),"3500", Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet()));
+        final SAPMaterial primaryMaterial =
+                new SAPMaterial(testOrder.getProduct().getPartNumber(), "2000", Collections.<Condition>emptySet(),
+                        Collections.<DeliveryCondition>emptySet());
+        primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        returnMaterials.add(primaryMaterial);
+        final SAPMaterial nonSeqMaterial =
+                new SAPMaterial(addonNonSeqProduct.getPartNumber(), "1573", Collections.<Condition>emptySet(),
+                        Collections.<DeliveryCondition>emptySet());
+        nonSeqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        returnMaterials.add(nonSeqMaterial);
+        final SAPMaterial seqMaterial = new SAPMaterial(seqProduct.getPartNumber(), "3500", Collections.<Condition>emptySet(),
+                Collections.<DeliveryCondition>emptySet());
+        seqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        returnMaterials.add(seqMaterial);
 
 
         Mockito.when(mockSAPService.findProductsInSap()).thenReturn(returnMaterials);
+        stubProductPriceCache.refreshCache();
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
         Mockito.when(mockQuoteService.getQuoteByAlphaId(testQuoteIdentifier)).thenReturn(testQuote);
 
@@ -1252,25 +1313,25 @@ public class ProductOrderActionBeanTest {
 
 
         Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0,
-                null), (double) (overrideCalculatedOrderValue + 82));
+                testOrder), (double) (overrideCalculatedOrderValue + 82));
         testQuote.setQuoteItems(quoteItems);
 
-        Assert.assertEquals(actionBean.estimateOutstandingOrders( testQuote, 0, null), (double) overrideCalculatedOrderValue + 82);
+        Assert.assertEquals(actionBean.estimateOutstandingOrders( testQuote, 0, testOrder), (double) overrideCalculatedOrderValue + 82);
 
         testOrder.updateAddOnProducts(Arrays.asList(addonNonSeqProduct, seqProduct));
 
-        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, null), (double) overrideCalculatedOrderValue + 82);
+        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, testOrder), (double) overrideCalculatedOrderValue + 82);
 
         testOrder.setProduct(seqProduct);
 
-        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, null), (double) overrideCalculatedOrderValue + 82);
+        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, testOrder), (double) overrideCalculatedOrderValue + 82);
 
         Assert.assertEquals(testOrder.getUnbilledSampleCount(), 75);
         ProductOrderSample abandonedSample = testOrder.getSamples().get(0);
         abandonedSample.setDeliveryStatus(ProductOrderSample.DeliveryStatus.ABANDONED);
 
         Assert.assertEquals(testOrder.getUnbilledSampleCount(), 74);
-        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, null), (double) overrideCalculatedOrderValue + 82);
+        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, testOrder), (double) overrideCalculatedOrderValue + 82);
 
 
         ProductOrder testChildOrder = new ProductOrder();
@@ -1282,11 +1343,11 @@ public class ProductOrderActionBeanTest {
         Assert.assertEquals(testChildOrder.getUnbilledSampleCount(), 1);
         Assert.assertEquals(testOrder.getUnbilledSampleCount(), 74);
 
-        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, null), (double) overrideCalculatedOrderValue + 82);
+        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, testOrder), (double) overrideCalculatedOrderValue + 82);
 
         testChildOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
-        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, null), (double) overrideCalculatedOrderValue + 82);
+        Assert.assertEquals(actionBean.estimateOutstandingOrders(testQuote, 0, testOrder), (double) overrideCalculatedOrderValue + 82);
 
         Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty());
 

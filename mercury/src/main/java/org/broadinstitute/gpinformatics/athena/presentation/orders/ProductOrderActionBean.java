@@ -55,6 +55,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProj
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
+import org.broadinstitute.gpinformatics.athena.entity.orders.PriceAdjustment;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderCompletionStatus;
@@ -898,20 +899,31 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         List<ProductOrder> ordersWithCommonQuote = productOrderDao.findOrdersWithCommonQuote(foundQuote.getAlphanumericId());
 
-        final OrderCalculatedValues calculatedValues = sapService
-                .calculateOpenOrderValues(addedSampleCount, foundQuote.getAlphanumericId(), productOrder);
+        OrderCalculatedValues calculatedValues = null;
+        try {
+            calculatedValues = sapService
+                    .calculateOpenOrderValues(addedSampleCount, foundQuote.getAlphanumericId(), productOrder);
+        } catch (SAPIntegrationException e) {
+            logger.info("Attempting to calculate order from SAP yeilded an error");
+        }
 
         Set<String> sapOrderIDsToExclude = new HashSet<>();
 
         double value = 0d;
 
-        value += calculatedValues.getPotentialOrderValue().doubleValue();
+        if (calculatedValues != null &&
+            calculatedValues.getPotentialOrderValue() != null) {
 
-        for (OrderValue orderValue : calculatedValues.getValue()) {
-            if(productOrder != null && !StringUtils.equals(orderValue.getSapOrderID(), productOrder.getSapOrderNumber())) {
-                value += orderValue.getValue().doubleValue();
+            value += calculatedValues.getPotentialOrderValue().doubleValue();
+
+            for (OrderValue orderValue : calculatedValues.getValue()) {
+
+                if (productOrder == null || (productOrder != null && !StringUtils
+                        .equals(orderValue.getSapOrderID(), productOrder.getSapOrderNumber()))) {
+                    value += orderValue.getValue().doubleValue();
+                }
+                sapOrderIDsToExclude.add(orderValue.getSapOrderID());
             }
-            sapOrderIDsToExclude.add(orderValue.getSapOrderID());
         }
 
         return value + getValueOfOpenOrders(ordersWithCommonQuote, foundQuote, sapOrderIDsToExclude);
@@ -1006,6 +1018,18 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         if (StringUtils.isNotBlank(foundPrice)) {
             Double productPrice = Double.valueOf(foundPrice);
+
+            final PriceAdjustment adjustmentForProduct = productOrder.getAdjustmentForProduct(product);
+            int adjustedCount = unbilledCount;
+            if(adjustmentForProduct != null) {
+                if(adjustmentForProduct.getAdjustmentValue() != null) {
+                    productPrice = adjustmentForProduct.getAdjustmentValue().doubleValue();
+                }
+
+                /* todo SGM adjust based on customization... if there are any
+                *  Must account for quantity.  Probably need to pass in billed count to do so.
+                * */
+            }
 
             productValue = productPrice * (unbilledCount);
         } else {

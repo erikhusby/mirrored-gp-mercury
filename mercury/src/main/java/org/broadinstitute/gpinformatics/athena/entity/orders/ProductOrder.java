@@ -2102,10 +2102,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     public void setCustomPriceAdjustment(ProductOrderPriceAdjustment customPriceAdjustment)
             throws ValidationException {
 
-        if(customPriceAdjustments.size()>1) {
-            throw new ValidationException("There should only be one price adjustment per product");
-        }
-
         this.customPriceAdjustments.clear();
         addCustomPriceAdjustment(customPriceAdjustment);
     }
@@ -2248,7 +2244,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                                 Integer.valueOf(mappedValues.get(addOnProduct.getPartNumber()).getQuantity()),
                                 mappedValues.get(addOnProduct.getPartNumber()).getCustomName());
 
-                productOrderAddOn.setCustomPriceAdjustments(Collections.singleton(productOrderAddOnPriceAdjustment));
+                productOrderAddOn.setCustomPriceAdjustment(productOrderAddOnPriceAdjustment);
             }
         }
     }
@@ -2352,5 +2348,23 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                 }
             }
         }
+    }
+
+    public PriceAdjustment getAdjustmentForProduct(Product product) {
+
+        PriceAdjustment foundAdjustment = null;
+
+        if(getProduct().equals(product)) {
+            foundAdjustment = getSinglePriceAdjustment();
+        } else {
+            for (ProductOrderAddOn productOrderAddOn : getAddOns()) {
+                if(productOrderAddOn.getAddOn().equals(product)) {
+                    foundAdjustment = productOrderAddOn.getSingleCustomPriceAdjustment();
+                    break;
+                }
+            }
+        }
+
+        return foundAdjustment;
     }
 }
