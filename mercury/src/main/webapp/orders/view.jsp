@@ -87,10 +87,15 @@ $j(document).ready(function () {
         var api = new $j.fn.dataTable.Api(settings);
         var table = api.table();
         var remainingSamples = [];
-        table.column(0).data().each(function (cell) {
-            remainingSamples.push($j(cell)[0]);
+        table.rows().data().each(function (row) {
+            var data = $j(row);
+            data.each(function () {
+                var pdoId = this.PRODUCT_ORDER_SAMPLE_ID;
+                if (!this.includeSampleData && remainingSamples.indexOf(pdoId)<0){
+                    remainingSamples.push(pdoId);
+                }
+            });
         });
-
         sampleInfoBatchUpdate(remainingSamples, table);
         updateSampleSummary();
     }
@@ -126,7 +131,6 @@ $j(document).ready(function () {
         var table = new $j.fn.dataTable.Api(settings).table();
 
         // When there are greater than 1000 samples split the call to updateSampleInformation
-
         fetchSize = pdoSampleCount > 2000 ? 2000: pdoSampleCount;
         while (samplesToFetch.length > 0) {
             (function (samples) {
@@ -751,17 +755,12 @@ function updateSampleInformation(samples, table, includeSampleSummary) {
             },
             success: function (json) {
                 if (json) {
-                    var dataMap = {};
                     for (var item of json.data) {
-                        dataMap[item.rowId] = item;
+                        var row = table.row("#"+item.rowId);
+                        row.data(item);
+                        row.invalidate;
                     }
-                    table.rows().every(function () {
-                        var newData = dataMap[this.data().rowId];
-                        if (newData) {
-                            this.data(newData);
-                            this.invalidate();
-                        }
-                    });
+
                     updateSampleDataProgress(json.rowsWithSampleData, recordsTotal);
                 }
             },
