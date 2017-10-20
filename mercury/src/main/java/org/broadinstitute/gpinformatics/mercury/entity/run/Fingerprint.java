@@ -25,9 +25,28 @@ import java.util.Date;
 public class Fingerprint {
 
     public enum Disposition {
-        PASS,
-        FAIL,
-        NONE
+        PASS("P"),
+        FAIL("F"),
+        NONE("N");
+
+        private final String abbreviation;
+
+        Disposition(String abbreviation) {
+            this.abbreviation = abbreviation;
+        }
+
+        public String getAbbreviation() {
+            return abbreviation;
+        }
+
+        public static Disposition byAbbreviation(String abbreviation) {
+            for (Disposition disposition : Disposition.values()) {
+                if (disposition.getAbbreviation().equals(abbreviation)) {
+                    return disposition;
+                }
+            }
+            return null;
+        }
     }
 
     public enum Platform {
@@ -44,9 +63,28 @@ public class Fingerprint {
     }
 
     public enum Gender {
-        MALE,
-        FEMALE,
-        UNKNOWN
+        MALE("M"),
+        FEMALE("F"),
+        UNKNOWN("U");
+
+        private final String abbreviation;
+
+        Gender(String abbreviation) {
+            this.abbreviation = abbreviation;
+        }
+
+        public String getAbbreviation() {
+            return abbreviation;
+        }
+
+        public static Gender byAbbreviation(String abbreviation) {
+            for (Gender gender : Gender.values()) {
+                if (gender.getAbbreviation().equals(abbreviation)) {
+                    return gender;
+                }
+            }
+            return null;
+        }
     }
 
     @SuppressWarnings("unused")
@@ -88,6 +126,7 @@ public class Fingerprint {
     public Fingerprint(MercurySample mercurySample, Disposition disposition, Platform platform, GenomeBuild genomeBuild,
             Date dateGenerated, String genotypes, String callConfidences, Gender gender, Boolean match) {
         this.mercurySample = mercurySample;
+        mercurySample.getFingerprints().add(this);
         this.disposition = disposition;
         this.platform = platform;
         this.genomeBuild = genomeBuild;

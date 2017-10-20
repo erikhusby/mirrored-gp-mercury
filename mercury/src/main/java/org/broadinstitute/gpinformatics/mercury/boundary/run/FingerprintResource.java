@@ -22,6 +22,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -148,6 +149,13 @@ public class FingerprintResource {
             "rs2108978",
             "rs753307"
     };
+    private static final Map<String, Integer> mapRsIdToIndex = new LinkedHashMap<>();
+
+    static {
+        for (int i = 0; i < rsIds.length; i++) {
+            mapRsIdToIndex.put(rsIds[i], i);
+        }
+    }
 
     @NotNull
     @DaoFree
@@ -173,7 +181,7 @@ public class FingerprintResource {
                     mercurySample.getLabVessel().iterator().next().evaluateCriteria(
                             fpCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
                     for (Fingerprint fingerprint : fpCriteria.getFingerprints()) {
-                        fingerprintEntities.add(new ImmutablePair<String, Fingerprint>(
+                        fingerprintEntities.add(new ImmutablePair<>(
                                 stringMercurySampleEntry.getKey(), fingerprint));
                     }
                 } else {
@@ -191,21 +199,50 @@ public class FingerprintResource {
             List<FingerprintCallsBean> calls = new ArrayList<>();
             Fingerprint fingerprint = stringFingerprintPair.getRight();
             for (int i = 0; i < rsIds.length; i++) {
-                calls.add(new FingerprintCallsBean(rsIds[i], fingerprint.getGenotypes().charAt(i),
-                        fingerprint.getCallConfidences().));
+                calls.add(new FingerprintCallsBean(rsIds[i], fingerprint.getGenotypes().substring(i * 2, i * 2 + 1),
+                        fingerprint.getCallConfidences().substring(i * 4, i * 4 + 4)));
             }
-            fingerprints.add(new FingerprintBean(stringFingerprintPair.getLeft(), fingerprint.getDisposition(),
-                    fingerprint.getMercurySample().getSampleKey(), fingerprint.getPlatform(),
-                    fingerprint.getGenomeBuild(), fingerprint.getDateGenerated(), fingerprint.getGender(), calls));
+            fingerprints.add(new FingerprintBean(stringFingerprintPair.getLeft(),
+                    fingerprint.getDisposition().getAbbreviation(), fingerprint.getMercurySample().getSampleKey(),
+                    fingerprint.getPlatform().name(), fingerprint.getGenomeBuild().name(),
+                    fingerprint.getDateGenerated(), fingerprint.getGender().getAbbreviation(), calls));
         }
 
-        FingerprintsBean fingerprintsBean = new FingerprintsBean(fingerprints);
-        return fingerprintsBean;
+        return new FingerprintsBean(fingerprints);
     }
 
     @POST
     public void post(FingerprintBean fingerprintBean) {
-        fingerprintBean.getAliquotLsid();
-        Fingerprint fingerprint = new Fingerprint(, , , , , , , , );
+        String sampleKey = fingerprintBean.getAliquotLsid().substring(fingerprintBean.getAliquotLsid().lastIndexOf(':'));
+        MercurySample mercurySample = mercurySampleDao.findBySampleKey(sampleKey);
+        if (mercurySample == null) {
+            mercurySample = new MercurySample(sampleKey, MercurySample.MetadataSource.BSP);
+            mercurySampleDao.persist(mercurySample);
+        }
+
+        String[] genotypes = new String[rsIds.length];
+        String[] callConfidences = new String[rsIds.length];
+        for (FingerprintCallsBean fingerprintCallsBean : fingerprintBean.getCalls()) {
+            Integer index = mapRsIdToIndex.get(fingerprintCallsBean.getRsid());
+            genotypes[index] = fingerprintCallsBean.getGenotype();
+            callConfidences[index] = fingerprintCallsBean.getCallConfidence();
+        }
+        StringBuilder genotypesBuilder = new StringBuilder();
+        StringBuilder callConfidencesBuilder = new StringBuilder();
+        for (int i = 0; i < rsIds.length; i++) {
+            genotypesBuilder.append(genotypes[i]);
+            callConfidencesBuilder.append(callConfidences[i]);
+        }
+
+        new Fingerprint(mercurySample,
+                Fingerprint.Disposition.byAbbreviation(fingerprintBean.getDisposition()),
+                Fingerprint.Platform.valueOf(fingerprintBean.getPlatform()),
+                Fingerprint.GenomeBuild.valueOf(fingerprintBean.getGenomeBuild()),
+                fingerprintBean.getDateGenerated(),
+                genotypesBuilder.toString(),
+                callConfidencesBuilder.toString(),
+                Fingerprint.Gender.byAbbreviation(fingerprintBean.getGender()),
+                true);
+        mercurySampleDao.flush();
     }
 }
