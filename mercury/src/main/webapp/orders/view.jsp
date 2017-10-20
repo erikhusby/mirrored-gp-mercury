@@ -52,6 +52,21 @@
             background: #c4eec0;
             height: 15px;
         }
+        /* css used to indicate slow columns */
+        .em-turtle {
+            background-image: url("${ctxpath}/images/turtle.png") !important;
+            background-size: 16px 16px;
+            background-repeat: no-repeat;
+            background-position: right 5px center;
+        }
+        .image-small {
+            width: 16px;
+            height: 16px;
+        }
+        .slow-colunms-hidden {
+            box-shadow: inset 0 0 10px orange
+        }
+
         .sampleDataProgressText{
             position: absolute;
             margin-left: 1em;
@@ -77,6 +92,30 @@ $j(document).ready(function () {
         });
 
         sampleInfoBatchUpdate(remainingSamples, table);
+        updateSampleSummary();
+    }
+
+    function updateSampleSummary(){
+        $j.ajax({
+            url: "${ctxpath}/orders/order.action?<%= ProductOrderActionBean.GET_SAMPLE_SUMMARY %>",
+            data: {
+                'productOrder': "${actionBean.editOrder.businessKey}",
+            },
+            method: 'POST',
+            dataType: 'json',
+            error: function (obj, error, ex) {
+                console.log(error, obj.responseText, JSON.stringify(ex));
+            },
+            success: function (json) {
+                if (json['summary']) {
+                    writeSummaryData(json);
+                }
+                if (json['<%=ProductOrderSampleBean.SAMPLES_NOT_RECEIVED%>']) {
+                    $j("#numberSamplesNotReceived").html(json['<%=ProductOrderSampleBean.SAMPLES_NOT_RECEIVED%>']);
+                }
+            }
+        })
+
     }
 
     function sampleInfoBatchUpdate(samplesToFetch, settings) {
@@ -124,6 +163,7 @@ $j(document).ready(function () {
             ajax: {
                 url: "${ctxpath}/orders/order.action?<%= ProductOrderActionBean.GET_SAMPLE_DATA %>",
                 method: 'POST',
+                dataType: 'json',
                 data: function (data, settings) {
                     data.productOrder = "${actionBean.editOrder.businessKey}";
                     data.initialLoad = true;
@@ -136,12 +176,6 @@ $j(document).ready(function () {
                     var rowsWithSampleData = data['<%=ProductOrderSampleBean.SAMPLE_DATA_ROW_COUNT%>'];
                     var recordsTotal = data['<%=ProductOrderSampleBean.RECORDS_TOTAL%>'];
                     initSampleDataProgress(rowsWithSampleData, recordsTotal);
-                    if (data['<%=ProductOrderSampleBean.COMMENT%>']) {
-                        writeSummaryData(data);
-                    }
-                    if (data['<%=ProductOrderSampleBean.SAMPLES_NOT_RECEIVED%>']) {
-                        $j("#numberSamplesNotReceived").html(data['<%=ProductOrderSampleBean.SAMPLES_NOT_RECEIVED%>']);
-                    }
                 },
             },
             "columns": [
@@ -297,14 +331,60 @@ $j(document).ready(function () {
     function initColumnVisibility(settings) {
         var api=$j.fn.dataTable.Api(settings);
         var columnVisibilityKey = "columnVisibility";
-        $j('#sampleData').on('column-visibility.dt', function (e, settings, column, state) {
+        var $sampleDataTable = $j('#sampleData');
+        var $colVis = $j(".buttons-colvis");
+
+        $sampleDataTable.on('column-visibility.dt', function (e, settings, column, state) {
             $j("body").data(columnVisibilityKey, state);
         });
+
+
+        $colVis.popover({
+            trigger: "hover", placement: 'top', html: true,
+            content: "Click to change column visibility. Columns marked with a <img src='${ctxpath}/images/turtle.png' class='image-small'/> will negatively impact page performance.</div>"
+        });
+
+        function updateShowHideButton() {
+            var $popover = $colVis.closest(".popover")
+            if (api.column(":hidden").length>0) {
+                $colVis.addClass("slow-colunms-hidden");
+                $colVis.attr('data-original-title','Some data columns are hidden.');
+            } else {
+                $colVis.removeClass("slow-colunms-hidden");
+                $colVis.attr('data-original-title','Hide unneeded columns.');
+            }
+        }
+
+        $j(".slow-colunms-hidden").on('hover', function(){
+           this.setAttribute('tooltip', 'Some data columns are hidden')
+        });
+        $sampleDataTable.on('init.dt', updateShowHideButton);
+
+        var slowColumns = ${actionBean.slowColumns}
+
+            // When the "Show or Hide" button is clicked
+            $j(document.body).on("click", "a.buttons-colvis", function (event) {
+                // When colvis modal is loading
+                $j.when($j(event.target).load()).then(function (event2) {
+                    var slowButtons = $j("a.buttons-columnVisibility").filter(function () {
+                        var $button = $j(this);
+                        // test if the column headers is in the slowColumns array.
+                        // the check for undefined is to prevent this from being called very time
+                        return $button.data('tooltip') === undefined && slowColumns.indexOf($button.text().trim()) >= 0;
+                    });
+                    slowButtons.addClass("em-turtle");
+                    slowButtons.attr('title', 'Enabling this column may slow page loading');
+                    slowButtons.tooltip();
+                });
+//                updateHowHideButton();
+            })
 
         // If a column that was previously hidden but becomes visible the page
         // must be reloaded since there is no data in that column.
         $j(document.body).on("click", ".dt-button-background", function () {
             api.state.save();
+            updateShowHideButton();
+
             var sessionVisibility = !undefined && $j("body").data(columnVisibilityKey) || false;
             if (sessionVisibility) {
 //                api.ajax.reload();
@@ -594,7 +674,7 @@ function setupDialogs() {
 
 function writeSummaryData(json) {
     var dataList = '<ul>';
-    json.comments.map(function (item) {
+    json.summary.map(function (item) {
         dataList += '<li>' + item + '</li>'
     });
     dataList += '</ul>';
@@ -682,13 +762,7 @@ function updateSampleInformation(samples, table, includeSampleSummary) {
                             this.invalidate();
                         }
                     });
-                    if (json.comments) {
-                        writeSummaryData(json);
-                    }
                     updateSampleDataProgress(json.rowsWithSampleData, recordsTotal);
-                    if (json.numberSamplesNotReceived) {
-                        $j("#numberSamplesNotReceived").html(json.numberSamplesNotReceived);
-                    }
                 }
             },
             complete: function () {
