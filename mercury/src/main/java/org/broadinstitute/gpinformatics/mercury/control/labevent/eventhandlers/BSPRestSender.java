@@ -186,7 +186,8 @@ public class BSPRestSender implements Serializable {
                 }
             }
         }
-        if (targetEvent.getLabEventType().getAddMetadataToBsp() == LabEventType.AddMetadataToBsp.PDO) {
+        if (atLeastOneTransfer &&
+                targetEvent.getLabEventType().getAddMetadataToBsp() == LabEventType.AddMetadataToBsp.PDO) {
             MetadataType metadataType = new MetadataType();
             metadataType.setName("PLATE_NAME");
             String plateNamePrefix = messagePdo.equals(PDO_NOT_NEEDED) ?
