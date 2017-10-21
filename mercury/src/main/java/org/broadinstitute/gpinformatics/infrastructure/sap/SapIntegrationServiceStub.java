@@ -51,13 +51,8 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
     }
 
     @Override
-    public void createProductInSAP(Product product) throws SAPIntegrationException {
-
-    }
-
-    @Override
-    public void changeProductInSAP(Product product) throws SAPIntegrationException {
-
+    public void publishProductInSAP(Product product) throws SAPIntegrationException {
+        
     }
 
     @Override

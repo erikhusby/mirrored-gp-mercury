@@ -351,11 +351,11 @@
                 </div>
 
                 <div class="control-group">
-                    <stripes:label for="externalProductName" class="control-label">
+                    <stripes:label for="alternateExternalName" class="control-label">
                         Alternate (External) Product Name
                     </stripes:label>
                     <div class="controls">
-                        <stripes:text id="externalProductName" name="editProduct.externalProductName" class="defaultText input-xxlarge"
+                        <stripes:text id="alternateExternalName" name="editProduct.alternateExternalName" class="defaultText input-xxlarge"
                             title="Enter the Commercial/Clinical (External) name of the new product"/>
                     </div>
                 </div>
