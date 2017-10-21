@@ -6,6 +6,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.orders.PriceAdjustment;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOnPriceAdjustment;
@@ -289,11 +290,17 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         //todo SGM must account for override quantity when determining sample count
 
+        final PriceAdjustment adjustmentForProduct = placedOrder.getAdjustmentForProduct(product);
+        Integer adjustmentQuantity = null;
+        if(adjustmentForProduct != null) {
+            adjustmentQuantity = adjustmentForProduct.getAdjustmentQuantity();
+        }
+
         if (product.getSupportsNumberOfLanes() && placedOrder.getLaneCount() > 0) {
-            sampleCount += placedOrder.getLaneCount();
+            sampleCount += (adjustmentQuantity != null) ?adjustmentQuantity :placedOrder.getLaneCount();
         } else {
             ProductOrder targetSapPdo = ProductOrder.getTargetSAPProductOrder(placedOrder);
-            sampleCount += targetSapPdo.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY) + additionalSampleCount;
+            sampleCount += (adjustmentQuantity != null)?adjustmentQuantity:targetSapPdo.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY) + additionalSampleCount;
         }
         return sampleCount;
     }
