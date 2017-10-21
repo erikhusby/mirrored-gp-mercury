@@ -108,6 +108,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
@@ -1011,7 +1012,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         double productValue = 0d;
         String foundPrice;
         try {
-            foundPrice = productOrderEjb.validateSAPAndQuoteServerPrices(quote,product, productOrder);
+            //todo sgm revert this so that we are still pulling from price listF
+            foundPrice = productOrderEjb.validateSAPAndQuoteServerPrices(quote, product, productOrder);
         } catch (InvalidProductException e) {
             throw new InvalidProductException("For '" + product.getDisplayName() + "' " + e.getMessage(), e);
         }
@@ -1922,8 +1924,17 @@ public class ProductOrderActionBean extends CoreActionBean {
                 JSONObject item = new JSONObject();
                 item.put("key", addOn.getBusinessKey());
                 item.put("value", addOn.getProductName());
-                item.put("researchListPrice", productPriceCache.findByProduct(addOn, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD).getBasePrice() );
-                item.put("externalListPrice", productPriceCache.findByProduct(addOn, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES).getBasePrice());
+                item.put("researchListPrice", priceListCache.findByKeyFields(addOn.getPrimaryPriceItem()).getPrice());
+
+                String externalPrice = null;
+                if (addOn.getExternalPriceItem() != null) {
+                    final QuotePriceItem externalPriceListItem = priceListCache.findByKeyFields(addOn.getExternalPriceItem());
+                    if(externalPriceListItem != null) {
+                        externalPrice = externalPriceListItem.getPrice();
+                    }
+                }
+
+                item.put("externalListPrice", (externalPrice != null) ?externalPrice:"");
 
                 itemList.put(item);
             }
@@ -2301,8 +2312,15 @@ public class ProductOrderActionBean extends CoreActionBean {
             productInfo.put("clinicalProduct", productEntity.isClinicalProduct());
             productInfo.put("externalProduct", productEntity.isExternalOnlyProduct());
             productInfo.put("productName", productEntity.getName());
-            productInfo.put("researchListPrice", productPriceCache.findByProduct(productEntity, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD).getBasePrice());
-            productInfo.put("externalListPrice", productPriceCache.findByProduct(productEntity, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES).getBasePrice());
+            productInfo.put("researchListPrice", priceListCache.findByKeyFields(productEntity.getPrimaryPriceItem()).getPrice());
+            String externalPrice = null;
+            if (productEntity.getExternalPriceItem() != null) {
+                final QuotePriceItem externalPriceItem = priceListCache.findByKeyFields(productEntity.getExternalPriceItem());
+                if (externalPriceItem != null) {
+                    externalPrice = externalPriceItem.getPrice();
+                }
+            }
+            productInfo.put("externalListPrice", (externalPrice != null)?externalPrice:"");
         }
 
         return createTextResolution(productInfo.toString());
@@ -2554,19 +2572,19 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    private void testForPriceItemValidity(ProductOrder editOrder, Quote orderQuote) {
-        try {
-            if(!productOrderEjb.areProductPricesValid(editOrder, new HashSet<AccessItem>(), orderQuote)) {
-                final String errorMessage = "One of the price items on this orders products is invalid";
-                if(editOrder.isSavedInSAP()) {
-                    addGlobalValidationError(errorMessage);
-                }
-            }
-        } catch (InvalidProductException e) {
-            addGlobalValidationError(e.getMessage());
-        }
-    }
-
+//    private void testForPriceItemValidity(ProductOrder editOrder, Quote orderQuote) {
+//        try {
+//            if(!productOrderEjb.areProductPricesValid(editOrder, new HashSet<AccessItem>(), orderQuote)) {
+//                final String errorMessage = "One of the price items on this orders products is invalid";
+//                if(editOrder.isSavedInSAP()) {
+//                    addGlobalValidationError(errorMessage);
+//                }
+//            }
+//        } catch (InvalidProductException e) {
+//            addGlobalValidationError(e.getMessage());
+//        }
+//    }
+//
     @HandlesEvent(ADD_SAMPLES_ACTION)
     public Resolution addSamples() throws Exception {
         List<ProductOrderSample> samplesToAdd = stringToSampleList(addSamplesText);
