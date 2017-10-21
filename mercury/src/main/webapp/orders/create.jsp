@@ -446,6 +446,10 @@
                         updateUIForMaterialInfoChoice(index, getSelectedPostReceiveOptions(index));
                     });
                     $j("#skipQuoteDiv").hide();
+                    $j("#showCustomizeWindow").hide();
+                    $j("#clinicalAttestationDiv").hide();
+                    $j("#customizationContent").hide();
+                    $j("#primaryProductListPrice").hide();
                     updateUIForProductChoice();
                     updateUIForProjectChoice();
                     updateFundsRemaining();
@@ -1523,13 +1527,13 @@
                                               title="Enter the product name for this order"/>
                         </c:otherwise>
                     </c:choose>
-                        <div id="primaryProductListPrice" />
+                        <div id="primaryProductListPrice" ></div>
                     </div>
                 </div>
 
                 <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager) %>">
-                    <div class="view-control-group control-group">
-                        <label class="control-label label-form">Order Customizations</label>
+                    <div class="control-group">
+                        <label class="control-label">Order Customizations</label>
 
                         <div class="controls">
                             <div class="form-value" id="customizationContent"></div>
@@ -1549,7 +1553,7 @@
                                     </c:if>
                                 </c:when>
                                 <c:otherwise>
-                                    <stripes:select name="orderType" id="orderType">
+                                    <stripes:select name="orderType" id="orderType" class="form-value">
                                         <stripes:option value="">Select an Order Type</stripes:option>
                                         <stripes:options-collection collection="${actionBean.orderTypeDisplayNames}"
                                                                     label="displayName"
@@ -1580,17 +1584,16 @@
                 <security:authorizeBlock roles="<%= roles(GPProjectManager, PDM, Developer) %>">
                     <div class="control-group">
                         <div class="controls">
-                            <a href="#" id="showCustomizeWindow">Customize product and add-ons for this order</a></div>
+                            <a href="#" id="showCustomizeWindow" class="form-value">Customize product and add-ons for this order</a></div>
                     </div>
                 </security:authorizeBlock>
 
                 <div id="clinicalAttestationDiv" class="controls controls-text">
 
                     <stripes:checkbox name="editOrder.clinicalAttestationConfirmed"
-                                      id="clinicalAttestationConfirmed"/>
+                                      id="clinicalAttestationConfirmed" class="form-value"/>
                         ${actionBean.clinicalAttestationMessage}
                 </div>
-
 
                 <div id="numberOfLanesDiv" class="control-group" style="display: ${actionBean.editOrder.requiresLaneCount() ? 'block' : 'none'};">
                     <stripes:label for="numberOfLanes" class="control-label">

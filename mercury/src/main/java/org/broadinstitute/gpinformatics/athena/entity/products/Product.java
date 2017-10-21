@@ -224,6 +224,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         clonedProduct.setInsertSize(productToClone.getInsertSize());
         clonedProduct.setLoadingConcentration(productToClone.getLoadingConcentration());
         clonedProduct.setPairedEndRead(productToClone.getPairedEndRead());
+        clonedProduct.setClinicalProduct(productToClone.isClinicalProduct());
 
         for (RiskCriterion riskCriterion : productToClone.getRiskCriteria()) {
             clonedProduct.addRiskCriteria(new RiskCriterion(riskCriterion.getType(), riskCriterion.getOperator(), riskCriterion.getValue()));

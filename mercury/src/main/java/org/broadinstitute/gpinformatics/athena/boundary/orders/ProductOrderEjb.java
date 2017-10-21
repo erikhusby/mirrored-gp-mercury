@@ -535,21 +535,36 @@ public class ProductOrderEjb {
             productListFromOrder.add(productOrderAddOn.getAddOn());
             priceItemNameList.add(new AccessItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getName()));
         }
-        return determinePriceItemValidity(productListFromOrder, orderQuote, editedProductOrder);
+        return determineProductAndPriceItemValidity(productListFromOrder, orderQuote, editedProductOrder);
     }
 
-    private boolean determinePriceItemValidity(Collection<Product> productsToConsider,
-                                               Quote orderQuote, ProductOrder productOrder) throws InvalidProductException {
+    private boolean determineProductAndPriceItemValidity(Collection<Product> productsToConsider,
+                                                         Quote orderQuote, ProductOrder productOrder) throws InvalidProductException {
         boolean allItemsValid = true;
         QuotePriceItem primaryPriceItem;
         if (CollectionUtils.isNotEmpty(productsToConsider)) {
             for (Product product : productsToConsider) {
                 try {
+                    SapIntegrationClientImpl.SAPCompanyConfiguration productSearchConfiguration =
+                            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
                     PriceItem priceItem = product.getPrimaryPriceItem();
-                    if(productOrder.getOrderType() == ProductOrder.OrderAccessType.COMMERCIAL &&
-                            product.getExternalPriceItem()!= null) {
-                        priceItem = product.getExternalPriceItem();
+                    if(productOrder.getOrderType() == ProductOrder.OrderAccessType.COMMERCIAL) {
+                        productSearchConfiguration = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES;
+                        if (product.getExternalPriceItem() != null) {
+                            priceItem = product.getExternalPriceItem();
+                        }
                     }
+
+                    //todo sgm do we need to include SAP product price cache?
+
+                    final SAPMaterial foundMaterial =
+                            productPriceCache.findByProduct(product, productSearchConfiguration);
+
+                    if (foundMaterial == null) {
+                        allItemsValid = false;
+                        break;
+                    }
+
                     primaryPriceItem =
                             priceListCache.findByKeyFields(priceItem.getPlatform(),
                                     priceItem.getCategory(),
