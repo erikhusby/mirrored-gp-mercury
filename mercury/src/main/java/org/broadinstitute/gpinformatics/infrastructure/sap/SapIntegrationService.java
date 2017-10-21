@@ -69,19 +69,14 @@ public interface SapIntegrationService {
      * representation of the price of work.  Products are now directly reflected in the System which manages our
      * financial records (SAP).  This method will allow Mercury to create a representation of a Product within SAP
      * for the purpose of tracking projected and actual work
-     * @param product The Product information to be reflected in SAP
-     * @throws SAPIntegrationException
-     */
-    void createProductInSAP(Product product) throws SAPIntegrationException;
-
-    /**
-     * For an existing product, this method will allow Mercury to update that product with any changes made within
+     * 
+     * For an existing product, this method will also allow Mercury to update that product with any changes made within
      * Mercury
      * @param product The Product information to be reflected in SAP
      * @throws SAPIntegrationException
      */
-    void changeProductInSAP(Product product) throws SAPIntegrationException;
-
+    void publishProductInSAP(Product product) throws SAPIntegrationException;
+    
     Set<SAPMaterial> findProductsInSap() throws SAPIntegrationException;
 
     OrderCalculatedValues calculateOpenOrderValues(int addedSampleCount, String quoteId, ProductOrder productOrder) throws SAPIntegrationException;

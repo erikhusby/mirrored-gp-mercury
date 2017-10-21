@@ -333,11 +333,7 @@ public class ProductEjb {
                     Collections.singleton(new AccessItem(productToPublish.getPrimaryPriceItem().getName())))
                 && control.isEnabled()) {
                 try {
-                    if (productPriceCache.productExists(productToPublish)) {
-                        sapService.changeProductInSAP(productToPublish);
-                    } else {
-                        sapService.createProductInSAP(productToPublish);
-                    }
+                    sapService.publishProductInSAP(productToPublish);
                     productToPublish.setSavedInSAP(true);
 
                 } catch (SAPIntegrationException e) {

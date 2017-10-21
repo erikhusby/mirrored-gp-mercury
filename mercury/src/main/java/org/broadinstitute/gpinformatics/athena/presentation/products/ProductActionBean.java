@@ -269,14 +269,6 @@ public class ProductActionBean extends CoreActionBean {
     @After(stages = LifecycleStage.BindingAndValidation, on = LIST_ACTION)
     public void allProductsInit() {
         allProducts = productDao.findProducts(availability, TopLevelOnly.NO, IncludePDMOnly.YES);
-        for (Product product : allProducts) {
-            final QuotePriceItem priceItem = priceListCache.findByKeyFields(product.getPrimaryPriceItem());
-            if(priceItem != null) {
-                product.getPrimaryPriceItem().setUnits(priceItem.getUnit());
-                product.getPrimaryPriceItem().setPrice(priceItem.getPrice());
-            }
-        }
-
     }
 
     /**

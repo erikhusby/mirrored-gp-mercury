@@ -58,6 +58,9 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     @Inject
     private PriceListCache priceListCache;
 
+    @Inject
+    private SAPProductPriceCache productPriceCache;
+
     private SapIntegrationClientImpl wrappedClient;
 
     private final static Log log = LogFactory.getLog(SapIntegrationServiceImpl.class);
@@ -374,22 +377,6 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         return getClient().createDeliveryDocument(deliveryDocument);
     }
 
-    @Override
-    public void createProductInSAP(Product product) throws SAPIntegrationException {
-        SAPMaterial newMaterial = initializeSapMaterialObject(product);
-
-        if(!product.isExternalOnlyProduct()) {
-            getClient().createMaterial(newMaterial);
-        }
-
-        if(product.hasExternalCounterpart() || product.isClinicalProduct() || product.isExternalOnlyProduct()) {
-            newMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES);
-            newMaterial.setMaterialName(StringUtils.isNotBlank(product.getAlternateExternalName())?product.getAlternateExternalName():product.getName());
-            getClient().createMaterial(newMaterial);
-        }
-
-    }
-
     @NotNull
     protected SAPMaterial initializeSapMaterialObject(Product product) {
         SAPMaterial newMaterial = new SAPMaterial(product.getPartNumber(),
@@ -412,16 +399,24 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     @Override
-    public void changeProductInSAP(Product product) throws SAPIntegrationException {
+    public void publishProductInSAP(Product product) throws SAPIntegrationException {
+        SAPMaterial newMaterial = initializeSapMaterialObject(product);
 
-        SAPMaterial existingMaterial = initializeSapMaterialObject(product);
-
-        getClient().changeMaterialDetails(existingMaterial);
+        if (productPriceCache.findByProduct(product, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD) == null) {
+            getClient().createMaterial(newMaterial);
+        } else {
+            getClient().changeMaterialDetails(newMaterial);
+        }
 
         if(product.hasExternalCounterpart() || product.isClinicalProduct() || product.isExternalOnlyProduct()) {
-            existingMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES);
-            existingMaterial.setMaterialName(StringUtils.isNotBlank(product.getAlternateExternalName())?product.getAlternateExternalName():product.getName());
-            getClient().changeMaterialDetails(existingMaterial);
+            newMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES);
+            newMaterial.setMaterialName(StringUtils.isNotBlank(product.getAlternateExternalName())?product.getAlternateExternalName():product.getName());
+            if (productPriceCache.findByProduct(product, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES) == null) {
+                getClient().createMaterial(newMaterial);
+            } else {
+                getClient().changeMaterialDetails(newMaterial);
+            }
+
         }
 
     }
@@ -549,5 +544,9 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
     protected void setPriceListCache(PriceListCache priceListCache) {
         this.priceListCache = priceListCache;
+    }
+
+    public void setProductPriceCache(SAPProductPriceCache productPriceCache) {
+        this.productPriceCache = productPriceCache;
     }
 }
