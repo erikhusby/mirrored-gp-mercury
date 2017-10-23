@@ -90,7 +90,7 @@ public final class PoiSpreadsheetParser {
             Row row = rows.next();
             // Create a mapping of the headers to the cell values. There are never date values for the header.
             Map<String, String> dataByHeader = new HashMap<>();
-            for (String headerName : processor.getHeaderNames()) {
+            for (String headerName : processor.getHeaderToColumnIndex().keySet()) {
                 int columnIdx = processor.getHeaderToColumnIndex().get(headerName);
                 ColumnHeader columnHeader = processor.findColumnHeaderByName(headerName);
                 dataByHeader.put(headerName, extractCellContent(row, columnIdx, columnHeader));
