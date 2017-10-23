@@ -44,11 +44,18 @@ public class FingerprintResource {
     public FingerprintsBean get(@QueryParam("lsids")List<String> lsids) {
         List<String> sampleIds = new ArrayList<>();
         for (String lsid : lsids) {
-            sampleIds.add("SM-" + lsid.substring(lsid.lastIndexOf(':')));
+            sampleIds.add("SM-" + lsid.substring(lsid.lastIndexOf(':') + 1));
         }
         Map<String, MercurySample> mapIdToMercurySample = mercurySampleDao.findMapIdToMercurySample(sampleIds);
 
         return buildFingerprintsBean(mapIdToMercurySample);
+    }
+
+    @GET
+    @Path("/rsids")
+    @Produces(MediaType.APPLICATION_JSON)
+    public RsIdsBean get() {
+        return new RsIdsBean(rsIds);
     }
 
     private static final String[] rsIds = {
@@ -167,30 +174,34 @@ public class FingerprintResource {
                         Response.Status.BAD_REQUEST);
             }
 
-            // Traverse to (new) root
-            Set<LabVessel> labVessels = stringMercurySampleEntry.getValue().getLabVessel();
-            if (labVessels.size() == 1) {
-                LabVessel labVessel = labVessels.iterator().next();
-                TransferTraverserCriteria.RootSample rootSample = new TransferTraverserCriteria.RootSample();
-                labVessel.evaluateCriteria(rootSample, TransferTraverserCriteria.TraversalDirection.Ancestors);
-                // Traverse to fingerprints
-                if (rootSample.getRootSamples().size() == 1) {
-                    MercurySample mercurySample = rootSample.getRootSamples().iterator().next();
-                    TransferTraverserCriteria.Fingerprints fpCriteria = new TransferTraverserCriteria.Fingerprints();
-                    // todo jmt check for multiple
-                    mercurySample.getLabVessel().iterator().next().evaluateCriteria(
-                            fpCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
-                    for (Fingerprint fingerprint : fpCriteria.getFingerprints()) {
-                        fingerprintEntities.add(new ImmutablePair<>(
-                                stringMercurySampleEntry.getKey(), fingerprint));
+            if (stringMercurySampleEntry.getValue().getFingerprints().isEmpty()) {
+                // Traverse to (new) root
+                Set<LabVessel> labVessels = stringMercurySampleEntry.getValue().getLabVessel();
+                if (labVessels.size() == 1) {
+                    LabVessel labVessel = labVessels.iterator().next();
+                    TransferTraverserCriteria.RootSample rootSample = new TransferTraverserCriteria.RootSample();
+                    labVessel.evaluateCriteria(rootSample, TransferTraverserCriteria.TraversalDirection.Ancestors);
+                    // Traverse to fingerprints
+                    if (rootSample.getRootSamples().size() == 1) {
+                        MercurySample mercurySample = rootSample.getRootSamples().iterator().next();
+                        TransferTraverserCriteria.Fingerprints fpCriteria = new TransferTraverserCriteria.Fingerprints();
+                        // todo jmt check for multiple
+                        mercurySample.getLabVessel().iterator().next().evaluateCriteria(
+                                fpCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+                        for (Fingerprint fingerprint : fpCriteria.getFingerprints()) {
+                            fingerprintEntities.add(new ImmutablePair<>(stringMercurySampleEntry.getKey(), fingerprint));
+                        }
+                    } else {
+                        throw new ResourceException("Expected 1 root sample for " + stringMercurySampleEntry.getKey() +
+                                ", found " + rootSample.getRootSamples().size(), Response.Status.BAD_REQUEST);
                     }
                 } else {
-                    throw new ResourceException("Expected 1 root sample for " + stringMercurySampleEntry.getKey() +
-                            ", found " + rootSample.getRootSamples().size(), Response.Status.BAD_REQUEST);
+                    throw new ResourceException("Expected 1 vessel for " + stringMercurySampleEntry.getKey() +
+                            ", found " + labVessels.size(), Response.Status.BAD_REQUEST);
                 }
             } else {
-                throw new ResourceException("Expected 1 vessel for " + stringMercurySampleEntry.getKey() +
-                        ", found " + labVessels.size(), Response.Status.BAD_REQUEST);
+                fingerprintEntities.add(new ImmutablePair<>(stringMercurySampleEntry.getKey(),
+                        stringMercurySampleEntry.getValue().getFingerprints().iterator().next()));
             }
         }
 
@@ -212,8 +223,9 @@ public class FingerprintResource {
     }
 
     @POST
-    public void post(FingerprintBean fingerprintBean) {
-        String sampleKey = fingerprintBean.getAliquotLsid().substring(fingerprintBean.getAliquotLsid().lastIndexOf(':'));
+    public String post(FingerprintBean fingerprintBean) {
+        String sampleKey = "SM-" + fingerprintBean.getAliquotLsid().substring(fingerprintBean.getAliquotLsid().
+                lastIndexOf(':') + 1);
         MercurySample mercurySample = mercurySampleDao.findBySampleKey(sampleKey);
         if (mercurySample == null) {
             mercurySample = new MercurySample(sampleKey, MercurySample.MetadataSource.BSP);
@@ -244,5 +256,6 @@ public class FingerprintResource {
                 Fingerprint.Gender.byAbbreviation(fingerprintBean.getGender()),
                 true);
         mercurySampleDao.flush();
+        return "Stored fingerprint";
     }
 }

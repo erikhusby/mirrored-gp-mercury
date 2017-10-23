@@ -904,7 +904,6 @@
             <column name="date_generated" type="timestamp"/>
             <column name="disposition" type="varchar2(255)"/>
             <column name="gender" type="varchar2(255)"/>
-            <column name="gender" type="varchar2(255)"/>
             <column name="genome_build" type="varchar2(255)"/>
             <column name="genotypes" type="varchar2(500)"/>
             <column name="match" type="number(1,0)"/>
@@ -915,11 +914,11 @@
     <changeSet id="GPLIM-5122-2" author="thompson">
         <createTable tableName="fingerprint_aud" schemaName="mercury">
             <column name="rev" type="number(19,0)"/>
+            <column name="revtype" type="number(3,0)"/>
             <column name="fingerprint_id" type="number(19,0)"/>
             <column name="call_confidences" type="varchar2(500)"/>
             <column name="date_generated" type="timestamp"/>
             <column name="disposition" type="varchar2(255)"/>
-            <column name="gender" type="varchar2(255)"/>
             <column name="gender" type="varchar2(255)"/>
             <column name="genome_build" type="varchar2(255)"/>
             <column name="genotypes" type="varchar2(500)"/>
