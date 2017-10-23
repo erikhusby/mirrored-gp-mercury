@@ -454,44 +454,42 @@
             // Enable the submit button if there are changes from a previous form submit that had validation errors
             updateSubmitButton();
 
-            // Last thing to do on document-ready: AJAX-fetch ledger details
-            <%--$j.ajax({--%>
-                <%--url: '${ctxpath}/orders/ledger.action',--%>
-                <%--data: {--%>
-                    <%--ledgerDetails: '',--%>
-                    <%--orderId: '${actionBean.productOrder.businessKey}'--%>
-                <%--},--%>
-                <%--dataType: 'json',--%>
-                <%--success: function (data) {--%>
-                    <%--ledgerDetails = data;--%>
-
-                    <%--/*--%>
-                     <%--* Set up ledger detail expand buttons.--%>
-                     <%--*/--%>
-                    <%--$j('#ledger').on('click', 'td.expand', function() {--%>
-                        <%--var parentRow = this.parentNode;--%>
-                        <%--var icon = $j('i', this);--%>
-                        <%--if (ledgerTable.fnIsOpen(parentRow)) {--%>
-                            <%--ledgerTable.fnClose(parentRow);--%>
-                            <%--icon.removeClass('icon-minus-sign');--%>
-                            <%--icon.addClass('icon-plus-sign');--%>
-                        <%--} else {--%>
-                            <%--var position = $j(parentRow.children[1]).text();--%>
-                            <%--var detailTable = $j('<table class="subTable" style="width: 100%;"><thead><tr><th>Price Item</th><th>Quantity</th><th>Quote</th><th>Work Complete</th><th>Billing Session</th><th>Billed Date</th><th>Billing Message</th></tr></thead><tbody></tbody></table>');--%>
-                            <%--detailTable.dataTable({--%>
-                                <%--aaData: ledgerDetails[position - 1],--%>
-                                <%--"aaSorting": [[5, 'asc']]--%>
-                            <%--});--%>
-                            <%--var detailRow = ledgerTable.fnOpen(parentRow, detailTable, 'ledgerDetail');--%>
-                            <%--$j(detailRow).addClass(parentRow.className);--%>
-                            <%--icon.removeClass('icon-plus-sign');--%>
-                            <%--icon.addClass('icon-minus-sign');--%>
-                        <%--}--%>
-                    <%--});--%>
-
-                    <%--$j('#ledger').find('td.expand').removeClass('loading');--%>
-                <%--}--%>
-            <%--});--%>
+            $j("td.expand").on('click', function(){
+                var $cell = $j(this);
+                var parentRow = this.parentNode;
+                var productOrderSampleId = $j(parentRow).find("input[name='selectedProductOrderSampleIds']").val()
+                var detailTable = $j(parentRow).next().find(".subTable");
+                var icon = $j('i', this);
+                if (detailTable.length === 0) {
+                    $cell.addClass('loading');
+                    $j.ajax({
+                        url: '${ctxpath}/orders/ledger.action',
+                        data: {
+                            ledgerDetails: '',
+                            orderId: '${actionBean.productOrder.businessKey}',
+                            productOrderSampleId: productOrderSampleId
+                        },
+                        dataType: 'json',
+                        success: function (data) {
+                            ledgerDetails = data;
+                            detailTable = $j('<table class="subTable" style="width: 100%;"><thead><tr><th>Price Item</th><th>Quantity</th><th>Quote</th><th>Work Complete</th><th>Billing Session</th><th>Billed Date</th><th>Billing Message</th></tr></thead><tbody></tbody></table>');
+                            detailTable.dataTable({
+                                aaData: ledgerDetails,
+                                "aaSorting": [[5, 'asc']]
+                            });
+                            var detailRow = ledgerTable.fnOpen(parentRow, detailTable, 'ledgerDetail');
+                            $j(detailRow).addClass(parentRow.className);
+                            icon.removeClass('icon-plus-sign');
+                            icon.addClass('icon-minus-sign');
+                            $cell.removeClass('loading');
+                        }
+                    });
+                } else {
+                    ledgerTable.fnClose(parentRow, detailTable, 'ledgerDetail');
+                    icon.removeClass('icon-minus-sign');
+                    icon.addClass('icon-plus-sign');
+                }
+            });
         });
 
         /*
@@ -883,7 +881,7 @@
                     <td style="text-align: right">
                         ${info.sample.samplePosition + 1}
                     </td>
-                    <td class="expand loading">
+                    <td class="expand">
                         <i class="icon-plus-sign"></i>
                     </td>
                     <td>

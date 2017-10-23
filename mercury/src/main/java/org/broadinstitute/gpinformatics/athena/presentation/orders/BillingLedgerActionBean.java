@@ -98,6 +98,11 @@ public class BillingLedgerActionBean extends CoreActionBean {
     private ProductOrder productOrder;
 
     /**
+     * productOrderSampleId to load when ledgerDetails is called.
+     */
+    private long productOrderSampleId;
+
+    /**
      * Provides information about the billing state of the product order.
      */
     private ProductOrderListEntry productOrderListEntry;
@@ -161,12 +166,9 @@ public class BillingLedgerActionBean extends CoreActionBean {
     }
 
     /**
-     * Load the product order based on the orderId request parameter. This is all of the data that is needed for loading
-     * the ledger details (from an AJAX request).
+     * Load the product order based on the orderId request parameter.
      */
-    @Before(stages = LifecycleStage.EventHandling, on = { "ledgerDetails" })
-    public void loadProductOrder() { productOrder = productOrderDao.findByBusinessKey(orderId);
-    }
+    public void loadProductOrder() { productOrder = productOrderDao.findByBusinessKey(orderId); }
 
     /**
      * Render the billing ledger UI.
@@ -185,10 +187,8 @@ public class BillingLedgerActionBean extends CoreActionBean {
     @HandlesEvent("ledgerDetails")
     public Resolution ledgerDetails() throws JSONException {
         JSONArray details = new JSONArray();
-        for (ProductOrderSample sample : productOrder.getSamples()) {
-            details.put(makeLedgerDetailJson(sample));
-        }
-        return createTextResolution(details.toString());
+        ProductOrderSample sample = productOrderDao.findById(ProductOrderSample.class, productOrderSampleId);
+        return createTextResolution(makeLedgerDetailJson(sample).toString());
     }
 
     /**
@@ -475,6 +475,14 @@ public class BillingLedgerActionBean extends CoreActionBean {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.MONTH, -3);
         return calendar.getTime().getTime();
+    }
+
+    public long getProductOrderSampleId() {
+        return productOrderSampleId;
+    }
+
+    public void setProductOrderSampleId(long productOrderSampleId) {
+        this.productOrderSampleId = productOrderSampleId;
     }
 
     /**
