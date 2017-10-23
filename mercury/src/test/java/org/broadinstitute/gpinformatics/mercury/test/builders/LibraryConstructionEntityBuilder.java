@@ -374,11 +374,17 @@ public class LibraryConstructionEntityBuilder {
             Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(),
                     "Illumina_P5-Habab_P7-Habab",
                     "Wrong index");
-        } else {
+        } else if (indexing == Indexing.DUAL){
             Assert.assertEquals(reagents.size(), 1, "Wrong number of reagents");
             molecularIndexReagent = (MolecularIndexReagent) reagents.iterator().next();
             Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(),
                     "Illumina_P5-Habab_P7-Habab",
+                    "Wrong index");
+        } else if (indexing == Indexing.SINGLE) {
+            Assert.assertEquals(reagents.size(), 1, "Wrong number of reagents");
+            molecularIndexReagent = (MolecularIndexReagent) reagents.iterator().next();
+            Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(),
+                    "Illumina_P7-Habab",
                     "Wrong index");
         }
 
