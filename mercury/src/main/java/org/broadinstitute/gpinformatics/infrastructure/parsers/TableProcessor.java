@@ -131,8 +131,8 @@ public abstract class TableProcessor implements Serializable {
         }
         if (!missingHeaders.isEmpty()) {
             validationMessages.add(
-                    String.format("Required %s missing: '%s'.", Noun.pluralOf("header", missingHeaders.size()),
-                            StringUtils.join(missingHeaders, "', '")));
+                    String.format("Required %s missing: %s.", Noun.pluralOf("header", missingHeaders.size()),
+                            StringUtils.join(missingHeaders, ", ")));
         }
         validateHeaderRow(cellContent);
         return validationMessages.isEmpty();

@@ -147,10 +147,14 @@ public final class PoiSpreadsheetParser {
                 while (cellIterator.hasNext()) {
                     Cell cell = cellIterator.next();
                     // Expects headers to be strings, possibly modified for more robust matching.
+                    // Only maps the headers defined with an enum. Any others are ignored.
                     String headerString = processor.adjustHeaderCell(getCellValues(cell, false, true));
-                    headers.add(headerString);
-                    // Makes a map of header string to column index for later processing of data rows.
-                    processor.getHeaderToColumnIndex().put(headerString, cell.getColumnIndex());
+                    ColumnHeader columnHeader = processor.findColumnHeaderByName(headerString);
+                    if (columnHeader != null) {
+                        headers.add(headerString);
+                        // Makes a map of header string to column index for later processing of data rows.
+                        processor.getHeaderToColumnIndex().put(headerString, cell.getColumnIndex());
+                    }
                 }
                 break;
             }

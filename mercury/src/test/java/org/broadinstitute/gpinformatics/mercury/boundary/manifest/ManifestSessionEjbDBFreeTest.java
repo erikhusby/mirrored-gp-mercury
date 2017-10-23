@@ -401,9 +401,7 @@ public class ManifestSessionEjbDBFreeTest {
                         "manifest-upload/empty-manifest.xlsx"},
                 {"Multiple Bad Columns in Manifest",
                         "Required headers missing: Specimen_Number, Sex, Patient_ID, Collection_Date, Visit, "
-                        + "SAMPLE_TYPE."
-                        + "\nUnknown headers '[Specimen_Numberz, Patient_Idee, Gender, Date, Visit Type, Sample Type]' "
-                        + "present.",
+                                + "SAMPLE_TYPE.",
                         "manifest-upload/manifest-with-multiple-bad-columns.xlsx"},
                 {"Unrecognized Material Types in file",
                         "Row #7 An unrecognized material type was entered: DNR:Heroic\n"

@@ -186,10 +186,10 @@ public class ManifestImporterTest {
         InputStream inputStream = new FileInputStream(TestUtils.getTestData(EMPTY_MANIFEST));
         try {
             PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
-            validateManifestRecords(manifestImportProcessor);
             Assert.fail();
         } catch (ValidationException e) {
-            assertThat(manifestImportProcessor.getMessages(), hasItem(ManifestImportProcessor.EMPTY_FILE_ERROR));
+            assertThat(manifestImportProcessor.getMessages(), hasItem("Required headers missing: Specimen_Number,"
+                    + " Sex, Patient_ID, Collection_Date, Visit, SAMPLE_TYPE, Material Type."));
         }
     }
 
