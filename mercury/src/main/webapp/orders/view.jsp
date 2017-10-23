@@ -269,7 +269,7 @@ $j(document).ready(function () {
                 {"data": "${columnHeaderOnRiskString}", "title": "${columnHeaderOnRisk}"},
                 {"data": "${columnHeaderProceedOutOfSpec}", "title": "${columnHeaderProceedOutOfSpec}"},
                 {"data": "${columnHeaderStatus}", "title": "${columnHeaderStatus}"},
-                { "data": "${columnHeaderCompletelyBilled}", "title": "${columnHeaderCompletelyBilled}", "sType": "title-string", render: renderBilled}, {"data": "${columnHeaderComment}", "title": "${columnHeaderComment}"}
+                { "data": "${columnHeaderCompletelyBilled}", "title": "${columnHeaderCompletelyBilled}", "sType": "boolean", render: renderBilled}, {"data": "${columnHeaderComment}", "title": "${columnHeaderComment}"}
             ],
             "stateSaveCallback": function (settings, data) {
                 var api = new $j.fn.dataTable.Api(settings);
@@ -351,37 +351,34 @@ $j(document).ready(function () {
 });
 
     function renderRackscanMismatch(data, type, row, meta) {
-        var result = data;
         if (type === 'display') {
             if (data === true) {
-                result = imageForBoolean(data, "${ctxpath}/images/error.png")
+                return imageForBoolean(data, "${ctxpath}/images/error.png")
             } else {
-                result = "";
+                return "";
             }
         }
-        return result;
+        return data;
     }
 
     function renderBilled(data, type, row, meta) {
-        var result = data;
         if (type === 'display') {
             if (data && data === true) {
                 return imageForBoolean(data, "${ctxpath}/images/check.png");
             } else {
-                result = "";
+                return "";
             }
         }
-        return result;
+        return data;
     }
 
-    function imageForBoolean(data, image) {
+    function imageForBoolean(data, imageSrc) {
         var result = data;
         if (data) {
-            tagAttributes = {
-                src: image,
-                title: true
-            }
-            result = jQuery("<img/>", tagAttributes)[0].outerHTML;
+            var image = document.createElement("img");
+            image.src = imageSrc;
+            image.title = true;
+            result = image.outerHTML;
         }
         return result;
     }
@@ -465,14 +462,14 @@ $j(document).ready(function () {
     function renderCheckbox(data, type, row) {
         var result = data;
         if (type === 'display') {
-            tagAttributes = {
-                "name": "selectedProductOrderSampleIds",
-                "value": data,
-                "type": "checkbox",
-                "class": "shiftCheckbox",
-                "data-sample-checkbox" :row["<%= ProductOrderSampleBean.SAMPLE_ID %>"]
-            };
-            result = jQuery("<input/>", tagAttributes)[0].outerHTML;
+            var input = document.createElement("input");
+            input.name = "selectedProductOrderSampleIds"
+            input.className = "shiftCheckbox";
+            input.type = "checkbox";
+            input.value = data;
+            input.setAttribute("data-sample-checkbox", row["<%= ProductOrderSampleBean.SAMPLE_ID %>"]);
+
+            result = input.outerHTML;
         }
         return result;
 
@@ -831,12 +828,11 @@ function updateSampleInformation(samples, table, includeSampleSummary) {
 
 function renderPico(data, type, row, meta) {
     var result = data;
-    if (result === null) {
-        result = "";
-    }
     if (type === 'display') {
-        if (result === "") {
-            result = "No Pico";
+        var outerDiv = document.createElement("div");
+        var picoSpan=document.createElement("span");
+        if (result === "" && row.includeSampleData) {
+            picoSpan.innerHTML = "No Pico";
         } else {
             var oneYearAgo = meta.settings.oneYearAgo;
             var almostOneYearAgo = meta.settings.almostOneYearAgo;
@@ -858,10 +854,11 @@ function renderPico(data, type, row, meta) {
             } else if (picoDate.getTime() < almostOneYearAgo.getTime()) {
                 containerClass = "label label-warning";
             }
-
+            picoSpan.innerHTML=data;
+            picoSpan.className=containerClass;
         }
-        var $container = $j("<span></span>", {text: result, class: containerClass});
-        result = $container.wrap("<div></div>").parent().html();
+        outerDiv.appendChild(picoSpan);
+        result = outerDiv.outerHTML;
     }
     return result;
 }
