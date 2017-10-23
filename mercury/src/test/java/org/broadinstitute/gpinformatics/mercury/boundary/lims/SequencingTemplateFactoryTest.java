@@ -32,6 +32,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressSheari
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq4000FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionCellFreeUMIEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
@@ -769,7 +770,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
                                         LibraryConstructionEntityBuilder.Indexing indexing,
                                         LibraryConstructionEntityBuilder.Umi umiType) {
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
-                runLibraryConstructionProcessWithUMI(shearingEntityBuilder.getShearingCleanupPlate(),
+                runWgsLibraryConstructionProcessWithUMI(shearingEntityBuilder.getShearingCleanupPlate(),
                         shearingEntityBuilder.getShearCleanPlateBarcode(),
                         shearingEntityBuilder.getShearingPlate(), BARCODE_SUFFIX,
                         LibraryConstructionJaxbBuilder.PondType.REGULAR, indexing, umiType);
