@@ -78,6 +78,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.IceEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.IceJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.InfiniumEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.InfiniumJaxbBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionCellFreeUMIEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.MiSeqReagentKitEntityBuilder;
@@ -506,16 +507,17 @@ public class BaseEventTest {
 
     /**
      * This method runs the entities through the library construction process with UMI.
-     *
-     * @param shearingCleanupPlate   The shearing cleanup plate from the shearing process.
-     * @param shearCleanPlateBarcode The shearing clean plate barcode.
-     * @param shearingPlate          The shearing plate from the shearing process.
-     * @param barcodeSuffix          Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
-     * @param pondType               PCR Free, PCR Plus etc.
-     *
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
-    public LibraryConstructionEntityBuilder runLibraryConstructionProcessWithUMI(StaticPlate shearingCleanupPlate,
+    public LibraryConstructionCellFreeUMIEntityBuilder runLibraryConstructionProcessWithUMI(
+            Map<String, BarcodedTube> mapBarcodeToVessel, TubeFormation initialRack, LibraryConstructionEntityBuilder.Umi umi) {
+        LibraryConstructionCellFreeUMIEntityBuilder builder = new LibraryConstructionCellFreeUMIEntityBuilder(
+                mapBarcodeToVessel, initialRack, bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
+                NUM_POSITIONS_IN_RACK, "CellFreeUMI", umi);
+        return builder.invoke();
+    }
+
+    public LibraryConstructionEntityBuilder runWgsLibraryConstructionProcessWithUMI(StaticPlate shearingCleanupPlate,
                                                                                  String shearCleanPlateBarcode,
                                                                                  StaticPlate shearingPlate,
                                                                                  String barcodeSuffix,
