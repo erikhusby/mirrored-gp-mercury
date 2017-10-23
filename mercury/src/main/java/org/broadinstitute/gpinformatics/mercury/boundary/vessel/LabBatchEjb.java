@@ -79,7 +79,6 @@ import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -110,8 +109,6 @@ public class LabBatchEjb {
     public static final String DESIGNATION_ERROR_MSG = "Designated tube {0} has invalid ";
 
     private static final Log logger = LogFactory.getLog(LabBatchEjb.class);
-    // todo jmt add this to a Preference, or add a flag on Product
-    private static final List<String> ADD_AND_REMOVE_SAMPLE_PRODUCTS = Arrays.asList("P-CLA-0008");
 
     private LabBatchDao labBatchDao;
 
@@ -714,8 +711,10 @@ public class LabBatchEjb {
                     for (BucketEntry bucketEntry : sampleInstance.getAllBucketEntries()) {
                         if (Objects.equals(bucketEntry.getLabBatch().getBatchName(), lcsetName)) {
                             bucketEntries.add(bucketEntry);
-                            if (ADD_AND_REMOVE_SAMPLE_PRODUCTS.contains(
-                                    bucketEntry.getProductOrder().getProduct().getPartNumber())) {
+                            // Exome Express currently does strange things with multiple LCSETs at shearing, so
+                            // limit this logic to WGS.
+                            if (Objects.equals(bucketEntry.getProductOrder().getProduct().getAggregationDataType(),
+                                    BassDTO.DATA_TYPE_WGS)) {
                                 addAndRemoveSamples = true;
                             }
                             found = true;
@@ -844,16 +843,27 @@ public class LabBatchEjb {
         }
 
         // Determine whether rack needs to be exported from BSP
-        IsExported.ExportResults exportResults = bspExportsService.findExportDestinations(
-                new HashSet<LabVessel>(mapBarcodeToTube.values()));
-        int needsExport = 0;
-        for (IsExported.ExportResult exportResult : exportResults.getExportResult()) {
-            if (exportResult.isError()) {
-                continue;
+        List<LabVessel> bspTubes = new ArrayList<>();
+        for (String barcode : rackScan.values()) {
+            BarcodedTube barcodedTube = mapBarcodeToTube.get(barcode);
+            SampleInstanceV2 sampleInstanceV2 = barcodedTube.getSampleInstancesV2().iterator().next();
+            MercurySample mercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
+            if (mercurySample == null || mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
+                bspTubes.add(barcodedTube);
             }
-            Set<IsExported.ExternalSystem> externalSystems = exportResult.getExportDestinations();
-            if (CollectionUtils.isEmpty(externalSystems) || !externalSystems.contains(IsExported.ExternalSystem.Mercury)) {
-                needsExport++;
+        }
+
+        int needsExport = 0;
+        if (!bspTubes.isEmpty()) {
+            IsExported.ExportResults exportResults = bspExportsService.findExportDestinations(bspTubes);
+            for (IsExported.ExportResult exportResult : exportResults.getExportResult()) {
+                if (exportResult.isError()) {
+                    continue;
+                }
+                Set<IsExported.ExternalSystem> externalSystems = exportResult.getExportDestinations();
+                if (CollectionUtils.isEmpty(externalSystems) || !externalSystems.contains(IsExported.ExternalSystem.Mercury)) {
+                    needsExport++;
+                }
             }
         }
 
