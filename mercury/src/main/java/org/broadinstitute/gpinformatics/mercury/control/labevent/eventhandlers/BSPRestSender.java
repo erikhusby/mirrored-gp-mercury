@@ -62,6 +62,7 @@ public class BSPRestSender implements Serializable {
     private static final Log logger = LogFactory.getLog(BSPRestSender.class);
 
     public static final Format PLATE_NAME_DATE_FORMAT = FastDateFormat.getInstance("MMddHHmm");
+    private static final String PDO_NOT_NEEDED = "PDO Not Needed";
 
     @Inject
     private BSPRestClient bspRestClient;
@@ -135,7 +136,9 @@ public class BSPRestSender implements Serializable {
                 // NA12878 samples, that fill up partial fingerprint plates to 48 wells, are reagents
                 if (!sampleInstance.isReagentOnly()) {
                     MercurySample rootMercurySample = sampleInstance.getRootOrEarliestMercurySample();
-                    metadataSources.add(rootMercurySample.getMetadataSource());
+                    // if root is null, assume it's an old BSP sample that was received before Mercury existed
+                    metadataSources.add(rootMercurySample == null ? MercurySample.MetadataSource.BSP :
+                            rootMercurySample.getMetadataSource());
                 }
             }
 
@@ -156,19 +159,18 @@ public class BSPRestSender implements Serializable {
                         // Set PDO.  If it's a psuedo-pool, assume all are in the same PDO
                         SampleInstanceV2 sampleInstanceV2 = sampleInstances.iterator().next();
                         List<ProductOrderSample> allProductOrderSamples = sampleInstanceV2.getAllProductOrderSamples();
-                        if (!allProductOrderSamples.isEmpty()) {
-                            MetadataType metadataType = new MetadataType();
-                            metadataType.setName("PDO");
-                            // todo jmt if multiple, pick most recent?
-                            String pdoJiraId = allProductOrderSamples.iterator().next().getProductOrder().getBusinessKey();
-                            metadataType.setValue(pdoJiraId);
-                            if (messagePdo == null) {
-                                messagePdo = pdoJiraId;
-                            }
-                            ReceptacleType receptacleType = mapDestPosToReceptacle.get(destVesselPosition);
-                            if (receptacleType != null) {
-                                receptacleType.getMetadata().add(metadataType);
-                            }
+                        // todo jmt if multiple, pick most recent?
+                        String pdoJiraId = allProductOrderSamples.isEmpty() ? PDO_NOT_NEEDED :
+                                allProductOrderSamples.iterator().next().getProductOrder().getBusinessKey();
+                        MetadataType metadataType = new MetadataType();
+                        metadataType.setName("PDO");
+                        metadataType.setValue(pdoJiraId);
+                        if (messagePdo == null) {
+                            messagePdo = pdoJiraId;
+                        }
+                        ReceptacleType receptacleType = mapDestPosToReceptacle.get(destVesselPosition);
+                        if (receptacleType != null) {
+                            receptacleType.getMetadata().add(metadataType);
                         }
                     }
                 } else {
@@ -184,10 +186,13 @@ public class BSPRestSender implements Serializable {
                 }
             }
         }
-        if (targetEvent.getLabEventType().getAddMetadataToBsp() == LabEventType.AddMetadataToBsp.PDO) {
+        if (atLeastOneTransfer &&
+                targetEvent.getLabEventType().getAddMetadataToBsp() == LabEventType.AddMetadataToBsp.PDO) {
             MetadataType metadataType = new MetadataType();
             metadataType.setName("PLATE_NAME");
-            metadataType.setValue(messagePdo + "_" + PLATE_NAME_DATE_FORMAT.format(new Date()));
+            String plateNamePrefix = messagePdo.equals(PDO_NOT_NEEDED) ?
+                    plateTransferEventType.getSourcePlate().getBarcode() : messagePdo;
+            metadataType.setValue(plateNamePrefix + "_" + PLATE_NAME_DATE_FORMAT.format(new Date()));
             plateCherryPickEvent.getMetadata().add(metadataType);
         }
 

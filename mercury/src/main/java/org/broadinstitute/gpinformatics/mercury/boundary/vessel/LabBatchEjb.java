@@ -526,7 +526,9 @@ public class LabBatchEjb {
             labVessels.add(bucketEntry.getLabVessel());
             pdoKeys.add(bucketEntry.getProductOrder().getBusinessKey());
             bucketEntry.getBucket().removeEntry(bucketEntry);
-            commentString.append(String.format("Added vessel *%s* with material type *%s* from *%s*.\n", bucketEntry.getLabVessel().getLabel(),
+            String sampleName = getSample(bucketEntry);
+            commentString.append(String.format("Added vessel *%s / %s* with material type *%s* from *%s*.\n",
+                    bucketEntry.getLabVessel().getLabel(), sampleName,
                     bucketEntry.getLabVessel().getLatestMaterialType().getDisplayName(), bucketName));
         }
 
@@ -543,9 +545,10 @@ public class LabBatchEjb {
             reworkVessels.add(entry.getLabVessel());
             pdoKeys.add(entry.getProductOrder().getBusinessKey());
             entry.getBucket().removeEntry(entry);
-            commentString.append(String.format("Added rework for vessel %s with material type %s to %s.\n",
-                    entry.getLabVessel().getLabel(), entry.getLabVessel().getLatestMaterialType().getDisplayName(),
-                    bucketName));
+            String sampleName = getSample(entry);
+            commentString.append(String.format("Added rework for vessel %s / %s with material type %s to %s.\n",
+                    entry.getLabVessel().getLabel(), sampleName,
+                    entry.getLabVessel().getLatestMaterialType().getDisplayName(), bucketName));
 
         }
 
@@ -556,8 +559,9 @@ public class LabBatchEjb {
         for (BucketEntry removeBucketEntry : removeBucketEntries) {
             removeBucketEntry.getLabVessel().removeFromBatch(removeBucketEntry.getLabBatch());
             batch.removeBucketEntry(removeBucketEntry);
-            commentString.append(String.format("Removed vessel *%s* with material type *%s* from *%s*.\n",
-                    removeBucketEntry.getLabVessel().getLabel(),
+            String sampleName = getSample(removeBucketEntry);
+            commentString.append(String.format("Removed vessel *%s / %s* with material type *%s* from *%s*.\n",
+                    removeBucketEntry.getLabVessel().getLabel(), sampleName,
                     removeBucketEntry.getLabVessel().getLatestMaterialType().getDisplayName(), bucketName));
         }
 
@@ -589,6 +593,7 @@ public class LabBatchEjb {
 
         verifyAllowedValues(batchJiraTicketFields, messageReporter);
         JiraIssue jiraIssue = jiraService.getIssue(batch.getJiraTicket().getTicketName());
+        // todo jmt send email with commentString to jiraIssue.getReporter()
         jiraIssue.addWatchers(watchers);
         jiraIssue.addComment(commentString.toString());
         jiraIssue.updateIssue(batchJiraTicketFields);
@@ -598,6 +603,18 @@ public class LabBatchEjb {
             linkJiraBatchToTicket(pdoKey, batch);
         }
 
+    }
+
+    @org.jetbrains.annotations.Nullable
+    private String getSample(BucketEntry entry) {
+        String sampleName = null;
+        for (SampleInstanceV2 sampleInstanceV2 : entry.getLabVessel().getSampleInstancesV2()) {
+            sampleName = sampleInstanceV2.getNearestMercurySampleName();
+            if (sampleName != null) {
+                break;
+            }
+        }
+        return sampleName;
     }
 
     /**
@@ -677,6 +694,7 @@ public class LabBatchEjb {
         List<LabVessel> controlTubes = new ArrayList<>();
         List<LabVessel> addTubes = new ArrayList<>();
         Set<BucketEntry> bucketEntries = new HashSet<>();
+        boolean addAndRemoveSamples = false;
         for (Map.Entry<String, String> positionBarcodeEntry : rackScan.entrySet()) {
             LabVessel barcodedTube = mapBarcodeToTube.get(positionBarcodeEntry.getValue());
             if (barcodedTube != null) {
@@ -693,6 +711,12 @@ public class LabBatchEjb {
                     for (BucketEntry bucketEntry : sampleInstance.getAllBucketEntries()) {
                         if (Objects.equals(bucketEntry.getLabBatch().getBatchName(), lcsetName)) {
                             bucketEntries.add(bucketEntry);
+                            // Exome Express currently does strange things with multiple LCSETs at shearing, so
+                            // limit this logic to WGS.
+                            if (Objects.equals(bucketEntry.getProductOrder().getProduct().getAggregationDataType(),
+                                    BassDTO.DATA_TYPE_WGS)) {
+                                addAndRemoveSamples = true;
+                            }
                             found = true;
                             break;
                         }
@@ -705,7 +729,11 @@ public class LabBatchEjb {
                         }
                     } else {
                         if (!found) {
-                            addTubes.add(barcodedTube);
+                            if (addAndRemoveSamples) {
+                                addTubes.add(barcodedTube);
+                            } else {
+                                messageCollection.addError(barcodedTube.getLabel() + " is not in this LCSET");
+                            }
                         }
                     }
                 }
@@ -713,15 +741,16 @@ public class LabBatchEjb {
         }
 
         // Any tubes that are in the LCSET, but not in the scan, will need to be removed
-        // todo jmt this will mess up malaria, which will have four racks per LCSET
         List<LabVessel> removeTubes = new ArrayList<>();
-        LabBatch labBatch = labBatchDao.findByBusinessKey(lcsetName);
-        if (labBatch == null) {
-            messageCollection.addError("Failed to find " + lcsetName);
-        } else {
-            for (BucketEntry bucketEntry : labBatch.getBucketEntries()) {
-                if (!bucketEntries.contains(bucketEntry)) {
-                    removeTubes.add(bucketEntry.getLabVessel());
+        if (addAndRemoveSamples) {
+            LabBatch labBatch = labBatchDao.findByBusinessKey(lcsetName);
+            if (labBatch == null) {
+                messageCollection.addError("Failed to find " + lcsetName);
+            } else {
+                for (BucketEntry bucketEntry : labBatch.getBucketEntries()) {
+                    if (!bucketEntries.contains(bucketEntry)) {
+                        removeTubes.add(bucketEntry.getLabVessel());
+                    }
                 }
             }
         }
@@ -814,16 +843,27 @@ public class LabBatchEjb {
         }
 
         // Determine whether rack needs to be exported from BSP
-        IsExported.ExportResults exportResults = bspExportsService.findExportDestinations(
-                new HashSet<LabVessel>(mapBarcodeToTube.values()));
-        int needsExport = 0;
-        for (IsExported.ExportResult exportResult : exportResults.getExportResult()) {
-            if (exportResult.isError()) {
-                continue;
+        List<LabVessel> bspTubes = new ArrayList<>();
+        for (String barcode : rackScan.values()) {
+            BarcodedTube barcodedTube = mapBarcodeToTube.get(barcode);
+            SampleInstanceV2 sampleInstanceV2 = barcodedTube.getSampleInstancesV2().iterator().next();
+            MercurySample mercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
+            if (mercurySample == null || mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
+                bspTubes.add(barcodedTube);
             }
-            Set<IsExported.ExternalSystem> externalSystems = exportResult.getExportDestinations();
-            if (CollectionUtils.isEmpty(externalSystems) || !externalSystems.contains(IsExported.ExternalSystem.Mercury)) {
-                needsExport++;
+        }
+
+        int needsExport = 0;
+        if (!bspTubes.isEmpty()) {
+            IsExported.ExportResults exportResults = bspExportsService.findExportDestinations(bspTubes);
+            for (IsExported.ExportResult exportResult : exportResults.getExportResult()) {
+                if (exportResult.isError()) {
+                    continue;
+                }
+                Set<IsExported.ExternalSystem> externalSystems = exportResult.getExportDestinations();
+                if (CollectionUtils.isEmpty(externalSystems) || !externalSystems.contains(IsExported.ExternalSystem.Mercury)) {
+                    needsExport++;
+                }
             }
         }
 

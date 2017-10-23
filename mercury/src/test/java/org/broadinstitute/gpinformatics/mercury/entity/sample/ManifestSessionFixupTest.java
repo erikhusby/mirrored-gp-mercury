@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import com.google.common.collect.Sets;
+import org.apache.commons.io.IOUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
@@ -10,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessio
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata_;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
@@ -30,9 +32,11 @@ import javax.persistence.criteria.ListJoin;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.transaction.UserTransaction;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -44,6 +48,8 @@ import static org.hamcrest.Matchers.notNullValue;
  */
 @Test(groups = TestGroups.FIXUP)
 public class ManifestSessionFixupTest extends Arquillian {
+
+    private static final Pattern TAB_PATTERN = Pattern.compile("\\t");
 
     @Inject
     private ManifestSessionDao manifestSessionDao;
@@ -211,4 +217,47 @@ public class ManifestSessionFixupTest extends Arquillian {
         manifestSessionDao.persist(new FixupCommentary("CRSP-468 change sample ID"));
         manifestSessionDao.flush();
     }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/UpdateManifestSession.txt, so
+     * it can be used for other similar fixups, without writing a new test.
+     * Line 1 is the fixup commentary.
+     * Line 2 is the session prefix.
+     * Line 3 and subsequent are SampleId\tMetadata.Key\value.
+     * Example contents of the file are:
+     * CRSP-538
+     * MERCURY UPLOAD Myeloid Lymphoid CLIA VAL manifest_PDO-13048
+     * 1125699613	TUMOR_NORMAL	Normal
+     * 1125699614	TUMOR_NORMAL	Normal
+     */
+    @Test(enabled = false)
+    public void fixupCrsp538() throws IOException {
+        userBean.loginOSUser();
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("UpdateManifestSession.txt"));
+        String fixupComment = lines.get(0);
+        String sessionPrefix = lines.get(1);
+
+        boolean found = false;
+        for (ManifestSession manifestSession : manifestSessionDao.findOpenSessions()) {
+            if (manifestSession.getSessionName().startsWith(sessionPrefix)) {
+                found = true;
+                for (String line : lines.subList(2, lines.size())) {
+                    String[] fields = TAB_PATTERN.split(line);
+                    if (fields.length != 3) {
+                        throw new RuntimeException("Expected three tab separated fields in " + line);
+                    }
+                    ManifestRecord manifestRecord = manifestSession.getRecordWithMatchingValueForKey(
+                            Metadata.Key.SAMPLE_ID, fields[0]);
+                    Assert.assertNotNull(manifestRecord, fields[0]);
+                    manifestRecord.getMetadataByKey(Metadata.Key.valueOf(fields[1])).setStringValue(fields[2]);
+                }
+                break;
+            }
+        }
+        Assert.assertTrue(found);
+
+        manifestSessionDao.persist(new FixupCommentary(fixupComment));
+        manifestSessionDao.flush();
+    }
+
 }

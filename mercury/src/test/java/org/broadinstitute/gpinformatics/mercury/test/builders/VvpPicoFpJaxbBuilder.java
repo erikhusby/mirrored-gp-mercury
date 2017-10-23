@@ -62,12 +62,12 @@ public class VvpPicoFpJaxbBuilder {
             fpTubeBarcodes.add(testPrefix + "FP" + i);
         }
         String fpRackBarcode = testPrefix + "FPR";
-        fingerprintingAliquot = bettaLimsMessageTestFactory.buildPlateToRack("FingerprintingAliquot",
+        fingerprintingAliquot = bettaLimsMessageTestFactory.buildPlateToRack("FingerprintingAliquotForwardBsp",
                 picoDilutionPlateBarcode, fpRackBarcode, fpTubeBarcodes);
         bettaLimsMessageTestFactory.addMessage(messageList, fingerprintingAliquot);
 
         String fpPlateBarcode = testPrefix + "FPS";
-        fingerprintingPlateSetup = bettaLimsMessageTestFactory.buildRackToPlate("FingerprintingPlateSetup",
+        fingerprintingPlateSetup = bettaLimsMessageTestFactory.buildRackToPlate("FingerprintingPlateSetupForwardBsp",
                 fpRackBarcode, fpTubeBarcodes, fpPlateBarcode);
         fingerprintingPlateSetup.getPlate().setPhysType("Plate96Well200PCR");
         PositionMapType destinationPositionMap = new PositionMapType();
@@ -76,8 +76,8 @@ public class VvpPicoFpJaxbBuilder {
             ReceptacleType destinationReceptacle = new ReceptacleType();
             destinationReceptacle.setReceptacleType("Well200");
             destinationReceptacle.setPosition(receptacleType.getPosition());
-            destinationReceptacle.setVolume(BigDecimal.valueOf(8));
-            destinationReceptacle.setConcentration(BigDecimal.valueOf(20));
+            destinationReceptacle.setVolume(new BigDecimal("8"));
+            destinationReceptacle.setConcentration(new BigDecimal("0.01"));
             destinationPositionMap.getReceptacle().add(destinationReceptacle);
         }
         fingerprintingPlateSetup.setPositionMap(destinationPositionMap);

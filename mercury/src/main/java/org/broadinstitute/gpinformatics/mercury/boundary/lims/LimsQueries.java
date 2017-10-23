@@ -357,7 +357,7 @@ public class LimsQueries {
         List<String> bspBarcodes = new ArrayList<>();
         for (Map.Entry<String, LabVessel> entry: mapBarcodeToVessel.entrySet()) {
             LabVessel labVessel = entry.getValue();
-            if (labVessel != null && labVessel.getVolume() == null) {
+            if (labVessel != null && (labVessel.getVolume() == null || labVessel.getConcentration() == null)) {
                 Set<MercurySample.MetadataSource> metadataSources = new HashSet<>();
                 for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
                     if (!sampleInstanceV2.isReagentOnly()) {
@@ -397,7 +397,8 @@ public class LimsQueries {
                 if (labVessel.getReceptacleWeight() != null) {
                     concentrationAndVolumeAndWeightType.setWeight(labVessel.getReceptacleWeight());
                 }
-                if (labVessel.getVolume() == null) {
+                if ((labVessel.getVolume() == null || labVessel.getConcentration() == null) &&
+                        mapBarcodeToInfo.get(labVessel.getLabel()) != null) {
                     GetSampleDetails.SampleInfo sampleInfo = mapBarcodeToInfo.get(labVessel.getLabel());
                     if (sampleInfo != null) {
                         concentrationAndVolumeAndWeightType.setVolume(MathUtils.scaleTwoDecimalPlaces(
@@ -417,7 +418,7 @@ public class LimsQueries {
                     Set<LabMetric> metrics = labVessel.getConcentrationMetrics();
                     if (metrics != null && !metrics.isEmpty()) {
                         List<LabMetric> metricList = new ArrayList<>(metrics);
-                        Collections.sort(metricList, new LabMetric.LabMetricRunDateComparator());
+                        Collections.sort(metricList, Collections.reverseOrder());
                         LabMetric.MetricType metricType = metricList.get(0).getName();
                         for (LabMetric labMetric : metricList) {
                             if (labMetric.getName() != metricType) {
