@@ -2747,6 +2747,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     private void buildJsonObjectFromEditOrderProductCustomizations() throws JSONException {
+
         JSONObject customizationJson = new JSONObject(customizationJsonString);
 
         final Iterator keys = customizationJson.keys();

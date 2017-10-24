@@ -43,11 +43,20 @@
             </div>
 
             <div class="view-control-group control-group">
-                <label class="control-label label-form">Product Name</label>
+                <label class="control-label label-form">Primary Product Name</label>
                 <div class="controls">
                     <div class="form-value">${actionBean.editProduct.productName}</div>
                 </div>
             </div>
+
+            <c:if test="${actionBean.editProduct.alternateExternalName != null}">
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Alternate (External) Product Name</label>
+                    <div class="controls">
+                        <div class="form-value">${actionBean.editProduct.alternateExternalName}</div>
+                    </div>
+                </div>
+            </c:if>
 
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Product Family</label>
@@ -129,6 +138,15 @@
                     <div class="form-value">${actionBean.editProduct.primaryPriceItem.displayName}</div>
                 </div>
             </div>
+
+            <c:if test="${actionBean.editProduct.externalPriceItem != null}">
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Alternate (External) Price Items</label>
+                    <div class="controls">
+                        <div class="form-value">${actionBean.editProduct.externalPriceItem.displayName}</div>
+                    </div>
+                </div>
+            </c:if>
 
             <div class="view-control-group control-group">
                 <label class="control-label label-form">PDM Orderable Only</label>

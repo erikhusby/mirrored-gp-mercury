@@ -481,7 +481,7 @@
 
                     <div class="control-group">
                         <stripes:label for="externalPriceItem" class="control-label">
-                            Alternate (External) Price Item
+                                Alternate (External) Price Item
                         </stripes:label>
                         <div class="controls">
                             <stripes:text id="externalPriceItem" name="externalPriceItemTokenInput.listOfKeys"
