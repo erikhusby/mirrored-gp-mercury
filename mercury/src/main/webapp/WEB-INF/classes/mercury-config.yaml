@@ -236,6 +236,8 @@ infiniumStarter:
     DEV:
         dataPath: /humgen/illumina_data/dev
         minimumIdatFileLength: -1
+        decodeDataPath: /humgen/illumina_decode_data/Decode_data/dev
+        archivePath: /tmp/gap_archive/infinium
         jmsHost: picard-jms-dev.broadinstitute.org
         jmsPort: 61616
         jmsQueue: broad.arrays.enqueue.staging
@@ -245,6 +247,8 @@ infiniumStarter:
     QA:
         dataPath: /humgen/illumina_data/qa
         minimumIdatFileLength: -1
+        decodeDataPath: /humgen/illumina_decode_data/Decode_data/qa
+        archivePath: /tmp/gap_archive/infinium
         jmsHost: picard-jms-dev.broadinstitute.org
         jmsPort: 61616
         jmsQueue: broad.arrays.enqueue.staging
@@ -254,6 +258,8 @@ infiniumStarter:
     PROD:
         dataPath: /humgen/illumina_data
         minimumIdatFileLength: 2000000
+        decodeDataPath: /humgen/illumina_decode_data/Decode_data
+        archivePath: /seq/tier3b/gap_archive/infinium
         jmsHost: picard-jms.broadinstitute.org
         jmsPort: 61616
         jmsQueue: broad.arrays.enqueue

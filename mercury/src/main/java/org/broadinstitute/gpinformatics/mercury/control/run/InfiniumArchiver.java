@@ -33,6 +33,8 @@ import java.util.zip.ZipOutputStream;
 public class InfiniumArchiver {
 
     private static final Log log = LogFactory.getLog(InfiniumArchiver.class);
+    private static final String DECODE_DATA_NAME = "Decode_Data";
+    private static final String ARCHIVED_DIR_NAME = "Archived";
 
     /*
      How to test this?
@@ -97,137 +99,176 @@ public class InfiniumArchiver {
     /**
      * This code is inspired by GAP's InfiniumArchiveBean.archiveChip.
      */
-    public void archiveChip(String chipBarcode) {
-        try {
-            File rootDir = new File(infiniumStarterConfig.getDataPath());
-            File chipDir = new File(rootDir, chipBarcode);
-            // delete jpg files
-            String[] extensions = {"jpg"};
-            Iterator<File> iter = FileUtils.iterateFiles(chipDir, extensions, false);
-            boolean isSuccessful;
-            while (iter.hasNext()) {
-                File jpgFile = iter.next();
-                if (jpgFile.getName().endsWith("jpg")) {
-                    if (!jpgFile.delete()) {
-                        isSuccessful = false;
-                    }
+    public void archiveChip(String barcode) {
+        log.info("Archiving Chip Barcode " + barcode);
+        boolean isSuccessful = true;
+        File baseDataDir = new File(infiniumStarterConfig.getDataPath());
+        File dataDir = new File(baseDataDir, barcode);
+
+        String baseDecodeDataDir = infiniumStarterConfig.getDecodeDataPath();
+        File decodeDataDir = new File(baseDecodeDataDir, barcode);
+        File newDecodeDataDir = new File(dataDir, DECODE_DATA_NAME);
+
+        // delete jpg files
+        String[] extensions = {"jpg"};
+        Iterator<File> iter = FileUtils.iterateFiles(dataDir, extensions, false);
+        while (iter.hasNext()) {
+            File jpgFile = iter.next();
+            if (jpgFile.getName().endsWith("jpg")) {
+                if (!jpgFile.delete()) {
+                    isSuccessful = false;
                 }
             }
+        }
 
-            File newDecodeDataDir = new File(dataDir, DECODE_DATA_NAME);
-            if (isSuccessful) {
-                if (decodeDataDir.exists()) {
-                    // Copy the Decode_data for this barcode intoto the data directory
-                    // NOTE - I am copying, rather than moving, so I can back out if need be...
-                    if (newDecodeDataDir.mkdir()) {
-                        File newNewDecodeDataDir = new File(newDecodeDataDir, barcode); // Oooh another level...
-                        if (newNewDecodeDataDir.mkdir()) {
-                            try {
-                                FileUtils.copyDirectory(decodeDataDir, newNewDecodeDataDir);
-                            } catch (IOException ioe) {
-                                isSuccessful = false;
-                                log.error("Error copying " + decodeDataDir + " to " + newNewDecodeDataDir);
-                            }
-                        } else {
+        if (isSuccessful) {
+            if (decodeDataDir.exists()) {
+                // Copy the Decode_data for this barcode intoto the data directory
+                // NOTE - I am copying, rather than moving, so I can back out if need be...
+                if (newDecodeDataDir.mkdir()) {
+                    File newNewDecodeDataDir = new File(newDecodeDataDir, barcode); // Oooh another level...
+                    if (newNewDecodeDataDir.mkdir()) {
+                        try {
+                            FileUtils.copyDirectory(decodeDataDir, newNewDecodeDataDir);
+                        } catch (IOException ioe) {
                             isSuccessful = false;
-                            log.error("Failed to make directory: " + newNewDecodeDataDir.getAbsolutePath());
+                            log.error("Error copying " + decodeDataDir + " to " + newNewDecodeDataDir);
                         }
                     } else {
                         isSuccessful = false;
-                        log.error("Failed to make directory: " + newDecodeDataDir.getAbsolutePath());
-                    }
-                }
-            }
-
-            // Create zip file in tmp
-            String tempDir = System.getProperty("java.io.tmpdir");
-            String zipFileName = chipBarcode + ".zip";
-            File zipFile = new File(tempDir, zipFileName);
-            ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipFile));
-            // assuming that there is a directory named inFolder (If there isn't
-            // create one) in the same directory as the one the code runs from,
-            // call the zipDir method
-            isSuccessful = zipDir(chipDir.getAbsolutePath(), zos, true);
-
-            // close the stream
-            zos.close();
-            // Copy archive
-            File newZipFileLocn = new File(infiniumStarterConfig., zipFile.getName());
-            if (isSuccessful) {
-                // If here, we have successfully created the zip file in the temp directory....
-                // Move the zip file to archive pending..
-                if (!newZipFileLocn.exists()) {
-                    try {
-                        FileUtils.copyFile(zipFile, newZipFileLocn);
-                    } catch (IOException ioe) {
-                        isSuccessful = false;
-                        log.error("Error copying " + zipFile + " to " + newZipFileLocn);
-                    }
-                    if (zipFile.length() == newZipFileLocn.length()) {
-                        // TODO - MD5 or some sort of check...
-//                isSuccessful = true;
-                    } else {
-                        isSuccessful = false;
-                        log.error("Size of '" + newZipFileLocn.getAbsolutePath()
-                                + "' Does not agree with previous - error in transfer? - deleting..");
-                        newZipFileLocn.delete();
+                        log.error("Failed to make directory: " + newNewDecodeDataDir.getAbsolutePath());
                     }
                 } else {
                     isSuccessful = false;
-                    log.error(newZipFileLocn + " already exists!");
+                    log.error("Failed to make directory: " + newDecodeDataDir.getAbsolutePath());
                 }
             }
-            // delete tmp
-            if (zipFile.exists()) {
-                zipFile.delete();
-            }
-            // update status to ARCHIVED?
-            // rename dir
-            // delete dir
-            if (isSuccessful) {
-                // If here, everything worked.  Time for clean up... gulp...
-                if (dataDir.exists()) {
-//                deleteDirectory(dataDir);
-                    File archivedDataDir = new File(new File(baseDataDir, ARCHIVED_DIR_NAME), barcode);
-                    if (dataDir.renameTo(archivedDataDir)) {
-                        // TODO - I am doing it this way (move and then delete) as I was not able to delete the root directoy...
-                        deleteDirectory(archivedDataDir);
-                    } else {
-                        log.error("Failed to rename " + dataDir + " to " + archivedDataDir);
-                    }
-                }
+        }
 
-                if (decodeDataDir.exists()) {
-                    // We only remove the decode data if:
-                    // we are NOT doing rescan archiving AND the chip is not flagged for rescan
-                    // or
-                    // we ARE doing rescan archiving AND the chip has been flagged for rescan..
-                    // (isn't that an XOR?)
-                    if ((!rescanArchiving && !chipFlaggedForRescan) ||
-                            (rescanArchiving && chipFlaggedForRescan)) {
-                        deleteDirectory(decodeDataDir);
+        // Create zip file in tmp
+        String tempDir = System.getProperty("java.io.tmpdir");
+        String zipFileName = barcode + ".zip";
+        File zipFile = new File(tempDir, zipFileName);
+        if (isSuccessful) {
+            // If here, the contents of the data directory is complete for archiving
+            isSuccessful = zipDir(dataDir, zipFile, Boolean.TRUE);
+        }
+
+        // Copy archive
+        File newZipFileLocn = new File(infiniumStarterConfig.getArchivePath(), zipFile.getName());
+        if (isSuccessful) {
+            // If here, we have successfully created the zip file in the temp directory....
+            // Move the zip file to archive pending..
+            if (!newZipFileLocn.exists()) {
+                try {
+                    FileUtils.copyFile(zipFile, newZipFileLocn);
+                } catch (IOException ioe) {
+                    isSuccessful = false;
+                    log.error("Error copying " + zipFile + " to " + newZipFileLocn);
+                }
+                if (zipFile.length() == newZipFileLocn.length()) {
+                    // TODO - MD5 or some sort of check...
+//                isSuccessful = true;
+                } else {
+                    isSuccessful = false;
+                    log.error("Size of '" + newZipFileLocn.getAbsolutePath()
+                            + "' Does not agree with previous - error in transfer? - deleting..");
+                    newZipFileLocn.delete();
+                }
+            } else {
+                isSuccessful = false;
+                log.error(newZipFileLocn + " already exists!");
+            }
+        }
+
+        // delete tmp
+        if (zipFile.exists()) {
+            zipFile.delete();
+        }
+        // todo update status to ARCHIVED?
+
+        // rename dir
+        // delete dir
+        if (isSuccessful) {
+            // If here, everything worked.  Time for clean up... gulp...
+            if (dataDir.exists()) {
+//                deleteDirectory(dataDir);
+                File archivedDataDir = new File(new File(baseDataDir, ARCHIVED_DIR_NAME), barcode);
+                if (dataDir.renameTo(archivedDataDir)) {
+                    // TODO - I am doing it this way (move and then delete) as I was not able to delete the root directoy...
+                    deleteDirectory(archivedDataDir);
+                } else {
+                    log.error("Failed to rename " + dataDir + " to " + archivedDataDir);
+                }
+            }
+
+            if (decodeDataDir.exists()) {
+                // We only remove the decode data if:
+                // we are NOT doing rescan archiving AND the chip is not flagged for rescan
+                // or
+                // we ARE doing rescan archiving AND the chip has been flagged for rescan..
+                // (isn't that an XOR?)
+//                    if ((!rescanArchiving && !chipFlaggedForRescan) ||
+//                            (rescanArchiving && chipFlaggedForRescan)) {
+                    deleteDirectory(decodeDataDir);
 //                    File archivedDecodeDataDir = new File(new File(baseDecodeDataDir, ARCHIVED_DIR_NAME), barcode);
 //                    if (!decodeDataDir.renameTo(archivedDecodeDataDir)) {
 //                        log.error("Failed to rename " + decodeDataDir + " to " + archivedDecodeDataDir);
 //                    }
-                    }
-                }
-            } else {
-                // If here, something failed - do clean up...
-                // Note that I am NOT deleting the zip file if found on pending.  Not sure why it would be there, but....
+//                    }
+            }
+        } else {
+            // If here, something failed - do clean up...
+            // Note that I am NOT deleting the zip file if found on pending.  Not sure why it would be there, but....
 //            if (newZipFileLocn.exists()) {
 //                newZipFileLocn.delete();
 //            }
-                if (newDecodeDataDir.exists()) {
-                    deleteDirectory(newDecodeDataDir);
-                }
+            if (newDecodeDataDir.exists()) {
+                deleteDirectory(newDecodeDataDir);
             }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
     }
 
-    public static boolean zipDir(String dir2zip, ZipOutputStream zos, boolean useFullPath) {
+    private static boolean zipDir(File dir2Zip, File zipFile, boolean useFullPath) {
+        boolean isSuccessful = false;
+
+        if (zipFile.exists()) {
+            log.error("Zip File " + zipFile.getAbsolutePath() + " already exists!");
+            return false;
+        }
+        if (!dir2Zip.exists()) {
+            log.error("Directory " + dir2Zip.getAbsolutePath() + " Does not exist!");
+            return false;
+        }
+        if (!dir2Zip.isDirectory()) {
+            log.error("Directory " + dir2Zip.getAbsolutePath() + " Is not a directory!");
+            return false;
+        }
+
+        try {
+            // create a ZipOutputStream to zip the data to
+            ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipFile));
+            // assuming that there is a directory named inFolder (If there isn't
+            // create one) in the same directory as the one the code runs from,
+            // call the zipDir method
+            isSuccessful = zipDir(dir2Zip.getAbsolutePath(), zos, useFullPath);
+
+            // close the stream
+            zos.close();
+        } catch (IOException ioe) {
+            log.error("IOException creating zip");
+            isSuccessful = false;
+        } finally {
+            if (!isSuccessful) {
+                if (zipFile.exists()) {
+                    zipFile.delete();
+                }
+            }
+        }
+        return isSuccessful;
+    }
+
+    private static boolean zipDir(String dir2zip, ZipOutputStream zos, boolean useFullPath) {
         boolean isSuccessful = false;
 
         try {
@@ -277,4 +318,16 @@ public class InfiniumArchiver {
         }
         return isSuccessful;
     }
+
+    private boolean deleteDirectory(File dir) {
+        boolean isSuccessful = true;
+        try {
+            FileUtils.deleteDirectory(dir);
+        } catch (IOException ioe) {
+            isSuccessful = false;
+            log.error("Error deleting directory " + dir);
+        }
+        return isSuccessful;
+    }
+
 }
