@@ -1295,4 +1295,21 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderDao.persist(new FixupCommentary(fixupReason ));
         commitTransaction();
     }
+
+    @Test(enabled = false)
+    public void support3471AddSampleToSupportData() throws Exception {
+
+        String productOrderString = "PDO-13241";
+        ProductOrderSample sampleToAdd = new ProductOrderSample("SM-DAMWL");
+
+        userBean.loginOSUser();
+        beginTransaction();
+
+
+        productOrderEjb.addSamplesNoSap(productOrderString, Collections.singletonList(sampleToAdd),MessageReporter.UNUSED);
+
+        productOrderDao.persist(new FixupCommentary("SUPPORT-3471" ));
+        commitTransaction();
+
+    }
 }
