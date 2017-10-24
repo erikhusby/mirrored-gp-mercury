@@ -288,8 +288,6 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     public static int getSampleCount(ProductOrder placedOrder, Product product, int additionalSampleCount) {
         int sampleCount = 0;
 
-        //todo SGM must account for override quantity when determining sample count
-
         final PriceAdjustment adjustmentForProduct = placedOrder.getAdjustmentForProduct(product);
         Integer adjustmentQuantity = null;
         if(adjustmentForProduct != null) {

@@ -2229,7 +2229,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             if(mappedValues.containsKey(primaryPartNumber) && !mappedValues.get(primaryPartNumber).isEmpty()) {
                 ProductOrderPriceAdjustment primaryAdjustment =
                         new ProductOrderPriceAdjustment(new BigDecimal(mappedValues.get(primaryPartNumber).getPrice()),
-                                Integer.valueOf(mappedValues.get(primaryPartNumber).getQuantity()),
+                                (StringUtils.isNotBlank(mappedValues.get(primaryPartNumber).getQuantity()))?Integer.valueOf(mappedValues.get(primaryPartNumber).getQuantity()):null,
                                 mappedValues.get(primaryPartNumber).getCustomName());
                 setCustomPriceAdjustment(primaryAdjustment);
             }
@@ -2241,7 +2241,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                !mappedValues.get(addOnProduct.getPartNumber()).isEmpty()) {
                 final ProductOrderAddOnPriceAdjustment productOrderAddOnPriceAdjustment =
                         new ProductOrderAddOnPriceAdjustment(new BigDecimal(mappedValues.get(addOnProduct.getPartNumber()).getPrice()),
-                                Integer.valueOf(mappedValues.get(addOnProduct.getPartNumber()).getQuantity()),
+                                (StringUtils.isNotBlank(mappedValues.get(addOnProduct.getPartNumber()).getQuantity()))?Integer.valueOf(mappedValues.get(addOnProduct.getPartNumber()).getQuantity()):null,
                                 mappedValues.get(addOnProduct.getPartNumber()).getCustomName());
 
                 productOrderAddOn.setCustomPriceAdjustment(productOrderAddOnPriceAdjustment);

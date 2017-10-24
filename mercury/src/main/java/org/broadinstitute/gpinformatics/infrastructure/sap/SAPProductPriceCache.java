@@ -103,11 +103,11 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
 
         //  A temporary short circuit until actual implementation of the service to retrieve all materials is in place
         // When it is, this condition and it's contents will be removed
-        if(foundMaterial == null) {
-            PriceItem priceItem = getDeterminePriceItemByCompanyCode(product, companyCode);
-            final QuotePriceItem priceListItem = quotesPriceListCache.findByKeyFields(priceItem);
-            foundMaterial = new SAPMaterial(product.getPartNumber(), priceListItem.getPrice(), Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet());
-        }
+//        if(foundMaterial == null) {
+//            PriceItem priceItem = getDeterminePriceItemByCompanyCode(product, companyCode);
+//            final QuotePriceItem priceListItem = quotesPriceListCache.findByKeyFields(priceItem);
+//            foundMaterial = new SAPMaterial(product.getPartNumber(), priceListItem.getPrice(), Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet());
+//        }
 
         return foundMaterial;
     }

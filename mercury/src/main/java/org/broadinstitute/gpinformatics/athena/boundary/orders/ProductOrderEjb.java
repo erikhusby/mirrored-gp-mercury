@@ -596,19 +596,25 @@ public class ProductOrderEjb {
         } catch (SAPIntegrationException e) {
             throw new InvalidProductException(e);
         }
-        sapMaterial = productPriceCache.findByProduct(product, companyCode);
+
+        // todo sgm check quote and throw exception if it is null
+
+        // todo sgm revisit putting all this back in.
+//        sapMaterial = productPriceCache.findByProduct(product, companyCode);
 
         PriceItem priceItem = SAPProductPriceCache.getDeterminePriceItemByCompanyCode(product, companyCode);
         final QuotePriceItem priceListItem = priceListCache.findByKeyFields(priceItem);
         final String effectivePrice = priceListItem.getPrice();
-        if (sapMaterial == null) {
-            throw new InvalidProductException("Unable to continue since the product " + product.getDisplayName()
-                                              + " has not been properly set up in SAP.");
-        } else if(!StringUtils.equals(sapMaterial.getBasePrice(), effectivePrice)) {
-            throw new InvalidProductException("Unable to continue since the price for the product " +
-                                              product.getDisplayName() + " has not been properly set up in SAP");
-        }
-        return productPriceCache.getEffectivePrice(product,companyCode, orderQuote);
+//        if (sapMaterial == null) {
+//            throw new InvalidProductException("Unable to continue since the product " + product.getDisplayName()
+//                                              + " has not been properly set up in SAP.");
+//        } else if(!StringUtils.equals(sapMaterial.getBasePrice(), effectivePrice)) {
+//            throw new InvalidProductException("Unable to continue since the price for the product " +
+//                                              product.getDisplayName() + " has not been properly set up in SAP");
+//        }
+        return priceListCache.getEffectivePrice(priceItem, orderQuote);
+
+//        return productPriceCache.getEffectivePrice(product,companyCode, orderQuote);
     }
 
     /**
