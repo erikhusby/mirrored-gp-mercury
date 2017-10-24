@@ -29,9 +29,9 @@ public class InfiniumArchiverTest extends Arquillian {
     }
 
     public void testX() {
-        List<LabVessel> chipsToArchive = infiniumArchiver.findChipsToArchive();
-        for (LabVessel labVessel : chipsToArchive) {
-            System.out.println(labVessel.getLabel());
+        List<String> chipsToArchive = infiniumArchiver.findChipsToArchive();
+        for (String barcode : chipsToArchive) {
+            System.out.println(barcode);
         }
     }
 }
