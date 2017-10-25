@@ -57,7 +57,7 @@
               id="editContainerForm" class="form-horizontal">
     <c:set var="geometry" value="${actionBean.viewVessel.vesselGeometry}"/>
     <c:set var="canRackScan" value="${actionBean.editLayout and
-                    actionBean.rackOfTubes.rackType.displayName.startsWith('Matrix96')}"/>
+                    actionBean.rackOfTubes.rackType.rackScannable}"/>
     <stripes:hidden name="containerBarcode" value="${actionBean.containerBarcode}"/>
     <%--Do not let the lab get away with hand scanning RackOfTubes that can be scanned by a flatbed--%>
     <c:if test="${canRackScan}">
