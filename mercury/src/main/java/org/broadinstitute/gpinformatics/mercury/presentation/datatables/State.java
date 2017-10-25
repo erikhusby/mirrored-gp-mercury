@@ -23,6 +23,7 @@ import java.util.Map;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class State implements Serializable {
     private static final long serialVersionUID = 2016092701L;
+    public static final int ALL_RESULTS = -1;
 
     private long time;
     private int start;
@@ -38,7 +39,8 @@ public class State implements Serializable {
 
     public enum Direction {asc, desc}
 
-    public State(long time, Integer start, Integer length, List<Map<Integer, Direction>> orderList, Search search, List<Column> columns) {
+    public State(long time, Integer start, Integer length,
+                 List<Map<Integer, Direction>> orderList, Search search, List<Column> columns) {
         this.time = time;
         this.start = start;
         this.length = length;
@@ -91,8 +93,13 @@ public class State implements Serializable {
         this.columns = columns;
     }
 
-    public void setStart(Integer start) {
+
+    public void setStart(int start) {
         this.start = start;
+    }
+
+    public int getEnd() {
+        return start+length;
     }
 
     @Override

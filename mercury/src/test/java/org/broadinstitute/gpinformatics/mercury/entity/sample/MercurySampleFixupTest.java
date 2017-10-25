@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -11,6 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -159,6 +161,20 @@ public class MercurySampleFixupTest extends Arquillian {
         }
         mercurySampleDao.persist(new FixupCommentary(
                 fixupReason));
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/DeleteOrphanSamples.txt, so it
+     * can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * GPLIM-5053 delete samples that were rolled back in BSP
+     * SM-D3J61
+     * SM-D3J62
+     */
+    @Test(groups = TestGroups.FIXUP, enabled = false)
+    public void gplim5053DeleteOrphanedSamples() throws Exception {
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("DeleteOrphanSamples.txt"));
+        String fixupReason = lines.get(0);
+        removeOrphanedSamplesHelper(lines.subList(1, lines.size()), fixupReason);
     }
 
     /**

@@ -43,11 +43,18 @@ public class DeploymentBuilder {
      * @return war
      */
     public static WebArchive buildMercuryWar(Deployment deployment, String dataSourceEnvironment) {
+
+        // Look for the mercury data source in two places, prefering the target/test-classes over src/test/resources
+        // A feature branch build needs to filter the mercury datasource from src/test/resources-fb to target/test-classes
+        File mercuryDS = new File("target/test-classes/" + "mercury-"
+                + dataSourceEnvironment + "-ds.xml");
+        if (!mercuryDS.exists()) {
+            mercuryDS = new File("src/test/resources/" + "mercury-"+dataSourceEnvironment+"-ds.xml");
+        }
         WebArchive war = ShrinkWrap.create(ExplodedImporter.class, MERCURY_WAR)
                 .importDirectory("src/main/webapp")
                 .as(WebArchive.class)
-                .addAsWebInfResource(new File("src/test/resources/" + "mercury-"
-                                              + dataSourceEnvironment + "-ds.xml"))
+                .addAsWebInfResource(mercuryDS)
                 .addAsWebInfResource(new File("src/test/resources/squid-" + dataSourceEnvironment + "-ds.xml"))
                 .addAsWebInfResource(new File("src/test/resources/metrics-" + dataSourceEnvironment + "-ds.xml"))
                 .addAsResource(new File("src/main/resources/META-INF/persistence.xml"), "META-INF/persistence.xml")

@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -58,11 +59,18 @@ public class LabBatch {
         private List<VesselPosition> lanes;
         private BigDecimal concentration;
         private LabVessel labVessel;
+        private String linkedLcset;
+        private String productNames;
+        private List<FlowcellDesignation> designations;
 
-        public VesselToLanesInfo(List<VesselPosition> lanes, BigDecimal concentration, LabVessel labVessel) {
+        public VesselToLanesInfo(List<VesselPosition> lanes, BigDecimal concentration, LabVessel labVessel,
+                String lcsetName, String productName, @Nonnull List<FlowcellDesignation> designations) {
             this.lanes = lanes;
             this.concentration = concentration;
             this.labVessel = labVessel;
+            this.linkedLcset = lcsetName;
+            this.productNames = productName;
+            this.designations = designations;
         }
 
         public List<VesselPosition> getLanes() {
@@ -87,6 +95,30 @@ public class LabBatch {
 
         public void setLabVessel(LabVessel labVessel) {
             this.labVessel = labVessel;
+        }
+
+        public String getLinkedLcset() {
+            return linkedLcset;
+        }
+
+        public void setLinkedLcset(String linkedLcset) {
+            this.linkedLcset = linkedLcset;
+        }
+
+        public String getProductNames() {
+            return productNames;
+        }
+
+        public void setProductNames(String productNames) {
+            this.productNames = productNames;
+        }
+
+        public List<FlowcellDesignation> getDesignations() {
+            return designations;
+        }
+
+        public void setDesignations(@Nonnull List<FlowcellDesignation> designations) {
+            this.designations = designations;
         }
     }
 
@@ -187,7 +219,7 @@ public class LabBatch {
     @Transient
     private String important;
 
-    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labBatch")
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "labBatch", orphanRemoval = true)
     private Set<BucketEntry> bucketEntries = new HashSet<>();
 
     protected LabBatch() {
@@ -210,7 +242,8 @@ public class LabBatch {
                     @Nullable BigDecimal concentration) {
         this(batchName, Collections.singletonList(
                 new VesselToLanesInfo(Arrays.asList(flowcellType.getVesselGeometry().getVesselPositions()),
-                        concentration, starterVessel)), labBatchType, flowcellType);
+                        concentration, starterVessel, null, null, Collections.<FlowcellDesignation>emptyList())),
+                labBatchType, flowcellType);
     }
 
     /** Constructor for FCT or MISEQ where each vessel must be designated to specific lanes. */
@@ -221,8 +254,7 @@ public class LabBatch {
         this.labBatchType = labBatchType;
         this.flowcellType = flowcellType;
         for (VesselToLanesInfo vesselToLanesInfo : vesselToLanesInfos) {
-            addLabVessel(vesselToLanesInfo.getLabVessel(), vesselToLanesInfo.getConcentration(),
-                    vesselToLanesInfo.getLanes());
+            addLabVessel(vesselToLanesInfo);
         }
         createdOn = new Date();
     }
@@ -279,28 +311,26 @@ public class LabBatch {
     }
 
     public void addLabVessel(@Nonnull LabVessel labVessel) {
-        addLabVessel(labVessel, null);
-    }
-
-    public void addLabVessel(@Nonnull LabVessel labVessel, @Nullable BigDecimal concentration) {
-        LabBatchStartingVessel labBatchStartingVessel = new LabBatchStartingVessel(labVessel, this, concentration);
+        LabBatchStartingVessel labBatchStartingVessel = new LabBatchStartingVessel(labVessel, this);
         startingBatchLabVessels.add(labBatchStartingVessel);
         labVessel.addNonReworkLabBatchStartingVessel(labBatchStartingVessel);
     }
 
     /**
-     * Adds a vessel to this batch.
-     * @param labVessel the vessel to be added.
-     * @param concentration the vessel's concentration (typically a flowcell loading concentration).
-     * @param positions the position that the vessel occupies in the batch (typically a flowcell lane).
+     * Adds a vessel with lane loading info to this FCT/MISEQ batch.
+     * @param vesselToLanesInfo holds the flowcell loading parameters.
      */
-    public void addLabVessel(@Nonnull LabVessel labVessel, @Nullable BigDecimal concentration,
-                             @Nonnull List<VesselPosition> positions) {
-        for (VesselPosition vesselPosition : positions) {
+    public void addLabVessel(@Nonnull VesselToLanesInfo vesselToLanesInfo) {
+        for (int i = 0; i < vesselToLanesInfo.getLanes().size(); ++i) {
+            FlowcellDesignation designation = (vesselToLanesInfo.getDesignations().size() > i) ?
+                    vesselToLanesInfo.getDesignations().get(i) : null;
             LabBatchStartingVessel labBatchStartingVessel =
-                    new LabBatchStartingVessel(labVessel, this, concentration, vesselPosition);
+                    new LabBatchStartingVessel(vesselToLanesInfo.getLabVessel(), this,
+                            vesselToLanesInfo.getConcentration(),
+                            vesselToLanesInfo.getLanes().get(i), vesselToLanesInfo.getLinkedLcset(),
+                            vesselToLanesInfo.getProductNames(), designation);
             startingBatchLabVessels.add(labBatchStartingVessel);
-            labVessel.addNonReworkLabBatchStartingVessel(labBatchStartingVessel);
+            vesselToLanesInfo.getLabVessel().addNonReworkLabBatchStartingVessel(labBatchStartingVessel);
         }
     }
 
@@ -554,6 +584,12 @@ public class LabBatch {
     public void addBucketEntry(BucketEntry bucketEntry) {
         bucketEntries.add(bucketEntry);
         bucketEntry.setLabBatch(this);
+    }
+
+    public void removeBucketEntry(BucketEntry bucketEntry) {
+        bucketEntries.remove(bucketEntry);
+        bucketEntry.setLabBatch(null);
+        bucketEntry.setStatus(BucketEntry.Status.Active);
     }
 
     public void setCreatedOn(Date createdOn) {

@@ -57,7 +57,7 @@
 
                 var cantAbandonOrderStatuses=buildCantAbandonOrderStatusesXpath();
                 $j("input.shiftCheckbox, input.checkAll").on('click', function(){
-                    var disableButton = $j(".shiftCheckbox:checked").closest("tr").children(cantAbandonOrderStatuses).size() > 0;
+                    var disableButton = $j(".shiftCheckbox:checked").closest("tr").children(cantAbandonOrderStatuses).length > 0;
                     $j("input[name='abandonOrders']").prop('disabled', disableButton);
                 });
             });

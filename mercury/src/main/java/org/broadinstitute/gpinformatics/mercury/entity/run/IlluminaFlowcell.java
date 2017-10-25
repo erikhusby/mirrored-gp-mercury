@@ -71,8 +71,12 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
                 "^\\w+BB..$", "HiSeq", CreateFields.IssueType.HISEQ_4000, LabBatch.LabBatchType.FCT, CreateFct.YES),
         HiSeqX10Flowcell("Flowcell8LaneX10", "HiSeq X 10 Flowcell", VesselGeometry.FLOWCELL1x8, "Illumina HiSeq X 10",
                 "^\\w+(CC|AL)..$", "HiSeq", CreateFields.IssueType.HISEQ_X_10, LabBatch.LabBatchType.FCT, CreateFct.YES),
-        NovaSeqFlowcell("Flowcell1LaneNova", "NovaSeq Flowcell", VesselGeometry.FLOWCELL1x1, "Illumina NovaSeq",
+        NovaSeqFlowcell("Flowcell2LaneNova", "NovaSeq Flowcell", VesselGeometry.FLOWCELL1x2, "Illumina NovaSeq",
                 "^\\w+DM..$", "NovaSeq", CreateFields.IssueType.NOVASEQ, LabBatch.LabBatchType.FCT, CreateFct.YES),
+        NovaSeqS4Flowcell("Flowcell4LaneNova", "NovaSeq S4 Flowcell", VesselGeometry.FLOWCELL1x4, "Illumina NovaSeq",
+                "^\\w+DS..$", "NovaSeq", CreateFields.IssueType.NOVASEQ_S4, LabBatch.LabBatchType.FCT, CreateFct.YES),
+        NextSeqFlowcell("Flowcell4LaneNextSeq", "NextSeq Flowcell", VesselGeometry.FLOWCELL1x4, "Illumina NextSeq",
+                "^\\w+BG..$", "NovaSeq", CreateFields.IssueType.NEXTSEQ, LabBatch.LabBatchType.FCT, CreateFct.YES),
         OtherFlowcell("FlowcellUnknown", "Unknown Flowcell", VesselGeometry.FLOWCELL1x2, "Unknown Model", ".*", null,
                 null, null, CreateFct.NO);
 
@@ -239,6 +243,10 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
                 return HiSeqFlowcell;
             } else if (FlowcellType.NovaSeqFlowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
                 return NovaSeqFlowcell;
+            } else if (FlowcellType.NovaSeqS4Flowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
+                return NovaSeqS4Flowcell;
+            } else if (FlowcellType.NextSeqFlowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
+                return NextSeqFlowcell;
             }
             return null;
         }

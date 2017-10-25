@@ -13,13 +13,13 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.ArrayList;
 
 public class JiraIssue implements Serializable {
 
@@ -27,6 +27,7 @@ public class JiraIssue implements Serializable {
 
     private String summary;
     private String status;
+    private String parent;
     private String description;
     private List<String> subTasks;
 
@@ -74,8 +75,16 @@ public class JiraIssue implements Serializable {
         return status;
     }
 
+    public String getParent() throws IOException {
+        return parent;
+    }
+
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public void setParent(String parent) {
+        this.parent = parent;
     }
 
     public String getDescription() throws IOException {
@@ -198,6 +207,9 @@ public class JiraIssue implements Serializable {
 
     private void copyFromJiraIssue(String fieldName) throws IOException {
         JiraIssue tempIssue = jiraService.getIssueInfo(key, fieldName);
+        if(tempIssue == null) {
+            return;
+        }
         extraFields.put(fieldName,tempIssue.getFieldValue(fieldName));
         summary = tempIssue.getSummary();
         description = tempIssue.getDescription();
@@ -207,6 +219,7 @@ public class JiraIssue implements Serializable {
         status = tempIssue.getStatus();
         subTasks = tempIssue.getSubTasks();
         conditions = tempIssue.conditions;
+        parent = tempIssue.getParent();
     }
 
     public <TV> void addFieldValue(String filedName, TV value) {

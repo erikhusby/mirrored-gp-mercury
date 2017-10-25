@@ -322,6 +322,28 @@ public class WorkflowTransitionTest extends Arquillian {
         Assert.assertEquals(exexIssue.getStatus(), "In Sequencing");
     }
 
+    @Test
+    public void testPcrFreePondRegistration() throws IOException {
+        Assert.assertEquals(genomeIssue.getStatus(), "On Hold");
+        genomeIssue.postTransition("In LC", null);
+
+        String sourcePlateBarcode = "000009184173";
+        String destRackBarcode = "PondRegistrationBarcodeGenomeTest" + timestampFormat.format(new Date());
+        List<String> pondTube = Arrays.asList("PondTubeWorkflowtest" +  timestampFormat.format(new Date()));
+
+        PlateTransferEventType plateTransferEventType = bettaLimsMessageTestFactory
+                .buildPlateToRack(LabEventType.PCR_FREE_POND_REGISTRATION.getName(), sourcePlateBarcode,
+                        destRackBarcode, pondTube);
+
+        BettaLIMSMessage message = new BettaLIMSMessage();
+        message.getPlateTransferEvent().add(plateTransferEventType);
+        List<LabEvent> labEvents = labEventFactory.buildFromBettaLims(message);
+        LabEvent labEvent = labEvents.get(0);
+        jiraCommentUtil.postUpdate(labEvent);
+        genomeIssue = jiraService.getIssue(genomeJiraTicket);
+        Assert.assertEquals(genomeIssue.getStatus(), "Norm and Pool");
+    }
+
     private JiraIssue resetJiraTicketState(String ticketKey) throws IOException {
         JiraIssue issue = jiraService.getIssue(ticketKey);
         Assert.assertNotNull(issue);

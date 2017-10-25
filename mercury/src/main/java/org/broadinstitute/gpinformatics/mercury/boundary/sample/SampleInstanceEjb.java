@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
@@ -18,17 +19,21 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntityTsk;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import java.util.List;
+import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Stateful
 @RequestScoped
@@ -47,7 +52,7 @@ public class SampleInstanceEjb  {
     private List<MolecularIndexingScheme> molecularIndexSchemes = new ArrayList<>();
     private List<ReagentDesign> reagents = new ArrayList<>();
     private List<MercurySample> mercurySamples = new ArrayList<>();
-    private List<MercurySample> rootSamples = new ArrayList<>();
+    private List<MercurySample> mercuryRootSamples = new ArrayList<>();
     private List<Boolean> sampleRegistrationFlag = new ArrayList<>();
     private int rowOffset = 2;
 
@@ -81,15 +86,46 @@ public class SampleInstanceEjb  {
     /**
      * Build and return the collaborator metadata for the samples. (If supplied)
      */
-    private Set<Metadata> collaboratorSampleIdMetadata(final int index) {
-        return new HashSet<Metadata>() {{
-            add(new Metadata(Metadata.Key.SAMPLE_ID, collaboratorSampleId.get(index)));
-            add(new Metadata(Metadata.Key.BROAD_SAMPLE_ID, broadParticipantId.get(index)));
-            add(new Metadata(Metadata.Key.PATIENT_ID, collaboratorParticipantId.get(index)));
-            add(new Metadata(Metadata.Key.GENDER, gender.get(index)));
-            add(new Metadata(Metadata.Key.LSID, lsid.get(index)));
-            add(new Metadata(Metadata.Key.SPECIES, species.get(index)));
-        }};
+    private Set<Metadata> collaboratorSampleIdMetadata(final int index, MercurySample mercurySample) {
+
+        removeExistingMetadata(mercurySample);
+        if(!collaboratorSampleId.get(index).isEmpty()) {
+            return new HashSet<Metadata>() {{
+                add(new Metadata(Metadata.Key.SAMPLE_ID, collaboratorSampleId.get(index)));
+                add(new Metadata(Metadata.Key.BROAD_PARTICIPANT_ID, broadParticipantId.get(index)));
+                add(new Metadata(Metadata.Key.PATIENT_ID, collaboratorParticipantId.get(index)));
+                add(new Metadata(Metadata.Key.GENDER, gender.get(index)));
+                add(new Metadata(Metadata.Key.LSID, lsid.get(index)));
+                add(new Metadata(Metadata.Key.SPECIES, species.get(index)));
+                add(new Metadata(Metadata.Key.MATERIAL_TYPE, MaterialType.DNA.getDisplayName()));
+            }};
+        }
+        return new HashSet<>();
+    }
+
+    /**
+     *  Handle instances where metadata is updated / or deleted by an upload.
+     */
+    private void removeExistingMetadata(MercurySample mercurySample) {
+
+        List<Metadata.Key> metadatas = new ArrayList<>();
+        metadatas.add(Metadata.Key.SAMPLE_ID);
+        metadatas.add(Metadata.Key.BROAD_PARTICIPANT_ID);
+        metadatas.add(Metadata.Key.PATIENT_ID);
+        metadatas.add(Metadata.Key.GENDER);
+        metadatas.add(Metadata.Key.LSID);
+        metadatas.add(Metadata.Key.SPECIES);
+        metadatas.add(Metadata.Key.MATERIAL_TYPE);
+
+        HashSet<Metadata> metadataHashSet = new HashSet<>();
+        for(Metadata metadata : mercurySample.getMetadata()) {
+            if(metadatas.contains(metadata.getKey())) {
+                metadataHashSet.add(metadata);
+            }
+        }
+
+        mercurySample.getMetadata().removeAll(metadataHashSet);
+
     }
 
     /**
@@ -97,13 +133,26 @@ public class SampleInstanceEjb  {
      */
     private void persistResults(VesselPooledTubesProcessor vesselSpreadsheetProcessor, MessageCollection messageCollection) {
         int sampleIndex = 0;
+        List<SampleInstanceEntity> sampleInstanceEntities = new ArrayList<>();
+        Map<String, MercurySample> mercurySampleMap = new HashMap<>();
+        Map<String, MercurySample> mercuryRootSampleMap = new HashMap<>();
 
+        List<LabVessel> labVessels = new ArrayList<>();
         for (String sampleId : vesselSpreadsheetProcessor.getBroadSampleId()) {
             LabVessel labVessel = mapBarcodeToVessel.get(vesselSpreadsheetProcessor.getBarcodes().get(sampleIndex));
+            String rootSampleId = vesselSpreadsheetProcessor.getRootSampleId().get(sampleIndex);
 
             if (labVessel == null) {
                 labVessel = new BarcodedTube(vesselSpreadsheetProcessor.getBarcodes().get(sampleIndex), BarcodedTube.BarcodedTubeType.MatrixTube);
             }
+
+            //Add volume to lab vessel.
+            if(getVolume(vesselSpreadsheetProcessor, labVessel.getLabel()) != null) {
+                labVessel.setVolume(getVolume(vesselSpreadsheetProcessor, labVessel.getLabel()));
+            }
+
+            //Add library size lab metric to to lab vessel.
+            addLibrarySize(labVessel,new BigDecimal(vesselSpreadsheetProcessor.getFragmentSize().get(sampleIndex)));
 
             SampleInstanceEntity sampleInstanceEntity = sampleInstanceEntityDao.findByName(vesselSpreadsheetProcessor.getSingleSampleLibraryName().get(sampleIndex));
             if (sampleInstanceEntity == null) {
@@ -112,34 +161,67 @@ public class SampleInstanceEjb  {
 
             //Check if the sample is registered in Mercury.
             MercurySample mercurySample = mercurySampleDao.findBySampleKey(sampleId);
+            //Check if the Root sample is registered in Mercury.
+            MercurySample mercuryRootSample = mercurySampleDao.findBySampleKey(rootSampleId);
 
-            //Add the new registration metadata.
-            if (!sampleRegistrationFlag.get(sampleIndex)) {
-                if (mercurySample == null) {
-                    mercurySample = new MercurySample(sampleId, MercurySample.MetadataSource.MERCURY);
+            if (mercurySample == null) {
+                mercurySample = new MercurySample(sampleId, MercurySample.MetadataSource.MERCURY);
+            }
+
+            Set<Metadata>  metadata = collaboratorSampleIdMetadata(sampleIndex, mercurySample);
+
+            if (mercuryRootSample == null) {
+                mercuryRootSample = new MercurySample(rootSampleId, MercurySample.MetadataSource.MERCURY);
+
+                if(mercuryRootSample.getMetadataSource().equals(MercurySample.MetadataSource.MERCURY)) {
+                    mercuryRootSample.addMetadata(metadata);
                 }
-                mercurySample.addMetadata(collaboratorSampleIdMetadata(sampleIndex));
-                mercurySample.addLabVessel(labVessel);
+
+                mercuryRootSample.addLabVessel(labVessel);
+
+            }
+
+            if(mercurySample.getMetadataSource().equals(MercurySample.MetadataSource.MERCURY)) {
+                mercurySample.addMetadata(metadata);
             }
 
             mercurySample.addLabVessel(labVessel);
-            mercurySampleDao.persist(mercurySample);
+
             mercurySamples.add(mercurySample);
-
-            sampleInstanceEntity.setSampleLibraryName(vesselSpreadsheetProcessor.getSingleSampleLibraryName().get(sampleIndex));
-            sampleInstanceEntity.setReagentDesign(reagents.get(sampleIndex));
-            sampleInstanceEntity.setMolecularIndexScheme(molecularIndexSchemes.get(sampleIndex));
-            sampleInstanceEntity.setMercurySampleId(mercurySamples.get(sampleIndex));
-
-            if(rootSamples.size() >= sampleIndex) {
-                sampleInstanceEntity.setRootSample(rootSamples.get(sampleIndex));
+            if(!mercuryRootSamples.contains(mercuryRootSample)) {
+                mercuryRootSamples.add(mercuryRootSample);
             }
 
+            mercurySampleMap.put(mercurySample.getSampleKey(),mercuryRootSample);
+
+            if(!rootSampleId.equals(sampleId)) {
+                mercuryRootSample.addLabVessel(labVessel);
+                mercuryRootSampleMap.put(mercuryRootSample.getSampleKey(),mercuryRootSample);
+            }
+            else {
+                mercuryRootSampleMap.put(mercuryRootSample.getSampleKey(),mercuryRootSample);
+            }
+
+            sampleInstanceEntity.setSampleLibraryName(vesselSpreadsheetProcessor.getSingleSampleLibraryName().get(sampleIndex));
+            if(reagents.size() > sampleIndex) {
+                sampleInstanceEntity.setReagentDesign(reagents.get(sampleIndex));
+            }
+            if(molecularIndexSchemes.size() > sampleIndex) {
+                sampleInstanceEntity.setMolecularIndexScheme(molecularIndexSchemes.get(sampleIndex));
+            }
+            if(mercurySamples.size() > sampleIndex) {
+                sampleInstanceEntity.setMercurySampleId(mercurySamples.get(sampleIndex));
+            }
+            if(!StringUtils.isEmpty(vesselSpreadsheetProcessor.getReadLength().get(sampleIndex).trim())) {
+                sampleInstanceEntity.setReadLength(Integer.valueOf(vesselSpreadsheetProcessor.getReadLength().get(sampleIndex)));
+            }
+            if(mercuryRootSamples.size() > sampleIndex) {
+                sampleInstanceEntity.setRootSample(mercuryRootSamples.get(sampleIndex));
+            }
             sampleInstanceEntity.setExperiment(vesselSpreadsheetProcessor.getExperiment().get(sampleIndex));
 
             sampleInstanceEntity.setLabVessel(labVessel);
             sampleInstanceEntity.setUploadDate();
-
             sampleInstanceEntity.removeSubTasks();
 
             //Persist the dev sub-tasks in the order they where provided.
@@ -149,12 +231,32 @@ public class SampleInstanceEjb  {
                 sampleInstanceEntity.addSubTasks(sampleInstanceEntityTsk);
             }
 
-            sampleInstanceEntityDao.persist(sampleInstanceEntity);
-            sampleInstanceEntityDao.flush();
+            //labVesselDao.persist(labVessel);
+            labVessels.add(labVessel);
+            sampleInstanceEntities.add(sampleInstanceEntity);
             mapBarcodeToVessel.put(labVessel.getLabel(),labVessel);
-
             ++sampleIndex;
         }
+
+
+        labVesselDao.persistAll(labVessels);
+
+       //This fix the potential problem when both the root and sample are the same and do not already exist.
+       for(SampleInstanceEntity sampleInstanceEntity : sampleInstanceEntities) {
+            if(sampleInstanceEntity.getMercurySample().getMercurySampleId() == null ||
+                   sampleInstanceEntity.getRootSample().getMercurySampleId() == null)  {
+               if(sampleInstanceEntity.getMercurySample().getSampleKey().equals(
+                       sampleInstanceEntity.getRootSample().getSampleKey())) {
+                   MercurySample mercurySample = mercurySampleMap.get(sampleInstanceEntity.getMercurySample().getSampleKey());
+                   MercurySample mercurySampleRoot = mercuryRootSampleMap.get(sampleInstanceEntity.getRootSample().getSampleKey());
+                   sampleInstanceEntity.setMercurySampleId(mercurySample);
+                   sampleInstanceEntity.setRootSample(mercurySampleRoot);
+               }
+            }
+         }
+
+         sampleInstanceEntityDao.persistAll(sampleInstanceEntities);
+
 
         if (sampleIndex > 0) {
             messageCollection.addInfo("Spreadsheet with " + String.valueOf(sampleIndex) + " rows successfully uploaded!");
@@ -222,7 +324,7 @@ public class SampleInstanceEjb  {
         for (String rootSampleId : vesselSpreadsheetProcessor.getRootSampleId()) {
             MercurySample mercurySample = mercurySampleDao.findBySampleKey(rootSampleId);
             if (mercurySample != null) {
-                this.rootSamples.add(mercurySample);
+                this.mercuryRootSamples.add(mercurySample);
             }
         }
 
@@ -238,7 +340,7 @@ public class SampleInstanceEjb  {
                         + " At Row: " + (baitCatIndex + rowOffset) + " Column: " + VesselPooledTubesProcessor.Headers.BAIT.getText()
                         + " & " + VesselPooledTubesProcessor.Headers.CAT.getText());
             }
-            if ((!cat.isEmpty() && cat.isEmpty()) && reagentDesignBait == null) {
+            if ((!bait.isEmpty() && cat.isEmpty()) && reagentDesignBait == null) {
                 messageCollection.addError("Bait: " + bait + " is not registered. At Row: " + (baitCatIndex + rowOffset)
                         + " Column: " + VesselPooledTubesProcessor.Headers.BAIT.getText());
             }
@@ -263,27 +365,24 @@ public class SampleInstanceEjb  {
         for (Map<String, String> devCondition : devConditions) {
             String experiment = vesselSpreadsheetProcessor.getExperiment().get(conditionIndex);
             JiraIssue jiraIssue = getIssueInfoNoException(experiment, null);
-            List<String> jiraSubTasks;
             if (jiraIssue == null) {
                 messageCollection.addError("Dev ticket not found for Experiment: " + experiment + " At Row: " + experimentIndex
                         + " Column: " + VesselPooledTubesProcessor.Headers.EXPERIMENT.getText());
             } else {
-                jiraSubTasks = jiraIssue.getSubTasks();
+                List<String> jiraSubTasks = jiraIssue.getSubTaskKeys();
                 if (jiraSubTasks != null && devConditions.size() > 0) {
                     subTaskList = new ArrayList<String>(devCondition.values());
                     for (String subTask : subTaskList) {
-                        boolean foundFlag = false;
-                        for (String jiraSubTask : jiraSubTasks) {
-                            if (devCondition.containsKey(jiraSubTask)) {
-                                foundFlag = true;
-                                jiraSubTasks.remove(jiraSubTask);
+                        for(String key : devCondition.keySet()) {
+                            if (jiraSubTasks.contains(key)) {
                                 break;
                             }
+                            else {
+                                messageCollection.addError("Condition / Sub Task: " + key + " not found for Experiment: "
+                                        + experiment + " At Row: " + experimentIndex + " Column: " + VesselPooledTubesProcessor.Headers.CONDITIONS.getText());
+                            }
                         }
-                        if (!foundFlag) {
-                            messageCollection.addError("Condition / Sub Task: " + subTask + " not found for Experiment: "
-                                    + experiment + " At Row: " + experimentIndex + " Column: " + VesselPooledTubesProcessor.Headers.EXPERIMENT.getText());
-                        }
+
                     }
                 }
             }
@@ -292,17 +391,18 @@ public class SampleInstanceEjb  {
             conditionIndex++;
         }
 
-        //Is the sample ID registred in Mercury? If not check for optional ID fields.
+        //Is the sample ID registered in Mercury? If not check for optional ID fields.
         int sampleIndex = 0;
         for (String sampleId : vesselSpreadsheetProcessor.getBroadSampleId()) {
             MercurySample mercurySample = mercurySampleDao.findBySampleKey(sampleId);
 
             //If the sample is missing or not registered check to see if the alternate info was supplied
-            if ((sampleId == null || mercurySample == null)) {
+            if ((mercurySample == null)) {
+                checkForOptionalHeaders(vesselSpreadsheetProcessor.getRootSampleId().get(sampleIndex), VesselPooledTubesProcessor.Headers.ROOT_SAMPLE_ID, sampleIndex, messageCollection);
                 this.collaboratorSampleId.add(vesselSpreadsheetProcessor.getCollaboratorSampleId().get(sampleIndex));
                 checkForOptionalHeaders(this.collaboratorSampleId.get(sampleIndex), VesselPooledTubesProcessor.Headers.COLLABORATOR_SAMPLE_ID, sampleIndex, messageCollection);
                 this.collaboratorParticipantId.add(vesselSpreadsheetProcessor.getCollaboratorParticipantId().get(sampleIndex));
-                checkForOptionalHeaders(this.collaboratorParticipantId.get(sampleIndex), VesselPooledTubesProcessor.Headers.COLLABORATOR_SAMPLE_ID, sampleIndex, messageCollection);
+                checkForOptionalHeaders(this.collaboratorParticipantId.get(sampleIndex), VesselPooledTubesProcessor.Headers.COLLABORATOR_PARTICIPANT_ID, sampleIndex, messageCollection);
                 this.broadParticipantId.add(vesselSpreadsheetProcessor.getBroadParticipantId().get(sampleIndex));
                 checkForOptionalHeaders(this.broadParticipantId.get(sampleIndex), VesselPooledTubesProcessor.Headers.BROAD_PARTICIPANT_ID, sampleIndex, messageCollection);
                 this.gender.add(vesselSpreadsheetProcessor.getGender().get(sampleIndex));
@@ -313,9 +413,35 @@ public class SampleInstanceEjb  {
                 checkForOptionalHeaders(this.lsid.get(sampleIndex), VesselPooledTubesProcessor.Headers.LSID, sampleIndex, messageCollection);
                 sampleRegistrationFlag.add(false);
             } else {
+                this.collaboratorSampleId.add(vesselSpreadsheetProcessor.getCollaboratorSampleId().get(sampleIndex));
+                this.collaboratorParticipantId.add(vesselSpreadsheetProcessor.getCollaboratorParticipantId().get(sampleIndex));
+                this.broadParticipantId.add(vesselSpreadsheetProcessor.getBroadParticipantId().get(sampleIndex));
+                this.gender.add(vesselSpreadsheetProcessor.getGender().get(sampleIndex));
+                this.species.add(vesselSpreadsheetProcessor.getSpecies().get(sampleIndex));
+                this.lsid.add(vesselSpreadsheetProcessor.getLsid().get(sampleIndex));
+
+                //If this is a BSP sample do not allow the user to modify the metadata in Mercury.
+                if(mercurySample.getMetadataSource().equals(MercurySample.MetadataSource.BSP)) {
+                    checkForMetadata(this.collaboratorSampleId.get(sampleIndex), VesselPooledTubesProcessor.Headers.COLLABORATOR_SAMPLE_ID, sampleIndex, messageCollection);
+                    checkForMetadata(this.collaboratorParticipantId.get(sampleIndex), VesselPooledTubesProcessor.Headers.COLLABORATOR_PARTICIPANT_ID, sampleIndex, messageCollection);
+                    checkForMetadata(this.broadParticipantId.get(sampleIndex), VesselPooledTubesProcessor.Headers.BROAD_PARTICIPANT_ID, sampleIndex, messageCollection);
+                    checkForMetadata(this.gender.get(sampleIndex), VesselPooledTubesProcessor.Headers.GENDER, sampleIndex, messageCollection);
+                    checkForMetadata(this.species.get(sampleIndex), VesselPooledTubesProcessor.Headers.SPECIES, sampleIndex, messageCollection);
+                    checkForMetadata(this.lsid.get(sampleIndex), VesselPooledTubesProcessor.Headers.LSID, sampleIndex, messageCollection);
+                }
+
+
                 mercurySamples.add(mercurySample);
                 sampleRegistrationFlag.add(true);
             }
+
+            //Validate if Fragment and Read Length exist that they are actual numbers.
+            validateNumber( vesselSpreadsheetProcessor.getFragmentSize().get(sampleIndex),
+                    VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE,sampleIndex,messageCollection, true);
+
+            validateNumber(vesselSpreadsheetProcessor.getReadLength().get(sampleIndex),
+                    VesselPooledTubesProcessor.Headers.READ_LENGTH,sampleIndex,messageCollection, false);
+
             ++sampleIndex;
         }
 
@@ -334,6 +460,16 @@ public class SampleInstanceEjb  {
         if (isFieldEmpty(value)) {
             messageCollection.addError("No Valid Broad Sample ID found and column " + headers.getText()
                     + " was also missing at Row: " + (index + 2));
+        }
+    }
+
+    /**
+     *  This method creates errors when the user tries to update Metadata fields in Mercury for BSP samples.
+     */
+    private void checkForMetadata(String value, VesselPooledTubesProcessor.Headers headers, int index, MessageCollection messageCollection) {
+        if (!isFieldEmpty(value)) {
+            messageCollection.addError("This sample was registered in BSP.  " + headers.getText() + " cannot be updated via the pooled tube upload "
+                    + "at Row: " + (index + 2));
         }
     }
 
@@ -362,6 +498,70 @@ public class SampleInstanceEjb  {
         }
     }
 
+    /**
+     *  Return the first non empty volume for a given barcode(s)
+     */
+    private BigDecimal getVolume(VesselPooledTubesProcessor vesselSpreadsheetProcessor, String barcode)
+    {
+        int index = 0;
+        BigDecimal volume = BigDecimal.ZERO;
+        for (String volumeBarcode : vesselSpreadsheetProcessor.getBarcodes()) {
+            if(volumeBarcode.equals(barcode)){
+                if(vesselSpreadsheetProcessor.getVolume().get(index).trim().length() > 0) {
+                    volume = BigDecimal.valueOf(Float.parseFloat((vesselSpreadsheetProcessor.getVolume().get(index))));
+                }
+                if (volume.compareTo(BigDecimal.ZERO) > 0) {
+                    return volume;
+                }
+            }
+            ++index;
+        }
+        return null;
+    }
 
+    /**
+     *  Add library size metric to the given lab vessel.
+     */
+    private void addLibrarySize(LabVessel labVessel, BigDecimal librarySize)
+    {
 
+        //Don't continue to add the same value if it already exists for the that vessel.
+        for(LabMetric labMetric: labVessel.getMetrics()) {
+            if(labMetric.getName() == LabMetric.MetricType.FINAL_LIBRARY_SIZE && labMetric.getValue().equals(librarySize)) {
+                return;
+            }
+        }
+        LabMetric finalLibrarySizeMetric =
+                new LabMetric(librarySize, LabMetric.MetricType.FINAL_LIBRARY_SIZE, LabMetric.LabUnit.UG_PER_ML,
+                        null, new Date());
+        labVessel.addMetric(finalLibrarySizeMetric);
+    }
+
+    /**
+     *  Check for missing / invalid numeric fields.
+     */
+    private void validateNumber(String input, VesselPooledTubesProcessor.Headers headers, int index, MessageCollection messageCollection, Boolean required) {
+
+        //Check for fields that are not required, but if they are there, they must contain a valid number.
+        if(!required && StringUtils.isEmpty(input.trim())) {
+            return;
+        }
+        if(!required && !StringUtils.isEmpty(input.trim())) {
+            if(StringUtils.isNumeric(input)) {
+                return;
+            }
+            else {
+                messageCollection.addError("Invalid number:   " + input + " at column: " + headers.getText() + " at row: " + (index + 2));
+                return;
+            }
+        }
+
+        //Check for required fields
+        if(StringUtils.isNumeric(input)) {
+            return;
+        }
+        else {
+            messageCollection.addError("Invalid or missing number:   " + input + " at column: " + headers.getText() + " at row: " + (index + 2));
+        }
+    }
 }

@@ -236,23 +236,29 @@ infiniumStarter:
     DEV:
         dataPath: /humgen/illumina_data/dev
         minimumIdatFileLength: -1
-        jmsHost: vpicard01
+        jmsHost: picard-jms-dev.broadinstitute.org
         jmsPort: 61616
-        jmsQueue: broad.arrays.enqueue_staging
+        jmsQueue: broad.arrays.enqueue.staging
+        login: mercury-pipeline
+        passwordFileName: mercury-pipeline-dev-passwords.properties
 
     QA:
         dataPath: /humgen/illumina_data/qa
         minimumIdatFileLength: -1
-        jmsHost: vpicard01
+        jmsHost: picard-jms-dev.broadinstitute.org
         jmsPort: 61616
-        jmsQueue: broad.arrays.enqueue_staging
+        jmsQueue: broad.arrays.enqueue.staging
+        login: mercury-pipeline
+        passwordFileName: mercury-pipeline-dev-passwords.properties
 
     PROD:
         dataPath: /humgen/illumina_data
         minimumIdatFileLength: 2000000
-        jmsHost: vpicard03
+        jmsHost: picard-jms.broadinstitute.org
         jmsPort: 61616
         jmsQueue: broad.arrays.enqueue
+        login: mercury-pipeline
+        passwordFileName: mercury-pipeline-prod-passwords.properties
 
 hipchat:
     DEV:

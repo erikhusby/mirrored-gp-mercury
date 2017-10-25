@@ -277,9 +277,11 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
                 })(column, this);
             });
         }
-        api.on('init.dt', function (event, settings) {
-            updateFilterInfo(column, cleanTitle, headerLabel, savedFilterValue);
-        });
+        if (filterColumn) {
+            api.on('init.dt', function (event, settings) {
+                updateFilterInfo(column, cleanTitle, headerLabel, savedFilterValue);
+            });
+        }
     });
 
     // do not sort column when input field is clicked.

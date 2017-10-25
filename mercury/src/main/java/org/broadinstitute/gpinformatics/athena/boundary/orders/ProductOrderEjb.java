@@ -486,9 +486,9 @@ public class ProductOrderEjb {
 
         if(orderQuote != null && accessControl.isEnabled()) {
 
-            eligibilityResult = orderQuote.isEligibleForSAP() &&
-                                editedProductOrder.getProduct()
-                                        .getPrimaryPriceItem() != null &&
+            eligibilityResult = editedProductOrder.getProduct()!=null &&
+                                editedProductOrder.getProduct().getPrimaryPriceItem() != null &&
+                                orderQuote != null && orderQuote.isEligibleForSAP() &&
                                 !CollectionUtils.containsAny(accessControl.getDisabledItems(), priceItemNameList) ;
         }
 
@@ -502,8 +502,10 @@ public class ProductOrderEjb {
 
     public boolean arePriceItemsValid(ProductOrder editedProductOrder, Set<AccessItem> priceItemNameList) {
         Set<Product> productListFromOrder = new HashSet<>();
-        productListFromOrder.add(editedProductOrder.getProduct());
-        priceItemNameList.add(new AccessItem(editedProductOrder.getProduct().getPrimaryPriceItem().getName()));
+        if (editedProductOrder.getProduct() != null) {
+            productListFromOrder.add(editedProductOrder.getProduct());
+            priceItemNameList.add(new AccessItem(editedProductOrder.getProduct().getPrimaryPriceItem().getName()));
+        }
         for (ProductOrderAddOn productOrderAddOn : editedProductOrder.getAddOns()) {
             productListFromOrder.add(productOrderAddOn.getAddOn());
             priceItemNameList.add(new AccessItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getName()));
@@ -514,19 +516,23 @@ public class ProductOrderEjb {
     public boolean determinePriceItemValidity(Collection<Product> productsToConsider) {
         boolean allItemsValid = true;
         QuotePriceItem primaryPriceItem;
-        try {
-            for (Product product: productsToConsider) {
-               primaryPriceItem =
-                        priceListCache.findByKeyFields(product.getPrimaryPriceItem().getPlatform(),
-                                product.getPrimaryPriceItem().getCategory(),
-                                product.getPrimaryPriceItem().getName());
-                if(primaryPriceItem == null) {
-                    allItemsValid = false;
-                    break;
+        if(CollectionUtils.isNotEmpty(productsToConsider)) {
+            try {
+                for (Product product : productsToConsider) {
+                    primaryPriceItem =
+                            priceListCache.findByKeyFields(product.getPrimaryPriceItem().getPlatform(),
+                                    product.getPrimaryPriceItem().getCategory(),
+                                    product.getPrimaryPriceItem().getName());
+                    if (primaryPriceItem == null) {
+                        allItemsValid = false;
+                        break;
+                    }
                 }
-            }
 
-        } catch (Exception e) {
+            } catch (Exception e) {
+                allItemsValid = false;
+            }
+        } else {
             allItemsValid = false;
         }
 
@@ -1318,6 +1324,45 @@ public class ProductOrderEjb {
     }
 
     /**
+     * Used only for a fixup test.
+     *
+     * Update JIRA state of an order based on a sample change operation.
+     * <ul>
+     * <li>add a comment with the operation and the list of samples changed</li>
+     * <li>update the Sample IDs and Number of Samples fields</li>
+     * <li>output a message to the user about the operation</li>
+     * <li>if necessary, update the order status based on the new list of samples</li>
+     * </ul>
+     */
+    private void updateSamplesNoSap(ProductOrder order, Collection<ProductOrderSample> samples, MessageReporter reporter,
+                               String operation) throws IOException, NoSuchPDOException, SAPInterfaceException {
+        JiraIssue issue = jiraService.getIssue(order.getJiraTicketKey());
+
+        String nameList = StringUtils.join(ProductOrderSample.getSampleNames(samples), ",");
+        issue.addComment(MessageFormat.format("{0} {1} samples: {2}.",
+                userBean.getLoginUserName(), operation, nameList));
+        productOrderJiraUtil.setCustomField(issue, ProductOrder.JiraField.SAMPLE_IDS, order.getSampleString());
+        productOrderJiraUtil.setCustomField(issue, ProductOrder.JiraField.NUMBER_OF_SAMPLES, order.getSamples().size());
+
+        MessageCollection collection = new MessageCollection();
+        for (String error : collection.getErrors()) {
+            reporter.addMessage(error);
+        }
+        for (String warn : collection.getWarnings()) {
+            reporter.addMessage("Warning: " + warn);
+        }
+        for (String info : collection.getInfos()) {
+            reporter.addMessage(info);
+        }
+
+        reporter.addMessage("{0} samples: {1}.", WordUtils.capitalize(operation), nameList);
+
+        updateOrderStatus(order.getJiraTicketKey(), reporter);
+
+
+    }
+
+    /**
      * Given a PDO ID, add a list of samples to the PDO.  This will update the PDO's JIRA with a comment that the
      * samples have been added, and will notify LIMS that the samples are now present, and update the PDO's status
      * if necessary.
@@ -1341,6 +1386,34 @@ public class ProductOrderEjb {
 
         updateSamples(order, samples, reporter, "added");
     }
+
+    /**
+     * Used only for a fixup test
+     *
+     * Given a PDO ID, add a list of samples to the PDO.  This will update the PDO's JIRA with a comment that the
+     * samples have been added, and will notify LIMS that the samples are now present, and update the PDO's status
+     * if necessary.
+     *
+     * @param jiraTicketKey the PDO key
+     * @param samples       the samples to add. this argument must not be changed to Collection, or
+     *                      ImmutableListMultiMap does not work correctly.
+     */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public void addSamplesNoSap(@Nonnull String jiraTicketKey, @Nonnull List<ProductOrderSample> samples,
+                           @Nonnull MessageReporter reporter)
+            throws NoSuchPDOException, IOException, SAPInterfaceException {
+        ProductOrder order = findProductOrder(jiraTicketKey);
+        order.addSamples(samples);
+
+        attachMercurySamples(samples);
+
+        order.prepareToSave(userBean.getBspUser());
+        productOrderDao.persist(order);
+        handleSamplesAdded(jiraTicketKey, samples, reporter);
+
+        updateSamplesNoSap(order, samples, reporter, "added");
+    }
+
 
     /**
      * Makes the association between ProductOrderSample and MercurySample.
@@ -1585,11 +1658,11 @@ public class ProductOrderEjb {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    public GenotypingProductOrderMapping findOrCreateGenotypingChipProductOrderMapping(String productOrderJiraTicket) {
+    public GenotypingProductOrderMapping findOrCreateGenotypingChipProductOrderMapping(Long productOrderId) {
         GenotypingProductOrderMapping mapping =
-                attributeArchetypeDao.findGenotypingProductOrderMapping(productOrderJiraTicket);
+                attributeArchetypeDao.findGenotypingProductOrderMapping(productOrderId);
         if (mapping == null) {
-            mapping = new GenotypingProductOrderMapping(productOrderJiraTicket, null, null);
+            mapping = new GenotypingProductOrderMapping(productOrderId.toString(), null, null);
             attributeArchetypeDao.persist(mapping);
             attributeArchetypeDao.flush();
         }
@@ -1612,6 +1685,7 @@ public class ProductOrderEjb {
         this.accessController = accessController;
     }
 
+    @Inject
     public void setSapConfig(SapConfig sapConfig) {
         this.sapConfig = sapConfig;
     }
