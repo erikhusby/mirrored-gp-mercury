@@ -386,7 +386,7 @@ public class ProductOrderEjb {
                 } else if(orderToPublish.isSavedInSAP()){
                     if (SapIntegrationServiceImpl.getSampleCount((ProductOrder) orderToPublish,
                             (Product) orderToPublish.getProduct(),
-                            (int) 0) > 0) {
+                            (int) 0, false) > 0) {
                         updateOrderInSap(orderToPublish, allProductsOrdered, effectivePricesForProducts, messageCollection);
 
                         for (ProductOrder childProductOrder : orderToPublish.getChildOrders()) {
@@ -435,7 +435,7 @@ public class ProductOrderEjb {
             throws SAPIntegrationException {
         sapService.updateOrder(orderToUpdate);
         orderToUpdate.updateSapDetails(SapIntegrationServiceImpl.getSampleCount((ProductOrder) orderToUpdate,
-                (Product) orderToUpdate.getProduct(), (int) 0),
+                (Product) orderToUpdate.getProduct(), (int) 0, false),
                 TubeFormation.makeDigest(StringUtils.join(allProductsOrdered, ",")),
                 TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ",")));
         messageCollection.addInfo("Order "+orderToUpdate.getJiraTicketKey() +
@@ -462,9 +462,8 @@ public class ProductOrderEjb {
             oldNumber = orderToPublish.getSapOrderNumber();
         }
         orderToPublish.addSapOrderDetail(new SapOrderDetail(sapOrderIdentifier,
-                SapIntegrationServiceImpl.getSampleCount((ProductOrder) orderToPublish,
-                        (Product) orderToPublish.getProduct(),
-                        (int) 0),
+                SapIntegrationServiceImpl.getSampleCount( orderToPublish, orderToPublish.getProduct(),0,
+                        false),
                 orderToPublish.getQuoteId(),
                 SapIntegrationServiceImpl.determineCompanyCode(orderToPublish).getCompanyCode(),
                 TubeFormation.makeDigest(StringUtils.join(allProductsOrdered, ",")),

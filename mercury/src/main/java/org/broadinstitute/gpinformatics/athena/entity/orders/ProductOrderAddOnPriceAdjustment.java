@@ -130,6 +130,7 @@ public class ProductOrderAddOnPriceAdjustment implements PriceAdjustment{
                 .toHashCode();
     }
 
+    @Override
     public Condition deriveAdjustmentCondition() {
         if(listPrice.compareTo(adjustmentValue) <0) {
             return Condition.MARK_UP_LINE_ITEM;
@@ -138,6 +139,7 @@ public class ProductOrderAddOnPriceAdjustment implements PriceAdjustment{
         }
     }
 
+    @Override
     public BigDecimal getAdjustmentDifference() {
         if(listPrice.compareTo(adjustmentValue) <0) {
             return adjustmentValue.subtract(listPrice);
