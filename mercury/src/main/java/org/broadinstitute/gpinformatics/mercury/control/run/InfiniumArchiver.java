@@ -1,9 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.control.run;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarterConfig;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
@@ -13,14 +16,27 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
+import javax.annotation.Resource;
+import javax.ejb.EJBContext;
+import javax.ejb.Singleton;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.inject.Inject;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+import javax.transaction.UserTransaction;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -30,6 +46,8 @@ import java.util.zip.ZipOutputStream;
 /**
  * Archives Infinium idats and other files at some interval (e.g. 10 days) after the pipeline starter has been called.
  */
+@Singleton
+@TransactionManagement(TransactionManagementType.BEAN)
 public class InfiniumArchiver {
 
     private static final Log log = LogFactory.getLog(InfiniumArchiver.class);
@@ -41,6 +59,11 @@ public class InfiniumArchiver {
      Could create vessel and files
      Check vessel is found
      Check directory is archived
+     For testing, use 20 days, vs 10 days "for real"
+
+     Make part of InfiniumRunStarter / InfiniumRunFinder, to get transaction handling, singleton etc.
+
+     Startup
      */
 
     @Inject
@@ -55,39 +78,75 @@ public class InfiniumArchiver {
     @Inject
     private InfiniumStarterConfig infiniumStarterConfig;
 
+    @Inject
+    private BSPUserList bspUserList;
+
+    @Resource
+    private EJBContext ejbContext;
+
+    public void archive() {
+        GregorianCalendar gregorianCalendar = new GregorianCalendar();
+        gregorianCalendar.add(Calendar.DAY_OF_YEAR, -10);
+        List<Pair<String, Boolean>> chipsToArchive = findChipsToArchive(50, gregorianCalendar.getTime());
+        UserTransaction utx = ejbContext.getUserTransaction();
+        try {
+            for (Pair<String, Boolean> stringBooleanPair : chipsToArchive) {
+                if (stringBooleanPair.getRight()) {
+                    archiveChip(stringBooleanPair.getLeft());
+                }
+                // else assume GAP has archived it
+                utx.begin();
+                LabVessel chip = labVesselDao.findByIdentifier(stringBooleanPair.getKey());
+                chip.addInPlaceEvent(new LabEvent(LabEventType.INFINIUM_ARCHIVED, new Date(), LabEvent.UI_EVENT_LOCATION,
+                        1L, bspUserList.getByUsername("seqsystem").getUserId(), LabEvent.UI_PROGRAM_NAME));
+                // The commit doesn't cause a flush (not clear why), so we must do it explicitly.
+                labVesselDao.flush();
+                utx.commit();
+            }
+        } catch (NotSupportedException | SystemException | RollbackException | HeuristicRollbackException |
+                HeuristicMixedException e) {
+            try {
+                utx.rollback();
+            } catch (SystemException e1) {
+                throw new RuntimeException(e1);
+            }
+            throw new RuntimeException(e);
+        }
+    }
 
     /**
      * Finds chips that have LabEventType.INFINIUM_AUTOCALL_ALL_STARTED events that are old enough that the chips are
      * likely to have been analyzed.
      * @return list of chip barcodes (not entities, because this method clears the session periodically)
      */
-    public List<String> findChipsToArchive() {
+    List<Pair<String, Boolean>> findChipsToArchive(int limit, Date archiveDate) {
         List<LabVessel> infiniumChips = labVesselDao.findAllWithEventButMissingAnother(
                 LabEventType.INFINIUM_AUTOCALL_SOME_STARTED,
                 LabEventType.INFINIUM_ARCHIVED);
-        Date tenDaysAgo = new Date(System.currentTimeMillis() - 1000L * 60L * 60L * 24L * 10L);
         List<String> barcodes = new ArrayList<>();
         for (LabVessel labVessel : infiniumChips) {
             barcodes.add(labVessel.getLabel());
         }
+        labVesselDao.clear();
 
         // To avoid running out of memory, break the list into small chunks, and clear the Hibernate session.
         List<Collection<String>> split = BaseSplitter.split(barcodes, 10);
-        List<String> chipsToArchive = new ArrayList<>();
+        List<Pair<String, Boolean>> chipsToArchive = new ArrayList<>();
         for (Collection<String> strings : split) {
             List<LabVessel> chips = labVesselDao.findByListIdentifiers(new ArrayList<>(strings));
             for (LabVessel chip : chips) {
                 for (LabEvent labEvent : chip.getInPlaceLabEvents()) {
                     if (labEvent.getLabEventType() == LabEventType.INFINIUM_AUTOCALL_ALL_STARTED) {
-                        String forwardToGap = LabEventFactory.determineForwardToGap(labEvent, chip, productEjb,
-                                attributeArchetypeDao);
-                        if (Objects.equals(forwardToGap, "N")) {
-                            if (labEvent.getEventDate().before(tenDaysAgo)) {
-                                chipsToArchive.add(chip.getLabel());
-                            }
+                        if (labEvent.getEventDate().before(archiveDate)) {
+                            String forwardToGap = LabEventFactory.determineForwardToGap(labEvent, chip, productEjb,
+                                    attributeArchetypeDao);
+                            chipsToArchive.add(new ImmutablePair<>(chip.getLabel(), Objects.equals(forwardToGap, "N")));
                         }
                         break;
                     }
+                }
+                if (chipsToArchive.size() >= limit) {
+                    return chipsToArchive;
                 }
             }
             labVesselDao.clear();
@@ -99,7 +158,7 @@ public class InfiniumArchiver {
     /**
      * This code is inspired by GAP's InfiniumArchiveBean.archiveChip.
      */
-    public void archiveChip(String barcode) {
+    void archiveChip(String barcode) {
         log.info("Archiving Chip Barcode " + barcode);
         boolean isSuccessful = true;
         File baseDataDir = new File(infiniumStarterConfig.getDataPath());
