@@ -245,11 +245,11 @@ public class BillingAdaptor implements Serializable {
 
                     // Get the quote PriceItem that this is replacing, if it is a replacement.
                     // todo need to set the price on the Price Item before this step
-                    QuotePriceItem primaryPriceItemIfReplacement = item.getPrimaryForReplacement(priceItemsForDate,
-                            item.getWorkCompleteDate());
+                    QuotePriceItem primaryPriceItemIfReplacement = item.getPrimaryForReplacement(priceItemsForDate
+                    );
                     // todo need to set the price on the Price Item before this step
-                    QuotePriceItem primaryPriceItemIfReplacementForSAP =item.getPrimaryForReplacement(priceItemsForDate,
-                            item.getWorkCompleteDate());
+                    QuotePriceItem primaryPriceItemIfReplacementForSAP =item.getPrimaryForReplacement(priceItemsForDate
+                    );
 
                     // Get the quote items on the quote, adding to the quote item cache, if not there.
                     Collection<String> quoteItemNames = getQuoteItems(quoteItemsByQuote, item.getQuoteId());
@@ -322,6 +322,7 @@ public class BillingAdaptor implements Serializable {
                         result.setSAPBillingId(sapBillingId);
                         billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacementForSAP, workId, sapBillingId,
                                 BillingSession.BILLED_FOR_SAP + BillingSession.BILLED_FOR_QUOTES);
+                        item.getProductOrder().latestSapOrderDetail().addLedgerEntries(item.getLedgerItems());
                     }
 
                     Set<String> billedPdoKeys = getBilledPdoKeys(result);

@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.broadinstitute.sap.entity.Condition;
+
 import java.math.BigDecimal;
 
 /**
@@ -15,4 +17,8 @@ public interface PriceAdjustment {
     Integer getAdjustmentQuantity();
 
     BigDecimal getListPrice();
+
+    Condition deriveAdjustmentCondition();
+
+    BigDecimal getAdjustmentDifference();
 }

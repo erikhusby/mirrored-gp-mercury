@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.billing;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
@@ -83,6 +84,10 @@ public class LedgerEntry implements Serializable {
 
     @Column(name = "SAP_DELIVERY_DOCUMENT_ID")
     private String sapDeliveryDocumentId;
+
+    @ManyToOne
+    @JoinColumn(name = "SAP_ORDER_DETAIL_ID")
+    private SapOrderDetail sapOrderDetail;
 
     /**
      * Package private constructor for JPA use.
@@ -269,6 +274,14 @@ public class LedgerEntry implements Serializable {
 
     public Date getBucketDate() {
         return billingSession.getBucketDate(workCompleteDate);
+    }
+
+    public void setSapOrderDetail(SapOrderDetail sapOrderDetail) {
+        this.sapOrderDetail = sapOrderDetail;
+    }
+
+    public SapOrderDetail getSapOrderDetail() {
+        return sapOrderDetail;
     }
 
     /**

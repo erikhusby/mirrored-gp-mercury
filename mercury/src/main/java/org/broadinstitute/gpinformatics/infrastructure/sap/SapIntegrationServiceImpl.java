@@ -119,7 +119,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     @Override
     public String createOrder(ProductOrder placedOrder) throws SAPIntegrationException {
 
-        SAPOrder newOrder = initializeSAPOrder(placedOrder);
+        SAPOrder newOrder = initializeSAPOrder(placedOrder, true);
 
         return getClient().createSAPOrder(newOrder);
     }
@@ -127,7 +127,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     @Override
     public void updateOrder(ProductOrder placedOrder) throws SAPIntegrationException {
 
-        SAPOrder newOrder = initializeSAPOrder(placedOrder);
+        SAPOrder newOrder = initializeSAPOrder(placedOrder, false);
 
         if(placedOrder.getSapOrderNumber() == null) {
             throw new SAPIntegrationException("Cannot update an order in SAP since this product order does not have "
@@ -142,10 +142,11 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      * Helper method to compile the order object which will be transmitted to SAP for either creation up to be
      * updated
      * @param placedOrder The ProductOrder from which a JAXB representation of an SAP order will be created
+     * @param creatingOrder
      * @return JAXB representation of a Product Order
      * @throws SAPIntegrationException
      */
-    protected SAPOrder initializeSAPOrder(ProductOrder placedOrder) throws SAPIntegrationException {
+    protected SAPOrder initializeSAPOrder(ProductOrder placedOrder, boolean creatingOrder) throws SAPIntegrationException {
 
         ProductOrder orderToUpdate = (placedOrder.isChildOrder() && placedOrder.getParentOrder().getSapOrderNumber().equals(placedOrder.getSapOrderNumber()))?placedOrder.getParentOrder():placedOrder;
 
@@ -192,10 +193,10 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         newOrder.setResearchProjectNumber(orderToUpdate.getResearchProject().getJiraTicketKey());
 
         Product primaryProduct = placedOrder.getProduct();
-        newOrder.addOrderItem(getOrderItem(placedOrder, primaryProduct, foundQuote, 0));
+        newOrder.addOrderItem(getOrderItem(placedOrder, primaryProduct, foundQuote, 0, creatingOrder));
 
         for (ProductOrderAddOn addon : placedOrder.getAddOns()) {
-            newOrder.addOrderItem(getOrderItem(placedOrder, addon.getAddOn(), foundQuote, 0));
+            newOrder.addOrderItem(getOrderItem(placedOrder, addon.getAddOn(), foundQuote, 0, creatingOrder));
         }
 
         return newOrder;
@@ -208,17 +209,18 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      * @param product Product that is to be eventually charged when work on the product order is completed
      * @param quote
      * @param additionalSampleCount
+     * @param creatingNewOrder
      * @return JAXB sub element of the SAP order to represent the Product that will be charged and the quantity that
      * is expected of it.
      */
     protected SAPOrderItem getOrderItem(ProductOrder placedOrder, Product product, Quote quote,
-                                        int additionalSampleCount) throws SAPIntegrationException {
+                                        int additionalSampleCount, boolean creatingNewOrder) throws SAPIntegrationException {
         try {
             //TODO SGM:  This has to change!!!
             String price = priceListCache.getEffectivePrice(product.getPrimaryPriceItem(), quote);
 
             final SAPOrderItem sapOrderItem = new SAPOrderItem(product.getPartNumber(),
-                    getSampleCount(placedOrder, product, additionalSampleCount));
+                    getSampleCount(placedOrder, product, additionalSampleCount, creatingNewOrder));
 
             if(placedOrder.isPriorToSAP1_5()) {
                 sapOrderItem.addCondition(Condition.MATERIAL_PRICE, new BigDecimal(price));
@@ -271,21 +273,24 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         }
     }
 
-    protected SAPOrderItem getOrderItem(ProductOrder placedOrder, Product product, int additionalSampleCount) {
+    protected SAPOrderItem getOrderItem(ProductOrder placedOrder, Product product, int additionalSampleCount,
+                                        boolean creatingNewOrder) {
 
         final SAPOrderItem sapOrderItem =
-                new SAPOrderItem(product.getPartNumber(), getSampleCount(placedOrder, product, additionalSampleCount));
+                new SAPOrderItem(product.getPartNumber(), getSampleCount(placedOrder, product, additionalSampleCount,
+                        creatingNewOrder));
         defineConditionsForOrderItem(placedOrder, product, sapOrderItem);
         return sapOrderItem;
     }
 
 
-    public static int getSampleCount(ProductOrder placedOrder, Product product) {
+    public static int getSampleCount(ProductOrder placedOrder, Product product, boolean creatingNewOrder) {
 
-        return getSampleCount(placedOrder, product, 0);
+        return getSampleCount(placedOrder, product, 0, creatingNewOrder);
     }
 
-    public static int getSampleCount(ProductOrder placedOrder, Product product, int additionalSampleCount) {
+    public static int getSampleCount(ProductOrder placedOrder, Product product, int additionalSampleCount,
+                                     boolean creatingNewOrder) {
         int sampleCount = 0;
 
         final PriceAdjustment adjustmentForProduct = placedOrder.getAdjustmentForProduct(product);
@@ -294,13 +299,28 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             adjustmentQuantity = adjustmentForProduct.getAdjustmentQuantity();
         }
 
+        int previousBilledCount = 0;
+
+        for (SapOrderDetail sapOrderDetail : placedOrder.getSapReferenceOrders()) {
+            if(sapOrderDetail.equals(placedOrder.latestSapOrderDetail()) && !creatingNewOrder) {
+                break;
+            }
+
+            final Map<Product, Integer> numberOfBilledEntriesByProduct =
+                    sapOrderDetail.getNumberOfBilledEntriesByProduct();
+            if(numberOfBilledEntriesByProduct.containsKey(product)) {
+                previousBilledCount+= numberOfBilledEntriesByProduct.get(product);
+            }
+        }
+
+
         if (product.getSupportsNumberOfLanes() && placedOrder.getLaneCount() > 0) {
             sampleCount += (adjustmentQuantity != null) ?adjustmentQuantity :placedOrder.getLaneCount();
         } else {
             ProductOrder targetSapPdo = ProductOrder.getTargetSAPProductOrder(placedOrder);
             sampleCount += (adjustmentQuantity != null)?adjustmentQuantity:targetSapPdo.getTotalNonAbandonedCount(ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY) + additionalSampleCount;
         }
-        return sampleCount;
+        return sampleCount - previousBilledCount;
     }
 
     @Override
@@ -462,12 +482,14 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         final Set<SAPOrderItem> sapOrderItems = new HashSet<>();
         final Map<Condition, String> conditionStringMap = Collections.emptyMap();
-        final SAPOrderItem orderItem = getOrderItem(productOrder, productOrder.getProduct(), addedSampleCount);
+        final SAPOrderItem orderItem = getOrderItem(productOrder, productOrder.getProduct(), addedSampleCount,
+                false);
 
         sapOrderItems.add(orderItem);
 
         for (ProductOrderAddOn productOrderAddOn : productOrder.getAddOns()) {
-            final SAPOrderItem orderSubItem = getOrderItem(productOrder, productOrderAddOn.getAddOn(), addedSampleCount);
+            final SAPOrderItem orderSubItem = getOrderItem(productOrder, productOrderAddOn.getAddOn(), addedSampleCount,
+                    false);
             sapOrderItems.add(orderSubItem);
         }
 

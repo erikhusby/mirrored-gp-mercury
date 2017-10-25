@@ -1025,4 +1025,23 @@
         </sql>
     </changeSet>
 
+    <changeSet author="scottmat" id ="GPLIM-4922-1">
+        <addColumn tableName="BILLING_LEDGER" schemaName="ATHENA">
+            <column name="sap_order_detail_id" type="number(19,0)" />
+        </addColumn>
+
+        <addForeignKeyConstraint baseTableName="BILLING_LEDGER" baseColumnNames="sap_order_detail_id"
+                                 constraintName="FK_LEDGER_TO_SAP_ORDER"
+                                 referencedTableName="sap_order_detail"
+                                 referencedColumnNames="sap_order_detail_id" baseTableSchemaName="athena"
+                                 referencedTableSchemaName="athena" />
+    </changeSet>
+    <changeSet id="GPLIM-4922-2" author="scottmat">
+        <addColumn tableName="BILLING_LEDGER_AUD" schemaName="ATHENA">
+            <column name="sap_order_detail_id" type="number(19,0)" />
+        </addColumn>
+    </changeSet>
+
+    
+
 </databaseChangeLog>

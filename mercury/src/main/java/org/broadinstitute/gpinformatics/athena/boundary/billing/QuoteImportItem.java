@@ -230,10 +230,9 @@ public class QuoteImportItem {
      *
      * @param priceListCache The cache of the price list.
      *
-     * @param effectiveDate
      * @return null if this is not a replacement item or the primary price item if it is one.
      */
-    public QuotePriceItem getPrimaryForReplacement(PriceList priceListCache, Date effectiveDate) {
+    public QuotePriceItem getPrimaryForReplacement(PriceList priceListCache) {
         PriceItem primaryPriceItem = getPrimaryProduct().getPrimaryPriceItem();
 
         // If this is optional, then return the primary as the 'is replacing.' This is comparing the quote price item
