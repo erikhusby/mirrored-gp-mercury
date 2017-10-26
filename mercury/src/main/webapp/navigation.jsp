@@ -249,6 +249,40 @@
                 </li>
             </security:authorizeBlock>
 
+            <li class="dropdown">
+                <a id="storageNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
+                class="icon-inbox"></span> Storage <b class="caret"></b></a>
+                <ul class="dropdown-menu" role="menu">
+                    <li>
+                        <stripes:link id="listStorage"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.storage.StorageLocationActionBean"
+                                      event="list">List</stripes:link>
+                    </li>
+                    <security:authorizeBlock roles="<%= roles(LabManager,PDM, PM, Developer) %>">
+                        <li>
+                            <stripes:link id="createStorage"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.storage.StorageLocationActionBean"
+                                          event="create">Create New Storage</stripes:link>
+                        </li>
+                    </security:authorizeBlock>
+                    <li class="divider"></li>
+                    <li>
+                        <stripes:link id="findContainer"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.container.ContainerActionBean"
+                                      event="view">
+                            Search For Container
+                        </stripes:link>
+                    </li>
+                    <li>
+                        <stripes:link id="createNewContainer"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.container.ContainerActionBean"
+                                      event="create">
+                            Create New Container
+                        </stripes:link>
+                    </li>
+                </ul>
+            </li>
+
         </ul>
         <ul class="nav pull-right global-search navbar-search">
             <li style="white-space:nowrap;">
