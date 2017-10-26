@@ -1,10 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import org.apache.commons.io.IOUtils;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -21,6 +23,7 @@ import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -28,8 +31,10 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -38,6 +43,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  */
 @Test(groups = TestGroups.FIXUP)
 public class LabMetricFixupTest extends Arquillian {
+    public static final Pattern TAB_PATTERN = Pattern.compile("\\t");
 
     @Inject
     private LabMetricRunDao dao;
@@ -404,4 +410,37 @@ public class LabMetricFixupTest extends Arquillian {
         dao.flush();
     }
 
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/ChangeMetricRunType.txt, so it
+     * can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * SUPPORT-3483
+     * 10x NCI inters low input\tPlating Pico
+     * 12128 inters\tPlating Pico
+     */
+    @Test(enabled = false)
+    public void fixupSupport3483() throws IOException {
+        userBean.loginOSUser();
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("ChangeMetricRunType.txt"));
+        String jiraTicket = lines.get(0);
+        for (int i = 1; i < lines.size(); i++) {
+            String[] fields = TAB_PATTERN.split(lines.get(i));
+            if (fields.length != 2) {
+                throw new RuntimeException("Expected two tab separated fields in " + lines.get(i));
+            }
+            String runName = fields[0];
+            LabMetricRun labMetricRun = dao.findByName(runName);
+            Assert.assertNotNull(labMetricRun, runName + " not found");
+            System.out.println("Updating run " + labMetricRun.getRunName());
+            String metricTypeName = fields[1];
+            LabMetric.MetricType metricType = LabMetric.MetricType.getByDisplayName(metricTypeName);
+            Assert.assertNotNull(metricType, metricTypeName + " not found");
+            labMetricRun.setMetricType(metricType);
+            for (LabMetric labMetric : labMetricRun.getLabMetrics()) {
+                System.out.println("Updating metric " + labMetric.getLabMetricId());
+                labMetric.setMetricType(metricType);
+            }
+        }
+        dao.persist(new FixupCommentary(jiraTicket));
+        dao.flush();
+    }
 }
