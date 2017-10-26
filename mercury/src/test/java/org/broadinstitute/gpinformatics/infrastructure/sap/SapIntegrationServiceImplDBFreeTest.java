@@ -382,13 +382,23 @@ public class SapIntegrationServiceImplDBFreeTest {
 
         SAPOrder convertedOrder2 = integrationService.initializeSAPOrder(conversionPdo, true);
         for(SAPOrderItem item:convertedOrder2.getOrderItems()) {
-            assertThat(item.getSampleCount(), equalTo(conversionPdo.getSamples().size()));
+            if(item.getProductIdentifier().equals(conversionPdo.getProduct().getPartNumber())) {
+                assertThat(item.getSampleCount(), equalTo(conversionPdo.getSamples().size()));
+            }
+            else {
+                assertThat(item.getSampleCount(), equalTo(1));
+            }
         }
 
 
         SAPOrder convertedChildOrder = integrationService.initializeSAPOrder(childOrder, true);
         for(SAPOrderItem item:convertedChildOrder.getOrderItems()) {
-            assertThat(item.getSampleCount(), equalTo(childOrder.getSamples().size()));
+            if(item.getProductIdentifier().equals(childOrder.getProduct().getPartNumber())) {
+                assertThat(item.getSampleCount(), equalTo(childOrder.getSamples().size()));
+            }
+            else {
+                assertThat(item.getSampleCount(), equalTo(1));
+            }
         }
 
 
@@ -401,8 +411,12 @@ public class SapIntegrationServiceImplDBFreeTest {
 
         SAPOrder convertedOrder3 = integrationService.initializeSAPOrder(conversionPdo, true);
         for(SAPOrderItem item:convertedOrder3.getOrderItems()) {
-            assertThat(item.getSampleCount(),
-                    equalTo(conversionPdo.getSamples().size()));
+            if(item.getProductIdentifier().equals(conversionPdo.getProduct().getPartNumber())) {
+                assertThat(item.getSampleCount(), equalTo(conversionPdo.getSamples().size()));
+            }
+            else {
+                assertThat(item.getSampleCount(), equalTo(1));
+            }
         }
 
         childOrder2.setOrderStatus(ProductOrder.OrderStatus.Submitted);
@@ -411,14 +425,24 @@ public class SapIntegrationServiceImplDBFreeTest {
 
         convertedOrder3 = integrationService.initializeSAPOrder(conversionPdo, true);
         for(SAPOrderItem item:convertedOrder3.getOrderItems()) {
-            assertThat(item.getSampleCount(),
-                    equalTo(conversionPdo.getSamples().size() + childOrder2.getSamples().size()));
+            if(item.getProductIdentifier().equals(childOrder2.getProduct().getPartNumber())) {
+                assertThat(item.getSampleCount(), equalTo(conversionPdo.getSamples().size() + childOrder2.getSamples().size()));
+            }
+            else {
+                assertThat(item.getSampleCount(), equalTo(1));
+            }
         }
 
 
         SAPOrder convertedChildOrder2 = integrationService.initializeSAPOrder(childOrder2, true);
         for(SAPOrderItem item:convertedChildOrder2.getOrderItems()) {
-            assertThat(item.getSampleCount(), equalTo(conversionPdo.getSamples().size() + childOrder2.getSamples().size()));
+            if(item.getProductIdentifier().equals(childOrder2.getProduct().getPartNumber())) {
+                assertThat(item.getSampleCount(), equalTo(conversionPdo.getSamples().size() + childOrder2.getSamples().size()));
+            }
+            else {
+                assertThat(item.getSampleCount(), equalTo(1));
+            }
+
         }
 
     }
