@@ -2186,6 +2186,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 JsonFactory jsonFactory = new JsonFactory();
                 JsonGenerator jsonGenerator = null;
                 try {
+
                     ObjectMapper objectMapper = new ObjectMapper();
                     OutputStream outputStream = response.getOutputStream();
                     jsonGenerator = jsonFactory.createJsonGenerator(outputStream);
