@@ -201,11 +201,6 @@
                                     event="view">Arrays Reports</stripes:link>
                         </li>
                         <li>
-                            <stripes:link id="pooledTubeUpload"
-                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.PooledTubeUploadActionBean"
-                                          event="view">Pooled Tube Upload</stripes:link>
-                        </li>
-                        <li>
                             <stripes:link id="tagVessel"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.TagVesselActionBean"
                                           event="view">Add Dev Condition To Vessel</stripes:link>
