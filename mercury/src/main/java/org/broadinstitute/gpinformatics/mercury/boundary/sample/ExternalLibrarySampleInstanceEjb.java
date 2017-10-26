@@ -535,23 +535,23 @@ public class ExternalLibrarySampleInstanceEjb {
             //If the sample is missing or not registered check to see if the alternate info was supplied
             if ((sampleId == null || mercurySample == null)) {
                 collaboratorSampleIds.add(vesselSpreadsheetProcessor.getCollaboratorSampleId().get(sampleIndex));
-                checkForOptionalHeaders(collaboratorSampleIds.get(sampleIndex),
+                checkContingentValues(collaboratorSampleIds.get(sampleIndex),
                         VesselPooledTubesProcessor.Headers.COLLABORATOR_SAMPLE_ID, sampleIndex, messageCollection);
                 collaboratorParticipantIds.add(vesselSpreadsheetProcessor.getCollaboratorParticipantId()
                         .get(sampleIndex));
-                checkForOptionalHeaders(collaboratorParticipantIds.get(sampleIndex),
+                checkContingentValues(collaboratorParticipantIds.get(sampleIndex),
                         VesselPooledTubesProcessor.Headers.COLLABORATOR_SAMPLE_ID, sampleIndex, messageCollection);
                 broadParticipantIds.add(vesselSpreadsheetProcessor.getBroadParticipantId().get(sampleIndex));
-                checkForOptionalHeaders(broadParticipantIds.get(sampleIndex),
+                checkContingentValues(broadParticipantIds.get(sampleIndex),
                         VesselPooledTubesProcessor.Headers.BROAD_PARTICIPANT_ID, sampleIndex, messageCollection);
                 genders.add(vesselSpreadsheetProcessor.getGender().get(sampleIndex));
-                checkForOptionalHeaders(genders.get(sampleIndex), VesselPooledTubesProcessor.Headers.GENDER,
+                checkContingentValues(genders.get(sampleIndex), VesselPooledTubesProcessor.Headers.GENDER,
                         sampleIndex, messageCollection);
                 species.add(vesselSpreadsheetProcessor.getSpecies().get(sampleIndex));
-                checkForOptionalHeaders(species.get(sampleIndex), VesselPooledTubesProcessor.Headers.SPECIES,
+                checkContingentValues(species.get(sampleIndex), VesselPooledTubesProcessor.Headers.SPECIES,
                         sampleIndex, messageCollection);
                 lsids.add(vesselSpreadsheetProcessor.getLsid().get(sampleIndex));
-                checkForOptionalHeaders(lsids.get(sampleIndex), VesselPooledTubesProcessor.Headers.LSID, sampleIndex,
+                checkContingentValues(lsids.get(sampleIndex), VesselPooledTubesProcessor.Headers.LSID, sampleIndex,
                         messageCollection);
                 sampleRegistrationFlags.add(false);
             } else {
@@ -627,11 +627,11 @@ public class ExternalLibrarySampleInstanceEjb {
     /**
      * Method to create errors when no Broad ID was supplied and some/all collaborator information is missing.
      */
-    private void checkForOptionalHeaders(String value, VesselPooledTubesProcessor.Headers headers, int index,
+    private void checkContingentValues(String value, VesselPooledTubesProcessor.Headers headers, int index,
             MessageCollection messageCollection) {
         if (StringUtils.isNotBlank(value)) {
-            messageCollection.addError("When Broad Sample is missing " + headers.getText()
-                    + " is required at row " + (index + ROW_OFFSET));
+            messageCollection.addError(String.format("Spreadsheet must supply %s at row %d since Broad Sample is blank",
+                    headers.getText(), index + ROW_OFFSET));
         }
     }
 
