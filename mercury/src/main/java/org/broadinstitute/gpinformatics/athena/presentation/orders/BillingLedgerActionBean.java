@@ -8,10 +8,12 @@ import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
-import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
+import net.sourceforge.stripes.validation.ValidationError;
+import net.sourceforge.stripes.validation.ValidationErrors;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
@@ -37,10 +39,18 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundExcept
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+import org.codehaus.jackson.JsonFactory;
+import org.codehaus.jackson.JsonGenerator;
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.json.JSONArray;
 import org.json.JSONException;
 
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletResponse;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -210,11 +220,47 @@ public class BillingLedgerActionBean extends CoreActionBean {
             }
         }
 
-        if (hasErrors()) {
-            return new ForwardResolution(BILLING_LEDGER_PAGE);
-        } else {
-            return new RedirectResolution("/orders/ledger.action?orderId=" + productOrder.getBusinessKey());
-        }
+        Resolution resolution = new StreamingResolution("text/json") {
+            @Override
+            protected void stream(HttpServletResponse response) throws Exception {
+                JsonFactory jsonFactory = new JsonFactory();
+                JsonGenerator jsonGenerator = null;
+                try {
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    OutputStream outputStream = response.getOutputStream();
+                    jsonGenerator = jsonFactory.createJsonGenerator(outputStream);
+                    jsonGenerator.setCodec(objectMapper);
+                    jsonGenerator.writeStartObject();
+                    if (hasErrors()) {
+                        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                        jsonGenerator.writeArrayFieldStart("error");
+                        ValidationErrors errors = getValidationErrors();
+                        for (Map.Entry<String, List<ValidationError>> errorsEntry : errors.entrySet()) {
+                            for (ValidationError validationError : errorsEntry.getValue()) {
+                                jsonGenerator.writeObject(validationError.getMessage(getContext().getLocale()));
+                            }
+                        }
+                        jsonGenerator.writeEndArray();
+                    }else {
+                        jsonGenerator.writeArrayFieldStart(ProductOrderSampleBean.DATA_FIELD);
+                        for (LedgerData ledgerDatum : ledgerData) {
+                            if (ledgerDatum!=null) {
+                                jsonGenerator.writeObject(ledgerDatum);
+                            }
+                        }
+                        jsonGenerator.writeEndArray();
+                    }
+                    jsonGenerator.writeEndObject();
+                } catch (Exception e) {
+                    logger.error("updating ledgers", e);
+                } finally {
+                    if (jsonGenerator != null) {
+                        jsonGenerator.close();
+                    }
+                }
+            }
+        };
+        return resolution;
     }
 
     /**
@@ -551,11 +597,24 @@ public class BillingLedgerActionBean extends CoreActionBean {
     /**
      * Data posted from the billing ledger UI.
      */
+    @JsonSerialize(include = JsonSerialize.Inclusion.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class LedgerData {
         private String sampleName;
         private Date workCompleteDate;
         private Map<Long, ProductOrderSampleQuantities> quantities;
+        private Long id;
 
+        @JsonProperty
+        public Long getId() {
+            return id;
+        }
+
+        public void setId(Long id) {
+            this.id = id;
+        }
+
+        @JsonProperty
         public String getSampleName() {
             return sampleName;
         }
@@ -564,6 +623,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
             this.sampleName = sampleName;
         }
 
+        @JsonProperty
         public Date getWorkCompleteDate() {
             return workCompleteDate;
         }
@@ -594,6 +654,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
             this.workCompleteDate = workCompleteDate;
         }
 
+        @JsonProperty
         public Map<Long, ProductOrderSampleQuantities> getQuantities() {
             return quantities;
         }
@@ -615,10 +676,13 @@ public class BillingLedgerActionBean extends CoreActionBean {
     /**
      * Quantity data for a single price item posted from the billing ledger UI.
      */
+    @JsonSerialize(include = JsonSerialize.Inclusion.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class ProductOrderSampleQuantities {
         private double originalQuantity;
         private double submittedQuantity;
 
+        @JsonProperty
         public double getOriginalQuantity() {
             return originalQuantity;
         }
@@ -627,6 +691,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
             this.originalQuantity = originalQuantity;
         }
 
+        @JsonProperty
         public double getSubmittedQuantity() {
             return submittedQuantity;
         }

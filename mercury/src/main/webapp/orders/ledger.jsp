@@ -8,6 +8,7 @@
 
 <stripes:layout-component name="extraHead">
     <script src="${ctxpath}/resources/scripts/hSpinner.js"></script>
+    <script src="${ctxpath}/resources/scripts/modalMessages.js"></script>
 
 <%-- ================ Page-specific CSS ================ --%>
 
@@ -153,7 +154,6 @@
     </style>
 
 <%-- ================ Page-specific JavaScript ================ --%>
-
     <script type="text/javascript">
 
         // Holds AJAX-fetched ledger data for the data table
@@ -161,8 +161,13 @@
 
         var dateCompleteWarningThreshold = new Date(${actionBean.threeMonthsAgo});
 
+        document.addEventListener('readystatechange', () => console.log('readyState:' + document.readyState + " " + performance.now()));
+
         $j(document).ready(function() {
 
+//            modalMessages.addError("an error");
+//            modalMessages.addWarning("an warning");
+//            modalMessages.addInfo("an info");
             /*
              * Extract the values from the quantity fields to use when sorting.
              */
@@ -211,55 +216,68 @@
                     {'bSortable': true, 'sType': 'title-string'}    // billed
                 ],
                 fnInitComplete: function(){
-                    function deferAppliedAction(func){
-                        console.time();
-                        var deferred = $j.Deferred();
-                        deferred.then(func).then(function () {
-                            updateSubmitButton();
-                        }).done(function() {
-                            console.timeEnd();
-                        });
-                        deferred.resolve();
-                    }
+//                    function deferAppliedAction(func){
+//                        console.time();
+//                        var deferred = $j.Deferred();
+//                        deferred.then(func).then(function () {
+//                            updateSubmitButton();
+//                        }).done(function() {
+//                            console.timeEnd();
+//                        });
+//                        deferred.resolve();
+//                    }
                     /*
                      * Set up hSpinner widgets for controlling ledger quantities.
                      */
                     ledgerQuantities.hSpinner({
                         additionalChangedSelector: "tr",
-                        originalValue: function(element) {
-                            return $j(element).siblings().filter('input:hidden').eq(0).val();
+//                        initialVisibility: 'hidden',
+                        originalValue: function (element) {
+                            return element.querySelector('input[type="hidden"]').value;
                         },
-                        incremented: function(event, inputName) {
-                            var escaped = escapeForSelector(inputName);
-                            deferAppliedAction(function () {
-                                updateUnbilledStatus($j('#' + escaped));
-                                applyToSelected(inputName, escaped, 'increment')
-                            });
-
+                        incremented: function (event, inputName) {
+                            console.time("incremented");
+                            var $escaped = $j("#" + escapeForSelector(inputName));
+                            updateUnbilledStatus($escaped);
+                            applyToSelected(inputName, $escaped, 'increment');
+                            updateSubmitButton();
+                            console.timeEnd("incremented");
                         },
-                        decremented: function(event, inputName) {
-                            var escaped = escapeForSelector(inputName);
-
-                            deferAppliedAction(function () {
-                                updateUnbilledStatus($j('#' + escaped));
-                                applyToSelected(inputName, escaped, 'decrement')
-                            });
+                        decremented: function (event, inputName) {
+                            console.time("decremented");
+                            var $escaped = $j("#" + escapeForSelector(inputName));
+                            updateUnbilledStatus($escaped);
+                            applyToSelected(inputName, $escaped, 'decrement');
+                            updateSubmitButton();
+                            console.timeEnd("decremented")
                         },
                         // hSpinner widget "input" event, not to be confused with the browser built-in DOM "input" event.
-                        input: function(event, inputName) {
-                            var escaped = escapeForSelector(inputName);
-
-                            deferAppliedAction(function () {
-                                updateUnbilledStatus($j('#' + escaped));
-                                applyToSelected(inputName, escaped, 'setValue')
-                            });
+                        input: function (event, inputName) {
+                            var $escaped = $j("#" + escapeForSelector(inputName));
+                            updateUnbilledStatus($escaped);
+                            applyToSelected(inputName, $escaped, 'setValue');
+                            updateSubmitButton();
                         }
                     });
+//                    $j('.input-prepend, .input-append').on('click', function (event) {
+//                        var closestCell = $j(event.target).closest("td");
+//                        var hSpinner = closestCell.find(".hSpinner");
+//                        hSpinner.hSpinner('hidden', false);
+//                        ledgerQuantities.filter(function () {
+//                            return this != hSpinner[0];
+//                        }).hSpinner('hidden', true);
+//                        $j(document.body).one('click', function (event) {
+//                            if ($j(event.target).closest("td")[0] !== closestCell[0]) {
+//                                hSpinner.hSpinner('hidden', true);
+//                            }
+//                        })
+//                    });
+
                     /**
                      * When rows are selected and one "date complete" is changed, change all selected rows.
                      */
                     $j('#ledger').on('change', '.dateComplete', function(event) {
-                        var $selectedRows = getSelectedRows();
+                        var $selectedRows = $j(getSelectedRows());
                         var $input = $j(event.target);
                         var value = $input.val();
                         if ($selectedRows.length > 0) {
@@ -355,6 +373,22 @@
                 updateUnbilledStatus(ledgerQuantities.eq(i));
             }
 
+            function toggleHidden(row) {
+                var $hspinner = $j(row).find(".hSpinner");
+                if ($hspinner.hSpinner('option','hidden') === false){
+                    $hspinner.hSpinner('option',{hidden:true});
+                } else {
+                    $hspinner.hSpinner('option',{hidden:false});
+                }
+            }
+
+            $j("#ledger tbody tr").on('click', function(event){
+                var $hSpinner = $j(".hSpinner");
+                $hSpinner.filter(":visible").hSpinner('option',{hidden:true});
+                toggleHidden(event.currentTarget, "toggle");
+            });
+
+
             /*
              * Handle enable/disable of row inputs based on checkboxes.
              */
@@ -378,13 +412,6 @@
                 console.timeEnd("onClick input:checkbox");
             });
 
-            function timeIt(name, func){
-                console.time(name);
-                var res = func();
-                console.timeEnd(name);
-                return res;
-            }
-
             /*
              * This page's DataTable reserves a spot, #dtButtonHolder (see its sDom property), above the table between
              * the filter input and download buttons. This one-liner moves the existing #dtButtons element into that
@@ -402,37 +429,68 @@
                 console.time("submit")
                 var changedInputs;
                 var hiddenInputContainer = document.getElementById('hiddenRowInputs');
+
                 try {
                     var changedRows = $j(ledgerTable.fnGetNodes()).filter('.changed');
                     var dom = changedRows.find("input").filter("[name^='l']").get();
                     console.time("copy inputs");
-                    for (var i = dom.length-1; i >= 0; i--) {
+                    for (var i = dom.length - 1; i >= 0; i--) {
                         var input = document.createElement("input");
-                        input.type="hidden";
-                        input.name=dom[i].name;
-                        input.value=dom[i].value;
+                        input.type = "hidden";
+                        input.name = dom[i].name;
+                        input.value = dom[i].value;
                         hiddenInputContainer.appendChild(input);
                     }
                     console.time("copy inputs");
+                    event.preventDefault();
+
+                    var allData = $j(hiddenInputContainer).children();
+
+                    while (allData.length > 0) {
+                        var submitData = allData.splice(0, 1000);
+                        $j.ajax({
+                            url: '${ctxpath}/orders/ledger.action?updateLedgers&orderId=${actionBean.productOrder.businessKey}',
+                            data: $j(submitData).serializeArray(),
+                            type: 'post',
+                            dataType: 'json',
+                            success: function (a, b, c, d, e) {
+                                var dataItems = a['data'];
+                                var samples = [];
+
+                                for (var i = 0; i < dataItems.length; i++) {
+                                    samples.push(dataItems[i]['sampleName']);
+                                    ledgerTable.fnGetNodes();
+                                    var rowId = dataItems[i]['rowId'];
+                                }
+                                if (samples.length >= 10) {
+                                    modalMessages.addInfo("Ledger data updated for " + samples + ".");
+                                } else {
+                                    modalMessages.addInfo("Ledger data updated for " + dataItems.length + " samples.");
+                                }
+                            },
+                            error: function (a) {
+                                console.log(a);
+                                if (a.responseJSON) {
+                                    var errors = a.responseJSON['error'];
+                                    for (var i = 0;i<errors.length;i++) {
+                                        modalMessages.addError(errors[i]);
+                                    }
+                                    if (errors.length===0) {
+                                        modalMessages.addError("Unknown Error: ", a.statusText);
+                                    }
+                                }
+                            },
+                            complete: function(){
+                                modalMessages.clear();
+                                hiddenInputContainer.innerHTML = "";
+                            }
+                        });
+                    }
                 } catch (e) {
                     var errorMessage = "Error collecting ledger entries: '" + e + "'";
-                    console.log(errorMessage);
-                    var errorBlock = $j("<div>", {'class': "modal alert alert-block"});
-                    errorBlock.append($j("<p>", {
-                        text: errorMessage,
-                        'class': 'text-error',
-                        css: 'font-weight: bold; margin-left: 50px'
-                    }));
-
-                    while (hiddenInputContainer.hasChildNodes()){
-                        hiddenInputContainer.removeChild(hiddenInputContainer.lastChild)
-                    }
-
-                    errorBlock.appendTo(document.body);
-                    event.preventDefault();
+                    modalMessages.addError(errorMessage);
                 }
                 console.timeEnd("submit")
-                debugger;
             });
 
             $j('#helpButton').click(function() {
@@ -566,13 +624,12 @@
             return $j('#ledger tbody input[name=selectedProductOrderSampleIds]:checked').closest("tr");
         }
 
-        function applyToSelected(inputName, escaped, action) {
+        function applyToSelected(inputName, input, action) {
             /*
              * Select starting with the checked samples, find the parent rows, find the child inputs for the
              * same price item, but not the current input, and apply the action.
              */
             var selectedRows = getSelectedRows();
-            var input = $j('#' + escaped);
             var priceItemId = input.attr('priceItemId');
             var value = input.val();
             var $quantityInputs = selectedRows.find('input.ledgerQuantity[priceItemId=' + priceItemId + ']');
@@ -869,7 +926,7 @@
         </thead>
         <tbody>
             <c:forEach items="${actionBean.productOrderSampleLedgerInfos}" var="info">
-                <tr class="${info.sample.deliveryStatus.displayName == 'Abandoned' ? 'abandoned' : ''}">
+                <tr id="${info.sample.productOrderSampleId}" class="${info.sample.deliveryStatus.displayName == 'Abandoned' ? 'abandoned' : ''}">
                     <td>
                         <input type="checkbox" title="${info.sample.samplePosition}" class="shiftCheckbox" name="selectedProductOrderSampleIds" value="${info.sample.productOrderSampleId}">
                     </td>
@@ -888,6 +945,9 @@
                         <input type="hidden"
                                name="l[${info.sample.samplePosition}].s"
                                value="${info.sample.name}"/>
+                        <input type="hidden"
+                               name="l[${info.sample.samplePosition}].id"
+                               value="${info.sample.productOrderSampleId}"/>
                     </td>
                     <td>
                         ${info.sample.sampleData.collaboratorsSampleName}
