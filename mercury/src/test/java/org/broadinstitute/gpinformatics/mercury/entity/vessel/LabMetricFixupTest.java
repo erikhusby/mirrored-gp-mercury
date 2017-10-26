@@ -1,6 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.commons.io.IOUtils;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -9,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -33,6 +38,7 @@ import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
@@ -439,8 +445,45 @@ public class LabMetricFixupTest extends Arquillian {
                 System.out.println("Updating metric " + labMetric.getLabMetricId());
                 labMetric.setMetricType(metricType);
             }
+            updateRisk(labMetricRun.getLabMetrics());
         }
         dao.persist(new FixupCommentary(jiraTicket));
         dao.flush();
+    }
+
+    private void updateRisk(Set<LabMetric> labMetrics) {
+        Map<ProductOrder, List<ProductOrderSample>> mapPdoToListPdoSamples = new HashMap<>();
+        Multimap<ProductOrderSample, LabMetric> mapPdoSampleToMetrics = HashMultimap.create();
+        for (LabMetric localLabMetric : labMetrics) {
+            if (localLabMetric.getLabMetricDecision() != null) {
+                for (SampleInstanceV2 sampleInstanceV2 : localLabMetric.getLabVessel().getSampleInstancesV2()) {
+                    ProductOrderSample singleProductOrderSample = sampleInstanceV2.getSingleProductOrderSample();
+                    if (singleProductOrderSample != null) {
+                        ProductOrder productOrder = singleProductOrderSample.getProductOrder();
+                        List<ProductOrderSample> productOrderSamples =
+                                mapPdoToListPdoSamples.get(productOrder);
+                        if (productOrderSamples == null) {
+                            productOrderSamples = new ArrayList<>();
+                            mapPdoToListPdoSamples.put(productOrder, productOrderSamples);
+                        }
+                        productOrderSamples.add(singleProductOrderSample);
+                        mapPdoSampleToMetrics.put(singleProductOrderSample, localLabMetric);
+                    }
+                }
+            }
+        }
+        for (Map.Entry<ProductOrder, List<ProductOrderSample>> pdoListPdoSamplesEntry :
+                mapPdoToListPdoSamples.entrySet()) {
+            ProductOrder productOrder = pdoListPdoSamplesEntry.getKey();
+            System.out.print("Calculating risk for " + productOrder.getBusinessKey() + " ");
+            List<ProductOrderSample> productOrderSamples = pdoListPdoSamplesEntry.getValue();
+            for (ProductOrderSample productOrderSample : productOrderSamples) {
+                System.out.print(productOrderSample.getSampleKey() + " ");
+            }
+            System.out.println();
+
+            int i = productOrder.calculateRisk(productOrderSamples);
+            System.out.println("Risk count " + i);
+        }
     }
 }
