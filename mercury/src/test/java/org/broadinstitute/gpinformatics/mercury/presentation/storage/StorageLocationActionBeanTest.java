@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
+import org.codehaus.jettison.json.JSONArray;
 import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -116,10 +117,17 @@ public class StorageLocationActionBeanTest {
         String jsonString = response.getOutputString();
         ArrayNode arrayNode = (ArrayNode) objectMapper.readValue(jsonString, JsonNode.class);
         Assert.assertEquals(arrayNode.size(), 2);
-        JsonNode jsonNode = arrayNode.get(0);
-        Assert.assertEquals(jsonNode.get("text").asText(), "Freezer");
-        Assert.assertEquals(jsonNode.get("type").asText(), "FREEZER");
-        Assert.assertEquals(jsonNode.get("children").asText(), "true");
+        for (JsonNode jsonNode: arrayNode) {
+            if (jsonNode.get("id").asInt() == 1) {
+                Assert.assertEquals(jsonNode.get("text").asText(), "Freezer");
+                Assert.assertEquals(jsonNode.get("type").asText(), "FREEZER");
+                Assert.assertEquals(jsonNode.get("children").asText(), "true");
+            } else if (jsonNode.get("id").asInt() == 2) {
+                Assert.assertEquals(jsonNode.get("text").asText(), "Deli Fridge");
+                Assert.assertEquals(jsonNode.get("type").asText(), "REFRIGERATOR");
+                Assert.assertEquals(jsonNode.get("children").asText(), "true");
+            }
+        }
     }
 
     @Test
@@ -132,9 +140,15 @@ public class StorageLocationActionBeanTest {
         String jsonString = response.getOutputString();
         ArrayNode arrayNode = (ArrayNode) objectMapper.readValue(jsonString, JsonNode.class);
         Assert.assertEquals(arrayNode.size(), 2);
-        JsonNode jsonNode = arrayNode.get(1);
-        Assert.assertEquals(jsonNode.get("text").asText(), "Deli Fridge");
-        Assert.assertEquals(jsonNode.get("state").get("selected").asBoolean(), true);
+        boolean foundSelectedNode = false;
+        for (JsonNode jsonNode: arrayNode) {
+            if (jsonNode.get("id").asText().equals("selected_node")) {
+                foundSelectedNode = true;
+                Assert.assertEquals(jsonNode.get("text").asText(), "Deli Fridge");
+                Assert.assertEquals(jsonNode.get("state").get("selected").asBoolean(), true);
+            }
+        }
+        Assert.assertEquals(true, foundSelectedNode);
     }
 
     @Test
