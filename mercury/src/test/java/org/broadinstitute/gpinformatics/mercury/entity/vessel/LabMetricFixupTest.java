@@ -420,8 +420,8 @@ public class LabMetricFixupTest extends Arquillian {
      * This test reads its parameters from a file, mercury/src/test/resources/testdata/ChangeMetricRunType.txt, so it
      * can be used for other similar fixups, without writing a new test.  Example contents of the file are:
      * SUPPORT-3483
-     * 10x NCI inters low input\tPlating Pico
-     * 12128 inters\tPlating Pico
+     * 10x NCI inters low input\tPlating Pico\tTrue
+     * 12128 inters\tPlating Pico\tTrue
      */
     @Test(enabled = false)
     public void fixupSupport3483() throws IOException {
@@ -430,8 +430,8 @@ public class LabMetricFixupTest extends Arquillian {
         String jiraTicket = lines.get(0);
         for (int i = 1; i < lines.size(); i++) {
             String[] fields = TAB_PATTERN.split(lines.get(i));
-            if (fields.length != 2) {
-                throw new RuntimeException("Expected two tab separated fields in " + lines.get(i));
+            if (fields.length != 3) {
+                throw new RuntimeException("Expected three tab separated fields in " + lines.get(i));
             }
             String runName = fields[0];
             LabMetricRun labMetricRun = dao.findByName(runName);
@@ -445,7 +445,9 @@ public class LabMetricFixupTest extends Arquillian {
                 System.out.println("Updating metric " + labMetric.getLabMetricId());
                 labMetric.setMetricType(metricType);
             }
-            updateRisk(labMetricRun.getLabMetrics());
+            if (Boolean.valueOf(fields[2])) {
+                updateRisk(labMetricRun.getLabMetrics());
+            }
         }
         dao.persist(new FixupCommentary(jiraTicket));
         dao.flush();
@@ -454,6 +456,9 @@ public class LabMetricFixupTest extends Arquillian {
     private void updateRisk(Set<LabMetric> labMetrics) {
         Map<ProductOrder, List<ProductOrderSample>> mapPdoToListPdoSamples = new HashMap<>();
         Multimap<ProductOrderSample, LabMetric> mapPdoSampleToMetrics = HashMultimap.create();
+        // This code could be factored out of QuantificationEJB.updateRisk, but it seems risky to change
+        // production code for a fixup.
+        //noinspection Duplicates
         for (LabMetric localLabMetric : labMetrics) {
             if (localLabMetric.getLabMetricDecision() != null) {
                 for (SampleInstanceV2 sampleInstanceV2 : localLabMetric.getLabVessel().getSampleInstancesV2()) {
