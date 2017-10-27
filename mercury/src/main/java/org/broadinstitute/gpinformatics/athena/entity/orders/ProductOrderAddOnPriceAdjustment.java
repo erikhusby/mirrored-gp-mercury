@@ -21,7 +21,7 @@ import java.math.BigDecimal;
 @Entity
 @Audited
 @Table(name = "PDO_ADDON_PRICE_ADJUSTMENT", schema = "athena")
-public class ProductOrderAddOnPriceAdjustment implements PriceAdjustment{
+public class ProductOrderAddOnPriceAdjustment extends PriceAdjustment{
 
     @Id
     @Column(name = "pdo_addon_price_adjustment_id")
@@ -66,17 +66,14 @@ public class ProductOrderAddOnPriceAdjustment implements PriceAdjustment{
         this.addOn = addOn;
     }
 
-    @Override
     public BigDecimal getAdjustmentValue() {
         return adjustmentValue;
     }
 
-    @Override
     public String getCustomProductName() {
         return customProductName;
     }
 
-    @Override
     public Integer getAdjustmentQuantity() {
         return adjustmentQuantity;
     }
@@ -89,7 +86,6 @@ public class ProductOrderAddOnPriceAdjustment implements PriceAdjustment{
         this.priceAdjustmentCondition = priceAdjustmentCondition;
     }
 
-    @Override
     public BigDecimal getListPrice() {
         return listPrice;
     }
@@ -130,21 +126,4 @@ public class ProductOrderAddOnPriceAdjustment implements PriceAdjustment{
                 .toHashCode();
     }
 
-    @Override
-    public Condition deriveAdjustmentCondition() {
-        if(listPrice.compareTo(adjustmentValue) <0) {
-            return Condition.MARK_UP_LINE_ITEM;
-        } else {
-            return Condition.DOLLAR_DISCOUNT_LINE_ITEM;
-        }
-    }
-
-    @Override
-    public BigDecimal getAdjustmentDifference() {
-        if(listPrice.compareTo(adjustmentValue) <0) {
-            return adjustmentValue.subtract(listPrice);
-        } else {
-            return listPrice.subtract(adjustmentValue);
-        }
-    }
 }

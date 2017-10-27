@@ -892,9 +892,7 @@
             <column name="adjustment_value" type="number(19,2)" />
             <column name="adjustment_quantity" type="number(19,0)" />
             <column name="custom_product_name" type="varchar(255)" />
-            <column name="product_order" type="number(19,0)">
-                <constraints nullable="false" />
-            </column>
+            <column name="product_order" type="number(19,0)"/>
         </createTable>
 
         <addPrimaryKey schemaName="athena" tableName="pdo_price_adjustment_aud"

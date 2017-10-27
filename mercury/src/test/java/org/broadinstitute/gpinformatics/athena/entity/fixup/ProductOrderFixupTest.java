@@ -1052,8 +1052,7 @@ public class ProductOrderFixupTest extends Arquillian {
         for(ProductOrder orderWithSap:listWithWildcard) {
             if(CollectionUtils.isEmpty(orderWithSap.getSapReferenceOrders())) {
                 SapOrderDetail newDetail = new SapOrderDetail(orderWithSap.getSapOrderNumber(),
-                        SapIntegrationServiceImpl.getSampleCount(orderWithSap, orderWithSap.getProduct(),
-                                false),
+                        SapIntegrationServiceImpl.getSampleCount(orderWithSap, orderWithSap.getProduct()),
                         orderWithSap.getQuoteId(), SapIntegrationServiceImpl.determineCompanyCode(orderWithSap).getCompanyCode(),
                         "", "");
                 orderWithSap.addSapOrderDetail(newDetail);

@@ -52,6 +52,7 @@ public class ProductDao extends GenericDao implements Serializable {
     }
 
     public enum IncludePDMOnly {
+        WITH_GP,
         YES,
         NO;
 

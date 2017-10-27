@@ -370,8 +370,6 @@ public class ProductOrderEjb {
                 }
 
                 if ((!orderToPublish.isSavedInSAP() && allowCreateOrder) || quoteIdChange || priceChangeForNewOrder) {
-                    String sapOrderIdentifier = sapService.createOrder(orderToPublish);
-
                     final String newSapOrderNumber = createOrderInSAP(orderToPublish, quoteIdChange,allProductsOrdered,
                             effectivePricesForProducts, messageCollection, priceChangeForNewOrder);
 

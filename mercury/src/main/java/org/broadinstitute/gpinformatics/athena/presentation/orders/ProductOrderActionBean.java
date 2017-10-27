@@ -1340,8 +1340,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             CustomizationValues primaryCustomization =
                     new CustomizationValues(editOrder.getProduct().getPartNumber(),
-                            String.valueOf(editOrder.getSinglePriceAdjustment().getAdjustmentQuantity()),
-                            editOrder.getSinglePriceAdjustment().getAdjustmentValue().toString(),
+                            String.valueOf((editOrder.getSinglePriceAdjustment().getAdjustmentQuantity() != null?editOrder.getSinglePriceAdjustment().getAdjustmentQuantity():"")),
+                            (editOrder.getSinglePriceAdjustment().getAdjustmentValue() != null)?editOrder.getSinglePriceAdjustment().getAdjustmentValue().toString():"",
                             editOrder.getSinglePriceAdjustment().getCustomProductName());
             customizationOutput.put(editOrder.getProduct().getPartNumber(), primaryCustomization.toJson());
         }
@@ -1351,8 +1351,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
                 CustomizationValues addonCustomization =
                         new CustomizationValues(productOrderAddOn.getAddOn().getPartNumber(),
-                                String.valueOf(productOrderAddOn.getSingleCustomPriceAdjustment().getAdjustmentQuantity()),
-                                productOrderAddOn.getSingleCustomPriceAdjustment().getAdjustmentValue().toString(),
+                                String.valueOf(
+                                        (productOrderAddOn.getSingleCustomPriceAdjustment().getAdjustmentQuantity() != null)?productOrderAddOn.getSingleCustomPriceAdjustment().getAdjustmentQuantity():""),
+                                (productOrderAddOn.getSingleCustomPriceAdjustment().getAdjustmentValue() != null)?productOrderAddOn.getSingleCustomPriceAdjustment().getAdjustmentValue().toString():"",
                                 productOrderAddOn.getSingleCustomPriceAdjustment().getCustomProductName());
 
                 customizationOutput.put(productOrderAddOn.getAddOn().getPartNumber(),addonCustomization.toJson());
@@ -1682,23 +1683,27 @@ public class ProductOrderActionBean extends CoreActionBean {
             saveType = ProductOrder.SaveType.CREATING;
         }
 
-        if(userBean.isPDMUser() || userBean.isGPPMUser() || userBean.isDeveloperUser()) {
+        if (editOrder.getProduct() != null) {
+            if(userBean.isPDMUser() || userBean.isGPPMUser() || userBean.isDeveloperUser()) {
 
-            if (orderType != null) {
-                editOrder.setOrderType(ProductOrder.OrderAccessType.fromDisplayName(orderType));
-            }
-        } else {
-            if(editOrder.getProduct().isClinicalProduct()) {
-                editOrder.setOrderType(ProductOrder.OrderAccessType.COMMERCIAL);
+                if (orderType != null) {
+                    editOrder.setOrderType(ProductOrder.OrderAccessType.fromDisplayName(orderType));
+                }
             } else {
-                editOrder.setOrderType(ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
+                if(editOrder.getProduct().isClinicalProduct()) {
+                    editOrder.setOrderType(ProductOrder.OrderAccessType.COMMERCIAL);
+                } else {
+                    editOrder.setOrderType(ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
+                }
+            }
+            if (StringUtils.isNotBlank(customizationJsonString)) {
+                buildJsonObjectFromEditOrderProductCustomizations();
             }
         }
 
         if (editOrder.isRegulatoryInfoEditAllowed()) {
             updateRegulatoryInformation();
         }
-        buildJsonObjectFromEditOrderProductCustomizations();
 
         Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
         try {
@@ -2757,9 +2762,9 @@ public class ProductOrderActionBean extends CoreActionBean {
             JSONObject currentCustomization = (JSONObject) customizationJson.get(productPartNumber);
 
             final CustomizationValues customizedProductInfo = new CustomizationValues(productPartNumber,
-                    (String) currentCustomization.get("quantity"),
-                    (String) currentCustomization.get("price"),
-                    (String) currentCustomization.get("customName"));
+                    (String) ((currentCustomization.has("quantity") && currentCustomization.get("quantity") != null) ?currentCustomization.get("quantity"):""),
+                    (String) ((currentCustomization.has("price") && currentCustomization.get("price") != null) ?currentCustomization.get("price"):""),
+                    (String) ((currentCustomization.has("customName") && currentCustomization.get("customName") != null) ?currentCustomization.get("customName"):""));
             customizedProductInfo.setProductName(productDao.findByPartNumber(productPartNumber).getProductName());
             productCustomizations.add(customizedProductInfo);
         }

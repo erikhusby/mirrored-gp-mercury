@@ -7,18 +7,34 @@ import java.math.BigDecimal;
 /**
  * TODO scottmat fill in javadoc!!!
  */
-public interface PriceAdjustment {
+public abstract class PriceAdjustment {
 
 
-    BigDecimal getAdjustmentValue();
+    public abstract BigDecimal getAdjustmentValue();
 
-    String getCustomProductName();
+    public abstract String getCustomProductName();
 
-    Integer getAdjustmentQuantity();
+    public abstract Integer getAdjustmentQuantity();
 
-    BigDecimal getListPrice();
+    public abstract BigDecimal getListPrice();
 
-    Condition deriveAdjustmentCondition();
+    public boolean hasPriceAdjustment() {
+        return getAdjustmentValue() != null;
+    }
 
-    BigDecimal getAdjustmentDifference();
+    public Condition deriveAdjustmentCondition() {
+        if(getListPrice().compareTo(getAdjustmentValue()) <0) {
+            return Condition.MARK_UP_LINE_ITEM;
+        } else {
+            return Condition.DOLLAR_DISCOUNT_LINE_ITEM;
+        }
+    }
+
+    public BigDecimal getAdjustmentDifference() {
+        if(getListPrice().compareTo(getAdjustmentValue()) <0) {
+            return getAdjustmentValue().subtract(getListPrice());
+        } else {
+            return getListPrice().subtract(getAdjustmentValue());
+        }
+    }
 }
