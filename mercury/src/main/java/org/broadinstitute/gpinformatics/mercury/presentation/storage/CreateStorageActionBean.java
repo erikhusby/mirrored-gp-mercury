@@ -6,6 +6,7 @@ import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
@@ -154,7 +155,7 @@ public class CreateStorageActionBean extends CoreActionBean {
                 String sectionName = String.valueOf((char)('A' + i));
                 StorageLocation section = new StorageLocation(sectionName, StorageLocation.LocationType.SECTION, freezer);
                 for (int j = 0; j < getShelves(); j++) {
-                    String shelfName = "Shelf " +  ( j + 1);
+                    String shelfName = buildShelfName(j + 1, getShelves());
                     StorageLocation shelf = new StorageLocation(shelfName, StorageLocation.LocationType.SHELF, section);
                     section.getChildrenStorageLocation().add(shelf);
                 }
@@ -162,13 +163,22 @@ public class CreateStorageActionBean extends CoreActionBean {
             }
         } else {
             for (int j = 0; j < getShelves(); j++) {
-                String shelfName = " Shelf " + (j + 1);
+                String shelfName = " " + buildShelfName(j + 1, getShelves());
                 StorageLocation shelf = new StorageLocation(shelfName, StorageLocation.LocationType.SHELF, freezer);
                 freezer.getChildrenStorageLocation().add(shelf);
             }
         }
 
         return freezer;
+    }
+
+    /**
+     * Build a shelf name with leading zeroes (if necessary), to sort correctly.
+     */
+    private String buildShelfName(int currentShelf, int totalShelves) {
+        int numShelfDigits = (int) Math.log10(currentShelf) + 1;
+        int numTotalShelfDigits = (int) Math.log10(totalShelves) + 1;
+        return "Shelf " + StringUtils.repeat('0', numTotalShelfDigits - numShelfDigits) + currentShelf;
     }
 
     public String getName() {
