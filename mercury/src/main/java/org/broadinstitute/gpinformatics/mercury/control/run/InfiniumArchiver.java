@@ -92,7 +92,7 @@ public class InfiniumArchiver {
         try {
             for (Pair<String, Boolean> stringBooleanPair : chipsToArchive) {
                 if (stringBooleanPair.getRight()) {
-                    archiveChip(stringBooleanPair.getLeft());
+                    archiveChip(stringBooleanPair.getLeft(), infiniumStarterConfig);
                 }
                 // else assume GAP has archived it
                 utx.begin();
@@ -158,7 +158,7 @@ public class InfiniumArchiver {
     /**
      * This code is inspired by GAP's InfiniumArchiveBean.archiveChip.
      */
-    void archiveChip(String barcode) {
+    static void archiveChip(String barcode, InfiniumStarterConfig infiniumStarterConfig) {
         log.info("Archiving Chip Barcode " + barcode);
         boolean isSuccessful = true;
         File baseDataDir = new File(infiniumStarterConfig.getDataPath());
@@ -244,7 +244,6 @@ public class InfiniumArchiver {
         if (zipFile.exists()) {
             zipFile.delete();
         }
-        // todo update status to ARCHIVED?
 
         // rename dir
         // delete dir
@@ -378,7 +377,7 @@ public class InfiniumArchiver {
         return isSuccessful;
     }
 
-    private boolean deleteDirectory(File dir) {
+    private static boolean deleteDirectory(File dir) {
         boolean isSuccessful = true;
         try {
             FileUtils.deleteDirectory(dir);
