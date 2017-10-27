@@ -448,7 +448,7 @@
                     $j("#skipQuoteDiv").hide();
                     $j("#showCustomizeWindow").hide();
                     $j("#clinicalAttestationDiv").hide();
-                    $j("#customizationContent").hide();
+//                    $j("#customizationContent").hide();
                     $j("#primaryProductListPrice").hide();
                     updateUIForProductChoice();
                     updateUIForProjectChoice();
@@ -634,7 +634,7 @@
                 $j("#quote").show();
                 $j("#showCustomizeWindow").hide();
                 $j("#clinicalAttestationDiv").hide();
-                $j("#customizationContent").hide();
+//                $j("#customizationContent").hide();
                 $j("#primaryProductListPrice").hide();
 
                 // TODO SGM Add div for main product list price.  Update it with the list price when the Product is selected.
@@ -834,6 +834,7 @@
             var productKey = $j("#product").val();
 
             <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager) %>">
+            $j("#primaryProductListPrice").show();
             $j("#primaryProductListPrice").text("research list price: $" + data.researchListPrice + ", external list price: $" +data.externalListPrice);
             </security:authorizeBlock>
 
@@ -841,7 +842,7 @@
             if ((productKey !== null) && (productKey !== "") && (productKey !== undefined)) {
                 $j("#showCustomizeWindow").show();
                 renderCustomizationSummary();
-                if(data["clinicalProduct"] == true) {
+                if(data["clinicalProduct"] === true) {
                     $j("#clinicalAttestationDiv").show();
                 }
 
@@ -1255,7 +1256,7 @@
 
                     var firstSetting = true;
 
-                    if (!(price === 'undefined') && !(price === null)) {
+                    if (!(price === undefined) && !(price === 'null') && (price.length >0)) {
 
                         if(firstSetting) {
                             content += ": ";
@@ -1264,7 +1265,7 @@
 
                         content += "Custom Price -- " + price;
                     }
-                    if (!(quantity === 'undefined') && !(quantity === null)) {
+                    if (!(quantity === undefined) && !(quantity === 'null') && (quantity.length >0)) {
                         if(firstSetting) {
                             content += ": ";
                             firstSetting = false;
@@ -1275,7 +1276,7 @@
 
                         content += "Custom Quantity -- " + quantity;
                     }
-                    if (!(customName === 'undefined') && !(customName === null)) {
+                    if (!(customName === undefined) && !(customName === 'null') && (customName.length > 0)) {
                         if(firstSetting) {
                             content += ": ";
                             firstSetting = false;

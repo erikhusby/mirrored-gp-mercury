@@ -235,10 +235,15 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         }
     }
 
-    private void defineConditionsForOrderItem(ProductOrder placedOrder, Product product, SAPOrderItem sapOrderItem) {
+    private void defineConditionsForOrderItem(ProductOrder placedOrder, Product product, SAPOrderItem sapOrderItem)
+            throws SAPIntegrationException {
         if(placedOrder.getProduct().equals(product)) {
 
-            if(placedOrder.getSinglePriceAdjustment() != null) {
+            if(placedOrder.getSinglePriceAdjustment() != null && placedOrder.getSinglePriceAdjustment().hasPriceAdjustment()) {
+
+                placedOrder.getSinglePriceAdjustment().setListPrice(
+                        new BigDecimal(productPriceCache.findByProduct(product, determineCompanyCode(placedOrder)).getBasePrice()));
+
                 sapOrderItem.addCondition(placedOrder.getSinglePriceAdjustment().deriveAdjustmentCondition(),
                         placedOrder.getSinglePriceAdjustment().getAdjustmentDifference());
                 if(StringUtils.isNotBlank(placedOrder.getSinglePriceAdjustment().getCustomProductName())) {
@@ -247,14 +252,18 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             }
 
             for (ProductOrderPriceAdjustment productOrderPriceAdjustment : placedOrder.getQuotePriceMatchAdjustments()) {
-                sapOrderItem.addCondition(productOrderPriceAdjustment.deriveAdjustmentCondition(),
-                        productOrderPriceAdjustment.getAdjustmentDifference());
+                if (productOrderPriceAdjustment.hasPriceAdjustment()) {
+                    sapOrderItem.addCondition(productOrderPriceAdjustment.deriveAdjustmentCondition(),
+                            productOrderPriceAdjustment.getAdjustmentDifference());
+                }
             }
         } else {
             for (ProductOrderAddOn productOrderAddOn : placedOrder.getAddOns()) {
                 if(productOrderAddOn.getAddOn().equals(product)) {
 
-                    if(productOrderAddOn.getSingleCustomPriceAdjustment() != null) {
+                    if(productOrderAddOn.getSingleCustomPriceAdjustment() != null &&
+                       productOrderAddOn.getSingleCustomPriceAdjustment().hasPriceAdjustment()) {
+                        productOrderAddOn.getSingleCustomPriceAdjustment().setListPrice(new BigDecimal(productPriceCache.findByProduct(productOrderAddOn.getAddOn(), determineCompanyCode(placedOrder)).getBasePrice()));
                         sapOrderItem.addCondition(
                                 productOrderAddOn.getSingleCustomPriceAdjustment().deriveAdjustmentCondition(),
                                 productOrderAddOn.getSingleCustomPriceAdjustment().getAdjustmentDifference());
@@ -265,28 +274,30 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
                     for (ProductOrderAddOnPriceAdjustment productOrderAddOnPriceAdjustment : productOrderAddOn
                             .getQuotePriceAdjustments()) {
-                        sapOrderItem.addCondition(productOrderAddOnPriceAdjustment.deriveAdjustmentCondition(),
-                                productOrderAddOnPriceAdjustment.getAdjustmentDifference());
+                        if (productOrderAddOnPriceAdjustment.hasPriceAdjustment()) {
+                            sapOrderItem.addCondition(productOrderAddOnPriceAdjustment.deriveAdjustmentCondition(),
+                                    productOrderAddOnPriceAdjustment.getAdjustmentDifference());
+                        }
                     }
                 }
             }
         }
     }
 
-    protected SAPOrderItem getOrderItem(ProductOrder placedOrder, Product product, int additionalSampleCount,
-                                        boolean creatingNewOrder) {
+    protected SAPOrderItem getOrderItem(ProductOrder placedOrder, Product product, int additionalSampleCount)
+            throws SAPIntegrationException {
 
         final SAPOrderItem sapOrderItem =
                 new SAPOrderItem(product.getPartNumber(), getSampleCount(placedOrder, product, additionalSampleCount,
-                        creatingNewOrder));
+                        false));
         defineConditionsForOrderItem(placedOrder, product, sapOrderItem);
         return sapOrderItem;
     }
 
 
-    public static int getSampleCount(ProductOrder placedOrder, Product product, boolean creatingNewOrder) {
+    public static int getSampleCount(ProductOrder placedOrder, Product product) {
 
-        return getSampleCount(placedOrder, product, 0, creatingNewOrder);
+        return getSampleCount(placedOrder, product, 0, false);
     }
 
     public static int getSampleCount(ProductOrder placedOrder, Product product, int additionalSampleCount,
@@ -482,14 +493,12 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         final Set<SAPOrderItem> sapOrderItems = new HashSet<>();
         final Map<Condition, String> conditionStringMap = Collections.emptyMap();
-        final SAPOrderItem orderItem = getOrderItem(productOrder, productOrder.getProduct(), addedSampleCount,
-                false);
+        final SAPOrderItem orderItem = getOrderItem(productOrder, productOrder.getProduct(), addedSampleCount);
 
         sapOrderItems.add(orderItem);
 
         for (ProductOrderAddOn productOrderAddOn : productOrder.getAddOns()) {
-            final SAPOrderItem orderSubItem = getOrderItem(productOrder, productOrderAddOn.getAddOn(), addedSampleCount,
-                    false);
+            final SAPOrderItem orderSubItem = getOrderItem(productOrder, productOrderAddOn.getAddOn(), addedSampleCount);
             sapOrderItems.add(orderSubItem);
         }
 

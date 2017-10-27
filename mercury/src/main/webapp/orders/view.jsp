@@ -116,7 +116,7 @@ $j(document).ready(function () {
 
                 var firstSetting = true;
 
-                if (!(price === 'undefined') && !(price === null)) {
+                if ((price !== undefined) && (price !== 'null') && (price.length > 0)) {
 
                     if(firstSetting) {
                         content += ": ";
@@ -125,7 +125,7 @@ $j(document).ready(function () {
 
                     content += "Custom Price -- " + price;
                 }
-                if (!(quantity === 'undefined') && !(quantity === null)) {
+                if ((quantity !== undefined) && (quantity !== 'null') && (quantity.length > 0)) {
                     if(firstSetting) {
                         content += ": ";
                         firstSetting = false;
@@ -136,7 +136,7 @@ $j(document).ready(function () {
 
                     content += "Custom Quantity -- " + quantity;
                 }
-                if (!(customName === 'undefined') && !(customName === null)) {
+                if ((customName !== undefined) && (customName !== 'null') && (customName.length > 0)) {
                     if(firstSetting) {
                         content += ": ";
                         firstSetting = false;
