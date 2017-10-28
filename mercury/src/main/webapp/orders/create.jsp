@@ -397,16 +397,34 @@
                                 text: "Customize",
                                 click: function() {
 
-                                    $j("#customizationData > tbody > tr").each(function() {
+                                    var errors = [];
 
+                                    $j("#customizationData > tbody > tr").each(function() {
+                                        var foundError = false;
                                         var partnumberIndex = $(this).find("input[class='partNumber']").val();
                                         var quantity = $(this).find("input[class='customQuantityValue']").val();
                                         var price = $(this).find("input[class='customPriceValue']").val();
                                         var productName = $(this).find("input[class='customProductNameValue']").val();
 
-                                        addCustomizationValue(partnumberIndex, price, quantity, productName);
+                                          if ((quantity !== undefined) && (quantity !== "") && (quantity !== 'null')
+                                          && (isNaN(quantity ))) {
+                                              errors.push(partnumberIndex + ": If you enter a value for quantity it must be numeric");
+                                              foundError = true;
+                                          }
+                                          if ((price !== undefined) && (price !== "") && (price !== 'null')
+                                          && (isNaN(price ))) {
+                                              errors.push(partnumberIndex + ": If you enter a value for quantity it must be numeric");
+                                              foundError = true;
+                                          }
+                                        if(!foundError) {
+                                            addCustomizationValue(partnumberIndex, price, quantity, productName);
+                                        }
 
                                     });
+                                    if(errors.length > 0) {
+                                        alert(errors.join("<br>"));
+//                                            return;
+                                    }
                                     $j("#customizationJsonString").val(JSON.stringify(customizationValues));
                                     $j(this).dialog("close");
                                     renderCustomizationSummary();
@@ -659,12 +677,6 @@
                 // Moving the check for number of lanes visibility to the 'complete' (like finally in a try catch)
                 // setting for the ajax call for getting addons.  This way the addons that are set can be input for
                 // determining visibility of the number of lanes field
-
-                <%--$j.ajax({--%>
-                    <%--url: "${ctxpath}/orders/order.action?getSupportsSkippingQuote=&product=" + productKey,--%>
-                    <%--dataType: 'json',--%>
-                    <%--success: updateSkipQuoteVisibility--%>
-                <%--});--%>
             }
         }
 
@@ -1289,7 +1301,7 @@
                     }
                     content += "<BR>";
                 }
-                return content;
+                return (firstSetting)?"":content;
             });
 
         }
