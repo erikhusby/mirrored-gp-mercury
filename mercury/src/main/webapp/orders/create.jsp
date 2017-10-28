@@ -421,13 +421,12 @@
                                         }
 
                                     });
-                                    if(errors.length > 0) {
-                                        alert(errors.join("<br>"));
-//                                            return;
-                                    }
                                     $j("#customizationJsonString").val(JSON.stringify(customizationValues));
                                     $j(this).dialog("close");
                                     renderCustomizationSummary();
+                                    if(errors.length > 0) {
+                                        alert(errors.join("\n"));
+                                    }
                                 }
                             },
                             {
