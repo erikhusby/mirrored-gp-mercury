@@ -351,8 +351,13 @@ public class ContainerActionBean extends RackScanActionBean {
 
     private List<BarcodedTube> savePositionMapToLocation(MessageCollection messageCollection) {
         Set<String> barcodes = new HashSet<>();
-        if (rackOfTubes == null)
+        if (rackOfTubes == null) {
             return null;
+        }
+        if (receptacleTypes == null) {
+            messageCollection.addError("You must scan the rack.");
+            return null;
+        }
         List<BarcodedTube> tubesToAddToStorage = new ArrayList<>();
         for (ReceptacleType receptacleType : receptacleTypes) {
             if (!StringUtils.isEmpty(receptacleType.getBarcode())) {
