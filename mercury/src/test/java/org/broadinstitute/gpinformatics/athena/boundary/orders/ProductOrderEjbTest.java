@@ -691,7 +691,12 @@ public class ProductOrderEjbTest {
 
         Set<SAPMaterial> returnMaterials = new HashSet<>();
 
-        returnMaterials.add(new SAPMaterial(conversionPdo.getProduct().getPartNumber(),"5", Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet()));
+        final SAPMaterial primaryMaterial =
+                new SAPMaterial(conversionPdo.getProduct().getPartNumber(), "5", Collections.<Condition>emptySet(),
+                        Collections.<DeliveryCondition>emptySet());
+        primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        returnMaterials.add(
+                primaryMaterial);
         priceList.add(new QuotePriceItem(conversionPdo.getProduct().getPrimaryPriceItem().getCategory(),
                 conversionPdo.getProduct().getPrimaryPriceItem().getName(),
                 conversionPdo.getProduct().getPrimaryPriceItem().getName(), "10", "test",
@@ -701,7 +706,10 @@ public class ProductOrderEjbTest {
                 conversionPdo.getProduct().getPrimaryPriceItem().getPlatform(),
                 conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
-            returnMaterials.add(new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(),"5", Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet()));
+            final SAPMaterial addonMaterial = new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), "5",
+                    Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet());
+            addonMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+            returnMaterials.add(addonMaterial);
             priceList.add(new QuotePriceItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory(),
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(),
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().getName(), "10", "test",
