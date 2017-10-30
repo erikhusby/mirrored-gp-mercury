@@ -270,7 +270,7 @@
                         <stripes:link id="findContainer"
                                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.container.ContainerActionBean"
                                       event="view">
-                            Search For Container
+                            Check-In / Search Container
                         </stripes:link>
                     </li>
                     <li>
