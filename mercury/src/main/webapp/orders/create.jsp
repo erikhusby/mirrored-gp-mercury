@@ -654,8 +654,6 @@
 //                $j("#customizationContent").hide();
                 $j("#primaryProductListPrice").hide();
 
-                // TODO SGM Add div for main product list price.  Update it with the list price when the Product is selected.
-
             } else {
                 if (productKey == '<%= Product.SAMPLE_INITIATION_PART_NUMBER %>') {
                     // Product is Sample Initiation "P-ESH-0001".

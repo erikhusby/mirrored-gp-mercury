@@ -219,8 +219,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     protected SAPOrderItem getOrderItem(ProductOrder placedOrder, Product product, Quote quote,
                                         int additionalSampleCount, boolean creatingNewOrder) throws SAPIntegrationException {
         try {
-            //TODO SGM:  This has to change!!!
-            String price = priceListCache.getEffectivePrice(product.getPrimaryPriceItem(), quote);
+            String price = priceListCache.getEffectivePrice(SAPProductPriceCache.getDeterminePriceItemByCompanyCode(product, getSapCompanyConfigurationForProductOrder(placedOrder)),
+                    quote);
 
             final SAPOrderItem sapOrderItem = new SAPOrderItem(product.getPartNumber(),
                     getSampleCount(placedOrder, product, additionalSampleCount, creatingNewOrder));
@@ -548,7 +548,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             throws SAPIntegrationException
     {
         SapIntegrationClientImpl.SAPCompanyConfiguration companyCode =
-                getSapCompanyConfigurationForProduct(companyProductOrder.getProduct(), companyProductOrder);
+                getSapCompanyConfigurationForProductOrder(companyProductOrder);
 
         final SapOrderDetail latestSapOrderDetail = companyProductOrder.latestSapOrderDetail();
         if(latestSapOrderDetail != null && latestSapOrderDetail.getCompanyCode()!= null
@@ -560,9 +560,11 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         return companyCode;
     }
 
+    // TODO SGM  these two methods are potentially redundant!!
+
     @NotNull
-    public static SapIntegrationClientImpl.SAPCompanyConfiguration getSapCompanyConfigurationForProduct(Product product,
-                                                                                                        ProductOrder order) {
+    public static SapIntegrationClientImpl.SAPCompanyConfiguration getSapCompanyConfigurationForProductOrder(
+            ProductOrder order) {
         SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
         if ((order.getOrderType() == ProductOrder.OrderAccessType.COMMERCIAL)) {
             companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES;

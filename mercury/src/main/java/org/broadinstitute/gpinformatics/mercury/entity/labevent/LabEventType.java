@@ -1470,7 +1470,7 @@ public enum LabEventType {
             LibraryType.CF_POND),
 
     /**
-     * TODO SGM  the following names are place holders.  They will be re-evaluated as development of
+     * TODO the following names are place holders.  They will be re-evaluated as development of
      */
     SHEARING_BUCKET("ShearingBucket",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,

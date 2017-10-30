@@ -87,7 +87,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
             if (pdo != null) {
                 foundResearchProjectList.put(currPdo, pdo.getResearchProject());
             } else {
-                //TODO SGM: Throw an exception here (?)
+                //TODO Throw an exception here (?)
                 log.error("Unable to find a PDO for the business key of " + currPdo);
             }
             if (batch.getWorkflowName() != null) {
@@ -100,7 +100,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
     @Override
     public Collection<CustomField> getCustomFields(Map<String, CustomFieldDefinition> submissionFields) {
 
-        //TODO SGM: Modify Field settings to Append instead of Overwriting.  This would cover associating an Existing Ticket
+        //TODO Modify Field settings to Append instead of Overwriting.  This would cover associating an Existing Ticket
 
         Set<CustomField> customFields = new HashSet<>();
 

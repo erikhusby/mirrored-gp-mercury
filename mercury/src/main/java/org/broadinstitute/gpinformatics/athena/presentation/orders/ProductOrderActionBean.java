@@ -54,7 +54,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryIn
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
-import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.PriceAdjustment;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
@@ -133,7 +132,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchAction
 import org.broadinstitute.sap.entity.OrderCalculatedValues;
 import org.broadinstitute.sap.entity.OrderValue;
 import org.broadinstitute.sap.services.SAPIntegrationException;
-import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -979,13 +977,13 @@ public class ProductOrderActionBean extends CoreActionBean {
             try {
                 final Product product = testOrder.getProduct();
                 double productValue =
-                        getProductValue((product.getSupportsNumberOfLanes())?(int)ProductOrder.getUnbilledLaneCount(testOrder, product):sampleCount, product,
+                        getProductValue(getUnbilledCountForProduct(testOrder, sampleCount, product), product,
                                 quote, testOrder);
                 value += productValue;
                 for (ProductOrderAddOn testOrderAddon : testOrder.getAddOns()) {
                     final Product addOn = testOrderAddon.getAddOn();
                     double addOnValue =
-                            getProductValue((addOn.getSupportsNumberOfLanes())?(int)ProductOrder.getUnbilledLaneCount(testOrder, product):sampleCount, addOn,
+                            getProductValue(getUnbilledCountForProduct(testOrder, sampleCount, addOn), addOn,
                                     quote, testOrder);
                     value += addOnValue;
                 }
@@ -995,6 +993,29 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
         }
         return value;
+    }
+
+    private int getUnbilledCountForProduct(ProductOrder productOrder, int sampleCount, Product product) {
+        int unbilledCount = sampleCount;
+
+        final PriceAdjustment adjustmentForProduct = productOrder.getAdjustmentForProduct(product);
+        int totalAdjustmentCount = 0;
+        if(adjustmentForProduct != null && adjustmentForProduct.getAdjustmentQuantity() != null) {
+            totalAdjustmentCount = adjustmentForProduct.getAdjustmentQuantity();
+        }
+
+        if (product.getSupportsNumberOfLanes()) {
+            int totalCount = productOrder.getLaneCount();
+            if(totalAdjustmentCount > 0 ) {
+                totalCount = totalAdjustmentCount;
+            }
+            unbilledCount = (int) ProductOrder.getUnbilledAlternateValueCount(productOrder, product, totalCount);
+        } else {
+            if(totalAdjustmentCount > 0) {
+                unbilledCount = (int) ProductOrder.getUnbilledAlternateValueCount(productOrder, product, totalAdjustmentCount);
+            }
+        }
+        return unbilledCount;
     }
 
     /**
@@ -1012,7 +1033,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         double productValue = 0d;
         String foundPrice;
         try {
-            //todo sgm revert this so that we are still pulling from price listF
             foundPrice = productOrderEjb.validateSAPAndQuoteServerPrices(quote, product, productOrder);
         } catch (InvalidProductException e) {
             throw new InvalidProductException("For '" + product.getDisplayName() + "' " + e.getMessage(), e);
@@ -1027,10 +1047,6 @@ public class ProductOrderActionBean extends CoreActionBean {
                 if(adjustmentForProduct.getAdjustmentValue() != null) {
                     productPrice = adjustmentForProduct.getAdjustmentValue().doubleValue();
                 }
-
-                /* todo SGM adjust based on customization... if there are any
-                *  Must account for quantity.  Probably need to pass in billed count to do so.
-                * */
             }
 
             productValue = productPrice * (unbilledCount);
@@ -1822,7 +1838,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         Product product = tokenProduct != null ? productDao.findByPartNumber(tokenProduct.getPartNumber()) : null;
 
         if(editOrder.isSavedInSAP() && !editOrder.latestSapOrderDetail().getCompanyCode().equals(
-                SapIntegrationServiceImpl.getSapCompanyConfigurationForProduct(product, editOrder).getCompanyCode())) {
+                SapIntegrationServiceImpl.getSapCompanyConfigurationForProductOrder(editOrder).getCompanyCode())) {
             addGlobalValidationError("Unable to update the order in SAP.  This combination of Product and Order is "
                                      + "attempting to change the company code to which this order will be associated.");
         }
