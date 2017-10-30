@@ -28,6 +28,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderT
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.sap.entity.Condition;
 import org.broadinstitute.sap.entity.ConditionValue;
+import org.broadinstitute.sap.entity.SAPMaterial;
 import org.broadinstitute.sap.entity.SAPOrder;
 import org.broadinstitute.sap.entity.SAPOrderItem;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
@@ -43,6 +44,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
@@ -57,13 +59,14 @@ public class SapIntegrationServiceImplDBFreeTest {
     public static final String SINGLE_SOURCE_FUND_RES_QUOTE_ID = "GPFRQT";
     public static final String MULTIPLE_SOURCE_QUOTE_ID = "GPMultipleQtTest";
     public static final String MOCK_CUSTOMER_NUMBER = "0000123456";
-    public Quote testSingleSourceQuote;
-    public Quote testMultipleLevelQuote;
-    public String testUser;
-    public Quote testSingleSourceFRQuote;
-    public SapIntegrationServiceImpl integrationService;
-    public QuoteService mockQuoteService;
-    public PriceListCache priceListCache;
+    private Quote testSingleSourceQuote;
+    private Quote testMultipleLevelQuote;
+    private String testUser;
+    private Quote testSingleSourceFRQuote;
+    private SapIntegrationServiceImpl integrationService;
+    private SAPProductPriceCache productPriceCache;
+    private QuoteService mockQuoteService;
+    private PriceListCache priceListCache;
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -127,6 +130,9 @@ public class SapIntegrationServiceImplDBFreeTest {
         priceListCache = new PriceListCache(mockQuoteService);
 
         integrationService.setPriceListCache(priceListCache);
+
+        productPriceCache = new SAPProductPriceCache(integrationService);
+        integrationService.setProductPriceCache(productPriceCache);
     }
 
 
@@ -279,10 +285,17 @@ public class SapIntegrationServiceImplDBFreeTest {
         ProductOrder conversionPdo = ProductOrderTestFactory.createDummyProductOrder(10, jiraTicketKey);
         conversionPdo.setQuoteId(testSingleSourceQuote.getAlphanumericId());
         conversionPdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+        Set<SAPMaterial> materials = new HashSet<>();
 
+        final String primaryMaterialBasePrice = "50.50";
+        final String addonMaterialPrice = "40.50";
+        SAPMaterial primaryMaterial = new SAPMaterial(conversionPdo.getProduct().getPartNumber(),
+                primaryMaterialBasePrice,null, null);
+        primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+        materials.add(primaryMaterial);
         priceList.add(new QuotePriceItem(conversionPdo.getProduct().getPrimaryPriceItem().getCategory(),
                 conversionPdo.getProduct().getPrimaryPriceItem().getName(),
-                conversionPdo.getProduct().getPrimaryPriceItem().getName(), "50.50", "test",
+                conversionPdo.getProduct().getPrimaryPriceItem().getName(), primaryMaterialBasePrice, "test",
                 conversionPdo.getProduct().getPrimaryPriceItem().getPlatform()));
         quoteItems.add(new QuoteItem(testSingleSourceQuote.getAlphanumericId(),
                 conversionPdo.getProduct().getPrimaryPriceItem().getName(),
@@ -291,9 +304,13 @@ public class SapIntegrationServiceImplDBFreeTest {
                 conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
 
         for (ProductOrderAddOn addOn : conversionPdo.getAddOns()) {
+            SAPMaterial addonMaterial = new SAPMaterial(addOn.getAddOn().getPartNumber(),
+                    addonMaterialPrice,null, null);
+            addonMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
+            materials.add(addonMaterial);
             priceList.add(new QuotePriceItem(addOn.getAddOn().getPrimaryPriceItem().getCategory(),
                     addOn.getAddOn().getPrimaryPriceItem().getName(),
-                    addOn.getAddOn().getPrimaryPriceItem().getName(), "40.50", "test",
+                    addOn.getAddOn().getPrimaryPriceItem().getName(), addonMaterialPrice, "test",
                     addOn.getAddOn().getPrimaryPriceItem().getPlatform()));
 
             quoteItems.add(new QuoteItem(testSingleSourceQuote.getAlphanumericId(),
@@ -317,6 +334,7 @@ public class SapIntegrationServiceImplDBFreeTest {
         }
 
         Mockito.when(mockQuoteService.getAllPriceItems()).thenReturn(priceList);
+        Mockito.when(integrationService.findProductsInSap()).thenReturn(materials);
         testSingleSourceQuote.setQuoteItems(quoteItems);
         Map<String, SampleData> mockReturnValue = new HashMap<>();
 
