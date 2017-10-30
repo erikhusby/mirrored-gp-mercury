@@ -1363,4 +1363,24 @@ public class ProductOrderFixupTest extends Arquillian {
         utx.commit();
     }
 
+
+    @Test(enabled=false)
+    public void gplim4593BackfillBilledSampleAssociationWithSAPOrders() throws Exception {
+
+        userBean.loginOSUser();
+        List<ProductOrder> ordersToUpdate = productOrderDao.findOrdersWithSAPOrdersAndBilledSamples();
+        for (ProductOrder productOrder : ordersToUpdate) {
+            Set<LedgerEntry> billedLedgerEntries = new HashSet<>();
+            for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
+                billedLedgerEntries.addAll(productOrderSample.getBilledLedgerItems());
+            }
+
+            productOrder.latestSapOrderDetail().addLedgerEntries(billedLedgerEntries);
+            System.out.println("Updating association to SAP order " + productOrder.getSapOrderNumber() + " for PDO " +
+                               productOrder.getBusinessKey() + " with association to the " + billedLedgerEntries.size() +
+                               " ledger entries which have already successfully been billed");
+        }
+
+        productOrderDao.persist(new FixupCommentary("GPLIM-4593: Backfilling sap Order Detail with billing Ledger Associations"));
+    }
 }

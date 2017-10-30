@@ -82,6 +82,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.persistence.LockModeType;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -597,18 +598,18 @@ public class ProductOrderEjb {
         // todo sgm check quote and throw exception if it is null
 
         // todo sgm revisit putting all this back in.
-//        sapMaterial = productPriceCache.findByProduct(product, companyCode);
+        sapMaterial = productPriceCache.findByProduct(product, companyCode);
 
         PriceItem priceItem = SAPProductPriceCache.getDeterminePriceItemByCompanyCode(product, companyCode);
         final QuotePriceItem priceListItem = priceListCache.findByKeyFields(priceItem);
-        final String effectivePrice = priceListItem.getPrice();
-//        if (sapMaterial == null) {
-//            throw new InvalidProductException("Unable to continue since the product " + product.getDisplayName()
-//                                              + " has not been properly set up in SAP.");
-//        } else if(!StringUtils.equals(sapMaterial.getBasePrice(), effectivePrice)) {
-//            throw new InvalidProductException("Unable to continue since the price for the product " +
-//                                              product.getDisplayName() + " has not been properly set up in SAP");
-//        }
+        final BigDecimal effectivePrice = new BigDecimal(priceListItem.getPrice());
+        if (sapMaterial != null && StringUtils.isNotBlank(sapMaterial.getBasePrice())) {
+            final BigDecimal basePrice = new BigDecimal(sapMaterial.getBasePrice());
+            if (!basePrice.equals(effectivePrice)) {
+                throw new InvalidProductException("Unable to continue since the price for the product " +
+                                                  product.getDisplayName() + " has not been properly set up in SAP");
+            }
+        }
         return priceListCache.getEffectivePrice(priceItem, orderQuote);
 
 //        return productPriceCache.getEffectivePrice(product,companyCode, orderQuote);

@@ -1040,6 +1040,12 @@
         </addColumn>
     </changeSet>
 
-    
+    <changeSet id="GPLIM-5112-5" author="scottmat">
+        <sql>
+            update athena.product pdt
+            set pdt.PDM_ORDERABLE_ONLY = 0
+            where pdt.CLINICAL_ONLY_PRODUCT = 1
+        </sql>
+    </changeSet>
 
 </databaseChangeLog>

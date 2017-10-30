@@ -1,7 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerHeader;
@@ -10,7 +8,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao
 import org.broadinstitute.gpinformatics.athena.control.dao.work.WorkCompleteMessageDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
-import org.broadinstitute.gpinformatics.athena.entity.billing.ProductLedgerIndex;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
@@ -23,9 +20,11 @@ import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.tableau.TableauConfig;
+import org.broadinstitute.sap.services.SAPIntegrationException;
+import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 
-import javax.annotation.Nullable;
 import java.awt.Color;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -129,6 +128,58 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
             if (priceItem == null) {
                 priceItem = new PriceItem(quotePriceItem.getId(), quotePriceItem.getPlatformName(),
                                           quotePriceItem.getCategoryName(), quotePriceItem.getName());
+                priceItemDao.persist(priceItem);
+            }
+
+            allPriceItems.add(priceItem);
+        }
+
+        return allPriceItems;
+    }
+
+    /**
+     * This gets the product price item and then its list of optional price items. If the price items are not
+     * yet stored in the PRICE_ITEM table, it will create it there.
+     *
+     * @param product The product.
+     * @param priceItemDao The DAO to use for saving any new price item.
+     * @param priceItemListCache The price list cache.
+     *
+     * @param productOrder
+     * @return The real price item objects.
+     */
+    public static List<PriceItem> getPriceItems(Product product, PriceItemDao priceItemDao,
+                                                PriceListCache priceItemListCache,
+                                                ProductOrder productOrder) throws SAPIntegrationException {
+
+        List<PriceItem> allPriceItems = new ArrayList<>();
+
+        // First add the primary price item.
+        PriceItem primaryPriceItem = product.getPrimaryPriceItem();
+        final SapIntegrationClientImpl.SAPCompanyConfiguration configuration =
+                SapIntegrationServiceImpl.determineCompanyCode(productOrder);
+        if(configuration == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES &&
+                product.getExternalPriceItem() != null) {
+            primaryPriceItem = product.getExternalPriceItem();
+        }
+        allPriceItems.add(primaryPriceItem);
+
+        // Now add the replacement price items.
+        // Get the replacement items from the quote cache.
+        Collection<QuotePriceItem> quotePriceItems =
+                priceItemListCache.getReplacementPriceItems(primaryPriceItem);
+
+        // Now add the replacement items as mercury price item objects.
+        for (QuotePriceItem quotePriceItem : quotePriceItems) {
+            // Find the price item object.
+            PriceItem priceItem =
+                    priceItemDao.find(
+                            quotePriceItem.getPlatformName(), quotePriceItem.getCategoryName(), quotePriceItem.getName());
+
+            // If it does not exist create it.
+            if (priceItem == null) {
+                priceItem = new PriceItem(quotePriceItem.getId(), quotePriceItem.getPlatformName(),
+                        quotePriceItem.getCategoryName(), quotePriceItem.getName());
                 priceItemDao.persist(priceItem);
             }
 

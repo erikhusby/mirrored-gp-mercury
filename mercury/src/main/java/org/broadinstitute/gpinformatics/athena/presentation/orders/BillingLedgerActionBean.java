@@ -146,7 +146,11 @@ public class BillingLedgerActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.EventHandling, on = { "view", "updateLedgers" })
     public void loadAllDataForView() {
         loadProductOrder();
-        gatherPriceItems();
+        try {
+            gatherPriceItems();
+        } catch (SAPIntegrationException e) {
+            addGlobalValidationError(e.getMessage());
+        }
 
         /*
          * When processing a form submit ("updateLedgers" action), this will only be used if rendering an error.
@@ -229,9 +233,10 @@ public class BillingLedgerActionBean extends CoreActionBean {
      * configured replacement price items, add-on price items, and any "historical" price items (ones that have been
      * billed for this PDO but are otherwise no longer related).
      */
-    private void gatherPriceItems() {
+    private void gatherPriceItems() throws SAPIntegrationException {
         // Collect primary and replacement price items
-        priceItems.addAll(SampleLedgerExporter.getPriceItems(productOrder.getProduct(), priceItemDao, priceListCache));
+        priceItems.addAll(SampleLedgerExporter.getPriceItems(productOrder.getProduct(), priceItemDao, priceListCache,
+                productOrder));
 
         // Collect historical price items (need add-ons to do that)
         List<Product> addOns = new ArrayList<>();

@@ -1,9 +1,11 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerProcessor;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
@@ -632,6 +634,20 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         }
 
         return billableLedgerItems;
+    }
+
+    public Set<LedgerEntry> getBilledLedgerItems() {
+        Set<LedgerEntry> billedEntries = new HashSet<>();
+
+        if(CollectionUtils.isNotEmpty(getLedgerItems())) {
+            for (LedgerEntry ledgerEntry : getLedgerItems()) {
+                if(StringUtils.equals(ledgerEntry.getBillingMessage(), BillingSession.SUCCESS)) {
+                    billedEntries.add(ledgerEntry);
+                }
+            }
+
+        }
+        return billedEntries;
     }
 
     /**
