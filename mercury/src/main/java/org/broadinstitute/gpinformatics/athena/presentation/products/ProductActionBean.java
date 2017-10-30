@@ -530,7 +530,7 @@ public class ProductActionBean extends CoreActionBean {
             productDownloadList = Arrays.asList(downloadProduct);
         } else {
             productDownloadList = productDao.findProducts(ProductDao.Availability.CURRENT, TopLevelOnly.NO,
-                    IncludePDMOnly.toIncludePDMOnly(userBean.isPDMUser()));
+                    IncludePDMOnly.toIncludePDMOnly(userBean.isPDMUser(), userBean.isGPPMUser()));
         }
         return productDownloadList;
     }

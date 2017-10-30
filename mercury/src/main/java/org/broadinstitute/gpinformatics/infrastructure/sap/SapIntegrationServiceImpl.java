@@ -92,6 +92,9 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         case TEST:
             environment = SapIntegrationClientImpl.SAPEnvironment.DEV_400;
             break;
+        case RC:
+            environment = SapIntegrationClientImpl.SAPEnvironment.QA_400;
+            break;
         case QA:
         default:
             environment = SapIntegrationClientImpl.SAPEnvironment.QA;
@@ -542,7 +545,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      * @return an indicator that represents one of the configured companies within SAP
      */
     public static SapIntegrationClientImpl.SAPCompanyConfiguration determineCompanyCode(ProductOrder companyProductOrder)
-            throws SAPIntegrationException {
+            throws SAPIntegrationException
+    {
         SapIntegrationClientImpl.SAPCompanyConfiguration companyCode =
                 getSapCompanyConfigurationForProduct(companyProductOrder.getProduct(), companyProductOrder);
 
