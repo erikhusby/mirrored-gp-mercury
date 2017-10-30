@@ -23,6 +23,7 @@ $j(document).ready( function() {
                 } else {
                     console.log(resultObj);
                     $j("#storageName").val(resultObj.locationTrail);
+                    $j("#storageName").css("width", resultObj.locationTrail.length * 8);
                     $j("#storageId").val(storageId);
                     console.log("Set value of storage id to " + $j("#storageId").val());
                 }
