@@ -137,6 +137,10 @@ public class ContainerActionBean extends RackScanActionBean {
 
     @ValidationMethod(on = CREATE_CONTAINER_ACTION)
     public void labVesselDoesntExist(ValidationErrors errors) {
+        if (StringUtils.isEmpty(containerBarcode)) {
+            addValidationError("containerBarcode", "Container Barcode is required.");
+            return;
+        }
         if (labVesselDao.findByIdentifier(containerBarcode) != null) {
             errors.add(containerBarcode, new SimpleError("Barcode is already associated with another lab vessel"));
         }
