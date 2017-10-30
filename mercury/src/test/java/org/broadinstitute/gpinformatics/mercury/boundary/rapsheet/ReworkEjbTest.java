@@ -851,7 +851,7 @@ public class ReworkEjbTest extends Arquillian {
         Assert.assertEquals(candidates.size(), mapBarcodeToTube.size());
 
         for (ReworkEjb.BucketCandidate candidate : candidates) {
-            //TODO SGM/BR  Need to figure a way to get Stub search really working to validate the Barcode
+            //TODO Need to figure a way to get Stub search really working to validate the Barcode
             Assert.assertTrue(candidate.isValid());
             Assert.assertEquals(candidate.getProductOrder().getBusinessKey(), exExProductOrder1.getBusinessKey());
         }
@@ -1338,7 +1338,7 @@ public class ReworkEjbTest extends Arquillian {
         Assert.assertEquals(candidates.size(), mapBarcodeToTube.size() * 2);
 
         for (ReworkEjb.BucketCandidate candidate : candidates) {
-            //TODO SGM/BR  Need to figure a way to get Stub search really working to validate the Barcode
+            //TODO Need to figure a way to get Stub search really working to validate the Barcode
             Assert.assertTrue(candidate.isValid());
 //            Assert.assertTrue(mapBarcodeToTube.keySet().contains(candidate.getTubeBarcode()),"Did not find barcode " + candidate.getTubeBarcode() + "In the map of created tubes");
         }
@@ -1388,7 +1388,7 @@ public class ReworkEjbTest extends Arquillian {
 
         for (ReworkEjb.BucketCandidate candidate : candidates) {
 
-            //TODO SGM/BR  Need to figure a way to get Stub search really working to validate the Barcode
+            //TODO Need to figure a way to get Stub search really working to validate the Barcode
 
             Assert.assertTrue(candidate.isValid());
         }

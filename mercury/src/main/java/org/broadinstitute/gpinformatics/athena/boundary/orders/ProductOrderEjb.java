@@ -553,16 +553,6 @@ public class ProductOrderEjb {
                         }
                     }
 
-                    //todo sgm do we need to include SAP product price cache?
-
-                    final SAPMaterial foundMaterial =
-                            productPriceCache.findByProduct(product, productSearchConfiguration);
-
-                    if (foundMaterial == null) {
-                        allItemsValid = false;
-                        break;
-                    }
-
                     primaryPriceItem =
                             priceListCache.findByKeyFields(priceItem.getPlatform(),
                                     priceItem.getCategory(),
@@ -597,7 +587,6 @@ public class ProductOrderEjb {
 
         // todo sgm check quote and throw exception if it is null
 
-        // todo sgm revisit putting all this back in.
         sapMaterial = productPriceCache.findByProduct(product, companyCode);
 
         PriceItem priceItem = SAPProductPriceCache.getDeterminePriceItemByCompanyCode(product, companyCode);
@@ -611,8 +600,6 @@ public class ProductOrderEjb {
             }
         }
         return priceListCache.getEffectivePrice(priceItem, orderQuote);
-
-//        return productPriceCache.getEffectivePrice(product,companyCode, orderQuote);
     }
 
     /**

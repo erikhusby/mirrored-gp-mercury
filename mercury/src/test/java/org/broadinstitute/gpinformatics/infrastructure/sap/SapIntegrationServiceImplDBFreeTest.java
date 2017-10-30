@@ -210,7 +210,6 @@ public class SapIntegrationServiceImplDBFreeTest {
             assertThat(item.getSampleCount(), equalTo(conversionPdo.getSamples().size()));
             if(item.getProductIdentifier().equals(conversionPdo.getProduct().getPartNumber())) {
 
-                //TODO sgm must add in productPriceCache to make this work
                 assertThat(item.getConditions().iterator().next().getValue(), equalTo(new BigDecimal("30.50")));
             } else {
                 assertThat(item.getConditions().iterator().next().getValue(), equalTo(new BigDecimal("20.50")));
@@ -370,7 +369,6 @@ public class SapIntegrationServiceImplDBFreeTest {
                 assertThat(item.getSampleCount(), equalTo(conversionPdo.getSamples().size()));
                 assertThat(item.getProductAlias(), equalTo(customProductName));
 
-                //TODO sgm must add in productPriceCache to make this work
                 final ConditionValue foundCondition = item.getConditions().iterator().next();
                 assertThat(foundCondition.getValue(), equalTo(new BigDecimal("29.50")));
                 assertThat(foundCondition.getCondition(), equalTo(Condition.MARK_UP_LINE_ITEM));

@@ -13,6 +13,7 @@ import org.apache.commons.lang3.time.DateUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
@@ -32,6 +33,8 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -1985,18 +1988,22 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return (filteredResults != null) ? Iterators.size(filteredResults.iterator()) : 0;
     }
 
-    public static double getUnbilledLaneCount(ProductOrder order, Product targetProduct) {
+    public static double getUnbilledAlternateValueCount(ProductOrder order, Product targetProduct, int totalCount) {
         double existingCount = 0;
 
         for (ProductOrderSample targetSample : order.getSamples()) {
             for (LedgerEntry ledgerItem: targetSample.getLedgerItems()) {
-                if(ledgerItem.getPriceItem().equals(targetProduct.getPrimaryPriceItem())) {
+                PriceItem priceItem = SAPProductPriceCache
+                        .getDeterminePriceItemByCompanyCode(targetProduct,
+                                SapIntegrationServiceImpl.getSapCompanyConfigurationForProductOrder(order));
+
+                if(ledgerItem.getPriceItem().equals(priceItem)) {
                     existingCount += ledgerItem.getQuantity();
                 }
             }
 
         }
-        return order.getLaneCount() - existingCount;
+        return totalCount - existingCount;
     }
 
     public boolean isSavedInSAP() {

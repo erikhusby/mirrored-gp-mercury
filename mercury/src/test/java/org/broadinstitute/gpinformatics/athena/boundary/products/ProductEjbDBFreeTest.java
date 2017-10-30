@@ -79,7 +79,6 @@ public class ProductEjbDBFreeTest {
 
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(noControl);
-        // TODO SGM Mockup productPriceCache.productExists to say Yes
         testEjb.publishProductToSAP(testProduct);
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockSapService, Mockito.times(2)).publishProductInSAP(testProduct);
@@ -153,7 +152,6 @@ public class ProductEjbDBFreeTest {
 
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(noControl);
-        // TODO SGM Mockup productPriceCache.productExists to say Yes
         testEjb.publishProductToSAP(testProduct);
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockSapService, Mockito.times(2)).publishProductInSAP(testProduct);
@@ -232,7 +230,6 @@ public class ProductEjbDBFreeTest {
 
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(noControl);
-        // TODO SGM Mockup productPriceCache.productExists to say Yes
         testEjb.publishProductToSAP(testProduct);
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockSapService, Mockito.times(2)).publishProductInSAP(testProduct);
@@ -421,7 +418,6 @@ public class ProductEjbDBFreeTest {
 
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(noControl);
-        // TODO SGM Mockup productPriceCache.productExists to say Yes
         testEjb.publishProductToSAP(testProduct);
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockWrappedClient, Mockito.times(2)).createMaterial(Mockito.any(SAPMaterial.class));
@@ -518,7 +514,6 @@ public class ProductEjbDBFreeTest {
 
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(noControl);
-        // TODO SGM Mockup productPriceCache.productExists to say Yes
         testEjb.publishProductToSAP(testProduct);
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockWrappedClient, Mockito.times(2)).createMaterial(Mockito.any(SAPMaterial.class));
