@@ -1002,19 +1002,13 @@ public class ProductOrderActionBean extends CoreActionBean {
         int totalAdjustmentCount = 0;
         if(adjustmentForProduct != null && adjustmentForProduct.getAdjustmentQuantity() != null) {
             totalAdjustmentCount = adjustmentForProduct.getAdjustmentQuantity();
+            unbilledCount = (int) ProductOrder.getUnbilledNonSampleCount(productOrder, product, totalAdjustmentCount);
         }
 
         if (product.getSupportsNumberOfLanes()) {
             int totalCount = productOrder.getLaneCount();
-            if(totalAdjustmentCount > 0 ) {
-                totalCount = totalAdjustmentCount;
-            }
-            unbilledCount = (int) ProductOrder.getUnbilledAlternateValueCount(productOrder, product, totalCount);
-        } else {
-            if(totalAdjustmentCount > 0) {
-                unbilledCount = (int) ProductOrder.getUnbilledAlternateValueCount(productOrder, product, totalAdjustmentCount);
-            }
-        }
+            unbilledCount = (int) ProductOrder.getUnbilledNonSampleCount(productOrder, product, totalCount);
+        } 
         return unbilledCount;
     }
 

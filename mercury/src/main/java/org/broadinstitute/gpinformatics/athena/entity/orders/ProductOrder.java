@@ -1988,7 +1988,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return (filteredResults != null) ? Iterators.size(filteredResults.iterator()) : 0;
     }
 
-    public static double getUnbilledAlternateValueCount(ProductOrder order, Product targetProduct, int totalCount) {
+    public static double getUnbilledNonSampleCount(ProductOrder order, Product targetProduct, int totalCount) {
         double existingCount = 0;
 
         for (ProductOrderSample targetSample : order.getSamples()) {
