@@ -135,6 +135,11 @@ quote:
       password: ml1m5qu0t3
       url:      http://quoteqa:8080
 
+    TEST:
+      login:    mercuryquote
+      password: ml1m5qu0t3
+      url:      http://quotetest:8080
+
     PROD:
       login:    mercuryquote
       password: ml1m5qu0t3
@@ -322,7 +327,7 @@ mercury:
       bsp:      DEV
       gap:      DEV
       jira:     TEST
-      quote:    QA
+      quote:    TEST
       squid:    TEST
       tableau:  PROD
       thrift:   TEST
@@ -363,7 +368,7 @@ mercury:
       bsp:      DEV
       gap:      DEV
       jira:     TEST
-      quote:    QA
+      quote:    TEST
       squid:    TEST
       tableau:  PROD
       thrift:   TEST
@@ -382,7 +387,7 @@ mercury:
       bsp:      RC
       gap:      RC
       jira:     TEST
-      quote:    QA
+      quote:    TEST
       squid:    QA
       tableau:  PROD
       thrift:   QA
@@ -402,7 +407,7 @@ mercury:
       bsp:      RC
       gap:      RC
       jira:     TEST
-      quote:    QA
+      quote:    TEST
       squid:    QA
       tableau:  PROD
       thrift:   QA
