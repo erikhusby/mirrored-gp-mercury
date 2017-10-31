@@ -164,10 +164,6 @@
         document.addEventListener('readystatechange', () => console.log('readyState:' + document.readyState + " " + performance.now()));
 
         $j(document).ready(function() {
-
-//            modalMessages.addError("an error");
-//            modalMessages.addWarning("an warning");
-//            modalMessages.addInfo("an info");
             /*
              * Extract the values from the quantity fields to use when sorting.
              */
@@ -216,16 +212,6 @@
                     {'bSortable': true, 'sType': 'title-string'}    // billed
                 ],
                 fnInitComplete: function(){
-//                    function deferAppliedAction(func){
-//                        console.time();
-//                        var deferred = $j.Deferred();
-//                        deferred.then(func).then(function () {
-//                            updateSubmitButton();
-//                        }).done(function() {
-//                            console.timeEnd();
-//                        });
-//                        deferred.resolve();
-//                    }
                     /*
                      * Set up hSpinner widgets for controlling ledger quantities.
                      */
@@ -259,19 +245,6 @@
                             updateSubmitButton();
                         }
                     });
-//                    $j('.input-prepend, .input-append').on('click', function (event) {
-//                        var closestCell = $j(event.target).closest("td");
-//                        var hSpinner = closestCell.find(".hSpinner");
-//                        hSpinner.hSpinner('hidden', false);
-//                        ledgerQuantities.filter(function () {
-//                            return this != hSpinner[0];
-//                        }).hSpinner('hidden', true);
-//                        $j(document.body).one('click', function (event) {
-//                            if ($j(event.target).closest("td")[0] !== closestCell[0]) {
-//                                hSpinner.hSpinner('hidden', true);
-//                            }
-//                        })
-//                    });
 
                     /**
                      * When rows are selected and one "date complete" is changed, change all selected rows.
@@ -427,71 +400,104 @@
 
             $j('#ledgerForm').submit(function (event) {
                 console.log("beginning");
-                console.time("submit")
+                console.time("submit");
+                $j('#updateLedgers').attr('disabled', true);
+                messages = modalMessages();
+                messages.addInfo("Updating Ledgers...")
                 var changedInputs;
                 var hiddenInputContainer = document.getElementById('hiddenRowInputs');
 
                 try {
+                    var allDataByRow=[];
+                    var allRows=[];
                     var changedRows = $j(ledgerTable.fnGetNodes()).filter('.changed');
-                    var dom = changedRows.find("input").filter("[name^='l']").get();
+                    var dom = changedRows.find("input").filter("[name^='ledgerData']").get();
                     console.time("copy inputs");
                     for (var i = dom.length - 1; i >= 0; i--) {
                         var input = document.createElement("input");
                         input.type = "hidden";
                         input.name = dom[i].name;
                         input.value = dom[i].value;
-                        hiddenInputContainer.appendChild(input);
+                        var rowNum=dom[i].getAttribute('data-rownum');
+                        row = allDataByRow[rowNum];
+                        if (row===undefined){
+                            row=[];
+                        }
+                        row.push(input);
+                        allDataByRow[rowNum] = row;
+                        if (allRows.indexOf(rowNum)===-1){
+                            allRows.push(rowNum);
+                        }
+
+//                        hiddenInputContainer.appendChild(input);
                     }
                     console.time("copy inputs");
+//                    var allData = $j(hiddenInputContainer).children();
                     event.preventDefault();
 
-                    var allData = $j(hiddenInputContainer).children();
+                    // get keys as an array;
+                    var rowsRemaining = allRows.length;
+                    var rowsCompleted = 0;
+                    while (allRows.length > 0) {
+                        var submitRows = allRows.splice(0,1000);
+                        var submitData=[];
+                        submitRows.forEach(function(key){
+                            submitData.push(allDataByRow[key]);
+                        });
 
-                    while (allData.length > 0) {
-                        var submitData = allData.splice(0, 1000);
+                        var serializedData = $j(submitData).serializeArray();
+                        if (allRows.length===0){
+                            serializedData.push({name:'redirectOnSuccess',value: true})
+                        }
+
                         $j.ajax({
                             url: '${ctxpath}/orders/ledger.action?updateLedgers&orderId=${actionBean.productOrder.businessKey}',
-                            data: $j(submitData).serializeArray(),
+                            data: serializedData,
                             type: 'post',
                             dataType: 'json',
-                            success: function (a, b, c, d, e) {
-                                var dataItems = a['data'];
+                            success: function (json) {
+                                var dataItems = json['data'];
                                 var samples = [];
-
                                 for (var i = 0; i < dataItems.length; i++) {
-                                    samples.push(dataItems[i]['sampleName']);
-                                    ledgerTable.fnGetNodes();
-                                    var rowId = dataItems[i]['rowId'];
+                                    samples.push(dataItems[i].sampleName);
                                 }
-                                if (samples.length >= 10) {
-                                    modalMessages.addInfo("Ledger data updated for " + samples + ".");
+                                var message = undefined;
+                                rowsRemaining-=samples.length;
+                                rowsCompleted += samples.length;
+                                if (samples.length <= 20) {
+                                    message = "Ledger data updated for ".concat(samples.join(", ")).concat(".");
                                 } else {
-                                    modalMessages.addInfo("Ledger data updated for " + dataItems.length + " samples.");
+                                    message = "Ledger data updated for ".concat(rowsCompleted).concat(" samples. ").concat(rowsRemaining).concat(" remaining.");
+                                }
+
+                                messages.addInfo(message, "updateStatus");
+                                if (json.redirectOnSuccess) {
+                                    messages.addInfo("Reloading page...");
+                                    $j(".changed").removeClass("changed");
+                                    setTimeout(function () {
+                                        window.location.replace("${ctxpath}/orders/ledger.action?orderId=${actionBean.productOrder.businessKey}")
+                                    }, 3000);
                                 }
                             },
-                            error: function (a) {
-                                console.log(a);
-                                if (a.responseJSON) {
-                                    var errors = a.responseJSON['error'];
-                                    for (var i = 0;i<errors.length;i++) {
-                                        modalMessages.addError(errors[i]);
+                            error: function (json) {
+                                console.log(json);
+                                if (json.responseJSON) {
+
+                                    var errors = json.responseJSON['error'];
+                                    for (var i = 0; i < errors.length; i++) {
+                                        messages.addError(errors[i]);
                                     }
-                                    if (errors.length===0) {
-                                        modalMessages.addError("Unknown Error: ", a.statusText);
+                                    if (errors.length === 0) {
+                                        messages.addError("Unknown Error: ", json.statusText);
                                     }
                                 }
-                            },
-                            complete: function(){
-                                modalMessages.clear();
-                                hiddenInputContainer.innerHTML = "";
                             }
                         });
                     }
                 } catch (e) {
                     var errorMessage = "Error collecting ledger entries: '" + e + "'";
-                    modalMessages.addError(errorMessage);
+                    messages.addError(errorMessage);
                 }
-                console.timeEnd("submit")
             });
 
             $j('#helpButton').click(function() {
@@ -927,7 +933,7 @@
         </thead>
         <tbody>
             <c:forEach items="${actionBean.productOrderSampleLedgerInfos}" var="info">
-                <tr id="${info.sample.productOrderSampleId}" class="${info.sample.deliveryStatus.displayName == 'Abandoned' ? 'abandoned' : ''}">
+                <tr class="${info.sample.deliveryStatus.displayName == 'Abandoned' ? 'abandoned' : ''}">
                     <td>
                         <input type="checkbox" title="${info.sample.samplePosition}" class="shiftCheckbox" name="selectedProductOrderSampleIds" value="${info.sample.productOrderSampleId}">
                     </td>
@@ -943,12 +949,9 @@
                     </td>
                     <td>
                         ${info.sample.name}
-                        <input type="hidden"
-                               name="l[${info.sample.samplePosition}].s"
+                        <input type="hidden" data-rownum = "${info.sample.samplePosition}"
+                               name="ledgerData[${info.sample.samplePosition}].sampleName"
                                value="${info.sample.name}"/>
-                        <input type="hidden"
-                               name="l[${info.sample.samplePosition}].id"
-                               value="${info.sample.productOrderSampleId}"/>
                     </td>
                     <td>
                         ${info.sample.sampleData.collaboratorsSampleName}
@@ -968,11 +971,11 @@
                     </td>
                     <td style="text-align: center">
                         <c:set var="submittedCompleteDate"
-                               value="${actionBean.l[info.sample.samplePosition].completeDateFormatted}"/>
+                               value="${actionBean.ledgerData[info.sample.samplePosition].completeDateFormatted}"/>
                         <c:set var="currentValue"
                                value="${submittedCompleteDate != null ? submittedCompleteDate : info.dateCompleteFormatted}"/>
-                        <input name="l[${info.sample.samplePosition}].c"
-                               value="${currentValue}"
+                        <input name="ledgerData[${info.sample.samplePosition}].workCompleteDate"
+                               value="${currentValue}" data-rownum = "${info.sample.samplePosition}"
                                originalValue="${info.dateCompleteFormatted}"
                                class="dateComplete ${currentValue != info.dateCompleteFormatted ? 'changed' : ''}">
                     </td>
@@ -982,14 +985,14 @@
                                 ${info.getTotalForPriceItem(priceItem)}
                         </td>
                         <td style="text-align: center">
-                            <input type="hidden"
-                                   name="l[${info.sample.samplePosition}].q[${priceItem.priceItemId}].q"
+                            <input type="hidden" data-rownum = "${info.sample.samplePosition}"
+                                   name="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].originalQuantity"
                                    value="${info.getTotalForPriceItem(priceItem)}"/>
-                            <c:set var="submittedQuantity" value="${actionBean.l[info.sample.samplePosition].q[priceItem.priceItemId].submittedQuantity}"/>
-                            <input id="l[${info.sample.samplePosition}].q[${priceItem.priceItemId}].s"
-                                   name="l[${info.sample.samplePosition}].q[${priceItem.priceItemId}].s"
+                            <c:set var="submittedQuantity" value="${actionBean.ledgerData[info.sample.samplePosition].quantities[priceItem.priceItemId].submittedQuantity}"/>
+                            <input id="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].submittedQuantity"
+                                   name="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].submittedQuantity"
                                    value="${submittedQuantity != null ? submittedQuantity : info.getTotalForPriceItem(priceItem)}"
-                                   class="ledgerQuantity"
+                                   class="ledgerQuantity" data-rownum = "${info.sample.samplePosition}"
                                    priceItemId="${priceItem.priceItemId}"
                                    billedQuantity="${info.getBilledForPriceItem(priceItem)}">
                             <c:if test="${priceItem == actionBean.productOrder.determinePriceItemByCompanyCode(actionBean.productOrder.product) && info.autoFillQuantity != 0}">
