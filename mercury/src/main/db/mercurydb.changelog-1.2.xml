@@ -971,4 +971,9 @@
             <column name="parent_storage_location"/>
         </createIndex>
     </changeSet>
+
+    <changeSet id="GPLIM-5153-1" author="thompson">
+        <dropNotNullConstraint schemaName="mercury" tableName="storage_location_aud" columnName="label"/>
+        <dropNotNullConstraint schemaName="mercury" tableName="storage_location_aud" columnName="location_type"/>
+    </changeSet>
 </databaseChangeLog>
