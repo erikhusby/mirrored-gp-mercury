@@ -843,8 +843,23 @@
             var productKey = $j("#product").val();
 
             <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager) %>">
-            $j("#primaryProductListPrice").show();
-            $j("#primaryProductListPrice").text("research list price: $" + data.researchListPrice + ", external list price: $" +data.externalListPrice);
+            var priceListText = "";
+
+            if(data.researchListPrice !== undefined && data.researchListPrice.length > 0) {
+                priceListText += "research list price: $" + data.researchListPrice;
+            }
+
+            if(data.externalListPrice !== undefined && data.externalListPrice.length > 0) {
+                if(priceListText.length > 0) {
+                    priceListText += ",  ";
+                }
+
+                priceListText += "external list price: $" + data.externalListPrice;
+            }
+            $j("#primaryProductListPrice").text(priceListText);
+            if(priceListText.length > 0) {
+                $j("#primaryProductListPrice").show();
+            }
             </security:authorizeBlock>
 
             setupAddonCheckboxes(data, productKey);
@@ -881,7 +896,24 @@
                 checkboxText += '  <input id="' + addOnId + '" type="checkbox"' + checked + ' name="addOnKeys" value="' + val.key + '" onchange="registerChangeForAddon()" />';
                 checkboxText += '  <label style="font-size: x-small;" for="' + addOnId + '">' + val.value + ' [' + val.key;
                 <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager) %>">
-                checkboxText += ' (research list price: $' + val.researchListPrice + ', external list price: $' + val.externalListPrice + ')';
+                if((val.externalListPrice !== undefined && val.externalListPrice.length > 0) ||
+                    (val.researchListPrice !== undefined && val.researchListPrice.length > 0)) {
+                    checkboxText += ' (';
+                }
+                if(val.researchListPrice !== undefined && val.researchListPrice.length > 0) {
+                    checkboxText += 'research list price: $' + val.researchListPrice;
+                }
+                if(val.externalListPrice !== undefined && val.externalListPrice.length > 0) {
+                    if(val.researchListPrice !== undefined && val.researchListPrice.length > 0) {
+                        checkboxText += ', ';
+                    }
+                    checkboxText += 'external list price: $' + val.externalListPrice ;
+                }
+
+                if((val.externalListPrice !== undefined && val.externalListPrice.length > 0) ||
+                    (val.researchListPrice !== undefined && val.researchListPrice.length > 0)) {
+                    checkboxText += ')';
+                }
                 </security:authorizeBlock>
                 checkboxText += ']</label>';
                 checkboxText += '  <br>';
