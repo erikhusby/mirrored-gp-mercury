@@ -8,6 +8,7 @@ import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
+import net.sourceforge.stripes.action.Message;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
@@ -149,6 +150,11 @@ public class BillingLedgerActionBean extends CoreActionBean {
     private List<LedgerData> ledgerData;
 
     /**
+     * this variable is sent in with the updaterLedgers request to instruct the actionBean to forward rather than send
+     * another json response;
+     */
+    boolean redirectOnSuccess=false;
+    /**
      * Load the product order, price items, sample data, and various other information based on the orderId parameter.
      * All of this data is needed for rendering the billing ledger UI.
      */
@@ -201,6 +207,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
             Map<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> ledgerUpdates = buildLedgerUpdates();
             try {
                 productOrderEjb.updateSampleLedgers(ledgerUpdates);
+                addMessage("{1} ledgers have been updated.", ledgerUpdates.size());
             } catch (ValidationException e) {
                 logger.error(e);
                 addGlobalValidationErrors(e.getValidationMessages());
@@ -218,6 +225,14 @@ public class BillingLedgerActionBean extends CoreActionBean {
                 logger.error(ipe);
                 addGlobalValidationError(errorMessage+ipe.getMessage());
             }
+        }
+        if (redirectOnSuccess) {
+            if (!hasErrors()){
+                for (Message message : getContext().getMessages()) {
+                    flashMessage(message);
+                }
+            }
+//            return new RedirectResolution(BillingLedgerActionBean.class).addParameter("orderId", orderId);
         }
 
         Resolution resolution = new StreamingResolution("text/json") {
@@ -241,14 +256,15 @@ public class BillingLedgerActionBean extends CoreActionBean {
                             }
                         }
                         jsonGenerator.writeEndArray();
-                    }else {
+                    } else {
                         jsonGenerator.writeArrayFieldStart(ProductOrderSampleBean.DATA_FIELD);
                         for (LedgerData ledgerDatum : ledgerData) {
-                            if (ledgerDatum!=null) {
+                            if (ledgerDatum != null) {
                                 jsonGenerator.writeObject(ledgerDatum);
                             }
                         }
                         jsonGenerator.writeEndArray();
+                        jsonGenerator.writeObjectField("redirectOnSuccess", redirectOnSuccess);
                     }
                     jsonGenerator.writeEndObject();
                 } catch (Exception e) {
@@ -488,13 +504,6 @@ public class BillingLedgerActionBean extends CoreActionBean {
         return ledgerData;
     }
 
-    public List<LedgerData> getL(){
-        return getLedgerData();
-    }
-
-    public void setL(List<LedgerData> ledgerData){
-        setLedgerData(ledgerData);
-    }
 
     public void setLedgerData(List<LedgerData> ledgerData) {
         this.ledgerData = ledgerData;
@@ -518,6 +527,14 @@ public class BillingLedgerActionBean extends CoreActionBean {
 
     public void setProductOrderSampleId(long productOrderSampleId) {
         this.productOrderSampleId = productOrderSampleId;
+    }
+
+    public boolean isRedirectOnSuccess() {
+        return redirectOnSuccess;
+    }
+
+    public void setRedirectOnSuccess(boolean redirectOnSuccess) {
+        this.redirectOnSuccess = redirectOnSuccess;
     }
 
     /**
@@ -600,12 +617,15 @@ public class BillingLedgerActionBean extends CoreActionBean {
     @JsonSerialize(include = JsonSerialize.Inclusion.NON_EMPTY)
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class LedgerData {
+        @JsonProperty
         private String sampleName;
+        @JsonProperty
         private Date workCompleteDate;
+        @JsonProperty
         private Map<Long, ProductOrderSampleQuantities> quantities;
+        @JsonProperty
         private Long id;
 
-        @JsonProperty
         public Long getId() {
             return id;
         }
@@ -614,62 +634,24 @@ public class BillingLedgerActionBean extends CoreActionBean {
             this.id = id;
         }
 
-        @JsonProperty
         public String getSampleName() {
             return sampleName;
         }
-
         public void setSampleName(String sampleName) {
             this.sampleName = sampleName;
         }
 
-        @JsonProperty
         public Date getWorkCompleteDate() {
             return workCompleteDate;
         }
-        public Date getC() {
-            return getWorkCompleteDate();
-        }
-        public void setC(Date d){
-            setWorkCompleteDate(d);
-        }
-        public String getCompleteDateFormatted() {
-            return workCompleteDate != null ? new SimpleDateFormat(DATE_FORMAT).format(workCompleteDate) : null;
-        }
-
-        public String getF(){
-            return getCompleteDateFormatted();
-        }
-
-        public String getS(){
-            return getSampleName();
-        }
-
-
-        public void setS(String s) {
-            setSampleName(s);
-        }
-
+        public String getCompleteDateFormatted() { return workCompleteDate != null ? new SimpleDateFormat(DATE_FORMAT).format(workCompleteDate) : null; }
         public void setWorkCompleteDate(Date workCompleteDate) {
             this.workCompleteDate = workCompleteDate;
         }
 
-        @JsonProperty
-        public Map<Long, ProductOrderSampleQuantities> getQuantities() {
-            return quantities;
-        }
-
+        public Map<Long, ProductOrderSampleQuantities> getQuantities() { return quantities; }
         public void setQuantities(Map<Long, ProductOrderSampleQuantities> quantities) {
             this.quantities = quantities;
-        }
-
-        public Map<Long, ProductOrderSampleQuantities> getQ() {
-            return getQuantities();
-        }
-
-        public void setQ(
-            Map<Long, ProductOrderSampleQuantities> q) {
-            setQuantities(q);
         }
     }
 
@@ -679,41 +661,23 @@ public class BillingLedgerActionBean extends CoreActionBean {
     @JsonSerialize(include = JsonSerialize.Inclusion.NON_EMPTY)
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class ProductOrderSampleQuantities {
+        @JsonProperty
         private double originalQuantity;
+        @JsonProperty
         private double submittedQuantity;
 
-        @JsonProperty
         public double getOriginalQuantity() {
             return originalQuantity;
         }
-
         public void setOriginalQuantity(double originalQuantity) {
             this.originalQuantity = originalQuantity;
         }
 
-        @JsonProperty
         public double getSubmittedQuantity() {
             return submittedQuantity;
         }
-
         public void setSubmittedQuantity(double submittedQuantity) {
             this.submittedQuantity = submittedQuantity;
-        }
-
-        public double getQ() {
-            return originalQuantity;
-        }
-
-        public double getS() {
-            return submittedQuantity;
-        }
-
-        public void setQ(double oc) {
-            setOriginalQuantity(oc);
-        }
-
-        public void setS(double sq) {
-            setSubmittedQuantity(sq);
         }
     }
 }

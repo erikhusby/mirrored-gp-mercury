@@ -9,121 +9,128 @@
  * use, misuse, or functionality.
  */
 
+var modalMessages = function (options) {
+    // initialization:
+    (function () {
 
-window.modalMessages = (function (window) {
-    function init() {
+        this.messageContainer = createElement("<div class='modal alert alert-block'><button class='close'>&times;</button></div>");
+        hideContainer();
 
-        console.log("init");
+        var closeButton = this.messageContainer.querySelector("button.close");
+        if (options.onClose) {
+            if (isFunction(options.onClose)) {
+                closeButton.addEventListener("click", function () {
+                    options.onClose();
+                    this.parentNode.style.visibility = 'hidden';
+                }, true);
+            }
+        } else {
+            (function (container) {
+                    closeButton.addEventListener("click", function () {
+                        container.style.visibility = "hidden";
+                    }, false);
+                }(this.messageContainer)
+            )
+        }
 
-        initStyle();
-        var closeButton = document.createElement("button");
-        closeButton.className = "close";
-        closeButton.innerHTML = '&times;';
+        this.messageContainer.addEventListener("modal-message", function (event) {
 
-        this.messageContainer = document.createElement("div");
-        this.messageContainer.className = "modal alert alert-block";
-        this.messageContainer.id = "mymessage";
-        this.messageContainer.style.visibility = "hidden";
-        this.messageContainer.appendChild(closeButton);
-        this.messageBlock = document.createElement("ul");
-        messageContainer.appendChild(this.messageBlock);
-        document.body.appendChild(messageContainer);
-
-        document.addEventListener("modal-message", function (event) {
             if (event.detail.type === 'clear') {
-                this.messageBlock = document.querySelector(".alert-block ul");
-                this.messageBlock.innerHTML = "";
-                document.querySelector(".alert-block").style.visibility = 'hidden';
             } else {
                 // setTimeout to prevent clear events from occurring after a set event;
-                setTimeout(function() {
-                    addItem(event.detail);
-                },200);
+                setTimeout(function (e) {
+                    addItem(e);
+                }(event), 200);
             }
         }, false);
 
-        closeButton.addEventListener("click", function () {
-            var container = document.querySelector(".alert-block").style.visibility = "hidden";
-        }, false);
+    }());
+
+    // public functions
+    return {
+        addError: function (messageText, messageSelector) {
+            addItem('error', messageText, messageSelector);
+        },
+        addInfo: function (messageText, messageSelector) {
+            addItem('info', messageText, messageSelector);
+        },
+        addSuccess: function (messageText, messageSelector) {
+            addItem('success', messageText, messageSelector);
+        },
+        addWarning: function (messageText, messageSelector) {
+            addItem('warning', messageText, messageSelector);
+        },
+        clear: function () {
+            clearMessages();
+        },
+        hide: function () {
+            hideContainer();
+        }
     };
 
-    function initStyle() {
-        console.log("initStyle");
-        var style = document.createElement("style");
-        var errorStyle = document.createTextNode('.message-item:{font-weight: bold; margin-left: 50px}');
-        style.appendChild(errorStyle);
-        document.head.appendChild(style);
+    function isFunction(functionToCheck) {
+        var getType = {};
+        return functionToCheck && getType.toString.call(functionToCheck) === '[object Function]';
     }
 
-
-    function addItem(eventDetail) {
-        var level = eventDetail.type;
-        var messageText = eventDetail.message;
-        console.log("addItem");
-        var className = undefined;
-        switch (level) {
-            case "error":
-                className = 'text-error';
-                break;
-            case "warning":
-                className = 'text-warning';
-                break;
-            case "info":
-                className = 'text-message';
-                break;
-            default:
-                throw "Invalid message level " + level + ". valid options are 'error', 'warning', or 'info'.";
+    function addItem(level, messageText, messageSelector) {
+        var levels = ['success', 'info', 'warning', 'error'];
+        if (levels.indexOf(level) === -1) {
+            throw `Invalid message level '${level}'. valid options are ${levels.join(", ")}.`;
         }
 
-        var messageElement = document.createElement("li");
-        messageElement.className = className + " message-item";
-        messageElement.innerText = messageText;
-
-        this.messageBlock.appendChild(messageElement);
-
-        if (this.messageContainer.style.visibility === 'hidden') {
-            this.messageContainer.style.visibility = 'visible';
+        var messageElement = undefined;
+        if (messageSelector != undefined) {
+            messageElement = this.messageContainer.querySelector("[data-message-item=" + messageSelector + "]");
         }
+
+        if (messageElement == undefined) {
+            messageElement = createElement(`<li class='message-item'></li>`);
+            if (messageSelector !== undefined) {
+                messageElement.setAttribute("data-message-item", messageSelector);
+            }
+        }
+        messageElement.innerHTML = messageText;
+        var listContainer = getListContainer(level);
+        listContainer.appendChild(messageElement);
+        showContainer();
     }
 
+    function getListContainer(level) {
+        var className = "alert-" + level;
+        var listContainer = this.messageContainer.querySelector("ul." + className);
+        if (listContainer == undefined) {
+            var outerDiv = document.createElement("div");
+            outerDiv.classList.add("alert-outer");
+            outerDiv.classList.add(className);
+            listContainer = document.createElement("ul");
+            listContainer.classList.add(className);
+            outerDiv.appendChild(listContainer);
+            this.messageContainer.appendChild(outerDiv);
+        }
+        return listContainer;
+    }
 
-    return (function () {
-        document.addEventListener("DOMContentLoaded", function (event) {
-            init();
+    function createElement(value) {
+        var frag = document.createRange().createContextualFragment(value);
+        var child = frag.firstChild;
+        document.body.appendChild(child);
+        return child;
+    }
 
-            modalMessages = {
-                addError: function (messageText) {
-                    var messageEvent = new CustomEvent("modal-message", {
-                        detail: {
-                            type: 'error',
-                            message: messageText
-                        }
-                    });
-                    return document.dispatchEvent(messageEvent)
-                },
-                addInfo: function (messageText) {
-                    var messageEvent = new CustomEvent("modal-message", {detail: {type: 'info', message: messageText}});
-                    return document.dispatchEvent(messageEvent)
+    function clearMessages() {
+        var outerDiv = this.messageContainer.getElementsByClassName("alert-outer");
+        for (var i = 0; i < outerDiv.length; i++) {
+            outerDiv[i].innerHTML = "";
+        }
+        hideContainer();
+    }
 
-                },
-                addWarning: function (messageText) {
-                    var messageEvent = new CustomEvent("modal-message", {
-                        detail: {
-                            type: 'warning',
-                            message: messageText
-                        }
-                    });
-                    return document.dispatchEvent(messageEvent)
+    function showContainer() {
+        this.messageContainer.style.visibility = 'visible';
+    }
 
-                },
-                clear: function () {
-                    var messageEvent = new CustomEvent("modal-message", {detail: {type: 'clear'}});
-                    return document.dispatchEvent(messageEvent)
-
-                }
-            };
-            return modalMessages;
-        })
-    }() );
-
-}(window));
+    function hideContainer() {
+        this.messageContainer.style.visibility = 'hidden';
+    }
+};
