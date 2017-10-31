@@ -956,4 +956,19 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-5149-1" author="thompson">
+        <createIndex schemaName="mercury" tableName="lab_vessel" indexName="IX_LV_STORAGE_LOCATION">
+            <column name="storage_location"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-5149-2" author="thompson">
+        <createIndex schemaName="mercury" tableName="STORAGE_LOCATION_AUD" indexName="IX_SLA_STORAGE_LOCATION_ID">
+            <column name="STORAGE_LOCATION_ID"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-5149-3" author="thompson">
+        <createIndex schemaName="mercury" tableName="storage_location" indexName="ix_sl_parent_storage_location">
+            <column name="parent_storage_location"/>
+        </createIndex>
+    </changeSet>
 </databaseChangeLog>
