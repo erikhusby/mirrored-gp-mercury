@@ -1023,6 +1023,50 @@
         </sql>
     </changeSet>
 
+    <changeSet id="GPLIM-4924-7" author="scottmat">
+        <sql>
+            update product_order_aud pdo
+            set pdo.ORDER_TYPE = 'BROAD_PI_ENGAGED_WORK'
+            where pdo.PRODUCT_ORDER_ID in (
+            select pdo.PRODUCT_ORDER_ID from product_order pdo
+            join product pdt on pdt.PRODUCT_ID = pdo.PRODUCT
+            where pdt.EXTERNAL_ONLY_PRODUCT = 0
+            and pdt.CLINICAL_ONLY_PRODUCT != 1
+            );
+        </sql>
+    </changeSet>
+
+    <changeSet author="scottmat" id="GPLIM-4924-8">
+        <sql>
+            update product_order_aud pdo
+            set pdo.ORDER_TYPE = 'COMMERCIAL'
+            where pdo.PRODUCT_ORDER_ID in (
+            select pdo.PRODUCT_ORDER_ID from product_order pdo
+            join product pdt on pdt.PRODUCT_ID = pdo.PRODUCT
+            where pdt.EXTERNAL_ONLY_PRODUCT = 1
+            or pdt.CLINICAL_ONLY_PRODUCT = 1
+            );
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-4924-9" author="scottmat">
+        <sql>
+            update product pdt
+            set pdt.EXTERNAL_ONLY_PRODUCT=0
+            where pdt.CLINICAL_ONLY_PRODUCT=1
+            and pdt.EXTERNAL_ONLY_PRODUCT=1
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-4924-10" author="scottmat">
+        <sql>
+            update product_aud pdt
+            set pdt.EXTERNAL_ONLY_PRODUCT=0
+            where pdt.CLINICAL_ONLY_PRODUCT=1
+            and pdt.EXTERNAL_ONLY_PRODUCT=1
+        </sql>
+    </changeSet>
+
     <changeSet author="scottmat" id ="GPLIM-4922-1">
         <addColumn tableName="BILLING_LEDGER" schemaName="ATHENA">
             <column name="sap_order_detail_id" type="number(19,0)" />

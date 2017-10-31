@@ -606,7 +606,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         if(editOrder.getProduct() != null) {
             if(ProductOrder.OrderAccessType.COMMERCIAL.getDisplayName().equals(orderType) &&
-               !editOrder.getProduct().hasExternalCounterpart()) {
+               (!editOrder.getProduct().hasExternalCounterpart() || !editOrder.getProduct().isClinicalProduct() ||
+                !editOrder.getProduct().isExternalOnlyProduct())) {
                 addGlobalValidationError("Selecting " +
                                          ProductOrder.OrderAccessType.COMMERCIAL.getDisplayName() +
                                          " Is not valid since " + editOrder.getProduct().getDisplayName() +
@@ -1694,20 +1695,20 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         if (editOrder.getProduct() != null) {
-            if(userBean.isPDMUser() || userBean.isGPPMUser() || userBean.isDeveloperUser()) {
-
-                if (orderType != null) {
-                    editOrder.setOrderType(ProductOrder.OrderAccessType.fromDisplayName(orderType));
-                }
+            if(editOrder.getProduct().isClinicalProduct()) {
+                editOrder.setOrderType(ProductOrder.OrderAccessType.COMMERCIAL);
             } else {
-                if(editOrder.getProduct().isClinicalProduct()) {
-                    editOrder.setOrderType(ProductOrder.OrderAccessType.COMMERCIAL);
+                if (userBean.isPDMUser() || userBean.isGPPMUser() || userBean.isDeveloperUser()) {
+
+                    if (orderType != null) {
+                        editOrder.setOrderType(ProductOrder.OrderAccessType.fromDisplayName(orderType));
+                    }
                 } else {
-                    editOrder.setOrderType(ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
+                        editOrder.setOrderType(ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
                 }
-            }
-            if (StringUtils.isNotBlank(customizationJsonString)) {
-                buildJsonObjectFromEditOrderProductCustomizations();
+                if (StringUtils.isNotBlank(customizationJsonString)) {
+                    buildJsonObjectFromEditOrderProductCustomizations();
+                }
             }
         }
 
