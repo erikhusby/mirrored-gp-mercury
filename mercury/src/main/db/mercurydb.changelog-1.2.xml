@@ -966,4 +966,9 @@
             <column name="STORAGE_LOCATION_ID"/>
         </createIndex>
     </changeSet>
+    <changeSet id="GPLIM-5149-3" author="thompson">
+        <createIndex schemaName="mercury" tableName="storage_location" indexName="ix_sl_parent_storage_location">
+            <column name="parent_storage_location"/>
+        </createIndex>
+    </changeSet>
 </databaseChangeLog>
