@@ -47,6 +47,7 @@ import java.util.TreeSet;
  * A future version of this class will probably support both export and import, since there will be some common
  * code & data structures.
  */
+@Deprecated
 public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedgerSpreadSheetWriter> {
 
     // Each worksheet is a different product, so distribute the list of orders by product.
