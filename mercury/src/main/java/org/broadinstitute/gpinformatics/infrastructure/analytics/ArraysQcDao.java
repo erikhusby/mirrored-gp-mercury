@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.analytics;
 
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcBlacklisting;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcBlacklisting_;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.CriteriaInClauseCreator;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.JPASplitter;
@@ -53,6 +55,32 @@ public class ArraysQcDao {
         Map<String, ArraysQc> mapWellBarcodeToMetric = new HashMap<>();
         for (ArraysQc arraysQc : arraysQcList) {
             mapWellBarcodeToMetric.put(arraysQc.getChipWellBarcode(), arraysQc);
+        }
+        return mapWellBarcodeToMetric;
+    }
+
+    public List<ArraysQcBlacklisting> findBlacklistByBarcodes(List<String> chipWellBarcodes) {
+        if( chipWellBarcodes == null || chipWellBarcodes.isEmpty() ) {
+            return Collections.emptyList();
+        }
+        return JPASplitter.runCriteriaQuery(chipWellBarcodes, new CriteriaInClauseCreator<String>() {
+            @Override
+            public Query createCriteriaInQuery(Collection<String> parameterList) {
+                CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+                CriteriaQuery<ArraysQcBlacklisting> criteria = cb.createQuery(ArraysQcBlacklisting.class);
+                Root<ArraysQcBlacklisting> root = criteria.from(ArraysQcBlacklisting.class);
+                criteria.select(root).where(
+                        root.get(ArraysQcBlacklisting_.chipWellBarcode).in(parameterList));
+                return entityManager.createQuery(criteria);
+            }
+        });
+    }
+
+    public Map<String, ArraysQcBlacklisting> findBlacklistMapByBarcodes(List<String> chipWellBarcodes) {
+        List<ArraysQcBlacklisting> arraysQcBlacklist = findBlacklistByBarcodes(chipWellBarcodes);
+        Map<String, ArraysQcBlacklisting> mapWellBarcodeToMetric = new HashMap<>();
+        for (ArraysQcBlacklisting blacklist : arraysQcBlacklist) {
+            mapWellBarcodeToMetric.put(blacklist.getChipWellBarcode(), blacklist);
         }
         return mapWellBarcodeToMetric;
     }
