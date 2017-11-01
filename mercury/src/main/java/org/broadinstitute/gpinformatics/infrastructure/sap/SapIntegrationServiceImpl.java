@@ -161,7 +161,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         }
 
         SAPOrder newOrder =
-                new SAPOrder(SapIntegrationClientImpl.SystemIdentifier.MERCURY, determineCompanyCode(orderToUpdate),
+                new SAPOrder(SapIntegrationClientImpl.SystemIdentifier.MERCURY, orderToUpdate.getSapCompanyConfigurationForProductOrder(),
                         orderToUpdate.getQuoteId(), bspUserList.getUserFullName(orderToUpdate.getCreatedBy()),
                         placedOrder.isPriorToSAP1_5());
 
@@ -178,7 +178,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         for (Funding funding:fundingLevel.getFunding()) {
             if (funding.getFundingType().equals(Funding.PURCHASE_ORDER)) {
-                String customerNumber = findCustomer(determineCompanyCode(orderToUpdate), fundingLevel);
+                String customerNumber = findCustomer(orderToUpdate.getSapCompanyConfigurationForProductOrder(), fundingLevel);
 
                 newOrder.setSapCustomerNumber(customerNumber);
                 newOrder.setFundingSource(funding.getPurchaseOrderNumber(), SAPOrder.FundingType.PURCHASE_ORDER);
@@ -219,7 +219,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     protected SAPOrderItem getOrderItem(ProductOrder placedOrder, Product product, Quote quote,
                                         int additionalSampleCount, boolean creatingNewOrder) throws SAPIntegrationException {
         try {
-            String price = priceListCache.getEffectivePrice(SAPProductPriceCache.getDeterminePriceItemByCompanyCode(product, getSapCompanyConfigurationForProductOrder(placedOrder)),
+            String price = priceListCache.getEffectivePrice(placedOrder.determinePriceItemByCompanyCode(product),
                     quote);
 
             final SAPOrderItem sapOrderItem = new SAPOrderItem(product.getPartNumber(),
@@ -239,13 +239,14 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     private void defineConditionsForOrderItem(ProductOrder placedOrder, Product product, SAPOrderItem sapOrderItem)
-            throws SAPIntegrationException {
+             {
         if(placedOrder.getProduct().equals(product)) {
 
             if(placedOrder.getSinglePriceAdjustment() != null && placedOrder.getSinglePriceAdjustment().hasPriceAdjustment()) {
 
                 placedOrder.getSinglePriceAdjustment().setListPrice(
-                        new BigDecimal(productPriceCache.findByProduct(product, determineCompanyCode(placedOrder)).getBasePrice()));
+                        new BigDecimal(productPriceCache.findByProduct(product,
+                                placedOrder.getSapCompanyConfigurationForProductOrder()).getBasePrice()));
 
                 sapOrderItem.addCondition(placedOrder.getSinglePriceAdjustment().deriveAdjustmentCondition(),
                         placedOrder.getSinglePriceAdjustment().getAdjustmentDifference());
@@ -266,7 +267,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
                     if(productOrderAddOn.getSingleCustomPriceAdjustment() != null &&
                        productOrderAddOn.getSingleCustomPriceAdjustment().hasPriceAdjustment()) {
-                        productOrderAddOn.getSingleCustomPriceAdjustment().setListPrice(new BigDecimal(productPriceCache.findByProduct(productOrderAddOn.getAddOn(), determineCompanyCode(placedOrder)).getBasePrice()));
+                        productOrderAddOn.getSingleCustomPriceAdjustment().setListPrice(new BigDecimal(productPriceCache.findByProduct(productOrderAddOn.getAddOn(),
+                                placedOrder.getSapCompanyConfigurationForProductOrder()).getBasePrice()));
                         sapOrderItem.addCondition(
                                 productOrderAddOn.getSingleCustomPriceAdjustment().deriveAdjustmentCondition(),
                                 productOrderAddOn.getSingleCustomPriceAdjustment().getAdjustmentDifference());
@@ -399,7 +401,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         SAPDeliveryDocument deliveryDocument =
                 new SAPDeliveryDocument(SapIntegrationClientImpl.SystemIdentifier.MERCURY,
-                        determineCompanyCode(quoteItemForBilling.getProductOrder()),
+                        quoteItemForBilling.getProductOrder().getSapCompanyConfigurationForProductOrder(),
                         quoteItemForBilling.getProductOrder().getSapOrderNumber(), workCompleteDate);
 
         SAPDeliveryItem lineItem =
@@ -528,15 +530,14 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         }
         for (Funding funding : fundingLevel.getFunding()) {
             if (funding.getFundingType().equals(Funding.PURCHASE_ORDER)) {
-                customerNumber = findCustomer(determineCompanyCode(productOrder), fundingLevel);
+                customerNumber = findCustomer(productOrder.getSapCompanyConfigurationForProductOrder(), fundingLevel);
             } else {
                 customerNumber = SapIntegrationClientImpl.INTERNAL_ORDER_CUSTOMER_NUMBER;
             }
         }
 
-        return new OrderCriteria(customerNumber,
-                //This will probably change with the implementation of the product/pricing caching and/or selling a product from both research and external
-                determineCompanyCode(productOrder), sapOrderItems);
+        return new OrderCriteria(customerNumber, productOrder.getSapCompanyConfigurationForProductOrder(),
+                sapOrderItems);
     }
 
     /**
@@ -548,7 +549,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             throws SAPIntegrationException
     {
         SapIntegrationClientImpl.SAPCompanyConfiguration companyCode =
-                getSapCompanyConfigurationForProductOrder(companyProductOrder);
+                companyProductOrder.getSapCompanyConfigurationForProductOrder();
 
         final SapOrderDetail latestSapOrderDetail = companyProductOrder.latestSapOrderDetail();
         if(latestSapOrderDetail != null && latestSapOrderDetail.getCompanyCode()!= null
@@ -557,18 +558,6 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                                               + "company code to which this order will be associated.");
         }
 
-        return companyCode;
-    }
-
-    // TODO SGM  these two methods are potentially redundant!!
-
-    @NotNull
-    public static SapIntegrationClientImpl.SAPCompanyConfiguration getSapCompanyConfigurationForProductOrder(
-            ProductOrder order) {
-        SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
-        if ((order.getOrderType() == ProductOrder.OrderAccessType.COMMERCIAL)) {
-            companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES;
-        }
         return companyCode;
     }
 

@@ -628,6 +628,10 @@ public class ProductActionBean extends CoreActionBean {
         return priceListCache.getReplacementPriceItems(editProduct);
     }
 
+    public Collection<QuotePriceItem> getExternalReplacementPriceItems() {
+        return priceListCache.getReplacementPriceItems(editProduct.getExternalPriceItem());
+    }
+
     /**
      * @return Show the create title if this is a developer or PDM.
      */

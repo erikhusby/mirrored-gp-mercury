@@ -15,7 +15,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.w3c.dom.Document;
@@ -391,15 +393,19 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
 
         for (QuoteImportItem targetedPriceItemCriterion : targetedPriceItemCriteria) {
 
-            orderedPriceItemNames.add(targetedPriceItemCriterion.getProductOrder().getProduct().getPrimaryPriceItem().getName());
-            orderedCategoryNames.add(targetedPriceItemCriterion.getProductOrder().getProduct().getPrimaryPriceItem().getCategory());
-            orderedPlatformNames.add(targetedPriceItemCriterion.getProductOrder().getProduct().getPrimaryPriceItem().getPlatform());
+            final PriceItem primaryPriceItem =
+                    targetedPriceItemCriterion.getProductOrder().determinePriceItemByCompanyCode(targetedPriceItemCriterion.getProductOrder().getProduct());
+            orderedPriceItemNames.add(primaryPriceItem.getName());
+            orderedCategoryNames.add(primaryPriceItem.getCategory());
+            orderedPlatformNames.add(primaryPriceItem.getPlatform());
             orderedEffectiveDates.add(FastDateFormat.getInstance(EFFECTIVE_DATE_FORMAT).format(targetedPriceItemCriterion.getWorkCompleteDate()));
 
             for (ProductOrderAddOn productOrderAddOn : targetedPriceItemCriterion.getProductOrder().getAddOns()) {
-                orderedPriceItemNames.add(productOrderAddOn.getAddOn().getPrimaryPriceItem().getName());
-                orderedCategoryNames.add(productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory());
-                orderedPlatformNames.add(productOrderAddOn.getAddOn().getPrimaryPriceItem().getPlatform());
+                final PriceItem addonPriceItem =
+                        targetedPriceItemCriterion.getProductOrder().determinePriceItemByCompanyCode(productOrderAddOn.getAddOn());
+                orderedPriceItemNames.add(addonPriceItem.getName());
+                orderedCategoryNames.add(addonPriceItem.getCategory());
+                orderedPlatformNames.add(addonPriceItem.getPlatform());
                 orderedEffectiveDates.add(FastDateFormat.getInstance(EFFECTIVE_DATE_FORMAT).format(targetedPriceItemCriterion.getWorkCompleteDate()));
             }
         }

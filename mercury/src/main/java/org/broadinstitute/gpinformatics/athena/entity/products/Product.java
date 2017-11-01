@@ -235,6 +235,8 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         }
 
         clonedProduct.setPrimaryPriceItem(productToClone.getPrimaryPriceItem());
+        clonedProduct.setAlternateExternalName(productToClone.getAlternateExternalName());
+        clonedProduct.setExternalPriceItem(productToClone.getExternalPriceItem());
         return clonedProduct;
     }
 

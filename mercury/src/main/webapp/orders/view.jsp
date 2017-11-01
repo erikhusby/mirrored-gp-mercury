@@ -1225,27 +1225,9 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
 
                 <security:authorizeBlock roles="<%= roles(Developer, PDM, BillingManager) %>">
                     <stripes:param name="selectedProductOrderBusinessKeys" value="${actionBean.editOrder.businessKey}"/>
-                    <stripes:submit name="downloadBillingTracker" value="Download Billing Tracker" class="btn"
-                                    style="margin-right:30px;"/>
                 </security:authorizeBlock>
 
                 <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
-                    <c:choose>
-                        <c:when test="${actionBean.productOrderListEntry.billing}">
-                            <span class="disabled-link" title="Upload not allowed while billing is in progress">Upload Billing Tracker</span>
-                        </c:when>
-                        <c:otherwise>
-                            <stripes:link
-                                    beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.UploadTrackerActionBean"
-                                    event="view" >
-                                Upload Billing Tracker
-                            </stripes:link>
-                        </c:otherwise>
-                    </c:choose>
-                    <c:if test="${actionBean.productOrderListEntry.billing}">
-                        &#160;
-                        Upload not allowed while billing is in progress
-                    </c:if>
 
                     &nbsp;&nbsp;&nbsp;&nbsp;
                     <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.BillingLedgerActionBean"><stripes:param name="orderId" value="${actionBean.editOrder.jiraTicketKey}"/>Online Billing Ledger</stripes:link>

@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 
 import javax.annotation.Nonnull;
 import java.text.DecimalFormat;
@@ -233,14 +234,14 @@ public class QuoteImportItem {
      * @return null if this is not a replacement item or the primary price item if it is one.
      */
     public QuotePriceItem getPrimaryForReplacement(PriceList priceListCache) {
-        PriceItem primaryPriceItem = getPrimaryProduct().getPrimaryPriceItem();
+        PriceItem derivedPriceItem = getProductOrder().determinePriceItemByCompanyCode(getPrimaryProduct());
 
         // If this is optional, then return the primary as the 'is replacing.' This is comparing the quote price item
         // to the values on the product's price item, so do the item by item compare.
-        for (QuotePriceItem optional : priceListCache.getReplacementPriceItems(primaryPriceItem)) {
+        for (QuotePriceItem optional : priceListCache.getReplacementPriceItems(derivedPriceItem)) {
             if (optional.isMercuryPriceItemEqual(priceItem)) {
-                final QuotePriceItem priceItem = QuotePriceItem.convertMercuryPriceItem(primaryPriceItem);
-                priceItem.setPrice(priceListCache.findByKeyFields(primaryPriceItem).getPrice());
+                final QuotePriceItem priceItem = QuotePriceItem.convertMercuryPriceItem(derivedPriceItem);
+                priceItem.setPrice(priceListCache.findByKeyFields(derivedPriceItem).getPrice());
                 return priceItem;
             }
         }
@@ -254,12 +255,15 @@ public class QuoteImportItem {
 
         if (itemIsReplacing != null) {
             type = LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM;
-        } else if (getPrimaryProduct().getPrimaryPriceItem().getName().equals(getPriceItem().getName())
-                   || replacementPriceItemNames.contains(getPriceItem().getName())) {
-            type = LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM;
         } else {
-            // If it is not the primary or replacement right now, it has to be considered add on.
-            type = LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM;
+            PriceItem priceItem = getProductOrder().determinePriceItemByCompanyCode(getPrimaryProduct());
+            if (priceItem.getName().equals(getPriceItem().getName())
+                || replacementPriceItemNames.contains(getPriceItem().getName())) {
+                type = LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM;
+            } else {
+                // If it is not the primary or replacement right now, it has to be considered add on.
+                type = LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM;
+            }
         }
 
         return type;
@@ -317,8 +321,9 @@ public class QuoteImportItem {
 
         PriceList priceItemsForDate = getPriceOnWorkDate();
         if(getQuotePriceType().equals(LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.getQuoteType())) {
+            PriceItem priceItem = getProductOrder().determinePriceItemByCompanyCode(getProduct());
             final QuotePriceItem replacedProductQuotePriceItem = priceItemsForDate
-                    .findByKeyFields(getProduct().getPrimaryPriceItem());
+                    .findByKeyFields(priceItem);
 
             for (QuotePriceItem replacementPriceItem : replacedProductQuotePriceItem.getReplacementItems()
                     .getQuotePriceItems()) {

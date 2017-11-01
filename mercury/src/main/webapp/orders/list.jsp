@@ -256,15 +256,6 @@
                     <stripes:submit name="startBilling" value="Start Billing Session" class="btn" style="margin-right:30px;"/>
                 </security:authorizeBlock>
 
-                <security:authorizeBlock roles="<%= roles(Developer, PDM, BillingManager) %>">
-                    <stripes:submit name="downloadBillingTracker" value="Download Billing Tracker" class="btn" style="margin-right:5px;"/>
-                </security:authorizeBlock>
-
-                <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
-                    <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.UploadTrackerActionBean" event="view">
-                        Upload Billing Tracker
-                    </stripes:link>
-                </security:authorizeBlock>
             </div>
 
             <table id="productOrderList" class="table simple">

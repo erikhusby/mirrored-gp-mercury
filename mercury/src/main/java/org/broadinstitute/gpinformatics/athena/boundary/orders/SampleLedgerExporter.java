@@ -20,10 +20,9 @@ import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.tableau.TableauConfig;
 import org.broadinstitute.sap.services.SAPIntegrationException;
-import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 
 import java.awt.Color;
 import java.io.IOException;
@@ -156,13 +155,8 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
         List<PriceItem> allPriceItems = new ArrayList<>();
 
         // First add the primary price item.
-        PriceItem primaryPriceItem = product.getPrimaryPriceItem();
-        final SapIntegrationClientImpl.SAPCompanyConfiguration configuration =
-                SapIntegrationServiceImpl.determineCompanyCode(productOrder);
-        if(configuration == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES &&
-                product.getExternalPriceItem() != null) {
-            primaryPriceItem = product.getExternalPriceItem();
-        }
+        PriceItem primaryPriceItem = productOrder.determinePriceItemByCompanyCode(product);
+
         allPriceItems.add(primaryPriceItem);
 
         // Now add the replacement price items.

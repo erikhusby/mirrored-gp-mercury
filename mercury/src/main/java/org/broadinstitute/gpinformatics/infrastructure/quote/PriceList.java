@@ -90,10 +90,6 @@ public class PriceList {
         return price;
     }
 
-    public Collection<QuotePriceItem> getReplacementPriceItems(Product product) {
-        return getReplacementPriceItems(product.getPrimaryPriceItem());
-    }
-
     public Collection<QuotePriceItem> getReplacementPriceItems(PriceItem primaryPriceItem) {
         try {
             QuotePriceItem quotePriceItem = findByKeyFields(primaryPriceItem);

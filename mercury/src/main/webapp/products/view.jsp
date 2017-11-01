@@ -382,6 +382,9 @@
                         <td>${addOnProduct.productFamily.name}</td>
                         <td>
                             ${addOnProduct.primaryPriceItem.displayName}
+                            <c:if test="${addOnProduct.externalPriceItem != null}">
+                                external price item ${addOnProduct.externalPriceItem.displayName}
+                            </c:if>
                         </td>
                     </tr>
                 </c:forEach>
@@ -408,6 +411,17 @@
                     </tr>
                 </c:forEach>
             </tbody>
+            <c:if test="${actionBean.externalReplacementPriceItems != null}">
+                <tbody>
+                <c:forEach items="${actionBean.externalReplacementPriceItems}" var="externalReplacementPriceItem">
+                    <tr>
+                        <td>${externalReplacementPriceItem.platformName}</td>
+                        <td>${externalReplacementPriceItem.categoryName}</td>
+                        <td>${externalReplacementPriceItem.name}</td>
+                    </tr>
+                </c:forEach>
+                </tbody>
+            </c:if>
         </table>
     </stripes:layout-component>
 </stripes:layout-render>
