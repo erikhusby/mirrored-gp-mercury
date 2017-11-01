@@ -61,6 +61,7 @@ import java.util.Set;
 import static java.util.Arrays.asList;
 import static org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell;
 import static org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell;
+import static org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell.FlowcellType.HiSeqFlowcell;
 import static org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell.FlowcellType.MiSeqFlowcell;
 
 /**
@@ -452,7 +453,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
                 if (dto.getNumberLanes() == 17) {
                     dto.setPriority(FlowcellDesignation.Priority.LOW);
                     splitDtoBarcode = dto.getBarcode();
-                    splitDtoGrouping = dto.fctGrouping();
+                    splitDtoGrouping = dto.fctGrouping(false);
                 }
                 designationDtos.add(dto);
                 barcodeToLcset.put(dto.getBarcode(), dto.getLcset());
@@ -709,7 +710,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
             }
         };
 
-        final IlluminaFlowcell.FlowcellType flowcellType = IlluminaFlowcell.FlowcellType.HiSeqFlowcell;
+        final IlluminaFlowcell.FlowcellType flowcellType = HiSeqFlowcell;
         final LabBatch lcset = new LabBatch("lcset0", Collections.EMPTY_SET, LabBatch.LabBatchType.WORKFLOW);
         List<DesignationDto> dtos = new ArrayList<>();
         final int numberLanes = 1;
@@ -766,7 +767,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
             DesignationDto dto = dtos.get(index);
             int emptyLanes = flowcellType.getVesselGeometry().getVesselPositions().length -
                              (index < 4 ? numberLanes : 2 * numberLanes);
-            String msg = MessageFormat.format(LabBatchEjb.PARTIAL_FCT_MESSAGE, dto.fctGrouping(), emptyLanes);
+            String msg = MessageFormat.format(LabBatchEjb.PARTIAL_FCT_MESSAGE, dto.fctGrouping(false), emptyLanes);
 
             Assert.assertTrue(messageLines.remove(msg), "Expected: " + msg);
         }
@@ -774,31 +775,70 @@ public class LabBatchEjbStandardTest extends Arquillian {
     }
 
     @Test(groups = TestGroups.STANDARD)
-    public void testDesignationError() throws Exception {
+    public void testDesignationMix() throws Exception {
         final StringBuilder messages = new StringBuilder();
-        final MessageReporter messageReporter = new MessageReporter() {
+        MessageReporter messageReporter = new MessageReporter() {
             @Override
             public String addMessage(String message, Object... arguments) {
                 messages.append(String.format(message, arguments)).append("\n");
                 return "";
             }
         };
+
+        // Should fail to put Exome mix of clinical and research on one FCT.
+        List<MutablePair<String, String>> list = designationErrorHelper(messages, messageReporter,
+                Pair.of("Exome Express v2", DesignationUtils.CLINICAL),
+                Pair.of("Exome Express v2", DesignationUtils.RESEARCH));
+        Assert.assertEquals(list.size(), 0);
+        String[] message = messages.toString().split("\\n");
+        // Verfies two partially filled FCTs.
+        Assert.assertTrue(message[0].contains("makes partially filled FCT with 1 empty lane"), message[0]);
+        Assert.assertTrue(message[1].contains("makes partially filled FCT with 1 empty lane"), message[1]);
+
+        // Should fail to validate an Exome mixed designation.
+        messages.setLength(0);
+        list = designationErrorHelper(messages, messageReporter,
+                Pair.of("Exome Express v2", DesignationUtils.MIXED),
+                Pair.of("Exome Express v2", DesignationUtils.MIXED));
+        Assert.assertEquals(list.size(), 0, messages.toString());
+        Assert.assertTrue(messages.toString().contains("has invalid regulatory designation (Clinical and Research)"),
+                messages.toString());
+
+        // Makes Genome mixed designation FCT just fine.
+        messages.setLength(0);
+        list = designationErrorHelper(messages, messageReporter,
+                Pair.of("CLIA PCR-Free Whole Genome", DesignationUtils.CLINICAL),
+                Pair.of("PCR-Free Human WGS - 30x v1.1", DesignationUtils.RESEARCH));
+        Assert.assertEquals(list.size(), 1, messages.toString());
+
+        // Validates a Genome mixed designation just fine.
+        messages.setLength(0);
+        list = designationErrorHelper(messages, messageReporter,
+                Pair.of("CLIA PCR-Free Whole Genome", DesignationUtils.MIXED),
+                Pair.of("PCR-Free Human WGS - 30x v1.1", DesignationUtils.MIXED));
+        Assert.assertEquals(list.size(), 1, messages.toString());
+        Assert.assertEquals(messages.length(), 0, messages.toString());
+    }
+
+    private List<MutablePair<String, String>> designationErrorHelper(StringBuilder messages,
+            MessageReporter messageReporter, final Pair<String, String>... productAndRegulatoryDesignations) {
+
         final LabVessel loadingTube = mapBarcodeToTube.values().iterator().next();
-        final IlluminaFlowcell.FlowcellType flowcellType = MiSeqFlowcell;
+        final IlluminaFlowcell.FlowcellType flowcellType = HiSeq2500Flowcell;
         final LabBatch lcset = new LabBatch("lcset0", Collections.EMPTY_SET, LabBatch.LabBatchType.WORKFLOW);
         List<DesignationDto> dtos = new ArrayList<DesignationDto>() {{
-            for (int i = 0; i < 2; ++i) {
+            for (Pair<String, String> productAndRegulatoryDesignation : productAndRegulatoryDesignations) {
                 DesignationDto dto = new DesignationDto();
                 dto.setBarcode(loadingTube.getLabel());
                 dto.setLcset(lcset.getBatchName());
-                dto.setProduct("Exome Express v2");
+                dto.setProduct(productAndRegulatoryDesignation.getLeft());
                 dto.setNumberSamples(1);
-                dto.setRegulatoryDesignation(i == 0 ? DesignationUtils.CLINICAL : DesignationUtils.RESEARCH);
+                dto.setRegulatoryDesignation(productAndRegulatoryDesignation.getRight());
                 dto.setSequencerModel(flowcellType);
                 dto.setIndexType(FlowcellDesignation.IndexType.DUAL);
                 dto.setReadLength(151);
                 dto.setLoadingConc(BigDecimal.TEN);
-                dto.setNumberLanes(i);
+                dto.setNumberLanes(1);
                 dto.setStatus(FlowcellDesignation.Status.QUEUED);
                 dto.setPoolTest(false);
                 dto.setPairedEndRead(true);
@@ -815,16 +855,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
         for (DesignationDto dto : dtos) {
             dto.setSelected(true);
         }
-
-        // Normally would make an FCT but the error should prevent it.
-        Assert.assertTrue(CollectionUtils.isEmpty(labBatchEJB.makeFcts(dtos, "epolk", messageReporter)));
-
-        // Verifies the action bean message is about the number of lanes.
-        List<String> messageLines = asList(messages.toString().split("\n"));
-        Assert.assertEquals(messageLines.size(), 1, messages.toString());
-        String msg = MessageFormat.format(LabBatchEjb.DESIGNATION_ERROR_MSG, loadingTube.getLabel());
-        Assert.assertTrue(messageLines.get(0).startsWith(msg), messages.toString());
-        Assert.assertTrue(messageLines.get(0).contains("number of lanes"), messages.toString());
+        return labBatchEJB.makeFcts(dtos, "epolk", messageReporter);
     }
 
     /**
