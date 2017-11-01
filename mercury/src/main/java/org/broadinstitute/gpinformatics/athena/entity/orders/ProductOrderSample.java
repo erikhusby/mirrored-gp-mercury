@@ -4,7 +4,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerProcessor;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
@@ -12,7 +11,6 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.samples.SampleReceiptValidation;
-import org.broadinstitute.gpinformatics.athena.presentation.orders.BillingLedgerActionBean;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
@@ -20,7 +18,6 @@ import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProject
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Index;
@@ -1049,10 +1046,12 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
             }
             Date now = new Date();
             if (now.before(ledgerUpdate.getWorkCompleteDate())) {
-                throw new IllegalArgumentException(BillingTrackerProcessor
-                        .makeCompletedDateFutureErrorMessage(ledgerUpdate.getSampleName(),
-                                new SimpleDateFormat(BillingLedgerActionBean.DATE_FORMAT)
-                                        .format(ledgerUpdate.getWorkCompleteDate())));
+                final String futureErrorMessage =
+                        String.format("Sample %s cannot have a completed date of %s because it is in the future.",
+                                ledgerUpdate.getSampleName(),
+                                new SimpleDateFormat(LedgerEntry.BILLING_LEDGER_DATE_FORMAT)
+                                        .format(ledgerUpdate.getWorkCompleteDate()));
+                throw new IllegalArgumentException( futureErrorMessage);
             }
 
 
