@@ -56,7 +56,7 @@ public class SapIntegrationServiceImplTest extends Arquillian {
     @Test
     public void testCustomerSearch() {
 
-        String testUser = "Scott.G.MATThEws@GMail.CoM";
+        String testUser = "ScottmATT@broadinstitute.org";
         String testBadUser = "scottnobody@broadInstitute.org";
 
         Funding fundingDefined = new Funding(Funding.PURCHASE_ORDER,null, null);
