@@ -4,9 +4,11 @@ import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.Updatable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.hibernate.envers.Audited;
 
@@ -19,9 +21,7 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
 import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -184,7 +184,10 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
                 aggregatingProduct = productOrder.getProduct();
             } else {
                 for (ProductOrderAddOn productOrderAddOn : productOrder.getAddOns()) {
-                    if(productOrderAddOn.getAddOn().getPrimaryPriceItem().equals(ledgerEntry.getPriceItem())) {
+                    PriceItem addonPriceItem =
+                            productOrder.determinePriceItemByCompanyCode(productOrderAddOn.getAddOn());
+
+                    if(addonPriceItem.equals(ledgerEntry.getPriceItem())) {
                         aggregatingProduct = productOrderAddOn.getAddOn();
                         break;
                     }

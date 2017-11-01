@@ -43,6 +43,7 @@ import java.util.Set;
 /**
  * This handles all the needed interface processing elements
  */
+@Deprecated
 @UrlBinding("/orders/uploadTracker.action")
 public class UploadTrackerActionBean extends CoreActionBean {
 

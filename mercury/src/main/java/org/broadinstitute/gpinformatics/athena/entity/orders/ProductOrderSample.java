@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProject
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Index;
@@ -157,11 +158,13 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
     public Product getProductForPriceItem(PriceItem priceItem) {
         Product result = getProductOrder().getProduct();
-        if(getProductOrder().getProduct().getPrimaryPriceItem().equals(priceItem)) {
+        if(getProductOrder().getProduct().getPrimaryPriceItem().equals(priceItem) ||
+           priceItem.equals(getProductOrder().getProduct().getExternalPriceItem())) {
             result = getProductOrder().getProduct();
         } else {
             for(ProductOrderAddOn addOn:getProductOrder().getAddOns()) {
-                if(addOn.getAddOn().getPrimaryPriceItem().equals(priceItem)) {
+                if(addOn.getAddOn().getPrimaryPriceItem().equals(priceItem) ||
+                   priceItem.equals(addOn.getAddOn().getExternalPriceItem())) {
                     result = addOn.getAddOn();
                     break;
                 }
@@ -679,7 +682,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     public void autoBillSample(Date completedDate, double quantity) {
         Date now = new Date();
         Map<PriceItem, LedgerQuantities> ledgerQuantitiesMap = getLedgerQuantities();
-        PriceItem priceItem = getProductOrder().getProduct().getPrimaryPriceItem();
+        PriceItem priceItem = getProductOrder().determinePriceItemByCompanyCode(getProductOrder().getProduct());
 
         LedgerQuantities quantities = ledgerQuantitiesMap.get(priceItem);
         if (quantities == null) {

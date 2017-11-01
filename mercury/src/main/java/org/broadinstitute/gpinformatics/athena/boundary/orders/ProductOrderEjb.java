@@ -527,11 +527,13 @@ public class ProductOrderEjb {
         Set<Product> productListFromOrder = new HashSet<>();
         if (editedProductOrder.getProduct() != null) {
             productListFromOrder.add(editedProductOrder.getProduct());
-            priceItemNameList.add(new AccessItem(editedProductOrder.getProduct().getPrimaryPriceItem().getName()));
+            PriceItem priceItem = editedProductOrder.determinePriceItemByCompanyCode(editedProductOrder.getProduct());
+            priceItemNameList.add(new AccessItem(priceItem.getName()));
         }
         for (ProductOrderAddOn productOrderAddOn : editedProductOrder.getAddOns()) {
             productListFromOrder.add(productOrderAddOn.getAddOn());
-            priceItemNameList.add(new AccessItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getName()));
+            PriceItem addonPricItem = editedProductOrder.determinePriceItemByCompanyCode(productOrderAddOn.getAddOn());
+            priceItemNameList.add(new AccessItem(addonPricItem.getName()));
         }
         return determineProductAndPriceItemValidity(productListFromOrder, orderQuote, editedProductOrder);
     }
@@ -543,16 +545,8 @@ public class ProductOrderEjb {
         if (CollectionUtils.isNotEmpty(productsToConsider)) {
             for (Product product : productsToConsider) {
                 try {
-                    SapIntegrationClientImpl.SAPCompanyConfiguration productSearchConfiguration =
-                            SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
-                    PriceItem priceItem = product.getPrimaryPriceItem();
-                    if(productOrder.getOrderType() == ProductOrder.OrderAccessType.COMMERCIAL) {
-                        productSearchConfiguration = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES;
-                        if (product.getExternalPriceItem() != null) {
-                            priceItem = product.getExternalPriceItem();
-                        }
-                    }
-
+                    PriceItem priceItem = productOrder.determinePriceItemByCompanyCode(product);
+                    
                     primaryPriceItem =
                             priceListCache.findByKeyFields(priceItem.getPlatform(),
                                     priceItem.getCategory(),
@@ -579,8 +573,7 @@ public class ProductOrderEjb {
         SAPMaterial sapMaterial = null;
         SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = null;
         try {
-            companyCode = SapIntegrationServiceImpl.determineCompanyCode(
-                    productOrder);
+            companyCode = SapIntegrationServiceImpl.determineCompanyCode(productOrder);
         } catch (SAPIntegrationException e) {
             throw new InvalidProductException(e);
         }
@@ -589,7 +582,7 @@ public class ProductOrderEjb {
 
         sapMaterial = productPriceCache.findByProduct(product, companyCode);
 
-        PriceItem priceItem = SAPProductPriceCache.getDeterminePriceItemByCompanyCode(product, companyCode);
+        PriceItem priceItem = productOrder.determinePriceItemByCompanyCode(product);
         final QuotePriceItem priceListItem = priceListCache.findByKeyFields(priceItem);
         final BigDecimal effectivePrice = new BigDecimal(priceListItem.getPrice());
         if (sapMaterial != null && StringUtils.isNotBlank(sapMaterial.getBasePrice())) {

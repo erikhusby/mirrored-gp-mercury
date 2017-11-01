@@ -218,14 +218,14 @@ public class SapIntegrationServiceImplDBFreeTest {
 
         conversionPdo.addSapOrderDetail(new SapOrderDetail("testsap001", conversionPdo.getTotalNonAbandonedCount(
                 ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY),
-                conversionPdo.getQuoteId(), SapIntegrationServiceImpl.determineCompanyCode(conversionPdo).getCompanyCode(), "", ""));
+                conversionPdo.getQuoteId(), conversionPdo.getSapCompanyConfigurationForProductOrder().getCompanyCode(), "", ""));
 
         ProductOrder childOrder = ProductOrder.cloneProductOrder(conversionPdo, false);
         childOrder.setJiraTicketKey("PDO-CLONE1");
 
         childOrder.addSapOrderDetail(new SapOrderDetail("testchildsap001", childOrder.getTotalNonAbandonedCount(
                 ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY),
-                childOrder.getQuoteId(), integrationService.determineCompanyCode(childOrder).getCompanyCode(), "", ""));
+                childOrder.getQuoteId(), childOrder.getSapCompanyConfigurationForProductOrder().getCompanyCode(), "", ""));
 
         childOrder.setSamples(ProductOrderSampleTestFactory
                 .createDBFreeSampleList(MercurySample.MetadataSource.BSP,
@@ -383,14 +383,14 @@ public class SapIntegrationServiceImplDBFreeTest {
 
         conversionPdo.addSapOrderDetail(new SapOrderDetail("testsap001", conversionPdo.getTotalNonAbandonedCount(
                 ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY),
-                conversionPdo.getQuoteId(), SapIntegrationServiceImpl.determineCompanyCode(conversionPdo).getCompanyCode(), "", ""));
+                conversionPdo.getQuoteId(), conversionPdo.getSapCompanyConfigurationForProductOrder().getCompanyCode(), "", ""));
 
         ProductOrder childOrder = ProductOrder.cloneProductOrder(conversionPdo, false);
         childOrder.setJiraTicketKey("PDO-CLONE1");
 
         childOrder.addSapOrderDetail(new SapOrderDetail("testchildsap001", childOrder.getTotalNonAbandonedCount(
                 ProductOrder.CountAggregation.SHARE_SAP_ORDER_AND_BILL_READY),
-                childOrder.getQuoteId(), integrationService.determineCompanyCode(childOrder).getCompanyCode(), "", ""));
+                childOrder.getQuoteId(), childOrder.getSapCompanyConfigurationForProductOrder().getCompanyCode(), "", ""));
 
         childOrder.setSamples(ProductOrderSampleTestFactory
                 .createDBFreeSampleList(MercurySample.MetadataSource.BSP,

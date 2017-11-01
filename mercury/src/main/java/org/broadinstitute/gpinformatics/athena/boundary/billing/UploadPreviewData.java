@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.common.BusinessKeyCompara
 /**
  * Denormalized data to feed to the upload preview table
  */
+@Deprecated
 public class UploadPreviewData implements Comparable<UploadPreviewData> {
 
     private final String orderJiraKey;

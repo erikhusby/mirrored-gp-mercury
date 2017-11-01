@@ -25,6 +25,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.sap.entity.Condition;
@@ -174,7 +175,8 @@ public class BillingAdaptor implements Serializable {
 
                     if(itemForPriceUpdate.getProductOrder().isSavedInSAP()) {
 
-                        effectivePricesForProducts = getEffectivePricesForProducts(allProductsOrdered, quote, priceItemsForDate);
+                        effectivePricesForProducts = getEffectivePricesForProducts(allProductsOrdered, quote, priceItemsForDate,
+                                itemForPriceUpdate.getProductOrder());
                         if (itemForPriceUpdate.getProductOrder().isPriorToSAP1_5()) {
 
                             if (!StringUtils.equals(itemForPriceUpdate.getProductOrder().latestSapOrderDetail().getOrderPricesHash(),
@@ -491,12 +493,16 @@ public class BillingAdaptor implements Serializable {
     }
 
     public List<String> getEffectivePricesForProducts(List<Product> products, Quote orderQuote,
-                                                      PriceList sourceOfPrices)
+                                                      PriceList sourceOfPrices,
+                                                      ProductOrder order)
             throws InvalidProductException {
         List<String> orderedPrices = new ArrayList<>();
 
         for (Product product : products) {
-            orderedPrices.add(getEffectivePrice(product.getPrimaryPriceItem(), orderQuote, sourceOfPrices));
+
+            PriceItem priceItem = order.determinePriceItemByCompanyCode(product);
+
+            orderedPrices.add(getEffectivePrice(priceItem, orderQuote, sourceOfPrices));
         }
 
         return orderedPrices;

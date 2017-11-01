@@ -113,7 +113,6 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
@@ -1833,7 +1832,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         Product product = tokenProduct != null ? productDao.findByPartNumber(tokenProduct.getPartNumber()) : null;
 
         if(editOrder.isSavedInSAP() && !editOrder.latestSapOrderDetail().getCompanyCode().equals(
-                SapIntegrationServiceImpl.getSapCompanyConfigurationForProductOrder(editOrder).getCompanyCode())) {
+                editOrder.getSapCompanyConfigurationForProductOrder().getCompanyCode())) {
             addGlobalValidationError("Unable to update the order in SAP.  This combination of Product and Order is "
                                      + "attempting to change the company code to which this order will be associated.");
         }
@@ -1855,6 +1854,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
+    @Deprecated
     @HandlesEvent("downloadBillingTracker")
     public Resolution downloadBillingTracker() throws Exception {
 

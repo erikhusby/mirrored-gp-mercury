@@ -11,9 +11,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
-import org.broadinstitute.sap.entity.Condition;
-import org.broadinstitute.sap.entity.DeliveryCondition;
 import org.broadinstitute.sap.entity.SAPMaterial;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
@@ -25,7 +22,6 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -100,20 +96,12 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
 
     public SAPMaterial findByProduct(Product product, SapIntegrationClientImpl.SAPCompanyConfiguration companyCode) {
         SAPMaterial foundMaterial = findByPartNumber(product.getPartNumber(), companyCode);
-
-        //  A temporary short circuit until actual implementation of the service to retrieve all materials is in place
-        // When it is, this condition and it's contents will be removed
-//        if(foundMaterial == null) {
-//            PriceItem priceItem = getDeterminePriceItemByCompanyCode(product, companyCode);
-//            final QuotePriceItem priceListItem = quotesPriceListCache.findByKeyFields(priceItem);
-//            foundMaterial = new SAPMaterial(product.getPartNumber(), priceListItem.getPrice(), Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet());
-//        }
-
+        
         return foundMaterial;
     }
 
-    public static PriceItem getDeterminePriceItemByCompanyCode(Product product,
-                                                                SapIntegrationClientImpl.SAPCompanyConfiguration companyCode) {
+    public static PriceItem determinePriceItemByCompanyCode(Product product,
+                                                            SapIntegrationClientImpl.SAPCompanyConfiguration companyCode) {
         PriceItem priceItem = product.getPrimaryPriceItem();
         if(companyCode == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES &&
                 product.getExternalPriceItem() != null) {
@@ -130,7 +118,7 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
             throw new InvalidProductException("The material "+product.getName()+" does not exist in SAP");
         }
 
-        final PriceItem determinePriceItemByCompanyCode = getDeterminePriceItemByCompanyCode(product, companyCode);
+        final PriceItem determinePriceItemByCompanyCode = determinePriceItemByCompanyCode(product, companyCode);
         String price = cachedMaterial.getBasePrice();
         QuoteItem foundMatchingQuoteItem = orderQuote.findCachedQuoteItem(determinePriceItemByCompanyCode.getPlatform(),
                 determinePriceItemByCompanyCode.getCategory(), determinePriceItemByCompanyCode.getName());
@@ -141,8 +129,6 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
             }
         }
         return price;
-
-//        return getEffectivePrice(cachedMaterial, orderQuote);
     }
 
     public List<String> getEffectivePricesForProducts(List<Product> products, ProductOrder productOrder,
@@ -150,9 +136,9 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
             throws InvalidProductException, SAPIntegrationException {
         List<String> orderedPrices = new ArrayList<>();
         final SapIntegrationClientImpl.SAPCompanyConfiguration configuration =
-                SapIntegrationServiceImpl.determineCompanyCode(productOrder);
+                productOrder.getSapCompanyConfigurationForProductOrder();
         for (Product product : products) {
-            orderedPrices.add(getEffectivePrice(product,configuration, orderQuote));
+            orderedPrices.add(getEffectivePrice(product, configuration, orderQuote));
         }
 
         return orderedPrices;
@@ -174,12 +160,4 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
         }
         return result;
     }
-
-    //  this additon is for the temporary support of current processing of recognizing a valid Product.
-    //  When the full implementation of the fetchMatarials interface for SAP is completed, this will be removed
-    public void setQuotesPriceListCache(
-            PriceListCache quotesPriceListCache) {
-        this.quotesPriceListCache = quotesPriceListCache;
-    }
-
 }

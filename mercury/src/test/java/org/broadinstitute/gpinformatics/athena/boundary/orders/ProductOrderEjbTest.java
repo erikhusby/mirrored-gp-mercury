@@ -124,7 +124,6 @@ public class ProductOrderEjbTest {
 
         //  this additon is for the temporary support of current processing of recognizing a valid Product.
         //  When the full implementation of the fetchMatarials interface for SAP is completed, this will be removed
-        productPriceCache.setQuotesPriceListCache(priceListCache);
         mockMercurySampleDao = Mockito.mock(MercurySampleDao.class);
         productOrderDaoMock = Mockito.mock(ProductOrderDao.class);
         productOrderEjb = new ProductOrderEjb(productOrderDaoMock, null, mockQuoteService,

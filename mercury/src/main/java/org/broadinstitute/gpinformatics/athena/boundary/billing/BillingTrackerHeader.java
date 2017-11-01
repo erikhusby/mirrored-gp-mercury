@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 /**
  * This enum holds the headers for the billing tracker and provides access to the headers for parsing spreadsheets.
  */
+@Deprecated
 public enum BillingTrackerHeader implements ColumnHeader {
 
     SAMPLE_ID("Sample ID", ColumnHeader.REQUIRED_HEADER),

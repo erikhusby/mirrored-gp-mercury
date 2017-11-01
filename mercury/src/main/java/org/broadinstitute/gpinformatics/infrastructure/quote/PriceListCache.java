@@ -250,17 +250,6 @@ public class PriceListCache extends AbstractCache implements Serializable {
         return price;
     }
 
-    public List<String> getEffectivePricesForProducts(List<Product> products, Quote orderQuote)
-            throws InvalidProductException {
-        List<String> orderedPrices = new ArrayList<>();
-
-        for (Product product : products) {
-            orderedPrices.add(getEffectivePrice(product.getPrimaryPriceItem(), orderQuote));
-        }
-
-        return orderedPrices;
-    }
-
     public enum PriceGrouping {
         SSF_Only, External_Only, ALL;
     }

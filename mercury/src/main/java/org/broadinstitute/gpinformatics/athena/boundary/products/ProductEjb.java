@@ -29,6 +29,7 @@ import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -330,7 +331,8 @@ public class ProductEjb {
         SAPAccessControl control = accessController.getCurrentControlDefinitions();
         for (Product productToPublish : productsToPublish) {
             if (!CollectionUtils.containsAll(control.getDisabledItems(),
-                    Collections.singleton(new AccessItem(productToPublish.getPrimaryPriceItem().getName())))
+                    Arrays.asList(new AccessItem(productToPublish.getPrimaryPriceItem().getName()),
+                            new AccessItem(productToPublish.getExternalPriceItem().getName())))
                 && control.isEnabled()) {
                 try {
                     sapService.publishProductInSAP(productToPublish);

@@ -34,17 +34,18 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -1993,9 +1994,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
         for (ProductOrderSample targetSample : order.getSamples()) {
             for (LedgerEntry ledgerItem: targetSample.getLedgerItems()) {
-                PriceItem priceItem = SAPProductPriceCache
-                        .getDeterminePriceItemByCompanyCode(targetProduct,
-                                SapIntegrationServiceImpl.getSapCompanyConfigurationForProductOrder(order));
+                PriceItem priceItem = order.determinePriceItemByCompanyCode(targetProduct);
 
                 if(ledgerItem.getPriceItem().equals(priceItem)) {
                     existingCount += ledgerItem.getQuantity();
@@ -2374,4 +2373,27 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
         return foundAdjustment;
     }
+
+    public PriceItem determinePriceItemByCompanyCode(Product product) {
+        PriceItem priceItem = product.getPrimaryPriceItem();
+        SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = this.getSapCompanyConfigurationForProductOrder(
+        );
+        if(companyCode == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES &&
+           product.getExternalPriceItem() != null) {
+            priceItem = product.getExternalPriceItem();
+        }
+        return priceItem;
+    }
+
+    @NotNull
+    public SapIntegrationClientImpl.SAPCompanyConfiguration getSapCompanyConfigurationForProductOrder() {
+        SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
+        if ((getOrderType() == OrderAccessType.COMMERCIAL)) {
+            companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES;
+        }
+        return companyCode;
+    }
+
+
+
 }

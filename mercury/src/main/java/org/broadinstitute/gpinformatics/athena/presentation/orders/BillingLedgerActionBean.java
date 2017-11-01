@@ -36,6 +36,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.json.JSONArray;
@@ -250,7 +251,9 @@ public class BillingLedgerActionBean extends CoreActionBean {
 
         // Collect add-on price items
         for (Product addOn : addOns) {
-            priceItems.add(addOn.getPrimaryPriceItem());
+            final PriceItem addonPriceItem = productOrder.determinePriceItemByCompanyCode(addOn);
+
+            priceItems.add(addonPriceItem);
         }
     }
 
