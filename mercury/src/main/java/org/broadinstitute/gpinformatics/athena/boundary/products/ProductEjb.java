@@ -330,9 +330,12 @@ public class ProductEjb {
         Set<String> errorMessages = new HashSet<>();
         SAPAccessControl control = accessController.getCurrentControlDefinitions();
         for (Product productToPublish : productsToPublish) {
-            if (!CollectionUtils.containsAll(control.getDisabledItems(),
-                    Arrays.asList(new AccessItem(productToPublish.getPrimaryPriceItem().getName()),
-                            new AccessItem(productToPublish.getExternalPriceItem().getName())))
+            final List<AccessItem> accessItemList =
+                    Arrays.asList(new AccessItem(productToPublish.getPrimaryPriceItem().getName()));
+            if(productToPublish.getExternalPriceItem() != null) {
+                accessItemList.add(new AccessItem(productToPublish.getExternalPriceItem().getName()));
+            }
+            if (!CollectionUtils.containsAll(control.getDisabledItems(), accessItemList)
                 && control.isEnabled()) {
                 try {
                     sapService.publishProductInSAP(productToPublish);
