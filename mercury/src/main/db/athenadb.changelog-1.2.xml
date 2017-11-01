@@ -1092,4 +1092,25 @@
         </sql>
     </changeSet>
 
+    <changeSet id="GPLIM-4750-5" author="scottmat">
+        <createIndex tableName="pdo_price_adjustment_aud" indexName="PDO_ADJUSTMENT_AUD_IDX">
+            <column name="rev"/>
+            <column name="pdo_price_adjustment_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-4750-6" author="scottmat">
+        <createIndex tableName="pdo_addon_price_adjustment_aud" indexName="PDO_ADDON_ADJUSTMENT_AUD_IDX">
+            <column name="rev"/>
+            <column name="pdo_addon_price_adjustment_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-4750-7" author="scottmat">
+        <createIndex tableName="pdo_addon_price_adjustment" indexName="PDO_ADJUSTMENT_IDX">
+            <column name="add_on"/>
+            <column name="pdo_addon_price_adjustment_id" />
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>

@@ -100,6 +100,14 @@ public class QuoteServiceStub implements QuoteService {
 
         try {
             priceList = QuoteServerDataSnapshotter.readPriceListFromTestFile();
+
+            for (QuoteImportItem targetedPriceItemCriterion : targetedPriceItemCriteria) {
+                final QuotePriceItem quotePriceItem =
+                        QuotePriceItem.convertMercuryPriceItem(targetedPriceItemCriterion.getPriceItem());
+                quotePriceItem.setPrice("50.00");
+                priceList.add(quotePriceItem);
+            }
+
         }
         catch(Exception e) {
             throw new RuntimeException("Failed to read price list from disk",e);

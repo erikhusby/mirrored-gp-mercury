@@ -96,7 +96,16 @@ class AcceptsAllWorkRegistrationsQuoteServiceStub implements QuoteService {
     @Override
     public PriceList getPriceItemsForDate(List<QuoteImportItem> targetedPriceItemCriteria)
             throws QuoteServerException, QuoteNotFoundException {
-        return getAllPriceItems();
+        final PriceList allPriceItems = getAllPriceItems();
+        for (QuoteImportItem quoteImportItem : targetedPriceItemCriteria) {
+
+            final QuotePriceItem quotePriceItem =
+                    QuotePriceItem.convertMercuryPriceItem(quoteImportItem.getPriceItem());
+            quotePriceItem.setPrice("50.00");
+            allPriceItems.add(quotePriceItem);
+        }
+
+        return allPriceItems;
     }
 
     @Override
