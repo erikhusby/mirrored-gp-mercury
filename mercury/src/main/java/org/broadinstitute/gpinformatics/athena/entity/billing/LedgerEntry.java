@@ -34,6 +34,10 @@ import java.util.Date;
 @Audited
 @Table(name= "BILLING_LEDGER", schema = "athena")
 public class LedgerEntry implements Serializable {
+    /**
+     * Date format used for displaying DCFM and the value of Date Complete inputs.
+     */
+    public static final String BILLING_LEDGER_DATE_FORMAT = "MMM d, yyyy";
     private static final long serialVersionUID = -4740767648087018522L;
 
     @Id

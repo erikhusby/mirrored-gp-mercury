@@ -37,8 +37,6 @@ import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.bsp.client.workrequest.kit.KitTypeAllowanceSpecification;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
-import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
-import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporterFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
@@ -74,7 +72,6 @@ import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
-import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingTrackerResolution;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.athena.presentation.links.SquidLink;
 import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean;
@@ -288,9 +285,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private BSPKitRequestService bspKitRequestService;
-
-    @Inject
-    private SampleLedgerExporterFactory sampleLedgerExporterFactory;
 
     @Inject
     private SampleDataSourceResolver sampleDataSourceResolver;
@@ -1851,23 +1845,6 @@ public class ProductOrderActionBean extends CoreActionBean {
                     bspShippingLocationTokenInput.getTokenObject() != null ?
                             bspShippingLocationTokenInput.getTokenObject().getId() : null);
             editOrder.getProductOrderKit().setNotificationIds(notificationListTokenInput.getTokenBusinessKeys());
-        }
-    }
-
-    @Deprecated
-    @HandlesEvent("downloadBillingTracker")
-    public Resolution downloadBillingTracker() throws Exception {
-
-        SampleLedgerExporter exporter = sampleLedgerExporterFactory.makeExporter(selectedProductOrders);
-
-        try {
-            return new BillingTrackerResolution(exporter);
-        } catch (Exception e) {
-            String message = "Error generating billing tracker for download";
-            addGlobalValidationError("{2}: {3}", message, e.getMessage());
-            logger.error(message, e);
-            setupListDisplay();
-            return getSourcePageResolution();
         }
     }
 
