@@ -9,6 +9,7 @@
 <stripes:layout-component name="extraHead">
     <script src="${ctxpath}/resources/scripts/hSpinner.js"></script>
     <script src="${ctxpath}/resources/scripts/modalMessages.js"></script>
+    <script src="${ctxpath}/resources/scripts/jquery.ajaxMultiQueue.js"></script>
 
 <%-- ================ Page-specific CSS ================ --%>
 
@@ -130,7 +131,7 @@
         .changed.hasDatepicker:disabled {
             background-color: springgreen;
         }
-
+\
         /* Mimic styles that would be applied if ui-state-disabled was correctly applied to datepicker widgets. */
         .hasDatepicker:disabled {
             opacity: .35;
@@ -150,6 +151,14 @@
             clear: none;
             padding-top: 5px;
             padding-left: 1em;
+        }
+
+        div.alert {
+            margin: 2px;
+        }
+
+        .alert ul {
+            margin-bottom: 0px;
         }
     </style>
 
@@ -189,7 +198,8 @@
                  * It's not useful to save filter state for this UI. Also, hSpinner widgets will not be initialized if
                  * they are filtered out of the DOM when the page loads
                  */
-                'bStateSave': false,
+                "iDisplayLength": 50,
+                'bStateSave': true,
                 'aaSorting': [[2, 'asc']],
                 'aoColumns': [
                     {'bSortable': false},                                                   // 0: checkbox
@@ -401,8 +411,11 @@
                 console.log("beginning");
                 console.time("submit");
                 $j('#updateLedgers').attr('disabled', true);
-                messages = modalMessages();
-                messages.addInfo("Updating Ledgers...")
+
+
+                var infoMessages = modalMessages("info");
+                infoMessages.add("Updating Ledgers...", "updateStatus");
+                var errorMessages = modalMessages("error");
                 var changedInputs;
                 var hiddenInputContainer = document.getElementById('hiddenRowInputs');
 
@@ -437,6 +450,7 @@
                     // get keys as an array;
                     var rowsRemaining = allRows.length;
                     var rowsCompleted = 0;
+                    var queue = $j.ajaxMultiQueue(5);
                     while (allRows.length > 0) {
                         var submitRows = allRows.splice(0,1000);
                         var submitData=[];
@@ -449,7 +463,7 @@
                             serializedData.push({name:'redirectOnSuccess',value: true})
                         }
 
-                        $j.ajax({
+                        queue.queue({
                             url: '${ctxpath}/orders/ledger.action?updateLedgers&orderId=${actionBean.productOrder.businessKey}',
                             data: serializedData,
                             type: 'post',
@@ -466,16 +480,16 @@
                                 if (samples.length <= 20) {
                                     message = "Ledger data updated for ".concat(samples.join(", ")).concat(".");
                                 } else {
-                                    message = "Ledger data updated for ".concat(rowsCompleted).concat(" samples. ").concat(rowsRemaining).concat(" remaining.");
+                                    message = "Ledger data updated for ".concat(rowsCompleted).concat(" samples, ").concat(rowsRemaining).concat(" remaining.");
                                 }
 
-                                messages.addInfo(message, "updateStatus");
+                                infoMessages.add(message, "updateStatus");
                                 if (json.redirectOnSuccess) {
-                                    messages.addInfo("Reloading page...");
+                                    modalMessages('success').add("Reloading page...");
                                     $j(".changed").removeClass("changed");
                                     setTimeout(function () {
                                         window.location.replace("${ctxpath}/orders/ledger.action?orderId=${actionBean.productOrder.businessKey}")
-                                    }, 3000);
+                                    }, 5000);
                                 }
                             },
                             error: function (json) {
@@ -484,10 +498,10 @@
 
                                     var errors = json.responseJSON['error'];
                                     for (var i = 0; i < errors.length; i++) {
-                                        messages.addError(errors[i]);
+                                        errorMessages.add(errors[i]);
                                     }
                                     if (errors.length === 0) {
-                                        messages.addError("Unknown Error: ", json.statusText);
+                                        errorMessages.add("Unknown Error: ", json.statusText);
                                     }
                                 }
                             }
@@ -495,7 +509,7 @@
                     }
                 } catch (e) {
                     var errorMessage = "Error collecting ledger entries: '" + e + "'";
-                    messages.addError(errorMessage);
+                    errorMessages.add(errorMessage);
                 }
             });
 
