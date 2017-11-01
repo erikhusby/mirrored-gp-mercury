@@ -1,7 +1,7 @@
 -- --------------------------------
--- https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-4934
--- Add call rate threshold to mercury DW ETL
+-- https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-5155
+-- Constrain MERCURYDW.LEDGER_ENTRY.VALID_WORK_ITEM to be NULL or a number
 -- --------------------------------
 
-ALTER TABLE IM_PRODUCT_ORDER ADD CALL_RATE_THRESHOLD VARCHAR2(12);
-ALTER TABLE PRODUCT_ORDER ADD CALL_RATE_THRESHOLD VARCHAR2(12);
+ALTER TABLE MERCURYDW.LEDGER_ENTRY
+ADD CONSTRAINT VALID_WORK_ITEM CHECK (TO_NUMBER( NVL( QUOTE_SERVER_WORK_ITEM, '1') ) > 0) ENABLE;
