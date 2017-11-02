@@ -995,8 +995,9 @@ public class LabBatchEjb {
         Multimap<String, Triple<FctDto, LabVessel, FlowcellDesignation>> typeMap = HashMultimap.create();
         for (DesignationDto designationDto : designationDtos) {
             if (designationDto.isSelected()) {
-                if (isValidDto(designationDto, messageReporter)) {
-                    typeMap.put(designationDto.fctGrouping(), Triple.of((FctDto)designationDto,
+                boolean mixedFlowcellOk = isMixedFlowcellOk(designationDto);
+                if (isValidDto(designationDto, messageReporter, mixedFlowcellOk)) {
+                    typeMap.put(designationDto.fctGrouping(mixedFlowcellOk), Triple.of((FctDto)designationDto,
                             labVesselDao.findByIdentifier(designationDto.getBarcode()),
                             labVesselDao.findById(FlowcellDesignation.class, designationDto.getDesignationId())));
                 } else {
@@ -1070,7 +1071,8 @@ public class LabBatchEjb {
         return fctUrls;
     }
 
-    private boolean isValidDto(DesignationDto designationDto, MessageReporter messageReporter) {
+    private boolean isValidDto(DesignationDto designationDto, MessageReporter messageReporter,
+            boolean mixedFlowcellOk) {
         boolean isValid = true;
         String errorString = MessageFormat.format(DESIGNATION_ERROR_MSG, designationDto.getBarcode());
 
@@ -1114,7 +1116,6 @@ public class LabBatchEjb {
             errorString += (isValid ? "" : "and ") + "lcset (null) ";
             isValid = false;
         }
-        boolean mixedFlowcellOk = isMixedFlowcellOk(designationDto);
         if (!mixedFlowcellOk) {
             if (!DesignationUtils.RESEARCH.equals(designationDto.getRegulatoryDesignation()) &&
                     !DesignationUtils.CLINICAL.equals(designationDto.getRegulatoryDesignation())) {

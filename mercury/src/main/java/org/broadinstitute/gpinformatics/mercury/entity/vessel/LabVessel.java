@@ -30,6 +30,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.TubeTransferException;
+import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.hibernate.annotations.BatchSize;
@@ -48,6 +49,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -219,6 +221,9 @@ public abstract class LabVessel implements Serializable {
 
     @OneToMany(mappedBy = "labVessel", cascade = CascadeType.PERSIST)
     private Set<LabMetric> labMetrics = new HashSet<>();
+
+    @ManyToOne
+    private StorageLocation storageLocation;
 
     @Transient
     private Map<LabMetric.MetricType, Set<LabMetric>> ancestorMetricMap;
@@ -465,6 +470,14 @@ public abstract class LabVessel implements Serializable {
         }
 
         return null;
+    }
+
+    public StorageLocation getStorageLocation() {
+        return storageLocation;
+    }
+
+    public void setStorageLocation(StorageLocation storageLocation) {
+        this.storageLocation = storageLocation;
     }
 
     /**
