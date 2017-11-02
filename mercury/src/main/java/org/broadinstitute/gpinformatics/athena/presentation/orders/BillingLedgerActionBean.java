@@ -153,6 +153,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
      * https://stripesframework.atlassian.net/wiki/display/STRIPES/Indexed+Properties
      */
     private List<LedgerData> ledgerData;
+    private String successMessage;
 
     /**
      * this variable is sent in with the updaterLedgers request to instruct the actionBean to forward rather than send
@@ -546,6 +547,14 @@ public class BillingLedgerActionBean extends CoreActionBean {
 
     public void setRedirectOnSuccess(boolean redirectOnSuccess) {
         this.redirectOnSuccess = redirectOnSuccess;
+    }
+
+    public String getSuccessMessage() {
+        return successMessage;
+    }
+
+    public void setSuccessMessage(String successMessage) {
+        this.successMessage = successMessage;
     }
 
     /**

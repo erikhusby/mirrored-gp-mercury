@@ -22,14 +22,14 @@ var modalMessages = function (level = "info", options={}) {
         this.messageBlock = document.querySelector("div.message-block");
         if (this.messageBlock == undefined) {
             this.messageBlock = createElement("<div class='message-block modal'></div>");
-        } else {
-            return;
         }
 
-        this.messageContainer = document.querySelector("div." + className);
+        this.messageContainer = document.querySelector("div." + this.className);
         if (this.messageContainer == undefined) {
             this.messageContainer = createElement("<div class='alert'><button class='close'>&times;</button></div>");
-            this.messageContainer.classList.add(className)
+            this.messageContainer.classList.add(this.className)
+        } else {
+            return;
         }
         this.messageBlock.appendChild(this.messageContainer);
 
@@ -61,25 +61,13 @@ var modalMessages = function (level = "info", options={}) {
     return {
         add: function (messageText, messageSelector) {
             addItem(messageText, messageSelector);
+        },
+        clear: function () {
+            clearMessages();
+        },
+        hide: function () {
+            hideContainer();
         }
-        // add: function (messageText, messageSelector) {
-        //     addItem('error', messageText, messageSelector);
-        // },
-        // addInfo: function (messageText, messageSelector) {
-        //     addItem('info', messageText, messageSelector);
-        // },
-        // addSuccess: function (messageText, messageSelector) {
-        //     addItem('success', messageText, messageSelector);
-        // },
-        // addWarning: function (messageText, messageSelector) {
-        //     addItem('warning', messageText, messageSelector);
-        // },
-        // clear: function () {
-        //     clearMessages();
-        // },
-        // hide: function () {
-        //     hideContainer();
-        // }
     };
 
     function isFunction(functionToCheck) {

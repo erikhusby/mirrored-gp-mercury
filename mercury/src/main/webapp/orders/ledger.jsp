@@ -131,7 +131,7 @@
         .changed.hasDatepicker:disabled {
             background-color: springgreen;
         }
-\
+
         /* Mimic styles that would be applied if ui-state-disabled was correctly applied to datepicker widgets. */
         .hasDatepicker:disabled {
             opacity: .35;
@@ -173,6 +173,10 @@
         document.addEventListener('readystatechange', () => console.log('readyState:' + document.readyState + " " + performance.now()));
 
         $j(document).ready(function() {
+            if ("${actionBean.successMessage}" !== ""){
+                modalMessages("success").add("${actionBean.successMessage}");
+
+            }
             /*
              * Extract the values from the quantity fields to use when sorting.
              */
@@ -414,23 +418,20 @@
                 $j('#updateLedgers').attr('disabled', true);
 
 
-                var infoMessages = modalMessages("info");
+                var infoMessages = new modalMessages("info");
                 infoMessages.add("Updating Ledgers...", "updateStatus");
-                var errorMessages = modalMessages("error");
-                var changedInputs;
-                var hiddenInputContainer = document.getElementById('hiddenRowInputs');
-
+//                var changedInputs;
+//                var hiddenInputContainer = document.getElementById('hiddenRowInputs');
                 try {
-                    var allDataByRow=[];
+                    var allDataByRow={};
                     var allRows=[];
                     var changedRows = $j(ledgerTable.fnGetNodes()).filter('.changed');
                     var dom = changedRows.find("input").filter("[name^='ledgerData']").get();
                     console.time("copy inputs");
                     for (var i = dom.length - 1; i >= 0; i--) {
-                        var input = document.createElement("input");
-                        input.type = "hidden";
-                        input.name = dom[i].name;
-                        input.value = dom[i].value;
+                        var input = {};
+                        input['name'] = dom[i].name;
+                        input['value'] = dom[i].value;
                         var rowNum=dom[i].getAttribute('data-rownum');
                         row = allDataByRow[rowNum];
                         if (row===undefined){
@@ -441,10 +442,8 @@
                         if (allRows.indexOf(rowNum)===-1){
                             allRows.push(rowNum);
                         }
-
-//                        hiddenInputContainer.appendChild(input);
                     }
-                    console.time("copy inputs");
+                    console.timeEnd("copy inputs");
 //                    var allData = $j(hiddenInputContainer).children();
                     event.preventDefault();
 
@@ -455,18 +454,22 @@
                     while (allRows.length > 0) {
                         var submitRows = allRows.splice(0,1000);
                         var submitData=[];
+
                         submitRows.forEach(function(key){
-                            submitData.push(allDataByRow[key]);
+                            allDataByRow[key].forEach(function (mapEntry) {
+                                submitData = submitData.concat(mapEntry);
+                            });
                         });
 
-                        var serializedData = $j(submitData).serializeArray();
+
+//                        var serializedData = $j(submitData).serializeArray();
                         if (allRows.length===0){
-                            serializedData.push({name:'redirectOnSuccess',value: true})
+                            submitData.push({name:'redirectOnSuccess',value: true})
                         }
 
                         queue.queue({
                             url: '${ctxpath}/orders/ledger.action?updateLedgers&orderId=${actionBean.productOrder.businessKey}',
-                            data: serializedData,
+                            data: submitData,
                             type: 'post',
                             dataType: 'json',
                             success: function (json) {
@@ -485,15 +488,18 @@
                                 }
 
                                 infoMessages.add(message, "updateStatus");
+                                message = "Successfully updated ".concat(rowsCompleted).concat(" ledger entries.");
                                 if (json.redirectOnSuccess) {
                                     modalMessages('success').add("Reloading page...");
+
                                     $j(".changed").removeClass("changed");
                                     setTimeout(function () {
-                                        window.location.replace("${ctxpath}/orders/ledger.action?orderId=${actionBean.productOrder.businessKey}")
+                                        window.location.replace("${ctxpath}/orders/ledger.action?orderId=${actionBean.productOrder.businessKey}&successMessage="+message)
                                     }, 5000);
                                 }
                             },
                             error: function (json) {
+                                errorMessages = new modalMessages("error");
                                 console.log(json);
                                 if (json.responseJSON) {
 
@@ -509,6 +515,7 @@
                         });
                     }
                 } catch (e) {
+                    errorMessages = new modalMessages("error");
                     var errorMessage = "Error collecting ledger entries: '" + e + "'";
                     errorMessages.add(errorMessage);
                 }
