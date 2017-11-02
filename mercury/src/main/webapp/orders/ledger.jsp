@@ -203,8 +203,7 @@
                  * It's not useful to save filter state for this UI. Also, hSpinner widgets will not be initialized if
                  * they are filtered out of the DOM when the page loads
                  */
-                "iDisplayLength": 50,
-                'bStateSave': true,
+                'bStateSave': false,
                 'aaSorting': [[2, 'asc']],
                 'aoColumns': [
                     {'bSortable': false},                                                   // 0: checkbox
