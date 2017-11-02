@@ -1,7 +1,14 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselEjb;
@@ -22,12 +29,15 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
+import org.jvnet.inflector.Noun;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -40,22 +50,19 @@ import java.util.Set;
 public class SampleInstanceEjb  {
 
     private Map<String, LabVessel> mapBarcodeToVessel;
-    private List<List<String>> jiraSubTaskList = new ArrayList<List<String>>();
     private List<String> collaboratorSampleId = new ArrayList<>();
     private List<String> collaboratorParticipantId = new ArrayList<>();
     private List<String> broadParticipantId = new ArrayList<>();
     private List<String> gender = new ArrayList<>();
     private List<String> species = new ArrayList<>();
     private List<String> lsid = new ArrayList<>();
-    private List<String> barcode = new ArrayList<>();
-    private List<String> sampleLibraryName = new ArrayList<>();
+    private List<String> barcodes = new ArrayList<>();
     private List<MolecularIndexingScheme> molecularIndexSchemes = new ArrayList<>();
     private List<ReagentDesign> reagents = new ArrayList<>();
-    private List<MercurySample> mercurySamples = new ArrayList<>();
-    private List<MercurySample> mercuryRootSamples = new ArrayList<>();
-    private List<Boolean> sampleRegistrationFlag = new ArrayList<>();
-    private int rowOffset = 2;
-
+    private Map<String, MercurySample> broadSampleMap = new HashMap<>();
+    private Map<String, MercurySample> rootSampleMap = new HashMap<>();
+    private Map<String, BigDecimal> barcodeToVolumeMap = new HashMap<>();
+    private Map<String, BspSampleData> bspSampleDataMap = new HashMap<>();
 
     @Inject
     private VesselEjb vesselEjb;
@@ -81,487 +88,421 @@ public class SampleInstanceEjb  {
     @Inject
     private SampleInstanceEntityDao sampleInstanceEntityDao;
 
-
-
-    /**
-     * Build and return the collaborator metadata for the samples. (If supplied)
-     */
-    private Set<Metadata> collaboratorSampleIdMetadata(final int index, MercurySample mercurySample) {
-
-        removeExistingMetadata(mercurySample);
-        if(!collaboratorSampleId.get(index).isEmpty()) {
-            return new HashSet<Metadata>() {{
-                add(new Metadata(Metadata.Key.SAMPLE_ID, collaboratorSampleId.get(index)));
-                add(new Metadata(Metadata.Key.BROAD_PARTICIPANT_ID, broadParticipantId.get(index)));
-                add(new Metadata(Metadata.Key.PATIENT_ID, collaboratorParticipantId.get(index)));
-                add(new Metadata(Metadata.Key.GENDER, gender.get(index)));
-                add(new Metadata(Metadata.Key.LSID, lsid.get(index)));
-                add(new Metadata(Metadata.Key.SPECIES, species.get(index)));
-                add(new Metadata(Metadata.Key.MATERIAL_TYPE, MaterialType.DNA.getDisplayName()));
-            }};
-        }
-        return new HashSet<>();
-    }
-
-    /**
-     *  Handle instances where metadata is updated / or deleted by an upload.
-     */
-    private void removeExistingMetadata(MercurySample mercurySample) {
-
-        List<Metadata.Key> metadatas = new ArrayList<>();
-        metadatas.add(Metadata.Key.SAMPLE_ID);
-        metadatas.add(Metadata.Key.BROAD_PARTICIPANT_ID);
-        metadatas.add(Metadata.Key.PATIENT_ID);
-        metadatas.add(Metadata.Key.GENDER);
-        metadatas.add(Metadata.Key.LSID);
-        metadatas.add(Metadata.Key.SPECIES);
-        metadatas.add(Metadata.Key.MATERIAL_TYPE);
-
-        HashSet<Metadata> metadataHashSet = new HashSet<>();
-        for(Metadata metadata : mercurySample.getMetadata()) {
-            if(metadatas.contains(metadata.getKey())) {
-                metadataHashSet.add(metadata);
-            }
-        }
-
-        mercurySample.getMetadata().removeAll(metadataHashSet);
-
-    }
+    @Inject
+    private BSPSampleDataFetcher bspSampleDataFetcher;
 
     /**
      * Save uploaded data after it hs been verified by verifySpreadSheet();
      */
     private void persistResults(VesselPooledTubesProcessor vesselSpreadsheetProcessor, MessageCollection messageCollection) {
-        int sampleIndex = 0;
         List<SampleInstanceEntity> sampleInstanceEntities = new ArrayList<>();
-        Map<String, MercurySample> mercurySampleMap = new HashMap<>();
-        Map<String, MercurySample> mercuryRootSampleMap = new HashMap<>();
-
         List<LabVessel> labVessels = new ArrayList<>();
-        for (String sampleId : vesselSpreadsheetProcessor.getBroadSampleId()) {
-            LabVessel labVessel = mapBarcodeToVessel.get(vesselSpreadsheetProcessor.getBarcodes().get(sampleIndex));
-            String rootSampleId = vesselSpreadsheetProcessor.getRootSampleId().get(sampleIndex);
 
+        int rowIndex = 0;
+        for (String broadSampleName : vesselSpreadsheetProcessor.getBroadSampleId()) {
+            String barcode = vesselSpreadsheetProcessor.getBarcodes().get(rowIndex);
+            LabVessel labVessel = mapBarcodeToVessel.get(barcode);
             if (labVessel == null) {
-                labVessel = new BarcodedTube(vesselSpreadsheetProcessor.getBarcodes().get(sampleIndex), BarcodedTube.BarcodedTubeType.MatrixTube);
+                labVessel = new BarcodedTube(vesselSpreadsheetProcessor.getBarcodes().get(rowIndex),
+                        BarcodedTube.BarcodedTubeType.MatrixTube);
             }
-
-            //Add volume to lab vessel.
-            if(getVolume(vesselSpreadsheetProcessor, labVessel.getLabel()) != null) {
-                labVessel.setVolume(getVolume(vesselSpreadsheetProcessor, labVessel.getLabel()));
-            }
+            labVessel.setVolume(barcodeToVolumeMap.get(barcode));
 
             //Add library size lab metric to to lab vessel.
-            addLibrarySize(labVessel,new BigDecimal(vesselSpreadsheetProcessor.getFragmentSize().get(sampleIndex)));
+            addLibrarySize(labVessel, new BigDecimal(vesselSpreadsheetProcessor.getFragmentSize().get(rowIndex)));
 
-            SampleInstanceEntity sampleInstanceEntity = sampleInstanceEntityDao.findByName(vesselSpreadsheetProcessor.getSingleSampleLibraryName().get(sampleIndex));
+            // Finds or creates the Broad MercurySample.
+            MercurySample broadSample = broadSampleMap.get(broadSampleName);
+            if (broadSample == null) {
+                // New sample uses either BSP data or the spreadsheet row.
+                BspSampleData bspSampleData = bspSampleDataMap.get(broadSampleName);
+                if (bspSampleData != null) {
+                    broadSample = new MercurySample(broadSampleName, bspSampleData);
+                } else {
+                    Set<Metadata> metadata = new HashSet<>();
+                    metadata.add(new Metadata(Metadata.Key.SAMPLE_ID, collaboratorSampleId.get(rowIndex)));
+                    metadata.add(new Metadata(Metadata.Key.BROAD_PARTICIPANT_ID, broadParticipantId.get(rowIndex)));
+                    metadata.add(new Metadata(Metadata.Key.PATIENT_ID, collaboratorParticipantId.get(rowIndex)));
+                    metadata.add(new Metadata(Metadata.Key.GENDER, gender.get(rowIndex)));
+                    metadata.add(new Metadata(Metadata.Key.LSID, lsid.get(rowIndex)));
+                    metadata.add(new Metadata(Metadata.Key.SPECIES, species.get(rowIndex)));
+                    metadata.add(new Metadata(Metadata.Key.MATERIAL_TYPE, MaterialType.DNA.getDisplayName()));
+                    broadSample = new MercurySample(broadSampleName, metadata);
+                }
+                broadSampleMap.put(broadSampleName, broadSample);
+            }
+            broadSample.addLabVessel(labVessel);
+
+            // Finds or creates the root MercurySample.
+            MercurySample rootSample = null;
+            String rootSampleName = vesselSpreadsheetProcessor.getRootSampleId().get(rowIndex);
+            if (StringUtils.isNotBlank(rootSampleName)) {
+                if (broadSampleName.equals(rootSampleName)) {
+                    rootSample = broadSample;
+                } else {
+                    // Checks for a root sample used on an earlier row.
+                    rootSample = rootSampleMap.get(rootSampleName);
+                    if (rootSample == null) {
+                        // Root sample is unknown to Mercury. Creates a new sample using metadata from either
+                        // BSP or the Broad Sample, which was newly created using the spreadsheet row metadata
+                        // and should apply to the root sample too.
+                        rootSample = bspSampleDataMap.containsKey(rootSampleName) ?
+                                new MercurySample(rootSampleName, bspSampleDataMap.get(rootSampleName)) :
+                                new MercurySample(rootSampleName, broadSample.getMetadata());
+                        rootSampleMap.put(rootSampleName, rootSample);
+                    }
+                    rootSample.addLabVessel(labVessel);
+                }
+            }
+
+            SampleInstanceEntity sampleInstanceEntity = sampleInstanceEntityDao.findByName(
+                    vesselSpreadsheetProcessor.getSingleSampleLibraryName().get(rowIndex));
             if (sampleInstanceEntity == null) {
                 sampleInstanceEntity = new SampleInstanceEntity();
             }
+            sampleInstanceEntity.setMercurySample(broadSample);
+            sampleInstanceEntity.setRootSample(rootSample);
+            sampleInstanceEntity.setMolecularIndexScheme(molecularIndexSchemes.get(rowIndex));
+            sampleInstanceEntity.setSampleLibraryName(vesselSpreadsheetProcessor.getSingleSampleLibraryName().get(rowIndex));
+            sampleInstanceEntity.setReagentDesign(reagents.get(rowIndex));
 
-            //Check if the sample is registered in Mercury.
-            MercurySample mercurySample = mercurySampleDao.findBySampleKey(sampleId);
-            //Check if the Root sample is registered in Mercury.
-            MercurySample mercuryRootSample = mercurySampleDao.findBySampleKey(rootSampleId);
-
-            if (mercurySample == null) {
-                mercurySample = new MercurySample(sampleId, MercurySample.MetadataSource.MERCURY);
+            if (StringUtils.isNotBlank(vesselSpreadsheetProcessor.getReadLength().get(rowIndex))) {
+                sampleInstanceEntity.setReadLength(Integer.valueOf(vesselSpreadsheetProcessor.getReadLength().get(rowIndex)));
             }
 
-            Set<Metadata>  metadata = collaboratorSampleIdMetadata(sampleIndex, mercurySample);
-
-            if (mercuryRootSample == null) {
-                mercuryRootSample = new MercurySample(rootSampleId, MercurySample.MetadataSource.MERCURY);
-
-                if(mercuryRootSample.getMetadataSource().equals(MercurySample.MetadataSource.MERCURY)) {
-                    mercuryRootSample.addMetadata(metadata);
-                }
-
-                mercuryRootSample.addLabVessel(labVessel);
-
-            }
-
-            if(mercurySample.getMetadataSource().equals(MercurySample.MetadataSource.MERCURY)) {
-                mercurySample.addMetadata(metadata);
-            }
-
-            mercurySample.addLabVessel(labVessel);
-
-            mercurySamples.add(mercurySample);
-            if(!mercuryRootSamples.contains(mercuryRootSample)) {
-                mercuryRootSamples.add(mercuryRootSample);
-            }
-
-            mercurySampleMap.put(mercurySample.getSampleKey(),mercuryRootSample);
-
-            if(!rootSampleId.equals(sampleId)) {
-                mercuryRootSample.addLabVessel(labVessel);
-                mercuryRootSampleMap.put(mercuryRootSample.getSampleKey(),mercuryRootSample);
-            }
-            else {
-                mercuryRootSampleMap.put(mercuryRootSample.getSampleKey(),mercuryRootSample);
-            }
-
-            sampleInstanceEntity.setSampleLibraryName(vesselSpreadsheetProcessor.getSingleSampleLibraryName().get(sampleIndex));
-            if(reagents.size() > sampleIndex) {
-                sampleInstanceEntity.setReagentDesign(reagents.get(sampleIndex));
-            }
-            if(molecularIndexSchemes.size() > sampleIndex) {
-                sampleInstanceEntity.setMolecularIndexScheme(molecularIndexSchemes.get(sampleIndex));
-            }
-            if(mercurySamples.size() > sampleIndex) {
-                sampleInstanceEntity.setMercurySampleId(mercurySamples.get(sampleIndex));
-            }
-            if(!StringUtils.isEmpty(vesselSpreadsheetProcessor.getReadLength().get(sampleIndex).trim())) {
-                sampleInstanceEntity.setReadLength(Integer.valueOf(vesselSpreadsheetProcessor.getReadLength().get(sampleIndex)));
-            }
-            if(mercuryRootSamples.size() > sampleIndex) {
-                sampleInstanceEntity.setRootSample(mercuryRootSamples.get(sampleIndex));
-            }
-            sampleInstanceEntity.setExperiment(vesselSpreadsheetProcessor.getExperiment().get(sampleIndex));
+            sampleInstanceEntity.setExperiment(vesselSpreadsheetProcessor.getExperiment().get(rowIndex));
 
             sampleInstanceEntity.setLabVessel(labVessel);
             sampleInstanceEntity.setUploadDate();
             sampleInstanceEntity.removeSubTasks();
 
-            //Persist the dev sub-tasks in the order they where provided.
-            for (String subTask : jiraSubTaskList.get(sampleIndex)) {
+            // Persists the experiment conditions in the order they appeared on the row.
+            for (String subTask : vesselSpreadsheetProcessor.getConditions().get(rowIndex)) {
                 SampleInstanceEntityTsk sampleInstanceEntityTsk = new SampleInstanceEntityTsk();
                 sampleInstanceEntityTsk.setSubTask(subTask);
                 sampleInstanceEntity.addSubTasks(sampleInstanceEntityTsk);
             }
 
-            //labVesselDao.persist(labVessel);
             labVessels.add(labVessel);
             sampleInstanceEntities.add(sampleInstanceEntity);
             mapBarcodeToVessel.put(labVessel.getLabel(),labVessel);
-            ++sampleIndex;
+            ++rowIndex;
         }
 
-
         labVesselDao.persistAll(labVessels);
+        sampleInstanceEntityDao.persistAll(sampleInstanceEntities);
 
-       //This fix the potential problem when both the root and sample are the same and do not already exist.
-       for(SampleInstanceEntity sampleInstanceEntity : sampleInstanceEntities) {
-            if(sampleInstanceEntity.getMercurySample().getMercurySampleId() == null ||
-                   sampleInstanceEntity.getRootSample().getMercurySampleId() == null)  {
-               if(sampleInstanceEntity.getMercurySample().getSampleKey().equals(
-                       sampleInstanceEntity.getRootSample().getSampleKey())) {
-                   MercurySample mercurySample = mercurySampleMap.get(sampleInstanceEntity.getMercurySample().getSampleKey());
-                   MercurySample mercurySampleRoot = mercuryRootSampleMap.get(sampleInstanceEntity.getRootSample().getSampleKey());
-                   sampleInstanceEntity.setMercurySampleId(mercurySample);
-                   sampleInstanceEntity.setRootSample(mercurySampleRoot);
-               }
-            }
-         }
-
-         sampleInstanceEntityDao.persistAll(sampleInstanceEntities);
-
-
-        if (sampleIndex > 0) {
-            messageCollection.addInfo("Spreadsheet with " + String.valueOf(sampleIndex) + " rows successfully uploaded!");
+        if (rowIndex > 0) {
+            messageCollection.addInfo("Spreadsheet with " + String.valueOf(rowIndex) + " rows successfully uploaded!");
         } else {
             messageCollection.addError("No valid data found.");
         }
-
     }
 
 
     /**
-     * Verify the spreadsheet contents before attempting to persist data.
+     * Verifies the spreadsheet contents and if it's ok, persists the data.
      */
-    public void verifySpreadSheet(VesselPooledTubesProcessor vesselSpreadsheetProcessor, MessageCollection messageCollection, boolean overWriteFlag) {
+    public void verifyAndPersistSpreadsheet(VesselPooledTubesProcessor vesselSpreadsheetProcessor,
+            MessageCollection messageCollection, boolean overWriteFlag) {
+
+        int rowOffset = vesselSpreadsheetProcessor.getHeaderRowIndex() + 2; //converts index to 1-based row number
+        collaboratorSampleId.clear();
+        collaboratorParticipantId.clear();
+        broadParticipantId.clear();
+        gender.clear();
+        species.clear();
+        lsid.clear();
+        barcodes.clear();
+        molecularIndexSchemes.clear();
+        reagents.clear();
+        broadSampleMap.clear();
+        rootSampleMap.clear();
+        barcodeToVolumeMap.clear();
+        bspSampleDataMap.clear();
+
         mapBarcodeToVessel = labVesselDao.findByBarcodes( vesselSpreadsheetProcessor.getBarcodes());
-        //Is the sample library name unique to the spreadsheet??
-        Map<String, String> map = new HashMap<String, String>();
-        int mapIndex = 0;
+        Set<String> libraryNames = new HashSet<>();
+        int rowIndex = 0;
         for (String libraryName : vesselSpreadsheetProcessor.getSingleSampleLibraryName()) {
-            map.put(libraryName, libraryName);
-            mapIndex++;
-
-            if (mapIndex > map.size()) {
-                messageCollection.addError("Single sample library name : " + libraryName + " at Row: " + (mapIndex + 1)
-                        + " Column: " + VesselPooledTubesProcessor.Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText() + " must be unique");
-            } else {
-                sampleLibraryName.add(libraryName);
+            if (!libraryNames.add(libraryName)) {
+                messageCollection.addError("Duplicate Library " + libraryName + " found at row " +
+                        (rowIndex + rowOffset));
             }
-
             if (sampleInstanceEntityDao.findByName(libraryName) != null && !overWriteFlag) {
-                messageCollection.addError("Single sample library name : " + libraryName + " at Row: " + (mapIndex + 1) + " Column: "
-                        + VesselPooledTubesProcessor.Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText()
-                        + " exists in the database. Please choose the overwrite previous upload option.");
+                messageCollection.addError("Library " + libraryName + " at row " + (rowIndex + rowOffset) +
+                        " already exists. Set Overwrite checkbox to re-upload it.");
             }
+            rowIndex++;
         }
 
         //Are Tubes registered.
-        int barcodeIndex = 0;
+        rowIndex = 0;
+        Set<String> barcodeAndMis = new HashSet<>();
         for (String barcode : vesselSpreadsheetProcessor.getBarcodes()) {
-            if (barcode == null) {
-                messageCollection.addError("Barcode not found: " + barcode.toString() + " At Row: " + (barcodeIndex + rowOffset) + " Column: " + VesselPooledTubesProcessor.Headers.TUBE_BARCODE.getText());
+            if (StringUtils.isBlank(barcode)) {
+                messageCollection.addError("Tube barcode is blank at row " + (rowIndex + rowOffset));
             } else if (mapBarcodeToVessel.get(barcode) != null && !overWriteFlag) {
-                messageCollection.addError("Barcode already registered: " + barcode.toString() + " At Row: " + (barcodeIndex + rowOffset) + " Column: " + VesselPooledTubesProcessor.Headers.TUBE_BARCODE.getText());
+                messageCollection.addError("Tube " + barcode + " at row " + (rowIndex + rowOffset) +
+                        " already exists. Set Overwrite checkbox to re-upload it.");
             } else {
-                this.barcode.add(barcode);
+                barcodes.add(barcode);
             }
-            barcodeIndex++;
+            // Errors if a tube has duplicate Molecular Index Scheme.
+            String misName = vesselSpreadsheetProcessor.getMolecularIndexingScheme().get(rowIndex);
+            if (!barcodeAndMis.add(barcode + "_" + misName)) {
+                messageCollection.addError("Duplicate Molecular Indexing Scheme " + misName + " in tube " +
+                        barcode + " found at row " + (rowIndex + rowOffset));
+            }
+
+            // Maps tube barcode to its first non-zero value for volume.
+            if (!barcodeToVolumeMap.containsKey(barcode)) {
+                String value = vesselSpreadsheetProcessor.getVolume().get(rowIndex);
+                if (StringUtils.isNotBlank(value) && StringUtils.isNumeric(value)) {
+                    BigDecimal volume = new BigDecimal(value);
+                    if (volume.compareTo(BigDecimal.ZERO) > 0) {
+                        barcodeToVolumeMap.put(barcode, volume);
+                    }
+                }
+            }
+            rowIndex++;
+        }
+
+        // Every tube must have a volume.
+        Set<String> uniqueBarcodes = new HashSet<>(barcodes);
+        uniqueBarcodes.removeAll(barcodeToVolumeMap.keySet());
+        if (!uniqueBarcodes.isEmpty()) {
+            messageCollection.addError(Noun.pluralOf("Tube", uniqueBarcodes.size()) +
+                    " missing a value for volume: " + StringUtils.join(uniqueBarcodes, ", "));
         }
 
         //Does molecular index scheme exist.
-        int molecularIndexSchemeIndex = 0;
+        rowIndex = 0;
+        Multimap<String, String> mapMisAndSampleToBarcodes = HashMultimap.create();
         for (String molecularIndexScheme : vesselSpreadsheetProcessor.getMolecularIndexingScheme()) {
-            MolecularIndexingScheme molecularIndexingScheme = molecularIndexingSchemeDao.findByName(molecularIndexScheme);
+            MolecularIndexingScheme molecularIndexingScheme =
+                    molecularIndexingSchemeDao.findByName(molecularIndexScheme);
             if (molecularIndexingScheme == null) {
-                messageCollection.addError("Molecular Indexing Scheme not found: " + molecularIndexScheme.toString()
-                        + " At Row: " + (molecularIndexSchemeIndex + rowOffset) + " Column: "
-                        + VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText());
-            } else {
-                this.molecularIndexSchemes.add(molecularIndexingScheme);
+                messageCollection.addError("Unknown Molecular Indexing Scheme " + molecularIndexScheme +
+                        " found at row " + (rowIndex + rowOffset));
             }
-            molecularIndexSchemeIndex++;
+            molecularIndexSchemes.add(molecularIndexingScheme);
+            String broadSample = vesselSpreadsheetProcessor.getBroadSampleId().get(rowIndex);
+            mapMisAndSampleToBarcodes.put(molecularIndexScheme + ", " + broadSample,
+                    vesselSpreadsheetProcessor.getBarcodes().get(rowIndex));
+            rowIndex++;
         }
-
-        //Add root samples
-        for (String rootSampleId : vesselSpreadsheetProcessor.getRootSampleId()) {
-            MercurySample mercurySample = mercurySampleDao.findBySampleKey(rootSampleId);
-            if (mercurySample != null) {
-                this.mercuryRootSamples.add(mercurySample);
+        // Warns if the spreadsheet has duplicate combination of Broad Sample and Molecular Index Scheme.
+        // It's not an error as long as the tubes don't get pooled later on, which isn't known at upload time.
+        for (String misSample : mapMisAndSampleToBarcodes.keySet()) {
+            if (mapMisAndSampleToBarcodes.get(misSample).size() > 1) {
+                List<String> barcodes = new ArrayList<>(new HashSet<>(mapMisAndSampleToBarcodes.get(misSample)));
+                Collections.sort(barcodes);
+                messageCollection.addWarning("The same Molecular Indexing Scheme and Broad Sample (" + misSample +
+                        ") was found in tubes " + StringUtils.join(barcodes, ", "));
             }
         }
 
         //Was both bait and cat specified.
-        int baitCatIndex = 0;
+        rowIndex = 0;
         for (String bait : vesselSpreadsheetProcessor.getBait()) {
             ReagentDesign reagentDesignBait = reagentDesignDao.findByBusinessKey(bait);
-            String cat = vesselSpreadsheetProcessor.getCat().get(baitCatIndex);
+            String cat = vesselSpreadsheetProcessor.getCat().get(rowIndex);
             ReagentDesign reagentDesignCat = reagentDesignDao.findByBusinessKey(cat);
 
             if (!bait.isEmpty() && !cat.isEmpty()) {
-                messageCollection.addError("Found both Bait and CAT on same line. Bait: " + bait + " CAT: " + cat
-                        + " At Row: " + (baitCatIndex + rowOffset) + " Column: " + VesselPooledTubesProcessor.Headers.BAIT.getText()
-                        + " & " + VesselPooledTubesProcessor.Headers.CAT.getText());
+                messageCollection.addError("A row must not have both a Bait and a CAT, found at row " +
+                        (rowIndex + rowOffset));
             }
             if ((!bait.isEmpty() && cat.isEmpty()) && reagentDesignBait == null) {
-                messageCollection.addError("Bait: " + bait + " is not registered. At Row: " + (baitCatIndex + rowOffset)
-                        + " Column: " + VesselPooledTubesProcessor.Headers.BAIT.getText());
-            }
-            if (reagentDesignBait != null) {
-                reagents.add(reagentDesignBait);
+                messageCollection.addError("Unknown bait " + bait + " found at row " + (rowIndex + rowOffset));
             }
             if ((!cat.isEmpty() && bait.isEmpty()) && reagentDesignCat == null) {
-                messageCollection.addError("Cat: " + cat + " is not registered. At Row: " + (baitCatIndex + rowOffset)
-                        + " Column: " + VesselPooledTubesProcessor.Headers.CAT.getText());
+                messageCollection.addError("Unknown cat " + cat + " found at row " + (rowIndex + rowOffset));
             }
-            if (reagentDesignCat != null) {
-                reagents.add(reagentDesignCat);
-            }
-            ++baitCatIndex;
+            // It's ok if both are null, and indicates no reagents on this row.
+            reagents.add(reagentDesignBait != null ? reagentDesignBait : reagentDesignCat);
+            ++rowIndex;
         }
 
         //Find the Jira ticket & list of dev conditions (sub tasks) for the experiment.
-        int experimentIndex = 2;
-        int conditionIndex = 0;
-        List<Map<String, String>> devConditions = vesselSpreadsheetProcessor.getConditions();
-        List<String> subTaskList = new ArrayList<String>();
-        for (Map<String, String> devCondition : devConditions) {
-            String experiment = vesselSpreadsheetProcessor.getExperiment().get(conditionIndex);
-            JiraIssue jiraIssue = getIssueInfoNoException(experiment, null);
-            if (jiraIssue == null) {
-                messageCollection.addError("Dev ticket not found for Experiment: " + experiment + " At Row: " + experimentIndex
-                        + " Column: " + VesselPooledTubesProcessor.Headers.EXPERIMENT.getText());
+        Multimap<String, String> experimentConditions = HashMultimap.create();
+        Multimap<String, Integer> experimentConditionsRow = HashMultimap.create();
+        for (rowIndex = 0; rowIndex < vesselSpreadsheetProcessor.getBarcodes().size(); ++rowIndex) {
+            String experiment = vesselSpreadsheetProcessor.getExperiment().get(rowIndex);
+            if (StringUtils.isBlank(experiment)) {
+                messageCollection.addError("Experiment is blank at row " + (rowIndex + rowOffset));
+            }
+            List<String> conditions = vesselSpreadsheetProcessor.getConditions().get(rowIndex);
+            if (CollectionUtils.isEmpty(conditions)) {
+                messageCollection.addError("Conditions is blank at row " + (rowIndex + rowOffset));
             } else {
-                List<String> jiraSubTasks = jiraIssue.getSubTaskKeys();
-                if (jiraSubTasks != null && devConditions.size() > 0) {
-                    subTaskList = new ArrayList<String>(devCondition.values());
-                    for (String subTask : subTaskList) {
-                        for(String key : devCondition.keySet()) {
-                            if (jiraSubTasks.contains(key)) {
-                                break;
-                            }
-                            else {
-                                messageCollection.addError("Condition / Sub Task: " + key + " not found for Experiment: "
-                                        + experiment + " At Row: " + experimentIndex + " Column: " + VesselPooledTubesProcessor.Headers.CONDITIONS.getText());
-                            }
-                        }
+                experimentConditions.putAll(experiment, conditions);
+                // Collects all row numbers that have the same experiment & condition.
+                for (String condition : conditions) {
+                    experimentConditionsRow.put(experiment + " " + condition, rowIndex + rowOffset);
+                }
+            }
+        }
 
+        // Iterates on experiment and its conditions and checks for their existence.
+        for (String experiment : experimentConditions.keySet()) {
+            // Gets the Experiment JIRA ticket.
+            JiraIssue jiraIssue = null;
+            try {
+                jiraIssue = jiraService.getIssueInfo(experiment, (String[]) null);
+            } catch (Exception e) {
+                // Silently ignores any Jira exception.
+            }
+            if (jiraIssue == null) {
+                // Errors the rows that have this unknown experiment.
+                List<Integer> rowNumbers = new ArrayList<>();
+                for (int i = 0; i < vesselSpreadsheetProcessor.getBarcodes().size(); ++i) {
+                    if (vesselSpreadsheetProcessor.getExperiment().get(rowIndex).equals(experiment)) {
+                        rowNumbers.add(i + rowOffset);
+                    }
+                }
+                Collections.sort(rowNumbers);
+                messageCollection.addError("Unknown DEV ticket " + experiment + " given for Experiment at " +
+                        Noun.pluralOf("row", rowNumbers.size()) + " " + StringUtils.join(rowNumbers, ", "));
+            } else {
+                // Checks that the Conditions are listed as sub-tasks on the Experiment JIRA ticket.
+                Collection<String> jiraSubTasks = CollectionUtils.emptyIfNull(jiraIssue.getSubTaskKeys());
+                Set<String> invalidConditions = new HashSet<>(experimentConditions.get(experiment));
+                invalidConditions.removeAll(jiraSubTasks);
+                for (String condition : invalidConditions) {
+                    List<Integer> rowNumbers = new ArrayList<>(experimentConditionsRow.get(
+                            experiment + " " + condition));
+                    Collections.sort(rowNumbers);
+                    messageCollection.addError("Experiment ticket " + experiment +
+                            " does not have a sub-task for Condition " + condition + " found at " +
+                            Noun.pluralOf("row", rowNumbers.size()) + " " + StringUtils.join(rowNumbers, ", "));
+                }
+            }
+        }
+
+        // Fetches Broad samples and root samples from Mercury. If not in Mercury then fetches from BSP.
+        Set<String> fetchFromBsp = new HashSet<>();
+        for (rowIndex = 0; rowIndex < vesselSpreadsheetProcessor.getBroadSampleId().size(); ++rowIndex) {
+            String broadSampleName = vesselSpreadsheetProcessor.getBroadSampleId().get(rowIndex);
+            MercurySample mercurySample = mercurySampleDao.findBySampleKey(broadSampleName);
+            if (mercurySample == null) {
+                fetchFromBsp.add(broadSampleName);
+            } else {
+                broadSampleMap.put(broadSampleName, mercurySample);
+            }
+            String rootSampleName = vesselSpreadsheetProcessor.getRootSampleId().get(rowIndex);
+            mercurySample = mercurySampleDao.findBySampleKey(rootSampleName);
+            if (mercurySample == null) {
+                fetchFromBsp.add(rootSampleName);
+            } else {
+                rootSampleMap.put(rootSampleName, mercurySample);
+            }
+        }
+        bspSampleDataMap.clear();
+        bspSampleDataMap.putAll(bspSampleDataFetcher.fetchSampleData(fetchFromBsp,
+                BSPSampleSearchColumn.ROOT_SAMPLE,
+                BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID,
+                BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID,
+                BSPSampleSearchColumn.PARTICIPANT_ID,
+                BSPSampleSearchColumn.GENDER,
+                BSPSampleSearchColumn.SPECIES,
+                BSPSampleSearchColumn.LSID,
+                BSPSampleSearchColumn.MATERIAL_TYPE));
+
+        // Check Broad Sample Name and any contingent fields.
+        rowIndex = 0;
+        for (String broadSampleName : vesselSpreadsheetProcessor.getBroadSampleId()) {
+            // These are possibly blank, but needed to keep the lists in order.
+            collaboratorSampleId.add(vesselSpreadsheetProcessor.getCollaboratorSampleId().get(rowIndex));
+            collaboratorParticipantId.add(vesselSpreadsheetProcessor.getCollaboratorParticipantId().get(rowIndex));
+            broadParticipantId.add(vesselSpreadsheetProcessor.getBroadParticipantId().get(rowIndex));
+            gender.add(vesselSpreadsheetProcessor.getGender().get(rowIndex));
+            species.add(vesselSpreadsheetProcessor.getSpecies().get(rowIndex));
+            lsid.add(vesselSpreadsheetProcessor.getLsid().get(rowIndex));
+
+            boolean needsMetadata = !broadSampleMap.containsKey(broadSampleName) &&
+                    !bspSampleDataMap.containsKey(broadSampleName);
+            // Errors if it's a new Broad Sample name that could collide with a future BSP SM-id.
+            if (needsMetadata && BSPUtil.isInBspFormat(broadSampleName)) {
+                messageCollection.addError("Broad Sample " + broadSampleName +
+                        " that is not in BSP cannot be have the format of a BSP sample name. Found at line " +
+                        (rowIndex + rowOffset));
+            }
+            // Validates root sample name. If it's non-blank for a BSP sample, it must match the BSP metadata.
+            String rootSampleName = vesselSpreadsheetProcessor.getRootSampleId().get(rowIndex);
+            if (StringUtils.isBlank(rootSampleName)) {
+                checkContingentFields(needsMetadata, rootSampleName,
+                        VesselPooledTubesProcessor.Headers.ROOT_SAMPLE_ID.getText(), rowIndex + rowOffset,
+                        messageCollection);
+            } else {
+                if (bspSampleDataMap.containsKey(broadSampleName)) {
+                    String bspMetadataRootSample = bspSampleDataMap.get(broadSampleName).getRootSample();
+                    if (!rootSampleName.equals(bspMetadataRootSample)) {
+                        messageCollection.addError("Root Sample in BSP (" + bspMetadataRootSample +
+                                ") does not match Root Sample " + rootSampleName + " at row " + (rowIndex + rowOffset));
                     }
                 }
             }
-            jiraSubTaskList.add(subTaskList);
-            experimentIndex++;
-            conditionIndex++;
-        }
+            // The contingent fields must not be blank if the sample is unknown and needs to be created
+            // in this class. If the sample is already in either Mercury or BSP the fields must be blank
+            // since updating the sample metadata from spreadsheet values is not allowed.
+            checkContingentFields(needsMetadata, collaboratorSampleId.get(rowIndex),
+                    VesselPooledTubesProcessor.Headers.COLLABORATOR_SAMPLE_ID.getText(), rowIndex + rowOffset,
+                    messageCollection);
+            checkContingentFields(needsMetadata, collaboratorParticipantId.get(rowIndex),
+                    VesselPooledTubesProcessor.Headers.COLLABORATOR_PARTICIPANT_ID.getText(), rowIndex + rowOffset,
+                    messageCollection);
+            checkContingentFields(needsMetadata, broadParticipantId.get(rowIndex),
+                    VesselPooledTubesProcessor.Headers.BROAD_PARTICIPANT_ID.getText(), rowIndex + rowOffset,
+                    messageCollection);
+            checkContingentFields(needsMetadata, gender.get(rowIndex),
+                    VesselPooledTubesProcessor.Headers.GENDER.getText(), rowIndex + rowOffset, messageCollection);
+            checkContingentFields(needsMetadata, species.get(rowIndex),
+                    VesselPooledTubesProcessor.Headers.SPECIES.getText(), rowIndex + rowOffset, messageCollection);
+            checkContingentFields(needsMetadata, lsid.get(rowIndex),
+                    VesselPooledTubesProcessor.Headers.LSID.getText(), rowIndex + rowOffset, messageCollection);
 
-        //Is the sample ID registered in Mercury? If not check for optional ID fields.
-        int sampleIndex = 0;
-        for (String sampleId : vesselSpreadsheetProcessor.getBroadSampleId()) {
-            MercurySample mercurySample = mercurySampleDao.findBySampleKey(sampleId);
-
-            //If the sample is missing or not registered check to see if the alternate info was supplied
-            if ((mercurySample == null)) {
-                checkForOptionalHeaders(vesselSpreadsheetProcessor.getRootSampleId().get(sampleIndex), VesselPooledTubesProcessor.Headers.ROOT_SAMPLE_ID, sampleIndex, messageCollection);
-                this.collaboratorSampleId.add(vesselSpreadsheetProcessor.getCollaboratorSampleId().get(sampleIndex));
-                checkForOptionalHeaders(this.collaboratorSampleId.get(sampleIndex), VesselPooledTubesProcessor.Headers.COLLABORATOR_SAMPLE_ID, sampleIndex, messageCollection);
-                this.collaboratorParticipantId.add(vesselSpreadsheetProcessor.getCollaboratorParticipantId().get(sampleIndex));
-                checkForOptionalHeaders(this.collaboratorParticipantId.get(sampleIndex), VesselPooledTubesProcessor.Headers.COLLABORATOR_PARTICIPANT_ID, sampleIndex, messageCollection);
-                this.broadParticipantId.add(vesselSpreadsheetProcessor.getBroadParticipantId().get(sampleIndex));
-                checkForOptionalHeaders(this.broadParticipantId.get(sampleIndex), VesselPooledTubesProcessor.Headers.BROAD_PARTICIPANT_ID, sampleIndex, messageCollection);
-                this.gender.add(vesselSpreadsheetProcessor.getGender().get(sampleIndex));
-                checkForOptionalHeaders(this.gender.get(sampleIndex), VesselPooledTubesProcessor.Headers.GENDER, sampleIndex, messageCollection);
-                this.species.add(vesselSpreadsheetProcessor.getSpecies().get(sampleIndex));
-                checkForOptionalHeaders(this.species.get(sampleIndex), VesselPooledTubesProcessor.Headers.SPECIES, sampleIndex, messageCollection);
-                this.lsid.add(vesselSpreadsheetProcessor.getLsid().get(sampleIndex));
-                checkForOptionalHeaders(this.lsid.get(sampleIndex), VesselPooledTubesProcessor.Headers.LSID, sampleIndex, messageCollection);
-                sampleRegistrationFlag.add(false);
-            } else {
-                this.collaboratorSampleId.add(vesselSpreadsheetProcessor.getCollaboratorSampleId().get(sampleIndex));
-                this.collaboratorParticipantId.add(vesselSpreadsheetProcessor.getCollaboratorParticipantId().get(sampleIndex));
-                this.broadParticipantId.add(vesselSpreadsheetProcessor.getBroadParticipantId().get(sampleIndex));
-                this.gender.add(vesselSpreadsheetProcessor.getGender().get(sampleIndex));
-                this.species.add(vesselSpreadsheetProcessor.getSpecies().get(sampleIndex));
-                this.lsid.add(vesselSpreadsheetProcessor.getLsid().get(sampleIndex));
-
-                //If this is a BSP sample do not allow the user to modify the metadata in Mercury.
-                if(mercurySample.getMetadataSource().equals(MercurySample.MetadataSource.BSP)) {
-                    checkForMetadata(this.collaboratorSampleId.get(sampleIndex), VesselPooledTubesProcessor.Headers.COLLABORATOR_SAMPLE_ID, sampleIndex, messageCollection);
-                    checkForMetadata(this.collaboratorParticipantId.get(sampleIndex), VesselPooledTubesProcessor.Headers.COLLABORATOR_PARTICIPANT_ID, sampleIndex, messageCollection);
-                    checkForMetadata(this.broadParticipantId.get(sampleIndex), VesselPooledTubesProcessor.Headers.BROAD_PARTICIPANT_ID, sampleIndex, messageCollection);
-                    checkForMetadata(this.gender.get(sampleIndex), VesselPooledTubesProcessor.Headers.GENDER, sampleIndex, messageCollection);
-                    checkForMetadata(this.species.get(sampleIndex), VesselPooledTubesProcessor.Headers.SPECIES, sampleIndex, messageCollection);
-                    checkForMetadata(this.lsid.get(sampleIndex), VesselPooledTubesProcessor.Headers.LSID, sampleIndex, messageCollection);
-                }
-
-
-                mercurySamples.add(mercurySample);
-                sampleRegistrationFlag.add(true);
+            if (StringUtils.isBlank(vesselSpreadsheetProcessor.getFragmentSize().get(rowIndex)) ||
+                    !StringUtils.isNumeric(vesselSpreadsheetProcessor.getFragmentSize().get(rowIndex))) {
+                messageCollection.addError("A number must be given for Fragment Size at row " + (rowIndex + rowOffset));
             }
-
-            //Validate if Fragment and Read Length exist that they are actual numbers.
-            validateNumber( vesselSpreadsheetProcessor.getFragmentSize().get(sampleIndex),
-                    VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE,sampleIndex,messageCollection, true);
-
-            validateNumber(vesselSpreadsheetProcessor.getReadLength().get(sampleIndex),
-                    VesselPooledTubesProcessor.Headers.READ_LENGTH,sampleIndex,messageCollection, false);
-
-            ++sampleIndex;
+            if (StringUtils.isNotBlank(vesselSpreadsheetProcessor.getReadLength().get(rowIndex)) &&
+                    !StringUtils.isNumeric(vesselSpreadsheetProcessor.getReadLength().get(rowIndex))) {
+                messageCollection.addError("Read Length is not a number, at row " + (rowIndex + rowOffset));
+            }
+            ++rowIndex;
         }
 
-        /**
-         * If there are no errors attempt save the data to the database.
-         */
+        // If there are no errors attempt save the data to the database.
         if (!messageCollection.hasErrors()) {
             persistResults(vesselSpreadsheetProcessor, messageCollection);
         }
     }
 
-    /**
-     * Method to create errors when no Broad ID was supplied and some/all collaborator information is missing.
-     */
-    private void checkForOptionalHeaders(String value, VesselPooledTubesProcessor.Headers headers, int index, MessageCollection messageCollection) {
-        if (isFieldEmpty(value)) {
-            messageCollection.addError("No Valid Broad Sample ID found and column " + headers.getText()
-                    + " was also missing at Row: " + (index + 2));
+    /** Adds an error message if a contingent field is missing or present. */
+    private void checkContingentFields(boolean mustBePresent, String value, String columnName, int rowNumber,
+            MessageCollection messageCollection) {
+        if (mustBePresent && StringUtils.isBlank(value)) {
+            messageCollection.addError("Broad Sample is unknown so " + columnName + " must not be blank at row " +
+                    rowNumber);
+        } else if (!mustBePresent && StringUtils.isNotBlank(value)) {
+            messageCollection.addError("Broad Sample already exists so " + columnName + " must be blank at row " +
+                    rowNumber);
         }
     }
 
-    /**
-     *  This method creates errors when the user tries to update Metadata fields in Mercury for BSP samples.
-     */
-    private void checkForMetadata(String value, VesselPooledTubesProcessor.Headers headers, int index, MessageCollection messageCollection) {
-        if (!isFieldEmpty(value)) {
-            messageCollection.addError("This sample was registered in BSP.  " + headers.getText() + " cannot be updated via the pooled tube upload "
-                    + "at Row: " + (index + 2));
-        }
-    }
-
-    /**
-     * Check for empty spreadsheet fields that may have spaces or be null.
-     */
-    private boolean isFieldEmpty(String field) {
-        if (field != null) {
-            if (field.trim().isEmpty()) {
-                return true;
-            }
-        } else {
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * This intercepts the Jira Issue exception handler and keeps it from preempting the global validation errors
-     */
-    private JiraIssue getIssueInfoNoException(String key, String... fields) {
-        try {
-            return jiraService.getIssueInfo(key, fields);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    /**
-     *  Return the first non empty volume for a given barcode(s)
-     */
-    private BigDecimal getVolume(VesselPooledTubesProcessor vesselSpreadsheetProcessor, String barcode)
-    {
-        int index = 0;
-        BigDecimal volume = BigDecimal.ZERO;
-        for (String volumeBarcode : vesselSpreadsheetProcessor.getBarcodes()) {
-            if(volumeBarcode.equals(barcode)){
-                if(vesselSpreadsheetProcessor.getVolume().get(index).trim().length() > 0) {
-                    volume = BigDecimal.valueOf(Float.parseFloat((vesselSpreadsheetProcessor.getVolume().get(index))));
-                }
-                if (volume.compareTo(BigDecimal.ZERO) > 0) {
-                    return volume;
-                }
-            }
-            ++index;
-        }
-        return null;
-    }
-
-    /**
-     *  Add library size metric to the given lab vessel.
-     */
-    private void addLibrarySize(LabVessel labVessel, BigDecimal librarySize)
-    {
-
-        //Don't continue to add the same value if it already exists for the that vessel.
-        for(LabMetric labMetric: labVessel.getMetrics()) {
-            if(labMetric.getName() == LabMetric.MetricType.FINAL_LIBRARY_SIZE && labMetric.getValue().equals(librarySize)) {
+    /** Adds library size metric to the given lab vessel. */
+    private void addLibrarySize(LabVessel labVessel, BigDecimal librarySize) {
+        // Does not add the same value if it already exists for the that vessel.
+        for (LabMetric labMetric: labVessel.getMetrics()) {
+            if (labMetric.getName() == LabMetric.MetricType.FINAL_LIBRARY_SIZE &&
+                    labMetric.getValue().equals(librarySize)) {
                 return;
             }
         }
-        LabMetric finalLibrarySizeMetric =
-                new LabMetric(librarySize, LabMetric.MetricType.FINAL_LIBRARY_SIZE, LabMetric.LabUnit.UG_PER_ML,
-                        null, new Date());
+        LabMetric finalLibrarySizeMetric = new LabMetric(librarySize, LabMetric.MetricType.FINAL_LIBRARY_SIZE,
+                LabMetric.LabUnit.UG_PER_ML, null, new Date());
         labVessel.addMetric(finalLibrarySizeMetric);
-    }
-
-    /**
-     *  Check for missing / invalid numeric fields.
-     */
-    private void validateNumber(String input, VesselPooledTubesProcessor.Headers headers, int index, MessageCollection messageCollection, Boolean required) {
-
-        //Check for fields that are not required, but if they are there, they must contain a valid number.
-        if(!required && StringUtils.isEmpty(input.trim())) {
-            return;
-        }
-        if(!required && !StringUtils.isEmpty(input.trim())) {
-            if(StringUtils.isNumeric(input)) {
-                return;
-            }
-            else {
-                messageCollection.addError("Invalid number:   " + input + " at column: " + headers.getText() + " at row: " + (index + 2));
-                return;
-            }
-        }
-
-        //Check for required fields
-        if(StringUtils.isNumeric(input)) {
-            return;
-        }
-        else {
-            messageCollection.addError("Invalid or missing number:   " + input + " at column: " + headers.getText() + " at row: " + (index + 2));
-        }
     }
 }
