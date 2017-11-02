@@ -1688,7 +1688,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         if (editOrder.getProduct() != null) {
-            if(editOrder.getProduct().isClinicalProduct()) {
+            if(editOrder.getProduct().isClinicalProduct() ||
+                    editOrder.getProduct().isExternalOnlyProduct()) {
                 editOrder.setOrderType(ProductOrder.OrderAccessType.COMMERCIAL);
             } else {
                 if (userBean.isPDMUser() || userBean.isGPPMUser() || userBean.isDeveloperUser()) {
