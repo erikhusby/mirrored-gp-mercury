@@ -854,7 +854,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
 
         // Test both the user's role and whether or not they are listed as a project manager in the project. This
         // protects from the case where the user's role has been revoked, but the project people haven't been updated.
-        boolean isPm = getUserBean().isPMUser() && projectManagerIds.contains(getUserBean().getBspUser().getUserId());
+        boolean isPm = (getUserBean().isPMUser() || getUserBean().isGPPMUser()) && projectManagerIds.contains(getUserBean().getBspUser().getUserId());
         if (!isPm) {
             accessRestriction.add(String.format("Project Managers of %s", researchProject));
         }
@@ -1179,7 +1179,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     }
 
     public static boolean isEditAllowed(UserBean userBean) {
-        return userBean.isDeveloperUser() || userBean.isPMUser() || userBean.isPDMUser();
+        return userBean.isDeveloperUser() || userBean.isPMUser() || userBean.isPDMUser() || userBean.isGPPMUser();
     }
 
     public CollaborationData getCollaborationData() {
@@ -1270,7 +1270,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
      */
     public boolean isCanBeginCollaborations() {
         if (isResearchOnly()) {
-            return getUserBean().isDeveloperUser() || getUserBean().isPMUser();
+            return getUserBean().isDeveloperUser() || getUserBean().isPMUser() || getUserBean().isGPPMUser();
         }
         return false;
     }

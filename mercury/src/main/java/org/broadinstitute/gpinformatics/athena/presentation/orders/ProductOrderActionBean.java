@@ -473,7 +473,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public String[] getModifyOrderRoles() {
         if (editOrder.isPending()) {
             // Allow PMs to modify Pending orders.
-            return Role.roles(Role.Developer, Role.PDM, Role.PM);
+            return Role.roles(Role.Developer, Role.PDM, Role.PM, Role.GPProjectManager);
         }
         return Role.roles(Role.Developer, Role.PDM);
     }
@@ -3178,7 +3178,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     @Override
     public boolean isCreateAllowed() {
-        return getUserBean().isDeveloperUser() || getUserBean().isPMUser() || getUserBean().isPDMUser();
+        return getUserBean().isDeveloperUser() || getUserBean().isPMUser() || getUserBean().isPDMUser() || getUserBean().isGPPMUser();
     }
 
     /**
