@@ -16,7 +16,7 @@
                             value="${actionBean.editProduct.businessKey}"/>
             <div class="actionButtons">
 
-                <security:authorizeBlock roles="<%= roles(PDM, PM, Developer) %>">
+                <security:authorizeBlock roles="<%= roles(PDM, GPProjectManager, PM, Developer) %>">
 
                     <c:if test="${!actionBean.productInSAP(actionBean.editProduct.partNumber)}">
                         <stripes:submit name="${actionBean.publishSAPAction}" id="${actionBean.publishSAPAction}"

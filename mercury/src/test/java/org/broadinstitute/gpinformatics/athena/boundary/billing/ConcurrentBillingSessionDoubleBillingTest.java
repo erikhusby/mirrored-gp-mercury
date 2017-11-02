@@ -8,6 +8,7 @@ import org.apache.deltaspike.core.api.provider.BeanProvider;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
@@ -37,6 +38,7 @@ import javax.transaction.UserTransaction;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -87,6 +89,7 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
             ledgerEntry.setBillingMessage("test flameout");
             billingSession.setBilledDate(null);
             ledgerEntry.setWorkItem(null);
+            RegisterWorkAlwaysWorks.testPriceItems.add(ledgerEntry.getPriceItem());
             Assert.assertFalse(ledgerEntry.isBilled(),
                     "If ledger entry is considered billed, this test will not try to bill it, which means we may be at risk of double billing.");
         }
@@ -184,9 +187,18 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
 
         public static int workItemNumber;
 
+        public static Set<PriceItem> testPriceItems = new HashSet<>();
+
         @Override
         public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
-            return new PriceList();
+            final PriceList priceList = new PriceList();
+            for (PriceItem testPriceItem : testPriceItems) {
+                final QuotePriceItem quotePriceItem = QuotePriceItem.convertMercuryPriceItem(testPriceItem);
+                quotePriceItem.setPrice("50.00");
+                priceList.add(quotePriceItem);
+            }
+
+            return priceList;
         }
 
         @Override
@@ -256,7 +268,17 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
         @Override
         public PriceList getPriceItemsForDate(List<QuoteImportItem> targetedPriceItemCriteria)
                 throws QuoteServerException, QuoteNotFoundException {
-            return null;
+            final PriceList priceList = getAllPriceItems();
+
+            for (QuoteImportItem targetedPriceItemCriterion : targetedPriceItemCriteria) {
+
+                final QuotePriceItem quotePriceItem =
+                        QuotePriceItem.convertMercuryPriceItem(targetedPriceItemCriterion.getPriceItem());
+                quotePriceItem.setPrice("50.00");
+                priceList.add(quotePriceItem);
+            }
+
+            return priceList;
         }
 
         @Override

@@ -53,7 +53,7 @@ public class SapIntegrationServiceImplTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
-    @Test
+    @Test(enabled = false)
     public void testCustomerSearch() {
 
         String testUser = "ScottmATT@broadinstitute.org";

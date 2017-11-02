@@ -1177,7 +1177,7 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
             <%-- PDOs can be placed by PM or PDMs, so the security tag accepts either of those roles for 'Place Order'. --%>
             <%--'Validate' is also under that same security tag since that has the power to alter 'On-Riskedness' --%>
             <%-- for PDO samples. --%>
-            <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
+            <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager, PM) %>">
                 <stripes:submit name="placeOrder" value="Validate and Place Order"
                                 disabled="${!actionBean.canPlaceOrder}" class="btn"/>
                 <stripes:submit name="validate" value="Validate" style="margin-left: 3px;" class="btn"/>
@@ -1190,14 +1190,14 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
                 <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
             </stripes:link>
 
-            <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
+            <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager, PM) %>">
                 <stripes:button onclick="showDeleteConfirm('deleteOrder')" name="deleteOrder"
                                 value="Delete Draft" style="margin-left: 10px;" class="btn"/>
             </security:authorizeBlock>
         </c:when>
         <c:otherwise>
             <c:if test="${actionBean.canPlaceOrder}">
-                <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
+                <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager, PM) %>">
                     <stripes:button onclick="showPlaceConfirm('placeOrder')" name="placeOrder"
                                     value="Place Order" class="btn"/>
                 </security:authorizeBlock>
@@ -1235,7 +1235,7 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
 
             </c:if>
 
-            <security:authorizeBlock roles="<%= roles(PDM, PM, Developer) %>">
+            <security:authorizeBlock roles="<%= roles(PDM, GPProjectManager, PM, Developer) %>">
 
                 <c:if test="${!actionBean.editOrder.savedInSAP && !actionBean.editOrder.pending && !actionBean.editOrder.draft}">
                     &nbsp;&nbsp;&nbsp;&nbsp;
@@ -1790,7 +1790,7 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
 
         </c:if>
 
-        <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
+        <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager, PM) %>">
             <stripes:button name="setProceedOos" value="Set Proceed OOS" class="btn"
                     style="margin-left:5px;" onclick="showProceedOosDialog()"/>
         </security:authorizeBlock>
