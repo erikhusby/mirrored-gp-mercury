@@ -242,16 +242,27 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
              {
         if(placedOrder.getProduct().equals(product)) {
 
-            if(placedOrder.getSinglePriceAdjustment() != null && placedOrder.getSinglePriceAdjustment().hasPriceAdjustment()) {
+            final ProductOrderPriceAdjustment singlePriceAdjustment = placedOrder.getSinglePriceAdjustment();
+            if(singlePriceAdjustment != null && singlePriceAdjustment.hasPriceAdjustment()) {
 
-                placedOrder.getSinglePriceAdjustment().setListPrice(
+                singlePriceAdjustment.setListPrice(
                         new BigDecimal(productPriceCache.findByProduct(product,
                                 placedOrder.getSapCompanyConfigurationForProductOrder()).getBasePrice()));
 
-                sapOrderItem.addCondition(placedOrder.getSinglePriceAdjustment().deriveAdjustmentCondition(),
-                        placedOrder.getSinglePriceAdjustment().getAdjustmentDifference());
-                if(StringUtils.isNotBlank(placedOrder.getSinglePriceAdjustment().getCustomProductName())) {
-                    sapOrderItem.setProductAlias(placedOrder.getSinglePriceAdjustment().getCustomProductName());
+                sapOrderItem.addCondition(singlePriceAdjustment.deriveAdjustmentCondition(),
+                        singlePriceAdjustment.getAdjustmentDifference());
+                if(StringUtils.isNotBlank(singlePriceAdjustment.getCustomProductName())) {
+                    sapOrderItem.setProductAlias(singlePriceAdjustment.getCustomProductName());
+                }
+
+                if(StringUtils.isNotBlank(singlePriceAdjustment.getCustomProductName())) {
+                    sapOrderItem.setProductAlias(singlePriceAdjustment.getCustomProductName());
+                } else {
+                    sapOrderItem.setProductAlias(product.getProductName());
+                    if(placedOrder.getSapCompanyConfigurationForProductOrder() == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES &&
+                            StringUtils.isNotBlank(product.getAlternateExternalName())) {
+                        sapOrderItem.setProductAlias(product.getAlternateExternalName());
+                    }
                 }
             }
 
