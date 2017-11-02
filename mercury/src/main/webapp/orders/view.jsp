@@ -67,6 +67,9 @@ var kitDefinitionIndex = 0;
 $j(document).ready(function () {
     $j('body').popover({selector: '[rel=popover]'});
 //    if ($j("#sampleData tbody>tr").length > 0) {
+    $j("#ledgerLink").on('click', function(){
+        window.stop();
+    });
     enableDefaultPagingOptions();
     function loadBspData(settings) {
         var api = new $j.fn.dataTable.Api(settings);
@@ -1191,7 +1194,7 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
                     </c:if>
 
                     &nbsp;&nbsp;&nbsp;&nbsp;
-                    <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.BillingLedgerActionBean"><stripes:param name="orderId" value="${actionBean.editOrder.jiraTicketKey}"/>Online Billing Ledger</stripes:link>
+                    <stripes:link id="ledgerLink" beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.BillingLedgerActionBean"><stripes:param name="orderId" value="${actionBean.editOrder.jiraTicketKey}"/>Online Billing Ledger</stripes:link>
                 </security:authorizeBlock>
 
             </c:if>
