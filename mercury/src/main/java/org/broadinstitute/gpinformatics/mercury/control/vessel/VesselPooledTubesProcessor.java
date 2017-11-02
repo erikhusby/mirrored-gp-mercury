@@ -1,8 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
@@ -19,7 +21,8 @@ public class VesselPooledTubesProcessor extends TableProcessor {
     private List<String> bait = new ArrayList<>();
     private List<String> cat = new ArrayList<>();
     private List<String> experiment = new ArrayList<>();
-    private List<String> conditions = new ArrayList<>();
+    // conditions is a per-row list of dev ticket strings.
+    private List<List<String>> conditions = new ArrayList<>();
     private List<String> collaboratorSampleId = new ArrayList<>();
     private List<String> collaboratorParticipantId = new ArrayList<>();
     private List<String> broadParticipantId = new ArrayList<>();
@@ -56,7 +59,8 @@ public class VesselPooledTubesProcessor extends TableProcessor {
         bait.add(dataRow.get(Headers.BAIT.getText()));
         cat.add(dataRow.get(Headers.CAT.getText()));
         experiment.add(dataRow.get(Headers.EXPERIMENT.getText()));
-        conditions.add(dataRow.get(Headers.CONDITIONS.getText()));
+        String conditionsString = dataRow.get(Headers.CONDITIONS.getText());
+        conditions.add(Arrays.asList(StringUtils.stripAll(conditionsString.split(","))));
         collaboratorSampleId.add(dataRow.get(Headers.COLLABORATOR_SAMPLE_ID.getText()));
         collaboratorParticipantId.add(dataRow.get(Headers.COLLABORATOR_PARTICIPANT_ID.getText()));
         broadParticipantId.add(dataRow.get(Headers.BROAD_PARTICIPANT_ID.getText()));
@@ -150,20 +154,8 @@ public class VesselPooledTubesProcessor extends TableProcessor {
 
     public List<String> getExperiment() { return experiment; }
 
-    public List<Map<String, String>> getConditions() {
-        List<Map<String, String>> devConditions = new ArrayList<>();
-        if (conditions != null) {
-            for (String condition : conditions) {
-                String[] devTasks = condition.split(",");
-                Map<String, String> map = new HashMap<String, String>();
-                for (String devTask : devTasks) {
-                    map.put(devTask.trim(), devTask.trim());
-                }
-                devConditions.add(map);
-            }
-            return devConditions;
-        }
-        return null;
+    public List<List<String>> getConditions() {
+        return conditions;
     }
 
     public List<String> getCollaboratorSampleId() { return collaboratorSampleId; }
