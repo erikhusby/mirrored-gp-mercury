@@ -170,12 +170,13 @@
 
         var dateCompleteWarningThreshold = new Date(${actionBean.threeMonthsAgo});
 
-        document.addEventListener('readystatechange', () => console.log('readyState:' + document.readyState + " " + performance.now()));
-
         $j(document).ready(function() {
             if ("${actionBean.successMessage}" !== ""){
-                modalMessages("success").add("${actionBean.successMessage}");
-
+                var message = modalMessages("success");
+                message.add("${actionBean.successMessage}");
+                setTimeout(function(){
+                    message.clear();
+                },10000);
             }
             /*
              * Extract the values from the quantity fields to use when sorting.
@@ -236,20 +237,16 @@
                             return element.querySelector('input[type="hidden"]').value;
                         },
                         incremented: function (event, inputName) {
-                            console.time("incremented");
                             var $escaped = $j("#" + escapeForSelector(inputName));
                             updateUnbilledStatus($escaped);
                             applyToSelected(inputName, $escaped, 'increment');
                             updateSubmitButton();
-                            console.timeEnd("incremented");
                         },
                         decremented: function (event, inputName) {
-                            console.time("decremented");
                             var $escaped = $j("#" + escapeForSelector(inputName));
                             updateUnbilledStatus($escaped);
                             applyToSelected(inputName, $escaped, 'decrement');
                             updateSubmitButton();
-                            console.timeEnd("decremented")
                         },
                         // hSpinner widget "input" event, not to be confused with the browser built-in DOM "input" event.
                         input: function (event, inputName) {
@@ -381,7 +378,6 @@
              * Handle enable/disable of row inputs based on checkboxes.
              */
             $j('#ledger').on('click', 'input:checkbox', function () {
-                console.time("onClick input:checkbox");
                 var selectedRows = getSelectedRows();
                 var unselectedRows = $j("#ledger tbody tr").not(selectedRows);
                 if (selectedRows.length > 0) {
@@ -394,10 +390,9 @@
                     $j('input.ledgerQuantity').filter(isChecked()).hSpinner().hSpinner('enable');
                 } else {
                     var inputs = unselectedRows.find("input");
-                    inputs.filter(".dateComplete.pending").datepicker().datepicker('enable')
+                    inputs.filter(".dateComplete.pending").datepicker().datepicker('enable');
                     inputs.filter(".ledgerQuantity").datepicker().datepicker('enable');
                 }
-                console.timeEnd("onClick input:checkbox");
             });
 
             /*
@@ -413,21 +408,14 @@
             });
 
             $j('#ledgerForm').submit(function (event) {
-                console.log("beginning");
-                console.time("submit");
                 $j('#updateLedgers').attr('disabled', true);
-
-
-                var infoMessages = new modalMessages("info");
+                var infoMessages = modalMessages("info");
                 infoMessages.add("Updating Ledgers...", "updateStatus");
-//                var changedInputs;
-//                var hiddenInputContainer = document.getElementById('hiddenRowInputs');
                 try {
                     var allDataByRow={};
                     var allRows=[];
                     var changedRows = $j(ledgerTable.fnGetNodes()).filter('.changed');
                     var dom = changedRows.find("input").filter("[name^='ledgerData']").get();
-                    console.time("copy inputs");
                     for (var i = dom.length - 1; i >= 0; i--) {
                         var input = {};
                         input['name'] = dom[i].name;
@@ -443,8 +431,6 @@
                             allRows.push(rowNum);
                         }
                     }
-                    console.timeEnd("copy inputs");
-//                    var allData = $j(hiddenInputContainer).children();
                     event.preventDefault();
 
                     // get keys as an array;
@@ -454,19 +440,14 @@
                     while (allRows.length > 0) {
                         var submitRows = allRows.splice(0,1000);
                         var submitData=[];
-
                         submitRows.forEach(function(key){
                             allDataByRow[key].forEach(function (mapEntry) {
                                 submitData = submitData.concat(mapEntry);
                             });
                         });
-
-
-//                        var serializedData = $j(submitData).serializeArray();
                         if (allRows.length===0){
                             submitData.push({name:'redirectOnSuccess',value: true})
                         }
-
                         queue.queue({
                             url: '${ctxpath}/orders/ledger.action?updateLedgers&orderId=${actionBean.productOrder.businessKey}',
                             data: submitData,
@@ -486,23 +467,20 @@
                                 } else {
                                     message = "Ledger data updated for ".concat(rowsCompleted).concat(" samples, ").concat(rowsRemaining).concat(" remaining.");
                                 }
-
                                 infoMessages.add(message, "updateStatus");
-                                message = "Successfully updated ".concat(rowsCompleted).concat(" ledger entries.");
+                                message = "&successMessage=Successfully updated ".concat(rowsCompleted).concat(" ledger entries.");
                                 if (json.redirectOnSuccess) {
-                                    modalMessages('success').add("Reloading page...");
+                                    modalMessages('success').add("Updates complete, reloading page...");
 
                                     $j(".changed").removeClass("changed");
                                     setTimeout(function () {
-                                        window.location.replace("${ctxpath}/orders/ledger.action?orderId=${actionBean.productOrder.businessKey}&successMessage="+message)
+                                        window.location.replace("${ctxpath}/orders/ledger.action?orderId=${actionBean.productOrder.businessKey}"+message);
                                     }, 5000);
                                 }
                             },
                             error: function (json) {
-                                errorMessages = new modalMessages("error");
-                                console.log(json);
+                                errorMessages = modalMessages("error");
                                 if (json.responseJSON) {
-
                                     var errors = json.responseJSON['error'];
                                     for (var i = 0; i < errors.length; i++) {
                                         errorMessages.add(errors[i]);
@@ -515,7 +493,7 @@
                         });
                     }
                 } catch (e) {
-                    errorMessages = new modalMessages("error");
+                    errorMessages = modalMessages("error");
                     var errorMessage = "Error collecting ledger entries: '" + e + "'";
                     errorMessages.add(errorMessage);
                 }

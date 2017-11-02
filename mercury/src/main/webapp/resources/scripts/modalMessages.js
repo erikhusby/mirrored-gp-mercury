@@ -8,9 +8,29 @@
  * whatsoever. Neither the Broad Institute nor MIT can be responsible for its
  * use, misuse, or functionality.
  */
-
+/**
+ * Add a modal message with similar appearance to stripes:errors and stripes:messages.
+ * Different message levels are availble which changes the appearance of the message and allows message grouping.
+ *
+ * usage: modalMessages("info").add(messageText, [namespace]);
+ * this example will show two error messages in a modal dialog box style for errors:
+ *      <ul style="list-style-type:none">
+ *          <li>var message = modalMessages("info");</li>
+ *          <li>message.add("hello there");</li>
+ *          <li>message.add("hello again");</li>
+ *      </ul>
+ * This example will show an error message and then overwrite it with a different one;
+ *      <ul style="list-style-type:none">
+ *          <li>var message = modalMessages("info");</li>
+ *          <li>message.add("hello there", "hello");</li>
+ *          <li>message.add("hello again", "hello");</li>
+ *      </ul>
+ * @param level: 'success', 'info', 'warning', 'error'
+ * @param options: {onClose: function()} callback to execute when the close box is clicked
+ * @returns {{add: add message, clear: clear messages, hide: hide messages}}
+ */
 var modalMessages = function (level = "info", options={}) {
-    // initialization:
+    // automatic initialization:
     (function () {
         var levels = ['success', 'info', 'warning', 'error'];
         if (levels.indexOf(level) === -1) {
