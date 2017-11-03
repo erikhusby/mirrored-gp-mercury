@@ -1677,9 +1677,8 @@ public class ProductOrderEjb {
 
                 final List<Product> allProductsOrdered =
                         ProductOrder.getAllProductsOrdered(productOrderSample.getProductOrder());
-                List<String> effectivePricesForProducts =
-                        productPriceCache.getEffectivePricesForProducts(allProductsOrdered,
-                                productOrderSample.getProductOrder(), orderQuote);
+                List<String> effectivePricesForProducts = priceListCache
+                        .getEffectivePricesForProducts(allProductsOrdered, orderQuote);
 
                 final MessageCollection messageCollection = new MessageCollection();
                 if (productOrderSample.getProductOrder().isSavedInSAP()) {

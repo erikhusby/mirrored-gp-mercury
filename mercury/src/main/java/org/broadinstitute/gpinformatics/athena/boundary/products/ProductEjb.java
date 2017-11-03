@@ -330,8 +330,8 @@ public class ProductEjb {
         Set<String> errorMessages = new HashSet<>();
         SAPAccessControl control = accessController.getCurrentControlDefinitions();
         for (Product productToPublish : productsToPublish) {
-            final List<AccessItem> accessItemList =
-                    Arrays.asList(new AccessItem(productToPublish.getPrimaryPriceItem().getName()));
+            List<AccessItem> accessItemList = new ArrayList<>();
+            accessItemList.add(new AccessItem(productToPublish.getPrimaryPriceItem().getName()));
             if(productToPublish.getExternalPriceItem() != null) {
                 accessItemList.add(new AccessItem(productToPublish.getExternalPriceItem().getName()));
             }

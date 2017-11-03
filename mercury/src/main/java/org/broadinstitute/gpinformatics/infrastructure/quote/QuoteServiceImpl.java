@@ -80,7 +80,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         //TODO this next enum value will be removed soon.
         SINGLE_NUMERIC_QUOTE("/quotes/ws/portals/private/getquotes?with_funding=true&quote_ids="),
         REGISTER_BLOCKED_WORK("/quotes/rest/create_blocked_work"),
-        PRICE_ITEM_DETAILS("/quotes/rest/getPriceITem");
+        PRICE_ITEM_DETAILS("/quotes/rest/getPriceitem");
 
         String suffixUrl;
 
@@ -393,6 +393,11 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
 
         for (QuoteImportItem targetedPriceItemCriterion : targetedPriceItemCriteria) {
 
+            orderedPriceItemNames.add(targetedPriceItemCriterion.getPriceItem().getName());
+            orderedCategoryNames.add(targetedPriceItemCriterion.getPriceItem().getCategory());
+            orderedPlatformNames.add(targetedPriceItemCriterion.getPriceItem().getPlatform());
+            orderedEffectiveDates.add(FastDateFormat.getInstance(EFFECTIVE_DATE_FORMAT).format(targetedPriceItemCriterion.getWorkCompleteDate()));
+
             final PriceItem primaryPriceItem =
                     targetedPriceItemCriterion.getProductOrder().determinePriceItemByCompanyCode(targetedPriceItemCriterion.getProductOrder().getProduct());
             orderedPriceItemNames.add(primaryPriceItem.getName());
@@ -422,8 +427,13 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         WebResource resource = getJerseyClient().resource( urlString);
 
         try {
-            priceList = resource.accept(MediaType.APPLICATION_XML).get(PriceList.class);
-            resource.queryParams(params);
+            resource.accept(MediaType.APPLICATION_XML);
+            final ClientResponse clientResponse = resource.queryParams(params).get(ClientResponse.class);
+            priceList = clientResponse.getEntity(PriceList.class);
+
+            if(priceList == null) {
+                throw new QuoteServerException("No results returned when looking for price items :" + orderedPriceItemNames);
+            }
         } catch (UniformInterfaceException e) {
             final String priceFindErrorMessage = "Could not find specific billing prices for the given work complete dates::";
             log.error(priceFindErrorMessage+urlString, e);
