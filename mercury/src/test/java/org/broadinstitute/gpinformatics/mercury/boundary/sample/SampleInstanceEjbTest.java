@@ -7,7 +7,6 @@ import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VesselPooledTubesProcessor;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -20,9 +19,7 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Random;
 
-import static com.javafx.tools.doclets.formats.html.markup.HtmlStyle.bar;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation_.barcode;
 
 @Test(groups = TestGroups.STANDARD)
 public class SampleInstanceEjbTest extends Arquillian {
