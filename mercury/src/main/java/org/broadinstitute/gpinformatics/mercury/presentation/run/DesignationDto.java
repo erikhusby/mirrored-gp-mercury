@@ -109,10 +109,14 @@ public class DesignationDto implements Cloneable, FctDto {
     }
 
 
-    /** Defines how designations may be combined on a flowcell. */
-    public String fctGrouping() {
+    /**
+     * Defines how designations may be combined on a flowcell.
+     * @param ignoreRegulatoryDesignation indicates whether to ignore or to use the regulatory designation.
+     */
+    public String fctGrouping(boolean ignoreRegulatoryDesignation) {
         return "FctGrouping{" + getSequencerModel() + ", " + calculateCycles() + " cycles, " +
-               getReadLength() + " readLength, " + getIndexType() + " index, " + getRegulatoryDesignation() + "}";
+                getReadLength() + " readLength, " + getIndexType() + " index" +
+                (ignoreRegulatoryDesignation ? "" : ", " + getRegulatoryDesignation()) + "}";
     }
 
     /** Calculates the number of cycles from read length, paired end read, and index type. */

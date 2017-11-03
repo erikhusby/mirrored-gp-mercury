@@ -87,6 +87,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
@@ -1294,5 +1295,22 @@ public class ProductOrderFixupTest extends Arquillian {
 
         productOrderDao.persist(new FixupCommentary(fixupReason ));
         commitTransaction();
+    }
+
+    @Test(enabled = false)
+    public void support3471AddSampleToSupportData() throws Exception {
+
+        String productOrderString = "PDO-13241";
+        ProductOrderSample sampleToAdd = new ProductOrderSample("SM-DAMWL");
+
+        userBean.loginOSUser();
+        beginTransaction();
+
+
+        productOrderEjb.addSamplesNoSap(productOrderString, Collections.singletonList(sampleToAdd),MessageReporter.UNUSED);
+
+        productOrderDao.persist(new FixupCommentary("SUPPORT-3471:  Adding The stock for a control sample since that is what was sequenced in the LCSet" ));
+        commitTransaction();
+
     }
 }
