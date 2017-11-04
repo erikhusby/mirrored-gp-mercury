@@ -117,7 +117,8 @@ public class InfiniumArchiver {
     /**
      * Finds chips that have LabEventType.INFINIUM_AUTOCALL_ALL_STARTED events that are old enough that the chips are
      * likely to have been analyzed.
-     * @return list of chip barcodes (not entities, because this method clears the session periodically)
+     * @return list of chip barcodes (not entities, because this method clears the session periodically) and true
+     * if Mercury (rather than GAP) is responsible for archiving.
      */
     List<Pair<String, Boolean>> findChipsToArchive(int limit, Date archiveDate) {
         List<LabVessel> infiniumChips = labVesselDao.findAllWithEventButMissingAnother(
@@ -156,7 +157,7 @@ public class InfiniumArchiver {
     }
 
     /**
-     * This code is inspired by GAP's InfiniumArchiveBean.archiveChip.
+     * This code is mostly copied from GAP's InfiniumArchiveBean.archiveChip.
      */
     static void archiveChip(String barcode, InfiniumStarterConfig infiniumStarterConfig) {
         log.info("Archiving Chip Barcode " + barcode);

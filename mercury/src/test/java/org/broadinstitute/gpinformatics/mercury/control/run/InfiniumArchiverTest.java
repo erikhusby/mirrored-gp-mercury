@@ -17,6 +17,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.List;
@@ -40,7 +41,7 @@ public class InfiniumArchiverTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
-    public void testX() {
+    public void testQuery() {
         GregorianCalendar gregorianCalendar = new GregorianCalendar();
         gregorianCalendar.add(Calendar.DAY_OF_YEAR, -20);
         List<Pair<String, Boolean>> chipsToArchive = infiniumArchiver.findChipsToArchive(50,
@@ -52,7 +53,7 @@ public class InfiniumArchiverTest extends Arquillian {
         }
     }
 
-    public void testY() {
+    public void testZip() {
         try {
             Path infiniumTest = Files.createTempDirectory("infiniumTest");
 
@@ -64,15 +65,20 @@ public class InfiniumArchiverTest extends Arquillian {
             String position = "R01C01";
             File jpg = new File(chipDataDir, barcode + "_" + position + "_Red.jpg");
             Assert.assertTrue(jpg.createNewFile());
-            File idat = new File(chipDataDir, barcode + "_" + position + "_Red.idat");
+            String idatName = barcode + "_" + position + "_Red.idat";
+            File idat = new File(chipDataDir, idatName);
             Assert.assertTrue(idat.createNewFile());
+            List<String> expectedNames = new ArrayList<>();
+            expectedNames.add(idatName);
 
             File decodeData = new File(infiniumTest.toFile(), "decodeData");
             Assert.assertTrue(decodeData.mkdir());
             File chipDecodeData = new File(decodeData, barcode);
             Assert.assertTrue(chipDecodeData.mkdir());
-            File dmap = new File(chipDecodeData, barcode + "_" + position + "_1.dmap.gz");
+            String dmapName = barcode + "_" + position + "_1.dmap.gz";
+            File dmap = new File(chipDecodeData, dmapName);
             Assert.assertTrue(dmap.createNewFile());
+            expectedNames.add(dmapName);
 
             File archive = new File(infiniumTest.toFile(), "archive");
             Assert.assertTrue(archive.mkdir());
@@ -87,9 +93,15 @@ public class InfiniumArchiverTest extends Arquillian {
             File zipFile = new File(archive, barcode + ".zip");
             ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream(zipFile));
             ZipEntry nextEntry;
+            int found = 0;
             while((nextEntry = zipInputStream.getNextEntry()) != null) {
-                nextEntry.getName();
+                for (String expectedName : expectedNames) {
+                    if (nextEntry.getName().endsWith(expectedName)) {
+                        found++;
+                    }
+                }
             }
+           Assert.assertEquals(found, expectedNames.size());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
