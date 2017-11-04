@@ -261,26 +261,10 @@ public class InfiniumArchiver {
             }
 
             if (decodeDataDir.exists()) {
-                // We only remove the decode data if:
-                // we are NOT doing rescan archiving AND the chip is not flagged for rescan
-                // or
-                // we ARE doing rescan archiving AND the chip has been flagged for rescan..
-                // (isn't that an XOR?)
-//                    if ((!rescanArchiving && !chipFlaggedForRescan) ||
-//                            (rescanArchiving && chipFlaggedForRescan)) {
-                    deleteDirectory(decodeDataDir);
-//                    File archivedDecodeDataDir = new File(new File(baseDecodeDataDir, ARCHIVED_DIR_NAME), barcode);
-//                    if (!decodeDataDir.renameTo(archivedDecodeDataDir)) {
-//                        log.error("Failed to rename " + decodeDataDir + " to " + archivedDecodeDataDir);
-//                    }
-//                    }
+                deleteDirectory(decodeDataDir);
             }
         } else {
             // If here, something failed - do clean up...
-            // Note that I am NOT deleting the zip file if found on pending.  Not sure why it would be there, but....
-//            if (newZipFileLocn.exists()) {
-//                newZipFileLocn.delete();
-//            }
             if (newDecodeDataDir.exists()) {
                 deleteDirectory(newDecodeDataDir);
             }
