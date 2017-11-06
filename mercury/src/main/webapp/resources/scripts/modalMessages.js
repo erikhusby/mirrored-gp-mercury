@@ -30,15 +30,16 @@
  * @returns {{add: add message, clear: clear messages, hide: hide messages}}
  */
 var modalMessages = function (level = "info", options={}) {
+    var defaults = {
+        onClose: clearMessages
+};
     // automatic initialization:
     (function () {
         var levels = ['success', 'info', 'warning', 'error'];
         if (levels.indexOf(level) === -1) {
             throw `Invalid message level '${level}'. valid options are ${levels.join(", ")}.`;
         }
-
         this.className = 'alert-' + level;
-
         this.messageBlock = document.querySelector("div.message-block");
         if (this.messageBlock == undefined) {
             this.messageBlock = createElement("<div class='message-block modal'></div>");
@@ -56,24 +57,13 @@ var modalMessages = function (level = "info", options={}) {
         hideContainer();
 
         var closeButton = this.messageContainer.querySelector("button.close");
-        if (options && options.onClose) {
-            if (isFunction(options.onClose)) {
-                closeButton.addEventListener("click", function () {
-                    options.onClose();
-                    messageBlock = document.querySelector("div.message-block");
-                    messageBlock.removeChild(this.parentElement);
-                    if (messageBlock.childElementCount == 0) {
-                        messageBlock.remove();
-                    }
-                }, true);
-            }
-        } else {
-            (function (container) {
-                    closeButton.addEventListener("click", function () {
-                        container.style.visibility = "hidden";
-                    }, false);
-                }(this.messageContainer)
-            )
+        if (options.onClose == undefined) {
+            options.onClose = defaults.onClose;
+        }
+        if (isFunction(options.onClose)) {
+            closeButton.addEventListener("click", function () {
+                options.onClose(this.parentNode);
+            }, false);
         }
     }());
 
@@ -87,6 +77,9 @@ var modalMessages = function (level = "info", options={}) {
         },
         hide: function () {
             hideContainer();
+        },
+        show: function () {
+            showContainer();
         }
     };
 
@@ -106,6 +99,9 @@ var modalMessages = function (level = "info", options={}) {
             if (messageSelector !== undefined) {
                 messageElement.setAttribute("data-message-item", messageSelector);
             }
+        }
+        if (this.messageContainer.querySelector("ul") == undefined) {
+            this.messageContainer.visibility = 'hidden';
         }
         messageElement.innerHTML = messageText;
         var listContainer = getListContainer(level);
@@ -129,12 +125,15 @@ var modalMessages = function (level = "info", options={}) {
         return child;
     }
 
-    function clearMessages() {
-        var outerDiv = this.messageContainer.getElementsByClassName(this.className);
-        for (var i = 0; i < outerDiv.length; i++) {
-            outerDiv[i].innerHTML = "";
+    function clearMessages(container = this.messageContainer) {
+        if (container==undefined){
+            return;
         }
-        hideContainer();
+        var messageBlock = container.parentNode;
+        messageBlock.removeChild(container);
+        if (messageBlock.childElementCount === 0) {
+            messageBlock.parentNode.removeChild(messageBlock)
+        }
     }
 
     function showContainer() {
