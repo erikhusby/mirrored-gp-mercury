@@ -856,6 +856,14 @@
 
                 priceListText += "external list price: $" + data.externalListPrice;
             }
+
+            if(data.clinicalPrice  !== undefined && data.clinicalPrice.length > 0) {
+                if(priceListText.length > 0) {
+                    priceListText += ",  ";
+                }
+
+                priceListText += "Clinical list price: $" + data.clinicalPrice;
+            }
             $j("#primaryProductListPrice").text(priceListText);
             if(priceListText.length > 0) {
                 $j("#primaryProductListPrice").show();
@@ -1582,29 +1590,29 @@
                         </div>
                     </div>
 
-                    <div class="control-group">
-                        <stripes:label for="orderType" class="control-label">
-                            Order Type <c:if test="${not actionBean.editOrder.draft}">*</c:if>
-                        </stripes:label>
-                        <div class="controls">
-                            <c:choose>
-                                <c:when test="${actionBean.editOrder.childOrder}">
-                                    <c:if test="${actionBean.editOrder.orderType != null}">
-                                        <stripes:hidden name="orderType" id="orderType"
-                                                        value="${actionBean.editOrder.orderType.displayName}"/>
-                                    </c:if>
-                                </c:when>
-                                <c:otherwise>
-                                    <stripes:select name="orderType" id="orderType" class="form-value">
-                                        <stripes:option value="">Select an Order Type</stripes:option>
-                                        <stripes:options-collection collection="${actionBean.orderTypeDisplayNames}"
-                                                                    label="displayName"
-                                                                    value="displayName"/>
-                                    </stripes:select>
-                                </c:otherwise>
-                            </c:choose>
-                        </div>
-                    </div>
+                    <%--<div class="control-group">--%>
+                        <%--<stripes:label for="orderType" class="control-label">--%>
+                            <%--Order Type <c:if test="${not actionBean.editOrder.draft}">*</c:if>--%>
+                        <%--</stripes:label>--%>
+                        <%--<div class="controls">--%>
+                            <%--<c:choose>--%>
+                                <%--<c:when test="${actionBean.editOrder.childOrder}">--%>
+                                    <%--<c:if test="${actionBean.editOrder.orderType != null}">--%>
+                                        <%--<stripes:hidden name="orderType" id="orderType"--%>
+                                                        <%--value="${actionBean.editOrder.orderType.displayName}"/>--%>
+                                    <%--</c:if>--%>
+                                <%--</c:when>--%>
+                                <%--<c:otherwise>--%>
+                                    <%--<stripes:select name="orderType" id="orderType" class="form-value">--%>
+                                        <%--<stripes:option value="">Select an Order Type</stripes:option>--%>
+                                        <%--<stripes:options-collection collection="${actionBean.orderTypeDisplayNames}"--%>
+                                                                    <%--label="displayName"--%>
+                                                                    <%--value="displayName"/>--%>
+                                    <%--</stripes:select>--%>
+                                <%--</c:otherwise>--%>
+                            <%--</c:choose>--%>
+                        <%--</div>--%>
+                    <%--</div>--%>
                 </security:authorizeBlock>
 
                 <div class="control-group">

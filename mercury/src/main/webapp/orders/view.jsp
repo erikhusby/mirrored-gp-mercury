@@ -99,6 +99,7 @@ $j(document).ready(function () {
 
     setupDialogs();
     renderCustomizationSummary();
+    updateFundsRemaining();
 
     function renderCustomizationSummary() {
         var customJSONString = $j("#customizationJsonString").val();
@@ -287,7 +288,6 @@ $j(document).ready(function () {
                 }
                 loadBspData(settings);
                 initColumnVisibility(settings);
-                updateFundsRemaining();
 
 //                postLoadSampleInfo();
                 // Only show the fill kit detail information for sample initiation PDOs. With the collaboration portal, there
@@ -797,7 +797,7 @@ function updateFundsRemaining() {
     var productOrderKey = $j("input[name='productOrder'").val();
     if ($j.trim(quoteIdentifier)) {
         $j.ajax({
-            url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=${actionBean.editOrder.quoteId}&productOrder=" + productOrderKey,
+            url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier="+quoteIdentifier+"&productOrder=" + productOrderKey,
             dataType: 'json',
             success: updateFunds
         });

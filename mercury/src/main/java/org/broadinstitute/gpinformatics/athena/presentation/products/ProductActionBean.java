@@ -20,9 +20,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductPdfFactory;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -45,6 +48,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.sap.services.SAPIntegrationException;
+import org.springframework.util.CollectionUtils;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletResponse;
@@ -161,6 +165,8 @@ public class ProductActionBean extends CoreActionBean {
     })
     private Product editProduct;
 
+    private boolean productUsedInOrders = false;
+
     public ProductActionBean() {
         super(CREATE_PRODUCT, EDIT_PRODUCT, PRODUCT_PARAMETER);
     }
@@ -263,6 +269,9 @@ public class ProductActionBean extends CoreActionBean {
             if (editProduct.getPositiveControlResearchProject() != null) {
                 controlsProject = editProduct.getPositiveControlResearchProject().getBusinessKey();
             }
+
+            final List<ProductOrder> productOrderList = productDao.findList(ProductOrder.class, ProductOrder_.product, editProduct);
+            productUsedInOrders = !CollectionUtils.isEmpty(productOrderList);
         }
     }
 
@@ -725,6 +734,7 @@ public class ProductActionBean extends CoreActionBean {
     }
 
     public boolean productInSAP(String partNumber) {
+
         return productPriceCache.productExists(partNumber);
     }
 
@@ -796,4 +806,9 @@ public class ProductActionBean extends CoreActionBean {
     public SAPProductPriceCache getProductPriceCache() {
         return productPriceCache;
     }
+
+    public boolean isProductUsedInOrders() {
+        return productUsedInOrders;
+    }
+    
 }

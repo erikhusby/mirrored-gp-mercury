@@ -308,10 +308,10 @@
                                 Only offered as Commercial Product
                             </stripes:label>
                             <div class="controls">
-                                <stripes:checkbox id="externalOrderOnly" name="editProduct.externalOnlyProduct" style="margin-top: 10px;"/>
-                                <c:if test="${!actionBean.productInSAP(editProduct.partNumber)}">
-                                    <stripes:hidden name="editProduct.externalOnlyProduct" value="${actionBean.editProduct.externalOnlyProduct}" />
-                                </c:if>
+                                <stripes:checkbox id="externalOrderOnly" name="editProduct.externalOnlyProduct" style="margin-top: 10px;" disabled="${actionBean.productUsedInOrders}"/>
+                                <%--<c:if test="${!actionBean.productInSAP(actionBean.editProduct.partNumber)}">--%>
+                                    <%--<stripes:hidden name="editProduct.externalOnlyProduct" value="${actionBean.editProduct.externalOnlyProduct}" />--%>
+                                <%--</c:if>--%>
                             </div>
                         </div>
                         <div class="control-group">
@@ -319,10 +319,10 @@
                                 Clinical Product
                             </stripes:label>
                             <div class="controls">
-                                <stripes:checkbox id="clinicalProduct" name="editProduct.clinicalProduct" style="margin-top: 10px;"/>
-                                <c:if test="${!actionBean.productInSAP(editProduct.partNumber)}">
-                                    <stripes:hidden name="editProduct.clinicalProduct" value="${actionBean.editProduct.clinicalProduct}" />
-                                </c:if>
+                                <stripes:checkbox id="clinicalProduct" name="editProduct.clinicalProduct" style="margin-top: 10px;" disabled="${actionBean.productUsedInOrders}"/>
+                                <%--<c:if test="${!actionBean.productInSAP(actionBean.editProduct.partNumber)}">--%>
+                                    <%--<stripes:hidden name="editProduct.clinicalProduct" value="${actionBean.editProduct.clinicalProduct}" />--%>
+                                <%--</c:if>--%>
                             </div>
                         </div>
                     </security:authorizeBlock>
@@ -350,15 +350,16 @@
                     </div>
                 </div>
 
-                <div class="control-group">
-                    <stripes:label for="alternateExternalName" class="control-label">
-                        Alternate (External) Product Name
-                    </stripes:label>
-                    <div class="controls">
-                        <stripes:text id="alternateExternalName" name="editProduct.alternateExternalName" class="defaultText input-xxlarge"
-                            title="Enter the Commercial/Clinical (External) name of the new product"/>
-                    </div>
-                </div>
+                        <%--Saving this implementation for the final 2.0 SAP/GP release of Mercury--%>
+                <%--<div class="control-group">--%>
+                    <%--<stripes:label for="alternateExternalName" class="control-label">--%>
+                        <%--Alternate (External) Product Name--%>
+                    <%--</stripes:label>--%>
+                    <%--<div class="controls">--%>
+                        <%--<stripes:text id="alternateExternalName" name="editProduct.alternateExternalName" class="defaultText input-xxlarge"--%>
+                            <%--title="Enter the Commercial/Clinical (External) name of the new product"/>--%>
+                    <%--</div>--%>
+                <%--</div>--%>
 
                 <div class="control-group">
                     <stripes:label for="description" class="control-label">
@@ -376,7 +377,7 @@
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="partNumber" name="editProduct.partNumber" class="defaultText input-xxlarge"
-                            title="Enter the part number of the new product" readonly="${actionBean.productInSAP(editProduct.partNumber)}"/>
+                            title="Enter the part number of the new product" readonly="${actionBean.productUsedInOrders}"/>
                     </div>
                 </div>
 
@@ -479,15 +480,16 @@
                     </div>
                 </div>
 
-                    <div class="control-group">
-                        <stripes:label for="externalPriceItem" class="control-label">
-                                Alternate (External) Price Item
-                        </stripes:label>
-                        <div class="controls">
-                            <stripes:text id="externalPriceItem" name="externalPriceItemTokenInput.listOfKeys"
-                                          class="defaultText" title="Type to search for matching price items"/>
-                        </div>
-                    </div>
+                        <%--Saving this implementation for the final 2.0 SAP/GP release of Mercury--%>
+                    <%--<div class="control-group">--%>
+                        <%--<stripes:label for="externalPriceItem" class="control-label">--%>
+                            <%--Alternate (External) Price Item--%>
+                        <%--</stripes:label>--%>
+                        <%--<div class="controls">--%>
+                            <%--<stripes:text id="externalPriceItem" name="externalPriceItemTokenInput.listOfKeys"--%>
+                                          <%--class="defaultText" title="Type to search for matching price items"/>--%>
+                        <%--</div>--%>
+                    <%--</div>--%>
 
 
                     <div class="control-group">

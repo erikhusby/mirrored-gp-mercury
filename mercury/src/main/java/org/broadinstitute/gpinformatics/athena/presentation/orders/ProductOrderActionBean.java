@@ -1692,14 +1692,15 @@ public class ProductOrderActionBean extends CoreActionBean {
                     editOrder.getProduct().isExternalOnlyProduct()) {
                 editOrder.setOrderType(ProductOrder.OrderAccessType.COMMERCIAL);
             } else {
-                if (userBean.isPDMUser() || userBean.isGPPMUser() || userBean.isDeveloperUser()) {
-
-                    if (orderType != null) {
-                        editOrder.setOrderType(ProductOrder.OrderAccessType.fromDisplayName(orderType));
-                    }
-                } else {
+            // TODO SGM Saving this implementation for the final 2.0 SAP/GP release of Mercury
+//                if (userBean.isPDMUser() || userBean.isGPPMUser() || userBean.isDeveloperUser()) {
+//
+//                    if (orderType != null) {
+//                        editOrder.setOrderType(ProductOrder.OrderAccessType.fromDisplayName(orderType));
+//                    }
+//                } else {
                         editOrder.setOrderType(ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
-                }
+//                }
                 if (StringUtils.isNotBlank(customizationJsonString)) {
                     buildJsonObjectFromEditOrderProductCustomizations();
                 }
@@ -1918,17 +1919,24 @@ public class ProductOrderActionBean extends CoreActionBean {
                 JSONObject item = new JSONObject();
                 item.put("key", addOn.getBusinessKey());
                 item.put("value", addOn.getProductName());
-                item.put("researchListPrice", priceListCache.findByKeyFields(addOn.getPrimaryPriceItem()).getPrice());
-
-                String externalPrice = null;
-                if (addOn.getExternalPriceItem() != null) {
-                    final QuotePriceItem externalPriceListItem = priceListCache.findByKeyFields(addOn.getExternalPriceItem());
-                    if(externalPriceListItem != null) {
-                        externalPrice = externalPriceListItem.getPrice();
-                    }
+                String priceTitle = "researchListPrice";
+                if(addOn.isExternalOnlyProduct()) {
+                    priceTitle =  "externalListPrice";
+                } else if(addOn.isClinicalProduct()) {
+                    priceTitle = "clinicalPrice";
                 }
 
-                item.put("externalListPrice", (externalPrice != null) ?externalPrice:"");
+                item.put(priceTitle , priceListCache.findByKeyFields(addOn.getPrimaryPriceItem()).getPrice());
+
+//                String externalPrice = null;
+//                if (addOn.getExternalPriceItem() != null) {
+//                    final QuotePriceItem externalPriceListItem = priceListCache.findByKeyFields(addOn.getExternalPriceItem());
+//                    if(externalPriceListItem != null) {
+//                        externalPrice = externalPriceListItem.getPrice();
+//                    }
+//                }
+//
+//                item.put("externalListPrice", (externalPrice != null) ?externalPrice:"");
 
                 itemList.put(item);
             }
@@ -2306,15 +2314,25 @@ public class ProductOrderActionBean extends CoreActionBean {
             productInfo.put("clinicalProduct", productEntity.isClinicalProduct());
             productInfo.put("externalProduct", productEntity.isExternalOnlyProduct());
             productInfo.put("productName", productEntity.getName());
-            productInfo.put("researchListPrice", priceListCache.findByKeyFields(productEntity.getPrimaryPriceItem()).getPrice());
-            String externalPrice = null;
-            if (productEntity.getExternalPriceItem() != null) {
-                final QuotePriceItem externalPriceItem = priceListCache.findByKeyFields(productEntity.getExternalPriceItem());
-                if (externalPriceItem != null) {
-                    externalPrice = externalPriceItem.getPrice();
-                }
+            String priceTitle = "researchListPrice";
+
+            if(productEntity.isExternalOnlyProduct()) {
+                priceTitle = "externalListPrice";
             }
-            productInfo.put("externalListPrice", (externalPrice != null)?externalPrice:"");
+            if(productEntity.isClinicalProduct()) {
+                priceTitle = "clinicalPrice";
+            }
+
+
+            productInfo.put(priceTitle, priceListCache.findByKeyFields(productEntity.getPrimaryPriceItem()).getPrice());
+//            String externalPrice = null;
+//            if (productEntity.getExternalPriceItem() != null) {
+//                final QuotePriceItem externalPriceItem = priceListCache.findByKeyFields(productEntity.getExternalPriceItem());
+//                if (externalPriceItem != null) {
+//                    externalPrice = externalPriceItem.getPrice();
+//                }
+//            }
+//            productInfo.put("externalListPrice", (externalPrice != null)?externalPrice:"");
         }
 
         return createTextResolution(productInfo.toString());

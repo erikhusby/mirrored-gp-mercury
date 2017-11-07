@@ -881,7 +881,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         this.externalPriceItem = externalPriceItem;
     }
 
-    public void setClinicalProduct(Boolean clinicalProduct) {
+    public void setClinicalProduct(boolean clinicalProduct) {
         this.clinicalProduct = clinicalProduct;
     }
 

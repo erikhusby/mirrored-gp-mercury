@@ -49,14 +49,16 @@
                 </div>
             </div>
 
-            <c:if test="${actionBean.editProduct.alternateExternalName != null}">
-                <div class="view-control-group control-group">
-                    <label class="control-label label-form">Alternate (External) Product Name</label>
-                    <div class="controls">
-                        <div class="form-value">${actionBean.editProduct.alternateExternalName}</div>
-                    </div>
-                </div>
-            </c:if>
+
+            <%--Saving this implementation for the final 2.0 SAP/GP release of Mercury--%>
+            <%--<c:if test="${actionBean.editProduct.alternateExternalName != null}">--%>
+                <%--<div class="view-control-group control-group">--%>
+                    <%--<label class="control-label label-form">Alternate (External) Product Name</label>--%>
+                    <%--<div class="controls">--%>
+                        <%--<div class="form-value">${actionBean.editProduct.alternateExternalName}</div>--%>
+                    <%--</div>--%>
+                <%--</div>--%>
+            <%--</c:if>--%>
 
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Product Family</label>
@@ -139,14 +141,15 @@
                 </div>
             </div>
 
-            <c:if test="${actionBean.editProduct.externalPriceItem != null}">
-                <div class="view-control-group control-group">
-                    <label class="control-label label-form">Alternate (External) Price Items</label>
-                    <div class="controls">
-                        <div class="form-value">${actionBean.editProduct.externalPriceItem.displayName}</div>
-                    </div>
-                </div>
-            </c:if>
+                <%--Saving this implementation for the final 2.0 SAP/GP release of Mercury--%>
+            <%--<c:if test="${actionBean.editProduct.externalPriceItem != null}">--%>
+                <%--<div class="view-control-group control-group">--%>
+                    <%--<label class="control-label label-form">Alternate (External) Price Items</label>--%>
+                    <%--<div class="controls">--%>
+                        <%--<div class="form-value">${actionBean.editProduct.externalPriceItem.displayName}</div>--%>
+                    <%--</div>--%>
+                <%--</div>--%>
+            <%--</c:if>--%>
 
             <div class="view-control-group control-group">
                 <label class="control-label label-form">PDM Orderable Only</label>

@@ -253,7 +253,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "ORDER_TYPE")
-    private OrderAccessType orderType;
+    private OrderAccessType orderType = OrderAccessType.BROAD_PI_ENGAGED_WORK;
 
     @Column(name = "CLINICAL_ATTESTATION_CONFIRMED")
     private Boolean clinicalAttestationConfirmed = false;
