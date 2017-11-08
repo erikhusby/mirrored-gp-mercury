@@ -118,7 +118,7 @@
                 <stripes:hidden id="storageId" name="storageId"/>
                 <stripes:hidden id="containerBarcode" name="containerBarcode"/>
                 <stripes:text id="storageName" name="storageName" value="${actionBean.locationTrail}" readonly="true" style="width:${empty actionBean.locationTrail ? 200 : actionBean.locationTrail.length() * 8}px"/>
-                <c:if test="${actionBean.showLayout && !actionBean.editLayout}">
+                <c:if test="${not empty actionBean.staticPlate or (actionBean.showLayout && !actionBean.editLayout)}">
                     <stripes:submit name="browse" id="browse" value="Browse"
                                     class="btn"/>
                     <stripes:submit id="saveStorageLocation" name="saveLocation" value="Save To Location"
