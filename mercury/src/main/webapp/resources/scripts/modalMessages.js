@@ -58,7 +58,7 @@ var modalMessages = function (level = "info", options={}) {
         } else {
             return;
         }
-        this.messageBlock.appendChild(this.messageContainer);
+        this.messageBlock.prepend(this.messageContainer);
 
         hideContainer();
 
