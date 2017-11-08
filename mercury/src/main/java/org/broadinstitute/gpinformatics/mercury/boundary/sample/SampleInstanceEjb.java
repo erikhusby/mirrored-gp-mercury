@@ -11,12 +11,10 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
-import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleInstanceEntityDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VesselPooledTubesProcessor;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -58,12 +56,6 @@ public class SampleInstanceEjb {
     static final String NUMBER_MESSAGE = "%s must be a number. Found at row %d";
     static final String UNKNOWN_MESSAGE = "The value for %s is unknown in %s. Found at row %d";
     static final String DUPLICATE_MESSAGE = "Duplicate value for %s %s found at row %d";
-
-    @Inject
-    private VesselEjb vesselEjb;
-
-    @Inject
-    private BarcodedTubeDao barcodedTubeDao;
 
     @Inject
     private MolecularIndexingSchemeDao molecularIndexingSchemeDao;
