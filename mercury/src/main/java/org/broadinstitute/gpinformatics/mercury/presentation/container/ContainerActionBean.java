@@ -454,33 +454,45 @@ public class ContainerActionBean extends RackScanActionBean {
     @HandlesEvent(FIRE_RACK_SCAN)
     public Resolution fireRackScan() throws ScannerException {
         scan();
-        showLayout = true;
+        boolean rackScanEmpty = true;
         MessageCollection messageCollection = new MessageCollection();
         Map<VesselPosition, LabVessel> scanPositionToVessel = new HashMap<>();
         if(getRackScan() != null) {
-            List<String> barcodes = new ArrayList<>(rackScan.values());
-            Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
-            for (Map.Entry<String, String> entry: rackScan.entrySet()) {
-                String position = entry.getKey();
-                String barcode = entry.getValue();
-                LabVessel labVessel = mapBarcodeToVessel.get(barcode);
-                if (labVessel == null) {
-                    messageCollection.addError("Unrecognized tube barcode: " + barcode);
-                } else {
-                    VesselPosition vesselPosition = VesselPosition.getByName(position);
-                    if (vesselPosition == null) {
-                        messageCollection.addError("Unrecognized position: " + position);
-                    } else {
-                        scanPositionToVessel.put(vesselPosition, labVessel);
+            if (rackScan == null || rackScan.isEmpty()) {
+                messageCollection.addError("No results from rack scan");
+            } else {
+                List<String> barcodes = new ArrayList<>(rackScan.values());
+                Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
+                for (Map.Entry<String, String> entry : rackScan.entrySet()) {
+                    if (StringUtils.isNotEmpty(entry.getValue())) {
+                        rackScanEmpty = false;
+                        String position = entry.getKey();
+                        String barcode = entry.getValue();
+                        LabVessel labVessel = mapBarcodeToVessel.get(barcode);
+                        if (labVessel == null) {
+                            messageCollection.addError("Unrecognized tube barcode: " + barcode);
+                        } else {
+                            VesselPosition vesselPosition = VesselPosition.getByName(position);
+                            if (vesselPosition == null) {
+                                messageCollection.addError("Unrecognized position: " + position);
+                            } else {
+                                scanPositionToVessel.put(vesselPosition, labVessel);
+                            }
+                        }
                     }
                 }
             }
+        }
+
+        if (rackScanEmpty) {
+            messageCollection.addError("No results from rack scan");
         }
 
         if (messageCollection.hasErrors()) {
             showLayout = false;
             addMessages(messageCollection);
         } else {
+            showLayout = true;
             mapPositionToVessel = scanPositionToVessel;
         }
         editLayout = true;
