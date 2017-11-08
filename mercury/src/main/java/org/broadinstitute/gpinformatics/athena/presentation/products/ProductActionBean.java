@@ -36,6 +36,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.DisplayableItem;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.PriceItemTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
@@ -473,13 +474,10 @@ public class ProductActionBean extends CoreActionBean {
     public Resolution publishProductsToSap() {
         selectedProducts = productDao.findListByList(Product.class, Product_.partNumber, selectedProductPartNumbers);
         try {
-            for(Product selectedProduct:selectedProducts) {
 
-                productEjb.publishProductToSAP(selectedProduct);
-                addMessage(selectedProduct.getPartNumber() + " was successfully published to SAP");
-            }
-        } catch (SAPIntegrationException e) {
-            addGlobalValidationError("Unable to publish some of the products to SAP. " + e.getMessage());
+                productEjb.publishProductsToSAP(selectedProducts);
+        } catch (ValidationException e) {
+            addGlobalValidationError("Unable to publish some of the products to SAP. " + e.getMessage("<br/>"));
         }
         return new RedirectResolution(ProductActionBean.class,LIST_ACTION);
     }

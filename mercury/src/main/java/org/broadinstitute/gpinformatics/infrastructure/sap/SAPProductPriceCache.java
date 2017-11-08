@@ -144,12 +144,6 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
         return orderedPrices;
     }
 
-    public boolean productExists(Product productToFind) {
-        final String partNumber = productToFind.getPartNumber();
-        return productExists(partNumber);
-
-    }
-
     public boolean productExists(String partNumber) {
         boolean result = false;
         for (SAPMaterial sapMaterial : sapMaterials) {

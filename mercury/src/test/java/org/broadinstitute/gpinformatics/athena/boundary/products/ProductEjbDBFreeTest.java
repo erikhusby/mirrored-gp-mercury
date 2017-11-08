@@ -73,7 +73,7 @@ public class ProductEjbDBFreeTest {
             Assert.fail();
         } catch (SAPIntegrationException e) {
         }
-        Mockito.when(productPriceCache.productExists(Mockito.any(Product.class))).thenReturn(Boolean.TRUE);
+//        Mockito.when(productPriceCache.productExists(Mockito.any(Product.class))).thenReturn(Boolean.TRUE);
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockSapService, Mockito.times(1)).publishProductInSAP(testProduct);
 
@@ -146,7 +146,7 @@ public class ProductEjbDBFreeTest {
             Assert.fail();
         } catch (SAPIntegrationException e) {
         }
-        Mockito.when(productPriceCache.productExists(Mockito.any(Product.class))).thenReturn(Boolean.TRUE);
+//        Mockito.when(productPriceCache.productExists(Mockito.any(Product.class))).thenReturn(Boolean.TRUE);
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockSapService, Mockito.times(1)).publishProductInSAP(testProduct);
 
@@ -224,7 +224,7 @@ public class ProductEjbDBFreeTest {
             Assert.fail();
         } catch (SAPIntegrationException e) {
         }
-        Mockito.when(productPriceCache.productExists(Mockito.any(Product.class))).thenReturn(Boolean.TRUE);
+//        Mockito.when(productPriceCache.productExists(Mockito.any(Product.class))).thenReturn(Boolean.TRUE);
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockSapService, Mockito.times(1)).publishProductInSAP(testProduct);
 
@@ -308,7 +308,7 @@ public class ProductEjbDBFreeTest {
             Assert.fail();
         } catch (SAPIntegrationException e) {
         }
-        Mockito.when(productPriceCache.productExists(Mockito.any(Product.class))).thenReturn(Boolean.TRUE);
+//        Mockito.when(productPriceCache.productExists(Mockito.any(Product.class))).thenReturn(Boolean.TRUE);
 
         final SAPMaterial primaryProductMaterial =
                 new SAPMaterial(testProduct.getPartNumber(), SapIntegrationClientImpl.SystemIdentifier.MERCURY,
@@ -396,7 +396,7 @@ public class ProductEjbDBFreeTest {
             Assert.fail();
         } catch (SAPIntegrationException e) {
         }
-        Mockito.when(productPriceCache.productExists(Mockito.any(Product.class))).thenReturn(Boolean.TRUE);
+//        Mockito.when(productPriceCache.productExists(Mockito.any(Product.class))).thenReturn(Boolean.TRUE);
 
         final SAPMaterial primaryProductMaterial =
                 new SAPMaterial(testProduct.getPartNumber(), SapIntegrationClientImpl.SystemIdentifier.MERCURY,
@@ -492,7 +492,7 @@ public class ProductEjbDBFreeTest {
             Assert.fail();
         } catch (SAPIntegrationException e) {
         }
-        Mockito.when(productPriceCache.productExists(Mockito.any(Product.class))).thenReturn(Boolean.TRUE);
+//        Mockito.when(productPriceCache.productExists(Mockito.any(Product.class))).thenReturn(Boolean.TRUE);
 
         final SAPMaterial primaryProductMaterial =
                 new SAPMaterial(testProduct.getPartNumber(), SapIntegrationClientImpl.SystemIdentifier.MERCURY,
