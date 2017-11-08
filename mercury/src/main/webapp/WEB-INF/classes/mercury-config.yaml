@@ -46,8 +46,8 @@ bsp:
     DEV:
       login:    seqsystem
       password: bspbsp
-      host:     gapdev.broadinstitute.org
-      port:     8080
+      host:     localhost
+      port:     8118
 
     RC:
       login:    seqsystem
@@ -66,8 +66,8 @@ gap:
     DEV:
       login:    seqsystem
       password: bspbsp
-      host:     gapdev.broadinstitute.org
-      port:     8080
+      host:     localhost
+      port:     8118
 
     RC:
       login:    seqsystem
@@ -323,7 +323,7 @@ mercury:
       collaborate: DEV
       bass: PROD
       submission: DEV
-      infiniumStarter: DEV
+      infiniumStarter: DISABLED
       sap:  QA
 
 
@@ -344,7 +344,7 @@ mercury:
       collaborate: DEV
       bass: PROD
       submission: DEV
-      infiniumStarter: DEV
+      infiniumStarter: DISABLED
       sap:  QA
 
     TEST:
@@ -364,7 +364,7 @@ mercury:
       collaborate: DEV
       bass:     PROD
       submission: DEV
-      infiniumStarter: DEV
+      infiniumStarter: DISABLED
       sap:  QA
 
     QA:

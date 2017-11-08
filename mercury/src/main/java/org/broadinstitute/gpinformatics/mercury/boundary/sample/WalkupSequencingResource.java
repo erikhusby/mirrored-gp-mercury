@@ -125,7 +125,7 @@ public class WalkupSequencingResource {
         sampleInstanceEntity.setUploadDate();
 
         sampleInstanceEntity.setLabVessel(labVessel);
-        sampleInstanceEntity.setMercurySampleId(mercurySample);
+        sampleInstanceEntity.setMercurySample(mercurySample);
         sampleInstanceEntityDao.persist(sampleInstanceEntity);
         sampleInstanceEntityDao.flush();
     }

@@ -118,7 +118,7 @@ public class QuoteFundingList extends AbstractCache {
     @Override
     public synchronized void refreshCache() {
         try {
-            Set<Funding> rawFunding = quoteService.getAllFundingSources();
+            if (true)return; Set<Funding> rawFunding = quoteService.getAllFundingSources();
 
             // if fails, use previous cache entry (even if it's null)
             if (rawFunding == null) {

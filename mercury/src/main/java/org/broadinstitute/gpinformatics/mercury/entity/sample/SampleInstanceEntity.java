@@ -219,14 +219,6 @@ public class SampleInstanceEntity {
         this.mercurySample = mercurySample; 
     }
 
-    public void setSampleLibraryName(String sampleLibraryName) {
-        this.sampleLibraryName = sampleLibraryName;
-    }
-
-    public void setMercurySampleId(MercurySample mercurySample){
-        this.mercurySample = mercurySample; 
-    }
-
     public MercurySample getMercurySample() {
         return this.mercurySample;    
     }

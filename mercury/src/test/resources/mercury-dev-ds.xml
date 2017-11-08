@@ -5,11 +5,11 @@
         http://www.jboss.org/ironjacamar/schema
         http://docs.jboss.org/ironjacamar/schema/datasources_1_0.xsd">
     <datasource jndi-name="java:jboss/jdbc/mercury_pool" pool-name="mercury_pool" enabled="true">
-        <connection-url>jdbc:oracle:thin:@vmgpinform:1521:gpinfdev</connection-url>
+        <connection-url>jdbc:oracle:thin:@192.168.194.83:1521:gpgold</connection-url>
         <driver>com.oracle</driver>
         <security>
             <user-name>mercury</user-name>
-            <password>mercury_dev</password>
+            <password>guest</password>
             <!--<password>mercury_local</password>-->
         </security>
         <validation>

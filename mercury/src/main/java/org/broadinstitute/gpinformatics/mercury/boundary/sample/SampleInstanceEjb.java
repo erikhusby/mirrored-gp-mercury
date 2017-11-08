@@ -486,7 +486,7 @@ public class SampleInstanceEjb {
             SampleDataDto sampleDataDto = sampleDataDtoMap.get(sampleName);
             if (sampleDataDto == null) {
                 // Missing metadata means this is a new root sample.
-                mercurySample = new MercurySample(sampleName, MercurySample.MetadataSource.MERCURY, true);
+                mercurySample = new MercurySample(sampleName, MercurySample.MetadataSource.MERCURY);
             } else {
                 Set<Metadata> metadata = new HashSet<>();
                 metadata.add(new Metadata(Metadata.Key.SAMPLE_ID, sampleDataDto.getCollaboratorSampleId()));
@@ -509,7 +509,7 @@ public class SampleInstanceEjb {
             }
             sampleInstanceEntity.setMercurySample(combinedSampleMap.get(rowDto.getBroadSampleId()));
             sampleInstanceEntity.setRootSample(combinedSampleMap.get(rowDto.getRootSampleId()));
-            sampleInstanceEntity.setMolecularIndexScheme(rowDto.getMolecularIndexSchemes());
+            sampleInstanceEntity.setMolecularIndexingScheme(rowDto.getMolecularIndexSchemes());
             sampleInstanceEntity.setSampleLibraryName(rowDto.getLibraryName());
             sampleInstanceEntity.setReagentDesign(rowDto.getReagent());
             sampleInstanceEntity.setReadLength(rowDto.getReadLength());

@@ -51,7 +51,7 @@ public class PooledTubeUploadActionBean extends CoreActionBean {
 
             PoiSpreadsheetParser.processSingleWorksheet(pooledTubesSpreadsheet.getInputStream(), vesselSpreadsheetProcessor);
 
-            sampleInstanceEjb.verifySpreadSheet(vesselSpreadsheetProcessor,messageCollection, overWriteFlag);
+            sampleInstanceEjb.verifyAndPersistSpreadsheet(vesselSpreadsheetProcessor,messageCollection, overWriteFlag);
 
             addMessages(messageCollection);
 
@@ -65,6 +65,9 @@ public class PooledTubeUploadActionBean extends CoreActionBean {
 
     public void setOverWriteFlag(boolean overWriteFlag) { this.overWriteFlag = overWriteFlag; }
 
+    public boolean getOverWriteFlag() {
+        return overWriteFlag;
+    }
 }
 
 
