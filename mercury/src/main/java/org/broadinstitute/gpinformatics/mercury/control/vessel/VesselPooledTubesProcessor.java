@@ -4,11 +4,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 public class VesselPooledTubesProcessor extends TableProcessor {
 
