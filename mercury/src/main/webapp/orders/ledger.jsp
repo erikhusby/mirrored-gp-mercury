@@ -154,7 +154,7 @@
         }
 
         div.alert {
-            margin: 2px;
+            margin: 8px;
         }
 
         .alert ul {
@@ -169,15 +169,19 @@
         var ledgerDetails;
 
         var dateCompleteWarningThreshold = new Date(${actionBean.threeMonthsAgo});
+        var $selectedRows=undefined;
+        function getSelectedRows() {
+            console.time("selectedRows");
+            if ($selectedRows == undefined) {
+                $selectedRows = $j('#ledger tbody input[name=selectedProductOrderSampleIds]:checked').closest("tr");
+            }
+            console.timeEnd("selectedRows");
+            return $selectedRows;
+        }
 
         $j(document).ready(function() {
-            if ("${actionBean.successMessage}" !== ""){
-                var message = modalMessages("success");
-                message.add("${actionBean.successMessage}");
-                setTimeout(function(){
-                    message.clear();
-                },10000);
-            }
+            var ledgerForm = $j('#ledgerForm');
+            modalMessages("intercept");
             /*
              * Extract the values from the quantity fields to use when sorting.
              */
@@ -191,8 +195,9 @@
              * Configure ledger datatable.
              */
             enableDefaultPagingOptions();
-            var ledgerQuantities = $j('input.ledgerQuantity');
-            var ledgerTable = $j('#ledger').dataTable({
+            var $ledger = $j("#ledger");
+            var $ledgerQuantities = $ledger.find('input.ledgerQuantity');
+            var ledgerTable = $ledger.dataTable({
                 <%-- copy/csv/print buttons don't work very will with the hidden columns and text inputs. Buttons need
                      to be overridden with custom mColumns and fnCellRender. Disabling this feature for now by removing
                      the "T" from the sDom string.
@@ -204,7 +209,7 @@
                  * they are filtered out of the DOM when the page loads
                  */
                 'bStateSave': false,
-                'aaSorting': [[2, 'asc']],
+                "iDisplayLength": 50,
                 'aoColumns': [
                     {'bSortable': false},                                                   // 0: checkbox
                     {'bVisible': false},                                                    // 1: search text
@@ -225,33 +230,44 @@
 
                     {'bSortable': true, 'sType': 'title-string'}    // billed
                 ],
+                fnDrawCallback: function(settings){
+                    var wasWarned = localStorage.getItem("largeTableWarningAck");
+                    if (wasWarned === "false" && settings._iDisplayLength >= 1000) {
+                        var message = modalMessages("warning",{
+                            onClose: function() {
+                                localStorage.setItem("largeTableWarningAck", true);
+                                modalMessages("warning").clear();
+                            }
+                        }).add("Please be aware that the user interface is less responsive when large amounts of data are displayed. (clicking things takes longer)", 'slowMessage');
+
+                    }
+                },
                 fnInitComplete: function(){
                     /*
                      * Set up hSpinner widgets for controlling ledger quantities.
                      */
-                    ledgerQuantities.hSpinner({
+                    $ledgerQuantities.hSpinner({
                         additionalChangedSelector: "tr",
-//                        initialVisibility: 'hidden',
                         originalValue: function (element) {
                             return element.querySelector('input[type="hidden"]').value;
                         },
                         incremented: function (event, inputName) {
                             var $escaped = $j("#" + escapeForSelector(inputName));
-                            updateUnbilledStatus($escaped);
-                            applyToSelected(inputName, $escaped, 'increment');
+                            updateUnbilledStatus($escaped, $dateCompleteInputs);
+                            applyToSelected(inputName, $escaped, $dateCompleteInputs, 'increment');
                             updateSubmitButton();
                         },
                         decremented: function (event, inputName) {
                             var $escaped = $j("#" + escapeForSelector(inputName));
-                            updateUnbilledStatus($escaped);
-                            applyToSelected(inputName, $escaped, 'decrement');
+                            updateUnbilledStatus($escaped, $dateCompleteInputs);
+                            applyToSelected(inputName, $escaped, $dateCompleteInputs, 'decrement');
                             updateSubmitButton();
                         },
                         // hSpinner widget "input" event, not to be confused with the browser built-in DOM "input" event.
                         input: function (event, inputName) {
                             var $escaped = $j("#" + escapeForSelector(inputName));
-                            updateUnbilledStatus($escaped);
-                            applyToSelected(inputName, $escaped, 'setValue');
+                            updateUnbilledStatus($escaped, $dateCompleteInputs);
+                            applyToSelected(inputName, $escaped, $dateCompleteInputs, 'setValue');
                             updateSubmitButton();
                         }
                     });
@@ -260,12 +276,11 @@
                      * When rows are selected and one "date complete" is changed, change all selected rows.
                      */
                     $j('#ledger').on('change', '.dateComplete', function(event) {
-                        var $selectedRows = $j(getSelectedRows());
                         var $input = $j(event.target);
                         var value = $input.val();
-                        if ($selectedRows.length > 0) {
+                        if (getSelectedRows().length > 0) {
                             var inputName = $input.attr('name');
-                            var $selectedInputs = $selectedRows.find('input.dateComplete:enabled');
+                            var $selectedInputs = getSelectedRows().find('input.dateComplete:enabled');
                             for (var i = 0; i < $selectedInputs.length; i++) {
                                 var $selectedInput = $selectedInputs.eq(i);
                                 if ($selectedInput.attr('name') != inputName) {
@@ -287,8 +302,9 @@
                 }
             });
             // Reuse the existing filter input, but unbind its usual behavior and replace it with our own.
-            $j(".dataTables_filter input").unbind('keyup');
-            $j('.dataTables_filter input').on('input', function() {
+            var $datatablesFilter = $j("#ledger_filter").find("input");
+            $datatablesFilter.unbind('keyup');
+            $datatablesFilter.on('input', function() {
                 var tab = RegExp("\\t", "g");
                 var filter = $j(this).val().trim().replace(tab, " ");
                 var regexFilter = '.';
@@ -297,6 +313,16 @@
                 }
                 ledgerTable.fnFilter(regexFilter, 1, true, false);
             });
+
+            function autoFill() {
+                $j('#ledger .autoFillQuantity').each(function() {
+                    var $autoFillValueInput = $j(this);
+                    var $ledgerQuantityInput = $autoFillValueInput.parent().find('.ledgerQuantity');
+                    $ledgerQuantityInput.hSpinner('setValue', $autoFillValueInput.val());
+                    updateUnbilledStatus($ledgerQuantityInput, $dateCompleteInputs)
+                });
+                updateSubmitButton();
+            }
 
             /*
              * Set up ledger datatable filters.
@@ -312,7 +338,8 @@
                 'abandoned': 3,
                 'modified': 4
             };
-            $j('#filters .filterOption').click(function(event) {
+            var $filters = $j('#filters');
+            $filters.on('click', ".filterOption", function(event) {
                 var $target = $j(event.target);
                 var filterIndex = filterIndexes[$target.attr('name')];
                 var filterFunction = window[$target.attr('value')];
@@ -328,7 +355,7 @@
                 ledgerTable.fnDraw();
                 event.preventDefault();
             });
-            $j('#filters').show();
+            $filters.show();
 
             /*
              * Set up on-risk hover.
@@ -338,23 +365,32 @@
             /*
              * Set up date pickers for date complete.
              */
-            $j('.dateComplete').datepicker({ dateFormat: 'M d, yy', maxDate: 0 }).datepicker('refresh');
 
+            var $dateCompleteInputs = $ledger.find("input.dateComplete");
+            $dateCompleteInputs.on("click", function(){
+                var $thisInput = $j(this);
+                function destroyMe(){
+                    $j(this).datepicker("destroy");
+                }
+                $thisInput.datepicker({ onClose: destroyMe, dateFormat: 'M d, yy', maxDate: 0}).datepicker('refresh');
+                $thisInput.datepicker("show");
+
+
+            });
             // Update display styles for all date complete inputs when the page loads.
-            var dateCompleteInputs = $j('.dateComplete');
-            for (var i = 0; i < dateCompleteInputs.length; i++) {
-                updateDateCompleteValidation(dateCompleteInputs.eq(i));
+            for (var i = 0; i < $dateCompleteInputs.length; i++) {
+                updateDateCompleteValidation($dateCompleteInputs.eq(i));
             }
 
             // Update display styles in response to change event fired after auto-fill.
-            ledgerQuantities.on('change', function(event) {
-                updateUnbilledStatus($j(event.target));
+            $ledgerQuantities.on('change', function(event) {
+                updateUnbilledStatus($j(event.target), $dateCompleteInputs);
                 updateSubmitButton();
             });
 
             // Update display styles for all quantities when the page loads.
-            for (var i = 0; i < ledgerQuantities.length; i++) {
-                updateUnbilledStatus(ledgerQuantities.eq(i));
+            for (var i = 0; i < $ledgerQuantities.length; i++) {
+                updateUnbilledStatus($ledgerQuantities.eq(i), $dateCompleteInputs);
             }
 
             function toggleHidden(row) {
@@ -366,7 +402,7 @@
                 }
             }
 
-            $j("#ledger tbody tr").on('click', function(event){
+            $ledger.on('click', 'tbody tr', function(event){
                 var $hSpinner = $j(".hSpinner");
                 $hSpinner.filter(":visible").hSpinner('option',{hidden:true});
                 toggleHidden(event.currentTarget, "toggle");
@@ -376,21 +412,26 @@
             /*
              * Handle enable/disable of row inputs based on checkboxes.
              */
-            $j('#ledger').on('click', 'input:checkbox', function () {
-                var selectedRows = getSelectedRows();
-                var unselectedRows = $j("#ledger tbody tr").not(selectedRows);
-                if (selectedRows.length > 0) {
-                    unselectedRows.filter(".dateComplete").datepicker().datepicker('disable')
-                    unselectedRows.filter(".ledgerQuantity").hSpinner().hSpinner('disable')
+            $ledger.on('change', 'input:checkbox', function () {
+                $selectedRows=undefined;
+                getSelectedRows();
+
+                console.time("unselectedRows");
+                var unselectedRows = $j("#ledger").find("tbody tr").not($selectedRows);
+                console.timeEnd("unselectedRows");
+                var inputs = unselectedRows.find("input");
+
+                if ($selectedRows.length > 0) {
+                    unselectedRows.filter(".dateComplete").prop('disabled',true);
+                    unselectedRows.filter(".ledgerQuantity").hSpinner().hSpinner('disable');
                     var isChecked = function () {
-                        $j(this).closest("tr").filter("input[name=selectedProductOrderSampleIds]:checked") != 0;
+                        $j(this).closest("tr").filter("input[name=selectedProductOrderSampleIds]:checked") !== 0;
                     };
-                    $j('input.dateComplete.pending').filter(isChecked()).datepicker().datepicker('enable');
-                    $j('input.ledgerQuantity').filter(isChecked()).hSpinner().hSpinner('enable');
+                    inputs.filter(".dateComplete.pending").prop('disabled', false);
+                    $ledgerQuantities.filter(isChecked()).hSpinner().hSpinner('enable');
                 } else {
-                    var inputs = unselectedRows.find("input");
-                    inputs.filter(".dateComplete.pending").datepicker().datepicker('enable');
-                    inputs.filter(".ledgerQuantity").datepicker().datepicker('enable');
+                    inputs.filter(".dateComplete.pending").prop('disabled', false);
+                    inputs.filter(".ledgerQuantity").hSpinner().hSpinner('enable');
                 }
             });
 
@@ -406,27 +447,30 @@
                 autoFill();
             });
 
-            $j('#ledgerForm').submit(function (event) {
-                $j('#updateLedgers').attr('disabled', true);
+            ledgerForm.submit(function (event) {
                 var infoMessages = modalMessages("info");
-                infoMessages.add("Updating Ledgers...", "updateStatus");
+                var statusNamespace = "updateStatus";
+                infoMessages.add("Updating Ledger", statusNamespace);
+
+                var formData = $j(event.target).serializeArray();
+
                 try {
-                    var allDataByRow={};
-                    var allRows=[];
+                    var allDataByRow = {};
+                    var allRows = [];
                     var changedRows = $j(ledgerTable.fnGetNodes()).filter('.changed');
                     var dom = changedRows.find("input").filter("[name^='ledgerData']").get();
                     for (var i = dom.length - 1; i >= 0; i--) {
                         var input = {};
                         input['name'] = dom[i].name;
                         input['value'] = dom[i].value;
-                        var rowNum=dom[i].getAttribute('data-rownum');
+                        var rowNum = dom[i].getAttribute('data-rownum');
                         row = allDataByRow[rowNum];
-                        if (row===undefined){
-                            row=[];
+                        if (row === undefined) {
+                            row = [];
                         }
                         row.push(input);
                         allDataByRow[rowNum] = row;
-                        if (allRows.indexOf(rowNum)===-1){
+                        if (allRows.indexOf(rowNum) === -1) {
                             allRows.push(rowNum);
                         }
                     }
@@ -437,19 +481,19 @@
                     var rowsCompleted = 0;
                     var queue = $j.ajaxMultiQueue(5);
                     while (allRows.length > 0) {
-                        var submitRows = allRows.splice(0,1000);
-                        var submitData=[];
-                        submitRows.forEach(function(key){
+                        var submitRows = allRows.splice(0, 1000);
+                        var submitData = formData;
+                        submitRows.forEach(function (key) {
                             allDataByRow[key].forEach(function (mapEntry) {
                                 submitData = submitData.concat(mapEntry);
                             });
                         });
-                        if (allRows.length===0){
-                            submitData.push({name:'redirectOnSuccess',value: true})
+                        if (allRows.length === 0) {
+                            submitData.push({name: 'redirectOnSuccess', value: true})
                         }
                         queue.queue({
                             url: '${ctxpath}/orders/ledger.action?updateLedgers&orderId=${actionBean.productOrder.businessKey}',
-                            data: submitData,
+                            data: $j(submitData),
                             type: 'post',
                             dataType: 'json',
                             success: function (json) {
@@ -459,34 +503,36 @@
                                     samples.push(dataItems[i].sampleName);
                                 }
                                 var message = undefined;
-                                rowsRemaining-=samples.length;
+                                rowsRemaining -= samples.length;
                                 rowsCompleted += samples.length;
                                 if (samples.length <= 20) {
                                     message = "Ledger data updated for ".concat(samples.join(", ")).concat(".");
                                 } else {
                                     message = "Ledger data updated for ".concat(rowsCompleted).concat(" samples, ").concat(rowsRemaining).concat(" remaining.");
                                 }
-                                infoMessages.add(message, "updateStatus");
+                                infoMessages.add(message, statusNamespace);
                                 message = "&successMessage=Successfully updated ".concat(rowsCompleted).concat(" ledger entries.");
                                 if (json.redirectOnSuccess) {
                                     modalMessages('success').add("Updates complete, reloading page...");
 
                                     $j(".changed").removeClass("changed");
                                     setTimeout(function () {
-                                        window.location.replace("${ctxpath}/orders/ledger.action?orderId=${actionBean.productOrder.businessKey}"+message);
+                                        window.location.replace("${ctxpath}/orders/ledger.action?orderId=${actionBean.productOrder.businessKey}" + message);
                                     }, 5000);
                                 }
                             },
-                            error: function (json) {
-                                errorMessages = modalMessages("error");
-                                if (json.responseJSON) {
-                                    var errors = json.responseJSON['error'];
+                            error: function (jqxhr, status, thrownError) {
+                                var errorMessages = modalMessages("error");
+                                if (jqxhr.responseJSON) {
+                                    var errors = jqxhr.responseJSON['error'];
                                     for (var i = 0; i < errors.length; i++) {
                                         errorMessages.add(errors[i]);
                                     }
                                     if (errors.length === 0) {
-                                        errorMessages.add("Unknown Error: ", json.statusText);
+                                        errorMessages.add("Unknown Error: " + jqxhr.statusText);
                                     }
+                                } else {
+                                    errorMessages.add(thrownError);
                                 }
                             }
                         });
@@ -511,7 +557,7 @@
              * Data for this table comes from DOM and is initially hidden and shown only after applying DataTables. This
              * avoids extra rendering and repositioning/flickering.
              */
-            $j('#ledger').show();
+            $ledger.show();
 
             // Enable the submit button if there are changes from a previous form submit that had validation errors
             updateSubmitButton();
@@ -552,6 +598,25 @@
                     icon.addClass('icon-plus-sign');
                 }
             });
+            function applyToSelected(inputName, input, dateComplete, action) {
+                /*
+                 * Select starting with the checked samples, find the parent rows, find the child inputs for the
+                 * same price item, but not the current input, and apply the action.
+                 */
+                var priceItemId = input.attr('priceItemId');
+                var $quantityInputs = getSelectedRows().find('input.ledgerQuantity[priceItemId=' + priceItemId + ']');
+                var value = input.val();
+
+                for (var i = 0; i < $quantityInputs.length; i++) {
+                    var $quantityInput = $quantityInputs.eq(i);
+                    var name = $quantityInput.attr('name');
+                    if (name != inputName) {
+                        $quantityInput.hSpinner(action, value);
+                        updateUnbilledStatus($j('#' + escapeForSelector(name)), dateComplete);
+                    }
+                }
+            }
+
         });
 
         /*
@@ -625,28 +690,7 @@
 </c:if>
         }
 
-        function getSelectedRows() {
-            return $j('#ledger tbody input[name=selectedProductOrderSampleIds]:checked').closest("tr");
-        }
 
-        function applyToSelected(inputName, input, action) {
-            /*
-             * Select starting with the checked samples, find the parent rows, find the child inputs for the
-             * same price item, but not the current input, and apply the action.
-             */
-            var selectedRows = getSelectedRows();
-            var priceItemId = input.attr('priceItemId');
-            var value = input.val();
-            var $quantityInputs = selectedRows.find('input.ledgerQuantity[priceItemId=' + priceItemId + ']');
-            for (var i = 0; i < $quantityInputs.length; i++) {
-                var $quantityInput = $quantityInputs.eq(i);
-                var name = $quantityInput.attr('name');
-                if (name != inputName) {
-                    $quantityInput.hSpinner(action, value);
-                    updateUnbilledStatus($j('#' + escapeForSelector(name)));
-                }
-            }
-        }
 
         /**
          * Updates the style for date complete inputs based on range validation rules.
@@ -664,30 +708,14 @@
          * and as an asterisk in the "Billed" column. This is an indication that whether or not the sample is billed is
          * dependent on the pending processing of the unbilled ledger entries.
          */
-        function updateUnbilledStatus($input) {
+        function updateUnbilledStatus($input, dateComplete) {
             var hasUnbilledQuantity = parseFloat($input.val()) != parseFloat($input.attr('billedQuantity'));
             $input.toggleClass('pending', hasUnbilledQuantity);
             var row = $input.parentsUntil('tbody', 'tr');
             var hasUnbilledQuantityForAnyPriceItem = row.find('input.ledgerQuantity.pending').length > 0;
             row.find('.unbilledStatus').text(hasUnbilledQuantityForAnyPriceItem ? '*' : '');
-            var dateComplete = row.find('.dateComplete');
+            var dateComplete = row.find('.donefinddateComplete');
             dateComplete.toggleClass('pending', hasUnbilledQuantityForAnyPriceItem);
-            var datePicker = dateComplete.datepicker();
-            if (hasUnbilledQuantityForAnyPriceItem) {
-                datePicker.datepicker('enable');
-            } else {
-                datePicker.datepicker('disable');
-            }
-        }
-
-        function autoFill() {
-            $j('#ledger .autoFillQuantity').each(function() {
-                var $autoFillValueInput = $j(this);
-                var $ledgerQuantityInput = $autoFillValueInput.parent().find('.ledgerQuantity');
-                $ledgerQuantityInput.hSpinner('setValue', $autoFillValueInput.val());
-                updateUnbilledStatus($ledgerQuantityInput)
-            });
-            updateSubmitButton();
         }
 
         function escapeForSelector(value) {
@@ -821,13 +849,7 @@
 
         <%-- Hidden form data for order context --%>
         <stripes:hidden name="orderId"/>
-
-        <%-- If any rows are hidden due to filtering or paging, the hidden input values will not be submitted. This
-             could lead to action bean errors and requested changes not being applied. Therefore, when the form is
-             submitted, inputs from hidden rows will be gathered and moved into this div. --%>
-        <div id="hiddenRowInputs" style="display: none;"></div>
-
-        <stripes:hidden name="changedDate"/>
+        <stripes:hidden formatType="date" formatPattern="EEE MMM dd HH:mm:ss zzz yyyy" name="modifiedDate" value="${actionBean.productOrder.modifiedDate}"/>
         <stripes:hidden name="renderedPriceItemNames"/>
 
         <%-- Datatable filters --%>

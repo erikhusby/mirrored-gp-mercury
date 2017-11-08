@@ -15,6 +15,7 @@ import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.ValidationError;
 import net.sourceforge.stripes.validation.ValidationErrors;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
@@ -39,14 +40,12 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundExcept
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
-import org.codehaus.jackson.annotate.JsonIgnoreProperties;
-import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.json.JSONArray;
 import org.json.JSONException;
 
@@ -55,7 +54,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -125,8 +123,12 @@ public class BillingLedgerActionBean extends CoreActionBean {
      */
     private List<PriceItem> priceItems = new ArrayList<>();
 
-    private Date changedDate;
-
+    /**
+     * the modified date of this product order. This is saved into the form and checked against the order when
+     * the form is submitted to make sure that nothing changed between rendering and submitting the form. Used for both
+     * rendering the JSP and capturing the values submitted from hidden elements in the form.
+     */
+    private Date modifiedDate;
     /**
      * List of price item names for this product order. This is saved into the form and checked against current data
      * when the form is submitted to make sure that nothing changed between rendering and submitting the form. Used for
@@ -153,7 +155,6 @@ public class BillingLedgerActionBean extends CoreActionBean {
      * https://stripesframework.atlassian.net/wiki/display/STRIPES/Indexed+Properties
      */
     private List<LedgerData> ledgerData;
-    private String successMessage;
 
     /**
      * this variable is sent in with the updaterLedgers request to instruct the actionBean to forward rather than send
@@ -192,18 +193,21 @@ public class BillingLedgerActionBean extends CoreActionBean {
      */
     @DefaultHandler
     public Resolution view() {
+        String successMessage = getContext().getRequest().getParameter("successMessage");
+        if (StringUtils.isNotBlank(successMessage)) {
+            addMessage(successMessage);
+        }
         return new ForwardResolution(BILLING_LEDGER_PAGE);
     }
 
     /**
-     * Load the ledger details and return them as JSON data to be loaded by the page via AJAX.
+     * Load the ledger detail for specified sample and return it as JSON data to be loaded by the page via AJAX.
      *
      * @return a resolution containing the ledger details serialized as JSON
      * @throws JSONException
      */
     @HandlesEvent("ledgerDetails")
     public Resolution ledgerDetails() throws JSONException {
-        JSONArray details = new JSONArray();
         ProductOrderSample sample = productOrderDao.findById(ProductOrderSample.class, productOrderSampleId);
         return createTextResolution(makeLedgerDetailJson(sample).toString());
     }
@@ -213,7 +217,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
      */
     @HandlesEvent("updateLedgers")
     public Resolution updateLedgers() {
-        if (isSubmittedSampleListValid() && isSubmittedPriceItemListValid()) {
+        if (isOrderModified() && isSubmittedPriceItemListValid()) {
             Map<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> ledgerUpdates = buildLedgerUpdates();
             try {
                 productOrderEjb.updateSampleLedgers(ledgerUpdates);
@@ -328,7 +332,6 @@ public class BillingLedgerActionBean extends CoreActionBean {
         productOrderSampleLedgerInfos = gatherSampleInfo();
 
         // Capture data to render into the form to verify that nothing changed when the form is submitted
-        changedDate = productOrder.getModifiedDate();
         renderedPriceItemNames = buildPriceItemNameList();
     }
 
@@ -341,11 +344,11 @@ public class BillingLedgerActionBean extends CoreActionBean {
     private List<ProductOrderSampleLedgerInfo> gatherSampleInfo() {
         List<ProductOrderSampleLedgerInfo> infos = new ArrayList<>();
 
-        Map<String, SampleCoverageFirstMet> coverageFirstMetBySample =
+        Map<String, SampleCoverageFirstMet> coverageFirstMetBySample =null;
                 sampleCoverageFirstMetFetcher.getCoverageFirstMetBySampleForPdo(productOrder.getBusinessKey());
 
         for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
-            SampleCoverageFirstMet sampleCoverageFirstMet =
+            SampleCoverageFirstMet sampleCoverageFirstMet = null;
                     coverageFirstMetBySample.get(productOrderSample.getSampleData().getCollaboratorsSampleName());
             if (sampleCoverageFirstMet == null) {
                 sampleCoverageFirstMet = coverageFirstMetBySample.get(productOrderSample.getName());
@@ -379,8 +382,8 @@ public class BillingLedgerActionBean extends CoreActionBean {
      *
      * @return true if the sample names have not changed; false otherwise
      */
-    private boolean isSubmittedSampleListValid() {
-        if (!productOrder.getModifiedDate().equals(changedDate)) {
+    private boolean isOrderModified() {
+        if (modifiedDate.compareTo(productOrder.getModifiedDate()) != 0) {
             addGlobalValidationError(
                     "The sample list has changed since loading the page. Changes have not been saved. Please reevaluate your billing decisions and reapply your changes as appropriate.");
             return false;
@@ -492,14 +495,6 @@ public class BillingLedgerActionBean extends CoreActionBean {
         return priceItems;
     }
 
-    public Date getChangedDate() {
-        return changedDate;
-    }
-
-    public void setChangedDate(Date changedDate) {
-        this.changedDate = changedDate;
-    }
-
     public List<String> getRenderedPriceItemNames() {
         return renderedPriceItemNames;
     }
@@ -516,7 +511,6 @@ public class BillingLedgerActionBean extends CoreActionBean {
         return ledgerData;
     }
 
-
     public void setLedgerData(List<LedgerData> ledgerData) {
         this.ledgerData = ledgerData;
     }
@@ -528,9 +522,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
      * @return the date 3 months ago as milliseconds since January 1, 1970, 00:00:00 GMT
      */
     public long getThreeMonthsAgo() {
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.MONTH, -3);
-        return calendar.getTime().getTime();
+        return DateUtils.getMonths(-3).getTime();
     }
 
     public long getProductOrderSampleId() {
@@ -549,12 +541,12 @@ public class BillingLedgerActionBean extends CoreActionBean {
         this.redirectOnSuccess = redirectOnSuccess;
     }
 
-    public String getSuccessMessage() {
-        return successMessage;
+    public Date getModifiedDate() {
+        return modifiedDate;
     }
 
-    public void setSuccessMessage(String successMessage) {
-        this.successMessage = successMessage;
+    public void setModifiedDate(Date modifiedDate) {
+        this.modifiedDate = modifiedDate;
     }
 
     /**
@@ -634,29 +626,15 @@ public class BillingLedgerActionBean extends CoreActionBean {
     /**
      * Data posted from the billing ledger UI.
      */
-    @JsonSerialize(include = JsonSerialize.Inclusion.NON_EMPTY)
-    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class LedgerData {
-        @JsonProperty
         private String sampleName;
-        @JsonProperty
         private Date workCompleteDate;
-        @JsonProperty
         private Map<Long, ProductOrderSampleQuantities> quantities;
-        @JsonProperty
-        private Long id;
-
-        public Long getId() {
-            return id;
-        }
-
-        public void setId(Long id) {
-            this.id = id;
-        }
 
         public String getSampleName() {
             return sampleName;
         }
+
         public void setSampleName(String sampleName) {
             this.sampleName = sampleName;
         }
@@ -678,12 +656,8 @@ public class BillingLedgerActionBean extends CoreActionBean {
     /**
      * Quantity data for a single price item posted from the billing ledger UI.
      */
-    @JsonSerialize(include = JsonSerialize.Inclusion.NON_EMPTY)
-    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class ProductOrderSampleQuantities {
-        @JsonProperty
         private double originalQuantity;
-        @JsonProperty
         private double submittedQuantity;
 
         public double getOriginalQuantity() {
