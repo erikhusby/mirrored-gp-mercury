@@ -4900,6 +4900,11 @@ input[type="submit"].btn.btn-mini {
   filter: alpha(opacity=80);
 }
 
+.message-block {
+  border-color: rgba(255, 255, 255, 0) !important;
+  box-shadow: none !important;
+}
+
 .modal {
   background-color: #ffffff;
 }
