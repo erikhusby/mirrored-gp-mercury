@@ -486,7 +486,7 @@ public class SampleInstanceEjb {
             SampleDataDto sampleDataDto = sampleDataDtoMap.get(sampleName);
             if (sampleDataDto == null) {
                 // Missing metadata means this is a new root sample.
-                mercurySample = new MercurySample(sampleName, MercurySample.MetadataSource.MERCURY, true);
+                mercurySample = new MercurySample(sampleName, MercurySample.MetadataSource.MERCURY);
             } else {
                 Set<Metadata> metadata = new HashSet<>();
                 metadata.add(new Metadata(Metadata.Key.SAMPLE_ID, sampleDataDto.getCollaboratorSampleId()));
