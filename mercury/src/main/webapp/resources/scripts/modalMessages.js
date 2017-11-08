@@ -31,21 +31,25 @@
  */
 var modalMessages = function (level = "info", options={}) {
     var defaults = {
-        onClose: clearMessages
-};
+        onClose: clearMessages,
+        clearOnError: ["success", "info"]
+    };
+
     // automatic initialization:
     (function () {
         var levels = ['success', 'info', 'warning', 'error'];
         if (levels.indexOf(level) === -1) {
             throw `Invalid message level '${level}'. valid options are ${levels.join(", ")}.`;
         }
+        options = Object.assign({}, options, defaults);
         this.className = 'alert-' + level;
         this.messageBlock = document.querySelector("div.message-block");
         if (this.messageBlock == undefined) {
             this.messageBlock = createElement("<div class='message-block modal'></div>");
         }
 
-        this.messageContainer = document.querySelector("div." + this.className);
+        this.messageContainer = getMessageContainer(className);
+
         if (this.messageContainer == undefined) {
             this.messageContainer = createElement("<div class='alert'><button class='close'>&times;</button></div>");
             this.messageContainer.classList.add(this.className)
@@ -57,9 +61,6 @@ var modalMessages = function (level = "info", options={}) {
         hideContainer();
 
         var closeButton = this.messageContainer.querySelector("button.close");
-        if (options.onClose == undefined) {
-            options.onClose = defaults.onClose;
-        }
         if (isFunction(options.onClose)) {
             closeButton.addEventListener("click", function () {
                 options.onClose(this.parentNode);
@@ -82,6 +83,10 @@ var modalMessages = function (level = "info", options={}) {
             showContainer();
         }
     };
+
+    function getMessageContainer(className) {
+        return document.querySelector("div." + className);
+    }
 
     function isFunction(functionToCheck) {
         var getType = {};
@@ -106,6 +111,14 @@ var modalMessages = function (level = "info", options={}) {
         messageElement.innerHTML = messageText;
         var listContainer = getListContainer(level);
         listContainer.appendChild(messageElement);
+        if (options.clearOnError && level === 'error') {
+            for (var i = 0; i <= options.clearOnError.length; i++) {
+                var container = getMessageContainer("alert-" + options.clearOnError[i]);
+                if (container != undefined) {
+                    clearMessages(container);
+                }
+            }
+        }
         showContainer();
     }
 
