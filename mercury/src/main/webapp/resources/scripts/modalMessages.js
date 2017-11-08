@@ -41,6 +41,8 @@ var modalMessages = function (level = "info", options={}) {
         if (levels.indexOf(level) === -1) {
             throw `Invalid message level '${level}'. valid options are ${levels.join(", ")}.`;
         }
+
+        // merge passed in options with defaults.
         options = Object.assign({}, options, defaults);
         this.className = 'alert-' + level;
         this.messageBlock = document.querySelector("div.message-block");
