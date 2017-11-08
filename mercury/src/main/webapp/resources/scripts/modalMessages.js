@@ -10,7 +10,7 @@
  */
 /**
  * Add a modal message with similar appearance to stripes:errors and stripes:messages.
- * Different message levels are availble which changes the appearance of the message and allows message grouping.
+ * Different message levels are available which changes the appearance of the message and allows message grouping.
  *
  * usage: modalMessages("info").add(messageText, [namespace]);
  * this example will show two error messages in a modal dialog box style for errors:
@@ -26,7 +26,10 @@
  *          <li>message.add("hello again", "hello");</li>
  *      </ul>
  * @param level: 'success', 'info', 'warning', 'error'
- * @param options: {onClose: function()} callback to execute when the close box is clicked
+ * @param options: {
+ *            onClose: function(),  callback to execute when the close box is clicked.
+ *            clearOnError: []      alert levels which should be cleared when an error message is shown.
+ *        }
  * @returns {{add: add message, clear: clear messages, hide: hide messages}}
  */
 var modalMessages = function (level = "info", options={}) {
@@ -37,9 +40,13 @@ var modalMessages = function (level = "info", options={}) {
 
     // automatic initialization:
     (function () {
-        var levels = ['success', 'info', 'warning', 'error'];
+        var levels = ['success', 'info', 'warning', 'error', 'intercept'];
         if (levels.indexOf(level) === -1) {
             throw `Invalid message level '${level}'. valid options are ${levels.join(", ")}.`;
+        }
+        if (level === 'intercept') {
+            interceptMessages();
+            return;
         }
 
         // merge passed in options with defaults.
@@ -73,7 +80,13 @@ var modalMessages = function (level = "info", options={}) {
     // public functions
     return {
         add: function (messageText, messageSelector) {
-            addItem(messageText, messageSelector);
+            if (Array.isArray(messageText)) {
+                for (var i = 0; i < messageText.length; i++) {
+                    addItem(messageText[i], messageSelector);
+                }
+            } else {
+                addItem(messageText, messageSelector);
+            }
         },
         clear: function () {
             clearMessages();
@@ -85,6 +98,33 @@ var modalMessages = function (level = "info", options={}) {
             showContainer();
         }
     };
+
+    function interceptMessages() {
+        var messages = [];
+        var alerts = document.querySelectorAll(".alert");
+        for (var i = 0; i < alerts.length; i++){
+            var alert = alerts[i];
+            var level="success";
+            if (alert.className.indexOf("error")>0){
+                level = "error";
+            }
+
+            var messageItems = alert.querySelectorAll(".alert-" + level + " ul li");
+            messageItems.forEach(function (node) {
+                if (messages[level] == undefined) {
+                    messages[level] = [];
+                }
+                messages[level].push(node.textContent);
+            });
+            alert.parentNode.removeChild(alert);
+        };
+
+
+        for (var key in messages) {
+            var message = modalMessages(key);
+            message.add(messages[key]);
+        }
+    }
 
     function getMessageContainer(className) {
         return document.querySelector("div." + className);
