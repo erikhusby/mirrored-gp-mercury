@@ -171,83 +171,165 @@ public class SampleInstanceEntity {
        return subTask;
     }
 
-    public void setReadLength(Integer readLength) { this.readLength = readLength;  }
+    public void setReadLength(Integer readLength) {
+        this.readLength = readLength;  
+    }
 
-    public MercurySample getRootSample() {  return rootSample;  }
+    public MercurySample getRootSample() {
+         return rootSample;  
+    }
 
-    public void setRootSample(MercurySample rootSample) { this.rootSample = rootSample;  }
+    public void setRootSample(MercurySample rootSample) {
+        this.rootSample = rootSample;  
+    }
 
-    public void setLabVessel(LabVessel labVessel) { this.labVessel = labVessel; }
+    public void setLabVessel(LabVessel labVessel) {
+        this.labVessel = labVessel; 
+    }
 
-    public LabVessel getBarodedTube() { return labVessel;  }
+    public LabVessel getBarodedTube() {
+        return labVessel;  
+    }
 
-    public String getSampleLibraryName() { return  sampleLibraryName; }
+    public String getSampleLibraryName() {
+        return  sampleLibraryName; 
+    }
 
-    public MolecularIndexingScheme getMolecularIndexingScheme() { return molecularIndexingScheme;  }
+    public MolecularIndexingScheme getMolecularIndexingScheme() {
+        return molecularIndexingScheme;  
+    }
 
-    public void setReagentDesign(ReagentDesign reagentDesign){ this.reagentDesign = reagentDesign; }
+    public void setReagentDesign(ReagentDesign reagentDesign){
+        this.reagentDesign = reagentDesign; 
+    }
 
-    public ReagentDesign getReagentDesign() { return this.reagentDesign; }
+    public ReagentDesign getReagentDesign() {
+        return this.reagentDesign; 
+    }
 
-    public void setSampleInstanceEntityId(Long sampleInstanceEntityId) {this.sampleInstanceEntityId = sampleInstanceEntityId; }
+    public void setSampleInstanceEntityId(Long sampleInstanceEntityId) {
+       this.sampleInstanceEntityId = sampleInstanceEntityId; 
+    }
 
-    public Long getSampleInstanceEntityId() { return sampleInstanceEntityId; }
+    public Long getSampleInstanceEntityId() {
+        return sampleInstanceEntityId; 
+    }
 
-    public void setMolecularIndexScheme(MolecularIndexingScheme molecularIndexingScheme) { this.molecularIndexingScheme = molecularIndexingScheme; }
+    public void setMercurySample(MercurySample mercurySample){
+        this.mercurySample = mercurySample; 
+    }
 
-    public void setMercurySampleId(MercurySample mercurySample){ this.mercurySample = mercurySample; }
+    public void setSampleLibraryName(String sampleLibraryName) {
+        this.sampleLibraryName = sampleLibraryName;
+    }
 
-    public MercurySample getMercurySample() { return this.mercurySample;    }
+    public void setMercurySampleId(MercurySample mercurySample){
+        this.mercurySample = mercurySample; 
+    }
 
-    public void setSampleLibraryName(String sampleLibraryName) { this.sampleLibraryName = sampleLibraryName; }
+    public MercurySample getMercurySample() {
+        return this.mercurySample;    
+    }
 
-    public void setUploadDate(){ this.uploadDate = new Date(); }
+    public void setSampleLibraryName(String sampleLibraryName) {
+        this.sampleLibraryName = sampleLibraryName; 
+    }
 
-    public void setExperiment(String experiment) { this.experiment = experiment;  }
+    public void setUploadDate(){
+        this.uploadDate = new Date(); 
+    }
 
-    public String getExperiment() { return this.experiment; }
+    public void setExperiment(String experiment) {
+        this.experiment = experiment;  
+    }
 
-    public String getReferenceSequence() { return this.referenceSequence; }
+    public String getExperiment() {
+        return this.experiment; 
+    }
 
-    public void setReferenceSequence(String referenceSequence) {this.referenceSequence = referenceSequence;}
+    public String getReferenceSequence() {
+        return this.referenceSequence; 
+    }
 
-    public String getCoverage() { return this.coverage; }
+    public void setReferenceSequence(String referenceSequence) {
+       this.referenceSequence = referenceSequence;
+    }
 
-    public void setCoverage(String coverage) { this.coverage = coverage;}
+    public String getCoverage() {
+        return this.coverage; 
+    }
 
-    public void setRestrictionEnzyme(String restrictionEnzyme) {this.restrictionEnzyme = restrictionEnzyme;}
+    public void setCoverage(String coverage) {
+        this.coverage = coverage;
+    }
 
-    public void setJumpSize(String jumpSize) {this.jumpSize = jumpSize; }
+    public void setRestrictionEnzyme(String restrictionEnzyme) {
+       this.restrictionEnzyme = restrictionEnzyme;
+    }
 
-    public void setLibrarySizeRange(String librarySizeRange) { this.librarySizeRange = librarySizeRange;}
+    public void setJumpSize(String jumpSize) {
+       this.jumpSize = jumpSize; 
+    }
 
-    public void setInsertSizeRange(String insertSizeRange) { this.insertSizeRange = insertSizeRange;}
+    public void setLibrarySizeRange(String librarySizeRange) {
+        this.librarySizeRange = librarySizeRange;
+    }
 
-    public String getPooled() { return this.pooled; }
+    public void setInsertSizeRange(String insertSizeRange) {
+        this.insertSizeRange = insertSizeRange;
+    }
 
-    public void setPooled(String pooled) { this.pooled = pooled; }
+    public String getPooled() {
+        return this.pooled; 
+    }
 
-    public String getLibraryType() { return  this.libraryType; }
+    public void setPooled(String pooled) {
+        this.pooled = pooled; 
+    }
 
-    public void setLibraryType(String libraryType) { this.libraryType = libraryType; }
+    public String getLibraryType() {
+        return  this.libraryType; 
+    }
 
-    public String getCollaboratorSampleId() { return this.collaboratorSampleId; }
+    public void setLibraryType(String libraryType) {
+        this.libraryType = libraryType; 
+    }
 
-    public void setCollaboratorSampleId(String collaboratorSampleId) { this.collaboratorSampleId = collaboratorSampleId;}
+    public String getCollaboratorSampleId() {
+        return this.collaboratorSampleId; 
+    }
 
-    public void setTissueType(String tissueType) { this.tissueType = tissueType;}
+    public void setCollaboratorSampleId(String collaboratorSampleId) {
+        this.collaboratorSampleId = collaboratorSampleId;
+    }
 
-    public void setDesiredReadLength(Integer readLength) { this.readLength = readLength;}
+    public void setTissueType(String tissueType) {
+        this.tissueType = tissueType;
+    }
 
-    public void setSampleKitRequest(SampleKitRequest sampleKitRequest) { this.sampleKitRequest = sampleKitRequest; }
+    public void setDesiredReadLength(Integer readLength) {
+        this.readLength = readLength;
+    }
 
-    public ResearchProject getResearchProject() { return researchProject;  }
+    public void setSampleKitRequest(SampleKitRequest sampleKitRequest) {
+        this.sampleKitRequest = sampleKitRequest; 
+    }
 
-    public void setResearchProject(ResearchProject researchProject) { this.researchProject = researchProject; }
+    public ResearchProject getResearchProject() {
+        return researchProject;  
+    }
 
-    public ProductOrder getProductOrder() { return productOrder; }
+    public void setResearchProject(ResearchProject researchProject) {
+        this.researchProject = researchProject; 
+    }
 
-    public void setProductOrder(ProductOrder productOrder) { this.productOrder = productOrder; }
+    public ProductOrder getProductOrder() {
+        return productOrder; 
+    }
+
+    public void setProductOrder(ProductOrder productOrder) {
+        this.productOrder = productOrder; 
+    }
 
     public void setMolecularIndexingScheme(MolecularIndexingScheme molecularIndexingScheme) {
         this.molecularIndexingScheme = molecularIndexingScheme;
