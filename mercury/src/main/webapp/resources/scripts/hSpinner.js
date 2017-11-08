@@ -16,7 +16,8 @@ $j.widget('mercury.hSpinner', {
     },
     hidden: function(isHidden) {
         var hideValue = isHidden ? 'none' : '';
-        for (var i = 0; i < this.controlButtons.length; i++) {
+        var length = this.controlButtons.length;
+        for (var i = 0; i < length; i++) {
             this.controlButtons[i].style.display = hideValue;
         }
     },
@@ -36,7 +37,8 @@ $j.widget('mercury.hSpinner', {
     _create: function () {
         elementJs = this.element.get(0);
         var container = elementJs.parentNode;
-        var $container = $j(container);
+        var parent = container.parentNode;
+        parent.removeChild(container);
         // this.element.remove();
         // $originalElement = this.element.remove();
         this.inputName = elementJs.name;
@@ -67,6 +69,8 @@ $j.widget('mercury.hSpinner', {
         if (this.options.initialVisibility==='hidden'){
             this.hidden(true)
         }
+        parent.appendChild(container);
+        $container=$j(container);
         // $container.append(this.$incButton);
 
         this._on($container, {
