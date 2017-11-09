@@ -30,6 +30,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioSampleBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -2044,8 +2045,17 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return pipelineLocation;
     }
 
-    public void setPipelineLocation(
-            PipelineLocation pipelineLocation) {
+    public String submissionProcessingLocation(){
+        String processingLocation = null;
+        if (pipelineLocation == PipelineLocation.ON_PREMISES) {
+            processingLocation = SubmissionBioSampleBean.ON_PREM;
+        } else if (pipelineLocation == PipelineLocation.US_CLOUD) {
+            processingLocation = SubmissionBioSampleBean.GCP;
+        }
+        return processingLocation;
+    }
+
+    public void setPipelineLocation(PipelineLocation pipelineLocation) {
         this.pipelineLocation = pipelineLocation;
     }
 

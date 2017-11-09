@@ -81,7 +81,7 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
     }
 
     public static SubmissionLibraryDescriptor defaultLibraryDescriptor() {
-        return new SubmissionLibraryDescriptor(SubmissionLibraryDescriptor.WHOLE_GENOME_NAME, SubmissionLibraryDescriptor.WHOLE_GENOME_DESCRIPTION);
+        return SubmissionLibraryDescriptor.WHOLE_GENOME;
     }
 
     /**

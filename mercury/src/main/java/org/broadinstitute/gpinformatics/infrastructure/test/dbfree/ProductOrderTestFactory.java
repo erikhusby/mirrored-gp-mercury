@@ -58,7 +58,8 @@ public class ProductOrderTestFactory {
 
         ResearchProject researchProject = ResearchProjectTestFactory.createDummyResearchProject(
                 creatorId, rpTitle, rpSynopsis, irbNotEngaged);
-
+        String testRpValue = "RP-99999";
+        researchProject.setJiraTicketKey(testRpValue);
         ProductOrder productOrder =
                 new ProductOrder(creatorId, "Test PO", productOrderSamples, "GSP-123", dummyProduct, researchProject);
         if (StringUtils.isNotBlank(jiraKey)) {
