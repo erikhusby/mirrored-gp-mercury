@@ -33,6 +33,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioSampleBean;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -242,7 +243,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Enumerated(EnumType.STRING)
     @Column(name = "PIPELINE_LOCATION", nullable = true)
     private PipelineLocation pipelineLocation;
-    
+
     @OneToMany(mappedBy = "productOrder", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<ProductOrderPriceAdjustment> customPriceAdjustments = new HashSet<>();
 
@@ -2069,8 +2070,17 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return pipelineLocation;
     }
 
-    public void setPipelineLocation(
-            PipelineLocation pipelineLocation) {
+    public String submissionProcessingLocation(){
+        String processingLocation = null;
+        if (pipelineLocation == PipelineLocation.ON_PREMISES) {
+            processingLocation = SubmissionBioSampleBean.ON_PREM;
+        } else if (pipelineLocation == PipelineLocation.US_CLOUD) {
+            processingLocation = SubmissionBioSampleBean.GCP;
+        }
+        return processingLocation;
+    }
+
+    public void setPipelineLocation(PipelineLocation pipelineLocation) {
         this.pipelineLocation = pipelineLocation;
     }
 

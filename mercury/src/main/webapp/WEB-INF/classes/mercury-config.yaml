@@ -276,13 +276,6 @@ hipchat:
         gpLimsRoom: Mercury & Athena (GPInfx)
         authorizationToken: db3e86c451ef8ac0cddb94133e0455
 
-bass:
-    PROD:
-      login:    mercury-bass
-      password: LszkUJSGyb!
-      host:     bass.broadinstitute.org
-      port:     443
-
 submission:
     DEV:
       host:     seqsubmission02
@@ -336,7 +329,6 @@ mercury:
       bettaLimsServer: DEV
       hipchat: DEV
       collaborate: DEV
-      bass: PROD
       submission: DEV
       infiniumStarter: DEV
       sap:  TEST
@@ -357,7 +349,6 @@ mercury:
       bettaLimsServer: DEV
       hipchat: DEV
       collaborate: DEV
-      bass: PROD
       submission: DEV
       infiniumStarter: DEV
       sap:  RC
@@ -377,7 +368,6 @@ mercury:
       bettaLimsServer: TEST
       hipchat: DEV
       collaborate: DEV
-      bass:     PROD
       submission: DEV
       infiniumStarter: DEV
       sap:  RC
@@ -396,7 +386,6 @@ mercury:
       bettaLimsServer: QA
       hipchat: DEV
       collaborate: RC
-      bass:     PROD
       submission: DEV
       infiniumStarter: QA
       sap:  RC
@@ -416,7 +405,6 @@ mercury:
       bettaLimsServer: QA
       hipchat: DEV
       collaborate: RC
-      bass:     PROD
       submission: DEV
       infiniumStarter: QA
       sap:  RC
@@ -437,7 +425,6 @@ mercury:
       bettaLimsServer: PROD
       hipchat: PROD
       collaborate: PROD
-      bass:     PROD
       submission: PROD
       infiniumStarter: PROD
       sap:  PROD

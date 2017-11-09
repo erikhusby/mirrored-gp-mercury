@@ -43,7 +43,6 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Fundi
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProjectList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
@@ -861,6 +860,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         if (accessRestriction.isEmpty()) {
             return true;
         }
+
         if (!supressValidationErrors) {
             addGlobalValidationError(
                     String.format("Data submissions are available for %s.", StringUtils.join(accessRestriction, " and ")));
@@ -944,19 +944,26 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
             addGlobalValidationError("You must select a submission site in order to post for submissions.");
             errors = true;
         }
+        List<SubmissionDto> selectedSubmissions = new ArrayList<>();
         if (!errors) {
-            List<SubmissionDto> selectedSubmissions = new ArrayList<>();
-            Map<SubmissionTuple, BassDTO> bassDtoMap = submissionDtoFetcher.fetchBassDtos(
-                    editResearchProject.getBusinessKey(),
-                    tupleToSampleMap.values().toArray(new String[tupleToSampleMap.values().size()]));
-            for (BassDTO bassDTO : bassDtoMap.values()) {
-                if (tupleToSampleMap.containsKey(bassDTO.getTuple())) {
-                    // All required data are in the bassDTO
-                    selectedSubmissions
-                            .add(new SubmissionDto(bassDTO, null, editResearchProject.getProductOrders(), null));
+
+
+            for (SubmissionDto submissionDto : submissionDtoFetcher.fetch(editResearchProject, this)) {
+                Set<SubmissionLibraryDescriptor> libraryTypes = submissionDto.getAggregation().getLibraryTypes();
+                if (tupleToSampleMap.containsKey(submissionDto.getSubmissionTuple())) {
+                    // All required data are in the submissionDto
+                    selectedSubmissions.add(submissionDto);
+                    for (SubmissionLibraryDescriptor libraryType : libraryTypes) {
+                        if (!libraryType.getName().equals(selectedSubmissionLibraryDescriptor)) {
+                            addGlobalValidationError("Data selected for submission of ''{2}'' is ''{3}'' but library ''{4}'' was selected.",
+                                submissionDto.getSampleName(), libraryType.getName(), selectedSubmissionLibraryDescriptor);
+                            errors = true;
+                        }
+                    }
                 }
             }
-
+        }
+        if (!errors){
             try {
                 Collection<SubmissionStatusDetailBean> submissionStatuses =
                         researchProjectEjb
