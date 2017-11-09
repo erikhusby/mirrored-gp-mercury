@@ -714,7 +714,7 @@ public class LabBatchEjb {
                             // Exome Express currently does strange things with multiple LCSETs at shearing, so
                             // limit this logic to WGS.
                             if (Objects.equals(bucketEntry.getProductOrder().getProduct().getAggregationDataType(),
-                                    BassDTO.DATA_TYPE_WGS)) {
+                                    Aggregation.DATA_TYPE_WGS)) {
                                 addAndRemoveSamples = true;
                             }
                             found = true;
