@@ -54,7 +54,7 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
             log.trace("POST response: " + ret);
             return ret;
         } catch (UniformInterfaceException e) {
-            //TODO SGM:  Change to a more defined exception to give the option to set in throws or even catch
+            //TODO   Change to a more defined exception to give the option to set in throws or even catch
             log.error("POST request: " + request, e);
             throw new RuntimeException(e.getResponse().getEntity(String.class), e);
         }
@@ -72,7 +72,7 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
         try {
             setJsonMimeTypes(webResource).post(request);
         } catch (UniformInterfaceException e) {
-            //TODO SGM:  Change to a more defined exception to give the option to set in throws or even catch
+            //TODO  Change to a more defined exception to give the option to set in throws or even catch
             log.error("POST request: " + request, e);
             throw new RuntimeException(e.getResponse().getEntity(String.class), e);
         }
@@ -88,7 +88,7 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
         try {
             setJsonMimeTypes(webResource).put(request);
         } catch (UniformInterfaceException e) {
-            //TODO SGM:  Change to a more defined exception to give the option to set in throws or even catch
+            //TODO Change to a more defined exception to give the option to set in throws or even catch
             log.error("PUT request: " + request, e);
             throw new RuntimeException(e.getResponse().getEntity(String.class), e);
         }
@@ -101,7 +101,7 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
         try {
             return setJsonMimeTypes(webResource).get(genericType);
         } catch (UniformInterfaceException e) {
-            //TODO SGM:  Change to a more defined exception to give the option to set in throws or even catch
+            //TODO Change to a more defined exception to give the option to set in throws or even catch
             log.error("GET request" + webResource.getURI(), e);
             throw new RuntimeException(e.getResponse().getEntity(String.class), e);
         }
@@ -114,7 +114,7 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
         try {
             setJsonMimeTypes(webResource).delete();
         } catch (UniformInterfaceException e) {
-            //TODO SGM:  Change to a more defined exception to give the option to set in throws or even catch
+            //TODO Change to a more defined exception to give the option to set in throws or even catch
             log.error("DELETE request" + webResource.getURI(), e);
             throw new RuntimeException(e.getResponse().getEntity(String.class), e);
         }

@@ -224,7 +224,7 @@ public class BucketEjb {
     /**
      * Removes entries from a bucket and marks them as having been extracted.
      */
-    //TODO SGM  Move to a bucket factory class
+    //TODO Move to a bucket factory class
     private void removeEntries(@Nonnull Collection<BucketEntry> bucketEntries) {
         removeEntries(bucketEntries, "Extracted for Batch");
     }

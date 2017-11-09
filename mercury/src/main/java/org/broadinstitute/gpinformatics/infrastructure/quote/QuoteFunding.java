@@ -33,6 +33,12 @@ public class QuoteFunding {
         this.fundingLevel = fundLevel;
     }
 
+    public QuoteFunding(String fundsRemaining,
+                        Collection<FundingLevel> fundingLevel) {
+        this.fundsRemaining = fundsRemaining;
+        this.fundingLevel = fundingLevel;
+    }
+
     public Collection<FundingLevel> getFundingLevel() {
         return fundingLevel;
     }

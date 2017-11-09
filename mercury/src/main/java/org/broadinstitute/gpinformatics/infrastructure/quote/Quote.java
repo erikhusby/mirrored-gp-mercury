@@ -7,6 +7,7 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -25,6 +26,8 @@ public class Quote {
     private QuoteFunding quoteFunding;
     private QuoteType quoteType;
     private Collection<QuoteItem> quoteItems = new ArrayList<> ();
+    private Date expirationDate;
+
 
     // quick access Cache of quote items
     @XmlTransient
@@ -114,6 +117,15 @@ public class Quote {
         this.quoteType = quoteType;
     }
 
+    @XmlAttribute(name="expirationDate")
+    @XmlJavaTypeAdapter(QuotePriceItem.DateAdapter.class)
+    public Date getExpirationDate() {
+        return expirationDate;
+    }
+
+    public void setExpirationDate(Date expirationDate) {
+        this.expirationDate = expirationDate;
+    }
 
     @Override
     public boolean equals(Object o) {

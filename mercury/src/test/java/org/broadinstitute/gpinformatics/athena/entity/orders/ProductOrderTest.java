@@ -133,6 +133,8 @@ public class ProductOrderTest {
                 .ignoreProperty("childOrders")
                 .ignoreProperty("parentOrder")
                 .ignoreProperty("pipelineLocation")
+                .ignoreProperty("quotePriceMatchAdjustments")
+                .ignoreProperty("orderType")
                 .build();
         tester.testBean(ProductOrder.class, configuration);
 
