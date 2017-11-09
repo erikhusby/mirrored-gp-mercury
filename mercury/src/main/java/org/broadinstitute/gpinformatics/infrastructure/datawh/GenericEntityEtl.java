@@ -46,6 +46,11 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
     public static final String IN_CLAUSE_PLACEHOLDER = "__IN_CLAUSE__";
     public static final int TRANSACTION_TIMEOUT = 2 * 60 * 60; // in seconds.
 
+    // Gathering data over a large number of entities in a revision (PDO 1500 sample sets)
+    //  causes Hibernate to consume too much memory.  Incorporate clearing Hibernate session when this batch size is hit.
+    // Takes 30% less time and 36% of the memory hit on a 1500 sample revision in Hibernate 4/JBoss 7
+    public static final int JPA_CLEAR_THRESHOLD = 75;
+
     /** The quote character for ETL values. */
     private static final String QUOTE = "\"";
 

@@ -1133,6 +1133,19 @@
                 </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
+                <name>Calibrated Pooling Transfer</name>
+                <labEventTypes>CALIBRATED_POOLING_TRANSFER</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <ancestryEtlFlag>true</ancestryEtlFlag>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>Norm and Pool</statusTransition>
+                    <endStatus>In Sequencing Prep</endStatus>
+                </jiraTransition>
+            </workflowStepDefs>
+            <workflowStepDefs>
                 <name>Pool Correction</name>
                 <labEventTypes>POOL_CORRECTION</labEventTypes>
                 <optional>true</optional>
