@@ -417,10 +417,10 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
 
         final PriceList priceList;
 
-        params.add("effectiveDate", StringUtils.join(orderedEffectiveDates, ","));
-        params.add("priceitem_name", StringUtils.join(orderedPriceItemNames, ","));
-        params.add("platform_name", StringUtils.join(orderedPlatformNames, ","));
-        params.add("category_name=", StringUtils.join(orderedCategoryNames, ","));
+        params.add("effectiveDate", StringUtils.join(orderedEffectiveDates, ";;"));
+        params.add("priceitem_name", StringUtils.join(orderedPriceItemNames, ";;"));
+        params.add("platform_name", StringUtils.join(orderedPlatformNames, ";;"));
+        params.add("category_name=", StringUtils.join(orderedCategoryNames, ";;"));
 
         final String urlString = url(Endpoint.PRICE_ITEM_DETAILS);
 
