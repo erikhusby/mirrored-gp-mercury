@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 import com.opencsv.bean.CsvToBeanFilter;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.bsp.client.util.MessageCollection;
@@ -18,6 +19,8 @@ import java.util.Set;
  * Parser for tube barcode/well pairs to output vessel barcode from the BDS600 DBS Punch
  */
 public class DBSPuncherFileParser {
+    public static final int BARCODE_LENGTH = 12;
+
     // The DBS puncher does in fact output with extra spaces in some columns
     private static final Map<String, String> COL_TO_FIELD_MAP = new HashMap<String, String>() {
         {
@@ -59,7 +62,9 @@ public class DBSPuncherFileParser {
             messageCollection.addError("Expected only one plate barcode but found: " + plateBarcodes.size());
             return null;
         }
-        return new DBSPuncherRun(plateBarcodes.iterator().next(), mapPositionToSample);
+        String plateBarcode = plateBarcodes.iterator().next();
+        String formattedBarcode = StringUtils.leftPad(plateBarcode, BARCODE_LENGTH, '0');
+        return new DBSPuncherRun(formattedBarcode, mapPositionToSample);
     }
 
     public class DBSPuncherRun {
