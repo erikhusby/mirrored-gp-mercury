@@ -271,7 +271,10 @@ public class ProductActionBean extends CoreActionBean {
                 controlsProject = editProduct.getPositiveControlResearchProject().getBusinessKey();
             }
 
-            final List<ProductOrder> productOrderList = productDao.findList(ProductOrder.class, ProductOrder_.product, editProduct);
+            List<ProductOrder> productOrderList = null;
+            if (editProduct.getProductId() != null) {
+                productOrderList = productDao.findList(ProductOrder.class, ProductOrder_.product, editProduct);
+            }
             productUsedInOrders = !CollectionUtils.isEmpty(productOrderList);
         }
     }
