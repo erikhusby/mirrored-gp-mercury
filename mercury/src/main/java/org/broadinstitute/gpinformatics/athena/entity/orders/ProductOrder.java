@@ -2146,7 +2146,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return displayName;
     }
 
-    public boolean isClinicalAttestationConfirmed() {
+    public Boolean isClinicalAttestationConfirmed() {
         return isChildOrder() ? parentOrder.getClinicalAttestationConfirmed() : getClinicalAttestationConfirmed();
     }
 
