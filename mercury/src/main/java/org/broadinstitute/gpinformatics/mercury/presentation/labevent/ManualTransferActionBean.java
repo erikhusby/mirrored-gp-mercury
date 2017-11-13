@@ -477,6 +477,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     Iterator<StationEventType> eventIterator = stationEvents.iterator();
                     PlateTransferEventType plateTransferEventTypeDbs =
                             (PlateTransferEventType) eventIterator.next();
+                    String sourceBarcode =  manualTransferDetails.getSourceContainerPrefix() + syntheticBarcode;
+                    plateTransferEventTypeDbs.getSourcePlate().setBarcode(sourceBarcode);
                     plateTransferEventTypeDbs.getPlate().setBarcode(puncherRun.getPlateBarcode());
                     PositionMapType sourcePositionMap = plateTransferEventTypeDbs.getSourcePositionMap();
                     sourcePositionMap.setBarcode(plateTransferEventTypeDbs.getSourcePlate().getBarcode());
