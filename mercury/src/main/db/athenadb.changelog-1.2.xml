@@ -1167,7 +1167,8 @@
                 select pdo.product_order_id
                 from athena.product_order pdo
                 join athena.product pdt on pdt.PRODUCT_ID = pdo.PRODUCT
-                where pdt.CLINICAL_ONLY_PRODUCT = 1);
+                where pdt.CLINICAL_ONLY_PRODUCT = 1 and
+                pdo.order_status not in ('Draft', 'Abandoned'));
         </sql>
     </changeSet>
 
@@ -1179,7 +1180,8 @@
                 select pdo.product_order_id
                 from athena.product_order_aud pdo
                 join athena.product pdt on pdt.PRODUCT_ID = pdo.PRODUCT
-                where pdt.CLINICAL_ONLY_PRODUCT = 1);
+                where pdt.CLINICAL_ONLY_PRODUCT = 1 and
+            pdo.order_status not in ('Draft', 'Abandoned'));
         </sql>
     </changeSet>
 
