@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.infrastructure.parsers.HeaderValueRow;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.HeaderValueRowTableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -70,6 +71,12 @@ public class PoiSpreadsheetParserTest {
         assertThat(testProcessor.getMessages(), emptyCollectionOf(String.class));
         for (Map<String, String> spreadsheetRowValues : testProcessor.getSpreadsheetValues()) {
             PoiSpreadsheetValidator.validateSpreadsheetRow(spreadsheetRowValues, TestHeaders.class);
+            // Header names and values should be trimmed of leading and trailing spaces.
+            for (String headerName : spreadsheetRowValues.keySet()) {
+                Assert.assertEquals(headerName, headerName.trim());
+            }
+            String value = spreadsheetRowValues.get("testname");
+            Assert.assertEquals(value, value.trim());
         }
     }
 
