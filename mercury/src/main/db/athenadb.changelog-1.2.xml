@@ -1137,4 +1137,52 @@
         </createIndex>
     </changeSet>
 
+    <changeSet id="GPLIM-5112-6" author="scottmat">
+        <sql>
+            update athena.product_aud pdt
+            set pdt.PDM_ORDERABLE_ONLY = 0
+            where pdt.CLINICAL_ONLY_PRODUCT = 1
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-5112-7" author="scottmat">
+        <sql>
+            update athena.product_order pdo
+            set pdo.CLINICAL_ATTESTATION_CONFIRMED = 0;
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-5112-8" author="scottmat">
+        <sql>
+            update athena.product_order_aud pdo
+            set pdo.CLINICAL_ATTESTATION_CONFIRMED = 0;
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-5112-9" author="scottmat">
+        <sql>
+            update athena.product_order pdo
+            set pdo.CLINICAL_ATTESTATION_CONFIRMED = 1
+            where pdo.product_order_id in (
+                select pdo.product_order_id
+                from athena.product_order pdo
+                join athena.product pdt on pdt.PRODUCT_ID = pdo.PRODUCT
+                where pdt.CLINICAL_ONLY_PRODUCT = 1 and
+                pdo.order_status not in ('Draft', 'Abandoned'));
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-5112-10" author="scottmat">
+        <sql>
+            update athena.product_order_aud pdo
+            set pdo.CLINICAL_ATTESTATION_CONFIRMED = 1
+            where pdo.product_order_id in (
+                select pdo.product_order_id
+                from athena.product_order_aud pdo
+                join athena.product pdt on pdt.PRODUCT_ID = pdo.PRODUCT
+                where pdt.CLINICAL_ONLY_PRODUCT = 1 and
+            pdo.order_status not in ('Draft', 'Abandoned'));
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>

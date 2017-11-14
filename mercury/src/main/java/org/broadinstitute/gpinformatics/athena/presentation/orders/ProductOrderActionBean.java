@@ -787,6 +787,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         } catch (InvalidProductException | SAPIntegrationException e) {
             addGlobalValidationError("Unable to determine the existing value of open orders for " +
                                      quote.getAlphanumericId() +": " +e.getMessage());
+            logger.error(e);
         }
 
         if (editOrder != null) {

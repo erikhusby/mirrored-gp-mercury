@@ -370,7 +370,7 @@ mercury:
       collaborate: DEV
       submission: DEV
       infiniumStarter: DEV
-      sap:  RC
+      sap:  TEST
 
     QA:
       app:      QA
