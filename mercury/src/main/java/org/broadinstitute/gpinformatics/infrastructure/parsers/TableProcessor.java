@@ -149,7 +149,7 @@ public abstract class TableProcessor implements Serializable {
      * subclasses need not litter their code with these easy validations.
      *
      * @param dataRow      The row of data
-     * @param dataRowIndex The index into the row
+     * @param dataRowIndex The 0-based index of the row
      *
      * @return Is the required value there?
      */
@@ -160,7 +160,8 @@ public abstract class TableProcessor implements Serializable {
         for (ColumnHeader header : getColumnHeaders()) {
             if (header.isRequiredValue() &&
                 (!dataRow.containsKey(header.getText()) || StringUtils.isBlank(dataRow.get(header.getText())))) {
-                addDataMessage(String.format(REQUIRED_VALUE_IS_MISSING, header.getText()), dataRowIndex);
+                addDataMessage(String.format(REQUIRED_VALUE_IS_MISSING, header.getText()),
+                        headerRowIndex + 1 + dataRowIndex);
                 hasValue = false;
             }
         }

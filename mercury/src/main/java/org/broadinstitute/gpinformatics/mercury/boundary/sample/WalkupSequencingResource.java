@@ -125,14 +125,14 @@ public class WalkupSequencingResource {
         sampleInstanceEntity.setUploadDate();
 
         sampleInstanceEntity.setLabVessel(labVessel);
-        sampleInstanceEntity.setMercurySampleId(mercurySample);
+        sampleInstanceEntity.setMercurySample(mercurySample);
         sampleInstanceEntityDao.persist(sampleInstanceEntity);
         sampleInstanceEntityDao.flush();
     }
 
     /** Use this when a "0" is wanted for a blank input. */
     public static String asNumber(@Nullable String input) {
-        return StringUtils.isNumeric(StringUtils.trimToEmpty(input)) ? input : "0";
+        return NumberUtils.isNumber(StringUtils.trimToEmpty(input)) ? input : "0";
     }
 
     /** Use this when a null result is wanted for a blank input. */

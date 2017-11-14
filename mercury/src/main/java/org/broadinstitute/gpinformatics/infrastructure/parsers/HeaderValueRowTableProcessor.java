@@ -1,9 +1,14 @@
 package org.broadinstitute.gpinformatics.infrastructure.parsers;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 
 import javax.annotation.Nonnull;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Adds header-value row processing to the TableProcessor, for spreadsheets with
@@ -11,6 +16,9 @@ import java.util.List;
  * of ExternalLibrary.xlsx
  */
 public abstract class HeaderValueRowTableProcessor extends TableProcessor {
+    protected Map<String, String> headerValueMap = new HashMap<>();
+    protected Map<String, Integer> headerRowNumberMap = new HashMap<>();
+
     public HeaderValueRowTableProcessor(String sheetName) {
         super(sheetName);
     }
@@ -22,9 +30,56 @@ public abstract class HeaderValueRowTableProcessor extends TableProcessor {
     }
 
     /** Processes a spreadsheet row as a single row that consists of a header cell followed by value cell(s). */
-    public abstract void processHeaderValueRow(Row row);
+    public void processHeaderValueRow(Row row) {
+        String headerContent = null;
+        for (Iterator<Cell> iterator = row.cellIterator(); iterator.hasNext(); ) {
+            Cell cell = iterator.next();
+            String content = cell.getStringCellValue();
+            // The first non-blank cell is the header, and the very next cell on the row is the value.
+            if (headerContent == null) {
+                if (StringUtils.isNotBlank(content) && getHeaderValueNames().contains(content)) {
+                    headerContent = content;
+                    headerRowNumberMap.put(headerContent, row.getRowNum());
+                }
+            } else {
+                headerValueMap.put(headerContent, content);
+                break;
+            }
+        }
+    }
 
-    protected abstract HeaderValueRow[] getHeaderValueRows();
+    /**
+     * Generates error messages if the header-value rows are missing any required headers or required values.
+     * This should be called after all the header-value rows have been parsed.
+     */
+    public void validateHeaderValueRows() {
+        for (HeaderValueRow headerValueRow : getHeaderValueRows()) {
+            String headerName = headerValueRow.getText();
+            if (!headerValueMap.containsKey(headerName)) {
+                if (headerValueRow.isRequiredHeader()) {
+                    getMessages().add("Required row for \"" + headerName + "\" is missing (must appear above row " +
+                            (getHeaderRowIndex() + 1) + ").");
+                }
+            } else {
+                if (headerValueRow.isRequiredValue() && StringUtils.isBlank(headerValueMap.get(headerName))) {
+                    getMessages().add("Required value for " + headerName + " is blank at row " +
+                            headerRowNumberMap.get(headerName));
+                }
+            }
+        }
+    }
+
+    public abstract HeaderValueRow[] getHeaderValueRows();
 
     public abstract List<String> getHeaderValueNames();
+
+    /** Returns the mapping from header text to data value. */
+    public Map<String, String> getHeaderValueMap() {
+        return headerValueMap;
+    };
+
+    /** Returns the mapping from header text to the 1-based row number that the header first appeared in. */
+    public Map<String, Integer> getHeaderRowNumberMap() {
+        return headerRowNumberMap;
+    }
 }

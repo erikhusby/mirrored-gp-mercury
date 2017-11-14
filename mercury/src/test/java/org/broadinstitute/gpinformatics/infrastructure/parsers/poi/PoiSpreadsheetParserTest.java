@@ -11,10 +11,7 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.parsers.poi;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
@@ -32,8 +29,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -104,10 +99,10 @@ public class PoiSpreadsheetParserTest {
         PoiSpreadsheetParser.processSingleWorksheet(fileInputStream, processor);
         assertThat(processor.getMessages(), emptyCollectionOf(String.class));
         assertThat(processor.getWarnings(), emptyCollectionOf(String.class));
-        assertThat(processor.headerValueMap.get("Collaborator Information"), equalTo("XYZ Collection"));
-        assertThat(processor.headerValueMap.get("First Name:"), equalTo("Abel"));
-        assertThat(processor.headerValueMap.get("Last Name:"), equalTo("Baker"));
-        assertThat(processor.headerValueMap.get("Organization:"), equalTo("The Organization"));
+        assertThat(processor.getHeaderValueMap().get("Collaborator Information"), equalTo("XYZ Collection"));
+        assertThat(processor.getHeaderValueMap().get("First Name:"), equalTo("Abel"));
+        assertThat(processor.getHeaderValueMap().get("Last Name:"), equalTo("Baker"));
+        assertThat(processor.getHeaderValueMap().get("Organization:"), equalTo("The Organization"));
         assertThat(processor.spreadsheetValues.get(0).get("stringData2"), is("1234"));
         assertThat(processor.spreadsheetValues.get(1).get("stringData2"), is("5678"));
         assertThat(processor.spreadsheetValues.get(2).get("stringData2"), is("9012"));
@@ -215,7 +210,6 @@ public class PoiSpreadsheetParserTest {
 
     private static class TestHeaderValueRowProcessor extends HeaderValueRowTableProcessor {
         private final List<Map<String, String>> spreadsheetValues = new ArrayList<>();
-        private final Map<String, String> headerValueMap = new HashMap<>();
 
         enum MyColumnHeaders implements ColumnHeader {
             rowCount,
@@ -293,22 +287,16 @@ public class PoiSpreadsheetParserTest {
         @Override
         public List<String> getHeaderNames() {
             return new ArrayList<String>() {{
-               for (ColumnHeader columnHeader : MyColumnHeaders.values()) {
-                   add(columnHeader.getText());
-               }
+                for (ColumnHeader columnHeader : MyColumnHeaders.values()) {
+                    add(columnHeader.getText());
+                }
             }};
         }
 
         @Override
         public void processHeader(List<String> headers, int row) {
-            for (HeaderValueRow headerValueRow : getHeaderValueRows()) {
-                // All required headers present?
-                assertThat(!headerValueRow.isRequiredHeader() ||
-                        headerValueMap.containsKey(headerValueRow.getText().trim()), is(true));
-                // All required values present?
-                assertThat(!headerValueRow.isRequiredValue() ||
-                        StringUtils.isNotBlank(headerValueMap.get(headerValueRow.getText().trim())), is(true));
-            }
+            validateHeaderValueRows();
+            assertThat(getMessages().size(), is(0));
         }
 
         @Override
@@ -326,25 +314,7 @@ public class PoiSpreadsheetParserTest {
         }
 
         @Override
-        public void processHeaderValueRow(Row row) {
-            String headerContent = null;
-            for (Iterator<Cell> iterator = row.cellIterator(); iterator.hasNext(); ) {
-                Cell cell = iterator.next();
-                String content = cell.getStringCellValue();
-                // The first non-blank cell is the header, and the very next cell is the value.
-                if (headerContent == null) {
-                    if (StringUtils.isNotBlank(content) && getHeaderValueNames().contains(content)) {
-                        headerContent = content;
-                    }
-                } else {
-                    headerValueMap.put(headerContent, content);
-                    break;
-                }
-            }
-        }
-
-        @Override
-        protected HeaderValueRow[] getHeaderValueRows() {
+        public HeaderValueRow[] getHeaderValueRows() {
             return MyHeaderValueRow.values();
         }
 

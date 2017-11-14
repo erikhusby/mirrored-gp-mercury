@@ -37,8 +37,6 @@ public final class PoiSpreadsheetParser {
 
     private static final Format DATE_FORMATTER = FastDateFormat.getInstance("MM/dd/yyyy");
 
-    protected List<String> validationMessages = new ArrayList<>();
-
     // This maps table processors by sheet name.
     private final Map<String, ? extends TableProcessor> processorMap;
 
@@ -51,7 +49,8 @@ public final class PoiSpreadsheetParser {
      * the data, row by row, from the spreadsheet file and holding that data in such a way that a concrete parser
      * can parse the row data in a way specific to that parser.
      *
-     * @throws ValidationException
+     * @throws ValidationException if the header row cannot be found or the header is missing required columns.
+     * Other validation errors such as missing data values can be found in processor.getMessages().
      */
     public void processRows(Sheet workSheet, TableProcessor processor) throws ValidationException {
         // If the index is invalid then sets it by parsing the spreadsheet and searching for the header strings.
@@ -130,17 +129,19 @@ public final class PoiSpreadsheetParser {
      *
      * @param processor The Table Processor that will be turning rows of data into objects based on headers.
      * @param rows The row iterator which gets advanced past the header row.
+     * @throws ValidationException if the header row cannot be found or the header is missing required columns.
      */
     private void processHeaders(TableProcessor processor, Iterator<Row> rows) throws ValidationException {
-        boolean doRowHeaderRows = processor instanceof HeaderValueRowTableProcessor;
+        HeaderValueRowTableProcessor processorCast = (processor instanceof HeaderValueRowTableProcessor) ?
+                (HeaderValueRowTableProcessor) processor : null;
         // headerRowIndex is the 0-based index of the first header row.
         final int headerRowIndex = processor.getHeaderRowIndex();
         List<String> headers = new ArrayList<>();
         while (rows.hasNext()) {
             Row headerRow = rows.next();
             if (headerRow.getRowNum() < headerRowIndex) {
-                if (doRowHeaderRows) {
-                    ((HeaderValueRowTableProcessor) processor).processHeaderValueRow(headerRow);
+                if (processorCast != null) {
+                    processorCast.processHeaderValueRow(headerRow);
                 }
             } else {
                 Iterator<Cell> cellIterator = headerRow.cellIterator();
@@ -159,9 +160,12 @@ public final class PoiSpreadsheetParser {
                 break;
             }
         }
-        if (!processor.validateColumnHeaders(headers)) {
+        if (!processor.validateColumnHeaders(headers)){
             throw new ValidationException("Failed to validate headers at row " + (headerRowIndex + 1),
                     processor.getMessages());
+        }
+        if (processorCast != null) {
+            processorCast.validateHeaderValueRows();
         }
         // Turn the header strings for this row into whatever objects are needed to continue on.
         processor.processHeader(headers, headerRowIndex + 1);
@@ -175,9 +179,11 @@ public final class PoiSpreadsheetParser {
      *
      * @throws IOException
      * @throws InvalidFormatException
-     * @throws ValidationException
+     * @throws ValidationException if the header row cannot be found or is missing required columns.
+     * Other validation errors can be found in processor.getMessages().
      */
-    public void processUploadFile(InputStream fileStream) throws IOException, InvalidFormatException, ValidationException {
+    public void processUploadFile(InputStream fileStream) throws IOException, InvalidFormatException,
+            ValidationException {
         processWorkSheets(WorkbookFactory.create(fileStream));
     }
 
@@ -211,12 +217,7 @@ public final class PoiSpreadsheetParser {
      */
     protected @NotNull String extractCellContent(Row row, int columnIndex, ColumnHeader header) {
         Cell cell = row.getCell(columnIndex);
-        String result = getCellValues(cell, header.isDateColumn(), header.isStringColumn());
-        if (header.isRequiredValue() && StringUtils.isBlank(result)) {
-            validationMessages.add("Row # " + (row.getRowNum() + 1) + " requires a value for " +
-                    header.getText());
-        }
-        return result;
+        return getCellValues(cell, header.isDateColumn(), header.isStringColumn());
     }
 
     /**
@@ -301,11 +302,13 @@ public final class PoiSpreadsheetParser {
      * @param spreadsheet The spreadsheet stream of data.
      * @param processor The table processor.
      *
-     * @return the list of validation messages, if any
+     * @return the list of validation error messages, such as a missing data value when the ColumnHeader
+     * indicates that it is required.
      *
      * @throws InvalidFormatException Formatting issues
      * @throws IOException File issues
-     * @throws ValidationException Any problems with the data in the spreadsheet
+     * @throws ValidationException if the header row cannot be found or is the header is missing required columns
+     * (defined in ColumnHeader). Other validation errors are in the returned list.
      */
     public static List<String> processSingleWorksheet(InputStream spreadsheet, TableProcessor processor)
             throws InvalidFormatException, IOException, ValidationException {

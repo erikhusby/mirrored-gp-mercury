@@ -199,7 +199,7 @@ public class SampleInstanceEntity {
         this.molecularIndexingScheme = molecularIndexingScheme;
     }
 
-    public void setMercurySampleId(MercurySample mercurySample) {
+    public void setMercurySample(MercurySample mercurySample) {
         this.mercurySample = mercurySample;
     }
 
@@ -281,66 +281,6 @@ public class SampleInstanceEntity {
 
     public ProductOrder getProductOrder() {
         return productOrder;
-    }
-
-    public void setProductOrder(ProductOrder productOrder) {
-        this.productOrder = productOrder;
-    }
-
-    public String getRestrictionEnzyme() {
-        return restrictionEnzyme;
-    }
-
-    public void setRestrictionEnzyme(String restrictionEnzyme) {
-        this.restrictionEnzyme = restrictionEnzyme;
-    }
-
-    public String getIllumina454KitUsed() {
-        return illumina454KitUsed;
-    }
-
-    public void setIllumina454KitUsed(String illumina454KitUsed) {
-        this.illumina454KitUsed = illumina454KitUsed;
-    }
-
-    public Date getUploadDate() {
-        return uploadDate;
-    }
-
-    public void setUploadDate(Date uploadDate) {
-        this.uploadDate = uploadDate;
-    }
-
-    public String getLibrarySizeRange() {
-        return librarySizeRange;
-    }
-
-    public void setLibrarySizeRange(String librarySizeRange) {
-        this.librarySizeRange = librarySizeRange;
-    }
-
-    public String getJumpSize() {
-        return jumpSize;
-    }
-
-    public void setJumpSize(String jumpSize) {
-        this.jumpSize = jumpSize;
-    }
-
-    public String getInsertSizeRange() {
-        return insertSizeRange;
-    }
-
-    public void setInsertSizeRange(String insertSizeRange) {
-        this.insertSizeRange = insertSizeRange;
-    }
-
-    public String getTissueType() {
-        return tissueType;
-    }
-
-    public void setTissueType(String tissueType) {
-        this.tissueType = tissueType;
     }
 
     public String getSampleTubeBarcode() {
@@ -562,5 +502,69 @@ public class SampleInstanceEntity {
 
     public Set<SampleInstanceEntityTsk> getSampleInstanceEntityTsks() {
         return sampleInstanceEntityTsks;
+    }
+
+    public void setProductOrder(ProductOrder productOrder) {
+        this.productOrder = productOrder;
+    }
+
+    public String getRestrictionEnzyme() {
+        return restrictionEnzyme;
+    }
+
+    public void setRestrictionEnzyme(String restrictionEnzyme) {
+        this.restrictionEnzyme = restrictionEnzyme;
+    }
+
+    public String getIllumina454KitUsed() {
+        return illumina454KitUsed;
+    }
+
+    public void setIllumina454KitUsed(String illumina454KitUsed) {
+        this.illumina454KitUsed = illumina454KitUsed;
+    }
+
+    public Date getUploadDate() {
+        return uploadDate;
+    }
+
+    public void setUploadDate(Date uploadDate) {
+        this.uploadDate = uploadDate;
+    }
+
+    public String getLibrarySizeRange() {
+        return librarySizeRange;
+    }
+
+    public void setLibrarySizeRange(String librarySizeRange) {
+        this.librarySizeRange = librarySizeRange;
+    }
+
+    public String getJumpSize() {
+        return jumpSize;
+    }
+
+    public void setJumpSize(String jumpSize) {
+        this.jumpSize = jumpSize;
+    }
+
+    public String getInsertSizeRange() {
+        return insertSizeRange;
+    }
+
+    public void setInsertSizeRange(String insertSizeRange) {
+        this.insertSizeRange = insertSizeRange;
+    }
+
+    public String getTissueType() {
+        return tissueType;
+    }
+
+    public void setTissueType(String tissueType) {
+        this.tissueType = tissueType;
+    }
+
+    public void setSubmitDate(Date submitDate) {
+        this.submitDate = submitDate;
     }
 }

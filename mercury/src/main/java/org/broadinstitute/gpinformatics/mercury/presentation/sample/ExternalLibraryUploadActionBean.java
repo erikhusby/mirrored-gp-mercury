@@ -11,7 +11,7 @@ import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
-import org.broadinstitute.gpinformatics.mercury.boundary.sample.ExternalLibrarySampleInstanceEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjb;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorEzPass;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorNonPooled;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorPooled;
@@ -26,7 +26,6 @@ import java.io.IOException;
 public class ExternalLibraryUploadActionBean extends CoreActionBean {
 
     public static final String EZPASS_KIOSK = "ezpassKiosk";
-    public static final String EZPASS_NON_KIOSK = "ezpassNonKiosk";
     public static final String UPLOAD_SAMPLES = "uploadSamples";
     public static final String POOLED = "pooled";
     public static final String NON_POOLED = "non-pooled";
@@ -38,7 +37,7 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
     private ExternalLibraryUploadActionBean.SpreadsheetType spreadsheetType;
 
     @Inject
-    private ExternalLibrarySampleInstanceEjb externalLibrarySampleInstanceEjb;
+    private SampleInstanceEjb sampleInstanceEjb;
 
     @Validate(required = true, on = UPLOAD_SAMPLES)
     private FileBean samplesSpreadsheet;
@@ -56,10 +55,10 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
     public Resolution uploadTubes() {
         switch (spreadsheetType) {
         case EZ_PASS:
-            uploadEzPassLibraries(false);
+            uploadEzPassLibraries();
             break;
         case EZ_PASS_KIOSK:
-            uploadEzPassLibraries(true);
+            uploadEzPassLibraries();
             break;
         case EXTERNAL_LIBRARY_POOLED_TUBES:
             uploadPooledLibrary();
@@ -84,10 +83,10 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
         try {
             MessageCollection messageCollection = new MessageCollection();
             VesselPooledTubesProcessor vesselSpreadsheetProcessor = new VesselPooledTubesProcessor("Sheet1");
-            PoiSpreadsheetParser.processSingleWorksheet(samplesSpreadsheet.getInputStream(),
-                    vesselSpreadsheetProcessor);
-            externalLibrarySampleInstanceEjb.verifyPooledTubes(vesselSpreadsheetProcessor, messageCollection,
-                    overWriteFlag);
+            messageCollection.addErrors(PoiSpreadsheetParser.processSingleWorksheet(
+                    samplesSpreadsheet.getInputStream(), vesselSpreadsheetProcessor));
+            sampleInstanceEjb.verifyAndPersistPooledTubeSpreadsheet(vesselSpreadsheetProcessor,
+                    messageCollection, overWriteFlag);
             addMessages(messageCollection);
         } catch (InvalidFormatException | IOException | ValidationException e) {
             addValidationError("samplesSpreadsheet", e.getMessage());
@@ -97,13 +96,14 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
     /**
      * EZ Pass samples
      */
-    public void uploadEzPassLibraries(Boolean isKiosk) {
+    public void uploadEzPassLibraries() {
         try {
             MessageCollection messageCollection = new MessageCollection();
             ExternalLibraryProcessorEzPass processor = new ExternalLibraryProcessorEzPass("Sheet1");
-            PoiSpreadsheetParser.processSingleWorksheet(samplesSpreadsheet.getInputStream(), processor);
-            externalLibrarySampleInstanceEjb.verifyExternalLibrary(processor, messageCollection,
-                    overWriteFlag, isKiosk ? EZPASS_KIOSK : EZPASS_NON_KIOSK);
+            messageCollection.addErrors(PoiSpreadsheetParser.processSingleWorksheet(
+                    samplesSpreadsheet.getInputStream(), processor));
+            sampleInstanceEjb.verifyAndPersistExternalLibrary(processor, messageCollection,
+                    overWriteFlag);
             addMessages(messageCollection);
         } catch (InvalidFormatException | IOException | ValidationException e) {
             addValidationError("samplesSpreadsheet", e.getMessage());
@@ -118,9 +118,10 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
             MessageCollection messageCollection = new MessageCollection();
             ExternalLibraryProcessorPooledMultiOrganism processor =
                     new ExternalLibraryProcessorPooledMultiOrganism("Sheet1");
-            PoiSpreadsheetParser.processSingleWorksheet(samplesSpreadsheet.getInputStream(), processor);
-            externalLibrarySampleInstanceEjb.verifyExternalLibrary(processor, messageCollection,
-                    overWriteFlag, MULTI_ORG);
+            messageCollection.addErrors(PoiSpreadsheetParser.processSingleWorksheet(
+                    samplesSpreadsheet.getInputStream(), processor));
+            sampleInstanceEjb.verifyAndPersistExternalLibrary(processor, messageCollection,
+                    overWriteFlag);
             addMessages(messageCollection);
         } catch (InvalidFormatException | IOException | ValidationException e) {
             addValidationError("samplesSpreadsheet", e.getMessage());
@@ -134,9 +135,10 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
         try {
             MessageCollection messageCollection = new MessageCollection();
             ExternalLibraryProcessorPooled processor = new ExternalLibraryProcessorPooled("Sheet1");
-            PoiSpreadsheetParser.processSingleWorksheet(samplesSpreadsheet.getInputStream(), processor);
-            externalLibrarySampleInstanceEjb.verifyExternalLibrary(processor, messageCollection,
-                    overWriteFlag, POOLED);
+            messageCollection.addErrors(PoiSpreadsheetParser.processSingleWorksheet(
+                    samplesSpreadsheet.getInputStream(), processor));
+            sampleInstanceEjb.verifyAndPersistExternalLibrary(processor, messageCollection,
+                    overWriteFlag);
             addMessages(messageCollection);
         } catch (InvalidFormatException | IOException | ValidationException e) {
             addValidationError("samplesSpreadsheet", e.getMessage());
@@ -150,25 +152,35 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
         try {
             MessageCollection messageCollection = new MessageCollection();
             ExternalLibraryProcessorNonPooled processor = new ExternalLibraryProcessorNonPooled("Sheet1");
-            PoiSpreadsheetParser.processSingleWorksheet(samplesSpreadsheet.getInputStream(), processor);
-            externalLibrarySampleInstanceEjb.verifyExternalLibrary(processor, messageCollection,
-                    overWriteFlag, NON_POOLED);
+            messageCollection.addErrors(PoiSpreadsheetParser.processSingleWorksheet(
+                    samplesSpreadsheet.getInputStream(), processor));
+            sampleInstanceEjb.verifyAndPersistExternalLibrary(processor, messageCollection,
+                    overWriteFlag);
             addMessages(messageCollection);
         } catch (InvalidFormatException | IOException | ValidationException e) {
             addValidationError("samplesSpreadsheet", e.getMessage());
         }
     }
 
-    public void setSpreadsheetType(ExternalLibraryUploadActionBean.SpreadsheetType spreadsheetType) {
-        this.spreadsheetType = spreadsheetType;
-    }
-
     public void setSamplesSpreadsheet(FileBean spreadsheet) {
         this.samplesSpreadsheet = spreadsheet;
     }
 
+    public SpreadsheetType getSpreadsheetType() {
+        return spreadsheetType;
+    }
+
+    public void setSpreadsheetType(
+            SpreadsheetType spreadsheetType) {
+        this.spreadsheetType = spreadsheetType;
+    }
+
     public void setOverWriteFlag(boolean overWriteFlag) {
         this.overWriteFlag = overWriteFlag;
+    }
+
+    public boolean isOverWriteFlag() {
+        return overWriteFlag;
     }
 
     @UrlBinding(value = "/sample/ExternalLibraryUpload.action")

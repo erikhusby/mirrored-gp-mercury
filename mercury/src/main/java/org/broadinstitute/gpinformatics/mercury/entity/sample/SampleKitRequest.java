@@ -10,6 +10,8 @@ import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
+import static org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity_.sampleKitRequest;
+
 @Entity
 @Audited
 @Table(schema = "mercury", name = "sample_kit_request")
@@ -50,7 +52,6 @@ public class SampleKitRequest {
     private String species;
 
     private String irbApprovalRequired;
-
 
     public Long getSampleKitRequest() {
         return sampleKitRequestId;

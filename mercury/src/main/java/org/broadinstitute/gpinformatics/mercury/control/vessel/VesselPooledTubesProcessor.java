@@ -1,12 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 public class VesselPooledTubesProcessor extends TableProcessor {
     private List<String> headers;
@@ -18,7 +19,8 @@ public class VesselPooledTubesProcessor extends TableProcessor {
     private List<String> bait = new ArrayList<>();
     private List<String> cat = new ArrayList<>();
     private List<String> experiment = new ArrayList<>();
-    private List<String> conditions = new ArrayList<>();
+    // conditions is a per-row list of dev ticket strings.
+    private List<List<String>> conditions = new ArrayList<>();
     private List<String> collaboratorSampleId = new ArrayList<>();
     private List<String> collaboratorParticipantId = new ArrayList<>();
     private List<String> broadParticipantId = new ArrayList<>();
@@ -50,7 +52,8 @@ public class VesselPooledTubesProcessor extends TableProcessor {
         bait.add(dataRow.get(Headers.BAIT.getText()));
         cat.add(dataRow.get(Headers.CAT.getText()));
         experiment.add(dataRow.get(Headers.EXPERIMENT.getText()));
-        conditions.add(dataRow.get(Headers.CONDITIONS.getText()));
+        String conditionsString = dataRow.get(Headers.CONDITIONS.getText());
+        conditions.add(Arrays.asList(StringUtils.stripAll(conditionsString.split(","))));
         collaboratorSampleId.add(dataRow.get(Headers.COLLABORATOR_SAMPLE_ID.getText()));
         collaboratorParticipantId.add(dataRow.get(Headers.COLLABORATOR_PARTICIPANT_ID.getText()));
         broadParticipantId.add(dataRow.get(Headers.BROAD_PARTICIPANT_ID.getText()));
@@ -70,33 +73,32 @@ public class VesselPooledTubesProcessor extends TableProcessor {
     }
 
     public enum Headers implements ColumnHeader {
-        TUBE_BARCODE("Tube barcode", ColumnHeader.OPTIONAL_HEADER, true),
-        SINGLE_SAMPLE_LIBRARY_NAME("Single sample library name", ColumnHeader.OPTIONAL_HEADER, true),
-        BROAD_SAMPLE_ID("Broad sample ID", ColumnHeader.OPTIONAL_HEADER, true),
-        ROOT_SAMPLE_ID("Root Sample ID", ColumnHeader.OPTIONAL_HEADER, true),
-        MOLECULAR_INDEXING_SCHEME("Molecular indexing scheme", ColumnHeader.OPTIONAL_HEADER, true),
-        BAIT("Bait", ColumnHeader.OPTIONAL_HEADER, true),
-        CAT("CAT", ColumnHeader.OPTIONAL_HEADER, true),
-        EXPERIMENT("Experiment", ColumnHeader.OPTIONAL_HEADER, true),
-        CONDITIONS("Conditions", ColumnHeader.OPTIONAL_HEADER, true),
-        COLLABORATOR_SAMPLE_ID("Collaborator sample ID", ColumnHeader.OPTIONAL_HEADER, true),
-        COLLABORATOR_PARTICIPANT_ID("Collaborator participant ID", ColumnHeader.OPTIONAL_HEADER, true),
-        BROAD_PARTICIPANT_ID("Broad participant ID", ColumnHeader.OPTIONAL_HEADER, true),
-        GENDER("Gender", ColumnHeader.OPTIONAL_HEADER, true),
-        SPECIES("Species", ColumnHeader.OPTIONAL_HEADER, true),
-        VOLUME("Volume", ColumnHeader.OPTIONAL_HEADER, true),
-        FRAGMENT_SIZE("Fragment Size", ColumnHeader.OPTIONAL_HEADER, true),
-        READ_LENGTH("Read Length", ColumnHeader.OPTIONAL_HEADER, true),
-        LSID("Lsid", ColumnHeader.OPTIONAL_HEADER, true);
-
+        TUBE_BARCODE("Tube barcode", ColumnHeader.REQUIRED_VALUE, true),
+        SINGLE_SAMPLE_LIBRARY_NAME("Single sample library name", ColumnHeader.REQUIRED_VALUE, true),
+        BROAD_SAMPLE_ID("Broad sample ID", ColumnHeader.REQUIRED_VALUE, true),
+        ROOT_SAMPLE_ID("Root Sample ID", ColumnHeader.OPTIONAL_VALUE, true),
+        MOLECULAR_INDEXING_SCHEME("Molecular indexing scheme", ColumnHeader.REQUIRED_VALUE, true),
+        BAIT("Bait", ColumnHeader.OPTIONAL_VALUE, true),
+        CAT("CAT", ColumnHeader.OPTIONAL_VALUE, true),
+        EXPERIMENT("Experiment", ColumnHeader.REQUIRED_VALUE, true),
+        CONDITIONS("Conditions", ColumnHeader.REQUIRED_VALUE, true),
+        COLLABORATOR_SAMPLE_ID("Collaborator sample ID", ColumnHeader.OPTIONAL_VALUE, true),
+        COLLABORATOR_PARTICIPANT_ID("Collaborator participant ID", ColumnHeader.OPTIONAL_VALUE, true),
+        BROAD_PARTICIPANT_ID("Broad participant ID", ColumnHeader.OPTIONAL_VALUE, true),
+        GENDER("Gender", ColumnHeader.OPTIONAL_VALUE, true),
+        SPECIES("Species", ColumnHeader.OPTIONAL_VALUE, true),
+        VOLUME("Volume", ColumnHeader.OPTIONAL_VALUE, true),
+        FRAGMENT_SIZE("Fragment Size", ColumnHeader.OPTIONAL_VALUE, true),
+        READ_LENGTH("Read Length", ColumnHeader.OPTIONAL_VALUE, true),
+        LSID("Lsid", ColumnHeader.OPTIONAL_VALUE, true);
 
         private final String text;
-        private boolean optionalHeader;
+        private boolean isRequired;
         private boolean isString;
 
-        Headers(String text, boolean optionalHeader, boolean isString) {
+        Headers(String text, boolean isRequired, boolean isString) {
             this.text = text;
-            this.optionalHeader = optionalHeader;
+            this.isRequired = isRequired;
             this.isString = isString;
         }
 
@@ -107,12 +109,12 @@ public class VesselPooledTubesProcessor extends TableProcessor {
 
         @Override
         public boolean isRequiredHeader() {
-            return true;
+            return isRequired;
         }
 
         @Override
         public boolean isRequiredValue() {
-            return this.optionalHeader;
+            return isRequired;
         }
 
         @Override
@@ -122,7 +124,7 @@ public class VesselPooledTubesProcessor extends TableProcessor {
 
         @Override
         public boolean isStringColumn() {
-            return this.isString;
+            return isString;
         }
     }
 
@@ -142,20 +144,8 @@ public class VesselPooledTubesProcessor extends TableProcessor {
 
     public List<String> getExperiment() { return experiment; }
 
-    public List<Map<String, String>> getConditions() {
-        List<Map<String, String>> devConditions = new ArrayList<>();
-        if (conditions != null) {
-            for (String condition : conditions) {
-                String[] devTasks = condition.split(",");
-                Map<String, String> map = new HashMap<String, String>();
-                for (String devTask : devTasks) {
-                    map.put(devTask.trim(), devTask.trim());
-                }
-                devConditions.add(map);
-            }
-            return devConditions;
-        }
-        return null;
+    public List<List<String>> getConditions() {
+        return conditions;
     }
 
     public List<String> getCollaboratorSampleId() { return collaboratorSampleId; }

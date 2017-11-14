@@ -1,16 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.control.sample;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.HeaderValueRow;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.HeaderValueRowTableProcessor;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -20,7 +16,6 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
 
     protected List<String> headerNames = new ArrayList<>();
     protected List<String> headerValueNames = new ArrayList<>();
-    protected Map<String, String> headerValueMap = new HashMap<>();
 
     protected List<String> accessList = new ArrayList<>();
     protected List<String> additionalAssemblyInformation = new ArrayList<>();
@@ -70,9 +65,9 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
     protected List<String> virtualGSSRId = new ArrayList<>();
 
     public enum HeaderValueRows implements HeaderValueRow {
-        FIRST_NAME("First Name:", OPTIONAL),
-        LAST_NAME("Last Name:", OPTIONAL),
-        ORGANIZATION("Organization:", OPTIONAL),
+        FIRST_NAME("First Name:", REQUIRED),
+        LAST_NAME("Last Name:", REQUIRED),
+        ORGANIZATION("Organization:", REQUIRED),
         ADDRESS("Address:", OPTIONAL),
         CITY("City:", OPTIONAL),
         STATE("State:", OPTIONAL),
@@ -90,11 +85,10 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         private boolean requiredHeader;
         private boolean requiredValue;
 
-
-        private HeaderValueRows(String text, boolean requiredValue) {
+        private HeaderValueRows(String text, boolean required) {
             this.text = text;
-            this.requiredHeader = true;
-            this.requiredValue = requiredValue;
+            this.requiredHeader = required;
+            this.requiredValue = required;
         }
 
         @Override
@@ -139,7 +133,7 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
     }
 
     @Override
-    protected HeaderValueRow[] getHeaderValueRows() {
+    public HeaderValueRow[] getHeaderValueRows() {
         return HeaderValueRows.values();
     }
 
@@ -151,23 +145,6 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
     @Override
     public List<String> getHeaderNames() {
         return headerNames;
-    }
-
-    @Override
-    public void processHeaderValueRow(Row row) {
-        String headerCell = null;
-        for (Iterator<Cell> iterator = row.cellIterator(); iterator.hasNext(); ) {
-            String cell = iterator.next().getStringCellValue();
-            // Expects the first non-blank cell to be the header and the next cell to be the value.
-            if (headerCell == null) {
-                if (StringUtils.isNotBlank(cell) && getHeaderValueNames().contains(cell)) {
-                    headerCell = cell;
-                }
-            } else {
-                headerValueMap.put(headerCell, cell);
-                break;
-            }
-        }
     }
 
     @Override
