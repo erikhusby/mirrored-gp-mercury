@@ -131,14 +131,12 @@ public class SubmissionDtoFetcher {
         }
         final Map<SubmissionTuple, Aggregation> aggregationMap = new HashMap<>();
         List<Aggregation> aggregations = aggregationMetricsFetcher.fetch(tupleList);
-        for (final Aggregation aggregation : aggregations) {
-            aggregationMap.putAll(Maps.uniqueIndex(aggregations, new Function<Aggregation, SubmissionTuple>() {
-                @Override
-                public SubmissionTuple apply(@Nullable Aggregation aggregation) {
-                    return aggregation.getTuple();
-                }
-            }));
-        }
+        aggregationMap.putAll(Maps.uniqueIndex(aggregations, new Function<Aggregation, SubmissionTuple>() {
+            @Override
+            public SubmissionTuple apply(@Nullable Aggregation aggregation) {
+                return aggregation.getTuple();
+            }
+        }));
 
         return aggregationMap;
     }
