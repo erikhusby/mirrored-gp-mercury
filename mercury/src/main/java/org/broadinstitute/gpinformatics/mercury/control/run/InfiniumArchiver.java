@@ -133,6 +133,7 @@ public class InfiniumArchiver {
         // To avoid running out of memory, break the list into small chunks, and clear the Hibernate session.
         List<Collection<String>> split = BaseSplitter.split(barcodes, 10);
         List<Pair<String, Boolean>> chipsToArchive = new ArrayList<>();
+        int i = 0;
         for (Collection<String> strings : split) {
             List<LabVessel> chips = labVesselDao.findByListIdentifiers(new ArrayList<>(strings));
             for (LabVessel chip : chips) {
@@ -142,6 +143,10 @@ public class InfiniumArchiver {
                             String forwardToGap = LabEventFactory.determineForwardToGap(labEvent, chip, productEjb,
                                     attributeArchetypeDao);
                             chipsToArchive.add(new ImmutablePair<>(chip.getLabel(), Objects.equals(forwardToGap, "N")));
+                            i++;
+                            if (i %100 == 0) {
+                                System.out.println("Found " + i + " chips");
+                            }
                         }
                         break;
                     }

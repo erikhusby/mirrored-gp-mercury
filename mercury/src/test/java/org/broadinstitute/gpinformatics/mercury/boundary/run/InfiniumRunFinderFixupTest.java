@@ -124,11 +124,11 @@ public class InfiniumRunFinderFixupTest extends Arquillian {
     public void testGplim5110() throws SystemException, NotSupportedException, HeuristicRollbackException,
             HeuristicMixedException, RollbackException {
         userBean.loginOSUser();
-        userTransaction.begin();
         GregorianCalendar gregorianCalendar = new GregorianCalendar();
         gregorianCalendar.add(Calendar.DAY_OF_YEAR, -10);
         List<Pair<String, Boolean>> chipsToArchive = infiniumArchiver.findChipsToArchive(20000, gregorianCalendar.getTime());
 
+        userTransaction.begin();
         int i = 1;
         for (Pair<String, Boolean> stringBooleanPair : chipsToArchive) {
             if (stringBooleanPair.getRight()) {
