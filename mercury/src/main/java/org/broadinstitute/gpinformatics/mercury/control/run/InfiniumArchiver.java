@@ -87,7 +87,7 @@ public class InfiniumArchiver {
     public void archive() {
         GregorianCalendar gregorianCalendar = new GregorianCalendar();
         gregorianCalendar.add(Calendar.DAY_OF_YEAR, -10);
-        List<Pair<String, Boolean>> chipsToArchive = findChipsToArchive(50, gregorianCalendar.getTime());
+        List<Pair<String, Boolean>> chipsToArchive = findChipsToArchive(100, gregorianCalendar.getTime());
         UserTransaction utx = ejbContext.getUserTransaction();
         try {
             for (Pair<String, Boolean> stringBooleanPair : chipsToArchive) {
@@ -120,7 +120,7 @@ public class InfiniumArchiver {
      * @return list of chip barcodes (not entities, because this method clears the session periodically) and true
      * if Mercury (rather than GAP) is responsible for archiving.
      */
-    List<Pair<String, Boolean>> findChipsToArchive(int limit, Date archiveDate) {
+    public List<Pair<String, Boolean>> findChipsToArchive(int limit, Date archiveDate) {
         List<LabVessel> infiniumChips = labVesselDao.findAllWithEventButMissingAnother(
                 LabEventType.INFINIUM_AUTOCALL_SOME_STARTED,
                 LabEventType.INFINIUM_ARCHIVED);
@@ -137,7 +137,7 @@ public class InfiniumArchiver {
             List<LabVessel> chips = labVesselDao.findByListIdentifiers(new ArrayList<>(strings));
             for (LabVessel chip : chips) {
                 for (LabEvent labEvent : chip.getInPlaceLabEvents()) {
-                    if (labEvent.getLabEventType() == LabEventType.INFINIUM_AUTOCALL_ALL_STARTED) {
+                    if (labEvent.getLabEventType() == LabEventType.INFINIUM_AUTOCALL_ALL_STARTED) { // todo jmt check for all started
                         if (labEvent.getEventDate().before(archiveDate)) {
                             String forwardToGap = LabEventFactory.determineForwardToGap(labEvent, chip, productEjb,
                                     attributeArchetypeDao);

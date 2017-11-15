@@ -90,7 +90,7 @@ public class InfiniumRunStarter {
                         try {
                             userBean.login("seqsystem");
                             infiniumRunFinder.find();
-//                            infiniumArchiver.archive();
+                            infiniumArchiver.archive();
                         } catch (SystemException e) {
                             log.error("Error finding infinium runs", e);
                         }

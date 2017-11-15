@@ -1,12 +1,17 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
+import org.broadinstitute.gpinformatics.mercury.control.run.InfiniumArchiver;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
+import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVesselFixupTest;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -24,6 +29,9 @@ import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import java.io.IOException;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
@@ -44,7 +52,13 @@ public class InfiniumRunFinderFixupTest extends Arquillian {
     private UserBean userBean;
 
     @Inject
+    private InfiniumArchiver infiniumArchiver;
+
+    @Inject
     private UserTransaction userTransaction;
+
+    @Inject
+    private LabVesselDao labVesselDao;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -104,6 +118,35 @@ public class InfiniumRunFinderFixupTest extends Arquillian {
                 HeuristicRollbackException | HeuristicMixedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Test(enabled = true)
+    public void testGplim5110() throws SystemException, NotSupportedException, HeuristicRollbackException,
+            HeuristicMixedException, RollbackException {
+        userBean.loginOSUser();
+        userTransaction.begin();
+        GregorianCalendar gregorianCalendar = new GregorianCalendar();
+        gregorianCalendar.add(Calendar.DAY_OF_YEAR, -10);
+        List<Pair<String, Boolean>> chipsToArchive = infiniumArchiver.findChipsToArchive(20000, gregorianCalendar.getTime());
+
+        int i = 1;
+        for (Pair<String, Boolean> stringBooleanPair : chipsToArchive) {
+            if (stringBooleanPair.getRight()) {
+                continue;
+            }
+            // else assume GAP has archived it
+            LabVessel chip = labVesselDao.findByIdentifier(stringBooleanPair.getKey());
+            chip.addInPlaceEvent(new LabEvent(LabEventType.INFINIUM_ARCHIVED, new Date(), LabEvent.UI_EVENT_LOCATION,
+                    1L, userBean.getBspUser().getUserId(), LabEvent.UI_PROGRAM_NAME));
+            labVesselDao.flush();
+            labVesselDao.clear();
+            if (i % 100 == 0) {
+                System.out.println("Marked " + i + " chips");
+            }
+            i++;
+        }
+        labVesselDao.persist(new FixupCommentary("GPLIM-5110 mark chips archived by GAP"));
+        userTransaction.commit();
     }
 
 }
