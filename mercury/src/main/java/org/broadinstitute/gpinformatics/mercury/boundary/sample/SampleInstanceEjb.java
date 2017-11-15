@@ -51,7 +51,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 @Stateful
 @RequestScoped
 public class SampleInstanceEjb {
-    static final String CONFLICT_MESSAGE = "Conflicting value of %s (found %s, expected %s) %s at row %d";
+    static final String CONFLICT_MESSAGE = "Conflicting value of %s (found \"%s\", expected \"%s\") %s at row %d";
     static final String MISSING_MESSAGE = "Missing value of %s at row %d";
     static final String NUMBER_MESSAGE = "%s must be a number. Found at row %d";
     static final String UNKNOWN_MESSAGE = "The value for %s is unknown in %s. Found at row %d";
@@ -278,7 +278,7 @@ public class SampleInstanceEjb {
                                 rowDto.getRowNumber()));
                     }
                     if (sampleInstanceEntityDao.findByName(libraryName) != null && !overWriteFlag) {
-                        messageCollection.addError("Library " + libraryName + " at row " + rowDto.getRowNumber() +
+                        messageCollection.addError("Library \"" + libraryName + "\" at row " + rowDto.getRowNumber() +
                                 " already exists. Set Overwrite checkbox to re-upload it.");
                     }
                 }
@@ -288,7 +288,7 @@ public class SampleInstanceEjb {
                     messageCollection.addError(String.format(MISSING_MESSAGE,
                             VesselPooledTubesProcessor.Headers.TUBE_BARCODE.getText(), rowDto.getRowNumber()));
                 } else if (mapBarcodeToVessel.get(barcode) != null && !overWriteFlag) {
-                    messageCollection.addError("Tube " + barcode + " at row " + rowDto.getRowNumber() +
+                    messageCollection.addError("Tube \"" + barcode + "\" at row " + rowDto.getRowNumber() +
                             " already exists. Set Overwrite checkbox to re-upload it.");
                 }
 
@@ -299,7 +299,7 @@ public class SampleInstanceEjb {
                 } else {
                     if (!sampleMap.containsKey(broadSampleName) && BSPUtil.isInBspFormat(broadSampleName)) {
                         // Errors if it's a new Broad Sample name that could collide with a future BSP SM-id.
-                        messageCollection.addError("A new Broad Sample " + broadSampleName +
+                        messageCollection.addError("A new Broad Sample \"" + broadSampleName + "\"" +
                                 " must not have a BSP sample name format. Found at row " + rowDto.getRowNumber());
                     }
                 }
