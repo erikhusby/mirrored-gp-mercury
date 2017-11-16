@@ -34,6 +34,7 @@ public enum Workflow {
     TEN_X("10X"),
     INFINIUM("Infinium"),
     INFINIUM_METHYLATION("Infinium Methylation"),
+    MALARIA("Malaria"),
     /** Use this to indicate that no workflow is associated. */
     NONE(null, false);
 
