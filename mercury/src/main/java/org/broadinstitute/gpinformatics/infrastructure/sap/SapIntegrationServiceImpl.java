@@ -419,8 +419,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                 new SAPDeliveryItem(quoteItemForBilling.getProduct().getPartNumber(),
                         (quantityOverride == null)?new BigDecimal(quoteItemForBilling.getQuantityForSAP()):quantityOverride);
 
-        if(Arrays.asList("P-EX-0028", "P-EX-0029").contains(quoteItemForBilling.getProduct().getPartNumber()) &&
-           StringUtils.equals(quoteItemForBilling.getQuotePriceType(), LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.getQuoteType())) {
+        if(StringUtils.equals(quoteItemForBilling.getQuotePriceType(), LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.getQuoteType())) {
             lineItem.addCondition(DeliveryCondition.LATE_DELIVERY_DISCOUNT);
         }
 

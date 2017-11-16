@@ -1334,6 +1334,19 @@ public class ProductOrderActionBean extends CoreActionBean {
                 }
             }
 
+            final QuotePriceItem priceItemByKeyFields =
+                    priceListCache.findByKeyFields(editOrder.getProduct().getPrimaryPriceItem());
+            if (priceItemByKeyFields != null) {
+                editOrder.getProduct().getPrimaryPriceItem().setUnits(priceItemByKeyFields.getUnit());
+            }
+
+            for (ProductOrderAddOn productOrderAddOn : editOrder.getAddOns()) {
+                final QuotePriceItem addOnPriceItemByKeyFields =
+                        priceListCache.findByKeyFields(productOrderAddOn.getAddOn().getPrimaryPriceItem());
+                if (priceItemByKeyFields != null) {
+                    productOrderAddOn.getAddOn().getPrimaryPriceItem().setUnits(addOnPriceItemByKeyFields.getUnit());
+                }
+            }
         }
     }
 

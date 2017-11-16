@@ -29,6 +29,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quotes;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -113,6 +114,10 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
     private org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment deployment;
 
     private BillingAdaptor billingAdaptor;
+
+    @Inject
+    private SAPProductPriceCache productPriceCache;
+
     public enum Result {FAIL, SUCCESS}
 
     public static final Log log = LogFactory.getLog(BillingEjbPartialSuccessTest.class);
@@ -143,7 +148,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         sapService = SapIntegrationServiceProducer.stubInstance();
 
         billingAdaptor = new BillingAdaptor(billingEjb, billingSessionDao, tempPriceListCache, quoteService,
-                billingSessionAccessEjb, sapService);
+                billingSessionAccessEjb, sapService, productPriceCache);
         billingAdaptor.setProductOrderEjb(productOrderEjb);
     }
 
