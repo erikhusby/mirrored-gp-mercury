@@ -255,7 +255,7 @@ public class ContainerActionBean extends RackScanActionBean {
                                 && !barcodedTube.getStorageLocation().equals(rackOfTubes.getStorageLocation())) {
                             continue;
                         }
-                        LabEvent barcodesLatestEvent = barcodedTube.getLatestEvent();
+                        LabEvent barcodesLatestEvent = barcodedTube.getLatestNonBucketEntryEvent();
                         if (barcodesLatestEvent != null && barcodesLatestEvent.equals(latestEvent)) {
                             mapPositionToVessel.put(vesselPosition, barcodedTube);
                         }
