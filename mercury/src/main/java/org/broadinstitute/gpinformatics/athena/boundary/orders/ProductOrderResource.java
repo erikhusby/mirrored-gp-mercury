@@ -309,6 +309,7 @@ public class ProductOrderResource {
             productOrder.setOrderStatus(ProductOrder.OrderStatus.Pending);
             if(productOrder.getProduct().isClinicalProduct()) {
                 productOrder.setClinicalAttestationConfirmed(true);
+                productOrder.setOrderType(ProductOrder.OrderAccessType.COMMERCIAL);
             }
 
             // The PDO's IRB information is copied from its RP. For Collaboration PDOs, we require that there
