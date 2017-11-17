@@ -1284,6 +1284,25 @@ public abstract class LabVessel implements Serializable {
         return event;
     }
 
+    /**
+     * @return return latest lab event, ignoring things like bucket entries
+     */
+    public LabEvent getLatestNonBucketEntryEvent() {
+        List<LabEvent> eventsList = getAllEventsSortedByDate();
+        int size = eventsList.size();
+        if (size > 0) {
+            int index = eventsList.size() - 1;
+            while (index >= 0) {
+                LabEvent labEvent = eventsList.get(index);
+                if (!labEvent.getLabEventType().getName().contains("Bucket")) {
+                    return labEvent;
+                }
+                index--;
+            }
+        }
+        return null;
+    }
+
     @SuppressWarnings("unused")
     public Collection<String> getNearestProductOrders() {
 
