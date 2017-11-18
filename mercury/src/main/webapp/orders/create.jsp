@@ -312,6 +312,7 @@
                                 hintText: "Type a Product name or Part Number   ",
                                 onAdd: updateUIForProductChoice,
                                 onDelete: updateUIForProductChoice,
+                                onChange: resetCustomizationChoices,
                                 resultsFormatter: formatInput,
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.productTokenInput.completeData)},
                                 tokenDelimiter: "${actionBean.productTokenInput.separator}",
@@ -465,7 +466,6 @@
                     $j("#skipQuoteDiv").hide();
                     $j("#showCustomizeWindow").hide();
                     $j("#clinicalAttestationDiv").hide();
-//                    $j("#customizationContent").hide();
                     $j("#primaryProductListPrice").hide();
                     updateUIForProductChoice();
                     updateUIForProjectChoice();
@@ -628,7 +628,7 @@
             var selectedAddonProducts = "";
 
             $j('#createForm').find('input:checkbox[name="addOnKeys"]:checked').each(function () {
-                if (selectedAddonProducts != "") {
+                if (selectedAddonProducts !== "") {
                     selectedAddonProducts += "|@|";
                 }
                 selectedAddonProducts += $(this).val();
@@ -643,7 +643,9 @@
         function updateUIForProductChoice() {
 
             var productKey = $j("#product").val();
-            if ((productKey == null) || (productKey == "")) {
+            if ((productKey === null) || (productKey === "")) {
+                $j("#customizationJsonString").val("");
+                customizationValues = {};
                 $j("#addOnCheckboxes").text('If you select a product, its Add-ons will show up here');
                 $j("#sampleInitiationKitRequestEdit").hide();
                 $j("#numberOfLanesDiv").fadeOut(duration);
@@ -651,7 +653,6 @@
                 $j("#quote").show();
                 $j("#showCustomizeWindow").hide();
                 $j("#clinicalAttestationDiv").hide();
-//                $j("#customizationContent").hide();
                 $j("#primaryProductListPrice").hide();
 
             } else {
@@ -1103,6 +1104,10 @@
             customizationValues[productPart] = new CustomizationValue(priceValue, quantityValue, customNameValue);
         }
 
+        function resetCustomizationChoices() {
+            customizationValues = {};
+        }
+
         /**
          * Method to bring up customization dialog will pass in any existing customizations currently defined.  If none
          * exist, it will fill in with blank values to just have a place holder
@@ -1290,6 +1295,7 @@
         }
 
         function renderCustomizationSummary() {
+            $j("#customizationContent").html("");
             var customJSONString = $j("#customizationJsonString").val();
             if(customJSONString !== null && customJSONString!==undefined && customJSONString !== "") {
                 var customSettings = JSON.parse(customJSONString);

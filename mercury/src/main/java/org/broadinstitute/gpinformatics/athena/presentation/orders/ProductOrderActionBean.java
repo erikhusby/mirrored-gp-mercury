@@ -1715,9 +1715,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 //                } else {
                         editOrder.setOrderType(ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
 //                }
-                if (StringUtils.isNotBlank(customizationJsonString)) {
-                    buildJsonObjectFromEditOrderProductCustomizations();
-                }
+            }
+            if (StringUtils.isNotBlank(customizationJsonString)) {
+                buildJsonObjectFromEditOrderProductCustomizations();
             }
         }
 
