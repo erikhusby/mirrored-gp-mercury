@@ -786,7 +786,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             addGlobalValidationError("The quote ''{2}'' was not found ", quoteId);
         } catch (InvalidProductException | SAPIntegrationException e) {
             addGlobalValidationError("Unable to determine the existing value of open orders for " +
-                                     quote.getAlphanumericId() +": " +e.getMessage());
+                                     quoteId +": " +e.getMessage());
             logger.error(e);
         }
 
@@ -1740,6 +1740,10 @@ public class ProductOrderActionBean extends CoreActionBean {
             getSourcePageResolution();
         }
         try {
+            /*
+            if this order is not destined to go to SAP, validate Quote order values and only send a warning if
+            there is an issue
+            */
             if(!productOrderEjb.isOrderEligibleForSAP(editOrder)) {
                 validateQuoteDetails(editOrder.getQuoteId(), ErrorLevel.WARNING, !editOrder.hasJiraTicketKey());
             }
