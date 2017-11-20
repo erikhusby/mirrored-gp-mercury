@@ -31,6 +31,7 @@ import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -113,8 +114,8 @@ public class BillingEjbJiraDownTest extends Arquillian {
         billingAdaptor = new BillingAdaptor(billingEjb, billingSessionDao, tempPriceListCache, quoteService,
                 billingSessionAccessEjb, sapService, productPriceCache);
         Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.any(
-                SapIntegrationClientImpl.SAPCompanyConfiguration.class))).thenReturn(new SAPMaterial("Test", "50", Collections.<Condition>emptySet(), Collections.singleton(
-                DeliveryCondition.LATE_DELIVERY_DISCOUNT)));
+                SapIntegrationClientImpl.SAPCompanyConfiguration.class))).thenReturn(new SAPMaterial("Test", "50", Collections.<Condition>emptySet(), Collections.singletonMap(
+                DeliveryCondition.LATE_DELIVERY_DISCOUNT, new BigDecimal("200.00"))));
         Mockito.when(productPriceCache.productExists(Mockito.anyString())).thenReturn(true);
         billingAdaptor.setProductOrderEjb(productOrderEjb);
 

@@ -491,7 +491,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     public OrderCalculatedValues calculateOpenOrderValues(int addedSampleCount, String quoteId,
                                                           ProductOrder productOrder) throws SAPIntegrationException {
         OrderCriteria potentialOrderCriteria = null;
-        if (productOrder != null) {
+        if (productOrder != null && productOrder.getProduct() != null) {
             potentialOrderCriteria = generateOrderCriteria(productOrder, addedSampleCount, true);
         }
         return getClient().calculateOrderValues(quoteId, SapIntegrationClientImpl.SystemIdentifier.MERCURY,

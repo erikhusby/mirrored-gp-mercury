@@ -284,7 +284,7 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
         Integer testPrice = new Integer(1000);
         for (String productDump : initialTest) {
             String[] dividedProductInfo = StringUtils.split(productDump);
-            SAPMaterial initialMaterial = new SAPMaterial(dividedProductInfo[0],testPrice.toString(), Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet());
+            SAPMaterial initialMaterial = new SAPMaterial(dividedProductInfo[0],testPrice.toString(), Collections.<Condition>emptySet(), Collections.<DeliveryCondition, BigDecimal>emptyMap());
             testPrice += 10;
             sapMaterials.add(initialMaterial);
         }
