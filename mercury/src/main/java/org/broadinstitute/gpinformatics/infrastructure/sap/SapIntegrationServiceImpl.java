@@ -37,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Inject;
 import java.math.BigDecimal;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -493,17 +492,18 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                                                           ProductOrder productOrder) throws SAPIntegrationException {
         OrderCriteria potentialOrderCriteria = null;
         if (productOrder != null) {
-            potentialOrderCriteria = generateOrderCriteria(productOrder, addedSampleCount);
+            potentialOrderCriteria = generateOrderCriteria(productOrder, addedSampleCount, true);
         }
-        return getClient().calculateOrderValues(quoteId,
-                SapIntegrationClientImpl.SystemIdentifier.MERCURY, potentialOrderCriteria);
+        return getClient().calculateOrderValues(quoteId, SapIntegrationClientImpl.SystemIdentifier.MERCURY,
+                potentialOrderCriteria);
     }
 
     protected OrderCriteria generateOrderCriteria(ProductOrder productOrder) throws SAPIntegrationException {
-        return generateOrderCriteria(productOrder, 0);
+        return generateOrderCriteria(productOrder, 0, false);
     }
 
-    protected OrderCriteria generateOrderCriteria(ProductOrder productOrder, int addedSampleCount) throws SAPIntegrationException {
+    protected OrderCriteria generateOrderCriteria(ProductOrder productOrder, int addedSampleCount,
+                                                  boolean forOrderValueQuery) throws SAPIntegrationException {
 
 
         final Set<SAPOrderItem> sapOrderItems = new HashSet<>();
@@ -517,32 +517,35 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             sapOrderItems.add(orderSubItem);
         }
 
-        Quote foundQuote = null;
-        try {
-            foundQuote = quoteService.getQuoteByAlphaId(productOrder.getQuoteId());
-        } catch (QuoteServerException | QuoteNotFoundException e) {
-            throw new SAPIntegrationException("Unable to get information for the Quote from the quote server", e);
-        }
-        FundingLevel fundingLevel = foundQuote.getFirstRelevantFundingLevel();
+        String customerNumber = "";
+        if (!forOrderValueQuery) {
+            Quote foundQuote = null;
+            try {
+                foundQuote = quoteService.getQuoteByAlphaId(productOrder.getQuoteId());
+            } catch (QuoteServerException | QuoteNotFoundException e) {
+                throw new SAPIntegrationException("Unable to get information for the Quote from the quote server", e);
+            }
+            FundingLevel fundingLevel = foundQuote.getFirstRelevantFundingLevel();
 
-        if (fundingLevel == null) {
-            // Too many funding sources to allow this to work with SAP.  Keep using the Quote Server as the definition
-            // of funding
-            throw new SAPIntegrationException(
-                    "Unable to continue with SAP.  The associated quote has either too few or too many funding sources");
-        }
+            if (fundingLevel == null) {
+                // Too many funding sources to allow this to work with SAP.  Keep using the Quote Server as the definition
+                // of funding
+                throw new SAPIntegrationException(
+                        "Unable to continue with SAP.  The associated quote has either too few or too many funding sources");
+            }
 
-        String customerNumber = null;
-        if(fundingLevel.getFunding().size() >1) {
-            throw new SAPIntegrationException("This order is ineligible to save to SAP since there are multiple "
-                                              + "funding sources associated with the given quote " +
-                                              productOrder.getQuoteId());
-        }
-        for (Funding funding : fundingLevel.getFunding()) {
-            if (funding.getFundingType().equals(Funding.PURCHASE_ORDER)) {
-                customerNumber = findCustomer(productOrder.getSapCompanyConfigurationForProductOrder(), fundingLevel);
-            } else {
-                customerNumber = SapIntegrationClientImpl.INTERNAL_ORDER_CUSTOMER_NUMBER;
+            customerNumber = null;
+            if(fundingLevel.getFunding().size() >1) {
+                throw new SAPIntegrationException("This order is ineligible to save to SAP since there are multiple "
+                                                  + "funding sources associated with the given quote " +
+                                                  productOrder.getQuoteId());
+            }
+            for (Funding funding : fundingLevel.getFunding()) {
+                if (funding.getFundingType().equals(Funding.PURCHASE_ORDER)) {
+                    customerNumber = findCustomer(productOrder.getSapCompanyConfigurationForProductOrder(), fundingLevel);
+                } else {
+                    customerNumber = SapIntegrationClientImpl.INTERNAL_ORDER_CUSTOMER_NUMBER;
+                }
             }
         }
 
