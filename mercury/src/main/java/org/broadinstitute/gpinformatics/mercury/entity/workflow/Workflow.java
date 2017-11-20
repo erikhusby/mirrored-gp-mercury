@@ -34,6 +34,7 @@ public enum Workflow {
     TEN_X("10X"),
     INFINIUM("Infinium"),
     INFINIUM_METHYLATION("Infinium Methylation"),
+    MALARIA("Malaria"),
     /** Use this to indicate that no workflow is associated. */
     NONE(null, false);
 
@@ -67,7 +68,7 @@ public enum Workflow {
             EnumSet.of(AGILENT_EXOME_EXPRESS, ICE_EXOME_EXPRESS, ICE_CRSP, CLINICAL_WHOLE_BLOOD_EXTRACTION,
                     DNA_RNA_EXTRACTION_CELL_PELLETS, TRU_SEQ_STRAND_SPECIFIC_CRSP, PCR_FREE, PCR_PLUS,
                     PCR_FREE_HYPER_PREP, PCR_PLUS_HYPER_PREP, CELL_FREE_HYPER_PREP, ICE_EXOME_EXPRESS_HYPER_PREP,
-                    TEN_X, INFINIUM, INFINIUM_METHYLATION
+                    TEN_X, INFINIUM, INFINIUM_METHYLATION, MALARIA
             );
 
     public boolean isWorkflowSupportedByMercury() {
