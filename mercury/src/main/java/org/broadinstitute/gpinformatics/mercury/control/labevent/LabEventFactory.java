@@ -724,9 +724,6 @@ public class LabEventFactory implements Serializable {
                             }
                             setTubeQuantities(mapBarcodeToTube, positionMapType, labEvent);
                         }
-                        if (rackOfTubes != null) {
-                            rackOfTubes.setStorageLocation(null);
-                        }
                         mapBarcodeToTubeFormation.put(plateType.getBarcode(), tubeFormation);
                         break;
                     }
@@ -751,9 +748,6 @@ public class LabEventFactory implements Serializable {
                                 StaticPlate.PlateType.getByAutomationName(plateType.getPhysType()));
                     }
                     mapBarcodeToVessel.put(plateType.getBarcode(), labVessel);
-                }
-                if (labVessel != null) {
-                    labVessel.setStorageLocation(null);
                 }
             }
         }
@@ -979,17 +973,11 @@ public class LabEventFactory implements Serializable {
             }
             StaticPlate staticPlate = staticPlateDao.findByBarcode(plate.getBarcode());
             labEvent = buildFromBettaLimsPlateEventDbFree(plateEventType, staticPlate);
-            if (staticPlate != null) {
-                staticPlate.setStorageLocation(null);
-            }
         } else {
             TubeFormation tubeFormation = fetchTubeFormation(plateEventType.getPositionMap());
             RackOfTubes rackOfTubes = rackOfTubesDao.findByBarcode(plateEventType.getPlate().getBarcode());
             labEvent = buildFromBettaLimsRackEventDbFree(plateEventType, tubeFormation, findTubesByBarcodes(
                     plateEventType.getPositionMap()), rackOfTubes);
-            if (rackOfTubes != null) {
-                rackOfTubes.setStorageLocation(null);
-            }
         }
         labEvent.setStationEventType(plateEventType);
         return labEvent;
@@ -1129,7 +1117,6 @@ public class LabEventFactory implements Serializable {
         if (rackOfTubes == null) {
             rackOfTubes = new RackOfTubes(plate.getBarcode(), rackType);
         }
-        rackOfTubes.setStorageLocation(null);
         tubeFormation.addRackOfTubes(rackOfTubes);
         return tubeFormation;
     }
@@ -1173,7 +1160,6 @@ public class LabEventFactory implements Serializable {
         if (receptacleType.getReceptacleWeight() != null) {
             barcodedTube.setReceptacleWeight(receptacleType.getReceptacleWeight());
         }
-        barcodedTube.setStorageLocation(null);
         if (labEvent.getLabEventType().getVolumeConcUpdate() == LabEventType.VolumeConcUpdate.BSP_AND_MERCURY) {
             MercurySample mercurySample = extractSample(barcodedTube.getSampleInstancesV2());
             if (mercurySample == null || mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
