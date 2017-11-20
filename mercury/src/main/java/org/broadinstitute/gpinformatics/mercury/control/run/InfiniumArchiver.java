@@ -40,6 +40,7 @@ import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -84,33 +85,42 @@ public class InfiniumArchiver {
     @Resource
     private EJBContext ejbContext;
 
+    private static final AtomicBoolean busy = new AtomicBoolean(false);
+
     public void archive() {
-        GregorianCalendar gregorianCalendar = new GregorianCalendar();
-        gregorianCalendar.add(Calendar.DAY_OF_YEAR, -10);
-        List<Pair<String, Boolean>> chipsToArchive = findChipsToArchive(100, gregorianCalendar.getTime());
-        UserTransaction utx = ejbContext.getUserTransaction();
+        if (!busy.compareAndSet(false, true)) {
+            return;
+        }
         try {
-            for (Pair<String, Boolean> stringBooleanPair : chipsToArchive) {
-                if (stringBooleanPair.getRight()) {
-                    archiveChip(stringBooleanPair.getLeft(), infiniumStarterConfig);
-                }
-                // else assume GAP has archived it
-                utx.begin();
-                LabVessel chip = labVesselDao.findByIdentifier(stringBooleanPair.getKey());
-                chip.addInPlaceEvent(new LabEvent(LabEventType.INFINIUM_ARCHIVED, new Date(), LabEvent.UI_EVENT_LOCATION,
-                        1L, bspUserList.getByUsername("seqsystem").getUserId(), LabEvent.UI_PROGRAM_NAME));
-                // The commit doesn't cause a flush (not clear why), so we must do it explicitly.
-                labVesselDao.flush();
-                utx.commit();
-            }
-        } catch (NotSupportedException | SystemException | RollbackException | HeuristicRollbackException |
-                HeuristicMixedException e) {
+            GregorianCalendar gregorianCalendar = new GregorianCalendar();
+            gregorianCalendar.add(Calendar.DAY_OF_YEAR, -10);
+            List<Pair<String, Boolean>> chipsToArchive = findChipsToArchive(100, gregorianCalendar.getTime());
+            UserTransaction utx = ejbContext.getUserTransaction();
             try {
-                utx.rollback();
-            } catch (SystemException e1) {
-                throw new RuntimeException(e1);
+                for (Pair<String, Boolean> stringBooleanPair : chipsToArchive) {
+                    if (stringBooleanPair.getRight()) {
+                        archiveChip(stringBooleanPair.getLeft(), infiniumStarterConfig);
+                    }
+                    // else assume GAP has archived it
+                    utx.begin();
+                    LabVessel chip = labVesselDao.findByIdentifier(stringBooleanPair.getKey());
+                    chip.addInPlaceEvent(new LabEvent(LabEventType.INFINIUM_ARCHIVED, new Date(), LabEvent.UI_EVENT_LOCATION,
+                            1L, bspUserList.getByUsername("seqsystem").getUserId(), LabEvent.UI_PROGRAM_NAME));
+                    // The commit doesn't cause a flush (not clear why), so we must do it explicitly.
+                    labVesselDao.flush();
+                    utx.commit();
+                }
+            } catch (NotSupportedException | SystemException | RollbackException | HeuristicRollbackException |
+                    HeuristicMixedException e) {
+                try {
+                    utx.rollback();
+                } catch (SystemException e1) {
+                    throw new RuntimeException(e1);
+                }
+                throw new RuntimeException(e);
             }
-            throw new RuntimeException(e);
+        } finally {
+            busy.set(false);
         }
     }
 
