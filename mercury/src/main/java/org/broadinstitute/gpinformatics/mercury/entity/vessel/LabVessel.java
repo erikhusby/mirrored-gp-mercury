@@ -1294,7 +1294,7 @@ public abstract class LabVessel implements Serializable {
             int index = eventsList.size() - 1;
             while (index >= 0) {
                 LabEvent labEvent = eventsList.get(index);
-                if (!labEvent.getLabEventType().getName().contains("Bucket")) {
+                if (labEvent.getLabEventType().getIgnoreInStorageLayout() == LabEventType.IgnoreInStorageLayout.FALSE) {
                     return labEvent;
                 }
                 index--;
