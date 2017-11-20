@@ -607,7 +607,7 @@ public enum LabEventType {
     DBS_FINAL_TRANSFER("DBSFinalTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED),
+            null, MaterialType.DNA_DNA_GENOMIC, LibraryType.NONE_ASSIGNED),
 
     //Cryovial Blood and Saliva Extraction
     BLOOD_CENTRIFUGE("BloodCentrifuge",
