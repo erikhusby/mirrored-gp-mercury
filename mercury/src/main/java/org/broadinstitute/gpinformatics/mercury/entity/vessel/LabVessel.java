@@ -348,9 +348,9 @@ public abstract class LabVessel implements Serializable {
     }
 
     /**
-     *  Check to see if the vessel has been abandoned.
+     *  Check to see if this vessel is directly abandoned.
      *
-     *  @return true if the vessel is abandoned
+     *  @return true if this vessel is abandoned
      *
      */
     @SuppressWarnings("unused") // used in JSP
@@ -359,23 +359,6 @@ public abstract class LabVessel implements Serializable {
             return false;
         }
         return true;
-    }
-
-    /**
-     *  If the vessel is a chip, check to see is a specific well has been abandoned.
-     *
-     * @param well The well name we are checking
-     * @return true if the well has been abandoned
-     */
-    public boolean isPositionAbandoned(String well) {
-        for (AbandonVessel abaondendVessel : this.getAbandonVessels()) {
-            for (AbandonVesselPosition abandonVesselPosition : abaondendVessel.getAbandonedVesselPosition()) {
-                if(abandonVesselPosition.getPosition().equals(well)){
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     /**
@@ -445,9 +428,9 @@ public abstract class LabVessel implements Serializable {
         labMetric.setLabVessel(this);
     }
 
-    public void addAbandonedVessel(AbandonVessel vessels) {
-        abandonVessels.add(vessels);
-        vessels.setAbandonedVessel(this);
+    public void addAbandonedVessel(AbandonVessel abandonVessel) {
+        abandonVessels.add(abandonVessel);
+        abandonVessel.setAbandonedVessel(this);
     }
 
     public void removeAbandonedVessel(Set<AbandonVessel> abandonVessel) {
@@ -971,6 +954,11 @@ public abstract class LabVessel implements Serializable {
         this.receptacleWeight = receptacleWeight;
     }
 
+    /**
+     * Gets only the AbandonVessel entities directly attached to this lab vessel <br/>
+     * Use TransferTraverserCriteria.AbandonedVesselCriteria For method of finding abandon state of ancestors and/or descendants
+     * @see TransferTraverserCriteria.AbandonedLabVesselCriteria
+     */
     public Set<AbandonVessel> getAbandonVessels() {
         return abandonVessels;
     }
@@ -980,75 +968,16 @@ public abstract class LabVessel implements Serializable {
     }
 
     /**
-     *
-     * Returns just the parent vessel for vessels with multiple positions.
-     *
+     *  Get the AbandonVessel entry for a specific well <br/>
+     *  Return null if well has not been abandoned.
      */
-    public AbandonVessel getParentAbandonVessel() {
-        if(getAbandonVessels().size() > 0)
-            return new ArrayList<>(getAbandonVessels()).get(0);
-        else
-            return null;
-    }
-
-    /**
-     *
-     * Returns the date a vessel or position was abandoned on, if it exists.
-     *
-     */
-    @Nullable
-    public Date getAbandonedDate() {
-       if(getParentAbandonVessel() != null)
-          return getParentAbandonVessel().getAbandonedOn();
-        else {
-           return null;
-       }
-    }
-
-    /**
-     *
-     * Returns the reason that a vessel was abandoned. If the vessel has multiple position, it concatenates them
-     * into a single string for screen display and user-defined search.
-     *
-     */
-    public String getAbandonReason() {
-
-        AbandonVessel abandonVessel = getParentAbandonVessel();
-
-        if(abandonVessel == null) {
-            return "";
-        }
-
-        String reason ="Vessel Position(s): ";
-        if(abandonVessel.getAbandonedVesselPosition().size() > 0) {
-
-            int index = 0;
-            int duplicate = 0;
-
-            //If all the reasons are the same, collapse them down and return them as a single reason.
-            for (AbandonVesselPosition abandonVesselPosition : abandonVessel.getAbandonedVesselPosition()) {
-                if(index == 0) {
-                    reason = abandonVesselPosition.getReason().getDisplayName();
-                }
-                if(!reason.equals(abandonVesselPosition.getReason().getDisplayName()))
-                    duplicate++;
-
-                index++;
+    public AbandonVessel getAbandonPositionForWell( VesselPosition well ) {
+        for (AbandonVessel abandonVessel : getAbandonVessels() ) {
+            if( abandonVessel.getVesselPosition() == well ){
+                return abandonVessel;
             }
-
-            if(duplicate == 0)
-                return reason;
-
-            //Return a concatenated list of reasons if there are differences.
-            reason = "";
-            for (AbandonVesselPosition abandonVesselPosition : abandonVessel.getAbandonedVesselPosition()) {
-                reason += "(" + abandonVesselPosition.getPosition() + ":" + abandonVesselPosition.getReason().getDisplayName() + ") ";
-            }
-            return reason;
         }
-        else {
-            return abandonVessel.getReason().getDisplayName();
-        }
+        return null;
     }
 
     public Set<BucketEntry> getBucketEntries() {

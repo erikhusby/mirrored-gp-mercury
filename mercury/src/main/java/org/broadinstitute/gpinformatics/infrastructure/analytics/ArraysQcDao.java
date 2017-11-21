@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.analytics;
 
+import org.apache.commons.collections4.ListValuedMap;
+import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcBlacklisting;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcBlacklisting_;
@@ -69,16 +71,17 @@ public class ArraysQcDao {
                 CriteriaBuilder cb = entityManager.getCriteriaBuilder();
                 CriteriaQuery<ArraysQcBlacklisting> criteria = cb.createQuery(ArraysQcBlacklisting.class);
                 Root<ArraysQcBlacklisting> root = criteria.from(ArraysQcBlacklisting.class);
-                criteria.select(root).where(
-                        root.get(ArraysQcBlacklisting_.chipWellBarcode).in(parameterList));
+                criteria.select(root)
+                        .where(root.get(ArraysQcBlacklisting_.chipWellBarcode).in(parameterList))
+                        .orderBy(cb.asc(root.get(ArraysQcBlacklisting_.chipWellBarcode)), cb.asc(root.get(ArraysQcBlacklisting_.blacklistedOn)));
                 return entityManager.createQuery(criteria);
             }
         });
     }
 
-    public Map<String, ArraysQcBlacklisting> findBlacklistMapByBarcodes(List<String> chipWellBarcodes) {
+    public ListValuedMap<String, ArraysQcBlacklisting> findBlacklistMapByBarcodes(List<String> chipWellBarcodes) {
         List<ArraysQcBlacklisting> arraysQcBlacklist = findBlacklistByBarcodes(chipWellBarcodes);
-        Map<String, ArraysQcBlacklisting> mapWellBarcodeToMetric = new HashMap<>();
+        ListValuedMap<String, ArraysQcBlacklisting> mapWellBarcodeToMetric = new ArrayListValuedHashMap<>();
         for (ArraysQcBlacklisting blacklist : arraysQcBlacklist) {
             mapWellBarcodeToMetric.put(blacklist.getChipWellBarcode(), blacklist);
         }

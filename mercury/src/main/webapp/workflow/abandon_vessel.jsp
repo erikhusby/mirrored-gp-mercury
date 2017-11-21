@@ -62,7 +62,7 @@
             $(function() {
                 $('#reasonCode').change(function() {
                     var x = $(this).val();
-                    $('#abandonComment').val(x);
+                    $('#abandonReason').val(x);
                 });
             });
 
@@ -72,7 +72,7 @@
             }
 
             function abandonPositions(position) {
-                var reason = $("#"+"reason_"+position);
+                var reason = $("#reason_"+position);
                 $j("#vesselPosition").attr("value", position);
                 $j("#vesselPositionReason").attr("value", reason.val());
             }
@@ -103,8 +103,7 @@
                             click: function () {
                                 $j(this).dialog("close");
                                 $j("#abandonOkButton").attr("disabled", "disabled");
-                                $j("#abandonStatus").attr("value", $j("#abandonDialogId").attr("checked") != undefined);
-                                $j("#abandonComment").attr("value", $( "#reasonCode option:selected" ).val());
+                                $j("#abandonReason").attr("value", $( "#reasonCode option:selected" ).val());
                                 $j("#vesselBarcode").attr("value", $("#vesselLabel").val());
                                 $('#abandonVessel').trigger('click');
                             }
@@ -155,11 +154,10 @@
     <stripes:layout-component name="content">
         <stripes:form action="/workflow/AbandonVessel.action" id="orderForm" class="form-horizontal">
             <input type="hidden" id="rackMap" name="rackMap" value="${actionBean.rackMap}">
-            <stripes:hidden id="abandonComment" name="abandonComment" value=''/>
-            <stripes:hidden id="unAbandonComment" name="unAbandonComment" value=''/>
-            <stripes:hidden id="vesselBarcode" name="vesselBarcode" value=''/>
-            <stripes:hidden id="vesselPosition" name="vesselPosition" value=''/>
-            <stripes:hidden id="vesselPositionReason" name="vesselPositionReason" value=''/>
+            <input type="hidden" id="abandonReason" name="abandonReason" value=''/>
+            <input type="hidden" id="vesselBarcode" name="vesselBarcode" value=''/>
+            <input type="hidden" id="vesselPosition" name="vesselPosition" value=''/>
+            <input type="hidden" id="vesselPositionReason" name="vesselPositionReason" value=''/>
 
             <div id="searchInput">
                     <label for="vesselBarcode">Vessel Barcode</label>
@@ -202,6 +200,7 @@
                         </p>
                         <div>
                         <select class='filterDropdown' id="reasonCodeAllPositions" name="reasonCodeAllPositions">
+                            <option value="">-Select-</option>
                             <c:forEach items="${reasonCodes}" var="reasonValue" varStatus="reasonStatus">
                                 <option value="${reasonValue}">${reasonValue.getDisplayName()}</option>
                             </c:forEach>
@@ -218,7 +217,7 @@
                         </c:choose>
 
                             <div id="toggleText" style="display: none">
-                                <stripes:submit id="abandonVessel" name="abandonVessel" value="abandon" class="btn btn-primary"/>
+                                <input type="submit" id="abandonVessel" name="abandonVessel" value="abandonVessel" class="btn btn-primary"/>
                             </div>
                         </div>
 
@@ -251,14 +250,10 @@
                                             </c:otherwise>
                                             </c:choose>
                                             <select class="${actionBean.shrinkCss('ddl-xs')}" id="reason_${rowName}${columnName}" name="reasonDdl">
+                                                <option value="">-Select-</option>
                                                 <c:forEach items="${reasonCodes}" var="reasonValue" varStatus="reasonStatus">
-                                                        <c:set var="selectedValue" value="${actionBean.getAbandonReason(wellTest)}"/>
-                                                        <c:if test="${reasonValue.getDisplayName() != selectedValue}">
-                                                            <option value="${reasonValue}">${reasonValue.getDisplayName()}</option>
-                                                        </c:if>
-                                                        <c:if test="${reasonValue.getDisplayName() == selectedValue}">
-                                                            <option selected="SELECT">${actionBean.getAbandonReason(wellTest)}</option>
-                                                        </c:if>
+                                                    <c:set var="selectedValue" value="${actionBean.getAbandonReason(wellTest)}"/>
+                                                    <option value="${reasonValue}"<c:if test="${reasonValue.getDisplayName() == selectedValue}"> selected="true"</c:if>>${reasonValue.getDisplayName()}</option>
                                                 </c:forEach>
                                             </select>
                                         </td>
@@ -296,6 +291,7 @@
                     <label>Reason:</label>
                 </p>
                 <select class='filterDropdown' id="reasonCode" name="reasonCode">
+                    <option value="">-Select-</option>
                     <c:forEach items="${reasonCodes}" var="reasonValue" varStatus="reasonStatus">
                         <option value="${reasonValue}">${reasonValue.getDisplayName()}</option>
                     </c:forEach>
