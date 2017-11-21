@@ -221,7 +221,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             String price = priceListCache.getEffectivePrice(placedOrder.determinePriceItemByCompanyCode(product),
                     quote);
 
-            final SAPOrderItem sapOrderItem = new SAPOrderItem(product.getPartNumber(),
+            final SAPOrderItem sapOrderItem = new SAPOrderItem(product.getPartNumber().toUpperCase(),
                     getSampleCount(placedOrder, product, additionalSampleCount, creatingNewOrder));
 
             if(placedOrder.isPriorToSAP1_5()) {
@@ -233,7 +233,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             return sapOrderItem;
 
         } catch (InvalidProductException e) {
-            throw new SAPIntegrationException("For " + product.getPartNumber() + " " + e.getMessage());
+            throw new SAPIntegrationException("For " + product.getPartNumber().toUpperCase() + " " + e.getMessage());
         }
     }
 
@@ -303,7 +303,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             throws SAPIntegrationException {
 
         final SAPOrderItem sapOrderItem =
-                new SAPOrderItem(product.getPartNumber(), getSampleCount(placedOrder, product, additionalSampleCount,
+                new SAPOrderItem(product.getPartNumber().toUpperCase(), getSampleCount(placedOrder, product, additionalSampleCount,
                         false));
         defineConditionsForOrderItem(placedOrder, product, sapOrderItem);
         return sapOrderItem;
@@ -415,7 +415,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                         quoteItemForBilling.getProductOrder().getSapOrderNumber(), workCompleteDate);
 
         SAPDeliveryItem lineItem =
-                new SAPDeliveryItem(quoteItemForBilling.getProduct().getPartNumber(),
+                new SAPDeliveryItem(quoteItemForBilling.getProduct().getPartNumber().toUpperCase(),
                         (quantityOverride == null)?new BigDecimal(quoteItemForBilling.getQuantityForSAP()):quantityOverride);
 
         if(StringUtils.equals(quoteItemForBilling.getQuotePriceType(), LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.getQuoteType())) {
@@ -429,7 +429,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
     @NotNull
     protected SAPMaterial initializeSapMaterialObject(Product product) {
-        SAPMaterial newMaterial = new SAPMaterial(product.getPartNumber(),
+        SAPMaterial newMaterial = new SAPMaterial(product.getPartNumber().toUpperCase(),
                 SapIntegrationClientImpl.SystemIdentifier.MERCURY, product.getAvailabilityDate(),
                 product.getAvailabilityDate());
         newMaterial.setCompanyCode(

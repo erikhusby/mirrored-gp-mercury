@@ -309,6 +309,9 @@
                             </stripes:label>
                             <div class="controls">
                                 <stripes:checkbox id="externalOrderOnly" name="editProduct.externalOnlyProduct" style="margin-top: 10px;" disabled="${actionBean.productUsedInOrders}"/>
+                                <c:if test="${actionBean.productUsedInOrders}">
+                                    <stripes:hidden name="editProduct.externalOnlyProduct" value="${actionBean.editProduct.externalOnlyProduct}" />
+                                </c:if>
                             </div>
                         </div>
                         <div class="control-group">
@@ -317,6 +320,9 @@
                             </stripes:label>
                             <div class="controls">
                                 <stripes:checkbox id="clinicalProduct" name="editProduct.clinicalProduct" style="margin-top: 10px;" disabled="${actionBean.productUsedInOrders}"/>
+                                <c:if test="${actionBean.productUsedInOrders}">
+                                    <stripes:hidden name="editProduct.clinicalProduct" value="${actionBean.editProduct.clinicalProduct}" />
+                                </c:if>
                             </div>
                         </div>
                     </security:authorizeBlock>
