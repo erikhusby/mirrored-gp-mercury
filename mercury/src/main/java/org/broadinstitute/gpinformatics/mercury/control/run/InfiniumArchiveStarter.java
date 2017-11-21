@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.mercury.boundary.run;
+package org.broadinstitute.gpinformatics.mercury.control.run;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarterConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
-import org.broadinstitute.gpinformatics.mercury.control.run.InfiniumArchiver;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.PostConstruct;
@@ -28,29 +27,21 @@ import java.util.Date;
 import static javax.ejb.ConcurrencyManagementType.BEAN;
 
 /**
- * Singleton to configure and schedule the timer for Infinium run starting activities.
+ * Singleton to configure and schedule the timer for daily activities, initially Infinium archiving.
  */
 @Startup
 @Singleton
 @ConcurrencyManagement(BEAN)
-public class InfiniumRunStarter {
-    private static final Log log = LogFactory.getLog(InfiniumRunStarter.class);
+public class InfiniumArchiveStarter {
+    private static final Log log = LogFactory.getLog(InfiniumArchiveStarter.class);
 
     @Inject
     private Deployment deployment;
-
-    /**
-     * Interval in minutes for the timer to fire off.
-     */
-    private int timerPeriod = 5;
 
     private static Date previousNextTimeout = new Date(0);
 
     @Resource
     private TimerService timerService;
-
-    @Inject
-    private InfiniumRunFinder infiniumRunFinder;
 
     @Inject
     private InfiniumArchiver infiniumArchiver;
@@ -64,7 +55,11 @@ public class InfiniumRunStarter {
     @PostConstruct
     public void initialize() {
         ScheduleExpression expression = new ScheduleExpression();
-        expression.minute("*/" + timerPeriod).hour("*");
+        if (deployment.equals(Deployment.PROD)) {
+            expression.hour("0");
+        } else {
+            expression.minute("*/5").hour("*");
+        }
         timerService.createCalendarTimer(expression, new TimerConfig("Infinium run timer", false));
     }
 
@@ -89,7 +84,7 @@ public class InfiniumRunStarter {
                     public void apply() {
                         try {
                             userBean.login("seqsystem");
-                            infiniumRunFinder.find();
+                            infiniumArchiver.archive();
                         } catch (SystemException e) {
                             log.error("Error finding infinium runs", e);
                         }
@@ -108,7 +103,7 @@ public class InfiniumRunStarter {
      * @return true if it's an environment where the Infinium Starter should be run
      */
     private boolean isEnabled() {
-        boolean useRunFinder = Boolean.getBoolean("useInfiniumRunFinder");
+        boolean useRunFinder = Boolean.getBoolean("useInfiniumArchiver");
         // Can't use @Inject for this object or we'll run into VFS protocol errors.
         InfiniumStarterConfig infiniumStarterConfig = (InfiniumStarterConfig) MercuryConfiguration.getInstance().
                 getConfig(InfiniumStarterConfig.class, deployment);
