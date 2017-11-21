@@ -1,12 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.parsers;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
-import org.jvnet.inflector.Noun;
 
 import javax.annotation.Nonnull;
 import java.io.Serializable;
@@ -23,8 +21,6 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import static com.javafx.tools.doclets.formats.html.markup.HtmlStyle.header;
-import static com.sun.org.apache.xerces.internal.impl.xpath.regex.CaseInsensitiveMap.get;
 import static org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser.getCellValues;
 import static org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor.stripTrimLowerCase;
 
