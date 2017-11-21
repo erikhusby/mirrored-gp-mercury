@@ -84,7 +84,7 @@ public class SampleInstanceEjbTest extends Arquillian {
                 }
 
                 MessageCollection messageCollection = new MessageCollection();
-                sampleInstanceEjb.verifyAndPersistPooledTubeSpreadsheet(processor, messageCollection, !isFirst);
+                sampleInstanceEjb.verifyAndPersistSpreadsheet(processor, messageCollection, !isFirst);
 
                 if (expectSuccess) {
                     Assert.assertTrue(messageCollection.getErrors().isEmpty(), "In " + filename + ": " +
@@ -132,73 +132,73 @@ public class SampleInstanceEjbTest extends Arquillian {
                     String diagnostic = "In " + filename + ": " + StringUtils.join(messageCollection.getErrors(), ";;");
                     Assert.assertEquals(messageCollection.getErrors().size(), 20, diagnostic);
                     Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                            SampleInstanceEjb.CONFLICT_MESSAGE, VesselPooledTubesProcessor.Headers.VOLUME.getText(),
+                            SampleInstanceEjb.IS_CONFLICT, VesselPooledTubesProcessor.Headers.VOLUME.getText(),
                             "61.00", "60.00", "", 7)), diagnostic);
                     Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                            SampleInstanceEjb.CONFLICT_MESSAGE,
+                            SampleInstanceEjb.IS_CONFLICT,
                             VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE.getText(), "151.00", "150.00", "", 7)),
                             diagnostic);
                     Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                            SampleInstanceEjb.CONFLICT_MESSAGE, VesselPooledTubesProcessor.Headers.BAIT.getText() +
+                            SampleInstanceEjb.IS_CONFLICT, VesselPooledTubesProcessor.Headers.BAIT.getText() +
                                     " and " + VesselPooledTubesProcessor.Headers.CAT.getText(),
                             "both", "only one", "", 7)), diagnostic);
                     Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                            SampleInstanceEjb.CONFLICT_MESSAGE, VesselPooledTubesProcessor.Headers.LSID.getText(),
+                            SampleInstanceEjb.IS_CONFLICT, VesselPooledTubesProcessor.Headers.LSID.getText(),
                             "lsid:1", "null", "for existing Mercury Sample", 2)), diagnostic);
                     Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                            SampleInstanceEjb.CONFLICT_MESSAGE,
+                            SampleInstanceEjb.IS_CONFLICT,
                             VesselPooledTubesProcessor.Headers.BROAD_PARTICIPANT_ID.getText(),
                             "987654321", "12001-015", "for existing Mercury Sample", 2)), diagnostic);
                     Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                            SampleInstanceEjb.CONFLICT_MESSAGE,
+                            SampleInstanceEjb.IS_CONFLICT,
                             VesselPooledTubesProcessor.Headers.SPECIES.getText(),
                             "canine", "null", "for existing Mercury Sample", 2)), diagnostic);
 
                     Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                            SampleInstanceEjb.DUPLICATE_MESSAGE,
+                            SampleInstanceEjb.IS_DUPLICATE,
                             VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText(),
                             "in tube 01509634244", 3)), diagnostic);
 
                     Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                            SampleInstanceEjb.NUMBER_MESSAGE, VesselPooledTubesProcessor.Headers.READ_LENGTH.getText(),
+                            SampleInstanceEjb.IS_WRONG_TYPE, VesselPooledTubesProcessor.Headers.READ_LENGTH.getText(),
                             8)), diagnostic);
                     Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                            SampleInstanceEjb.NUMBER_MESSAGE,
+                            SampleInstanceEjb.IS_WRONG_TYPE,
                             VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE.getText(), 8)), diagnostic);
 
                     Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                            SampleInstanceEjb.MISSING_MESSAGE, VesselPooledTubesProcessor.Headers.VOLUME.getText(),
+                            SampleInstanceEjb.IS_MISSING, VesselPooledTubesProcessor.Headers.VOLUME.getText(),
                             8)), diagnostic);
                     Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                            SampleInstanceEjb.MISSING_MESSAGE,
+                            SampleInstanceEjb.IS_MISSING,
                             VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE.getText(), 8)), diagnostic);
                     Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                            SampleInstanceEjb.MISSING_MESSAGE,
+                            SampleInstanceEjb.IS_MISSING,
                             VesselPooledTubesProcessor.Headers.TUBE_BARCODE.getText(), 5)), diagnostic);
                     Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                            SampleInstanceEjb.MISSING_MESSAGE, VesselPooledTubesProcessor.Headers.EXPERIMENT.getText(),
+                            SampleInstanceEjb.IS_MISSING, VesselPooledTubesProcessor.Headers.EXPERIMENT.getText(),
                             5)), diagnostic);
                     Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                            SampleInstanceEjb.MISSING_MESSAGE,
+                            SampleInstanceEjb.IS_MISSING,
                             VesselPooledTubesProcessor.Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText(), 6)), diagnostic);
                     Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                            SampleInstanceEjb.MISSING_MESSAGE,
+                            SampleInstanceEjb.IS_MISSING,
                             VesselPooledTubesProcessor.Headers.BROAD_SAMPLE_ID.getText(), 7)), diagnostic);
                     Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                            SampleInstanceEjb.MISSING_MESSAGE,
+                            SampleInstanceEjb.IS_MISSING,
                             VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText(), 7)), diagnostic);
 
                     Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                            SampleInstanceEjb.UNKNOWN_MESSAGE, VesselPooledTubesProcessor.Headers.EXPERIMENT.getText(),
+                            SampleInstanceEjb.IS_UNKNOWN, VesselPooledTubesProcessor.Headers.EXPERIMENT.getText(),
                             "JIRA DEV", 5)), diagnostic);
                     Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                            SampleInstanceEjb.UNKNOWN_MESSAGE, VesselPooledTubesProcessor.Headers.CONDITIONS.getText(),
+                            SampleInstanceEjb.IS_UNKNOWN, VesselPooledTubesProcessor.Headers.CONDITIONS.getText(),
                             "sub-tasks of DEV-6796", 7)), diagnostic);
                     Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                            SampleInstanceEjb.UNKNOWN_MESSAGE, VesselPooledTubesProcessor.Headers.CONDITIONS.getText(),
+                            SampleInstanceEjb.IS_UNKNOWN, VesselPooledTubesProcessor.Headers.CONDITIONS.getText(),
                             "sub-tasks of DEV-6796", 8)), diagnostic);
                     Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                            SampleInstanceEjb.UNKNOWN_MESSAGE,
+                            SampleInstanceEjb.IS_UNKNOWN,
                             VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText(),
                             "Mercury", 8)), diagnostic);
                 }

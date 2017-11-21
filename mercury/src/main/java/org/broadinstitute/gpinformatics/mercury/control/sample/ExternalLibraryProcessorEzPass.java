@@ -28,8 +28,8 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
         dataAnalysisType.add(dataRow.get(Headers.DATA_ANALYSIS_TYPE.getText()));
         referenceSequence.add(dataRow.get(Headers.REFERENCE_SEQUENCE.getText()));
         gssrOfBaitPool.add(dataRow.get(Headers.GSSR_OF_BAIT_POOL.getText()));
-        insertSizeRangeBp.add(dataRow.get(Headers.INSERT_SIZE_RANGE_BP.getText()));
-        librarySizeRangeBp.add(dataRow.get(Headers.LIBRARY_SIZE_RANGE_BP.getText()));
+        insertSize.add(dataRow.get(Headers.INSERT_SIZE_RANGE_BP.getText()));
+        librarySize.add(dataRow.get(Headers.LIBRARY_SIZE_RANGE_BP.getText()));
         jumpSize.add(dataRow.get(Headers.JUMP_SIZE.getText()));
         illuminaKitUsed.add(dataRow.get(Headers.ILLUMINA_KIT_USED.getText()));
         restrictionEnzymes.add(dataRow.get(Headers.RESTRICTION_ENZYMES.getText()));
@@ -43,7 +43,7 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
         additionalSampleInformation.add(dataRow.get(Headers.ADDITIONAL_SAMPLE_INFORMATION.getText()));
         projectTitle.add(dataRow.get(Headers.PROJECT_TITLE.getText()));
         fundingSource.add(dataRow.get(Headers.FUNDING_SOURCE.getText()));
-        coverage.add(dataRow.get(Headers.COVERAGE.getText()));
+        numberOfLanes.add(dataRow.get(Headers.COVERAGE.getText()));
         approvedBy.add(dataRow.get(Headers.APPROVED_BY.getText()));
         requestedCompletionDate.add(dataRow.get(Headers.REQUESTED_COMPLETION_DATE.getText()));
         dataSubmission.add(dataRow.get(Headers.DATA_SUBMISSION.getText()));

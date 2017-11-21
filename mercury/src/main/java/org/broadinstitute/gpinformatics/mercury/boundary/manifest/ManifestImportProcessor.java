@@ -70,15 +70,15 @@ public class ManifestImportProcessor extends TableProcessor {
      * Validations protect against duplicate headers and unknown headers
      *
      * @param headers List header strings in this row
-     * @param row     The row number in the file.
+     * @param rowIndex the 0-based row index.
      */
     @Override
-    public void processHeader(List<String> headers, int row) {
+    public void processHeader(List<String> headers, int rowIndex) {
         List<String> errors = new ArrayList<>();
         List<String> seenHeaders = new ArrayList<>();
         for (String header : headers) {
             if (seenHeaders.contains(header)) {
-                addDataMessage(String.format(DUPLICATE_HEADER_FORMAT, header), row);
+                addDataMessage(String.format(DUPLICATE_HEADER_FORMAT, header), rowIndex);
             }
             seenHeaders.add(header);
         }
@@ -87,29 +87,33 @@ public class ManifestImportProcessor extends TableProcessor {
                 ManifestHeader.fromColumnName(errors, headers.toArray(new String[headers.size()]));
         columnHeaders = foundHeaders.toArray(new ColumnHeader[foundHeaders.size()]);
         if (!errors.isEmpty()) {
-            addDataMessage(String.format(UNKNOWN_HEADER_FORMAT, errors), row);
+            addDataMessage(String.format(UNKNOWN_HEADER_FORMAT, errors), rowIndex);
         }
     }
 
     /**
      * Iterate through the data and add it to the list of ManifestRecords.
+     * @param rowIndex the 0-based row index.
      */
     @Override
-    public void processRowDetails(Map<String, String> dataRow, int dataRowNumber) {
+    public void processRowDetails(Map<String, String> dataRow, int rowIndex) {
 
-        validateRow(dataRow, dataRowNumber);
+        validateRow(dataRow, rowIndex);
 
         ManifestRecord manifestRecord = new ManifestRecord(ManifestHeader.toMetadata(dataRow));
-        // The dataRowIndex is 1-based, but the manifest index is 0-based.
-        manifestRecord.setManifestRecordIndex(dataRowNumber - 1);
+        manifestRecord.setManifestRecordIndex(rowIndex);
         manifestRecords.add(manifestRecord);
     }
 
-    private void validateRow(Map<String, String> dataRow, int dataRowIndex) {
+    /**
+     * Adds error message for invalid material type.
+     * @param rowIndex the 0-based row index.
+     */
+    private void validateRow(Map<String, String> dataRow, int rowIndex) {
         for(Map.Entry<String, String> rowEntry: dataRow.entrySet()) {
             Metadata.Key metadataKey = Metadata.Key.fromDisplayName(rowEntry.getKey());
             if (metadataKey == Metadata.Key.MATERIAL_TYPE && !MaterialType.isValid(rowEntry.getValue())) {
-                addDataMessage(ClinicalResource.UNRECOGNIZED_MATERIAL_TYPE + ": " + rowEntry.getValue(), dataRowIndex);
+                addDataMessage(ClinicalResource.UNRECOGNIZED_MATERIAL_TYPE + ": " + rowEntry.getValue(), rowIndex);
             }
         }
     }

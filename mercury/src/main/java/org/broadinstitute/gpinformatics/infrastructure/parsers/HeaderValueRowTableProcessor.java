@@ -17,7 +17,7 @@ import java.util.Map;
  */
 public abstract class HeaderValueRowTableProcessor extends TableProcessor {
     protected Map<String, String> headerValueMap = new HashMap<>();
-    protected Map<String, Integer> headerRowNumberMap = new HashMap<>();
+    protected Map<String, Integer> headerRowIndexMap = new HashMap<>();
 
     public HeaderValueRowTableProcessor(String sheetName) {
         super(sheetName);
@@ -31,18 +31,18 @@ public abstract class HeaderValueRowTableProcessor extends TableProcessor {
 
     /** Processes a spreadsheet row as a single row that consists of a header cell followed by value cell(s). */
     public void processHeaderValueRow(Row row) {
-        String headerContent = null;
         for (Iterator<Cell> iterator = row.cellIterator(); iterator.hasNext(); ) {
-            Cell cell = iterator.next();
-            String content = cell.getStringCellValue();
-            // The first non-blank cell is the header, and the very next cell on the row is the value.
-            if (headerContent == null) {
-                if (StringUtils.isNotBlank(content) && getHeaderValueNames().contains(content)) {
-                    headerContent = content;
-                    headerRowNumberMap.put(headerContent, row.getRowNum());
+            String content = iterator.next().getStringCellValue().trim();
+            // The header is the first non-blank cell on the row, and the very next cell is the value.
+            if (StringUtils.isNotBlank(content)) {
+                for (String headerName : getHeaderValueNames()) {
+                    if (headerName.equals(content)) {
+                        String value =  iterator.hasNext() ? iterator.next().getStringCellValue().trim() : "";
+                        headerValueMap.put(content, value);
+                        headerRowIndexMap.put(content, row.getRowNum());
+                        break;
+                    }
                 }
-            } else {
-                headerValueMap.put(headerContent, content);
                 break;
             }
         }
@@ -63,7 +63,7 @@ public abstract class HeaderValueRowTableProcessor extends TableProcessor {
             } else {
                 if (headerValueRow.isRequiredValue() && StringUtils.isBlank(headerValueMap.get(headerName))) {
                     getMessages().add("Required value for " + headerName + " is blank at row " +
-                            headerRowNumberMap.get(headerName));
+                            (headerRowIndexMap.get(headerName) + 1));
                 }
             }
         }
@@ -79,7 +79,7 @@ public abstract class HeaderValueRowTableProcessor extends TableProcessor {
     };
 
     /** Returns the mapping from header text to the 1-based row number that the header first appeared in. */
-    public Map<String, Integer> getHeaderRowNumberMap() {
-        return headerRowNumberMap;
+    public Map<String, Integer> getHeaderRowIndexMap() {
+        return headerRowIndexMap;
     }
 }

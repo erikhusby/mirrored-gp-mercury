@@ -49,8 +49,8 @@ public final class PoiSpreadsheetParser {
      * the data, row by row, from the spreadsheet file and holding that data in such a way that a concrete parser
      * can parse the row data in a way specific to that parser.
      *
-     * @throws ValidationException if the header row cannot be found or the header is missing required columns.
-     * Other validation errors such as missing data values can be found in processor.getMessages().
+     * @throws ValidationException if the header row cannot be found or the header validation failed.
+     * Data validation errors can be found in processor.getMessages().
      */
     public void processRows(Sheet workSheet, TableProcessor processor) throws ValidationException {
         // If the index is invalid then sets it by parsing the spreadsheet and searching for the header strings.
@@ -87,12 +87,12 @@ public final class PoiSpreadsheetParser {
 
         while (rows.hasNext()) {
             Row row = rows.next();
-            // Create a mapping of the headers to the cell values. There are never date values for the header.
+            // Create a mapping of the header name (the header enum text) to data cell value.
             Map<String, String> dataByHeader = new HashMap<>();
             for (String headerName : processor.getHeaderToColumnIndex().keySet()) {
                 int columnIdx = processor.getHeaderToColumnIndex().get(headerName);
                 ColumnHeader columnHeader = processor.findColumnHeaderByName(headerName);
-                dataByHeader.put(headerName, extractCellContent(row, columnIdx, columnHeader));
+                dataByHeader.put(columnHeader.getText(), extractCellContent(row, columnIdx, columnHeader));
             }
 
             boolean isBlankLine = false;
@@ -147,13 +147,11 @@ public final class PoiSpreadsheetParser {
                 Iterator<Cell> cellIterator = headerRow.cellIterator();
                 while (cellIterator.hasNext()) {
                     Cell cell = cellIterator.next();
-                    // Expects headers to be strings, possibly modified for more robust matching.
-                    // Only maps the headers defined with an enum. Any others are ignored.
-                    String headerString = processor.adjustHeaderCell(getCellValues(cell, false, true));
-                    ColumnHeader columnHeader = processor.findColumnHeaderByName(headerString);
-                    if (columnHeader != null) {
+                    // Expects headers to be strings. Ignores any blank headers.
+                    // Makes a map of header string to column index for later processing of data rows.
+                    String headerString = getCellValues(cell, false, true);
+                    if (StringUtils.isNotBlank(headerString)) {
                         headers.add(headerString);
-                        // Makes a map of header string to column index for later processing of data rows.
                         processor.getHeaderToColumnIndex().put(headerString, cell.getColumnIndex());
                     }
                 }

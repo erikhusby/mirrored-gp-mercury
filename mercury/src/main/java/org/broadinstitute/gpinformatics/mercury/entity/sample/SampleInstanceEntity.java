@@ -4,15 +4,16 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
+import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
 import javax.persistence.CascadeType;
-import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -21,8 +22,9 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -74,82 +76,19 @@ public class SampleInstanceEntity {
     @ManyToOne
     private ProductOrder productOrder;
 
+    @ManyToOne
+    private ReferenceSequence referenceSequence;
+
     private String sampleLibraryName;
-
-    private String referenceSequence;
-
-    private String coverage;
-
-    private String restrictionEnzyme;
-
-    @Column(name = "illumina_454_kit_used")
-    private String illumina454KitUsed;
-
-    private Date uploadDate;
-
-    private String librarySizeRange;
-
-    private String jumpSize;
-
-    private String insertSizeRange;
-
-    private String pooled;
-
+    private Boolean pooled;
     private String libraryType;
-
     private String experiment;
-
-    private String collaboratorSampleId;
-
-    private String tissueType;
-
-    private String sampleTubeBarcode;
-
-    private String sampleNumber;
-
     private Integer readLength;
-
     private Date submitDate;
-
-    private String labName;
-
-    private String readType;
-
-    private String reference;
-
-    private Integer referenceVersion;
-
-    private String fragmentSize;
-
-    private String isPhix;
-
-    private BigDecimal phixPercentage;
-
-    private Integer readLength2;
-
-    private Integer indexLength;
-
-    private Integer indexLength2;
-
+    private Boolean pairedEndRead;
     private String comments;
-
-    private String enzyme;
-
-    private String fragSizeRange;
-
-    private String status;
-
-    private String flowcellLaneDesignated;
-
-    private String flowcellDesignation;
-
-    private String libraryConstructionMethod;
-
-    private String quantificationMethod;
-
-    private String concentrationUnit;
-
-    private Integer laneQuantity;
+    private Integer numberLanes;
+    private IlluminaFlowcell.FlowcellType sequencerModel;
 
     public void removeSubTasks() {
         sampleInstanceEntityTsks.clear();
@@ -162,14 +101,24 @@ public class SampleInstanceEntity {
 
     /** Returns the Jira dev sub tasks in the order they were created. */
     public List<String> getSubTasks() {
-       List<String> subTask = new ArrayList<>();
-       for(SampleInstanceEntityTsk task : sampleInstanceEntityTsks) {
-           subTask.add(task.getSubTask());
-       }
-       return subTask;
+        List<SampleInstanceEntityTsk> list = new ArrayList<>(sampleInstanceEntityTsks);
+        Collections.sort(list, new Comparator<SampleInstanceEntityTsk>() {
+            @Override
+            public int compare(SampleInstanceEntityTsk o1, SampleInstanceEntityTsk o2) {
+                int order = o1.getOrder() - o2.getOrder();
+                return (order == 0) ? o1.getSubTask().compareTo(o2.getSubTask()) : order;
+            }
+        });
+        List<String> subTaskNames = new ArrayList<>();
+        for (SampleInstanceEntityTsk subTask : list) {
+            subTaskNames.add(subTask.getSubTask());
+        }
+        return subTaskNames;
     }
 
-    public MercurySample getRootSample() {  return rootSample;  }
+    public MercurySample getRootSample() {
+        return rootSample;
+    }
 
     public void setRootSample(MercurySample rootSample) {
         this.rootSample = rootSample;
@@ -211,60 +160,36 @@ public class SampleInstanceEntity {
         this.sampleLibraryName = sampleLibraryName;
     }
 
-    public void setUploadDate() {
-        this.uploadDate = new Date();
-    }
-
     public String getExperiment() {
-        return this.experiment;
+        return experiment;
     }
 
     public void setExperiment(String experiment) {
         this.experiment = experiment;
     }
 
-    public String getReferenceSequence() {
-        return this.referenceSequence;
+    public ReferenceSequence getReferenceSequence() {
+        return referenceSequence;
     }
 
-    public void setReferenceSequence(String referenceSequence) {
+    public void setReferenceSequence(ReferenceSequence referenceSequence) {
         this.referenceSequence = referenceSequence;
     }
 
-    public String getCoverage() {
-        return this.coverage;
+    public Boolean getPooled() {
+        return pooled;
     }
 
-    public void setCoverage(String coverage) {
-        this.coverage = coverage;
-    }
-
-    public String getPooled() {
-        return this.pooled;
-    }
-
-    public void setPooled(String pooled) {
+    public void setPooled(Boolean pooled) {
         this.pooled = pooled;
     }
 
     public String getLibraryType() {
-        return this.libraryType;
+        return libraryType;
     }
 
     public void setLibraryType(String libraryType) {
         this.libraryType = libraryType;
-    }
-
-    public String getCollaboratorSampleId() {
-        return this.collaboratorSampleId;
-    }
-
-    public void setCollaboratorSampleId(String collaboratorSampleId) {
-        this.collaboratorSampleId = collaboratorSampleId;
-    }
-
-    public void setDesiredReadLength(Integer readLength) {
-        this.readLength = readLength;
     }
 
     public void setSampleKitRequest(SampleKitRequest sampleKitRequest) {
@@ -281,22 +206,6 @@ public class SampleInstanceEntity {
 
     public ProductOrder getProductOrder() {
         return productOrder;
-    }
-
-    public String getSampleTubeBarcode() {
-        return sampleTubeBarcode;
-    }
-
-    public void setSampleTubeBarcode(String sampleTubeBarcode) {
-        this.sampleTubeBarcode = sampleTubeBarcode;
-    }
-
-    public String getSampleNumber() {
-        return sampleNumber;
-    }
-
-    public void setSampleNumber(String sampleNumber) {
-        this.sampleNumber = sampleNumber;
     }
 
     public Integer getReadLength() {
@@ -322,169 +231,12 @@ public class SampleInstanceEntity {
             }
         }
     }
-
-    public String getLabName() {
-        return labName;
-    }
-
-    public void setLabName(String labName) {
-        this.labName = labName;
-    }
-
-    public String getReadType() {
-        return readType;
-    }
-
-    public void setReadType(String readType) {
-        this.readType = readType;
-    }
-
-    public String getReference() {
-        return reference;
-    }
-
-    public void setReference(String reference) {
-        this.reference = reference;
-    }
-
-    public Integer getReferenceVersion() {
-        return referenceVersion;
-    }
-
-    public void setReferenceVersion(Integer referenceVersion) {
-        this.referenceVersion = referenceVersion;
-    }
-
-    public String getFragmentSize() {
-        return fragmentSize;
-    }
-
-    public void setFragmentSize(String fragmentSize) {
-        this.fragmentSize = fragmentSize;
-    }
-
-    public String getIsPhix() {
-        return isPhix;
-    }
-
-    public void setIsPhix(String isPhix) {
-        this.isPhix = isPhix;
-    }
-
-    public BigDecimal getPhixPercentage() {
-        return phixPercentage;
-    }
-
-    public void setPhixPercentage(BigDecimal phixPercentage) {
-        this.phixPercentage = phixPercentage;
-    }
-
-    public Integer getReadLength2() {
-        return readLength2;
-    }
-
-    public void setReadLength2(Integer readLength2) {
-        this.readLength2 = readLength2;
-    }
-
-    public Integer getIndexLength() {
-        return indexLength;
-    }
-
-    public void setIndexLength(Integer indexLength) {
-        this.indexLength = indexLength;
-    }
-
-    public Integer getIndexLength2() {
-        return indexLength2;
-    }
-
-    public void setIndexLength2(Integer indexLength2) {
-        this.indexLength2 = indexLength2;
-    }
-
     public String getComments() {
         return comments;
     }
 
     public void setComments(String comments) {
         this.comments = comments;
-    }
-
-    public String getEnzyme() {
-        return enzyme;
-    }
-
-    public void setEnzyme(String enzyme) {
-        this.enzyme = enzyme;
-    }
-
-    public String getFragSizeRange() {
-        return fragSizeRange;
-    }
-
-    public void setFragSizeRange(String fragSizeRange) {
-        this.fragSizeRange = fragSizeRange;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getFlowcellLaneDesignated() {
-        return flowcellLaneDesignated;
-    }
-
-    public void setFlowcellLaneDesignated(String flowcellLaneDesignated) {
-        this.flowcellLaneDesignated = flowcellLaneDesignated;
-    }
-
-    public String getFlowcellDesignation() {
-        return flowcellDesignation;
-    }
-
-    public void setFlowcellDesignation(String flowcellDesignation) {
-        this.flowcellDesignation = flowcellDesignation;
-    }
-
-    public String getLibraryConstructionMethod() {
-        return libraryConstructionMethod;
-    }
-
-    public void setLibraryConstructionMethod(String libraryConstructionMethod) {
-        this.libraryConstructionMethod = libraryConstructionMethod;
-    }
-
-    public String getQuantificationMethod() {
-        return this.quantificationMethod;
-    }
-
-    public void setQuantificationMethod(String quantificationMethod) {
-        this.quantificationMethod = quantificationMethod;
-    }
-
-    public Integer getLaneQuantity() {
-        return laneQuantity;
-    }
-
-    public void setLaneQuantity(Integer laneQuantity) {
-        this.laneQuantity = laneQuantity;
-    }
-
-    public String getConcentrationUnit() {
-        return concentrationUnit;
-    }
-
-    public void setConcentrationUnit(String concentrationUnit) {
-        this.concentrationUnit = concentrationUnit;
-    }
-
-    public Long getSampleInstanceEntityId() {
-        return sampleInstanceEntityId;
     }
 
     @Nonnull
@@ -508,63 +260,31 @@ public class SampleInstanceEntity {
         this.productOrder = productOrder;
     }
 
-    public String getRestrictionEnzyme() {
-        return restrictionEnzyme;
-    }
-
-    public void setRestrictionEnzyme(String restrictionEnzyme) {
-        this.restrictionEnzyme = restrictionEnzyme;
-    }
-
-    public String getIllumina454KitUsed() {
-        return illumina454KitUsed;
-    }
-
-    public void setIllumina454KitUsed(String illumina454KitUsed) {
-        this.illumina454KitUsed = illumina454KitUsed;
-    }
-
-    public Date getUploadDate() {
-        return uploadDate;
-    }
-
-    public void setUploadDate(Date uploadDate) {
-        this.uploadDate = uploadDate;
-    }
-
-    public String getLibrarySizeRange() {
-        return librarySizeRange;
-    }
-
-    public void setLibrarySizeRange(String librarySizeRange) {
-        this.librarySizeRange = librarySizeRange;
-    }
-
-    public String getJumpSize() {
-        return jumpSize;
-    }
-
-    public void setJumpSize(String jumpSize) {
-        this.jumpSize = jumpSize;
-    }
-
-    public String getInsertSizeRange() {
-        return insertSizeRange;
-    }
-
-    public void setInsertSizeRange(String insertSizeRange) {
-        this.insertSizeRange = insertSizeRange;
-    }
-
-    public String getTissueType() {
-        return tissueType;
-    }
-
-    public void setTissueType(String tissueType) {
-        this.tissueType = tissueType;
-    }
-
     public void setSubmitDate(Date submitDate) {
         this.submitDate = submitDate;
+    }
+
+    public Boolean getPairedEndRead() {
+        return pairedEndRead;
+    }
+
+    public void setPairedEndRead(Boolean pairedEndRead) {
+        this.pairedEndRead = pairedEndRead;
+    }
+
+    public Integer getNumberLanes() {
+        return numberLanes;
+    }
+
+    public void setNumberLanes(Integer numberLanes) {
+        this.numberLanes = numberLanes;
+    }
+
+    public IlluminaFlowcell.FlowcellType getSequencerModel() {
+        return sequencerModel;
+    }
+
+    public void setSequencerModel(IlluminaFlowcell.FlowcellType sequencerModel) {
+        this.sequencerModel = sequencerModel;
     }
 }

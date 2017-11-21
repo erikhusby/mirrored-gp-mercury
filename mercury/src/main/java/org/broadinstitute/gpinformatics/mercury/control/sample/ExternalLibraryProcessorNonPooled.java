@@ -21,8 +21,8 @@ public class ExternalLibraryProcessorNonPooled extends ExternalLibraryProcessor 
         individualName.add(dataRow.get(Headers.INDIVIDUAL_NAME.getText()));
         singleSampleLibraryName.add(dataRow.get(Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText()));
         libraryType.add(dataRow.get(Headers.LIBRARY_TYPE.getText()));
-        insertSizeRangeBp.add(dataRow.get(Headers.INSERT_SIZE_RANGE_BP.getText()));
-        librarySizeRangeBp.add(dataRow.get(Headers.LIBRARY_SIZE_RANGE_BP.getText()));
+        insertSize.add(dataRow.get(Headers.INSERT_SIZE_RANGE_BP.getText()));
+        librarySize.add(dataRow.get(Headers.LIBRARY_SIZE_RANGE_BP.getText()));
         jumpSize.add(dataRow.get(Headers.JUMP_SIZE.getText()));
         illuminaKitUsed.add(dataRow.get(Headers.ILLUMINA_KIT_USED.getText()));
         restrictionEnzymes.add(dataRow.get(Headers.RESTRICTION_ENZYMES.getText()));
@@ -32,10 +32,10 @@ public class ExternalLibraryProcessorNonPooled extends ExternalLibraryProcessor 
         totalLibraryConcentration.add(dataRow.get(Headers.TOTAL_LIBRARY_CONCENTRATION.getText()));
         additionalSampleInformation.add(dataRow.get(Headers.ADDITIONAL_SAMPLE_INFORMATION.getText()));
         singleDoubleStranded.add(dataRow.get(Headers.SINGLE_DOUBLE_STRANDED.getText()));
-        desiredReadLength.add(dataRow.get(Headers.DESIRED_READ_LENGTH.getText()));
+        readLength.add(dataRow.get(Headers.DESIRED_READ_LENGTH.getText()));
         projectTitle.add(dataRow.get(Headers.PROJECT_TITLE.getText()));
         fundingSource.add(dataRow.get(Headers.FUNDING_SOURCE.getText()));
-        coverage.add(dataRow.get(Headers.COVERAGE.getText()));
+        numberOfLanes.add(dataRow.get(Headers.COVERAGE.getText()));
         approvedBy.add(dataRow.get(Headers.APPROVED_BY.getText()));
         referenceSequence.add(dataRow.get(Headers.REFERENCE_SEQUENCE.getText()));
         requestedCompletionDate.add(dataRow.get(Headers.REQUESTED_COMPLETION_DATE.getText()));

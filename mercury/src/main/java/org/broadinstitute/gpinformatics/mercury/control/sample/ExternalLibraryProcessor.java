@@ -24,28 +24,28 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
     protected List<String> barcodes = new ArrayList<>();
     protected List<String> cellLine = new ArrayList<>();
     protected List<String> collaboratorSampleId = new ArrayList<>();
-    protected List<String> coverage = new ArrayList<>();
     protected List<String> dataAnalysisType = new ArrayList<>();
     protected List<String> dataSubmission = new ArrayList<>();
     protected List<String> derivedFrom = new ArrayList<>();
-    protected List<String> desiredReadLength = new ArrayList<>();
     protected List<String> fundingSource = new ArrayList<>();
     protected List<String> gssrOfBaitPool = new ArrayList<>();
     protected List<String> illuminaKitUsed = new ArrayList<>();
     protected List<String> individualName = new ArrayList<>();
-    protected List<String> insertSizeRangeBp = new ArrayList<>();
+    protected List<String> insertSize = new ArrayList<>();
     protected List<String> irbNumber = new ArrayList<>();
     protected List<String> jumpSize = new ArrayList<>();
-    protected List<String> librarySizeRangeBp = new ArrayList<>();
+    protected List<String> librarySize = new ArrayList<>();
     protected List<String> libraryType = new ArrayList<>();
     protected List<String> memberOfPool = new ArrayList<>();
     protected List<String> molecularBarcodeName = new ArrayList<>();
     protected List<String> molecularBarcodePlateID = new ArrayList<>();
     protected List<String> molecularBarcodePlateWellID = new ArrayList<>();
     protected List<String> molecularBarcodeSequence = new ArrayList<>();
+    protected List<String> numberOfLanes = new ArrayList<>();
     protected List<String> organism = new ArrayList<>();
     protected List<String> pooled = new ArrayList<>();
     protected List<String> projectTitle = new ArrayList<>();
+    protected List<String> readLength = new ArrayList<>();
     protected List<String> referenceSequence = new ArrayList<>();
     protected List<String> requestedCompletionDate = new ArrayList<>();
     protected List<String> requiredControlledAccess = new ArrayList<>();
@@ -118,11 +118,7 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
     }
 
     public ExternalLibraryProcessor(String sheetName) {
-        this(sheetName, IgnoreTrailingBlankLines.YES);
-    }
-
-    public ExternalLibraryProcessor(String sheetName, @Nonnull IgnoreTrailingBlankLines ignoreTrailingBlankLines) {
-        super(sheetName, ignoreTrailingBlankLines);
+        super(sheetName, IgnoreTrailingBlankLines.YES);
 
         for (HeaderValueRow headerValueRow : getHeaderValueRows()) {
             headerValueNames.add(headerValueRow.getText());
@@ -161,7 +157,11 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
 
     /** Strips parethetical material off and trim blanks off of the header cell before matching it. */
     public String adjustHeaderCell(String headerCell) {
-        return StringUtils.substringBefore(headerCell, "(").trim();
+        return stripTrimLowerCase(headerCell);
+    }
+
+    public static String stripTrimLowerCase(String headerCell) {
+        return StringUtils.substringBefore(headerCell, "(").trim().toLowerCase();
     }
 
     public List<String> getAccessList() {
@@ -192,8 +192,8 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         return collaboratorSampleId;
     }
 
-    public List<String> getCoverage() {
-        return coverage;
+    public List<String> getNumberOfLanes() {
+        return numberOfLanes;
     }
 
     public List<String> getDataAnalysisType() {
@@ -208,8 +208,8 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         return derivedFrom;
     }
 
-    public List<String> getDesiredReadLength() {
-        return desiredReadLength;
+    public List<String> getReadLength() {
+        return readLength;
     }
 
     public List<String> getFundingSource() {
@@ -228,8 +228,8 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         return individualName;
     }
 
-    public List<String> getInsertSizeRangeBp() {
-        return insertSizeRangeBp;
+    public List<String> getInsertSize() {
+        return insertSize;
     }
 
     public List<String> getIrbNumber() {
@@ -240,8 +240,8 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
         return jumpSize;
     }
 
-    public List<String> getLibrarySizeRangeBp() {
-        return librarySizeRangeBp;
+    public List<String> getLibrarySize() {
+        return librarySize;
     }
 
     public List<String> getLibraryType() {

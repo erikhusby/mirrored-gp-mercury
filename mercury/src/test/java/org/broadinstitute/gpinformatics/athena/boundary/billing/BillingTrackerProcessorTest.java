@@ -19,7 +19,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -32,7 +33,8 @@ import static org.mockito.Mockito.when;
 public class BillingTrackerProcessorTest {
 
     public static final String TEST_SAMPLE_ID = "SM-1";
-    public static final String MESSAGE_PREFIX = "Sheet test, Row #0 ";
+    // A message about the first row in a spreadsheet should display "Row #1"
+    public static final String MESSAGE_PREFIX = "Sheet test, Row #1 ";
 
     private BillingTrackerProcessor processor;
     private ProductOrder order;

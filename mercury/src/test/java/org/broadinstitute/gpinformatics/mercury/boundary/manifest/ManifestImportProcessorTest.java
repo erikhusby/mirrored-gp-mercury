@@ -119,8 +119,9 @@ public class ManifestImportProcessorTest {
 
         processor.processRowDetails(dataRow, 0);
         processor.getMessages();
+        // A message about the first row in a spreadsheet should display "Row #1"
         assertThat(processor.getMessages(),
-                hasItem(String.format("Row #0 An unrecognized material type was entered: %s", unknownMaterial)));
+                hasItem(String.format("Row #1 An unrecognized material type was entered: %s", unknownMaterial)));
     }
 
     public void testProcessRowDetailsNullMaterialType() throws Exception {
@@ -130,7 +131,7 @@ public class ManifestImportProcessorTest {
         processor.processRowDetails(dataRow, 0);
         processor.getMessages();
         assertThat(processor.getMessages(),
-                hasItem(String.format("Row #0 An unrecognized material type was entered: %s", nullMaterial)));
+                hasItem(String.format("Row #1 An unrecognized material type was entered: %s", nullMaterial)));
     }
 
 
@@ -140,7 +141,7 @@ public class ManifestImportProcessorTest {
         dataRow.put(unknownHeader, "new to me too!");
         processor.processHeader(new ArrayList<>(dataRow.keySet()), row);
         assertThat(processor.getMessages(),
-                hasItem(String.format(TEST_UNKNOWN_HEADER_FORMAT, row, Arrays.asList(unknownHeader))));
+                hasItem(String.format(TEST_UNKNOWN_HEADER_FORMAT, row + 1, Arrays.asList(unknownHeader))));
     }
 
     public void testGetColumnHeaders() throws Exception {

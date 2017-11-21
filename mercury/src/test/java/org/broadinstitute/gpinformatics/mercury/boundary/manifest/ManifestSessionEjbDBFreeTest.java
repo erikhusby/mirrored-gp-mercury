@@ -393,7 +393,7 @@ public class ManifestSessionEjbDBFreeTest {
         return new Object[][]{
                 {"Not an Excel file", "Your InputStream was neither an OLE2 stream, nor an OOXML stream",
                         "manifest-upload/not-an-excel-file.txt"},
-                {"Missing required field", "Row #1 Required value for Specimen_Number is missing.",
+                {"Missing required field", "Row #2 Required value for Specimen_Number is missing.",
                         "manifest-import/test-manifest-missing-specimen.xlsx"},
                 {"Missing column", "Required header missing: Specimen_Number.",
                         "manifest-upload/manifest-with-missing-column.xlsx"},
@@ -404,9 +404,9 @@ public class ManifestSessionEjbDBFreeTest {
                                 + "SAMPLE_TYPE.",
                         "manifest-upload/manifest-with-multiple-bad-columns.xlsx"},
                 {"Unrecognized Material Types in file",
-                        "Row #7 An unrecognized material type was entered: DNR:Heroic\n"
-                        + "Row #8 An unrecognized material type was entered: Fresh DNA\n"
-                        + "Row #9 An unrecognized material type was entered: Buffy Vampire Coat",
+                        "Row #8 An unrecognized material type was entered: DNR:Heroic\n"
+                        + "Row #9 An unrecognized material type was entered: Fresh DNA\n"
+                        + "Row #10 An unrecognized material type was entered: Buffy Vampire Coat",
                         "manifest-upload/manifest-with-bad-material-type.xlsx"}
         };
         // @formatter:on

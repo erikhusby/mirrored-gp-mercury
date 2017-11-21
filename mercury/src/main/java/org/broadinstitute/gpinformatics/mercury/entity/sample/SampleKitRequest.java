@@ -10,8 +10,6 @@ import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
-import static org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity_.sampleKitRequest;
-
 @Entity
 @Audited
 @Table(schema = "mercury", name = "sample_kit_request")
@@ -23,13 +21,11 @@ public class SampleKitRequest {
     @Id
     private Long sampleKitRequestId;
 
-    private String collaboratorName;
-
     private String firstName;
 
     private String lastName;
 
-    private String Organization;
+    private String organization;
 
     private String address;
 
@@ -78,11 +74,11 @@ public class SampleKitRequest {
     }
 
     public String getOrganization() {
-        return Organization;
+        return organization;
     }
 
     public void setOrganization(String organization) {
-        Organization = organization;
+        this.organization = organization;
     }
 
     public String getAddress() {
@@ -166,11 +162,7 @@ public class SampleKitRequest {
     }
 
     public String getCollaboratorName() {
-        return collaboratorName;
-    }
-
-    public void setCollaboratorName(String collaboratorName) {
-        this.collaboratorName = collaboratorName;
+        return firstName + " " + lastName;
     }
 
     public String getIrbApprovalRequired() {

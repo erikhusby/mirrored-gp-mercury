@@ -46,6 +46,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
@@ -531,13 +532,21 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         this.irbNotEngaged = irbNotEngaged;
     }
 
-    public List<String> getIrbNumbers() {
+    public List<String> getIrbNumbers(boolean appendType) {
         List<String> irbNumberList = new ArrayList<>(irbNumbers.size());
         for (ResearchProjectIRB irb : irbNumbers) {
-            irbNumberList.add(irb.getIrb() + ": " + irb.getIrbType().getDisplayName());
+            if (appendType) {
+                irbNumberList.add(irb.getIrb() + ": " + irb.getIrbType().getDisplayName());
+            } else {
+                irbNumberList.add(irb.getIrb());
+            }
         }
-
+        Collections.sort(irbNumberList);
         return irbNumberList;
+    }
+
+    public List<String> getIrbNumbers() {
+        return getIrbNumbers(true);
     }
 
     public void addIrbNumber(ResearchProjectIRB irbNumber) {

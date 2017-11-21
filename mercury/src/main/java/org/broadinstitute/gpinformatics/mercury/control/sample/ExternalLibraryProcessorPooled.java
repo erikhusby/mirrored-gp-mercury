@@ -26,8 +26,8 @@ public class ExternalLibraryProcessorPooled extends ExternalLibraryProcessor {
         memberOfPool.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.MEMBER_OF_POOL.getText()));
         submittedToGSSR.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.SUBMITTED_TO_GSSR.getText()));
         derivedFrom.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.DERIVED_FROM.getText()));
-        insertSizeRangeBp.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.INSERT_SIZE_RANGE_BP.getText()));
-        librarySizeRangeBp.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.LIBRARY_SIZE_RANGE_BP.getText()));
+        insertSize.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.INSERT_SIZE_RANGE_BP.getText()));
+        librarySize.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.LIBRARY_SIZE_RANGE_BP.getText()));
         jumpSize.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.JUMP_SIZE.getText()));
         illuminaKitUsed.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.ILLUMINA_KIT_USED.getText()));
         restrictionEnzymes.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.RESTRICTION_ENZYMES.getText()));
@@ -35,10 +35,10 @@ public class ExternalLibraryProcessorPooled extends ExternalLibraryProcessor {
         totalLibraryConcentration.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.TOTAL_LIBRARY_CONCENTRATION.getText()));
         additionalSampleInformation.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.ADDITIONAL_SAMPLE_INFORMATION.getText()));
         singleDoubleStranded.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.SINGLE_DOUBLE_STRANDED.getText()));
-        desiredReadLength.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.DESIRED_READ_LENGTH.getText()));
+        readLength.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.DESIRED_READ_LENGTH.getText()));
         projectTitle.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.PROJECT_TITLE.getText()));
         fundingSource.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.FUNDING_SOURCE.getText()));
-        coverage.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.COVERAGE.getText()));
+        numberOfLanes.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.COVERAGE.getText()));
         approvedBy.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.APPROVED_BY.getText()));
         referenceSequence.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.DATA_ANALYSIS_TYPE.getText()));
         requestedCompletionDate.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.REQUESTED_COMPLETION_DATE.getText()));

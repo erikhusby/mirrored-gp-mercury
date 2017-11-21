@@ -2,9 +2,20 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
-import javax.persistence.*;
 
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 
+/**
+ * This class represents the DEV ticket subtasks associated with a SampleInstanceEntity
+ * that is made from a PooledTube upload.
+ */
 @Entity
 @Audited
 @Table(schema = "mercury", name = "sample_instance_entity_tsk")
@@ -20,7 +31,17 @@ public class SampleInstanceEntityTsk {
     @ManyToOne(fetch = FetchType.LAZY)
     private SampleInstanceEntity sampleInstanceEntity;
 
+    private int order;
+
     private String subTask;
+
+    public int getOrder() {
+        return order;
+    }
+
+    public void setOrder(int order) {
+        this.order = order;
+    }
 
     public void setSubTask(String subTask) { this.subTask = subTask; }
 

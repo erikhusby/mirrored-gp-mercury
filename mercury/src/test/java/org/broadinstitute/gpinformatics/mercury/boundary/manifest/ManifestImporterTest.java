@@ -121,7 +121,7 @@ public class ManifestImporterTest {
             Assert.fail(VALIDATION_EXCEPTION_MESSAGE);
         } catch (ValidationException e) {
             assertThat(manifestImportProcessor.getMessages(),
-                    hasItem(String.format(REQUIRED_VALUE_IS_MISSING, 1, header.getColumnName())));
+                    hasItem(String.format(REQUIRED_VALUE_IS_MISSING, 2, header.getColumnName())));
             assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
         }
     }
@@ -152,8 +152,9 @@ public class ManifestImporterTest {
         PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
 
         validateManifestRecords(manifestImportProcessor);
+        // A message about the first row in a spreadsheet should display "Row #1"
         String expectedError =
-                String.format(ManifestImportProcessorTest.TEST_UNKNOWN_HEADER_FORMAT, 0, Arrays.asList("YOMAMA"));
+                String.format(ManifestImportProcessorTest.TEST_UNKNOWN_HEADER_FORMAT, 1, Arrays.asList("YOMAMA"));
         assertThat(manifestImportProcessor.getMessages(), contains(expectedError));
         assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
     }
