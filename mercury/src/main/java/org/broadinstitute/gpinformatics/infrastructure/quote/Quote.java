@@ -160,7 +160,7 @@ public class Quote {
 
         FundingLevel singleLevel = getFirstRelevantFundingLevel();
 
-        boolean grantHasEnded = false;
+        boolean grantHasEnded = true;
 
         boolean multipleFundReservation = true;
 

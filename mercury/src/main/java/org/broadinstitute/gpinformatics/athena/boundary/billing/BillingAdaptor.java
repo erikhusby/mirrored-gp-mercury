@@ -338,10 +338,10 @@ public class BillingAdaptor implements Serializable {
 
                         if(StringUtils.equals(item.getQuotePriceType(),LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.getQuoteType()) ) {
                             if(!material.getPossibleDeliveryConditions().containsKey(DeliveryCondition.LATE_DELIVERY_DISCOUNT)) {
-                                throw new InvalidProductException("Pricing in SAP has not been set up correct: Late Delivery charge is not set for " + item.getProduct().getPartNumber());
+                                throw new InvalidProductException("Pricing in SAP has not been set up correctly: Late Delivery charge is not set for " + item.getProduct().getPartNumber());
                             }
                             if(replacementPrice.compareTo(sapPrimaryPrice.add(material.getPossibleDeliveryConditions().get(DeliveryCondition.LATE_DELIVERY_DISCOUNT))) != 0) {
-                                throw new InvalidProductException("Pricing in SAP has not been set up correct: Late Delivery charge in SAP differs from Quotes for " + item.getProduct().getPartNumber());
+                                throw new InvalidProductException("Pricing in SAP has not been set up correctly: Late Delivery charge in SAP differs from Quotes for " + item.getProduct().getPartNumber());
                             }
                         }
 

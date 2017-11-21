@@ -58,7 +58,7 @@ public class QuoteTest {
 
         QuoteService stubbedQuoteService = QuoteServiceProducer.stubInstance();
 
-        Quote eligibleQuote = stubbedQuoteService.getQuoteByAlphaId("BSP1WX");
+        Quote eligibleQuote = stubbedQuoteService.getQuoteByAlphaId("STC3ZW");
 
         boolean quoteEligibility = true;
 
@@ -70,5 +70,21 @@ public class QuoteTest {
         }
     }
 
+
+    public void testInligibleCostObjectQuote() throws Exception {
+
+        QuoteService stubbedQuoteService = QuoteServiceProducer.stubInstance();
+
+        Quote eligibleQuote = stubbedQuoteService.getQuoteByAlphaId("MPG20W");
+
+        boolean quoteEligibility = true;
+
+        try {
+            quoteEligibility = eligibleQuote.isEligibleForSAP();
+            Assert.assertFalse(quoteEligibility);
+        } catch (Exception shouldNotHappen) {
+            Assert.fail(shouldNotHappen.toString());
+        }
+    }
 
 }
