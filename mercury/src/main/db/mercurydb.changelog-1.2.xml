@@ -991,7 +991,7 @@
 
             INSERT INTO MERCURY.ABANDON_VESSEL_NEW
             SELECT CASE WHEN ROW_NUMBER() OVER (PARTITION BY av.abandon_vessel_id order by av.abandon_vessel_id ) > 1
-            THEN seq_abandon_vessel.nextval
+            THEN avp.abandon_vessel_position_id * -1
             ELSE av.abandon_vessel_id
             END as abandon_vessel_id,
             av.lab_vessel,
@@ -1020,6 +1020,28 @@
             MODIFY REASON VARCHAR2(64);
             ALTER TABLE MERCURY.ABANDON_VESSEL_AUD
             MODIFY ABANDONED_ON DATE;
+
+            UPDATE MERCURY.ABANDON_VESSEL_AUD AUD
+            SET AUD.VESSEL_POSITION = (
+            SELECT AV.VESSEL_POSITION
+            FROM MERCURY.ABANDON_VESSEL AV
+            WHERE AV.ABANDON_VESSEL_ID = AUD.ABANDON_VESSEL_ID );
+
+            INSERT INTO ABANDON_VESSEL_AUD (
+            ABANDON_VESSEL_ID, LAB_VESSEL, REASON, ABANDONED_ON,
+            REV, REVTYPE, VESSEL_POSITION
+            ) SELECT ABANDON_VESSEL_POSITION_ID * -1,
+            0, REASON,
+            ABANDONED_ON, REV, REVTYPE, VESSEL_POSITION
+            from ABANDON_VESSEL_POSITION_AUD;
+
+            UPDATE ABANDON_VESSEL_AUD AUD
+            SET AUD.LAB_VESSEL = ( SELECT AV.LAB_VESSEL
+            FROM MERCURY.ABANDON_VESSEL AV
+            WHERE AV.ABANDON_VESSEL_ID = AUD.ABANDON_VESSEL_ID )
+            WHERE AUD.LAB_VESSEL = 0;
+
+            COMMIT;
         </sql>
     </changeSet>
 
