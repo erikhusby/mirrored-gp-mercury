@@ -84,7 +84,7 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
         SAPMaterial foundMaterial = null;
 
         for (SAPMaterial sapMaterial : getSapMaterials()) {
-            if(StringUtils.equals(partNumber, sapMaterial.getMaterialIdentifier()) &&
+            if(StringUtils.equalsIgnoreCase(partNumber, sapMaterial.getMaterialIdentifier()) &&
                sapMaterial.getCompanyCode() == companyCode) {
                 foundMaterial = sapMaterial;
                 break;
@@ -147,7 +147,7 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
     public boolean productExists(String partNumber) {
         boolean result = false;
         for (SAPMaterial sapMaterial : sapMaterials) {
-            if (StringUtils.equals(sapMaterial.getMaterialIdentifier(), partNumber)) {
+            if (StringUtils.equalsIgnoreCase(sapMaterial.getMaterialIdentifier(), partNumber)) {
                 result = true;
                 break;
             }

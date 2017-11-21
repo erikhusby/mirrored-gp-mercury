@@ -73,6 +73,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -376,7 +377,7 @@ public class ProductOrderEjbTest {
 
         final SAPMaterial primaryMaterial =
                 new SAPMaterial(conversionPdo.getProduct().getPartNumber(), "10", Collections.<Condition>emptySet(),
-                        Collections.<DeliveryCondition>emptySet());
+                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
         primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(
                 primaryMaterial);
@@ -398,7 +399,7 @@ public class ProductOrderEjbTest {
                 conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
             final SAPMaterial addonMaterial = new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), "10",
-                    Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet());
+                    Collections.<Condition>emptySet(), Collections.<DeliveryCondition, BigDecimal>emptyMap());
             addonMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
             returnMaterials.add(addonMaterial);
             priceList.add(new QuotePriceItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory(),
@@ -539,7 +540,7 @@ public class ProductOrderEjbTest {
 
         final SAPMaterial primaryMaterial =
                 new SAPMaterial(conversionPdo.getProduct().getPartNumber(), "10", Collections.<Condition>emptySet(),
-                        Collections.<DeliveryCondition>emptySet());
+                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
         primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(
                 primaryMaterial);
@@ -553,7 +554,7 @@ public class ProductOrderEjbTest {
                 conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
             final SAPMaterial addonMaterial = new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), "10",
-                    Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet());
+                    Collections.<Condition>emptySet(), Collections.<DeliveryCondition, BigDecimal>emptyMap());
             addonMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
             returnMaterials.add(addonMaterial);
             priceList.add(new QuotePriceItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory(),
@@ -692,7 +693,7 @@ public class ProductOrderEjbTest {
 
         final SAPMaterial primaryMaterial =
                 new SAPMaterial(conversionPdo.getProduct().getPartNumber(), "5", Collections.<Condition>emptySet(),
-                        Collections.<DeliveryCondition>emptySet());
+                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
         primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(
                 primaryMaterial);
@@ -706,7 +707,7 @@ public class ProductOrderEjbTest {
                 conversionPdo.getProduct().getPrimaryPriceItem().getCategory()));
         for (ProductOrderAddOn productOrderAddOn : conversionPdo.getAddOns()) {
             final SAPMaterial addonMaterial = new SAPMaterial(productOrderAddOn.getAddOn().getPartNumber(), "5",
-                    Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet());
+                    Collections.<Condition>emptySet(), Collections.<DeliveryCondition, BigDecimal>emptyMap());
             addonMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
             returnMaterials.add(addonMaterial);
             priceList.add(new QuotePriceItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getCategory(),

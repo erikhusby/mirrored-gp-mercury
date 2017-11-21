@@ -309,6 +309,9 @@
                             </stripes:label>
                             <div class="controls">
                                 <stripes:checkbox id="externalOrderOnly" name="editProduct.externalOnlyProduct" style="margin-top: 10px;" disabled="${actionBean.productUsedInOrders}"/>
+                                <c:if test="${actionBean.productUsedInOrders}">
+                                    <stripes:hidden name="editProduct.externalOnlyProduct" value="${actionBean.editProduct.externalOnlyProduct}" />
+                                </c:if>
                             </div>
                         </div>
                         <div class="control-group">
@@ -317,6 +320,9 @@
                             </stripes:label>
                             <div class="controls">
                                 <stripes:checkbox id="clinicalProduct" name="editProduct.clinicalProduct" style="margin-top: 10px;" disabled="${actionBean.productUsedInOrders}"/>
+                                <c:if test="${actionBean.productUsedInOrders}">
+                                    <stripes:hidden name="editProduct.clinicalProduct" value="${actionBean.editProduct.clinicalProduct}" />
+                                </c:if>
                             </div>
                         </div>
                     </security:authorizeBlock>
@@ -371,7 +377,7 @@
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="partNumber" name="editProduct.partNumber" class="defaultText input-xxlarge"
-                            title="Enter the part number of the new product" readonly="${actionBean.productUsedInOrders}"/>
+                            title="Enter the part number of the new product" readonly="${actionBean.productInSAP(actionBean.editProduct.partNumber)}"/>
                     </div>
                 </div>
 

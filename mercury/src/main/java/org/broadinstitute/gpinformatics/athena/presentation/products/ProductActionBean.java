@@ -225,6 +225,7 @@ public class ProductActionBean extends CoreActionBean {
             // This must be a create, so construct a new top level product that has nothing else set
             editProduct = new Product(Product.TOP_LEVEL_PRODUCT);
         }
+        productPriceCache.refreshCache();
         availableChipTechnologyAndChipNames = productEjb.findChipFamiliesAndNames();
     }
 
@@ -547,6 +548,10 @@ public class ProductActionBean extends CoreActionBean {
 
     public Product getEditProduct() {
         return editProduct;
+    }
+
+    public boolean isProductNameSet() {
+        return StringUtils.isNotBlank(editProduct.getPartNumber());
     }
 
     public void setEditProduct(Product product) {

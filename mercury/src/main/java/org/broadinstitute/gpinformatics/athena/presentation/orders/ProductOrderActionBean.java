@@ -1334,6 +1334,21 @@ public class ProductOrderActionBean extends CoreActionBean {
                 }
             }
 
+            QuotePriceItem priceItemByKeyFields = null;
+            if (editOrder.getProduct() != null) {
+                priceItemByKeyFields = priceListCache.findByKeyFields(editOrder.getProduct().getPrimaryPriceItem());
+                if (priceItemByKeyFields != null) {
+                    editOrder.getProduct().getPrimaryPriceItem().setUnits(priceItemByKeyFields.getUnit());
+                }
+            }
+
+            for (ProductOrderAddOn productOrderAddOn : editOrder.getAddOns()) {
+                final QuotePriceItem addOnPriceItemByKeyFields =
+                        priceListCache.findByKeyFields(productOrderAddOn.getAddOn().getPrimaryPriceItem());
+                if (priceItemByKeyFields != null) {
+                    productOrderAddOn.getAddOn().getPrimaryPriceItem().setUnits(addOnPriceItemByKeyFields.getUnit());
+                }
+            }
         }
     }
 
@@ -1702,9 +1717,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 //                } else {
                         editOrder.setOrderType(ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
 //                }
-                if (StringUtils.isNotBlank(customizationJsonString)) {
-                    buildJsonObjectFromEditOrderProductCustomizations();
-                }
+            }
+            if (StringUtils.isNotBlank(customizationJsonString)) {
+                buildJsonObjectFromEditOrderProductCustomizations();
             }
         }
 

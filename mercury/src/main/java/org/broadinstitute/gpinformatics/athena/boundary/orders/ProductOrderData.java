@@ -304,6 +304,11 @@ public class ProductOrderData {
         if (!StringUtils.isBlank(productName)) {
             productOrder.setProduct(productDao.findByName(productName));
         }
+        if(productOrder.getProduct().isClinicalProduct() || productOrder.getProduct().isExternalOnlyProduct()) {
+            productOrder.setOrderType(ProductOrder.OrderAccessType.COMMERCIAL);
+        } else {
+            productOrder.setOrderType(ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
+        }
 
         if (!StringUtils.isBlank(researchProjectId)) {
             ResearchProject researchProject =

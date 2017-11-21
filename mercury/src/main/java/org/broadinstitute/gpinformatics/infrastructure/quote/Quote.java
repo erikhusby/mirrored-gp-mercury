@@ -160,21 +160,24 @@ public class Quote {
 
         FundingLevel singleLevel = getFirstRelevantFundingLevel();
 
-        boolean grantHasEnded = false;
+        boolean grantHasEnded = true;
 
         boolean multipleFundReservation = true;
 
         if (singleLevel != null ) {
-            multipleFundReservation = singleLevel.getFunding().size()>1;
-            if (!multipleFundReservation) {
-                for (Funding funding : singleLevel.getFunding()) {
+            final Collection<Funding> fundingSources = singleLevel.getFunding();
+            if (CollectionUtils.isNotEmpty(fundingSources)) {
+                multipleFundReservation = fundingSources.size() > 1;
+                if (!multipleFundReservation) {
+                    for (Funding funding : fundingSources) {
 
-                    if(funding.getGrantEndDate() != null && funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
-                        final Date today = DateUtils.truncate(new Date(), Calendar.DATE);
-                        grantHasEnded = grantHasEnded && !FundingLevel.isGrantActiveForDate(today, funding);
+                        if(funding.getGrantEndDate() != null && funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
+                            final Date today = DateUtils.truncate(new Date(), Calendar.DATE);
+                            grantHasEnded = grantHasEnded && !FundingLevel.isGrantActiveForDate(today, funding);
 
-                        if(grantHasEnded) {
-                            break;
+                            if(grantHasEnded) {
+                                break;
+                            }
                         }
                     }
                 }

@@ -809,7 +809,7 @@ public class ProductOrderActionBeanTest {
         Set<SAPMaterial> returnMaterials = new HashSet<>();
 
         final Product primaryOrderProduct = testOrder.getProduct();
-        returnMaterials.add(new SAPMaterial(primaryOrderProduct.getPartNumber(),"2000", Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet()));
+        returnMaterials.add(new SAPMaterial(primaryOrderProduct.getPartNumber(),"2000", Collections.<Condition>emptySet(), Collections.<DeliveryCondition, BigDecimal>emptyMap()));
 
         final String priceItemPrice = "2000";
         final String quoteItemQuantity = "2000";
@@ -822,7 +822,7 @@ public class ProductOrderActionBeanTest {
         addonNonSeqProduct.setPrimaryPriceItem(new PriceItem("Secondary", "Genomics Platform",
                 "secondary testing size", "Extraction price"));
         addonNonSeqProduct.setProductFamily(new ProductFamily(ProductFamily.ProductFamilyInfo.ALTERNATE_LIBRARY_PREP_DEVELOPMENT.getFamilyName()));
-        returnMaterials.add(new SAPMaterial(addonNonSeqProduct.getPartNumber(),"1573", Collections.<Condition>emptySet(), Collections.<DeliveryCondition>emptySet()));
+        returnMaterials.add(new SAPMaterial(addonNonSeqProduct.getPartNumber(),"1573", Collections.<Condition>emptySet(), Collections.<DeliveryCondition, BigDecimal>emptyMap()));
 
         addPriceItemForProduct(testQuoteIdentifier, priceList, quoteItems, addonNonSeqProduct, "1573", "2000", "573"
         );
@@ -847,20 +847,20 @@ public class ProductOrderActionBeanTest {
         seqProduct.setProductFamily(new ProductFamily(ProductFamily.ProductFamilyInfo.SEQUENCE_ONLY.getFamilyName()));
 
         final SAPMaterial seqMaterial= new SAPMaterial(seqProduct.getPartNumber(), "3500", Collections.<Condition>emptySet(),
-                Collections.<DeliveryCondition>emptySet());
+                Collections.<DeliveryCondition,BigDecimal>emptyMap());
         seqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(seqMaterial);
 
 
         final SAPMaterial primaryMaterial =
                 new SAPMaterial(testOrder.getProduct().getPartNumber(), "2000", Collections.<Condition>emptySet(),
-                        Collections.<DeliveryCondition>emptySet());
+                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
         primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(
                 primaryMaterial);
         final SAPMaterial nonSeqMaterial =
                 new SAPMaterial(addonNonSeqProduct.getPartNumber(), "1573", Collections.<Condition>emptySet(),
-                        Collections.<DeliveryCondition>emptySet());
+                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
         nonSeqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(
                 nonSeqMaterial);
@@ -983,18 +983,18 @@ public class ProductOrderActionBeanTest {
 
         final SAPMaterial primaryMaterial =
                 new SAPMaterial(testOrder.getProduct().getPartNumber(), "2000", Collections.<Condition>emptySet(),
-                        Collections.<DeliveryCondition>emptySet());
+                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
         primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(
                 primaryMaterial);
         final SAPMaterial nonSeqMaterial =
                 new SAPMaterial(addonNonSeqProduct.getPartNumber(), "1573", Collections.<Condition>emptySet(),
-                        Collections.<DeliveryCondition>emptySet());
+                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
         nonSeqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(
                 nonSeqMaterial);
         final SAPMaterial seqMaterial = new SAPMaterial(seqProduct.getPartNumber(), "3500", Collections.<Condition>emptySet(),
-                Collections.<DeliveryCondition>emptySet());
+                Collections.<DeliveryCondition, BigDecimal>emptyMap());
         seqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(seqMaterial);
 
@@ -1124,18 +1124,18 @@ public class ProductOrderActionBeanTest {
 
         final SAPMaterial primaryMaterial =
                 new SAPMaterial(testOrder.getProduct().getPartNumber(), "2000", Collections.<Condition>emptySet(),
-                        Collections.<DeliveryCondition>emptySet());
+                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
         primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(
                 primaryMaterial);
         final SAPMaterial nonSeqMaterial =
                 new SAPMaterial(addonNonSeqProduct.getPartNumber(), "1573", Collections.<Condition>emptySet(),
-                        Collections.<DeliveryCondition>emptySet());
+                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
         nonSeqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(
                 nonSeqMaterial);
         final SAPMaterial seqMaterial = new SAPMaterial(seqProduct.getPartNumber(), "3500", Collections.<Condition>emptySet(),
-                Collections.<DeliveryCondition>emptySet());
+                Collections.<DeliveryCondition, BigDecimal>emptyMap());
         seqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(seqMaterial);
 
@@ -1271,16 +1271,16 @@ public class ProductOrderActionBeanTest {
 
         final SAPMaterial primaryMaterial =
                 new SAPMaterial(testOrder.getProduct().getPartNumber(), "2000", Collections.<Condition>emptySet(),
-                        Collections.<DeliveryCondition>emptySet());
+                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
         primaryMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(primaryMaterial);
         final SAPMaterial nonSeqMaterial =
                 new SAPMaterial(addonNonSeqProduct.getPartNumber(), "1573", Collections.<Condition>emptySet(),
-                        Collections.<DeliveryCondition>emptySet());
+                        Collections.<DeliveryCondition, BigDecimal>emptyMap());
         nonSeqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(nonSeqMaterial);
         final SAPMaterial seqMaterial = new SAPMaterial(seqProduct.getPartNumber(), "3500", Collections.<Condition>emptySet(),
-                Collections.<DeliveryCondition>emptySet());
+                Collections.<DeliveryCondition, BigDecimal>emptyMap());
         seqMaterial.setCompanyCode(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         returnMaterials.add(seqMaterial);
 
