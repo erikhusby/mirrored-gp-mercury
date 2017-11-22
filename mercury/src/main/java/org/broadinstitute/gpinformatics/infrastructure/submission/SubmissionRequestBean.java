@@ -4,16 +4,22 @@ package org.broadinstitute.gpinformatics.infrastructure.submission;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.annotate.JsonPropertyOrder;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 import java.util.List;
 
-@XmlRootElement()
+// setting the access order to alphabetical helps the tests pass more reliably.
+@JsonPropertyOrder(alphabetic = true)
+@JsonSerialize(include=JsonSerialize.Inclusion.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown=true)
 public class SubmissionRequestBean implements Serializable {
-
     private static final long serialVersionUID = -2195569074348464285L;
+
+    @JsonProperty(value = "onPremOrCloudSubmissions")
     private List<SubmissionBean> submissions;
 
     public SubmissionRequestBean() {
@@ -21,14 +27,11 @@ public class SubmissionRequestBean implements Serializable {
 
     public SubmissionRequestBean(List<SubmissionBean> submissionBeans) {
         setSubmissions(submissionBeans);
-
     }
 
     public List<SubmissionBean> getSubmissions() {
         return submissions;
     }
-
-    @XmlElement
     public void setSubmissions(List<SubmissionBean> submissions) {
         this.submissions = submissions;
     }

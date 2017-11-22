@@ -2572,6 +2572,111 @@
         </workflowProcessDefVersions>
     </workflowProcessDefs>
     <workflowProcessDefs>
+        <name>Dried Blood Spots</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2017-11-15T10:03:24.085-04:00</effectiveDate>
+            <workflowStepDefs>
+                <name>DBSSamplePunch</name>
+                <labEventTypes>DBS_SAMPLE_PUNCH</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>DBSIncubationMix</name>
+                <labEventTypes>DBS_INCUBATION_MIX</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>DBSLysisBuffer</name>
+                <labEventTypes>DBS_LYSIS_BUFFER</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>DBSMagneticResin</name>
+                <labEventTypes>DBS_MAGNETIC_RESIN</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>DBS1stPurification</name>
+                <labEventTypes>DBS_1ST_PURIFICATION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>DBSWashBuffer</name>
+                <labEventTypes>DBS_WASH_BUFFER</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>DBS2ndPurification</name>
+                <labEventTypes>DBS_2ND_PURIFICATION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>DBSElutionBuffer</name>
+                <labEventTypes>DBS_ELUTION_BUFFER</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>DBSFinalTransfer</name>
+                <labEventTypes>DBS_FINAL_TRANSFER</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>Malaria</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2017-11-15T10:03:24.085-04:00</effectiveDate>
+            <workflowStepDefs>
+                <name>Malaria PCR 1</name>
+                <labEventTypes>MALARIA_PCR1</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Malaria PCRTail 2</name>
+                <labEventTypes>MALARIA_PCRTAIL2</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Malaria PCR Norm</name>
+                <labEventTypes>MALARIA_PCR_NORM</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Malaria Miseq PCR Pool SPRI</name>
+                <labEventTypes>MALARIA_MISEQ_PCR_POOL_SPRI</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
         <name>Infinium Methylation</name>
         <workflowProcessDefVersions>
             <version>1.0</version>
@@ -3097,6 +3202,26 @@
             <workflowProcessDefs>QTP</workflowProcessDefs>
             <workflowProcessDefs>MiSEQ</workflowProcessDefs>
             <workflowProcessDefs>HiSEQ</workflowProcessDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
+            <routingRule>MERCURY</routingRule>
+            <inValidation>false</inValidation>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>Malaria</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
+            <effectiveDate>2017-06-06T10:03:24.085-04:00</effectiveDate>
+            <workflowProcessDefs>Dried Blood Spots</workflowProcessDefs>
+            <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
+            <workflowProcessDefs>Malaria</workflowProcessDefs>
+            <workflowProcessDefs>MiSEQ</workflowProcessDefs>
             <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
             <sequencingConfigDefs>Amplicon-Pool-Default</sequencingConfigDefs>
             <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>

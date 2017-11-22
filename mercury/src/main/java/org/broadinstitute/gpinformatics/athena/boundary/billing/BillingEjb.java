@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.work.MessageDataValue;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
@@ -16,6 +17,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -161,8 +163,9 @@ public class BillingEjb {
         // Now that we have successfully billed, update the Ledger Entries associated with this QuoteImportItem
         // with the quote for the QuoteImportItem, add the priceItemType, and the success message.
         Collection<String> replacementPriceItemNames = new ArrayList<>();
+        PriceItem priceItem = item.getProductOrder().determinePriceItemByCompanyCode(item.getPrimaryProduct());
         Collection<QuotePriceItem> replacementPriceItems =
-                priceListCache.getReplacementPriceItems(item.getPrimaryProduct().getPrimaryPriceItem());
+                priceListCache.getReplacementPriceItems(priceItem);
         for (QuotePriceItem replacementPriceItem : replacementPriceItems) {
             replacementPriceItemNames.add(replacementPriceItem.getName());
         }

@@ -4,7 +4,7 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
 <%--@elvariable id="userBean" type="org.broadinstitute.gpinformatics.mercury.presentation.UserBean"--%>
 <%--@elvariable id="submissionsTabSelector" type="java.lang.String"--%>
-<%--@elvariable id="submissionType" type="java.lang.String"--%>
+<%--@elvariable id="submissionDatatype" type="java.lang.String"--%>
 <%--@elvariable id="submissionRepository" type="java.lang.String"--%>
 <%--@elvariable id="researchProject" type="java.lang.String"--%>
 <%--@elvariable id="event" type="java.lang.String"--%>
@@ -21,7 +21,6 @@
         .columnAggregationProject { width: 5em; }
         .columnRepository { max-width: 30em; }
         .columnLibraryDescriptor { width: 11em; }
-        .columnFileType { width: 5em; }
         .columnVersion { width: 2em; }
         .columnQualityMetric { width: 3em; }
         .columnContamination { width: 5em; }
@@ -151,7 +150,7 @@
                             if (status.length === 0) {
                                 tagAttributes = {
                                     "name": "<%=ResearchProjectActionBean.SUBMISSION_TUPLES_PARAMETER%>",
-                                    "value": data,
+                                    "value": JSON.stringify(data),
                                     "type": "checkbox",
                                     "class": "shiftCheckbox"
                                 };
@@ -187,7 +186,6 @@
                                     href: "${ctxpath}/orders/order.action?view=&productOrder=" + pdoPair[0],
                                     class: "noWrap",
                                     text: pdoPair[0],
-                                    title: pdoPair[1]
                                 })[0].outerHTML);
                             }
                             return pdos.join(", ");
@@ -229,7 +227,7 @@
                         {"bSearchable": true, "aTargets": ["_all"]}
                     ],
                     "aoColumns": [
-                        {"mData": "<%=SubmissionField.BASS_TUPLE%>","asSorting": ["desc", "asc"], "mRender": renderCheckbox},
+                        {"mData": "<%=SubmissionField.SUBMISSION_TUPLE%>","asSorting": ["desc", "asc"], "mRender": renderCheckbox},
                         {"mData": "<%=SubmissionField.SAMPLE_NAME%>"},
                         {"mData": "<%=SubmissionField.SUBMISSION_SITE%>", "sClass": "ellipsis"},
                         {"mData": "<%=SubmissionField.LIBRARY_DESCRIPTOR%>"},
@@ -237,7 +235,6 @@
                         {"mData": "<%=SubmissionField.PRODUCT_ORDERS %>", "mRender": displayPdoList},
                         {"mData": "<%=SubmissionField.AGGREGATION_PROJECT %>"},
                         {"mData": "<%=SubmissionField.BIO_PROJECT%>"},
-                        {"mData": "<%=SubmissionField.FILE_TYPE %>"},
                         {"mData": "<%=SubmissionField.VERSION %>"},
                         {"mData": "<%=SubmissionField.QUALITY_METRIC %>"},
                         {"mData": "<%=SubmissionField.CONTAMINATION_STRING %>",
@@ -360,11 +357,11 @@
             </div>
         </div>
         <div class="control-group">
-            <stripes:label for="submissionType"
+            <stripes:label for="submissionDatatype"
                            class="control-label label-form">Choose a Library *</stripes:label>
 
             <div class="controls">
-                <stripes:select id="submissionType" name="selectedSubmissionLibraryDescriptor">
+                <stripes:select id="submissionDatatype" name="selectedSubmissionLibraryDescriptor">
                     <stripes:option value="">Choose...</stripes:option>
                     <stripes:options-collection label="description" value="name"
                                                 collection="${actionBean.submissionLibraryDescriptors}"/>
@@ -406,7 +403,6 @@
             <th class="columnPDOs">PDOs</th>
             <th class="columnAggregationProject">Agg. Project</th>
             <th class="columnBioProject">Study</th>
-            <th class="columnFileType">File Type</th>
             <th class="columnVersion">Version</th>
             <th class="columnQualityMetric">Quality Metric</th>
             <th class="columnContamination">Contam.</th>

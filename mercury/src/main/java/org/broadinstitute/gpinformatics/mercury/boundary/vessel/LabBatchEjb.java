@@ -20,7 +20,6 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.BSPExportsService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
@@ -30,6 +29,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.mercury.BSPRestClient;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
@@ -714,7 +714,7 @@ public class LabBatchEjb {
                             // Exome Express currently does strange things with multiple LCSETs at shearing, so
                             // limit this logic to WGS.
                             if (Objects.equals(bucketEntry.getProductOrder().getProduct().getAggregationDataType(),
-                                    BassDTO.DATA_TYPE_WGS)) {
+                                    Aggregation.DATA_TYPE_WGS)) {
                                 addAndRemoveSamples = true;
                             }
                             found = true;
@@ -844,7 +844,8 @@ public class LabBatchEjb {
 
         // Determine whether rack needs to be exported from BSP
         List<LabVessel> bspTubes = new ArrayList<>();
-        for (BarcodedTube barcodedTube : mapBarcodeToTube.values()) {
+        for (String barcode : rackScan.values()) {
+            BarcodedTube barcodedTube = mapBarcodeToTube.get(barcode);
             SampleInstanceV2 sampleInstanceV2 = barcodedTube.getSampleInstancesV2().iterator().next();
             MercurySample mercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
             if (mercurySample == null || mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
@@ -994,8 +995,9 @@ public class LabBatchEjb {
         Multimap<String, Triple<FctDto, LabVessel, FlowcellDesignation>> typeMap = HashMultimap.create();
         for (DesignationDto designationDto : designationDtos) {
             if (designationDto.isSelected()) {
-                if (isValidDto(designationDto, messageReporter)) {
-                    typeMap.put(designationDto.fctGrouping(), Triple.of((FctDto)designationDto,
+                boolean mixedFlowcellOk = isMixedFlowcellOk(designationDto);
+                if (isValidDto(designationDto, messageReporter, mixedFlowcellOk)) {
+                    typeMap.put(designationDto.fctGrouping(mixedFlowcellOk), Triple.of((FctDto)designationDto,
                             labVesselDao.findByIdentifier(designationDto.getBarcode()),
                             labVesselDao.findById(FlowcellDesignation.class, designationDto.getDesignationId())));
                 } else {
@@ -1069,7 +1071,8 @@ public class LabBatchEjb {
         return fctUrls;
     }
 
-    private boolean isValidDto(DesignationDto designationDto, MessageReporter messageReporter) {
+    private boolean isValidDto(DesignationDto designationDto, MessageReporter messageReporter,
+            boolean mixedFlowcellOk) {
         boolean isValid = true;
         String errorString = MessageFormat.format(DESIGNATION_ERROR_MSG, designationDto.getBarcode());
 
@@ -1113,7 +1116,6 @@ public class LabBatchEjb {
             errorString += (isValid ? "" : "and ") + "lcset (null) ";
             isValid = false;
         }
-        boolean mixedFlowcellOk = isMixedFlowcellOk(designationDto);
         if (!mixedFlowcellOk) {
             if (!DesignationUtils.RESEARCH.equals(designationDto.getRegulatoryDesignation()) &&
                     !DesignationUtils.CLINICAL.equals(designationDto.getRegulatoryDesignation())) {
@@ -1135,7 +1137,7 @@ public class LabBatchEjb {
         for (String productName : designationDto.getProductNames()) {
             if (!productName.equals(CONTROLS)) {
                 Product product = productDao.findByName(productName);
-                if (Objects.equals(product.getAggregationDataType(), BassDTO.DATA_TYPE_WGS)) {
+                if (Objects.equals(product.getAggregationDataType(), Aggregation.DATA_TYPE_WGS)) {
                     mixedFlowcellOk = true;
                     break;
                 }
