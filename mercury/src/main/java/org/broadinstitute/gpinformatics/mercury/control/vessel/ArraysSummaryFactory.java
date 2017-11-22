@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
+import org.apache.commons.collections4.ListValuedMap;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
@@ -8,6 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.ArraysQcDao;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcBlacklisting;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcFingerprint;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcGtConcordance;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
@@ -27,6 +29,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import javax.inject.Inject;
 import java.io.PrintStream;
 import java.math.BigDecimal;
+import java.text.DateFormat;
 import java.text.Format;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,7 +43,8 @@ import java.util.Set;
  */
 public class ArraysSummaryFactory {
 
-    private static final Format DATE_FORMAT = FastDateFormat.getInstance("MM/dd/yyyy hh:mm a");
+    private static final Format DATE_TIME_FORMAT = FastDateFormat.getInstance("MM/dd/yyyy hh:mm a");
+    private static final Format DATE_FORMAT = FastDateFormat.getInstance("MM/dd/yyyy");
 
     @Inject
     private SampleDataFetcher sampleDataFetcher;
@@ -84,28 +88,33 @@ public class ArraysSummaryFactory {
                 BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID,
                 BSPSampleSearchColumn.STOCK_SAMPLE);
         Map<String, ArraysQc> mapBarcodeToArrayQc = arraysQcDao.findMapByBarcodes(chipWellBarcodes);
+        ListValuedMap<String, ArraysQcBlacklisting> mapBarcodeToArrayQcBlacklist
+                = arraysQcDao.findBlacklistMapByBarcodes(chipWellBarcodes);
         LabVessel labVessel1 = vesselPositionPairs.get(0).getLeft();
         String chipType = productEjb.getGenotypingChip(productOrder,
                 labVessel1.getEvents().iterator().next().getEventDate()).getRight();
 
         // Header Group
         printStream.println("PED Data\t\tCall Rate\t\tSample\t\t\t\t\t\t\tFingerprint\tGender\t\t\t\tTrio\t" +
-                "BEADSTUDIO\t\t\t\t\tZCALL\t\tScan\t\t\t\t\tPlate\t\t\t");
+                "BEADSTUDIO\t\t\t\t\tZCALL\t\tScan\t\t\t\t\tPlate\t\t\tFailures\t\t\t");
         // Headers
         printStream.println("Family ID\tIndividual ID\tAutoCall\tzCall\tAliquot\tRoot Sample\tStock Sample\tParticipant\t" +
                 "Collaborator Sample\tCollaborator Participant\tCalled Infinium SNPs\tLOD\tReported Gender\tFldm FP Gender\t" +
                 "Beadstudio Gender\tAlgorithm Gender Concordance\tFamily\tHet %\tAnalysis Version\tHap Map Concordance\t" +
                 "Version\tLast Cluster File\tRun\tVersion\tChip\tScan Date\tAmp Date\tScanner\tChip Well Barcode\t" +
-                "DNA Plate\tDNA Plate Well");
+                "DNA Plate\tDNA Plate Well\tLab Abandon\tBlacklisted On\tBlacklist Reason\tWhitelisted On");
         for (int i = 0; i < vesselPositionPairs.size(); i++) {
             Pair<LabVessel, VesselPosition> vesselPositionPair = vesselPositionPairs.get(i);
             LabVessel chip = vesselPositionPair.getLeft();
             VesselPosition vesselPosition = vesselPositionPair.getRight();
             SampleInstanceV2 sampleInstanceV2 = mapPairToSampleInstance.get(vesselPositionPair);
             SampleData sampleData = mapSampleNameToData.get(sampleInstanceV2.getNearestMercurySampleName());
+            boolean foundArraysQc = true;
             ArraysQc arraysQc = mapBarcodeToArrayQc.get(chipWellBarcodes.get(i));
+            List<ArraysQcBlacklisting> arraysQcBlacklistings = mapBarcodeToArrayQcBlacklist.get(chipWellBarcodes.get(i));
             if (arraysQc == null) {
                 arraysQc = new ArraysQc();
+                foundArraysQc = false;
             }
             TransferTraverserCriteria.VesselPositionForEvent traverserCriteria =
                     new TransferTraverserCriteria.VesselPositionForEvent(SampleSheetFactory.LAB_EVENT_TYPES);
@@ -181,7 +190,7 @@ public class ArraysSummaryFactory {
             // Scan Date
             for (LabEvent labEvent: chip.getInPlaceLabEvents()) {
                 if (labEvent.getLabEventType() == LabEventType.INFINIUM_AUTOCALL_SOME_STARTED) {
-                    printStream.print(DATE_FORMAT.format(labEvent.getEventDate()));
+                    printStream.print(DATE_TIME_FORMAT.format(labEvent.getEventDate()));
                     break;
                 }
             }
@@ -189,7 +198,7 @@ public class ArraysSummaryFactory {
             // Amp Date
             for (LabEvent labEvent : dnaPlateAndPosition.getVessel().getTransfersFrom()) {
                 if (labEvent.getLabEventType() == LabEventType.INFINIUM_AMPLIFICATION) {
-                    printStream.print(DATE_FORMAT.format(labEvent.getEventDate()));
+                    printStream.print(DATE_TIME_FORMAT.format(labEvent.getEventDate()));
                     break;
                 }
             }
@@ -216,6 +225,33 @@ public class ArraysSummaryFactory {
             printStream.print(dnaPlateAndPosition.getVessel().getName() + "\t");
             // DNA Plate Well
             printStream.print(dnaPlateAndPosition.getPosition());
+
+            // Lab abandon vessel reason and date
+            if( !foundArraysQc ) {
+                // No data, see if cause is an abandon
+                printStream.print("Lab abandon reason(date)");
+            } else {
+                printStream.print(" \t");
+            }
+
+            // Pipeline blacklist
+            if( arraysQcBlacklistings == null || arraysQcBlacklistings.isEmpty() ) {
+                printStream.print(" \t");
+                printStream.print(" \t");
+                printStream.print(" \t");
+            } else {
+                String blon = "", reas = "", wlon = "";
+                boolean isFirst = true;
+                for( ArraysQcBlacklisting blacklist : arraysQcBlacklistings ) {
+                    blon += isFirst?"":", " + DATE_FORMAT.format(blacklist.getBlacklistedOn());
+                    reas += isFirst?"":", " + blacklist.getBlacklistReason();
+                    // Retain only the latest
+                    wlon = blacklist.getWhitelistedOn() == null?"":DATE_FORMAT.format(blacklist.getWhitelistedOn());
+                }
+                printStream.print(blon + "\t");
+                printStream.print(reas + "\t");
+                printStream.print(wlon + "\t");
+            }
             printStream.println();
         }
     }
