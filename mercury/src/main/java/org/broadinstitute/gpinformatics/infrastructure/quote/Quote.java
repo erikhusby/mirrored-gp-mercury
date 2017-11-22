@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
 import clover.org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
 
 import javax.xml.bind.annotation.XmlAttribute;
@@ -160,9 +161,11 @@ public class Quote {
 
         FundingLevel singleLevel = getFirstRelevantFundingLevel();
 
-        boolean grantHasEnded = true;
+        boolean grantHasEnded = false;
 
-        boolean multipleFundReservation = true;
+        boolean multipleFundReservation;
+
+        boolean atLeastOneValid = false;
 
         if (singleLevel != null ) {
             final Collection<Funding> fundingSources = singleLevel.getFunding();
@@ -170,21 +173,29 @@ public class Quote {
                 multipleFundReservation = fundingSources.size() > 1;
                 if (!multipleFundReservation) {
                     for (Funding funding : fundingSources) {
+                        if(StringUtils.isNotBlank(funding.getFundingType())) {
+                            atLeastOneValid = true;
+                            if (funding.getGrantEndDate() != null && funding.getFundingType()
+                                    .equals(Funding.FUNDS_RESERVATION)) {
+                                final Date today = DateUtils.truncate(new Date(), Calendar.DATE);
+                                grantHasEnded = grantHasEnded || !FundingLevel.isGrantActiveForDate(today, funding);
 
-                        if(funding.getGrantEndDate() != null && funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
-                            final Date today = DateUtils.truncate(new Date(), Calendar.DATE);
-                            grantHasEnded = grantHasEnded && !FundingLevel.isGrantActiveForDate(today, funding);
-
-                            if(grantHasEnded) {
-                                break;
+                                if (grantHasEnded) {
+                                    break;
+                                }
                             }
                         }
                     }
+                } else {
+                    return false;
                 }
+            } else {
+                return false;
             }
-
+        } else {
+            return false;
         }
-        return !(singleLevel == null) && !grantHasEnded && !multipleFundReservation;
+        return !grantHasEnded && atLeastOneValid;
     }
 
     /**
@@ -196,11 +207,13 @@ public class Quote {
     public FundingLevel getFirstRelevantFundingLevel() {
         FundingLevel singleLevel = null;
 
-        for(FundingLevel level : quoteFunding.getFundingLevel()) {
-            if (singleLevel == null) {
-                singleLevel = level;
-            } else {
-                return null;
+        if (quoteFunding != null && CollectionUtils.isNotEmpty(quoteFunding.getFundingLevel())) {
+            for(FundingLevel level : quoteFunding.getFundingLevel()) {
+                if (singleLevel == null) {
+                    singleLevel = level;
+                } else {
+                    return null;
+                }
             }
         }
         return singleLevel;

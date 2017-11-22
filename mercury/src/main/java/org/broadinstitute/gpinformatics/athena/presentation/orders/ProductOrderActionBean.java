@@ -1696,6 +1696,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution save() throws Exception {
 
         MessageCollection saveOrderMessageCollection = new MessageCollection();
+        String originalBusinessKey = editOrder.getBusinessKey();
 
         // Update the modified by and created by, if necessary.
         ProductOrder.SaveType saveType = ProductOrder.SaveType.UPDATING;
@@ -1731,6 +1732,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         try {
             productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails,
                     productCustomizations, saveOrderMessageCollection);
+            originalBusinessKey = null;
+
+
             if (isInfinium() && editOrder.getPipelineLocation() == null) {
                 editOrder.setPipelineLocation(ProductOrder.PipelineLocation.US_CLOUD);
                 productOrderDao.persist(editOrder);
@@ -1738,6 +1742,11 @@ public class ProductOrderActionBean extends CoreActionBean {
             addMessages(saveOrderMessageCollection);
             addMessage("Product Order \"{0}\" has been saved.", editOrder.getTitle());
         } catch (SAPInterfaceException e) {
+            if (originalBusinessKey != null) {
+                productOrderDao.clear();
+                editOrder = productOrderDao.findByBusinessKey(originalBusinessKey);
+            }
+
             addGlobalValidationError(e.getMessage());
             getSourcePageResolution();
         }

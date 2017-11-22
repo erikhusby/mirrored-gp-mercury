@@ -402,7 +402,12 @@ public class ProductOrderEjb {
                 }
                 productOrderDao.persist(orderToPublish);
             } else {
-                messageCollection.addInfo("This order is ineligible to post to SAP: ");
+                final String inelligiblOrderError = "This order is ineligible to post to SAP: ";
+                if(orderToPublish.isSavedInSAP()) {
+                    throw new SAPInterfaceException(inelligiblOrderError);
+                } else {
+                    messageCollection.addInfo(inelligiblOrderError);
+                }
             }
         } catch (SAPIntegrationException | QuoteServerException | QuoteNotFoundException | InvalidProductException e) {
             StringBuilder errorMessage = new StringBuilder();
