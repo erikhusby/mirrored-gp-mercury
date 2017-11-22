@@ -120,7 +120,10 @@ public class InfiniumRunFinderFixupTest extends Arquillian {
         }
     }
 
-    @Test(enabled = true)
+    /**
+     * Add INFINIUM_ARCHIVED event to ~1000 chips that were archived by GAP.
+     */
+    @Test(enabled = false)
     public void testGplim5110() throws SystemException, NotSupportedException, HeuristicRollbackException,
             HeuristicMixedException, RollbackException {
         userBean.loginOSUser();

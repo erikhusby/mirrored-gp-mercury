@@ -22,10 +22,6 @@ import javax.ejb.Singleton;
 import javax.ejb.TransactionManagement;
 import javax.ejb.TransactionManagementType;
 import javax.inject.Inject;
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.NotSupportedException;
-import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import java.io.File;
@@ -55,18 +51,6 @@ public class InfiniumArchiver {
     private static final String DECODE_DATA_NAME = "Decode_Data";
     private static final String ARCHIVED_DIR_NAME = "Archived";
 
-    /*
-     How to test this?
-     Could create vessel and files
-     Check vessel is found
-     Check directory is archived
-     For testing, use 20 days, vs 10 days "for real"
-
-     Make part of InfiniumRunStarter / InfiniumRunFinder, to get transaction handling, singleton etc.
-
-     Startup
-     */
-
     @Inject
     private LabVesselDao labVesselDao;
 
@@ -94,30 +78,35 @@ public class InfiniumArchiver {
         try {
             GregorianCalendar gregorianCalendar = new GregorianCalendar();
             gregorianCalendar.add(Calendar.DAY_OF_YEAR, -10);
-            List<Pair<String, Boolean>> chipsToArchive = findChipsToArchive(100, gregorianCalendar.getTime());
-            UserTransaction utx = ejbContext.getUserTransaction();
-            try {
-                for (Pair<String, Boolean> stringBooleanPair : chipsToArchive) {
+            List<Pair<String, Boolean>> chipsToArchive = findChipsToArchive(
+                    infiniumStarterConfig.getNumChipsPerArchivePeriod(), gregorianCalendar.getTime());
+            for (Pair<String, Boolean> stringBooleanPair : chipsToArchive) {
+                UserTransaction utx = ejbContext.getUserTransaction();
+                try {
+                    boolean archived = true;
                     if (stringBooleanPair.getRight()) {
-                        archiveChip(stringBooleanPair.getLeft(), infiniumStarterConfig);
+                        archived = archiveChip(stringBooleanPair.getLeft(), infiniumStarterConfig);
                     }
                     // else assume GAP has archived it
-                    utx.begin();
-                    LabVessel chip = labVesselDao.findByIdentifier(stringBooleanPair.getKey());
-                    chip.addInPlaceEvent(new LabEvent(LabEventType.INFINIUM_ARCHIVED, new Date(), LabEvent.UI_EVENT_LOCATION,
-                            1L, bspUserList.getByUsername("seqsystem").getUserId(), LabEvent.UI_PROGRAM_NAME));
-                    // The commit doesn't cause a flush (not clear why), so we must do it explicitly.
-                    labVesselDao.flush();
-                    utx.commit();
+                    if (archived) {
+                        utx.begin();
+                        LabVessel chip = labVesselDao.findByIdentifier(stringBooleanPair.getLeft());
+                        chip.addInPlaceEvent(new LabEvent(LabEventType.INFINIUM_ARCHIVED, new Date(), LabEvent.UI_EVENT_LOCATION,
+                                1L, bspUserList.getByUsername("seqsystem").getUserId(), LabEvent.UI_PROGRAM_NAME));
+                        // The commit doesn't cause a flush (not clear why), so we must do it explicitly.
+                        labVesselDao.flush();
+                        utx.commit();
+                    }
+                } catch (Exception e) {
+                    try {
+                        utx.rollback();
+                    } catch (SystemException e1) {
+                        log.error("Error rolling back", e1);
+                    }
+                    log.error("Failed to process chip " + stringBooleanPair.getLeft(), e);
+                    // todo jmt email?
+                    throw new RuntimeException(e);
                 }
-            } catch (NotSupportedException | SystemException | RollbackException | HeuristicRollbackException |
-                    HeuristicMixedException e) {
-                try {
-                    utx.rollback();
-                } catch (SystemException e1) {
-                    throw new RuntimeException(e1);
-                }
-                throw new RuntimeException(e);
             }
         } finally {
             busy.set(false);
@@ -125,8 +114,9 @@ public class InfiniumArchiver {
     }
 
     /**
-     * Finds chips that have LabEventType.INFINIUM_AUTOCALL_ALL_STARTED events that are old enough that the chips are
-     * likely to have been analyzed.
+     * Finds chips that have INFINIUM_AUTOCALL_SOME_STARTED and INFINIUM_AUTOCALL_ALL_STARTED events that are old
+     * enough that the chips are likely to have been analyzed.  We're checking for both events to avoid chips that
+     * were messaged through GAP only.
      * @return list of chip barcodes (not entities, because this method clears the session periodically) and true
      * if Mercury (rather than GAP) is responsible for archiving.
      */
@@ -148,14 +138,14 @@ public class InfiniumArchiver {
             List<LabVessel> chips = labVesselDao.findByListIdentifiers(new ArrayList<>(strings));
             for (LabVessel chip : chips) {
                 for (LabEvent labEvent : chip.getInPlaceLabEvents()) {
-                    if (labEvent.getLabEventType() == LabEventType.INFINIUM_AUTOCALL_ALL_STARTED) { // todo jmt check for all started
+                    if (labEvent.getLabEventType() == LabEventType.INFINIUM_AUTOCALL_ALL_STARTED) {
                         if (labEvent.getEventDate().before(archiveDate)) {
                             String forwardToGap = LabEventFactory.determineForwardToGap(labEvent, chip, productEjb,
                                     attributeArchetypeDao);
                             chipsToArchive.add(new ImmutablePair<>(chip.getLabel(), Objects.equals(forwardToGap, "N")));
                             i++;
                             if (i %100 == 0) {
-                                System.out.println("Found " + i + " chips");
+                                log.info("Found " + i + " chips");
                             }
                         }
                         break;
@@ -172,9 +162,12 @@ public class InfiniumArchiver {
     }
 
     /**
-     * This code is mostly copied from GAP's InfiniumArchiveBean.archiveChip.
+     * This code is mostly copied from GAP's InfiniumArchiveBean.archiveChip: delete the jpg files; copy the
+     * decode_data files (downloaded from Illumina for each chip position) into the idat directory; zip the
+     * idats and decode_data into a temp zip file; copy the zip to the archive directory; delete the temp zip;
+     * rename the idats directory (due to locks?), then delete it.
      */
-    static void archiveChip(String barcode, InfiniumStarterConfig infiniumStarterConfig) {
+    static boolean archiveChip(String barcode, InfiniumStarterConfig infiniumStarterConfig) {
         log.info("Archiving Chip Barcode " + barcode);
         boolean isSuccessful = true;
         File baseDataDir = new File(infiniumStarterConfig.getDataPath());
@@ -201,7 +194,8 @@ public class InfiniumArchiver {
                 // Copy the Decode_data for this barcode intoto the data directory
                 // NOTE - I am copying, rather than moving, so I can back out if need be...
                 if (newDecodeDataDir.mkdir()) {
-                    File newNewDecodeDataDir = new File(newDecodeDataDir, barcode); // Oooh another level...
+                    // Directory for chip barcode
+                    File newNewDecodeDataDir = new File(newDecodeDataDir, barcode);
                     if (newNewDecodeDataDir.mkdir()) {
                         try {
                             FileUtils.copyDirectory(decodeDataDir, newNewDecodeDataDir);
@@ -261,12 +255,10 @@ public class InfiniumArchiver {
             zipFile.delete();
         }
 
-        // rename dir
-        // delete dir
+        // rename then delete dir
         if (isSuccessful) {
-            // If here, everything worked.  Time for clean up... gulp...
+            // If here, everything worked.  Time for clean up...
             if (dataDir.exists()) {
-//                deleteDirectory(dataDir);
                 File archivedDataDir = new File(new File(baseDataDir, ARCHIVED_DIR_NAME), barcode);
                 if (dataDir.renameTo(archivedDataDir)) {
                     // TODO - I am doing it this way (move and then delete) as I was not able to delete the root directoy...
@@ -285,6 +277,7 @@ public class InfiniumArchiver {
                 deleteDirectory(newDecodeDataDir);
             }
         }
+        return isSuccessful;
     }
 
     private static boolean zipDir(File dir2Zip, File zipFile, boolean useFullPath) {

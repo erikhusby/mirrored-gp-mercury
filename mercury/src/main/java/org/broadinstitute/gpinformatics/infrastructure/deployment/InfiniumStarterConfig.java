@@ -21,6 +21,7 @@ public class InfiniumStarterConfig extends AbstractConfig implements LoginAndPas
     private long minimumIdatFileLength;
     private String decodeDataPath;
     private String archivePath;
+    private int numChipsPerArchivePeriod;
     private String jmsHost;
     private int jmsPort;
     private String jmsQueue;
@@ -63,6 +64,14 @@ public class InfiniumStarterConfig extends AbstractConfig implements LoginAndPas
 
     public void setArchivePath(String archivePath) {
         this.archivePath = archivePath;
+    }
+
+    public int getNumChipsPerArchivePeriod() {
+        return numChipsPerArchivePeriod;
+    }
+
+    public void setNumChipsPerArchivePeriod(int numChipsPerArchivePeriod) {
+        this.numChipsPerArchivePeriod = numChipsPerArchivePeriod;
     }
 
     public String getJmsHost() {

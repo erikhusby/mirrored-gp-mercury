@@ -56,8 +56,10 @@ public class InfiniumArchiveStarter {
     public void initialize() {
         ScheduleExpression expression = new ScheduleExpression();
         if (deployment.equals(Deployment.PROD)) {
-            expression.hour("0");
+            // 10pm
+            expression.hour("22");
         } else {
+            // Every 5 minutes
             expression.minute("*/5").hour("*");
         }
         timerService.createCalendarTimer(expression, new TimerConfig("Infinium run timer", false));
@@ -65,10 +67,8 @@ public class InfiniumArchiveStarter {
 
     /**
      * This method does all the work -- it gets called at every interval defined by the timerPeriod.  The check for the
-     * isEnabled() is done here instead of the initialize() is simply because YAML needs to get a servlet or file
+     * isEnabled() is done here instead of the initialize() simply because YAML needs to get a servlet or file
      * protocol handler.
-     *
-     * @see {@link AbstractConfig}
      *
      * @param timer the defined {@Timer}
      */
@@ -82,22 +82,18 @@ public class InfiniumArchiveStarter {
                 sessionContextUtility.executeInContext(new SessionContextUtility.Function() {
                     @Override
                     public void apply() {
-                        try {
-                            userBean.login("seqsystem");
-                            infiniumArchiver.archive();
-                        } catch (SystemException e) {
-                            log.error("Error finding infinium runs", e);
-                        }
+                        userBean.login("seqsystem");
+                        infiniumArchiver.archive();
                     }
                 });
             } else {
-                log.trace("Skipping Infinium Starter timer retry");
+                log.trace("Skipping Infinium Archive timer retry");
             }
         }
     }
 
     /**
-     * Check Mercury configuration in the YAML file and see if the Infinium Starter system is enabled for this
+     * Check Mercury configuration in the YAML file and see if the Infinium Archiver system is enabled for this
      * environment.  If it is not, then the configuration will be null.
      *
      * @return true if it's an environment where the Infinium Starter should be run

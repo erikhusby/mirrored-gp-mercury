@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarterConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
-import org.broadinstitute.gpinformatics.mercury.control.run.InfiniumArchiver;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.PostConstruct;
@@ -51,9 +50,6 @@ public class InfiniumRunStarter {
 
     @Inject
     private InfiniumRunFinder infiniumRunFinder;
-
-    @Inject
-    private InfiniumArchiver infiniumArchiver;
 
     @Inject
     private SessionContextUtility sessionContextUtility;

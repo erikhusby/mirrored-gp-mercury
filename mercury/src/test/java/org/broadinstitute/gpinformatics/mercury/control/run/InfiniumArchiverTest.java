@@ -28,7 +28,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 
 
 /**
- * Test archiving
+ * Test archiving.
  */
 @Test(groups = TestGroups.STUBBY)
 public class InfiniumArchiverTest extends Arquillian {
@@ -43,14 +43,11 @@ public class InfiniumArchiverTest extends Arquillian {
 
     public void testQuery() {
         GregorianCalendar gregorianCalendar = new GregorianCalendar();
-        gregorianCalendar.add(Calendar.DAY_OF_YEAR, -20);
+        // Archive interval is 10 days, so we should find something at 5 days.
+        gregorianCalendar.add(Calendar.DAY_OF_YEAR, -5);
         List<Pair<String, Boolean>> chipsToArchive = infiniumArchiver.findChipsToArchive(50,
                 gregorianCalendar.getTime());
-        for (Pair<String, Boolean> stringBooleanPair : chipsToArchive) {
-            if (stringBooleanPair.getRight()) {
-                System.out.println(stringBooleanPair);
-            }
-        }
+        Assert.assertTrue(!chipsToArchive.isEmpty());
     }
 
     public void testZip() {
