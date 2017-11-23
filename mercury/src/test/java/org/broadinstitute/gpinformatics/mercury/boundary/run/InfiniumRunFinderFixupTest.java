@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarterConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -28,6 +29,7 @@ import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
+import java.io.File;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
@@ -35,6 +37,7 @@ import java.util.GregorianCalendar;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 
 /**
  * "Test" to resubmit Infinium starter messages.
@@ -59,6 +62,9 @@ public class InfiniumRunFinderFixupTest extends Arquillian {
 
     @Inject
     private LabVesselDao labVesselDao;
+
+    @Inject
+    private InfiniumStarterConfig infiniumStarterConfig;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -121,9 +127,10 @@ public class InfiniumRunFinderFixupTest extends Arquillian {
     }
 
     /**
-     * Add INFINIUM_ARCHIVED event to ~1000 chips that were archived by GAP.
+     * Add INFINIUM_ARCHIVED event to ~1000 chips that were archived by GAP (or if it's DEV, to chips that don't
+     * exist in the dev directory).
      */
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void testGplim5110() throws SystemException, NotSupportedException, HeuristicRollbackException,
             HeuristicMixedException, RollbackException {
         userBean.loginOSUser();
@@ -135,9 +142,17 @@ public class InfiniumRunFinderFixupTest extends Arquillian {
         int i = 1;
         for (Pair<String, Boolean> stringBooleanPair : chipsToArchive) {
             if (stringBooleanPair.getRight()) {
-                continue;
+                if (infiniumStarterConfig.getDeploymentConfig() == PROD) {
+                    continue;
+                } else {
+                    File baseDataDir = new File(infiniumStarterConfig.getDataPath());
+                    File dataDir = new File(baseDataDir, stringBooleanPair.getLeft());
+                    if (dataDir.exists()) {
+                        continue;
+                    }
+                }
             }
-            // else assume GAP has archived it
+            // else assume GAP has archived it (or it's dev and the data directory exists)
             LabVessel chip = labVesselDao.findByIdentifier(stringBooleanPair.getKey());
             chip.addInPlaceEvent(new LabEvent(LabEventType.INFINIUM_ARCHIVED, new Date(), LabEvent.UI_EVENT_LOCATION,
                     1L, userBean.getBspUser().getUserId(), LabEvent.UI_PROGRAM_NAME));

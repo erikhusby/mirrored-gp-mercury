@@ -8,6 +8,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarterConfig;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -97,10 +98,10 @@ public class InfiniumArchiver {
                         labVesselDao.flush();
                         utx.commit();
                     }
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     try {
                         utx.rollback();
-                    } catch (SystemException e1) {
+                    } catch (Throwable e1) {
                         log.error("Error rolling back", e1);
                     }
                     log.error("Failed to process chip " + stringBooleanPair.getLeft(), e);
@@ -177,6 +178,15 @@ public class InfiniumArchiver {
         File decodeDataDir = new File(baseDecodeDataDir, barcode);
         File newDecodeDataDir = new File(dataDir, DECODE_DATA_NAME);
 
+        if (!dataDir.exists()) {
+            if (infiniumStarterConfig.getDeploymentConfig() == Deployment.PROD) {
+                log.error("Data directory doesn't exist : " + dataDir.getAbsolutePath());
+                return false;
+            } else {
+                // Assume this is a production chip for which idats don't exist in the dev directory
+                return isSuccessful;
+            }
+        }
         // delete jpg files
         String[] extensions = {"jpg"};
         Iterator<File> iter = FileUtils.iterateFiles(dataDir, extensions, false);
