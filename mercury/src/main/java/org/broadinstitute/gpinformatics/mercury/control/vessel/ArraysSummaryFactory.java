@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
-import org.apache.commons.collections4.ListValuedMap;
+import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
@@ -21,6 +21,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.AbandonVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
@@ -29,9 +30,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import javax.inject.Inject;
 import java.io.PrintStream;
 import java.math.BigDecimal;
-import java.text.DateFormat;
 import java.text.Format;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -88,7 +89,7 @@ public class ArraysSummaryFactory {
                 BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID,
                 BSPSampleSearchColumn.STOCK_SAMPLE);
         Map<String, ArraysQc> mapBarcodeToArrayQc = arraysQcDao.findMapByBarcodes(chipWellBarcodes);
-        ListValuedMap<String, ArraysQcBlacklisting> mapBarcodeToArrayQcBlacklist
+        MultiValuedMap<String, ArraysQcBlacklisting> mapBarcodeToArrayQcBlacklist
                 = arraysQcDao.findBlacklistMapByBarcodes(chipWellBarcodes);
         LabVessel labVessel1 = vesselPositionPairs.get(0).getLeft();
         String chipType = productEjb.getGenotypingChip(productOrder,
@@ -96,7 +97,7 @@ public class ArraysSummaryFactory {
 
         // Header Group
         printStream.println("PED Data\t\tCall Rate\t\tSample\t\t\t\t\t\t\tFingerprint\tGender\t\t\t\tTrio\t" +
-                "BEADSTUDIO\t\t\t\t\tZCALL\t\tScan\t\t\t\t\tPlate\t\t\tFailures\t\t\t");
+                "BEADSTUDIO\t\t\t\t\tZCALL\t\tScan\t\t\t\t\tPlate\t\tFailures\t\t\t");
         // Headers
         printStream.println("Family ID\tIndividual ID\tAutoCall\tzCall\tAliquot\tRoot Sample\tStock Sample\tParticipant\t" +
                 "Collaborator Sample\tCollaborator Participant\tCalled Infinium SNPs\tLOD\tReported Gender\tFldm FP Gender\t" +
@@ -111,7 +112,7 @@ public class ArraysSummaryFactory {
             SampleData sampleData = mapSampleNameToData.get(sampleInstanceV2.getNearestMercurySampleName());
             boolean foundArraysQc = true;
             ArraysQc arraysQc = mapBarcodeToArrayQc.get(chipWellBarcodes.get(i));
-            List<ArraysQcBlacklisting> arraysQcBlacklistings = mapBarcodeToArrayQcBlacklist.get(chipWellBarcodes.get(i));
+            Collection<ArraysQcBlacklisting> arraysQcBlacklistings = mapBarcodeToArrayQcBlacklist.get(chipWellBarcodes.get(i));
             if (arraysQc == null) {
                 arraysQc = new ArraysQc();
                 foundArraysQc = false;
@@ -224,17 +225,18 @@ public class ArraysSummaryFactory {
             // DNA Plate
             printStream.print(dnaPlateAndPosition.getVessel().getName() + "\t");
             // DNA Plate Well
-            printStream.print(dnaPlateAndPosition.getPosition());
+            printStream.print(dnaPlateAndPosition.getPosition() + "\t");
 
             // Lab abandon vessel reason and date
+            // To test abandon output:  foundArraysQc = false;
             if( !foundArraysQc ) {
-                // No data, see if cause is an abandon
-                printStream.print("Lab abandon reason(date)");
-            } else {
+                // No metrics data, try if cause is an abandon
+                printStream.print( getAbandon(chip, vesselPosition) + "\t" );
+            }else {
                 printStream.print(" \t");
             }
 
-            // Pipeline blacklist
+            // Pipeline blacklist date, reason, whitelist date
             if( arraysQcBlacklistings == null || arraysQcBlacklistings.isEmpty() ) {
                 printStream.print(" \t");
                 printStream.print(" \t");
@@ -243,16 +245,33 @@ public class ArraysSummaryFactory {
                 String blon = "", reas = "", wlon = "";
                 boolean isFirst = true;
                 for( ArraysQcBlacklisting blacklist : arraysQcBlacklistings ) {
-                    blon += isFirst?"":", " + DATE_FORMAT.format(blacklist.getBlacklistedOn());
-                    reas += isFirst?"":", " + blacklist.getBlacklistReason();
+                    blon += (isFirst?"":", ") + DATE_FORMAT.format(blacklist.getBlacklistedOn());
+                    reas += (isFirst?"":", ") + blacklist.getBlacklistReason();
                     // Retain only the latest
                     wlon = blacklist.getWhitelistedOn() == null?"":DATE_FORMAT.format(blacklist.getWhitelistedOn());
+                    isFirst = false;
                 }
                 printStream.print(blon + "\t");
                 printStream.print(reas + "\t");
                 printStream.print(wlon + "\t");
             }
             printStream.println();
+        }
+    }
+
+    /**
+     * Gets output formatted lab abandon vessel reason and date (only the most recent in ancestor transfers <br/>
+     * Format as "Abandon reason(abandon simple date)" e.g. Equipment failure(10/21/2017)
+     */
+    private String getAbandon(LabVessel chip, VesselPosition well){
+        TransferTraverserCriteria.AbandonedLabVesselCriteria abandonCriteria = new TransferTraverserCriteria.AbandonedLabVesselCriteria();
+        chip.getContainerRole().evaluateCriteria(well, abandonCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors,0);
+        if( abandonCriteria.isAncestorAbandoned() ) {
+            MultiValuedMap<LabVessel,AbandonVessel> vesselMultiValuedMap = abandonCriteria.getAncestorAbandonVessels();
+            AbandonVessel abandonVessel = vesselMultiValuedMap.values().iterator().next();
+            return abandonVessel.getReason().getDisplayName() + "(" + DATE_FORMAT.format( abandonVessel.getAbandonedOn() ) + ")";
+        } else {
+            return "";
         }
     }
 }
