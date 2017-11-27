@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
  * analytics.tiger.OrspProjectAgent TigerETL script.
  */
 @Entity
-@Table(schema = "COGNOS", name = "ORSP_PROJECT")
+@Table(schema = "ANALYTICS", name = "ORSP_PROJECT")
 public class OrspProject {
 
     /**
@@ -34,12 +34,13 @@ public class OrspProject {
     public static final String CONSENT_GROUP_PREFIX = "CG-";
 
     @Id
+    @Column(name = "KEY")
     private String projectKey;
 
     @Column(name = "LABEL")
     private String rawLabel;
 
-    @Column(name = "PROJECT_TYPE")
+    @Column(name = "TYPE")
     private String rawType;
 
     private String status;
