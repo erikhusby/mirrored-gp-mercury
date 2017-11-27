@@ -10,7 +10,7 @@ import javax.persistence.Table;
  *
  */
 @Entity
-@Table(schema = "COGNOS", name = "ORSP_PROJECT_CONSENT")
+@Table(schema = "ANALYTICS", name = "ORSP_SAMPLE_STAR")
 public class OrspProjectConsent {
 
     @EmbeddedId

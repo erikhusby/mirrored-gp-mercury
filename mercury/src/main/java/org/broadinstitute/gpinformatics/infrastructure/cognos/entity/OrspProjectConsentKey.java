@@ -16,6 +16,7 @@ public class OrspProjectConsentKey implements Serializable {
      */
     @Column(name = "project_key")
     private String projectKey;
+    @Column(name = "sample_collection_key")
     private String sampleCollection;
     private String consentKey;
 
