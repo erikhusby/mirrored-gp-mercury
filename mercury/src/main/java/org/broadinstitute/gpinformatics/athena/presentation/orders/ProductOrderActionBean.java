@@ -1956,7 +1956,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                     priceTitle = "clinicalPrice";
                 }
 
-                item.put(priceTitle , priceListCache.findByKeyFields(addOn.getPrimaryPriceItem()).getPrice());
+                BigDecimal priceForFormat = new BigDecimal(priceListCache.findByKeyFields(addOn.getPrimaryPriceItem()).getPrice());
+                item.put(priceTitle , NumberFormat.getCurrencyInstance().format(priceForFormat));
 
 //                String externalPrice = null;
 //                if (addOn.getExternalPriceItem() != null) {
@@ -2353,8 +2354,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                 priceTitle = "clinicalPrice";
             }
 
-
-            productInfo.put(priceTitle, priceListCache.findByKeyFields(productEntity.getPrimaryPriceItem()).getPrice());
+            BigDecimal priceForFormat = new BigDecimal(priceListCache.findByKeyFields(productEntity.getPrimaryPriceItem()).getPrice());
+            productInfo.put(priceTitle, NumberFormat.getCurrencyInstance().format(priceForFormat));
 //            String externalPrice = null;
 //            if (productEntity.getExternalPriceItem() != null) {
 //                final QuotePriceItem externalPriceItem = priceListCache.findByKeyFields(productEntity.getExternalPriceItem());

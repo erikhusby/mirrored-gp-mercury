@@ -847,7 +847,7 @@
             var priceListText = "";
 
             if(data.researchListPrice !== undefined && data.researchListPrice.length > 0) {
-                priceListText += "research list price: $" + data.researchListPrice;
+                priceListText += "research list price: " + data.researchListPrice;
             }
 
             if(data.externalListPrice !== undefined && data.externalListPrice.length > 0) {
@@ -855,7 +855,7 @@
                     priceListText += ",  ";
                 }
 
-                priceListText += "external list price: $" + data.externalListPrice;
+                priceListText += "external list price: " + data.externalListPrice;
             }
 
             if(data.clinicalPrice  !== undefined && data.clinicalPrice.length > 0) {
@@ -863,7 +863,7 @@
                     priceListText += ",  ";
                 }
 
-                priceListText += "Clinical list price: $" + data.clinicalPrice;
+                priceListText += "Clinical list price: " + data.clinicalPrice;
             }
             $j("#primaryProductListPrice").text(priceListText);
             if(priceListText.length > 0) {
@@ -910,17 +910,24 @@
                     checkboxText += ' (';
                 }
                 if(val.researchListPrice !== undefined && val.researchListPrice.length > 0) {
-                    checkboxText += 'research list price: $' + val.researchListPrice;
+                    checkboxText += 'research list price: ' + val.researchListPrice;
                 }
                 if(val.externalListPrice !== undefined && val.externalListPrice.length > 0) {
                     if(val.researchListPrice !== undefined && val.researchListPrice.length > 0) {
                         checkboxText += ', ';
                     }
-                    checkboxText += 'external list price: $' + val.externalListPrice ;
+                    checkboxText += 'external list price: ' + val.externalListPrice ;
                 }
-
+                if(val.clinicalPrice  !== undefined && val.clinicalPrice.length > 0) {
+                    if((val.researchListPrice !== undefined && val.researchListPrice.length > 0) ||
+                        (val.externalListPrice !== undefined && val.externalListPrice.length > 0)) {
+                        checkboxText += ', ';
+                    }
+                    checkboxText += 'clinical list price: ' + val.clinicalPrice ;
+                }
                 if((val.externalListPrice !== undefined && val.externalListPrice.length > 0) ||
-                    (val.researchListPrice !== undefined && val.researchListPrice.length > 0)) {
+                    (val.researchListPrice !== undefined && val.researchListPrice.length > 0) ||
+                    (val.clinicalPrice !== undefined && val.clinicalPrice.length > 0)) {
                     checkboxText += ')';
                 }
                 </security:authorizeBlock>
