@@ -70,7 +70,36 @@ public class QuoteTest {
         }
     }
 
+    public void testIssuedNoFundingIneligibleQuote() throws Exception {
 
+        QuoteService stubbedQuoteService = QuoteServiceProducer.stubInstance();
+
+        Quote eligibleQuote = stubbedQuoteService.getQuoteByAlphaId("BSP2A3");
+
+        boolean quoteEligibility = true;
+
+        try {
+            quoteEligibility = eligibleQuote.isEligibleForSAP();
+            Assert.assertFalse(quoteEligibility);
+        } catch (Exception shouldNotHappen) {
+            Assert.fail(shouldNotHappen.toString());
+        }
+    }
+    public void testIssuedNoFunding2IneligibleQuote() throws Exception {
+
+        QuoteService stubbedQuoteService = QuoteServiceProducer.stubInstance();
+
+        Quote eligibleQuote = stubbedQuoteService.getQuoteByAlphaId("BSP1CK");
+
+        boolean quoteEligibility = true;
+
+        try {
+            quoteEligibility = eligibleQuote.isEligibleForSAP();
+            Assert.assertFalse(quoteEligibility);
+        } catch (Exception shouldNotHappen) {
+            Assert.fail(shouldNotHappen.toString());
+        }
+    }
     public void testInligibleCostObjectQuote() throws Exception {
 
         QuoteService stubbedQuoteService = QuoteServiceProducer.stubInstance();
