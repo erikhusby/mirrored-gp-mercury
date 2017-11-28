@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.emptyCollectionOf;
 import static org.hamcrest.Matchers.equalTo;
@@ -105,7 +106,8 @@ public class PoiSpreadsheetParserTest {
         processor.setHeaderRowIndex(7);
         PoiSpreadsheetParser.processSingleWorksheet(fileInputStream, processor);
         assertThat(processor.getMessages(), emptyCollectionOf(String.class));
-        assertThat(processor.getWarnings(), emptyCollectionOf(String.class));
+        assertThat(processor.getWarnings().iterator().next(),
+                containsString(String.format(TableProcessor.UNKNOWN_HEADER, "")));
         assertThat(processor.getHeaderValueMap().get("Collaborator Information"), equalTo("XYZ Collection"));
         assertThat(processor.getHeaderValueMap().get("First Name:"), equalTo("Abel"));
         assertThat(processor.getHeaderValueMap().get("Last Name:"), equalTo("Baker"));
@@ -114,6 +116,7 @@ public class PoiSpreadsheetParserTest {
         assertThat(processor.spreadsheetValues.get(1).get("stringData2"), is("5678"));
         assertThat(processor.spreadsheetValues.get(2).get("stringData2"), is("9012"));
         assertThat(processor.spreadsheetValues.get(3).get("stringData2"), is("3456"));
+        assertThat(testProcessor.getWarnings(), emptyCollectionOf(String.class));
     }
 
     private static final boolean IS_DATE = true;
@@ -288,7 +291,7 @@ public class PoiSpreadsheetParserTest {
         }
 
         private TestHeaderValueRowProcessor() {
-            super(null, IgnoreTrailingBlankLines.YES);
+            super(null);
         }
 
         @Override

@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -137,31 +138,32 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
     @Test
     public void parseExternalLibarayEZFail() throws InvalidFormatException, IOException, ValidationException {
-        InputStream testSpreadSheetInputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(
+        InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(
                 "testdata/ExternalLibraryEZFailTest.xlsx");
-        ExternalLibraryProcessorEzPass processor = new ExternalLibraryProcessorEzPass("Sheet1");
+        ExternalLibraryProcessorEzPass processor = new ExternalLibraryProcessorEzPass(null);
         try {
-            PoiSpreadsheetParser.processSingleWorksheet(testSpreadSheetInputStream, processor);
+            PoiSpreadsheetParser.processSingleWorksheet(inputStream, processor);
             Assert.fail("Should have thrown exception.");
         } catch (ValidationException e) {
             int count = 0;
             for (String msg : e.getValidationMessages()) {
-                if (msg.startsWith("Duplicate header: \"Virtual GSSR ID\"") ||
-                        msg.startsWith("Duplicate header: \"SQUID Project\"") ||
-                        msg.startsWith("Unknown header: \"Sample No.\"")) {
+                if (msg.startsWith(String.format(TableProcessor.DUPLICATE_HEADER, "Virtual GSSR ID")) ||
+                        msg.startsWith(String.format(TableProcessor.DUPLICATE_HEADER, "SQUID Project"))) {
                     ++count;
                 }
             }
-            Assert.assertEquals(count, 3);
+            Assert.assertEquals(count, 2);
+            Assert.assertEquals(processor.getWarnings().iterator().next(), TableProcessor.getPrefixedMessage(
+                    String.format(TableProcessor.UNKNOWN_HEADER, "Sample No."), null, 29));
         }
     }
 
     @Test
     public void testExternalLibraryEZPass() throws InvalidFormatException, IOException, ValidationException {
-        InputStream testSpreadSheetInputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(
+        InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(
                 "testdata/ExternalLibraryEZPassTest.xlsx");
-        ExternalLibraryProcessorEzPass processor = new ExternalLibraryProcessorEzPass("Sheet1");
-        PoiSpreadsheetParser.processSingleWorksheet(testSpreadSheetInputStream, processor);
+        ExternalLibraryProcessorEzPass processor = new ExternalLibraryProcessorEzPass(null);
+        PoiSpreadsheetParser.processSingleWorksheet(inputStream, processor);
         Assert.assertEquals(processor.getMessages().size(), 0, StringUtils.join(processor.getMessages()));
         List<SampleInstanceEntity> sampleInstanceEntities = runVerifyAndPersist(processor, true);
         Assert.assertEquals(sampleInstanceEntities.size(), 1);
@@ -171,11 +173,10 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
     @Test
     public void testExternalLibraryMultiOrganism() throws InvalidFormatException, IOException, ValidationException {
-        InputStream testSpreadSheetInputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(
+        InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(
                 "testdata/ExternalLibraryMultiOrganismTest.xlsx");
-        ExternalLibraryProcessorPooledMultiOrganism processor =
-                new ExternalLibraryProcessorPooledMultiOrganism("Sheet1");
-        PoiSpreadsheetParser.processSingleWorksheet(testSpreadSheetInputStream, processor);
+        ExternalLibraryProcessorPooledMultiOrganism processor = new ExternalLibraryProcessorPooledMultiOrganism(null);
+        PoiSpreadsheetParser.processSingleWorksheet(inputStream, processor);
         Assert.assertEquals(processor.getMessages().size(), 0, StringUtils.join(processor.getMessages()));
         List<SampleInstanceEntity> entities = runVerifyAndPersist(processor, true);
         Assert.assertEquals(entities.size(), 3);
@@ -236,7 +237,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
     public void testExternalLibraryPooled() throws InvalidFormatException, IOException, ValidationException {
         InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(
                 "testdata/ExternalLibraryPooledTest.xlsx");
-        ExternalLibraryProcessorPooled processor = new ExternalLibraryProcessorPooled("Sheet1");
+        ExternalLibraryProcessorPooled processor = new ExternalLibraryProcessorPooled(null);
         PoiSpreadsheetParser.processSingleWorksheet(inputStream, processor);
         Assert.assertEquals(processor.getMessages().size(), 0, StringUtils.join(processor.getMessages()));
         List<SampleInstanceEntity> entities = runVerifyAndPersist(processor, true);
@@ -264,10 +265,10 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
     @Test
     public void testExternalLibraryNonPooled() throws InvalidFormatException, IOException, ValidationException {
-        InputStream testSpreadSheetInputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(
+        InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(
                 "testdata/ExternalLibraryNONPooledTest.xlsx");
-        ExternalLibraryProcessorNonPooled processor = new ExternalLibraryProcessorNonPooled("Sheet1");
-        PoiSpreadsheetParser.processSingleWorksheet(testSpreadSheetInputStream, processor);
+        ExternalLibraryProcessorNonPooled processor = new ExternalLibraryProcessorNonPooled(null);
+        PoiSpreadsheetParser.processSingleWorksheet(inputStream, processor);
         Assert.assertEquals(processor.getMessages().size(), 0, StringUtils.join(processor.getMessages()));
         List<SampleInstanceEntity> sampleInstanceEntities = runVerifyAndPersist(processor, true);
         Assert.assertEquals(sampleInstanceEntities.size(), 2);
@@ -338,11 +339,11 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
     @Test
     public void testPooledTubes() throws InvalidFormatException, IOException, ValidationException {
         // Parses the spreadSheet.
-        InputStream testSpreadSheetInputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(
+        InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(
                 "testdata/PooledTubesTest.xlsx");
-        final VesselPooledTubesProcessor spreadSheetProcessor = new VesselPooledTubesProcessor("Sheet1");
+        final VesselPooledTubesProcessor spreadSheetProcessor = new VesselPooledTubesProcessor(null);
         MessageCollection messageCollection = new MessageCollection();
-        messageCollection.addErrors(PoiSpreadsheetParser.processSingleWorksheet(testSpreadSheetInputStream,
+        messageCollection.addErrors(PoiSpreadsheetParser.processSingleWorksheet(inputStream,
                 spreadSheetProcessor));
         Assert.assertEquals(messageCollection.getErrors().size(), 0,
                 StringUtils.join(messageCollection.getErrors(), " ;; "));

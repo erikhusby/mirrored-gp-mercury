@@ -9,44 +9,48 @@ public class ExternalLibraryProcessorPooled extends ExternalLibraryProcessor {
         super(sheetName);
     }
 
+    private String getFromRow(Map<String, String> dataRow, Headers header) {
+        return dataRow.get(getAdjustedNames().get(adjustHeaderName(header.getText())));
+    }
+
     public void processRowDetails(Map<String, String> dataRow, int dataRowNumber) {
-        sequencingTechnology.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.SEQUENCING_TECHNOLOGY.getText()));
-        irbNumber.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.IRB_NUMBER.getText()));
-        strain.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.STRAIN.getText()));
-        sex.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.SEX.getText()));
-        cellLine.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.CELL_LINE.getText()));
-        tissueType.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.TISSUE_TYPE.getText()));
-        collaboratorSampleId.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.COLLABORATOR_SAMPLE_ID.getText()));
-        individualName.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.INDIVIDUAL_NAME.getText()));
-        singleSampleLibraryName.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText()));
-        libraryType.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.LIBRARY_TYPE.getText()));
-        molecularBarcodeSequence.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.MOLECULAR_BARCODE_SEQUENCE.getText()));
-        molecularBarcodeName.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.MOLECULAR_BARCODE_NAME.getText()));
-        pooled.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.POOLED.getText()));
-        memberOfPool.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.MEMBER_OF_POOL.getText()));
-        submittedToGSSR.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.SUBMITTED_TO_GSSR.getText()));
-        derivedFrom.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.DERIVED_FROM.getText()));
-        insertSize.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.INSERT_SIZE_RANGE_BP.getText()));
-        librarySize.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.LIBRARY_SIZE_RANGE_BP.getText()));
-        jumpSize.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.JUMP_SIZE.getText()));
-        illuminaKitUsed.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.ILLUMINA_KIT_USED.getText()));
-        restrictionEnzymes.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.RESTRICTION_ENZYMES.getText()));
-        totalLibraryVolume.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.TOTAL_LIBRARY_VOLUME.getText()));
-        totalLibraryConcentration.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.TOTAL_LIBRARY_CONCENTRATION.getText()));
-        additionalSampleInformation.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.ADDITIONAL_SAMPLE_INFORMATION.getText()));
-        singleDoubleStranded.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.SINGLE_DOUBLE_STRANDED.getText()));
-        readLength.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.DESIRED_READ_LENGTH.getText()));
-        projectTitle.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.PROJECT_TITLE.getText()));
-        fundingSource.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.FUNDING_SOURCE.getText()));
-        numberOfLanes.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.COVERAGE.getText()));
-        approvedBy.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.APPROVED_BY.getText()));
-        referenceSequence.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.DATA_ANALYSIS_TYPE.getText()));
-        requestedCompletionDate.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.REQUESTED_COMPLETION_DATE.getText()));
-        dataSubmission.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.DATA_SUBMISSION.getText()));
-        requiredControlledAccess.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.REQUIRED_ACCESS.getText()));
-        accessList.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.ACCESS_LIST.getText()));
-        additionalAssemblyInformation.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.ADDITIONAL_ASSEMBLY_AND_ANALYSIS_INFORMATION.getText()));
-        dataAnalysisType.add(dataRow.get(ExternalLibraryProcessorPooledMultiOrganism.Headers.DATA_ANALYSIS_TYPE.getText()));
+        sequencingTechnology.add(getFromRow(dataRow, Headers.SEQUENCING_TECHNOLOGY));
+        irbNumber.add(getFromRow(dataRow, Headers.IRB_NUMBER));
+        strain.add(getFromRow(dataRow, Headers.STRAIN));
+        sex.add(getFromRow(dataRow, Headers.SEX));
+        cellLine.add(getFromRow(dataRow, Headers.CELL_LINE));
+        tissueType.add(getFromRow(dataRow, Headers.TISSUE_TYPE));
+        collaboratorSampleId.add(getFromRow(dataRow, Headers.COLLABORATOR_SAMPLE_ID));
+        individualName.add(getFromRow(dataRow, Headers.INDIVIDUAL_NAME));
+        singleSampleLibraryName.add(getFromRow(dataRow, Headers.SINGLE_SAMPLE_LIBRARY_NAME));
+        libraryType.add(getFromRow(dataRow, Headers.LIBRARY_TYPE));
+        molecularBarcodeSequence.add(getFromRow(dataRow, Headers.MOLECULAR_BARCODE_SEQUENCE));
+        molecularBarcodeName.add(getFromRow(dataRow, Headers.MOLECULAR_BARCODE_NAME));
+        pooled.add(getFromRow(dataRow, Headers.POOLED));
+        memberOfPool.add(getFromRow(dataRow, Headers.MEMBER_OF_POOL));
+        submittedToGSSR.add(getFromRow(dataRow, Headers.SUBMITTED_TO_GSSR));
+        derivedFrom.add(getFromRow(dataRow, Headers.DERIVED_FROM));
+        insertSize.add(getFromRow(dataRow, Headers.INSERT_SIZE_RANGE_BP));
+        librarySize.add(getFromRow(dataRow, Headers.LIBRARY_SIZE_RANGE_BP));
+        jumpSize.add(getFromRow(dataRow, Headers.JUMP_SIZE));
+        illuminaKitUsed.add(getFromRow(dataRow, Headers.ILLUMINA_KIT_USED));
+        restrictionEnzymes.add(getFromRow(dataRow, Headers.RESTRICTION_ENZYMES));
+        totalLibraryVolume.add(getFromRow(dataRow, Headers.TOTAL_LIBRARY_VOLUME));
+        totalLibraryConcentration.add(getFromRow(dataRow, Headers.TOTAL_LIBRARY_CONCENTRATION));
+        additionalSampleInformation.add(getFromRow(dataRow, Headers.ADDITIONAL_SAMPLE_INFORMATION));
+        singleDoubleStranded.add(getFromRow(dataRow, Headers.SINGLE_DOUBLE_STRANDED));
+        readLength.add(getFromRow(dataRow, Headers.DESIRED_READ_LENGTH));
+        projectTitle.add(getFromRow(dataRow, Headers.PROJECT_TITLE));
+        fundingSource.add(getFromRow(dataRow, Headers.FUNDING_SOURCE));
+        numberOfLanes.add(getFromRow(dataRow, Headers.COVERAGE));
+        approvedBy.add(getFromRow(dataRow, Headers.APPROVED_BY));
+        referenceSequence.add(getFromRow(dataRow, Headers.DATA_ANALYSIS_TYPE));
+        requestedCompletionDate.add(getFromRow(dataRow, Headers.REQUESTED_COMPLETION_DATE));
+        dataSubmission.add(getFromRow(dataRow, Headers.DATA_SUBMISSION));
+        requiredControlledAccess.add(getFromRow(dataRow, Headers.REQUIRED_ACCESS));
+        accessList.add(getFromRow(dataRow, Headers.ACCESS_LIST));
+        additionalAssemblyInformation.add(getFromRow(dataRow, Headers.ASSEMBLY_INFORMATION));
+        dataAnalysisType.add(getFromRow(dataRow, Headers.DATA_ANALYSIS_TYPE));
     }
 
     protected ColumnHeader[] getColumnHeaders() {
@@ -89,7 +93,7 @@ public class ExternalLibraryProcessorPooled extends ExternalLibraryProcessor {
         DATA_SUBMISSION("Data Submission", REQUIRED),
         REQUIRED_ACCESS("Require controlled Access for Data", REQUIRED),
         ACCESS_LIST("IF Data Access Controlled is Desired, please Indicate individuals who should have access", OPTIONAL),
-        ADDITIONAL_ASSEMBLY_AND_ANALYSIS_INFORMATION("Additional Assembly and Analysis Information", REQUIRED),
+        ASSEMBLY_INFORMATION("Additional Assembly and Analysis Information", REQUIRED),
         DATA_ANALYSIS_TYPE("Data Analysis Type", REQUIRED),
         ;
 

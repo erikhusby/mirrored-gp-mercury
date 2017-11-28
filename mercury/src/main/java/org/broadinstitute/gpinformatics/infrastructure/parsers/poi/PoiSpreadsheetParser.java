@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.HeaderValueRowTableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
 import java.io.File;
@@ -45,17 +46,17 @@ public final class PoiSpreadsheetParser {
     }
 
     /**
-     * processWorkbook contains the generic guts of parsing a spreadsheet.  This method is responsible for pulling
-     * the data, row by row, from the spreadsheet file and holding that data in such a way that a concrete parser
-     * can parse the row data in a way specific to that parser.
+     * Does the generic parsing of a spreadsheet.  This method pulls the data row by row from the
+     * spreadsheet and holds that data in such a way that a concrete implementation of TableProcessor
+     * can parse the data in a way specific to that parser.
      *
      * @throws ValidationException if the header row cannot be found or the header validation failed.
      * Data validation errors can be found in processor.getMessages().
      */
     public void processRows(Sheet workSheet, TableProcessor processor) throws ValidationException {
-        // If the index is invalid then sets it by parsing the spreadsheet and searching for the header strings.
-        if (processor.getHeaderRowIndex() < 0 && processor instanceof HeaderValueRowTableProcessor) {
-            processor.setHeaderRowIndex(((HeaderValueRowTableProcessor)processor).findHeaderRow(workSheet));
+        // If the header row index is invalid then it is found by searching for a row with the required header names.
+        if (processor.getHeaderRowIndex() < 0) {
+            processor.setHeaderRowIndex(processor.findHeaderRow(workSheet));
         }
         Iterator<Row> rows = workSheet.rowIterator();
         processHeaders(processor, rows);
@@ -75,9 +76,9 @@ public final class PoiSpreadsheetParser {
     }
 
     /**
-     * Process the data portion of the spreadsheet.
+     * Process the data portion of the spreadsheet, i.e. after the header row(s) have been processed.
      *
-     * @param processor The processor being used.
+     * @param processor The processor being used. Missing data error messages are put in processor messages.
      * @param rows The iterator on the excel rows, positioned at the first row after the header row.
      */
     private void processData(TableProcessor processor, Iterator<Row> rows) {
@@ -87,12 +88,13 @@ public final class PoiSpreadsheetParser {
 
         while (rows.hasNext()) {
             Row row = rows.next();
-            // Create a mapping of the header name (the header enum text) to data cell value.
+            // Creates a mapping of the header name to data cell value.
             Map<String, String> dataByHeader = new HashMap<>();
-            for (String headerName : processor.getHeaderToColumnIndex().keySet()) {
-                int columnIdx = processor.getHeaderToColumnIndex().get(headerName);
+            for (int i = 0; i < processor.getHeaderNames().size(); i++) {
+                String headerName = processor.getHeaderNames().get(i);
                 ColumnHeader columnHeader = processor.findColumnHeaderByName(headerName);
-                dataByHeader.put(columnHeader.getText(), extractCellContent(row, columnIdx, columnHeader));
+                // Columns not found in the Headers enum are still mapped, and are treated as string values.
+                dataByHeader.put(headerName, extractCellContent(row, i, columnHeader));
             }
 
             boolean isBlankLine = false;
@@ -144,28 +146,23 @@ public final class PoiSpreadsheetParser {
                     processorCast.processHeaderValueRow(headerRow);
                 }
             } else {
-                Iterator<Cell> cellIterator = headerRow.cellIterator();
-                while (cellIterator.hasNext()) {
-                    Cell cell = cellIterator.next();
-                    // Expects headers to be strings. Ignores any blank headers.
-                    // Makes a map of header string to column index for later processing of data rows.
+                for (int i = 0; i < headerRow.getLastCellNum(); ++i) {
+                    Cell cell = headerRow.getCell(i);
+                    // Expects headers to be strings.
                     String headerString = getCellValues(cell, false, true);
-                    if (StringUtils.isNotBlank(headerString)) {
-                        headers.add(headerString);
-                        processor.getHeaderToColumnIndex().put(headerString, cell.getColumnIndex());
-                    }
+                    headers.add(headerString);
                 }
                 break;
             }
         }
-        if (!processor.validateColumnHeaders(headers)){
-            throw new ValidationException("Failed to validate headers at row " + (headerRowIndex + 1),
-                    processor.getMessages());
+        if (!processor.validateColumnHeaders(headers, headerRowIndex)){
+            throw new ValidationException(TableProcessor.getPrefixedMessage("Failed to validate headers.", null,
+                    headerRowIndex), processor.getMessages());
         }
         if (processorCast != null) {
             processorCast.validateHeaderValueRows();
         }
-        // Turn the header strings for this row into whatever objects are needed to continue on.
+        // Passes the actual header strings to the subclass for any additional processing needed.
         processor.processHeader(headers, headerRowIndex + 1);
     }
 
@@ -213,9 +210,10 @@ public final class PoiSpreadsheetParser {
      *
      * @return A string representation of the data in the cell indicated by the given row/column (header) combination
      */
-    protected @NotNull String extractCellContent(Row row, int columnIndex, ColumnHeader header) {
+    protected @NotNull String extractCellContent(Row row, int columnIndex, @Nullable  ColumnHeader header) {
         Cell cell = row.getCell(columnIndex);
-        return getCellValues(cell, header.isDateColumn(), header.isStringColumn());
+        return getCellValues(cell, (header != null ? header.isDateColumn() : false),
+                (header != null ? header.isStringColumn() : true));
     }
 
     /**

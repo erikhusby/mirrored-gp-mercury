@@ -4,7 +4,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 
-import javax.annotation.Nonnull;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -20,11 +19,7 @@ public abstract class HeaderValueRowTableProcessor extends TableProcessor {
     protected Map<String, Integer> headerRowIndexMap = new HashMap<>();
 
     public HeaderValueRowTableProcessor(String sheetName) {
-        super(sheetName);
-    }
-
-    public HeaderValueRowTableProcessor(String sheetName, @Nonnull IgnoreTrailingBlankLines ignoreTrailingBlankLines) {
-        super(sheetName, ignoreTrailingBlankLines);
+        super(sheetName, IgnoreTrailingBlankLines.YES);
         // By default searches spreadsheet for the actual horizonal header row.
         setHeaderRowIndex(-1);
     }

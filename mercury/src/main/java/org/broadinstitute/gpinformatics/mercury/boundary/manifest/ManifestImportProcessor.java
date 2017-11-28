@@ -20,7 +20,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.sample.ClinicalResource
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
-import org.jvnet.inflector.Noun;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,8 +42,7 @@ public class ManifestImportProcessor extends TableProcessor {
     public static final String NO_DATA_ERROR = "The uploaded Manifest has no data.";
     private ColumnHeader[] columnHeaders;
     private List<ManifestRecord> manifestRecords = new ArrayList<>();
-    static final String UNKNOWN_HEADER_FORMAT = "Unknown header(s) '%s'.";
-    static final String DUPLICATE_HEADER_FORMAT = "Duplicate header found: %s";
+    List<String> errors = new ArrayList<>();
 
     protected ManifestImportProcessor() {
         super(null, IgnoreTrailingBlankLines.YES);
@@ -55,40 +53,17 @@ public class ManifestImportProcessor extends TableProcessor {
         return ManifestHeader.headerNames(columnHeaders);
     }
 
-    @Override
-    public void validateHeaderRow(List<String> headers) {
-        List<String> errors = new ArrayList<>();
-        ManifestHeader.fromColumnName(errors, headers.toArray(new String[headers.size()]));
-        if (!errors.isEmpty()){
-            getMessages()
-                    .add(String.format("Unknown %s '%s' present.", Noun.pluralOf("header", errors.size()), errors));
-        }
-    }
-
     /**
      * Process headers of Manifest file.
-     * Validations protect against duplicate headers and unknown headers
      *
      * @param headers List header strings in this row
      * @param rowIndex the 0-based row index.
      */
     @Override
     public void processHeader(List<String> headers, int rowIndex) {
-        List<String> errors = new ArrayList<>();
-        List<String> seenHeaders = new ArrayList<>();
-        for (String header : headers) {
-            if (seenHeaders.contains(header)) {
-                addDataMessage(String.format(DUPLICATE_HEADER_FORMAT, header), rowIndex);
-            }
-            seenHeaders.add(header);
-        }
-
         Collection<? extends ColumnHeader> foundHeaders =
                 ManifestHeader.fromColumnName(errors, headers.toArray(new String[headers.size()]));
         columnHeaders = foundHeaders.toArray(new ColumnHeader[foundHeaders.size()]);
-        if (!errors.isEmpty()) {
-            addDataMessage(String.format(UNKNOWN_HEADER_FORMAT, errors), rowIndex);
-        }
     }
 
     /**
@@ -116,6 +91,12 @@ public class ManifestImportProcessor extends TableProcessor {
                 addDataMessage(ClinicalResource.UNRECOGNIZED_MATERIAL_TYPE + ": " + rowEntry.getValue(), rowIndex);
             }
         }
+    }
+
+    @Override
+    public void validateHeaderRow(List<String> headers) {
+        getErrors().addAll(getWarnings());
+        getWarnings().clear();
     }
 
     /**

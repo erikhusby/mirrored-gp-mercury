@@ -1,12 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.control.sample;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.HeaderValueRow;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.HeaderValueRowTableProcessor;
 
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -16,6 +15,9 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
 
     protected List<String> headerNames = new ArrayList<>();
     protected List<String> headerValueNames = new ArrayList<>();
+
+    // Maps adjusted header name to actual header name.
+    protected Map<String, String> adjustedNames = new HashMap<>();
 
     protected List<String> accessList = new ArrayList<>();
     protected List<String> additionalAssemblyInformation = new ArrayList<>();
@@ -118,13 +120,10 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
     }
 
     public ExternalLibraryProcessor(String sheetName) {
-        super(sheetName, IgnoreTrailingBlankLines.YES);
+        super(sheetName);
 
         for (HeaderValueRow headerValueRow : getHeaderValueRows()) {
             headerValueNames.add(headerValueRow.getText());
-        }
-        for (ColumnHeader columnHeader : getColumnHeaders()) {
-            headerNames.add(columnHeader.getText());
         }
     }
 
@@ -145,10 +144,10 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
 
     @Override
     public void processHeader(List<String> headers, int row) {
-    }
-
-    @Override
-    public void processSubHeaders(List<String> headers) {
+        headerNames.addAll(headers);
+        for (String header : headers) {
+            adjustedNames.put(adjustHeaderName(header), header);
+        }
     }
 
     @Override
@@ -156,12 +155,17 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
     }
 
     /** Strips parethetical material off and trim blanks off of the header cell before matching it. */
-    public String adjustHeaderCell(String headerCell) {
+    public String adjustHeaderName(String headerCell) {
         return stripTrimLowerCase(headerCell);
     }
 
     public static String stripTrimLowerCase(String headerCell) {
         return StringUtils.substringBefore(headerCell, "(").trim().toLowerCase();
+    }
+
+    /** Returns a mapping of adjusted header name to actual header name. */
+    public Map<String, String> getAdjustedNames() {
+        return adjustedNames;
     }
 
     public List<String> getAccessList() {

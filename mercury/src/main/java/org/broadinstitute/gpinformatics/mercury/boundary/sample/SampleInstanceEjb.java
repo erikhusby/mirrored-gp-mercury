@@ -171,11 +171,11 @@ public class SampleInstanceEjb {
 
         Map<TableProcessor, List<String>> errorMap = new HashMap<>();
         byte[] inputStreamBytes = IOUtils.toByteArray(inputStream);
-        for (TableProcessor processor : Arrays.asList(new VesselPooledTubesProcessor("Sheet1"),
-                new ExternalLibraryProcessorEzPass("Sheet1"),
-                new ExternalLibraryProcessorPooledMultiOrganism("Sheet1"),
-                new ExternalLibraryProcessorPooled("Sheet1"),
-                new ExternalLibraryProcessorNonPooled("Sheet1"))) {
+        for (TableProcessor processor : Arrays.asList(new VesselPooledTubesProcessor(null),
+                new ExternalLibraryProcessorEzPass(null),
+                new ExternalLibraryProcessorPooledMultiOrganism(null),
+                new ExternalLibraryProcessorPooled(null),
+                new ExternalLibraryProcessorNonPooled(null))) {
             errorMap.put(processor, PoiSpreadsheetParser.processSingleWorksheet(
                     new ByteArrayInputStream(inputStreamBytes), processor));
         }
@@ -710,8 +710,6 @@ public class SampleInstanceEjb {
             // reused then it's unusable unless Overwrite is set. The pipeline and elsewhere require a
             // simple name so disallow whitespace and anything that might cause trouble.
             String libraryName = get(processor.getSingleSampleLibraryName(), index);
-            assert (isNotBlank(libraryName));
-            // The library name must only appear in one row.
             if (!uniqueLibraryNames.add(libraryName)) {
                 messageCollection.addError(String.format(IS_DUPLICATE, "Library Name", rowNumber));
             }
@@ -1055,15 +1053,9 @@ public class SampleInstanceEjb {
                     asNumber(walkUpSequencing.getFragmentSize()))));
         }
         labVessel.setVolume(MathUtils.scaleTwoDecimalPlaces(new BigDecimal(asNumber(walkUpSequencing.getVolume()))));
-        // Concentration is only stored as ng/ul. If given nM, convert it based on
-        // www.kumc.edu/Documents/gsf/nM%20Conversion%20Calculator.xlsx
-        // (ng/ul) = nM * (avgSizeInBasePairs * 607.4 + 157.9) / 1e6
-        BigDecimal concentration = NANOMOLAR.equalsIgnoreCase(walkUpSequencing.getConcentrationUnit()) ?
-                new BigDecimal(Double.parseDouble(asNumber(walkUpSequencing.getConcentration()))
-                        * (asInteger(walkUpSequencing.getFragmentSize()) * 607.4 + 157.9) / 1000000d) :
-                new BigDecimal(asNumber(walkUpSequencing.getConcentration()));
-        labVessel.setConcentration(MathUtils.scaleTwoDecimalPlaces(concentration));
-
+        // Concentration units are either ng/ul or nM. Apparently the event context tells the users which one it is.
+        labVessel.setConcentration(MathUtils.scaleTwoDecimalPlaces(new BigDecimal(
+                asNumber(walkUpSequencing.getConcentration()))));
         MercurySample mercurySample = mercurySampleDao.findBySampleKey(walkUpSequencing.getLibraryName());
         if (mercurySample == null) {
             mercurySample = new MercurySample(walkUpSequencing.getLibraryName(), MercurySample.MetadataSource.MERCURY);

@@ -34,8 +34,12 @@ public class WallacPlateProcessor  extends TableProcessor {
     }
 
     @Override
-    public void processHeader(List<String> headers, int row) {
-        this.headers = headers;
+    public void processHeader(List<String> headerNames, int row) {
+        headers = new ArrayList<>();
+        // "Group" header name appears in column A but the values for it are actually found in column B.
+        headers.add(headerNames.get(1));
+        headers.add(headerNames.get(0));
+        headers.addAll(headerNames.subList(2, headerNames.size()));
     }
 
     @Override
@@ -84,8 +88,7 @@ public class WallacPlateProcessor  extends TableProcessor {
     }
 
     private enum Headers implements ColumnHeader {
-        //Group Header in A1 but type is actually in B column
-        GROUP("", IS_STRING),
+        GROUP("Group", IS_STRING),
         PLATE("Plate", IS_STRING),
         WELL("Wells", IS_STRING),
         VALUE("Sample Conc. Mean");

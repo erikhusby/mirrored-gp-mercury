@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NextTransition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
+import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
@@ -393,15 +394,21 @@ public class ManifestSessionEjbDBFreeTest {
         return new Object[][]{
                 {"Not an Excel file", "Your InputStream was neither an OLE2 stream, nor an OOXML stream",
                         "manifest-upload/not-an-excel-file.txt"},
-                {"Missing required field", "Row #2 Required value for Specimen_Number is missing.",
+                {"Missing required field", TableProcessor.getPrefixedMessage(String.format(
+                        TableProcessor.REQUIRED_VALUE_IS_MISSING, "Specimen_Number"), null, 2),
                         "manifest-import/test-manifest-missing-specimen.xlsx"},
-                {"Missing column", "Required header missing: Specimen_Number.",
+                {"Missing column", String.format(TableProcessor.REQUIRED_HEADER_IS_MISSING, "Specimen_Number"),
                         "manifest-upload/manifest-with-missing-column.xlsx"},
                 {"Empty manifest", "The uploaded Manifest has no data.",
                         "manifest-upload/empty-manifest.xlsx"},
                 {"Multiple Bad Columns in Manifest",
-                        "Required headers missing: Specimen_Number, Sex, Patient_ID, Collection_Date, Visit, "
-                                + "SAMPLE_TYPE.",
+                        String.format(TableProcessor.REQUIRED_HEADER_IS_MISSING, "Specimen_Number") + "\n" +
+                                String.format(TableProcessor.REQUIRED_HEADER_IS_MISSING, "Sex") + "\n" +
+                                String.format(TableProcessor.REQUIRED_HEADER_IS_MISSING, "Patient_ID") + "\n" +
+                                String.format(TableProcessor.REQUIRED_HEADER_IS_MISSING, "Collection_Date") + "\n" +
+                                String.format(TableProcessor.REQUIRED_HEADER_IS_MISSING, "Visit") + "\n" +
+                                String.format(TableProcessor.REQUIRED_HEADER_IS_MISSING, "SAMPLE_TYPE") + "\n" +
+                                "Row #2 Unknown header(s) \"Sample Type\", \"Specimen_Numberz\", \"Date\", \"Gender\", \"Patient_Idee\", \"Visit Type\".",
                         "manifest-upload/manifest-with-multiple-bad-columns.xlsx"},
                 {"Unrecognized Material Types in file",
                         "Row #8 An unrecognized material type was entered: DNR:Heroic\n"

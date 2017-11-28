@@ -5,12 +5,12 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -18,11 +18,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 import static org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser.getCellValues;
-import static org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor.stripTrimLowerCase;
 
 /**
  * This abstract class provides spreadsheet/table parsers with the logic for turning rows of data into objects and
@@ -41,7 +38,10 @@ public abstract class TableProcessor implements Serializable {
     }
 
     private static final long serialVersionUID = 8122298462727182883L;
-    public static final String REQUIRED_VALUE_IS_MISSING = "Required value for %s is missing.";
+    public static final String REQUIRED_VALUE_IS_MISSING = "Required value for \"%s\" is missing.";
+    public static final String REQUIRED_HEADER_IS_MISSING = "Required header \"%s\" is missing.";
+    public static final String UNKNOWN_HEADER = "Unknown header(s) \"%s\".";
+    public static final String DUPLICATE_HEADER = "Duplicate header: \"%s\".";
 
     protected final List<String> validationMessages = new ArrayList<>();
     private int headerRowIndex;
@@ -69,9 +69,6 @@ public abstract class TableProcessor implements Serializable {
         this.ignoreTrailingBlankLines = ignoreTrailingBlankLines;
     }
 
-    public void processSubHeaders(List<String> headers) {
-    }
-
     public int getHeaderRowIndex() {
         return this.headerRowIndex;
      }
@@ -81,16 +78,17 @@ public abstract class TableProcessor implements Serializable {
     }
 
     /**
-     * Header method used by all parsers to get the names that will be used to map values to the appropriate columns.
+     * The actual header names. These are expected to align 1:1 with the data columns found after the header row.
      *
-     * @return The list of header names.
+     * @return the names that will be used to map values to the appropriate columns.
      */
     public abstract List<String> getHeaderNames();
 
     /**
-     * Take all headers identified for the specified row and pull whatever important data is needed from that to help
-     * process the date that comes from the table cells. Note that the headers will not necessarily be all covered by
-     * header enums. We often have columns that are data specific (Like price items on products in the tracker).
+     * The actual header names found in this spreadsheet are passed to the subclass here.
+     * By default, headers are expected to align 1:1 with the data columns in the subsequent rows.
+     * The actual headers found will not necessarily be among the Header enums. Sometimes headers
+     * are data specific, such as price items on products in the billing tracker.
      *
      * @param headers The header strings in this row
      * @param row     The 0-based row index of the row being processed.
@@ -99,7 +97,7 @@ public abstract class TableProcessor implements Serializable {
 
     /**
      * If all required values are present, processes the row.
-     * @param dataRow Map of column name to value.
+     * @param dataRow Map of actual header name to value.
      * @param rowIndex The 0-based row index
      */
     public final void processRow(Map<String, String> dataRow, int rowIndex) {
@@ -109,46 +107,47 @@ public abstract class TableProcessor implements Serializable {
     }
 
     /**
-     * This method defines the specific logic necessary to parse the data in the given table.  The concrete parser will
-     * be responsible for constructing any  necessary entities to represent the data found in this table row.
+     * Processes one row of data. The concrete implementation is responsible for constructing any
+     * necessary entities for the data.
      *
      * @param dataRow      The row of data mapped by header name.
      * @param rowIndex     The 0-based row index.
      */
     public abstract void processRowDetails(Map<String, String> dataRow, int rowIndex);
 
-    /** Returns true if the given cells constitute a valid header row, meaning all required headers are present. */
-    public final boolean validateColumnHeaders(List<String> cellContents) {
+    /**
+     * Returns true if the given cells constitute a valid header row, meaning all required headers are present.
+     * @param cellContents The header names found on this row.
+     * @param rowIndex     The 0-based row index.
+     */
+    public final boolean validateColumnHeaders(List<String> cellContents, int rowIndex) {
         Set<String> uniqueHeaders = new HashSet<>();
         Set<String> unknownCellContents = new HashSet<>(cellContents);
         for (ColumnHeader header : getColumnHeaders()) {
-            // Applies adjustHeaderCell() to make the match more robust.
-            String adjustedHeader = adjustHeaderCell(header.getText());
+            // Performs matching by using an adjusted header text that allows the spreadsheet some latitude.
+            String adjustedHeader = adjustHeaderName(header.getText());
             boolean found = false;
             for (String cellContent : cellContents) {
-                if (adjustHeaderCell(cellContent).equals(adjustedHeader)) {
+                if (adjustHeaderName(cellContent).equals(adjustedHeader)) {
                     found = true;
                     unknownCellContents.remove(cellContent);
                     if (!uniqueHeaders.add(adjustedHeader)) {
-                        validationMessages.add("Duplicate header: \"" + cellContent + "\"" +
-                                (adjustedHeader.equals(cellContent) ? "" : " (matches \"" + adjustedHeader + "\")"));
+                        validationMessages.add(String.format(DUPLICATE_HEADER, cellContent));
                     }
                 }
             }
             if (header.isRequiredHeader() && !found) {
-                validationMessages.add("Required header \"" + adjustedHeader + "\" is missing.");
+                validationMessages.add(String.format(REQUIRED_HEADER_IS_MISSING, adjustedHeader));
             }
         }
         if (!unknownCellContents.isEmpty()) {
-            validationMessages.add("Unknown header: \"" + StringUtils.join(unknownCellContents, "\", \"") + "\"");
+            addWarning(rowIndex + 1, UNKNOWN_HEADER, StringUtils.join(unknownCellContents, "\", \""));
         }
         validateHeaderRow(cellContents);
         return validationMessages.isEmpty();
     }
 
-    /**
-     * If Processor specific header validation is required, override this method and perform it there.
-     */
+    /** Subclass should override this if additional header validation is required. */
     @SuppressWarnings("unused")
     public void validateHeaderRow(List<String> headers) { }
 
@@ -163,16 +162,17 @@ public abstract class TableProcessor implements Serializable {
         boolean hasAll = true;
         for (ColumnHeader header : getColumnHeaders()) {
             if (header.isRequiredValue()) {
-                String adjustedHeaderName = adjustHeaderCell(header.getText());
+                String adjustedHeaderName = adjustHeaderName(header.getText());
                 boolean found = false;
-                for (String dataHeaderName : dataRow.keySet()) {
-                    if (adjustedHeaderName.equals(adjustHeaderCell(dataHeaderName))) {
-                        found = true;
+                for (Map.Entry<String, String> headerAndValue : dataRow.entrySet()) {
+                    if (adjustedHeaderName.equals(adjustHeaderName(headerAndValue.getKey()))) {
+                        found = StringUtils.isNotBlank(headerAndValue.getValue());
                         break;
                     }
                 }
                 if (!found) {
-                    addDataMessage(String.format(REQUIRED_VALUE_IS_MISSING, header.getText()), rowIndex + 1);
+                    validationMessages.add(TableProcessor.getPrefixedMessage(String.format(REQUIRED_VALUE_IS_MISSING,
+                            header.getText()), sheetName, rowIndex + 1));
                     hasAll = false;
                 }
             }
@@ -186,7 +186,9 @@ public abstract class TableProcessor implements Serializable {
 
     /**
      * Returns the 0-based index of the horizontal header row, which is the first row
-     * that contains all of the required ColumnHeader strings.
+     * that contains all of the required ColumnHeader strings. If no such row is found
+     * then uses the row having the closest match, and expects that the later validation
+     * will show the missing header messages.
      */
     public int findHeaderRow(Sheet worksheet) {
         int bestGuess = 0;
@@ -201,56 +203,21 @@ public abstract class TableProcessor implements Serializable {
                     theCells.add(cell);
                 }
             }
-            if (validateColumnHeaders(theCells)) {
+            if (validateColumnHeaders(theCells, row.getRowNum())) {
                 return row.getRowNum();
             }
             if (StringUtils.join(validationMessages).length() < leastError) {
                 leastError = StringUtils.join(validationMessages).length();
                 bestGuess = row.getRowNum();
             }
+            warnings.clear();
             validationMessages.clear();
         }
         return bestGuess;
     }
 
-    /** Returns the row index and number of missing header columns (ideally 0). */
-    public static Map.Entry<Integer, Integer> evaluateHeaderMatch(Sheet worksheet, ColumnHeader[] headers) {
-        SortedMap<Integer, Integer> rowIndexToErrorCount = new TreeMap<>();
-        for (Iterator<Row> rowIter = worksheet.rowIterator(); rowIter.hasNext(); ) {
-            Row row = rowIter.next();
-            List<String> theCells = new ArrayList<>();
-            for (Iterator<Cell> cellIter = row.cellIterator(); cellIter.hasNext(); ) {
-                String cell = stripTrimLowerCase(getCellValues(cellIter.next(), false, true));
-                if (StringUtils.isNotBlank(cell)) {
-                    theCells.add(cell);
-                }
-            }
-            int errorCount = 0;
-            for (ColumnHeader header : headers) {
-                String adjustedHeader = stripTrimLowerCase(header.getText());
-                if (header.isRequiredHeader() && !theCells.contains(adjustedHeader)) {
-                    ++errorCount;
-                }
-            }
-            rowIndexToErrorCount.put(row.getRowNum(), errorCount);
-            // Breaks off the search if an exact match is found.
-            if (errorCount == 0) {
-                break;
-            }
-        }
-        // Returns the row index having the fewest errors.
-        List<Integer> errorCounts = new ArrayList<>(rowIndexToErrorCount.values());
-        Collections.sort(errorCounts);
-        for (Map.Entry<Integer, Integer> mapEntry : rowIndexToErrorCount.entrySet()) {
-            if (mapEntry.getValue().equals(errorCounts.get(0))) {
-                return mapEntry;
-            }
-        }
-        return null;
-    }
-
     /** Allows a processor to modify the header cell (trim, lower case, etc.) before matching it with Header text. */
-    public String adjustHeaderCell(String headerCell) {
+    public String adjustHeaderName(String headerCell) {
         return headerCell;
     }
 
@@ -267,9 +234,10 @@ public abstract class TableProcessor implements Serializable {
      * @param rowIndex the 0-based row index. A 1-based number is put into the message in order to
      *                 display to the user the same number shown by Excel on the far left of each row.
      */
-    private String getPrefixedMessage(String message, int rowIndex) {
-        String prefix = (sheetName == null) ? "" : "Sheet " + sheetName + ", ";
-        return prefix + "Row #" + (rowIndex + 1) + " " + message;
+    public static String getPrefixedMessage(String message, String sheetName, int rowIndex) {
+        return (StringUtils.isBlank(sheetName) ? "" :
+                (!sheetName.toLowerCase().startsWith("sheet") ? "Sheet " : "") + sheetName + ", ") +
+                "Row #" + (rowIndex + 1) + " " + message;
     }
 
     protected void addGeneralMessage(String message) {
@@ -281,7 +249,11 @@ public abstract class TableProcessor implements Serializable {
      * @param rowIndex the 0-based row index.
      */
     protected void addDataMessage(String message, int rowIndex) {
-        validationMessages.add(getPrefixedMessage(message, rowIndex));
+        validationMessages.add(getPrefixedMessage(message, sheetName, rowIndex));
+    }
+
+    protected void addDataMessage(int rowIndex, String format, String... formatParams) {
+        validationMessages.add(getPrefixedMessage(String.format(format, formatParams), sheetName, rowIndex));
     }
 
     /**
@@ -289,7 +261,11 @@ public abstract class TableProcessor implements Serializable {
      * @param rowIndex the 0-based row index.
      */
     protected void addWarning(String message, int rowIndex) {
-        warnings.add(getPrefixedMessage(message, rowIndex));
+        warnings.add(getPrefixedMessage(message, sheetName, rowIndex));
+    }
+
+    protected void addWarning(int rowIndex, String format, String... formatParams) {
+        warnings.add(getPrefixedMessage(String.format(format, formatParams), sheetName, rowIndex));
     }
 
     public boolean isDateColumn(String headerName) {
@@ -310,12 +286,12 @@ public abstract class TableProcessor implements Serializable {
 
     /**
      * Returns the header enum for the header name, or null if no match found.
-     * Applies adjustHeaderCell() to make the match more robust.
+     * Performs matching using an adjusted header name to allow the spreadsheet some latitude.
      */
-    public ColumnHeader findColumnHeaderByName(String headerName) {
-        String adjustedHeaderName = adjustHeaderCell(headerName);
+    public @Nullable ColumnHeader findColumnHeaderByName(String headerName) {
+        String adjustedHeaderName = adjustHeaderName(headerName);
         for (ColumnHeader columnHeader : getColumnHeaders()) {
-            if (adjustedHeaderName.equals(adjustHeaderCell(columnHeader.getText()))) {
+            if (adjustedHeaderName.equals(adjustHeaderName(columnHeader.getText()))) {
                 return columnHeader;
             }
         }
@@ -339,4 +315,5 @@ public abstract class TableProcessor implements Serializable {
     public Map<String, Integer> getHeaderToColumnIndex() {
         return headerToColumnIndex;
     }
+
 }
