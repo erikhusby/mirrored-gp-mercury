@@ -62,7 +62,8 @@ public class RackOfTubes extends LabVessel {
         TissueCassetteBox_7x3("TissueCassetteBox_7x3", VesselGeometry.G3x7_NUM),
         TwoInch9x9box("TwoInch9x9box", VesselGeometry.G9x9_NUM),
         Vacutainer12x6Rack("Vacutainer12x6Rack", VesselGeometry.G12x6_NUM),
-        Voucher_Box("Voucher_Box", VesselGeometry.G10x1_NUM);
+        Voucher_Box("Voucher_Box", VesselGeometry.G10x1_NUM),
+        FTAPaperHolder("FTAPaperHolder", VesselGeometry.G12x8);
 
         public enum CanRackScan {
             TRUE(true),

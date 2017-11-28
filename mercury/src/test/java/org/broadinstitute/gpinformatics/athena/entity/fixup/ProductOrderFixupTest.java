@@ -23,6 +23,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfoFixupTest;
@@ -31,6 +32,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -54,7 +56,9 @@ import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Join;
 import javax.persistence.criteria.ParameterExpression;
+import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
@@ -150,6 +154,7 @@ public class ProductOrderFixupTest extends Arquillian {
 
     @Inject
     private BucketEntryDao bucketEntryDao;
+
 
     // When you run this on prod, change to PROD and prod.
     @Deployment
@@ -1176,7 +1181,7 @@ public class ProductOrderFixupTest extends Arquillian {
         beginTransaction();
         String pdoToComplete = "PDO-12069";
 
-        
+
         productOrderEjb.updateOrderStatus(pdoToComplete, MessageReporter.UNUSED);
 
         productOrderDao.persist(new FixupCommentary("GPLIM-5054: Updating PDO-12069 to Completed."));
@@ -1312,5 +1317,25 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderDao.persist(new FixupCommentary("SUPPORT-3471:  Adding The stock for a control sample since that is what was sequenced in the LCSet" ));
         commitTransaction();
 
+    }
+
+    @Test(enabled=false)
+    public void gplim4593BackfillBilledSampleAssociationWithSAPOrders() throws Exception {
+
+        userBean.loginOSUser();
+        List<ProductOrder> ordersToUpdate = productOrderDao.findOrdersWithSAPOrdersAndBilledSamples();
+        for (ProductOrder productOrder : ordersToUpdate) {
+            Set<LedgerEntry> billedLedgerEntries = new HashSet<>();
+            for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
+                billedLedgerEntries.addAll(productOrderSample.getBilledLedgerItems());
+            }
+
+            productOrder.latestSapOrderDetail().addLedgerEntries(billedLedgerEntries);
+            System.out.println("Updating association to SAP order " + productOrder.getSapOrderNumber() + " for PDO " +
+                               productOrder.getBusinessKey() + " with association to the " + billedLedgerEntries.size() +
+                               " ledger entries which have already successfully been billed");
+        }
+
+        productOrderDao.persist(new FixupCommentary("GPLIM-4593: Backfilling sap Order Detail with billing Ledger Associations"));
     }
 }

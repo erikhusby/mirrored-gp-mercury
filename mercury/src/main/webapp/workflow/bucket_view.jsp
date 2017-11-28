@@ -266,7 +266,7 @@
             }
 
             var columnsEditable=false;
-            <security:authorizeBlock roles="<%= roles(LabManager, PDM, PM, Developer) %>">
+            <security:authorizeBlock roles="<%= roles(LabManager, PDM, GPProjectManager, PM, Developer) %>">
             columnsEditable = true;
             </security:authorizeBlock>
 

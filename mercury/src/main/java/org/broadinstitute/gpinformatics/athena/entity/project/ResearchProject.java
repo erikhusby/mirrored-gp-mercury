@@ -232,7 +232,7 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     public SubmissionTracker getSubmissionTracker(SubmissionTuple submissionTuple) {
         Set<SubmissionTracker> foundSubmissionTrackers = new HashSet<>();
         for (SubmissionTracker submissionTracker : getSubmissionTrackers()) {
-            if (submissionTracker.getTuple().equals(submissionTuple)) {
+            if (submissionTracker.getSubmissionTuple().equals(submissionTuple)) {
                 if (!foundSubmissionTrackers.add(submissionTracker)){
                     throw new RuntimeException("More then one result found");
                 }

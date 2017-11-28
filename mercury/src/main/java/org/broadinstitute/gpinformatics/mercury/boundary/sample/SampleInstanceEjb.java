@@ -1413,4 +1413,3 @@ public class SampleInstanceEjb {
         }
     }
 }
-

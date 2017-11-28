@@ -3,9 +3,10 @@
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderSampleBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver" %>
-<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderSampleBean" %>
+<%@ page import="static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderAccessType.*" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -97,6 +98,62 @@ $j(document).ready(function () {
     }
 
     setupDialogs();
+    renderCustomizationSummary();
+    updateFundsRemaining();
+
+    function renderCustomizationSummary() {
+        var customJSONString = $j("#customizationJsonString").val();
+        if(customJSONString !== null && customJSONString!==undefined && customJSONString !== "") {
+            var customSettings = JSON.parse(customJSONString);
+        }
+        $j("#customizationContent").html(function() {
+            var content = "";
+
+            for  (part in customSettings) {
+                content += "<b>"+part +"</b>";
+                var price = customSettings[part]["price"];
+                var quantity = customSettings[part]["quantity"];
+                var customName = customSettings[part]["customName"];
+
+                var firstSetting = true;
+
+                if ((price !== undefined) && (price !== 'null') && (price.length > 0)) {
+
+                    if(firstSetting) {
+                        content += ": ";
+                        firstSetting = false;
+                    }
+
+                    content += "Custom Price -- " + price;
+                }
+                if ((quantity !== undefined) && (quantity !== 'null') && (quantity.length > 0)) {
+                    if(firstSetting) {
+                        content += ": ";
+                        firstSetting = false;
+                    } else {
+
+                        content += ", ";
+                    }
+
+                    content += "Custom Quantity -- " + quantity;
+                }
+                if ((customName !== undefined) && (customName !== 'null') && (customName.length > 0)) {
+                    if(firstSetting) {
+                        content += ": ";
+                        firstSetting = false;
+                    } else {
+
+                        content += ", ";
+                    }
+
+                    content += "Custom Product Name -- " + customName;
+                }
+                content += "<BR>";
+            }
+            return content;
+        });
+
+    }
 
     var oTable = $j('#sampleData').dataTable({
         'dom': "<'row-fluid'<'span12'f>><'row-fluid'<'span5'l><'span2 sampleDataProgress'><'span5 pull-right'<'pull-right'B>>>rt<'row-fluid'<'span6'l><'span6 pull-right'p>>",
@@ -231,7 +288,6 @@ $j(document).ready(function () {
                 }
                 loadBspData(settings);
                 initColumnVisibility(settings);
-                updateFundsRemaining();
 
 //                postLoadSampleInfo();
                 // Only show the fill kit detail information for sample initiation PDOs. With the collaboration portal, there
@@ -254,7 +310,6 @@ $j(document).ready(function () {
 
             }
 });
-//    }
 
     function renderRackscanMismatch(data, type, row, meta) {
         var result = data;
@@ -739,9 +794,10 @@ function renderPico(data, type, row, meta) {
 
 function updateFundsRemaining() {
     var quoteIdentifier = '${actionBean.editOrder.quoteId}';
+    var productOrderKey = $j("input[name='productOrder'").val();
     if ($j.trim(quoteIdentifier)) {
         $j.ajax({
-            url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=${actionBean.editOrder.quoteId}",
+            url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier="+quoteIdentifier+"&productOrder=" + productOrderKey,
             dataType: 'json',
             success: updateFunds
         });
@@ -1113,6 +1169,7 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
     <stripes:hidden name="replacementSampleList" id="replacementSampleList" value="" />
 <%--<stripes:hidden id="unAbandonComment" name="unAbandonComment" value=""/>--%>
 <stripes:hidden id="attestationConfirmed" name="editOrder.attestationConfirmed" value=""/>
+<stripes:hidden name="customizationJsonString" id="customizationJsonString" />
 
 <div class="actionButtons">
     <c:choose>
@@ -1120,7 +1177,7 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
             <%-- PDOs can be placed by PM or PDMs, so the security tag accepts either of those roles for 'Place Order'. --%>
             <%--'Validate' is also under that same security tag since that has the power to alter 'On-Riskedness' --%>
             <%-- for PDO samples. --%>
-            <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
+            <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager, PM) %>">
                 <stripes:submit name="placeOrder" value="Validate and Place Order"
                                 disabled="${!actionBean.canPlaceOrder}" class="btn"/>
                 <stripes:submit name="validate" value="Validate" style="margin-left: 3px;" class="btn"/>
@@ -1133,14 +1190,14 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
                 <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
             </stripes:link>
 
-            <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
+            <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager, PM) %>">
                 <stripes:button onclick="showDeleteConfirm('deleteOrder')" name="deleteOrder"
                                 value="Delete Draft" style="margin-left: 10px;" class="btn"/>
             </security:authorizeBlock>
         </c:when>
         <c:otherwise>
             <c:if test="${actionBean.canPlaceOrder}">
-                <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
+                <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager, PM) %>">
                     <stripes:button onclick="showPlaceConfirm('placeOrder')" name="placeOrder"
                                     value="Place Order" class="btn"/>
                 </security:authorizeBlock>
@@ -1168,27 +1225,9 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
 
                 <security:authorizeBlock roles="<%= roles(Developer, PDM, BillingManager) %>">
                     <stripes:param name="selectedProductOrderBusinessKeys" value="${actionBean.editOrder.businessKey}"/>
-                    <stripes:submit name="downloadBillingTracker" value="Download Billing Tracker" class="btn"
-                                    style="margin-right:30px;"/>
                 </security:authorizeBlock>
 
                 <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
-                    <c:choose>
-                        <c:when test="${actionBean.productOrderListEntry.billing}">
-                            <span class="disabled-link" title="Upload not allowed while billing is in progress">Upload Billing Tracker</span>
-                        </c:when>
-                        <c:otherwise>
-                            <stripes:link
-                                    beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.UploadTrackerActionBean"
-                                    event="view" >
-                                Upload Billing Tracker
-                            </stripes:link>
-                        </c:otherwise>
-                    </c:choose>
-                    <c:if test="${actionBean.productOrderListEntry.billing}">
-                        &#160;
-                        Upload not allowed while billing is in progress
-                    </c:if>
 
                     &nbsp;&nbsp;&nbsp;&nbsp;
                     <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.BillingLedgerActionBean"><stripes:param name="orderId" value="${actionBean.editOrder.jiraTicketKey}"/>Online Billing Ledger</stripes:link>
@@ -1196,7 +1235,7 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
 
             </c:if>
 
-            <security:authorizeBlock roles="<%= roles(PDM, PM, Developer) %>">
+            <security:authorizeBlock roles="<%= roles(PDM, GPProjectManager, PM, Developer) %>">
 
                 <c:if test="${!actionBean.editOrder.savedInSAP && !actionBean.editOrder.pending && !actionBean.editOrder.draft}">
                     &nbsp;&nbsp;&nbsp;&nbsp;
@@ -1288,6 +1327,9 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
             <c:if test="${actionBean.editOrder.product != null}">
                 <stripes:link title="Product" href="${ctxpath}/products/product.action?view">
                     <stripes:param name="product" value="${actionBean.editOrder.product.partNumber}"/>
+                    <c:if test="${actionBean.editOrder.orderType != null}">
+                        ${actionBean.editOrder.orderTypeDisplay} --
+                    </c:if>
                     ${actionBean.editOrder.product.productName}
                 </stripes:link>
             </c:if>
@@ -1440,6 +1482,16 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
         <div class="form-value">${actionBean.editOrder.addOnList}</div>
     </div>
 </div>
+
+    <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager) %>">
+    <div class="view-control-group control-group">
+        <label class="control-label label-form">Order Customizations</label>
+
+        <div class="controls">
+            <div class="form-value" id="customizationContent"></div>
+        </div>
+    </div>
+    </security:authorizeBlock>
 
 <div class="view-control-group control-group">
     <label class="control-label label-form">Quote ID</label>
@@ -1738,7 +1790,7 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
 
         </c:if>
 
-        <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
+        <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager, PM) %>">
             <stripes:button name="setProceedOos" value="Set Proceed OOS" class="btn"
                     style="margin-left:5px;" onclick="showProceedOosDialog()"/>
         </security:authorizeBlock>
