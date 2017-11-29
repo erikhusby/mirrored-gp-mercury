@@ -96,7 +96,12 @@ public class SubmissionDtoFetcher {
         ProductOrder.loadCollaboratorSampleName(productOrderSamples);
 
         // Gather status for anything that has already been submitted
-        Map<String, SubmissionStatusDetailBean> sampleSubmissionMap = buildSampleToSubmissionMap(researchProject);
+        Map<String, SubmissionStatusDetailBean> sampleSubmissionMap = new HashMap<>();
+        try {
+            sampleSubmissionMap.putAll(buildSampleToSubmissionMap(researchProject));
+        } catch (Exception e) {
+            messageReporter.addMessage(e.getLocalizedMessage());
+        }
 
         /*
          * Since Mercury currently only works with BAM files, always fetch aggregation metrics. If Mercury needs to
