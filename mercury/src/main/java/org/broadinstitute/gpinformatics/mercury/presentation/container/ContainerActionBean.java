@@ -47,6 +47,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActi
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -235,7 +236,22 @@ public class ContainerActionBean extends RackScanActionBean {
             }
         }
         if (!sortedTreeMap.isEmpty()) {
-            Pair<LabEvent, TubeFormation> labEventTubeFormationPair = sortedTreeMap.get(sortedTreeMap.lastKey());
+            TreeMap<Date, Pair<LabEvent, TubeFormation>> sortedDateDesc =
+                    new TreeMap<>(Collections.reverseOrder());
+            sortedDateDesc.putAll(sortedTreeMap);
+            Pair<LabEvent, TubeFormation> labEventTubeFormationPair = null;
+            for (Map.Entry<Date, Pair<LabEvent, TubeFormation>> entry: sortedDateDesc.entrySet()) {
+                if (entry.getValue() != null && entry.getValue().getLeft() != null &&
+                    entry.getValue().getLeft().getLabEventType() == LabEventType.STORAGE_CHECK_IN ||
+                    entry.getValue().getLeft().getLabEventType() == LabEventType.STORAGE_CHECK_OUT ) {
+                    labEventTubeFormationPair = entry.getValue();
+                    break;
+                }
+            }
+            if (labEventTubeFormationPair == null) {
+                return;
+            }
+
             LabEvent latestEvent = labEventTubeFormationPair.getLeft();
             TubeFormation tubeFormation = labEventTubeFormationPair.getRight();
             VesselContainer<?> containerRole = tubeFormation.getContainerRole();
@@ -255,7 +271,7 @@ public class ContainerActionBean extends RackScanActionBean {
                                 && !barcodedTube.getStorageLocation().equals(rackOfTubes.getStorageLocation())) {
                             continue;
                         }
-                        LabEvent barcodesLatestEvent = barcodedTube.getLatestEvent();
+                        LabEvent barcodesLatestEvent = barcodedTube.getLatestStorageEvent();
                         if (barcodesLatestEvent != null && barcodesLatestEvent.equals(latestEvent)) {
                             mapPositionToVessel.put(vesselPosition, barcodedTube);
                         }
@@ -417,6 +433,14 @@ public class ContainerActionBean extends RackScanActionBean {
             barcodedTubesToAddToStorage = savePositionMapToLocation(messageCollection);
             if (messageCollection.hasErrors()) {
                 addMessages(messageCollection);
+            }
+        } else {
+            for (ReceptacleType receptacleType : receptacleTypes) {
+                if (!StringUtils.isEmpty(receptacleType.getBarcode())) {
+                    String barcode = receptacleType.getBarcode();
+                    LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
+                    labVessel.setStorageLocation(null);
+                }
             }
         }
 
