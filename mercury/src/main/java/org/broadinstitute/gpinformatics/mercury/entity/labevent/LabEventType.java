@@ -149,7 +149,7 @@ public enum LabEventType {
     HYBRIDIZATION_BUCKET("HybridizationBucket",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED, IgnoreInStorageLayout.TRUE),
+            LibraryType.NONE_ASSIGNED),
     HYBRIDIZATION("Hybridization",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
@@ -223,7 +223,7 @@ public enum LabEventType {
     POOLING_BUCKET("PoolingBucket",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED, IgnoreInStorageLayout.TRUE),
+            LibraryType.NONE_ASSIGNED),
     POOLING_TRANSFER("PoolingTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
@@ -494,7 +494,7 @@ public enum LabEventType {
     PICO_PLATING_BUCKET("PicoPlatingBucket",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED, IgnoreInStorageLayout.TRUE),
+            LibraryType.NONE_ASSIGNED),
     PICO_PLATING_QC("PicoPlatingQC",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
@@ -944,7 +944,7 @@ public enum LabEventType {
     TRU_SEQ_STRAND_SPECIFIC_BUCKET("TruSeqStrandSpecificBucket",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED, IgnoreInStorageLayout.TRUE),
+            LibraryType.NONE_ASSIGNED),
     POLY_A_SELECTION_TS("PolyASelectionTS",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
@@ -1067,8 +1067,7 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.BSP_AND_MERCURY, LibraryType.NONE_ASSIGNED),
     SAMPLE_RECEIPT("SampleReceipt",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.BSP_AND_MERCURY, LibraryType.NONE_ASSIGNED,
-            IgnoreInStorageLayout.TRUE),
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.BSP_AND_MERCURY, LibraryType.NONE_ASSIGNED),
     WEIGHT_MEASUREMENT("WeightMeasurement",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.BSP_AND_MERCURY, LibraryType.NONE_ASSIGNED),
@@ -1118,7 +1117,7 @@ public enum LabEventType {
     SAMPLE_IMPORT("SampleImport",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED, IgnoreInStorageLayout.TRUE),
+            LibraryType.NONE_ASSIGNED),
     SEQ_PLATING_NORMALIZATION("SeqPlatingNormalization",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.TRUE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.BSP_AND_MERCURY,
@@ -1214,7 +1213,7 @@ public enum LabEventType {
     ICE_BUCKET("IceBucket",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED, IgnoreInStorageLayout.TRUE),
+            LibraryType.NONE_ASSIGNED),
     ICE_POOLING_TRANSFER("IcePoolingTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
@@ -1506,13 +1505,13 @@ public enum LabEventType {
     SHEARING_BUCKET("ShearingBucket",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED, IgnoreInStorageLayout.TRUE),
+            LibraryType.NONE_ASSIGNED),
 //    SHEARING_BUCKET_ENTRY ("ShearingBucketEntry", ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY),
 //    SHEARING_BUCKET_EXIT ("ShearingBucketExit", ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY),
     COLLABORATOR_TRANSFER("CollaboratorTransfer", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE,
             SystemOfRecord.MERCURY, CreateSources.FALSE, PlasticToValidate.TARGET, PipelineTransformation.NONE,
             ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED, IgnoreInStorageLayout.TRUE),
+            LibraryType.NONE_ASSIGNED),
 
     // Activity - sent by decks for otherwise non-messaged protocols (technology development); used by Analytics to
     // track usage.
@@ -1535,15 +1534,15 @@ public enum LabEventType {
     DNA_AND_RNA_EXTRACTION_BUCKET("ExtractToDnaAndRnaBucket", ExpectSourcesEmpty.TRUE,
             ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE, PlasticToValidate.SOURCE,
             PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED, IgnoreInStorageLayout.TRUE),
+            LibraryType.NONE_ASSIGNED),
     RNA_EXTRACTION_BUCKET("ExtractToRnaBucket", ExpectSourcesEmpty.TRUE,
             ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE, PlasticToValidate.SOURCE,
             PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED, IgnoreInStorageLayout.TRUE),
+            LibraryType.NONE_ASSIGNED),
     DNA_EXTRACTION_BUCKET("ExtractToDnaBucket", ExpectSourcesEmpty.TRUE,
             ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE, PlasticToValidate.SOURCE,
             PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED, IgnoreInStorageLayout.TRUE),
+            LibraryType.NONE_ASSIGNED),
 
     // Transfer blood to micro centrifuge tube
     EXTRACT_BLOOD_TO_MICRO("ExtractBloodToMicro",
@@ -1679,7 +1678,7 @@ public enum LabEventType {
     INFINIUM_BUCKET("InfiniumBucket",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED, IgnoreInStorageLayout.TRUE),
+            LibraryType.NONE_ASSIGNED),
     INFINIUM_METHYLATION_ZYMO_TRANSFER("InfiniumMethylationZymoTransferElution",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
@@ -1774,11 +1773,11 @@ public enum LabEventType {
     INFINIUM_AUTOCALL_SOME_STARTED("InfiniumAutocallSomeStarted",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED, IgnoreInStorageLayout.TRUE),
+            LibraryType.NONE_ASSIGNED),
     INFINIUM_AUTOCALL_ALL_STARTED("InfiniumAutoCallAllStarted",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED, IgnoreInStorageLayout.TRUE),
+            LibraryType.NONE_ASSIGNED),
 
     // FP
     FP_PCR_1("FP_PCR1",
@@ -1838,7 +1837,7 @@ public enum LabEventType {
     STORE("Store",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED, IgnoreInStorageLayout.TRUE),
+            LibraryType.NONE_ASSIGNED),
     IN_PLACE("In-Place",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
@@ -1986,20 +1985,6 @@ public enum LabEventType {
     }
 
     /**
-     * Container page determines the layout of the container by checking against latest lab events. Some events
-     * like bucket entries should be ignored as they don't reflect actual work done in the lab.
-     */
-    public enum IgnoreInStorageLayout {
-        TRUE(true),
-        FALSE(false);
-        private final boolean value;
-
-        IgnoreInStorageLayout(boolean value) {
-            this.value = value;
-        }
-    }
-
-    /**
      * Whether to send this event message to BSP.
      */
     public enum ForwardMessage {
@@ -2103,8 +2088,6 @@ public enum LabEventType {
     }
 
     private TranslateBspMessage translateBspMessage = TranslateBspMessage.NONE;
-
-    private IgnoreInStorageLayout ignoreInStorageLayout = IgnoreInStorageLayout.FALSE;
 
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class ManualTransferDetails {
@@ -2560,15 +2543,6 @@ public enum LabEventType {
     }
 
     LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
-                 SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
-                 PipelineTransformation pipelineTransformation, ForwardMessage forwardMessage,
-                 VolumeConcUpdate volumeConcUpdate, LibraryType libraryType, IgnoreInStorageLayout ignoreInStorageLayout) {
-        this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
-                pipelineTransformation, forwardMessage, volumeConcUpdate, null, null, libraryType);
-        this.ignoreInStorageLayout = ignoreInStorageLayout;
-    }
-
-    LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
             SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
             PipelineTransformation pipelineTransformation, ForwardMessage forwardMessage,
             VolumeConcUpdate volumeConcUpdate, LibraryType libraryType, TranslateBspMessage translateBspMessage) {
@@ -2732,9 +2706,5 @@ public enum LabEventType {
 
     public TranslateBspMessage getTranslateBspMessage() {
         return translateBspMessage;
-    }
-
-    public IgnoreInStorageLayout getIgnoreInStorageLayout() {
-        return ignoreInStorageLayout;
     }
 }

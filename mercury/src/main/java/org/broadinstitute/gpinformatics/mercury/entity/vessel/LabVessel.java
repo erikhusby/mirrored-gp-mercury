@@ -1285,16 +1285,17 @@ public abstract class LabVessel implements Serializable {
     }
 
     /**
-     * @return return latest lab event, ignoring things like bucket entries
+     * @return return latest storage lab event.
      */
-    public LabEvent getLatestNonBucketEntryEvent() {
+    public LabEvent getLatestStorageEvent() {
         List<LabEvent> eventsList = getAllEventsSortedByDate();
         int size = eventsList.size();
         if (size > 0) {
             int index = eventsList.size() - 1;
             while (index >= 0) {
                 LabEvent labEvent = eventsList.get(index);
-                if (labEvent.getLabEventType().getIgnoreInStorageLayout() == LabEventType.IgnoreInStorageLayout.FALSE) {
+                if (labEvent.getLabEventType() == LabEventType.STORAGE_CHECK_IN ||
+                    labEvent.getLabEventType() == LabEventType.STORAGE_CHECK_OUT) {
                     return labEvent;
                 }
                 index--;
