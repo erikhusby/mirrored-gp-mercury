@@ -242,7 +242,8 @@ public class ContainerActionBean extends RackScanActionBean {
             Pair<LabEvent, TubeFormation> labEventTubeFormationPair = null;
             for (Map.Entry<Date, Pair<LabEvent, TubeFormation>> entry: sortedDateDesc.entrySet()) {
                 if (entry.getValue() != null && entry.getValue().getLeft() != null &&
-                    entry.getValue().getLeft().getLabEventType().getIgnoreInStorageLayout() != LabEventType.IgnoreInStorageLayout.TRUE) {
+                    entry.getValue().getLeft().getLabEventType() == LabEventType.STORAGE_CHECK_IN ||
+                    entry.getValue().getLeft().getLabEventType() == LabEventType.STORAGE_CHECK_OUT ) {
                     labEventTubeFormationPair = entry.getValue();
                     break;
                 }
@@ -270,7 +271,7 @@ public class ContainerActionBean extends RackScanActionBean {
                                 && !barcodedTube.getStorageLocation().equals(rackOfTubes.getStorageLocation())) {
                             continue;
                         }
-                        LabEvent barcodesLatestEvent = barcodedTube.getLatestNonBucketEntryEvent();
+                        LabEvent barcodesLatestEvent = barcodedTube.getLatestStorageEvent();
                         if (barcodesLatestEvent != null && barcodesLatestEvent.equals(latestEvent)) {
                             mapPositionToVessel.put(vesselPosition, barcodedTube);
                         }

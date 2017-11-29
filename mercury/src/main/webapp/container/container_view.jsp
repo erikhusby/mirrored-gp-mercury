@@ -126,7 +126,8 @@
                 </c:if>
             </div>
         </div>
-        <c:if test="${not empty actionBean.storageLocation && actionBean.showLayout && !actionBean.editLayout}">
+        <c:if test="${not empty actionBean.storageLocation and (not empty actionBean.staticPlate or actionBean.showLayout)
+                      and !actionBean.editLayout}">
             <div class="control-group">
                 <div class="controls">
                     <stripes:submit id="removeFromStorage" name="removeLocation" value="Remove From Storage"
