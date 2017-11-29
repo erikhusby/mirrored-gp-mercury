@@ -144,6 +144,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.StringReader;
+import java.math.BigDecimal;
 import java.text.MessageFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -449,7 +450,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private String orderType;
 
     private List<CustomizationValues> productCustomizations = new ArrayList();
-
+    private String customPricePlaceholder;
     /**
      * @return the required confirmation message for IRB attestation.
      */
@@ -1955,7 +1956,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                     priceTitle = "clinicalPrice";
                 }
 
-                item.put(priceTitle , priceListCache.findByKeyFields(addOn.getPrimaryPriceItem()).getPrice());
+                BigDecimal priceForFormat = new BigDecimal(priceListCache.findByKeyFields(addOn.getPrimaryPriceItem()).getPrice());
+                item.put(priceTitle , NumberFormat.getCurrencyInstance().format(priceForFormat));
 
 //                String externalPrice = null;
 //                if (addOn.getExternalPriceItem() != null) {
@@ -2352,8 +2354,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                 priceTitle = "clinicalPrice";
             }
 
-
-            productInfo.put(priceTitle, priceListCache.findByKeyFields(productEntity.getPrimaryPriceItem()).getPrice());
+            BigDecimal priceForFormat = new BigDecimal(priceListCache.findByKeyFields(productEntity.getPrimaryPriceItem()).getPrice());
+            productInfo.put(priceTitle, NumberFormat.getCurrencyInstance().format(priceForFormat));
 //            String externalPrice = null;
 //            if (productEntity.getExternalPriceItem() != null) {
 //                final QuotePriceItem externalPriceItem = priceListCache.findByKeyFields(productEntity.getExternalPriceItem());
@@ -2796,12 +2798,18 @@ public class ProductOrderActionBean extends CoreActionBean {
         while(keys.hasNext()) {
             String productPartNumber = (String)keys.next();
             JSONObject currentCustomization = (JSONObject) customizationJson.get(productPartNumber);
+            
+            final Product product = productDao.findByPartNumber(productPartNumber);
 
             final CustomizationValues customizedProductInfo = new CustomizationValues(productPartNumber,
                     (String) ((currentCustomization.has("quantity") && currentCustomization.get("quantity") != null) ?currentCustomization.get("quantity"):""),
                     (String) ((currentCustomization.has("price") && currentCustomization.get("price") != null) ?currentCustomization.get("price"):""),
                     (String) ((currentCustomization.has("customName") && currentCustomization.get("customName") != null) ?currentCustomization.get("customName"):""));
-            customizedProductInfo.setProductName(productDao.findByPartNumber(productPartNumber).getProductName());
+            customizedProductInfo.setProductName(product.getProductName());
+            final QuotePriceItem priceListItem = priceListCache.findByKeyFields(product.getPrimaryPriceItem());
+            customizedProductInfo.setUnits(priceListItem.getUnit().toLowerCase());
+            BigDecimal formatedPrice = new BigDecimal(priceListItem.getPrice());
+            customizedProductInfo.setOriginalPrice(NumberFormat.getCurrencyInstance().format(formatedPrice));
             productCustomizations.add(customizedProductInfo);
         }
     }
@@ -3725,6 +3733,14 @@ public class ProductOrderActionBean extends CoreActionBean {
         return customizationJsonString;
     }
 
+    public String getCustomPricePlaceholder() {
+        return customPricePlaceholder;
+    }
+
+    public void setCustomPricePlaceholder(String customPricePlaceholder) {
+        this.customPricePlaceholder = customPricePlaceholder;
+    }
+
     public void setCustomizationJsonString(String customizationJsonString) {
         this.customizationJsonString = customizationJsonString;
     }
@@ -3733,5 +3749,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         return "I acknowledge that I have been properly trained in the handling of clinical projects, samples, and "
                + "data per Broad Genomics requirements, including HIPAA and data security policies, in order to order "
                + "clinical products";
+    }
+
+    public Boolean canEditPrice(String units) {
+        return StringUtils.equalsIgnoreCase(units, "Sample") && (userBean.isPDMUser() || userBean.isDeveloperUser()) || !StringUtils.equalsIgnoreCase(units, "Sample") ;
     }
 }
