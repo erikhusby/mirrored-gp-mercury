@@ -130,7 +130,7 @@
             $j("${submissionsTabSelector}").click(function () {
                 function buildMessage(jqXHR) {
                     var responseText = jqXHR.responseJSON;
-                    if (responseText.stripesMessages) {
+                    if (responseText && responseText.stripesMessages) {
                         outerDiv = jQuery("<div></div>", {
                             "id": "stripesMessageOuter",
                             "style": "position: relative;z-index:5",
