@@ -61,6 +61,11 @@ public class ArraysQcDao {
         return mapWellBarcodeToMetric;
     }
 
+    /**
+     * Returns a raw list of all ArraysQcBlacklisting entities related to chip well barcode<br/>
+     * Note:  Schema design allows more than one blacklist entry per chip well barcode so caller should account
+     *    for possibility of multiples if details (e.g reasons, dates) required
+     */
     public List<ArraysQcBlacklisting> findBlacklistByBarcodes(List<String> chipWellBarcodes) {
         if( chipWellBarcodes == null || chipWellBarcodes.isEmpty() ) {
             return Collections.emptyList();
@@ -79,6 +84,9 @@ public class ArraysQcDao {
         });
     }
 
+    /**
+     * Returns 0:n ArraysQcBlacklisting entities related to each chip well barcode
+     */
     public ListValuedMap<String, ArraysQcBlacklisting> findBlacklistMapByBarcodes(List<String> chipWellBarcodes) {
         List<ArraysQcBlacklisting> arraysQcBlacklist = findBlacklistByBarcodes(chipWellBarcodes);
         ListValuedMap<String, ArraysQcBlacklisting> mapWellBarcodeToMetric = new ArrayListValuedHashMap<>();
