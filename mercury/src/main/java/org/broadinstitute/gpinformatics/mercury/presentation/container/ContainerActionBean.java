@@ -415,8 +415,11 @@ public class ContainerActionBean extends RackScanActionBean {
             showLayout = true;
             editLayout = true;
             return new ForwardResolution(CONTAINER_VIEW_PAGE);
+        } else if (messageCollection.hasWarnings()) {
+            addMessages(messageCollection);
         }
         addMessage("Successfully updated layout.");
+        addMessage("Please select storage location.");
         return new RedirectResolution(ContainerActionBean.class, VIEW_CONTAINER_SEARCH_ACTION)
                 .addParameter(CONTAINER_PARAMETER, containerBarcode)
                 .addParameter(SHOW_LAYOUT_PARAMETER, true);
@@ -428,19 +431,15 @@ public class ContainerActionBean extends RackScanActionBean {
             messageCollection.addError("No tube barcodes found.");
             return;
         }
+        storageLocation = null;
         List<BarcodedTube> barcodedTubesToAddToStorage = null;
-        if (storageLocation != null) {
-            barcodedTubesToAddToStorage = savePositionMapToLocation(messageCollection);
-            if (messageCollection.hasErrors()) {
-                addMessages(messageCollection);
-            }
-        } else {
-            for (ReceptacleType receptacleType : receptacleTypes) {
-                if (!StringUtils.isEmpty(receptacleType.getBarcode())) {
-                    String barcode = receptacleType.getBarcode();
-                    LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
-                    labVessel.setStorageLocation(null);
-                }
+        Set<String> barcodes = new HashSet<>();
+        for (ReceptacleType receptacleType : receptacleTypes) {
+            if (!StringUtils.isEmpty(receptacleType.getBarcode())) {
+                String barcode = receptacleType.getBarcode();
+                LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
+                labVessel.setStorageLocation(null);
+                barcodes.add(barcode);
             }
         }
 
@@ -468,6 +467,16 @@ public class ContainerActionBean extends RackScanActionBean {
         if (barcodedTubesToAddToStorage != null) {
             for (BarcodedTube barcodedTube : barcodedTubesToAddToStorage) {
                 barcodedTube.setStorageLocation(storageLocation);
+            }
+        }
+
+        // Remove any tubes that are no longer in this storage location
+        for (Map.Entry<VesselPosition, LabVessel> entry: mapPositionToVessel.entrySet()) {
+            LabVessel labVessel = entry.getValue();
+            if (!barcodes.contains(labVessel.getLabel())) {
+                VesselPosition vesselPosition = entry.getKey();
+                labVessel.setStorageLocation(null);
+                messageCollection.addWarning("Lab Vessel " + labVessel.getLabel() + " was orphaned from position " + vesselPosition.name());
             }
         }
         showLayout = true;
