@@ -751,7 +751,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         if(action.equals(PLACE_ORDER_ACTION) && editOrder.getProduct().isClinicalProduct()) {
-            requireField(editOrder.isClinicalAttestationConfirmed(),
+            requireField(editOrder.isClinicalAttestationConfirmed().booleanValue(),
                     "the checkbox that confirms you have completed requirements to place a clinical order",
                     action);
         }
