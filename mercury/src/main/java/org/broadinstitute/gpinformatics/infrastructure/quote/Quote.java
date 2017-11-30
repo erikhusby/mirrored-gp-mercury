@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
 import clover.org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
+import org.broadinstitute.gpinformatics.infrastructure.ShortDateAdapter;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
@@ -119,7 +120,7 @@ public class Quote {
     }
 
     @XmlAttribute(name="expirationDate")
-    @XmlJavaTypeAdapter(QuotePriceItem.DateAdapter.class)
+    @XmlJavaTypeAdapter(ShortDateAdapter.class)
     public Date getExpirationDate() {
         return expirationDate;
     }
