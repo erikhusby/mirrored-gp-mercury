@@ -24,7 +24,7 @@ import java.util.Map;
  * Utility class to define common rest helper functions that can assist in most Jersey calls.
  */
 public class JerseyUtils {
-    private static final int DEFAULT_TIMEOUT = 10000;
+    private static final int DEFAULT_TIMEOUT = 60000;
 
     public static WebResource.Builder getWebResource(String squidWSUrl, MediaType mediaType) {
         WebResource resource = getWebResourceBase(squidWSUrl, mediaType);
