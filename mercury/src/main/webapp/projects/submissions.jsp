@@ -295,6 +295,14 @@
                             }
                         }
 
+                        // recheck previously checked values. Stripes can't do this itself since datatables is rendered later.
+                        var selectedSubmissions = ${actionBean.selectedSubmissionTuples};
+                        if (selectedSubmissions != undefined) {
+                            for (var i = 0; i<selectedSubmissions.length; i++) {
+                                $j("input[value='" + JSON.stringify(selectedSubmissions[i]) + "']").attr('checked','checked');
+                            }
+                        }
+
                         updateSearchText();
                         $j(findFilterTextInput(oTable).on("change init", updateSearchText));
                     },
