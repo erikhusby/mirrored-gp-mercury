@@ -5,6 +5,7 @@ import com.google.common.collect.ListMultimap;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
@@ -15,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
@@ -33,7 +35,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +49,7 @@ import java.util.Set;
 @RequestScoped
 public class LabBatchResource {
 
-    static final String BSP_BATCH_PREFIX = "BP";
+    private static final String BSP_BATCH_PREFIX = "BP";
 
     @Inject
     private BarcodedTubeDao barcodedTubeDao;
@@ -115,7 +116,7 @@ public class LabBatchResource {
     }
 
     /**
-     * Build a LabBatch entity from a LabBatchBean with a ParentVesselBean.  If the plate wells have product orders,
+     * Build a LabBatch entity from a LabBatchBean with a ParentVesselBean.  If there are plate wells,
      * create bucket entries and associate them with the batch.
      */
     private LabBatch createLabBatchByParentVessel(LabBatchBean labBatchBean) {
@@ -125,21 +126,13 @@ public class LabBatchResource {
 
         // Gather vessels for each PDO (if any)
         Set<LabVessel> labVesselSet = new HashSet<>();
-        Map<String, ProductOrder> mapIdToPdo = new HashMap<>();
-        ListMultimap<String, LabVessel> mapPdoToVessels = ArrayListMultimap.create();
         for (ChildVesselBean childVesselBean : labBatchBean.getParentVesselBean().getChildVesselBeans()) {
-            if (childVesselBean.getProductOrder() != null) {
-                ProductOrder productOrder = mapIdToPdo.get(childVesselBean.getProductOrder());
-                if (productOrder == null) {
-                    productOrder = productOrderDao.findByBusinessKey(childVesselBean.getProductOrder());
-                    mapIdToPdo.put(childVesselBean.getProductOrder(), productOrder);
-                }
+            if (labBatchBean.getWorkflowName() != null) {
                 if (labVessels.size() == 1 && labVessels.get(0).getType() == LabVessel.ContainerType.STATIC_PLATE) {
                     StaticPlate staticPlate = (StaticPlate) labVessels.get(0);
                     PlateWell plateWell = staticPlate.getContainerRole().getVesselAtPosition(
                             VesselPosition.getByName(childVesselBean.getPosition()));
                     labVesselSet.add(plateWell);
-                    mapPdoToVessels.put(childVesselBean.getProductOrder(), plateWell);
                 } else {
                     throw new RuntimeException("Product Orders supported only for plates.");
                 }
@@ -158,17 +151,33 @@ public class LabBatchResource {
         }
 
         // Create bucket entries (if any) and add to batch
-        if (!mapIdToPdo.isEmpty()) {
-            LabVessel.loadSampleDataForBuckets(labVesselSet);
+        LabVessel.loadSampleDataForBuckets(labVesselSet);
+        ListMultimap<ProductOrder, LabVessel> mapPdoToVessels = ArrayListMultimap.create();
+        for (LabVessel labVessel : labVesselSet) {
+            Set<SampleInstanceV2> sampleInstancesV2 = labVessel.getSampleInstancesV2();
+            if (sampleInstancesV2.size() == 1) {
+                SampleInstanceV2 sampleInstanceV2 = sampleInstancesV2.iterator().next();
+                for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
+                    if (productOrderSample.getProductOrder().getProduct().getProductFamily().getName().equals(
+                            labBatchBean.getWorkflowName())) {
+                        if (productOrderSample.getProductOrder().getOrderStatus() == ProductOrder.OrderStatus.Submitted) {
+                            mapPdoToVessels.put(productOrderSample.getProductOrder(), labVessel);
+                            // todo jmt what if there are multiple?
+                            break;
+                        }
+                    }
+                }
+            }
         }
-        for (Map.Entry<String, ProductOrder> stringProductOrderEntry : mapIdToPdo.entrySet()) {
+
+        for (ProductOrder productOrder : mapPdoToVessels.keySet()) {
             // Remove vessels that have already been bucketed for this PDO
-            List<LabVessel> vessels = mapPdoToVessels.get(stringProductOrderEntry.getKey());
+            List<LabVessel> vessels = mapPdoToVessels.get(productOrder);
             List<LabVessel> noBucketEntryVessels = new ArrayList<>();
             for (LabVessel vessel : vessels) {
                 boolean found = false;
                 for (BucketEntry bucketEntry : vessel.getBucketEntries()) {
-                    if (bucketEntry.getProductOrder().equals(stringProductOrderEntry.getValue())) {
+                    if (bucketEntry.getProductOrder().equals(productOrder)) {
                         found = true;
                         break;
                     }
@@ -178,13 +187,14 @@ public class LabBatchResource {
                 }
             }
 
+            // Get existing PDOs
             Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair =
                     bucketEjb.applyBucketCriteria(noBucketEntryVessels,
-                            stringProductOrderEntry.getValue(), labBatchBean.getUsername(),
+                            productOrder, labBatchBean.getUsername(),
                             ProductWorkflowDefVersion.BucketingSource.LAB_BATCH_WS);
             ProductWorkflowDefVersion productWorkflowDefVersion = workflowBucketEntriesPair.getLeft();
             if (productWorkflowDefVersion == null) {
-                throw new RuntimeException("No workflow for " + stringProductOrderEntry.getValue().getJiraTicketKey());
+                throw new RuntimeException("No workflow for " + productOrder.getJiraTicketKey());
             }
             labBatch.setWorkflowName(productWorkflowDefVersion.getProductWorkflowDef().getName());
             // todo jmt check that bucket entries count matches lab vessel count?

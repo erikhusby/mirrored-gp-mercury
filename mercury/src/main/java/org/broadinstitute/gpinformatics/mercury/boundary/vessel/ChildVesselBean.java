@@ -53,7 +53,9 @@ public class ChildVesselBean {
         return position;
     }
 
+/*
     public String getProductOrder() {
         return productOrder;
     }
+*/
 }
