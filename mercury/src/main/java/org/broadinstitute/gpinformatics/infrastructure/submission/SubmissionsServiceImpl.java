@@ -160,7 +160,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
             return JerseyUtils.getWebResource(submissionsConfig.getWSUrl(servicePath),
                     MediaType.APPLICATION_JSON_TYPE, parameters).get(ClientResponse.class);
         } catch (Exception e) {
-            throw new InformaticsServiceException("Error communicating with Submissions server.", e);
+            throw new InformaticsServiceException("Error communicating with Submissions server. Please contact support using the <span class='badge'>Feedback</span> link above", e);
         }
     }
 
