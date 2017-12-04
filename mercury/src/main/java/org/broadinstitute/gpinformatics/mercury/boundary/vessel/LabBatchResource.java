@@ -34,6 +34,7 @@ import javax.ws.rs.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -157,15 +158,28 @@ public class LabBatchResource {
             Set<SampleInstanceV2> sampleInstancesV2 = labVessel.getSampleInstancesV2();
             if (sampleInstancesV2.size() == 1) {
                 SampleInstanceV2 sampleInstanceV2 = sampleInstancesV2.iterator().next();
+                List<ProductOrder> productOrders = new ArrayList<>();
                 for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
                     if (productOrderSample.getProductOrder().getProduct().getProductFamily().getName().equals(
                             labBatchBean.getWorkflowName())) {
                         if (productOrderSample.getProductOrder().getOrderStatus() == ProductOrder.OrderStatus.Submitted) {
-                            mapPdoToVessels.put(productOrderSample.getProductOrder(), labVessel);
-                            // todo jmt what if there are multiple?
-                            break;
+                            productOrders.add(productOrderSample.getProductOrder());
                         }
                     }
+                }
+                // Choose most recently submitted PDO
+                if (productOrders.size() > 1) {
+                    Collections.sort(productOrders, new Comparator<ProductOrder>() {
+                        @Override
+                        public int compare(ProductOrder o1, ProductOrder o2) {
+                            return o2.getPlacedDate().compareTo(o1.getPlacedDate());
+                        }
+                    });
+                }
+                if (productOrders.isEmpty()) {
+                    // todo jmt email?
+                } else {
+                    mapPdoToVessels.put(productOrders.get(0), labVessel);
                 }
             }
         }
