@@ -491,4 +491,48 @@ public class AttributeArchetypeFixupTest extends Arquillian {
         }
     }
 
+    /**
+     * This test deletes attribute archetypes and/or archetype attributes. It reads its parameters
+     * from the file mercury/src/test/resources/testdata/FixupAttributeArchetype.txt
+     * so that it can be used for other similar fixups without writing a new test.
+     * The format of the file is:
+     *   one line with the ticket for the FixupCommentary
+     *   one or more lines with either "archetypeId" and the archetypeId, or "attributeId" and the attributeId
+     *
+     * For example:
+     * SUPPORT-3620
+     * attributeId,25318
+     * archetypeId,29233
+     *
+     */
+    @Test(enabled = false)
+    public void fixupSupport3620() throws Exception {
+        userBean.loginOSUser();
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("FixupAttributeArchetype.txt"));
+        String ticketId = lines.get(0);
+        for (int i = 1; i < lines.size(); i++) {
+            String[] fields = lines.get(i).split(",");
+            Assert.assertEquals(fields.length, 2);
+            Long id = Long.parseLong(fields[1]);
+            if (fields[0].equalsIgnoreCase("archetypeId")) {
+                AttributeArchetype archetype = attributeArchetypeDao.findById(AttributeArchetype.class, id);
+                Assert.assertNotNull(archetype);
+                System.out.println("Deleting " + archetype.getGroup() + " archetype for " +
+                        archetype.getArchetypeName() + " (id " + archetype.getArchetypeId() + ").");
+                // Hibernate orphan removal should cause any archetype attributes to be deleted also.
+                archetype.getAttributes().clear();
+                attributeArchetypeDao.remove(archetype);
+            } else {
+                Assert.assertTrue(fields[0].equalsIgnoreCase("attributeId"), "unknown param " + fields[0]);
+                ArchetypeAttribute attribute = attributeArchetypeDao.findById(ArchetypeAttribute.class, id);
+                Assert.assertNotNull(attribute);
+                System.out.println("Deleting " + attribute.getAttributeName() + " attribute (id " +
+                        attribute.getAttributeId() + ").");
+                attributeArchetypeDao.remove(attribute);
+            }
+        }
+        attributeArchetypeDao.persist(new FixupCommentary(ticketId + " fixup Attribute Archetypes"));
+        attributeArchetypeDao.flush();
+    }
+
 }
