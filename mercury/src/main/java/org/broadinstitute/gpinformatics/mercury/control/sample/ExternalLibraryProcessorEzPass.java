@@ -15,44 +15,44 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
     }
 
     public void processRowDetails(Map<String, String> dataRow, int dataRowNumber) {
-        sampleNumber.add(getFromRow(dataRow, Headers.SAMPLE_NUMBER));
+        additionalAssemblyInformation.add(getFromRow(dataRow, Headers.ASSEMBLY_INFORMATION));
+        additionalSampleInformation.add(getFromRow(dataRow, Headers.ADDITIONAL_SAMPLE_INFORMATION));
+        approvedBy.add(getFromRow(dataRow, Headers.APPROVED_BY));
         barcodes.add(getFromRow(dataRow, Headers.TUBE_BARCODE));
-        sourceSampleGSSRId.add(getFromRow(dataRow, Headers.SOURCE_SAMPLE_GSSR_ID));
-        virtualGSSRId.add(getFromRow(dataRow, Headers.VIRTUAL_GSSR_ID));
-        squidProject.add(getFromRow(dataRow, Headers.SQUID_PROJECT));
-        sequencingTechnology.add(getFromRow(dataRow, Headers.SEQUENCING_TECHNOLOGY));
-        strain.add(getFromRow(dataRow, Headers.STRAIN));
-        sex.add(getFromRow(dataRow, Headers.SEX));
         cellLine.add(getFromRow(dataRow, Headers.CELL_LINE));
-        tissueType.add(getFromRow(dataRow, Headers.TISSUE_TYPE));
         collaboratorSampleId.add(getFromRow(dataRow, Headers.COLLABORATOR_SAMPLE_ID));
-        individualName.add(getFromRow(dataRow, Headers.INDIVIDUAL_NAME));
-        singleSampleLibraryName.add(getFromRow(dataRow, Headers.SINGLE_SAMPLE_LIBRARY_NAME));
-        libraryType.add(getFromRow(dataRow, Headers.LIBRARY_TYPE));
         dataAnalysisType.add(getFromRow(dataRow, Headers.DATA_ANALYSIS_TYPE));
-        referenceSequence.add(getFromRow(dataRow, Headers.REFERENCE_SEQUENCE));
+        dataSubmission.add(getFromRow(dataRow, Headers.DATA_SUBMISSION));
+        fundingSource.add(getFromRow(dataRow, Headers.FUNDING_SOURCE));
         gssrOfBaitPool.add(getFromRow(dataRow, Headers.GSSR_OF_BAIT_POOL));
-        insertSize.add(getFromRow(dataRow, Headers.INSERT_SIZE_RANGE_BP));
-        librarySize.add(getFromRow(dataRow, Headers.LIBRARY_SIZE_RANGE_BP));
-        jumpSize.add(getFromRow(dataRow, Headers.JUMP_SIZE));
         illuminaKitUsed.add(getFromRow(dataRow, Headers.ILLUMINA_KIT_USED));
-        restrictionEnzymes.add(getFromRow(dataRow, Headers.RESTRICTION_ENZYMES));
+        individualName.add(getFromRow(dataRow, Headers.INDIVIDUAL_NAME));
+        insertSize.add(getFromRow(dataRow, Headers.INSERT_SIZE_RANGE_BP));
+        jumpSize.add(getFromRow(dataRow, Headers.JUMP_SIZE));
+        librarySize.add(getFromRow(dataRow, Headers.LIBRARY_SIZE_RANGE_BP));
+        libraryType.add(getFromRow(dataRow, Headers.LIBRARY_TYPE));
+        molecularBarcodeName.add(getFromRow(dataRow, Headers.MOLECULAR_BARCODE_NAME));
         molecularBarcodePlateID.add(getFromRow(dataRow, Headers.MOLECULAR_BARCODE_PLATE_ID));
         molecularBarcodePlateWellID.add(getFromRow(dataRow, Headers.MOLECULAR_BARCODE_PLATE_WELL_ID));
         molecularBarcodeSequence.add(getFromRow(dataRow, Headers.MOLECULAR_BARCODE_SEQUENCE));
-        molecularBarcodeName.add(getFromRow(dataRow, Headers.MOLECULAR_BARCODE_NAME));
-        totalLibraryVolume.add(getFromRow(dataRow, Headers.TOTAL_LIBRARY_VOLUME));
-        totalLibraryConcentration.add(getFromRow(dataRow, Headers.TOTAL_LIBRARY_CONCENTRATION));
-        singleDoubleStranded.add(getFromRow(dataRow, Headers.SINGLE_DOUBLE_STRANDED));
-        additionalSampleInformation.add(getFromRow(dataRow, Headers.ADDITIONAL_SAMPLE_INFORMATION));
-        projectTitle.add(getFromRow(dataRow, Headers.PROJECT_TITLE));
-        fundingSource.add(getFromRow(dataRow, Headers.FUNDING_SOURCE));
         numberOfLanes.add(getFromRow(dataRow, Headers.COVERAGE));
-        approvedBy.add(getFromRow(dataRow, Headers.APPROVED_BY));
-        requestedCompletionDate.add(getFromRow(dataRow, Headers.REQUESTED_COMPLETION_DATE));
-        dataSubmission.add(getFromRow(dataRow, Headers.DATA_SUBMISSION));
-        additionalAssemblyInformation.add(getFromRow(dataRow, Headers.ASSEMBLY_INFORMATION));
         pooled.add(getFromRow(dataRow, Headers.POOLED));
+        projectTitle.add(getFromRow(dataRow, Headers.PROJECT_TITLE));
+        referenceSequence.add(getFromRow(dataRow, Headers.REFERENCE_SEQUENCE));
+        requestedCompletionDate.add(getFromRow(dataRow, Headers.REQUESTED_COMPLETION_DATE));
+        restrictionEnzymes.add(getFromRow(dataRow, Headers.RESTRICTION_ENZYMES));
+        sampleNumber.add(getFromRow(dataRow, Headers.SAMPLE_NUMBER));
+        sequencingTechnology.add(getFromRow(dataRow, Headers.SEQUENCING_TECHNOLOGY));
+        sex.add(getFromRow(dataRow, Headers.SEX));
+        singleDoubleStranded.add(getFromRow(dataRow, Headers.SINGLE_DOUBLE_STRANDED));
+        singleSampleLibraryName.add(getFromRow(dataRow, Headers.SINGLE_SAMPLE_LIBRARY_NAME));
+        sourceSampleGSSRId.add(getFromRow(dataRow, Headers.SOURCE_SAMPLE_GSSR_ID));
+        squidProject.add(getFromRow(dataRow, Headers.SQUID_PROJECT));
+        strain.add(getFromRow(dataRow, Headers.STRAIN));
+        tissueType.add(getFromRow(dataRow, Headers.TISSUE_TYPE));
+        totalLibraryConcentration.add(getFromRow(dataRow, Headers.TOTAL_LIBRARY_CONCENTRATION));
+        totalLibraryVolume.add(getFromRow(dataRow, Headers.TOTAL_LIBRARY_VOLUME));
+        virtualGSSRId.add(getFromRow(dataRow, Headers.VIRTUAL_GSSR_ID));
     }
 
     protected ColumnHeader[] getColumnHeaders() {

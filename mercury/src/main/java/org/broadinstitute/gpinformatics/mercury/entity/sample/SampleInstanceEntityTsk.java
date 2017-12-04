@@ -31,16 +31,16 @@ public class SampleInstanceEntityTsk {
     @ManyToOne(fetch = FetchType.LAZY)
     private SampleInstanceEntity sampleInstanceEntity;
 
-    private int order;
+    private int orderOfCreation;
 
     private String subTask;
 
-    public int getOrder() {
-        return order;
+    public int getOrderOfCreation() {
+        return orderOfCreation;
     }
 
-    public void setOrder(int order) {
-        this.order = order;
+    public void setOrderOfCreation(int orderOfCreation) {
+        this.orderOfCreation = orderOfCreation;
     }
 
     public void setSubTask(String subTask) { this.subTask = subTask; }

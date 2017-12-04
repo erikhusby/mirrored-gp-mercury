@@ -1118,4 +1118,163 @@
         <dropNotNullConstraint schemaName="mercury" tableName="storage_location_aud" columnName="location_type"/>
     </changeSet>
 
+    <changeSet id="GPLIM-4712-100" author="epolk">
+        <dropColumn tableName="sample_instance_entity" columnName="collaborator_sample_id"/>
+        <dropColumn tableName="sample_instance_entity" columnName="concentration_unit"/>
+        <dropColumn tableName="sample_instance_entity" columnName="comments"/>
+        <dropColumn tableName="sample_instance_entity" columnName="coverage"/>
+        <dropColumn tableName="sample_instance_entity" columnName="enzyme"/>
+        <dropColumn tableName="sample_instance_entity" columnName="flowcell_designation"/>
+        <dropColumn tableName="sample_instance_entity" columnName="flowcell_lane_designated"/>
+        <dropColumn tableName="sample_instance_entity" columnName="frag_size_range"/>
+        <dropColumn tableName="sample_instance_entity" columnName="fragment_size"/>
+        <dropColumn tableName="sample_instance_entity" columnName="illumina_454_kit_used"/>
+        <dropColumn tableName="sample_instance_entity" columnName="index_length"/>
+        <dropColumn tableName="sample_instance_entity" columnName="index_length2"/>
+        <dropColumn tableName="sample_instance_entity" columnName="insert_size_range"/>
+        <dropColumn tableName="sample_instance_entity" columnName="is_phix"/>
+        <dropColumn tableName="sample_instance_entity" columnName="jump_size"/>
+        <dropColumn tableName="sample_instance_entity" columnName="lab_name"/>
+        <dropColumn tableName="sample_instance_entity" columnName="lane_quantity"/>
+        <dropColumn tableName="sample_instance_entity" columnName="library_construction_method"/>
+        <dropColumn tableName="sample_instance_entity" columnName="library_size_range"/>
+        <dropColumn tableName="sample_instance_entity" columnName="phix_percentage"/>
+        <dropColumn tableName="sample_instance_entity" columnName="quantification_method"/>
+        <dropColumn tableName="sample_instance_entity" columnName="read_length2"/>
+        <dropColumn tableName="sample_instance_entity" columnName="read_type"/>
+        <dropColumn tableName="sample_instance_entity" columnName="reference"/>
+        <dropColumn tableName="sample_instance_entity" columnName="reference_sequence"/>
+        <dropColumn tableName="sample_instance_entity" columnName="reference_version"/>
+        <dropColumn tableName="sample_instance_entity" columnName="restriction_enzyme"/>
+        <dropColumn tableName="sample_instance_entity" columnName="sample_number"/>
+        <dropColumn tableName="sample_instance_entity" columnName="sample_tube_barcode"/>
+        <dropColumn tableName="sample_instance_entity" columnName="status"/>
+        <dropColumn tableName="sample_instance_entity" columnName="tissue_type"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-4712-101" author="epolk">
+        <addColumn schemaName="mercury" tableName="sample_instance_entity">
+            <column name="comments" type="varchar(2000)"/>
+        </addColumn>
+        <addColumn schemaName="mercury" tableName="sample_instance_entity">
+            <column name="number_lanes" type="number(10,0)"/>
+        </addColumn>
+        <addColumn schemaName="mercury" tableName="sample_instance_entity">
+            <column name="paired_end_read" type="number(1,0)"/>
+        </addColumn>
+        <addColumn schemaName="mercury" tableName="sample_instance_entity">
+            <column name="sequencer_model" type="varchar(255)"/>
+        </addColumn>
+        <addColumn schemaName="mercury" tableName="sample_instance_entity">
+            <column name="reference_sequence" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-4712-102" author="epolk">
+        <addForeignKeyConstraint constraintName="FK_SAMPL_INST_MERC_SAMPLE"
+	    baseTableName="sample_instance_entity" baseColumnNames="mercury_sample"
+	    referencedTableName="mercury_sample" referencedColumnNames="mercury_sample_id"/>
+        <addForeignKeyConstraint constraintName="FK_SAMPL_INST_ROOT_SAMPLE"
+	    baseTableName="sample_instance_entity" baseColumnNames="root_sample"
+	    referencedTableName="mercury_sample" referencedColumnNames="mercury_sample_id"/>
+        <addForeignKeyConstraint constraintName="FK_SAMPL_INST_SAMPL_KIT_REQ"
+	    baseTableName="sample_instance_entity" baseColumnNames="sample_kit_request"
+	    referencedTableName="sample_kit_request" referencedColumnNames="sample_kit_request_id"/>
+        <addForeignKeyConstraint constraintName="FK_SAMPL_INST_MOL_IDX_SCHEME"
+	    baseTableName="sample_instance_entity" baseColumnNames="molecular_indexing_scheme"
+	    referencedTableName="molecular_indexing_scheme" referencedColumnNames="molecular_indexing_scheme_id"/>
+        <addForeignKeyConstraint constraintName="FK_SAMPL_INST_REAGENT_DESGN"
+	    baseTableName="sample_instance_entity" baseColumnNames="reagent_design"
+	    referencedTableName="reagent_design" referencedColumnNames="reagent_design_id"/>
+        <addForeignKeyConstraint constraintName="FK_SAMPL_INST_REF_SEQUENCE"
+	    baseTableName="sample_instance_entity" baseColumnNames="reference_sequence"
+	    referencedTableName="reference_sequence" referencedColumnNames="sequence_id"/>
+        <addForeignKeyConstraint constraintName="FK_SAMPL_INST_RESEARCH_PROJ"
+	    baseTableName="sample_instance_entity" baseColumnNames="research_project"
+	    referencedTableName="research_project" referencedColumnNames="research_project_id"
+	    baseTableSchemaName="mercury" referencedTableSchemaName="athena"/>
+        <addForeignKeyConstraint constraintName="FK_SAMPL_INST_PRODUCT_ORDER"
+	    baseTableName="sample_instance_entity" baseColumnNames="product_order"
+	    referencedTableName="product_order" referencedColumnNames="product_order_id"
+	    baseTableSchemaName="mercury" referencedTableSchemaName="athena"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-4712-103" author="epolk">
+        <addColumn schemaName="mercury" tableName="sample_instance_entity_tsk">
+            <column name="order_of_creation" type="number(10,0)">
+                <constraints nullable="false"/>
+	    </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-4712-104" author="epolk">
+        <dropColumn tableName="sample_instance_entity_aud" columnName="collaborator_sample_id"/>
+        <dropColumn tableName="sample_instance_entity_aud" columnName="concentration_unit"/>
+        <dropColumn tableName="sample_instance_entity_aud" columnName="comments"/>
+        <dropColumn tableName="sample_instance_entity_aud" columnName="coverage"/>
+        <dropColumn tableName="sample_instance_entity_aud" columnName="enzyme"/>
+        <dropColumn tableName="sample_instance_entity_aud" columnName="flowcell_designation"/>
+        <dropColumn tableName="sample_instance_entity_aud" columnName="flowcell_lane_designated"/>
+        <dropColumn tableName="sample_instance_entity_aud" columnName="frag_size_range"/>
+        <dropColumn tableName="sample_instance_entity_aud" columnName="fragment_size"/>
+        <dropColumn tableName="sample_instance_entity_aud" columnName="illumina_454_kit_used"/>
+        <dropColumn tableName="sample_instance_entity_aud" columnName="index_length"/>
+        <dropColumn tableName="sample_instance_entity_aud" columnName="index_length2"/>
+        <dropColumn tableName="sample_instance_entity_aud" columnName="insert_size_range"/>
+        <dropColumn tableName="sample_instance_entity_aud" columnName="is_phix"/>
+        <dropColumn tableName="sample_instance_entity_aud" columnName="jump_size"/>
+        <dropColumn tableName="sample_instance_entity_aud" columnName="lab_name"/>
+        <dropColumn tableName="sample_instance_entity_aud" columnName="lane_quantity"/>
+        <dropColumn tableName="sample_instance_entity_aud" columnName="library_construction_method"/>
+        <dropColumn tableName="sample_instance_entity_aud" columnName="library_size_range"/>
+        <dropColumn tableName="sample_instance_entity_aud" columnName="phix_percentage"/>
+        <dropColumn tableName="sample_instance_entity_aud" columnName="quantification_method"/>
+        <dropColumn tableName="sample_instance_entity_aud" columnName="read_length2"/>
+        <dropColumn tableName="sample_instance_entity_aud" columnName="read_type"/>
+        <dropColumn tableName="sample_instance_entity_aud" columnName="reference"/>
+        <dropColumn tableName="sample_instance_entity_aud" columnName="reference_sequence"/>
+        <dropColumn tableName="sample_instance_entity_aud" columnName="reference_version"/>
+        <dropColumn tableName="sample_instance_entity_aud" columnName="restriction_enzyme"/>
+        <dropColumn tableName="sample_instance_entity_aud" columnName="sample_number"/>
+        <dropColumn tableName="sample_instance_entity_aud" columnName="sample_tube_barcode"/>
+        <dropColumn tableName="sample_instance_entity_aud" columnName="status"/>
+        <dropColumn tableName="sample_instance_entity_aud" columnName="tissue_type"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-4712-105" author="epolk">
+        <addColumn schemaName="mercury" tableName="sample_instance_entity_aud">
+            <column name="comments" type="varchar(2000)"/>
+        </addColumn>
+        <addColumn schemaName="mercury" tableName="sample_instance_entity_aud">
+            <column name="number_lanes" type="number(10,0)"/>
+        </addColumn>
+        <addColumn schemaName="mercury" tableName="sample_instance_entity_aud">
+            <column name="paired_end_read" type="number(1,0)"/>
+        </addColumn>
+        <addColumn schemaName="mercury" tableName="sample_instance_entity_aud">
+            <column name="sequencer_model" type="varchar(255)"/>
+        </addColumn>
+        <addColumn schemaName="mercury" tableName="sample_instance_entity_aud">
+            <column name="reference_sequence" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-4712-106" author="epolk">
+        <addColumn schemaName="mercury" tableName="sample_instance_entity_tsk_aud">
+            <column name="order_of_creation" type="number(10,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-4712-107" author="epolk">
+        <addUniqueConstraint constraintName="U_SAMPL_INST_LIBRARY_NAME"
+	    tableName="sample_instance_entity" columnNames="sample_library_name"/>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-4712-108" author="epolk">
+        <createIndex indexName="IX_SAMPL_INST_TSK_SAMPL_INST" tableName="sample_instance_entity_tsk">
+	    <column name="sample_instance_entity"/>
+	</createIndex>
+    </changeSet>
+
 </databaseChangeLog>

@@ -14,6 +14,7 @@ import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -32,9 +33,9 @@ import java.util.Set;
 
 /**
  * Represents a pre-processed sample and its vessel that is pushed into Mercury from an
- * outside source (i.e. not from BSP nor accessioned by Mercury). Enough info must be
- * provided so that this entity can be used as a starting point of a chain of custody.
- * It can more or less stand in for a computed SampleInstance, hence the name.
+ * outside source. The sample may or may not have been processed by BSP, and has not
+ * been accessioned by Mercury. Enough info is provided so that this entity can be used
+ * as a starting point of a chain of custody, so it functions as a SampleInstance.
  */
 @Entity
 @Audited
@@ -79,12 +80,14 @@ public class SampleInstanceEntity {
     @ManyToOne
     private ReferenceSequence referenceSequence;
 
+    @Column(unique = true)
     private String sampleLibraryName;
+
     private Boolean pooled;
     private String libraryType;
     private String experiment;
     private Integer readLength;
-    private Date submitDate;
+    private Date uploadDate;
     private Boolean pairedEndRead;
     private String comments;
     private Integer numberLanes;
@@ -105,7 +108,7 @@ public class SampleInstanceEntity {
         Collections.sort(list, new Comparator<SampleInstanceEntityTsk>() {
             @Override
             public int compare(SampleInstanceEntityTsk o1, SampleInstanceEntityTsk o2) {
-                int order = o1.getOrder() - o2.getOrder();
+                int order = o1.getOrderOfCreation() - o2.getOrderOfCreation();
                 return (order == 0) ? o1.getSubTask().compareTo(o2.getSubTask()) : order;
             }
         });
@@ -216,18 +219,18 @@ public class SampleInstanceEntity {
         this.readLength = readLength;
     }
 
-    public Date getSubmitDate() {
-        return submitDate;
+    public Date getUploadDate() {
+        return uploadDate;
     }
 
-    public void setSubmitDate(String submitDate) {
+    public void setUploadDate(String uploadDate) {
         try {
-            this.submitDate = DateUtils.convertStringToDateTime(submitDate);
+            this.uploadDate = DateUtils.convertStringToDateTime(uploadDate);
         } catch (Exception e) {
             try {
-                this.submitDate = DateUtils.convertStringToDateTime(StringUtils.substringBefore(submitDate, " "));
+                this.uploadDate = DateUtils.convertStringToDateTime(StringUtils.substringBefore(uploadDate, " "));
             } catch (Exception e1) {
-                this.submitDate = new Date();
+                this.uploadDate = new Date();
             }
         }
     }
@@ -260,8 +263,8 @@ public class SampleInstanceEntity {
         this.productOrder = productOrder;
     }
 
-    public void setSubmitDate(Date submitDate) {
-        this.submitDate = submitDate;
+    public void setUploadDate(Date uploadDate) {
+        this.uploadDate = uploadDate;
     }
 
     public Boolean getPairedEndRead() {
@@ -272,8 +275,8 @@ public class SampleInstanceEntity {
         this.pairedEndRead = pairedEndRead;
     }
 
-    public Integer getNumberLanes() {
-        return numberLanes;
+    public int getNumberLanes() {
+        return numberLanes == null ? 1 : numberLanes;
     }
 
     public void setNumberLanes(Integer numberLanes) {

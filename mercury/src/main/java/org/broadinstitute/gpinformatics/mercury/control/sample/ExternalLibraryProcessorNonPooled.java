@@ -15,39 +15,39 @@ public class ExternalLibraryProcessorNonPooled extends ExternalLibraryProcessor 
     }
 
     public void processRowDetails(Map<String, String> dataRow, int dataRowNumber) {
-        sequencingTechnology.add(getFromRow(dataRow, Headers.SEQUENCING_TECHNOLOGY));
-        irbNumber.add(getFromRow(dataRow, Headers.IRB_NUMBER));
-        strain.add(getFromRow(dataRow, Headers.STRAIN));
-        sex.add(getFromRow(dataRow, Headers.SEX));
-        cellLine.add(getFromRow(dataRow, Headers.CELL_LINE));
-        tissueType.add(getFromRow(dataRow, Headers.TISSUE_TYPE));
-        collaboratorSampleId.add(getFromRow(dataRow, Headers.COLLABORATOR_SAMPLE_ID));
-        individualName.add(getFromRow(dataRow, Headers.INDIVIDUAL_NAME));
-        singleSampleLibraryName.add(getFromRow(dataRow, Headers.SINGLE_SAMPLE_LIBRARY_NAME));
-        libraryType.add(getFromRow(dataRow, Headers.LIBRARY_TYPE));
-        insertSize.add(getFromRow(dataRow, Headers.INSERT_SIZE_RANGE_BP));
-        librarySize.add(getFromRow(dataRow, Headers.LIBRARY_SIZE_RANGE_BP));
-        jumpSize.add(getFromRow(dataRow, Headers.JUMP_SIZE));
-        illuminaKitUsed.add(getFromRow(dataRow, Headers.ILLUMINA_KIT_USED));
-        restrictionEnzymes.add(getFromRow(dataRow, Headers.RESTRICTION_ENZYMES));
-        molecularBarcodeSequence.add(getFromRow(dataRow, Headers.MOLECULAR_BARCODE_SEQUENCE));
-        molecularBarcodeName.add(getFromRow(dataRow, (Headers.MOLECULAR_BARCODE_NAME)));
-        totalLibraryVolume.add(getFromRow(dataRow, Headers.TOTAL_LIBRARY_VOLUME));
-        totalLibraryConcentration.add(getFromRow(dataRow, Headers.TOTAL_LIBRARY_CONCENTRATION));
-        additionalSampleInformation.add(getFromRow(dataRow, Headers.ADDITIONAL_SAMPLE_INFORMATION));
-        singleDoubleStranded.add(getFromRow(dataRow, Headers.SINGLE_DOUBLE_STRANDED));
-        readLength.add(getFromRow(dataRow, Headers.DESIRED_READ_LENGTH));
-        projectTitle.add(getFromRow(dataRow, Headers.PROJECT_TITLE));
-        fundingSource.add(getFromRow(dataRow, Headers.FUNDING_SOURCE));
-        numberOfLanes.add(getFromRow(dataRow, Headers.COVERAGE));
-        approvedBy.add(getFromRow(dataRow, Headers.APPROVED_BY));
-        referenceSequence.add(getFromRow(dataRow, Headers.REFERENCE_SEQUENCE));
-        requestedCompletionDate.add(getFromRow(dataRow, Headers.REQUESTED_COMPLETION_DATE));
-        dataSubmission.add(getFromRow(dataRow, Headers.DATA_SUBMISSION));
-        requiredControlledAccess.add(getFromRow(dataRow, Headers.REQUIRED_ACCESS));
         accessList.add(getFromRow(dataRow, Headers.ACCESS_LIST));
         additionalAssemblyInformation.add(getFromRow(dataRow, Headers.ASSEMBLY_INFORMATION));
+        additionalSampleInformation.add(getFromRow(dataRow, Headers.ADDITIONAL_SAMPLE_INFORMATION));
+        approvedBy.add(getFromRow(dataRow, Headers.APPROVED_BY));
+        cellLine.add(getFromRow(dataRow, Headers.CELL_LINE));
+        collaboratorSampleId.add(getFromRow(dataRow, Headers.COLLABORATOR_SAMPLE_ID));
         dataAnalysisType.add(getFromRow(dataRow, Headers.DATA_ANALYSIS_TYPE));
+        dataSubmission.add(getFromRow(dataRow, Headers.DATA_SUBMISSION));
+        fundingSource.add(getFromRow(dataRow, Headers.FUNDING_SOURCE));
+        illuminaKitUsed.add(getFromRow(dataRow, Headers.ILLUMINA_KIT_USED));
+        individualName.add(getFromRow(dataRow, Headers.INDIVIDUAL_NAME));
+        insertSize.add(getFromRow(dataRow, Headers.INSERT_SIZE_RANGE_BP));
+        irbNumber.add(getFromRow(dataRow, Headers.IRB_NUMBER));
+        jumpSize.add(getFromRow(dataRow, Headers.JUMP_SIZE));
+        librarySize.add(getFromRow(dataRow, Headers.LIBRARY_SIZE_RANGE_BP));
+        libraryType.add(getFromRow(dataRow, Headers.LIBRARY_TYPE));
+        molecularBarcodeName.add(getFromRow(dataRow, (Headers.MOLECULAR_BARCODE_NAME)));
+        molecularBarcodeSequence.add(getFromRow(dataRow, Headers.MOLECULAR_BARCODE_SEQUENCE));
+        numberOfLanes.add(getFromRow(dataRow, Headers.COVERAGE));
+        projectTitle.add(getFromRow(dataRow, Headers.PROJECT_TITLE));
+        readLength.add(getFromRow(dataRow, Headers.DESIRED_READ_LENGTH));
+        referenceSequence.add(getFromRow(dataRow, Headers.REFERENCE_SEQUENCE));
+        requestedCompletionDate.add(getFromRow(dataRow, Headers.REQUESTED_COMPLETION_DATE));
+        requiredControlledAccess.add(getFromRow(dataRow, Headers.REQUIRED_ACCESS));
+        restrictionEnzymes.add(getFromRow(dataRow, Headers.RESTRICTION_ENZYMES));
+        sequencingTechnology.add(getFromRow(dataRow, Headers.SEQUENCING_TECHNOLOGY));
+        sex.add(getFromRow(dataRow, Headers.SEX));
+        singleDoubleStranded.add(getFromRow(dataRow, Headers.SINGLE_DOUBLE_STRANDED));
+        singleSampleLibraryName.add(getFromRow(dataRow, Headers.SINGLE_SAMPLE_LIBRARY_NAME));
+        strain.add(getFromRow(dataRow, Headers.STRAIN));
+        tissueType.add(getFromRow(dataRow, Headers.TISSUE_TYPE));
+        totalLibraryConcentration.add(getFromRow(dataRow, Headers.TOTAL_LIBRARY_CONCENTRATION));
+        totalLibraryVolume.add(getFromRow(dataRow, Headers.TOTAL_LIBRARY_VOLUME));
     }
 
     protected ColumnHeader[] getColumnHeaders() {
@@ -55,6 +55,7 @@ public class ExternalLibraryProcessorNonPooled extends ExternalLibraryProcessor 
     }
 
     public enum Headers implements ColumnHeader {
+        BLANK("", OPTIONAL),
         SEQUENCING_TECHNOLOGY("Sequencing Technology", REQUIRED),
         IRB_NUMBER("IRB Number", REQUIRED),
         STRAIN("Strain", OPTIONAL),
