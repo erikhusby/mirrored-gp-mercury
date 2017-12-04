@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTe
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.UMIReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.UniqueMolecularIdentifier;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
@@ -22,6 +23,7 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -45,13 +47,13 @@ public class UniqueMolecularIdentifierReagentProcessorTest {
             parser.processRows(WorkbookFactory.create(testSpreadSheetInputStream).getSheetAt(0), umiProcessor);
             Assert.assertEquals(umiProcessor.getMessages().size(), 0);
             Assert.assertEquals(umiProcessor.getMapBarcodeToReagentDto().size(), 5);
-            Assert.assertEquals(umiProcessor.getMapUmiToUmi().size(), 6);
+            Assert.assertEquals(umiProcessor.getMapUmiToUmi().size(), 7);
 
             UniqueMolecularIdentifierReagentFactory factory = new UniqueMolecularIdentifierReagentFactory();
             MessageCollection messageCollection = new MessageCollection();
 
             Map<String, LabVessel> mapBarcodeToPlate = new HashMap<>();
-            Map<String, List<UMIReagent>> mapBarcodeToReagent = new HashMap<>();
+            Map<String, List<UniqueMolecularIdentifier>> mapBarcodeToReagent = new HashMap<>();
             List<LabVessel> labVessels = factory.buildPlates(umiProcessor.getMapBarcodeToReagentDto(),
                     messageCollection, mapBarcodeToPlate, mapBarcodeToReagent);
             Assert.assertFalse(messageCollection.hasErrors());
@@ -64,22 +66,24 @@ public class UniqueMolecularIdentifierReagentProcessorTest {
             Assert.assertEquals(sampleInstances.size(), 1);
             SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
             Assert.assertEquals(sampleInstance.getReagents().size(), 1);
-            UMIReagent umi =
+            UMIReagent umiReagent =
                     (UMIReagent) sampleInstance.getReagents().iterator().next();
-            Assert.assertEquals(umi.getUmiLocation(), UMIReagent.UMILocation.INLINE_FIRST_READ);
-            Assert.assertEquals(umi.getUmiLength(), Long.valueOf(6));
+            Assert.assertEquals(umiReagent.getUniqueMolecularIdentifier().getLocation(), UniqueMolecularIdentifier.UMILocation.INLINE_FIRST_READ);
+            Assert.assertEquals(umiReagent.getUniqueMolecularIdentifier().getLength(), Long.valueOf(6));
 
             // Tube has 2 UMIs
             LabVessel barcodedTube = labVessels.get(labVessels.size() - 1);
             Assert.assertEquals(barcodedTube.getLabel(), BARCODED_TUBE);
-            UMIReagent firstRead = new UMIReagent(UMIReagent.UMILocation.BEFORE_FIRST_READ, 3L, 2L);
-            UMIReagent secondRead = new UMIReagent(UMIReagent.UMILocation.BEFORE_SECOND_READ, 3L, 2L);
+            UniqueMolecularIdentifier firstRead = new UniqueMolecularIdentifier(UniqueMolecularIdentifier.UMILocation.BEFORE_FIRST_READ, 3L, 2L);
+            UniqueMolecularIdentifier secondRead = new UniqueMolecularIdentifier(UniqueMolecularIdentifier.UMILocation.BEFORE_SECOND_READ, 3L, 2L);
             Assert.assertEquals(barcodedTube.getReagentContents().size(), 2);
             for (Reagent reagent: barcodedTube.getReagentContents()) {
-                UMIReagent actualUMI = (UMIReagent) reagent;
-                if (actualUMI.getUmiLocation() == UMIReagent.UMILocation.BEFORE_FIRST_READ) {
+                UMIReagent uniqueMolecularIdentifierReagent =
+                        (UMIReagent) reagent;
+                UniqueMolecularIdentifier actualUMI = uniqueMolecularIdentifierReagent.getUniqueMolecularIdentifier();
+                if (actualUMI.getLocation() == UniqueMolecularIdentifier.UMILocation.BEFORE_FIRST_READ) {
                     Assert.assertEquals(actualUMI, firstRead);
-                } else if (actualUMI.getUmiLocation() == UMIReagent.UMILocation.BEFORE_SECOND_READ) {
+                } else if (actualUMI.getLocation() == UniqueMolecularIdentifier.UMILocation.BEFORE_SECOND_READ) {
                     Assert.assertEquals(actualUMI, secondRead);
                 } else {
                     Assert.fail("Failed to find one of the expected UMIs");
@@ -102,7 +106,7 @@ public class UniqueMolecularIdentifierReagentProcessorTest {
 
     private void testIndexPlate(StaticPlate indexPlateP7, MessageCollection messageCollection) {
         Map<String, LabVessel> mapBarcodeToPlate = new HashMap<>();
-        Map<String, List<UMIReagent>> mapBarcodeToReagent = new HashMap<>();
+        Map<String, List<UniqueMolecularIdentifier>> mapBarcodeToReagent = new HashMap<>();
         mapBarcodeToPlate.put(indexPlateP7.getLabel(), indexPlateP7);
 
         UniqueMolecularIdentifierReagentFactory factory = new UniqueMolecularIdentifierReagentFactory();
@@ -110,7 +114,7 @@ public class UniqueMolecularIdentifierReagentProcessorTest {
                 new HashMap<>();
         UniqueMolecularIdentifierReagentProcessor.UniqueMolecularIdentifierDto dto =
                 new UniqueMolecularIdentifierReagentProcessor.UniqueMolecularIdentifierDto(
-                        UMIReagent.UMILocation.BEFORE_SECOND_INDEX_READ, 4, 2, StaticPlate.PlateType.IndexedAdapterPlate96);
+                        UniqueMolecularIdentifier.UMILocation.BEFORE_SECOND_INDEX_READ, 4, 2, StaticPlate.PlateType.IndexedAdapterPlate96);
         mapBarcodeToUMI.put(indexPlateP7.getLabel(), Collections.singletonList(dto));
         factory.buildPlates(mapBarcodeToUMI,
                 messageCollection, mapBarcodeToPlate, mapBarcodeToReagent);
@@ -121,7 +125,8 @@ public class UniqueMolecularIdentifierReagentProcessorTest {
                 Collections.singletonList(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7),
                 Collections.singletonList(plateBarcode)).get(0);
         if (withUmi) {
-            UMIReagent umiReagent = new UMIReagent(UMIReagent.UMILocation.BEFORE_SECOND_INDEX_READ, 3L, 2L);
+            UniqueMolecularIdentifier umi = new UniqueMolecularIdentifier(UniqueMolecularIdentifier.UMILocation.BEFORE_SECOND_INDEX_READ, 3L, 2L);
+            UMIReagent umiReagent = new UMIReagent(umi);
             for (VesselPosition vesselPosition: indexPlateP7.getVesselGeometry().getVesselPositions()) {
                 PlateWell plateWell = new PlateWell(indexPlateP7, vesselPosition);
                 plateWell.addReagent(umiReagent);

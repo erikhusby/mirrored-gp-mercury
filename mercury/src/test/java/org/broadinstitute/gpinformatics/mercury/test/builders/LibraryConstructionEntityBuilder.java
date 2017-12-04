@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexRea
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.UMIReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.UniqueMolecularIdentifier;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -214,8 +215,8 @@ public class LibraryConstructionEntityBuilder {
             );
             indexPlateP7 = indexPlates.get(0);
             indexPlateP5 = indexPlates.get(1);
-            attachUmiToIndexPlate(indexPlateP7, UMIReagent.UMILocation.BEFORE_FIRST_INDEX_READ);
-            attachUmiToIndexPlate(indexPlateP5, UMIReagent.UMILocation.BEFORE_SECOND_INDEX_READ);
+            attachUmiToIndexPlate(indexPlateP7, UniqueMolecularIdentifier.UMILocation.BEFORE_FIRST_INDEX_READ);
+            attachUmiToIndexPlate(indexPlateP5, UniqueMolecularIdentifier.UMILocation.BEFORE_SECOND_INDEX_READ);
         }
         Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
         mapBarcodeToVessel.put(indexPlateP7.getLabel(), indexPlateP7);
@@ -399,8 +400,9 @@ public class LibraryConstructionEntityBuilder {
         return null;
     }
 
-    private void attachUmiToIndexPlate(StaticPlate indexPlate, UMIReagent.UMILocation umiLocation) {
-        UMIReagent umiReagent = new UMIReagent(umiLocation, 3L, 2L);
+    private void attachUmiToIndexPlate(StaticPlate indexPlate, UniqueMolecularIdentifier.UMILocation umiLocation) {
+        UniqueMolecularIdentifier umi = new UniqueMolecularIdentifier(umiLocation, 3L, 2L);
+        UMIReagent umiReagent = new UMIReagent(umi);
         Map<VesselPosition, PlateWell> mapPositionToVessel = indexPlate.getContainerRole().getMapPositionToVessel();
         for (VesselPosition vesselPosition: indexPlate.getVesselGeometry().getVesselPositions()) {
             PlateWell plateWell;
