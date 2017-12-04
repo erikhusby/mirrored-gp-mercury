@@ -507,6 +507,7 @@ public class AttributeArchetypeFixupTest extends Arquillian {
      */
     @Test(enabled = false)
     public void fixupSupport3620() throws Exception {
+        utx.begin();
         userBean.loginOSUser();
         List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("FixupAttributeArchetype.txt"));
         String ticketId = lines.get(0);
@@ -533,6 +534,7 @@ public class AttributeArchetypeFixupTest extends Arquillian {
         }
         attributeArchetypeDao.persist(new FixupCommentary(ticketId + " fixup Attribute Archetypes"));
         attributeArchetypeDao.flush();
+        utx.commit();
     }
 
 }
