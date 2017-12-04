@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.UMIReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.UniqueMolecularIdentifier;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
@@ -32,7 +33,6 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressSheari
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq4000FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionCellFreeUMIEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
@@ -647,24 +647,30 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         }
     }
 
+    //TODO JW re-enable when the pipeline is ready for UMI (GPLIM-4825)
+    @Test(enabled = false)
     public void testSingleUmiMultiDesignations() {
-        UMIReagent umiReagent = LabEventTest.createUmi(6, 3, UMIReagent.UMILocation.BEFORE_SECOND_INDEX_READ);
+        UniqueMolecularIdentifier umiReagent = LabEventTest.createUmi(6, 3, UniqueMolecularIdentifier.UMILocation.BEFORE_SECOND_INDEX_READ);
         StaticPlate umiPlate = LabEventTest.buildUmiPlate("UMITestPlate0101", umiReagent);
         testUniqueMolecularIdentifierMultiDesignations(umiPlate, "99T8B6M3S8B99T", LibraryConstructionEntityBuilder.Umi.SINGLE);
     }
 
+    @Test(enabled = false)
     public void testDoubleUMIMultiDesignations() {
-        UMIReagent umiReagent = LabEventTest.createUmi(3, 2, UMIReagent.UMILocation.BEFORE_FIRST_READ);
-        UMIReagent umiReagent2 = LabEventTest.createUmi(3, 2, UMIReagent.UMILocation.BEFORE_SECOND_READ);
+        UniqueMolecularIdentifier umiReagent = LabEventTest.createUmi(3, 2, UniqueMolecularIdentifier.UMILocation.BEFORE_FIRST_READ);
+        UniqueMolecularIdentifier umiReagent2 = LabEventTest.createUmi(3, 2, UniqueMolecularIdentifier.UMILocation.BEFORE_SECOND_READ);
         StaticPlate umiPlate = LabEventTest.buildUmiPlate("UMITestPlate0101", umiReagent);
         LabEventTest.attachUMIToPlate(umiReagent2, umiPlate);
         testUniqueMolecularIdentifierMultiDesignations(umiPlate, "3M2S99T8B8B3M2S99T",
                 LibraryConstructionEntityBuilder.Umi.DUAL);
     }
 
+    @Test(enabled = false)
     public void testDoubleUMIFromTubeMultiDesignations() {
-        UMIReagent umiReagent = LabEventTest.createUmi(3, 2, UMIReagent.UMILocation.BEFORE_FIRST_READ);
-        UMIReagent umiReagent2 = LabEventTest.createUmi(3, 2, UMIReagent.UMILocation.BEFORE_SECOND_READ);
+        UMIReagent umiReagent = new UMIReagent(
+                LabEventTest.createUmi(3, 2, UniqueMolecularIdentifier.UMILocation.BEFORE_FIRST_READ));
+        UMIReagent umiReagent2 = new UMIReagent(
+                LabEventTest.createUmi(3, 2, UniqueMolecularIdentifier.UMILocation.BEFORE_SECOND_READ));
         BarcodedTube barcodedTube = new BarcodedTube("UmiTestTube01232", BarcodedTube.BarcodedTubeType.MatrixTube075);
         barcodedTube.addReagent(umiReagent);
         barcodedTube.addReagent(umiReagent2);

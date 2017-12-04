@@ -74,7 +74,11 @@ public class ReagentActionBean extends CoreActionBean {
             case UMI:
                 List<LabVessel> staticPlates =
                         umiReagentFactory.buildUMIFromSpreadsheet(reagentsFile.getInputStream(), messageCollection);
-                uploadCount = staticPlates.size();
+                if (!messageCollection.hasErrors() && staticPlates != null) {
+                    uploadCount = staticPlates.size();
+                } else {
+                    uploadCount = 0;
+                }
                 break;
             default:
                 throw new RuntimeException("Unexpected reagent format " + reagentFormat);

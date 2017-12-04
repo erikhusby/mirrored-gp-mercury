@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.UMIReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.UniqueMolecularIdentifier;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -92,9 +92,11 @@ public class LibraryConstructionCellFreeUMIEntityBuilder {
         labEventHandler.processEvent(postEndRepairThermoCyclerEntity);
 
         BarcodedTube umiTube = null;
-        UMIReagent umiReagent = new UMIReagent(UMIReagent.UMILocation.BEFORE_FIRST_READ, 6L, 3L);
+        UniqueMolecularIdentifier umiReagent = new UniqueMolecularIdentifier(
+                UniqueMolecularIdentifier.UMILocation.BEFORE_FIRST_READ, 6L, 3L);
         if (umi == LibraryConstructionEntityBuilder.Umi.DUAL) {
-            UMIReagent umiReagent2 = new UMIReagent(UMIReagent.UMILocation.BEFORE_SECOND_READ, 6L, 3L);
+            UniqueMolecularIdentifier umiReagent2 = new UniqueMolecularIdentifier(
+                    UniqueMolecularIdentifier.UMILocation.BEFORE_SECOND_READ, 6L, 3L);
             umiTube = LabEventTest.buildUmiTube(testPrefix + "UmiTestTube", umiReagent, umiReagent2);
         } else if (umi == LibraryConstructionEntityBuilder.Umi.SINGLE) {
             umiTube = LabEventTest.buildUmiTube(testPrefix + "UmiTestTube", umiReagent);

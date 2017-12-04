@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.control.reagent;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.UMIReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.UniqueMolecularIdentifier;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselTypeGeometry;
@@ -27,20 +27,20 @@ public class UniqueMolecularIdentifierReagentProcessor extends TableProcessor {
     private final Map<UniqueMolecularIdentifierDto, UniqueMolecularIdentifierDto> mapUmiToUmi = new HashMap<>();
 
     public static class UniqueMolecularIdentifierDto {
-        private final UMIReagent.UMILocation location;
+        private final UniqueMolecularIdentifier.UMILocation location;
         private final long length;
         private final long spacerLength;
         private final VesselTypeGeometry vesselTypeGeometry;
 
         public UniqueMolecularIdentifierDto(
-                UMIReagent.UMILocation location, long length, long spacerLength, VesselTypeGeometry vesselTypeGeometry) {
+                UniqueMolecularIdentifier.UMILocation location, long length, long spacerLength, VesselTypeGeometry vesselTypeGeometry) {
             this.location = location;
             this.length = length;
             this.spacerLength = spacerLength;
             this.vesselTypeGeometry = vesselTypeGeometry;
         }
 
-        public UMIReagent.UMILocation getLocation() {
+        public UniqueMolecularIdentifier.UMILocation getLocation() {
             return location;
         }
 
@@ -133,10 +133,16 @@ public class UniqueMolecularIdentifierReagentProcessor extends TableProcessor {
             }
             barcode = formattedBarcode;
             if (vesselTypeGeometry != null) {
-                UMIReagent.UMILocation locationType =
-                        UMIReagent.UMILocation.getByName(location);
+                UniqueMolecularIdentifier.UMILocation locationType =
+                        UniqueMolecularIdentifier.UMILocation.getByName(location);
                 int length = Integer.parseInt(lengthString);
                 int spacerLength = Integer.parseInt(spacerLengthString);
+                if (length <= 0) {
+                    addDataMessage("UMI must have a defined length > 0", dataRowIndex);
+                }
+                if (spacerLength < 0) {
+                    addDataMessage("UMI must have a defined spacer length >= 0", dataRowIndex);
+                }
                 if (locationType != null) {
                     UniqueMolecularIdentifierDto umiKey =
                             new UniqueMolecularIdentifierDto(locationType, length, spacerLength, vesselTypeGeometry);
@@ -147,6 +153,13 @@ public class UniqueMolecularIdentifierReagentProcessor extends TableProcessor {
                     }
                     if (!mapBarcodeToReagentDto.containsKey(barcode)) {
                         mapBarcodeToReagentDto.put(barcode, new ArrayList<UniqueMolecularIdentifierDto>());
+                    } else {
+                        for (UniqueMolecularIdentifierDto dto: mapBarcodeToReagentDto.get(barcode)) {
+                            if (dto.getLocation() == locationType) {
+                                addDataMessage("Barcode has duplicate locations: " + barcode, dataRowIndex);
+                                break;
+                            }
+                        }
                     }
                     mapBarcodeToReagentDto.get(barcode).add(umiValue);
                 } else {
