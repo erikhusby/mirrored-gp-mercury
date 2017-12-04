@@ -78,7 +78,7 @@
                     <h5>LIMS File</h5>
                     <stripes:hidden name="stationEvents[0].eventType" value="${actionBean.stationEvents[0].eventType}"/>
                     <div class="controls">
-                        <stripes:select name="limsFileType">
+                        <stripes:select name="limsFileType" id="limsFileType">
                             <stripes:options-enumeration
                                     enum="org.broadinstitute.gpinformatics.mercury.control.vessel.LimsFileType"
                                     label="displayName"/>
