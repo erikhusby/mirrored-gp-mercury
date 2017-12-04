@@ -20,17 +20,15 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.UMIReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.UniqueMolecularIdentifier;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
-import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
-import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
-import org.hibernate.metamodel.source.annotations.entity.IdType;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -48,6 +46,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -61,8 +60,9 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 public class UniqueMolecularIdentifierContainerTest extends Arquillian {
 
     private static final String WGS_LC_PLATE = "000009472573";
-    private static final String WGS_SEQ_RUN = "170401_SL-HXF_0640_BFCHG52TALXX";
     private static final String DUAL_BARCODE = "87654";
+    private static final String DUAL_PLATE_BARCODE = "77891";
+    private SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
 
     @Inject
     private UniqueMolecularIdentifierReagentFactory umiFactory;
@@ -101,95 +101,129 @@ public class UniqueMolecularIdentifierContainerTest extends Arquillian {
         utx.rollback();
     }
 
-    public void testBasic() {
+    public void testPlateWithTwoUmi() throws IOException, InvalidFormatException {
+        String plateBarcode = "StaticPlateUmi" + simpleDateFormat.format(new Date());
+        File file = generateSpreadSheet(plateBarcode, DUAL_PLATE_BARCODE);
+
+        MessageCollection messageCollection = new MessageCollection();
+        List<LabVessel> labVessels = umiFactory.buildUMIFromSpreadsheet(
+                new FileInputStream(file), messageCollection);
+
+        Assert.assertFalse(messageCollection.hasErrors(),
+                "messageCollection failed: " + messageCollection.getErrors());
+
+        labVesselDao.flush();
+        labVesselDao.clear();
+
+        LabVessel labVessel = labVesselDao.findByIdentifier(labVessels.get(0).getLabel());
+        Assert.assertEquals(OrmUtil.proxySafeIsInstance(labVessel, StaticPlate.class), true);
+        StaticPlate staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
+        Set<SampleInstanceV2> sampleInstances =
+                staticPlate.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.A01);
+        SampleInstanceV2 sampleInstanceV2 = sampleInstances.iterator().next();
+        Assert.assertEquals(sampleInstanceV2.getUmiReagents().size(), 2);
+    }
+
+    public void testTubeBasic() throws IOException, InvalidFormatException {
         InputStream testSpreadSheetInputStream = VarioskanParserTest.getTestResource("UMIReagents.xlsx");
-        Assert.assertNotNull(testSpreadSheetInputStream);
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
         String timestamp = simpleDateFormat.format(new Date());
+        String dualTubeBarcode = "UMI" + timestamp + "DUAL";
+        File tempFile = generateSpreadSheet(dualTubeBarcode, DUAL_BARCODE);
+        Assert.assertNotNull(testSpreadSheetInputStream);
 
-        try {
-            // replace plate barcode with timestamps, to avoid unique constraint
-            Workbook workbook = WorkbookFactory.create(testSpreadSheetInputStream);
-            Sheet sheet = workbook.getSheet("Sheet1");
-            String dualTubeBarcode = "UMI" + timestamp + "DUAL";
-            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
-                Row row = sheet.getRow(i);
-                if (row != null) {
-                    Cell plateCell = row.getCell(1);
-                    plateCell.setCellType(Cell.CELL_TYPE_STRING);
-                    String oldValue = plateCell.getStringCellValue();
-                    if (oldValue.equals(DUAL_BARCODE)) {
-                        plateCell.setCellValue(dualTubeBarcode);
-                    } else {
-                        plateCell.setCellValue("UMI" + timestamp + i);
-                    }
-                }
+        MessageCollection messageCollection = new MessageCollection();
+        List<LabVessel> labVessels = umiFactory.buildUMIFromSpreadsheet(
+                new FileInputStream(tempFile), messageCollection);
+
+        Assert.assertFalse(messageCollection.hasErrors(),
+                "messageCollection failed: " + messageCollection.getErrors());
+
+        labVesselDao.flush();
+        labVesselDao.clear();
+
+        // Grab tube
+        LabVessel barcodedTubeLv = labVesselDao.findByIdentifier(labVessels.get(labVessels.size() - 1).getLabel());
+        Assert.assertTrue(OrmUtil.proxySafeIsInstance(barcodedTubeLv, BarcodedTube.class));
+
+        BarcodedTube barcodedTube = OrmUtil.proxySafeCast(barcodedTubeLv, BarcodedTube.class);
+        Assert.assertEquals(barcodedTube.getTubeType(), BarcodedTube.BarcodedTubeType.MatrixTube075);
+        UniqueMolecularIdentifier firstRead = new UniqueMolecularIdentifier(UniqueMolecularIdentifier.UMILocation.BEFORE_FIRST_READ, 3L, 2L);
+        UniqueMolecularIdentifier secondRead = new UniqueMolecularIdentifier(UniqueMolecularIdentifier.UMILocation.BEFORE_SECOND_READ, 3L, 2L);
+        Assert.assertEquals(barcodedTube.getReagentContents().size(), 2);
+        for (Reagent reagent: barcodedTube.getReagentContents()) {
+            UMIReagent uniqueMolecularIdentifierReagent =
+                    (UMIReagent) reagent;
+            UniqueMolecularIdentifier actualUMI = uniqueMolecularIdentifierReagent.getUniqueMolecularIdentifier();
+            if (actualUMI.getLocation() == UniqueMolecularIdentifier.UMILocation.BEFORE_FIRST_READ) {
+                Assert.assertEquals(actualUMI, firstRead);
+            } else if (actualUMI.getLocation() == UniqueMolecularIdentifier.UMILocation.BEFORE_SECOND_READ) {
+                Assert.assertEquals(actualUMI, secondRead);
+            } else {
+                Assert.fail("Failed to find one of the expected UMIs");
             }
-            File tempFile = File.createTempFile("UMIReagents", ".xlsx");
-            workbook.write(new FileOutputStream(tempFile));
+        }
 
-            MessageCollection messageCollection = new MessageCollection();
-            List<LabVessel> labVessels = umiFactory.buildUMIFromSpreadsheet(
-                    new FileInputStream(tempFile), messageCollection);
+        //Add a UMI to WGS Clean up plate
+        LabVessel wgsLCPLateLV = labVesselDao.findByIdentifier(WGS_LC_PLATE);
+        StaticPlate wgsLcPlate = OrmUtil.proxySafeCast(wgsLCPLateLV, StaticPlate.class);
+        LabEvent labEvent = new LabEvent(LabEventType.UMI_ADDITION, new Date(), "Mercury", 1L, 1L, "MercuryTest");
+        labEvent.getVesselToSectionTransfers().add(new VesselToSectionTransfer(barcodedTube, SBSSection.ALL96,
+                wgsLcPlate.getContainerRole(), wgsLcPlate, labEvent));
+        labVesselDao.persist(labEvent);
+        labVesselDao.flush();
 
-            Assert.assertFalse(messageCollection.hasErrors(),
-                    "messageCollection failed: " + messageCollection.getErrors());
+        SequencingTemplateType sequencingTemplateType = limsQueryResource
+                .fetchIlluminaSeqTemplate("HG52TALXX", SequencingTemplateFactory.QueryVesselType.FLOWCELL, false);
 
-            labVesselDao.flush();
-            labVesselDao.clear();
-
-            LabVessel labVessel = labVesselDao.findByIdentifier(labVessels.get(0).getLabel());
-            Set<SampleInstanceV2> sampleInstances =
-                    labVessel.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.A01);
-            Assert.assertEquals(sampleInstances.size(), 1);
-            SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
-            Assert.assertEquals(sampleInstance.getReagents().size(), 1);
-            UMIReagent umiReagent =
-                    (UMIReagent) sampleInstance.getReagents().iterator().next();
-            Assert.assertEquals(umiReagent.getUmiLength(), Long.valueOf(6));
-            Assert.assertEquals(umiReagent.getSpacerLength(), Long.valueOf(3));
-            Assert.assertEquals(umiReagent.getUmiLocation(), UMIReagent.UMILocation.INLINE_FIRST_READ);
-
-            // Grab tube
-            LabVessel barcodedTubeLv = labVesselDao.findByIdentifier(labVessels.get(labVessels.size() - 1).getLabel());
-            Assert.assertTrue(OrmUtil.proxySafeIsInstance(barcodedTubeLv, BarcodedTube.class));
-
-            BarcodedTube barcodedTube = OrmUtil.proxySafeCast(barcodedTubeLv, BarcodedTube.class);
-            Assert.assertEquals(barcodedTube.getTubeType(), BarcodedTube.BarcodedTubeType.MatrixTube075);
-            UMIReagent firstRead = new UMIReagent(UMIReagent.UMILocation.BEFORE_FIRST_READ, 3L, 2L);
-            UMIReagent secondRead = new UMIReagent(UMIReagent.UMILocation.BEFORE_SECOND_READ, 3L, 2L);
-            Assert.assertEquals(barcodedTube.getReagentContents().size(), 2);
-            for (Reagent reagent: barcodedTube.getReagentContents()) {
-                UMIReagent actualUMI = (UMIReagent) reagent;
-                if (actualUMI.getUmiLocation() == UMIReagent.UMILocation.BEFORE_FIRST_READ) {
-                    Assert.assertEquals(actualUMI, firstRead);
-                } else if (actualUMI.getUmiLocation() == UMIReagent.UMILocation.BEFORE_SECOND_READ) {
-                    Assert.assertEquals(actualUMI, secondRead);
-                } else {
-                    Assert.fail("Failed to find one of the expected UMIs");
-                }
-            }
-
-            //Add a UMI to WGS Clean up plate
-            LabVessel wgsLCPLateLV = labVesselDao.findByIdentifier(WGS_LC_PLATE);
-            StaticPlate wgsLcPlate = OrmUtil.proxySafeCast(wgsLCPLateLV, StaticPlate.class);
-            LabEvent labEvent = new LabEvent(LabEventType.UMI_ADDITION, new Date(), "Mercury", 1L, 1L, "MercuryTest");
-            labEvent.getVesselToSectionTransfers().add(new VesselToSectionTransfer(barcodedTube, SBSSection.ALL96,
-                    wgsLcPlate.getContainerRole(), wgsLcPlate, labEvent));
-            labVesselDao.persist(labEvent);
-            labVesselDao.flush();
-
-            SequencingTemplateType sequencingTemplateType = limsQueryResource
-                    .fetchIlluminaSeqTemplate("HG52TALXX", SequencingTemplateFactory.QueryVesselType.FLOWCELL, false);
-
+        //TODO JW re-enable when the pipeline is ready for UMI (GPLIM-4825)
+        if (false) {
             //Check against illumina run query
-            for (SequencingTemplateLaneType lane: sequencingTemplateType.getLanes()) {
+            for (SequencingTemplateLaneType lane : sequencingTemplateType.getLanes()) {
                 String readStructure = lane.getReadStructure();
                 Assert.assertEquals(readStructure, "3M2S151T8B8B3M2S151T");
             }
+        }
+    }
 
-        } catch (IOException | InvalidFormatException e) {
-            throw new RuntimeException(e);
+    private File generateSpreadSheet(String plateBarcode, String replaceBarcode)
+            throws IOException, InvalidFormatException {
+        InputStream testSpreadSheetInputStream = VarioskanParserTest.getTestResource("UMIReagents.xlsx");
+        Workbook workbook = WorkbookFactory.create(testSpreadSheetInputStream);
+        Sheet sheet = workbook.getSheet("Sheet1");
+        List<Integer> removeRows = new ArrayList<>();
+        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+            Row row = sheet.getRow(i);
+            if (row != null) {
+                Cell plateCell = row.getCell(1);
+                plateCell.setCellType(Cell.CELL_TYPE_STRING);
+                String oldValue = plateCell.getStringCellValue();
+                if (oldValue.equals(replaceBarcode)) {
+                    plateCell.setCellValue(plateBarcode);
+                } else {
+                    removeRows.add(i);
+                }
+            }
+        }
+        int decrementRow = 0;
+        for (Integer rowNum: removeRows) {
+            removeRow(sheet, rowNum - decrementRow);
+            decrementRow++;
+        }
+        File tempFile = File.createTempFile("UMIReagents", ".xlsx");
+        workbook.write(new FileOutputStream(tempFile));
+        return tempFile;
+    }
+
+    private void removeRow(Sheet sheet, int rowIndex) {
+        int lastRowNum = sheet.getLastRowNum();
+        if(rowIndex >= 0 && rowIndex < lastRowNum) {
+            sheet.shiftRows(rowIndex + 1, lastRowNum, -1);
+        }
+        if (rowIndex == lastRowNum) {
+            Row removingRow=sheet.getRow(rowIndex);
+            if (removingRow != null){
+                sheet.removeRow(removingRow);
+            }
         }
     }
 }
