@@ -138,9 +138,9 @@ public class InfiniumRunResource {
             SampleData sampleData = sampleDataFetcher.fetchSampleData(
                     sampleInstanceV2.getNearestMercurySampleName());
 
-            // When the ARRAY batch is auto-created, all samples on the plate get BucketEntries, even controls (this
-            // is arguably a bug in BucketEjb), so the BucketEntry can be used to determine an unambiguous PDO, unless
-            // the sample pre-dates auto-creation of ARRAY batches.
+            // Between Sept 2016 and Dec 2017, when the ARRAY batch wass auto-created, all samples on the plate got
+            // BucketEntries, even controls (this was arguably a bug in BucketEjb), so the BucketEntry can be used to
+            // determine an unambiguous PDO, unless the sample falls outside this window.
             // To determine whether the sample is a process control (as opposed to a HapMap sample added to a PDO for
             // scientific purposes), we have to look for the absence of a ProductOrderSample.
             ProductOrder productOrder;
@@ -174,10 +174,8 @@ public class InfiniumRunResource {
                         }
                     }
 
-                    if (productOrders.size() == 1) {
+                    if (productOrders.size() >= 1) {
                         productOrder = productOrders.iterator().next();
-                    } else if (productOrders.size() > 1) {
-                        throw new ResourceException("Found mix of product orders ", Response.Status.INTERNAL_SERVER_ERROR);
                     } else {
                         throw new ResourceException("Found no product orders ", Response.Status.INTERNAL_SERVER_ERROR);
                     }

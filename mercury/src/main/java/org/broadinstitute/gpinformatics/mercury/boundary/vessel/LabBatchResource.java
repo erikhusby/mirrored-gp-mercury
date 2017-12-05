@@ -177,7 +177,8 @@ public class LabBatchResource {
                     });
                 }
                 if (productOrders.isEmpty()) {
-                    // todo jmt email?
+                    // assume it's a control, add it to the batch without a bucket entry
+                    labBatch.addLabVessel(labVessel);
                 } else {
                     mapPdoToVessels.put(productOrders.get(0), labVessel);
                 }

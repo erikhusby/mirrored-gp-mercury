@@ -54,7 +54,7 @@ public class SampleSheetFactory {
 
     public static List<Pair<LabVessel, VesselPosition>> loadByPdo(ProductOrder productOrder) {
         List<Pair<LabVessel, VesselPosition>> vesselPositionPairs = new ArrayList<>();
-        // todo jmt include controls?
+        // todo jmt include controls
         // Infinium bucket entries are always DNA plate wells
         for (BucketEntry bucketEntry : productOrder.getBucketEntries()) {
             for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions :
