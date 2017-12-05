@@ -48,6 +48,7 @@ import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -366,6 +367,9 @@ public class ContainerActionBean extends RackScanActionBean {
         if (rackOfTubes != null && !rackOfTubes.getRackType().isRackScannable()) {
             showLayout = true;
         }
+        if (storageLocation != null) {
+            addMessage("After updating the container layout you will need to add it back to storage.");
+        }
         return new ForwardResolution(CONTAINER_VIEW_PAGE);
     }
 
@@ -471,7 +475,15 @@ public class ContainerActionBean extends RackScanActionBean {
         }
 
         // Remove any tubes that are no longer in this storage location
-        for (Map.Entry<VesselPosition, LabVessel> entry: mapPositionToVessel.entrySet()) {
+        // Sort to display orphans warnings in order
+        List<Map.Entry<VesselPosition, LabVessel>> entries = new ArrayList<>(mapPositionToVessel.entrySet());
+        Collections.sort(entries, new Comparator<Map.Entry<VesselPosition, LabVessel>>() {
+            @Override
+            public int compare(Map.Entry<VesselPosition, LabVessel> o1, Map.Entry<VesselPosition, LabVessel> o2) {
+                return o1.getKey().compareTo(o2.getKey());
+            }
+        });
+        for (Map.Entry<VesselPosition, LabVessel> entry: entries) {
             LabVessel labVessel = entry.getValue();
             if (!barcodes.contains(labVessel.getLabel())) {
                 VesselPosition vesselPosition = entry.getKey();
