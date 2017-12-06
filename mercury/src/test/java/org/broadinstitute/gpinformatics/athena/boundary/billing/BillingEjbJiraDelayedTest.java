@@ -41,6 +41,7 @@ import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -109,6 +110,7 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
 
         private static final long serialVersionUID = 6093273925949722169L;
 
+
         @Override
         public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
             return new PriceList();
@@ -125,7 +127,8 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
                                       QuotePriceItem itemIsReplacing,
                                       Date reportedCompletionDate,
                                       double numWorkUnits,
-                                      String callbackUrl, String callbackParameterName, String callbackParameterValue) {
+                                      String callbackUrl, String callbackParameterName, String callbackParameterValue,
+                                      BigDecimal priceAdjustment) {
             // Simulate failure only for one particular PriceItem.
             log.debug("In register New work");
             String workId = "workItemId\t1000";
@@ -149,7 +152,8 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
         @Override
         public String registerNewSAPWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
                                          Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
-                                         String callbackParameterName, String callbackParameterValue) {
+                                         String callbackParameterName, String callbackParameterValue,
+                                         BigDecimal priceAdjustment) {
             // Simulate failure only for one particular PriceItem.
             log.debug("In register New work");
             String workId = "workItemId\t1000";
@@ -187,6 +191,12 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
 
         @Override
         public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException {
+            return null;
+        }
+
+        @Override
+        public PriceList getPriceItemsForDate(List<QuoteImportItem> targetedPriceItemCriteria)
+                throws QuoteServerException, QuoteNotFoundException {
             return null;
         }
 

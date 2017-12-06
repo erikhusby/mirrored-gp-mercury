@@ -11,9 +11,11 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.hibernate.annotations.BatchSize;
 
 import javax.persistence.Column;
@@ -32,6 +34,9 @@ import java.util.Set;
 @Entity
 @Table(name = "AGGREGATION", schema = "METRICS")
 public class Aggregation {
+    public static final String DATA_TYPE_EXOME = "Exome";
+    public static final String DATA_TYPE_RNA = "RNA";
+    public static final String DATA_TYPE_WGS = "WGS";
     @SuppressWarnings("unused")
     @Id @Column(name = "ID")
     private Integer id;
@@ -52,22 +57,28 @@ public class Aggregation {
     @Column(name="READ_GROUP_COUNT")
     private Integer readGroupCount;
 
-    @Transient
+    @Column(name = "PROCESSING_LOCATION")
+    private String processingLocation;
+
+    @Column(name = "IS_LATEST")
+    private boolean latest;
+
+    @Column(name = "DATA_TYPE")
     private String dataType;
 
-    @OneToMany(fetch = FetchType.EAGER, mappedBy = "aggregation")
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "aggregation")
     @BatchSize(size = 100)
     private Set<AggregationAlignment> aggregationAlignments = new HashSet<>();
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ID", referencedColumnName = "AGGREGATION_ID", insertable = false, updatable = false)
     private AggregationContam aggregationContam;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ID", referencedColumnName = "AGGREGATION_ID", insertable = false, updatable = false)
     private AggregationHybridSelection aggregationHybridSelection;
 
-    @OneToMany(fetch = FetchType.EAGER, mappedBy = "aggregation")
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "aggregation")
     @BatchSize(size = 100)
     private Set<AggregationReadGroup> aggregationReadGroups = new HashSet<>();
 
@@ -77,6 +88,8 @@ public class Aggregation {
 
     @Transient
     private LevelOfDetection levelOfDetection;
+    @Transient
+    private SubmissionTuple submissionTuple;
 
     public Aggregation() {
     }
@@ -88,13 +101,15 @@ public class Aggregation {
                        AggregationHybridSelection aggregationHybridSelection,
                        Set<AggregationReadGroup> aggregationReadGroups,
                        AggregationWgs aggregationWgs,
-                       LevelOfDetection levelOfDetection) {
+                       LevelOfDetection levelOfDetection,
+                       String processingLocation) {
         this.project = project;
         this.sample = sample;
         this.library = library;
         this.version = version;
         this.readGroupCount = readGroupCount;
         this.dataType = dataType;
+        this.processingLocation = processingLocation;
         this.aggregationAlignments = aggregationAlignments;
         this.aggregationContam = aggregationContam;
         this.aggregationHybridSelection = aggregationHybridSelection;
@@ -103,22 +118,22 @@ public class Aggregation {
         this.levelOfDetection = levelOfDetection;
     }
 
-    public Aggregation(String project, String sample, Integer version) {
-        this.project = project;
-        this.sample = sample;
-        this.version = version;
-    }
 
+    @Transient
     public SubmissionTuple getTuple() {
         // These aggregation metrics are specific to BAM files, so the BassFileType is always BAM.
-        return new SubmissionTuple(getProject(), getSample(), getVersion().toString(), BassFileType.BAM);
+        if (submissionTuple == null) {
+            submissionTuple =
+                new SubmissionTuple(getProject(), getSample(), getVersion().toString(), getProcessingLocation(), getDataType());
+        }
+        return submissionTuple;
     }
 
-    public Double getQualityMetric(String dataType) {
+    public Double getQualityMetric() {
         switch (dataType) {
-        case BassDTO.DATA_TYPE_EXOME:
+        case DATA_TYPE_EXOME:
             return aggregationHybridSelection.getPctTargetBases20X();
-        case BassDTO.DATA_TYPE_RNA:
+        case DATA_TYPE_RNA:
             long totalReadsAlignedInPairs = 0;
             for (AggregationAlignment aggregationAlignment : getAggregationAlignments()) {
                 if (aggregationAlignment.getCategory().equals("PAIR")) {
@@ -126,7 +141,7 @@ public class Aggregation {
                 }
             }
             return (double) totalReadsAlignedInPairs;
-        case BassDTO.DATA_TYPE_WGS:
+        case DATA_TYPE_WGS:
             if (aggregationWgs.getMeanCoverage()!=0){
                 return aggregationWgs.getMeanCoverage();
             }
@@ -135,17 +150,17 @@ public class Aggregation {
         }
     }
 
-    public String getQualityMetricString(String dataType) {
+    public String getQualityMetricString() {
         if (dataType == null) {
             return null;
         }
-        Double qualityMetric = getQualityMetric(dataType);
+        Double qualityMetric = getQualityMetric();
         switch (dataType) {
-        case BassDTO.DATA_TYPE_EXOME:
+        case DATA_TYPE_EXOME:
             return convertToPercent(qualityMetric);
-        case BassDTO.DATA_TYPE_RNA:
+        case DATA_TYPE_RNA:
             return MessageFormat.format("{0,number,#}", qualityMetric);
-        case BassDTO.DATA_TYPE_WGS:
+        case DATA_TYPE_WGS:
             return MessageFormat.format("{0,number,#.##}", qualityMetric);
         default:
             return "N/A";
@@ -203,6 +218,22 @@ public class Aggregation {
         }
     }
 
+    public String getProcessingLocation() {
+        return processingLocation;
+    }
+
+    public void setProcessingLocation(String processingLocation) {
+        this.processingLocation = processingLocation;
+    }
+
+    public boolean isLatest() {
+        return latest;
+    }
+
+    public void setLatest(boolean latest) {
+        this.latest = latest;
+    }
+
     public AggregationHybridSelection getAggregationHybridSelection() {
         return aggregationHybridSelection;
     }
@@ -221,5 +252,73 @@ public class Aggregation {
 
     public void setLevelOfDetection(LevelOfDetection levelOfDetection) {
         this.levelOfDetection = levelOfDetection;
+    }
+
+    @Override
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+
+        if (o == null || (!OrmUtil.proxySafeIsInstance(o, Aggregation.class))) {
+            return false;
+        }
+
+        if (!(o instanceof Aggregation)) {
+            return false;
+        }
+
+        Aggregation that = OrmUtil.proxySafeCast(o, Aggregation.class);
+
+        return new EqualsBuilder()
+            .append(latest, that.latest)
+            .append(id, that.id)
+            .append(project, that.project)
+            .append(sample, that.sample)
+            .append(library, that.library)
+            .append(version, that.version)
+            .append(readGroupCount, that.readGroupCount)
+            .append(processingLocation, that.processingLocation)
+            .append(dataType, that.dataType)
+            .append(aggregationAlignments, that.aggregationAlignments)
+            .append(aggregationContam, that.aggregationContam)
+            .append(aggregationHybridSelection, that.aggregationHybridSelection)
+            .append(aggregationReadGroups, that.aggregationReadGroups)
+            .append(aggregationWgs, that.aggregationWgs)
+            .append(levelOfDetection, that.levelOfDetection)
+            .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+            .append(id)
+            .append(project)
+            .append(sample)
+            .append(library)
+            .append(version)
+            .append(readGroupCount)
+            .append(processingLocation)
+            .append(latest)
+            .append(dataType)
+            .append(aggregationAlignments)
+            .append(aggregationContam)
+            .append(aggregationHybridSelection)
+            .append(aggregationReadGroups)
+            .append(aggregationWgs)
+            .append(levelOfDetection)
+            .toHashCode();
+    }
+
+    public Set<SubmissionLibraryDescriptor> getLibraryTypes() {
+        Set<SubmissionLibraryDescriptor> submissionLibraryDescriptors = new HashSet<>();
+        for (AggregationReadGroup aggregationReadGroup : getAggregationReadGroups()) {
+            ReadGroupIndex readGroupIndex = aggregationReadGroup.getReadGroupIndex();
+            if (readGroupIndex != null) {
+                submissionLibraryDescriptors.add(readGroupIndex.getLibraryType());
+            }
+        }
+        return submissionLibraryDescriptors;
     }
 }

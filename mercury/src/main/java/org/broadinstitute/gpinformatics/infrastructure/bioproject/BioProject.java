@@ -14,13 +14,24 @@ package org.broadinstitute.gpinformatics.infrastructure.bioproject;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.annotate.JsonPropertyOrder;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 
-import javax.xml.bind.annotation.XmlElement;
 import java.io.Serializable;
+
+// setting the access order to alphabetical helps the tests pass more reliably.
+@JsonPropertyOrder(alphabetic = true)
+@JsonSerialize(include=JsonSerialize.Inclusion.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown=true)
 public class BioProject implements Serializable {
     private static final long serialVersionUID = 2014072901l;
+    @JsonProperty
     private String accession;
+    @JsonProperty
     private String alias;
+    @JsonProperty
     private String projectName;
 
     public BioProject() {
@@ -44,7 +55,6 @@ public class BioProject implements Serializable {
         this.accession = accession;
     }
 
-    @XmlElement(required = false)
     public String getAlias() {
         return alias;
     }
@@ -53,7 +63,6 @@ public class BioProject implements Serializable {
         this.alias = alias;
     }
 
-    @XmlElement(required = false)
     public String getProjectName() {
         return projectName;
     }
@@ -61,7 +70,6 @@ public class BioProject implements Serializable {
     public void setProjectName(String projectName) {
         this.projectName = projectName;
     }
-
 
     @Override
     public boolean equals(Object o) {

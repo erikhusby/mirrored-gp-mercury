@@ -48,7 +48,6 @@
                                     style="margin-right:30px;" disabled="${actionBean.isBillingSessionLocked()}"/>
                 </c:if>
 
-                <stripes:submit name="downloadTracker" value="Download Tracker" class="btn" style="margin-right:30px;"/>
                 <stripes:submit name="downloadQuoteItems" value="Download Quote Items" class="btn" style="margin-right:30px;"/>
 
                 <c:if test="${actionBean.editSession.billedDate == null}">

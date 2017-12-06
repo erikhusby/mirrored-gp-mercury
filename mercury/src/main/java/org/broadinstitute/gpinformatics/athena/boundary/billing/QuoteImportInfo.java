@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -196,8 +197,12 @@ public class QuoteImportInfo {
         }
 
         // No quote, so calculate what it would be given the state of things now.
+        final Product product = ledger.getProductOrderSample().getProductOrder().getProduct();
+
+        final PriceItem priceItem =
+                ledger.getProductOrderSample().getProductOrder().determinePriceItemByCompanyCode(product);
         Collection<QuotePriceItem> quotePriceItems =
-            priceListCache.getReplacementPriceItems(ledger.getProductOrderSample().getProductOrder().getProduct());
+            priceListCache.getReplacementPriceItems(priceItem);
 
         for (QuotePriceItem quotePriceItem : quotePriceItems) {
             if (ledger.getPriceItem().getName().equals(quotePriceItem.getName())) {

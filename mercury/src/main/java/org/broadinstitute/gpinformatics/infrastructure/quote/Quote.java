@@ -1,12 +1,15 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
 import clover.org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
+import org.broadinstitute.gpinformatics.infrastructure.ShortDateAdapter;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -25,6 +28,8 @@ public class Quote {
     private QuoteFunding quoteFunding;
     private QuoteType quoteType;
     private Collection<QuoteItem> quoteItems = new ArrayList<> ();
+    private Date expirationDate;
+
 
     // quick access Cache of quote items
     @XmlTransient
@@ -114,6 +119,15 @@ public class Quote {
         this.quoteType = quoteType;
     }
 
+    @XmlAttribute(name="expirationDate")
+    @XmlJavaTypeAdapter(ShortDateAdapter.class)
+    public Date getExpirationDate() {
+        return expirationDate;
+    }
+
+    public void setExpirationDate(Date expirationDate) {
+        this.expirationDate = expirationDate;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -150,26 +164,39 @@ public class Quote {
 
         boolean grantHasEnded = false;
 
-        boolean multipleFundReservation = true;
+        boolean multipleFundReservation;
+
+        boolean atLeastOneValid = false;
 
         if (singleLevel != null ) {
-            multipleFundReservation = singleLevel.getFunding().size()>1;
-            if (!multipleFundReservation) {
-                for (Funding funding : singleLevel.getFunding()) {
+            final Collection<Funding> fundingSources = singleLevel.getFunding();
+            if (CollectionUtils.isNotEmpty(fundingSources)) {
+                multipleFundReservation = fundingSources.size() > 1;
+                if (!multipleFundReservation) {
+                    for (Funding funding : fundingSources) {
+                        if(StringUtils.isNotBlank(funding.getFundingType())) {
+                            atLeastOneValid = true;
+                            if (funding.getGrantEndDate() != null && funding.getFundingType()
+                                    .equals(Funding.FUNDS_RESERVATION)) {
+                                final Date today = DateUtils.truncate(new Date(), Calendar.DATE);
+                                grantHasEnded = grantHasEnded || !FundingLevel.isGrantActiveForDate(today, funding);
 
-                    if(funding.getGrantEndDate() != null && funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
-                        final Date today = DateUtils.truncate(new Date(), Calendar.DATE);
-                        grantHasEnded = grantHasEnded && !FundingLevel.isGrantActiveForDate(today, funding);
-
-                        if(grantHasEnded) {
-                            break;
+                                if (grantHasEnded) {
+                                    break;
+                                }
+                            }
                         }
                     }
+                } else {
+                    return false;
                 }
+            } else {
+                return false;
             }
-
+        } else {
+            return false;
         }
-        return !(singleLevel == null) && !grantHasEnded && !multipleFundReservation;
+        return !grantHasEnded && atLeastOneValid;
     }
 
     /**
@@ -181,11 +208,13 @@ public class Quote {
     public FundingLevel getFirstRelevantFundingLevel() {
         FundingLevel singleLevel = null;
 
-        for(FundingLevel level : quoteFunding.getFundingLevel()) {
-            if (singleLevel == null) {
-                singleLevel = level;
-            } else {
-                return null;
+        if (quoteFunding != null && CollectionUtils.isNotEmpty(quoteFunding.getFundingLevel())) {
+            for(FundingLevel level : quoteFunding.getFundingLevel()) {
+                if (singleLevel == null) {
+                    singleLevel = level;
+                } else {
+                    return null;
+                }
             }
         }
         return singleLevel;

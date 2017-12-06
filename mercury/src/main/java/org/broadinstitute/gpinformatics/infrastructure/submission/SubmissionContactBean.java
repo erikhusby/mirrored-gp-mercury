@@ -3,18 +3,30 @@ package org.broadinstitute.gpinformatics.infrastructure.submission;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.annotate.JsonPropertyOrder;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 
-import javax.xml.bind.annotation.XmlElement;
 import java.io.Serializable;
 
+// setting the access order to alphabetical helps the tests pass more reliably.
+@JsonPropertyOrder(alphabetic = true)
+@JsonSerialize(include=JsonSerialize.Inclusion.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown=true)
 public class SubmissionContactBean implements Serializable {
-
     private static final long serialVersionUID = 8166404474924070240L;
+    @JsonProperty
     private String email;
+    @JsonProperty
     private String phone;
+    @JsonProperty
     private String lab;
+    @JsonProperty
     private String firstName;
+    @JsonProperty
     private String lastName;
+    @JsonProperty
     private String middleName;
 
     public SubmissionContactBean() {
@@ -38,7 +50,6 @@ public class SubmissionContactBean implements Serializable {
         return email;
     }
 
-    @XmlElement
     public void setEmail(String email) {
         this.email = email;
     }
@@ -47,7 +58,6 @@ public class SubmissionContactBean implements Serializable {
         return phone;
     }
 
-    @XmlElement
     public void setPhone(String phone) {
         this.phone = phone;
     }
@@ -56,7 +66,6 @@ public class SubmissionContactBean implements Serializable {
         return lab;
     }
 
-    @XmlElement
     public void setLab(String lab) {
         this.lab = lab;
     }
@@ -65,7 +74,6 @@ public class SubmissionContactBean implements Serializable {
         return firstName;
     }
 
-    @XmlElement
     public void setFirstName(String firstName) {
         this.firstName = firstName;
     }
@@ -74,7 +82,6 @@ public class SubmissionContactBean implements Serializable {
         return lastName;
     }
 
-    @XmlElement
     public void setLastName(String lastName) {
         this.lastName = lastName;
     }
@@ -83,7 +90,6 @@ public class SubmissionContactBean implements Serializable {
         return middleName;
     }
 
-    @XmlElement
     public void setMiddleName(String middleName) {
         this.middleName = middleName;
     }

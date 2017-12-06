@@ -62,7 +62,7 @@
             <c:forEach items="${actionBean.allProducts}" var="product">
                 <tr>
                     <td>
-                        <c:if test="${product.canPublishToSAP()}">
+                        <c:if test="${!actionBean.productInSAP(product.partNumber)}">
                             <stripes:checkbox name="selectedProductPartNumbers" value="${product.partNumber}" class="shiftCheckbox" />
                         </c:if>
                     </td>
