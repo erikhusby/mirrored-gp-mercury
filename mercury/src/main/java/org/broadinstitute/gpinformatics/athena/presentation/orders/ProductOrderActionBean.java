@@ -1412,27 +1412,32 @@ public class ProductOrderActionBean extends CoreActionBean {
                 final Date todayTruncated = org.apache.commons.lang3.time.DateUtils.truncate(new Date(), Calendar.DATE);
 
                 for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel(true)) {
-                    for (Funding funding:fundingLevel.getFunding()) {
-                        if(funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
-                            JSONObject fundingInfo = new JSONObject();
-                            fundingInfo.put("grantTitle", funding.getDisplayName());
-                            fundingInfo.put("grantEndDate",
-                                    DateUtils.getDate(funding.getGrantEndDate()));
-                            fundingInfo.put("grantNumber", funding.getGrantNumber());
-                            fundingInfo.put("grantStatus", funding.getGrantStatus());
 
-                            final Date today = new Date();
-                            fundingInfo.put("activeGrant", (FundingLevel.isGrantActiveForDate(todayTruncated,funding)));
-                            fundingInfo.put("daysTillExpire",
-                                    DateUtils.getNumDaysBetween(today, funding.getGrantEndDate()));
-                            fundingDetails.put(fundingInfo);
+                    if (CollectionUtils.isNotEmpty(fundingLevel.getFunding())) {
+                        for (Funding funding:fundingLevel.getFunding()) {
+                            if (StringUtils.isNotBlank(funding.getFundingType())) {
+                                if(funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
+                                    JSONObject fundingInfo = new JSONObject();
+                                    fundingInfo.put("grantTitle", funding.getDisplayName());
+                                    fundingInfo.put("grantEndDate",
+                                            DateUtils.getDate(funding.getGrantEndDate()));
+                                    fundingInfo.put("grantNumber", funding.getGrantNumber());
+                                    fundingInfo.put("grantStatus", funding.getGrantStatus());
+
+                                    final Date today = new Date();
+                                    fundingInfo.put("activeGrant", (FundingLevel.isGrantActiveForDate(todayTruncated,funding)));
+                                    fundingInfo.put("daysTillExpire",
+                                            DateUtils.getNumDaysBetween(today, funding.getGrantEndDate()));
+                                    fundingDetails.put(fundingInfo);
+                                }
+                            }
+                    /*
+                    This really only needs to loop once since the information that is retrieved will be the same for each
+                    funding instance under fundingLevel
+                    */
+
+                            break;
                         }
-                /*
-                This really only needs to loop once since the information that is retrieved will be the same for each
-                funding instance under fundingLevel
-                */
-
-                        break;
                     }
                 }
                 item.put("fundingDetails", fundingDetails);

@@ -175,10 +175,12 @@ public class BillingAdaptor implements Serializable {
                     //todo SGM is this call really necessary?  Is it just for DBFree tests?
                     quote.setAlphanumericId(itemForPriceUpdate.getQuoteId());
                     itemForPriceUpdate.setQuote(quote);
-                    ProductOrder.checkQuoteValidity(quote,
-                            DateUtils.truncate(itemForPriceUpdate.getWorkCompleteDate(), Calendar.DATE));
-                    
-                    if(itemForPriceUpdate.getProductOrder().isSavedInSAP()) {
+
+                    if(productOrderEjb.isOrderEligibleForSAP(itemForPriceUpdate.getProductOrder()) &&
+                       itemForPriceUpdate.getProductOrder().isSavedInSAP()) {
+                        
+                        ProductOrder.checkQuoteValidity(quote,
+                                DateUtils.truncate(itemForPriceUpdate.getWorkCompleteDate(), Calendar.DATE));
 
                         effectivePricesForProducts = getEffectivePricesForProducts(allProductsOrdered, quote, priceItemsForDate,
                                 itemForPriceUpdate.getProductOrder());
@@ -195,8 +197,6 @@ public class BillingAdaptor implements Serializable {
 
                             BigDecimal listPrice = new BigDecimal(price);
                             BigDecimal effectivePrice = new BigDecimal(itemForPriceUpdate.getEffectivePrice());
-                            Condition adjustmentCondition = null;
-                            BigDecimal adjustmentDifference = null;
 
                             if(!itemForPriceUpdate.getProductOrder().needsCustomization(itemForPriceUpdate.getProduct()) && listPrice.compareTo(effectivePrice) !=0) {
                                 itemForPriceUpdate.getProductOrder().addQuoteAdjustment(itemForPriceUpdate.getProduct(), effectivePrice, listPrice);
