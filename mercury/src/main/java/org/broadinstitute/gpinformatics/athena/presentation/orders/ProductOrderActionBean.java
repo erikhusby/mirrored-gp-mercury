@@ -12,7 +12,6 @@ import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
-import net.sourceforge.stripes.action.HttpCache;
 import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.StreamingResolution;
@@ -105,7 +104,6 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
@@ -170,7 +168,6 @@ import static org.broadinstitute.gpinformatics.mercury.presentation.datatables.D
  * This handles all the needed interface processing elements.
  */
 @SuppressWarnings("unused")
-@HttpCache
 @UrlBinding(ProductOrderActionBean.ACTIONBEAN_URL_BINDING)
 public class ProductOrderActionBean extends CoreActionBean {
 
@@ -215,6 +212,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String COULD_NOT_LOAD_SAMPLE_DATA = "Could not load sample data";
     public static final String GET_SAMPLE_DATA = "getSampleData";
     public static final String OPEN_CUSTOM_VIEW_ACTION = "openCustomView";
+    public static final String GET_SAMPLE_SUMMARY = "getSampleSummary";
     private String sampleSummary;
     private State state;
 
@@ -2182,7 +2180,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                         ProductOrderSampleBean.SHIPPED_DATE, ProductOrderSampleBean.CONCENTRATION,
                         ProductOrderSampleBean.RIN, ProductOrderSampleBean.RQS,
                         ProductOrderSampleBean.DV2000, ProductOrderSampleBean.PICO_RUN_DATE,
-                        ProductOrderSampleBean.RACKSCAN_MISMATCH, RECEIVED_DATE);
+                        ProductOrderSampleBean.RACKSCAN_MISMATCH, ProductOrderSampleBean.RECEIVED_DATE);
 
                 boolean withSampleData = false;
                 for (String visibleColumn : allVisibleColumns) {
