@@ -154,6 +154,7 @@ public class LabBatchResource {
         // Create bucket entries (if any) and add to batch
         LabVessel.loadSampleDataForBuckets(labVesselSet);
         ListMultimap<ProductOrder, LabVessel> mapPdoToVessels = ArrayListMultimap.create();
+        List<LabVessel> controls = new ArrayList<>();
         for (LabVessel labVessel : labVesselSet) {
             Set<SampleInstanceV2> sampleInstancesV2 = labVessel.getSampleInstancesV2();
             if (sampleInstancesV2.size() == 1) {
@@ -177,11 +178,19 @@ public class LabBatchResource {
                     });
                 }
                 if (productOrders.isEmpty()) {
-                    // assume it's a control, add it to the batch without a bucket entry
-                    labBatch.addLabVessel(labVessel);
+                    // assume it's a control
+                    controls.add(labVessel);
                 } else {
                     mapPdoToVessels.put(productOrders.get(0), labVessel);
                 }
+            }
+        }
+
+        if (!mapPdoToVessels.isEmpty()) {
+            // Pick a PDO arbitrarily
+            ProductOrder controlPdo = mapPdoToVessels.keySet().iterator().next();
+            for (LabVessel control : controls) {
+                mapPdoToVessels.put(controlPdo, control);
             }
         }
 
