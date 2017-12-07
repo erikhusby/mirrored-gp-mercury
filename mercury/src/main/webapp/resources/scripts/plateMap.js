@@ -55,16 +55,26 @@
             plugin.attachMetadata($(cellIdPrefix + cell), metavals, cellMetadataSelector);
         });
 
-        $.each(platemap.emptyWells, function (idx, well) {
-            var wellIdTag = cellIdPrefix + well;
-            var wellElem = $(wellIdTag);
-            wellElem.attr('class', 'metricCell noSample');
-        });
-        $.each(platemap.blacklistWells, function (idx, well) {
-            var wellIdTag = cellIdPrefix + well;
-            var wellElem = $(wellIdTag);
-            wellElem.attr('class', 'metricCell blacklisted');
-        });
+        // Status
+        if( platemap.wellStatusMap != null ) {
+            $.each(platemap.wellStatusMap, function (idx, well) {
+                var wellIdTag = cellIdPrefix + idx;
+                var wellElem = $(wellIdTag);
+                switch (well) {
+                    case "Empty":
+                        wellElem.attr('class', 'metricCell noSample');
+                        break;
+                    case "Blacklisted":
+                        wellElem.attr('class', 'metricCell blacklisted');
+                        break;
+                    case "Abandoned":
+                        wellElem.attr('class', 'metricCell abandoned');
+                        break;
+                    default:
+                        wellElem.attr('class', 'metricCell');
+                }
+            });
+        }
 
         metricsListBox.change(function() {
             var selectedMetric = this.value;
@@ -118,6 +128,7 @@
     Plugin.prototype.buildLegend = function(legend, options) {
         legend.empty();
         var legendList = $('<ul></ul>').addClass('legend');
+        if( !options ) return;
         for (var i = 0; i < options.length; i++) {
             var option = options[i];
             var li = $('<li></li>');

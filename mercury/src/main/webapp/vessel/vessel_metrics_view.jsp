@@ -35,10 +35,15 @@
             }
 
             .blacklisted {
-                border-top: 3px solid #EE0000;
-                border-left: 3px solid #EE0000;
-                border-right: 3px solid #EE0000;
-                border-bottom: 3px solid #EE0000;
+                background-image:url("../images/b.png");
+                background-position: right center;
+                background-repeat: no-repeat;
+            }
+
+            .abandoned {
+                background-image:url("../images/a.png");
+                background-position: right center;
+                background-repeat: no-repeat;
             }
         </style>
         <script src="${ctxpath}/resources/scripts/plateMap.js"></script>
@@ -123,7 +128,7 @@
                                         </table>
                                     </div>
                                     <div class="span4">
-                                        <div class="well">
+                                        <div class="well" style="height: 335px">
                                             Vessel Metadata
                                             <dl class="metadataDefinitionPlateList dl-horizontal">
                                             </dl>

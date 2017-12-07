@@ -298,7 +298,6 @@ public class MetricsViewActionBean extends CoreActionBean {
         GenotypingChip genotypingChip = barcodeToGenotypingChip.get(staticPlate.getLabel());
         boolean isClinical = barcodeToIsClinical.get(staticPlate.getLabel());
         Set<String> allPositionNames = Sets.newHashSet(staticPlate.getVesselGeometry().getPositionNames());
-        Set<String> blackListWells = new HashSet<>();
         Set<LabEvent> hybEvents = new TreeSet<>(LabEvent.BY_EVENT_DATE);
         if (staticPlate.getVesselGeometry().name().contains("CHIP")) {
             chips.add(staticPlate);
@@ -466,7 +465,7 @@ public class MetricsViewActionBean extends CoreActionBean {
 
             // Blacklisting
             if( wellBlacklistMap.containsKey(chipWellbarcode) ) {
-                blackListWells.add(startPosition);
+                plateMap.setWellStatus(startPosition, WellStatus.Blacklisted);
                 for( ArraysQcBlacklisting blacklisting : wellBlacklistMap.get(chipWellbarcode)) {
                     metadata.add(Metadata.create("Pipeline Blacklist", DATE_FORMAT.format(blacklisting.getBlacklistedOn()) + " - " + blacklisting.getBlacklistReason()));
                     if( blacklisting.getWhitelistedOn() != null ) {
@@ -599,12 +598,11 @@ public class MetricsViewActionBean extends CoreActionBean {
                 percentZCallCallWellsPassingString));
 
         // Empty wells
-        Set<String> emptyWells = new HashSet<>();
         for( String platePosition : allPositionNames ) {
             if( chipWellToSourcePosition.containsValue(platePosition) ) {
                 continue;
             } else {
-                emptyWells.add(platePosition);
+                plateMap.setWellStatus(platePosition, WellStatus.Empty);
                 plateMap.getWellMetadataMap().put(platePosition, new ArrayList<Metadata>());
                 plateMap.getWellMetadataMap().get(platePosition).add( Metadata.create("(Empty)", ""));
             }
@@ -630,6 +628,7 @@ public class MetricsViewActionBean extends CoreActionBean {
                                 metadataList.add(Metadata.create("Lab Abandon Reason", abandon.getReason().getDisplayName()));
                                 metadataList.add(Metadata.create("Abandoned On", DATE_FORMAT.format( abandon.getAbandonedOn() ) ));
                                 plateMap.getWellMetadataMap().put(platePosition, metadataList);
+                                plateMap.setWellStatus(platePosition, WellStatus.Abandoned);
                             }
                             break;
                         }
@@ -637,9 +636,6 @@ public class MetricsViewActionBean extends CoreActionBean {
                 }
             }
         }
-
-        plateMap.setEmptyWells(emptyWells);
-        plateMap.setBlacklistWells(blackListWells);
 
         return plateMap;
     }
@@ -701,8 +697,7 @@ public class MetricsViewActionBean extends CoreActionBean {
         private List<WellDataset> datasets;
         private String label;
         private List<Metadata> plateMetadata;
-        private Set<String> emptyWells;
-        private Set<String> blacklistWells;
+        private Map<String, WellStatus> wellStatusMap;
         private Map<String,List<Metadata>> wellMetadataMap;
 
         public List<WellDataset> getDatasets() {
@@ -729,26 +724,18 @@ public class MetricsViewActionBean extends CoreActionBean {
             this.plateMetadata = plateMetadata;
         }
 
-        public Set<String> getEmptyWells() {
-            if (emptyWells == null) {
-                emptyWells = new HashSet<>();
+        /**
+         * JSON needs this to serialize as map
+         */
+        public Map<String, WellStatus> getWellStatusMap(){
+            return wellStatusMap;
+        }
+
+        public void setWellStatus(String well, WellStatus wellStatus){
+            if( wellStatusMap == null ) {
+                wellStatusMap = new HashMap<>();
             }
-            return emptyWells;
-        }
-
-        public void setEmptyWells(Set<String> emptyWells) {
-            this.emptyWells = emptyWells;
-        }
-
-        public Set<String> getBlacklistWells() {
-            if (blacklistWells == null) {
-                blacklistWells = new HashSet<>();
-            }
-            return blacklistWells;
-        }
-
-        public void setBlacklistWells(Set<String> blacklistWells) {
-            this.blacklistWells = blacklistWells;
+            wellStatusMap.put(well, wellStatus);
         }
 
         public String getLabel() {
@@ -822,6 +809,14 @@ public class MetricsViewActionBean extends CoreActionBean {
 
     public enum ChartType {
         Category, Heatmap
+    }
+
+    /**
+     * Mapped to UI display css logic <br/>
+     * Should be mutually exclusive, but other use cases may apply so stored as a Set
+     */
+    public enum WellStatus {
+        Empty, Blacklisted, Abandoned
     }
 
     private static class OptionsBuilder {
