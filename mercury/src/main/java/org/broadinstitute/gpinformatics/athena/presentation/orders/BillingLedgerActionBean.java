@@ -344,11 +344,11 @@ public class BillingLedgerActionBean extends CoreActionBean {
     private List<ProductOrderSampleLedgerInfo> gatherSampleInfo() {
         List<ProductOrderSampleLedgerInfo> infos = new ArrayList<>();
 
-        Map<String, SampleCoverageFirstMet> coverageFirstMetBySample =null;
+        Map<String, SampleCoverageFirstMet> coverageFirstMetBySample =
                 sampleCoverageFirstMetFetcher.getCoverageFirstMetBySampleForPdo(productOrder.getBusinessKey());
 
         for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
-            SampleCoverageFirstMet sampleCoverageFirstMet = null;
+            SampleCoverageFirstMet sampleCoverageFirstMet =
                     coverageFirstMetBySample.get(productOrderSample.getSampleData().getCollaboratorsSampleName());
             if (sampleCoverageFirstMet == null) {
                 sampleCoverageFirstMet = coverageFirstMetBySample.get(productOrderSample.getName());

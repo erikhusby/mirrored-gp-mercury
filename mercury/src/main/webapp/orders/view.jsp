@@ -347,8 +347,9 @@ $j(document).ready(function () {
                 if (kitDefinitionIndex == 0) {
                     showKitDetail();
                 }
-            $j('.shiftCheckbox').enableCheckboxRangeSelection();
-
+            },
+            "drawCallback": function(){
+                $j(".shiftCheckbox").enableCheckboxRangeSelection();
             }
 });
 
