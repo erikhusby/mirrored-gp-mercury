@@ -14,6 +14,7 @@ public class FingerprintsBean {
     private List<FingerprintBean> fingerprints;
 
     /** For JAXB. */
+    @SuppressWarnings("unused")
     public FingerprintsBean() {
     }
 

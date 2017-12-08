@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.config.ClientConfig;
-import org.apache.bcel.generic.NEW;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
@@ -17,7 +16,6 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
-
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
