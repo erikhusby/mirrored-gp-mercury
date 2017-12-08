@@ -28,7 +28,6 @@ import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.sap.entity.Condition;
 import org.broadinstitute.sap.entity.DeliveryCondition;
 import org.broadinstitute.sap.entity.SAPMaterial;
 
@@ -275,10 +274,52 @@ public class BillingAdaptor implements Serializable {
                         }
                     }
 
-                    if(StringUtils.isBlank(workId)) {
+                    BigDecimal replacementMultiplier = null;
+                    if(primaryPriceItemIfReplacementForSAP != null) {
+                        BigDecimal primaryPrice = new BigDecimal(primaryPriceItemIfReplacementForSAP.getPrice());
+                        BigDecimal replacementPrice  = new BigDecimal(price);
+
+                        if(item.getProductOrder().isPriorToSAP1_5()) {
+                            replacementMultiplier = (replacementPrice.divide(primaryPrice, 3, BigDecimal.ROUND_DOWN))
+                                    .multiply(BigDecimal.valueOf(item.getQuantityForSAP()))
+                                    .setScale(3, BigDecimal.ROUND_DOWN);
+                        }
+                    }
+
+                    if( productOrderEjb.isOrderEligibleForSAP(item.getProductOrder() )
+                        && !item.getProductOrder().getOrderStatus().canPlace()
+                        && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
+                        && StringUtils.isBlank(item.getSapItems())) {
+
+                        final SAPMaterial material = productPriceCache.findByProduct(item.getProduct(),
+                                item.getProductOrder().getSapCompanyConfigurationForProductOrder());
+
+                        BigDecimal replacementPrice = new BigDecimal(price);
+
+                        BigDecimal sapPrimaryPrice = new BigDecimal(material.getBasePrice());
+
+                        if (StringUtils.equals(item.getQuotePriceType(),
+                                LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.getQuoteType())) {
+                            if (!material.getPossibleDeliveryConditions()
+                                    .containsKey(DeliveryCondition.LATE_DELIVERY_DISCOUNT)) {
+                                throw new InvalidProductException(
+                                        "Pricing in SAP has not been set up correctly: Late Delivery charge is not set for "
+                                        + item.getProduct().getPartNumber());
+                            }
+                            if (replacementPrice.compareTo(sapPrimaryPrice.add(material.getPossibleDeliveryConditions()
+                                    .get(DeliveryCondition.LATE_DELIVERY_DISCOUNT))) != 0) {
+                                throw new InvalidProductException(
+                                        "Pricing in SAP has not been set up correctly: Late Delivery charge in SAP differs from Quotes for "
+                                        + item.getProduct().getPartNumber());
+                            }
+                        }
+
+                    }
+
+                    if (StringUtils.isBlank(workId)) {
                         if (productOrderEjb.isOrderEligibleForSAP(item.getProductOrder())
                             && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
-                            if(item.getProductOrder().getSinglePriceAdjustment() == null) {
+                            if (item.getProductOrder().getSinglePriceAdjustment() == null) {
                                 workId = quoteService
                                         .registerNewSAPWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
                                                 item.getWorkCompleteDate(), item.getQuantity(),
@@ -292,7 +333,7 @@ public class BillingAdaptor implements Serializable {
                                                 item.getProductOrder().getSinglePriceAdjustment().getAdjustmentValue());
                             }
                         } else {
-                            if(item.getProductOrder().getSinglePriceAdjustment() == null) {
+                            if (item.getProductOrder().getSinglePriceAdjustment() == null) {
                                 workId = quoteService
                                         .registerNewWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
                                                 item.getWorkCompleteDate(), item.getQuantity(),
@@ -311,40 +352,12 @@ public class BillingAdaptor implements Serializable {
                     }
 
 
-                    BigDecimal replacementMultiplier = null;
-                    if(primaryPriceItemIfReplacementForSAP != null) {
-                        BigDecimal primaryPrice = new BigDecimal(primaryPriceItemIfReplacementForSAP.getPrice());
-                        BigDecimal replacementPrice  = new BigDecimal(price);
-
-                        if(item.getProductOrder().isPriorToSAP1_5()) {
-                            replacementMultiplier = (replacementPrice.divide(primaryPrice, 3, BigDecimal.ROUND_DOWN))
-                                    .multiply(BigDecimal.valueOf(item.getQuantityForSAP()))
-                                    .setScale(3, BigDecimal.ROUND_DOWN);
-                        }
-                    }
-
                     if( productOrderEjb.isOrderEligibleForSAP(item.getProductOrder() )
                         && !item.getProductOrder().getOrderStatus().canPlace()
                         && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
                         && StringUtils.isBlank(item.getSapItems()))
                     {
-
-                        final SAPMaterial material = productPriceCache.findByProduct(item.getProduct(),
-                                item.getProductOrder().getSapCompanyConfigurationForProductOrder());
-
-                        BigDecimal replacementPrice  = new BigDecimal(price);
-
-                        BigDecimal sapPrimaryPrice = new BigDecimal(material.getBasePrice());
-
-                        if(StringUtils.equals(item.getQuotePriceType(),LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.getQuoteType()) ) {
-                            if(!material.getPossibleDeliveryConditions().containsKey(DeliveryCondition.LATE_DELIVERY_DISCOUNT)) {
-                                throw new InvalidProductException("Pricing in SAP has not been set up correctly: Late Delivery charge is not set for " + item.getProduct().getPartNumber());
-                            }
-                            if(replacementPrice.compareTo(sapPrimaryPrice.add(material.getPossibleDeliveryConditions().get(DeliveryCondition.LATE_DELIVERY_DISCOUNT))) != 0) {
-                                throw new InvalidProductException("Pricing in SAP has not been set up correctly: Late Delivery charge in SAP differs from Quotes for " + item.getProduct().getPartNumber());
-                            }
-                        }
-
+                        
                         if(item.getQuantityForSAP() != 0) {
                             sapBillingId = sapService.billOrder(item, replacementMultiplier, item.getWorkCompleteDate());
                         }
