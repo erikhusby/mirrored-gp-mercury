@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.config.ClientConfig;
+import com.sun.jersey.api.client.filter.LoggingFilter;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
@@ -44,6 +45,7 @@ public class FingerprintResourceTest extends Arquillian {
         ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
         clientConfig.getClasses().add(JacksonJsonProvider.class);
         Client client = Client.create(clientConfig);
+        client.addFilter(new LoggingFilter(System.out));
 
         String rsidsUrl = RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/fingerprint/rsids";
         RsIdsBean rsIdsBean = client.resource(rsidsUrl).type(MediaType.APPLICATION_JSON_TYPE).
