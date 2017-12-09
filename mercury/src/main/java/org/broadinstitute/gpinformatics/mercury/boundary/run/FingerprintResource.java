@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -223,6 +224,7 @@ public class FingerprintResource {
     }
 
     @POST
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public String post(FingerprintBean fingerprintBean) {
         String sampleKey = "SM-" + fingerprintBean.getAliquotLsid().substring(fingerprintBean.getAliquotLsid().
                 lastIndexOf(':') + 1);
