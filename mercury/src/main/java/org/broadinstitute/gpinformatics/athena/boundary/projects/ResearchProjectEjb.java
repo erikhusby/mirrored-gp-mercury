@@ -317,13 +317,22 @@ public class ResearchProjectEjb {
         List<String> errorMessages = new ArrayList<>();
 
         for (SubmissionStatusDetailBean status : submissionResults) {
-            SubmissionTracker submissionTracker = submissionIdentifierToTracker.get(status.getUuid());
-            if (CollectionUtils.isNotEmpty(status.getErrors())) {
-                for(String errorMessage:status.getErrors()) {
-                    errorMessages.add(String.format("%s: %s", submissionTracker.getSubmittedSampleName(), errorMessage));
+            if (StringUtils.isBlank(status.getUuid())) {
+                if (!status.getErrors().isEmpty()) {
+                    errorMessages.addAll(status.getErrors());
+                } else {
+                    errorMessages.add("Unknown error while posting submission.");
                 }
-            }else {
-                submissionDtoMap.get(submissionTracker).setStatusDetailBean(status);
+            } else {
+                SubmissionTracker submissionTracker = submissionIdentifierToTracker.get(status.getUuid());
+                if (CollectionUtils.isNotEmpty(status.getErrors())) {
+                    for (String errorMessage : status.getErrors()) {
+                        errorMessages
+                            .add(String.format("%s: %s", submissionTracker.getSubmittedSampleName(), errorMessage));
+                    }
+                } else {
+                    submissionDtoMap.get(submissionTracker).setStatusDetailBean(status);
+                }
             }
         }
 
