@@ -194,7 +194,7 @@
                     return data;
                 }
                 oTable = $j('#submissionSamples').dataTable({
-                    "bDeferRender": true,
+                    "bDeferRender": false,
                     "oLanguage": {
                         "sInfo": "_TOTAL_ submissions displayed.",
                         "sProcessing": "&nbsp;<img src='${ctxpath}/images/spinner.gif'>&nbsp;Please wait. Gathering data from Mercury, BSP, and Picard. This may take a few minutes."
@@ -203,7 +203,7 @@
                     "bStateSave": true,
                     "bProcessing": true,
                     "bInfo": true,
-                    "sDom": "r<'#filtering.accordion'<'row-fluid'<'span12'<'columnFilter'>><'row-fluid'<'span8'f><'span4' iT>'span2'>>>t<'row-fluid'<'span6'><'span6'p>>",
+                    "sDom": "r<'row-fluid'<'span12'T>><'#filtering.accordion'<'row-fluid'<'span12'<'columnFilter'>><'row-fluid'<'span8'f><'span4' i>'span2'>>>t<'row-fluid'<'span6'><'span6'p>>",
                     "sAjaxSource": '${ctxpath}/projects/project.action',
                     "fnServerData": function (sSource, aoData, fnCallback, oSettings) {
                         aoData.push({"name": "researchProject", "value": "${researchProject}"});
@@ -305,10 +305,14 @@
 
                         updateSearchText();
                         $j(findFilterTextInput(oTable).on("change init", updateSearchText));
-                    },
-                    "fnDrawCallback": function () {
+
                         $j(".submissionControls").show();
                         $j(".accordion").show();
+
+                    },
+                    "fnDrawCallback": function () {
+//                        $j(".submissionControls").show();
+//                        $j(".accordion").show();
                         $j(".ui-accordion-content").css('overflow', 'visible');
                         $j('.shiftCheckbox').enableCheckboxRangeSelection();
 
