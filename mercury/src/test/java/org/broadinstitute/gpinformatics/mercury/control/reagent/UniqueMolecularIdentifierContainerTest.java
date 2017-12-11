@@ -175,13 +175,10 @@ public class UniqueMolecularIdentifierContainerTest extends Arquillian {
         SequencingTemplateType sequencingTemplateType = limsQueryResource
                 .fetchIlluminaSeqTemplate("HG52TALXX", SequencingTemplateFactory.QueryVesselType.FLOWCELL, false);
 
-        //TODO JW re-enable when the pipeline is ready for UMI (GPLIM-4825)
-        if (false) {
-            //Check against illumina run query
-            for (SequencingTemplateLaneType lane : sequencingTemplateType.getLanes()) {
-                String readStructure = lane.getReadStructure();
-                Assert.assertEquals(readStructure, "3M2S151T8B8B3M2S151T");
-            }
+        //Check against illumina run query
+        for (SequencingTemplateLaneType lane : sequencingTemplateType.getLanes()) {
+            String readStructure = lane.getReadStructure();
+            Assert.assertEquals(readStructure, "3M2S151T8B8B3M2S151T");
         }
     }
 
