@@ -307,11 +307,8 @@
 
                         $j(".submissionControls").show();
                         $j(".accordion").show();
-
                     },
                     "fnDrawCallback": function () {
-//                        $j(".submissionControls").show();
-//                        $j(".accordion").show();
                         $j(".ui-accordion-content").css('overflow', 'visible');
                         $j('.shiftCheckbox').enableCheckboxRangeSelection();
 
