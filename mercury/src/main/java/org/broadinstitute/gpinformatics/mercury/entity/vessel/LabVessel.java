@@ -41,6 +41,7 @@ import org.hibernate.envers.NotAudited;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -231,6 +232,7 @@ public abstract class LabVessel implements Serializable {
     @OneToMany(mappedBy = "labVessel", cascade = CascadeType.PERSIST)
     private Set<LabMetric> labMetrics = new HashSet<>();
 
+    @Column(name = "STORAGE_LOCATION")
     @ManyToOne
     private StorageLocation storageLocation;
 

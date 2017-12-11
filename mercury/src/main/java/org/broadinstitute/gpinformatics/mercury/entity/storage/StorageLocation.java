@@ -215,6 +215,7 @@ public class StorageLocation {
     @Enumerated(EnumType.STRING)
     private LocationType locationType;
 
+    @Column(name="PARENT_STORAGE_LOCATION")
     @ManyToOne
     private StorageLocation parentStorageLocation;
 
