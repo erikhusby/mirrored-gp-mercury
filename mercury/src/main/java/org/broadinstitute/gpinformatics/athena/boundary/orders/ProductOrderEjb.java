@@ -243,12 +243,7 @@ public class ProductOrderEjb {
         kitDetailCollection.removeAll(Collections.singleton(null));
         deletedIds.removeAll(Collections.singleton(null));
 
-        try {
-            editedProductOrder.updateCustomSettings(customizationValues);
-        } catch (ValidationException e) {
-            log.error(e.getMessage(), e);
-            throw new InformaticsServiceException("Error setting customizations for products on the Product Order");
-        }
+        editedProductOrder.updateCustomSettings(customizationValues);
 
         editedProductOrder.prepareToSave(userBean.getBspUser(), saveType);
 

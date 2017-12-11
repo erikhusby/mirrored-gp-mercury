@@ -568,6 +568,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     public void updateData(ResearchProject researchProject, Product product, List<Product> addOnProducts,
                            List<ProductOrderSample> samples) {
         updateAddOnProducts(addOnProducts);
+        if(this.product != null && this.product != product) {
+            this.clearCustomPriceAdjustment();
+        }
         this.product = product;
         setResearchProject(researchProject);
         setSamples(samples);
@@ -2114,11 +2117,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return found;
     }
 
-    public void setCustomPriceAdjustment(ProductOrderPriceAdjustment customPriceAdjustment)
-            throws ValidationException {
+    public void setCustomPriceAdjustment(ProductOrderPriceAdjustment customPriceAdjustment) {
 
-        this.customPriceAdjustments.clear();
+        clearCustomPriceAdjustment();
         addCustomPriceAdjustment(customPriceAdjustment);
+    }
+
+    public void clearCustomPriceAdjustment() {
+        this.customPriceAdjustments.clear();
     }
 
     public void addCustomPriceAdjustment(ProductOrderPriceAdjustment priceAdjustment) {
@@ -2230,8 +2236,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return returnOrder;
     }
 
-    public void updateCustomSettings(List<CustomizationValues> productCustomizations)
-            throws ValidationException {
+    public void updateCustomSettings(List<CustomizationValues> productCustomizations){
 
         Map<String, CustomizationValues> mappedValues = new HashMap<>();
         for (CustomizationValues productCustomization : productCustomizations) {
@@ -2241,25 +2246,43 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         if(getProduct() != null){
             final Product product = getProduct();
             final String primaryPartNumber = product.getPartNumber();
-            if(mappedValues.containsKey(primaryPartNumber) && !mappedValues.get(primaryPartNumber).isEmpty()) {
-                ProductOrderPriceAdjustment primaryAdjustment =
-                        new ProductOrderPriceAdjustment(new BigDecimal(mappedValues.get(primaryPartNumber).getPrice()),
-                                (StringUtils.isNotBlank(mappedValues.get(primaryPartNumber).getQuantity()))?Integer.valueOf(mappedValues.get(primaryPartNumber).getQuantity()):null,
-                                mappedValues.get(primaryPartNumber).getCustomName());
-                setCustomPriceAdjustment(primaryAdjustment);
+            if(mappedValues.containsKey(primaryPartNumber)) {
+                if(mappedValues.get(primaryPartNumber).isEmpty()) {
+                    if(getSinglePriceAdjustment() != null) {
+                        clearCustomPriceAdjustment();
+                    }
+                } else {
+                    ProductOrderPriceAdjustment primaryAdjustment =
+                            new ProductOrderPriceAdjustment(
+                                    new BigDecimal(mappedValues.get(primaryPartNumber).getPrice()),
+                                    (StringUtils.isNotBlank(mappedValues.get(primaryPartNumber).getQuantity())) ?
+                                            Integer.valueOf(mappedValues.get(primaryPartNumber).getQuantity()) : null,
+                                    mappedValues.get(primaryPartNumber).getCustomName());
+                    setCustomPriceAdjustment(primaryAdjustment);
+                }
             }
         }
 
         for (ProductOrderAddOn productOrderAddOn : getAddOns()) {
             final Product addOnProduct = productOrderAddOn.getAddOn();
-            if(mappedValues.containsKey(addOnProduct.getPartNumber()) &&
-               !mappedValues.get(addOnProduct.getPartNumber()).isEmpty()) {
-                final ProductOrderAddOnPriceAdjustment productOrderAddOnPriceAdjustment =
-                        new ProductOrderAddOnPriceAdjustment(new BigDecimal(mappedValues.get(addOnProduct.getPartNumber()).getPrice()),
-                                (StringUtils.isNotBlank(mappedValues.get(addOnProduct.getPartNumber()).getQuantity()))?Integer.valueOf(mappedValues.get(addOnProduct.getPartNumber()).getQuantity()):null,
-                                mappedValues.get(addOnProduct.getPartNumber()).getCustomName());
+            if(mappedValues.containsKey(addOnProduct.getPartNumber())) {
+                if(mappedValues.get(addOnProduct.getPartNumber()).isEmpty()) {
+                    if(productOrderAddOn.getSingleCustomPriceAdjustment() != null) {
+                        productOrderAddOn.clearCustomPriceAdjustment();
+                    }
+                } else {
+                    final ProductOrderAddOnPriceAdjustment productOrderAddOnPriceAdjustment =
+                            new ProductOrderAddOnPriceAdjustment(
+                                    new BigDecimal(mappedValues.get(addOnProduct.getPartNumber()).getPrice()),
+                                    (StringUtils
+                                            .isNotBlank(mappedValues.get(addOnProduct.getPartNumber()).getQuantity())) ?
+                                            Integer.valueOf(
+                                                    mappedValues.get(addOnProduct.getPartNumber()).getQuantity()) :
+                                            null,
+                                    mappedValues.get(addOnProduct.getPartNumber()).getCustomName());
 
-                productOrderAddOn.setCustomPriceAdjustment(productOrderAddOnPriceAdjustment);
+                    productOrderAddOn.setCustomPriceAdjustment(productOrderAddOnPriceAdjustment);
+                }
             }
         }
     }
