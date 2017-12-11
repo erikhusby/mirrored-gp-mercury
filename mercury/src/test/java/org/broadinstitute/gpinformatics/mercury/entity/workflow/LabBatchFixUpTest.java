@@ -1437,4 +1437,49 @@ public class LabBatchFixUpTest extends Arquillian {
         labBatchDao.flush();
         userTransaction.commit();
     }
+
+    /*
+     * This test is used to change the PDO on bucket entries.  It reads its parameters from a file,
+     * testdata/ChangeBucketEntryPdo.txt, so it can be used for other similar fixups, without writing a new test.
+     * The first line is for the FixupCommentary.  The second line is the lab batch name.  The third and subsequent
+     * lines are space separated Lab Vessel label and Product Order.
+     * Example contents of the file are:
+     * SUPPORT-3543
+     * ARRAY-9623
+     * CO-25311884A01 PDO-13210
+     * CO-25311884A02 PDO-13210
+     * CO-25311884A03 PDO-13210
+     * ...
+     */
+    @Test(enabled = false)
+    public void fixupSupport3543() throws Exception {
+        userBean.loginOSUser();
+        userTransaction.begin();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("ChangeBucketEntryPdo.txt"));
+        LabBatch labBatch = labBatchDao.findByName(lines.get(1));
+        Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<>();
+        for (int i = 2; i < lines.size(); ++i) {
+            String[] fields = WHITESPACE_PATTERN.split(lines.get(i));
+            if (fields.length != 2) {
+                throw new RuntimeException("Expected two white-space separated fields in " + lines.get(i));
+            }
+            for (BucketEntry bucketEntry : labBatch.getBucketEntries()) {
+                if (bucketEntry.getLabVessel().getLabel().equals(fields[0])) {
+                    ProductOrder productOrder = mapKeyToProductOrder.get(fields[1]);
+                    if (productOrder == null) {
+                        productOrder = productOrderDao.findByBusinessKey(fields[1]);
+                        mapKeyToProductOrder.put(productOrder.getBusinessKey(), productOrder);
+                    }
+                    System.out.println("Setting " + bucketEntry.getLabVessel().getLabel() + " to " +
+                            productOrder.getBusinessKey());
+                    bucketEntry.setProductOrder(productOrder);
+                }
+            }
+
+        }
+        labBatchDao.persist(new FixupCommentary(lines.get(0)));
+        labBatchDao.flush();
+        userTransaction.commit();
+    }
 }

@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import java.math.BigDecimal;
 import java.util.Comparator;
+import java.util.List;
 
 /** This interface defines the subset of Dto data needed to create an FCT. */
 public interface FctDto {
@@ -18,6 +19,7 @@ public interface FctDto {
     public int getAllocationOrder();
     public FctDto split(int numberLanes);
     public String getProduct();
+    public List<String> getProductNames();
 
 
     public static final Comparator<Triple<FctDto, LabVessel, FlowcellDesignation>> BY_ALLOCATION_ORDER =

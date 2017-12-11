@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mocks;
 
+import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
@@ -11,9 +12,12 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerExceptio
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quotes;
 
+
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Alternative;
+import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -40,14 +44,14 @@ public class HappyQuoteServiceMock implements QuoteService {
     @Override
     public String registerNewWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
                                   Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
-                                  String callbackParameterName, String callbackParameterValue) {
+                                  String callbackParameterName, String callbackParameterValue, BigDecimal priceAdjustment) {
         throw new RuntimeException("happy mock can't do this");
     }
 
     @Override
     public String registerNewSAPWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
                                      Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
-                                     String callbackParameterName, String callbackParameterValue) {
+                                     String callbackParameterName, String callbackParameterValue, BigDecimal priceAdjustment) {
         throw new RuntimeException("happy mock can't do this");
     }
 
@@ -72,6 +76,12 @@ public class HappyQuoteServiceMock implements QuoteService {
 
     @Override
     public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException {
+        return null;
+    }
+
+    @Override
+    public PriceList getPriceItemsForDate(List<QuoteImportItem> targetedPriceItemCriteria)
+            throws QuoteServerException, QuoteNotFoundException {
         return null;
     }
 

@@ -30,6 +30,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.TubeTransferException;
+import org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.hibernate.annotations.BatchSize;
@@ -48,6 +49,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -66,6 +68,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -227,6 +230,9 @@ public abstract class LabVessel implements Serializable {
 
     @OneToMany(mappedBy = "labVessel", cascade = CascadeType.PERSIST)
     private Set<LabMetric> labMetrics = new HashSet<>();
+
+    @ManyToOne
+    private StorageLocation storageLocation;
 
     @Transient
     private Map<LabMetric.MetricType, Set<LabMetric>> ancestorMetricMap;
@@ -473,6 +479,14 @@ public abstract class LabVessel implements Serializable {
         }
 
         return null;
+    }
+
+    public StorageLocation getStorageLocation() {
+        return storageLocation;
+    }
+
+    public void setStorageLocation(StorageLocation storageLocation) {
+        this.storageLocation = storageLocation;
     }
 
     /**
@@ -1066,6 +1080,7 @@ public abstract class LabVessel implements Serializable {
              */
             throw new RuntimeException("Vessel already contains an entry equal to: " + bucketEntry);
         }
+        bucketEntriesCount++;
         clearCaches();
     }
 
@@ -1076,6 +1091,18 @@ public abstract class LabVessel implements Serializable {
 
     public void addReworkLabBatch(LabBatch reworkLabBatch) {
         reworkLabBatches.add(reworkLabBatch);
+    }
+
+    public void removeFromBatch(LabBatch labBatch) {
+        for (LabBatchStartingVessel labBatchStartingVessel : labBatches) {
+            if (Objects.equals(labBatchStartingVessel.getLabBatch(), labBatch)) {
+                labBatchStartingVessel.setLabVessel(null);
+                labBatchStartingVessel.getLabBatch().getLabBatchStartingVessels().remove(labBatchStartingVessel);
+                labBatches.remove(labBatchStartingVessel);
+                break;
+            }
+        }
+        reworkLabBatches.remove(labBatch);
     }
 
     public Set<LabBatch> getLabBatches() {
@@ -1264,6 +1291,26 @@ public abstract class LabVessel implements Serializable {
             event = eventsList.get(size - 1);
         }
         return event;
+    }
+
+    /**
+     * @return return latest storage lab event.
+     */
+    public LabEvent getLatestStorageEvent() {
+        List<LabEvent> eventsList = getAllEventsSortedByDate();
+        int size = eventsList.size();
+        if (size > 0) {
+            int index = eventsList.size() - 1;
+            while (index >= 0) {
+                LabEvent labEvent = eventsList.get(index);
+                if (labEvent.getLabEventType() == LabEventType.STORAGE_CHECK_IN ||
+                    labEvent.getLabEventType() == LabEventType.STORAGE_CHECK_OUT) {
+                    return labEvent;
+                }
+                index--;
+            }
+        }
+        return null;
     }
 
     @SuppressWarnings("unused")

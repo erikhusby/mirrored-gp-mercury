@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
@@ -53,6 +54,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 @Dependent
@@ -501,13 +503,22 @@ public class SequencingTemplateFactory {
     private void validateCollections(Set<String> designations, Set<Product> products, Set<String> structures) {
         if (designations.isEmpty()) {
             throw new InformaticsServiceException("Could not find regulatory designation.");
-        } else if(designations.contains(ResearchProject.RegulatoryDesignation.RESEARCH_ONLY.name())
-                && (designations.contains(ResearchProject.RegulatoryDesignation.GENERAL_CLIA_CAP.name()) ||
-                    designations.contains(ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS.name()))){
-            throw new InformaticsServiceException("Template tube has mix of Research and Clinical regulatory designations");
         }
         if (products.isEmpty()) {
             throw new InformaticsServiceException("Could not find any products.");
+        }
+        boolean mixedFlowcellOk = false;
+        for (Product product : products) {
+            if (Objects.equals(product.getAggregationDataType(), Aggregation.DATA_TYPE_WGS)) {
+                mixedFlowcellOk = true;
+                break;
+            }
+        }
+        if(!mixedFlowcellOk &&
+                designations.contains(ResearchProject.RegulatoryDesignation.RESEARCH_ONLY.name())
+                && (designations.contains(ResearchProject.RegulatoryDesignation.GENERAL_CLIA_CAP.name()) ||
+                    designations.contains(ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS.name()))){
+            throw new InformaticsServiceException("Template tube has mix of Research and Clinical regulatory designations");
         }
         if (structures.size() > 1) {
             throw new InformaticsServiceException("Found mix of different index lengths.");

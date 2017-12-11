@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
@@ -66,6 +67,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -139,69 +141,71 @@ public class ZimsIlluminaRunFactory {
             perLaneSampleInstanceDtos.add(sampleInstanceDtos);
             String positionName = positionNames.next();
             VesselPosition vesselPosition = VesselPosition.getByName(positionName);
-            // todo jmt delete this code, and determine if remainder can be simplified
-//            PipelineTransformationCriteria criteria = new PipelineTransformationCriteria();
-//            flowcell.getContainerRole().evaluateCriteria(vesselPosition, criteria, Ancestors, null, 0);
-//            Map<SampleInstanceV2, SampleInstanceV2> laneSampleInstances = new HashMap<>();
+
+            boolean mixedLaneOk = false;
+            for (SampleInstanceV2 sampleInstance : flowcell.getContainerRole().getSampleInstancesAtPositionV2(
+                    vesselPosition)) {
+                BucketEntry singleBucketEntry = sampleInstance.getSingleBucketEntry();
+                if (singleBucketEntry != null) {
+                    if (Objects.equals(singleBucketEntry.getProductOrder().getProduct().getAggregationDataType(),
+                        Aggregation.DATA_TYPE_WGS)) {
+                        mixedLaneOk = true;
+                        break;
+                    }
+                }
+            }
+
             for (SampleInstanceV2 laneSampleInstance :
-                    flowcell.getContainerRole().getSampleInstancesAtPositionV2(vesselPosition)) {
-//                laneSampleInstances.put(sampleInstanceV2, sampleInstanceV2);
-//            }
-//
-//            for (LabVessel labVessel : criteria.getNearestLabVessels()) {
-//                Set<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
-//                for (SampleInstanceV2 sampleInstance : sampleInstances) {
-//                    // Must use equivalent sample instance in the lane, to reflect any rework LCSET since the catch.
-//                    SampleInstanceV2 laneSampleInstance = laneSampleInstances.get(sampleInstance);
-//                    if (laneSampleInstance == null) {
-//                        throw new RuntimeException("Failed to find " + sampleInstance.getMercuryRootSampleName() +
-//                                " in lane " + laneNum);
-//                    }
-                    BucketEntry singleBucketEntry = laneSampleInstance.getSingleBucketEntry();
-                    String productOrderKey = null;
-                    if (singleBucketEntry != null) {
-                        productOrderKey = singleBucketEntry.getPoBusinessKey();
-                        productOrderKeys.add(productOrderKey);
+                flowcell.getContainerRole().getSampleInstancesAtPositionV2(vesselPosition)) {
+                BucketEntry singleBucketEntry = laneSampleInstance.getSingleBucketEntry();
+                String productOrderKey = null;
+                if (singleBucketEntry != null) {
+                    productOrderKey = singleBucketEntry.getPoBusinessKey();
+                    productOrderKeys.add(productOrderKey);
+                }
+                // todo jmt root may be null
+                String pdoSampleName;
+                ProductOrderSample productOrderSample = laneSampleInstance.getSingleProductOrderSample();
+                if (productOrderSample != null) {
+                    pdoSampleName = productOrderSample.getSampleKey();
+                } else {
+                    // Controls won't have a ProductOrderSample, so use root sample ID.
+                    pdoSampleName = laneSampleInstance.getMercuryRootSampleName();
+                }
+                String sampleId = laneSampleInstance.getMercuryRootSampleName();
+                LabBatchStartingVessel importLbsv = laneSampleInstance.getSingleBatchVessel(LabBatch.LabBatchType.SAMPLES_IMPORT);
+                if (importLbsv != null) {
+                    Collection<MercurySample> mercurySamples = importLbsv.getLabVessel().getMercurySamples();
+                    if (!mercurySamples.isEmpty()) {
+                        sampleId = mercurySamples.iterator().next().getSampleKey();
                     }
-                    // todo jmt root may be null
-                    String pdoSampleName;
-                    ProductOrderSample productOrderSample = laneSampleInstance.getSingleProductOrderSample();
-                    if (productOrderSample != null) {
-                        pdoSampleName = productOrderSample.getSampleKey();
-                    } else {
-                        // Controls won't have a ProductOrderSample, so use root sample ID.
-                        pdoSampleName = laneSampleInstance.getMercuryRootSampleName();
+                }
+                sampleIds.add(sampleId);
+                LabVessel libraryVessel = flowcell.getNearestTubeAncestorsForLanes().get(vesselPosition);
+                if (flowcellDesignation == null) {
+                    // Only need one designation since all of them constituting this flowcell will have been
+                    // grouped by and therefore have the same flowcell parameters.
+                    List<FlowcellDesignation> flowcellDesignations =
+                            flowcellDesignationEjb.getFlowcellDesignations(Collections.singleton(libraryVessel));
+                    if (CollectionUtils.isNotEmpty(flowcellDesignations)) {
+                        flowcellDesignation = flowcellDesignations.get(0);
                     }
-                    String sampleId = laneSampleInstance.getMercuryRootSampleName();
-                    LabBatchStartingVessel importLbsv = laneSampleInstance.getSingleBatchVessel(LabBatch.LabBatchType.SAMPLES_IMPORT);
-                    if (importLbsv != null) {
-                        Collection<MercurySample> mercurySamples = importLbsv.getLabVessel().getMercurySamples();
-                        if (!mercurySamples.isEmpty()) {
-                            sampleId = mercurySamples.iterator().next().getSampleKey();
-                        }
-                    }
-                    sampleIds.add(sampleId);
-                    LabVessel libraryVessel = flowcell.getNearestTubeAncestorsForLanes().get(vesselPosition);
-                    if (flowcellDesignation == null) {
-                        // Only need one designation since all of them constituting this flowcell will have been
-                        // grouped by and therefore have the same flowcell parameters.
-                        List<FlowcellDesignation> flowcellDesignations =
-                                flowcellDesignationEjb.getFlowcellDesignations(Collections.singleton(libraryVessel));
-                        if (CollectionUtils.isNotEmpty(flowcellDesignations)) {
-                            flowcellDesignation = flowcellDesignations.get(0);
-                        }
-                    }
-                    boolean isCrspLane = crspPipelineUtils.areAllSamplesForCrsp(
-                            libraryVessel.getSampleInstancesV2());
+                }
+                boolean isCrspLane;
+                if (mixedLaneOk && singleBucketEntry != null) {
+                    isCrspLane = singleBucketEntry.getProductOrder().getResearchProject().getRegulatoryDesignation().
+                            isClinical();
+                } else {
+                    isCrspLane = crspPipelineUtils.areAllSamplesForCrsp(
+                            libraryVessel.getSampleInstancesV2(), mixedLaneOk);
+                }
 
-                    String libraryName = libraryVessel.getLabel();
-                    String metadataSource = laneSampleInstance.getMetadataSourceForPipelineAPI();
+                String libraryName = libraryVessel.getLabel();
+                String metadataSource = laneSampleInstance.getMetadataSourceForPipelineAPI();
                     LabVessel contextVessel = getContextVessel(laneSampleInstance);
-                    sampleInstanceDtos.add(new SampleInstanceDto(laneNum, contextVessel,
-                            laneSampleInstance, sampleId, productOrderKey, libraryName, libraryVessel.getCreatedOn(),
-                            pdoSampleName, isCrspLane, metadataSource));
-
-//                }
+                sampleInstanceDtos.add(new SampleInstanceDto(laneNum, contextVessel,
+                        laneSampleInstance, sampleId, productOrderKey, libraryName, libraryVessel.getCreatedOn(),
+                        pdoSampleName, isCrspLane, metadataSource));
             }
         }
         int numberOfLanes = laneNum;

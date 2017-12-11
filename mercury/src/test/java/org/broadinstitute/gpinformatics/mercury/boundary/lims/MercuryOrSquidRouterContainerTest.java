@@ -391,7 +391,7 @@ public class MercuryOrSquidRouterContainerTest extends StubbyContainerTest {
      * Assists in creating a set of Mercury Tubes based on an existing Product order.  This method will also, if need
      * be, add the created mercury vessels to a given Bucket to assist
      * <p/>
-     * TODO SGM:  this could probably be broken up better to define an alternate method to make cleaner
+     * TODO  this could probably be broken up better to define an alternate method to make cleaner
      *
      * @param productOrder Product order by which to determine the Samples to Create.
      * @param bucketName   Optional:  Name of the Bucket to create.  If left null, bucket creation will be avoided

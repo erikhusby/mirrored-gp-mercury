@@ -311,5 +311,26 @@ public class LimsQueriesTest {
         assertThat(concentrationAndVolumeType.getWeight(), equalTo(receptacleWeight));
         assertThat(concentrationAndVolumeType.getConcentrationUnits(),
                 equalTo(LabMetric.LabUnit.UG_PER_ML.getDisplayName()));
+
+        // If volume or concentration is null on labvessel and sample details have data for both, then trust
+        // sample details as the source
+        Map<String, LabVessel> clinicalGenomeTubes = new HashMap<>();
+        tube = new BarcodedTube(barcode);
+        tube.setVolume(volume);
+        tube.getMercurySamples().add(new MercurySample("SM-1234", MercurySample.MetadataSource.BSP));
+        clinicalGenomeTubes.put(barcode, tube);
+        Map<String, GetSampleDetails.SampleInfo> mapBarcodeToInfo = new HashMap<>();
+        GetSampleDetails.SampleInfo sampleInfo = new GetSampleDetails.SampleInfo();
+        sampleInfo.setConcentration(5f);
+        sampleInfo.setVolume(25f);
+        mapBarcodeToInfo.put(barcode, sampleInfo);
+        concentrationAndVolumeTypeMap =
+                limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(clinicalGenomeTubes, mapBarcodeToInfo, true);
+        ConcentrationAndVolumeAndWeightType concentrationAndVolumeAndWeightType =
+                concentrationAndVolumeTypeMap.get(barcode);
+        BigDecimal expectedConcentration = new BigDecimal("5.00");
+        BigDecimal expectedVolume = new BigDecimal("25.00");
+        assertThat(concentrationAndVolumeAndWeightType.getConcentration(), equalTo(expectedConcentration));
+        assertThat(concentrationAndVolumeAndWeightType.getVolume(), equalTo(expectedVolume));
     }
 }

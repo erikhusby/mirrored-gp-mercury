@@ -161,7 +161,7 @@ public class TagVesselActionBean extends RackScanActionBean {
             }
         }
 
-        labVesselDao.flush();
+
         addMessages(messageCollection);
         return displayResults();
     }
@@ -294,6 +294,9 @@ public class TagVesselActionBean extends RackScanActionBean {
                             try {
                                 JiraIssue issue = getJiraDetails(ticket);
                                 jiraTicket = issue.getSummary();
+                                if(jiraTicket == null) {
+                                    jiraTicket = "Jira ticket  " + issue.getKey() + " does not exist.";
+                                }
                             } catch (IOException e) {
                             }
                             experimentText = idsBuilder.append(" " + "<a target =_blank href=" + ticket.getBrowserUrl() + ">" + ticket.getTicketId() + "</a>").append(" ").append(jiraTicket).toString();
@@ -361,6 +364,7 @@ public class TagVesselActionBean extends RackScanActionBean {
                 vessel.removeJiraTickets();
             }
         }
+        labVesselDao.flush();
     }
 
     /**
@@ -393,9 +397,9 @@ public class TagVesselActionBean extends RackScanActionBean {
             devConditionList.add(devCondition);
         }
         setShowResults(true);
+        LabVessel vessel = findAvailableVesselsByPosition(position);
         for(String devItem : devConditionList) {
             JiraTicket existingTicket = jiraTicketDao.fetchByName(devItem);
-            LabVessel vessel = findAvailableVesselsByPosition(position);
             if(vessel == null) {
                 messageCollection.addError("Lab Vessel:  " +  getRackScan().get(position) + " does not exist at position: " + position);
                 return;
@@ -405,6 +409,7 @@ public class TagVesselActionBean extends RackScanActionBean {
             else
                 vessel.getJiraTickets().add(existingTicket);
         }
+        labVesselDao.persist(vessel);
         messageCollection.addInfo("Successfully Added: " + getRackScan().get(position) + " to position: " + position);
 
     }
@@ -473,7 +478,7 @@ public class TagVesselActionBean extends RackScanActionBean {
                 List<JiraTicket> jiraTickets = getSortedJirTickets(vessel);
                 String summary = "<br>";
                 for (JiraTicket ticket : jiraTickets) {
-                    JiraIssue jiraIssue = jiraService.getIssue(ticket.getTicketId());
+                    JiraIssue jiraIssue =  getJiraDetails(ticket);
                     summary += jiraIssue.getSummary() + "<br>";
                 }
                 if (summary.length() > 0)

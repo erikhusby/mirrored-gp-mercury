@@ -868,6 +868,67 @@
         </addColumn>
     </changeSet>
 
+    <changeSet author="jowalsh" id="GPLIM-4178-1">
+        <createTable schemaName="mercury" tableName="storage_location">
+            <column name="storage_location_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="label" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="location_type" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="barcode" type="varchar(255)"/>
+            <column name="parent_storage_location" type="number(19,0)" />
+        </createTable>
+        <addPrimaryKey constraintName="pk_storage_location" tableName="storage_location"
+                       columnNames="storage_location_id"/>
+        <addForeignKeyConstraint constraintName="fk_location_parent_location"
+                                 baseTableName="storage_location" baseColumnNames="parent_storage_location"
+                                 referencedTableName="storage_location" referencedColumnNames="storage_location_id"/>
+        <addUniqueConstraint constraintName="U_STORAGE_BARCODE" tableName="STORAGE_LOCATION"
+                             schemaName="mercury" columnNames="barcode"/>
+    </changeSet>
+    <changeSet author="jowalsh" id="GPLIM-4178-2">
+        <createTable schemaName="mercury" tableName="storage_location_aud">
+            <column name="storage_location_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="label" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="location_type" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="barcode" type="varchar(255)"/>
+            <column name="parent_storage_location" type="number(19,0)"/>
+            <column name="rev" type="number(19,0)" />
+            <column name="revtype" type="number(3,0)" />
+        </createTable>
+        <addPrimaryKey constraintName="pk_storage_location_aud" tableName="storage_location_aud"
+                       columnNames="rev, storage_location_id"/>
+        <addForeignKeyConstraint constraintName="fk_locationrev_info"
+                                 baseTableName="storage_location_aud" baseColumnNames="rev"
+                                 referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
+    </changeSet>
+    <changeSet author="jowalsh" id="GPLIM-4178-3">
+        <addColumn schemaName="mercury" tableName="lab_vessel">
+            <column name="storage_location" type="number(19,0)"/>
+        </addColumn>
+        <addForeignKeyConstraint constraintName="fk_lv_storage_location"
+                                 baseTableSchemaName="mercury" baseTableName="lab_vessel" baseColumnNames="storage_location"
+                                 referencedTableSchemaName="mercury" referencedTableName="storage_location" referencedColumnNames="storage_location_id"/>
+    </changeSet>
+    <changeSet author="jowalsh" id="GPLIM-4178-4">
+        <addColumn schemaName="mercury" tableName="lab_vessel_aud">
+            <column name="storage_location" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="jowalsh" id="GPLIM-4178-5" >
+        <createSequence schemaName="mercury" sequenceName="SEQ_STORAGE_LOCATION" incrementBy="50"/>
+    </changeSet>
+
     <changeSet id="GPLIM-4820-1" author="epolk">
       <dropForeignKeyConstraint baseTableName="FLOWCELL_DESIGNATION" constraintName="FK_FLOWCELL_DESIG_EVENT"/>
       <dropColumn tableName="FLOWCELL_DESIGNATION" columnName="loading_tube_event"/>
@@ -895,4 +956,24 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-5149-1" author="thompson">
+        <createIndex schemaName="mercury" tableName="lab_vessel" indexName="IX_LV_STORAGE_LOCATION">
+            <column name="storage_location"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-5149-2" author="thompson">
+        <createIndex schemaName="mercury" tableName="STORAGE_LOCATION_AUD" indexName="IX_SLA_STORAGE_LOCATION_ID">
+            <column name="STORAGE_LOCATION_ID"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-5149-3" author="thompson">
+        <createIndex schemaName="mercury" tableName="storage_location" indexName="ix_sl_parent_storage_location">
+            <column name="parent_storage_location"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-5153-1" author="thompson">
+        <dropNotNullConstraint schemaName="mercury" tableName="storage_location_aud" columnName="label"/>
+        <dropNotNullConstraint schemaName="mercury" tableName="storage_location_aud" columnName="location_type"/>
+    </changeSet>
 </databaseChangeLog>

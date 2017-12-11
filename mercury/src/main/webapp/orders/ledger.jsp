@@ -294,7 +294,8 @@
                 var filterIndex = filterIndexes[$target.attr('name')];
                 var filterFunction = window[$target.attr('value')];
                 var filterText = $target.text()
-                var pill = $target.parentsUntil('li.dropdown').siblings('a');
+                var pill = $target.parentsUntil('li.dropdown').siblings
+                ('a');
                 var check = $target.siblings('div');
                 var allChecks = $target.parentsUntil('li.dropdown', 'ul.dropdown-menu').find('.checkContainer');
                 pill.html(filterText + ' <b class="caret">');
@@ -682,7 +683,7 @@
 
     <div class="row-fluid">
         <div class="span3"><span class="label-form">Product</span><br>${actionBean.productOrder.product.name}</div>
-        <div class="span3"><span class="label-form">Primary Price Item</span><br>${actionBean.productOrder.product.primaryPriceItem.name}</div>
+        <div class="span3"><span class="label-form">Price Item</span><br>${actionBean.productOrder.determinePriceItemByCompanyCode(actionBean.productOrder.product).name}</div>
         <div class="span2"><span class="label-form">Quote</span><br>${actionBean.productOrder.quoteId}</div>
         <div class="span1">${actionBean.productOrder.samples.size()} samples</div>
         <div class="span2" style="text-align: right">
@@ -890,7 +891,7 @@
                                    class="ledgerQuantity"
                                    priceItemId="${priceItem.priceItemId}"
                                    billedQuantity="${info.getBilledForPriceItem(priceItem)}">
-                            <c:if test="${priceItem == actionBean.productOrder.product.primaryPriceItem && info.autoFillQuantity != 0}">
+                            <c:if test="${priceItem == actionBean.productOrder.determinePriceItemByCompanyCode(actionBean.productOrder.product) && info.autoFillQuantity != 0}">
                                 <input type="hidden"
                                        name="${info.sample.samplePosition}-autoFill-${info.sample.name}"
                                        value="${info.autoFillQuantity}"

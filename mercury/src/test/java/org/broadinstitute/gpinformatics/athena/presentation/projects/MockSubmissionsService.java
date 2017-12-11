@@ -14,7 +14,6 @@ package org.broadinstitute.gpinformatics.athena.presentation.projects;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionConfig;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsServiceImpl;
 import org.mockserver.integration.ClientAndServer;
-import org.mockserver.model.Cookie;
 import org.mockserver.model.HttpRequest;
 import org.mockserver.model.HttpResponse;
 
@@ -26,9 +25,8 @@ public class MockSubmissionsService extends SubmissionsServiceImpl {
     public static MockSubmissionsService serviceWithResponse(ClientAndServer mockServer, HttpResponse httpResponse) {
         MockSubmissionConfig submissionConfig = new MockSubmissionConfig(mockServer);
         MockSubmissionsService mockSubmissionsService = new MockSubmissionsService(submissionConfig);
-        Cookie sessionId = new Cookie("sessionId", String.format("%d", mockSubmissionsService.hashCode()));
 
-        mockServer.when(HttpRequest.request().withCookies(sessionId)).respond(httpResponse);
+        mockServer.when(HttpRequest.request()).respond(httpResponse);
         return mockSubmissionsService;
     }
 }

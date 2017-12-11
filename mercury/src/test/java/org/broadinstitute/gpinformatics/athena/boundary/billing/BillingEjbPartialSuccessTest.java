@@ -44,6 +44,7 @@ import org.testng.annotations.Test;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -81,8 +82,10 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
     private PriceListCache priceListCache;
 
     public static final String GOOD_WORK_ID = "workItemId\t1000";
-    public static final String SM_1234 = "SM-1234";
-    public static final String SM_5678 = "SM-5678";
+    final long time = (new Date()).getTime();
+
+    public static final String SM_1234 = "SM-"+(new Date()).getTime();
+    public static final String SM_5678 = "SM-"+(new Date()).getTime()+1;
     private static String FAILING_PRICE_ITEM_NAME = "";
     private static String FAILING_PRICE_ITEM_SAMPLE = "";
 
@@ -152,6 +155,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
     protected static class PartiallySuccessfulQuoteServiceStub implements QuoteService {
         private static final long serialVersionUID = 6093273925949722169L;
         private Log log = LogFactory.getLog(QuoteFundingList.class);
+
         @Override
         public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
             return new PriceList();
@@ -168,7 +172,8 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                                       QuotePriceItem itemIsReplacing,
                                       Date reportedCompletionDate,
                                       double numWorkUnits,
-                                      String callbackUrl, String callbackParameterName, String callbackParameterValue) {
+                                      String callbackUrl, String callbackParameterName, String callbackParameterValue,
+                                      BigDecimal priceAdjustment) {
             // Simulate failure only for one particular PriceItem.
             log.debug("In register New work");
             if (FAILING_PRICE_ITEM_NAME.equals(quotePriceItem.getName())) {
@@ -200,7 +205,8 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         @Override
         public String registerNewSAPWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
                                          Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
-                                         String callbackParameterName, String callbackParameterValue) {
+                                         String callbackParameterName, String callbackParameterValue,
+                                         BigDecimal priceAdjustment) {
             // Simulate failure only for one particular PriceItem.
             log.debug("In register New work");
             if (FAILING_PRICE_ITEM_NAME.equals(quotePriceItem.getName())) {
@@ -255,6 +261,21 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         @Override
         public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException {
             return null;
+        }
+
+        @Override
+        public PriceList getPriceItemsForDate(List<QuoteImportItem> targetedPriceItemCriteria)
+                throws QuoteServerException, QuoteNotFoundException {
+            PriceList testPriceList = new PriceList();
+
+            for (QuoteImportItem targetedPriceItemCriterion : targetedPriceItemCriteria) {
+                final QuotePriceItem quotePriceItem =
+                        QuotePriceItem.convertMercuryPriceItem(targetedPriceItemCriterion.getPriceItem());
+                quotePriceItem.setPrice("50.00");
+                testPriceList.add(quotePriceItem);
+            }
+
+            return testPriceList;
         }
 
         @Override
@@ -440,8 +461,9 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
     @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
     public void testMultipleFailure() throws Exception{
 
-        String[] sampleNameList = {"SM-2342", "SM-9291", "SM-2349", "SM-9944", "SM-4444", "SM-4441", "SM-1112",
-                "SM-4488"};
+        final long time = (new Date()).getTime();
+        String[] sampleNameList = {"SM-"+time, "SM-"+time+1, "SM-"+time+2, "SM-"+time+3, "SM-"+time+4, "SM-"+time+5, "SM-"+time+6,
+                "SM-"+time+7};
         cycleFails = true;
         lastResult = Result.FAIL;
         quoteCount = 0;
@@ -489,8 +511,9 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
         log.debug("Running no forced failures threaded");
 
-        String[] sampleNameList = {"SM-2342", "SM-9291", "SM-2349", "SM-9944", "SM-4444", "SM-4441", "SM-1112",
-                "SM-4488"};
+        final long time = (new Date()).getTime();
+        String[] sampleNameList = {"SM-"+time, "SM-9291"+time+1, "SM-"+time+2, "SM-"+time+3, "SM-"+time+4, "SM-"+time+5, "SM-"+time+6,
+                "SM-"+time+7};
         cycleFails = false;
         lastResult = Result.FAIL;
         quoteCount = 0;

@@ -44,7 +44,7 @@ public class SampleLink {
     }
 
     private enum Format {
-        /* TODO SGM: Revisit the Validity of this enum */
+        /* TODO Revisit the Validity of this enum */
         BSP("BSP_SAMPLE", "BSP Sample"),
         UNKNOWN(null, null);
         private final String target;

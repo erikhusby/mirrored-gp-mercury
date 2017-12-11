@@ -39,7 +39,15 @@ public class PriceItemTokenInput extends TokenInput<QuotePriceItem> {
 
     public String getJsonString(String query) throws JSONException {
 
-        Collection<QuotePriceItem> quotePriceItems = priceListCache.searchPriceItems(query);
+        Collection<QuotePriceItem> quotePriceItems = priceListCache.searchPriceItems(query,
+                PriceListCache.PriceGrouping.ALL);
+        return createItemListString(new ArrayList<>(quotePriceItems));
+    }
+
+    public String getExternalJsonString(String query) throws JSONException {
+
+        Collection<QuotePriceItem> quotePriceItems = priceListCache.searchPriceItems(query,
+                PriceListCache.PriceGrouping.External_Only);
         return createItemListString(new ArrayList<>(quotePriceItems));
     }
 

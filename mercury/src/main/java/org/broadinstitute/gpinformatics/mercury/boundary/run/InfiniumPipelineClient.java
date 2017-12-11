@@ -38,8 +38,10 @@ public class InfiniumPipelineClient {
         Session session = null;
         try {
             String url = String.format(
-                    "tcp://%s:%d", infiniumStarterConfig.getJmsHost(), infiniumStarterConfig.getJmsPort());
-            ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(url);
+                    "failover:ssl://%s:%d", infiniumStarterConfig.getJmsHost(), infiniumStarterConfig.getJmsPort());
+            ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(
+                    infiniumStarterConfig.getLogin(), infiniumStarterConfig.getPassword(), url);
+            //connectionFactory.setUseAsyncSend(false);
             connection = connectionFactory.createQueueConnection();
 
             connection.start();
@@ -70,5 +72,10 @@ public class InfiniumPipelineClient {
                 log.error("Exception occurred when closing JMS Session and connection", e);
             }
         }
+    }
+
+    public void setInfiniumStarterConfig(
+            InfiniumStarterConfig infiniumStarterConfig) {
+        this.infiniumStarterConfig = infiniumStarterConfig;
     }
 }

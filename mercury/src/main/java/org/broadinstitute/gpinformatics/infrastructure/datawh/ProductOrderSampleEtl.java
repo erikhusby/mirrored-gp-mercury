@@ -21,6 +21,8 @@ import java.util.Set;
 public class ProductOrderSampleEtl extends GenericEntityAndStatusEtl<ProductOrderSample, ProductOrderSample> {
     private String samplePositionJoinTable;
 
+    private int counter = 0;
+
     public ProductOrderSampleEtl() {
     }
 
@@ -43,6 +45,10 @@ public class ProductOrderSampleEtl extends GenericEntityAndStatusEtl<ProductOrde
 
     @Override
     Collection<String> dataRecords(String etlDateStr, boolean isDelete, Long entityId) {
+        if( ++counter > JPA_CLEAR_THRESHOLD ) {
+            counter = 0;
+            dao.clear();
+        }
         return dataRecords(etlDateStr, isDelete, dao.findById(ProductOrderSample.class, entityId));
     }
 
