@@ -647,15 +647,14 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         }
     }
 
-    //TODO JW re-enable when the pipeline is ready for UMI (GPLIM-4825)
-    @Test(enabled = false)
+    @Test
     public void testSingleUmiMultiDesignations() {
         UniqueMolecularIdentifier umiReagent = LabEventTest.createUmi(6, 3, UniqueMolecularIdentifier.UMILocation.BEFORE_SECOND_INDEX_READ);
         StaticPlate umiPlate = LabEventTest.buildUmiPlate("UMITestPlate0101", umiReagent);
         testUniqueMolecularIdentifierMultiDesignations(umiPlate, "99T8B6M3S8B99T", LibraryConstructionEntityBuilder.Umi.SINGLE);
     }
 
-    @Test(enabled = false)
+    @Test
     public void testDoubleUMIMultiDesignations() {
         UniqueMolecularIdentifier umiReagent = LabEventTest.createUmi(3, 2, UniqueMolecularIdentifier.UMILocation.BEFORE_FIRST_READ);
         UniqueMolecularIdentifier umiReagent2 = LabEventTest.createUmi(3, 2, UniqueMolecularIdentifier.UMILocation.BEFORE_SECOND_READ);
@@ -665,7 +664,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
                 LibraryConstructionEntityBuilder.Umi.DUAL);
     }
 
-    @Test(enabled = false)
+    @Test
     public void testDoubleUMIFromTubeMultiDesignations() {
         UMIReagent umiReagent = new UMIReagent(
                 LabEventTest.createUmi(3, 2, UniqueMolecularIdentifier.UMILocation.BEFORE_FIRST_READ));
