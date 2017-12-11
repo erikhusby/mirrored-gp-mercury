@@ -9,10 +9,11 @@ Usage: $0 [-t <test> ] [-b <build>] [-j <jboss> ]
 Where:
 	-h		Show this message
 	-t <test>	Specifies a particular test profile to be run. Defaults to the standard set.
-	-b <build>	Specifies a particular build profile to be used. Defaults to BUILD.
+	-b <build>	Specifies a particular build profile to be used. Defaults to BUILD,Arquillian-JBossAS7-Remote.
 	-j <jboss>	Specifies a particular JBoss or Wildfly installation.
 	-m <maven>	Specifies additional Maven options. Can be mentioned more than once, they accumulate
 	-c 		Runs tests with Clover.
+	-u <java>   Specifes the Java version to use. Default is Java-1.7
 
 The standard set of test profiles includes:
     Tests.ArqSuite.Standard Tests.ArqSuite.Stubby Tests.Multithreaded Tests.DatabaseFree Tests.ExternalIntegration Tests.Alternatives
@@ -21,16 +22,17 @@ The standard set of test profiles includes:
 Each test profile will be executed separately. The results of each test execution wil be stored in ./surefire-reports-profile where "profile"
 is the test profile name. The exit status will be the failure if any test profile fails, otherwise will be success.
 
-The complete build log will be in tests.log
+The complete build logs will be in tests-$TEST.log
 
 EOF
 }
 TESTS="Tests.ArqSuite.Standard Tests.ArqSuite.Stubby Tests.Multithreaded Tests.DatabaseFree Tests.ExternalIntegration Tests.Alternatives"
-BUILD_PROFILE="BUILD"
+BUILD_PROFILE="BUILD,Arquillian-JBossAS7-Remote"
 CLOVER=0
 ADDITIONAL_OPTIONS=
+JAVA_USE="Java-1.7"
 
-while getopts "hct:b:j:m:" OPTION; do
+while getopts "hct:b:j:m:u:" OPTION; do
     case $OPTION in
 	h) usage; exit 1;;
 	t) TESTS=$OPTARG;;
@@ -38,6 +40,7 @@ while getopts "hct:b:j:m:" OPTION; do
 	j) JBOSS_HOME=$OPTARG;;
 	c) CLOVER=1;;
 	m) ADDITIONAL_OPTIONS="$ADDITIONAL_OPTIONS $OPTARG";;
+	u) JAVA_USE=$OPTARG;;
 	[?]) usage; exit 1;;
     esac
 done
@@ -45,8 +48,12 @@ done
 if [ -e "/broad/tools/scripts/useuse" ]
 then
     source /broad/tools/scripts/useuse
-    use -v Maven-3.1
-    use -v Java-1.7    
+    use Maven-3.1
+    use $JAVA_USE
+else
+    echo "Unable to set $JAVA_USE"
+    ls -l /broad/tools/scripts/useuse
+    exit 1
 fi
 
 if [ ! -e "$JBOSS_HOME" ]
@@ -59,8 +66,6 @@ EOF
     exit 1
 fi
 
-MAVEN_OPTS="-Xms4g -XX:MaxPermSize=1g $SSL_OPTS"
-    
 if [ "x$SSL_OPTS" == "x" ]
 then
     KEYSTORE_FILE="../JBossConfig/src/main/resources/keystore/.keystore"
@@ -83,7 +88,7 @@ else
     BUILD_PROFILE="$BUILD_PROFILE,Clover.All -Dmaven.clover.licenseLocation=/prodinfolocal/BambooHome/clover.license -DmercuryCloverDatabase=`pwd`clover/clover.db"
 fi
 
-OPTIONS="-PArquillian-JBossAS7-Remote,$BUILD_PROFILE -Djava.awt.headless=true --batch-mode  -Dannotation.outputDiagnostics=false -Dmaven.download.meter=silent $ADDITIONAL_OPTIONS"
+OPTIONS="-P$BUILD_PROFILE -Djava.awt.headless=true --batch-mode  -Dannotation.outputDiagnostics=false -Dmaven.download.meter=silent $ADDITIONAL_OPTIONS"
 
 for TEST in $TESTS
 do
@@ -125,7 +130,6 @@ EOF
     fi
 
 done
-
 
 exit $EXIT_STATUS
 

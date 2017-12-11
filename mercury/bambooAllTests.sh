@@ -8,11 +8,12 @@ usage() {
 
      Where:
         -h  Show this message
-        -w  Specifies the particular Wildfly installation
-        -j  Specifies the particular JBoss installation,
+        -w  Specifies the particular Wildfly installation, for example on mercuryfb it would be /local/prodinfolocal/wildfly
+        -j  Specifies the particular JBoss installation, for example: seq01-arqullian
         -c  Runs the tests with Clover.
        	-m <maven>	Specifies additional Maven options. Can be mentioned more than once, they accumulate.
-       	-b  Specifies a particular build profile to be used. Defaults to BUILD.
+       	-b  Specifies a particular build profile to be used. Defaults to BUILD,Arquillian-JBossAS7-Remote.
+       	-u <java>  Specifies version of Java to use, defaults to Java-1.7
 
 Either the JBoss or Wildfly server must be specified.
 
@@ -27,9 +28,10 @@ CLOVER=""
 JBOSS_SERVER=
 WILDFLY_SERVER=
 ADDITIONAL_OPTIONS=
+JAVA_USE="Java-1.7"
 let A=0
 
-while getopts "hcb:j:w:m:" OPTION; do
+while getopts "hcb:j:w:m:u:" OPTION; do
     case $OPTION in
 	h) usage
 	    exit 1
@@ -37,14 +39,18 @@ while getopts "hcb:j:w:m:" OPTION; do
 	b) BUILD=$OPTARG
 	    ;;
 	j) JBOSS_SERVER=$OPTARG
+	    BUILD="$BUILD,Arquillian-JBossAS7-Remote"
 	    (( A += 1 ))
 	    ;;
 	w) WILDFLY_SERVER=$OPTARG
+	    BUILD="$BUILD,Arquillian-WildFly10-Remote"
 	    (( A += 1 ))
 	    ;;
 	c) CLOVER="-c"
 	    ;;
 	m) ADDITIONAL_OPTIONS="$ADDITIONAL_OPTIONS -m $OPTARG "
+	    ;;
+	u) JAVA_USE=$OPTARG
 	    ;;
 	[?]) usage
 	    exit 1
@@ -56,7 +62,7 @@ if [ -e "/broad/tools/scripts/useuse" ]
 then
     source /broad/tools/scripts/useuse
     use -v Maven-3.1
-    use -v Java-1.7
+    use -v $JAVA_USE
 fi
 
 # Only one of JBoss or Wildfly can be specified.
@@ -73,7 +79,7 @@ rm -vrf surefire-reports*
 # Run the NonArquillian tests first
 for TEST in $TESTS_NONARQUILLIAN
 do
-    ./mvnAllTests.sh -t $TEST -b $BUILD $CLOVER $ADDITIONAL_OPTIONS
+    ./mvnAllTests.sh -t $TEST -b $BUILD -u $JAVA_USE $CLOVER $ADDITIONAL_OPTIONS
 done
 
 server() {
@@ -83,8 +89,7 @@ server() {
     fi
     if [[ "x$WILDFLY_SERVER" != "x" ]]
     then
-         echo "Don't know how to $1 a WILDFLY server"
-         exit 1
+        $WILDFLY_SERVER/wildfly.sh $1
     fi
 }
 
@@ -92,7 +97,7 @@ server() {
 for TEST in $TESTS_ARQUILLIAN
 do
     server start
-    ./mvnAllTests.sh -t $TEST -b $BUILD $CLOVER $ADDITIONAL_OPTIONS
+    ./mvnAllTests.sh -t $TEST -b $BUILD -u $JAVA_USE $CLOVER $ADDITIONAL_OPTIONS
     server stop
 done
 
