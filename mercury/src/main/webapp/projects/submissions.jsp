@@ -47,7 +47,6 @@
 
         .submissionControls {
             width: auto;
-            margin-bottom: 20px;
             display: none;
         }
 
