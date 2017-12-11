@@ -2139,17 +2139,14 @@ public class LabEventTest extends BaseEventTest {
         ZimsIlluminaRunFactory zimsIlluminaRunFactory = constructZimsIlluminaRunFactory(productOrder,
                 Collections.<FlowcellDesignation>emptyList());
 
-        //TODO JW re-enable when the pipeline is ready for UMI (GPLIM-4825)
-        if (false) {
-            ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
-            for (ZimsIlluminaChamber zimsIlluminaChamber : zimsIlluminaRun.getLanes()) {
-                if (zimsIlluminaChamber.getSequencedLibrary().equals(denatureTube.getLabel())) {
-                    Assert.assertEquals(zimsIlluminaChamber.getSetupReadStructure(), "76T8B76T");
-                } else if (zimsIlluminaChamber.getSequencedLibrary().equals(denatureTubeUMI.getLabel())) {
-                    Assert.assertEquals(zimsIlluminaChamber.getSetupReadStructure(), "6M3S76T8B76T");
-                } else {
-                    Assert.fail("Wrong sequencing library found " + zimsIlluminaChamber.getSequencedLibrary());
-                }
+        ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
+        for (ZimsIlluminaChamber zimsIlluminaChamber : zimsIlluminaRun.getLanes()) {
+            if (zimsIlluminaChamber.getSequencedLibrary().equals(denatureTube.getLabel())) {
+                Assert.assertEquals(zimsIlluminaChamber.getSetupReadStructure(), "76T8B76T");
+            } else if (zimsIlluminaChamber.getSequencedLibrary().equals(denatureTubeUMI.getLabel())) {
+                Assert.assertEquals(zimsIlluminaChamber.getSetupReadStructure(), "6M3S76T8B76T");
+            } else {
+                Assert.fail("Wrong sequencing library found " + zimsIlluminaChamber.getSequencedLibrary());
             }
         }
     }

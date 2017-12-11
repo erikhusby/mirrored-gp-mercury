@@ -551,14 +551,11 @@ public class SequencingTemplateFactory {
                     molecularIndexReadStructures.add(indexReadStructure);
                 }
 
-                // TODO JW re-enable when Pipeline is ready (GPLIM-4825)
-                if (false) {
-                    for (Reagent reagent : sampleInstance.getReagents()) {
-                        if (OrmUtil.proxySafeIsInstance(reagent, UMIReagent.class)) {
-                            UMIReagent umiReagent =
-                                    OrmUtil.proxySafeCast(reagent, UMIReagent.class);
-                            umiReagents.add(umiReagent.getUniqueMolecularIdentifier());
-                        }
+                for (Reagent reagent : sampleInstance.getReagents()) {
+                    if (OrmUtil.proxySafeIsInstance(reagent, UMIReagent.class)) {
+                        UMIReagent umiReagent =
+                                OrmUtil.proxySafeCast(reagent, UMIReagent.class);
+                        umiReagents.add(umiReagent.getUniqueMolecularIdentifier());
                     }
                 }
             }
