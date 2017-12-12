@@ -27,6 +27,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * JAX-RS web service for fingerprints.
@@ -35,6 +36,9 @@ import java.util.Set;
 @Stateful
 @RequestScoped
 public class FingerprintResource {
+
+    private static final int CONFIDENCE_WIDTH = 5;
+    private static final Pattern EVENT_TYPE_PATTERN = Pattern.compile("\\d{1,2}\\.\\d{1,2}|100.0");
 
     @Inject
     private MercurySampleDao mercurySampleDao;
@@ -212,7 +216,7 @@ public class FingerprintResource {
             Fingerprint fingerprint = stringFingerprintPair.getRight();
             for (int i = 0; i < rsIds.length; i++) {
                 calls.add(new FingerprintCallsBean(rsIds[i], fingerprint.getGenotypes().substring(i * 2, i * 2 + 1),
-                        fingerprint.getCallConfidences().substring(i * 4, i * 4 + 4)));
+                        fingerprint.getCallConfidences().substring(i * CONFIDENCE_WIDTH, i * CONFIDENCE_WIDTH + CONFIDENCE_WIDTH)));
             }
             fingerprints.add(new FingerprintBean(stringFingerprintPair.getLeft(),
                     fingerprint.getDisposition().getAbbreviation(), fingerprint.getMercurySample().getSampleKey(),
@@ -239,7 +243,12 @@ public class FingerprintResource {
         for (FingerprintCallsBean fingerprintCallsBean : fingerprintBean.getCalls()) {
             Integer index = mapRsIdToIndex.get(fingerprintCallsBean.getRsid());
             genotypes[index] = fingerprintCallsBean.getGenotype();
-            callConfidences[index] = fingerprintCallsBean.getCallConfidence();
+
+            String callConfidence = fingerprintCallsBean.getCallConfidence();
+            if (!EVENT_TYPE_PATTERN.matcher(callConfidence).matches()) {
+                throw new ResourceException(callConfidence + " is incorrect format", Response.Status.BAD_REQUEST);
+            }
+            callConfidences[index] = callConfidence;
         }
         StringBuilder genotypesBuilder = new StringBuilder();
         StringBuilder callConfidencesBuilder = new StringBuilder();

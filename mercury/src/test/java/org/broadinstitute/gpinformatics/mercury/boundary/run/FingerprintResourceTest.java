@@ -54,7 +54,7 @@ public class FingerprintResourceTest extends Arquillian {
         String postUrl = RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/fingerprint";
         List<FingerprintCallsBean> calls = new ArrayList<>();
         for (String rsid : rsIdsBean.getRsids()) {
-            calls.add(new FingerprintCallsBean(rsid, "AA", "99.7"));
+            calls.add(new FingerprintCallsBean(rsid, "AA", "99.99"));
         }
 
         String aliquotLsid = "org.broad:" + System.currentTimeMillis();

@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
 import org.codehaus.jackson.map.annotate.JsonDeserialize;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -20,6 +21,7 @@ public class FingerprintBean {
     private String platform;
     private String genomeBuild;
     @JsonDeserialize(using = CustomJsonDateDeserializer.class)
+    @JsonSerialize(using = CustomJsonDateSerializer.class)
     private Date dateGenerated;
     private String gender;
     // empty if failed
