@@ -22,7 +22,6 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -74,7 +73,6 @@ public class BillingSession implements Serializable {
 
     // Do NOT cascade removes because we want the ledger items to stay, but just have their billing session removed.
     @OneToMany(mappedBy = "billingSession", cascade = {CascadeType.PERSIST})
-    @JoinColumn(name = "BILLING_SESSION")
     private List<LedgerEntry> ledgerEntryItems;
 
     /**
