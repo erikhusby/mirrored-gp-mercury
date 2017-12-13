@@ -359,7 +359,7 @@ public class SapIntegrationServiceImplDBFreeTest {
         assertThat(convertedOrder.getSapOrderNumber(), is(nullValue()));
         assertThat(convertedOrder.getCreator(), equalTo(MOCK_USER_NAME));
         assertThat(convertedOrder.getResearchProjectNumber(), equalTo(conversionPdo.getResearchProject().getBusinessKey()));
-        assertThat(convertedOrder.getOrderItems().iterator().next().getSampleCount(),equalTo(10));
+        // HashSet order not deterministic. Tested at line 369 assertThat(convertedOrder.getOrderItems().iterator().next().getSampleCount(),equalTo(10));
 
         assertThat(convertedOrder.getOrderItems().size(), equalTo(conversionPdo.getAddOns().size()+1));
 
