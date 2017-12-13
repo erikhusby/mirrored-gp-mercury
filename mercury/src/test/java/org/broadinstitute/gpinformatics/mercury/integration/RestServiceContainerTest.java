@@ -76,8 +76,11 @@ public abstract class RestServiceContainerTest extends Arquillian {
 
         Client client = Client.create(clientConfig);
         String newUrl = convertUrlToSecure(baseUrl);
-        return client.resource(
-                newUrl + SERVLET_MAPPING_PREFIX + "/" + getResourcePath() + "/" + serviceUrl);
+        String url = newUrl + SERVLET_MAPPING_PREFIX + "/" + getResourcePath();
+        if (serviceUrl != null) {
+            url = url + "/" + serviceUrl;
+        }
+        return client.resource(url);
     }
 
     /**
