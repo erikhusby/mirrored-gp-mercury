@@ -476,12 +476,16 @@ public class ProductActionBean extends CoreActionBean {
 
     @HandlesEvent(PUBLISH_PRODUCTS_TO_SAP)
     public Resolution publishProductsToSap() {
-        selectedProducts = productDao.findListByList(Product.class, Product_.partNumber, selectedProductPartNumbers);
-        try {
-
+        if(CollectionUtils.isEmpty(selectedProductPartNumbers)) {
+            addGlobalValidationError("Select at least one product when publishing products in bulk.");
+        } else {
+            selectedProducts =
+                    productDao.findListByList(Product.class, Product_.partNumber, selectedProductPartNumbers);
+            try {
                 productEjb.publishProductsToSAP(selectedProducts);
-        } catch (ValidationException e) {
-            addGlobalValidationError("Unable to publish some of the products to SAP. " + e.getMessage("<br/>"));
+            } catch (ValidationException e) {
+                addGlobalValidationError("Unable to publish some of the products to SAP. " + e.getMessage("<br/>"));
+            }
         }
         return new RedirectResolution(ProductActionBean.class,LIST_ACTION);
     }
