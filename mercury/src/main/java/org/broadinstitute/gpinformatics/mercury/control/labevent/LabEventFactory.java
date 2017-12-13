@@ -1230,10 +1230,10 @@ public class LabEventFactory implements Serializable {
     }
 
     private void addMetadatas( LabEvent labEvent, List<MetadataType> metadataTypes) {
-        for(MetadataType metadataType: metadataTypes){
+        for (MetadataType metadataType: metadataTypes){
             LabEventMetadata.LabEventMetadataType labEventMetadataType =
                     LabEventMetadata.LabEventMetadataType.getByName(metadataType.getName());
-            if(labEventMetadataType != null) { //Throw runtime exception for unknown metadata?
+            if (labEventMetadataType != null) { //Throw runtime exception for unknown metadata?
                 LabEventMetadata labEventMetadata =
                         new LabEventMetadata(labEventMetadataType, metadataType.getValue());
                 labEvent.addMetadata(labEventMetadata);
