@@ -742,12 +742,6 @@ public enum LabEventType {
                     targetVolume(true).
                     build(),
             MaterialType.BODILY_FLUID_URINE, LibraryType.POOLED),
-    URINE_POOLING_TRANSFER("UrinePoolingTransfer",
-            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
-            new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT, RackOfTubes.RackType.FlipperRackRow8,
-                    RackOfTubes.RackType.FlipperRackRow8).build(),
-            LibraryType.POOLED),
     BLOOD_PLASMA_POOLING_TRANSFER("BloodPlasmaPoolingTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
