@@ -12,11 +12,14 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 @Entity
 @Audited
@@ -69,6 +72,9 @@ public class UniqueMolecularIdentifier {
     @Column(name = "SPACER_LENGTH")
     private Long spacerLength;
 
+    @OneToMany(mappedBy = "uniqueMolecularIdentifier")
+    private Set<UMIReagent> umiReagents = new HashSet<>();
+
     /** For JPA. */
     public UniqueMolecularIdentifier() {
     }
@@ -105,6 +111,13 @@ public class UniqueMolecularIdentifier {
 
     public String getDisplayName() {
         return String.format("%dM%dS %s", length, spacerLength, location.getDisplayName());
+    }
+
+    public UMIReagent getUmiReagent() {
+        if (umiReagents.isEmpty()) {
+            return null;
+        }
+        return umiReagents.iterator().next();
     }
 
     @Override

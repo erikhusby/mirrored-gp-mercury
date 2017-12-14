@@ -129,7 +129,16 @@ public class UniqueMolecularIdentifierReagentProcessor extends TableProcessor {
                 formattedBarcode = StringUtils.leftPad(barcode, 10, '0');
                 if (vesselTypeGeometry == null) {
                     addDataMessage("Unknown labware vessel type " + vesselType, dataRowIndex);
+                } else if (vesselTypeGeometry !=  BarcodedTube.BarcodedTubeType.MatrixTube075) {
+                    addDataMessage(
+                            "Vessel Type must be either: MatrixTube075, IndexedAdapterPlate96, or Eppendorf96", dataRowIndex);
+                    vesselTypeGeometry = null;
                 }
+            } else if (vesselTypeGeometry != StaticPlate.PlateType.Eppendorf96 &&
+                       vesselTypeGeometry != StaticPlate.PlateType.IndexedAdapterPlate96) {
+                addDataMessage(
+                        "Vessel Type must be either: MatrixTube075, IndexedAdapterPlate96, or Eppendorf96", dataRowIndex);
+                vesselTypeGeometry = null;
             }
             barcode = formattedBarcode;
             if (vesselTypeGeometry != null) {
