@@ -1023,11 +1023,12 @@
                                  referencedTableName="rev_info" referencedTableSchemaName="mercury"
                                  referencedColumnNames="rev_info_id"/>
     </changeSet>
+    <!-- Don't create for new deploys, GPLIM-4825-9 deletes for the ones already created
     <changeSet author="jowalsh" id="GPLIM-4825-4">
         <addUniqueConstraint tableName="umi_aud" constraintName="uk_umi_aud_length_spacer_loc" schemaName="mercury"
                              columnNames="length, spacer_length, location"/>
     </changeSet>
-
+    -->
     <changeSet id="GPLIM-4825-5" author="jowalsh">
         <addColumn schemaName="mercury" tableName="reagent">
             <column name="unique_molecular_identifier" type="number(19,0)"/>
@@ -1050,5 +1051,19 @@
             <column name="REV"/>
             <column name="UMI_ID"/>
         </createIndex>
+    </changeSet>
+    <changeSet author="jsacco" id="GPLIM-4825-9">
+        <sql splitStatements="false">
+            BEGIN
+              FOR nada IN ( SELECT 'Y'
+                              FROM USER_CONSTRAINTS
+                             WHERE TABLE_NAME = 'UMI_AUD'
+                               AND CONSTRAINT_NAME = 'UK_UMI_AUD_LENGTH_SPACER_LOC' )
+              LOOP
+                EXECUTE IMMEDIATE 'ALTER TABLE UMI_AUD DROP CONSTRAINT UK_UMI_AUD_LENGTH_SPACER_LOC';
+                DBMS_OUTPUT.PUT_LINE( 'DROPPED CONSTRAINT UK_UMI_AUD_LENGTH_SPACER_LOC' );
+              END LOOP;
+            END;
+        </sql>
     </changeSet>
 </databaseChangeLog>
