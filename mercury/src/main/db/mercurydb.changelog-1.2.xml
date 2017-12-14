@@ -961,7 +961,7 @@
             <column name="unique_molecular_identifier" type="number(19,0)"/>
         </addColumn>
     </changeSet>
-    <changeSet id="GPLIM-4825-6" author="jowalsh">
+    <changeSet id="GPLIM-4825-7" author="jowalsh">
         <createSequence schemaName="mercury" sequenceName="SEQ_UMI" incrementBy="50"/>
     </changeSet>
     <changeSet id="GPLIM-4825-7" author="jsacco">
