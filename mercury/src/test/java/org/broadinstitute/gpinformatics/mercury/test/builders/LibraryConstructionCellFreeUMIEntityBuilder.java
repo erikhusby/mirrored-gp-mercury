@@ -1,13 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
-import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.UniqueMolecularIdentifier;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -16,7 +14,6 @@ import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.Assert;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,11 +56,12 @@ public class LibraryConstructionCellFreeUMIEntityBuilder {
     }
 
     public LibraryConstructionCellFreeUMIEntityBuilder invoke() {
-        final String dualIndexPlateBarcode = testPrefix + "UmiDualIndexPlate";
+        final String p7IndexPlateBarcode = testPrefix + "UmiP7IndexPlate";
+        final String p5IndexPlateBarcode = testPrefix + "UmiP5IndexPlate";
         final LibraryConstructionCellFreeUMIJaxbBuilder libraryConstructionJaxbBuilder =
                 new LibraryConstructionCellFreeUMIJaxbBuilder(bettaLimsMessageTestFactory, testPrefix,
-                        "UmiTubeBarcode", dualIndexPlateBarcode, new ArrayList<>(mapBarcodeToTube.keySet()),
-                        "UmiStartingRackBarcode" + testPrefix
+                        "UmiTubeBarcode", p7IndexPlateBarcode, p5IndexPlateBarcode,
+                        new ArrayList<>(mapBarcodeToTube.keySet()), "UmiStartingRackBarcode" + testPrefix
                 ).invoke();
 
         LabEventTest.validateWorkflow("PreEndRepairTransfer", mapBarcodeToTube.values());
@@ -129,26 +127,37 @@ public class LibraryConstructionCellFreeUMIEntityBuilder {
                     add(MolecularIndexingScheme.IndexPosition.ILLUMINA_P5);
                 }},
                 new ArrayList<String>() {{
-                    add(dualIndexPlateBarcode);
-                    add(dualIndexPlateBarcode);
+                    add(p7IndexPlateBarcode);
+                    add(p5IndexPlateBarcode);
                 }}
         );
-        StaticPlate indexPlate = indexPlates.get(0);
+        StaticPlate p7IndexPlate = indexPlates.get(0);
+        StaticPlate p5IndexPlate = indexPlates.get(1);
 
-        LabEventTest.validateWorkflow("DualIndexPCR", umiCleanupPlate);
+        LabEventTest.validateWorkflow("IndexedAdapterLigation", umiCleanupPlate);
         mapBarcodeToVessel.clear();
-        mapBarcodeToVessel.put(indexPlate.getLabel(), indexPlate);
+        mapBarcodeToVessel.put(p7IndexPlate.getLabel(), p7IndexPlate);
         mapBarcodeToVessel.put(umiCleanupPlate.getLabel(), umiCleanupPlate);
-        LabEvent dualIndexPCR = labEventFactory.buildFromBettaLims(
-                libraryConstructionJaxbBuilder.getDualIndexPCRJaxb(), mapBarcodeToVessel);
-        labEventHandler.processEvent(dualIndexPCR);
-        indexPlate.clearCaches();
+        LabEvent p7IndexAdapterLigation = labEventFactory.buildFromBettaLims(
+                libraryConstructionJaxbBuilder.getP7IndexJaxb(), mapBarcodeToVessel);
+        labEventHandler.processEvent(p7IndexAdapterLigation);
+        p7IndexPlate.clearCaches();
         umiCleanupPlate.clearCaches();
 
-        LabEventTest.validateWorkflow("PostDualIndexThermoCyclerLoaded", umiCleanupPlate);
-        LabEvent postDualIndexThermoCyclerEvent = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+        LabEventTest.validateWorkflow("IndexP5PondEnrichment", umiCleanupPlate);
+        mapBarcodeToVessel.clear();
+        mapBarcodeToVessel.put(p5IndexPlate.getLabel(), p5IndexPlate);
+        mapBarcodeToVessel.put(umiCleanupPlate.getLabel(), umiCleanupPlate);
+        LabEvent p5IndexPondEnrichment = labEventFactory.buildFromBettaLims(
+                libraryConstructionJaxbBuilder.getP5IndexJaxb(), mapBarcodeToVessel);
+        labEventHandler.processEvent(p5IndexPondEnrichment);
+        p5IndexPlate.clearCaches();
+        umiCleanupPlate.clearCaches();
+
+        LabEventTest.validateWorkflow("PostIndexedAdapterLigationThermoCyclerLoaded", umiCleanupPlate);
+        LabEvent postIndexAdapterLigationThermoCyclerLoaded = labEventFactory.buildFromBettaLimsPlateEventDbFree(
                 libraryConstructionJaxbBuilder.getPostUmiAdditionThermoCyclerLoadedJaxb(), umiCleanupPlate);
-        labEventHandler.processEvent(postDualIndexThermoCyclerEvent);
+        labEventHandler.processEvent(postIndexAdapterLigationThermoCyclerLoaded);
 
         LabEventTest.validateWorkflow("CFDnaPondRegistration", umiCleanupPlate);
         LabEvent pondRegistrationEntity = labEventFactory.buildFromBettaLims(

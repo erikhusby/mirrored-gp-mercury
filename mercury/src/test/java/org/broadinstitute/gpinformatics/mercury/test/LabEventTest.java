@@ -2055,12 +2055,12 @@ public class LabEventTest extends BaseEventTest {
         // Grab denature tube from one UMI LC set and build another without
         Pair<Map<String, BarcodedTube>, QtpEntityBuilder> pairUmi =
                 testUpToBooking(productOrder, LibraryConstructionJaxbBuilder.PondType.PCR_PLUS,
-                        Workflow.CELL_FREE_HYPER_PREP_UMIS, "1_UMI", LibraryConstructionEntityBuilder.Indexing.SINGLE,
+                        Workflow.CELL_FREE_HYPER_PREP_UMIS, "1_UMI", LibraryConstructionEntityBuilder.Indexing.DUAL,
                         LibraryConstructionEntityBuilder.Umi.SINGLE);
 
         Pair<Map<String, BarcodedTube>, QtpEntityBuilder> pair =
                 testUpToBooking(productOrder, LibraryConstructionJaxbBuilder.PondType.PCR_PLUS,
-                        Workflow.PCR_PLUS, "1", LibraryConstructionEntityBuilder.Indexing.SINGLE,
+                        Workflow.PCR_PLUS, "1", LibraryConstructionEntityBuilder.Indexing.DUAL,
                         LibraryConstructionEntityBuilder.Umi.NONE);
 
         QtpEntityBuilder qtpEntityBuilderUMI = pairUmi.getRight();
@@ -2142,9 +2142,9 @@ public class LabEventTest extends BaseEventTest {
         ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
         for (ZimsIlluminaChamber zimsIlluminaChamber : zimsIlluminaRun.getLanes()) {
             if (zimsIlluminaChamber.getSequencedLibrary().equals(denatureTube.getLabel())) {
-                Assert.assertEquals(zimsIlluminaChamber.getSetupReadStructure(), "76T8B76T");
+                Assert.assertEquals(zimsIlluminaChamber.getSetupReadStructure(), "76T8B8B76T");
             } else if (zimsIlluminaChamber.getSequencedLibrary().equals(denatureTubeUMI.getLabel())) {
-                Assert.assertEquals(zimsIlluminaChamber.getSetupReadStructure(), "6M3S76T8B76T");
+                Assert.assertEquals(zimsIlluminaChamber.getSetupReadStructure(), "6M3S76T8B8B76T");
             } else {
                 Assert.fail("Wrong sequencing library found " + zimsIlluminaChamber.getSequencedLibrary());
             }
