@@ -964,7 +964,7 @@
     <changeSet id="GPLIM-4825-7" author="jowalsh">
         <createSequence schemaName="mercury" sequenceName="SEQ_UMI" incrementBy="50"/>
     </changeSet>
-    <changeSet id="GPLIM-4825-7" author="jsacco">
+    <changeSet id="GPLIM-4825-8" author="jsacco">
         <createIndex indexName="IDX_UMI_AUD_REV" tableName="UMI_AUD" schemaName="MERCURY">
             <column name="REV"/>
             <column name="UMI_ID"/>
