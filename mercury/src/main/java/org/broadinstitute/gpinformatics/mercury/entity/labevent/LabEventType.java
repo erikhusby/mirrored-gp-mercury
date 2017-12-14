@@ -712,9 +712,9 @@ public enum LabEventType {
                     RackOfTubes.RackType.FlipperRackRow8,
                     RackOfTubes.RackType.FlipperRackRow8).
                     sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.VacutainerBloodTube6).
-                    sourceContainerPrefix("CSF").
+                    sourceContainerPrefix("CSFSource").
                     targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.FluidX_6mL).
-                    targetContainerPrefix("CSF").
+                    targetContainerPrefix("CSFTarget").
                     build(),
             MaterialType.BODILY_FLUID_CEREBROSPINAL_FLUID, LibraryType.NONE_ASSIGNED),
     URINE_TRANSFER("UrineTransfer",
@@ -724,9 +724,9 @@ public enum LabEventType {
                     RackOfTubes.RackType.FlipperRackRow8,
                     RackOfTubes.RackType.FlipperRackRow8).
                     sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.VacutainerBloodTube6).
-                    sourceContainerPrefix("Urine").
+                    sourceContainerPrefix("UrineSource").
                     targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.CentriCutieSC_5).
-                    targetContainerPrefix("Urine").
+                    targetContainerPrefix("UrineTarget").
                     build(),
             MaterialType.BODILY_FLUID_URINE, LibraryType.NONE_ASSIGNED),
     URINE_SECOND_TRANSFER("UrineSecondTransfer",
@@ -736,9 +736,9 @@ public enum LabEventType {
                     RackOfTubes.RackType.FlipperRackRow8,
                     RackOfTubes.RackType.FlipperRackRow8).
                     sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.CentriCutieSC_5).
-                    sourceContainerPrefix("Urine").
+                    sourceContainerPrefix("UrineSource").
                     targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.FluidX_6mL).
-                    targetContainerPrefix("Urine").
+                    targetContainerPrefix("UrineTarget").
                     targetVolume(true).
                     build(),
             MaterialType.BODILY_FLUID_URINE, LibraryType.POOLED),
