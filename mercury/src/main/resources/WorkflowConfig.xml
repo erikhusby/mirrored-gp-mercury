@@ -619,15 +619,22 @@
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>DualIndexPCR</name>
-                <labEventTypes>DUAL_INDEX_PCR</labEventTypes>
+                <name>Indexed Adaptor Ligation</name>
+                <labEventTypes>INDEXED_ADAPTER_LIGATION</labEventTypes>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>PostDualIndexThermoCyclerLoaded</name>
-                <labEventTypes>POST_DUAL_INDEX_THERMO_CYCLER_LOADED</labEventTypes>
+                <name>Index P5 Pond Enrichment</name>
+                <labEventTypes>INDEX_P5_POND_ENRICHMENT</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>PostIndexedAdapterLigationThermoCyclerLoaded</name>
+                <labEventTypes>POST_INDEXED_ADAPTER_LIGATION_THERMO_CYCLER_LOADED</labEventTypes>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -709,15 +716,22 @@
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>DualIndexPCR</name>
-                <labEventTypes>DUAL_INDEX_PCR</labEventTypes>
+                <name>Indexed Adaptor Ligation</name>
+                <labEventTypes>INDEXED_ADAPTER_LIGATION</labEventTypes>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>PostDualIndexThermoCyclerLoaded</name>
-                <labEventTypes>POST_DUAL_INDEX_THERMO_CYCLER_LOADED</labEventTypes>
+                <name>Index P5 Pond Enrichment</name>
+                <labEventTypes>INDEX_P5_POND_ENRICHMENT</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>PostIndexedAdapterLigationThermoCyclerLoaded</name>
+                <labEventTypes>POST_INDEXED_ADAPTER_LIGATION_THERMO_CYCLER_LOADED</labEventTypes>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
