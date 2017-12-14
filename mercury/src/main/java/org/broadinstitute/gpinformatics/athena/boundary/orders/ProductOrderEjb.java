@@ -584,13 +584,19 @@ public class ProductOrderEjb {
 
         PriceItem priceItem = productOrder.determinePriceItemByCompanyCode(product);
         final QuotePriceItem priceListItem = priceListCache.findByKeyFields(priceItem);
-        final BigDecimal effectivePrice = new BigDecimal(priceListItem.getPrice());
-        if (sapMaterial != null && StringUtils.isNotBlank(sapMaterial.getBasePrice())) {
-            final BigDecimal basePrice = new BigDecimal(sapMaterial.getBasePrice());
-            if (!basePrice.equals(effectivePrice)) {
-                throw new InvalidProductException("Unable to continue since the price for the product " +
-                                                  product.getDisplayName() + " has not been properly set up in SAP");
+        if (priceListItem != null) {
+            final BigDecimal effectivePrice = new BigDecimal(priceListItem.getPrice());
+            if (sapMaterial != null && StringUtils.isNotBlank(sapMaterial.getBasePrice())) {
+                final BigDecimal basePrice = new BigDecimal(sapMaterial.getBasePrice());
+                if (!basePrice.equals(effectivePrice)) {
+                    throw new InvalidProductException("Unable to continue since the price for the product " +
+                                                      product.getDisplayName() + " has not been properly set up in SAP");
+                }
             }
+        } else {
+            throw new InvalidProductException("Unable to continue since the price list item " +
+                                              priceItem.getDisplayName() + " for " + product.getDisplayName() +
+                                              " is invalid.");
         }
         return priceListCache.getEffectivePrice(priceItem, orderQuote);
     }
