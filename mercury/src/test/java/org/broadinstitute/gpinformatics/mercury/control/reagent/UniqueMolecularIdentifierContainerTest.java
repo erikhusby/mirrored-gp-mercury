@@ -47,6 +47,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -201,26 +202,13 @@ public class UniqueMolecularIdentifierContainerTest extends Arquillian {
                 }
             }
         }
-        int decrementRow = 0;
+        Collections.reverse(removeRows);
         for (Integer rowNum: removeRows) {
-            removeRow(sheet, rowNum - decrementRow);
-            decrementRow++;
+            Row removingRow = sheet.getRow(rowNum);
+            sheet.removeRow(removingRow);
         }
         File tempFile = File.createTempFile("UMIReagents", ".xlsx");
         workbook.write(new FileOutputStream(tempFile));
         return tempFile;
-    }
-
-    private void removeRow(Sheet sheet, int rowIndex) {
-        int lastRowNum = sheet.getLastRowNum();
-        if(rowIndex >= 0 && rowIndex < lastRowNum) {
-            sheet.shiftRows(rowIndex + 1, lastRowNum, -1);
-        }
-        if (rowIndex == lastRowNum) {
-            Row removingRow=sheet.getRow(rowIndex);
-            if (removingRow != null){
-                sheet.removeRow(removingRow);
-            }
-        }
     }
 }
