@@ -316,25 +316,8 @@ public class ResearchProjectEjb {
                 });
         List<String> errorMessages = new ArrayList<>();
 
-        for (SubmissionStatusDetailBean status : submissionResults) {
-            if (StringUtils.isBlank(status.getUuid())) {
-                if (!status.getErrors().isEmpty()) {
-                    errorMessages.addAll(status.getErrors());
-                } else {
-                    errorMessages.add("Unknown error while posting submission.");
-                }
-            } else {
-                SubmissionTracker submissionTracker = submissionIdentifierToTracker.get(status.getUuid());
-                if (CollectionUtils.isNotEmpty(status.getErrors())) {
-                    for (String errorMessage : status.getErrors()) {
-                        errorMessages
-                            .add(String.format("%s: %s", submissionTracker.getSubmittedSampleName(), errorMessage));
-                    }
-                } else {
-                    submissionDtoMap.get(submissionTracker).setStatusDetailBean(status);
-                }
-            }
-        }
+        updateSubmissionDtoStatusFromResults(submissionDtoMap, submissionResults, submissionIdentifierToTracker,
+            errorMessages);
 
         if(CollectionUtils.isNotEmpty(errorMessages)) {
             throw new ValidationException(
@@ -387,6 +370,31 @@ public class ResearchProjectEjb {
         }
         if (!errors.isEmpty()) {
             throw new ValidationException(String.format("Some samples have already been submitted: %s", errors));
+        }
+    }
+
+    protected void updateSubmissionDtoStatusFromResults(Map<SubmissionTracker, SubmissionDto> submissionDtoMap,
+                                                        Collection<SubmissionStatusDetailBean> submissionResults,
+                                                        Map<String, SubmissionTracker> submissionIdentifierToTracker,
+                                                        List<String> errorMessages) {
+        for (SubmissionStatusDetailBean status : submissionResults) {
+            if (StringUtils.isBlank(status.getUuid())) {
+                if (!status.getErrors().isEmpty()) {
+                    errorMessages.addAll(status.getErrors());
+                } else {
+                    errorMessages.add("Unknown error while posting submission.");
+                }
+            } else {
+                SubmissionTracker submissionTracker = submissionIdentifierToTracker.get(status.getUuid());
+                if (CollectionUtils.isNotEmpty(status.getErrors())) {
+                    for (String errorMessage : status.getErrors()) {
+                        errorMessages
+                            .add(String.format("%s: %s", submissionTracker.getSubmittedSampleName(), errorMessage));
+                    }
+                } else {
+                    submissionDtoMap.get(submissionTracker).setStatusDetailBean(status);
+                }
+            }
         }
     }
 

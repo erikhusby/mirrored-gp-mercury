@@ -17,7 +17,9 @@ import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.AggregationTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
+import org.broadinstitute.gpinformatics.infrastructure.submission.FileType;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionStatusDetailBean;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
@@ -28,9 +30,17 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ResearchProjectEjbSubmissionTest {
@@ -152,6 +162,58 @@ public class ResearchProjectEjbSubmissionTest {
         } catch (ValidationException e) {
             Assert.assertTrue(e.getMessage().contains(submissionDto.getSubmissionTuple().toString()));
         }
+    }
+
+    @DataProvider
+    public Iterator<Object[]> updateSubmissionDtoFromResultsProvider() {
+        String location = "aLocation";
+        String type = "aType";
+        String errorMessage = "a error";
+        final String myUuid = "myUuid";
+
+        final SubmissionTracker testTracker =
+            new SubmissionTracker("aProject", TEST_SAMPLE_1, Integer.toString(TEST_VERSION_1), FileType.BAM,
+                location, type);
+
+
+        final SubmissionDto submissionDto = getSubmissionDto(dummyProductOrder, TEST_SAMPLE_1, ON_PREM, TEST_VERSION_1);
+
+        Map<SubmissionTracker, SubmissionDto> submisionDtoMap = new HashMap<SubmissionTracker, SubmissionDto>() {{
+            put(testTracker, submissionDto);
+        }};
+
+        Map<String, SubmissionTracker> idToTracker = new HashMap<String, SubmissionTracker>() {{
+            put(myUuid, testTracker);
+        }};
+
+
+        List<Object[]> testCases = new ArrayList<>();
+        testCases.add(new Object[]{Collections.singleton(
+            new SubmissionStatusDetailBean(myUuid, SubmissionStatusDetailBean.Status.FAILURE, location, type, new Date(),
+                errorMessage)), submisionDtoMap, idToTracker, String.format("%s: %s", TEST_SAMPLE_1, errorMessage)});
+
+
+        testCases.add(new Object[]{Collections.singleton(
+            new SubmissionStatusDetailBean(null, SubmissionStatusDetailBean.Status.FAILURE, location, type, new Date(),
+                errorMessage)), submisionDtoMap, idToTracker, errorMessage});
+
+        return testCases.iterator();
+    }
+
+    /**
+     * Tests an oddball case where E9 returns an error with no sample id.
+     */
+    @Test(dataProvider = "updateSubmissionDtoFromResultsProvider")
+    public void testUpdateSubmissionDtoFromResults(Collection<SubmissionStatusDetailBean> results,
+                                                   Map<SubmissionTracker, SubmissionDto> submisionDtoMap,
+                                                   Map<String, SubmissionTracker> idToTracker,
+                                                   String resultErrorMessage) {
+        ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(null);
+        List<String> errors = new ArrayList<>();
+        researchProjectEjb.updateSubmissionDtoStatusFromResults(submisionDtoMap, results, idToTracker, errors);
+
+        assertThat(errors, hasSize(1));
+        assertThat(errors.iterator().next(), equalTo(resultErrorMessage));
     }
 
     private ResearchProjectEjb getResearchProjectEjb(SubmissionTrackerDao submissionTrackerDao) {
