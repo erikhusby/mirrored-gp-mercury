@@ -237,66 +237,71 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         }
     }
 
-    private void defineConditionsForOrderItem(ProductOrder placedOrder, Product product, SAPOrderItem sapOrderItem)
-             {
-        if(placedOrder.getProduct().equals(product)) {
+    private void defineConditionsForOrderItem(ProductOrder placedOrder, Product product, SAPOrderItem sapOrderItem) {
 
-            final ProductOrderPriceAdjustment singlePriceAdjustment = placedOrder.getSinglePriceAdjustment();
-            if(singlePriceAdjustment != null && singlePriceAdjustment.hasPriceAdjustment()) {
+            if(placedOrder.getProduct().equals(product)) {
 
-                singlePriceAdjustment.setListPrice(
-                        new BigDecimal(productPriceCache.findByProduct(product,
-                                placedOrder.getSapCompanyConfigurationForProductOrder()).getBasePrice()));
+                final ProductOrderPriceAdjustment singlePriceAdjustment = placedOrder.getSinglePriceAdjustment();
+                if(singlePriceAdjustment != null && singlePriceAdjustment.hasPriceAdjustment()) {
 
-                sapOrderItem.addCondition(singlePriceAdjustment.deriveAdjustmentCondition(),
-                        singlePriceAdjustment.getAdjustmentDifference());
-                if(StringUtils.isNotBlank(singlePriceAdjustment.getCustomProductName())) {
-                    sapOrderItem.setProductAlias(singlePriceAdjustment.getCustomProductName());
-                }
+                    singlePriceAdjustment.setListPrice(
+                            new BigDecimal(productPriceCache.findByProduct(product,
+                                    placedOrder.getSapCompanyConfigurationForProductOrder()).getBasePrice()));
 
-                if(StringUtils.isNotBlank(singlePriceAdjustment.getCustomProductName())) {
-                    sapOrderItem.setProductAlias(singlePriceAdjustment.getCustomProductName());
-                } else {
-                    sapOrderItem.setProductAlias(product.getProductName());
-                    if(placedOrder.getSapCompanyConfigurationForProductOrder() == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES &&
-                            StringUtils.isNotBlank(product.getAlternateExternalName())) {
-                        sapOrderItem.setProductAlias(product.getAlternateExternalName());
-                    }
-                }
-            }
-
-            for (ProductOrderPriceAdjustment productOrderPriceAdjustment : placedOrder.getQuotePriceMatchAdjustments()) {
-                if (productOrderPriceAdjustment.hasPriceAdjustment()) {
-                    sapOrderItem.addCondition(productOrderPriceAdjustment.deriveAdjustmentCondition(),
-                            productOrderPriceAdjustment.getAdjustmentDifference());
-                }
-            }
-        } else {
-            for (ProductOrderAddOn productOrderAddOn : placedOrder.getAddOns()) {
-                if(productOrderAddOn.getAddOn().equals(product)) {
-
-                    if(productOrderAddOn.getSingleCustomPriceAdjustment() != null &&
-                       productOrderAddOn.getSingleCustomPriceAdjustment().hasPriceAdjustment()) {
-                        productOrderAddOn.getSingleCustomPriceAdjustment().setListPrice(new BigDecimal(productPriceCache.findByProduct(productOrderAddOn.getAddOn(),
-                                placedOrder.getSapCompanyConfigurationForProductOrder()).getBasePrice()));
-                        sapOrderItem.addCondition(
-                                productOrderAddOn.getSingleCustomPriceAdjustment().deriveAdjustmentCondition(),
-                                productOrderAddOn.getSingleCustomPriceAdjustment().getAdjustmentDifference());
-                        if(StringUtils.isNotBlank(productOrderAddOn.getSingleCustomPriceAdjustment().getCustomProductName())) {
-                            sapOrderItem.setProductAlias(productOrderAddOn.getSingleCustomPriceAdjustment().getCustomProductName());
-                        }
+                    sapOrderItem.addCondition(singlePriceAdjustment.deriveAdjustmentCondition(),
+                            singlePriceAdjustment.getAdjustmentDifference());
+                    if(StringUtils.isNotBlank(singlePriceAdjustment.getCustomProductName())) {
+                        sapOrderItem.setProductAlias(singlePriceAdjustment.getCustomProductName());
                     }
 
-                    for (ProductOrderAddOnPriceAdjustment productOrderAddOnPriceAdjustment : productOrderAddOn
-                            .getQuotePriceAdjustments()) {
-                        if (productOrderAddOnPriceAdjustment.hasPriceAdjustment()) {
-                            sapOrderItem.addCondition(productOrderAddOnPriceAdjustment.deriveAdjustmentCondition(),
-                                    productOrderAddOnPriceAdjustment.getAdjustmentDifference());
+                    if(StringUtils.isNotBlank(singlePriceAdjustment.getCustomProductName())) {
+                        sapOrderItem.setProductAlias(singlePriceAdjustment.getCustomProductName());
+                    } else {
+                        sapOrderItem.setProductAlias(product.getProductName());
+                        if(placedOrder.getSapCompanyConfigurationForProductOrder() == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES &&
+                                StringUtils.isNotBlank(product.getAlternateExternalName())) {
+                            sapOrderItem.setProductAlias(product.getAlternateExternalName());
                         }
                     }
                 }
+
+                if (singlePriceAdjustment == null || !singlePriceAdjustment.hasPriceAdjustment()) {
+                    for (ProductOrderPriceAdjustment productOrderPriceAdjustment : placedOrder.getQuotePriceMatchAdjustments()) {
+                        if (productOrderPriceAdjustment.hasPriceAdjustment()) {
+                            sapOrderItem.addCondition(productOrderPriceAdjustment.deriveAdjustmentCondition(),
+                                    productOrderPriceAdjustment.getAdjustmentDifference());
+                        }
+                    }
+                }
+            } else {
+                for (ProductOrderAddOn productOrderAddOn : placedOrder.getAddOns()) {
+                    final ProductOrderAddOnPriceAdjustment singleCustomPriceAdjustment =
+                            productOrderAddOn.getSingleCustomPriceAdjustment();
+                    if(productOrderAddOn.getAddOn().equals(product)) {
+                        if(singleCustomPriceAdjustment != null &&
+                           singleCustomPriceAdjustment.hasPriceAdjustment()) {
+                            singleCustomPriceAdjustment.setListPrice(new BigDecimal(productPriceCache.findByProduct(productOrderAddOn.getAddOn(),
+                                    placedOrder.getSapCompanyConfigurationForProductOrder()).getBasePrice()));
+                            sapOrderItem.addCondition(
+                                    singleCustomPriceAdjustment.deriveAdjustmentCondition(),
+                                    singleCustomPriceAdjustment.getAdjustmentDifference());
+                            if(StringUtils.isNotBlank(singleCustomPriceAdjustment.getCustomProductName())) {
+                                sapOrderItem.setProductAlias(singleCustomPriceAdjustment.getCustomProductName());
+                            }
+                        }
+
+                        if (singleCustomPriceAdjustment == null || !singleCustomPriceAdjustment.hasPriceAdjustment()) {
+                            for (ProductOrderAddOnPriceAdjustment productOrderAddOnPriceAdjustment : productOrderAddOn
+                                    .getQuotePriceAdjustments()) {
+                                if (productOrderAddOnPriceAdjustment.hasPriceAdjustment()) {
+                                    sapOrderItem.addCondition(productOrderAddOnPriceAdjustment.deriveAdjustmentCondition(),
+                                            productOrderAddOnPriceAdjustment.getAdjustmentDifference());
+                                }
+                            }
+                        }
+                    }
+                }
             }
-        }
     }
 
     protected SAPOrderItem getOrderItem(ProductOrder placedOrder, Product product, int additionalSampleCount)
