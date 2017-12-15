@@ -677,6 +677,42 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
                 LibraryConstructionEntityBuilder.Umi.DUAL);
     }
 
+    @Test
+    public void testMixIndexLengths() {
+        productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
+        runDate = new Date();
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+        workflowBatch = new LabBatch("Exome Express Batch",
+                new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
+        workflowBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
+
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, BARCODE_SUFFIX);
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
+                String.valueOf(runDate.getTime()),
+                BARCODE_SUFFIX, true);
+        ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
+                runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
+                        picoPlatingEntityBuilder.getNormTubeFormation(),
+                        picoPlatingEntityBuilder.getNormalizationBarcode(), BARCODE_SUFFIX);
+        LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = new LibraryConstructionEntityBuilder(
+                getBettaLimsMessageTestFactory(), getLabEventFactory(), getLabEventHandler(),
+                shearingCleanupPlate, shearingCleanupPlate.getLabel(),
+                exomeExpressShearingEntityBuilder.getShearingPlate(), 96, "MixTest",
+                LibraryConstructionEntityBuilder.Indexing.DUAL,
+                LibraryConstructionJaxbBuilder.PondType.REGULAR).invoke();
+
+        HybridSelectionEntityBuilder hybridSelectionEntityBuilder =
+                runHybridSelectionProcess(libraryConstructionEntityBuilder.getPondRegRack(),
+                        libraryConstructionEntityBuilder.getPondRegRackBarcode(),
+                        libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), BARCODE_SUFFIX);
+        QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
+                hybridSelectionEntityBuilder.getNormCatchBarcodes(),
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(),
+                "1");
+    }
+
     private void testUniqueMolecularIdentifierMultiDesignations(LabVessel umiPlate, String UMIReadStructure,
                                                                 LibraryConstructionEntityBuilder.Umi umiType) {
         final ProductOrder
