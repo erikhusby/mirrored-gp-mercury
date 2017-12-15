@@ -263,9 +263,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                             sapOrderItem.setProductAlias(product.getAlternateExternalName());
                         }
                     }
-                }
-
-                if (singlePriceAdjustment == null || !singlePriceAdjustment.hasPriceAdjustment()) {
+                } else {
                     for (ProductOrderPriceAdjustment productOrderPriceAdjustment : placedOrder.getQuotePriceMatchAdjustments()) {
                         if (productOrderPriceAdjustment.hasPriceAdjustment()) {
                             sapOrderItem.addCondition(productOrderPriceAdjustment.deriveAdjustmentCondition(),
@@ -288,9 +286,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                             if(StringUtils.isNotBlank(singleCustomPriceAdjustment.getCustomProductName())) {
                                 sapOrderItem.setProductAlias(singleCustomPriceAdjustment.getCustomProductName());
                             }
-                        }
-
-                        if (singleCustomPriceAdjustment == null || !singleCustomPriceAdjustment.hasPriceAdjustment()) {
+                        } else {
                             for (ProductOrderAddOnPriceAdjustment productOrderAddOnPriceAdjustment : productOrderAddOn
                                     .getQuotePriceAdjustments()) {
                                 if (productOrderAddOnPriceAdjustment.hasPriceAdjustment()) {

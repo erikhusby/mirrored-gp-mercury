@@ -570,8 +570,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         updateAddOnProducts(addOnProducts);
         if(this.product != null && this.product != product) {
             this.clearCustomPriceAdjustment();
-            if(product.isExternalOnlyProduct()) {
-                if(product.getSapMaterial() != null) {
+            if(product.getSapMaterial() != null) {
+                if(product.isExternalOnlyProduct() || product.isClinicalProduct()) {
                     final ProductOrderPriceAdjustment priceAdjustment = new ProductOrderPriceAdjustment();
                     priceAdjustment.setAdjustmentValue(new BigDecimal(product.getSapMaterial().getBasePrice()));
                     this.addCustomPriceAdjustment(priceAdjustment);
@@ -688,7 +688,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         addOns.clear();
         for (Product addOn : addOnList) {
             final ProductOrderAddOn pdoAddOn = new ProductOrderAddOn(addOn, this);
-            if (addOn.getSapMaterial() != null) {
+            if (addOn.getSapMaterial() != null && (addOn.isClinicalProduct() || addOn.isExternalOnlyProduct()) ) {
                 final ProductOrderAddOnPriceAdjustment customPriceAdjustment = new ProductOrderAddOnPriceAdjustment();
                 customPriceAdjustment.setAdjustmentValue(new BigDecimal(addOn.getSapMaterial().getBasePrice()));
                 pdoAddOn.setCustomPriceAdjustment(customPriceAdjustment);
