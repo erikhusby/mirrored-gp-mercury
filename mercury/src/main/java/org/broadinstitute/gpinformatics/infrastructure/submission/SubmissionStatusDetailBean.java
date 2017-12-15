@@ -10,6 +10,7 @@ import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.annotate.JsonPropertyOrder;
 import org.codehaus.jackson.annotate.JsonValue;
+import org.codehaus.jackson.map.annotate.JsonDeserialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import java.io.Serializable;
@@ -145,6 +146,7 @@ public class SubmissionStatusDetailBean implements Serializable {
         this.errors = errors;
     }
 
+    @JsonDeserialize(using = SubmissionServiceDateDeserializer.class)
     public Date getLastStatusUpdate() {
         return lastStatusUpdate;
     }
