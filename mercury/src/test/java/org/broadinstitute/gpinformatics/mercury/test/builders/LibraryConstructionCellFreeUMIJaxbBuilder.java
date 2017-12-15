@@ -19,7 +19,8 @@ public class LibraryConstructionCellFreeUMIJaxbBuilder {
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
     private final String testPrefix;
     private final String umiTubeBarcode;
-    private final String dualIndexPlateBarcode;
+    private final String p7IndexPlateBarcode;
+    private final String p5IndexPlateBarcode;
     private final List<String> tubeBarcodeList;
     private final String rackBarcode;
 
@@ -37,16 +38,18 @@ public class LibraryConstructionCellFreeUMIJaxbBuilder {
     private ReceptaclePlateTransferEvent umiAdditionJaxb;
     private PlateEventType postUmiAdditionThermoCyclerLoadedJaxb;
     private PlateTransferEventType umiCleanupJaxb;
-    private PlateTransferEventType dualIndexPCRJaxb;
-    private PlateEventType postDualIndexPCRThermoCyclerLoadedJaxb;
+    private PlateTransferEventType p7IndexJaxb;
+    private PlateTransferEventType p5IndexJaxb;
+    private PlateEventType postIndexAdapterLigationThermoCyclerLoaded;
 
     public LibraryConstructionCellFreeUMIJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String testPrefix,
-                                                     String umiTubeBarcode, String dualIndexPlateBarcode,
+                                                     String umiTubeBarcode, String p7IndexPlateBarcode,String p5IndexPlateBarcode,
                                                      List<String> tubeBarcodeList, String rackBarcode) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.testPrefix = testPrefix;
         this.umiTubeBarcode = umiTubeBarcode;
-        this.dualIndexPlateBarcode = dualIndexPlateBarcode;
+        this.p7IndexPlateBarcode = p7IndexPlateBarcode;
+        this.p5IndexPlateBarcode = p5IndexPlateBarcode;
         this.tubeBarcodeList = tubeBarcodeList;
         this.rackBarcode = rackBarcode;
     }
@@ -79,14 +82,19 @@ public class LibraryConstructionCellFreeUMIJaxbBuilder {
                 umiCleanupBarcode);
         bettaLimsMessageTestFactory.addMessage(messageList, umiCleanupJaxb);
 
-        dualIndexPCRJaxb = bettaLimsMessageTestFactory.buildPlateToPlate("DualIndexPCR",
-                dualIndexPlateBarcode,
+        p7IndexJaxb = bettaLimsMessageTestFactory.buildPlateToPlate("IndexedAdapterLigation",
+                p7IndexPlateBarcode,
                 umiCleanupBarcode);
-        bettaLimsMessageTestFactory.addMessage(messageList, dualIndexPCRJaxb);
+        bettaLimsMessageTestFactory.addMessage(messageList, p7IndexJaxb);
 
-        postDualIndexPCRThermoCyclerLoadedJaxb = bettaLimsMessageTestFactory.buildPlateEvent(
-                "PostDualIndexThermoCyclerLoaded", endRepairPlateBarcode);
-        bettaLimsMessageTestFactory.addMessage(messageList, postDualIndexPCRThermoCyclerLoadedJaxb);
+        p5IndexJaxb = bettaLimsMessageTestFactory.buildPlateToPlate("IndexP5PondEnrichment",
+                p5IndexPlateBarcode,
+                umiCleanupBarcode);
+        bettaLimsMessageTestFactory.addMessage(messageList, p5IndexJaxb);
+
+        postIndexAdapterLigationThermoCyclerLoaded = bettaLimsMessageTestFactory.buildPlateEvent(
+                "PostIndexedAdapterLigationThermoCyclerLoaded", umiCleanupBarcode);
+        bettaLimsMessageTestFactory.addMessage(messageList, postIndexAdapterLigationThermoCyclerLoaded);
 
         int numSamples = tubeBarcodeList.size();
         pondRegRackBarcode = "PondReg" + testPrefix;
@@ -141,12 +149,16 @@ public class LibraryConstructionCellFreeUMIJaxbBuilder {
         return postUmiAdditionThermoCyclerLoadedJaxb;
     }
 
-    public PlateEventType getPostDualIndexPCRThermoCyclerLoadedJaxb() {
-        return postDualIndexPCRThermoCyclerLoadedJaxb;
+    public PlateEventType getPostIndexAdapterLigationThermoCyclerLoaded() {
+        return postIndexAdapterLigationThermoCyclerLoaded;
     }
 
-    public PlateTransferEventType getDualIndexPCRJaxb() {
-        return dualIndexPCRJaxb;
+    public PlateTransferEventType getP7IndexJaxb() {
+        return p7IndexJaxb;
+    }
+
+    public PlateTransferEventType getP5IndexJaxb() {
+        return p5IndexJaxb;
     }
 
     public PlateTransferEventType getUmiCleanupJaxb() {
