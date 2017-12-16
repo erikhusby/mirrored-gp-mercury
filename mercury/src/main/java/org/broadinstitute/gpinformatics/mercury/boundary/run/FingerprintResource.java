@@ -10,6 +10,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.jetbrains.annotations.NotNull;
+import picard.fingerprint.FingerprintChecker;
+import picard.fingerprint.MatchResults;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -257,6 +259,10 @@ public class FingerprintResource {
             callConfidencesBuilder.append(callConfidences[i]);
         }
 
+        // todo jmt check concordance
+        FingerprintChecker fingerprintChecker = new FingerprintChecker();
+        MatchResults matchResults = fingerprintChecker.calculateMatchResults(new picard.fingerprint.Fingerprint(), );
+        matchResults.getLOD();
         new Fingerprint(mercurySample,
                 Fingerprint.Disposition.byAbbreviation(fingerprintBean.getDisposition()),
                 Fingerprint.Platform.valueOf(fingerprintBean.getPlatform()),
