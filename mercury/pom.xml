@@ -1834,6 +1834,12 @@ nodePrinter.print(webapp)
             <artifactId>cloning</artifactId>
             <version>1.9.5</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.github.broadinstitute</groupId>
+            <artifactId>picard</artifactId>
+            <version>2.16.0</version>
+        </dependency>
     </dependencies>
 
     <build>
