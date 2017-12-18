@@ -2146,7 +2146,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public OrderAccessType getOrderType() {
-        return orderType;
+        return isChildOrder() ? getParentOrder().orderType: orderType;
     }
 
     public void setOrderType(OrderAccessType orderType) {
@@ -2322,8 +2322,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public boolean isResearchOrder () {
         boolean result = true;
-        if(orderType != null) {
-            result = orderType == OrderAccessType.BROAD_PI_ENGAGED_WORK;
+        if(getOrderType() != null) {
+            result = getOrderType() == OrderAccessType.BROAD_PI_ENGAGED_WORK;
         }
         return result;
     }
