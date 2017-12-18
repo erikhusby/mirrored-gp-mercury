@@ -2150,7 +2150,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public void setOrderType(OrderAccessType orderType) {
-        this.orderType = orderType;
+        if (!isChildOrder()) {
+            this.orderType = orderType;
+        }
     }
 
     public String getOrderTypeDisplay() {
