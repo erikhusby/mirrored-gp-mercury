@@ -114,7 +114,7 @@ public class LedgerEntryTest {
     @Test
     public void testBean() {
         new BeanTester().testBean(LedgerEntry.class);
-        new EqualsMethodTester().testEqualsMethod(LedgerEntry.class, "autoLedgerTimestamp", "billingMessage", "quantity", "workItem", "workCompleteDate", "sapDeliveryDocumentId");
+        new EqualsMethodTester().testEqualsMethod(LedgerEntry.class, "autoLedgerTimestamp", "billingMessage", "quantity", "workItem", "workCompleteDate", "sapDeliveryDocumentId", "sapOrderDetail");
         new HashCodeMethodTester().testHashCodeMethod(LedgerEntry.class);
     }
 }

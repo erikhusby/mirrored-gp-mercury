@@ -1288,5 +1288,33 @@ public class ReagentFixupTest extends Arquillian {
         utx.commit();
     }
 
+    @Test(enabled = false)
+    public void fixupSupport3618() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
+
+        // Fix Linearization Mix 2
+        Reagent linearizationReagent = genericReagentDao.findByReagentNameLotExpiration("Patterned Linearization Mix 2",
+                "20177318", new GregorianCalendar(2018, Calendar.JULY, 1).getTime());
+        Assert.assertNotNull(linearizationReagent);
+        linearizationReagent.setLot("20208351");
+        linearizationReagent.setExpiration(sdf.parse("10/17/2018"));
+        System.out.println("Changing reagent: " + linearizationReagent.getReagentId() +
+                           " lot to: " + linearizationReagent.getLot() + " and expiration to 10/17/2018");
+
+        //Indexing Primer Mix
+        Reagent indexingPrimerMix = genericReagentDao.findByReagentNameLotExpiration("Indexing Primer Mix",
+                "20154795", new GregorianCalendar(2018, Calendar.APRIL, 24).getTime());
+        Assert.assertNotNull(indexingPrimerMix);
+        indexingPrimerMix.setLot("20185773");
+        indexingPrimerMix.setExpiration(sdf.parse("08/02/2018"));
+        System.out.println("Changing reagent: " + indexingPrimerMix.getReagentId() +
+                           " lot to: " + indexingPrimerMix.getLot() + " and expiration to 08/02/2018");
+        genericReagentDao.persist(new FixupCommentary("SUPPORT-3618 fixup reagent lot and expiration."));
+        genericReagentDao.flush();
+        utx.commit();
+    }
 
 }

@@ -1213,6 +1213,26 @@ public abstract class LabVessel implements Serializable {
         return event;
     }
 
+    /**
+     * @return return latest storage lab event.
+     */
+    public LabEvent getLatestStorageEvent() {
+        List<LabEvent> eventsList = getAllEventsSortedByDate();
+        int size = eventsList.size();
+        if (size > 0) {
+            int index = eventsList.size() - 1;
+            while (index >= 0) {
+                LabEvent labEvent = eventsList.get(index);
+                if (labEvent.getLabEventType() == LabEventType.STORAGE_CHECK_IN ||
+                    labEvent.getLabEventType() == LabEventType.STORAGE_CHECK_OUT) {
+                    return labEvent;
+                }
+                index--;
+            }
+        }
+        return null;
+    }
+
     @SuppressWarnings("unused")
     public Collection<String> getNearestProductOrders() {
 

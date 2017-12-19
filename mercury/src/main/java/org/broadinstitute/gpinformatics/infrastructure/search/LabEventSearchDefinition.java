@@ -631,6 +631,11 @@ public class LabEventSearchDefinition {
         searchTerm.setDisplayExpression(DisplayExpression.MOLECULAR_INDEX);
         searchTerms.add(searchTerm);
 
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Unique Molecular Identifier");
+        searchTerm.setDisplayExpression(DisplayExpression.UNIQUE_MOLECULAR_IDENTIFIER);
+        searchTerms.add(searchTerm);
+
         return searchTerms;
     }
 

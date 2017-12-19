@@ -5,13 +5,17 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMess
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.LimsQueries;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.UMIReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.UniqueMolecularIdentifier;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -32,6 +36,13 @@ import java.util.Set;
 public class LibraryConstructionEntityBuilder {
     public enum Indexing {
         SINGLE,
+        DUAL,
+        DUAL_UMI
+    }
+
+    public enum Umi {
+        NONE,
+        SINGLE,
         DUAL
     }
 
@@ -51,14 +62,24 @@ public class LibraryConstructionEntityBuilder {
     private String testPrefix;
     private Indexing indexing;
     private LibraryConstructionJaxbBuilder.PondType pondType;
+    private final Umi umi;
 
     private final Map<String, BarcodedTube> mapBarcodeToPondRegTubes = new HashMap<>();
     private final Map<String, BarcodedTube> mapBarcodeToPondNormTubes = new HashMap<>();
+    private boolean includeUmi = false;
+
+    public LibraryConstructionEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
+                                            LabEventFactory labEventFactory, LabEventHandler labEventHandler, StaticPlate shearingCleanupPlate,
+                                            String shearCleanPlateBarcode, StaticPlate shearingPlate, int numSamples, String testPrefix,
+                                            Indexing indexing, LibraryConstructionJaxbBuilder.PondType pondType) {
+        this(bettaLimsMessageTestFactory, labEventFactory, labEventHandler, shearingCleanupPlate, shearCleanPlateBarcode,
+                shearingPlate, numSamples, testPrefix, indexing, pondType, Umi.SINGLE);
+    }
 
     public LibraryConstructionEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
             LabEventFactory labEventFactory, LabEventHandler labEventHandler, StaticPlate shearingCleanupPlate,
             String shearCleanPlateBarcode, StaticPlate shearingPlate, int numSamples, String testPrefix,
-            Indexing indexing, LibraryConstructionJaxbBuilder.PondType pondType) {
+            Indexing indexing, LibraryConstructionJaxbBuilder.PondType pondType, Umi umi) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.labEventFactory = labEventFactory;
         this.labEventHandler = labEventHandler;
@@ -69,6 +90,7 @@ public class LibraryConstructionEntityBuilder {
         this.testPrefix = testPrefix;
         this.indexing = indexing;
         this.pondType = pondType;
+        this.umi = umi;
     }
 
     public List<String> getPondRegTubeBarcodes() {
@@ -176,10 +198,25 @@ public class LibraryConstructionEntityBuilder {
             );
             indexPlateP7 = indexPlates.get(0);
             indexPlateP5 = indexPlates.get(1);
-        } else {
+        } else if (indexing == Indexing.SINGLE){
             indexPlateP7 = LabEventTest.buildIndexPlate(null, null,
                     Collections.singletonList(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7),
                     Collections.singletonList(libraryConstructionJaxbBuilder.getP7IndexPlateBarcode())).get(0);
+        } else { //Must be Dual Index UMI
+            List<StaticPlate> indexPlates = LabEventTest.buildIndexPlate(null, null,
+                    new ArrayList<MolecularIndexingScheme.IndexPosition>() {{
+                        add(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7);
+                        add(MolecularIndexingScheme.IndexPosition.ILLUMINA_P5);
+                    }},
+                    new ArrayList<String>() {{
+                        add(libraryConstructionJaxbBuilder.getP7IndexPlateBarcode());
+                        add(libraryConstructionJaxbBuilder.getP5IndexPlateBarcode());
+                    }}
+            );
+            indexPlateP7 = indexPlates.get(0);
+            indexPlateP5 = indexPlates.get(1);
+            attachUmiToIndexPlate(indexPlateP7, UniqueMolecularIdentifier.UMILocation.BEFORE_FIRST_INDEX_READ);
+            attachUmiToIndexPlate(indexPlateP5, UniqueMolecularIdentifier.UMILocation.BEFORE_SECOND_INDEX_READ);
         }
         Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
         mapBarcodeToVessel.put(indexPlateP7.getLabel(), indexPlateP7);
@@ -194,10 +231,19 @@ public class LibraryConstructionEntityBuilder {
                 shearingCleanupPlate.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.A01);
         SampleInstanceV2 sampleInstance = postIndexingSampleInstances.iterator().next();
         List<Reagent> reagents = sampleInstance.getReagents();
-        Assert.assertEquals(reagents.size(), 1, "Wrong number of reagents");
-        MolecularIndexReagent molecularIndexReagent = (MolecularIndexReagent) reagents.iterator().next();
-        Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P7-Habab",
-                                   "Wrong index");
+        MolecularIndexReagent molecularIndexReagent = null;
+        if (includeUmi) {
+            int reagentCount = umi == Umi.SINGLE ? 2: 3;
+            Assert.assertEquals(reagents.size(), reagentCount, "Wrong number of reagents");
+            molecularIndexReagent = findIndexReagent(reagents);
+            Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P7-Habab",
+                    "Wrong index");
+        } else {
+            Assert.assertEquals(reagents.size(), 1, "Wrong number of reagents");
+            molecularIndexReagent = (MolecularIndexReagent) reagents.iterator().next();
+            Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P7-Habab",
+                    "Wrong index");
+        }
 
         // PostIndexedAdapterLigationThermoCyclerLoaded
         LabEventTest.validateWorkflow("PostIndexedAdapterLigationThermoCyclerLoaded", shearingCleanupPlate);
@@ -228,7 +274,7 @@ public class LibraryConstructionEntityBuilder {
             labEventHandler.processEvent(pondEnrichmentEntity);
         }
 
-        if (indexing == Indexing.DUAL) {
+        if (indexing == Indexing.DUAL || indexing == Indexing.DUAL_UMI) {
             // IndexP5PondEnrichment
             LabEventTest.validateWorkflow("IndexP5PondEnrichment", ligationCleanupPlate);
             mapBarcodeToVessel.clear();
@@ -319,11 +365,60 @@ public class LibraryConstructionEntityBuilder {
                         .getRootOrEarliestMercurySampleName(),
                 "Wrong sample");
         reagents = pondRegSampleInstance.getReagents();
-        Assert.assertEquals(reagents.size(), 1, "Wrong number of reagents");
-        molecularIndexReagent = (MolecularIndexReagent) reagents.iterator().next();
-        Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P5-Habab_P7-Habab",
-                "Wrong index");
+        if (includeUmi) {
+            if (umi == Umi.DUAL) {
+                Assert.assertEquals(reagents.size(), 3, "Wrong number of reagents");
+            } else {
+                Assert.assertEquals(reagents.size(), 2, "Wrong number of reagents");
+            }
+            molecularIndexReagent = findIndexReagent(reagents);
+            Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(),
+                    "Illumina_P5-Habab_P7-Habab",
+                    "Wrong index");
+        } else if (indexing == Indexing.DUAL){
+            Assert.assertEquals(reagents.size(), 1, "Wrong number of reagents");
+            molecularIndexReagent = (MolecularIndexReagent) reagents.iterator().next();
+            Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(),
+                    "Illumina_P5-Habab_P7-Habab",
+                    "Wrong index");
+        } else if (indexing == Indexing.SINGLE) {
+            Assert.assertEquals(reagents.size(), 1, "Wrong number of reagents");
+            molecularIndexReagent = (MolecularIndexReagent) reagents.iterator().next();
+            Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(),
+                    "Illumina_P7-Habab",
+                    "Wrong index");
+        }
 
         return this;
+    }
+
+    private MolecularIndexReagent findIndexReagent(List<Reagent> reagents) {
+        for (Reagent reagent : reagents) {
+            if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class))
+                return OrmUtil.proxySafeCast(reagent, MolecularIndexReagent.class);
+        }
+        return null;
+    }
+
+    private void attachUmiToIndexPlate(StaticPlate indexPlate, UniqueMolecularIdentifier.UMILocation umiLocation) {
+        UniqueMolecularIdentifier umi = new UniqueMolecularIdentifier(umiLocation, 3L, 2L);
+        UMIReagent umiReagent = new UMIReagent(umi);
+        Map<VesselPosition, PlateWell> mapPositionToVessel = indexPlate.getContainerRole().getMapPositionToVessel();
+        for (VesselPosition vesselPosition: indexPlate.getVesselGeometry().getVesselPositions()) {
+            PlateWell plateWell;
+            if (mapPositionToVessel != null && mapPositionToVessel.containsKey(vesselPosition)) {
+                plateWell = mapPositionToVessel.get(vesselPosition);
+                plateWell.addReagent(umiReagent);
+            } else {
+                plateWell = new PlateWell(indexPlate, vesselPosition);
+                plateWell.addReagent(umiReagent);
+                indexPlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
+            }
+
+        }
+    }
+
+    public void setIncludeUmi(boolean includeUmi) {
+        this.includeUmi = includeUmi;
     }
 }

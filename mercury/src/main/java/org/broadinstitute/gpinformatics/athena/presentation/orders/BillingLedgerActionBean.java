@@ -15,7 +15,6 @@ import net.sourceforge.stripes.controller.LifecycleStage;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
-import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderListEntryDao;
@@ -34,9 +33,11 @@ import org.broadinstitute.gpinformatics.infrastructure.cognos.SampleCoverageFirs
 import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.SampleCoverageFirstMet;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.json.JSONArray;
 import org.json.JSONException;
 
@@ -47,8 +48,12 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 // TODO: Move anything that is needed from SampleLedgerExporter into another class
 
@@ -145,7 +150,11 @@ public class BillingLedgerActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.EventHandling, on = { "view", "updateLedgers" })
     public void loadAllDataForView() {
         loadProductOrder();
-        gatherPriceItems();
+        try {
+            gatherPriceItems();
+        } catch (SAPIntegrationException e) {
+            addGlobalValidationError(e.getMessage());
+        }
 
         /*
          * When processing a form submit ("updateLedgers" action), this will only be used if rendering an error.
@@ -200,9 +209,9 @@ public class BillingLedgerActionBean extends CoreActionBean {
             } catch (ValidationException e) {
                 logger.error(e);
                 addGlobalValidationErrors(e.getValidationMessages());
-            } catch ( QuoteNotFoundException | QuoteServerException  otherEs) {
-                logger.error(otherEs);
-                addGlobalValidationError(otherEs.getMessage());
+            } catch (SAPIntegrationException | QuoteNotFoundException | QuoteServerException e) {
+                logger.error(e);
+                addGlobalValidationError(e.getMessage());
             } catch (SAPInterfaceException sie) {
                 String errorMessage = "While updating this order in SAP an error occurred:  ";
                 logger.error(sie);
@@ -228,9 +237,10 @@ public class BillingLedgerActionBean extends CoreActionBean {
      * configured replacement price items, add-on price items, and any "historical" price items (ones that have been
      * billed for this PDO but are otherwise no longer related).
      */
-    private void gatherPriceItems() {
+    private void gatherPriceItems() throws SAPIntegrationException {
         // Collect primary and replacement price items
-        priceItems.addAll(SampleLedgerExporter.getPriceItems(productOrder.getProduct(), priceItemDao, priceListCache));
+        priceItems.addAll(getPriceItems(productOrder.getProduct(), priceItemDao, priceListCache,
+                productOrder));
 
         // Collect historical price items (need add-ons to do that)
         List<Product> addOns = new ArrayList<>();
@@ -238,13 +248,14 @@ public class BillingLedgerActionBean extends CoreActionBean {
             addOns.add(productOrderAddOn.getAddOn());
         }
         Collections.sort(addOns);
-        priceItems.addAll(SampleLedgerExporter
-                .getHistoricalPriceItems(Collections.singletonList(productOrder), priceItems, addOns, priceItemDao,
+        priceItems.addAll(getHistoricalPriceItems(productOrder, priceItems, addOns, priceItemDao,
                         priceListCache));
 
         // Collect add-on price items
         for (Product addOn : addOns) {
-            priceItems.add(addOn.getPrimaryPriceItem());
+            final PriceItem addonPriceItem = productOrder.determinePriceItemByCompanyCode(addOn);
+
+            priceItems.add(addonPriceItem);
         }
     }
 
@@ -614,4 +625,77 @@ public class BillingLedgerActionBean extends CoreActionBean {
             this.submittedQuantity = submittedQuantity;
         }
     }
+    
+    /**
+     * This gets the product price item and then its list of optional price items. If the price items are not
+     * yet stored in the PRICE_ITEM table, it will create it there.
+     *
+     * @param product The product.
+     * @param priceItemDao The DAO to use for saving any new price item.
+     * @param priceItemListCache The price list cache.
+     *
+     * @param productOrder
+     * @return The real price item objects.
+     */
+    public List<PriceItem> getPriceItems(Product product, PriceItemDao priceItemDao,
+                                                PriceListCache priceItemListCache,
+                                                ProductOrder productOrder) {
+
+        List<PriceItem> allPriceItems = new ArrayList<>();
+
+        // First add the primary price item.
+        PriceItem primaryPriceItem = productOrder.determinePriceItemByCompanyCode(product);
+
+        allPriceItems.add(primaryPriceItem);
+
+        // Now add the replacement price items.
+        // Get the replacement items from the quote cache.
+        Collection<QuotePriceItem> quotePriceItems =
+                priceItemListCache.getReplacementPriceItems(primaryPriceItem);
+
+        // Now add the replacement items as mercury price item objects.
+        for (QuotePriceItem quotePriceItem : quotePriceItems) {
+            // Find the price item object.
+            PriceItem priceItem =
+                    priceItemDao.find(
+                            quotePriceItem.getPlatformName(), quotePriceItem.getCategoryName(), quotePriceItem.getName());
+
+            // If it does not exist create it.
+            if (priceItem == null) {
+                priceItem = new PriceItem(quotePriceItem.getId(), quotePriceItem.getPlatformName(),
+                        quotePriceItem.getCategoryName(), quotePriceItem.getName());
+                priceItemDao.persist(priceItem);
+            }
+
+            allPriceItems.add(priceItem);
+        }
+
+        return allPriceItems;
+    }
+
+
+    public SortedSet<PriceItem> getHistoricalPriceItems(ProductOrder productOrder,
+                                                               List<PriceItem> priceItems, List<Product> addOns,
+                                                               PriceItemDao priceItemDao,
+                                                               PriceListCache priceListCache) {
+        Set<PriceItem> addOnPriceItems = new HashSet<>();
+        for (Product addOn : addOns) {
+            addOnPriceItems.addAll(getPriceItems(addOn, priceItemDao, priceListCache, productOrder));
+        }
+
+        SortedSet<PriceItem> historicalPriceItems = new TreeSet<>();
+
+            for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
+                for (LedgerEntry ledgerEntry : productOrderSample.getLedgerItems()) {
+                    PriceItem priceItem = ledgerEntry.getPriceItem();
+                    if (!priceItems.contains(priceItem) && !addOnPriceItems
+                            .contains(priceItem)) {
+                        historicalPriceItems.add(priceItem);
+                    }
+                }
+            }
+
+        return historicalPriceItems;
+    }
+
 }

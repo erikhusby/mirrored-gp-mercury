@@ -21,12 +21,9 @@ import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingException
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingSessionAccessEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteWorkItemsExporter;
-import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
-import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporterFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
@@ -41,7 +38,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
@@ -87,9 +83,6 @@ public class BillingSessionActionBean extends CoreActionBean {
 
     @Inject
     private BillingSessionAccessEjb billingSessionAccessEjb;
-
-    @Inject
-    private SampleLedgerExporterFactory sampleLedgerExporterFactory;
 
     private List<BillingSession> billingSessions;
 
@@ -137,22 +130,6 @@ public class BillingSessionActionBean extends CoreActionBean {
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
         return new ForwardResolution(SESSION_VIEW_PAGE);
-    }
-
-    @HandlesEvent("downloadTracker")
-    public Resolution downloadTracker() {
-
-        List<ProductOrder> productOrders =
-                productOrderDao.findListForBilling(editSession.getProductOrderBusinessKeys());
-
-        SampleLedgerExporter exporter = sampleLedgerExporterFactory.makeExporter(productOrders);
-
-        try {
-            return new BillingTrackerResolution(exporter);
-        } catch (IOException e) {
-            addGlobalValidationError("Got an exception trying to download the billing tracker: " + e.getMessage());
-            return new ForwardResolution(SESSION_VIEW_PAGE);
-        }
     }
 
     /**
