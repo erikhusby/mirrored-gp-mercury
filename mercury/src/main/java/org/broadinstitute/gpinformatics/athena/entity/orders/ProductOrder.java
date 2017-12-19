@@ -2267,12 +2267,19 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                         clearCustomPriceAdjustment();
                     }
                 } else {
-                    ProductOrderPriceAdjustment primaryAdjustment =
-                            new ProductOrderPriceAdjustment(
-                                    (StringUtils.isNotBlank(mappedValues.get(primaryPartNumber).getPrice())) ?
-                                            new BigDecimal(mappedValues.get(primaryPartNumber).getPrice()) : null,
-                                    (StringUtils.isNotBlank(mappedValues.get(primaryPartNumber).getQuantity())) ?
-                                            Integer.valueOf(mappedValues.get(primaryPartNumber).getQuantity()) : null,
+                    BigDecimal adjustmentPriceValue = null;
+                    Integer adjustmentQuantityValue = null;
+
+                    if(StringUtils.isNotBlank(mappedValues.get(primaryPartNumber).getPrice())){
+
+                        adjustmentPriceValue = new BigDecimal(mappedValues.get(primaryPartNumber).getPrice());
+                    }
+                    if (StringUtils.isNotBlank(mappedValues.get(primaryPartNumber).getQuantity())) {
+                        adjustmentQuantityValue = Integer.valueOf(mappedValues.get(primaryPartNumber).getQuantity());
+                    }
+
+                    final ProductOrderPriceAdjustment primaryAdjustment =
+                            new ProductOrderPriceAdjustment(adjustmentPriceValue, adjustmentQuantityValue,
                                     mappedValues.get(primaryPartNumber).getCustomName());
                     setCustomPriceAdjustment(primaryAdjustment);
                 }
@@ -2287,17 +2294,23 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                         productOrderAddOn.clearCustomPriceAdjustment();
                     }
                 } else {
+                    BigDecimal addOnAdjustmentPriceValue = null;
+                    Integer addOnAdjustmentQuantityValue = null;
+
+                    if (StringUtils
+                            .isNoneBlank(mappedValues.get(addOnProduct.getPartNumber()).getPrice())) {
+                        addOnAdjustmentPriceValue =
+                                new BigDecimal(mappedValues.get(addOnProduct.getPartNumber()).getPrice());
+                    }
+                    if (StringUtils
+                            .isNotBlank(mappedValues.get(addOnProduct.getPartNumber()).getQuantity())) {
+                        addOnAdjustmentQuantityValue =
+                                Integer.valueOf(mappedValues.get(addOnProduct.getPartNumber()).getQuantity());
+                    }
+                    
                     final ProductOrderAddOnPriceAdjustment productOrderAddOnPriceAdjustment =
-                            new ProductOrderAddOnPriceAdjustment(
-                                    (StringUtils
-                                            .isNoneBlank(mappedValues.get(addOnProduct.getPartNumber()).getPrice()))?
-                                            new BigDecimal(mappedValues.get(addOnProduct.getPartNumber()).getPrice()):
-                                            null,
-                                    (StringUtils
-                                            .isNotBlank(mappedValues.get(addOnProduct.getPartNumber()).getQuantity())) ?
-                                            Integer.valueOf(
-                                                    mappedValues.get(addOnProduct.getPartNumber()).getQuantity()) :
-                                            null,
+                            new ProductOrderAddOnPriceAdjustment(addOnAdjustmentPriceValue,
+                                    addOnAdjustmentQuantityValue,
                                     mappedValues.get(addOnProduct.getPartNumber()).getCustomName());
 
                     productOrderAddOn.setCustomPriceAdjustment(productOrderAddOnPriceAdjustment);
