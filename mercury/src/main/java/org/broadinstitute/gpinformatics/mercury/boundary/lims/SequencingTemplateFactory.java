@@ -18,6 +18,8 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
+import org.broadinstitute.gpinformatics.infrastructure.search.LabVesselSearchDefinition;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
@@ -176,6 +178,28 @@ public class SequencingTemplateFactory {
         return getSequencingTemplate(fctBatch, isMiSeq);
     }
 
+    public List<LabBatch> fetchFlowcellTicketForLabBatch(LabVessel labVessel) {
+        List<LabBatch> results = new ArrayList<>();
+
+        LabVesselSearchDefinition.VesselBatchTraverserCriteria downstreamBatchFinder =
+                new LabVesselSearchDefinition.VesselBatchTraverserCriteria();
+        if( labVessel.getContainerRole() != null ) {
+            labVessel.getContainerRole().applyCriteriaToAllPositions(
+                    downstreamBatchFinder, TransferTraverserCriteria.TraversalDirection.Ancestors);
+        } else {
+            labVessel.evaluateCriteria(
+                    downstreamBatchFinder, TransferTraverserCriteria.TraversalDirection.Ancestors);
+        }
+
+        for ( LabBatch labBatch : downstreamBatchFinder.getLabBatches() ) {
+            if( labBatch.getLabBatchType() == LabBatch.LabBatchType.FCT
+                || labBatch.getLabBatchType() == LabBatch.LabBatchType.MISEQ ) {
+                results.add(labBatch);
+            }
+        }
+        return results;
+    }
+
     public SequencingTemplateType getSequencingTemplate(LabBatch fctBatch, boolean poolTestDefault) {
         String sequencingTemplateName = null;
         if (fctBatch.getLabBatchType() != LabBatch.LabBatchType.FCT) {
@@ -316,16 +340,22 @@ public class SequencingTemplateFactory {
                                                         boolean poolTestDefault) {
 
         // Finds the FCT for the flowcell.
-        TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
-                new TransferTraverserCriteria.NearestLabBatchFinder(LabBatch.LabBatchType.FCT,
-                        TransferTraverserCriteria.NearestLabBatchFinder.AssociationType.DILUTION_VESSEL);
-        flowcell.getContainerRole().applyCriteriaToAllPositions(batchCriteria,
-                TransferTraverserCriteria.TraversalDirection.Ancestors);
+        LabBatch fctBatch = null;
+        List<LabBatch> labBatches = fetchFlowcellTicketForLabBatch(flowcell);
+        if (labBatches.isEmpty()) {
+            TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
+                    new TransferTraverserCriteria.NearestLabBatchFinder(LabBatch.LabBatchType.FCT,
+                            TransferTraverserCriteria.NearestLabBatchFinder.AssociationType.DILUTION_VESSEL);
+            flowcell.getContainerRole().applyCriteriaToAllPositions(batchCriteria,
+                    TransferTraverserCriteria.TraversalDirection.Ancestors);
 
-        LabBatch fctBatch = CollectionUtils.isNotEmpty(batchCriteria.getAllLabBatches()) ?
-                batchCriteria.getAllLabBatches().iterator().next() :
-                (CollectionUtils.isNotEmpty(flowcell.getAllLabBatches(LabBatch.LabBatchType.FCT)) ?
-                        flowcell.getAllLabBatches(LabBatch.LabBatchType.FCT).iterator().next() : null);
+            fctBatch = CollectionUtils.isNotEmpty(batchCriteria.getAllLabBatches()) ?
+                    batchCriteria.getAllLabBatches().iterator().next() :
+                    (CollectionUtils.isNotEmpty(flowcell.getAllLabBatches(LabBatch.LabBatchType.FCT)) ?
+                            flowcell.getAllLabBatches(LabBatch.LabBatchType.FCT).iterator().next() : null);
+        } else {
+            fctBatch = labBatches.get(0);
+        }
 
         // If it exists, uses a designation for obtaining flowcell parameters. All of the flowcell's
         // designations will have the same flowcell parameters (read length, number of cycles, etc).
