@@ -2269,7 +2269,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                 } else {
                     ProductOrderPriceAdjustment primaryAdjustment =
                             new ProductOrderPriceAdjustment(
-                                    new BigDecimal(mappedValues.get(primaryPartNumber).getPrice()),
+                                    (StringUtils.isNotBlank(mappedValues.get(primaryPartNumber).getPrice())) ?
+                                            new BigDecimal(mappedValues.get(primaryPartNumber).getPrice()) : null,
                                     (StringUtils.isNotBlank(mappedValues.get(primaryPartNumber).getQuantity())) ?
                                             Integer.valueOf(mappedValues.get(primaryPartNumber).getQuantity()) : null,
                                     mappedValues.get(primaryPartNumber).getCustomName());
@@ -2288,7 +2289,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                 } else {
                     final ProductOrderAddOnPriceAdjustment productOrderAddOnPriceAdjustment =
                             new ProductOrderAddOnPriceAdjustment(
-                                    new BigDecimal(mappedValues.get(addOnProduct.getPartNumber()).getPrice()),
+                                    (StringUtils
+                                            .isNoneBlank(mappedValues.get(addOnProduct.getPartNumber()).getPrice()))?
+                                            new BigDecimal(mappedValues.get(addOnProduct.getPartNumber()).getPrice()):
+                                            null,
                                     (StringUtils
                                             .isNotBlank(mappedValues.get(addOnProduct.getPartNumber()).getQuantity())) ?
                                             Integer.valueOf(
