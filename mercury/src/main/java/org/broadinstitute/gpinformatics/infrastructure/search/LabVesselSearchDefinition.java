@@ -2589,7 +2589,9 @@ public class LabVesselSearchDefinition {
 
             if( !hadStartingVessels ) {
                 for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
-                    labBatches.add(bucketEntry.getLabBatch());
+                    if( bucketEntry.getLabBatch() != null ) {
+                        labBatches.add(bucketEntry.getLabBatch());
+                    }
                 }
             }
         }
