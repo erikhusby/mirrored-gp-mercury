@@ -20,7 +20,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductPdfFactory;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
@@ -49,6 +48,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.sap.services.SAPIntegrationException;
+import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.springframework.util.CollectionUtils;
 
 import javax.inject.Inject;
@@ -283,6 +283,16 @@ public class ProductActionBean extends CoreActionBean {
     @After(stages = LifecycleStage.BindingAndValidation, on = LIST_ACTION)
     public void allProductsInit() {
         allProducts = productDao.findProducts(availability, TopLevelOnly.NO, IncludePDMOnly.YES);
+
+        for (Product product: allProducts) {
+            final QuotePriceItem quotePriceItem = priceListCache.findByKeyFields(product.getPrimaryPriceItem());
+            if (quotePriceItem != null) {
+                product.getPrimaryPriceItem().setPrice(quotePriceItem.getPrice());
+                product.getPrimaryPriceItem().setUnits(quotePriceItem.getUnit());
+
+                product.setSapMaterial(productPriceCache.findByProduct(product, product.determineCompanyConfiguration()));
+            }
+        }
     }
 
     /**
@@ -743,9 +753,9 @@ public class ProductActionBean extends CoreActionBean {
         return workflows;
     }
 
-    public boolean productInSAP(String partNumber) {
+    public boolean productInSAP(String partNumber, SapIntegrationClientImpl.SAPCompanyConfiguration companyCode) {
 
-        return productPriceCache.productExists(partNumber);
+        return productPriceCache.findByPartNumber(partNumber, companyCode) != null;
     }
 
     public ProductDao.Availability getAvailability() {

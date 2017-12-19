@@ -79,7 +79,7 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
         return sapMaterials;
     }
 
-    private SAPMaterial findByPartNumber(String partNumber,
+    public SAPMaterial findByPartNumber(String partNumber,
                                          SapIntegrationClientImpl.SAPCompanyConfiguration companyCode) {
         SAPMaterial foundMaterial = null;
 

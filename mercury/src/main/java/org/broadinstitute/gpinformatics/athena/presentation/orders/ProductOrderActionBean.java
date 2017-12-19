@@ -1861,7 +1861,10 @@ public class ProductOrderActionBean extends CoreActionBean {
                 tokenProject != null ? researchProjectDao.findByBusinessKey(tokenProject.getBusinessKey()) : null;
         Product tokenProduct = productTokenInput.getTokenObject();
         Product product = tokenProduct != null ? productDao.findByPartNumber(tokenProduct.getPartNumber()) : null;
-
+        if(product != null) {
+            product.setSapMaterial(productPriceCache.findByPartNumber(product.getPartNumber(),
+                    product.determineCompanyConfiguration()));
+        }
         if(editOrder.isSavedInSAP() && !editOrder.latestSapOrderDetail().getCompanyCode().equals(
                 editOrder.getSapCompanyConfigurationForProductOrder().getCompanyCode())) {
             addGlobalValidationError("Unable to update the order in SAP.  This combination of Product and Order is "
@@ -1869,6 +1872,13 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
+
+        for (Product addOnProduct : addOnProducts) {
+            addOnProduct.setSapMaterial(productPriceCache.findByPartNumber(addOnProduct.getPartNumber(),
+                    addOnProduct.determineCompanyConfiguration()));
+        }
+
+
         editOrder.updateData(project, product, addOnProducts, stringToSampleListExisting(sampleList));
         BspUser tokenOwner = owner.getTokenObject();
         editOrder.setCreatedBy(tokenOwner != null ? tokenOwner.getUserId() : null);
