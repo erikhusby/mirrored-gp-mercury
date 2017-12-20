@@ -18,6 +18,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexRea
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.UMIReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.UniqueMolecularIdentifier;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
@@ -425,6 +427,19 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     @Nullable
     public MolecularIndexingScheme getMolecularIndexingScheme() {
         return molecularIndexingScheme;
+    }
+
+    @Nullable
+    public Set<UMIReagent> getUmiReagents() {
+        Set<UMIReagent> umiReagents = new HashSet<>();
+        for (Reagent reagent: getReagents()) {
+            if (OrmUtil.proxySafeIsInstance(reagent, UMIReagent.class)) {
+                UMIReagent umiReagent =
+                        OrmUtil.proxySafeCast(reagent, UMIReagent.class);
+                umiReagents.add(umiReagent);
+            }
+        }
+        return umiReagents;
     }
 
     public boolean isReagentOnly() {

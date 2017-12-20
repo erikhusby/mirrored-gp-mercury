@@ -60,6 +60,7 @@ import java.text.Format;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -242,11 +243,19 @@ public class ZimsIlluminaRunFactory {
         List<SequencingTemplateLaneType> sequencingTemplateLanes = null;
         try {
             SequencingTemplateType sequencingTemplate = sequencingTemplateFactory.getSequencingTemplate(
-                    illuminaFlowcell, loadedVesselsAndPositions, true);
+                    illuminaFlowcell, loadedVesselsAndPositions, false);
             sequencingTemplateLanes = sequencingTemplate.getLanes();
+            if (sequencingTemplateLanes != null) {
+                Collections.sort(sequencingTemplateLanes, new Comparator<SequencingTemplateLaneType>() {
+                    @Override
+                    public int compare(SequencingTemplateLaneType lane1, SequencingTemplateLaneType lane2) {
+                        return lane1.getLaneName().compareTo(lane2.getLaneName());
+                    }
+                });
+            }
         } catch (Exception e) {
             log.error("Failed to get sequencingTemplate.", e);
-            // don't rethrow, failing to get loading concentration is not fatal.
+            throw e;
         }
         for (List<SampleInstanceDto> sampleInstanceDtos : perLaneSampleInstanceDtos) {
             if (sampleInstanceDtos != null && !sampleInstanceDtos.isEmpty()) {
@@ -258,9 +267,11 @@ public class ZimsIlluminaRunFactory {
                 String sequencedLibraryName = sampleInstanceDto.getSequencedLibraryName();
                 Date sequencedLibraryDate = sampleInstanceDto.getSequencedLibraryDate();
 
+                String setupReadStructure = null;
                 BigDecimal loadingConcentration = null;
                 if (sequencingTemplateLanes != null && sequencingTemplateLanes.size() == numberOfLanes) {
                     loadingConcentration = sequencingTemplateLanes.get(laneNumber - 1).getLoadingConcentration();
+                    setupReadStructure = sequencingTemplateLanes.get(laneNumber - 1).getReadStructure();
                 }
                 IlluminaSequencingRunChamber sequencingRunChamber = illuminaRun.getSequencingRunChamber(laneNumber);
                 String actualReadStructure = null;
@@ -271,7 +282,7 @@ public class ZimsIlluminaRunFactory {
                                                                    sequencedLibraryDate,
                                                                    loadingConcentration == null ? null :
                                                                            loadingConcentration.doubleValue(),
-                                                                   actualReadStructure);
+                                                                   actualReadStructure, setupReadStructure);
                 run.addLane(lane);
             }
         }
@@ -577,6 +588,11 @@ public class ZimsIlluminaRunFactory {
         }
 
         return libraryBean;
+    }
+
+    public void setSequencingTemplateFactory(
+            SequencingTemplateFactory sequencingTemplateFactory) {
+        this.sequencingTemplateFactory = sequencingTemplateFactory;
     }
 
     /**

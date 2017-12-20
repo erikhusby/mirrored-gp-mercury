@@ -131,12 +131,7 @@ public class ContainerActionBeanTest {
         MessageCollection messageCollection = new MessageCollection();
         actionBean.handleSaveContainer(messageCollection);
         Assert.assertEquals(messageCollection.hasErrors(), false);
-        Assert.assertEquals(rackOfTubes.getStorageLocation(), storageLocation);
-        Assert.assertEquals(barcodedTube.getStorageLocation(), storageLocation);
-
-        actionBean.removeFromLocation();
-        Assert.assertNull(rackOfTubes.getStorageLocation());
-        Assert.assertNull(barcodedTube.getStorageLocation());
+        Assert.assertEquals(rackOfTubes.getStorageLocation(), null);
     }
 
     private LabEvent addEventToRack(RackOfTubes rackOfTubes, Map<VesselPosition, BarcodedTube> mapPositionToTube,

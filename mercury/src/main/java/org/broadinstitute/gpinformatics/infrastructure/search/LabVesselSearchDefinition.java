@@ -1368,6 +1368,11 @@ public class LabVesselSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
+        searchTerm.setName("Unique Molecular Identifier");
+        searchTerm.setDisplayExpression(DisplayExpression.UNIQUE_MOLECULAR_IDENTIFIER);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
         searchTerm.setName("Mercury Sample Tube Barcode");
         // todo jmt replace?
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
@@ -2584,7 +2589,9 @@ public class LabVesselSearchDefinition {
 
             if( !hadStartingVessels ) {
                 for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
-                    labBatches.add(bucketEntry.getLabBatch());
+                    if( bucketEntry.getLabBatch() != null ) {
+                        labBatches.add(bucketEntry.getLabBatch());
+                    }
                 }
             }
         }

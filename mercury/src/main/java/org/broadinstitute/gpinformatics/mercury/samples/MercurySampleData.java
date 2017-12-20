@@ -225,7 +225,8 @@ public class MercurySampleData implements SampleData {
         public void updateFromLabMetric(LabMetric labMetric) {
             concentration = labMetric.getValue().doubleValue();
             if (labMetric.getTotalNg() != null) {
-                totalDna = labMetric.getTotalNg().doubleValue();
+                // convert ng to ug
+                totalDna = labMetric.getTotalNg().doubleValue()  / 1000.0;
             }
             LabMetricRun labMetricRun = labMetric.getLabMetricRun();
 
