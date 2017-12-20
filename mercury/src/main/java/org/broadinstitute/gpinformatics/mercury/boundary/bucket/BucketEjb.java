@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.bucket;
 
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -377,15 +378,21 @@ public class BucketEjb {
             nameToSampleMap.put(pdoSample.getName(), pdoSample);
         }
 
-        List<LabVessel> vessels = labVesselDao.findBySampleKeyList(nameToSampleMap.keys());
+        Multimap<String, LabVessel> labVesselMap = HashMultimap.create();
+        for (String name : nameToSampleMap.keys()) {
+            labVesselMap.putAll(name, labVesselDao.findBySampleKey(name));
+        }
+        // PDO Samples may be named after tube barcodes.
+        for (Map.Entry<String, LabVessel> mapEntry :
+                labVesselDao.findByBarcodes(new ArrayList<>(nameToSampleMap.keys())).entrySet()) {
+            labVesselMap.put(mapEntry.getKey(), mapEntry.getValue());
+        }
 
         // Finds samples with no existing vessels.
-        Collection<String> samplesWithoutVessel = new ArrayList<>(nameToSampleMap.keys());
-        for (LabVessel vessel : vessels) {
-            for (MercurySample sample : vessel.getMercurySamples()) {
-                samplesWithoutVessel.remove(sample.getSampleKey());
-            }
-        }
+        Collection<String> samplesWithoutVessel = CollectionUtils.subtract(nameToSampleMap.keySet(),
+                labVesselMap.keySet());
+
+        Set<LabVessel> vessels = new HashSet<>(labVesselMap.values());
 
         // This case will only apply to Samples with a BSP data source, at least for now.  There should not be a
         // scenario in which we fall into this conditional for Vessels that originate in Mercury
@@ -404,7 +411,7 @@ public class BucketEjb {
         }
 
         Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair = applyBucketCriteria(
-                vessels, order, username, bucketingSource);
+                new ArrayList<>(vessels), order, username, bucketingSource);
         Collection<BucketEntry> newBucketEntries = workflowBucketEntriesPair.getRight();
 
         Map<String, Collection<ProductOrderSample>> samplesAdded = new HashMap<>();

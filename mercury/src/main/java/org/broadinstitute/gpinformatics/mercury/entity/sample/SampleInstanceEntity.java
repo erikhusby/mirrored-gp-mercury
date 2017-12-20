@@ -16,11 +16,11 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.Set;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Audited
@@ -97,6 +97,10 @@ public class SampleInstanceEntity {
     public void setRootSample(MercurySample rootSample) { this.rootSample = rootSample;  }
 
     public void setLabVessel(LabVessel labVessel) { this.labVessel = labVessel; }
+
+    public LabVessel getLabVessel() {
+        return labVessel;
+    }
 
     public MolecularIndexingScheme getMolecularIndexingScheme() { return molecularIndexingScheme;  }
 

@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import com.google.common.base.Predicate;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
@@ -34,8 +35,8 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioSampleBean;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleInstanceEntityDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -464,15 +465,42 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
         // Create a subset of the samples so we only call BSP for BSP samples that aren't already cached.
         Set<String> sampleNames = new HashSet<>(samples.size());
+        Multimap<String, ProductOrderSample> linkableSamples = HashMultimap.create();
         for (ProductOrderSample productOrderSample : samples) {
             if (!productOrderSample.isHasBspSampleDataBeenInitialized()) {
                 sampleNames.add(productOrderSample.getName());
+                if (productOrderSample.getMercurySample() == null) {
+                    linkableSamples.put(productOrderSample.getName(), productOrderSample);
+                }
             }
         }
         if (sampleNames.isEmpty()) {
             // This early return is needed to avoid making a unnecessary injection, which could cause
             // DB Free automated tests to fail.
             return;
+        }
+
+        // Samples created from externally uploaded samples will not have a Mercury Sample link yet
+        // and it needs to be present in order to correctly look up sample data. The PDO sample may
+        // be either a Mercury Sample name or a tube barcode.
+        if (!linkableSamples.isEmpty()) {
+            SampleInstanceEntityDao dao = ServiceAccessUtility.getBean(SampleInstanceEntityDao.class);
+            Multimap<String, MercurySample> map = dao.lookupSamplesByIdentifiers(linkableSamples.keySet());
+            for (String identifier : map.keySet()) {
+                if (map.get(identifier).size() > 1) {
+                    List<String> names = new ArrayList<>();
+                    for (MercurySample mercurySample : map.get(identifier)) {
+                        names.add(mercurySample.getSampleKey());
+                    }
+                    throw new RuntimeException("Multiple MercurySamples " + StringUtils.join(names, ", ") +
+                            " are associated with " + identifier);
+                } else if (map.get(identifier).size() == 1) {
+                    // There may be multiple pdo samples having the same name.
+                    for (ProductOrderSample pdoSample : linkableSamples.get(identifier)) {
+                        pdoSample.setMercurySample(map.get(identifier).iterator().next());
+                    }
+                }
+            }
         }
 
         // This gets all the sample names. We could get unique sample names from BSP as a future optimization.
@@ -672,7 +700,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public List<ProductOrderAddOn> getAddOns() {
-        return isChildOrder()?parentOrder.getAddOns():ImmutableList.copyOf(addOns);
+        return isChildOrder()?parentOrder.getAddOns(): ImmutableList.copyOf(addOns);
     }
 
     public void updateAddOnProducts(List<Product> addOnList) {
