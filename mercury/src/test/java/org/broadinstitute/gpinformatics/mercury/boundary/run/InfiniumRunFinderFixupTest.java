@@ -35,6 +35,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.Objects;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
@@ -140,6 +141,8 @@ public class InfiniumRunFinderFixupTest extends Arquillian {
 
         userTransaction.begin();
         int i = 1;
+        Date previousEventDate = null;
+        long disambiguator = 1L;
         for (Pair<String, Boolean> stringBooleanPair : chipsToArchive) {
             if (stringBooleanPair.getRight()) {
                 if (infiniumStarterConfig.getDeploymentConfig() == PROD) {
@@ -154,8 +157,15 @@ public class InfiniumRunFinderFixupTest extends Arquillian {
             }
             // else assume GAP has archived it (or it's dev and the data directory exists)
             LabVessel chip = labVesselDao.findByIdentifier(stringBooleanPair.getKey());
-            chip.addInPlaceEvent(new LabEvent(LabEventType.INFINIUM_ARCHIVED, new Date(), LabEvent.UI_EVENT_LOCATION,
-                    1L, userBean.getBspUser().getUserId(), LabEvent.UI_PROGRAM_NAME));
+            Date eventDate = new Date();
+            if (Objects.equals(eventDate, previousEventDate)) {
+                disambiguator++;
+            } else {
+                disambiguator = 1L;
+            }
+            chip.addInPlaceEvent(new LabEvent(LabEventType.INFINIUM_ARCHIVED, eventDate, LabEvent.UI_EVENT_LOCATION,
+                    disambiguator, userBean.getBspUser().getUserId(), LabEvent.UI_PROGRAM_NAME));
+            previousEventDate = eventDate;
             labVesselDao.flush();
             labVesselDao.clear();
             if (i % 100 == 0) {
