@@ -159,6 +159,22 @@ public class Quote {
      * @return
      */
     public boolean isEligibleForSAP() {
+        return isEligibleForSAP(new Date() );
+    }
+
+    /**
+     * Tests if the Quote is in a state that makes it eligible to be used on an order bound for SAP.  The criteria
+     * for this would be
+     * <ul>
+     *     <li>There is only one funding source defined for the quote.  SAP Orders will only be able to handle one
+     *     source of funding</li>
+     *     <li>If the funding source is backed by a Grant, ensure that the grant end date has not passed.</li>
+     * </ul>
+     *
+     * @return
+     * @param effectiveDate
+     */
+    public boolean isEligibleForSAP(Date effectiveDate) {
 
         FundingLevel singleLevel = getFirstRelevantFundingLevel();
 
@@ -178,8 +194,13 @@ public class Quote {
                             atLeastOneValid = true;
                             if (funding.getGrantEndDate() != null && funding.getFundingType()
                                     .equals(Funding.FUNDS_RESERVATION)) {
-                                final Date today = DateUtils.truncate(new Date(), Calendar.DATE);
-                                grantHasEnded = grantHasEnded || !FundingLevel.isGrantActiveForDate(today, funding);
+
+                                Date relativeDate = DateUtils.truncate(new Date(), Calendar.DATE);
+                                if(effectiveDate != null && effectiveDate.compareTo(relativeDate) != 0) {
+                                    relativeDate = DateUtils.truncate(effectiveDate, Calendar.DATE);
+                                }
+
+                                grantHasEnded = grantHasEnded || !FundingLevel.isGrantActiveForDate(relativeDate, funding);
 
                                 if (grantHasEnded) {
                                     break;

@@ -240,7 +240,7 @@ public class BillingAdaptor implements Serializable {
 //                    quote.setAlphanumericId(item.getQuoteId());
 
                     workId = CollectionUtils.isEmpty(item.getWorkItems())?null:item.getWorkItems().toArray(new String[item.getWorkItems().size()])[0];
-                    sapBillingId = quote.isEligibleForSAP()? item.getSapItems(): NOT_ELIGIBLE_FOR_SAP_INDICATOR;
+                    sapBillingId = quote.isEligibleForSAP(item.getWorkCompleteDate())? item.getSapItems(): NOT_ELIGIBLE_FOR_SAP_INDICATOR;
 
                     // The price item that we are billing.
                     // todo need to set the price on the Price Item before this step
@@ -384,7 +384,7 @@ public class BillingAdaptor implements Serializable {
                                 .append(billingSession.getBusinessKey()).append(".");
 
                     } else if (StringUtils.isBlank(result.getSAPBillingId()) && quote != null
-                               && quote.isEligibleForSAP()
+                               && quote.isEligibleForSAP(item.getWorkCompleteDate())
                                && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
 
                         errorMessage.append("A problem occured attempting to post to SAP for ")
