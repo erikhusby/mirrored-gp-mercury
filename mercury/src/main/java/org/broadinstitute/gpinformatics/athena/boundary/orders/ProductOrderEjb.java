@@ -33,7 +33,6 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.CustomizationValues;
-import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationWithRollbackException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
@@ -497,6 +496,20 @@ public class ProductOrderEjb {
      */
     public boolean isOrderEligibleForSAP(ProductOrder editedProductOrder)
             throws QuoteServerException, QuoteNotFoundException, InvalidProductException {
+        return isOrderEligibleForSAP(editedProductOrder, new Date());
+    }
+    /**
+     * Helper method to determine if, based on certain criteria, the order is allowed to be pushed to SAP at the time
+     * that the method is called.
+     *
+     * @param editedProductOrder The order to be tested for SAP eligibility
+     * @param effectiveDate
+     * @return Boolean indicator identifying SAP eligibility
+     * @throws QuoteServerException
+     * @throws QuoteNotFoundException
+     */
+    public boolean isOrderEligibleForSAP(ProductOrder editedProductOrder, Date effectiveDate)
+            throws QuoteServerException, QuoteNotFoundException, InvalidProductException {
         Quote orderQuote = quoteService.getQuoteByAlphaId(editedProductOrder.getQuoteId());
         SAPAccessControl accessControl = accessController.getCurrentControlDefinitions();
         boolean eligibilityResult = false;
@@ -509,7 +522,7 @@ public class ProductOrderEjb {
 
             eligibilityResult = editedProductOrder.getProduct()!=null &&
                                 editedProductOrder.getProduct().getPrimaryPriceItem() != null &&
-                                orderQuote != null && orderQuote.isEligibleForSAP() &&
+                                orderQuote != null && orderQuote.isEligibleForSAP(effectiveDate) &&
                                 !CollectionUtils.containsAny(accessControl.getDisabledItems(), priceItemNameList) ;
         }
 
@@ -572,6 +585,9 @@ public class ProductOrderEjb {
             throws InvalidProductException {
         SAPMaterial sapMaterial = null;
         SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = null;
+
+        SAPAccessControl accessControl = accessController.getCurrentControlDefinitions();
+
         try {
             companyCode = SapIntegrationServiceImpl.determineCompanyCode(productOrder);
         } catch (SAPIntegrationException e) {
@@ -580,7 +596,11 @@ public class ProductOrderEjb {
 
         // todo sgm check quote and throw exception if it is null
 
-        sapMaterial = productPriceCache.findByProduct(product, companyCode);
+        if(accessControl.isEnabled() &&
+           !CollectionUtils.containsAny(accessControl.getDisabledItems(),
+                   Collections.singleton(new AccessItem(product.getPrimaryPriceItem().getName())))) {
+            sapMaterial = productPriceCache.findByProduct(product, companyCode);
+        }
 
         PriceItem priceItem = productOrder.determinePriceItemByCompanyCode(product);
         final QuotePriceItem priceListItem = priceListCache.findByKeyFields(priceItem);

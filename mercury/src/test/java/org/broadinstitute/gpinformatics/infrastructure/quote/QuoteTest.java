@@ -1,11 +1,11 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.hamcrest.MatcherAssert;
-import org.hamcrest.Matchers;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import java.util.Calendar;
+import java.util.Date;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -35,6 +35,8 @@ public class QuoteTest {
         assertThat(testQuote.getQuoteItems(), hasSize(6));
         assertThat(testQuote.getExpirationDate(), is(notNullValue()));
 
+        assertThat(testQuote.isEligibleForSAP(), is(true));
+
     }
 
     public void testQuoteValuesFundsReservation() throws Exception {
@@ -57,6 +59,14 @@ public class QuoteTest {
         assertThat(testQuote.getName(), is(equalTo("MCKD1_kits_plating")));
         assertThat(testQuote.getQuoteItems(), hasSize(5));
         assertThat(testQuote.getExpirationDate(), is(notNullValue()));
+
+        assertThat(testQuote.isEligibleForSAP(), is(false));
+
+        Calendar cal = Calendar.getInstance();
+        cal.set(2013, Calendar.JANUARY, 9); //Year, month, day of month
+        Date date = cal.getTime();
+
+        assertThat(testQuote.isEligibleForSAP(date), is(true));
 
     }
 
