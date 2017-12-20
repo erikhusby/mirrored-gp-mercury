@@ -39,11 +39,11 @@ while getopts "hcb:j:w:m:u:" OPTION; do
 	b) BUILD=$OPTARG
 	    ;;
 	j) JBOSS_SERVER=$OPTARG
-	    BUILD="$BUILD,Arquillian-JBossAS7-Remote"
+	    SERVER_PROFILE="Arquillian-JBossAS7-Remote"
 	    (( A += 1 ))
 	    ;;
 	w) WILDFLY_SERVER=$OPTARG
-	    BUILD="$BUILD,Arquillian-WildFly10-Remote"
+	    SERVER_PROFILE="Arquillian-WildFly10-Remote"
 	    (( A += 1 ))
 	    ;;
 	c) CLOVER="-c"
@@ -57,6 +57,18 @@ while getopts "hcb:j:w:m:u:" OPTION; do
 	    ;;
     esac
 done
+
+BUILD="$BUILD,$SERVER_PROFILE"
+cat <<EOF
+BUILD=$BUILD
+JBOSS_SERVER=$JBOSS_SERVER
+WILDFLY_SERVER=$WILDFLY_SERVER
+CLOVER=$CLOVER
+ADDITIONAL_OPTIONS=$ADDITIONAL_OPTIONS
+JAVA_USE=$JAVA_USE
+EOF
+
+exit
 
 if [ -e "/broad/tools/scripts/useuse" ]
 then
