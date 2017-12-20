@@ -68,7 +68,6 @@ ADDITIONAL_OPTIONS=$ADDITIONAL_OPTIONS
 JAVA_USE=$JAVA_USE
 EOF
 
-exit
 
 if [ -e "/broad/tools/scripts/useuse" ]
 then
