@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.sap;
 
 import clover.org.apache.commons.lang.StringUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
@@ -168,7 +169,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         FundingLevel fundingLevel = foundQuote.getFirstRelevantFundingLevel();
 
-        if (fundingLevel == null) {
+        if (fundingLevel == null || CollectionUtils.isEmpty(fundingLevel.getFunding())) {
             // Too many funding sources to allow this to work with SAP.  Keep using the Quote Server as the definition
             // of funding
             throw new SAPIntegrationException(
@@ -354,7 +355,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     public String findCustomer(SapIntegrationClientImpl.SAPCompanyConfiguration companyCode, FundingLevel fundingLevel) throws SAPIntegrationException {
 
         String customerNumber = null;
-        if (fundingLevel == null) {
+        if (fundingLevel == null || CollectionUtils.isEmpty(fundingLevel.getFunding())) {
             // Too many funding sources to allow this to work with SAP.  Keep using the Quote Server as the definition
             // of funding
             throw new SAPIntegrationException(
@@ -528,7 +529,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             }
             FundingLevel fundingLevel = foundQuote.getFirstRelevantFundingLevel();
 
-            if (fundingLevel == null) {
+            if (fundingLevel == null || CollectionUtils.isEmpty(fundingLevel.getFunding())) {
                 // Too many funding sources to allow this to work with SAP.  Keep using the Quote Server as the definition
                 // of funding
                 throw new SAPIntegrationException(
