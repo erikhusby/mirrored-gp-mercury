@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.commons.lang3.StringUtils;
@@ -13,6 +12,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
@@ -22,7 +22,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySample
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleInstanceEntityDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VesselPooledTubesProcessor;
-import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -33,12 +32,12 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -68,7 +67,19 @@ public class SampleInstanceEjbTest extends Arquillian {
 
     @Test
     public void testPooledTubeUpload() throws Exception {
-        boolean overwrite = false;
+        // Makes randomized barcode, library, sample, root for the non-overwrite case.
+        List<Map<String, String>> alternativeData = new ArrayList<>();
+        int randomNumber = random.nextInt(100000000) * 10;
+        for (int rowIndex : Arrays.asList(1, 2)) {
+            String randomDigits = String.format("%010d", randomNumber + rowIndex);
+            Map<String, String> row = new HashMap<>();
+            row.put("Tube barcode", "E" + randomDigits);
+            row.put("Single sample library name", "Library" + randomDigits);
+            row.put("Broad sample ID", "SM-" + randomDigits);
+            row.put("Root Sample ID", String.format("%010d", randomNumber + (new int[]{1, 3})[rowIndex - 1]));
+            alternativeData.add(row);
+        }
+
         for (Pair<String, Boolean> fileSuccessPair : Arrays.asList(
                 Pair.of("PooledTubeReg.xlsx", true),
                 Pair.of("PooledTube_Test-363_case1.xls", true),
@@ -78,155 +89,152 @@ public class SampleInstanceEjbTest extends Arquillian {
 
             boolean expectSuccess = fileSuccessPair.getRight();
             String filename = fileSuccessPair.getLeft();
+            boolean overwrite = filename.startsWith("PooledTube_Test-363_");
+
             byte[] bytes = IOUtils.toByteArray(Thread.currentThread().getContextClassLoader()
                     .getResourceAsStream(filename));
             Assert.assertTrue(bytes.length > 0, "Zero length spreadsheet file " + filename);
 
+            // Writes unique barcode, library, etc. for the PooledTubeReg spreadsheet.
+            if (filename.startsWith("PooledTubeReg")) {
+                bytes = modifySpreadsheet(new ByteArrayInputStream(bytes), alternativeData);
+            }
+
             TableProcessor testProcessor = sampleInstanceEjb.bestProcessor(new ByteArrayInputStream(bytes)).getLeft();
             Assert.assertTrue(testProcessor instanceof VesselPooledTubesProcessor);
 
-            // Makes randomized barcode, library, sample, root for the non-overwrite case.
-            List<Map<String, String>> alternativeData = new ArrayList<>();
-            if (!overwrite) {
-                int randomNumber = random.nextInt(100000000) * 10;
-                for (int rowIndex = 1; rowIndex < 3; ++rowIndex) {
-                    String randomDigits = String.format("%010d", randomNumber + rowIndex);
-                    Map<String, String> row = new HashMap<>();
-                    row.put("Tube barcode", "E" + randomDigits);
-                    row.put("Single sample library name", "Library" + randomDigits);
-                    row.put("Broad sample ID", "SM-" + randomDigits);
-                    row.put("Root Sample ID",
-                            String.format("%010d", randomNumber + (new int[]{1, 3})[rowIndex - 1]));
-                }
-            }
-            InputStream inputStream = modify(new ByteArrayInputStream(bytes), alternativeData);
-
             MessageCollection messageCollection = new MessageCollection();
-            Pair<TableProcessor, List<SampleInstanceEntity>> pair = sampleInstanceEjb.doExternalUpload(inputStream,
-                    overwrite, messageCollection);
-            VesselPooledTubesProcessor processor = (VesselPooledTubesProcessor)pair.getLeft();
+            Pair<TableProcessor, List<SampleInstanceEntity>> pair = sampleInstanceEjb.doExternalUpload(
+                    new ByteArrayInputStream(bytes), overwrite, messageCollection);
 
+            VesselPooledTubesProcessor processor = (VesselPooledTubesProcessor)pair.getLeft();
             if (expectSuccess) {
                 Assert.assertTrue(messageCollection.getErrors().isEmpty(), "In " + filename + ": " +
-                        StringUtils.join(messageCollection.getErrors(), "  ;  "));
+                        StringUtils.join(messageCollection.getErrors(), "; "));
                 // Should have persisted all rows.
                 for (int i = 0; i < processor.getBarcodes().size(); ++i) {
                     Assert.assertNotNull(labVesselDao.findByIdentifier(processor.getBarcodes().get(i)),
                             processor.getBarcodes().get(i));
                     String libraryName = processor.getSingleSampleLibraryName().get(i);
-                    Assert.assertNotNull(sampleInstanceEntityDao.findByName(libraryName), libraryName);
+                    Assert.assertNotNull(sampleInstanceEntityDao.findByName(libraryName),
+                            filename + " " + libraryName);
+
                     String sampleName = processor.getBroadSampleId().get(i);
+                    String msg = filename + " " + sampleName;
                     MercurySample mercurySample = mercurySampleDao.findBySampleKey(sampleName);
-                    Assert.assertNotNull(mercurySample, sampleName);
-                    MercurySample.MetadataSource metadataSource = mercurySample.getMetadataSource();
-                    if (metadataSource == MercurySample.MetadataSource.MERCURY) {
-                        Assert.assertTrue(CollectionUtils.isNotEmpty(mercurySample.getMetadata()),
-                                "No metadata for " + sampleName);
-                        if (StringUtils.isNotBlank(processor.getBroadParticipantId().get(i))) {
-                            boolean found = false;
-                            for (Metadata metadata : mercurySample.getMetadata()) {
-                                if (metadata.getKey() == Metadata.Key.BROAD_PARTICIPANT_ID) {
-                                    found = true;
-                                    Assert.assertEquals(metadata.getValue(),
-                                            processor.getBroadParticipantId().get(i));
-                                    break;
-                                }
-                            }
-                            Assert.assertTrue(found, "Missing participant id on " + sampleName);
-                        }
-                    } else {
-                        Assert.assertEquals(metadataSource, MercurySample.MetadataSource.BSP, sampleName);
+                    Assert.assertNotNull(mercurySample, msg);
+
+                    SampleData sampleData = mercurySample.getSampleData();
+                    String rootSampleName = sampleData.getRootSample();
+                    MercurySample rootSample = mercurySampleDao.findBySampleKey(rootSampleName);
+                    Assert.assertTrue(StringUtils.isBlank(rootSampleName) || rootSample != null,
+                            msg + " " + rootSampleName);
+
+                    SampleData rootSampleData = (rootSample != null) ? rootSample.getSampleData() : null;
+                    if (!processor.getBroadParticipantId().get(i).isEmpty()) {
+                        Assert.assertEquals((rootSampleData != null ? rootSampleData : sampleData)
+                                .getPatientId(), processor.getBroadParticipantId().get(i), msg);
                     }
-                    String rootSampleName = processor.getRootSampleId().get(i);
-                    if (StringUtils.isNotBlank(rootSampleName)) {
-                        Assert.assertNotNull(mercurySampleDao.findBySampleKey(rootSampleName), rootSampleName);
+                    if (!processor.getCollaboratorSampleId().get(i).isEmpty()) {
+                        Assert.assertEquals((rootSampleData != null ? rootSampleData : sampleData)
+                                .getCollaboratorsSampleName(), processor.getCollaboratorSampleId().get(i), msg);
+                    }
+                    if (!processor.getCollaboratorParticipantId().get(i).isEmpty()) {
+                        Assert.assertEquals((rootSampleData != null ? rootSampleData : sampleData)
+                                .getCollaboratorParticipantId(), processor.getCollaboratorParticipantId().get(i),
+                                msg);
+                    }
+                    if (!processor.getGender().get(i).isEmpty()) {
+                        Assert.assertEquals(sampleData.getGender(), processor.getGender().get(i), msg);
+                    }
+                    if (!processor.getSpecies().get(i).isEmpty()) {
+                        Assert.assertEquals(sampleData.getOrganism(), processor.getSpecies().get(i), msg);
+                    }
+                    if (!processor.getLsid().get(i).isEmpty()) {
+                        Assert.assertEquals(sampleData.getSampleLsid(), processor.getLsid().get(i), msg);
                     }
                 }
             } else {
                 // The failing test case should not have persisted any rows.
                 for (int i = 0; i < processor.getBarcodes().size(); ++i) {
                     String libraryName = processor.getSingleSampleLibraryName().get(i);
-                    Assert.assertNull(sampleInstanceEntityDao.findByName(libraryName), libraryName);
+                    Assert.assertNull(sampleInstanceEntityDao.findByName(libraryName), filename + " " + libraryName);
                 }
                 // Checks the error messages for expected problems.
-                String diagnostic = "In " + filename + ": " + StringUtils.join(messageCollection.getErrors(), ";;");
-                Assert.assertEquals(messageCollection.getErrors().size(), 20, diagnostic);
-                Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                        SampleInstanceEjb.CONFLICT, 7, VesselPooledTubesProcessor.Headers.VOLUME.getText(),
-                        "61.00", "60.00", "")), diagnostic);
-                Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                        SampleInstanceEjb.CONFLICT, 7,
-                        VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE.getText(), "151.00", "150.00", "")),
-                        diagnostic);
-                Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                        SampleInstanceEjb.CONFLICT, 7, VesselPooledTubesProcessor.Headers.BAIT.getText() +
-                                " and " + VesselPooledTubesProcessor.Headers.CAT.getText(),
-                        "both", "only one", "")), diagnostic);
-                Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                        SampleInstanceEjb.CONFLICT, 2, VesselPooledTubesProcessor.Headers.LSID.getText(),
-                        "lsid:1", "null", "for existing Mercury Sample")), diagnostic);
-                Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                        SampleInstanceEjb.CONFLICT, 2,
+                // FYI metadata for SM-748OO is from Mercury and not BSP even though the sample is in BSP.
+                List<String> errors = new ArrayList<>(messageCollection.getErrors());
+                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.CONFLICT, 2,
                         VesselPooledTubesProcessor.Headers.BROAD_PARTICIPANT_ID.getText(),
-                        "987654321", "12001-015", "for existing Mercury Sample")), diagnostic);
-                Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                        SampleInstanceEjb.CONFLICT, 2,
-                        VesselPooledTubesProcessor.Headers.SPECIES.getText(),
-                        "canine", "null", "for existing Mercury Sample")), diagnostic);
-
-                Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                        SampleInstanceEjb.DUPLICATE, 3,
-                        VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText(),
-                        "in tube 01509634244")), diagnostic);
-
-                Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                        SampleInstanceEjb.WRONG_TYPE, 8, VesselPooledTubesProcessor.Headers.READ_LENGTH.getText())),
-                        diagnostic);
-                Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                        SampleInstanceEjb.WRONG_TYPE, 8,
-                        VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE.getText())), diagnostic);
-
-                Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                        SampleInstanceEjb.MISSING, 8, VesselPooledTubesProcessor.Headers.VOLUME.getText())),
-                        diagnostic);
-                Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                        SampleInstanceEjb.MISSING, 8,
-                        VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE.getText())), diagnostic);
-                Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                        SampleInstanceEjb.MISSING, 5,
-                        VesselPooledTubesProcessor.Headers.TUBE_BARCODE.getText())), diagnostic);
-                Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                        SampleInstanceEjb.MISSING, 5, VesselPooledTubesProcessor.Headers.EXPERIMENT.getText())),
-                        diagnostic);
-                Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                        SampleInstanceEjb.MISSING, 6,
-                        VesselPooledTubesProcessor.Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText())), diagnostic);
-                Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                        SampleInstanceEjb.MISSING, 7,
-                        VesselPooledTubesProcessor.Headers.BROAD_SAMPLE_ID.getText())), diagnostic);
-                Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                        SampleInstanceEjb.MISSING, 7,
-                        VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText())), diagnostic);
-
-                Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                        SampleInstanceEjb.UNKNOWN, 5, VesselPooledTubesProcessor.Headers.EXPERIMENT.getText(),
-                        "JIRA DEV")), diagnostic);
-                Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                        SampleInstanceEjb.UNKNOWN, 7, VesselPooledTubesProcessor.Headers.CONDITIONS.getText(),
-                        "sub-tasks of DEV-6796")), diagnostic);
-                Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                        SampleInstanceEjb.UNKNOWN, 8, VesselPooledTubesProcessor.Headers.CONDITIONS.getText(),
-                        "sub-tasks of DEV-6796")), diagnostic);
-                Assert.assertTrue(messageCollection.getErrors().contains(String.format(
-                        SampleInstanceEjb.UNKNOWN, 8,
-                        VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText(),
-                        "Mercury")), diagnostic);
+                        "987654321", "12001-015", "", ""));
+                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.CONFLICT, 2,
+                        VesselPooledTubesProcessor.Headers.SPECIES.getText(), "canine", "null", "", ""));
+                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.CONFLICT, 2,
+                        VesselPooledTubesProcessor.Headers.LSID.getText(), "lsid:1", "null", "", ""));
+                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.DUPLICATE, 3,
+                        VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText(), "01509634244"));
+                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN, 3,
+                        VesselPooledTubesProcessor.Headers.ROOT_SAMPLE_ID.getText(), "Mercury",
+                        "Broad Sample already exists"));
+                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.CONFLICT, 7,
+                        VesselPooledTubesProcessor.Headers.VOLUME.getText(), "61.00", "60.00", "", ""));
+                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.CONFLICT, 7,
+                        VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE.getText(), "151.00", "150.00", "", ""));
+                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.MUST_NOT_BE, 7,
+                        VesselPooledTubesProcessor.Headers.BAIT.getText() + " and " +
+                        VesselPooledTubesProcessor.Headers.CAT.getText(), "both"));
+                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.WRONG_TYPE, 8,
+                        VesselPooledTubesProcessor.Headers.READ_LENGTH.getText(), "numeric"));
+                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.WRONG_TYPE, 8,
+                        VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE.getText(), "numeric"));
+                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.MISSING, 8,
+                        VesselPooledTubesProcessor.Headers.VOLUME.getText()));
+                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.MISSING, 8,
+                        VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE.getText()));
+                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.MISSING, 5,
+                        VesselPooledTubesProcessor.Headers.TUBE_BARCODE.getText()));
+                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.MISSING, 5,
+                        VesselPooledTubesProcessor.Headers.EXPERIMENT.getText()));
+                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.MISSING, 6,
+                        VesselPooledTubesProcessor.Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText()));
+                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.MISSING, 7,
+                        VesselPooledTubesProcessor.Headers.BROAD_SAMPLE_ID.getText()));
+                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.MISSING, 7,
+                        VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText()));
+                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN, 5,
+                        VesselPooledTubesProcessor.Headers.EXPERIMENT.getText(), "JIRA DEV"));
+                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN, 7,
+                        VesselPooledTubesProcessor.Headers.CONDITIONS.getText(), "sub-tasks of DEV-6796"));
+                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN, 8,
+                        VesselPooledTubesProcessor.Headers.CONDITIONS.getText(), "sub-tasks of DEV-6796"));
+                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN, 8,
+                        VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText(), "Mercury"));
+                Assert.assertTrue(errors.isEmpty(), "Found unexpected errors: " + StringUtils.join(errors, "; "));
             }
-            overwrite = false;
         }
     }
 
-    private InputStream modify(InputStream spreadsheet, List<Map<String, String>> alternativeData)
+    private boolean errorIfMissing(List<String> errors, String filename, String... tokens) {
+        for (Iterator<String> iterator = errors.iterator(); iterator.hasNext(); ) {
+            String error = iterator.next();
+            boolean hasAllTokens = true;
+            for (String token : tokens) {
+                if (!error.contains(token)) {
+                    hasAllTokens = false;
+                    break;
+                }
+            }
+            if (hasAllTokens) {
+                iterator.remove();
+                return true;
+            }
+        }
+        Assert.fail(filename + " missing an error message that contains \"" +
+                StringUtils.join(tokens, "\" and \"") + "\"; " +
+                "Existing errors are: " + StringUtils.join(errors, "; "));
+        return false;
+    }
+
+    private byte[] modifySpreadsheet(InputStream spreadsheet, List<Map<String, String>> alternativeData)
             throws Exception {
 
         // Reads the spreadsheet
@@ -291,10 +299,6 @@ public class SampleInstanceEjbTest extends Arquillian {
         workbook.write(outputStream);
         byte[] bytes = outputStream.toByteArray();
         IOUtils.closeQuietly(outputStream);
-        //File tempFile = new File(FileUtils.getTempDirectory(), System.currentTimeMillis() + ".xls");
-        //FileUtils.writeByteArrayToFile(tempFile, bytes);
-
-        return new ByteArrayInputStream(bytes);
+        return bytes;
     }
-
 }

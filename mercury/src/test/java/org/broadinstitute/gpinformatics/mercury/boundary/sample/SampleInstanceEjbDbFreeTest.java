@@ -33,7 +33,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleInstanc
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleKitRequestDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
-import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorEzPass;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorNonPooled;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorPooledMultiOrganism;
@@ -127,7 +126,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             setReadType("Paried End");
         }}, messages);
 
-        Assert.assertFalse(messages.hasErrors(), StringUtils.join(messages.getErrors(), " ; "));
+        Assert.assertFalse(messages.hasErrors(), StringUtils.join(messages.getErrors(), "; "));
     }
 
     @Test
@@ -164,10 +163,10 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         MessageCollection messageCollection = new MessageCollection();
         Pair<TableProcessor, List<SampleInstanceEntity>> pair = sampleInstanceEjb.doExternalUpload(
                 new ByteArrayInputStream(bytes), OVERWRITE, messageCollection);
-        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), " ; "));
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertTrue(messageCollection.getInfos().iterator().next()
                 .startsWith(String.format(SampleInstanceEjb.IS_SUCCESS, 1)),
-                StringUtils.join(messageCollection.getInfos(), " ; "));
+                StringUtils.join(messageCollection.getInfos(), "; "));
 
         List<SampleInstanceEntity> entities = pair.getRight();
         Assert.assertEquals(entities.size(), 1);
@@ -244,10 +243,10 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         MessageCollection messageCollection = new MessageCollection();
         Pair<TableProcessor, List<SampleInstanceEntity>> pair = sampleInstanceEjb.doExternalUpload(
                 new ByteArrayInputStream(bytes), OVERWRITE, messageCollection);
-        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), " ; "));
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertTrue(messageCollection.getInfos().iterator().next()
                         .startsWith(String.format(SampleInstanceEjb.IS_SUCCESS, 3)),
-                StringUtils.join(messageCollection.getInfos(), " ; "));
+                StringUtils.join(messageCollection.getInfos(), "; "));
 
         List<SampleInstanceEntity> entities = pair.getRight();
         Assert.assertEquals(entities.size(), 3);
@@ -334,10 +333,10 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         MessageCollection messageCollection = new MessageCollection();
         Pair<TableProcessor, List<SampleInstanceEntity>> pair = sampleInstanceEjb.doExternalUpload(
                 inputStream, OVERWRITE, messageCollection);
-        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), " ; "));
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertTrue(messageCollection.getInfos().iterator().next()
                 .startsWith(String.format(SampleInstanceEjb.IS_SUCCESS, 2)),
-                StringUtils.join(messageCollection.getInfos(), " ; "));
+                StringUtils.join(messageCollection.getInfos(), "; "));
 
         Assert.assertTrue(pair.getLeft() instanceof ExternalLibraryProcessorPooledMultiOrganism,
                 pair.getLeft().getClass().getName());
@@ -417,10 +416,10 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         MessageCollection messageCollection = new MessageCollection();
         Pair<TableProcessor, List<SampleInstanceEntity>> pair = sampleInstanceEjb.doExternalUpload(
                 inputStream, OVERWRITE, messageCollection);
-        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), " ; "));
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertTrue(messageCollection.getInfos().iterator().next()
                 .startsWith(String.format(SampleInstanceEjb.IS_SUCCESS, 2)),
-                StringUtils.join(messageCollection.getInfos(), " ; "));
+                StringUtils.join(messageCollection.getInfos(), "; "));
 
         Assert.assertTrue(pair.getLeft() instanceof ExternalLibraryProcessorNonPooled,
                 pair.getLeft().getClass().getName());
@@ -499,10 +498,10 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         MessageCollection messageCollection = new MessageCollection();
         Pair<TableProcessor, List<SampleInstanceEntity>> pair = sampleInstanceEjb.doExternalUpload(
                 inputStream, OVERWRITE, messageCollection);
-        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), " ; "));
+        Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertTrue(messageCollection.getInfos().iterator().next()
                 .startsWith(String.format(SampleInstanceEjb.IS_SUCCESS, 2)),
-                StringUtils.join(messageCollection.getInfos(), " ; "));
+                StringUtils.join(messageCollection.getInfos(), "; "));
 
         Assert.assertTrue(pair.getLeft() instanceof VesselPooledTubesProcessor, pair.getLeft().getClass().getName());
 
@@ -510,7 +509,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), ". "));
         Assert.assertTrue(messageCollection.getInfos().get(0)
                 .startsWith(String.format(SampleInstanceEjb.IS_SUCCESS, 2)),
-                StringUtils.join(messageCollection.getInfos(), " ; "));
+                StringUtils.join(messageCollection.getInfos(), "; "));
 
         Assert.assertEquals(entities.size(), 2);
 
@@ -531,13 +530,15 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(mercurySample.getMetadataSource(), MercurySample.MetadataSource.BSP);
             SampleData sampleData = mercurySample.getSampleData();
 
-            Assert.assertEquals(sampleData.getSampleId(), select(i, "SM-JT12", "SM-JT23"));
+            // This metadata is present only on root sample
             Assert.assertEquals(sampleData.getCollaboratorsSampleName(), select(i, "COLLAB-JT04121", "COLLAB-JT04122"));
             Assert.assertEquals(sampleData.getPatientId(), select(i, "PT-JT1", "PT-JT2"));
             Assert.assertEquals(sampleData.getCollaboratorParticipantId(),
                     select(i, "COLLAB-P-JT04121", "COLLAB-P-JT04122"));
-            Assert.assertEquals(sampleData.getOrganism(), "Homo Sapiens");
+
+            // This metadata is present on Broad sample
             Assert.assertEquals(sampleData.getGender(), "");
+            Assert.assertEquals(sampleData.getOrganism(), "Homo Sapiens");
             Assert.assertEquals(sampleData.getMaterialType(), "");
             Assert.assertEquals(sampleData.getSampleLsid(), select(i,
                     "broadinstitute.org:bsp.dev.sample:JT1", "broadinstitute.org:bsp.dev.sample:JT2"));
