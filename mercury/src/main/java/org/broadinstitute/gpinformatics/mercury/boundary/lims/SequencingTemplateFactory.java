@@ -18,6 +18,8 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
+import org.broadinstitute.gpinformatics.infrastructure.search.LabVesselSearchDefinition;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
@@ -25,7 +27,11 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowc
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.MiSeqReagentKitDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.UMIReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.UniqueMolecularIdentifier;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -48,6 +54,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -55,6 +62,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class SequencingTemplateFactory {
     @Inject
@@ -169,6 +178,28 @@ public class SequencingTemplateFactory {
         return getSequencingTemplate(fctBatch, isMiSeq);
     }
 
+    public List<LabBatch> fetchFlowcellTicketForLabBatch(LabVessel labVessel) {
+        List<LabBatch> results = new ArrayList<>();
+
+        LabVesselSearchDefinition.VesselBatchTraverserCriteria downstreamBatchFinder =
+                new LabVesselSearchDefinition.VesselBatchTraverserCriteria();
+        if( labVessel.getContainerRole() != null ) {
+            labVessel.getContainerRole().applyCriteriaToAllPositions(
+                    downstreamBatchFinder, TransferTraverserCriteria.TraversalDirection.Ancestors);
+        } else {
+            labVessel.evaluateCriteria(
+                    downstreamBatchFinder, TransferTraverserCriteria.TraversalDirection.Ancestors);
+        }
+
+        for ( LabBatch labBatch : downstreamBatchFinder.getLabBatches() ) {
+            if( labBatch.getLabBatchType() == LabBatch.LabBatchType.FCT
+                || labBatch.getLabBatchType() == LabBatch.LabBatchType.MISEQ ) {
+                results.add(labBatch);
+            }
+        }
+        return results;
+    }
+
     public SequencingTemplateType getSequencingTemplate(LabBatch fctBatch, boolean poolTestDefault) {
         String sequencingTemplateName = null;
         if (fctBatch.getLabBatchType() != LabBatch.LabBatchType.FCT) {
@@ -204,10 +235,15 @@ public class SequencingTemplateFactory {
         Set<Integer> productReadLengths = new HashSet<>();
         Set<Boolean> productPairedEnds = new HashSet<>();
         Set<String> molecularIndexReadStructures = new HashSet<>();
-
+        Map<String, Set<UniqueMolecularIdentifier>> mapLaneToUmi = new HashMap<>();
         for (LabBatchStartingVessel startingVessel : startingFCTVessels) {
+            Set<UniqueMolecularIdentifier> umiReagents = new HashSet<>();
             extractInfo(startingVessel.getLabVessel().getSampleInstancesV2(), regulatoryDesignations, products,
-                    productReadLengths, productPairedEnds, molecularIndexReadStructures);
+                    productReadLengths, productPairedEnds, molecularIndexReadStructures, umiReagents);
+            if (umiReagents.size() > 2) {
+                throw new InformaticsServiceException("More than two UMI Reagent found for lab batch " +
+                                                      startingVessel.getLabBatch().getBatchName());
+            }
 
             if (startingVessel.getVesselPosition() != null) {
                 if (!fetchFromDesignation) {
@@ -220,6 +256,8 @@ public class SequencingTemplateFactory {
                 SequencingTemplateLaneType lane = LimsQueryObjectFactory.createSequencingTemplateLaneType(
                         startingVessel.getVesselPosition().name(), loadingConcentration, "",
                         startingVessel.getLabVessel().getLabel());
+                //TODO Assert umiReagents at most == 1
+                mapLaneToUmi.put(lane.getLaneName(), umiReagents);
                 lanes.add(lane);
             } else {
                 if (loadingConcentration == null) {
@@ -245,6 +283,7 @@ public class SequencingTemplateFactory {
                             LimsQueryObjectFactory.createSequencingTemplateLaneType(vesselPosition,
                                     loadingConcentration, "",
                                     startingVessel.getLabVessel().getLabel());
+                    mapLaneToUmi.put(lane.getLaneName(), umiReagents);
                     lanes.add(lane);
                 }
             }
@@ -263,9 +302,16 @@ public class SequencingTemplateFactory {
             }
         }
         SequencingConfigDef sequencingConfig = getSequencingConfig(isPoolTest);
-        String readStructure =  makeReadStructure(readLength, isPoolTest, molecularIndexReadStructures, isPairedEnd);
+        String readStructure =  makeReadStructure(readLength, isPoolTest, molecularIndexReadStructures, isPairedEnd, null);
         if (StringUtils.isBlank(readStructure)) {
             readStructure = sequencingConfig.getReadStructure().getValue();
+        }
+
+        for (SequencingTemplateLaneType laneType: lanes) {
+            Set<UniqueMolecularIdentifier> umiReagentSet = mapLaneToUmi.get(laneType.getLaneName());
+            String laneReadStructure = makeReadStructure(readLength, isPoolTest, molecularIndexReadStructures,
+                    isPairedEnd, umiReagentSet);
+            laneType.setReadStructure(laneReadStructure);
         }
 
         SequencingTemplateType sequencingTemplate = LimsQueryObjectFactory.createSequencingTemplate(
@@ -294,16 +340,22 @@ public class SequencingTemplateFactory {
                                                         boolean poolTestDefault) {
 
         // Finds the FCT for the flowcell.
-        TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
-                new TransferTraverserCriteria.NearestLabBatchFinder(LabBatch.LabBatchType.FCT,
-                        TransferTraverserCriteria.NearestLabBatchFinder.AssociationType.DILUTION_VESSEL);
-        flowcell.getContainerRole().applyCriteriaToAllPositions(batchCriteria,
-                TransferTraverserCriteria.TraversalDirection.Ancestors);
+        LabBatch fctBatch = null;
+        List<LabBatch> labBatches = fetchFlowcellTicketForLabBatch(flowcell);
+        if (labBatches.isEmpty()) {
+            TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
+                    new TransferTraverserCriteria.NearestLabBatchFinder(LabBatch.LabBatchType.FCT,
+                            TransferTraverserCriteria.NearestLabBatchFinder.AssociationType.DILUTION_VESSEL);
+            flowcell.getContainerRole().applyCriteriaToAllPositions(batchCriteria,
+                    TransferTraverserCriteria.TraversalDirection.Ancestors);
 
-        LabBatch fctBatch = CollectionUtils.isNotEmpty(batchCriteria.getAllLabBatches()) ?
-                batchCriteria.getAllLabBatches().iterator().next() :
-                (CollectionUtils.isNotEmpty(flowcell.getAllLabBatches(LabBatch.LabBatchType.FCT)) ?
-                        flowcell.getAllLabBatches(LabBatch.LabBatchType.FCT).iterator().next() : null);
+            fctBatch = CollectionUtils.isNotEmpty(batchCriteria.getAllLabBatches()) ?
+                    batchCriteria.getAllLabBatches().iterator().next() :
+                    (CollectionUtils.isNotEmpty(flowcell.getAllLabBatches(LabBatch.LabBatchType.FCT)) ?
+                            flowcell.getAllLabBatches(LabBatch.LabBatchType.FCT).iterator().next() : null);
+        } else {
+            fctBatch = labBatches.get(0);
+        }
 
         // If it exists, uses a designation for obtaining flowcell parameters. All of the flowcell's
         // designations will have the same flowcell parameters (read length, number of cycles, etc).
@@ -347,9 +399,33 @@ public class SequencingTemplateFactory {
         Set<Integer> productReadLengths = new HashSet<>();
         Set<Boolean> productPairedEnds = new HashSet<>();
         Set<String> molecularIndexReadStructures = new HashSet<>();
+        Map<String, Set<UniqueMolecularIdentifier>> mapLaneToUmi = new HashMap<>();
+        if (fctBatch != null) {
+            for (LabBatchStartingVessel startingVessel : fctBatch.getLabBatchStartingVessels()) {
+                Set<UniqueMolecularIdentifier> umiReagents = new HashSet<>();
+                extractInfo(startingVessel.getLabVessel().getSampleInstancesV2(), regulatoryDesignations, products,
+                        productReadLengths, productPairedEnds, molecularIndexReadStructures, umiReagents);
+                if (umiReagents.size() > 1) {
+                    //Check if they are in the same position
+                    Set<UniqueMolecularIdentifier.UMILocation> umiLocations = new HashSet<>();
+                    for (UniqueMolecularIdentifier umiReagent: umiReagents) {
+                        if (!umiLocations.add(umiReagent.getLocation())) {
+                            throw new InformaticsServiceException(
+                                    "More than one UMI Reagent found at same location for lab batch " +
+                                    startingVessel.getLabBatch().getBatchName());
+                        }
+                    }
+                }
+                if (startingVessel.getVesselPosition() != null) {
+                    mapLaneToUmi.put(startingVessel.getVesselPosition().name(), umiReagents);
+                }
+            }
+        } else {
+            Set<UniqueMolecularIdentifier> umiReagents = new HashSet<>();
+            extractInfo(flowcell.getSampleInstancesV2(), regulatoryDesignations, products,
+                    productReadLengths, productPairedEnds, molecularIndexReadStructures, umiReagents);
 
-        extractInfo(flowcell.getSampleInstancesV2(), regulatoryDesignations, products,
-                productReadLengths, productPairedEnds, molecularIndexReadStructures);
+        }
 
         validateCollections(regulatoryDesignations, products, molecularIndexReadStructures);
         // Provides defaults from product when there is no designation. Pair end read should default to true.
@@ -363,8 +439,18 @@ public class SequencingTemplateFactory {
                 isPairedEnd = true;
             }
         }
+
+        for (SequencingTemplateLaneType laneType: lanes) {
+            Set<UniqueMolecularIdentifier> umiReagentSet = mapLaneToUmi.get(laneType.getLaneName());
+            if (umiReagentSet != null) {
+                String laneReadStructure = makeReadStructure(readLength, isPoolTest, molecularIndexReadStructures,
+                        isPairedEnd, umiReagentSet);
+                laneType.setReadStructure(laneReadStructure);
+            }
+        }
+
         SequencingConfigDef sequencingConfig = getSequencingConfig(isPoolTest);
-        String readStructure =  makeReadStructure(readLength, isPoolTest, molecularIndexReadStructures, isPairedEnd);
+        String readStructure =  makeReadStructure(readLength, isPoolTest, molecularIndexReadStructures, isPairedEnd, null);
         if (StringUtils.isBlank(readStructure)) {
             readStructure = sequencingConfig.getReadStructure().getValue();
         }
@@ -461,9 +547,9 @@ public class SequencingTemplateFactory {
     }
 
     /** Iterates on the sample instances and adds product defaults and the molecular indexes to the collections. */
-    private void extractInfo(Set<SampleInstanceV2> sampleInstances,  Set<String> regulatoryDesignations,
+    private void extractInfo(Set<SampleInstanceV2> sampleInstances, Set<String> regulatoryDesignations,
                              Set<Product> products, Set<Integer> readLengths, Set<Boolean> pairedEnds,
-                             Set<String> molecularIndexReadStructures) {
+                             Set<String> molecularIndexReadStructures, Set<UniqueMolecularIdentifier> umiReagents) {
 
         for(SampleInstanceV2 sampleInstance: sampleInstances) {
             // Controls don't have bucket entries, but assumes that the non-control samples will be present.
@@ -493,6 +579,14 @@ public class SequencingTemplateFactory {
                         indexReadStructure += index.getSequence().length() + "B";
                     }
                     molecularIndexReadStructures.add(indexReadStructure);
+                }
+
+                for (Reagent reagent : sampleInstance.getReagents()) {
+                    if (OrmUtil.proxySafeIsInstance(reagent, UMIReagent.class)) {
+                        UMIReagent umiReagent =
+                                OrmUtil.proxySafeCast(reagent, UMIReagent.class);
+                        umiReagents.add(umiReagent.getUniqueMolecularIdentifier());
+                    }
                 }
             }
         }
@@ -524,10 +618,81 @@ public class SequencingTemplateFactory {
     }
 
     private String makeReadStructure(Integer readLength, boolean isPoolTest, Set<String> molecularIndexReadStructures,
-                                     @Nonnull Boolean isPairedEnd) {
+                                     @Nonnull Boolean isPairedEnd, Set<UniqueMolecularIdentifier> umiReagents) {
         String strandCode = (readLength != null && !isPoolTest) ? readLength.intValue() + "T" : "";
         String indexCode = molecularIndexReadStructures.isEmpty() ? "" : molecularIndexReadStructures.iterator().next();
-        return strandCode + indexCode + (isPairedEnd  ? strandCode : "");
+
+        if (umiReagents == null || umiReagents.isEmpty()) {
+            return strandCode + indexCode + (isPairedEnd  ? strandCode : "");
+        }
+
+        List<UniqueMolecularIdentifier> umiReagentsList = new ArrayList<>(umiReagents);
+        Collections.sort(umiReagentsList, new Comparator<UniqueMolecularIdentifier>() {
+            @Override
+            public int compare(UniqueMolecularIdentifier umi1, UniqueMolecularIdentifier umi2) {
+                return umi1.getLocation().compareTo(umi2.getLocation());
+            }
+        });
+        Map<UniqueMolecularIdentifier.UMILocation, UniqueMolecularIdentifier> umiLocationUMIReagentMap = new HashMap<>();
+        for (UniqueMolecularIdentifier umiReagent: umiReagentsList) {
+            umiLocationUMIReagentMap.put(umiReagent.getLocation(), umiReagent);
+        }
+
+        String readStructure = "";
+        if (umiLocationUMIReagentMap.containsKey(UniqueMolecularIdentifier.UMILocation.BEFORE_FIRST_READ)) {
+            UniqueMolecularIdentifier umiReagent = umiLocationUMIReagentMap.get(UniqueMolecularIdentifier.UMILocation.BEFORE_FIRST_READ);
+            readStructure = umiReagent.getLength() + "M" + umiReagent.getSpacerLength() + "S";
+        }
+        if (umiLocationUMIReagentMap.containsKey(UniqueMolecularIdentifier.UMILocation.INLINE_FIRST_READ)) {
+            UniqueMolecularIdentifier umiReagent = umiLocationUMIReagentMap.get(UniqueMolecularIdentifier.UMILocation.INLINE_FIRST_READ);
+            readStructure = readStructure + umiReagent.getLength() + "M" + umiReagent.getSpacerLength() + "S";
+        }
+        readStructure = readStructure + strandCode; //Now Either 8M76T ot 76T
+        if (umiLocationUMIReagentMap.containsKey(UniqueMolecularIdentifier.UMILocation.BEFORE_FIRST_INDEX_READ)) {
+            UniqueMolecularIdentifier umiReagent = umiLocationUMIReagentMap.get(UniqueMolecularIdentifier.UMILocation.BEFORE_FIRST_INDEX_READ);
+            readStructure = readStructure + umiReagent.getLength() + "M" + umiReagent.getSpacerLength() + "S";
+        }
+
+        //Add first index if any
+        boolean dualIndex = indexCode.matches("^\\d+B\\d+B$");
+        boolean hasIndex = indexCode.matches(".*\\d+B.*");
+        if (hasIndex) {
+            if (dualIndex) {
+                String indexPattern = (dualIndex) ? "(\\d+B)(\\d+B)" : "(\\d+B)";
+                Pattern r = Pattern.compile(indexPattern);
+                Matcher m = r.matcher(indexCode);
+                if (m.find()) {
+                    if (m.groupCount() == 2) {
+                        indexCode = m.group(1);
+                        readStructure += indexCode;
+                        if (umiLocationUMIReagentMap.containsKey(UniqueMolecularIdentifier.UMILocation.BEFORE_SECOND_INDEX_READ)) {
+                            UniqueMolecularIdentifier umiReagent =
+                                    umiLocationUMIReagentMap.get(UniqueMolecularIdentifier.UMILocation.BEFORE_SECOND_INDEX_READ);
+                            readStructure += umiReagent.getLength() + "M" + umiReagent.getSpacerLength() + "S";
+                        }
+                        readStructure += indexCode;
+                    } else {
+                        throw new RuntimeException("Failed to parse index length from " + indexCode);
+                    }
+                } else {
+                    throw new RuntimeException("Failed to find index code when expected from " + indexCode);
+                }
+            } else {
+                readStructure += indexCode;
+            }
+        }
+
+        if (umiLocationUMIReagentMap.containsKey(UniqueMolecularIdentifier.UMILocation.BEFORE_SECOND_READ)) {
+            UniqueMolecularIdentifier umiReagent = umiLocationUMIReagentMap.get(UniqueMolecularIdentifier.UMILocation.BEFORE_SECOND_READ);
+            readStructure = readStructure + umiReagent.getLength() + "M" + umiReagent.getSpacerLength() + "S";
+        }
+
+        readStructure = readStructure + (isPairedEnd ? strandCode : "");
+        if (umiLocationUMIReagentMap.containsKey(UniqueMolecularIdentifier.UMILocation.INLINE_SECOND_READ)) {
+            UniqueMolecularIdentifier umiReagent = umiLocationUMIReagentMap.get(UniqueMolecularIdentifier.UMILocation.INLINE_SECOND_READ);
+            readStructure = readStructure + umiReagent.getLength() + "M" + umiReagent.getSpacerLength() + "S";
+        }
+        return readStructure;
     }
 
     private SequencingConfigDef getSequencingConfig(boolean isPoolTest) {
