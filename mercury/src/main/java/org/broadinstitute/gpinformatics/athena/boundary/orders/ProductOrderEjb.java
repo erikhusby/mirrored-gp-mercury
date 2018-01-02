@@ -379,7 +379,7 @@ public class ProductOrderEjb {
                 } else if(orderToPublish.isSavedInSAP()){
                     if (SapIntegrationServiceImpl.getSampleCount((ProductOrder) orderToPublish,
                             (Product) orderToPublish.getProduct(),
-                            (int) 0, false) > 0) {
+                            (int) 0, false) >= 0) {
                         updateOrderInSap(orderToPublish, allProductsOrdered, effectivePricesForProducts, messageCollection);
 
                         for (ProductOrder childProductOrder : orderToPublish.getChildOrders()) {
@@ -1037,6 +1037,7 @@ public class ProductOrderEjb {
      * @param samples                    Samples to change.
      * @param comment                    optional user supplied comment about this action.
      *
+     * @param messageCollection
      * @throws NoSuchPDOException
      * @throws SampleDeliveryStatusChangeException
      * @throws IOException
@@ -1044,11 +1045,19 @@ public class ProductOrderEjb {
     private void transitionSamplesAndUpdateTicket(String jiraTicketKey,
                                                   Set<DeliveryStatus> acceptableStartingStatuses,
                                                   DeliveryStatus targetStatus,
-                                                  Collection<ProductOrderSample> samples, String comment)
-            throws NoSuchPDOException, SampleDeliveryStatusChangeException, IOException {
+                                                  Collection<ProductOrderSample> samples, String comment,
+                                                  MessageCollection messageCollection)
+            throws NoSuchPDOException, SampleDeliveryStatusChangeException, IOException, SAPInterfaceException {
         ProductOrder order = findProductOrder(jiraTicketKey);
 
         transitionSamples(order, acceptableStartingStatuses, targetStatus, samples);
+
+        try {
+            publishProductOrderToSAP(order, messageCollection, false);
+        } catch (SAPInterfaceException e) {
+            log.error("SAP Error when attempting to abandon samples", e);
+            throw e;
+        }
 
         JiraIssue issue = jiraService.getIssue(order.getJiraTicketKey());
         issue.addComment(MessageFormat.format("{0} transitioned samples to status {1}: {2}\n\n{3}",
@@ -1326,28 +1335,29 @@ public class ProductOrderEjb {
      * @param jiraTicketKey the order's JIRA key
      * @param samples       the samples to abandon
      * @param comment       optional user supplied comment about this action.
+     * @param messageCollection
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void abandonSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<ProductOrderSample> samples,
-                               @Nonnull String comment)
-            throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException {
+                               @Nonnull String comment, MessageCollection messageCollection)
+            throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException, SAPInterfaceException {
         transitionSamplesAndUpdateTicket(jiraTicketKey,
                 EnumSet.of(DeliveryStatus.ABANDONED, DeliveryStatus.NOT_STARTED),
                 DeliveryStatus.ABANDONED, samples,
-                comment);
+                comment, messageCollection);
     }
 
     /**
      * Un-abandon a list of samples and add a message to the JIRA ticket to reflect this change.
-     *
-     * @param jiraTicketKey the order's JIRA key
+     *  @param jiraTicketKey the order's JIRA key
      * @param sampleIds     the samples to un-abandon
      * @param comment       optional user supplied comment about this action.
+     * @param reporter
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void unAbandonSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<Long> sampleIds,
-                                 @Nonnull String comment, @Nonnull MessageReporter reporter)
-            throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException {
+                                 @Nonnull String comment, @Nonnull MessageCollection reporter)
+            throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException, SAPInterfaceException {
 
         List<ProductOrderSample> samples = productOrderSampleDao.findListByList(ProductOrderSample.class,
                 ProductOrderSample_.productOrderSampleId, sampleIds);
@@ -1361,9 +1371,9 @@ public class ProductOrderEjb {
         }
 
         transitionSamplesAndUpdateTicket(jiraTicketKey, EnumSet.of(DeliveryStatus.ABANDONED),
-                DeliveryStatus.NOT_STARTED, samples, comment);
+                DeliveryStatus.NOT_STARTED, samples, comment, reporter);
 
-        reporter.addMessage("Un-Abandoned samples: {0}.",
+        reporter.addInfo("Un-Abandoned samples: {0}.",
                 StringUtils.join(ProductOrderSample.getSampleNames(samples), ", "));
     }
 
