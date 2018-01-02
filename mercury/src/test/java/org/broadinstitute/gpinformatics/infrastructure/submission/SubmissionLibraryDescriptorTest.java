@@ -33,9 +33,12 @@ public class SubmissionLibraryDescriptorTest {
     public static Iterator<Object[]> descriptorNames() {
         List<Object[]> testCases = new ArrayList<>();
         testCases.add(new Object[]{"Exome", WHOLE_EXOME.getName()});
-        testCases.add(new Object[]{"WGS", WHOLE_GENOME.getName()});
         testCases.add(new Object[]{"Whole Exome", WHOLE_EXOME.getName()});
+        testCases.add(new Object[]{"WGS", WHOLE_GENOME.getName()});
+        testCases.add(new Object[]{"Genome", WHOLE_GENOME.getName()});
+        testCases.add(new Object[]{"Whole Genome", WHOLE_GENOME.getName()});
         testCases.add(new Object[]{"RNA", RNA_SEQ.getName()});
+        testCases.add(new Object[]{"RNA Seq", RNA_SEQ.getName()});
         testCases.add(new Object[]{"N/A", "N/A"});
         testCases.add(new Object[]{"Gen", "Gen"});
         testCases.add(new Object[]{"", null});
