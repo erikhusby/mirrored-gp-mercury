@@ -35,7 +35,7 @@ public class SubmissionLibraryDescriptor implements Serializable {
     public static final SubmissionLibraryDescriptor WHOLE_GENOME =
         new SubmissionLibraryDescriptor("Whole Genome", "Human Whole Genome");
     public static final SubmissionLibraryDescriptor RNA_SEQ =
-        new SubmissionLibraryDescriptor("RNA Seq", "Whole Exome Sequencing");
+        new SubmissionLibraryDescriptor("RNA Seq", "RNA Sequencing");
 
 
     @JsonProperty
