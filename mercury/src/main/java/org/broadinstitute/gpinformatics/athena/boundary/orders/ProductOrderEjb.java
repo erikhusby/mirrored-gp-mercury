@@ -377,9 +377,8 @@ public class ProductOrderEjb {
                     }
 
                 } else if(orderToPublish.isSavedInSAP()){
-                    if (SapIntegrationServiceImpl.getSampleCount((ProductOrder) orderToPublish,
-                            (Product) orderToPublish.getProduct(),
-                            (int) 0, false) >= 0) {
+                    if (SapIntegrationServiceImpl.getSampleCount(orderToPublish, orderToPublish.getProduct(),
+                            0, false) >= 0) {
                         updateOrderInSap(orderToPublish, allProductsOrdered, effectivePricesForProducts, messageCollection);
 
                         for (ProductOrder childProductOrder : orderToPublish.getChildOrders()) {
@@ -1349,7 +1348,7 @@ public class ProductOrderEjb {
 
     /**
      * Un-abandon a list of samples and add a message to the JIRA ticket to reflect this change.
-     *  @param jiraTicketKey the order's JIRA key
+     * @param jiraTicketKey the order's JIRA key
      * @param sampleIds     the samples to un-abandon
      * @param comment       optional user supplied comment about this action.
      * @param reporter
