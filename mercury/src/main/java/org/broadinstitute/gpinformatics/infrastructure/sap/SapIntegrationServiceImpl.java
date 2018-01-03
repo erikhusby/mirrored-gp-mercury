@@ -1,9 +1,11 @@
 package org.broadinstitute.gpinformatics.infrastructure.sap;
 
 import clover.org.apache.commons.lang.StringUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
+import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.PriceAdjustment;
@@ -60,6 +62,9 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
     @Inject
     private SAPProductPriceCache productPriceCache;
+
+    @Inject
+    private SAPAccessControlEjb accessControlEjb;
 
     private SapIntegrationClientImpl wrappedClient;
 
@@ -168,7 +173,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         FundingLevel fundingLevel = foundQuote.getFirstRelevantFundingLevel();
 
-        if (fundingLevel == null) {
+        if (fundingLevel == null || CollectionUtils.isEmpty(fundingLevel.getFunding())) {
             // Too many funding sources to allow this to work with SAP.  Keep using the Quote Server as the definition
             // of funding
             throw new SAPIntegrationException(
@@ -354,7 +359,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     public String findCustomer(SapIntegrationClientImpl.SAPCompanyConfiguration companyCode, FundingLevel fundingLevel) throws SAPIntegrationException {
 
         String customerNumber = null;
-        if (fundingLevel == null) {
+        if (fundingLevel == null || CollectionUtils.isEmpty(fundingLevel.getFunding())) {
             // Too many funding sources to allow this to work with SAP.  Keep using the Quote Server as the definition
             // of funding
             throw new SAPIntegrationException(
@@ -491,12 +496,17 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     @Override
     public OrderCalculatedValues calculateOpenOrderValues(int addedSampleCount, String quoteId,
                                                           ProductOrder productOrder) throws SAPIntegrationException {
-        OrderCriteria potentialOrderCriteria = null;
-        if (productOrder != null && productOrder.getProduct() != null) {
-            potentialOrderCriteria = generateOrderCriteria(productOrder, addedSampleCount, true);
+        OrderCalculatedValues orderCalculatedValues = null;
+        if (accessControlEjb.getCurrentControlDefinitions().isEnabled()) {
+            OrderCriteria potentialOrderCriteria = null;
+            if (productOrder != null && productOrder.getProduct() != null) {
+                potentialOrderCriteria = generateOrderCriteria(productOrder, addedSampleCount, true);
+            }
+
+            orderCalculatedValues = getClient().calculateOrderValues(quoteId, SapIntegrationClientImpl.SystemIdentifier.MERCURY,
+                            potentialOrderCriteria);
         }
-        return getClient().calculateOrderValues(quoteId, SapIntegrationClientImpl.SystemIdentifier.MERCURY,
-                potentialOrderCriteria);
+        return orderCalculatedValues;
     }
 
     protected OrderCriteria generateOrderCriteria(ProductOrder productOrder) throws SAPIntegrationException {
@@ -528,7 +538,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             }
             FundingLevel fundingLevel = foundQuote.getFirstRelevantFundingLevel();
 
-            if (fundingLevel == null) {
+            if (fundingLevel == null || CollectionUtils.isEmpty(fundingLevel.getFunding())) {
                 // Too many funding sources to allow this to work with SAP.  Keep using the Quote Server as the definition
                 // of funding
                 throw new SAPIntegrationException(

@@ -3,7 +3,9 @@ package org.broadinstitute.gpinformatics.infrastructure.sap;
 import clover.org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -38,6 +40,9 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
     @Inject
     private PriceListCache quotesPriceListCache;
 
+    @Inject
+    private SAPAccessControlEjb accessControlEjb;
+
     private static final Log logger = LogFactory.getLog(SAPProductPriceCache.class);
 
     public SAPProductPriceCache() {
@@ -56,10 +61,15 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
     @Override
     public synchronized void refreshCache() {
         try {
-            Set<SAPMaterial> tempSet = sapService.findProductsInSap();
 
-            if(!CollectionUtils.isEmpty(tempSet)) {
-                setMaterials(tempSet);
+            sapMaterials.clear();
+            SAPAccessControl control = accessControlEjb.getCurrentControlDefinitions();
+            if (control.isEnabled()) {
+                Set<SAPMaterial> tempSet = sapService.findProductsInSap();
+
+                if(!CollectionUtils.isEmpty(tempSet)) {
+                    setMaterials(tempSet);
+                }
             }
         } catch (SAPIntegrationException e) {
             logger.error("Could not refresh the SAP Product Price Cache", e);

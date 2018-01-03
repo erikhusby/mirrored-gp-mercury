@@ -763,15 +763,17 @@ public class ProductOrderActionBean extends CoreActionBean {
             if (quote != null) {
                 ProductOrder.checkQuoteValidity(quote);
                 for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel(true)) {
-                    for (Funding funding : fundingLevel.getFunding()) {
-                        if (funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
-                            final int numDaysBetween =
-                                    DateUtils.getNumDaysBetween(new Date(), funding.getGrantEndDate());
-                            if (numDaysBetween > 0 && numDaysBetween < 45) {
-                                addMessage("The Funding Source " + funding.getDisplayName() + " on " +
-                                        quote.getAlphanumericId() + "  Quote expires in " + numDaysBetween +
-                                        " days. If it is likely this work will not be completed by then, please work on "
-                                        + "updating the Funding Source so Billing Errors can be avoided.");
+                    if (CollectionUtils.isNotEmpty(fundingLevel.getFunding())) {
+                        for (Funding funding : fundingLevel.getFunding()) {
+                            if (funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
+                                final int numDaysBetween =
+                                        DateUtils.getNumDaysBetween(new Date(), funding.getGrantEndDate());
+                                if (numDaysBetween > 0 && numDaysBetween < 45) {
+                                    addMessage("The Funding Source " + funding.getDisplayName() + " on " +
+                                            quote.getAlphanumericId() + "  Quote expires in " + numDaysBetween +
+                                            " days. If it is likely this work will not be completed by then, please work on "
+                                            + "updating the Funding Source so Billing Errors can be avoided.");
+                                }
                             }
                         }
                     }
@@ -2570,19 +2572,15 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         if (!selectedProductOrderSamples.isEmpty()) {
-            productOrderEjb.abandonSamples(editOrder.getJiraTicketKey(), selectedProductOrderSamples, abandonComment);
+            MessageCollection abandonSamplesMessageCollection = new MessageCollection();
+            productOrderEjb.abandonSamples(editOrder.getJiraTicketKey(), selectedProductOrderSamples, abandonComment,
+                    abandonSamplesMessageCollection);
             addMessage("Abandoned samples: {0}.",
                     StringUtils.join(ProductOrderSample.getSampleNames(selectedProductOrderSamples), ", "));
+
+
             productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey(), this);
 
-            MessageCollection abandonSamplesMessageCollection = new MessageCollection();
-
-            try {
-                productOrderEjb.publishProductOrderToSAP(editOrder, abandonSamplesMessageCollection, false);
-            } catch (SAPInterfaceException e) {
-                logger.error("SAP Error when attempting to abandon samples", e);
-                addGlobalValidationError(e.getMessage());
-            }
             addMessages(abandonSamplesMessageCollection);
         }
         return createViewResolution(editOrder.getBusinessKey());
@@ -2592,28 +2590,24 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution unAbandonSamples() throws Exception {
 
         if (CollectionUtils.isNotEmpty(selectedProductOrderSampleIds)) {
+            MessageCollection abandonSamplesMessageCollection = new MessageCollection();
             try {
                 productOrderEjb.unAbandonSamples(editOrder.getJiraTicketKey(), selectedProductOrderSampleIds,
-                        unAbandonComment, this);
+                        unAbandonComment, abandonSamplesMessageCollection);
             } catch (ProductOrderEjb.SampleDeliveryStatusChangeException e) {
                 addGlobalValidationError(e.getMessage());
                 return new ForwardResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter(
                         PRODUCT_ORDER_PARAMETER,
                         editOrder.getBusinessKey());
             }
+
             productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey(), this);
 
-            MessageCollection abandonSamplesMessageCollection = new MessageCollection();
-            try {
-                productOrderEjb.publishProductOrderToSAP(editOrder, abandonSamplesMessageCollection, false);
-            } catch (SAPInterfaceException e) {
-                logger.error("SAP Error when attempting to abandon samples", e);
-                addGlobalValidationError(e.getMessage());
-            }
             addMessages(abandonSamplesMessageCollection);
         }
         return createViewResolution(editOrder.getBusinessKey());
     }
+
     @ValidationMethod(on = ADD_SAMPLES_ACTION)
     public void addSampleExtraValidations() throws Exception {
         try {
