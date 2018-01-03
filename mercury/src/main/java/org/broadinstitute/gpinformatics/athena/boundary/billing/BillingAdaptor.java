@@ -175,7 +175,7 @@ public class BillingAdaptor implements Serializable {
                     quote.setAlphanumericId(itemForPriceUpdate.getQuoteId());
                     itemForPriceUpdate.setQuote(quote);
 
-                    if(productOrderEjb.isOrderEligibleForSAP(itemForPriceUpdate.getProductOrder()) &&
+                    if(productOrderEjb.isOrderEligibleForSAP(itemForPriceUpdate.getProductOrder(), itemForPriceUpdate.getWorkCompleteDate()) &&
                        itemForPriceUpdate.getProductOrder().isSavedInSAP()) {
                         
                         ProductOrder.checkQuoteValidity(quote,
@@ -286,7 +286,7 @@ public class BillingAdaptor implements Serializable {
                         }
                     }
 
-                    if( productOrderEjb.isOrderEligibleForSAP(item.getProductOrder() )
+                    if( productOrderEjb.isOrderEligibleForSAP(item.getProductOrder(),item.getWorkCompleteDate() )
                         && !item.getProductOrder().getOrderStatus().canPlace()
                         && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
                         && StringUtils.isBlank(item.getSapItems())) {
@@ -317,7 +317,7 @@ public class BillingAdaptor implements Serializable {
                     }
 
                     if (StringUtils.isBlank(workId)) {
-                        if (productOrderEjb.isOrderEligibleForSAP(item.getProductOrder())
+                        if (productOrderEjb.isOrderEligibleForSAP(item.getProductOrder(),item.getWorkCompleteDate())
                             && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
                             if (item.getProductOrder().getSinglePriceAdjustment() == null) {
                                 workId = quoteService
@@ -352,7 +352,7 @@ public class BillingAdaptor implements Serializable {
                     }
 
 
-                    if( productOrderEjb.isOrderEligibleForSAP(item.getProductOrder() )
+                    if( productOrderEjb.isOrderEligibleForSAP(item.getProductOrder(), item.getWorkCompleteDate() )
                         && !item.getProductOrder().getOrderStatus().canPlace()
                         && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
                         && StringUtils.isBlank(item.getSapItems()))
