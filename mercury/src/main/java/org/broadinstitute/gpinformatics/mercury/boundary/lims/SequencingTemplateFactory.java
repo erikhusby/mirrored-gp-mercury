@@ -587,6 +587,14 @@ public class SequencingTemplateFactory {
                         umiReagents.add(umiReagent.getUniqueMolecularIdentifier());
                     }
                 }
+
+                for (Reagent reagent : sampleInstance.getReagents()) {
+                    if (OrmUtil.proxySafeIsInstance(reagent, UMIReagent.class)) {
+                        UMIReagent umiReagent =
+                                OrmUtil.proxySafeCast(reagent, UMIReagent.class);
+                        umiReagents.add(umiReagent.getUniqueMolecularIdentifier());
+                    }
+                }
             }
         }
     }
