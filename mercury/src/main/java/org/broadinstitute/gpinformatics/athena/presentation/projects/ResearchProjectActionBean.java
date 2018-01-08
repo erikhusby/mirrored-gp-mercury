@@ -875,6 +875,9 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
                 populateSubmissionSamples(true);
             } catch (SessionCacheException e) {
                 log.error("Error retrieving samples from cache", e);
+            } catch (Exception e) {
+                log.error("Error retrieving samples data", e);
+                addMessage(e.getLocalizedMessage());
             }
         }
     }
