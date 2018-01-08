@@ -330,15 +330,34 @@ public class ProductOrderEjb {
      * an SAP order.  This must be done in order to directly bill to SAP from mercury
      *
      * @param editedProductOrder Product order entity which intends to be reflected in SAP
-     * @param messageCollection Storage for error/success messages that happens during the publishing process
-     * @param allowCreateOrder Helper flag to know indicate if the scenario by which the method is called intends to
-     *                         allow a new order to be replaced (e.g. an order previously was associated with an SAP
-     *                         order but needs a new one)
+     * @param messageCollection  Storage for error/success messages that happens during the publishing process
+     * @param allowCreateOrder   Helper flag to know indicate if the scenario by which the method is called intends to
+     *                           allow a new order to be replaced (e.g. an order previously was associated with an SAP
+     *                           order but needs a new one)
+     *
+     * @throws SAPInterfaceException
+     */
+    public void publishProductOrderToSAP(ProductOrder editedProductOrder, MessageCollection messageCollection,
+                                         boolean allowCreateOrder) throws SAPInterfaceException {
+         publishProductOrderToSAP(editedProductOrder, messageCollection, allowCreateOrder, new Date());
+    }
+
+    /**
+     * Takes care of the logic to publish the Product Order to SAP for the purposes of either creating or updating
+     * an SAP order.  This must be done in order to directly bill to SAP from mercury
+     *
+     * @param editedProductOrder Product order entity which intends to be reflected in SAP
+     * @param messageCollection  Storage for error/success messages that happens during the publishing process
+     * @param allowCreateOrder   Helper flag to know indicate if the scenario by which the method is called intends to
+     *                           allow a new order to be replaced (e.g. an order previously was associated with an SAP
+     *                           order but needs a new one)
+     * @param effectiveDate
+     *
      * @throws SAPInterfaceException
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void publishProductOrderToSAP(ProductOrder editedProductOrder, MessageCollection messageCollection,
-                                         boolean allowCreateOrder) throws SAPInterfaceException {
+                                         boolean allowCreateOrder, Date effectiveDate) throws SAPInterfaceException {
         ProductOrder orderToPublish = editedProductOrder;
 
         final List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(orderToPublish);
@@ -346,7 +365,7 @@ public class ProductOrderEjb {
             orderToPublish = editedProductOrder.getParentOrder();
         }
         try {
-            if (isOrderEligibleForSAP(orderToPublish)
+            if (isOrderEligibleForSAP(orderToPublish, effectiveDate)
                 && !orderToPublish.getOrderStatus().canPlace()) {
 
                 final List<String> effectivePricesForProducts = productPriceCache
@@ -1683,12 +1702,16 @@ public class ProductOrderEjb {
      *
      * @param ledgerUpdates a map of PDO sample to a collection of ledger updates
      *
-     * @throws StaleLedgerUpdateException if the previous quantity in any ledger update is out-of-date
+     * @throws ValidationWithRollbackException to capture and relay multiple errors that may have occurred while
+     * creating or updating ledger entries
+     * @throws QuoteNotFoundException if the quote is not found
+     * @throws QuoteServerException if any errors occurs during the attempt to access the quote server during this
+     * method
+     *
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void updateSampleLedgers(Map<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> ledgerUpdates)
-            throws ValidationWithRollbackException, SAPInterfaceException, QuoteNotFoundException,
-            QuoteServerException, InvalidProductException, SAPIntegrationException {
+            throws ValidationWithRollbackException, QuoteNotFoundException, QuoteServerException {
         List<String> errorMessages = new ArrayList<>();
 
         Map<String, Quote> usedQuotesMiniCache = new HashMap<>();
@@ -1709,21 +1732,6 @@ public class ProductOrderEjb {
                     usedQuotesMiniCache.put(orderQuote.getAlphanumericId(), orderQuote);
                 }
 
-
-                final List<Product> allProductsOrdered =
-                        ProductOrder.getAllProductsOrdered(productOrderSample.getProductOrder());
-                List<String> effectivePricesForProducts = priceListCache
-                        .getEffectivePricesForProducts(allProductsOrdered, orderQuote);
-
-                final MessageCollection messageCollection = new MessageCollection();
-                if (productOrderSample.getProductOrder().isSavedInSAP()) {
-                    if (!StringUtils
-                            .equals(productOrderSample.getProductOrder().latestSapOrderDetail().getOrderPricesHash(),
-                                    TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ",")))
-                            ) {
-                        publishProductOrderToSAP(productOrderSample.getProductOrder(), messageCollection, true);
-                    }
-                }
                 updatedOrderMap.put(productOrderSample.getProductOrder().getBusinessKey(), Boolean.TRUE);
             }
 
