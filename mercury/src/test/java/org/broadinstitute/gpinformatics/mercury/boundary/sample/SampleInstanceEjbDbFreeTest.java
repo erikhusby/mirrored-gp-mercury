@@ -72,7 +72,6 @@ import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
@@ -83,6 +82,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -492,10 +492,12 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
     @Test
     public void testPooledTubes() throws Exception {
+        // Uploads the spreadsheet.
         String file = "testdata/PooledTubesTest.xlsx";
         InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(file);
         SampleInstanceEjb sampleInstanceEjb = setMocks(POOLEDTUBE);
         MessageCollection messageCollection = new MessageCollection();
+
         Pair<TableProcessor, List<SampleInstanceEntity>> pair = sampleInstanceEjb.doExternalUpload(
                 inputStream, OVERWRITE, messageCollection);
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
@@ -504,15 +506,17 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                 StringUtils.join(messageCollection.getInfos(), "; "));
 
         Assert.assertTrue(pair.getLeft() instanceof VesselPooledTubesProcessor, pair.getLeft().getClass().getName());
-
+        VesselPooledTubesProcessor vesselPooledTubesProcessor = (VesselPooledTubesProcessor)pair.getLeft();
         List<SampleInstanceEntity> entities = pair.getRight();
+
+        // Checks SampleInstanceEntities that were created.
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), ". "));
         Assert.assertTrue(messageCollection.getInfos().get(0)
                 .startsWith(String.format(SampleInstanceEjb.IS_SUCCESS, 2)),
                 StringUtils.join(messageCollection.getInfos(), "; "));
-
         Assert.assertEquals(entities.size(), 2);
 
+        Map<String, BarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
         for (int i = 0; i < entities.size(); ++i) {
             SampleInstanceEntity entity = entities.get(i);
 
@@ -543,7 +547,8 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(sampleData.getSampleLsid(), select(i,
                     "broadinstitute.org:bsp.dev.sample:JT1", "broadinstitute.org:bsp.dev.sample:JT2"));
 
-            LabVessel tube = entity.getLabVessel();
+            BarcodedTube tube = (BarcodedTube)entity.getLabVessel();
+            mapBarcodeToTube.put(tube.getLabel(), tube);
             Assert.assertEquals(tube.getLabel(), "JT041431");
             Assert.assertEquals(tube.getVolume(), new BigDecimal("0.60"));
             Assert.assertEquals(tube.getMetrics().size(), 1);
@@ -567,54 +572,53 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(entity.getMolecularIndexingScheme().getName(),
                     select(i, "Illumina_P5-Nijow_P7-Waren","Illumina_P5-Piwan_P7-Bidih"));
         }
+        assertSampleInstanceEntitiesPresent(mapBarcodeToTube.values(), entities);
 
-        runExomeExpressDBFree(((VesselPooledTubesProcessor) pair.getLeft()).getSingleSampleLibraryName());
-    }
-
-    private String select(int idx, String... params) {
-        Assert.assertTrue(params.length > idx, idx + " cannot select " + StringUtils.join(params, ", "));
-        return Arrays.asList(params).get(idx);
-    }
-
-    private void runExomeExpressDBFree(Collection<String> sampleNames) throws IOException {
-        Date runDate = new Date();
-        String pdo = "PDO-TEST123";
-        String lcsetSuffix = "1";
+        // Runs the workflow: PDO creation, LCSET creation, bucketing, pico plating, shearing, LC,
+        // HybSelect, QTP, sequencing.
         Workflow workflow = Workflow.AGILENT_EXOME_EXPRESS;
-
-        ProductOrder productOrder = ProductOrderTestFactory.createDummyProductOrder(1, pdo);
-        for (String sampleName : sampleNames) {
-            ProductOrderSample productOrderSample = new ProductOrderSample(sampleName);
+        ProductOrder productOrder = ProductOrderTestFactory.createDummyProductOrder(0, "PDO-TEST123");
+        Assert.assertTrue(entities.size() <= NUM_POSITIONS_IN_RACK,
+                entities.size() + " samples is more than a single rack " + NUM_POSITIONS_IN_RACK);
+        for (SampleInstanceEntity entity : entities) {
+            ProductOrderSample productOrderSample = new ProductOrderSample(entity.getMercurySample().getSampleKey());
             productOrder.addSample(productOrderSample);
         }
-        productOrder.setJiraTicketKey(pdo);
+        productOrder.setJiraTicketKey(productOrder.getJiraTicketKey());
         productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         productOrder.getProduct().setWorkflow(workflow);
         expectedRouting = SystemRouter.System.MERCURY;
 
-        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
-        //Batch
-        LabBatch workflowBatch = new LabBatch("whole Genome Batch", new HashSet<LabVessel>(mapBarcodeToTube.values()),
+        LabBatch workflowBatch = new LabBatch("a batch", new HashSet<LabVessel>(mapBarcodeToTube.values()),
                 LabBatch.LabBatchType.WORKFLOW);
         workflowBatch.setWorkflow(workflow);
-        //Bucket
+
+        String lcsetSuffix = "1";
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, lcsetSuffix);
-        //Plating
+        Assert.assertEquals(productOrder.getSamples().size(), entities.size());
+
         PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
                 "P", lcsetSuffix, true);
-        //Shearing
+
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
                 runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
                         picoPlatingEntityBuilder.getNormTubeFormation(),
                         picoPlatingEntityBuilder.getNormalizationBarcode(), lcsetSuffix);
-        //Library
+        Assert.assertEquals(exomeExpressShearingEntityBuilder.getShearingCleanupPlate().getSampleInstancesV2().size(),
+                entities.size());
+        Assert.assertEquals(exomeExpressShearingEntityBuilder.getShearingCleanupPlate().getContainerRole()
+                .getSampleInstancesAtPositionV2(VesselPosition.A01).size(), entities.size());
+
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = runLibraryConstructionProcess(
                 exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
                 exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(),
                 exomeExpressShearingEntityBuilder.getShearingPlate(),
                 lcsetSuffix,
-                mapBarcodeToTube.size());
-        //Hyb
+                productOrder.getSampleCount());
+        Assert.assertFalse(libraryConstructionEntityBuilder.getPondRegTubeBarcodes().isEmpty());
+        Assert.assertEquals(libraryConstructionEntityBuilder.getPondRegRack().getContainerRole()
+                .getSampleInstancesAtPositionV2(VesselPosition.A01).size(), entities.size());
+
         HybridSelectionEntityBuilder hybridSelectionEntityBuilder =
                 runHybridSelectionProcess(libraryConstructionEntityBuilder.getPondRegRack(),
                         libraryConstructionEntityBuilder.getPondRegRackBarcode(),
@@ -625,27 +629,24 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                 hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(),
                 "1");
 
-        LabVessel denatureSource =
-                qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
-        LabBatch fctBatch = new LabBatch(FCT_TICKET, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
+        LabVessel denatureSource = qtpEntityBuilder.getDenatureRack().getContainerRole()
+                .getVesselAtPosition(VesselPosition.A01);
+        new LabBatch(FCT_TICKET, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder = runHiSeq2500FlowcellProcess(
                 qtpEntityBuilder.getDenatureRack(), "1", FCT_TICKET, ProductionFlowcellPath.DILUTION_TO_FLOWCELL,
                 "designation", workflow);
-        SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
 
-        File runPath = File.createTempFile("tempRun" + dateFormat.format(runDate), ".txt");
+        Date runDate = new Date();
+        String runDateString = (new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN)).format(runDate);
+        File runPath = File.createTempFile("tempRun" + runDateString, ".txt");
         String flowcellBarcode = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell().getCartridgeBarcode();
 
-        String machineName = "Superman";
-        SolexaRunBean runBean = new SolexaRunBean(flowcellBarcode,
-                flowcellBarcode + dateFormat.format(runDate),
-                runDate, machineName,
-                runPath.getAbsolutePath(), null);
+        SolexaRunBean runBean = new SolexaRunBean(flowcellBarcode, flowcellBarcode + runDateString,
+                runDate, "Superman", runPath.getAbsolutePath(), null);
 
-        IlluminaSequencingRunFactory illuminaSequencingRunFactory =
-                new IlluminaSequencingRunFactory(EasyMock.createNiceMock(JiraCommentUtil.class));
+        IlluminaSequencingRunFactory illuminaSequencingRunFactory = new IlluminaSequencingRunFactory(
+                EasyMock.createNiceMock(JiraCommentUtil.class));
 
-        // Register run
         IlluminaSequencingRun run = illuminaSequencingRunFactory.buildDbFree(runBean,
                 hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell());
 
@@ -653,7 +654,21 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         for (SampleInstanceV2 sampleInstanceV2 : run.getSampleCartridge().getSampleInstancesV2()) {
             flowcellSamples.add(sampleInstanceV2.getNearestMercurySampleName());
         }
-        Assert.assertTrue(flowcellSamples.containsAll(sampleNames));
+        Assert.assertTrue(flowcellSamples.containsAll(vesselPooledTubesProcessor.getBroadSampleId()));
+    }
+
+
+    private <VESSEL extends LabVessel> void assertSampleInstanceEntitiesPresent(Collection<VESSEL> labVessels,
+            Collection<SampleInstanceEntity> entities) {
+        List<String> list = new ArrayList<>();
+        for (VESSEL labVessel : labVessels) {
+            for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                list.add(sampleInstanceV2.getEarliestMercurySampleName());
+            }
+        }
+        for (SampleInstanceEntity entity : entities) {
+            Assert.assertTrue(list.contains(entity.getMercurySample().getSampleKey()));
+        }
     }
 
     /** Returns the list element or null if the list or element doesn't exist */
@@ -661,8 +676,12 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         return (CollectionUtils.isNotEmpty(list) && list.size() > index) ? list.get(index) : null;
     }
 
-    /** Sets up the mocks for all test cases. */
+    private String select(int idx, String... params) {
+        Assert.assertTrue(params.length > idx, idx + " cannot select " + StringUtils.join(params, ", "));
+        return Arrays.asList(params).get(idx);
+    }
 
+    /** Sets up the mocks for all test cases. */
     private SampleInstanceEjb setMocks(TestType testType) throws Exception {
 
         // BarcodedTubes

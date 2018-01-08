@@ -73,6 +73,7 @@ import java.util.TreeSet;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil.isInBspFormat;
+import static org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation_.barcode;
 
 /**
  * This class handles the external library creation from walkup sequencing web serivce calls, pooled tube
@@ -224,12 +225,14 @@ public class SampleInstanceEjb {
     }
 
     /**
-     * Verifies the spreadsheet contents and if it's ok, persists the data.
+     * Verifies the spreadsheet contents and if it's ok, persists the data. If not, adds error messages.
      */
     private List<SampleInstanceEntity> verifyAndPersistSpreadsheet(VesselPooledTubesProcessor processor,
             MessageCollection messages, boolean overWriteFlag) {
 
-        // Adds any validation.
+        Set<String> volumeErrorReportedForBarcode = new HashSet<>();
+        Set<String> fragmentErrorReportedForBarcode = new HashSet<>();
+
         // rowOffset converts row index to the 1-based row number shown by Excel on the far left of each row.
         int rowOffset = processor.getHeaderRowIndex() + 2;
 
@@ -244,17 +247,24 @@ public class SampleInstanceEjb {
             for (int rowIndex = 0; rowIndex < processor.getBarcodes().size(); ++rowIndex) {
                 if (processor.getBarcodes().get(rowIndex).equals(barcode)) {
                     String volumeValue = processor.getVolume().get(rowIndex);
-                    if (isNotBlank(volumeValue) && NumberUtils.isNumber(volumeValue)) {
-                        BigDecimal bigDecimal = MathUtils.scaleTwoDecimalPlaces(new BigDecimal(volumeValue));
-                        if (bigDecimal.compareTo(BigDecimal.ZERO) > 0) {
-                            if (mapBarcodeToVolume.containsKey(barcode) &&
-                                    mapBarcodeToVolume.get(barcode).compareTo(bigDecimal) != 0) {
-                                messages.addError(String.format(CONFLICT, rowIndex + rowOffset,
-                                        VesselPooledTubesProcessor.Headers.VOLUME.getText(),
-                                        bigDecimal.toPlainString(),
-                                        mapBarcodeToVolume.get(barcode).toPlainString(), "", ""));
-                            } else {
-                                mapBarcodeToVolume.put(barcode, bigDecimal);
+                    if (isNotBlank(volumeValue)) {
+                        if (!NumberUtils.isNumber(volumeValue)) {
+                            messages.addError(String.format(WRONG_TYPE, rowIndex + rowOffset,
+                                    VesselPooledTubesProcessor.Headers.VOLUME.getText(), "numeric"));
+                            volumeErrorReportedForBarcode.add(barcode);
+                        } else {
+                            BigDecimal bigDecimal = MathUtils.scaleTwoDecimalPlaces(new BigDecimal(volumeValue));
+                            if (bigDecimal.compareTo(BigDecimal.ZERO) > 0) {
+                                if (mapBarcodeToVolume.containsKey(barcode) &&
+                                        mapBarcodeToVolume.get(barcode).compareTo(bigDecimal) != 0) {
+                                    messages.addError(String.format(CONFLICT, rowIndex + rowOffset,
+                                            VesselPooledTubesProcessor.Headers.VOLUME.getText(),
+                                            bigDecimal.toPlainString(),
+                                            mapBarcodeToVolume.get(barcode).toPlainString(), "", ""));
+                                    volumeErrorReportedForBarcode.add(barcode);
+                                } else {
+                                    mapBarcodeToVolume.put(barcode, bigDecimal);
+                                }
                             }
                         }
                     }
@@ -263,6 +273,7 @@ public class SampleInstanceEjb {
                         if (!NumberUtils.isNumber(fragmentSizeValue)) {
                             messages.addError(String.format(WRONG_TYPE, rowIndex + rowOffset,
                                     VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE.getText(), "numeric"));
+                            fragmentErrorReportedForBarcode.add(barcode);
                         } else {
                             BigDecimal bigDecimal = MathUtils.scaleTwoDecimalPlaces(new BigDecimal(fragmentSizeValue));
                             if (bigDecimal.compareTo(BigDecimal.ZERO) > 0) {
@@ -272,6 +283,7 @@ public class SampleInstanceEjb {
                                             VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE.getText(),
                                             bigDecimal.toPlainString(),
                                             mapBarcodeToFragmentSize.get(barcode).toPlainString(), "", ""));
+                                    fragmentErrorReportedForBarcode.add(barcode);
                                 } else {
                                     mapBarcodeToFragmentSize.put(barcode, bigDecimal);
                                 }
@@ -282,24 +294,20 @@ public class SampleInstanceEjb {
             }
         }
         // Errors if any tube is missing a value for volume or fragment size.
-        for (String barcode : CollectionUtils.subtract(uniqueBarcodes, mapBarcodeToVolume.keySet())) {
-            for (int rowIndex = 0; rowIndex < processor.getBarcodes().size(); ++rowIndex) {
-                if (processor.getBarcodes().get(rowIndex).equals(barcode)) {
-                    // Shows the error only for the first row containing the barcode.
-                    messages.addError(String.format(MISSING, rowIndex + rowOffset,
-                            VesselPooledTubesProcessor.Headers.VOLUME.getText()));
-                    break;
-                }
+        for (int rowIndex = 0; rowIndex < processor.getBarcodes().size(); ++rowIndex) {
+            if (!processor.getRequiredValuesPresent().get(rowIndex)) {
+                continue;
             }
-        }
-        for (String barcode : CollectionUtils.subtract(uniqueBarcodes, mapBarcodeToFragmentSize.keySet())) {
-            for (int rowIndex = 0; rowIndex < processor.getBarcodes().size(); ++rowIndex) {
-                if (processor.getBarcodes().get(rowIndex).equals(barcode)) {
-                    // Shows the error only for the first row containing the barcode.
-                    messages.addError(String.format(MISSING, rowIndex + rowOffset,
-                            VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE.getText()));
-                    break;
-                }
+            String barcode = get(processor.getBarcodes(), rowIndex);
+            if (!mapBarcodeToVolume.containsKey(barcode) && volumeErrorReportedForBarcode.add(barcode)) {
+                // Shows the error only for the first row containing the barcode.
+                messages.addError(String.format(MISSING, rowIndex + rowOffset,
+                        VesselPooledTubesProcessor.Headers.VOLUME.getText()));
+            }
+            if (!mapBarcodeToFragmentSize.containsKey(barcode) && fragmentErrorReportedForBarcode.add(barcode)) {
+                // Shows the error only for the first row containing the barcode.
+                messages.addError(String.format(MISSING, rowIndex + rowOffset,
+                        VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE.getText()));
             }
         }
 
@@ -316,10 +324,10 @@ public class SampleInstanceEjb {
         Map<String, SampleDataDto> sampleDataDtoMap = new HashMap<>();
 
         for (int rowIndex = 0; rowIndex < processor.getBarcodes().size(); ++rowIndex) {
-            String sampleName = processor.getBroadSampleId().get(rowIndex);
-            if (isBlank(sampleName)) {
+            if (!processor.getRequiredValuesPresent().get(rowIndex)) {
                 continue;
             }
+            String sampleName = processor.getBroadSampleId().get(rowIndex);
             // For new samples, sample metadata must be supplied in the spreadsheet.
             if (!sampleMap.containsKey(sampleName)) {
 
@@ -348,10 +356,10 @@ public class SampleInstanceEjb {
 
         // Collects root sample metadata. Broad samples may be root samples for another spreadsheet row.
         for (int rowIndex = 0; rowIndex < processor.getBarcodes().size(); ++rowIndex) {
-            String sampleName = processor.getBroadSampleId().get(rowIndex);
-            if (isBlank(sampleName)) {
+            if (!processor.getRequiredValuesPresent().get(rowIndex)) {
                 continue;
             }
+            String sampleName = processor.getBroadSampleId().get(rowIndex);
             boolean broadSampleExists = sampleMap.containsKey(sampleName);
             String rootSampleName = processor.getRootSampleId().get(rowIndex);
             boolean rootSampleExists = rootSampleMap.containsKey(rootSampleName);
@@ -401,6 +409,9 @@ public class SampleInstanceEjb {
         // the sample metadata cannot be updated from spreadsheet values, even when doing overwriting.
         Map<String, SampleData> fetchedData = sampleDataFetcher.fetchSampleData(sampleDataLookups);
         for (int rowIndex = 0; rowIndex < processor.getBarcodes().size(); ++rowIndex) {
+            if (!processor.getRequiredValuesPresent().get(rowIndex)) {
+                continue;
+            }
             String sampleName = processor.getBroadSampleId().get(rowIndex);
             String rootSampleName = processor.getRootSampleId().get(rowIndex);
             if (fetchedData.containsKey(sampleName)) {
@@ -420,7 +431,6 @@ public class SampleInstanceEjb {
 
         // Maps tube barcode to existing tubes.
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(new ArrayList<>(uniqueBarcodes));
-
         Set<String> uniqueLibraryNames = new HashSet<>();
         Set<String> barcodeAndMis = new HashSet<>();
         Set<String> uniqueSampleMis = new HashSet<>();
@@ -429,146 +439,147 @@ public class SampleInstanceEjb {
         List<RowDto> rowDtos = new ArrayList<>();
 
         for (int rowIndex = 0; rowIndex < processor.getBarcodes().size(); ++rowIndex) {
+            if (!processor.getRequiredValuesPresent().get(rowIndex)) {
+                continue;
+            }
             String libraryName = processor.getSingleSampleLibraryName().get(rowIndex);
             String barcode = processor.getBarcodes().get(rowIndex);
             String broadSampleName = processor.getBroadSampleId().get(rowIndex);
-            // Ignores the row if several key fields are blank.
-            if (isNotBlank(libraryName) || isNotBlank(barcode) || isNotBlank(broadSampleName)) {
-                RowDto rowDto = new RowDto(rowIndex + rowOffset);
-                rowDtos.add(rowDto);
+            RowDto rowDto = new RowDto(rowIndex + rowOffset);
+            rowDtos.add(rowDto);
 
-                rowDto.setLibraryName(libraryName);
-                if (isBlank(libraryName)) {
-                    messages.addError(String.format(MISSING, rowDto.getRowNumber(),
+            rowDto.setLibraryName(libraryName);
+            if (isBlank(libraryName)) {
+                messages.addError(String.format(MISSING, rowDto.getRowNumber(),
+                        VesselPooledTubesProcessor.Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText()));
+            } else {
+                if (!uniqueLibraryNames.add(libraryName)) {
+                    messages.addError(String.format(DUPLICATE, rowDto.getRowNumber(),
                             VesselPooledTubesProcessor.Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText()));
+                }
+                if (sampleInstanceEntityDao.findByName(libraryName) != null && !overWriteFlag) {
+                    messages.addError(String.format(PREXISTING, rowDto.getRowNumber(), "Library", libraryName));
+                }
+            }
+
+            rowDto.setBarcode(barcode);
+            if (isBlank(barcode)) {
+                messages.addError(String.format(MISSING, rowDto.getRowNumber(),
+                        VesselPooledTubesProcessor.Headers.TUBE_BARCODE.getText()));
+            }
+            LabVessel tube = mapBarcodeToVessel.get(barcode);
+            if (tube != null) {
+                if (!overWriteFlag) {
+                    messages.addError(String.format(PREXISTING, rowDto.getRowNumber(), "Tube", barcode));
+                }
+            } else {
+                // A new tube must not have a barcode that may someday collide with Mercury, so
+                // disallow a 10-digit barcode. The barcode character set is restricted.
+                if (!StringUtils.containsOnly(barcode, RESTRICTED_CHARS)) {
+                    messages.addError(String.format(WRONG_TYPE, rowDto.getRowNumber(), "Tube barcode",
+                            "composed of " + RESTRICTED_MESSAGE));
+                }
+                if (barcode.length() == 10 && barcode.matches("[0-9]+")) {
+                    messages.addError(String.format(MERCURY_FORMAT, rowDto.getRowNumber(), "Tube barcode", barcode));
+                }
+            }
+
+            rowDto.setBroadSampleId(broadSampleName);
+            if (isBlank(broadSampleName)) {
+                messages.addError(String.format(MISSING, rowDto.getRowNumber(),
+                        VesselPooledTubesProcessor.Headers.BROAD_SAMPLE_ID.getText()));
+            } else {
+                if (!sampleMap.containsKey(broadSampleName) && isInBspFormat(broadSampleName)) {
+                    // Errors if it's a new Broad Sample name that could collide with a future BSP SM-id.
+                    messages.addError(String.format(BSP_FORMAT, rowDto.getRowNumber(),
+                            "Broad Sample", broadSampleName));
+                }
+            }
+
+            String rootSampleName = processor.getRootSampleId().get(rowIndex);
+            rowDto.setRootSampleId(rootSampleName);
+
+            //Does molecular index scheme exist.
+            String misName = processor.getMolecularIndexingScheme().get(rowIndex);
+            if (isBlank(misName)) {
+                messages.addError(String.format(MISSING, rowDto.getRowNumber(),
+                        VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText()));
+            } else {
+                MolecularIndexingScheme molecularIndexingScheme = molecularIndexingSchemeDao.findByName(misName);
+                rowDto.setMolecularIndexSchemes(molecularIndexingScheme);
+                if (molecularIndexingScheme == null) {
+                    messages.addError(String.format(UNKNOWN, rowDto.getRowNumber(),
+                            VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText(), "Mercury"));
+                }
+                // Errors if a tube has duplicate Molecular Index Scheme.
+                if (!barcodeAndMis.add(barcode + "_" + misName)) {
+                    messages.addError(String.format(DUPLICATE, rowDto.getRowNumber(),
+                            VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText() +
+                                    " in tube " + barcode));
+                }
+                // Warns if the spreadsheet has duplicate combination of Broad Sample and Molecular Index Scheme
+                // (in different tubes). It's not an error as long as the tubes don't get pooled later on, which
+                // isn't known at upload time.
+                String sampleMis = broadSampleName + ", " + misName;
+                if (!uniqueSampleMis.add(sampleMis)) {
+                    messages.addWarning(String.format(DUPLICATE, rowDto.getRowNumber(),
+                            VesselPooledTubesProcessor.Headers.BROAD_SAMPLE_ID.getText() + " and " +
+                                    VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText() +
+                                    " (" + sampleMis + ")"));
+                }
+            }
+
+            // Either bait or cat may be specified, or neither.
+            String bait = processor.getBait().get(rowIndex);
+            String cat = processor.getCat().get(rowIndex);
+            ReagentDesign reagentDesign = null;
+            if (!bait.isEmpty() && !cat.isEmpty()) {
+                messages.addError(String.format(MUST_NOT_BE, rowDto.getRowNumber(),
+                        VesselPooledTubesProcessor.Headers.BAIT.getText() + " and " +
+                                VesselPooledTubesProcessor.Headers.CAT.getText(), "both defined"));
+
+            } else if (!bait.isEmpty()) {
+                reagentDesign = reagentDesignDao.findByBusinessKey(bait);
+                if (reagentDesign == null) {
+                    messages.addError(String.format(UNKNOWN, rowDto.getRowNumber(),
+                            VesselPooledTubesProcessor.Headers.BAIT.getText(), "Mercury"));
+                }
+            } else if (!cat.isEmpty()) {
+                reagentDesign = reagentDesignDao.findByBusinessKey(cat);
+                if (reagentDesign == null) {
+                    messages.addError(String.format(UNKNOWN, rowDto.getRowNumber(),
+                            VesselPooledTubesProcessor.Headers.CAT.getText(), "Mercury"));
+                }
+            }
+            rowDto.setReagent(reagentDesign);
+
+            // Collects the Jira ticket experiment and Jira sub-task conditions, to validate later.
+            String experiment = processor.getExperiment().get(rowIndex);
+            rowDto.setExperiment(experiment);
+            if (isBlank(experiment)) {
+                messages.addError(String.format(MISSING, rowDto.getRowNumber(),
+                        VesselPooledTubesProcessor.Headers.EXPERIMENT.getText()));
+            }
+
+            List<String> conditions = processor.getConditions().get(rowIndex);
+            rowDto.setConditions(conditions);
+            if (CollectionUtils.isEmpty(conditions)) {
+                messages.addError(String.format(MISSING, rowDto.getRowNumber(),
+                        VesselPooledTubesProcessor.Headers.CONDITIONS.getText()));
+            } else {
+                experimentConditions.putAll(experiment, conditions);
+                // Collects all row numbers that have the same experiment & condition.
+                for (String condition : conditions) {
+                    experimentConditionsRow.put(experiment + " " + condition, rowIndex + rowOffset);
+                }
+            }
+
+            if (isNotBlank(processor.getReadLength().get(rowIndex))) {
+                if (NumberUtils.isNumber(processor.getReadLength().get(rowIndex))) {
+                    rowDto.setReadLength(Integer.parseInt(processor.getReadLength().get(rowIndex)));
                 } else {
-                    if (!uniqueLibraryNames.add(libraryName)) {
-                        messages.addError(String.format(DUPLICATE, rowDto.getRowNumber(),
-                                VesselPooledTubesProcessor.Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText()));
-                    }
-                    if (sampleInstanceEntityDao.findByName(libraryName) != null && !overWriteFlag) {
-                        messages.addError(String.format(PREXISTING,  rowDto.getRowNumber(), "Library", libraryName));
-                    }
-                }
-
-                rowDto.setBarcode(barcode);
-                if (isBlank(barcode)) {
-                    messages.addError(String.format(MISSING, rowDto.getRowNumber(),
-                            VesselPooledTubesProcessor.Headers.TUBE_BARCODE.getText()));
-                }
-                if (mapBarcodeToVessel.get(barcode) != null) {
-                    if (!overWriteFlag) {
-                        messages.addError(String.format(PREXISTING,  rowDto.getRowNumber(), "Tube", barcode));
-                    }
-                } else {
-                    // A new tube must not have a barcode that may someday collide with Mercury, so
-                    // disallow a 10-digit barcode. The barcode character set is restricted.
-                    if (!StringUtils.containsOnly(barcode, RESTRICTED_CHARS)) {
-                        messages.addError(String.format(WRONG_TYPE, rowDto.getRowNumber(), "Tube barcode",
-                                "composed of " + RESTRICTED_MESSAGE));
-                    }
-                    if (barcode.length() == 10 && barcode.matches("[0-9]+")) {
-                        messages.addError(String.format(MERCURY_FORMAT, rowDto.getRowNumber(), "Tube barcode", barcode));
-                    }
-                }
-
-                rowDto.setBroadSampleId(broadSampleName);
-                if (isBlank(broadSampleName)) {
-                    messages.addError(String.format(MISSING, rowDto.getRowNumber(),
-                            VesselPooledTubesProcessor.Headers.BROAD_SAMPLE_ID.getText()));
-                } else {
-                    if (!sampleMap.containsKey(broadSampleName) && isInBspFormat(broadSampleName)) {
-                        // Errors if it's a new Broad Sample name that could collide with a future BSP SM-id.
-                        messages.addError(String.format(BSP_FORMAT,  rowDto.getRowNumber(),
-                                "Broad Sample", broadSampleName));
-                    }
-                }
-
-                String rootSampleName = processor.getRootSampleId().get(rowIndex);
-                rowDto.setRootSampleId(rootSampleName);
-
-                //Does molecular index scheme exist.
-                String misName = processor.getMolecularIndexingScheme().get(rowIndex);
-                if (isBlank(misName)) {
-                    messages.addError(String.format(MISSING, rowDto.getRowNumber(),
-                            VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText()));
-                } else {
-                    MolecularIndexingScheme molecularIndexingScheme = molecularIndexingSchemeDao.findByName(misName);
-                    rowDto.setMolecularIndexSchemes(molecularIndexingScheme);
-                    if (molecularIndexingScheme == null) {
-                        messages.addError(String.format(UNKNOWN, rowDto.getRowNumber(),
-                                VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText(), "Mercury"));
-                    }
-                    // Errors if a tube has duplicate Molecular Index Scheme.
-                    if (!barcodeAndMis.add(barcode + "_" + misName)) {
-                        messages.addError(String.format(DUPLICATE, rowDto.getRowNumber(),
-                                VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText() +
-                                        " in tube " + barcode));
-                    }
-                    // Warns if the spreadsheet has duplicate combination of Broad Sample and Molecular Index Scheme
-                    // (in different tubes). It's not an error as long as the tubes don't get pooled later on, which
-                    // isn't known at upload time.
-                    String sampleMis = broadSampleName + ", " + misName;
-                    if (!uniqueSampleMis.add(sampleMis)) {
-                        messages.addWarning(String.format(DUPLICATE, rowDto.getRowNumber(),
-                                VesselPooledTubesProcessor.Headers.BROAD_SAMPLE_ID.getText() + " and " +
-                                        VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText() +
-                                        " (" + sampleMis + ")"));
-                    }
-                }
-
-                // Either bait or cat may be specified, or neither.
-                String bait = processor.getBait().get(rowIndex);
-                String cat = processor.getCat().get(rowIndex);
-                ReagentDesign reagentDesign = null;
-                if (!bait.isEmpty() && !cat.isEmpty()) {
-                    messages.addError(String.format(MUST_NOT_BE, rowDto.getRowNumber(),
-                            VesselPooledTubesProcessor.Headers.BAIT.getText() + " and " +
-                                    VesselPooledTubesProcessor.Headers.CAT.getText(), "both defined"));
-
-                } else if (!bait.isEmpty()) {
-                    reagentDesign = reagentDesignDao.findByBusinessKey(bait);
-                    if (reagentDesign == null) {
-                        messages.addError(String.format(UNKNOWN, rowDto.getRowNumber(),
-                                VesselPooledTubesProcessor.Headers.BAIT.getText(), "Mercury"));
-                    }
-                } else if (!cat.isEmpty()) {
-                    reagentDesign = reagentDesignDao.findByBusinessKey(cat);
-                    if (reagentDesign == null) {
-                        messages.addError(String.format(UNKNOWN, rowDto.getRowNumber(),
-                                VesselPooledTubesProcessor.Headers.CAT.getText(), "Mercury"));
-                    }
-                }
-                rowDto.setReagent(reagentDesign);
-
-                // Collects the Jira ticket experiment and Jira sub-task conditions, to validate later.
-                String experiment = processor.getExperiment().get(rowIndex);
-                rowDto.setExperiment(experiment);
-                if (isBlank(experiment)) {
-                    messages.addError(String.format(MISSING, rowDto.getRowNumber(),
-                            VesselPooledTubesProcessor.Headers.EXPERIMENT.getText()));
-                }
-
-                List<String> conditions = processor.getConditions().get(rowIndex);
-                rowDto.setConditions(conditions);
-                if (CollectionUtils.isEmpty(conditions)) {
-                    messages.addError(String.format(MISSING, rowDto.getRowNumber(),
-                            VesselPooledTubesProcessor.Headers.CONDITIONS.getText()));
-                } else {
-                    experimentConditions.putAll(experiment, conditions);
-                    // Collects all row numbers that have the same experiment & condition.
-                    for (String condition : conditions) {
-                        experimentConditionsRow.put(experiment + " " + condition, rowIndex + rowOffset);
-                    }
-                }
-
-                if (isNotBlank(processor.getReadLength().get(rowIndex))) {
-                    if (NumberUtils.isNumber(processor.getReadLength().get(rowIndex))) {
-                        rowDto.setReadLength(Integer.parseInt(processor.getReadLength().get(rowIndex)));
-                    } else {
-                        messages.addError(String.format(WRONG_TYPE, rowDto.getRowNumber(),
-                                VesselPooledTubesProcessor.Headers.READ_LENGTH.getText(), "numeric"));
-                    }
+                    messages.addError(String.format(WRONG_TYPE, rowDto.getRowNumber(),
+                            VesselPooledTubesProcessor.Headers.READ_LENGTH.getText(), "numeric"));
                 }
             }
         }
@@ -585,7 +596,7 @@ public class SampleInstanceEjb {
             if (jiraIssue == null) {
                 // Errors the rows that have this unknown experiment.
                 for (int i = 0; i < rowDtos.size(); ++i) {
-                    if (rowDtos.get(i).getExperiment().equals(experiment)) {
+                    if (experiment.equals(rowDtos.get(i).getExperiment())) {
                         messages.addError(String.format(UNKNOWN, i + rowOffset,
                                 VesselPooledTubesProcessor.Headers.EXPERIMENT.getText(), "JIRA DEV"));
                     }
@@ -605,6 +616,7 @@ public class SampleInstanceEjb {
                 }
             }
         }
+
         List<SampleInstanceEntity> sampleInstanceEntities;
         if (!messages.hasErrors()) {
             // Passes a combined map of Broad and root samples.
@@ -639,6 +651,8 @@ public class SampleInstanceEjb {
                 labVessel = new BarcodedTube(barcode, BarcodedTube.BarcodedTubeType.MatrixTube);
                 newLabVessels.add(labVessel);
                 mapBarcodeToVessel.put(barcode, labVessel);
+            } else {
+                labVessel.getMercurySamples().clear();
             }
             labVessel.setVolume(mapBarcodeToVolume.get(barcode));
             addLibrarySize(labVessel, mapBarcodeToFragmentSize.get(barcode));
@@ -664,6 +678,7 @@ public class SampleInstanceEjb {
         for (RowDto rowDto : rowDtos) {
             String sampleName = rowDto.getBroadSampleId();
             MercurySample mercurySample = combinedSampleMap.get(sampleName);
+            LabVessel labVessel = mapBarcodeToVessel.get(rowDto.getBarcode());
 
             // Adds the root sample linkage to newly created Mercury samples.
             if (sampleDataDtoMap.keySet().contains(sampleName)) {
@@ -682,10 +697,10 @@ public class SampleInstanceEjb {
             sampleInstanceEntity.setReagentDesign(rowDto.getReagent());
             sampleInstanceEntity.setReadLength(rowDto.getReadLength());
             sampleInstanceEntity.setExperiment(rowDto.getExperiment());
-            sampleInstanceEntity.setLabVessel(mapBarcodeToVessel.get(rowDto.getBarcode()));
-            sampleInstanceEntity.removeSubTasks();
+            sampleInstanceEntity.setLabVessel(labVessel);
 
             // Persists the experiment conditions in the order they appeared on the row.
+            sampleInstanceEntity.removeSubTasks();
             int orderOfCreation = 0;
             for (String subTask : rowDto.getConditions()) {
                 SampleInstanceEntityTsk sampleInstanceEntityTsk = new SampleInstanceEntityTsk();
@@ -696,8 +711,9 @@ public class SampleInstanceEjb {
 
             sampleInstanceEntities.add(sampleInstanceEntity);
 
-            // Also puts the sample in tube.
-            mapBarcodeToVessel.get(rowDto.getBarcode()).addSample(sampleInstanceEntity.getMercurySample());
+            // Puts links in the lab vessel.
+            labVessel.addSample(mercurySample);
+            labVessel.getSampleInstanceEntities().add(sampleInstanceEntity);
         }
 
         labVesselDao.persistAll(newLabVessels);

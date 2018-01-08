@@ -91,7 +91,7 @@ public class VarioskanPlateProcessor extends TableProcessor {
     }
 
     @Override
-    public void processRowDetails(Map<String, String> dataRow, int dataRowNumber) {
+    public void processRowDetails(Map<String, String> dataRow, int dataRowNumber, boolean requiredValuesPresent) {
         String plate = dataRow.get(Headers.PLATE.getText());
         String sample = dataRow.get(Headers.SAMPLE.getText());
         String well = dataRow.get(Headers.WELL.getText());

@@ -14,8 +14,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.broadinstitute.gpinformatics.mercury.control.vessel.IndexedPlateFactory.BARCODE_LENGTH;
-
 /**
  * Parser for a spreadsheet containing plate barcodes of UMI reagent.
  */
@@ -114,7 +112,7 @@ public class UniqueMolecularIdentifierReagentProcessor extends TableProcessor {
     }
 
     @Override
-    public void processRowDetails(Map<String, String> dataRow, int dataRowIndex) {
+    public void processRowDetails(Map<String, String> dataRow, int dataRowIndex, boolean requiredValuesPresent) {
         String barcode = dataRow.get(Headers.BARCODE.getText());
         String location = dataRow.get(Headers.LOCATION.getText());
         String lengthString = dataRow.get(Headers.LENGTH.getText());

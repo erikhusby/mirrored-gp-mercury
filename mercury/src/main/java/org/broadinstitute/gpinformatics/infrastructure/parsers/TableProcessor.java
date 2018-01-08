@@ -96,24 +96,23 @@ public abstract class TableProcessor implements Serializable {
     public abstract void processHeader(List<String> headers, int row);
 
     /**
-     * If all required values are present, processes the row.
+     * Processes the data row. Adds messages for missing values that are required.
      * @param dataRow Map of actual header name to value.
      * @param rowIndex The 0-based row index
      */
     public final void processRow(Map<String, String> dataRow, int rowIndex) {
-        if (hasRequiredValues(dataRow, rowIndex)) {
-            processRowDetails(dataRow, rowIndex);
-        }
+        boolean requiredValuesPresent = hasRequiredValues(dataRow, rowIndex);
+        processRowDetails(dataRow, rowIndex, requiredValuesPresent);
     }
 
     /**
      * Processes one row of data. The concrete implementation is responsible for constructing any
      * necessary entities for the data.
-     *
-     * @param dataRow      The row of data mapped by header name.
+     *  @param dataRow      The row of data mapped by header name.
      * @param rowIndex     The 0-based row index.
+     * @param requiredValuesPresent
      */
-    public abstract void processRowDetails(Map<String, String> dataRow, int rowIndex);
+    public abstract void processRowDetails(Map<String, String> dataRow, int rowIndex, boolean requiredValuesPresent);
 
     /**
      * Returns true if the given cells constitute a valid header row, meaning all required headers are present.
@@ -152,8 +151,7 @@ public abstract class TableProcessor implements Serializable {
     public void validateHeaderRow(List<String> headers) { }
 
     /**
-     * Returns true if all of the required values are non-blank.
-     * Adds an error message for each missing value.
+     * Checks if any required value is blank and adds an error message for each missing value.
      *
      * @param dataRow  Map of header name to value.
      * @param rowIndex The 0-based index of the row
@@ -172,7 +170,7 @@ public abstract class TableProcessor implements Serializable {
                 }
                 if (!found) {
                     validationMessages.add(TableProcessor.getPrefixedMessage(String.format(REQUIRED_VALUE_IS_MISSING,
-                            header.getText()), sheetName, rowIndex + 1));
+                            header.getText()), sheetName, rowIndex));
                     hasAll = false;
                 }
             }

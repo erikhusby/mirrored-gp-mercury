@@ -395,7 +395,7 @@ public class ManifestSessionEjbDBFreeTest {
                 {"Not an Excel file", "Your InputStream was neither an OLE2 stream, nor an OOXML stream",
                         "manifest-upload/not-an-excel-file.txt"},
                 {"Missing required field", TableProcessor.getPrefixedMessage(String.format(
-                        TableProcessor.REQUIRED_VALUE_IS_MISSING, "Specimen_Number"), null, 2),
+                        TableProcessor.REQUIRED_VALUE_IS_MISSING, "Specimen_Number"), null, 1),
                         "manifest-import/test-manifest-missing-specimen.xlsx"},
                 {"Missing column", String.format(TableProcessor.REQUIRED_HEADER_IS_MISSING, "Specimen_Number"),
                         "manifest-upload/manifest-with-missing-column.xlsx"},

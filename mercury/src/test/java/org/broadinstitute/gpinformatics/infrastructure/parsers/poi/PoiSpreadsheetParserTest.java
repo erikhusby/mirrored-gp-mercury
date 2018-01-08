@@ -199,7 +199,7 @@ public class PoiSpreadsheetParserTest {
         }
 
         @Override
-        public void processRowDetails(Map<String, String> dataRow, int dataRowNumber) {
+        public void processRowDetails(Map<String, String> dataRow, int dataRowNumber, boolean requiredValuesPresent) {
             spreadsheetValues.add(dataRow);
         }
 
@@ -310,7 +310,7 @@ public class PoiSpreadsheetParserTest {
         }
 
         @Override
-        public void processRowDetails(Map<String, String> dataRow, int dataRowNumber) {
+        public void processRowDetails(Map<String, String> dataRow, int dataRowNumber, boolean requiredValuesPresent) {
             spreadsheetValues.add(dataRow);
         }
 

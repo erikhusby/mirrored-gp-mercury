@@ -163,7 +163,7 @@ public final class PoiSpreadsheetParser {
             processorCast.validateHeaderValueRows();
         }
         // Passes the actual header strings to the subclass for any additional processing needed.
-        processor.processHeader(headers, headerRowIndex + 1);
+        processor.processHeader(headers, headerRowIndex);
     }
 
     /**

@@ -39,7 +39,7 @@ public class SampleParentChildVesselProcessor extends SampleVesselProcessor {
     }
 
     @Override
-    public void processRowDetails(Map<String, String> dataRow, int dataRowNumber) {
+    public void processRowDetails(Map<String, String> dataRow, int dataRowNumber, boolean requiredValuesPresent) {
         String sampleId = dataRow.get(Headers.SAMPLE_ID.getText());
         String tubeBarcode = dataRow.get(Headers.MANUFACTURER_TUBE_BARCODE.getText());
         String containerBarcode = dataRow.get(Headers.CONTAINER_BARCODE.getText());

@@ -118,7 +118,7 @@ public class ManifestImporterTest {
         } catch (ValidationException e) {
             assertThat(manifestImportProcessor.getMessages(),
                     hasItem(TableProcessor.getPrefixedMessage(
-                            String.format(TableProcessor.REQUIRED_VALUE_IS_MISSING, header.getColumnName()), null, 2)));
+                            String.format(TableProcessor.REQUIRED_VALUE_IS_MISSING, header.getColumnName()), null, 1)));
             assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
         }
     }

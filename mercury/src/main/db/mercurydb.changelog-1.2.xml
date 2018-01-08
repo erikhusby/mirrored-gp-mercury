@@ -1201,13 +1201,21 @@
 
     <changeSet id="GPLIM-4712-103" author="epolk">
         <addColumn schemaName="mercury" tableName="sample_instance_entity_tsk">
-            <column name="order_of_creation" type="number(10,0)">
-                <constraints nullable="false"/>
-	    </column>
+            <column name="order_of_creation" type="number(10,0)"/>
         </addColumn>
     </changeSet>
 
     <changeSet id="GPLIM-4712-104" author="epolk">
+        <sql>
+	    update sample_instance_entity_tsk set order_of_creation = sample_instance_entity_tsk_id where order_of_creation is null
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-4712-105" author="epolk">
+        <addNotNullConstraint schemaName="mercury" tableName="sample_instance_entity_tsk" columnName="order_of_creation" />
+    </changeSet>
+
+    <changeSet id="GPLIM-4712-106" author="epolk">
         <dropColumn tableName="sample_instance_entity_aud" columnName="collaborator_sample_id"/>
         <dropColumn tableName="sample_instance_entity_aud" columnName="concentration_unit"/>
         <dropColumn tableName="sample_instance_entity_aud" columnName="comments"/>
@@ -1241,7 +1249,7 @@
         <dropColumn tableName="sample_instance_entity_aud" columnName="tissue_type"/>
     </changeSet>
 
-    <changeSet id="GPLIM-4712-105" author="epolk">
+    <changeSet id="GPLIM-4712-107" author="epolk">
         <addColumn schemaName="mercury" tableName="sample_instance_entity_aud">
             <column name="comments" type="varchar(2000)"/>
         </addColumn>
@@ -1259,19 +1267,19 @@
         </addColumn>
     </changeSet>
 
-    <changeSet id="GPLIM-4712-106" author="epolk">
+    <changeSet id="GPLIM-4712-108" author="epolk">
         <addColumn schemaName="mercury" tableName="sample_instance_entity_tsk_aud">
             <column name="order_of_creation" type="number(10,0)"/>
         </addColumn>
     </changeSet>
 
-    <changeSet id="GPLIM-4712-107" author="epolk">
+    <changeSet id="GPLIM-4712-109" author="epolk">
         <addUniqueConstraint constraintName="U_SAMPL_INST_LIBRARY_NAME"
 	    tableName="sample_instance_entity" columnNames="sample_library_name"/>
     </changeSet>
 
 
-    <changeSet id="GPLIM-4712-108" author="epolk">
+    <changeSet id="GPLIM-4712-110" author="epolk">
         <createIndex indexName="IX_SAMPL_INST_TSK_SAMPL_INST" tableName="sample_instance_entity_tsk">
 	    <column name="sample_instance_entity"/>
 	</createIndex>

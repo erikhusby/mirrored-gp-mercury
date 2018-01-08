@@ -45,7 +45,7 @@ public class LabMetricProcessor extends TableProcessor {
     }
 
     @Override
-    public void processRowDetails(Map<String, String> dataRow, int dataRowNumber) {
+    public void processRowDetails(Map<String, String> dataRow, int dataRowNumber, boolean requiredValuesPresent) {
         String barcode = dataRow.get(LabMetricHeaders.BARCODE.getText());
         String metric = dataRow.get(LabMetricHeaders.METRIC.getText());
         String vesselPosition = dataRow.get(LabMetricHeaders.LOCATION.getText());

@@ -15,7 +15,7 @@ public class ExternalLibraryProcessorPooledMultiOrganism extends ExternalLibrary
         return dataRow.get(getAdjustedNames().get(adjustHeaderName(header.getText())));
     }
 
-    public void processRowDetails(Map<String, String> dataRow, int dataRowNumber) {
+    public void processRowDetails(Map<String, String> dataRow, int dataRowNumber, boolean requiredValuesPresent) {
         accessList.add(getFromRow(dataRow, Headers.ACCESS_LIST));
         additionalAssemblyInformation.add(getFromRow(dataRow, Headers.ASSEMBLY_INFORMATION));
         additionalSampleInformation.add(getFromRow(dataRow, Headers.ADDITIONAL_SAMPLE_INFORMATION));

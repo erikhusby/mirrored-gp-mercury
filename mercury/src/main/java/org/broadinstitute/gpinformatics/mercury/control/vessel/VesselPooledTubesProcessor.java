@@ -30,6 +30,7 @@ public class VesselPooledTubesProcessor extends TableProcessor {
     private List<String> volume = new ArrayList<>();
     private List<String> fragmentSize = new ArrayList<>();
     private List<String> readLength = new ArrayList<>();
+    private List<Boolean> requiredValuesPresent = new ArrayList<>();
 
     public VesselPooledTubesProcessor(String sheetName) {
         super(sheetName, TableProcessor.IgnoreTrailingBlankLines.YES);
@@ -43,7 +44,7 @@ public class VesselPooledTubesProcessor extends TableProcessor {
         this.headers = headers;
     }
 
-    public void processRowDetails(Map<String, String> dataRow, int dataRowNumber) {
+    public void processRowDetails(Map<String, String> dataRow, int dataRowNumber, boolean requiredValuesPresent) {
         barcodes.add(dataRow.get(Headers.TUBE_BARCODE.getText()));
         singleSampleLibraryName.add(dataRow.get(Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText()));
         broadSampleId.add(dataRow.get(Headers.BROAD_SAMPLE_ID.getText()));
@@ -63,6 +64,7 @@ public class VesselPooledTubesProcessor extends TableProcessor {
         volume.add(dataRow.get(Headers.VOLUME.getText()));
         fragmentSize.add(dataRow.get(Headers.FRAGMENT_SIZE.getText()));
         readLength.add(dataRow.get(Headers.READ_LENGTH.getText()));
+        this.requiredValuesPresent.add(requiredValuesPresent);
     }
 
     protected ColumnHeader[] getColumnHeaders() {
@@ -165,4 +167,8 @@ public class VesselPooledTubesProcessor extends TableProcessor {
     public List<String> getFragmentSize() { return fragmentSize; }
 
     public List<String> getReadLength() { return readLength;  }
+
+    public List<Boolean> getRequiredValuesPresent() {
+        return requiredValuesPresent;
+    }
 }

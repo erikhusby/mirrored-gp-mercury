@@ -43,7 +43,7 @@ public class WallacPlateProcessor  extends TableProcessor {
     }
 
     @Override
-    public void processRowDetails(Map<String, String> dataRow, int dataRowNumber) {
+    public void processRowDetails(Map<String, String> dataRow, int dataRowNumber, boolean requiredValuesPresent) {
         String group = dataRow.get(Headers.GROUP.getText());
         String plate = dataRow.get(Headers.PLATE.getText());
         String well = dataRow.get(Headers.WELL.getText());

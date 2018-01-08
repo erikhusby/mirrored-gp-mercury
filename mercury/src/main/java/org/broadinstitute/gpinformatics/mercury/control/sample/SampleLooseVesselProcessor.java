@@ -36,7 +36,7 @@ public class SampleLooseVesselProcessor extends SampleVesselProcessor {
     }
 
     @Override
-    public void processRowDetails(Map<String, String> dataRow, int dataRowNumber) {
+    public void processRowDetails(Map<String, String> dataRow, int dataRowNumber, boolean requiredValuesPresent) {
         String sampleId = dataRow.get(Headers.SAMPLE_ID.getText());
         String vesselType = dataRow.get(Headers.VESSEL_TYPE.getText());
         if (!sampleIds.add(sampleId)) {

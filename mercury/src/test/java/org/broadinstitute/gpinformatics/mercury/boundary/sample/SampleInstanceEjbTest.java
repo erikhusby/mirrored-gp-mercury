@@ -43,6 +43,7 @@ import java.util.Map;
 import java.util.Random;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor.REQUIRED_VALUE_IS_MISSING;
 
 @Test(groups = TestGroups.STANDARD)
 public class SampleInstanceEjbTest extends Arquillian {
@@ -76,7 +77,7 @@ public class SampleInstanceEjbTest extends Arquillian {
             row.put("Tube barcode", "E" + randomDigits);
             row.put("Single sample library name", "Library" + randomDigits);
             row.put("Broad sample ID", "SM-" + randomDigits);
-            row.put("Root Sample ID", String.format("%010d", randomNumber + (new int[]{1, 3})[rowIndex - 1]));
+            row.put("Root Sample ID", String.format("SM-%010d", randomNumber + (new int[]{1, 3})[rowIndex - 1]));
             alternativeData.add(row);
         }
 
@@ -171,42 +172,43 @@ public class SampleInstanceEjbTest extends Arquillian {
                 errorIfMissing(errors, filename, String.format(SampleInstanceEjb.CONFLICT, 2,
                         VesselPooledTubesProcessor.Headers.LSID.getText(), "lsid:1", "null", "", ""));
                 errorIfMissing(errors, filename, String.format(SampleInstanceEjb.DUPLICATE, 3,
-                        VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText(), "01509634244"));
+                        VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText() +
+                                " in tube 01509634244"));
                 errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN, 3,
                         VesselPooledTubesProcessor.Headers.ROOT_SAMPLE_ID.getText(), "Mercury",
                         "Broad Sample already exists"));
-                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.CONFLICT, 7,
+                errorIfMissing(errors, filename, "Row #5 " + String.format(REQUIRED_VALUE_IS_MISSING,
+                        VesselPooledTubesProcessor.Headers.TUBE_BARCODE.getText()));
+                errorIfMissing(errors, filename, "Row #5 " + String.format(REQUIRED_VALUE_IS_MISSING,
+                        VesselPooledTubesProcessor.Headers.EXPERIMENT.getText()));
+                errorIfMissing(errors, filename, "Row #5 " + String.format(REQUIRED_VALUE_IS_MISSING,
+                        VesselPooledTubesProcessor.Headers.CONDITIONS.getText()));
+                errorIfMissing(errors, filename, "Row #6 " + String.format(REQUIRED_VALUE_IS_MISSING,
+                        VesselPooledTubesProcessor.Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText()));
+                errorIfMissing(errors, filename, "Row #7 " + String.format(REQUIRED_VALUE_IS_MISSING,
+                        VesselPooledTubesProcessor.Headers.BROAD_SAMPLE_ID.getText()));
+                errorIfMissing(errors, filename, "Row #7 " + String.format(REQUIRED_VALUE_IS_MISSING,
+                        VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText()));
+                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.CONFLICT, 8,
                         VesselPooledTubesProcessor.Headers.VOLUME.getText(), "61.00", "60.00", "", ""));
-                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.CONFLICT, 7,
+                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.CONFLICT, 8,
                         VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE.getText(), "151.00", "150.00", "", ""));
-                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.MUST_NOT_BE, 7,
+                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.MUST_NOT_BE, 8,
                         VesselPooledTubesProcessor.Headers.BAIT.getText() + " and " +
                         VesselPooledTubesProcessor.Headers.CAT.getText(), "both"));
-                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.WRONG_TYPE, 8,
+                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN, 8,
+                        VesselPooledTubesProcessor.Headers.CONDITIONS.getText(), "sub-tasks of DEV-6796"));
+                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.CONFLICT, 8,
+                        VesselPooledTubesProcessor.Headers.LSID.getText(), "lsid:3", "null", "", ""));
+                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.WRONG_TYPE, 9,
                         VesselPooledTubesProcessor.Headers.READ_LENGTH.getText(), "numeric"));
-                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.WRONG_TYPE, 8,
+                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.WRONG_TYPE, 9,
                         VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE.getText(), "numeric"));
-                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.MISSING, 8,
-                        VesselPooledTubesProcessor.Headers.VOLUME.getText()));
-                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.MISSING, 8,
-                        VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE.getText()));
-                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.MISSING, 5,
-                        VesselPooledTubesProcessor.Headers.TUBE_BARCODE.getText()));
-                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.MISSING, 5,
-                        VesselPooledTubesProcessor.Headers.EXPERIMENT.getText()));
-                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.MISSING, 6,
-                        VesselPooledTubesProcessor.Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText()));
-                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.MISSING, 7,
-                        VesselPooledTubesProcessor.Headers.BROAD_SAMPLE_ID.getText()));
-                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.MISSING, 7,
-                        VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText()));
-                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN, 5,
-                        VesselPooledTubesProcessor.Headers.EXPERIMENT.getText(), "JIRA DEV"));
-                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN, 7,
+                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.WRONG_TYPE, 9,
+                        VesselPooledTubesProcessor.Headers.VOLUME.getText(), "numeric"));
+                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN, 9,
                         VesselPooledTubesProcessor.Headers.CONDITIONS.getText(), "sub-tasks of DEV-6796"));
-                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN, 8,
-                        VesselPooledTubesProcessor.Headers.CONDITIONS.getText(), "sub-tasks of DEV-6796"));
-                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN, 8,
+                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN, 9,
                         VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText(), "Mercury"));
                 Assert.assertTrue(errors.isEmpty(), "Found unexpected errors: " + StringUtils.join(errors, "; "));
             }
@@ -253,7 +255,7 @@ public class SampleInstanceEjbTest extends Arquillian {
             }
 
             @Override
-            public void processRowDetails(Map<String, String> dataRow, int rowIndex) {
+            public void processRowDetails(Map<String, String> dataRow, int rowIndex, boolean requiredValuesPresent) {
                 rows.add(dataRow);
             }
 
@@ -282,8 +284,8 @@ public class SampleInstanceEjbTest extends Arquillian {
         for (String header : processor.getHeaderNames()) {
             currentRow.createCell(col++).setCellValue(creationHelper.createRichTextString(header));
         }
-        int rowIndex = 0;
         for (Map<String, String> row : rows) {
+            int rowIndex = currentSheetRow - 1;
             currentRow = sheet.createRow(currentSheetRow++);
             col = 0;
             for (String header : processor.getHeaderNames()) {

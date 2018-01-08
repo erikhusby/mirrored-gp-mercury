@@ -69,9 +69,10 @@ public class ManifestImportProcessor extends TableProcessor {
     /**
      * Iterate through the data and add it to the list of ManifestRecords.
      * @param rowIndex the 0-based row index.
+     * @param requiredValuesPresent
      */
     @Override
-    public void processRowDetails(Map<String, String> dataRow, int rowIndex) {
+    public void processRowDetails(Map<String, String> dataRow, int rowIndex, boolean requiredValuesPresent) {
 
         validateRow(dataRow, rowIndex);
 

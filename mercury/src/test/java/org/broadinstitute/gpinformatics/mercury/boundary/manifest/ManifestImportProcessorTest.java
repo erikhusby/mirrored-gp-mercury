@@ -101,7 +101,7 @@ public class ManifestImportProcessorTest {
     }
 
     public void testProcessRowDetailsShouldPass() throws Exception {
-        processor.processRowDetails(dataRow, 0);
+        processor.processRowDetails(dataRow, 0, true);
         processor.getMessages();
         assertThat(processor.getMessages(), is(empty()));
         for (ManifestRecord manifestRecord : processor.getManifestRecords()) {
@@ -120,7 +120,7 @@ public class ManifestImportProcessorTest {
         String unknownMaterial = "Goop";
         dataRow.put(ManifestHeader.MATERIAL_TYPE.getColumnName(), unknownMaterial);
 
-        processor.processRowDetails(dataRow, 0);
+        processor.processRowDetails(dataRow, 0, true);
         processor.getMessages();
         // A message about the first row in a spreadsheet should display "Row #1"
         assertThat(processor.getMessages(),
@@ -131,7 +131,7 @@ public class ManifestImportProcessorTest {
         String nullMaterial = null;
         dataRow.put(ManifestHeader.MATERIAL_TYPE.getColumnName(), nullMaterial);
 
-        processor.processRowDetails(dataRow, 0);
+        processor.processRowDetails(dataRow, 0, true);
         processor.getMessages();
         assertThat(processor.getMessages(),
                 hasItem(String.format("Row #1 An unrecognized material type was entered: %s", nullMaterial)));

@@ -101,7 +101,7 @@ public class ControlReagentProcessor extends TableProcessor {
     }
 
     @Override
-    public void processRowDetails(Map<String, String> dataRow, int dataRowNumber) {
+    public void processRowDetails(Map<String, String> dataRow, int dataRowNumber, boolean requiredValuesPresent) {
         String tubeBarcode = dataRow.get(Headers.TUBE_BARCODE.getText());
         String control = dataRow.get(Headers.CONTROL.getText());
         String lot = dataRow.get(Headers.LOT.getText());

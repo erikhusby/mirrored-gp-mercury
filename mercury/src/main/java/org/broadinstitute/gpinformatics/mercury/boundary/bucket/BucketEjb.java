@@ -55,6 +55,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample_.sampleKey;
+import static org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation_.labVessels;
+
 @Stateful
 @RequestScoped
 public class BucketEjb {
@@ -342,7 +345,7 @@ public class BucketEjb {
     /**
      * Puts product order samples into the appropriate bucket.  Does nothing if the product is not supported in Mercury.
      *
-     * @return the samples that were actually added to the bucket
+     * @return map of bucket name and the samples that were added to that bucket
      */
     public Map<String, Collection<ProductOrderSample>> addSamplesToBucket(ProductOrder order,
             Collection<ProductOrderSample> samples, ProductWorkflowDefVersion.BucketingSource bucketingSource) {
@@ -370,65 +373,87 @@ public class BucketEjb {
         // Finds existing vessels for the pdo samples, or if none, then either the sample has not been received
         // or the sample is a derived stock that has not been seen by Mercury.  Creates both standalone vessel and
         // MercurySample for the latter.
-        Multimap<String, ProductOrderSample> nameToSampleMap = ArrayListMultimap.create();
+        Multimap<String, ProductOrderSample> nameToPdoSample = ArrayListMultimap.create();
+        Set<LabVessel> vessels = new HashSet<>();
+        Multimap<String, ProductOrderSample> vesselToPdoSample = HashMultimap.create();
+        Map<String, ProductOrderSample> nameToUnknownPdoSample = new HashMap<>();
+        Multimap<String, ProductOrderSample> nameToUnlinkedPdoSample = HashMultimap.create();
         for (ProductOrderSample pdoSample : samples) {
             // A pdo can have multiple samples all with same sample name but with different sample position.
             // Each one will get a MercurySample and LabVessel put into the bucket.
+            nameToPdoSample.put(pdoSample.getName(), pdoSample);
 
-            nameToSampleMap.put(pdoSample.getName(), pdoSample);
-        }
-
-        Multimap<String, LabVessel> labVesselMap = HashMultimap.create();
-        for (String name : nameToSampleMap.keys()) {
-            labVesselMap.putAll(name, labVesselDao.findBySampleKey(name));
-        }
-        // PDO Samples may be named after tube barcodes.
-        for (Map.Entry<String, LabVessel> mapEntry :
-                labVesselDao.findByBarcodes(new ArrayList<>(nameToSampleMap.keys())).entrySet()) {
-            labVesselMap.put(mapEntry.getKey(), mapEntry.getValue());
-        }
-
-        // Finds samples with no existing vessels.
-        Collection<String> samplesWithoutVessel = CollectionUtils.subtract(nameToSampleMap.keySet(),
-                labVesselMap.keySet());
-
-        Set<LabVessel> vessels = new HashSet<>(labVesselMap.values());
-
-        // This case will only apply to Samples with a BSP data source, at least for now.  There should not be a
-        // scenario in which we fall into this conditional for Vessels that originate in Mercury
-        if (!CollectionUtils.isEmpty(samplesWithoutVessel)) {
-            Collection<LabVessel> newVessels = createInitialVessels(samplesWithoutVessel, username);
-            vessels.addAll(newVessels);
-        }
-
-        Map<String, MercurySample> existingSamples = mercurySampleDao.findMapIdToMercurySample(nameToSampleMap.keys());
-
-        for (ProductOrderSample productOrderSample : nameToSampleMap.values()) {
-            if(productOrderSample.getMercurySample() == null) {
-                MercurySample mercurySample = existingSamples.get(productOrderSample.getSampleKey());
-                mercurySample.addProductOrderSample(productOrderSample);
+            Collection<LabVessel> labVessels = labVesselDao.findBySampleKey(pdoSample.getName());
+            if (CollectionUtils.isNotEmpty(labVessels)) {
+                vessels.addAll(labVessels);
+                for (LabVessel labVessel : labVessels) {
+                    vesselToPdoSample.put(labVessel.getLabel(), pdoSample);
+                }
+                if (pdoSample.getMercurySample() == null) {
+                    nameToUnlinkedPdoSample.put(pdoSample.getName(), pdoSample);
+                }
+            } else {
+                // The PDO sample name may a tube barcode, and may be different than
+                // the name of sample(s) in the tube.
+                LabVessel labVessel = labVesselDao.findByIdentifier(pdoSample.getName());
+                if (labVessel != null) {
+                    vessels.add(labVessel);
+                    vesselToPdoSample.put(labVessel.getLabel(), pdoSample);
+                    if (pdoSample.getMercurySample() == null) {
+                        // Adds the mercury sample link(s) to pdo.
+                        for (MercurySample mercurySample : labVessel.getMercurySamples()) {
+                            mercurySample.addProductOrderSample(pdoSample);
+                        }
+                    }
+                } else {
+                    // Collects the PDO sample names that need vessel/sample creation.
+                    nameToUnknownPdoSample.put(pdoSample.getName(), pdoSample);
+                    if (pdoSample.getMercurySample() == null) {
+                        nameToUnlinkedPdoSample.put(pdoSample.getName(), pdoSample);
+                    }
+                }
             }
         }
 
+        // Creates vessels for PDO sample names that are in BSP but not Mercury.
+        // Throws an unchecked exception if passed a barcode or a sample id not in BSP.
+        if (!nameToUnknownPdoSample.isEmpty()) {
+            Collection<LabVessel> newVessels = createInitialVessels(nameToUnknownPdoSample.keySet(), username);
+            vessels.addAll(newVessels);
+            for (LabVessel labVessel : newVessels) {
+                for (MercurySample mercurySample : labVessel.getMercurySamples()) {
+                    ProductOrderSample pdoSample = nameToUnknownPdoSample.get(mercurySample.getSampleKey());
+                    vesselToPdoSample.put(labVessel.getLabel(), pdoSample);
+                }
+            }
+        }
+
+        // For Pdo samples whose name is a Mercury sample id, adds a MercurySample link.
+        for (Map.Entry<String, MercurySample> entry :
+                mercurySampleDao.findMapIdToMercurySample(nameToUnlinkedPdoSample.keySet()).entrySet()) {
+            for (ProductOrderSample productOrderSample : nameToUnlinkedPdoSample.get(entry.getKey())) {
+                entry.getValue().addProductOrderSample(productOrderSample);
+            }
+        }
+
+        // Adds the lab vessels to appropriate buckets.
         Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair = applyBucketCriteria(
                 new ArrayList<>(vessels), order, username, bucketingSource);
         Collection<BucketEntry> newBucketEntries = workflowBucketEntriesPair.getRight();
 
-        Map<String, Collection<ProductOrderSample>> samplesAdded = new HashMap<>();
+        // Returns the Pdo samples of the newly added bucketed vessels.
+        Map<String, Collection<ProductOrderSample>> bucketToPdoSamples = new HashMap<>();
         for (BucketEntry bucketEntry : newBucketEntries) {
-            for (MercurySample sample : bucketEntry.getLabVessel().getMercurySamples()) {
-                String sampleKey = sample.getSampleKey();
-                String bucketName = bucketEntry.getBucket().getBucketDefinitionName();
-                Collection<ProductOrderSample> productOrderSampleSet = samplesAdded.get(bucketName);
-                if (productOrderSampleSet == null) {
-                    productOrderSampleSet = new HashSet<>();
-                }
-                productOrderSampleSet.addAll(nameToSampleMap.get(sampleKey));
-                samplesAdded.put(bucketName, productOrderSampleSet);
+            String bucketName = bucketEntry.getBucket().getBucketDefinitionName();
+            Collection<ProductOrderSample> pdoSamples = bucketToPdoSamples.get(bucketName);
+            if (pdoSamples == null) {
+                pdoSamples = new HashSet<>();
+                bucketToPdoSamples.put(bucketName, pdoSamples);
             }
+            String bucketVesselBarcode = bucketEntry.getLabVessel().getLabel();
+            pdoSamples.addAll(vesselToPdoSample.get(bucketVesselBarcode));
         }
-
-        return samplesAdded;
+        return bucketToPdoSamples;
     }
 
 
@@ -462,7 +487,8 @@ public class BucketEjb {
     }
 
     /**
-     * Creates LabVessels to mirror BSP receptacles based on the given BSP sample IDs.
+     * Creates LabVessels with BSP receptacle barcodes for the given BSP sample IDs.
+     * Throws exception if BSP does not know about all of the sample IDs.
      *
      * @param samplesWithoutVessel BSP sample IDs that need LabVessels
      * @param username             the user performing the operation leading to the LabVessels being created

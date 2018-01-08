@@ -14,7 +14,7 @@ public class ExternalLibraryProcessorEzPass extends ExternalLibraryProcessor {
         return dataRow.get(getAdjustedNames().get(adjustHeaderName(header.getText())));
     }
 
-    public void processRowDetails(Map<String, String> dataRow, int dataRowNumber) {
+    public void processRowDetails(Map<String, String> dataRow, int dataRowNumber, boolean requiredValuesPresent) {
         additionalAssemblyInformation.add(getFromRow(dataRow, Headers.ASSEMBLY_INFORMATION));
         additionalSampleInformation.add(getFromRow(dataRow, Headers.ADDITIONAL_SAMPLE_INFORMATION));
         approvedBy.add(getFromRow(dataRow, Headers.APPROVED_BY));
