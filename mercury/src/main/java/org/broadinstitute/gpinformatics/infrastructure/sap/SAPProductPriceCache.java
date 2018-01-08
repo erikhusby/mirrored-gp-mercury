@@ -35,12 +35,6 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
 
     private SapIntegrationService sapService;
 
-    //  A temporary short circuit until actual implementation of the service to retrieve all materials is in place
-    //  When it is, this inclusion of the priceListCache will be removed.
-    @Inject
-    private PriceListCache quotesPriceListCache;
-
-    @Inject
     private SAPAccessControlEjb accessControlEjb;
 
     private static final Log logger = LogFactory.getLog(SAPProductPriceCache.class);
@@ -164,4 +158,11 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
         }
         return result;
     }
+
+    @Inject
+    public void setAccessControlEjb(
+            SAPAccessControlEjb accessControlEjb) {
+        this.accessControlEjb = accessControlEjb;
+    }
+
 }

@@ -115,6 +115,7 @@ public class ProductOrderEjbTest {
         Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenReturn(new SAPAccessControl());
 
         productPriceCache = new SAPProductPriceCache(mockSapService);
+        productPriceCache.setAccessControlEjb(mockAccessController);
         priceListCache = new PriceListCache(mockQuoteService);
 
         //  this additon is for the temporary support of current processing of recognizing a valid Product.

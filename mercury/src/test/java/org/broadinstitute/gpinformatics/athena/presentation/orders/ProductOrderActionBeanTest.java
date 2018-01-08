@@ -153,6 +153,9 @@ public class ProductOrderActionBeanTest {
         actionBean.setPriceListCache(priceListCache);
         mockSAPService = Mockito.mock(SapIntegrationService.class);
         stubProductPriceCache = new SAPProductPriceCache(mockSAPService);
+        final SAPAccessControlEjb mockAccessController = Mockito.mock(SAPAccessControlEjb.class);
+        Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenReturn(new SAPAccessControl());
+        stubProductPriceCache.setAccessControlEjb(mockAccessController);
         actionBean.setProductPriceCache(stubProductPriceCache);
 
         mockProductOrderDao = Mockito.mock(ProductOrderDao.class);
@@ -162,8 +165,6 @@ public class ProductOrderActionBeanTest {
                 Mockito.mock(MercurySampleDao.class),Mockito.mock(ProductOrderJiraUtil.class), mockSAPService,priceListCache,
                 stubProductPriceCache);
 
-        final SAPAccessControlEjb mockAccessController = Mockito.mock(SAPAccessControlEjb.class);
-        Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenReturn(new SAPAccessControl());
         productOrderEjb.setAccessController(mockAccessController);
 
         actionBean.setProductOrderEjb(productOrderEjb);

@@ -8,11 +8,14 @@ import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -80,6 +83,8 @@ public class BillingAdaptor implements Serializable {
             FastDateFormat.getDateTimeInstance(FastDateFormat.SHORT, FastDateFormat.SHORT);
 
     private SAPProductPriceCache productPriceCache;
+
+    private SAPAccessControlEjb sapAccessControlEjb;
 
     @Inject
     public BillingAdaptor(BillingEjb billingEjb, BillingSessionDao billingSessionDao, PriceListCache priceListCache,
@@ -176,7 +181,8 @@ public class BillingAdaptor implements Serializable {
                     itemForPriceUpdate.setQuote(quote);
 
                     if(productOrderEjb.isOrderEligibleForSAP(itemForPriceUpdate.getProductOrder(), itemForPriceUpdate.getWorkCompleteDate()) &&
-                       itemForPriceUpdate.getProductOrder().isSavedInSAP()) {
+                       itemForPriceUpdate.getProductOrder().isSavedInSAP() &&
+                       !isPriceItemBlocked(itemForPriceUpdate.getPriceItem().getName())) {
                         
                         ProductOrder.checkQuoteValidity(quote,
                                 DateUtils.truncate(itemForPriceUpdate.getWorkCompleteDate(), Calendar.DATE));
@@ -289,7 +295,8 @@ public class BillingAdaptor implements Serializable {
                     if( productOrderEjb.isOrderEligibleForSAP(item.getProductOrder(),item.getWorkCompleteDate() )
                         && !item.getProductOrder().getOrderStatus().canPlace()
                         && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
-                        && StringUtils.isBlank(item.getSapItems())) {
+                        && StringUtils.isBlank(item.getSapItems())
+                            && !isPriceItemBlocked(priceItemBeingBilled.getName())) {
 
                         final SAPMaterial material = productPriceCache.findByProduct(item.getProduct(),
                                 item.getProductOrder().getSapCompanyConfigurationForProductOrder());
@@ -318,7 +325,8 @@ public class BillingAdaptor implements Serializable {
 
                     if (StringUtils.isBlank(workId)) {
                         if (productOrderEjb.isOrderEligibleForSAP(item.getProductOrder(),item.getWorkCompleteDate())
-                            && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
+                            && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
+                            && !isPriceItemBlocked(priceItemBeingBilled.getName())) {
                             if (item.getProductOrder().getSinglePriceAdjustment() == null) {
                                 workId = quoteService
                                         .registerNewSAPWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
@@ -355,7 +363,8 @@ public class BillingAdaptor implements Serializable {
                     if( productOrderEjb.isOrderEligibleForSAP(item.getProductOrder(), item.getWorkCompleteDate() )
                         && !item.getProductOrder().getOrderStatus().canPlace()
                         && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
-                        && StringUtils.isBlank(item.getSapItems()))
+                        && StringUtils.isBlank(item.getSapItems())
+                        && !isPriceItemBlocked(priceItemBeingBilled.getName()))
                     {
                         
                         if(item.getQuantityForSAP() != 0) {
@@ -418,6 +427,13 @@ public class BillingAdaptor implements Serializable {
         }
 
         return results;
+    }
+
+    private boolean isPriceItemBlocked(String priceItemName) {
+        final SAPAccessControl currentControlDefinitions = sapAccessControlEjb.getCurrentControlDefinitions();
+
+        return !CollectionUtils.containsAny(currentControlDefinitions.getDisabledItems(),
+                Collections.singleton(new AccessItem(priceItemName)));
     }
 
     /**
@@ -551,5 +567,15 @@ public class BillingAdaptor implements Serializable {
     @Inject
     public void setProductOrderEjb(ProductOrderEjb productOrderEjb) {
         this.productOrderEjb = productOrderEjb;
+    }
+
+    public SAPAccessControlEjb getSapAccessControlEjb() {
+        return sapAccessControlEjb;
+    }
+
+    @Inject
+    public void setSapAccessControlEjb(
+            SAPAccessControlEjb sapAccessControlEjb) {
+        this.sapAccessControlEjb = sapAccessControlEjb;
     }
 }
