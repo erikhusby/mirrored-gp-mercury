@@ -19,6 +19,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.submission.FileType;
 import org.broadinstitute.gpinformatics.infrastructure.submission.ISubmissionTuple;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
 import org.codehaus.jackson.annotate.JsonCreator;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
@@ -89,7 +90,7 @@ public class SubmissionTuple implements ISubmissionTuple {
         this.sampleName = sampleName;
         this.version = version;
         this.processingLocation = processingLocation;
-        this.dataType = dataType;
+        this.dataType = SubmissionLibraryDescriptor.getNormalizedLibraryName(dataType);
     }
 
     @Override
