@@ -10,14 +10,17 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OrderColumn;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Stores a set of Single Nucleotide Polymorphisms that uniquely identify a sample.  Fingerprints can be generated
  * from genotyping or sequencing.  Fingerprints are used to detect mixups.  Typically, a fingerprint is made when a
- * sample is received, and later compared to another fingerprint taken from sequencing.
+ * sample is received (with a genotyping array), and later compared to another fingerprint derived from sequencing.
  */
 @Entity
 @Audited
@@ -108,7 +111,20 @@ public class Fingerprint {
     private Date dateGenerated;
     // reference to list of RSIDs?
 
+    // todo jmt add Entity called Genotype(?) with reference to SNP (enum or entity?), call, confidence
     private String genotypes;
+
+    /*
+    AssayList
+    AssayListAssay
+    Assay or SNP?
+    Fingerprint - AssayList
+    Genotype - Assay
+     */
+    // todo jmt, order here, or derive order from list of FP SNPs?  List of SNPs = enum or database?
+    @OneToMany(mappedBy = "fingerprint")
+    @OrderColumn()
+    private List<FpGenotype> fpGenotypes;
 
     private String callConfidences;
 
