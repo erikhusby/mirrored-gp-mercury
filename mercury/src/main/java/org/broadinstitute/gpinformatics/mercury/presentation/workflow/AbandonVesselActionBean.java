@@ -3,70 +3,74 @@ package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
-import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
-import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.AbandonVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
-import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jettison.json.JSONObject;
+import org.codehaus.jackson.map.ObjectReader;
+import org.codehaus.jackson.map.ObjectWriter;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import javax.inject.Inject;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
  * Abandon / Un-Abandon vessel / plastic logic.
- *
  */
 
 @UrlBinding(value = "/workflow/AbandonVessel.action")
-public class AbandonVesselActionBean  extends RackScanActionBean {
-    public static final String ACTIONBEAN_URL_BINDING = "/search/vessel.action";
-    public static final String VESSEL_SEARCH = "vesselBarcodeSearch";
-    public static final String ABANDON_POSITION = "abandonPosition";
-    public static final String UN_ABANDON_POSITION = "unAbandonPosition";
-    public static final String UN_ABANDON_VESSEL = "unAbandonVessel";
-    public static final String ABANDON_VESSEL = "abandonVessel";
-    public static final String ABANDON_ALL_POSITIONS = "abandonAllPositions";
-    public static final String RACK_SCAN_EVENT = "rackScan";
-    private Set<LabVessel> foundVessels = new HashSet<>();
-    private static final String SESSION_LIST_PAGE = "/workflow/abandon_vessel.jsp";
-    private static final String SESSION_LIST_REDIRECT_PAGE = "/workflow/AbandonVessel.action";
-    public static final String PAGE_TITLE = "Abandon Vessel";
-    private String resultSummaryString;
-    private boolean resultsAvailable = false;
-    private boolean isSearchDone = false;
+public class AbandonVesselActionBean extends CoreActionBean {
+
+    private static final Log log = LogFactory.getLog(AbandonVesselActionBean.class);
+
+    private static final String DEFAULT_PAGE = "/workflow/abandon_vessel.jsp";
+    private static final String VESSEL_SEARCH_EVENT = "vesselBarcodeSearch";
+    private static final String RACK_SCAN_EVENT = "processRackScan";
+    private static final String ABANDON_EVENT = "abandon";
+    private static final String UNABANDON_EVENT = "unabandon";
+
+    // JSON handlers, guaranteed threadsafe
+    private static final ObjectReader LAYOUT_JSON_READER;
+    private static final ObjectWriter LAYOUT_JSON_WRITER;
+    static {
+        ObjectMapper mapper = new ObjectMapper();
+        LAYOUT_JSON_READER = mapper.reader(LayoutMap.class);
+        LAYOUT_JSON_WRITER = mapper.writer();
+        mapper = null;
+    }
+
+    // Form fields
     private String vesselBarcode;
-    private String vesselLabel;
-    private String barcode;
+    private String redisplayVesselBarcode;
+    private String rackScanData;
+    private String abandonActionJson;
+    private AbandonVessel.Reason abandonActionReason;
+
+    // Display and logic fields
     private VesselGeometry vesselGeometry;
-
-    // Revert to String - FAIL!  @Validate(converter = EnumeratedTypeConverter.class, required=true, on = {"abandonPosition"})
-    private String vesselPosition;
-
-    private String abandonReason;
-    private String vesselPositionReason;
-    private boolean isMultiplePositions = false;
     private LabVessel labVessel;
-    private String searchKey;
-    private MessageCollection messageCollection = new MessageCollection();
-
-    private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("MM/dd/yyyy");
+    private boolean isTube;
+    private LayoutMap layoutMap;
 
     @Inject
     private LabVesselDao labVesselDao;
@@ -74,775 +78,510 @@ public class AbandonVesselActionBean  extends RackScanActionBean {
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
-        return new ForwardResolution(SESSION_LIST_PAGE);
-    }
-
-    @HandlesEvent(VESSEL_SEARCH)
-    public Resolution vesselBarcodeSearch() throws Exception {
-        doSearch();
-        orderResults();
-        if(searchKey == null) {
-            setSearchDone(false);
-            messageCollection.addError("Please provide a barcode");
-            addMessages(messageCollection);
-        }
-        if(!getResultsAvailable()) {
-            setSearchDone(false);
-            if(getSearchKey() != null) {
-                messageCollection.addError("No results found for: " + getSearchKey());
-                addMessages(messageCollection);
-            }
-        }
-        return new ForwardResolution(SESSION_LIST_PAGE);
-    }
-
-    public Resolution vesselSearch() throws Exception {
-        doSearch();
-        orderResults();
-        return new ForwardResolution(SESSION_LIST_PAGE);
+        return new ForwardResolution(DEFAULT_PAGE);
     }
 
     /**
-     * Rack scan handler.
-     *
+     * Do a browser vessel search request and generate layout data
      */
-    @HandlesEvent(RACK_SCAN_EVENT)
-    public Resolution rackScan() throws Exception {
-        runRackScan(false);
-        setRackScanGeometry();
-        if(getRackScan() != null) {
-            if(!verifyRackUpload())  {
-                messageCollection.addError("Unable to parse simulator file");
-                addMessages(messageCollection);
-            }
-            else {
-                setRackScanGeometry();
-                resultsAvailable = true;
-                isSearchDone = true;
-                isMultiplePositions = true;
-            }
+    @HandlesEvent(VESSEL_SEARCH_EVENT)
+    public Resolution vesselBarcodeSearch() {
+
+        rackScanData = null;
+        redisplayVesselBarcode = null;
+
+        if( vesselBarcode == null ) {
+            addGlobalValidationError("Please provide a barcode");
+            return new ForwardResolution(DEFAULT_PAGE);
+        }
+        labVessel = labVesselDao.findByIdentifier(vesselBarcode);
+        if( labVessel == null ) {
+            addGlobalValidationError("Vessel not found for barcode " + vesselBarcode);
+            return new ForwardResolution(DEFAULT_PAGE);
         }
 
-        return new ForwardResolution(SESSION_LIST_PAGE);
-
-    }
-
-    /**
-     *
-     * Verify basic format of uploaded rack.
-     *
-     */
-
-    public boolean verifyRackUpload()
-    {
-        if(rackScan.size() == 0)
-            return false;
-
-        boolean emptyRack = true;
-        for (Map.Entry<String, String> entry : rackScan.entrySet()) {
-            String key = entry.getKey();
-            if(entry.getValue().length() > 0)
-                emptyRack = false;
-            if(!key.equals("rack"))  {
-                if(key.length() != 3 ) {
-                    return false;
+        Map<VesselPosition, LabVessel> positionVesselMap = new HashMap<>();
+        if( labVessel.getContainerRole() != null ) {
+            VesselContainer vesselContainer = labVessel.getContainerRole();
+            vesselGeometry = vesselContainer.getEmbedder().getVesselGeometry();
+            if( vesselContainer.hasAnonymousVessels()) {
+                for( VesselPosition vesselPosition: vesselGeometry.getVesselPositions()){
+                    positionVesselMap.put(vesselPosition, labVessel );
                 }
-                if(key.length() == 3 ) {
-                    boolean isChar = key.substring(0,1).matches("[a-zA-z]");
-                    if(!isChar) {
-                        return isChar;
-                    }
+            } else {
+                for( VesselPosition vesselPosition: vesselGeometry.getVesselPositions()){
+                    positionVesselMap.put(vesselPosition, vesselContainer.getVesselAtPosition(vesselPosition) );
                 }
             }
-        }
-        if(emptyRack) {
-            return false;
-        }
-        return true;
-    }
-
-    /**
-     * Abandon a specific vessel position.
-     */
-    @HandlesEvent(ABANDON_POSITION)
-    public Resolution abandonPosition() throws Exception {
-
-        VesselPosition position = VesselPosition.getByName(vesselPosition);
-        setSearchKey(vesselLabel);
-        doSearch();
-        String responseLabel = "";
-        boolean vesselsFound = false;
-
-        if( rackScan != null ) {
-            if( rackScan.containsKey( "")){
-
-            }
-        }
-        isRackScan(position);
-
-        if(vesselPositionReason == null) {
-            messageCollection.addError("Please select a reason for abandoning the well.");
-            addMessages(messageCollection);
-            setRackScanGeometry();
-            resultsAvailable = true;
-            isSearchDone = true;
-            isMultiplePositions = true;
-            return new ForwardResolution(SESSION_LIST_PAGE);
-        }
-        AbandonVessel.Reason reason = AbandonVessel.Reason.valueOf(vesselPositionReason);
-
-        Date abandonedOn = new Date();
-
-        for (LabVessel vessel : getFoundVessels()) {
-            if(vessel != null && vessel.getLabel() != null) {
-                //Don't persist position in a rack scan
-                if( rackScan != null ) {
-                    addAbandonToVessel(vessel, abandonedOn, reason, null);
-                } else {
-                    // Assume position not already abandoned (abandon button not shown for any already abandoned)
-                    addAbandonToVessel(vessel, abandonedOn, reason, position);
-                }
-                vesselsFound = true;
-                responseLabel = vessel.getLabel();
-            }
-        }
-
-        if(!vesselsFound){
-            // Error message for rack scans with missing vessels in the database.
-            messageCollection.addError("No valid vessels found.");
-            addMessages(messageCollection);
-            setRackScanGeometry();
-            resultsAvailable = true;
-            isSearchDone = true;
-            isMultiplePositions = true;
-            return new ForwardResolution(SESSION_LIST_PAGE);
-        }
-        else {
-            labVesselDao.flush();
-            messageCollection.addInfo("Position: " + vesselPosition + " For Vessel: " + responseLabel + " Successfully Abandoned. ");
-            addMessages(messageCollection);
-        }
-        return vesselSearch();
-    }
-
-    /**
-     *
-     * If this is a rack scan then add it to the list of found lab vessels.
-     *
-     */
-    private void isRackScan(VesselPosition vesselPosition)
-    {
-        if( rackScan != null ) {
-            String barcode = rackScan.get(vesselPosition.name());
-            foundVessels.clear();
-            setLabVessel(labVesselDao.findByIdentifier( rackScan.get(vesselPosition.name())));
-            foundVessels.add(getLabVessel());
-        }
-    }
-
-    /**
-     *
-     * Abandon ALL positions in a vessel
-     *
-     */
-    @HandlesEvent(ABANDON_ALL_POSITIONS)
-    public Resolution abandonAllPositions() throws Exception {
-        setSearchKey(vesselLabel);
-        doSearch();
-        Date abandonedOn = new Date();
-
-
-        if( vesselPositionReason == null ) {
-            messageCollection.addError("Please select a reason for abandoning all wells.");
-            addMessages(messageCollection);
-            setRackScanGeometry();
-            resultsAvailable = true;
-            isSearchDone = true;
-            isMultiplePositions = true;
-            return new ForwardResolution(SESSION_LIST_PAGE);
-        }
-
-        AbandonVessel.Reason reason = AbandonVessel.Reason.valueOf( vesselPositionReason );
-
-        if(getRackScan() != null) {
-            setRackScanGeometry();
-            for (VesselPosition position : getVesselGeometry().getVesselPositions()) {
-                labVessel = labVesselDao.findByIdentifier(getRackScan().get(position.toString()));
-                if(labVessel != null) {
-                    labVessel.getAbandonVessels().clear();
-                    addAbandonToVessel( labVessel, abandonedOn, reason, position );
+        } else if(labVessel.getType() == LabVessel.ContainerType.RACK_OF_TUBES) {
+            vesselGeometry = labVessel.getVesselGeometry();
+            RackOfTubes rack = OrmUtil.proxySafeCast( labVessel, RackOfTubes.class);
+            for(TubeFormation tubeFormation : rack.getTubeFormations() ) {
+                for( VesselPosition vesselPosition: vesselGeometry.getVesselPositions()){
+                    positionVesselMap.put(vesselPosition, tubeFormation.getContainerRole().getVesselAtPosition(vesselPosition) );
                 }
             }
         } else {
-            for (LabVessel vessel : getFoundVessels()) {
-                vessel.getAbandonVessels().clear();
-                for (VesselPosition position : vessel.getVesselGeometry().getVesselPositions()) {
-                    addAbandonToVessel( vessel, abandonedOn, reason, position );
-                }
-            }
+            isTube = true;
+            vesselGeometry = VesselGeometry.TUBE;
+            positionVesselMap.put(VesselPosition._1_1, labVessel );
         }
-        labVesselDao.flush();
-        messageCollection.addInfo("All Positions Successfully Abandoned." );
-        addMessages(messageCollection);
-        return new RedirectResolution(SESSION_LIST_REDIRECT_PAGE);
+        buildLayout(positionVesselMap);
+        return new ForwardResolution(DEFAULT_PAGE);
     }
 
     /**
-     *
-     * Un-Abandon a specific position.
-     *
+     * Rack scan handler using rackScanData value posted from browser
      */
-    @HandlesEvent(UN_ABANDON_POSITION)
-    public Resolution unAbandonPosition() throws Exception {
+    @HandlesEvent(RACK_SCAN_EVENT)
+    public Resolution rackScan() throws Exception {
+        vesselGeometry = VesselGeometry.G12x8;
 
-        VesselPosition position = VesselPosition.getByName(vesselPosition);
+        JSONObject rackJson = new JSONObject(rackScanData);
+        JSONArray jsonPositionScan = rackJson.getJSONArray("scans");
 
-        setSearchKey(vesselLabel);
-        doSearch();
+        // Get barcodes and batch fetch
+        List<String> scanBarcodes = new ArrayList<>();
+        if( jsonPositionScan != null ) {
+            for( int i = 0; i < jsonPositionScan.length(); i++ ) {
+                scanBarcodes.add(jsonPositionScan.getJSONObject(i).getString("barcode"));
+            }
+        } else {
+            // Should have been captured at scan
+            addGlobalValidationError("No results from rack scan" );
+            return new ForwardResolution(DEFAULT_PAGE);
+        }
+        Map<String,LabVessel> barcodeVesselMap = labVesselDao.findByBarcodes(scanBarcodes);
 
-        isRackScan(position);
+        // Assign fetched vessels to positions
+        Map<VesselPosition, LabVessel> positionVesselMap = new HashMap<>();
+        Map<VesselPosition, String> positionErrorMap = new HashMap<>();
+        // Fill with empty flags
+        for( VesselPosition position :  vesselGeometry.getVesselPositions()) {
+            positionVesselMap.put(position, null);
+        }
+        for( int i = 0; i < jsonPositionScan.length(); i++ ) {
+            JSONObject node = jsonPositionScan.getJSONObject(i);
+            VesselPosition position = VesselPosition.getByName(node.getString("position"));
+            LabVessel labVessel = barcodeVesselMap.get(node.getString("barcode" ));
+            if( labVessel != null ) {
+                positionVesselMap.put(position, labVessel);
+            } else {
+                // Need to handle unregistered tubes!
+                positionErrorMap.put(position, "(" + node.getString("barcode" ) + " not found)");
+            }
+        }
 
-        AbandonVessel abandonVesselToRemove = null;
+        buildLayout(positionVesselMap, positionErrorMap);
 
-        for (LabVessel vessel : getFoundVessels()) {
-            if(vessel != null) {
-                for (AbandonVessel abandonVessel : vessel.getAbandonVessels()) {
-                    if (rackScan != null || abandonVessel.getVesselPosition() == position ) {
-                        abandonVesselToRemove = abandonVessel;
+        return new ForwardResolution(DEFAULT_PAGE);
+    }
+
+    /**
+     * Abandon vessel(s) and position(s).
+     */
+    @HandlesEvent(ABANDON_EVENT)
+    public Resolution abandonPosition() throws Exception {
+        LayoutMap abandonMap = LAYOUT_JSON_READER.readValue(abandonActionJson);
+        if( abandonMap.abandonCells == null || abandonMap.abandonCells.size() == 0 ) {
+            addGlobalValidationError("No cells selected to abandon");
+            return new ForwardResolution(DEFAULT_PAGE);
+        }
+        if( abandonActionReason == null ) {
+            addGlobalValidationError("Abandon reason required");
+            return new ForwardResolution(DEFAULT_PAGE);
+        }
+        abandonAction(abandonMap, true);
+        return postAbandonAction();
+    }
+
+    /**
+     * Un-Abandon a specific vessel or positions associated with it.
+     */
+    @HandlesEvent(UNABANDON_EVENT)
+    public Resolution unAbandonVessel() throws Exception {
+        LayoutMap abandonMap = LAYOUT_JSON_READER.readValue(abandonActionJson);
+        if( abandonMap.abandonCells == null || abandonMap.abandonCells.size() == 0 ) {
+            addGlobalValidationError("No cells selected to un-abandon");
+            return new ForwardResolution(DEFAULT_PAGE);
+        }
+        abandonAction(abandonMap, false);
+        return postAbandonAction();
+    }
+
+    /**
+     * Perform the requested abandon or un-abandon action
+     * @param abandonMap Generated from JSON cells posted from browser as abandonActionJson
+     * @param doAbandon Flag to either abandon or un-abandon
+     */
+    private void abandonAction( LayoutMap abandonMap, boolean doAbandon ) {
+        boolean isAnonymousContainer = false;
+        Date abandonedOn = new Date();
+
+        // Vessels in request (only one if container or tube)
+        List<LabVessel> vessels = new ArrayList<>();
+        for( AbandonCell abandonCell : abandonMap.abandonCells ) {
+            LabVessel selectedVessel = labVesselDao.findByIdentifier(abandonCell.barcode);
+            vessels.add(selectedVessel);
+            if( selectedVessel.getContainerRole() != null ) {
+                isAnonymousContainer = selectedVessel.getContainerRole().hasAnonymousVessels();
+                if( isAnonymousContainer ){
+                    break;
+                }
+            }
+        }
+
+        if( isAnonymousContainer ) {
+            // Have to dig through specific positions
+            LabVessel vesselToAbandon = vessels.iterator().next();
+            Set<AbandonVessel> vesselAbandonedPositions = vesselToAbandon.getAbandonVessels();
+            for( AbandonCell abandonCell : abandonMap.abandonCells ) {
+                VesselPosition position = abandonCell.getVesselPosition();
+
+                // Sanity check - do an overwrite
+                AbandonVessel abandonPositionToOverwrite = null;
+                for( AbandonVessel abandonPosition : vesselAbandonedPositions ) {
+                    if( position.equals( abandonPosition.getVesselPosition() ) ) {
+                        abandonPositionToOverwrite = abandonPosition;
                         break;
                     }
                 }
+                vesselAbandonedPositions.remove( abandonPositionToOverwrite );
 
-                if( abandonVesselToRemove != null ) {
-                    vessel.getAbandonVessels().remove(abandonVesselToRemove);
-                    labVesselDao.remove(abandonVesselToRemove);
-                    // Remove reference
-                    labVesselDao.flush();
-                    messageCollection.addInfo("Position Successfully Unabandoned. ");
-                    addMessages(messageCollection);
-                    return vesselSearch();
+                // If there are physical vessels at plate well positions, abandon them too
+                LabVessel well = vesselToAbandon.getContainerRole().getVesselAtPosition(position);
+                if( well != null ) {
+                    well.getAbandonVessels().clear();
                 }
-            }
-        }
-        labVesselDao.flush();
-        return vesselSearch();
-    }
 
-    /**
-     *
-     * Abandon a specific vessel.
-     *
-     */
-    @HandlesEvent(ABANDON_VESSEL)
-    public Resolution abandonVessel() throws Exception {
-
-        setSearchKey(vesselLabel);
-        doSearch();
-
-        Date abandonedOn = new Date();
-
-        if( abandonReason == null ) {
-            messageCollection.addError("Please select a reason for abandoning the vessel.");
-            addMessages(messageCollection);
-            return new ForwardResolution(SESSION_LIST_REDIRECT_PAGE);
-        }
-
-        AbandonVessel.Reason reason = AbandonVessel.Reason.valueOf(abandonReason);
-
-        for (LabVessel vessel : getFoundVessels()) {
-            if(vessel != null) {
-                addAbandonToVessel(vessel, abandonedOn, reason, null);
-            }
-        }
-        labVesselDao.flush();
-        messageCollection.addInfo("Vessel(s): " + vesselBarcode + " Successfully Abandoned. " );
-        addMessages(messageCollection);
-        return new RedirectResolution(SESSION_LIST_REDIRECT_PAGE);
-
-    }
-
-    /**
-     *
-     * Un-Abandon a specific vessel and remove any positions associated with it.
-     *
-     */
-    @HandlesEvent(UN_ABANDON_VESSEL)
-    public RedirectResolution unAbandonVessel() throws Exception {
-
-        setSearchKey(vesselLabel);
-
-        if(getRackScan() != null) {
-            setRackScanGeometry();
-            for (VesselPosition position : getVesselGeometry().getVesselPositions()) {
-                LabVessel vessel = labVesselDao.findByIdentifier(getRackScan().get(position.toString()));
-                if(vessel != null) {
-                    setLabVessel(vessel);
-                    getLabVessel().removeAbandonedVessel(getLabVessel().getAbandonVessels());
+                if( doAbandon ) {
+                    AbandonVessel abandonVessel = new AbandonVessel();
+                    abandonVessel.setReason(abandonActionReason);
+                    abandonVessel.setAbandonedOn(abandonedOn);
+                    abandonVessel.setVesselPosition(position);
+                    vesselToAbandon.addAbandonedVessel(abandonVessel);
+                    if( well != null ) {
+                        AbandonVessel wellAbandonVessel = new AbandonVessel();
+                        wellAbandonVessel.setReason(abandonActionReason);
+                        wellAbandonVessel.setAbandonedOn(abandonedOn);
+                        well.addAbandonedVessel(wellAbandonVessel);
+                    }
                 }
-            }
-        }
-        else {
-
-            doSearch();
-            for (LabVessel vessel : getFoundVessels()) {
-                if(vessel != null) {
-                    vessel.removeAbandonedVessel(vessel.getAbandonVessels());
-                }
-            }
-        }
-
-        labVesselDao.flush();
-        messageCollection.addInfo("Vessel Position(s) Successfully Unabandoned. " );
-        addMessages(messageCollection);
-        return new RedirectResolution(SESSION_LIST_REDIRECT_PAGE);
-    }
-
-
-    /**
-     *
-     * Determine if a specific vessel  has been abandoned
-     *
-     */
-    public boolean isVesselAbandoned() {
-
-        if(getRackScan() != null) {
-            setRackScanGeometry();
-            for (VesselPosition position : getVesselGeometry().getVesselPositions()) {
-                setLabVessel(labVesselDao.findByIdentifier(getRackScan().get(position.toString())));
-                if(labVessel != null) {
-                    if (labVessel.getAbandonVessels().size() > 0) {
-                        return true;
+                if( abandonPositionToOverwrite == null ) {
+                    if( doAbandon ) {
+                        addMessage("Abandoned " + vesselToAbandon.getLabel() + ", " + position );
+                    } else {
+                        addMessage("Warning: " + vesselToAbandon.getLabel() + ", " + position + " was not abandoned");
+                    }
+                } else {
+                    if( doAbandon ) {
+                        addMessage("Abandoned " + vesselToAbandon.getLabel() + ", " + position + " (overwrite " + abandonPositionToOverwrite.getReason().getDisplayName() + ")" );
+                    } else {
+                        addMessage("Un-Abandoned " + vesselToAbandon.getLabel() + ", " + position );
                     }
                 }
             }
-            return false;
-        }
-
-        if (labVessel == null || labVessel.getAbandonVessels().size() == 0) {
-            return false;
-        }
-        return true;
-    }
-
-    /**
-     * Determine if a specific vessel position has been abandoned
-     */
-    public boolean isPositionAbandoned(VesselPosition vesselPosition) {
-
-        isRackScan(vesselPosition);
-        if( rackScan != null && foundVessels.size() == 1 ) {
-            return foundVessels.iterator().next().getAbandonVessels().size() > 0;
-        }
-
-        for (LabVessel vessel : getFoundVessels()) {
-            if(vessel == null) {
-                return false;
-            }
-            for (AbandonVessel abandonVessel : vessel.getAbandonVessels()) {
-                if(abandonVessel.getVesselPosition() == vesselPosition){
-                    return true;
+        } else {
+            for( LabVessel vesselToAbandon : vessels ) {
+                Set<AbandonVessel> vesselAbandonedPositions = vesselToAbandon.getAbandonVessels();
+                // Sanity check - do an overwrite
+                AbandonVessel abandonPositionToOverwrite = null;
+                if( vesselAbandonedPositions.size() > 0 ) {
+                    abandonPositionToOverwrite = vesselAbandonedPositions.iterator().next();
+                    vesselAbandonedPositions.clear();
                 }
-            }
-        }
-        return false;
-    }
 
-    /**
-     *
-     * Retrieve the reason why a specific position was abandoned.
-     *
-     */
-    public String getAbandonReason(VesselPosition vesselPosition) {
-        String noReasonVal = "";
-        for (LabVessel vessel : getFoundVessels()) {
-            if(vessel == null) {
-                return noReasonVal;
-            }
-            for (AbandonVessel abandonVessel : vessel.getAbandonVessels()) {
-                if( rackScan != null || abandonVessel.getVesselPosition() == vesselPosition ){
-                    return abandonVessel.getReason().getDisplayName();
-                }
-            }
-        }
-        return noReasonVal;
-    }
-
-    /**
-     * This method orders the results based on the order of strings passed in.
-     *
-     */
-    private void orderResults() {
-
-        Map<String, LabVessel> labelToVessel = new HashMap<>();
-        String barcodes = "";
-        for (LabVessel vessel : getFoundVessels()) {
-            if(vessel == null) {
-                return;
-            }
-            setLabVessel(vessel);
-            labelToVessel.put(vessel.getLabel(), vessel);
-            barcodes += (vessel.getLabel() + " ");
-            this.vesselGeometry = vessel.getVesselGeometry();
-            getMultiplePositions(vessel);
-        }
-
-        setBarcode(barcodes);
-
-    }
-
-    /**
-     * This method creates a list of found vessels for the abandon_vessel.jsp page.
-     *
-     */
-    protected void doSearch()
-    {
-
-        //If this is a rack scan there is no need to search.
-        if(getRackScan() != null) {
-            resultsAvailable = true;
-            isSearchDone = true;
-            return;
-        }
-
-        if(searchKey == null) {
-            resultsAvailable = false;
-            return;
-        }
-
-        List<String> searchList = Arrays.asList(searchKey.split(" "));
-
-        List<LabVessel> labVessels = labVesselDao.findByListIdentifiers(searchList);
-
-        if(labVessels.size() == 0) {
-            resultsAvailable = false;
-            return;
-        }
-
-
-        if(labVessels.size() > 1 ) {
-            for(LabVessel labVessel : labVessels) {
-                if(!isMatrixTube(labVessel)) {
-                    resultsAvailable = false;
-                    messageCollection.addError("You can only bulk abandon matrix tubes.");
-                    addMessages(messageCollection);
-                    return;
+                if( doAbandon ) {
+                    AbandonVessel abandonVessel = new AbandonVessel();
+                    abandonVessel.setReason(abandonActionReason);
+                    abandonVessel.setAbandonedOn(abandonedOn);
+                    vesselToAbandon.addAbandonedVessel(abandonVessel);
+                    if( abandonPositionToOverwrite == null ) {
+                        addMessage( "Abandoned " + vesselToAbandon.getLabel() );
+                    } else {
+                        addMessage(
+                                "Abandoned " + vesselToAbandon.getLabel() + " (overwrite " + abandonPositionToOverwrite
+                                        .getReason().getDisplayName() + ")");
+                    }
+                } else {
+                    if( abandonPositionToOverwrite != null ) {
+                        addMessage( "Un-Abandoned " + vesselToAbandon.getLabel() );
+                    } else {
+                        addMessage( "Warning: " + vesselToAbandon.getLabel() + " was not abandoned.");
+                    }
                 }
             }
         }
 
-        if(isRackOfTubes(labVessels.get(0)) && getSearchKey() != null){
-            resultsAvailable = false;
-            messageCollection.addError("You must perform a rack scan to abandon tubes in a rack.");
-            addMessages(messageCollection);
-            return;
-        }
-
-        Set<LabVessel> vesselSet = new HashSet<>();
-        vesselSet.addAll(labVessels);
-        setFoundVessels(vesselSet);
-        resultsAvailable = true;
-
-        isSearchDone = true;
+        labVesselDao.flush();
     }
 
     /**
-     * Serialize and set the rackScan object from the .jsp
-     *
+     * After an abandon/un-abandon action, perform the applicable page refresh logic and refresh
      */
-    public void setRackMap(String rackMap) throws Exception{
-        if(rackMap != null) {
-            this.rackScan = new ObjectMapper().readValue(rackMap.replaceAll("~", "\""), LinkedHashMap.class);
+    private Resolution postAbandonAction() throws Exception {
+        if( rackScanData != null && rackScanData.length() > 0 ) {
+            // Redisplay rack scan data layout
+            return rackScan();
+        } else {
+            // Redisplay existing vessel
+            vesselBarcode = redisplayVesselBarcode;
+            return vesselBarcodeSearch();
         }
     }
 
     /**
-     * Return a serialized rackScan object to the .jsp
-     *
+     * Display purpose only - layout header
      */
-    public String getRackMap() throws Exception {
-        if(rackScan != null) {
-            setResultsAvailable(true);
-            return  new JSONObject(rackScan).toString().replace("\"", "~");
-        }
-        return  null;
-    }
-
-    /**
-     *
-     * Determine if this is a vessel with multiple positions.
-     *
-     */
-    public boolean getMultiplePositions(LabVessel vessel)
-    {
-        if(getRackScan() != null){
-            isMultiplePositions = true;
-            setRackScanGeometry();
-            return true;
-        }
-
-        if(vessel.isMultiplePositions()) {
-            isMultiplePositions = true;
-            return true;
-        }
-        else {
-            isMultiplePositions = false;
-            return false;
-        }
-    }
-
-    public void addAbandonToVessel(LabVessel vessel, Date abandonedOn
-            , AbandonVessel.Reason reason, VesselPosition position) {
-        AbandonVessel abandonVessel = new AbandonVessel();
-        abandonVessel.setAbandonedOn(abandonedOn);
-        abandonVessel.setReason(reason);
-        abandonVessel.setVesselPosition(position);
-        vessel.addAbandonedVessel(abandonVessel);
-    }
-
-    /**
-     *
-     *  If the vessel has > 24 positions, change the CSS set to shrink
-     *  the elements so they fit on the screen.
-     *
-     */
-    public String shrinkCss(String cssType)
-    {
-        if(getVesselGeometry().getCapacity() > 24) {
-            return cssType;
-        }
-        return null;
-    }
-
-    public void setSearchKey(String searchKey) {
-        this.searchKey = searchKey;
-    }
-
-    public Set<LabVessel> getFoundVessels() {
-        return foundVessels;
-    }
-
-    public void setFoundVessels(Set<LabVessel> foundVessels) {
-        this.foundVessels = foundVessels;
-    }
-
-    public void setSearchDone(boolean searchDone) {
-        isSearchDone = searchDone;
-    }
-
-    public boolean isSearchDone() {
-        return isSearchDone;
-    }
-
-    public String getResultSummaryString() {
-        return resultSummaryString;
-    }
-
-    public void setResultSummaryString(String resultSummaryString) {
-        this.resultSummaryString = resultSummaryString;
-    }
-
-    public  String getSearchKey() {
-        return searchKey;
-    }
-
-    public  boolean getResultsAvailable() {
-        return resultsAvailable;
-    }
-
-    public  void setLabVessel(LabVessel vessel)
-    {
-        this.labVessel = vessel;
-    }
-
-    public LabVessel getLabVessel()
-    {
-        return this.labVessel;
-    }
-
-    public VesselGeometry getVesselGeometry() {
-        return this.vesselGeometry;
-    }
-
-    public void setVesselGeometry(VesselGeometry vesselGeometry) { this.vesselGeometry = vesselGeometry; }
-
-    public boolean getIsMultiplePositions() {return isMultiplePositions; }
-
-    public String getVesselPositionReason() { return vesselPositionReason;}
-
-    public void setVesselPositionReason(String vesselPositionReason)  { this.vesselPositionReason = vesselPositionReason;  }
-
-    public String getVesselPosition() {
-        return vesselPosition;   }
-
-    public void setVesselPosition(String vesselPosition) {
-        this.vesselPosition = vesselPosition;
-    }
-
-    public AbandonVessel.Reason[] getReasonCodes() { return new AbandonVessel().getReasonList(); }
-
-    public void setResultsAvailable(boolean resultsAvailable) {
-        this.resultsAvailable = resultsAvailable;
-    }
-
     public String getVesselBarcode() {
-        return vesselBarcode;
+        if( rackScanData != null ) {
+            return ("(Rack Scan)");
+        } else {
+            return vesselBarcode;
+        }
+    }
+
+    /**
+     * Control table layout, either a container(row and column headers) or a single vessel
+     */
+    public boolean isTubeLayout(){
+        return isTube;
     }
 
     public void setVesselBarcode(String vesselBarcode) {
         this.vesselBarcode = vesselBarcode;
     }
 
-    public String getVesselLabel() {
-        return vesselLabel;
+    public void setRackScanData(String rackScanData) {
+        this.rackScanData = rackScanData;
     }
 
-    public void setVesselLabel(String vesselLabel) {
-        this.vesselLabel = vesselLabel;
+    public String getRackScanData() {
+        return rackScanData;
     }
 
-    public String getBarcode() {
-        return barcode;
+    public VesselGeometry getVesselGeometry() {
+        return vesselGeometry;
     }
 
-    public void setBarcode(String barcode) {
-        this.barcode = barcode;
+    public void setRedisplayVesselBarcode(String redisplayVesselBarcode) {
+        this.redisplayVesselBarcode = redisplayVesselBarcode;
     }
 
-    public void setRackScanGeometry()
-    {
-        LinkedHashMap<String, String> rackScan = getRackScan();
-        if( rackScan != null && rackScan.size() == 48 ) {
-            setVesselGeometry(RackOfTubes.RackType.Matrix48SlotRack2mL.getVesselGeometry());
-        } else {
-            // Needed for the simulator since it does not provide a default geometry.
-            setVesselGeometry(RackOfTubes.RackType.Matrix96.getVesselGeometry());
+    public void setAbandonActionJson(String abandonActionJson) {
+        this.abandonActionJson = abandonActionJson;
+    }
+
+    public void setAbandonActionReason(
+            AbandonVessel.Reason abandonActionReason) {
+        this.abandonActionReason = abandonActionReason;
+    }
+
+    /**
+     * Generate and return JSON layout map (assume test via isDoLayout() before calling)
+     */
+    public String getLayoutMap(){
+        String layoutMapJson;
+        try {
+            layoutMapJson = LAYOUT_JSON_WRITER.writeValueAsString(layoutMap);
+        } catch (Exception ex ) {
+            log.error(ex);
+            addGlobalValidationError("Failure building layout map: " + ex.getMessage() );
+            return "{}";
         }
+        return layoutMapJson;
     }
 
-    @Override
-    public String getRackScanPageUrl() { return ACTIONBEAN_URL_BINDING; }
-
-    @Override
-    public String getPageTitle() { return PAGE_TITLE; }
-
-    private boolean isRackOfTubes(LabVessel labVessel) {
-        if (labVessel.getType().equals(LabVessel.ContainerType.RACK_OF_TUBES)) {
-            return true;
-        } else {
-            return false;
-        }
+    /**
+     * Control display of vessel layout after search and abandon action functionality
+     */
+    public boolean isDoLayout() {
+        return layoutMap != null;
     }
 
-    private boolean isMatrixTube(LabVessel labVessel) {
-        if (labVessel.getType().equals(LabVessel.ContainerType.TUBE)) {
-            return true;
-        } else {
-            return false;
-        }
+    /**
+     * Is data from a rack scan?
+     */
+    public boolean isLayoutFromRackScan() {
+        return rackScanData != null;
     }
 
-    public void setAbandonReason( String abandonReason ){
-        this.abandonReason = abandonReason;
+    public AbandonVessel.Reason[] getReasonCodes() { return AbandonVessel.Reason.values(); }
+
+    /**
+     * Workhorse method to generate browser container layout when all positions are stored in Mercury
+     * @param positionVesselMap Vessels and positions to present, a tube is represented by pseudo-position _1_1
+     */
+    private void buildLayout( Map<VesselPosition, LabVessel> positionVesselMap ) {
+        buildLayout( positionVesselMap, Collections.EMPTY_MAP );
     }
 
-    public String getAbandonReason() {
+    /**
+     * Workhorse method to generate browser container layout
+     * @param positionVesselMap Vessels and positions to present, a tube is represented by pseudo-position _1_1
+     * @param positionErrorMap Problem cells, typically when a rack scan includes barcodes which aren't stored in Mercury
+     */
+    private void buildLayout( Map<VesselPosition, LabVessel> positionVesselMap
+            , Map<VesselPosition, String> positionErrorMap ) {
 
-        if( labVessel == null ) {
-            return "";
-        }
-
-        Set<AbandonVessel> abandonVessels = labVessel.getAbandonVessels();
-        if( abandonVessels == null || abandonVessels.isEmpty() ) {
-            return "";
-        }
-
-        Map<String,List<String>> reasonToPositionsMap = new HashMap<>();
-
-        // Build reason to position(s) map
-        for ( AbandonVessel abandonVessel : abandonVessels ) {
-            reasonToPositionsMap.put(abandonVessel.getReason().getDisplayName(), new ArrayList<String>());
-        }
-
-        // Add positions to map
-        for ( AbandonVessel abandonVessel : abandonVessels ) {
-            if( abandonVessel.getVesselPosition() != null ) {
-                reasonToPositionsMap.get(abandonVessel.getReason().getDisplayName())
-                        .add(abandonVessel.getVesselPosition().name());
-            }
-        }
-
-        // Return a concatenated list of reasons if there are differences.
-        StringBuilder reasonDisplay = new StringBuilder();
-        if( reasonToPositionsMap.size() == 1 ) {
-            reasonDisplay.append(reasonToPositionsMap.keySet().iterator().next());
-        } else {
-            for (Map.Entry<String, List<String>> reasonEntry : reasonToPositionsMap.entrySet()) {
-                List<String> positions = reasonEntry.getValue();
-                if (!positions.isEmpty()) {
-                    reasonDisplay.append("(")
-                            .append(reasonEntry.getKey())
-                            .append(":");
-                    for (String pos : reasonEntry.getValue()) {
-                        reasonDisplay.append(pos)
-                                .append(",");
-                    }
-                    reasonDisplay.replace(reasonDisplay.length() - 1, reasonDisplay.length(), ")");
+        List<AbandonCell> abandonCells = new ArrayList<>();
+        for( Map.Entry<VesselPosition, LabVessel> mapEntry : positionVesselMap.entrySet()) {
+            VesselPosition vesselPosition = mapEntry.getKey();
+            LabVessel labVessel = mapEntry.getValue();
+            VesselGeometry.RowColumn rowColumn = vesselGeometry.getRowColumnForVesselPosition(vesselPosition);
+            Pair<Integer,Integer> rowAndColumn = rowColumn==null?Pair.of(1,1):Pair.of(rowColumn.getRow(), rowColumn.getColumn() );
+            AbandonCell abandonCell;
+            if( labVessel == null ) {
+                if( positionErrorMap.containsKey(vesselPosition)) {
+                    // Build error cell
+                    abandonCell = new AbandonCell(positionErrorMap.get(vesselPosition), vesselPosition, rowAndColumn.getLeft(), rowAndColumn.getRight() );
+                    // Flag as empty to disable functionality
+                    abandonCell.setEmpty(true);
                 } else {
-                    reasonDisplay.append(reasonEntry.getKey());
+                    // Build empty cell
+                    abandonCell = new AbandonCell(null, vesselPosition, rowAndColumn.getLeft(), rowAndColumn.getRight() );
+                }
+            } else {
+                abandonCell = new AbandonCell( labVessel.getLabel(), vesselPosition, rowAndColumn.getLeft(), rowAndColumn.getRight() );
+                if( !labVessel.getAbandonVessels().isEmpty() ) {
+                    if( labVessel.getContainerRole() == null ) {
+                        abandonCell.setAbandonReason( labVessel.getAbandonVessels().iterator().next().getReason());
+                    } else {
+                        // Parse for position
+                        for( AbandonVessel abandonVessel : labVessel.getAbandonVessels() ) {
+                            if( vesselPosition == abandonVessel.getVesselPosition() ) {
+                                abandonCell.setAbandonReason( abandonVessel.getReason());
+                                break;
+                            }
+                        }
+                    }
                 }
             }
+            abandonCells.add(abandonCell);
+            if( vesselGeometry == VesselGeometry.TUBE ) {
+                layoutMap = new LayoutMap("", abandonCells);
+            } else {
+                layoutMap = new LayoutMap(getVesselBarcode(), abandonCells);
+            }
         }
-
-        return reasonDisplay.toString();
     }
 
-    public String getAbandonDate() {
+    /**
+     * Passed to browser as JSON to generate display layout. </br>
+     * Browser creates JavaScript object to post back as JSON for abandon/unabandon cell(s) functionality
+     */
+    public static class LayoutMap {
+        private String containerBarcode;
+        private List<AbandonCell> abandonCells;
 
-        if( labVessel == null ) {
-            return "";
+        public LayoutMap(){}
+
+        public LayoutMap( String containerBarcode, List<AbandonCell> abandonCells ){
+            this.containerBarcode = containerBarcode;
+            this.abandonCells = abandonCells;
         }
 
-        Set<AbandonVessel> abandonVessels = labVessel.getAbandonVessels();
-        if( abandonVessels == null || abandonVessels.isEmpty() ) {
-            return "";
+        public String getContainerBarcode() {
+            return containerBarcode;
         }
 
-        Map<String,List<String>> dateToPositionsMap = new HashMap<>();
-
-        // Build date to position(s) map
-        for ( AbandonVessel abandonVessel : abandonVessels ) {
-            String dateText = dateFormatter.format( abandonVessel.getAbandonedOn());
-            if( !dateToPositionsMap.containsKey(dateText) ) {
-                dateToPositionsMap.put(dateText, new ArrayList<String>());
-            }
-            if( abandonVessel.getVesselPosition() != null ) {
-                dateToPositionsMap.get(dateText).add(abandonVessel.getVesselPosition().name());
-            }
+        public void setContainerBarcode(String containerBarcode) {
+            this.containerBarcode = containerBarcode;
         }
 
-        // Return a concatenated list of dates if there are differences.
-        StringBuilder dateDisplay = new StringBuilder();
-        if( dateToPositionsMap.size() == 1 ) {
-            dateDisplay.append(dateToPositionsMap.keySet().iterator().next());
-        } else {
-            for (Map.Entry<String, List<String>> dateEntry : dateToPositionsMap.entrySet()) {
-                List<String> positions = dateEntry.getValue();
-                if (!positions.isEmpty()) {
-                    dateDisplay.append("(")
-                            .append(dateEntry.getKey())
-                            .append(":");
-                    for (String pos : dateEntry.getValue()) {
-                        dateDisplay.append(pos)
-                                .append(",");
-                    }
-                    dateDisplay.replace(dateDisplay.length() - 1, dateDisplay.length(), ")");
-                } else {
-                    dateDisplay.append(dateEntry.getKey());
-                }
-            }
+        public List<AbandonCell> getAbandonCells() {
+            return abandonCells;
         }
 
-        return dateDisplay.toString();
+        public void setAbandonCells(
+                List<AbandonCell> abandonCells) {
+            this.abandonCells = abandonCells;
+        }
     }
 
+    /**
+     * A representation of a cell's contents to pass back and forth from browser as JSON
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class AbandonCell {
+        // Only used if no mapPositionToVessel entries (e.g. StaticPlate)
+        private String barcode;
+        private boolean isEmpty;
+        private VesselPosition vesselPosition;
+        private int row;
+        private int column;
+        private AbandonVessel.Reason abandonReason;
+
+        public AbandonCell(){}
+
+        public AbandonCell( String barcode, VesselPosition vesselPosition, int row, int column ){
+            this.barcode = barcode;
+            this.vesselPosition = vesselPosition;
+            this.row = row;
+            this.column = column;
+            if( barcode == null || barcode.length() == 0 ) {
+                this.isEmpty = true;
+                this.barcode = "";
+            } else {
+                this.isEmpty = false;
+            }
+        }
+
+        public VesselPosition getVesselPosition() {
+            return vesselPosition;
+        }
+
+        public void setVesselPosition(VesselPosition vesselPosition) {
+            this.vesselPosition = vesselPosition;
+        }
+
+        public int getRow() {
+            return row;
+        }
+
+        public void setRow(int row) {
+            this.row = row;
+        }
+
+        public int getColumn() {
+            return column;
+        }
+
+        public void setColumn(int column) {
+            this.column = column;
+        }
+
+        public String getBarcode() {
+            return barcode;
+        }
+
+        public void setBarcode(String barcode) {
+            this.barcode = barcode;
+        }
+
+        public boolean isEmpty() {
+            return isEmpty;
+        }
+
+        public void setEmpty(boolean empty) {
+            isEmpty = empty;
+        }
+
+        public boolean isAbandoned() {
+            return abandonReason != null;
+        }
+
+        public AbandonVessel.Reason getAbandonReason() {
+            return abandonReason;
+        }
+
+        public void setAbandonReason(AbandonVessel.Reason abandonReason) {
+            this.abandonReason = abandonReason;
+        }
+
+        public String getAbandonReasonDisplay() {
+            return abandonReason==null?"":abandonReason.getDisplayName();
+        }
+
+    }
 }
