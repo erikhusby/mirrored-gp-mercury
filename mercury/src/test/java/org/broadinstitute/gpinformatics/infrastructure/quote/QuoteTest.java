@@ -144,8 +144,6 @@ public class QuoteTest {
 
         boolean quoteEligibility = true;
 
-        final FundingLevel firstRelevantFundingLevel = eligibleQuote.getFirstRelevantFundingLevel();
-        assertThat(firstRelevantFundingLevel, is(nullValue()));
         try {
             quoteEligibility = eligibleQuote.isEligibleForSAP();
             Assert.assertFalse(quoteEligibility);
