@@ -986,20 +986,26 @@ public class LabBatchEjb {
     /**
      * Creates FCTs from a collection of designation dtos.
      *
-     * @param designationDtos DTOs that represent designations, one per loading tube. If a dto is split it
-     *                        will be added to this list. Dto status is updated for those put in an FCT.
+     * @param uiDtos DTOs that represent designations, one per loading tube. If a dto is split it
+     *               will be added to this list. Dto status is updated for those put in an FCT.
      * @param userName
      * @param messageReporter for action bean message display.
      * @return Pair of FCT batch name and JIRA url.
      */
-    public List<MutablePair<String, String>> makeFcts(final List<DesignationDto> designationDtos, String userName,
+    public List<MutablePair<String, String>> makeFcts(final List<DesignationDto> uiDtos, String userName,
             MessageReporter messageReporter) {
-
+        // Only uses the selected dtos.
+        final List<DesignationDto> designationDtos = new ArrayList<>();
+        for (DesignationDto designationDto : uiDtos) {
+            if (designationDto.isSelected()) {
+                designationDtos.add(designationDto);
+            }
+        }
         // Validates the designations. Any invalid one will stop all FCT creation.
         boolean hasError = false;
         for (DesignationDto designationDto : designationDtos) {
             designationDto.setGroupByRegulatoryDesignation(!isMixedFlowcellOk(designationDto));
-            if (designationDto.isSelected() && !isValidDto(designationDto, messageReporter)) {
+            if (!isValidDto(designationDto, messageReporter)) {
                 hasError = true;
             }
         }
@@ -1058,6 +1064,7 @@ public class LabBatchEjb {
         for (DesignationDto dtoSplit : fctReturn.getRight()) {
             dtoSplit.setStatus(FlowcellDesignation.Status.QUEUED);
             designationDtos.add(dtoSplit);
+            uiDtos.add(dtoSplit);
             String groupDescription = dtoGroupDescription(dtoSplit);
             messageReporter.addMessage(MessageFormat.format(SPLIT_DESIGNATION_MESSAGE, 1, groupDescription));
         }
@@ -1164,7 +1171,7 @@ public class LabBatchEjb {
      * A given lane only contains material from one designation (one loading tube). But a designation may
      * span multiple lanes and multiple flowcells, depending on the designation lane count.
      *
-     * @param dtos the FctDtos, one per loading tube, already sorted in order of priority and size.
+     * @param dtos the selected FctDtos, one per loading tube, already sorted in order of priority and size.
      * @param loadingTubes maps loading tube barcode to loading tube.
      * @param designations maps  loading tube barcode to FlowcellDesignation.
      * @param createFctFlowcellType  the type of flowcells to create. Expect this to be null for
