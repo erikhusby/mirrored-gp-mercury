@@ -157,10 +157,10 @@ public class SubmissionDtoFetcherTest {
 
         String rpId = productOrder.getResearchProject().getBusinessKey();
 
-        Aggregation testAggregation1 =
-            getTestAggregation(rpId, sample1.getSampleData().getCollaboratorsSampleName(), SubmissionLibraryDescriptor.WHOLE_EXOME, SubmissionBioSampleBean.GCP);
-        Aggregation  testAggregation2 =
-            getTestAggregation(rpId, sample2.getSampleData().getCollaboratorsSampleName(), SubmissionLibraryDescriptor.RNA_SEQ, SubmissionBioSampleBean.ON_PREM);
+        Aggregation testAggregation1 = getTestAggregation(rpId, sample1.getSampleData().getCollaboratorsSampleName(),
+            SubmissionLibraryDescriptor.WHOLE_EXOME, SubmissionBioSampleBean.GCP);
+        Aggregation testAggregation2 = getTestAggregation(rpId, sample2.getSampleData().getCollaboratorsSampleName(),
+            SubmissionLibraryDescriptor.RNA_SEQ, SubmissionBioSampleBean.ON_PREM);
 
         aggregations = Arrays.asList(testAggregation1, testAggregation2);
 
