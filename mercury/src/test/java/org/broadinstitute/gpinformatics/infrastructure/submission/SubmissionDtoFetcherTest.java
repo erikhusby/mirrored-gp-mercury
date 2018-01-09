@@ -172,9 +172,8 @@ public class SubmissionDtoFetcherTest {
             submissionDtoFetcher.fetchAggregationDtos(productOrder.getSamples());
 
         assertThat(tupleMap.size(), is(2));
-        verifyTuple(tupleMap, testAggregation1, productOrder.getSamples().get(0));
-        assertThat(tupleMap.get(testAggregation1.getTuple()), is(testAggregation1));
-        assertThat(tupleMap.get(testAggregation2.getTuple()), is(testAggregation2));
+        verifyTuple(tupleMap, testAggregation1, sample1);
+        verifyTuple(tupleMap, testAggregation2, sample2);
     }
 
     private void verifyTuple(Map<SubmissionTuple, Aggregation> tupleMap, Aggregation aggregation,
