@@ -214,7 +214,7 @@ public class BillingAdaptor implements Serializable {
                 } catch (QuoteServerException|QuoteNotFoundException|InvalidProductException|SAPInterfaceException e) {
                     BillingEjb.BillingResult result = new BillingEjb.BillingResult(itemForPriceUpdate);
 
-                    final String errorMessage = "Unable to Update pricing in SAP for " +itemForPriceUpdate.getProductOrder().getBusinessKey()+": "+e.getMessage();
+                    final String errorMessage = "Failed Price check for " +itemForPriceUpdate.getProductOrder().getBusinessKey()+": "+e.getMessage();
                     itemForPriceUpdate.setBillingMessages(errorMessage);
                     result.setErrorMessage(errorMessage);
                     errorsInBilling = true;
@@ -226,7 +226,7 @@ public class BillingAdaptor implements Serializable {
             }
 
             if(!results.isEmpty()) {
-                throw new BillingException("Pricing Update to SAP Failed.  Unable to complete Billing Session at this time");
+                throw new BillingException("Pricing Validation Failed.  Unable to complete Billing Session at this time");
             }
 
             HashMultimap<String, String> quoteItemsByQuote = HashMultimap.create();

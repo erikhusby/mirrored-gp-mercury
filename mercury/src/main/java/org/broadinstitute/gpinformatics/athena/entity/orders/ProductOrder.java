@@ -249,6 +249,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Transient
     private Set<ProductOrderPriceAdjustment> quotePriceMatchAdjustments = new HashSet<>();
 
+    @Column(name = "PRIOR_TOSAP1_5")
     private Boolean priorToSAP1_5 = false;
 
     @Enumerated(EnumType.STRING)

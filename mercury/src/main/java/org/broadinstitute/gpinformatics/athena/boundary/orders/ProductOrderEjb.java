@@ -497,6 +497,7 @@ public class ProductOrderEjb {
 
             sendSapOrderShortCloseRequest(body);
         }
+        orderToPublish.setPriorToSAP1_5(false);
         messageCollection.addInfo("Order "+orderToPublish.getJiraTicketKey() +
                                   " has been successfully created in SAP");
 
