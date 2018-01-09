@@ -13,6 +13,7 @@ import static org.hamcrest.Matchers.equalToIgnoringCase;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class QuoteTest {
@@ -76,6 +77,9 @@ public class QuoteTest {
         Quote gp87Uquote = stubbedQuoteService.getQuoteByAlphaId("GP87U");
 
         boolean quoteEligibility = true;
+
+        final FundingLevel firstRelevantFundingLevel = gp87Uquote.getFirstRelevantFundingLevel();
+        assertThat(firstRelevantFundingLevel, is(nullValue()));
 
         try {
             quoteEligibility = gp87Uquote.isEligibleForSAP();

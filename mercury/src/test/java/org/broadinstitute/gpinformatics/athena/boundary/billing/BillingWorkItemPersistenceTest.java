@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
+import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
@@ -81,6 +82,9 @@ public class BillingWorkItemPersistenceTest extends AbstractContainerTest {
     @Inject
     private SAPProductPriceCache productPriceCache;
 
+    @Inject
+    private SAPAccessControlEjb accessControlEjb;
+
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWarWithAlternatives(AcceptsAllWorkRegistrationsQuoteServiceStub.class);
@@ -128,7 +132,7 @@ public class BillingWorkItemPersistenceTest extends AbstractContainerTest {
         sapService = SapIntegrationServiceProducer.stubInstance();
 
         billingAdaptor = new BillingAdaptor(billingEjb, billingSessionDao, tempPriceListCache, quoteService,
-                billingSessionAccessEjb, sapService, productPriceCache);
+                billingSessionAccessEjb, sapService, productPriceCache, accessControlEjb);
         billingAdaptor.setProductOrderEjb(productOrderEjb);
 
         BillingSession billingSession = new BillingSession(-1L, ledgerEntries);

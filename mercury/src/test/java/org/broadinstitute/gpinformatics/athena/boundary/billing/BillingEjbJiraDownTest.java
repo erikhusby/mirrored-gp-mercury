@@ -2,10 +2,12 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
+import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
@@ -77,6 +79,9 @@ public class BillingEjbJiraDownTest extends Arquillian {
 
     private SAPProductPriceCache productPriceCache;
 
+    @Inject
+    private SAPAccessControlEjb accessControlEjb;
+
     @Deployment
     public static WebArchive buildMercuryDeployment() {
         return DeploymentBuilder.buildMercuryWarWithAlternatives(AcceptsAllWorkRegistrationsQuoteServiceStub.class, AlwaysThrowsRuntimeExceptionsJiraStub.class);
@@ -112,7 +117,7 @@ public class BillingEjbJiraDownTest extends Arquillian {
         sapService = SapIntegrationServiceProducer.stubInstance();
         productPriceCache = Mockito.mock(SAPProductPriceCache.class);
         billingAdaptor = new BillingAdaptor(billingEjb, billingSessionDao, tempPriceListCache, quoteService,
-                billingSessionAccessEjb, sapService, productPriceCache);
+                billingSessionAccessEjb, sapService, productPriceCache, accessControlEjb);
         Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.any(
                 SapIntegrationClientImpl.SAPCompanyConfiguration.class))).thenReturn(new SAPMaterial("Test", "50", Collections.<Condition, BigDecimal>emptyMap(), Collections.singletonMap(
                 DeliveryCondition.LATE_DELIVERY_DISCOUNT, new BigDecimal("200.00"))));

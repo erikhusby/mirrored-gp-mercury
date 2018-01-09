@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.sap;
 
+import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOnPriceAdjustment;
@@ -133,6 +135,9 @@ public class SapIntegrationServiceImplDBFreeTest {
 
         productPriceCache = new SAPProductPriceCache(integrationService);
         integrationService.setProductPriceCache(productPriceCache);
+        final SAPAccessControlEjb mockAccessController = Mockito.mock(SAPAccessControlEjb.class);
+        Mockito.when(mockAccessController.getCurrentControlDefinitions()).thenReturn(new SAPAccessControl());
+        productPriceCache.setAccessControlEjb(mockAccessController);
     }
 
 
