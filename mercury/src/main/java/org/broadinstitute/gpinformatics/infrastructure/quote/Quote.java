@@ -231,7 +231,8 @@ public class Quote {
 
         if (quoteFunding != null && CollectionUtils.isNotEmpty(quoteFunding.getFundingLevel())) {
             for(FundingLevel level : quoteFunding.getFundingLevel()) {
-                if (singleLevel == null) {
+//                if (singleLevel == null) {
+                if (singleLevel == null && CollectionUtils.isNotEmpty(level.getFunding())) {
                     singleLevel = level;
                 } else {
                     return null;

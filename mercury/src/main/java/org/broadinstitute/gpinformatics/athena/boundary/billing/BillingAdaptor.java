@@ -90,7 +90,8 @@ public class BillingAdaptor implements Serializable {
     public BillingAdaptor(BillingEjb billingEjb, BillingSessionDao billingSessionDao, PriceListCache priceListCache,
                           QuoteService quoteService, BillingSessionAccessEjb billingSessionAccessEjb,
                           SapIntegrationService sapService,
-                          SAPProductPriceCache productPriceCache) {
+                          SAPProductPriceCache productPriceCache,
+                          SAPAccessControlEjb sapAccessControlEjb) {
         this.billingEjb = billingEjb;
         this.billingSessionDao = billingSessionDao;
         this.priceListCache = priceListCache;
@@ -98,6 +99,7 @@ public class BillingAdaptor implements Serializable {
         this.billingSessionAccessEjb = billingSessionAccessEjb;
         this.sapService = sapService;
         this.productPriceCache = productPriceCache;
+        this.sapAccessControlEjb = sapAccessControlEjb;
     }
 
     public BillingAdaptor() {
@@ -573,9 +575,4 @@ public class BillingAdaptor implements Serializable {
         return sapAccessControlEjb;
     }
 
-    @Inject
-    public void setSapAccessControlEjb(
-            SAPAccessControlEjb sapAccessControlEjb) {
-        this.sapAccessControlEjb = sapAccessControlEjb;
-    }
 }
