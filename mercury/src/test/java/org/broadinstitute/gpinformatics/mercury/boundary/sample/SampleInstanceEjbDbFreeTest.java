@@ -59,6 +59,7 @@ import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.IceEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
@@ -576,7 +577,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
         // Runs the workflow: PDO creation, LCSET creation, bucketing, pico plating, shearing, LC,
         // HybSelect, QTP, sequencing.
-        Workflow workflow = Workflow.AGILENT_EXOME_EXPRESS;
+        Workflow workflow = Workflow.ICE_EXOME_EXPRESS;
         ProductOrder productOrder = ProductOrderTestFactory.createDummyProductOrder(0, "PDO-TEST123");
         Assert.assertTrue(entities.size() <= NUM_POSITIONS_IN_RACK,
                 entities.size() + " samples is more than a single rack " + NUM_POSITIONS_IN_RACK);
@@ -613,21 +614,15 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                 exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
                 exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(),
                 exomeExpressShearingEntityBuilder.getShearingPlate(),
-                lcsetSuffix,
-                productOrder.getSampleCount());
+                lcsetSuffix, mapBarcodeToTube.size());
         Assert.assertFalse(libraryConstructionEntityBuilder.getPondRegTubeBarcodes().isEmpty());
         Assert.assertEquals(libraryConstructionEntityBuilder.getPondRegRack().getContainerRole()
                 .getSampleInstancesAtPositionV2(VesselPosition.A01).size(), entities.size());
+        IceEntityBuilder iceEntityBuilder = runIceProcess(
+                Collections.singletonList(libraryConstructionEntityBuilder.getPondRegRack()), "1");
 
-        HybridSelectionEntityBuilder hybridSelectionEntityBuilder =
-                runHybridSelectionProcess(libraryConstructionEntityBuilder.getPondRegRack(),
-                        libraryConstructionEntityBuilder.getPondRegRackBarcode(),
-                        libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
-
-        QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
-                hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(),
-                "1");
+        QtpEntityBuilder qtpEntityBuilder = runQtpProcess(iceEntityBuilder.getCatchEnrichRack(),
+                iceEntityBuilder.getCatchEnrichBarcodes(), iceEntityBuilder.getMapBarcodeToCatchEnrichTubes(), "1");
 
         LabVessel denatureSource = qtpEntityBuilder.getDenatureRack().getContainerRole()
                 .getVesselAtPosition(VesselPosition.A01);
@@ -669,11 +664,6 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         for (SampleInstanceEntity entity : entities) {
             Assert.assertTrue(list.contains(entity.getMercurySample().getSampleKey()));
         }
-    }
-
-    /** Returns the list element or null if the list or element doesn't exist */
-    private <T> T get(List<T> list, int index) {
-        return (CollectionUtils.isNotEmpty(list) && list.size() > index) ? list.get(index) : null;
     }
 
     private String select(int idx, String... params) {

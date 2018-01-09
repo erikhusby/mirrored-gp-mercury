@@ -59,7 +59,7 @@ public class LibraryConstructionEntityBuilder {
     private String pondNormRackBarcode;
     private List<String> pondNormTubeBarcodes;
     private TubeFormation pondNormRack;
-    private int numSamples;
+    private int numTubes;
     private String testPrefix;
     private Indexing indexing;
     private LibraryConstructionJaxbBuilder.PondType pondType;
@@ -71,15 +71,15 @@ public class LibraryConstructionEntityBuilder {
 
     public LibraryConstructionEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                                             LabEventFactory labEventFactory, LabEventHandler labEventHandler, StaticPlate shearingCleanupPlate,
-                                            String shearCleanPlateBarcode, StaticPlate shearingPlate, int numSamples, String testPrefix,
+                                            String shearCleanPlateBarcode, StaticPlate shearingPlate, int numTubes, String testPrefix,
                                             Indexing indexing, LibraryConstructionJaxbBuilder.PondType pondType) {
         this(bettaLimsMessageTestFactory, labEventFactory, labEventHandler, shearingCleanupPlate, shearCleanPlateBarcode,
-                shearingPlate, numSamples, testPrefix, indexing, pondType, Umi.SINGLE);
+                shearingPlate, numTubes, testPrefix, indexing, pondType, Umi.SINGLE);
     }
 
     public LibraryConstructionEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
             LabEventFactory labEventFactory, LabEventHandler labEventHandler, StaticPlate shearingCleanupPlate,
-            String shearCleanPlateBarcode, StaticPlate shearingPlate, int numSamples, String testPrefix,
+            String shearCleanPlateBarcode, StaticPlate shearingPlate, int numTubes, String testPrefix,
             Indexing indexing, LibraryConstructionJaxbBuilder.PondType pondType, Umi umi) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.labEventFactory = labEventFactory;
@@ -87,7 +87,7 @@ public class LibraryConstructionEntityBuilder {
         this.shearingCleanupPlate = shearingCleanupPlate;
         this.shearCleanPlateBarcode = shearCleanPlateBarcode;
         this.shearingPlate = shearingPlate;
-        this.numSamples = numSamples;
+        this.numTubes = numTubes;
         this.testPrefix = testPrefix;
         this.indexing = indexing;
         this.pondType = pondType;
@@ -129,7 +129,7 @@ public class LibraryConstructionEntityBuilder {
     public LibraryConstructionEntityBuilder invoke() {
         final LibraryConstructionJaxbBuilder libraryConstructionJaxbBuilder = new LibraryConstructionJaxbBuilder(
                 bettaLimsMessageTestFactory, testPrefix, shearCleanPlateBarcode, "IndexPlateP7", "IndexPlateP5",
-                numSamples, LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY,
+                numTubes, LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY,
                 Arrays.asList(Triple.of("KAPA Reagent Box", "0009753252", 1)),
                 Arrays.asList(Triple.of("PEG", "0009753352", 2), Triple.of("70% Ethanol", "LCEtohTest", 3),
                         Triple.of("EB", "0009753452", 4), Triple.of("SPRI", "LCSpriTest", 5)),
