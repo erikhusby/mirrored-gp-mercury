@@ -686,13 +686,32 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public void updateAddOnProducts(List<Product> addOnList) {
+
+        //make the existing Addons Accessible in a map for later comparison
+        Map<Product, ProductOrderAddOn> existingAddonMap = new HashMap<>();
+        for (ProductOrderAddOn addOn : addOns) {
+            existingAddonMap.put(addOn.getAddOn(), addOn);
+        }
+
         addOns.clear();
         for (Product addOn : addOnList) {
-            final ProductOrderAddOn pdoAddOn = new ProductOrderAddOn(addOn, this);
-            if (addOn.getSapMaterial() != null && (addOn.isClinicalProduct() || addOn.isExternalOnlyProduct()) ) {
-                final ProductOrderAddOnPriceAdjustment customPriceAdjustment = new ProductOrderAddOnPriceAdjustment();
-                customPriceAdjustment.setAdjustmentValue(new BigDecimal(addOn.getSapMaterial().getBasePrice()));
-                pdoAddOn.setCustomPriceAdjustment(customPriceAdjustment);
+            final ProductOrderAddOn pdoAddOn ;
+            if(existingAddonMap.keySet().contains(addOn)) {
+                // Keep the old Add on instead of just creating a new one
+                pdoAddOn = existingAddonMap.get(addOn);
+            } else {
+
+                // Create a new addon for any potential add ons which are not already existing
+                pdoAddOn = new ProductOrderAddOn(addOn, this);
+
+                // For SAP Company code 2000 orders, create a custom price adjustment to lock in the price at the time
+                // of the order
+                if (addOn.getSapMaterial() != null && (addOn.isClinicalProduct() || addOn.isExternalOnlyProduct())) {
+                    final ProductOrderAddOnPriceAdjustment customPriceAdjustment =
+                            new ProductOrderAddOnPriceAdjustment();
+                    customPriceAdjustment.setAdjustmentValue(new BigDecimal(addOn.getSapMaterial().getBasePrice()));
+                    pdoAddOn.setCustomPriceAdjustment(customPriceAdjustment);
+                }
             }
             addOns.add(pdoAddOn);
         }
