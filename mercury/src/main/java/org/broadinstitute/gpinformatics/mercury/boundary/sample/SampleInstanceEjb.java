@@ -204,13 +204,13 @@ public class SampleInstanceEjb {
             int rank;
             List<String> messages = new ArrayList<>();
             try {
-                messages.addAll(PoiSpreadsheetParser.processSingleWorksheet(
+                messages.addAll(PoiSpreadsheetParser.singleWorksheetHeaderErrors(
                         new ByteArrayInputStream(inputStreamBytes), processor));
                 // Use warnings about extraneous headers in case multiple processors find all of the required headers.
+                rank = processor.getMessages().size() * 100 + processor.getWarnings().size();
                 if (processor.getMessages().isEmpty()) {
                     messages.addAll(processor.getWarnings());
                 }
-                rank = processor.getMessages().size() * 100 + processor.getWarnings().size();
             } catch (ValidationException e) {
                 messages.addAll(e.getValidationMessages());
                 rank = e.getValidationMessages().size() * 100 + processor.getWarnings().size();
@@ -397,7 +397,7 @@ public class SampleInstanceEjb {
                         if (!rootSampleName.equals(expected)) {
                             messages.addError(String.format(CONFLICT, rowIndex + rowOffset,
                                     VesselPooledTubesProcessor.Headers.ROOT_SAMPLE_ID.getText(),
-                                    rootSampleExists, expected, " or blank", ""));
+                                    rootSampleName, expected, " or blank", ""));
                         }
                     }
                 }

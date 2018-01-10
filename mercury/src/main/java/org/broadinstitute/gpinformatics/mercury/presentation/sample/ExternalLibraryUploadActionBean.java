@@ -43,6 +43,7 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
         try {
             MessageCollection messageCollection = new MessageCollection();
             sampleInstanceEjb.doExternalUpload(samplesSpreadsheet.getInputStream(), overWriteFlag, messageCollection);
+            addMessages(messageCollection);
         } catch (InvalidFormatException | IOException | ValidationException e) {
             addValidationError("samplesSpreadsheet", e.getMessage());
         }
