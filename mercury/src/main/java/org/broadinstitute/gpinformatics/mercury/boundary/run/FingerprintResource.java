@@ -4,14 +4,16 @@ import clover.org.apache.commons.lang3.tuple.ImmutablePair;
 import clover.org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.SnpListDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.Fingerprint;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FpGenotype;
+import org.broadinstitute.gpinformatics.mercury.entity.run.Snp;
+import org.broadinstitute.gpinformatics.mercury.entity.run.SnpList;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.jetbrains.annotations.NotNull;
-import picard.fingerprint.FingerprintChecker;
-import picard.fingerprint.MatchResults;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -24,8 +26,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,11 +41,13 @@ import java.util.regex.Pattern;
 @RequestScoped
 public class FingerprintResource {
 
-    private static final int CONFIDENCE_WIDTH = 5;
-    private static final Pattern EVENT_TYPE_PATTERN = Pattern.compile("\\d{1,2}\\.\\d{1,2}|100.0");
+    private static final Pattern CONFIDENCE_PATTERN = Pattern.compile("\\d{1,2}\\.\\d{1,2}|100.0");
 
     @Inject
     private MercurySampleDao mercurySampleDao;
+
+    @Inject
+    private SnpListDao snpListDao;
 
     @GET
     @Path("/query")
@@ -65,6 +69,7 @@ public class FingerprintResource {
         return new RsIdsBean(rsIds);
     }
 
+    // todo jmt move to database
     private static final String[] rsIds = {
             "rs10037858",
             "rs532905",
@@ -163,13 +168,6 @@ public class FingerprintResource {
             "rs2108978",
             "rs753307"
     };
-    private static final Map<String, Integer> mapRsIdToIndex = new LinkedHashMap<>();
-
-    static {
-        for (int i = 0; i < rsIds.length; i++) {
-            mapRsIdToIndex.put(rsIds[i], i);
-        }
-    }
 
     @NotNull
     @DaoFree
@@ -198,6 +196,7 @@ public class FingerprintResource {
                         for (Fingerprint fingerprint : fpCriteria.getFingerprints()) {
                             fingerprintEntities.add(new ImmutablePair<>(stringMercurySampleEntry.getKey(), fingerprint));
                         }
+                        // todo jmt call BSP
                     } else {
                         throw new ResourceException("Expected 1 root sample for " + stringMercurySampleEntry.getKey() +
                                 ", found " + rootSample.getRootSamples().size(), Response.Status.BAD_REQUEST);
@@ -216,14 +215,16 @@ public class FingerprintResource {
         for (Pair<String, Fingerprint> stringFingerprintPair : fingerprintEntities) {
             List<FingerprintCallsBean> calls = new ArrayList<>();
             Fingerprint fingerprint = stringFingerprintPair.getRight();
-            for (int i = 0; i < rsIds.length; i++) {
-                calls.add(new FingerprintCallsBean(rsIds[i], fingerprint.getGenotypes().substring(i * 2, i * 2 + 1),
-                        fingerprint.getCallConfidences().substring(i * CONFIDENCE_WIDTH, i * CONFIDENCE_WIDTH + CONFIDENCE_WIDTH)));
+            for (FpGenotype fpGenotype : fingerprint.getFpGenotypesOrdered()) {
+                calls.add(new FingerprintCallsBean(fpGenotype.getSnp().getRsId(), fpGenotype.getGenotype(),
+                        fpGenotype.getCallConfidence().toString()));
             }
+
             fingerprints.add(new FingerprintBean(stringFingerprintPair.getLeft(),
                     fingerprint.getDisposition().getAbbreviation(), fingerprint.getMercurySample().getSampleKey(),
                     fingerprint.getPlatform().name(), fingerprint.getGenomeBuild().name(),
-                    fingerprint.getDateGenerated(), fingerprint.getGender().getAbbreviation(), calls));
+                    fingerprint.getSnpList().getName(), fingerprint.getDateGenerated(),
+                    fingerprint.getGender().getAbbreviation(), calls));
         }
 
         return new FingerprintsBean(fingerprints);
@@ -232,6 +233,7 @@ public class FingerprintResource {
     @POST
     @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public String post(FingerprintBean fingerprintBean) {
+
         String sampleKey = "SM-" + fingerprintBean.getAliquotLsid().substring(fingerprintBean.getAliquotLsid().
                 lastIndexOf(':') + 1);
         MercurySample mercurySample = mercurySampleDao.findBySampleKey(sampleKey);
@@ -240,38 +242,33 @@ public class FingerprintResource {
             mercurySampleDao.persist(mercurySample);
         }
 
-        String[] genotypes = new String[rsIds.length];
-        String[] callConfidences = new String[rsIds.length];
-        for (FingerprintCallsBean fingerprintCallsBean : fingerprintBean.getCalls()) {
-            Integer index = mapRsIdToIndex.get(fingerprintCallsBean.getRsid());
-            genotypes[index] = fingerprintCallsBean.getGenotype();
+        SnpList snpList = snpListDao.findByName(fingerprintBean.getSnpListName());
 
-            String callConfidence = fingerprintCallsBean.getCallConfidence();
-            if (!EVENT_TYPE_PATTERN.matcher(callConfidence).matches()) {
-                throw new ResourceException(callConfidence + " is incorrect format", Response.Status.BAD_REQUEST);
-            }
-            callConfidences[index] = callConfidence;
-        }
-        StringBuilder genotypesBuilder = new StringBuilder();
-        StringBuilder callConfidencesBuilder = new StringBuilder();
-        for (int i = 0; i < rsIds.length; i++) {
-            genotypesBuilder.append(genotypes[i]);
-            callConfidencesBuilder.append(callConfidences[i]);
-        }
-
-        // todo jmt check concordance
-        FingerprintChecker fingerprintChecker = new FingerprintChecker();
-        MatchResults matchResults = fingerprintChecker.calculateMatchResults(new picard.fingerprint.Fingerprint(), );
-        matchResults.getLOD();
-        new Fingerprint(mercurySample,
+        Fingerprint fingerprint = new Fingerprint(mercurySample,
                 Fingerprint.Disposition.byAbbreviation(fingerprintBean.getDisposition()),
                 Fingerprint.Platform.valueOf(fingerprintBean.getPlatform()),
                 Fingerprint.GenomeBuild.valueOf(fingerprintBean.getGenomeBuild()),
                 fingerprintBean.getDateGenerated(),
-                genotypesBuilder.toString(),
-                callConfidencesBuilder.toString(),
-                Fingerprint.Gender.byAbbreviation(fingerprintBean.getGender()),
+                snpList, Fingerprint.Gender.byAbbreviation(fingerprintBean.getGender()),
                 true);
+        for (FingerprintCallsBean fingerprintCallsBean : fingerprintBean.getCalls()) {
+            String callConfidence = fingerprintCallsBean.getCallConfidence();
+            if (!CONFIDENCE_PATTERN.matcher(callConfidence).matches()) {
+                throw new ResourceException(callConfidence + " is incorrect format", Response.Status.BAD_REQUEST);
+            }
+            Snp snp = snpList.getMapRsIdToSnp().get(fingerprintCallsBean.getRsid());
+            if (snp == null) {
+                throw new ResourceException("Snp not found: " + fingerprintCallsBean.getRsid(),
+                        Response.Status.BAD_REQUEST);
+            }
+            fingerprint.addFpGenotype(new FpGenotype(fingerprint, snp, fingerprintCallsBean.getGenotype(),
+                    new BigDecimal(callConfidence)));
+        }
+
+        // todo jmt check concordance
+//        FingerprintChecker fingerprintChecker = new FingerprintChecker();
+//        MatchResults matchResults = fingerprintChecker.calculateMatchResults(new picard.fingerprint.Fingerprint(), );
+//        matchResults.getLOD();
         mercurySampleDao.flush();
         return "Stored fingerprint";
     }

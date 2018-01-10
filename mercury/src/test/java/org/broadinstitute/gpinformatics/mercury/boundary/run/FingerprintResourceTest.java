@@ -59,7 +59,7 @@ public class FingerprintResourceTest extends Arquillian {
 
         String aliquotLsid = "org.broad:" + System.currentTimeMillis();
         FingerprintBean fingerprintBean = new FingerprintBean("", "P", aliquotLsid,
-                "FLUIDIGM", "HG19", new Date(), "M", calls);
+                "FLUIDIGM", "HG19", "FluidigmFPv5", new Date(), "M", calls);
         String response = client.resource(postUrl).type(MediaType.APPLICATION_JSON_TYPE).
                 accept(MediaType.APPLICATION_JSON).entity(fingerprintBean).post(String.class);
 

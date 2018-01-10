@@ -11,11 +11,16 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
-import javax.persistence.OrderColumn;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Stores a set of Single Nucleotide Polymorphisms that uniquely identify a sample.  Fingerprints can be generated
@@ -109,24 +114,12 @@ public class Fingerprint {
     private GenomeBuild genomeBuild;
 
     private Date dateGenerated;
-    // reference to list of RSIDs?
 
-    // todo jmt add Entity called Genotype(?) with reference to SNP (enum or entity?), call, confidence
-    private String genotypes;
+    @ManyToOne
+    private SnpList snpList;
 
-    /*
-    AssayList
-    AssayListAssay
-    Assay or SNP?
-    Fingerprint - AssayList
-    Genotype - Assay
-     */
-    // todo jmt, order here, or derive order from list of FP SNPs?  List of SNPs = enum or database?
     @OneToMany(mappedBy = "fingerprint")
-    @OrderColumn()
-    private List<FpGenotype> fpGenotypes;
-
-    private String callConfidences;
+    private Set<FpGenotype> fpGenotypes = new HashSet<>();
 
     @Enumerated(EnumType.STRING)
     private Gender gender;
@@ -140,18 +133,46 @@ public class Fingerprint {
     }
 
     public Fingerprint(MercurySample mercurySample, Disposition disposition, Platform platform, GenomeBuild genomeBuild,
-            Date dateGenerated, String genotypes, String callConfidences, Gender gender, Boolean match) {
+            Date dateGenerated, SnpList snpList, Gender gender, Boolean match) {
         this.mercurySample = mercurySample;
+        this.snpList = snpList;
         mercurySample.getFingerprints().add(this);
         this.disposition = disposition;
         this.platform = platform;
         this.genomeBuild = genomeBuild;
         this.dateGenerated = dateGenerated;
-        this.genotypes = genotypes;
-        this.callConfidences = callConfidences;
         this.gender = gender;
         this.match = match;
     }
+
+    @Transient
+    private
+    Map<String, FpGenotype> mapRsIdToFpGenotype;
+
+    public Map<String, FpGenotype> getMapRsIdToFpGenotype() {
+        if (mapRsIdToFpGenotype == null) {
+            mapRsIdToFpGenotype = new HashMap<>();
+            for (FpGenotype fpGenotype : fpGenotypes) {
+                mapRsIdToFpGenotype.put(fpGenotype.getSnp().getRsId(), fpGenotype);
+            }
+        }
+
+        return mapRsIdToFpGenotype;
+    }
+
+    public List<FpGenotype> getFpGenotypesOrdered() {
+        List<FpGenotype> fpGenotypesOrdered = new ArrayList<>();
+        for (Snp snp : snpList.getSnps()) {
+            fpGenotypesOrdered.add(getMapRsIdToFpGenotype().get(snp.getRsId()));
+        }
+
+        return fpGenotypesOrdered;
+    }
+
+    public void addFpGenotype(FpGenotype fpGenotype) {
+        fpGenotypes.add(fpGenotype);
+    }
+
 
     public MercurySample getMercurySample() {
         return mercurySample;
@@ -173,12 +194,8 @@ public class Fingerprint {
         return dateGenerated;
     }
 
-    public String getGenotypes() {
-        return genotypes;
-    }
-
-    public String getCallConfidences() {
-        return callConfidences;
+    public SnpList getSnpList() {
+        return snpList;
     }
 
     public Gender getGender() {
