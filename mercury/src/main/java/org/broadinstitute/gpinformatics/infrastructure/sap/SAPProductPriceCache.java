@@ -56,7 +56,7 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
     public synchronized void refreshCache() {
         try {
 
-            sapMaterials.clear();
+            getSapMaterials().clear();
             SAPAccessControl control = accessControlEjb.getCurrentControlDefinitions();
             if (control.isEnabled()) {
                 Set<SAPMaterial> tempSet = sapService.findProductsInSap();
@@ -71,11 +71,12 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
 
     }
 
-    public void setMaterials(Set<SAPMaterial> tempSet) {
+    public synchronized void setMaterials(Set<SAPMaterial> tempSet) {
         sapMaterials = tempSet;
     }
 
-    public Collection<SAPMaterial> getSapMaterials()
+
+    public synchronized Collection<SAPMaterial> getSapMaterials()
     {
         if(CollectionUtils.isEmpty(sapMaterials)) {
             refreshCache();
@@ -150,7 +151,7 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
 
     public boolean productExists(String partNumber) {
         boolean result = false;
-        for (SAPMaterial sapMaterial : sapMaterials) {
+        for (SAPMaterial sapMaterial : getSapMaterials()) {
             if (StringUtils.equalsIgnoreCase(sapMaterial.getMaterialIdentifier(), partNumber)) {
                 result = true;
                 break;
