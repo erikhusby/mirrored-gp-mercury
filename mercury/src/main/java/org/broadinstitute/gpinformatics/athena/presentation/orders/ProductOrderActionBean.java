@@ -941,10 +941,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         Set<ProductOrder> justParents = new HashSet<>();
         for (ProductOrder order : ordersWithCommonQuote) {
             if(order.isChildOrder()) {
-                if(order.getParentOrder().isSavedInSAP() && exclusionSapOrders.contains(order.getParentOrder().getSapOrderNumber())) {
+                if((order.getParentOrder().isSavedInSAP() && exclusionSapOrders.contains(order.getParentOrder().getSapOrderNumber())) ||
+                   (order.isSavedInSAP() && exclusionSapOrders.contains(order.getSapOrderNumber()))) {
                     continue;
                 }
                 justParents.add(order.getParentOrder());
+
             } else {
                 if(order.isSavedInSAP() && exclusionSapOrders.contains(order.getSapOrderNumber())) {
                     continue;
