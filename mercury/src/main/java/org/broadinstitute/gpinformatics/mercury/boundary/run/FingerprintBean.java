@@ -20,6 +20,7 @@ public class FingerprintBean {
     private String aliquotLsid;
     private String platform;
     private String genomeBuild;
+    private String snpListName;
     @JsonDeserialize(using = CustomJsonDateDeserializer.class)
     @JsonSerialize(using = CustomJsonDateSerializer.class)
     private Date dateGenerated;
@@ -32,12 +33,13 @@ public class FingerprintBean {
     }
 
     public FingerprintBean(String queriedLsid, String disposition, String aliquotLsid, String platform,
-            String genomeBuild, Date dateGenerated, String gender, List<FingerprintCallsBean> calls) {
+            String genomeBuild, String snpListName, Date dateGenerated, String gender, List<FingerprintCallsBean> calls) {
         this.queriedLsid = queriedLsid;
         this.disposition = disposition;
         this.aliquotLsid = aliquotLsid;
         this.platform = platform;
         this.genomeBuild = genomeBuild;
+        this.snpListName = snpListName;
         this.dateGenerated = dateGenerated;
         this.gender = gender;
         this.calls = calls;
@@ -61,6 +63,10 @@ public class FingerprintBean {
 
     public String getGenomeBuild() {
         return genomeBuild;
+    }
+
+    public String getSnpListName() {
+        return snpListName;
     }
 
     public Date getDateGenerated() {
