@@ -973,8 +973,9 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
                                 .processSubmissions(researchProject, new BioProject(selectedProject.getAccession()),
                                         selectedSubmissions, submissionRepository, submissionLibraryDescriptor);
                 updateUuid(selectedSubmissions);
-                addMessage("The selected samples for submission have been successfully posted to NCBI.  See the " +
-                           "Submission Requests tab for further details");
+                addMessage("The selected samples for submission have been successfully posted to ''{0}''. " +
+                           "See the Submission Requests tab for further details",
+                    submissionsService.findRepositoryByKey(selectedSubmissionRepository).getDescription());
             } catch (InformaticsServiceException | ValidationException e) {
                 log.error(e.getMessage(), e);
                 addGlobalValidationError(e.getMessage());
