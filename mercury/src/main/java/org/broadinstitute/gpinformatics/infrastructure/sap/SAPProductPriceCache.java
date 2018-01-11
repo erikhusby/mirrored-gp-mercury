@@ -76,7 +76,7 @@ public class SAPProductPriceCache extends AbstractCache implements Serializable 
     }
 
 
-    private Collection<SAPMaterial> getSapMaterials()
+    private synchronized Collection<SAPMaterial> getSapMaterials()
     {
         if(CollectionUtils.isEmpty(sapMaterials)) {
             refreshCache();
