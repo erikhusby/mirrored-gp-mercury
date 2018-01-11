@@ -253,8 +253,10 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                             new BigDecimal(productPriceCache.findByProduct(product,
                                     placedOrder.getSapCompanyConfigurationForProductOrder()).getBasePrice()));
 
-                    sapOrderItem.addCondition(singlePriceAdjustment.deriveAdjustmentCondition(),
-                            singlePriceAdjustment.getAdjustmentDifference());
+                    if (singlePriceAdjustment.getAdjustmentValue() != null) {
+                        sapOrderItem.addCondition(singlePriceAdjustment.deriveAdjustmentCondition(),
+                                singlePriceAdjustment.getAdjustmentDifference());
+                    }
                     if(StringUtils.isNotBlank(singlePriceAdjustment.getCustomProductName())) {
                         sapOrderItem.setProductAlias(singlePriceAdjustment.getCustomProductName());
                     }

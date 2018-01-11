@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.sap.entity.Condition;
 
 import java.math.BigDecimal;
@@ -19,7 +21,7 @@ public abstract class PriceAdjustment {
     public abstract BigDecimal getListPrice();
 
     public boolean hasPriceAdjustment() {
-        return getAdjustmentValue() != null;
+        return getAdjustmentValue() != null || StringUtils.isNotBlank(getCustomProductName()) || getAdjustmentQuantity() != null;
     }
 
     public Condition deriveAdjustmentCondition() {

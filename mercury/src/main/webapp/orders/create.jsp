@@ -391,7 +391,7 @@
                     $j("#customizedProductSettings").dialog({
                         modal: true,
                         autoOpen: false,
-                        position: {my: "center top", at: "center top", of: window},
+                        position: {my: "left top", at: "left top", of: window},
                         buttons: [
                             {
                                 id: "assignCustomizations",
@@ -416,6 +416,12 @@
                                           && (isNaN(price ))) {
                                               errors.push(partnumberIndex + ": If you enter a value for quantity it must be numeric");
                                               foundError = true;
+                                          }
+                                          if((productName !== undefined) && (productName !== "") && (productName !== 'null')) {
+                                              if(productName.length >40) {
+                                                  errors.push(partnumberIndex + ": A customized product name must be 40 Characters or less");
+                                                  foundError = true;
+                                              }
                                           }
                                         if(!foundError) {
                                             addCustomizationValue(partnumberIndex, price, quantity, productName);
