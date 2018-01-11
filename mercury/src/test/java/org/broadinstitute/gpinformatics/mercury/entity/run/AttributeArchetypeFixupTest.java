@@ -538,7 +538,7 @@ public class AttributeArchetypeFixupTest extends Arquillian {
         utx.commit();
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void fixupGplim5268GdcMetadata() throws Exception {
         utx.begin();
         userBean.loginOSUser();
