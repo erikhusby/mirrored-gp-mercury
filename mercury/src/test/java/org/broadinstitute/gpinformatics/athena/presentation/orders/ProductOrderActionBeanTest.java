@@ -16,6 +16,7 @@ import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
+import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
@@ -227,11 +228,19 @@ public class ProductOrderActionBeanTest {
         productThatHasRinRisk.addRiskCriteria(
                 new RiskCriterion(RiskCriterion.RiskCriteriaType.RIN, Operator.LESS_THAN, "6.0")
         );
-        pdo.setProduct(productThatHasRinRisk);
+        try {
+            pdo.setProduct(productThatHasRinRisk);
+        } catch (InvalidProductException e) {
+            Assert.fail(e.getMessage());
+        }
     }
 
     private void setNonRinRiskProduct(ProductOrder pdo) {
-        pdo.setProduct(new Product());
+        try {
+            pdo.setProduct(new Product());
+        } catch (InvalidProductException e) {
+            Assert.fail(e.getMessage());
+        }
     }
 
     /**
@@ -357,7 +366,11 @@ public class ProductOrderActionBeanTest {
 
     public void testSampleKitWithValidationErrors() {
         Product product = new Product();
-        pdo.setProduct(product);
+        try {
+            pdo.setProduct(product);
+        } catch (InvalidProductException e) {
+            Assert.fail(e.getMessage());
+        }
         ProductOrderKit kitWithValidationProblems = createGoodPdoKit();
         kitWithValidationProblems.setTransferMethod(SampleKitWorkRequest.TransferMethod.PICK_UP);
         kitWithValidationProblems.setNotificationIds(new ArrayList<String>());
@@ -369,7 +382,11 @@ public class ProductOrderActionBeanTest {
 
     public void testSampleKitNoValidationErrors() {
         Product product = new Product();
-        pdo.setProduct(product);
+        try {
+            pdo.setProduct(product);
+        } catch (InvalidProductException e) {
+            Assert.fail(e.getMessage());
+        }
         pdo.setProductOrderKit(createGoodPdoKit());
         actionBean.setEditOrder(pdo);
         actionBean.validateTransferMethod(pdo);
@@ -378,7 +395,11 @@ public class ProductOrderActionBeanTest {
 
     public void testPostReceiveOptionKeys() {
         Product product = new Product();
-        pdo.setProduct(product);
+        try {
+            pdo.setProduct(product);
+        } catch (InvalidProductException e) {
+            Assert.fail(e.getMessage());
+        }
         pdo.setProductOrderKit(createGoodPdoKit());
         actionBean.setEditOrder(pdo);
         Assert.assertTrue(actionBean.getPostReceiveOptionKeys().isEmpty());
@@ -576,7 +597,11 @@ public class ProductOrderActionBeanTest {
         Product dummyProduct =
                 ProductTestFactory
                         .createDummyProduct(Workflow.NONE, Product.EXOME_EXPRESS_V2_PART_NUMBER, false, false);
-        actionBean.getEditOrder().setProduct(dummyProduct);
+        try {
+            actionBean.getEditOrder().setProduct(dummyProduct);
+        } catch (InvalidProductException e) {
+            Assert.fail(e.getMessage());
+        }
         actionBean.getEditOrder().setQuoteId("");
         actionBean.validateQuoteOptions(ProductOrderActionBean.VALIDATE_ORDER);
         Assert.assertFalse(actionBean.getValidationErrors().isEmpty());

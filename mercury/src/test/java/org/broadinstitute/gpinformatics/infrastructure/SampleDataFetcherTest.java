@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -15,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleDataFetcher;
 import org.hamcrest.Matchers;
+import org.junit.Assert;
 import org.mockito.Mockito;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
@@ -546,7 +548,11 @@ public class SampleDataFetcherTest {
 
         ProductOrderSample productOrderSample = new ProductOrderSample(sampleId);
         ProductOrder productOrder = new ProductOrder();
-        productOrder.setProduct(new Product());
+        try {
+            productOrder.setProduct(new Product());
+        } catch (InvalidProductException e) {
+            Assert.fail(e.getMessage());
+        }
         productOrderSample.setProductOrder(productOrder);
         return productOrderSample;
     }
@@ -557,7 +563,11 @@ public class SampleDataFetcherTest {
 
         ProductOrderSample productOrderSample = new ProductOrderSample(sampleId);
         ProductOrder productOrder = new ProductOrder();
-        productOrder.setProduct(new Product());
+        try {
+            productOrder.setProduct(new Product());
+        } catch (InvalidProductException e) {
+            Assert.fail(e.getMessage());
+        }
         productOrderSample.setProductOrder(productOrder);
         MercurySample mercurySample = presetSampleToMercurySampleMap.get(sampleId);
         if(mercurySample == null) {

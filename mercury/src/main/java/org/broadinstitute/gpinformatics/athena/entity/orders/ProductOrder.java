@@ -11,6 +11,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.time.DateUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
@@ -39,6 +40,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
@@ -567,9 +569,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public void updateData(ResearchProject researchProject, Product product, List<Product> addOnProducts,
-                           List<ProductOrderSample> samples) {
+                           List<ProductOrderSample> samples) throws InvalidProductException {
         updateAddOnProducts(addOnProducts);
-        if(this.product != null && this.product != product) {
+        if(this.product == null || (this.product != null && this.product != product)) {
             this.clearCustomPriceAdjustment();
             if(product.getSapMaterial() != null) {
                 if(product.isExternalOnlyProduct() || product.isClinicalProduct()) {
@@ -579,7 +581,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                 }
             }
         }
-        this.product = product;
+        setProduct(product);
         setResearchProject(researchProject);
         setSamples(samples);
     }
@@ -740,7 +742,12 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return isChildOrder()?parentOrder.getProduct():product;
     }
 
-    public void setProduct(Product product) {
+    public void setProduct(Product product) throws InvalidProductException {
+        if(isSavedInSAP() &&
+           getSapCompanyConfigurationForProductOrder() != product.determineCompanyConfiguration()) {
+            throw new InvalidProductException("Unable to update the order.  This combination of Product and Order is "
+                                              + "attempting to change the company code to which this order will be associated.");
+        }
         this.product = product;
     }
 
