@@ -35,6 +35,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignation
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizerV2;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
@@ -998,7 +999,13 @@ public class BaseEventTest {
                 thenReturn(flowcellDesignations);
         Mockito.when(flowcellDesignationEjb.getFlowcellDesignations(Mockito.any(Collection.class))).
                 thenReturn(flowcellDesignations);
-
+        AttributeArchetypeDao attributeArchetypeDao = Mockito.mock(AttributeArchetypeDao.class);
+        Mockito.when(attributeArchetypeDao.findWorkflowMetadata(Mockito.anyString())).then(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                return null;
+            }
+        });
         return new ZimsIlluminaRunFactory(
                 new SampleDataFetcher() {
                     @Override
@@ -1014,7 +1021,7 @@ public class BaseEventTest {
                 },
                 new SequencingTemplateFactory(),
                 productOrderDao,
-                crspPipelineUtils, flowcellDesignationEjb
+                crspPipelineUtils, flowcellDesignationEjb, attributeArchetypeDao
         );
     }
 

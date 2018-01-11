@@ -9,6 +9,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeDefinition;
 import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeDefinition_;
 import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip_;
+import org.broadinstitute.gpinformatics.mercury.entity.run.WorkflowMetadata;
+import org.broadinstitute.gpinformatics.mercury.entity.run.WorkflowMetadata_;
 
 import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
@@ -156,6 +158,10 @@ public class AttributeArchetypeDao extends GenericDao {
     public GenotypingProductOrderMapping findGenotypingProductOrderMapping(Long productOrderId) {
         return findSingle(GenotypingProductOrderMapping.class, GenotypingProductOrderMapping_.archetypeName,
                 productOrderId.toString());
+    }
+
+    public WorkflowMetadata findWorkflowMetadata(String workflowName) {
+        return findSingle(WorkflowMetadata.class, WorkflowMetadata_.archetypeName, workflowName);
     }
 
     public Map<String, AttributeDefinition> findAttributeGroupByTypeAndName(
