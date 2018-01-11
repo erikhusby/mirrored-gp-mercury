@@ -575,8 +575,8 @@ public class AttributeArchetypeFixupTest extends Arquillian {
 
         String[] initialAttributes = {
                 "workflow_name", "Hyper Prep ICE Exome Express",
-                "library_preparation_kit_catalog_number", "KR0961",
-                "library_preparation_kit_name", "KAPA Hyper Prep Kit",
+                "library_preparation_kit_catalog_number", "KK8504",
+                "library_preparation_kit_name", "KAPA Hyper Prep Kit with KAPA Library Amplification Primer Mix (10X).",
                 "library_preparation_kit_vendor", "Kapa BioSystems",
                 "library_preparation_kit_version", "v1.1",
                 "target_capture_kit_catalog_number", "FC-144-1004",
@@ -586,20 +586,20 @@ public class AttributeArchetypeFixupTest extends Arquillian {
                 "target_capture_kit_version", "v1.2",
 
                 "workflow_name", "Whole Genome PCR Free HyperPrep",
-                "library_preparation_kit_catalog_number", "KR0961",
-                "library_preparation_kit_name", "KAPA Hyper Prep Kit",
+                "library_preparation_kit_catalog_number", "KK8505",
+                "library_preparation_kit_name", "KAPA HyperPrep Kit (no amp)",
                 "library_preparation_kit_vendor", "Kapa BioSystems",
                 "library_preparation_kit_version", "v1.1",
 
                 "workflow_name", "Whole Genome PCR Plus HyperPrep",
-                "library_preparation_kit_catalog_number", "KR0961",
-                "library_preparation_kit_name", "KAPA Hyper Prep Kit",
+                "library_preparation_kit_catalog_number", "KK8504",
+                "library_preparation_kit_name", "KAPA Hyper Prep Kit with KAPA Library Amplification Primer Mix (10X)",
                 "library_preparation_kit_vendor", "Kapa BioSystems",
                 "library_preparation_kit_version", "v1.1",
 
                 "workflow_name", "Cell Free HyperPrep",
-                "library_preparation_kit_catalog_number", "KR0961",
-                "library_preparation_kit_name", "KAPA Hyper Prep Kit",
+                "library_preparation_kit_catalog_number", "KK8504",
+                "library_preparation_kit_name", "KAPA Hyper Prep Kit with KAPA Library Amplification Primer Mix (10X)",
                 "library_preparation_kit_vendor", "Kapa BioSystems",
                 "library_preparation_kit_version", "v1.1",
         };
