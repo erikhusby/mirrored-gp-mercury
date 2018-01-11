@@ -434,7 +434,7 @@ public class BillingAdaptor implements Serializable {
     private boolean isPriceItemBlocked(String priceItemName) {
         final SAPAccessControl currentControlDefinitions = sapAccessControlEjb.getCurrentControlDefinitions();
 
-        return !CollectionUtils.containsAny(currentControlDefinitions.getDisabledItems(),
+        return CollectionUtils.containsAny(currentControlDefinitions.getDisabledItems(),
                 Collections.singleton(new AccessItem(priceItemName)));
     }
 

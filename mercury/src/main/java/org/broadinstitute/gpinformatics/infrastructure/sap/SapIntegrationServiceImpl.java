@@ -258,16 +258,6 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                     if(StringUtils.isNotBlank(singlePriceAdjustment.getCustomProductName())) {
                         sapOrderItem.setProductAlias(singlePriceAdjustment.getCustomProductName());
                     }
-
-                    if(StringUtils.isNotBlank(singlePriceAdjustment.getCustomProductName())) {
-                        sapOrderItem.setProductAlias(singlePriceAdjustment.getCustomProductName());
-                    } else {
-                        sapOrderItem.setProductAlias(product.getProductName());
-                        if(placedOrder.getSapCompanyConfigurationForProductOrder() == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES &&
-                                StringUtils.isNotBlank(product.getAlternateExternalName())) {
-                            sapOrderItem.setProductAlias(product.getAlternateExternalName());
-                        }
-                    }
                 } else {
                     for (ProductOrderPriceAdjustment productOrderPriceAdjustment : placedOrder.getQuotePriceMatchAdjustments()) {
                         if (productOrderPriceAdjustment.hasPriceAdjustment()) {
