@@ -2003,4 +2003,40 @@ public class LabEventFixupTest extends Arquillian {
         }
     }
 
+    /**
+     * GPLIM-5346 Analytics noticing PDO sample name and LCSET sample name are same due to ambiguity caused by duplicate
+     * malaria project imported samples on a messaging dry run (LCSET-12607) same as on the wet run (LCSET-12608)
+     */
+    @Test(enabled = false)
+    public void fixupGplim5346() throws Exception {
+        try {
+            userBean.loginOSUser();
+            utx.begin();
+            long[] eventIds = {2490587L,2490548L,2490663L,490647L,2490835L,2490744L,2490861L,2490841L};
+            for( long eventId : eventIds ) {
+                LabEvent labEvent = labEventDao.findById(LabEvent.class, eventId);
+                if (labEvent == null) {
+                    throw new RuntimeException("Failed to find lab event " + eventId);
+                }
+                labEventDao.remove(labEvent);
+            }
+            System.out.println("Deleted 8 events");
+
+            // Remove the bucket entries and vessels for the dry run batch
+            LabBatch dryRun = labBatchDao.findByName("LCSET-12607");
+            if (dryRun == null) {
+                throw new RuntimeException("Failed to find lab batch LCSET-12607" );
+            }
+            dryRun.getLabBatchStartingVessels().clear();
+            dryRun.getBucketEntries().clear();
+            System.out.println("Deleted LCSET-12607 bucket entries and batch starting vessels");
+
+            labEventDao.persist(new FixupCommentary("GPLIM-5346 Delete malaria dry run SampleImport events"));
+            labEventDao.flush();
+            utx.commit();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }
