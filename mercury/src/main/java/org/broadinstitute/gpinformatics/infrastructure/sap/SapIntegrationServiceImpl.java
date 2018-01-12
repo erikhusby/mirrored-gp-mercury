@@ -277,9 +277,11 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                            singleCustomPriceAdjustment.hasPriceAdjustment()) {
                             singleCustomPriceAdjustment.setListPrice(new BigDecimal(productPriceCache.findByProduct(productOrderAddOn.getAddOn(),
                                     placedOrder.getSapCompanyConfigurationForProductOrder()).getBasePrice()));
-                            sapOrderItem.addCondition(
-                                    singleCustomPriceAdjustment.deriveAdjustmentCondition(),
-                                    singleCustomPriceAdjustment.getAdjustmentDifference());
+                            if (singleCustomPriceAdjustment.getAdjustmentValue() != null) {
+                                sapOrderItem.addCondition(
+                                        singleCustomPriceAdjustment.deriveAdjustmentCondition(),
+                                        singleCustomPriceAdjustment.getAdjustmentDifference());
+                            }
                             if(StringUtils.isNotBlank(singleCustomPriceAdjustment.getCustomProductName())) {
                                 sapOrderItem.setProductAlias(singleCustomPriceAdjustment.getCustomProductName());
                             }
