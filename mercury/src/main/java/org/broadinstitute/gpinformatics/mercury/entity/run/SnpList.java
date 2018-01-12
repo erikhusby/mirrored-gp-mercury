@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.run;
 
 import org.hibernate.envers.Audited;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -32,7 +33,7 @@ public class SnpList {
 
     private String name;
 
-    @ManyToMany
+    @ManyToMany(cascade = CascadeType.PERSIST)
     @OrderColumn()
     private List<Snp> snps = new ArrayList<>();
 
@@ -44,7 +45,7 @@ public class SnpList {
     }
 
     /** For JPA. */
-    public SnpList() {
+    protected SnpList() {
     }
 
     public Map<String, Snp> getMapRsIdToSnp() {

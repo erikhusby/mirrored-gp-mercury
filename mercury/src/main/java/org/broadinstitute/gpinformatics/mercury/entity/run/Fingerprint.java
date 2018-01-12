@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.run;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.hibernate.envers.Audited;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -118,7 +119,7 @@ public class Fingerprint {
     @ManyToOne
     private SnpList snpList;
 
-    @OneToMany(mappedBy = "fingerprint")
+    @OneToMany(mappedBy = "fingerprint", cascade = CascadeType.PERSIST)
     private Set<FpGenotype> fpGenotypes = new HashSet<>();
 
     @Enumerated(EnumType.STRING)
@@ -129,7 +130,7 @@ public class Fingerprint {
     // fatPandaPl
 
     /** For JPA. */
-    public Fingerprint() {
+    protected Fingerprint() {
     }
 
     public Fingerprint(MercurySample mercurySample, Disposition disposition, Platform platform, GenomeBuild genomeBuild,
@@ -149,7 +150,7 @@ public class Fingerprint {
     private
     Map<String, FpGenotype> mapRsIdToFpGenotype;
 
-    public Map<String, FpGenotype> getMapRsIdToFpGenotype() {
+    private Map<String, FpGenotype> getMapRsIdToFpGenotype() {
         if (mapRsIdToFpGenotype == null) {
             mapRsIdToFpGenotype = new HashMap<>();
             for (FpGenotype fpGenotype : fpGenotypes) {

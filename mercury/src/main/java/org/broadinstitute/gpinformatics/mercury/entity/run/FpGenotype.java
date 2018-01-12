@@ -42,6 +42,10 @@ public class FpGenotype {
         this.callConfidence = callConfidence;
     }
 
+    /** For JPA. */
+    protected FpGenotype() {
+    }
+
     public Fingerprint getFingerprint() {
         return fingerprint;
     }
