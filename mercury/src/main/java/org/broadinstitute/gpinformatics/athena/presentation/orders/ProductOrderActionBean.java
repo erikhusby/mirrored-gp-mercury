@@ -1349,7 +1349,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             for (ProductOrderAddOn productOrderAddOn : editOrder.getAddOns()) {
                 final QuotePriceItem addOnPriceItemByKeyFields =
                         priceListCache.findByKeyFields(productOrderAddOn.getAddOn().getPrimaryPriceItem());
-                if (priceItemByKeyFields != null) {
+                if (addOnPriceItemByKeyFields != null ) {
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().setUnits(addOnPriceItemByKeyFields.getUnit());
                 }
             }
