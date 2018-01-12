@@ -31,7 +31,7 @@ public class Snp {
     }
 
     /** For JPA. */
-    public Snp() {
+    protected Snp() {
     }
 
     public String getRsId() {
