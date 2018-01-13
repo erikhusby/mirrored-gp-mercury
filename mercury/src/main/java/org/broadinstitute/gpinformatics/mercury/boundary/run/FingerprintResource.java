@@ -14,6 +14,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.jetbrains.annotations.NotNull;
+import picard.fingerprint.FingerprintChecker;
+import picard.fingerprint.HaplotypeMap;
+import picard.fingerprint.MatchResults;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -26,6 +29,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.File;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +40,7 @@ import java.util.regex.Pattern;
 /**
  * JAX-RS web service for fingerprints.
  */
-@Path("/fingerprint")
+@Path("/external/fingerprint")
 @Stateful
 @RequestScoped
 public class FingerprintResource {
@@ -174,9 +178,13 @@ public class FingerprintResource {
         }
 
         // todo jmt check concordance
-//        FingerprintChecker fingerprintChecker = new FingerprintChecker();
-//        MatchResults matchResults = fingerprintChecker.calculateMatchResults(new picard.fingerprint.Fingerprint(), );
-//        matchResults.getLOD();
+        FingerprintChecker fingerprintChecker = new FingerprintChecker(new HaplotypeMap(
+                new File("/notes/Homo_sapiens_assembly19.haplotype_database.txt")));
+        picard.fingerprint.Fingerprint observedFp = new picard.fingerprint.Fingerprint("", null, "");
+        observedFp.add();
+        picard.fingerprint.Fingerprint expectedFp = new picard.fingerprint.Fingerprint("", null, "");
+        MatchResults matchResults = fingerprintChecker.calculateMatchResults(observedFp, expectedFp);
+        matchResults.getLOD();
         mercurySampleDao.flush();
         return "Stored fingerprint";
     }

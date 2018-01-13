@@ -31,6 +31,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 @Test(groups = TestGroups.STANDARD)
 public class FingerprintResourceTest extends Arquillian {
 
+    private static final String WS_BASE = "rest/external/fingerprint";
     @Inject
     private FingerprintResource fingerprintResource;
 
@@ -47,11 +48,11 @@ public class FingerprintResourceTest extends Arquillian {
         Client client = Client.create(clientConfig);
         client.addFilter(new LoggingFilter(System.out));
 
-        String rsidsUrl = RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/fingerprint/rsids";
+        String rsidsUrl = RestServiceContainerTest.convertUrlToSecure(baseUrl) + WS_BASE + "/rsids";
         RsIdsBean rsIdsBean = client.resource(rsidsUrl).type(MediaType.APPLICATION_JSON_TYPE).
                 accept(MediaType.APPLICATION_JSON).get(RsIdsBean.class);
 
-        String postUrl = RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/fingerprint";
+        String postUrl = RestServiceContainerTest.convertUrlToSecure(baseUrl) + WS_BASE;
         List<FingerprintCallsBean> calls = new ArrayList<>();
         for (String rsid : rsIdsBean.getRsids()) {
             calls.add(new FingerprintCallsBean(rsid, "AA", "99.99"));
@@ -63,7 +64,7 @@ public class FingerprintResourceTest extends Arquillian {
         String response = client.resource(postUrl).type(MediaType.APPLICATION_JSON_TYPE).
                 accept(MediaType.APPLICATION_JSON).entity(fingerprintBean).post(String.class);
 
-        String getUrl = RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/fingerprint/query";
+        String getUrl = RestServiceContainerTest.convertUrlToSecure(baseUrl) + WS_BASE + "/query";
         FingerprintsBean fingerprintsBean = client.resource(getUrl).queryParam("lsids", aliquotLsid).
                 /*type(MediaType.APPLICATION_JSON_TYPE).*/accept(MediaType.APPLICATION_JSON).get(FingerprintsBean.class);
         fingerprintsBean.getFingerprints();
