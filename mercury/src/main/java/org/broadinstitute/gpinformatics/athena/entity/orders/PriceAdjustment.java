@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.sap.entity.Condition;
 
 import java.math.BigDecimal;

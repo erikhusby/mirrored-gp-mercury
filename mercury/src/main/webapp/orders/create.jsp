@@ -1610,30 +1610,7 @@
                             <div class="form-value" id="customizationContent"></div>
                         </div>
                     </div>
-
-                    <%--<div class="control-group">--%>
-                    <%--<stripes:label for="orderType" class="control-label">--%>
-                    <%--Order Type <c:if test="${not actionBean.editOrder.draft}">*</c:if>--%>
-                    <%--</stripes:label>--%>
-                    <%--<div class="controls">--%>
-                    <%--<c:choose>--%>
-                    <%--<c:when test="${actionBean.editOrder.childOrder}">--%>
-                    <%--<c:if test="${actionBean.editOrder.orderType != null}">--%>
-                    <%--<stripes:hidden name="orderType" id="orderType"--%>
-                    <%--value="${actionBean.editOrder.orderType.displayName}"/>--%>
-                    <%--</c:if>--%>
-                    <%--</c:when>--%>
-                    <%--<c:otherwise>--%>
-                    <%--<stripes:select name="orderType" id="orderType" class="form-value">--%>
-                    <%--<stripes:option value="">Select an Order Type</stripes:option>--%>
-                    <%--<stripes:options-collection collection="${actionBean.orderTypeDisplayNames}"--%>
-                    <%--label="displayName"--%>
-                    <%--value="displayName"/>--%>
-                    <%--</stripes:select>--%>
-                    <%--</c:otherwise>--%>
-                    <%--</c:choose>--%>
-                    <%--</div>--%>
-                    <%--</div>--%>
+                    
                 </c:if>
             </security:authorizeBlock>
 
