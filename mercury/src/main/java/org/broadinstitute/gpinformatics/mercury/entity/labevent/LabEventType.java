@@ -672,6 +672,7 @@ public enum LabEventType {
                     targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.FluidX_6mL).
                     targetContainerPrefix("BuffyCoat").
                     targetVolume(true).
+                    requireSingleParticipant(true).
                     build(),
             LibraryType.NONE_ASSIGNED, "_BC", Metadata.Key.TUMOR_NORMAL, "Normal", MaterialType.WHOLE_BLOOD_BUFFY_COAT),
     BLOOD_PLASMA_TRANSFER("BloodPlasmaBuffyTransfer",
@@ -685,6 +686,7 @@ public enum LabEventType {
                     targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.CentriCutieSC_5).
                     targetContainerPrefix("Plasma").
                     secondaryEvent(BLOOD_BUFFY_COAT_TRANSFER).
+                    requireSingleParticipant(true).
                     build(),
             MaterialType.PLASMA_PLASMA, LibraryType.NONE_ASSIGNED),
     PLASMA_CENTRIFUGE("PlasmaCentrifuge",
@@ -703,6 +705,7 @@ public enum LabEventType {
                     sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.CentriCutieSC_5).
                     targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.FluidX_6mL).
                     targetVolume(true).
+                    requireSingleParticipant(true).
                     build(),
             LibraryType.NONE_ASSIGNED, "_P", Metadata.Key.TUMOR_NORMAL, "Tumor", MaterialType.PLASMA_PLASMA),
     BLOOD_PLASMA_POOLING_TRANSFER("BloodPlasmaPoolingTransfer",
@@ -2204,6 +2207,9 @@ public enum LabEventType {
         /** If transfer can be filled from a generated LIMs file from automation. */
         private boolean limsFile = false;
 
+        /** True if all sources in a cherry pick must be from one participant. */
+        private boolean requireSingleParticipant = false;
+
         /** For JAXB */
         public ManualTransferDetails() {
         }
@@ -2235,6 +2241,7 @@ public enum LabEventType {
             sourceVesselTypeGeometries = builder.sourceVesselTypeGeometries;
             targetVesselTypeGeometries = builder.targetVesselTypeGeometries;
             limsFile = builder.limsFile;
+            requireSingleParticipant = builder.requireSingleParticipant;
         }
 
         public static class Builder {
@@ -2264,6 +2271,7 @@ public enum LabEventType {
             private boolean targetExpectedToExist = false;
             private boolean targetExpectedEmpty = true;
             private boolean limsFile = false;
+            private boolean requireSingleParticipant = false;
 
             public Builder(MessageType messageType, VesselTypeGeometry sourceVesselTypeGeometry,
                     VesselTypeGeometry targetVesselTypeGeometry) {
@@ -2379,6 +2387,11 @@ public enum LabEventType {
 
             public Builder limsFile(boolean limsFile) {
                 this.limsFile = limsFile;
+                return this;
+            }
+
+            public Builder requireSingleParticipant(boolean requireSingleParticipant) {
+                this.requireSingleParticipant = requireSingleParticipant;
                 return this;
             }
 
@@ -2540,6 +2553,10 @@ public enum LabEventType {
 
         public boolean isLimsFile() {
             return limsFile;
+        }
+
+        public boolean isRequireSingleParticipant() {
+            return requireSingleParticipant;
         }
     }
 

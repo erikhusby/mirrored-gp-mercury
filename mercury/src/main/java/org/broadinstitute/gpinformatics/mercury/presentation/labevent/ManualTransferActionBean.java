@@ -15,6 +15,8 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.rackscan.ScannerException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.ObjectMarshaller;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
@@ -136,6 +138,9 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
     @Inject
     private MercurySampleDao mercurySampleDao;
+
+    @Inject
+    private SampleDataFetcher sampleDataFetcher;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -585,7 +590,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                                 Direction.SOURCE);
 
                         //Check for duplicate molecular indexes in source tubes.
-                        Set<String> set = new HashSet<>();
+                        Set<String> molIndexSchemes = new HashSet<>();
                         for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
                             ReceptacleType receptacleType = findReceptacleAtPosition(
                                     plateCherryPickEvent.getSourcePositionMap().get(0), cherryPickSourceType.getWell());
@@ -597,13 +602,44 @@ public class ManualTransferActionBean extends RackScanActionBean {
                                 if (sample.getMolecularIndexingScheme() != null) {
                                     String molIndex = sample.getMolecularIndexingScheme().getName();
                                     if (molIndex != null) {
-                                        if (!set.add(molIndex)) {
+                                        if (!molIndexSchemes.add(molIndex)) {
                                             messageCollection.addWarning("Duplicate molecular index: " + molIndex);
                                         }
                                     }
                                 }
                             }
                         }
+
+                        // Check for duplicate participants in source tubes
+                        if (manualTransferDetails.isRequireSingleParticipant()) {
+                            Set<String> rootSampleIds = new HashSet<>();
+                            for (ReceptacleType receptacleType :
+                                    plateCherryPickEvent.getSourcePositionMap().get(0).getReceptacle()) {
+                                if (!StringUtils.isEmpty(receptacleType.getBarcode())) {
+                                    LabVessel currentLabVessel = mapBarcodeToVessel.get(receptacleType.getBarcode());
+                                    if (currentLabVessel == null) {
+                                        continue;
+                                    }
+                                    for (SampleInstanceV2 sample : currentLabVessel.getSampleInstancesV2()) {
+                                        rootSampleIds.add(sample.getMercuryRootSampleName());
+                                    }
+                                }
+                            }
+                            if (!rootSampleIds.isEmpty()) {
+                                Map<String, SampleData> mapSampleIdToData = sampleDataFetcher.fetchSampleData(
+                                        rootSampleIds);
+                                Set<String> ptIds = new HashSet<>();
+                                for (SampleData sampleData : mapSampleIdToData.values()) {
+                                    // todo jmt what if PT-ID isn't set yet?
+                                    ptIds.add(sampleData.getCollaboratorParticipantId());
+                                }
+                                if (ptIds.size() > 1) {
+                                    messageCollection.addError("More than one participant: " +
+                                            StringUtils.join(ptIds.toArray(), ','));
+                                }
+                            }
+                        }
+
                     }
 
                     loadPlateFromDb(plateCherryPickEvent.getPlate().get(0), plateCherryPickEvent.getPositionMap().get(0),
