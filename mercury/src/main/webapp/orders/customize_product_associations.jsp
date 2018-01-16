@@ -19,7 +19,7 @@
                 Total Number of Units for the Order
             </th>
             <th>
-                Alternate Product Title for Invoice (SAP Orders Only)
+                Alternate Product Title for Invoice (40 Characters Max -- SAP Orders Only)
             </th>
         </tr>
         </thead>

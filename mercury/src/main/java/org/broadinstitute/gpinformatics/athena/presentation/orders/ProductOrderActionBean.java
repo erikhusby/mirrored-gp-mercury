@@ -103,6 +103,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFunding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
@@ -763,17 +764,15 @@ public class ProductOrderActionBean extends CoreActionBean {
             if (quote != null) {
                 ProductOrder.checkQuoteValidity(quote);
                 for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel(true)) {
-                    if (CollectionUtils.isNotEmpty(fundingLevel.getFunding())) {
-                        for (Funding funding : fundingLevel.getFunding()) {
-                            if (funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
-                                final int numDaysBetween =
-                                        DateUtils.getNumDaysBetween(new Date(), funding.getGrantEndDate());
-                                if (numDaysBetween > 0 && numDaysBetween < 45) {
-                                    addMessage("The Funding Source " + funding.getDisplayName() + " on " +
-                                            quote.getAlphanumericId() + "  Quote expires in " + numDaysBetween +
-                                            " days. If it is likely this work will not be completed by then, please work on "
-                                            + "updating the Funding Source so Billing Errors can be avoided.");
-                                }
+                    for (Funding funding : fundingLevel.getFunding()) {
+                        if (funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
+                            final int numDaysBetween =
+                                    DateUtils.getNumDaysBetween(new Date(), funding.getGrantEndDate());
+                            if (numDaysBetween > 0 && numDaysBetween < 45) {
+                                addMessage("The Funding Source " + funding.getDisplayName() + " on " +
+                                           quote.getAlphanumericId() + "  Quote expires in " + numDaysBetween +
+                                           " days. If it is likely this work will not be completed by then, please work on "
+                                           + "updating the Funding Source so Billing Errors can be avoided.");
                             }
                         }
                     }
@@ -1350,7 +1349,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             for (ProductOrderAddOn productOrderAddOn : editOrder.getAddOns()) {
                 final QuotePriceItem addOnPriceItemByKeyFields =
                         priceListCache.findByKeyFields(productOrderAddOn.getAddOn().getPrimaryPriceItem());
-                if (priceItemByKeyFields != null) {
+                if (addOnPriceItemByKeyFields != null ) {
                     productOrderAddOn.getAddOn().getPrimaryPriceItem().setUnits(addOnPriceItemByKeyFields.getUnit());
                 }
             }
@@ -1404,7 +1403,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             item.put("key", quoteIdentifier);
             if (quoteIdentifier != null) {
                 Quote quote = quoteService.getQuoteByAlphaId(quoteIdentifier);
-                double fundsRemaining = Double.parseDouble(quote.getQuoteFunding().getFundsRemaining());
+                final QuoteFunding quoteFunding = quote.getQuoteFunding();
+                double fundsRemaining = Double.parseDouble(quoteFunding.getFundsRemaining());
                 item.put("fundsRemaining", NumberFormat.getCurrencyInstance().format(fundsRemaining));
                 item.put("status", quote.getApprovalStatus().getValue());
 
@@ -1415,39 +1415,44 @@ public class ProductOrderActionBean extends CoreActionBean {
 
                 final Date todayTruncated = org.apache.commons.lang3.time.DateUtils.truncate(new Date(), Calendar.DATE);
 
-                for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel(true)) {
+                if (CollectionUtils.isNotEmpty(quoteFunding.getFundingLevel())) {
+                    for (FundingLevel fundingLevel : quoteFunding.getFundingLevel(true)) {
 
-                    if (CollectionUtils.isNotEmpty(fundingLevel.getFunding())) {
-                        for (Funding funding:fundingLevel.getFunding()) {
-                            if (StringUtils.isNotBlank(funding.getFundingType())) {
-                                if(funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
-                                    JSONObject fundingInfo = new JSONObject();
-                                    fundingInfo.put("grantTitle", funding.getDisplayName());
-                                    fundingInfo.put("grantEndDate",
-                                            DateUtils.getDate(funding.getGrantEndDate()));
-                                    fundingInfo.put("grantNumber", funding.getGrantNumber());
-                                    fundingInfo.put("grantStatus", funding.getGrantStatus());
+                        if (CollectionUtils.isNotEmpty(fundingLevel.getFunding())) {
+                            for (Funding funding:fundingLevel.getFunding()) {
+                                if (StringUtils.isNotBlank(funding.getFundingType())) {
+                                    if(funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
+                                        JSONObject fundingInfo = new JSONObject();
+                                        fundingInfo.put("grantTitle", funding.getDisplayName());
+                                        fundingInfo.put("grantEndDate",
+                                                DateUtils.getDate(funding.getGrantEndDate()));
+                                        fundingInfo.put("grantNumber", funding.getGrantNumber());
+                                        fundingInfo.put("grantStatus", funding.getGrantStatus());
 
-                                    final Date today = new Date();
-                                    fundingInfo.put("activeGrant", (FundingLevel.isGrantActiveForDate(todayTruncated,funding)));
-                                    fundingInfo.put("daysTillExpire",
-                                            DateUtils.getNumDaysBetween(today, funding.getGrantEndDate()));
-                                    fundingDetails.put(fundingInfo);
+                                        final Date today = new Date();
+                                        fundingInfo.put("activeGrant", (FundingLevel.isGrantActiveForDate(todayTruncated,funding)));
+                                        fundingInfo.put("daysTillExpire",
+                                                DateUtils.getNumDaysBetween(today, funding.getGrantEndDate()));
+                                        fundingDetails.put(fundingInfo);
+                                    }
                                 }
-                            }
-                    /*
-                    This really only needs to loop once since the information that is retrieved will be the same for each
-                    funding instance under fundingLevel
-                    */
+                        /*
+                        This really only needs to loop once since the information that is retrieved will be the same for each
+                        funding instance under fundingLevel
+                        */
 
-                            break;
+                                break;
+                            }
                         }
                     }
+                } else {
+                    item.put("error", "This quote has no active Funding Sources.");
                 }
                 item.put("fundingDetails", fundingDetails);
             }
 
         } catch (Exception ex) {
+            logger.error("Error occured calculating quote funding", ex);
             try {
                 item.put("error", "Unable to complete evaluating order values:  " + ex.getMessage());
             } catch (Exception ex1) {
@@ -1869,12 +1874,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             product.setSapMaterial(productPriceCache.findByPartNumber(product.getPartNumber(),
                     product.determineCompanyConfiguration()));
         }
-        if(editOrder.isSavedInSAP() && !editOrder.latestSapOrderDetail().getCompanyCode().equals(
-                editOrder.getSapCompanyConfigurationForProductOrder().getCompanyCode())) {
-            addGlobalValidationError("Unable to update the order in SAP.  This combination of Product and Order is "
-                                     + "attempting to change the company code to which this order will be associated.");
-        }
-
         List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
 
         for (Product addOnProduct : addOnProducts) {
@@ -1882,8 +1881,12 @@ public class ProductOrderActionBean extends CoreActionBean {
                     addOnProduct.determineCompanyConfiguration()));
         }
 
+        try {
+            editOrder.updateData(project, product, addOnProducts, stringToSampleListExisting(sampleList));
+        } catch (InvalidProductException e) {
+            addGlobalValidationError(e.getMessage());
+        }
 
-        editOrder.updateData(project, product, addOnProducts, stringToSampleListExisting(sampleList));
         BspUser tokenOwner = owner.getTokenObject();
         editOrder.setCreatedBy(tokenOwner != null ? tokenOwner.getUserId() : null);
 
