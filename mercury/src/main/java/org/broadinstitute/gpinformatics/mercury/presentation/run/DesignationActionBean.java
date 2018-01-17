@@ -254,7 +254,7 @@ public class DesignationActionBean extends CoreActionBean implements Designation
         if (isNotBlank(lcsetsBarcodes)) {
             // Keeps only the decimal digits, ascii letters, hyphen, and space delimiters.
             String[] tokens = lcsetsBarcodes.replaceAll("[^\\p{Nd}\\p{Ll}\\p{Lu}\\p{Pd}]", " ").
-                    replaceAll("[^\\x20-\\x7E]", "").toUpperCase().split(" ");
+                    replaceAll("[^\\x20-\\x7E]", "").split(" ");
             for (String token : tokens) {
                 if (isNotBlank(token)) {
                     BarcodedTube tube = barcodedTubeDao.findByBarcode(token);
