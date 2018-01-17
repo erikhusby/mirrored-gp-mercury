@@ -1238,7 +1238,7 @@ public class ProductOrderFixupTest extends Arquillian {
     public void gplim5364UnabandonSamples() throws Exception {
         userBean.loginOSUser();
         beginTransaction();
-        final String sampleComment = "Accidentally abandoned due to a mis-communication.";
+        final String sampleComment = "Unabandon due to the current status of the samples in the process.";
         Set<Long> productOrderSampleIDs = new HashSet<>();
         String pdoTicket = "PDO-13827";
 
