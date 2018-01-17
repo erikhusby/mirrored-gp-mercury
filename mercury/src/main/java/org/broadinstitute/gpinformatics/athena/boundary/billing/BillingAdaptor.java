@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
+import org.broadinstitute.gpinformatics.athena.entity.orders.PriceAdjustment;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -185,7 +186,7 @@ public class BillingAdaptor implements Serializable {
                     if(productOrderEjb.isOrderEligibleForSAP(itemForPriceUpdate.getProductOrder(), itemForPriceUpdate.getWorkCompleteDate()) &&
                        itemForPriceUpdate.getProductOrder().isSavedInSAP() &&
                        !isPriceItemBlocked(itemForPriceUpdate.getPriceItem().getName())) {
-                        
+
                         ProductOrder.checkQuoteValidity(quote,
                                 DateUtils.truncate(itemForPriceUpdate.getWorkCompleteDate(), Calendar.DATE));
 
@@ -326,10 +327,17 @@ public class BillingAdaptor implements Serializable {
                     }
 
                     if (StringUtils.isBlank(workId)) {
+
+                        PriceAdjustment singlePriceAdjustment =
+                                item.getProductOrder().getAdjustmentForProduct(item.getProduct());
+
                         if (productOrderEjb.isOrderEligibleForSAP(item.getProductOrder(),item.getWorkCompleteDate())
                             && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
                             && !isPriceItemBlocked(priceItemBeingBilled.getName())) {
-                            if (item.getProductOrder().getSinglePriceAdjustment() == null) {
+
+
+
+                            if (singlePriceAdjustment == null) {
                                 workId = quoteService
                                         .registerNewSAPWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
                                                 item.getWorkCompleteDate(), item.getQuantity(),
@@ -340,10 +348,10 @@ public class BillingAdaptor implements Serializable {
                                                 primaryPriceItemIfReplacement,
                                                 item.getWorkCompleteDate(), item.getQuantity(),
                                                 pageUrl, "billingSession", sessionKey,
-                                                item.getProductOrder().getSinglePriceAdjustment().getAdjustmentValue());
+                                                singlePriceAdjustment.getAdjustmentValue());
                             }
                         } else {
-                            if (item.getProductOrder().getSinglePriceAdjustment() == null) {
+                            if (singlePriceAdjustment == null) {
                                 workId = quoteService
                                         .registerNewWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
                                                 item.getWorkCompleteDate(), item.getQuantity(),
@@ -353,7 +361,7 @@ public class BillingAdaptor implements Serializable {
                                         .registerNewWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
                                                 item.getWorkCompleteDate(), item.getQuantity(),
                                                 pageUrl, "billingSession", sessionKey,
-                                                item.getProductOrder().getSinglePriceAdjustment().getAdjustmentValue());
+                                                singlePriceAdjustment.getAdjustmentValue());
                             }
                         }
 
@@ -368,7 +376,7 @@ public class BillingAdaptor implements Serializable {
                         && StringUtils.isBlank(item.getSapItems())
                         && !isPriceItemBlocked(priceItemBeingBilled.getName()))
                     {
-                        
+
                         if(item.getQuantityForSAP() != 0) {
                             sapBillingId = sapService.billOrder(item, replacementMultiplier, item.getWorkCompleteDate());
                         }
