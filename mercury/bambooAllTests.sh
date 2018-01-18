@@ -84,8 +84,8 @@ then
 fi
 
 # Remove existing test logs and old surefire reports
-rm -v tests-*.log
-rm -vrf surefire-reports*
+rm tests-*.log
+rm -rf surefire-reports*
 
 # Run the NonArquillian tests first
 for TEST in $TESTS_NONARQUILLIAN
