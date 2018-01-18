@@ -136,8 +136,8 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     @JoinColumn(name="PRIMARY_PRICE_ITEM")
     private PriceItem primaryPriceItem;
 
-    @JoinColumn(name = "EXTERNAL_PRICE_ITEM")
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, optional = false)
+    @JoinColumn(name = "EXTERNAL_PRICE_ITEM")
     private PriceItem externalPriceItem;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
