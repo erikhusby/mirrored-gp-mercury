@@ -3,12 +3,12 @@
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
              xsi:schemaLocation="
         http://www.jboss.org/ironjacamar/schema
-        http://docs.jboss.org/ironjacamar/schema/datasources_1_0.xsd">
+        http://docs.jboss.org/ironjacamar/schema/datasources_1_1.xsd">
 
     <!-- In spite of the name this is the Mercury Feature Branch ds -->
     <datasource jndi-name="java:jboss/jdbc/mercury_pool" pool-name="mercury_pool" enabled="true">
         <connection-url>jdbc:oracle:thin:${mercury.fb.ip}:1521:gpgold</connection-url>
-        <driver>com.oracle</driver>
+        <driver>oracle</driver>
         <security>
             <user-name>mercury</user-name>
             <password>guest</password>
