@@ -25,7 +25,9 @@ public enum Workflow {
     PCR_FREE_HYPER_PREP("Whole Genome PCR Free HyperPrep"),
     PCR_PLUS_HYPER_PREP("Whole Genome PCR Plus HyperPrep"),
     CELL_FREE_HYPER_PREP("Cell Free HyperPrep"),
+    CELL_FREE_HYPER_PREP_UMIS("Cell Free HyperPrep With UMIs"),
     ICE_EXOME_EXPRESS_HYPER_PREP("Hyper Prep ICE Exome Express"),
+    ICE_EXOME_EXPRESS_HYPER_PREP_UMIS("Hyper Prep ICE Exome Express With UMIs"),
     ICE("ICE"),
     ICE_CRSP("ICE CRSP"),
     CLINICAL_WHOLE_BLOOD_EXTRACTION("Clinical Whole Blood Extraction"),
@@ -68,7 +70,8 @@ public enum Workflow {
             EnumSet.of(AGILENT_EXOME_EXPRESS, ICE_EXOME_EXPRESS, ICE_CRSP, CLINICAL_WHOLE_BLOOD_EXTRACTION,
                     DNA_RNA_EXTRACTION_CELL_PELLETS, TRU_SEQ_STRAND_SPECIFIC_CRSP, PCR_FREE, PCR_PLUS,
                     PCR_FREE_HYPER_PREP, PCR_PLUS_HYPER_PREP, CELL_FREE_HYPER_PREP, ICE_EXOME_EXPRESS_HYPER_PREP,
-                    TEN_X, INFINIUM, INFINIUM_METHYLATION, MALARIA
+                    TEN_X, INFINIUM, INFINIUM_METHYLATION, MALARIA, CELL_FREE_HYPER_PREP_UMIS,
+                    ICE_EXOME_EXPRESS_HYPER_PREP_UMIS
             );
 
     public boolean isWorkflowSupportedByMercury() {

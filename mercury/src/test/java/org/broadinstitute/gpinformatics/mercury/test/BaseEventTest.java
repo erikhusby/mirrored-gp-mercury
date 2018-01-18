@@ -78,6 +78,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.IceEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.IceJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.InfiniumEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.InfiniumJaxbBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionCellFreeUMIEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.MiSeqReagentKitEntityBuilder;
@@ -502,6 +503,34 @@ public class BaseEventTest {
                 shearingCleanupPlate, shearCleanPlateBarcode, shearingPlate, numSamples, barcodeSuffix,
                 LibraryConstructionEntityBuilder.Indexing.DUAL,
                 pondType).invoke();
+    }
+
+    /**
+     * This method runs the entities through the library construction process with UMI.
+     * @return Returns the entity builder that contains the entities after this process has been invoked.
+     */
+    public LibraryConstructionCellFreeUMIEntityBuilder runLibraryConstructionProcessWithUMI(
+            Map<String, BarcodedTube> mapBarcodeToVessel, TubeFormation initialRack, LibraryConstructionEntityBuilder.Umi umi) {
+        LibraryConstructionCellFreeUMIEntityBuilder builder = new LibraryConstructionCellFreeUMIEntityBuilder(
+                mapBarcodeToVessel, initialRack, bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
+                NUM_POSITIONS_IN_RACK, "CellFreeUMI", umi);
+        return builder.invoke();
+    }
+
+    public LibraryConstructionEntityBuilder runWgsLibraryConstructionProcessWithUMI(StaticPlate shearingCleanupPlate,
+                                                                                 String shearCleanPlateBarcode,
+                                                                                 StaticPlate shearingPlate,
+                                                                                 String barcodeSuffix,
+                                                                                 LibraryConstructionJaxbBuilder.PondType pondType,
+                                                                                 LibraryConstructionEntityBuilder.Indexing indexing,
+                                                                                 LibraryConstructionEntityBuilder.Umi umi) {
+        LibraryConstructionEntityBuilder builder = new LibraryConstructionEntityBuilder(
+                bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
+                shearingCleanupPlate, shearCleanPlateBarcode, shearingPlate, NUM_POSITIONS_IN_RACK, barcodeSuffix,
+                indexing,
+                pondType, umi);
+        builder.setIncludeUmi(true);
+        return builder.invoke();
     }
 
     /**
@@ -998,7 +1027,9 @@ public class BaseEventTest {
                 thenReturn(flowcellDesignations);
         Mockito.when(flowcellDesignationEjb.getFlowcellDesignations(Mockito.any(Collection.class))).
                 thenReturn(flowcellDesignations);
-
+        SequencingTemplateFactory sequencingTemplateFactory = new SequencingTemplateFactory();
+        sequencingTemplateFactory.setFlowcellDesignationEjb(flowcellDesignationEjb);
+        sequencingTemplateFactory.setWorkflowConfig(new WorkflowLoader().load());
         return new ZimsIlluminaRunFactory(
                 new SampleDataFetcher() {
                     @Override
@@ -1012,7 +1043,7 @@ public class BaseEventTest {
                         return controlList;
                     }
                 },
-                new SequencingTemplateFactory(),
+                sequencingTemplateFactory,
                 productOrderDao,
                 crspPipelineUtils, flowcellDesignationEjb
         );

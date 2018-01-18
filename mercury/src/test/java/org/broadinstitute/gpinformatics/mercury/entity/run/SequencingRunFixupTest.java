@@ -15,6 +15,9 @@ import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import javax.transaction.NotSupportedException;
+import javax.transaction.SystemException;
+import javax.transaction.UserTransaction;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -42,6 +45,10 @@ public class SequencingRunFixupTest extends Arquillian {
 
     @Inject
     private UserBean userBean;
+
+    @SuppressWarnings("CdiInjectionPointsInspection")
+    @Inject
+    private UserTransaction utx;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -345,5 +352,19 @@ public class SequencingRunFixupTest extends Arquillian {
         System.out.println("Prepending x to duplicate run barcode " + illuminaSequencingRun.getRunBarcode());
         illuminaSequencingRun.setRunBarcode("x" + illuminaSequencingRun.getRunBarcode());
         illuminaSequencingRunDao.persist(new FixupCommentary(jiraTicket + " add x to duplicate run barcode"));
+    }
+
+    @Test(enabled = false)
+    public void fixupPo11040() throws Exception{
+        userBean.loginOSUser();
+        utx.begin();
+        updateRunDirectory("171211_SL-HDE_0957_AHYHGVBCXY", "/seq/illumina/proc/SL-HDE/171211_SL-HDE_0957_AHYHGVBCXY",
+                "/crsp/illumina2/proc/SL-HDE/171211_SL-HDE_0957_AHYHGVBCXY");
+        FixupCommentary fixupCommentary =
+                new FixupCommentary("PO-11040 updating run directory for 171211_SL-HDE_0957_AHYHGVBCXY to CRSP folder");
+        illuminaSequencingRunDao.persist(fixupCommentary);
+        illuminaSequencingRunDao.flush();
+
+        utx.commit();
     }
 }
