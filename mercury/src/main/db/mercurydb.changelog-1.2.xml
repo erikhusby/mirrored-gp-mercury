@@ -976,4 +976,15 @@
         <dropNotNullConstraint schemaName="mercury" tableName="storage_location_aud" columnName="label"/>
         <dropNotNullConstraint schemaName="mercury" tableName="storage_location_aud" columnName="location_type"/>
     </changeSet>
+
+    <changeSet id="GPLIM-4950-1" author="thompson">
+        <addColumn tableName="FLOWCELL_DESIGNATION" schemaName="MERCURY">
+            <column name="POOLING_CALCULATOR_PARAMS" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-4950-2" author="thompson">
+        <addColumn tableName="FLOWCELL_DESIGNATION_AUD" schemaName="MERCURY">
+            <column name="POOLING_CALCULATOR_PARAMS" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

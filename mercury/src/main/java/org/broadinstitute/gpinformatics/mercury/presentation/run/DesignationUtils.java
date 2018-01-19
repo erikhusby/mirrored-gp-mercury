@@ -68,8 +68,9 @@ public class DesignationUtils {
     /**
      * Changes the selected dto rows, and persists them if their status is persistable.
      */
-    public void applyMultiEdit(EnumSet<FlowcellDesignation.Status> persistableStatuses,
-                               FlowcellDesignationEjb designationTubeEjb) {
+    public List<Pair<DesignationDto, FlowcellDesignation>> applyMultiEdit(
+            EnumSet<FlowcellDesignation.Status> persistableStatuses,
+            FlowcellDesignationEjb designationTubeEjb) {
         DesignationDto multiEdit = caller.getMultiEdit();
 
         for (Iterator<DesignationDto> iter = caller.getDtos().iterator(); iter.hasNext(); ) {
@@ -112,7 +113,7 @@ public class DesignationUtils {
             }
         }
         caller.setMultiEdit(new DesignationDto());
-        updateDesignationsAndDtos(caller.getDtos(), persistableStatuses, designationTubeEjb);
+        return updateDesignationsAndDtos(caller.getDtos(), persistableStatuses, designationTubeEjb);
     }
 
     /**
@@ -121,7 +122,7 @@ public class DesignationUtils {
      * @param persistableStatuses The dto status that permits persisting it.
      * @param designationTubeEjb
      */
-    public static void updateDesignationsAndDtos(Collection<DesignationDto> dtos,
+    public static List<Pair<DesignationDto, FlowcellDesignation>> updateDesignationsAndDtos(Collection<DesignationDto> dtos,
                                                  EnumSet<FlowcellDesignation.Status> persistableStatuses,
                                                  FlowcellDesignationEjb designationTubeEjb) {
         List<Pair<DesignationDto, FlowcellDesignation>> pairs = designationTubeEjb.update(dtos, persistableStatuses);
@@ -132,6 +133,7 @@ public class DesignationUtils {
             dto.setDesignationId(designation.getDesignationId());
             dto.setSelected(false);
         }
+        return pairs;
     }
 
     /** Finds the best lcset(s) and sample instances for the loading tube. */

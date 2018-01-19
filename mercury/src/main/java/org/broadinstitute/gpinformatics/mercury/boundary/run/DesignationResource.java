@@ -1,6 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
+import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationDto;
 import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationUtils;
 
@@ -11,6 +17,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,6 +32,15 @@ public class DesignationResource {
     @Inject
     private FlowcellDesignationEjb designationTubeEjb;
 
+    @Inject
+    private IlluminaFlowcellDao illuminaFlowcellDao;
+
+    @Inject
+    private UserBean userBean;
+
+    @Inject
+    private BSPUserList bspUserList;
+
     private class UtilsClient implements DesignationUtils.Caller {
         private DesignationUtils designationUtils = new DesignationUtils(this);
         private DesignationBean designationBean;
@@ -33,8 +49,8 @@ public class DesignationResource {
             this.designationBean = designationBean;
         }
 
-        public void run() {
-            designationUtils.applyMultiEdit(DesignationUtils.TARGETABLE_STATUSES, designationTubeEjb);
+        public List<Pair<DesignationDto, FlowcellDesignation>> run() {
+            return designationUtils.applyMultiEdit(DesignationUtils.TARGETABLE_STATUSES, designationTubeEjb);
         }
 
         @Override
@@ -65,8 +81,21 @@ public class DesignationResource {
     @POST
     @Consumes({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     public String createDesignationFromTableau(DesignationBean designationBean) {
+        BspUser bspUser = bspUserList.getByUsername(designationBean.getUserId());
+        if (bspUser == null) {
+            throw new ResourceException("Failed to find user " + designationBean.getUserId(),
+                    Response.Status.BAD_REQUEST);
+        }
+        userBean.login(designationBean.getUserId());
+        // todo jmt check user group?
         UtilsClient utilsClient = new UtilsClient(designationBean);
-        utilsClient.run();
+        List<Pair<DesignationDto, FlowcellDesignation>> pairs = utilsClient.run();
+        pairs.get(0).getRight().setPoolingCalculatorParams(String.format(
+                "PoolTestFlowcell=%s;Lane=%s;TargetSize=%d;TargetCoverage=%d;LaneYield=%d;SeqPenalty=%s",
+                designationBean.getPoolTestFlowcell(), designationBean.getPoolTestFlowcellLane(),
+                designationBean.getTargetSize(), designationBean.getTargetCoverage(),
+                designationBean.getLaneYield(), designationBean.getSeqPenalty()));
+        illuminaFlowcellDao.flush();
         return "success";
     }
 

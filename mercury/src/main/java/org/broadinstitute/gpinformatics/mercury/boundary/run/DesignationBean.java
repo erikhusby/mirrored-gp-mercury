@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 public class DesignationBean {
     private String tubeBarcode;
     private Integer numLanes;
+    private String userId;
 
     private String poolTestFlowcell;
     private Integer poolTestFlowcellLane;
@@ -36,6 +37,14 @@ public class DesignationBean {
 
     public void setNumLanes(Integer numLanes) {
         this.numLanes = numLanes;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
     public String getPoolTestFlowcell() {

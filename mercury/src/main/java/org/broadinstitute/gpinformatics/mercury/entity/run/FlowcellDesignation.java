@@ -63,6 +63,7 @@ public class FlowcellDesignation {
     private BigDecimal loadingConc;
     private boolean poolTest;
     private boolean pairedEndRead;
+    private String poolingCalculatorParams;
 
     public enum Priority {
         LOW, NORMAL, HIGH;
@@ -254,6 +255,14 @@ public class FlowcellDesignation {
 
     public void setPairedEndRead(boolean pairedEndRead) {
         this.pairedEndRead = pairedEndRead;
+    }
+
+    public String getPoolingCalculatorParams() {
+        return poolingCalculatorParams;
+    }
+
+    public void setPoolingCalculatorParams(String poolingCalculatorParameters) {
+        this.poolingCalculatorParams = poolingCalculatorParameters;
     }
 
     public static final Comparator<? super FlowcellDesignation> BY_DATE_DESC = new Comparator<FlowcellDesignation>() {
