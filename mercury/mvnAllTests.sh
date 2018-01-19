@@ -111,22 +111,33 @@ EOF
         EXIT_STATUS=${PIPESTATUS[0]}
     fi
 
+    cat <<EOF
+<<<<
+    Finished test profile $TEST
+<<<<
+
+EOF
+
 # Save the test results outside of the target directory
     if [ -e "target/surefire-reports" ]
     then
         if [ -e "surefire-reports-$TEST" ]
         then
-            rm -rf surefire-reports-$TEST
+            rm -rvf surefire-reports-$TEST
         fi
-        mv target/surefire-reports surefire-reports-$TEST
+        mv -v target/surefire-reports surefire-reports-$TEST
+    else
+        echo "<<<< No target/surefire-reports directory found!"
     fi
     if [ -e "target/clover/surefire-reports" ]
     then
         if [ -e "clover/surefire-reports-$TEST" ]
         then
-            rm -rf clover/surefire-reports-$TEST
+            rm -rvf clover/surefire-reports-$TEST
         fi
-        mv target/clover/surefire-reports clover/surefire-reports-$TEST
+        mv -v target/clover/surefire-reports clover/surefire-reports-$TEST
+    else
+        echo "<<<< No target/clover/surfire-reports directory found"
     fi
 
 done
