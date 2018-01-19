@@ -114,13 +114,9 @@ public class AbandonVesselActionBean extends CoreActionBean {
                 }
             }
         } else if(labVessel.getType() == LabVessel.ContainerType.RACK_OF_TUBES) {
-            vesselGeometry = labVessel.getVesselGeometry();
-            RackOfTubes rack = OrmUtil.proxySafeCast( labVessel, RackOfTubes.class);
-            for(TubeFormation tubeFormation : rack.getTubeFormations() ) {
-                for( VesselPosition vesselPosition: vesselGeometry.getVesselPositions()){
-                    positionVesselMap.put(vesselPosition, tubeFormation.getContainerRole().getVesselAtPosition(vesselPosition) );
-                }
-            }
+            // A rack of tubes may have been manually manipulated - force a rack scan to insure the actual contents are viewed
+            addGlobalValidationError("Vessel barcode refers to a rack of tubes, a rack scan is required.");
+            return new ForwardResolution(DEFAULT_PAGE);
         } else {
             isTube = true;
             vesselGeometry = VesselGeometry.TUBE;
