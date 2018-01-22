@@ -2,10 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
 import clover.org.apache.commons.lang3.tuple.ImmutablePair;
 import clover.org.apache.commons.lang3.tuple.Pair;
-import htsjdk.samtools.util.StringUtil;
-import htsjdk.variant.variantcontext.Genotype;
-import htsjdk.variant.variantcontext.GenotypeLikelihoods;
-import htsjdk.variant.variantcontext.VariantContext;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.SnpListDao;
@@ -18,13 +14,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.jetbrains.annotations.NotNull;
-import picard.fingerprint.FingerprintChecker;
-import picard.fingerprint.HaplotypeBlock;
-import picard.fingerprint.HaplotypeMap;
-import picard.fingerprint.HaplotypeProbabilitiesFromGenotype;
-import picard.fingerprint.HaplotypeProbabilitiesFromGenotypeLikelihoods;
-import picard.fingerprint.MatchResults;
-import picard.util.AlleleSubsettingUtils;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -37,14 +26,11 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.File;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.regex.Pattern;
 
 /**
@@ -173,6 +159,7 @@ public class FingerprintResource {
                 fingerprintBean.getDateGenerated(),
                 snpList, Fingerprint.Gender.byAbbreviation(fingerprintBean.getGender()),
                 true);
+//        List<DownloadGenotypes.GapGetGenotypesResult> gapResults = new ArrayList<>();
         for (FingerprintCallsBean fingerprintCallsBean : fingerprintBean.getCalls()) {
             String callConfidence = fingerprintCallsBean.getCallConfidence();
             if (!CONFIDENCE_PATTERN.matcher(callConfidence).matches()) {
@@ -185,21 +172,40 @@ public class FingerprintResource {
             }
             fingerprint.addFpGenotype(new FpGenotype(fingerprint, snp, fingerprintCallsBean.getGenotype(),
                     new BigDecimal(callConfidence)));
+//            gapResults.add(new DownloadGenotypes.GapGetGenotypesResult(fingerprintBean.getAliquotLsid(), sampleKey,
+//                    fingerprintCallsBean.getRsid(), fingerprintCallsBean.getGenotype(), fingerprintBean.getPlatform()));
         }
 
         // todo jmt check concordance
+/*
         HaplotypeMap haplotypes = new HaplotypeMap(
                 new File("/notes/Homo_sapiens_assembly19.haplotype_database.txt"));
+        DownloadGenotypes downloadGenotypes = new DownloadGenotypes();
+        List<DownloadGenotypes.SnpGenotype> snpGenotypes = downloadGenotypes.getGenotypesFromGap(gapResults, haplotypes);
+        downloadGenotypes.cleanupGenotypes(snpGenotypes, haplotypes);
+        File reference = new File("c:/temp/Homo_sapiens_assembly19.fasta");
+        try (final ReferenceSequenceFile ref = ReferenceSequenceFileFactory.getReferenceSequenceFile(reference)) {
+            SequenceUtil.assertSequenceDictionariesEqual(ref.getSequenceDictionary(), haplotypes.getHeader().getSequenceDictionary());
+            String sampleName = "";
+            SortedSet<VariantContext> variantContexts = downloadGenotypes.makeVariantContexts(snpGenotypes, sampleName, haplotypes, ref);
+            downloadGenotypes.writeVcf(variantContexts, File.createTempFile("FP", ".vcf"), reference, ref.getSequenceDictionary(), sampleName);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+*/
+/*
         FingerprintChecker fingerprintChecker = new FingerprintChecker(haplotypes);
         picard.fingerprint.Fingerprint observedFp = new picard.fingerprint.Fingerprint("", null, "");
         observedFp.add();
         picard.fingerprint.Fingerprint expectedFp = new picard.fingerprint.Fingerprint("", null, "");
         MatchResults matchResults = fingerprintChecker.calculateMatchResults(observedFp, expectedFp);
         matchResults.getLOD();
+*/
         mercurySampleDao.flush();
         return "Stored fingerprint";
     }
 
+/*
     private void x(String sample, HaplotypeMap haplotypes) {
         final SortedSet<picard.fingerprint.Snp> snps = new TreeSet<>(haplotypes.getAllSnps());
         for (final picard.fingerprint.Snp snp : snps) {
@@ -255,4 +261,5 @@ public class FingerprintResource {
             }
         }
     }
+*/
 }
