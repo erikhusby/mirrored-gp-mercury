@@ -54,6 +54,16 @@ while getopts "hcwt:b:j:m:u:" OPTION; do
     esac
 done
 
+cat <<EOF
+TESTS=$TESTS
+BUILD_PROFILE=$BUILD_PROFILE
+ARQUILLIAN_PROFILE=$ARQUILLIAN_PROFILE
+CLOVER=$CLOVER
+ADDITIONAL_OPTIONS=$ADDITIONAL_OPTIONS
+JAVA_USE=$JAVA_USE
+JBOSS_HOME=$JBOSS_HOME
+EOF
+
 if [ -e "/broad/tools/scripts/useuse" ]
 then
     source /broad/tools/scripts/useuse
