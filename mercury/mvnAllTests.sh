@@ -9,11 +9,12 @@ Usage: $0 [-t <test> ] [-b <build>] [-j <jboss> ]
 Where:
 	-h		Show this message
 	-t <test>	Specifies a particular test profile to be run. Defaults to the standard set.
-	-b <build>	Specifies a particular build profile to be used. Defaults to BUILD,Arquillian-JBossAS7-Remote.
+	-b <build>	Specifies a particular build profile to be used. Defaults to BUILD.
 	-j <jboss>	Specifies a particular JBoss or Wildfly installation.
 	-m <maven>	Specifies additional Maven options. Can be mentioned more than once, they accumulate
-	-c 		Runs tests with Clover.
-	-u <java>   Specifes the Java version to use. Default is Java-1.7
+	-c 		    Runs tests with Clover.
+	-u <java>   Specifies the Java version to use. Default is Java-1.7
+	-w          Running under Wildfly, default is JBOSS 7
 
 The standard set of test profiles includes:
     Tests.ArqSuite.Standard Tests.ArqSuite.Stubby Tests.Multithreaded Tests.DatabaseFree Tests.ExternalIntegration Tests.Alternatives
@@ -27,21 +28,29 @@ The complete build logs will be in tests-$TEST.log
 EOF
 }
 TESTS="Tests.ArqSuite.Standard Tests.ArqSuite.Stubby Tests.Multithreaded Tests.DatabaseFree Tests.ExternalIntegration Tests.Alternatives"
-BUILD_PROFILE="BUILD,Arquillian-JBossAS7-Remote"
+BUILD_PROFILE="BUILD"
+ARQUILLIAN_PROFILE=Arquillian-JBossAS7-Remote
 CLOVER=0
 ADDITIONAL_OPTIONS=
 JAVA_USE="Java-1.7"
 
-while getopts "hct:b:j:m:u:" OPTION; do
+while getopts "hcwt:b:j:m:u:" OPTION; do
     case $OPTION in
-	h) usage; exit 1;;
+	h)
+	    usage
+	    exit 1
+	    ;;
 	t) TESTS=$OPTARG;;
 	b) BUILD_PROFILE=$OPTARG;;
 	j) JBOSS_HOME=$OPTARG;;
 	c) CLOVER=1;;
 	m) ADDITIONAL_OPTIONS="$ADDITIONAL_OPTIONS $OPTARG";;
 	u) JAVA_USE=$OPTARG;;
-	[?]) usage; exit 1;;
+	w) ARQUILLIAN_PROFILE="Arquillian-WildFly10-Remote";;
+	[?])
+	    usage
+	    exit 1
+	    ;;
     esac
 done
 
@@ -85,10 +94,11 @@ else
     GOALS="clean clover:setup verify"
     rm -rf clover/
     mkdir clover
-    BUILD_PROFILE="$BUILD_PROFILE,Clover.All -Dmaven.clover.licenseLocation=/prodinfolocal/BambooHome/clover.license -DmercuryCloverDatabase=`pwd`clover/clover.db"
+    BUILD_PROFILE="$BUILD_PROFILE,Clover.All -Dmaven.clover.licenseLocation=/prodinfolocal/BambooHome/clover.license -DmercuryCloverDatabase=`pwd`/clover/clover.db"
 fi
+BUILD_PROFILE=$ARQUILLIAN_PROFILE,$BUILD_PROFILE
 
-OPTIONS="-P$BUILD_PROFILE -Djava.awt.headless=true --batch-mode  -Dannotation.outputDiagnostics=false -Dmaven.download.meter=silent $ADDITIONAL_OPTIONS"
+OPTIONS="-P$BUILD_PROFILE-Djava.awt.headless=true --batch-mode  -Dannotation.outputDiagnostics=false -Dmaven.download.meter=silent $ADDITIONAL_OPTIONS"
 
 for TEST in $TESTS
 do
