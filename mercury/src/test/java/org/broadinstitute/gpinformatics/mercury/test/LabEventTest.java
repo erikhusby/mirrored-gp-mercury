@@ -2629,6 +2629,13 @@ public class LabEventTest extends BaseEventTest {
         return umiTube;
     }
 
+    /**
+     * Treated as a test by default and thusly fails: <br/>
+     * org.testng.TestNGException:  <br/>
+     * Cannot inject @Test annotated Method [attachUMIToPlate] with [class org.broadinstitute.gpinformatics.mercury.entity.reagent.UniqueMolecularIdentifier, class org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate]. <br/>
+     * For more information on native dependency injection please refer to http://testng.org/doc/documentation-main.html#native-dependency-injection
+     */
+    @Test( enabled = false )
     public static void attachUMIToPlate(UniqueMolecularIdentifier umi, StaticPlate staticPlate) {
         UMIReagent umiReagent = new UMIReagent(umi);
         for (VesselPosition vesselPosition: staticPlate.getVesselGeometry().getVesselPositions()) {
