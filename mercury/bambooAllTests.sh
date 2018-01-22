@@ -8,8 +8,8 @@ usage() {
 
      Where:
         -h  Show this message
-        -w  Specifies the particular Wildfly installation, for example on mercuryfb it would be /local/prodinfolocal/wildfly
-        -j  Specifies the particular JBoss installation, for example: seq01-arqullian
+        -w  Use Wildfly, default is JBoss
+        -s  Specifies the server home. Example, for JBoss, seq01-arquillian. For Wildfly, /local/prodinfolocal/wildfly
         -c  Runs the tests with Clover.
        	-m <maven>	Specifies additional Maven options. Can be mentioned more than once, they accumulate.
        	-b  Specifies a particular build profile to be used. Defaults to BUILD,Arquillian-JBossAS7-Remote.
@@ -25,26 +25,21 @@ TESTS_ARQUILLIAN="Tests.ArqSuite.Standard Tests.ArqSuite.Stubby Tests.ExternalIn
 TESTS_NONARQUILLIAN="Tests.Multithreaded Tests.DatabaseFree "
 BUILD="BUILD"
 CLOVER=""
-JBOSS_SERVER=
-WILDFLY_SERVER=
+SERVER_HOME=
+USE_WILDFLY=""
 ADDITIONAL_OPTIONS=
 JAVA_USE="Java-1.7"
-let A=0
 
-while getopts "hcb:j:w:m:u:" OPTION; do
+while getopts "hcwb:s:w:m:u:" OPTION; do
     case $OPTION in
 	h) usage
 	    exit 1
 	    ;;
 	b) BUILD=$OPTARG
 	    ;;
-	j) JBOSS_SERVER=$OPTARG
-	    SERVER_PROFILE="Arquillian-JBossAS7-Remote"
-	    (( A += 1 ))
+	s) SERVER_HOME=$OPTARG
 	    ;;
-	w) WILDFLY_SERVER=$OPTARG
-	    SERVER_PROFILE="Arquillian-WildFly10-Remote"
-	    (( A += 1 ))
+	w) USE_WILDFLY="-w"
 	    ;;
 	c) CLOVER="-c"
 	    ;;
@@ -58,11 +53,10 @@ while getopts "hcb:j:w:m:u:" OPTION; do
     esac
 done
 
-BUILD="$BUILD,$SERVER_PROFILE"
 cat <<EOF
 BUILD=$BUILD
-JBOSS_SERVER=$JBOSS_SERVER
-WILDFLY_SERVER=$WILDFLY_SERVER
+SERVER_HOME=$SERVER_HOME
+USE_WILDFLY=$USE_WILDFLY
 CLOVER=$CLOVER
 ADDITIONAL_OPTIONS=$ADDITIONAL_OPTIONS
 JAVA_USE=$JAVA_USE
@@ -76,12 +70,6 @@ then
     use -v $JAVA_USE
 fi
 
-# Only one of JBoss or Wildfly can be specified.
-if (( A != 1 ))
-then
-    usage
-    exit 1
-fi
 
 # Remove existing test logs and old surefire reports
 rm tests-*.log
@@ -90,17 +78,15 @@ rm -rf surefire-reports*
 # Run the NonArquillian tests first
 for TEST in $TESTS_NONARQUILLIAN
 do
-    ./mvnAllTests.sh -t $TEST -b $BUILD -u $JAVA_USE $CLOVER $ADDITIONAL_OPTIONS
+    ./mvnAllTests.sh -t $TEST -b $BUILD $USE_WILDFLY -u $JAVA_USE $CLOVER $ADDITIONAL_OPTIONS
 done
 
 server() {
-    if [[ "x$JBOSS_SERVER" != "x" ]]
+    if [ "$USE_WILDFLY" == "-w" ]
     then
-        /prodinfo/prodapps/jboss/jboss.sh $JBOSS_SERVER $1
-    fi
-    if [[ "x$WILDFLY_SERVER" != "x" ]]
-    then
-        $WILDFLY_SERVER/wildfly.sh $1
+        $SERVER_HOME/scripts/$1.sh
+    else
+        /prodinfo/prodapps/jboss/jboss.sh $SERVER_HOME $1
     fi
 }
 
@@ -108,7 +94,7 @@ server() {
 for TEST in $TESTS_ARQUILLIAN
 do
     server start
-    ./mvnAllTests.sh -t $TEST -b $BUILD -u $JAVA_USE $CLOVER $ADDITIONAL_OPTIONS
+    ./mvnAllTests.sh -t $TEST -b $BUILD $USE_WILDFLY -u $JAVA_USE $CLOVER $ADDITIONAL_OPTIONS
     server stop
 done
 
@@ -118,6 +104,6 @@ then
     mvn $OPTIONS clover:aggregate clover:clover | tee tests-clover.log
     if [ ${PIPESTATUS[0]} -ne 0 ]
     then
-	EXIT_STATUS=${PIPESTATUS[0]}
+	    EXIT_STATUS=${PIPESTATUS[0]}
     fi
 fi

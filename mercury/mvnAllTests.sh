@@ -128,6 +128,7 @@ EOF
 
 EOF
 
+
 # Save the test results outside of the target directory
     if [ -e "target/surefire-reports" ]
     then
