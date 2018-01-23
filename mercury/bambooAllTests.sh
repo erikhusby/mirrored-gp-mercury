@@ -80,7 +80,7 @@ for TEST in $TESTS_NONARQUILLIAN
 do
     ./mvnAllTests.sh -t $TEST -b $BUILD $USE_WILDFLY -u $JAVA_USE $CLOVER $ADDITIONAL_OPTIONS
 done
-
+exit
 server() {
     if [ "$USE_WILDFLY" == "-w" ]
     then

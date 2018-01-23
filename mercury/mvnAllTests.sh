@@ -104,11 +104,13 @@ else
     GOALS="clean clover:setup verify"
     rm -rf clover/
     mkdir clover
-    BUILD_PROFILE="$BUILD_PROFILE,Clover.All -Dmaven.clover.licenseLocation=/prodinfolocal/BambooHome/clover.license -DmercuryCloverDatabase=`pwd`/clover/clover.db"
+    rm -rf cloverdb/
+    mkdir cloverdb
+    BUILD_PROFILE="$BUILD_PROFILE,Clover.All -Dmaven.clover.licenseLocation=/prodinfolocal/BambooHome/clover.license -DmercuryCloverDatabase=`pwd`/cloverdb/clover.db"
 fi
 BUILD_PROFILE=$ARQUILLIAN_PROFILE,$BUILD_PROFILE
 
-OPTIONS="-P$BUILD_PROFILE-Djava.awt.headless=true --batch-mode  -Dannotation.outputDiagnostics=false -Dmaven.download.meter=silent $ADDITIONAL_OPTIONS"
+OPTIONS="-P$BUILD_PROFILE -Djava.awt.headless=true --batch-mode  -Dannotation.outputDiagnostics=false -Dmaven.download.meter=silent $ADDITIONAL_OPTIONS"
 
 for TEST in $TESTS
 do
