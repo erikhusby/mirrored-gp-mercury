@@ -342,7 +342,7 @@ mercury:
       collaborate: DEV
       submission: DEV
       infiniumStarter: DEV
-      sap:  TEST
+      sap:  RC
 
 
     AUTO_BUILD:
