@@ -50,10 +50,15 @@ public class DeploymentBuilder {
 
         // Look for the mercury data source in two places, prefering the target/test-classes over src/test/resources
         // A feature branch build needs to filter the mercury datasource from src/test/resources-fb to target/test-classes
+        // And if the build is being done with clover, it will be in target/clover/test-classes. If not there then
+        // use the one in src/test/resources
         File mercuryDS = new File("target/test-classes/" + "mercury-"
                 + dataSourceEnvironment + "-ds.xml");
         if (!mercuryDS.exists()) {
-            mercuryDS = new File("src/test/resources/" + "mercury-"+dataSourceEnvironment+"-ds.xml");
+            mercuryDS = new File("target/clover/test-classes/" + "mercury-" + dataSourceEnvironment + "-ds.xml");
+            if (!mercuryDS.exists()) {
+                mercuryDS = new File("src/test/resources/" + "mercury-" + dataSourceEnvironment + "-ds.xml");
+            }
         }
         WebArchive war = ShrinkWrap.create(ExplodedImporter.class, MERCURY_WAR)
                 .importDirectory("src/main/webapp")
