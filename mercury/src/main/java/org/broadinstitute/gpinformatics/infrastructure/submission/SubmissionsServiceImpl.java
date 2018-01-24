@@ -156,9 +156,12 @@ public class SubmissionsServiceImpl implements SubmissionsService {
     }
 
     private ClientResponse clientResponseGet(String servicePath, Map<String, List<String>> parameters) {
-        ClientResponse response = JerseyUtils.getWebResource(submissionsConfig.getWSUrl(servicePath),
-                MediaType.APPLICATION_JSON_TYPE, parameters).get(ClientResponse.class);
-        return response;
+        try {
+            return JerseyUtils.getWebResource(submissionsConfig.getWSUrl(servicePath),
+                    MediaType.APPLICATION_JSON_TYPE, parameters).get(ClientResponse.class);
+        } catch (Exception e) {
+            throw new InformaticsServiceException("Error communicating with Submissions server. Please contact support using the <span class='badge'>Feedback</span> link above", e);
+        }
     }
 
 

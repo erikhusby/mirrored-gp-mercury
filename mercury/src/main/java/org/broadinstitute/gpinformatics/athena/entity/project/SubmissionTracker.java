@@ -4,6 +4,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.submission.FileType;
 import org.broadinstitute.gpinformatics.infrastructure.submission.ISubmissionTuple;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.hibernate.envers.Audited;
 
@@ -89,7 +90,7 @@ public class SubmissionTracker implements ISubmissionTuple {
         this.fileType = fileType;
         this.version = version;
         this.processingLocation = processingLocation;
-        this.dataType = dataType;
+        this.dataType = SubmissionLibraryDescriptor.getNormalizedLibraryName(dataType);
         this.requestDate = new Date();
     }
 
