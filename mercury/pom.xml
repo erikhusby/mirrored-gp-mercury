@@ -1835,6 +1835,7 @@ nodePrinter.print(webapp)
             <version>1.9.5</version>
         </dependency>
 
+<!--
         <dependency>
             <groupId>com.github.broadinstitute</groupId>
             <artifactId>picard</artifactId>
@@ -1846,6 +1847,7 @@ nodePrinter.print(webapp)
             <artifactId>picard-private</artifactId>
             <version>1.1</version>
         </dependency>
+-->
     </dependencies>
 
     <build>
