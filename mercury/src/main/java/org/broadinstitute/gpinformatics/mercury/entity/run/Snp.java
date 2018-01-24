@@ -11,7 +11,6 @@ import javax.persistence.Table;
 
 /**
  * Represents a Single Nucleotide Polymorphism
- * todo jmt call this GeneticVariation?
  */
 @Entity
 @Audited
@@ -26,8 +25,18 @@ public class Snp {
 
     private String rsId;
 
+    private Boolean isFailed;
+
+    private Boolean isGender;
+
     public Snp(String rsId) {
         this.rsId = rsId;
+    }
+
+    public Snp(String rsId, Boolean isFailed, Boolean isGender) {
+        this.rsId = rsId;
+        this.isFailed = isFailed;
+        this.isGender = isGender;
     }
 
     /** For JPA. */
@@ -36,5 +45,13 @@ public class Snp {
 
     public String getRsId() {
         return rsId;
+    }
+
+    public Boolean isGender() {
+        return isGender == null ? false : isGender;
+    }
+
+    public Boolean isFailed() {
+        return isFailed == null ? false : isFailed;
     }
 }
