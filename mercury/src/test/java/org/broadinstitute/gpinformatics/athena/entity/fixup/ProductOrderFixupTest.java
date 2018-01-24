@@ -1371,4 +1371,32 @@ public class ProductOrderFixupTest extends Arquillian {
 
         productOrderDao.persist(new FixupCommentary("GPLIM-4593: Backfilling sap Order Detail with billing Ledger Associations"));
     }
+
+    @Test(enabled=false)
+    public void gplim5377MakeCliaPcrFreeWholeGenomeClinical() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+
+        Product pcrFreeProduct = productDao.findByBusinessKey("P-CLA-0008");
+
+        List<ProductOrder> pcrFreeOrders = productOrderDao.findList(ProductOrder.class, ProductOrder_.product, pcrFreeProduct);
+
+        pcrFreeProduct.setClinicalProduct(true);
+        System.out.println("Set " + pcrFreeProduct.getPartNumber() + " to be a clinical order");
+        pcrFreeProduct.setExternalOnlyProduct(false);
+        System.out.println("Set " + pcrFreeProduct.getPartNumber() + " to not be an external order");
+
+        for (ProductOrder pcrFreeOrder : pcrFreeOrders) {
+            if(pcrFreeOrder.getOrderStatus() != ProductOrder.OrderStatus.Abandoned &&
+               pcrFreeOrder.getOrderStatus() != ProductOrder.OrderStatus.Draft) {
+                pcrFreeOrder.setClinicalAttestationConfirmed(true);
+                System.out.println("Updating " + pcrFreeOrder.getJiraTicketKey() + " to have Clinical attestation set");
+            }
+        }
+        productOrderDao.persist(new FixupCommentary("GPLIM-5377:  Updated PCR-Free Whole Genome product to be a "
+                                                    + "clinical product, and set the associated orders for them to "
+                                                    + "have the Clinical Attestation Set"));
+
+        commitTransaction();
+    }
 }
