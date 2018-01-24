@@ -99,12 +99,16 @@ do
     server stop
 done
 
-# Aggregate the clover results if necessary
-if [[ "$CLOVER" == "-c" ]]
+# Generate the clover report if necessary
+if [ "$CLOVER" == "-c" ]
 then
-    mvn $OPTIONS clover:aggregate clover:clover | tee tests-clover.log
+    mvn --batch-mode \
+	-Djava.awt.headless=true \
+	-Dmaven.clover.cloverDatabase=`pwd`/cloverdb/clover.db \
+	-Dmaven.clover.licenseLocation=/prodinfo/releng/clover.license \
+	clover:clover | tee tests-clover.log
     if [ ${PIPESTATUS[0]} -ne 0 ]
     then
-	    EXIT_STATUS=${PIPESTATUS[0]}
+	EXIT_STATUS=${PIPESTATUS[0]}
     fi
 fi
