@@ -62,7 +62,6 @@ ADDITIONAL_OPTIONS=$ADDITIONAL_OPTIONS
 JAVA_USE=$JAVA_USE
 EOF
 
-
 if [ -e "/broad/tools/scripts/useuse" ]
 then
     source /broad/tools/scripts/useuse
@@ -74,6 +73,8 @@ fi
 # Remove existing test logs and old surefire reports
 rm tests-*.log
 rm -rf surefire-reports*
+rm -vrf clover
+mkdir clover
 
 # Run the NonArquillian tests first
 for TEST in $TESTS_NONARQUILLIAN

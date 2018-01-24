@@ -102,8 +102,6 @@ then
     GOALS="clean test"
 else
     GOALS="clean clover:setup verify"
-    rm -rf clover/
-    mkdir clover
     rm -rf cloverdb/
     mkdir cloverdb
     BUILD_PROFILE="$BUILD_PROFILE,Clover.All -Dmaven.clover.licenseLocation=/prodinfolocal/BambooHome/clover.license -DmercuryCloverDatabase=`pwd`/cloverdb/clover.db"
@@ -162,7 +160,6 @@ EOF
     else
         echo "<<<< No target/clover/surfire-reports directory found"
     fi
-
 done
 
 exit $EXIT_STATUS
