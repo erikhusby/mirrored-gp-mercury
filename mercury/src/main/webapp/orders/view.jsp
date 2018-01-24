@@ -795,7 +795,7 @@ function renderPico(data, type, row, meta) {
 
 function updateFundsRemaining() {
     var quoteIdentifier = '${actionBean.editOrder.quoteId}';
-    var productOrderKey = $j("input[name='productOrder'").val();
+    var productOrderKey = $j("input[name='productOrder']").val();
     if ($j.trim(quoteIdentifier)) {
         $j.ajax({
             url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier="+quoteIdentifier+"&productOrder=" + productOrderKey,
