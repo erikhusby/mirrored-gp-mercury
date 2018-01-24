@@ -13,6 +13,7 @@ import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.jetbrains.annotations.NotNull;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -42,11 +43,8 @@ public class FingerprintResourceTest extends Arquillian {
 
     @Test(groups = TestGroups.STANDARD, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testBasics(@ArquillianResource URL baseUrl) throws MalformedURLException {
-        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
-        clientConfig.getClasses().add(JacksonJsonProvider.class);
-        Client client = Client.create(clientConfig);
-        client.addFilter(new LoggingFilter(System.out));
+    public void testStoreAndRetrieve(@ArquillianResource URL baseUrl) throws MalformedURLException {
+        Client client = getClient();
 
         String rsidsUrl = RestServiceContainerTest.convertUrlToSecure(baseUrl) + WS_BASE + "/rsids";
         RsIdsBean rsIdsBean = client.resource(rsidsUrl).type(MediaType.APPLICATION_JSON_TYPE).
@@ -66,7 +64,29 @@ public class FingerprintResourceTest extends Arquillian {
 
         String getUrl = RestServiceContainerTest.convertUrlToSecure(baseUrl) + WS_BASE + "/query";
         FingerprintsBean fingerprintsBean = client.resource(getUrl).queryParam("lsids", aliquotLsid).
-                /*type(MediaType.APPLICATION_JSON_TYPE).*/accept(MediaType.APPLICATION_JSON).get(FingerprintsBean.class);
+                accept(MediaType.APPLICATION_JSON).get(FingerprintsBean.class);
         fingerprintsBean.getFingerprints();
+    }
+
+    @Test(groups = TestGroups.STANDARD, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testRetrieveBackfill(@ArquillianResource URL baseUrl) throws MalformedURLException {
+        Client client = getClient();
+
+        String getUrl = RestServiceContainerTest.convertUrlToSecure(baseUrl) + WS_BASE + "/query";
+        FingerprintsBean fingerprintsBean = client.resource(getUrl).
+                queryParam("lsids", "broadinstitute.org:bsp.prod.sample:GOHM6").
+                accept(MediaType.APPLICATION_JSON).get(FingerprintsBean.class);
+        // todo jmt asserts
+        fingerprintsBean.getFingerprints();
+    }
+
+    @NotNull
+    private Client getClient() {
+        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
+        clientConfig.getClasses().add(JacksonJsonProvider.class);
+        Client client = Client.create(clientConfig);
+        client.addFilter(new LoggingFilter(System.out));
+        return client;
     }
 }

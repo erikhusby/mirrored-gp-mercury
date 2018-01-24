@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
 import clover.org.apache.commons.lang3.tuple.ImmutablePair;
 import clover.org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPGetExportedSamplesFromAliquots;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.SnpListDao;
@@ -28,10 +30,10 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 /**
  * JAX-RS web service for fingerprints.
@@ -41,25 +43,43 @@ import java.util.regex.Pattern;
 @RequestScoped
 public class FingerprintResource {
 
-    private static final Pattern CONFIDENCE_PATTERN = Pattern.compile("\\d{1,2}\\.\\d{1,2}|100.0");
-
     @Inject
     private MercurySampleDao mercurySampleDao;
 
     @Inject
     private SnpListDao snpListDao;
 
+    @Inject
+    private BSPGetExportedSamplesFromAliquots bspGetExportedSamplesFromAliquots;
+
+    /*
+    The lsids from the pipeline are sequencing aliquots, so we need to find the associated fingerprinting aliquot(s).
+    Prior to this code being deployed to production, all Fluidigm fingerprints are backfilled to their associated
+    MercurySamples.  However, the BSP transfers that made these plates are not in Mercury, so we have to call
+    getExportedSamplesFromAliquots.
+     */
+
     @GET
     @Path("/query")
     @Produces(MediaType.APPLICATION_JSON)
     public FingerprintsBean get(@QueryParam("lsids")List<String> lsids) {
-        List<String> sampleIds = new ArrayList<>();
+        Set<String> sampleIds = new HashSet<>();
         for (String lsid : lsids) {
-            sampleIds.add("SM-" + lsid.substring(lsid.lastIndexOf(':') + 1));
+            sampleIds.add(getSmIdFromLsid(lsid));
+        }
+        List<BSPGetExportedSamplesFromAliquots.ExportedSamples> samplesExportedFromBsp =
+                bspGetExportedSamplesFromAliquots.getExportedSamplesFromAliquots(lsids, IsExported.ExternalSystem.GAP);
+        for (BSPGetExportedSamplesFromAliquots.ExportedSamples exportedSamples : samplesExportedFromBsp) {
+            sampleIds.add(getSmIdFromLsid(exportedSamples.getExportedLsid()));
         }
         Map<String, MercurySample> mapIdToMercurySample = mercurySampleDao.findMapIdToMercurySample(sampleIds);
 
         return buildFingerprintsBean(mapIdToMercurySample);
+    }
+
+    @NotNull
+    private String getSmIdFromLsid(String lsid) {
+        return "SM-" + lsid.substring(lsid.lastIndexOf(':') + 1);
     }
 
     @GET
@@ -88,31 +108,8 @@ public class FingerprintResource {
             }
 
             if (stringMercurySampleEntry.getValue().getFingerprints().isEmpty()) {
-                // Traverse to (new) root
-                Set<LabVessel> labVessels = stringMercurySampleEntry.getValue().getLabVessel();
-                if (labVessels.size() == 1) {
-                    LabVessel labVessel = labVessels.iterator().next();
-                    TransferTraverserCriteria.RootSample rootSample = new TransferTraverserCriteria.RootSample();
-                    labVessel.evaluateCriteria(rootSample, TransferTraverserCriteria.TraversalDirection.Ancestors);
-                    // Traverse to fingerprints
-                    if (rootSample.getRootSamples().size() == 1) {
-                        MercurySample mercurySample = rootSample.getRootSamples().iterator().next();
-                        TransferTraverserCriteria.Fingerprints fpCriteria = new TransferTraverserCriteria.Fingerprints();
-                        // todo jmt check for multiple
-                        mercurySample.getLabVessel().iterator().next().evaluateCriteria(
-                                fpCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
-                        for (Fingerprint fingerprint : fpCriteria.getFingerprints()) {
-                            fingerprintEntities.add(new ImmutablePair<>(stringMercurySampleEntry.getKey(), fingerprint));
-                        }
-                        // todo jmt call BSP
-                    } else {
-                        throw new ResourceException("Expected 1 root sample for " + stringMercurySampleEntry.getKey() +
-                                ", found " + rootSample.getRootSamples().size(), Response.Status.BAD_REQUEST);
-                    }
-                } else {
-                    throw new ResourceException("Expected 1 vessel for " + stringMercurySampleEntry.getKey() +
-                            ", found " + labVessels.size(), Response.Status.BAD_REQUEST);
-                }
+                // todo jmt re-enable after Fluidigm moves to Mercury
+//                traverseMercuryTransfers(fingerprintEntities, stringMercurySampleEntry);
             } else {
                 fingerprintEntities.add(new ImmutablePair<>(stringMercurySampleEntry.getKey(),
                         stringMercurySampleEntry.getValue().getFingerprints().iterator().next()));
@@ -138,18 +135,51 @@ public class FingerprintResource {
         return new FingerprintsBean(fingerprints);
     }
 
+    // todo jmt is this a waste of time?  Will BSP continue to be the source of truth for fingerprinting transfers
+    // for the foreseeable future?
+    private void traverseMercuryTransfers(List<Pair<String, Fingerprint>> fingerprintEntities,
+            Map.Entry<String, MercurySample> stringMercurySampleEntry) {
+        // Traverse to (new) root
+        Set<LabVessel> labVessels = stringMercurySampleEntry.getValue().getLabVessel();
+        if (labVessels.size() == 1) {
+            LabVessel labVessel = labVessels.iterator().next();
+            TransferTraverserCriteria.RootSample rootSample = new TransferTraverserCriteria.RootSample();
+            labVessel.evaluateCriteria(rootSample, TransferTraverserCriteria.TraversalDirection.Ancestors);
+            // Traverse to fingerprints
+            if (rootSample.getRootSamples().size() == 1) {
+                MercurySample mercurySample = rootSample.getRootSamples().iterator().next();
+                TransferTraverserCriteria.Fingerprints fpCriteria = new TransferTraverserCriteria.Fingerprints();
+                // todo jmt check for multiple
+                mercurySample.getLabVessel().iterator().next().evaluateCriteria(
+                        fpCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+                for (Fingerprint fingerprint : fpCriteria.getFingerprints()) {
+                    fingerprintEntities.add(new ImmutablePair<>(stringMercurySampleEntry.getKey(), fingerprint));
+                }
+                // todo jmt call BSP
+            } else {
+                throw new ResourceException("Expected 1 root sample for " + stringMercurySampleEntry.getKey() +
+                        ", found " + rootSample.getRootSamples().size(), Response.Status.BAD_REQUEST);
+            }
+        } else {
+            throw new ResourceException("Expected 1 vessel for " + stringMercurySampleEntry.getKey() +
+                    ", found " + labVessels.size(), Response.Status.BAD_REQUEST);
+        }
+    }
+
     @POST
     @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public String post(FingerprintBean fingerprintBean) {
 
-        String sampleKey = "SM-" + fingerprintBean.getAliquotLsid().substring(fingerprintBean.getAliquotLsid().
-                lastIndexOf(':') + 1);
+        String sampleKey = getSmIdFromLsid(fingerprintBean.getAliquotLsid());
         MercurySample mercurySample = mercurySampleDao.findBySampleKey(sampleKey);
         if (mercurySample == null) {
             mercurySample = new MercurySample(sampleKey, MercurySample.MetadataSource.BSP);
             mercurySampleDao.persist(mercurySample);
         }
 
+        if (fingerprintBean.getSnpListName() == null) {
+            throw new ResourceException("snpListName is required", Response.Status.BAD_REQUEST);
+        }
         SnpList snpList = snpListDao.findByName(fingerprintBean.getSnpListName());
 
         Fingerprint fingerprint = new Fingerprint(mercurySample,
@@ -159,21 +189,15 @@ public class FingerprintResource {
                 fingerprintBean.getDateGenerated(),
                 snpList, Fingerprint.Gender.byAbbreviation(fingerprintBean.getGender()),
                 true);
-//        List<DownloadGenotypes.GapGetGenotypesResult> gapResults = new ArrayList<>();
+
         for (FingerprintCallsBean fingerprintCallsBean : fingerprintBean.getCalls()) {
-            String callConfidence = fingerprintCallsBean.getCallConfidence();
-            if (!CONFIDENCE_PATTERN.matcher(callConfidence).matches()) {
-                throw new ResourceException(callConfidence + " is incorrect format", Response.Status.BAD_REQUEST);
-            }
             Snp snp = snpList.getMapRsIdToSnp().get(fingerprintCallsBean.getRsid());
             if (snp == null) {
                 throw new ResourceException("Snp not found: " + fingerprintCallsBean.getRsid(),
                         Response.Status.BAD_REQUEST);
             }
             fingerprint.addFpGenotype(new FpGenotype(fingerprint, snp, fingerprintCallsBean.getGenotype(),
-                    new BigDecimal(callConfidence)));
-//            gapResults.add(new DownloadGenotypes.GapGetGenotypesResult(fingerprintBean.getAliquotLsid(), sampleKey,
-//                    fingerprintCallsBean.getRsid(), fingerprintCallsBean.getGenotype(), fingerprintBean.getPlatform()));
+                    new BigDecimal(fingerprintCallsBean.getCallConfidence())));
         }
 
         // todo jmt check concordance
