@@ -1234,6 +1234,8 @@
                 <constraints primaryKey="true" primaryKeyName="PK_SNP"/>
             </column>
             <column name="rs_id" type="varchar2(255)"/>
+            <column name="is_failed" type="number(1,0)"/>
+            <column name="is_gender" type="number(1,0)"/>
         </createTable>
     </changeSet>
     <changeSet id="GPLIM-5122-9" author="thompson">
@@ -1242,6 +1244,8 @@
             <column name="revtype" type="number(3,0)"/>
             <column name="snp_id" type="number(19,0)"/>
             <column name="rs_id" type="varchar2(255)"/>
+            <column name="is_failed" type="number(1,0)"/>
+            <column name="is_gender" type="number(1,0)"/>
         </createTable>
         <addPrimaryKey tableName="snp_aud" schemaName="mercury" columnNames="rev, snp_id"
                 constraintName="PK_SNP_AUD"/>
