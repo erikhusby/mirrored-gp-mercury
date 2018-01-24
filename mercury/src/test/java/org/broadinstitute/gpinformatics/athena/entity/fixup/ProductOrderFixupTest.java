@@ -1258,10 +1258,10 @@ public class ProductOrderFixupTest extends Arquillian {
         }
 
         final MessageReporter testOnly = MessageReporter.UNUSED;
-        productOrderEjb.unAbandonSamples(pdoTicket, productOrderSampleIDs, sampleComment, testOnly);
+        final MessageCollection messageCollection = new MessageCollection();
+        productOrderEjb.unAbandonSamples(pdoTicket, productOrderSampleIDs, sampleComment, messageCollection);
         productOrderEjb.updateOrderStatus(pdoTicket, testOnly);
 
-        final MessageCollection messageCollection = new MessageCollection();
         productOrderEjb.publishProductOrderToSAP(productOrder, messageCollection, false);
         if (messageCollection.hasErrors() || messageCollection.hasWarnings()) {
             Assert.fail("Error occured attempting to update SAP in fixupTest");
