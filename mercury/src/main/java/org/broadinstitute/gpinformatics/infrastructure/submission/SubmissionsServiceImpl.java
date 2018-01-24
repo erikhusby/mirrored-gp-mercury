@@ -88,11 +88,11 @@ public class SubmissionsServiceImpl implements SubmissionsService {
                         result.setSite(siteDescription);
                     }
                 }
-                String library = result.getSubmissiondatatype();
+                String library = result.getSubmissionDatatype();
                 if (StringUtils.isNotBlank(library)) {
                     String libraryDescription = libraryDescriptionMap.get(library);
                     if (StringUtils.isNotBlank(libraryDescription)) {
-                        result.setSubmissiondatatype(libraryDescription);
+                        result.setSubmissionDatatype(libraryDescription);
                     }
                 }
             }
@@ -125,7 +125,9 @@ public class SubmissionsServiceImpl implements SubmissionsService {
                         MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).entity(submissions)
                            .post(ClientResponse.class);
         validateResponseStatus("posting submissions", response);
-        return response.getEntity(SubmissionStatusResultBean.class).getSubmissionStatuses();
+        List<SubmissionStatusDetailBean> submissionStatuses =
+            response.getEntity(SubmissionStatusResultBean.class).getSubmissionStatuses();
+        return submissionStatuses;
     }
 
     @Override
@@ -154,9 +156,12 @@ public class SubmissionsServiceImpl implements SubmissionsService {
     }
 
     private ClientResponse clientResponseGet(String servicePath, Map<String, List<String>> parameters) {
-        ClientResponse response = JerseyUtils.getWebResource(submissionsConfig.getWSUrl(servicePath),
-                MediaType.APPLICATION_JSON_TYPE, parameters).get(ClientResponse.class);
-        return response;
+        try {
+            return JerseyUtils.getWebResource(submissionsConfig.getWSUrl(servicePath),
+                    MediaType.APPLICATION_JSON_TYPE, parameters).get(ClientResponse.class);
+        } catch (Exception e) {
+            throw new InformaticsServiceException("Error communicating with Submissions server. Please contact support using the <span class='badge'>Feedback</span> link above", e);
+        }
     }
 
 

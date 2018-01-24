@@ -8,6 +8,9 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.sap.entity.Condition;
+import org.broadinstitute.sap.entity.SAPMaterial;
+import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +36,7 @@ import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -41,6 +45,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -75,6 +80,9 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     @Column(name = "PRODUCT_NAME", length = 255)
     private String productName;
+
+    @Column(name = "ALTERNATE_EXTERNAL_NAME", length = 255)
+    private String alternateExternalName;
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST}, optional = false)
     private ProductFamily productFamily;
@@ -131,6 +139,9 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, optional = false)
     private PriceItem primaryPriceItem;
 
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, optional = false)
+    private PriceItem externalPriceItem;
+
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinTable(schema = "athena")
     private final Set<Product> addOns = new HashSet<>();
@@ -148,51 +159,8 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     public static final String DEFAULT_WORKFLOW_NAME = "";
     public static final Boolean DEFAULT_TOP_LEVEL = Boolean.TRUE;
 
-    /**
-     * Helper method to allow the quick creation of a new Product based on the contents of an existing product
-     *
-     * @param productToClone Existing product from which the content of the cloned product will be based.
-     * @param newProductName Title name to be given for the new Product
-     * @param newPartNumber New part number to be applied to the new product
-     * @return The newly created product to be saved
-     */
-    @NotNull
-    public static Product cloneProduct(Product productToClone, String newProductName, String newPartNumber) {
-
-        GregorianCalendar futureDate = new GregorianCalendar();
-        futureDate.add(Calendar.MONTH, 6);
-        Product clonedProduct = new Product(newProductName,
-                productToClone.getProductFamily(), productToClone.getDescription(),
-                newPartNumber,
-                futureDate.getTime(),null,
-                productToClone.getExpectedCycleTimeSeconds(), productToClone.getGuaranteedCycleTimeSeconds(),
-                productToClone.getSamplesPerWeek(),productToClone.getMinimumOrderSize(),
-                productToClone.getInputRequirements(), productToClone.getDeliverables(),
-                productToClone.isTopLevelProduct(), productToClone.getWorkflow(),
-                productToClone.isPdmOrderableOnly(),productToClone.getAggregationDataType());
-
-        clonedProduct.setExternalOnlyProduct(productToClone.isExternalOnlyProduct());
-
-        clonedProduct.setAggregationDataType(productToClone.getAggregationDataType());
-        clonedProduct.setAnalysisTypeKey(productToClone.getAnalysisTypeKey());
-        clonedProduct.setReagentDesignKey(productToClone.getReagentDesignKey());
-        clonedProduct.setPositiveControlResearchProject(productToClone.getPositiveControlResearchProject());
-        clonedProduct.setReadLength(productToClone.getReadLength());
-        clonedProduct.setInsertSize(productToClone.getInsertSize());
-        clonedProduct.setLoadingConcentration(productToClone.getLoadingConcentration());
-        clonedProduct.setPairedEndRead(productToClone.getPairedEndRead());
-
-        for (RiskCriterion riskCriterion : productToClone.getRiskCriteria()) {
-            clonedProduct.addRiskCriteria(new RiskCriterion(riskCriterion.getType(), riskCriterion.getOperator(), riskCriterion.getValue()));
-        }
-
-        for (Product product : productToClone.getAddOns()) {
-            clonedProduct.addAddOn(product);
-        }
-
-        clonedProduct.setPrimaryPriceItem(productToClone.getPrimaryPriceItem());
-        return clonedProduct;
-    }
+    @Transient
+    private SAPMaterial sapMaterial;
 
     // Initialize our transient data after the object has been loaded from the database.
     @PostLoad
@@ -227,6 +195,58 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     @Column(name = "SAVED_IN_SAP")
     private Boolean savedInSAP = false;
+
+    @Column(name="CLINICAL_ONLY_PRODUCT")
+    private Boolean clinicalProduct = false;
+
+    /**
+     * Helper method to allow the quick creation of a new Product based on the contents of an existing product
+     *
+     * @param productToClone Existing product from which the content of the cloned product will be based.
+     * @param newProductName Title name to be given for the new Product
+     * @param newPartNumber New part number to be applied to the new product
+     * @return The newly created product to be saved
+     */
+    @NotNull
+    public static Product cloneProduct(Product productToClone, String newProductName, String newPartNumber) {
+
+        GregorianCalendar futureDate = new GregorianCalendar();
+        futureDate.add(Calendar.MONTH, 6);
+        Product clonedProduct = new Product(newProductName,
+                productToClone.getProductFamily(), productToClone.getDescription(),
+                newPartNumber,
+                futureDate.getTime(),null,
+                productToClone.getExpectedCycleTimeSeconds(), productToClone.getGuaranteedCycleTimeSeconds(),
+                productToClone.getSamplesPerWeek(),productToClone.getMinimumOrderSize(),
+                productToClone.getInputRequirements(), productToClone.getDeliverables(),
+                productToClone.isTopLevelProduct(), productToClone.getWorkflow(),
+                productToClone.isPdmOrderableOnly(),productToClone.getAggregationDataType());
+
+        clonedProduct.setExternalOnlyProduct(productToClone.isExternalOnlyProduct());
+
+        clonedProduct.setAggregationDataType(productToClone.getAggregationDataType());
+        clonedProduct.setAnalysisTypeKey(productToClone.getAnalysisTypeKey());
+        clonedProduct.setReagentDesignKey(productToClone.getReagentDesignKey());
+        clonedProduct.setPositiveControlResearchProject(productToClone.getPositiveControlResearchProject());
+        clonedProduct.setReadLength(productToClone.getReadLength());
+        clonedProduct.setInsertSize(productToClone.getInsertSize());
+        clonedProduct.setLoadingConcentration(productToClone.getLoadingConcentration());
+        clonedProduct.setPairedEndRead(productToClone.getPairedEndRead());
+        clonedProduct.setClinicalProduct(productToClone.isClinicalProduct());
+
+        for (RiskCriterion riskCriterion : productToClone.getRiskCriteria()) {
+            clonedProduct.addRiskCriteria(new RiskCriterion(riskCriterion.getType(), riskCriterion.getOperator(), riskCriterion.getValue()));
+        }
+
+        for (Product product : productToClone.getAddOns()) {
+            clonedProduct.addAddOn(product);
+        }
+
+        clonedProduct.setPrimaryPriceItem(productToClone.getPrimaryPriceItem());
+        clonedProduct.setAlternateExternalName(productToClone.getAlternateExternalName());
+        clonedProduct.setExternalPriceItem(productToClone.getExternalPriceItem());
+        return clonedProduct;
+    }
 
     /**
      * Default no-arg constructor, also used when creating a new Product.
@@ -452,7 +472,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         for (Product addOn : addOns) {
             if (!addOn.isPdmOrderableOnly()) {
                 filteredAddOns.add(addOn);
-            } else if (roles.contains(Role.PDM) || roles.contains(Role.Developer)) {
+            } else if (roles.contains(Role.PDM) || roles.contains(Role.Developer) || (roles.contains(Role.GPProjectManager) && this.isExternalOnlyProduct())) {
                 filteredAddOns.add(addOn);
             }
         }
@@ -790,6 +810,10 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         return isExternallyNamed() || isExternalOnlyProduct();
     }
 
+    public boolean hasExternalCounterpart() {
+        return StringUtils.isNotBlank(alternateExternalName) || externalPriceItem != null;
+    }
+
     public boolean isExternallyNamed() {
         return getPartNumber().startsWith("XT");
     }
@@ -845,7 +869,99 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         this.savedInSAP = savedInSAP;
     }
 
-    public boolean canPublishToSAP() {
+    public boolean nocanPublishToSAP() {
         return !isSavedInSAP() && !isExternalOnlyProduct();
+    }
+
+    public String getAlternateExternalName() {
+        return alternateExternalName;
+    }
+
+    public void setAlternateExternalName(String externalProductName) {
+        this.alternateExternalName = externalProductName;
+    }
+
+    public PriceItem getExternalPriceItem() {
+        return externalPriceItem;
+    }
+
+    public void setExternalPriceItem(PriceItem externalPriceItem) {
+        this.externalPriceItem = externalPriceItem;
+    }
+
+    public void setClinicalProduct(boolean clinicalProduct) {
+        this.clinicalProduct = clinicalProduct;
+    }
+
+    public boolean isClinicalProduct() {
+        return clinicalProduct;
+    }
+
+    public SapIntegrationClientImpl.SAPCompanyConfiguration determineCompanyConfiguration () {
+
+        SapIntegrationClientImpl.SAPCompanyConfiguration configuration = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
+
+        if(isClinicalProduct() || isExternalOnlyProduct()) {
+            configuration = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES;
+        }
+        return configuration;
+    }
+
+    public void setSapMaterial(SAPMaterial sapMaterial) {
+        this.sapMaterial = sapMaterial;
+    }
+
+    public SAPMaterial getSapMaterial() {
+        return sapMaterial;
+    }
+
+    public String getSapClinicalCharge() {
+        return (determineCompanyConfiguration() == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES)?getFeeByCondition(Condition.CLINICAL_CHARGE):"";
+    }
+    
+    public String getSapCommercialCharge() {
+        return (determineCompanyConfiguration() == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES)?getFeeByCondition(Condition.COMMERCIAL_CHARGE):"";
+    }
+
+    public String getSapSSFIntercompanyCharge() {
+        return (determineCompanyConfiguration() == SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES)?getFeeByCondition(Condition.INTERCOMPANY_FEE):"";
+    }
+
+    public String getSapFullPrice() {
+        String price = "";
+        if(this.sapMaterial != null && StringUtils.isNotBlank(this.sapMaterial.getBasePrice())) {
+            final BigDecimal basePrice = new BigDecimal(this.sapMaterial.getBasePrice());
+            if (basePrice.doubleValue() > 0d) {
+                price = NumberFormat.getCurrencyInstance().format(basePrice);
+            }
+        }
+        return price;
+    }
+
+    public String getQuoteServerPrice() {
+        String price = "";
+        if(getPrimaryPriceItem() != null && StringUtils.isNotBlank(getPrimaryPriceItem().getPrice())) {
+            final BigDecimal quotePrice = new BigDecimal(getPrimaryPriceItem().getPrice());
+            if (quotePrice.doubleValue() > 0d) {
+                price = NumberFormat.getCurrencyInstance().format(quotePrice);
+            }
+        }
+        return price;
+    }
+
+    private String getFeeByCondition(Condition condition) {
+        String fee = "";
+        if (this.sapMaterial != null) {
+            final Map<Condition, BigDecimal> possibleOrderConditions = this.sapMaterial.getPossibleOrderConditions();
+            if(possibleOrderConditions.containsKey(condition)) {
+
+                final BigDecimal bigDecimalCharge = possibleOrderConditions.get(condition);
+                if(bigDecimalCharge != null && bigDecimalCharge.doubleValue() > 0d) {
+                    fee = NumberFormat.getCurrencyInstance().format(bigDecimalCharge);
+                }
+            }
+        }
+        return fee;
+
     }
 }

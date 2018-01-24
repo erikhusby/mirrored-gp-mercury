@@ -76,7 +76,7 @@ public class InfiniumRunProcesserTest {
         Assert.assertEquals(process.isHasRunStarted(), true);
     }
 
-    public void createTestFolderStructure(String barcode, VesselGeometry vesselGeometry, boolean generateXml,
+    private void createTestFolderStructure(String barcode, VesselGeometry vesselGeometry, boolean generateXml,
                                           boolean generateIdats) throws Exception {
         for (VesselPosition vesselPosition: vesselGeometry.getVesselPositions()) {
             if (generateXml) {

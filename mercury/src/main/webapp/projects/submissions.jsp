@@ -4,7 +4,7 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
 <%--@elvariable id="userBean" type="org.broadinstitute.gpinformatics.mercury.presentation.UserBean"--%>
 <%--@elvariable id="submissionsTabSelector" type="java.lang.String"--%>
-<%--@elvariable id="submissionType" type="java.lang.String"--%>
+<%--@elvariable id="submissionDatatype" type="java.lang.String"--%>
 <%--@elvariable id="submissionRepository" type="java.lang.String"--%>
 <%--@elvariable id="researchProject" type="java.lang.String"--%>
 <%--@elvariable id="event" type="java.lang.String"--%>
@@ -21,7 +21,6 @@
         .columnAggregationProject { width: 5em; }
         .columnRepository { max-width: 30em; }
         .columnLibraryDescriptor { width: 11em; }
-        .columnFileType { width: 5em; }
         .columnVersion { width: 2em; }
         .columnQualityMetric { width: 3em; }
         .columnContamination { width: 5em; }
@@ -48,7 +47,6 @@
 
         .submissionControls {
             width: auto;
-            margin-bottom: 20px;
             display: none;
         }
 
@@ -131,7 +129,7 @@
             $j("${submissionsTabSelector}").click(function () {
                 function buildMessage(jqXHR) {
                     var responseText = jqXHR.responseJSON;
-                    if (responseText.stripesMessages) {
+                    if (responseText && responseText.stripesMessages) {
                         outerDiv = jQuery("<div></div>", {
                             "id": "stripesMessageOuter",
                             "style": "position: relative;z-index:5",
@@ -151,7 +149,7 @@
                             if (status.length === 0) {
                                 tagAttributes = {
                                     "name": "<%=ResearchProjectActionBean.SUBMISSION_TUPLES_PARAMETER%>",
-                                    "value": data,
+                                    "value": JSON.stringify(data),
                                     "type": "checkbox",
                                     "class": "shiftCheckbox"
                                 };
@@ -187,7 +185,6 @@
                                     href: "${ctxpath}/orders/order.action?view=&productOrder=" + pdoPair[0],
                                     class: "noWrap",
                                     text: pdoPair[0],
-                                    title: pdoPair[1]
                                 })[0].outerHTML);
                             }
                             return pdos.join(", ");
@@ -199,13 +196,13 @@
                     "bDeferRender": true,
                     "oLanguage": {
                         "sInfo": "_TOTAL_ submissions displayed.",
-                        "sProcessing": "&nbsp;<img src='${ctxpath}/images/spinner.gif'>&nbsp;Please wait. Gathering data from Mercury, Bass, and Picard. This may take a few minutes."
+                        "sProcessing": "&nbsp;<img src='${ctxpath}/images/spinner.gif'>&nbsp;Please wait. Gathering data from Mercury, BSP, and Picard. This may take a few minutes."
                     },
                     "oTableTools": ttExportDefines,
                     "bStateSave": true,
                     "bProcessing": true,
                     "bInfo": true,
-                    "sDom": "r<'#filtering.accordion'<'row-fluid'<'span12'<'columnFilter'>><'row-fluid'<'span8'f><'span4' iT>'span2'>>>t<'row-fluid'<'span6'><'span6'p>>",
+                    "sDom": "r<'row-fluid'<'span12'T>><'#filtering.accordion'<'row-fluid'<'span12'<'columnFilter'>><'row-fluid'<'span8'f><'span4' i>'span2'>>>t<'row-fluid'<'span6'><'span6'p>>",
                     "sAjaxSource": '${ctxpath}/projects/project.action',
                     "fnServerData": function (sSource, aoData, fnCallback, oSettings) {
                         aoData.push({"name": "researchProject", "value": "${researchProject}"});
@@ -229,7 +226,7 @@
                         {"bSearchable": true, "aTargets": ["_all"]}
                     ],
                     "aoColumns": [
-                        {"mData": "<%=SubmissionField.BASS_TUPLE%>","asSorting": ["desc", "asc"], "mRender": renderCheckbox},
+                        {"mData": "<%=SubmissionField.SUBMISSION_TUPLE%>","asSorting": ["desc", "asc"], "mRender": renderCheckbox},
                         {"mData": "<%=SubmissionField.SAMPLE_NAME%>"},
                         {"mData": "<%=SubmissionField.SUBMISSION_SITE%>", "sClass": "ellipsis"},
                         {"mData": "<%=SubmissionField.LIBRARY_DESCRIPTOR%>"},
@@ -237,7 +234,6 @@
                         {"mData": "<%=SubmissionField.PRODUCT_ORDERS %>", "mRender": displayPdoList},
                         {"mData": "<%=SubmissionField.AGGREGATION_PROJECT %>"},
                         {"mData": "<%=SubmissionField.BIO_PROJECT%>"},
-                        {"mData": "<%=SubmissionField.FILE_TYPE %>"},
                         {"mData": "<%=SubmissionField.VERSION %>"},
                         {"mData": "<%=SubmissionField.QUALITY_METRIC %>"},
                         {"mData": "<%=SubmissionField.CONTAMINATION_STRING %>",
@@ -298,12 +294,21 @@
                             }
                         }
 
+                        // recheck previously checked values. Stripes can't do this itself since datatables is rendered later.
+                        var selectedSubmissions = ${actionBean.selectedSubmissionTuples};
+                        if (selectedSubmissions != undefined) {
+                            for (var i = 0; i<selectedSubmissions.length; i++) {
+                                $j("input[value='" + JSON.stringify(selectedSubmissions[i]) + "']").attr('checked','checked');
+                            }
+                        }
+
                         updateSearchText();
                         $j(findFilterTextInput(oTable).on("change init", updateSearchText));
-                    },
-                    "fnDrawCallback": function () {
+
                         $j(".submissionControls").show();
                         $j(".accordion").show();
+                    },
+                    "fnDrawCallback": function () {
                         $j(".ui-accordion-content").css('overflow', 'visible');
                         $j('.shiftCheckbox').enableCheckboxRangeSelection();
 
@@ -360,11 +365,11 @@
             </div>
         </div>
         <div class="control-group">
-            <stripes:label for="submissionType"
+            <stripes:label for="submissionDatatype"
                            class="control-label label-form">Choose a Library *</stripes:label>
 
             <div class="controls">
-                <stripes:select id="submissionType" name="selectedSubmissionLibraryDescriptor">
+                <stripes:select id="submissionDatatype" name="selectedSubmissionLibraryDescriptor">
                     <stripes:option value="">Choose...</stripes:option>
                     <stripes:options-collection label="description" value="name"
                                                 collection="${actionBean.submissionLibraryDescriptors}"/>
@@ -406,7 +411,6 @@
             <th class="columnPDOs">PDOs</th>
             <th class="columnAggregationProject">Agg. Project</th>
             <th class="columnBioProject">Study</th>
-            <th class="columnFileType">File Type</th>
             <th class="columnVersion">Version</th>
             <th class="columnQualityMetric">Quality Metric</th>
             <th class="columnContamination">Contam.</th>

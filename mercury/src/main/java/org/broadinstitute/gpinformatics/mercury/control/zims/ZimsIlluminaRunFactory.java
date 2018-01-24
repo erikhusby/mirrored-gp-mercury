@@ -16,9 +16,9 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
@@ -147,7 +147,7 @@ public class ZimsIlluminaRunFactory {
                 BucketEntry singleBucketEntry = sampleInstance.getSingleBucketEntry();
                 if (singleBucketEntry != null) {
                     if (Objects.equals(singleBucketEntry.getProductOrder().getProduct().getAggregationDataType(),
-                            BassDTO.DATA_TYPE_WGS)) {
+                        Aggregation.DATA_TYPE_WGS)) {
                         mixedLaneOk = true;
                         break;
                     }

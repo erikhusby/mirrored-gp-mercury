@@ -42,7 +42,7 @@ public class JiraServiceStub implements JiraService {
     /**
      * Controls the suffix of the new batch name e.g. "LCSET-123"
      */
-    private static String createdIssueSuffix = "-123";
+    public static String createdIssueSuffix = "-123";
 
     private Log logger = LogFactory.getLog(JiraServiceStub.class);
 

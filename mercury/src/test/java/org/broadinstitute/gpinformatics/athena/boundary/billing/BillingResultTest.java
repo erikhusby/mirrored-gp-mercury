@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 
+import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -33,7 +34,11 @@ public class BillingResultTest {
         List<LedgerEntry> ledgerEntries = new ArrayList<>();
         Product testProduct = new Product();
         ProductOrder testProductOrder = new ProductOrder();
-        testProductOrder.setProduct(testProduct);
+        try {
+            testProductOrder.setProduct(testProduct);
+        } catch (InvalidProductException e) {
+            Assert.fail(e.getMessage());
+        }
         for (int i = 0; i < numEntries; i++) {
             ProductOrderSample pdoSample = new ProductOrderSample("SM-123" + i);
             pdoSample.setProductOrder(testProductOrder);

@@ -135,6 +135,11 @@ quote:
       password: ml1m5qu0t3
       url:      http://quoteqa:8080
 
+    TEST:
+      login:    mercuryquote
+      password: ml1m5qu0t3
+      url:      http://quotetest:8080
+
     PROD:
       login:    mercuryquote
       password: ml1m5qu0t3
@@ -271,13 +276,6 @@ hipchat:
         gpLimsRoom: Mercury & Athena (GPInfx)
         authorizationToken: db3e86c451ef8ac0cddb94133e0455
 
-bass:
-    PROD:
-      login:    mercury-bass
-      password: LszkUJSGyb!
-      host:     bass.broadinstitute.org
-      port:     443
-
 submission:
     DEV:
       host:     seqsubmission02
@@ -293,9 +291,19 @@ sap:
       password:   SAPERD300!
       sapShortCloseRecipientEmail: zsearle@broadinstitute.org
       sapShortCloseEmailSubject: "TEST SAP Order: Short Close Request"
+    TEST:
+      login:      GPCOMU
+      password:   temp1!
+      sapShortCloseRecipientEmail: zsearle@broadinstitute.org
+      sapShortCloseEmailSubject: "TEST SAP Order: Short Close Request"
     QA:
       login:      GPCOMU
       password:   SAPERQ300!
+      sapShortCloseRecipientEmail: zsearle@broadinstitute.org
+      sapShortCloseEmailSubject: "TEST SAP Order: Short Close Request"
+    RC:
+      login:      GPCOMU
+      password:   temp1!
       sapShortCloseRecipientEmail: zsearle@broadinstitute.org
       sapShortCloseEmailSubject: "TEST SAP Order: Short Close Request"
     PROD:
@@ -312,7 +320,7 @@ mercury:
       bsp:      DEV
       gap:      DEV
       jira:     TEST
-      quote:    QA
+      quote:    TEST
       squid:    TEST
       tableau:  PROD
       thrift:   TEST
@@ -321,10 +329,9 @@ mercury:
       bettaLimsServer: DEV
       hipchat: DEV
       collaborate: DEV
-      bass: PROD
       submission: DEV
       infiniumStarter: DEV
-      sap:  QA
+      sap:  TEST
 
 
     AUTO_BUILD:
@@ -342,10 +349,9 @@ mercury:
       bettaLimsServer: DEV
       hipchat: DEV
       collaborate: DEV
-      bass: PROD
       submission: DEV
       infiniumStarter: DEV
-      sap:  QA
+      sap:  RC
 
     TEST:
 
@@ -353,7 +359,7 @@ mercury:
       bsp:      DEV
       gap:      DEV
       jira:     TEST
-      quote:    QA
+      quote:    TEST
       squid:    TEST
       tableau:  PROD
       thrift:   TEST
@@ -362,17 +368,16 @@ mercury:
       bettaLimsServer: TEST
       hipchat: DEV
       collaborate: DEV
-      bass:     PROD
       submission: DEV
       infiniumStarter: DEV
-      sap:  QA
+      sap:  RC
 
     QA:
       app:      QA
       bsp:      RC
       gap:      RC
       jira:     TEST
-      quote:    QA
+      quote:    TEST
       squid:    QA
       tableau:  PROD
       thrift:   QA
@@ -381,10 +386,9 @@ mercury:
       bettaLimsServer: QA
       hipchat: DEV
       collaborate: RC
-      bass:     PROD
       submission: DEV
       infiniumStarter: QA
-      sap:  QA
+      sap:  RC
 
     RC:
 
@@ -392,7 +396,7 @@ mercury:
       bsp:      RC
       gap:      RC
       jira:     TEST
-      quote:    QA
+      quote:    TEST
       squid:    QA
       tableau:  PROD
       thrift:   QA
@@ -401,10 +405,9 @@ mercury:
       bettaLimsServer: QA
       hipchat: DEV
       collaborate: RC
-      bass:     PROD
       submission: DEV
       infiniumStarter: QA
-      sap:  QA
+      sap:  RC
 
 
     PROD:
@@ -422,7 +425,6 @@ mercury:
       bettaLimsServer: PROD
       hipchat: PROD
       collaborate: PROD
-      bass:     PROD
       submission: PROD
       infiniumStarter: PROD
       sap:  PROD

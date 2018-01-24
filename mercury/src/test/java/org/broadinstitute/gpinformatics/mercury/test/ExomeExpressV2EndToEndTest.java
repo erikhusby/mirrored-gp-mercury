@@ -235,7 +235,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
                                                     picoPlatingEntityBuilder.getNormalizationBarcode());
         exexJaxbBuilder.invoke();
 
-        //TODO SGM   SHould this validate be on the tube formation?
+        //TODO Should this validate be on the tube formation?
 //        LabEventTest.validateWorkflow(LabEventType.SHEARING_TRANSFER.getName(),
 //                                      picoPlatingEntityBuilder.getNormBarcodeToTubeMap().values());
         PlateTransferEventType plateToShearXfer = exexJaxbBuilder.getShearTransferEventJaxb();

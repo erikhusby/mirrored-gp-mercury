@@ -43,7 +43,6 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Fundi
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProjectList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
@@ -854,13 +853,14 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
 
         // Test both the user's role and whether or not they are listed as a project manager in the project. This
         // protects from the case where the user's role has been revoked, but the project people haven't been updated.
-        boolean isPm = getUserBean().isPMUser() && projectManagerIds.contains(getUserBean().getBspUser().getUserId());
+        boolean isPm = (getUserBean().isPMUser() || getUserBean().isGPPMUser()) && projectManagerIds.contains(getUserBean().getBspUser().getUserId());
         if (!isPm) {
             accessRestriction.add(String.format("Project Managers of %s", researchProject));
         }
         if (accessRestriction.isEmpty()) {
             return true;
         }
+
         if (!supressValidationErrors) {
             addGlobalValidationError(
                     String.format("Data submissions are available for %s.", StringUtils.join(accessRestriction, " and ")));
@@ -875,6 +875,9 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
                 populateSubmissionSamples(true);
             } catch (SessionCacheException e) {
                 log.error("Error retrieving samples from cache", e);
+            } catch (Exception e) {
+                log.error("Error retrieving samples data", e);
+                addMessage(e.getLocalizedMessage());
             }
         }
     }
@@ -944,27 +947,35 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
             addGlobalValidationError("You must select a submission site in order to post for submissions.");
             errors = true;
         }
+        List<SubmissionDto> selectedSubmissions = new ArrayList<>();
         if (!errors) {
-            List<SubmissionDto> selectedSubmissions = new ArrayList<>();
-            Map<SubmissionTuple, BassDTO> bassDtoMap = submissionDtoFetcher.fetchBassDtos(
-                    editResearchProject.getBusinessKey(),
-                    tupleToSampleMap.values().toArray(new String[tupleToSampleMap.values().size()]));
-            for (BassDTO bassDTO : bassDtoMap.values()) {
-                if (tupleToSampleMap.containsKey(bassDTO.getTuple())) {
-                    // All required data are in the bassDTO
-                    selectedSubmissions
-                            .add(new SubmissionDto(bassDTO, null, editResearchProject.getProductOrders(), null));
+
+
+            for (SubmissionDto submissionDto : submissionDtoFetcher.fetch(editResearchProject, this)) {
+                Set<SubmissionLibraryDescriptor> libraryTypes = submissionDto.getAggregation().getLibraryTypes();
+                if (tupleToSampleMap.containsKey(submissionDto.getSubmissionTuple())) {
+                    // All required data are in the submissionDto
+                    selectedSubmissions.add(submissionDto);
+                    for (SubmissionLibraryDescriptor libraryType : libraryTypes) {
+                        if (!libraryType.getName().equals(selectedSubmissionLibraryDescriptor)) {
+                            addGlobalValidationError("Data selected for submission of ''{2}'' is ''{3}'' but library ''{4}'' was selected.",
+                                submissionDto.getSampleName(), libraryType.getName(), selectedSubmissionLibraryDescriptor);
+                            errors = true;
+                        }
+                    }
                 }
             }
-
+        }
+        if (!errors){
             try {
                 Collection<SubmissionStatusDetailBean> submissionStatuses =
                         researchProjectEjb
                                 .processSubmissions(researchProject, new BioProject(selectedProject.getAccession()),
                                         selectedSubmissions, submissionRepository, submissionLibraryDescriptor);
                 updateUuid(selectedSubmissions);
-                addMessage("The selected samples for submission have been successfully posted to NCBI.  See the " +
-                           "Submission Requests tab for further details");
+                addMessage("The selected samples for submission have been successfully posted to ''{0}''. " +
+                           "See the Submission Requests tab for further details",
+                    submissionsService.findRepositoryByKey(selectedSubmissionRepository).getDescription());
             } catch (InformaticsServiceException | ValidationException e) {
                 log.error(e.getMessage(), e);
                 addGlobalValidationError(e.getMessage());
@@ -1179,7 +1190,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     }
 
     public static boolean isEditAllowed(UserBean userBean) {
-        return userBean.isDeveloperUser() || userBean.isPMUser() || userBean.isPDMUser();
+        return userBean.isDeveloperUser() || userBean.isPMUser() || userBean.isPDMUser() || userBean.isGPPMUser();
     }
 
     public CollaborationData getCollaborationData() {
@@ -1270,7 +1281,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
      */
     public boolean isCanBeginCollaborations() {
         if (isResearchOnly()) {
-            return getUserBean().isDeveloperUser() || getUserBean().isPMUser();
+            return getUserBean().isDeveloperUser() || getUserBean().isPMUser() || getUserBean().isGPPMUser();
         }
         return false;
     }

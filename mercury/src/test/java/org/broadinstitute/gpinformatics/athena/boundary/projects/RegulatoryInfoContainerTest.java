@@ -19,9 +19,9 @@ public class RegulatoryInfoContainerTest extends ContainerTest {
     ProductOrderDao pdoDao;
 
     public void testRegulatoryInfoRelationship() throws Exception {
-        ProductOrder productOrder = ProductOrderDBTestFactory.createProductOrder(pdoDao, "SM-test1");
-
         Date today = new Date();
+        ProductOrder productOrder = ProductOrderDBTestFactory.createProductOrder(pdoDao, "SM-"+today.getTime());
+
         RegulatoryInfo regulatoryInfo = new RegulatoryInfo("test Consent" + today.getTime(),
                 RegulatoryInfo.Type.ORSP_NOT_HUMAN_SUBJECTS_RESEARCH, "1322" + today.getTime());
         productOrder.getResearchProject().getRegulatoryInfos().add(regulatoryInfo);
