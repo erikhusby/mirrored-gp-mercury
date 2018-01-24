@@ -49,6 +49,9 @@ public class HibernateMetadataTest extends ContainerTest {
     @PersistenceContext(unitName = "metrics_pu")
     private EntityManager metricsEntityManager;
 
+    @PersistenceContext(unitName = "analytics_pu")
+    private EntityManager analyticsEntityManager;
+
     /** Add exceptions to this list; the goal is to keep this list empty. */
     private static final String[] ignoredEntities = {
             LevelOfDetection.class.getName()
@@ -65,15 +68,22 @@ public class HibernateMetadataTest extends ContainerTest {
         AggregationHybridSelection.class.getName(),
         AggregationReadGroup.class.getName(),
         AggregationWgs.class.getName(),
-        ArraysQc.class.getName(),
-        ArraysQcFingerprint.class.getName(),
-        ArraysQcGtConcordance.class.getName(),
         OrspProject.class.getName(),
         OrspProjectConsent.class.getName(),
         PicardAnalysis.class.getName(),
         PicardFingerprint.class.getName(),
         ReadGroupIndex.class.getName(),
         SampleCoverageFirstMet.class.getName()
+    };
+
+    /**
+     * Entities that should be checked against the metrics analytics unit and, therefore, should not be checked
+     * against other persistence units.
+     */
+    private static final String[] analyticsEntities = {
+        ArraysQc.class.getName(),
+        ArraysQcFingerprint.class.getName(),
+        ArraysQcGtConcordance.class.getName(),
     };
 
     /**
@@ -108,6 +118,12 @@ public class HibernateMetadataTest extends ContainerTest {
     public void testMetricsPersistenceUnit() throws Exception {
         Session session = metricsEntityManager.unwrap(Session.class);
         testPersistenceUnit(session, null, metricsEntities);
+    }
+
+    @Test(groups = TestGroups.STUBBY, description = "Tests all the hibernate mappings in the analytics_pu.")
+    public void testAnalyticsPersistenceUnit() throws Exception {
+        Session session = analyticsEntityManager.unwrap(Session.class);
+        testPersistenceUnit(session, null, analyticsEntities);
     }
 
     private void testPersistenceUnit(Session session, String[] blackList, String[] whiteList) {
