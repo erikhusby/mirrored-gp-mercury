@@ -73,9 +73,10 @@ fi
 # Remove existing test logs and old surefire reports
 rm tests-*.log
 rm -rf surefire-reports*
-rm -vrf clover
+rm -rf clover
 mkdir clover
-
+rm -rf cloverdb
+mkdir cloverdb
 # Run the NonArquillian tests first
 for TEST in $TESTS_NONARQUILLIAN
 do

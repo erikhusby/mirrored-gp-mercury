@@ -102,8 +102,6 @@ then
     GOALS="clean test"
 else
     GOALS="clean clover:setup verify"
-    rm -rf cloverdb/
-    mkdir cloverdb
     BUILD_PROFILE="$BUILD_PROFILE,Clover.All -Dmaven.clover.licenseLocation=/prodinfolocal/BambooHome/clover.license -DmercuryCloverDatabase=`pwd`/cloverdb/clover.db"
 fi
 BUILD_PROFILE=$ARQUILLIAN_PROFILE,$BUILD_PROFILE
