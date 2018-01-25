@@ -210,6 +210,11 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.TagVesselActionBean"
                                           event="view">Add Dev Condition To Vessel</stripes:link>
                         </li>
+                        <li>
+                            <stripes:link id="uploadFingerprintingRun"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.UploadFingerprintingRunActionBean"
+                                          event="view">Upload Fingerprinting Run</stripes:link>
+                        </li>
                     </ul>
                 </li>
             </security:authorizeBlock>

@@ -48,7 +48,8 @@ public class LabMetric implements Comparable<LabMetric> {
         MBp("KBp"),
         GBp("GBp"),
         Bp("Bp"),
-        RQS("Rqs");
+        RQS("Rqs"),
+        PERCENTAGE("%");
 
         private String displayName;
         private static final Map<String, LabUnit> mapNameToUnit = new HashMap<>();
@@ -224,6 +225,20 @@ public class LabMetric implements Comparable<LabMetric> {
 
                 return new LabMetricDecision(decision, new Date(), decidingUser, labMetric, decisionNote, needsReview);
             }
+        }),
+
+        // Fingerprinting Metrics
+        AUTOCALL_CONFIDENCE("Autocall Confidence", false, Category.DNA_LENGTH, null),
+        CALL_RATE_Q17("Q17 Call Rate", false, Category.PERCENTAGE, new Decider() {
+            @Override
+            public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
+                LabMetricDecision.Decision decision = LabMetricDecision.Decision.PASS;
+                if (labMetric.getValue().doubleValue() < 75) {
+                    decision = LabMetricDecision.Decision.FAIL;
+                }
+
+                return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
+            }
         });
 
         private String displayName;
@@ -283,7 +298,8 @@ public class LabMetric implements Comparable<LabMetric> {
         public enum Category {
             CONCENTRATION,
             DNA_LENGTH,
-            QUALITY
+            QUALITY,
+            PERCENTAGE
         }
     }
 

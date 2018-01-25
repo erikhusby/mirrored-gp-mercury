@@ -270,7 +270,11 @@ public class Metadata {
         LOWER_MARKER_TIME(Category.LAB_METRIC, DataType.NUMBER, "Lower Marker Time", Visibility.USER),
         NA(Category.LAB_METRIC, DataType.STRING, "NA", Visibility.USER),
 
-        BAIT_WELL(Category.REAGENT, DataType.STRING, "Bait Well", Visibility.USER);
+        BAIT_WELL(Category.REAGENT, DataType.STRING, "Bait Well", Visibility.USER),
+
+        // Fingerprinting Metadata
+        TOTAL_POSSIBLE_CALLS(Category.LAB_METRIC, DataType.NUMBER, "Total Calls", Visibility.USER),
+        CALLS(Category.LAB_METRIC, DataType.NUMBER, "Calls", Visibility.USER);
 
         private final Category category;
         private final DataType dataType;
