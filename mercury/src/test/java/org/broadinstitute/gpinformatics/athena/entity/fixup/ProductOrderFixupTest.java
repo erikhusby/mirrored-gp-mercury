@@ -1372,12 +1372,14 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderDao.persist(new FixupCommentary("GPLIM-4593: Backfilling sap Order Detail with billing Ledger Associations"));
     }
 
-    @Test(enabled=false)
+    @Test(enabled=true)
     public void gplim5377MakeCliaPcrFreeWholeGenomeClinical() throws Exception {
         userBean.loginOSUser();
         beginTransaction();
 
         Product pcrFreeProduct = productDao.findByBusinessKey("P-CLA-0008");
+        Product germlineCommercial = productDao.findByBusinessKey("P-CLA-0005");
+        Product somaticCommercial = productDao.findByBusinessKey("P-CLA-0006");
 
         List<ProductOrder> pcrFreeOrders = productOrderDao.findList(ProductOrder.class, ProductOrder_.product, pcrFreeProduct);
 
@@ -1385,6 +1387,9 @@ public class ProductOrderFixupTest extends Arquillian {
         System.out.println("Set " + pcrFreeProduct.getPartNumber() + " to be a clinical order");
         pcrFreeProduct.setExternalOnlyProduct(false);
         System.out.println("Set " + pcrFreeProduct.getPartNumber() + " to not be an external order");
+
+        germlineCommercial.setExternalOnlyProduct(true);
+        somaticCommercial.setExternalOnlyProduct(true);
 
         for (ProductOrder pcrFreeOrder : pcrFreeOrders) {
             if(pcrFreeOrder.getOrderStatus() != ProductOrder.OrderStatus.Abandoned &&
