@@ -1372,7 +1372,7 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderDao.persist(new FixupCommentary("GPLIM-4593: Backfilling sap Order Detail with billing Ledger Associations"));
     }
 
-    @Test(enabled=true)
+    @Test(enabled=false)
     public void gplim5377MakeCliaPcrFreeWholeGenomeClinical() throws Exception {
         userBean.loginOSUser();
         beginTransaction();
