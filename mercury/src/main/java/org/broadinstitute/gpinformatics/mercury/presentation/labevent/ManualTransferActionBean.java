@@ -630,8 +630,12 @@ public class ManualTransferActionBean extends RackScanActionBean {
                                         rootSampleIds);
                                 Set<String> ptIds = new HashSet<>();
                                 for (SampleData sampleData : mapSampleIdToData.values()) {
-                                    // todo jmt what if PT-ID isn't set yet?
-                                    ptIds.add(sampleData.getCollaboratorParticipantId());
+                                    if (StringUtils.isEmpty(sampleData.getCollaboratorParticipantId())) {
+                                        messageCollection.addError("No collaborator participant ID for " +
+                                                sampleData.getSampleId());
+                                    } else {
+                                        ptIds.add(sampleData.getCollaboratorParticipantId());
+                                    }
                                 }
                                 if (ptIds.size() > 1) {
                                     messageCollection.addError("More than one participant: " +
