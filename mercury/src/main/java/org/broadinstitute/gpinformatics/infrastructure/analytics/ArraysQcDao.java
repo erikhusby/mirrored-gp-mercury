@@ -27,7 +27,7 @@ import java.util.Map;
 @TransactionAttribute(TransactionAttributeType.NEVER)
 public class ArraysQcDao {
 
-    @PersistenceContext(type = PersistenceContextType.EXTENDED, unitName = "metrics_pu")
+    @PersistenceContext(type = PersistenceContextType.EXTENDED, unitName = "analytics_pu")
     private EntityManager entityManager;
 
     public List<ArraysQc> findByBarcodes(List<String> chipWellBarcodes) {
