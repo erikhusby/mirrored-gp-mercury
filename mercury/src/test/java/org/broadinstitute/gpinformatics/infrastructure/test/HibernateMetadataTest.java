@@ -111,7 +111,7 @@ public class HibernateMetadataTest extends ContainerTest {
     @Test(groups = TestGroups.STUBBY, description = "Tests all the hibernate mappings in the mercury_pu")
     public void testMercuryPersistenceUnit() throws Exception {
         Session session = entityManager.unwrap(Session.class);
-        testPersistenceUnit(session, metricsEntities, null);
+        testPersistenceUnit(session, ArrayUtils.addAll(metricsEntities, analyticsEntities), null);
     }
 
     @Test(groups = TestGroups.STUBBY, description = "Tests all the hibernate mappings in the metrics_pu.")
