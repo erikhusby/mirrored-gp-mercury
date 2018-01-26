@@ -89,6 +89,7 @@ public class ResearchProjectActionBeanSubmissionsTest extends MockServerTest {
         List<Object[]> testCases = new ArrayList<>();
         BSPUserList.QADudeUser bspUser = new BSPUserList.QADudeUser(RoleType.BROAD_SCIENTIST.name(), 1L);
         BSPUserList.QADudeUser anotherUser = new BSPUserList.QADudeUser(RoleType.BROAD_SCIENTIST.name(), 2L);
+        ResearchProject.RegulatoryDesignation clinical = ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS;
         ResearchProject.RegulatoryDesignation research = ResearchProject.RegulatoryDesignation.RESEARCH_ONLY;
 
         // Developers always have access
@@ -104,10 +105,7 @@ public class ResearchProjectActionBeanSubmissionsTest extends MockServerTest {
 
         // These cases will always have access to the submission tab but and validation fails
         for (Role role : EnumSet.of(Role.PM, Role.GPProjectManager, Role.Developer)) {
-            testCases.add(new Object[]{role, Pair.of(RoleType.PM, bspUser),
-                ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS, true, false});
-            testCases.add(new Object[]{role, Pair.of(RoleType.PM, bspUser),
-                ResearchProject.RegulatoryDesignation.GENERAL_CLIA_CAP, true, false});
+            testCases.add(new Object[]{role, Pair.of(RoleType.PM, bspUser), clinical, true, false});
         }
 
         EnumSet<RoleType> rolesTypesWillAlwaysFail = EnumSet.complementOf(EnumSet.of(RoleType.PM));
@@ -168,29 +166,5 @@ public class ResearchProjectActionBeanSubmissionsTest extends MockServerTest {
         assertThat(passesValidation, is(validationExpectedToPass));
     }
 
-    @DataProvider(name = "submissionAllowedProvider")
-    public Iterator<Object[]> submissionAllowedProvider() {
-        List<Object[]> testCases = new ArrayList<>();
-        testCases.add(new Object[]{ResearchProject.RegulatoryDesignation.RESEARCH_ONLY, true});
-
-        // catch-all in case values are added to enum. Currently only RESEARCH_ONLY projects can submit samples.
-        for (Enum regulatoryDesignation : EnumSet.complementOf(EnumSet.of(ResearchProject.RegulatoryDesignation.RESEARCH_ONLY))) {
-            testCases.add(new Object[]{regulatoryDesignation, false});
-        }
-
-        return testCases.iterator();
-    }
-
-
-    @Test(dataProvider = "submissionAllowedProvider")
-    public void testSubmissionAllowed(ResearchProject.RegulatoryDesignation regulatoryDesignation,
-                                      boolean submissionAllowed) {
-        ResearchProjectActionBean actionBean = new ResearchProjectActionBean();
-        ResearchProject testResearchProject = ResearchProjectTestFactory.createTestResearchProject();
-        testResearchProject.setRegulatoryDesignation(regulatoryDesignation);
-        actionBean.setEditResearchProject(testResearchProject);
-
-        assertThat(actionBean.isProjectAllowsSubmission(), is(submissionAllowed));
-    }
 }
 
