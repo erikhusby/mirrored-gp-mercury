@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -39,6 +40,7 @@ import java.util.Set;
  * JAX-RS web service for fingerprints.
  */
 @Path("/external/fingerprint")
+@RolesAllowed("Mercury-FingerprintWebService")
 @Stateful
 @RequestScoped
 public class FingerprintResource {
