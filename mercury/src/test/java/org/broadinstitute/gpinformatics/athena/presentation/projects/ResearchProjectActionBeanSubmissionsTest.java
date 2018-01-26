@@ -14,7 +14,6 @@ package org.broadinstitute.gpinformatics.athena.presentation.projects;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.MockServerTest;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
@@ -89,23 +88,16 @@ public class ResearchProjectActionBeanSubmissionsTest extends MockServerTest {
         List<Object[]> testCases = new ArrayList<>();
         BSPUserList.QADudeUser bspUser = new BSPUserList.QADudeUser(RoleType.BROAD_SCIENTIST.name(), 1L);
         BSPUserList.QADudeUser anotherUser = new BSPUserList.QADudeUser(RoleType.BROAD_SCIENTIST.name(), 2L);
-        ResearchProject.RegulatoryDesignation clinical = ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS;
-        ResearchProject.RegulatoryDesignation research = ResearchProject.RegulatoryDesignation.RESEARCH_ONLY;
 
         // Developers always have access
         for (RoleType roleType : RoleType.values()) {
-            testCases.add(new Object[]{Role.Developer, Pair.of(roleType, anotherUser), research, true, true});
-            testCases.add(new Object[]{Role.Developer, Pair.of(roleType, bspUser), research, true, true});
+            testCases.add(new Object[]{Role.Developer, Pair.of(roleType, anotherUser), true});
+            testCases.add(new Object[]{Role.Developer, Pair.of(roleType, bspUser), true});
         }
 
-        // These cases will always have access to the submission tab and validation passes
+        // These cases will always have access to the submission tab
         for (Role role : EnumSet.of(Role.PM, Role.GPProjectManager, Role.Developer)) {
-            testCases.add(new Object[]{role, Pair.of(RoleType.PM, bspUser), research, true, true});
-        }
-
-        // These cases will always have access to the submission tab but and validation fails
-        for (Role role : EnumSet.of(Role.PM, Role.GPProjectManager, Role.Developer)) {
-            testCases.add(new Object[]{role, Pair.of(RoleType.PM, bspUser), clinical, true, false});
+            testCases.add(new Object[]{role, Pair.of(RoleType.PM, bspUser), true});
         }
 
         EnumSet<RoleType> rolesTypesWillAlwaysFail = EnumSet.complementOf(EnumSet.of(RoleType.PM));
@@ -114,14 +106,14 @@ public class ResearchProjectActionBeanSubmissionsTest extends MockServerTest {
         // These cases will never have access to the submission tab
         for (RoleType roleType : rolesTypesWillAlwaysFail) {
             for (Role role : allRolesExcludingDevelopers) {
-                testCases.add(new Object[]{role, Pair.of(roleType, bspUser), research, false, false});
+                testCases.add(new Object[]{role, Pair.of(roleType, bspUser), false});
             }
         }
 
         // These cases will fail because the login user is not a PM on the project
         for (RoleType roleType : RoleType.values()) {
             for (Role role : allRolesExcludingDevelopers) {
-                testCases.add(new Object[]{role, Pair.of(roleType, anotherUser), research, false, false});
+                testCases.add(new Object[]{role, Pair.of(roleType, anotherUser), false});
             }
         }
 
@@ -129,12 +121,10 @@ public class ResearchProjectActionBeanSubmissionsTest extends MockServerTest {
     }
 
     @Test(dataProvider = "loginUsersDataProvider")
-    public void testSubmissionAccess(Role loginUserRole, Map.Entry<RoleType, BspUser> projectUsers,
-                                     ResearchProject.RegulatoryDesignation regulatoryDesignation, boolean userCanAccessTab, boolean validationExpectedToPass) {
+    public void testSubmissionsTabAccess(Role loginUserRole, Map.Entry<RoleType, BspUser> projectUsers,
+                                         boolean willPass) {
         ResearchProjectActionBean actionBean = new ResearchProjectActionBean();
-        ResearchProject testResearchProject = ResearchProjectTestFactory.createTestResearchProject();
-        testResearchProject.setRegulatoryDesignation(regulatoryDesignation);
-        actionBean.setEditResearchProject(testResearchProject);
+        actionBean.setEditResearchProject(ResearchProjectTestFactory.createTestResearchProject());
         actionBean.getEditResearchProject().clearPeople();
         for (RoleType roleType : RoleType.values()) {
             assertThat(actionBean.getEditResearchProject().getPeople(roleType).length, is(0));
@@ -160,10 +150,7 @@ public class ResearchProjectActionBeanSubmissionsTest extends MockServerTest {
 
         boolean hasSubmissionsTabAccess = ResearchProjectActionBean
             .hasSubmissionsTabAccess(actionBean.getUserBean(), actionBean.getEditResearchProject());
-        assertThat(hasSubmissionsTabAccess, is(userCanAccessTab));
-
-        boolean passesValidation = actionBean.validateViewOrPostSubmissions();
-        assertThat(passesValidation, is(validationExpectedToPass));
+        assertThat(hasSubmissionsTabAccess, is(willPass));
     }
 
 }
