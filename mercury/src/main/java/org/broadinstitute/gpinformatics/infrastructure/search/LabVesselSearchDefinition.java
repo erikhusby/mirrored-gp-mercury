@@ -1933,6 +1933,31 @@ public class LabVesselSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
+        searchTerm.setName("Chip Well Barcode");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                String result = null;
+                LabVessel vessel = (LabVessel)entity;
+
+                // Ignore for all but Infinium DNA Plate wells as source vessel
+                if(!InfiniumVesselTraversalEvaluator.isInfiniumSearch(context) || vessel.getType() != LabVessel.ContainerType.PLATE_WELL) {
+                    return null;
+                }
+
+                // DNA plate well event/vessel looks to (latest if rehyb-ed) descendant for chip well (1:1)
+                for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
+                        : InfiniumVesselTraversalEvaluator.getChipDetailsForDnaWell(vessel, CHIP_EVENT_TYPES, context).asMap().entrySet()) {
+                    result = labVesselAndPositions.getKey().getLabel() + "_" + labVesselAndPositions.getValue().iterator().next().toString();
+                    break;
+                }
+
+                return result;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
         searchTerm.setName("Chip Well");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
