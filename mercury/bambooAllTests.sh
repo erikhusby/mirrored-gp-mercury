@@ -32,7 +32,7 @@ USE_WILDFLY=""
 ADDITIONAL_OPTIONS=
 JAVA_USE="Java-1.7"
 
-while getopts "hcwb:s:w:m:u:" OPTION; do
+while getopts "hcwb:s:w:m:t:u:" OPTION; do
     case $OPTION in
 	h) usage
 	    exit 1
