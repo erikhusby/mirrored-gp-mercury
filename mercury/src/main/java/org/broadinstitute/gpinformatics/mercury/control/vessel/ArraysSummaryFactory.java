@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
+import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
@@ -8,6 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.ArraysQcDao;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcBlacklisting;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcFingerprint;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcGtConcordance;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
@@ -19,6 +21,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.AbandonVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
@@ -29,6 +32,7 @@ import java.io.PrintStream;
 import java.math.BigDecimal;
 import java.text.Format;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +44,8 @@ import java.util.Set;
  */
 public class ArraysSummaryFactory {
 
-    private static final Format DATE_FORMAT = FastDateFormat.getInstance("MM/dd/yyyy hh:mm a");
+    private static final Format DATE_TIME_FORMAT = FastDateFormat.getInstance("MM/dd/yyyy hh:mm a");
+    private static final Format DATE_FORMAT = FastDateFormat.getInstance("MM/dd/yyyy");
 
     @Inject
     private SampleDataFetcher sampleDataFetcher;
@@ -85,29 +90,34 @@ public class ArraysSummaryFactory {
                 BSPSampleSearchColumn.STOCK_SAMPLE, BSPSampleSearchColumn.COLLECTION,
                 BSPSampleSearchColumn.BSP_COLLECTION_BARCODE, BSPSampleSearchColumn.PRIMARY_DISEASE);
         Map<String, ArraysQc> mapBarcodeToArrayQc = arraysQcDao.findMapByBarcodes(chipWellBarcodes);
+        MultiValuedMap<String, ArraysQcBlacklisting> mapBarcodeToArrayQcBlacklist
+                = arraysQcDao.findBlacklistMapByBarcodes(chipWellBarcodes);
         LabVessel labVessel1 = vesselPositionPairs.get(0).getLeft();
         String chipType = productEjb.getGenotypingChip(productOrder,
                 labVessel1.getEvents().iterator().next().getEventDate()).getRight();
 
         // Header Group
-        printStream.println("PED Data\t\t\t\t\tCall Rate\t\t\tSample\t\t\t\t\t\t\tFingerprint\tGender\t\t\t\tTrio\t" +
-                "BEADSTUDIO\t\t\t\t\tZCALL\t\tScan\t\t\t\t\tPlate\t\t\t");
+        printStream.println("PED Data\t\t\t\t\tCall Rate\t\tSample\t\t\t\t\t\t\tFingerprint\tGender\t\t\t\tTrio\t" +
+                "BEADSTUDIO\t\t\t\t\tZCALL\t\tScan\t\t\t\t\tPlate\t\tFailures\t\t\t");
         // Headers
         printStream.println("Family ID\tIndividual ID\tCollection\tCollection ID\tPrimary Disease" +
                 "\tAutoCall\tzCall\tCall Date\tAliquot\tRoot Sample\tStock Sample\tParticipant\t" +
                 "Collaborator Sample\tCollaborator Participant\tCalled Infinium SNPs\tLOD\tReported Gender\tFldm FP Gender\t" +
                 "Beadstudio Gender\tAlgorithm Gender Concordance\tFamily\tHet %\tHap Map Concordance\t" +
                 "Version\tLast Cluster File\tRun\tVersion\tChip\tScan Date\tAmp Date\tScanner\tChip Well Barcode\t" +
-                "Analysis Version\tDNA Plate\tDNA Plate Well");
+                "Analysis Version\tDNA Plate\tDNA Plate Well\tLab Abandon\tBlacklisted On\tBlacklist Reason\tWhitelisted On");
         for (int i = 0; i < vesselPositionPairs.size(); i++) {
             Pair<LabVessel, VesselPosition> vesselPositionPair = vesselPositionPairs.get(i);
             LabVessel chip = vesselPositionPair.getLeft();
             VesselPosition vesselPosition = vesselPositionPair.getRight();
             SampleInstanceV2 sampleInstanceV2 = mapPairToSampleInstance.get(vesselPositionPair);
             SampleData sampleData = mapSampleNameToData.get(sampleInstanceV2.getNearestMercurySampleName());
+            boolean foundArraysQc = true;
             ArraysQc arraysQc = mapBarcodeToArrayQc.get(chipWellBarcodes.get(i));
+            Collection<ArraysQcBlacklisting> arraysQcBlacklistings = mapBarcodeToArrayQcBlacklist.get(chipWellBarcodes.get(i));
             if (arraysQc == null) {
                 arraysQc = new ArraysQc();
+                foundArraysQc = false;
             }
             TransferTraverserCriteria.VesselPositionForEvent traverserCriteria =
                     new TransferTraverserCriteria.VesselPositionForEvent(SampleSheetFactory.LAB_EVENT_TYPES);
@@ -192,7 +202,7 @@ public class ArraysSummaryFactory {
             // Scan Date
             for (LabEvent labEvent: chip.getInPlaceLabEvents()) {
                 if (labEvent.getLabEventType() == LabEventType.INFINIUM_AUTOCALL_SOME_STARTED) {
-                    printStream.print(DATE_FORMAT.format(labEvent.getEventDate()));
+                    printStream.print(DATE_TIME_FORMAT.format(labEvent.getEventDate()));
                     break;
                 }
             }
@@ -200,7 +210,7 @@ public class ArraysSummaryFactory {
             // Amp Date
             for (LabEvent labEvent : dnaPlateAndPosition.getVessel().getTransfersFrom()) {
                 if (labEvent.getLabEventType() == LabEventType.INFINIUM_AMPLIFICATION) {
-                    printStream.print(DATE_FORMAT.format(labEvent.getEventDate()));
+                    printStream.print(DATE_TIME_FORMAT.format(labEvent.getEventDate()));
                     break;
                 }
             }
@@ -228,8 +238,53 @@ public class ArraysSummaryFactory {
             // DNA Plate
             printStream.print(dnaPlateAndPosition.getVessel().getName() + "\t");
             // DNA Plate Well
-            printStream.print(dnaPlateAndPosition.getPosition());
+            printStream.print(dnaPlateAndPosition.getPosition() + "\t");
+
+            // Lab abandon vessel reason and date
+            // To test abandon output:  foundArraysQc = false;
+            if( !foundArraysQc ) {
+                // No metrics data, try if cause is an abandon
+                printStream.print( getAbandon(chip, vesselPosition) + "\t" );
+            }else {
+                printStream.print(" \t");
+            }
+
+            // Pipeline blacklist date, reason, whitelist date
+            if( arraysQcBlacklistings == null || arraysQcBlacklistings.isEmpty() ) {
+                printStream.print(" \t");
+                printStream.print(" \t");
+                printStream.print(" \t");
+            } else {
+                String blon = "", reas = "", wlon = "";
+                boolean isFirst = true;
+                for( ArraysQcBlacklisting blacklist : arraysQcBlacklistings ) {
+                    blon += (isFirst?"":", ") + DATE_FORMAT.format(blacklist.getBlacklistedOn());
+                    reas += (isFirst?"":", ") + blacklist.getBlacklistReason();
+                    // Retain only the latest
+                    wlon = blacklist.getWhitelistedOn() == null?"":DATE_FORMAT.format(blacklist.getWhitelistedOn());
+                    isFirst = false;
+                }
+                printStream.print(blon + "\t");
+                printStream.print(reas + "\t");
+                printStream.print(wlon + "\t");
+            }
             printStream.println();
+        }
+    }
+
+    /**
+     * Gets output formatted lab abandon vessel reason and date (only the most recent in ancestor transfers <br/>
+     * Format as "Abandon reason(abandon simple date)" e.g. Equipment failure(10/21/2017)
+     */
+    private String getAbandon(LabVessel chip, VesselPosition well){
+        TransferTraverserCriteria.AbandonedLabVesselCriteria abandonCriteria = new TransferTraverserCriteria.AbandonedLabVesselCriteria();
+        chip.getContainerRole().evaluateCriteria(well, abandonCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors,0);
+        if( abandonCriteria.isAncestorAbandoned() ) {
+            MultiValuedMap<LabVessel,AbandonVessel> vesselMultiValuedMap = abandonCriteria.getAncestorAbandonVessels();
+            AbandonVessel abandonVessel = vesselMultiValuedMap.values().iterator().next();
+            return abandonVessel.getReason().getDisplayName() + "(" + DATE_FORMAT.format( abandonVessel.getAbandonedOn() ) + ")";
+        } else {
+            return "";
         }
     }
 }

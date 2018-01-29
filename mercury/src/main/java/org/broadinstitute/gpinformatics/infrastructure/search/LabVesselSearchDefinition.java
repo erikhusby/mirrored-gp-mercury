@@ -29,6 +29,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.AbandonVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -1548,21 +1549,109 @@ public class LabVesselSearchDefinition {
         searchTerm.setName("Abandon Reason");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public String evaluate(Object entity, SearchContext context) {
-                LabVessel labVessel = (LabVessel) entity;
-                return labVessel.getAbandonReason();
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                LabVessel currentVessel = (LabVessel) entity;
+                Set<String> reasons = null;
+                // Directly abandoned?  don't traverse
+                Set<AbandonVessel> directAbandoned = currentVessel.getAbandonVessels();
+                if( directAbandoned != null && !directAbandoned.isEmpty() ) {
+                    reasons = new HashSet<>();
+                    String reason;
+
+                    if( directAbandoned.size() == 1 ) {
+                        AbandonVessel abandonVessel = currentVessel.getAbandonVessels().iterator().next();
+                        reason = abandonVessel.getReason().getDisplayName();
+                        if( abandonVessel.getVesselPosition() != null ) {
+                            reason += "(" + abandonVessel.getVesselPosition().name() + ")";
+                        }
+                        reasons.add( reason );
+                    } else {
+                        // Gather reasons and positions
+                        String position;
+                        Map<String,Set<String>> reasonPositionMap = new HashMap<>();
+                        for( AbandonVessel abandonVessel : directAbandoned ) {
+                            reason = abandonVessel.getReason().getDisplayName();
+                            if( !reasonPositionMap.containsKey( reason ) ) {
+                                reasonPositionMap.put(reason, new HashSet<String>());
+                            }
+                            position = abandonVessel.getVesselPosition() == null?"":abandonVessel.getVesselPosition().name();
+                            reasonPositionMap.get(reason).add( position );
+                        }
+                        for( String key : reasonPositionMap.keySet() ) {
+                            StringBuilder posDisplay = new StringBuilder(64);
+                            for( String pos : reasonPositionMap.get(key)) {
+                                if( pos.length() > 0 ) {
+                                    posDisplay.append(pos).append(",");
+                                }
+                            }
+                            if( posDisplay.length() > 1 ) {
+                                posDisplay.deleteCharAt(posDisplay.length() - 1);
+                                posDisplay.append(")");
+                                posDisplay.insert(0,"(");
+                                posDisplay.insert(0,key );
+                                reasons.add( posDisplay.toString() );
+                            }
+                        }
+                    }
+                } else {
+                    TransferTraverserCriteria.AbandonedLabVesselCriteria abandonCriteria =
+                            new TransferTraverserCriteria.AbandonedLabVesselCriteria();
+
+                    if (currentVessel.getContainerRole() == null) {
+                        currentVessel.evaluateCriteria(abandonCriteria,
+                                TransferTraverserCriteria.TraversalDirection.Ancestors);
+                    } else {
+                        currentVessel.getContainerRole().applyCriteriaToAllPositions(abandonCriteria,
+                                TransferTraverserCriteria.TraversalDirection.Ancestors);
+                    }
+                    if (abandonCriteria.isAncestorAbandoned()) {
+                        reasons = new HashSet<>();
+                        String reason;
+                        MultiValuedMap<LabVessel, AbandonVessel> abandonMap =
+                                abandonCriteria.getAncestorAbandonVessels();
+                        for (LabVessel labVessel : abandonMap.keySet()) {
+                            for (AbandonVessel abandonVessel : abandonMap.get(labVessel)) {
+                                reason = abandonVessel.getReason().getDisplayName();
+                                if (abandonVessel.getVesselPosition() != null) {
+                                    reason += "(" + abandonVessel.getVesselPosition().name() + ")";
+                                }
+                                reasons.add(reason);
+                            }
+                        }
+                    }
+                }
+                return reasons;
             }
         });
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Abandon Date");
-        searchTerm.setValueType(ColumnValueType.DATE_TIME);
+        searchTerm.setValueType(ColumnValueType.DATE);
+
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public Date evaluate(Object entity, SearchContext context) {
-                LabVessel labVessel = (LabVessel) entity;
-                return labVessel.getAbandonedDate();
+            public Set<Date> evaluate(Object entity, SearchContext context) {
+                LabVessel currentVessel = (LabVessel) entity;
+                Set<Date> dateVal = null;
+                TransferTraverserCriteria.AbandonedLabVesselCriteria abandonCriteria =
+                        new TransferTraverserCriteria.AbandonedLabVesselCriteria();
+
+                if( currentVessel.getContainerRole() == null ) {
+                    currentVessel.evaluateCriteria(abandonCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+                } else {
+                    currentVessel.getContainerRole().applyCriteriaToAllPositions(abandonCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+                }
+                if( abandonCriteria.isAncestorAbandoned() ) {
+                    dateVal = new HashSet<>();
+                    MultiValuedMap<LabVessel,AbandonVessel> abandonMap = abandonCriteria.getAncestorAbandonVessels();
+                    for( LabVessel labVessel : abandonMap.keySet() ) {
+                        for( AbandonVessel abandonVessel : abandonMap.get(labVessel)) {
+                            dateVal.add(abandonVessel.getAbandonedOn());
+                        }
+                    }
+                }
+                return dateVal;
             }
         });
         searchTerms.add(searchTerm);

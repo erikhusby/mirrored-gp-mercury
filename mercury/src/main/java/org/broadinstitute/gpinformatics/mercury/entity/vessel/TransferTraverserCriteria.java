@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import org.apache.commons.collections4.MultiValuedMap;
+import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -549,49 +551,45 @@ public abstract class TransferTraverserCriteria {
         }
     }
 
-
     /**
-     * Returns true if an an ancesstor for a given position is abandoned.
+     * Gathers abandon state for a given vessel and/or position <br/>
+     * <strong>Note:</strong>  Descendant search will report all abandons in the transfers
+     * - an abandon along a fork will poison the successful transfers (e.g. reworks) along another fork
      */
-    public static class AbandonedLabVesselAncestorCriteria extends TransferTraverserCriteria {
-        private final Map<Integer, List<LabVessel>> labVesselAtHopCount = new TreeMap<>();
+    public static class AbandonedLabVesselCriteria extends TransferTraverserCriteria {
+
+        // Holds abandon state for vessels and, optionally, positions
+        private MultiValuedMap<LabVessel,AbandonVessel> abandonVessels = new HashSetValuedHashMap<>();
+
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
-            // May support it, but avoid mis-match between name and function
-            if (context.getTraversalDirection() != TraversalDirection.Ancestors) {
-                throw new IllegalStateException("LabVesselAncestorCriteria supports ancestor traversal only");
-            }
 
-            List<LabVessel> vesselList;
-            if (labVesselAtHopCount.containsKey(context.getHopCount())) {
-                vesselList = labVesselAtHopCount.get(context.getHopCount());
+            LabVessel contextVessel = context.getContextVessel();
+            if (contextVessel != null) {
+                if (contextVessel.isVesselAbandoned()) {
+                    for ( AbandonVessel abandonVessel : contextVessel.getAbandonVessels() ) {
+                        abandonVessels.put(contextVessel, abandonVessel);
+                    }
+                }
             } else {
-                vesselList = new ArrayList<>();
-            }
-
-            if (context.getContextVessel() != null) {
-                if (context.getContextVessel().isVesselAbandoned()) {
-                    if(context.getContextVessel().getAbandonVessels().iterator().next().getReason() == null) {
-                        if (isRackOfTubesReasonValid(context.getContextVessel())) {
-                            vesselList.add(context.getContextVessel());
+                VesselContainer vesselContainer = context.getContextVesselContainer();
+                if ( vesselContainer != null ) {
+                    Pair<LabVessel, VesselPosition> vesselPositionPair = context.getContextVesselAndPosition();
+                    LabVessel labVessel = vesselPositionPair.getLeft();
+                    // Wells have no vessel TODO JMS Why not put the container vessel in vesselPositionPair.getLeft()?
+                    if( labVessel == null ) {
+                        labVessel = vesselContainer.getEmbedder();
+                    }
+                    VesselPosition contextVesselPosition = vesselPositionPair.getRight();
+                    for( AbandonVessel abandonVessel : labVessel.getAbandonVessels() ) {
+                        if( abandonVessel.getVesselPosition() == contextVesselPosition ) {
+                                if (isPlateAbandonReasonValid(vesselContainer.getEmbedder(), contextVesselPosition)) {
+                                    abandonVessels.put(vesselContainer.getEmbedder(), abandonVessel);
+                                }
+                                break;
                         }
                     }
-                    else if (isTubeAbandonReasonValid(context.getContextVessel())) {
-                        vesselList.add(context.getContextVessel());
-                    }
                 }
-            } else if (context.getContextVesselContainer() != null) {
-                Pair<LabVessel, VesselPosition> vesselPositionPair = context.getContextVesselAndPosition();
-                VesselPosition contextVesselPosition = vesselPositionPair.getRight();
-                if (context.getContextVesselContainer().getEmbedder().isPositionAbandoned(contextVesselPosition.name())) {
-                    if (isPlateAbandonReasonValid(context.getContextVesselContainer().getEmbedder(), contextVesselPosition)) {
-                        vesselList.add(context.getContextVesselContainer().getEmbedder());
-                    }
-                }
-            }
-
-            if (vesselList.size() > 0) {
-                labVesselAtHopCount.put(context.getHopCount(), vesselList);
             }
 
             return TraversalControl.ContinueTraversing;
@@ -606,29 +604,25 @@ public abstract class TransferTraverserCriteria {
             return !labVessel.getAbandonVessels().iterator().next().getReason().equals(AbandonVessel.Reason.DEPLETED);
         }
 
-        //Tube in a rack container.
+        // Tube in a rack container.
         private boolean isRackOfTubesReasonValid(LabVessel labVessel) {
             for (AbandonVessel abandonVessel : labVessel.getAbandonVessels()) {
-                for (AbandonVesselPosition abandonVesselPosition : abandonVessel.getAbandonedVesselPosition()) {
-                    // If the plate position is marked as depleted we do not consider it abandoned.
-                    if (abandonVesselPosition.getReason().equals(AbandonVessel.Reason.DEPLETED)) {
-                        return false;
-                    }
+                // If the plate position is marked as depleted we do not consider it abandoned.
+                if ( abandonVessel.getReason() == AbandonVessel.Reason.DEPLETED ) {
+                    return false;
                 }
             }
             return false;
         }
 
-        //Positions on a plate.
+        // Positions on a plate.
         private boolean isPlateAbandonReasonValid(LabVessel labVessel, VesselPosition contextVesselPosition ) {
             //Multiple positions on a single plate may be abandoned with different reasons.
             for (AbandonVessel abandonVessel : labVessel.getAbandonVessels()) {
-                for (AbandonVesselPosition abandonVesselPosition : abandonVessel.getAbandonedVesselPosition()) {
-                    if(contextVesselPosition.name().equals(abandonVesselPosition.getPosition())) {
-                        // If the plate position is marked as depleted we do not consider it abandoned.
-                        if (abandonVesselPosition.getReason().equals(AbandonVessel.Reason.DEPLETED)) {
-                            return false;
-                        }
+                if( contextVesselPosition == abandonVessel.getVesselPosition() ) {
+                    // If the plate position is marked as depleted we do not consider it abandoned.
+                    if (abandonVessel.getReason().equals(AbandonVessel.Reason.DEPLETED)) {
+                        return false;
                     }
                 }
             }
@@ -636,8 +630,17 @@ public abstract class TransferTraverserCriteria {
         }
 
         public boolean  isAncestorAbandoned() {
-            return !labVesselAtHopCount.values().isEmpty();
+            return !abandonVessels.isEmpty();
         }
+
+        /**
+         * Ancestry traversal abandoned vessels, and optionally, positions
+         * @return A multi valued map keyed by LabVessel, value is a collection of abandoned positions in a container, null if the abandoned vessel is not a container (e.g. BarcodedTube)
+         */
+        public MultiValuedMap<LabVessel,AbandonVessel> getAncestorAbandonVessels(){
+            return abandonVessels;
+        }
+
     }
 
     /**
