@@ -82,21 +82,23 @@ public class ArraysSummaryFactory {
         Map<String, SampleData> mapSampleNameToData = sampleDataFetcher.fetchSampleDataForSamples(sampleNames,
                 BSPSampleSearchColumn.PARTICIPANT_ID, BSPSampleSearchColumn.COLLABORATOR_FAMILY_ID,
                 BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID,
-                BSPSampleSearchColumn.STOCK_SAMPLE);
+                BSPSampleSearchColumn.STOCK_SAMPLE, BSPSampleSearchColumn.COLLECTION,
+                BSPSampleSearchColumn.BSP_COLLECTION_BARCODE, BSPSampleSearchColumn.PRIMARY_DISEASE);
         Map<String, ArraysQc> mapBarcodeToArrayQc = arraysQcDao.findMapByBarcodes(chipWellBarcodes);
         LabVessel labVessel1 = vesselPositionPairs.get(0).getLeft();
         String chipType = productEjb.getGenotypingChip(productOrder,
                 labVessel1.getEvents().iterator().next().getEventDate()).getRight();
 
         // Header Group
-        printStream.println("PED Data\t\tCall Rate\t\tSample\t\t\t\t\t\t\tFingerprint\tGender\t\t\t\tTrio\t" +
+        printStream.println("PED Data\t\t\t\t\tCall Rate\t\t\tSample\t\t\t\t\t\t\tFingerprint\tGender\t\t\t\tTrio\t" +
                 "BEADSTUDIO\t\t\t\t\tZCALL\t\tScan\t\t\t\t\tPlate\t\t\t");
         // Headers
-        printStream.println("Family ID\tIndividual ID\tAutoCall\tzCall\tAliquot\tRoot Sample\tStock Sample\tParticipant\t" +
+        printStream.println("Family ID\tIndividual ID\tCollection\tCollection ID\tPrimary Disease" +
+                "\tAutoCall\tzCall\tCall Date\tAliquot\tRoot Sample\tStock Sample\tParticipant\t" +
                 "Collaborator Sample\tCollaborator Participant\tCalled Infinium SNPs\tLOD\tReported Gender\tFldm FP Gender\t" +
-                "Beadstudio Gender\tAlgorithm Gender Concordance\tFamily\tHet %\tAnalysis Version\tHap Map Concordance\t" +
+                "Beadstudio Gender\tAlgorithm Gender Concordance\tFamily\tHet %\tHap Map Concordance\t" +
                 "Version\tLast Cluster File\tRun\tVersion\tChip\tScan Date\tAmp Date\tScanner\tChip Well Barcode\t" +
-                "DNA Plate\tDNA Plate Well");
+                "Analysis Version\tDNA Plate\tDNA Plate Well");
         for (int i = 0; i < vesselPositionPairs.size(); i++) {
             Pair<LabVessel, VesselPosition> vesselPositionPair = vesselPositionPairs.get(i);
             LabVessel chip = vesselPositionPair.getLeft();
@@ -119,11 +121,22 @@ public class ArraysSummaryFactory {
             printStream.print(sampleData.getCollaboratorFamilyId() + "\t");
             // Individual ID
             printStream.print(sampleData.getPatientId() + "\t");
+            // Collection
+            printStream.print(sampleData.getCollection() + "\t");
+            // Collection ID
+            printStream.print(sampleData.getCollectionId() + "\t");
+            // Primary Disease
+            printStream.print(sampleData.getPrimaryDisease() + "\t");
             // AutoCall
             BigDecimal autocallCallRatePct = arraysQc.getAutocallCallRatePct();
             printStream.print((autocallCallRatePct == null ? "" : autocallCallRatePct) + "\t");
             // zCall
             printStream.print(arraysQc.getCallRatePct() + "\t");
+            // Call Date
+            if (arraysQc.getAutocallDate() != null) {
+                printStream.print(DATE_FORMAT.format(arraysQc.getAutocallDate()));
+            }
+            printStream.print("\t");
             // Aliquot
             printStream.print(sampleInstanceV2.getNearestMercurySampleName() + "\t");
             // Root Sample
@@ -156,8 +169,6 @@ public class ArraysSummaryFactory {
             printStream.print(sampleData.getCollaboratorFamilyId() + "\t");
             // Het %
             printStream.print(arraysQc.getHetPct100() + "\t");
-            // Analysis Version
-            printStream.print(arraysQc.getAnalysisVersion() + "\t");
             // Hap Map Concordance
             if (arraysQc.getArraysQcGtConcordances() != null) {
                 for (ArraysQcGtConcordance arraysQcGtConcordance: arraysQc.getArraysQcGtConcordances()) {
@@ -210,8 +221,10 @@ public class ArraysSummaryFactory {
                 printStream.print(scannerName == null ? "" : scannerName);
             }
             printStream.print("\t");
-            // Genotyping Run
+            // Chip Well Barcode
             printStream.print(chipWellBarcodes.get(i) + "\t");
+            // Analysis Version
+            printStream.print(arraysQc.getAnalysisVersion() + "\t");
             // DNA Plate
             printStream.print(dnaPlateAndPosition.getVessel().getName() + "\t");
             // DNA Plate Well
