@@ -1172,6 +1172,36 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
 
+    // Fingerprinting
+    FINGERPRINTING_STA_ADDITION("FingerprintingSTAAddition",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    FINGERPRINTING_POST_STA_ADDITION_THERMO_CYCLER_LOADED("FingerprintingPostSTAAdditionThermoCyclerLoaded",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    FINGERPRINTING_SLR_ADDITION("FingerprintingSLRDilution",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    FINGERPRINTING_IFC_TRANSFER("FingerprintingIFCTransfer",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT, StaticPlate.PlateType.Eppendorf96,
+                    StaticPlate.PlateType.Fluidigm96_96AccessArrayIFC).reagentNames(new String[]{}).
+                    sourceSection(SBSSection.ALL96).targetSection(SBSSection.P384COLS7_12BYROW).
+                    machineNames(new String[]{"HX10412", "HX10411", "HX10327", "HX10322"}).
+                    reagentNames(new String[]{"LSP Oligo Plate", "ASP Oligo Plate", "H2O", "2X", "1X Low TE"}).build(),
+            LibraryType.NONE_ASSIGNED),
+    FINGERPRINTING_FC1_LOADED("FingerprintingFC1Loaded",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_EVENT, StaticPlate.PlateType.Eppendorf96,
+                    StaticPlate.PlateType.Fluidigm96_96AccessArrayIFC).reagentNames(new String[]{}).
+                    machineNames(new String[]{"FC60317", "FC60308", "FC60306", "FC60187"}).build(),
+            LibraryType.NONE_ASSIGNED),
+
     // mRRBS
     MRRBS_GENOMIC_TRANSFER("mRRBSGenomicTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
