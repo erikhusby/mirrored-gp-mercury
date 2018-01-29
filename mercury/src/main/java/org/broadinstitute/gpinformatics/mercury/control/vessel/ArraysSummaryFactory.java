@@ -97,15 +97,15 @@ public class ArraysSummaryFactory {
                 labVessel1.getEvents().iterator().next().getEventDate()).getRight();
 
         // Header Group
-        printStream.println("PED Data\t\t\t\t\tCall Rate\t\tSample\t\t\t\t\t\t\tFingerprint\tGender\t\t\t\tTrio\t" +
-                "BEADSTUDIO\t\t\t\t\tZCALL\t\tScan\t\t\t\t\tPlate\t\tFailures\t\t\t");
+        printStream.println("PED Data\t\t\t\t\tCall Rate\t\t\tSample\t\t\t\t\t\tFingerprint\t\tGender\t\t\t\tTrio\t\t\t" +
+                "BEADSTUDIO\t\t\t\t\tZCALL\t\tScan\t\t\tPlate\t\tFailures\t\t\t\t");
         // Headers
         printStream.println("Family ID\tIndividual ID\tCollection\tCollection ID\tPrimary Disease" +
                 "\tAutoCall\tzCall\tCall Date\tAliquot\tRoot Sample\tStock Sample\tParticipant\t" +
                 "Collaborator Sample\tCollaborator Participant\tCalled Infinium SNPs\tLOD\tReported Gender\tFldm FP Gender\t" +
                 "Beadstudio Gender\tAlgorithm Gender Concordance\tFamily\tHet %\tHap Map Concordance\t" +
                 "Version\tLast Cluster File\tRun\tVersion\tChip\tScan Date\tAmp Date\tScanner\tChip Well Barcode\t" +
-                "Analysis Version\tDNA Plate\tDNA Plate Well\tLab Abandon\tBlacklisted On\tBlacklist Reason\tWhitelisted On");
+                "Analysis Version\tDNA Plate\tDNA Plate Well\tLab Abandon\tBlacklisted On\tBlacklist Reason\tWhitelisted On\t");
         for (int i = 0; i < vesselPositionPairs.size(); i++) {
             Pair<LabVessel, VesselPosition> vesselPositionPair = vesselPositionPairs.get(i);
             LabVessel chip = vesselPositionPair.getLeft();
