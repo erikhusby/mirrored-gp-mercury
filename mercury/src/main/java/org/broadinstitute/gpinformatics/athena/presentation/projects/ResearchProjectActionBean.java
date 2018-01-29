@@ -842,13 +842,19 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
 
     @ValidationMethod(on = {VIEW_SUBMISSIONS_ACTION, POST_SUBMISSIONS_ACTION}, priority=1)
     public boolean validateViewOrPostSubmissions() {
+        if (getUserBean().isDeveloperUser()) {
+            return true;
+        }
         List<String> accessRestriction = new ArrayList<>();
         if (!isProjectAllowsSubmission()) {
             accessRestriction.add("research projects only");
         }
+        Collection<Long> projectManagerIds = Arrays.asList(editResearchProject.getPeople(RoleType.PM));
 
-        boolean canAccess = hasSubmissionsTabAccess(getUserBean(), editResearchProject);
-        if (!canAccess) {
+        // Test both the user's role and whether or not they are listed as a project manager in the project. This
+        // protects from the case where the user's role has been revoked, but the project people haven't been updated.
+        boolean isPm = (getUserBean().isPMUser() || getUserBean().isGPPMUser()) && projectManagerIds.contains(getUserBean().getBspUser().getUserId());
+        if (!isPm) {
             accessRestriction.add(String.format("Project Managers of %s", researchProject));
         }
         if (accessRestriction.isEmpty()) {
@@ -858,20 +864,6 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         if (!supressValidationErrors) {
             addGlobalValidationError(
                     String.format("Data submissions are available for %s.", StringUtils.join(accessRestriction, " and ")));
-        }
-        return false;
-    }
-
-    static boolean hasSubmissionsTabAccess(UserBean userBean, ResearchProject researchProject) {
-        if (userBean.isDeveloperUser()) {
-            return true;
-        }
-        // Test both the user's role and whether or not they are listed as a project manager in the project. This
-        // protects from the case where the user's role has been revoked, but the project people haven't been updated.
-
-        Collection<Long> projectManagerIds = Arrays.asList(researchProject.getPeople(RoleType.PM));
-        if (userBean.isPMUser() || userBean.isGPPMUser()) {
-            return projectManagerIds.contains(userBean.getBspUser().getUserId());
         }
         return false;
     }
