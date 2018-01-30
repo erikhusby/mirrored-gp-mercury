@@ -34,6 +34,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySample
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.DBSPuncherFileParser;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LimsFileType;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.QiagenRackFileParser;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -241,8 +242,6 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     PlateEventType plateEventType = (PlateEventType) stationEvent;
                     PlateType plateType = new PlateType();
                     VesselTypeGeometry vesselTypeGeometry = manualTransferDetails.getTargetVesselTypeGeometry();
-                    assignSyntheticBarcode(plateType, vesselTypeGeometry,
-                            manualTransferDetails.getSourceContainerPrefix());
                     plateType.setPhysType(vesselTypeGeometry.getDisplayName());
                     plateEventType.setPlate(plateType);
                     if (vesselTypeGeometry instanceof RackOfTubes.RackType) {
@@ -253,8 +252,6 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     PlateTransferEventType plateTransferEventType = (PlateTransferEventType) stationEvent;
                     PlateType sourcePlate = new PlateType();
                     VesselTypeGeometry sourceVesselTypeGeometry = manualTransferDetails.getSourceVesselTypeGeometry();
-                    assignSyntheticBarcode(sourcePlate, sourceVesselTypeGeometry,
-                            manualTransferDetails.getSourceContainerPrefix());
                     sourcePlate.setPhysType(sourceVesselTypeGeometry.getDisplayName());
                     plateTransferEventType.setSourcePlate(sourcePlate);
                     if (sourceVesselTypeGeometry instanceof RackOfTubes.RackType) {
@@ -263,8 +260,6 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
                     PlateType destinationPlateType = new PlateType();
                     VesselTypeGeometry targetVesselTypeGeometry = manualTransferDetails.getTargetVesselTypeGeometry();
-                    assignSyntheticBarcode(destinationPlateType, targetVesselTypeGeometry,
-                            manualTransferDetails.getSourceContainerPrefix());
                     destinationPlateType.setPhysType(targetVesselTypeGeometry.getDisplayName());
                     plateTransferEventType.setPlate(destinationPlateType);
                     if (targetVesselTypeGeometry instanceof RackOfTubes.RackType) {
@@ -305,8 +300,6 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     //Source
                     PlateType sourcePlateCp = new PlateType();
                     VesselTypeGeometry sourceVesselTypeGeometryCp = localManualTransferDetails.getSourceVesselTypeGeometry();
-                    assignSyntheticBarcode(sourcePlateCp, sourceVesselTypeGeometryCp,
-                            localManualTransferDetails.getSourceContainerPrefix());
                     sourcePlateCp.setPhysType(sourceVesselTypeGeometryCp.getDisplayName());
                     plateCherryPickEvent.getSourcePlate().add(sourcePlateCp);
                     if (sourceVesselTypeGeometryCp instanceof RackOfTubes.RackType) {
@@ -316,8 +309,6 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     //Target
                     PlateType destinationPlateTypeCp = new PlateType();
                     VesselTypeGeometry targetVesselTypeGeometryCp = localManualTransferDetails.getTargetVesselTypeGeometry();
-                    assignSyntheticBarcode(destinationPlateTypeCp, targetVesselTypeGeometryCp,
-                            localManualTransferDetails.getTargetContainerPrefix());
                     destinationPlateTypeCp.setPhysType(targetVesselTypeGeometryCp.getDisplayName());
                     plateCherryPickEvent.getPlate().add(destinationPlateTypeCp);
                     if (targetVesselTypeGeometryCp instanceof RackOfTubes.RackType) {
@@ -362,6 +353,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
             }
             stationEventIndex++;
         }
+        assignSyntheticBarcodes();
         isParseLimsFile = manualTransferDetails.isLimsFile();
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }
@@ -472,6 +464,35 @@ public class ManualTransferActionBean extends RackScanActionBean {
                         }
                     }
                 }
+                break;
+            case DBS_PUNCHER:
+                DBSPuncherFileParser dbsPuncherFileParser = new DBSPuncherFileParser();
+                DBSPuncherFileParser.DBSPuncherRun puncherRun =
+                        dbsPuncherFileParser.parseRun(limsFileStream, messageCollection);
+                Map<VesselPosition, String> mapPositionToSampleBarcode = puncherRun.getMapPositionToSampleBarcode();
+                if (mapPositionToSampleBarcode.size() == 0) {
+                    messageCollection.addError(
+                            "Failed to find any transfers in file: " + mapPositionToSampleBarcode.size());
+                } else {
+                    Iterator<StationEventType> eventIterator = stationEvents.iterator();
+                    PlateTransferEventType plateTransferEventTypeDbs =
+                            (PlateTransferEventType) eventIterator.next();
+                    String sourceBarcode =  manualTransferDetails.getSourceContainerPrefix() + syntheticBarcode;
+                    plateTransferEventTypeDbs.getSourcePlate().setBarcode(sourceBarcode);
+                    plateTransferEventTypeDbs.getPlate().setBarcode(puncherRun.getPlateBarcode());
+                    PositionMapType sourcePositionMap = plateTransferEventTypeDbs.getSourcePositionMap();
+                    sourcePositionMap.setBarcode(plateTransferEventTypeDbs.getSourcePlate().getBarcode());
+                    for (Map.Entry<VesselPosition, String> entry: mapPositionToSampleBarcode.entrySet()) {
+                        ReceptacleType receptacleType = new ReceptacleType();
+                        receptacleType.setReceptacleType(manualTransferDetails.getSourceBarcodedTubeType().
+                                getAutomationName());
+                        receptacleType.setBarcode(entry.getValue());
+                        receptacleType.setPosition(entry.getKey().name());
+                        sourcePositionMap.getReceptacle().add(receptacleType);
+                    }
+                }
+
+                break;
             }
         } catch (IOException e) {
             log.error("IO Exception when parsing LIMS File", e);
@@ -610,19 +631,6 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 }
                 break;
         }
-    }
-
-    /**
-    * Parse well data positions from Cherry Pick Json result.
-    */
-    private  String parseWellFromJson(String input) {
-        if (input.length() >= 3) {
-            return input.substring(0, 3);
-        } else {
-            addGlobalValidationError("Cherrypick position input malformed " + input);
-            log.error("Cherrypick position input malformed ",null);
-        }
-        return null;
     }
 
     /**
@@ -815,6 +823,57 @@ public class ManualTransferActionBean extends RackScanActionBean {
         return returnMapBarcodeToVessel;
     }
 
+    private void assignSyntheticBarcodes() {
+        int stationEventIndex = 0;
+        for (StationEventType stationEvent : stationEvents) {
+            switch (manualTransferDetails.getMessageType()) {
+                case PLATE_EVENT:
+                    PlateEventType plateEventType = (PlateEventType) stationEvent;
+                    VesselTypeGeometry vesselTypeGeometry = manualTransferDetails.getTargetVesselTypeGeometry();
+                    assignSyntheticBarcode(plateEventType.getPlate(), vesselTypeGeometry,
+                            manualTransferDetails.getSourceContainerPrefix());
+                    break;
+                case PLATE_TRANSFER_EVENT:
+                    PlateTransferEventType plateTransferEventType = (PlateTransferEventType) stationEvent;
+                    VesselTypeGeometry sourceVesselTypeGeometry = manualTransferDetails.getSourceVesselTypeGeometry();
+                    assignSyntheticBarcode(plateTransferEventType.getSourcePlate(), sourceVesselTypeGeometry,
+                            manualTransferDetails.getSourceContainerPrefix());
+
+                    VesselTypeGeometry targetVesselTypeGeometry = manualTransferDetails.getTargetVesselTypeGeometry();
+                    assignSyntheticBarcode(plateTransferEventType.getPlate(), targetVesselTypeGeometry,
+                            manualTransferDetails.getTargetContainerPrefix());
+                    break;
+                case PLATE_CHERRY_PICK_EVENT:
+                    LabEventType.ManualTransferDetails localManualTransferDetails =
+                            manualTransferDetails.getSecondaryEvent() != null && stationEventIndex > 0 ?
+                                    manualTransferDetails.getSecondaryEvent().getManualTransferDetails() :
+                                    manualTransferDetails;
+                    PlateCherryPickEvent plateCherryPickEvent = (PlateCherryPickEvent) stationEvent;
+
+                    //Source
+                    VesselTypeGeometry sourceVesselTypeGeometryCp = localManualTransferDetails.getSourceVesselTypeGeometry();
+                    assignSyntheticBarcode(plateCherryPickEvent.getSourcePlate().get(0), sourceVesselTypeGeometryCp,
+                            localManualTransferDetails.getSourceContainerPrefix());
+
+                    //Target
+                    VesselTypeGeometry targetVesselTypeGeometryCp = localManualTransferDetails.getTargetVesselTypeGeometry();
+                    assignSyntheticBarcode(plateCherryPickEvent.getPlate().get(0), targetVesselTypeGeometryCp,
+                            localManualTransferDetails.getTargetContainerPrefix());
+                    for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
+                        if (!sourceVesselTypeGeometryCp.isBarcoded()) {
+                            cherryPickSourceType.setBarcode(plateCherryPickEvent.getSourcePlate().get(0).getBarcode());
+                        }
+                        if (!targetVesselTypeGeometryCp.isBarcoded()) {
+                            cherryPickSourceType.setDestinationBarcode(plateCherryPickEvent.getPlate().get(0).getBarcode());
+                        }
+                    }
+
+                    break;
+            }
+            stationEventIndex++;
+        }
+    }
+
     @HandlesEvent(TRANSFER_ACTION)
     public Resolution transfer() {
         BettaLIMSMessage bettaLIMSMessage = buildBettaLIMSMessage();
@@ -824,6 +883,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 ObjectMarshaller<BettaLIMSMessage> bettaLIMSMessageObjectMarshaller =
                         new ObjectMarshaller<>(BettaLIMSMessage.class);
                 bettaLimsMessageResource.storeAndProcess(bettaLIMSMessageObjectMarshaller.marshal(bettaLIMSMessage));
+                // Assign new synthetic barcodes, in case user pastes in new tube barcodes without refreshing page
+                assignSyntheticBarcodes();
                 addMessage("Transfer recorded successfully.");
             } catch (Exception e) {
                 log.error("Failed to process message", e);

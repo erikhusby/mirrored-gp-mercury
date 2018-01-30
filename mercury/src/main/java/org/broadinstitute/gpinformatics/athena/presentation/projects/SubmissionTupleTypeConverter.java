@@ -27,6 +27,6 @@ public class SubmissionTupleTypeConverter implements TypeConverter<SubmissionTup
     @Override
     public SubmissionTuple convert(String input, Class<? extends SubmissionTuple> targetType,
                                    Collection<ValidationError> errors) {
-        return SubmissionTuple.fromJson(input);
+        return new SubmissionTuple(input);
     }
 }

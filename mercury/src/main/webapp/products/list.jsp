@@ -1,5 +1,7 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
 <%@ page import="static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao.Availability.*" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao" %>
 
 <stripes:useActionBean var="actionBean"
@@ -13,12 +15,22 @@
                     "oTableTools": ttExportDefines,
                     "aaSorting": [[0,'asc']],
                     "aoColumns": [
-                        {"bSortable": false},
-                        {"bSortable": true, "sType": "title-string"},
-                        {"bSortable": true},
-                        {"bSortable": true},
-                        {"bSortable": true, "sType" : "title-string"},
-                        {"bSortable": true, "sType" : "title-string"}]
+                        {"bSortable": false},                           // checkbox
+                        {"bSortable": true, "sType": "title-string"},   // Part Number
+                        {"bSortable": true},                            // Product Name
+                        {"bSortable": true},                            // Product Family
+                        {"bSortable": true, "sType": "title-string"},   // Units
+                        {"bSortable": true, "sType": "title-string"},   // Price item Display Name
+                        {"bSortable": true, "sType": "title-string"},   // Price Item Platform
+                        {"bSortable": true, "sType": "numeric"},        // Quote Server Price
+                        {"bSortable": true, "sType": "numeric"},        // SAP Price
+                        {"bSortable": true, "sType": "numeric"},        // SAP Clinical Charge
+                        {"bSortable": true, "sType": "numeric"},        // SAP Commerical Charge
+                        {"bSortable": true, "sType": "numeric"},        // SAP SSF Intercompany Charge
+                        {"bSortable": true, "sType" : "title-string"},  // Commercial Indicator
+                        {"bSortable": true, "sType" : "title-string"},  // Clinical Indicator
+                        {"bSortable": true, "sType" : "title-string"},  // PDM Orderable Indicator
+                        {"bSortable": true, "sType" : "title-string"}]  // Availibility Indicaory
                 })
             });
 
@@ -54,36 +66,87 @@
                 <th>Part Number</th>
                 <th>Product Name</th>
                 <th>Product Family</th>
+                <security:authorizeBlock roles="<%= roles(Developer, PDM)%>">
+                    <th>Units</th>
+                    <th>Price Item Display Name</th>
+                    <th>Price Item Platform</th>
+                    <th>Quote Server Price</th>
+                    <th>SAP List Price</th>
+                    <th>SAP Clinical Charge</th>
+                    <th>SAP Commercial Charge</th>
+                    <th>SAP SSF intercompany Charge</th>
+                </security:authorizeBlock>
+                <th>Commercial?</th>
+                <th>Clinical?</th>
+
                 <th>PDM Orderable</th>
                 <th>Available</th>
             </tr>
             </thead>
             <tbody>
             <c:forEach items="${actionBean.allProducts}" var="product">
-                <tr>
+                <td>
+                    <c:if test="${!actionBean.productInSAP(product.partNumber, product.determineCompanyConfiguration())}">
+                        <stripes:checkbox name="selectedProductPartNumbers" value="${product.partNumber}"
+                                          class="shiftCheckbox"/>
+                    </c:if>
+                </td>
+                <td>
+                    <stripes:link beanclass="${actionBean.class.name}" event="view" title="${product.businessKey}">
+                        <stripes:param name="product" value="${product.businessKey}"/>
+                        ${product.partNumber}
+                    </stripes:link>
+                </td>
+
+                <td>${product.productName}</td>
+                <td>${product.productFamily.name}</td>
+                <security:authorizeBlock roles="<%= roles(Developer, PDM)%>">
+                    <td>${product.primaryPriceItem.units}</td>
+                    <td>${product.primaryPriceItem.displayName}</td>
+                    <td>${product.primaryPriceItem.platform}</td>
+                    <td>${product.quoteServerPrice}</td>
                     <td>
-                        <c:if test="${product.canPublishToSAP()}">
-                            <stripes:checkbox name="selectedProductPartNumbers" value="${product.partNumber}" class="shiftCheckbox" />
+                        <c:if test="${actionBean.productInSAP(product.partNumber, product.determineCompanyConfiguration())}">
+                            ${product.sapFullPrice}
+                        </c:if>
+                    </td>
+
+                    <td>
+                        <c:if test="${actionBean.productInSAP(product.partNumber, product.determineCompanyConfiguration())}">
+                            ${product.sapClinicalCharge}
                         </c:if>
                     </td>
                     <td>
-                        <stripes:link beanclass="${actionBean.class.name}" event="view" title="${product.businessKey}">
-                            <stripes:param name="product" value="${product.businessKey}"/>
-                            ${product.partNumber}
-                        </stripes:link>
-                    </td>
-                    <td>${product.productName}</td>
-                    <td>${product.productFamily.name}</td>
-                    <td>
-                        <c:if test="${product.pdmOrderableOnly}">
-                            <img src="${ctxpath}/images/check.png" alt="yes" title="yes"/>
+                        <c:if test="${actionBean.productInSAP(product.partNumber, product.determineCompanyConfiguration())}">
+                            ${product.sapCommercialCharge}
                         </c:if>
                     </td>
                     <td>
-                        <c:if test="${product.available}">
-                            <img src="${ctxpath}/images/check.png" alt="yes" title="yes"/>
+                        <c:if test="${actionBean.productInSAP(product.partNumber, product.determineCompanyConfiguration())}">
+                            ${product.sapSSFIntercompanyCharge}
                         </c:if>
                     </td>
+                </security:authorizeBlock>
+                <td>
+                    <c:if test="${product.externalOnlyProduct}">
+                        <img src="${ctxpath}/images/check.png" alt="yes" title="yes"/>
+                    </c:if>
+                </td>
+                <td>
+                    <c:if test="${product.clinicalProduct}">
+                        <img src="${ctxpath}/images/check.png" alt="yes" title="yes"/>
+                    </c:if>
+                </td>
+                <td>
+                    <c:if test="${product.pdmOrderableOnly}">
+                        <img src="${ctxpath}/images/check.png" alt="yes" title="yes"/>
+                    </c:if>
+                </td>
+                <td>
+                    <c:if test="${product.available}">
+                        <img src="${ctxpath}/images/check.png" alt="yes" title="yes"/>
+                    </c:if>
+                </td>
                 </tr>
             </c:forEach>
             </tbody>

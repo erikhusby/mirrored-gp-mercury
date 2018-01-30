@@ -1,9 +1,11 @@
 package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
@@ -21,6 +23,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfoFixupTest;
@@ -29,11 +32,17 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -47,7 +56,9 @@ import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Join;
 import javax.persistence.criteria.ParameterExpression;
+import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
@@ -80,6 +91,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
@@ -136,6 +148,13 @@ public class ProductOrderFixupTest extends Arquillian {
 
     @Inject
     private BillingEjb billingEjb;
+
+    @Inject
+    private LabBatchDao labBatchDao;
+
+    @Inject
+    private BucketEntryDao bucketEntryDao;
+
 
     // When you run this on prod, change to PROD and prod.
     @Deployment
@@ -1154,5 +1173,172 @@ public class ProductOrderFixupTest extends Arquillian {
             }
         }
         productOrderDao.persist(new FixupCommentary("GPLIM-4954: Updating productOrders to Submitted which were not previously tranistioned as such"));
+    }
+
+    @Test(enabled = false)
+    public void gplim5054SetOrderToCompleted() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+        String pdoToComplete = "PDO-12069";
+
+
+        productOrderEjb.updateOrderStatus(pdoToComplete, MessageReporter.UNUSED);
+
+        productOrderDao.persist(new FixupCommentary("GPLIM-5054: Updating PDO-12069 to Completed."));
+        commitTransaction();
+    }
+
+    @Test(enabled = false)
+    public void support3427CompleteOrders() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+        List<String> pdosToComplete = Arrays.asList("PDO-12890", "PDO-12581", "PDO-12947", "PDO-13129");
+
+        for (String pdoToComplete : pdosToComplete) {
+            productOrderEjb.updateOrderStatusNoRollback(pdoToComplete);
+        }
+
+        productOrderDao.persist(new FixupCommentary("SUPPORT-3427: Updating " + pdosToComplete + " to Completed."));
+        commitTransaction();
+    }
+
+    @Test(enabled = false)
+    public void support3399UnabandonSamples() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+        final String sampleComment = "Accidentally abandoned due to a mis-communication.";
+        Set<Long> productOrderSampleIDs = new HashSet<>();
+        String pdoTicket = "PDO-13210";
+
+        List<String> sampleKeys = Arrays.asList("SM-BY2PC", "SM-BY2XX", "SM-BY1ZL", "SM-BY3JV", "SM-BY11Y",
+                "SM-BY3IW", "SM-BY2Y1", "SM-BY2XF", "SM-BY3JD", "SM-BY2XD", "SM-BY3JQ", "SM-BY2X4", "SM-BY3KQ",
+                "SM-BY2KD", "SM-BY3K2", "SM-BY162", "SM-BY3IN", "SM-BY3KA", "SM-BY2XK", "SM-BY2LR", "SM-BY2KR",
+                "SM-BY3KC", "SM-BY161");
+
+        ProductOrder productOrder = productOrderDao.findByBusinessKey(pdoTicket);
+
+        for (ProductOrderSample sample : productOrder.getSamples()) {
+            if (sampleKeys.contains(sample.getSampleKey())) {
+                productOrderSampleIDs.add(sample.getProductOrderSampleId());
+            }
+        }
+
+        final MessageReporter testOnly = MessageReporter.UNUSED;
+
+        MessageCollection testCollection = new MessageCollection();
+
+        productOrderEjb.unAbandonSamples(pdoTicket, productOrderSampleIDs, sampleComment, testCollection);
+        productOrderEjb.updateOrderStatus(pdoTicket, testOnly);
+
+        final MessageCollection messageCollection = new MessageCollection();
+        productOrderEjb.publishProductOrderToSAP(productOrder, messageCollection, false);
+        if (messageCollection.hasErrors() || messageCollection.hasWarnings()) {
+            Assert.fail("Error occured attempting to update SAP in fixupTest");
+
+        }
+        productOrderDao.persist(new FixupCommentary("SUPPORT-3399: unabandonning samples since abandoning "
+                                                    + "these came by way of a communication mixup, the public feature "
+                                                    + "is removed and the new process would not satisfy this case"));
+        commitTransaction();
+    }
+
+    @Test(enabled = false)
+    public void support3407UpdatePDOAssociationsOnLCSET11965() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+
+        final ProductOrder oldProductOrder = productOrderDao.findByBusinessKey("PDO-13083");
+        final String labBatchBusinessKey = "LCSET-11965";
+
+        final Map<String, List<String>> newPdoToSampleMap = new HashMap<>();
+
+        newPdoToSampleMap.put("PDO-13067", Arrays.asList("SM-F2QYA", "SM-F2QYB", "SM-F2QYC", "SM-F2QYD", "SM-F2QYE", "SM-F2QYF", "SM-F2QYG", "SM-F2QYH"));
+        newPdoToSampleMap.put("PDO-13101", Arrays.asList("SM-F2RLI", "SM-F2RLJ", "SM-F2RLK"));
+        newPdoToSampleMap.put("PDO-12910", Arrays.asList("SM-G9VS5", "SM-G9VS6", "SM-G9VS7", "SM-G9VS8", "SM-G9VS9", "SM-G9VSA"));
+
+        for (Map.Entry<String, List<String>> newPdoToSampleEntry : newPdoToSampleMap.entrySet()) {
+
+            ProductOrder newProductOrder = productOrderDao.findByBusinessKey(newPdoToSampleEntry.getKey());
+
+            List<BucketEntry> bucketEntries = bucketEntryDao.findByProductOrder(oldProductOrder);
+            for (BucketEntry bucketEntry : bucketEntries) {
+                for (MercurySample mercurySample : bucketEntry.getLabVessel().getMercurySamples()) {
+                    if (newPdoToSampleEntry.getValue().contains(mercurySample.getSampleKey())) {
+                        bucketEntry.setProductOrder(newProductOrder);
+                    }
+                }
+            }
+        }
+
+        productOrderDao.persist(new FixupCommentary("SUPPORT-3407: changing the PDO association on certain"
+                                                    + " samples found in LCSET-11965"));
+        commitTransaction();
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/PDOsToBeClosed.txt, so it
+     * can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * SUPPORT-XXXX transitioning pdos to Closed which did not happen during billing
+     * PDO-123
+     * PDO-456
+     */
+    @Test(enabled = false)
+    public void supportTransitionPdosToClosed() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+
+        List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource("PDOsToBeClosed.txt"));
+        Assert.assertTrue(CollectionUtils.isNotEmpty(fixupLines), "The file PDOsToBeClosed.txt has no content.");
+        String fixupReason = fixupLines.get(0);
+
+        Assert.assertTrue(StringUtils.isNotBlank(fixupReason), "A fixup reason is necessary in order to record the fixup.");
+
+        List<String> pdosToComplete = fixupLines.subList(1, fixupLines.size());
+        Assert.assertTrue(CollectionUtils.isNotEmpty(pdosToComplete), "No PDOs have been provided to close");
+
+        for (String pdoToComplete : pdosToComplete) {
+            productOrderEjb.updateOrderStatusNoRollback(pdoToComplete);
+            System.out.println("Updated order status for: " + pdoToComplete);
+        }
+
+        productOrderDao.persist(new FixupCommentary(fixupReason ));
+        commitTransaction();
+    }
+
+    @Test(enabled = false)
+    public void support3471AddSampleToSupportData() throws Exception {
+
+        String productOrderString = "PDO-13241";
+        ProductOrderSample sampleToAdd = new ProductOrderSample("SM-DAMWL");
+
+        userBean.loginOSUser();
+        beginTransaction();
+
+
+        productOrderEjb.addSamplesNoSap(productOrderString, Collections.singletonList(sampleToAdd),MessageReporter.UNUSED);
+
+        productOrderDao.persist(new FixupCommentary("SUPPORT-3471:  Adding The stock for a control sample since that is what was sequenced in the LCSet" ));
+        commitTransaction();
+
+    }
+
+    @Test(enabled=false)
+    public void gplim4593BackfillBilledSampleAssociationWithSAPOrders() throws Exception {
+
+        userBean.loginOSUser();
+        List<ProductOrder> ordersToUpdate = productOrderDao.findOrdersWithSAPOrdersAndBilledSamples();
+        for (ProductOrder productOrder : ordersToUpdate) {
+            Set<LedgerEntry> billedLedgerEntries = new HashSet<>();
+            for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
+                billedLedgerEntries.addAll(productOrderSample.getBilledLedgerItems());
+            }
+
+            productOrder.latestSapOrderDetail().addLedgerEntries(billedLedgerEntries);
+            System.out.println("Updating association to SAP order " + productOrder.getSapOrderNumber() + " for PDO " +
+                               productOrder.getBusinessKey() + " with association to the " + billedLedgerEntries.size() +
+                               " ledger entries which have already successfully been billed");
+        }
+
+        productOrderDao.persist(new FixupCommentary("GPLIM-4593: Backfilling sap Order Detail with billing Ledger Associations"));
     }
 }

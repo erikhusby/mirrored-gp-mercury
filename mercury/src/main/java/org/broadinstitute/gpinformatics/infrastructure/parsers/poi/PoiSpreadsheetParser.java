@@ -233,7 +233,7 @@ public final class PoiSpreadsheetParser {
                 }
                 return String.valueOf(cell.getNumericCellValue());
             case Cell.CELL_TYPE_STRING:
-                return cell.getStringCellValue();
+                return cell.getStringCellValue().trim();
             }
         }
 

@@ -1,16 +1,26 @@
 package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.sap.entity.SAPMaterial;
+import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -24,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 
 /**
  *
@@ -41,6 +52,12 @@ public class ProductFixupTest extends Arquillian {
 
     @Inject
     private UserBean userBean;
+
+    @Inject
+    private SAPProductPriceCache productPriceCache;
+
+    @Inject
+    private PriceListCache priceListCache;
 
     @Inject
     private UserTransaction utx;
@@ -233,4 +250,116 @@ public class ProductFixupTest extends Arquillian {
 
     }
 
+
+    @Test(enabled = false)
+    public void support3393CloneProductsForHyperprep() throws Exception {
+
+        userBean.loginOSUser();
+        utx.begin();
+
+        final Map<String, Pair<String, String>> partNumbersToClone = new HashMap<>();
+        partNumbersToClone.put("P-WG-0071", Pair.of("P-WG-0086","PCR-Free Human WGS - 20x v1.1 (High Volume, >10,000 samples)"));
+        partNumbersToClone.put("P-WG-0069", Pair.of("P-WG-0087","PCR-Free Human WGS - 30x v1.1 (High Volume, >10,000 samples)"));
+        partNumbersToClone.put("P-WG-0079", Pair.of("P-WG-0088","PCR-Free Human WGS - 60x v1.1 (High Volume, >10,000 samples)"));
+        partNumbersToClone.put("P-WG-0084", Pair.of("P-WG-0089","PCR-Free Human WGS - 80x v1.1 (High Volume, >10,000 samples)"));
+        partNumbersToClone.put("XTNL-WGS-010339", Pair.of("XTNL-WGS-010343","WGS-010322 Genome, PCR-Free, 20X v1.1"));
+
+
+        final List<Product> productsToClone = productDao.findByPartNumbers(new ArrayList<String>(partNumbersToClone.keySet()));
+
+        for (Product productToClone : productsToClone) {
+
+            final String productName = partNumbersToClone.get(productToClone.getPartNumber()).getRight();
+            final String partNumber = partNumbersToClone.get(productToClone.getPartNumber()).getLeft();
+
+            Product clonedProduct = Product.cloneProduct(productToClone, productName, partNumber);
+
+            productDao.persist(clonedProduct);
+        }
+        productDao.persist(new FixupCommentary("SUPPORT-3393 cloning products for new WGS products"));
+        utx.commit();
+
+    }
+
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/ProductCloningInfo.txt, so it
+     * can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * SUPPORT-XXXX auto creating new products as clones of previous products
+     * P-EX-1123[\t]P-EX-1134[\t]new cloned product for the old product
+     * P-EX-1124[\t]P-EX-1135[\t]new cloned product for the other old product
+     *
+     */
+    @Test(enabled = false)
+    public void supportCloneProductsToNew() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("ProductCloningInfo.txt"));
+        String fixupReason = lines.get(0);
+        Assert.assertTrue(StringUtils.isNotBlank(fixupReason), "A fixup reason needs to be defined");
+        final List<String> cloningProductsLines = lines.subList(1, lines.size());
+        Assert.assertTrue(CollectionUtils.isNotEmpty(cloningProductsLines),
+                "Lines representing the old and new products needd to be defined in order for this fixup to be run");
+        final List<String> newProducts = new ArrayList<>();
+
+        final Map<String, Pair<String, String>> partNumbersToClone = new HashMap<>();
+
+        for (String cloningProduct : cloningProductsLines) {
+            final String[] splitLine = cloningProduct.split("\t");
+            Assert.assertTrue(splitLine.length == 3, "There appear to be more inputs than there should be on the row matching: " +cloningProduct);
+            Assert.assertTrue(StringUtils.isNotBlank(splitLine[0]), "The value of the originating Product part number needs to be set for all lines");
+            Assert.assertTrue(StringUtils.isNotBlank(splitLine[1]), "The value for the new product part number needs to be set on all lines");
+            Assert.assertTrue(StringUtils.isNotBlank(splitLine[2]), "The value for the new product name needs to be set on all lines");
+            partNumbersToClone.put(splitLine[0], Pair.of(splitLine[1], splitLine[2]));
+            newProducts.add(splitLine[1]);
+        }
+
+        final List<Product> productsToClone = productDao.findByPartNumbers(new ArrayList<String>(partNumbersToClone.keySet()));
+
+        for (Product productToClone : productsToClone) {
+
+            final String productName = partNumbersToClone.get(productToClone.getPartNumber()).getRight();
+            final String partNumber = partNumbersToClone.get(productToClone.getPartNumber()).getLeft();
+
+            Product clonedProduct = Product.cloneProduct(productToClone, productName, partNumber);
+
+            productDao.persist(clonedProduct);
+        }
+
+        final String loggedChanges = ".  Adding: " + newProducts + " from: " +
+                                     StringUtils.join(partNumbersToClone.keySet(), ",");
+        System.out.println("Proof of execution: " + loggedChanges);
+        productDao.persist(new FixupCommentary(fixupReason));
+        utx.commit();
+
+    }
+
+    @Test(enabled = false)
+    public void testPriceDifferences() throws Exception {
+        List<Product> allProducts =
+                productDao.findProducts(ProductDao.Availability.CURRENT, ProductDao.TopLevelOnly.NO,
+                        ProductDao.IncludePDMOnly.YES);
+
+        List<String> errors = new ArrayList<>();
+        for (Product currentProduct : allProducts) {
+            SapIntegrationClientImpl.SAPCompanyConfiguration configuration = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
+            if(currentProduct.isExternalOnlyProduct() || currentProduct.isClinicalProduct()) {
+                configuration = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES;
+            }
+            final QuotePriceItem byKeyFields = priceListCache.findByKeyFields(currentProduct.getPrimaryPriceItem());
+            if(byKeyFields != null) {
+                BigDecimal qsPrice = new BigDecimal(byKeyFields.getPrice());
+                final SAPMaterial material = productPriceCache.findByProduct(currentProduct, configuration);
+                if (material != null) {
+                    BigDecimal sapPrice = new BigDecimal(material.getBasePrice());
+                    if (sapPrice.compareTo(qsPrice) != 0) {
+                        errors.add("Price for " + currentProduct.getPartNumber() + " sold in " + configuration
+                                .getCompanyCode() + " does not match SAP: QS price is " +
+                                   qsPrice.toString() + " and SAP price is " + sapPrice.toString());
+                    }
+                }
+            }
+        }
+        System.out.println(StringUtils.join(errors,"\n"));
+    }
 }

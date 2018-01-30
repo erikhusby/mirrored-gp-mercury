@@ -104,14 +104,14 @@ public class CrspPipelineUtilsTest {
 
     public void testAllSamplesAreForCrsp() {
         boolean hasAllCrspSamples = crspPipelineAPIUtils.areAllSamplesForCrsp(createSampleInstances(
-                crspSample));
+                crspSample), false);
 
         Assert.assertTrue(hasAllCrspSamples);
     }
 
     public void testNoSamplesAreForCrsp() {
         boolean hasAllCrspSamples = crspPipelineAPIUtils.areAllSamplesForCrsp(createSampleInstances(
-                nonCrspSampleWithGSSRMetadata));
+                nonCrspSampleWithGSSRMetadata), false);
 
         Assert.assertFalse(hasAllCrspSamples);
     }
@@ -119,7 +119,7 @@ public class CrspPipelineUtilsTest {
     public void testMixOfCrspAndNonCrspSamplesShouldThrowException() {
         Set<SampleInstanceV2> sampleInstances = createSampleInstances(nonCrspSampleWithGSSRMetadata, crspSample);
         try {
-            crspPipelineAPIUtils.areAllSamplesForCrsp(sampleInstances);
+            crspPipelineAPIUtils.areAllSamplesForCrsp(sampleInstances, false);
             Assert.fail("Mixture of samples");
         }
         catch(RuntimeException e) {

@@ -29,6 +29,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
@@ -36,6 +37,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
@@ -59,6 +61,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.TreeMap;
 
 /**
@@ -1365,6 +1368,11 @@ public class LabVesselSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
+        searchTerm.setName("Unique Molecular Identifier");
+        searchTerm.setDisplayExpression(DisplayExpression.UNIQUE_MOLECULAR_IDENTIFIER);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
         searchTerm.setName("Mercury Sample Tube Barcode");
         // todo jmt replace?
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
@@ -1558,6 +1566,82 @@ public class LabVesselSearchDefinition {
             }
         });
         searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Storage Location");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>(){
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                LabVessel labVessel = (LabVessel) entity;
+                if (labVessel.getStorageLocation() != null) {
+                    // If Barcoded Tube, attempt to find its container by grabbing most recent Storage Check-in event.
+                    if (OrmUtil.proxySafeIsInstance(labVessel, BarcodedTube.class)) {
+                        SortedMap<Date, TubeFormation> sortedMap = new TreeMap<>();
+                        for (LabVessel container : labVessel.getContainers()) {
+                            if (OrmUtil.proxySafeIsInstance(container, TubeFormation.class)) {
+                                TubeFormation tubeFormation = OrmUtil.proxySafeCast(
+                                        container, TubeFormation.class);
+                                for (LabEvent labEvent : tubeFormation.getInPlaceLabEvents()) {
+                                    if (labEvent.getLabEventType() == LabEventType.STORAGE_CHECK_IN) {
+                                        sortedMap.put(labEvent.getEventDate(), tubeFormation);
+                                    }
+                                }
+                            }
+                        }
+                        if (!sortedMap.isEmpty()) {
+                            TubeFormation tubeFormation = sortedMap.get(sortedMap.lastKey());
+                            for (RackOfTubes rackOfTubes : tubeFormation.getRacksOfTubes()) {
+                                if (rackOfTubes.getStorageLocation() != null) {
+                                    if (rackOfTubes.getStorageLocation().equals(labVessel.getStorageLocation())) {
+                                        VesselContainer<BarcodedTube> containerRole = tubeFormation.getContainerRole();
+                                        for (Map.Entry<VesselPosition, BarcodedTube> entry:
+                                                containerRole.getMapPositionToVessel().entrySet()) {
+                                            BarcodedTube value = entry.getValue();
+                                            if (value != null && value.getLabel().equals(labVessel.getLabel())) {
+                                                String locationTrail = rackOfTubes.getStorageLocation().buildLocationTrail();
+                                                locationTrail = locationTrail + ": [" +
+                                                                rackOfTubes.getLabel() + "] : " +
+                                                                entry.getKey().name();
+                                                return locationTrail;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        // On Failure at least return storage location w/o container
+                        return labVessel.getStorageLocation().buildLocationTrail();
+                    } else {
+                        String location = labVessel.getStorageLocation().buildLocationTrail();
+                        location += " [" + labVessel.getLabel() + "]";
+                        return location;
+                    }
+                }
+                return null;
+            }
+        });
+        searchTerm.setUiDisplayOutputExpression(new SearchTerm.Evaluator<String>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                if (entity != null && entity instanceof String) {
+                    String str = (String) entity;
+                    if (str.contains("[")) {
+                        String containerBarcode = str.substring(str.indexOf("[")+1,str.indexOf("]"));
+                        String href = String.format(
+                                "/Mercury/container/container.action?containerBarcode=%s&viewContainerSearch=",
+                                containerBarcode
+                        );
+                        return String
+                                .format("<a class=\"external\" target=\"new\" href=\"%s\">%s</a>", href, str);
+                    } else {
+                        return str;
+                    }
+                }
+                return null;
+            }
+        });
+        searchTerms.add(searchTerm);
+
         return searchTerms;
 
         // todo jmt break some of these "metadata" terms into their own group
@@ -2505,7 +2589,9 @@ public class LabVesselSearchDefinition {
 
             if( !hadStartingVessels ) {
                 for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
-                    labBatches.add(bucketEntry.getLabBatch());
+                    if( bucketEntry.getLabBatch() != null ) {
+                        labBatches.add(bucketEntry.getLabBatch());
+                    }
                 }
             }
         }

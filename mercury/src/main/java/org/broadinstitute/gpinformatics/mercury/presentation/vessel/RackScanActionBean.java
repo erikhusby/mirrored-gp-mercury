@@ -46,6 +46,13 @@ public abstract class RackScanActionBean extends CoreActionBean {
     public static final String SHOW_SCAN_SELECTION_EVENT = "showScanSelection";
     public static final String SHOW_LAB_SELECTION_EVENT = "showLabSelection";
 
+    public RackScanActionBean() {
+    }
+
+    public RackScanActionBean(String createTitle, String editTitle, String editBusinessKeyName) {
+        super(createTitle, editTitle, editBusinessKeyName);
+    }
+
     /**
      * Loads the rack scanners based upon the lab to filter by.
      */

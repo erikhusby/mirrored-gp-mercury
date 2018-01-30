@@ -147,7 +147,7 @@ public class ExomeExpressEndToEndTest {
             //            if (directedPass.getResearchProject() != null)
             //                researchProject = pmBridgeService.getResearchProjectByID(directedPass.getResearchProject());
 
-            //TODO SGM: change this to PassBackedProjectPlan
+            //TODO change this to PassBackedProjectPlan
             //TODO MLC: tie in ResearchProject above
             //            BasicProject project = new BasicProject("ExomeExpressProject1", new JiraTicket());
             //            String runName = "theRun";

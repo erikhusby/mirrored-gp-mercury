@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Database free test of the Vessel Metric web service
+ * Database free test of the Vessel Metric web service run builder utility
  */
 @Test(groups = TestGroups.DATABASE_FREE)
 public class VesselMetricResourceTest {

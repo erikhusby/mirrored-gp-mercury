@@ -90,7 +90,7 @@
                 var labelId = pos.replace("cells_", "label_");
                 if(position.checked) {
                     $(pos).attr('name', getDevConditionsID());
-                    $(labelId).text(getDevConditions(position));
+                    $(labelId).html(getDevConditions(position));
                 }
                 else {
                     $(labelId).text("(no condition)");
@@ -112,7 +112,7 @@
                 var labelId = pos.replace("cells_", "label_");
                 if(position.checked) {
                     $(pos).attr('name', getDevConditionsID());
-                    $(labelId).text(getDevConditions(position));
+                    $(labelId).html(getDevConditions(position));
                 }
                 else {
                     $(labelId).text("(no condition)");
@@ -128,12 +128,15 @@
                 var labelId = position.id.replace("cells_", "label_");
                 var labelvar = document.getElementById(labelId);
                 for (var i = 0; i < fld.options.length; i++) {
+                    if(i==0) {
+                        text.push("</br>");
+                    }
                     if (fld.options[i].selected) {
                         values.push(fld.options[i].value);
-                        text.push(fld.options[i].text);
+                        text.push(fld.options[i].text  + "</br>");
                     }
                 }
-                return text.toString();
+                return text.join("");
             }
 
             function getDevConditionsID() {
@@ -156,15 +159,18 @@
                 var labelId = position.id.replace("cells_","label_");
                 var labelvar = document.getElementById(labelId);
                 for (var i = 0; i < fld.options.length; i++) {
+                    if(i==0) {
+                        text.push("</br>");
+                    }
                     if (fld.options[i].selected) {
                         values.push(fld.options[i].value);
-                        text.push(fld.options[i].text);
+                        text.push(fld.options[i].text + "</br>");
                     }
                 }
 
                 $(position).attr('name', values);
                 if (position.checked) {
-                    labelvar.innerHTML = text;
+                    labelvar.innerHTML = text.join("");
                     $(position).prop('checked', true);
                 } else {
                     labelvar.innerHTML = "(no condition)";
@@ -208,7 +214,7 @@
                     resultQueue = JSON.parse(paresdJson);
                     $.each(resultQueue, function (index, value) {
                         $( "#cells_" + value.position ).prop( "checked", true );
-                        $( "#label_" + value.position ).text(value.selection);
+                        $( "#label_" + value.position ).html(value.selection);
                         $( "#label_" + value.position ).attr('name', value.devCondition);
                     });
                 }
@@ -219,13 +225,16 @@
                     var values = [];
                     var text = [];
                     for (var i = 0; i < fld.options.length; i++) {
+                        if(i==0) {
+                            text.push("</br>");
+                        }
                         if (fld.options[i].selected) {
                             values.push(fld.options[i].value);
-                            text.push(fld.options[i].text);
+                            text.push(fld.options[i].text + "</br>");
                         }
                     }
                     if(this.checked) {
-                        $("[id^=label_]").text(text.toString());
+                        $("[id^=label_]").html(text.join(""));
                         $("[id^=cells_]").attr('name', values);
                         $("[id^=cells_]").prop( "checked", true );
                 }
