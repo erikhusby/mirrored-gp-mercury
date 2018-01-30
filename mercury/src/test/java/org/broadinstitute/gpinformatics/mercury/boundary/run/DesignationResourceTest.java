@@ -1,7 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
+import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.api.client.filter.LoggingFilter;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
@@ -44,7 +46,9 @@ public class DesignationResourceTest extends RestServiceContainerTest {
         designationBean.setTargetCoverage(30);
         designationBean.setLaneYield(135);
         designationBean.setSeqPenalty(new BigDecimal("1.25"));
-        WebResource resource = makeWebResource(baseUrl, null);
+        Client client = Client.create(getClientConfig());
+        WebResource resource = makeWebResource(baseUrl, null, client);
+        client.addFilter(new LoggingFilter(System.out));
         ClientResponse response = resource.type(MediaType.APPLICATION_JSON_TYPE).
                 accept(MediaType.APPLICATION_JSON_TYPE).entity(designationBean).
                 post(ClientResponse.class);

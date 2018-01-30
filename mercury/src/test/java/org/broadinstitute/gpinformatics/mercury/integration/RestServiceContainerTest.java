@@ -75,6 +75,11 @@ public abstract class RestServiceContainerTest extends Arquillian {
     protected WebResource makeWebResource(URL baseUrl, String serviceUrl) throws MalformedURLException {
 
         Client client = Client.create(clientConfig);
+        return makeWebResource(baseUrl, serviceUrl, client);
+    }
+
+    protected WebResource makeWebResource(URL baseUrl, String serviceUrl, Client client) throws MalformedURLException {
+
         String newUrl = convertUrlToSecure(baseUrl);
         String url = newUrl + SERVLET_MAPPING_PREFIX + "/" + getResourcePath();
         if (serviceUrl != null) {
@@ -192,5 +197,9 @@ public abstract class RestServiceContainerTest extends Arquillian {
         }
         sb.append("]");
         return sb.toString();
+    }
+
+    protected ClientConfig getClientConfig() {
+        return clientConfig;
     }
 }
