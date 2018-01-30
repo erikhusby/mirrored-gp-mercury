@@ -82,40 +82,12 @@ public class AbandonVesselEtlDbFreeTest {
         EasyMock.expect(abandonedLabVessel.getLabVesselId()).andReturn(abandonedLabVesselId);
         EasyMock.expect(abandonVessel.getReason()).andReturn(abandonVesselReason).times(2);
         EasyMock.expect(abandonVessel.getAbandonedOn()).andReturn(abandonVesselDate);
+        EasyMock.expect(abandonVessel.getVesselPosition()).andReturn(null);
 
         EasyMock.replay(mocks);
 
         Collection<String> records = abandonVesselEtl.dataRecords(etlDateStr, false, abandonVesselEntityId);
-        EasyMock.verify(mocks);
 
-        Assert.assertEquals(records.size(), 1);
-        String record = records.iterator().next();
-
-        int i = 0;
-        String[] parts = record.split(",",8);
-        Assert.assertEquals(parts[i++], etlDateStr);
-        Assert.assertEquals(parts[i++], "F");
-        Assert.assertEquals(parts[i++], String.valueOf(abandonVesselEntityId));
-        Assert.assertEquals(parts[i++], "AbandonVessel");
-        Assert.assertEquals(parts[i++], String.valueOf(abandonedLabVesselId));
-        Assert.assertEquals(parts[i++], abandonVesselReason.toString());
-        Assert.assertEquals(parts[i++], ExtractTransform.formatTimestamp(abandonVesselDate));
-        Assert.assertEquals(parts.length, i);
-    }
-
-
-    public void testAbandonVesselPosition() throws Exception {
-        EasyMock.expect(dao.findById(AbandonVessel.class, abandonVesselEntityId)).andReturn(abandonVessel);
-
-        EasyMock.expect(abandonVessel.getLabVessel()).andReturn(abandonedLabVessel);
-        EasyMock.expect(abandonedLabVessel.getLabVesselId()).andReturn(abandonedLabVesselId);
-        EasyMock.expect(abandonVessel.getVesselPosition()).andReturn(abandonPosition);
-        EasyMock.expect(abandonVessel.getReason()).andReturn(abandonPositionReason).times(2);
-        EasyMock.expect(abandonVessel.getAbandonedOn()).andReturn(abandonVesselPositionDate);
-
-        EasyMock.replay(mocks);
-
-        Collection<String> records = abandonVesselEtl.dataRecords(etlDateStr, false, abandonedLabVesselId);
         EasyMock.verify(mocks);
 
         Assert.assertEquals(records.size(), 1);
@@ -126,9 +98,38 @@ public class AbandonVesselEtlDbFreeTest {
         Assert.assertEquals(parts[i++], etlDateStr);
         Assert.assertEquals(parts[i++], "F");
         Assert.assertEquals(parts[i++], String.valueOf(abandonVesselEntityId));
-        Assert.assertEquals(parts[i++], abandonPosition.toString());
-        Assert.assertEquals(parts[i++], abandonPositionReason.toString());
-        Assert.assertEquals(parts[i++], ExtractTransform.formatTimestamp(abandonVesselPositionDate));
+        Assert.assertEquals(parts[i++], String.valueOf(abandonedLabVesselId));
+        Assert.assertEquals(parts[i++], abandonVesselReason.toString());
+        Assert.assertEquals(parts[i++], ExtractTransform.formatTimestamp(abandonVesselDate));
+        Assert.assertEquals(parts[i++], "");
+        Assert.assertEquals(parts.length, i);
+}
+    public void testAbandonVesselPosition() throws Exception {
+        EasyMock.expect(dao.findById(AbandonVessel.class, abandonVesselEntityId)).andReturn(abandonVessel);
+
+        EasyMock.expect(abandonVessel.getAbandonVesselId()).andReturn(abandonVesselEntityId);
+        EasyMock.expect(abandonVessel.getLabVessel()).andReturn(abandonedLabVessel);
+        EasyMock.expect(abandonedLabVessel.getLabVesselId()).andReturn(abandonedLabVesselId);
+        EasyMock.expect(abandonVessel.getReason()).andReturn(abandonVesselReason).times(2);
+        EasyMock.expect(abandonVessel.getAbandonedOn()).andReturn(abandonVesselDate);
+        EasyMock.expect(abandonVessel.getVesselPosition()).andReturn(abandonPosition).times(2);
+
+        EasyMock.replay(mocks);
+
+        Collection<String> records = abandonVesselEtl.dataRecords(etlDateStr, false, abandonVesselEntityId);
+        EasyMock.verify(mocks);
+
+        Assert.assertEquals(records.size(), 1);
+        String record = records.iterator().next();
+
+        int i = 0;
+        String[] parts = record.split(",",7);
+        Assert.assertEquals(parts[i++], etlDateStr);
+        Assert.assertEquals(parts[i++], "F");
+        Assert.assertEquals(parts[i++], String.valueOf(abandonVesselEntityId));
+        Assert.assertEquals(parts[i++], String.valueOf(abandonedLabVesselId));
+        Assert.assertEquals(parts[i++], abandonVesselReason.toString());
+        Assert.assertEquals(parts[i++], ExtractTransform.formatTimestamp(abandonVesselDate));
         Assert.assertEquals(parts[i++], abandonPosition.toString());
         Assert.assertEquals(parts.length, i);
     }

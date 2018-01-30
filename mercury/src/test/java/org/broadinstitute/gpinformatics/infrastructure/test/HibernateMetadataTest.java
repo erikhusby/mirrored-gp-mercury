@@ -13,6 +13,7 @@ package org.broadinstitute.gpinformatics.infrastructure.test;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcBlacklisting;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcFingerprint;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcGtConcordance;
 import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProject;
@@ -84,6 +85,7 @@ public class HibernateMetadataTest extends ContainerTest {
         ArraysQc.class.getName(),
         ArraysQcFingerprint.class.getName(),
         ArraysQcGtConcordance.class.getName(),
+        ArraysQcBlacklisting.class.getName()
     };
 
     /**
