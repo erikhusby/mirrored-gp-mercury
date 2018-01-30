@@ -123,14 +123,14 @@ then
 else
     # Otherwise, determine if the test relies on Arquillian support or not. Default to an Arquillian test if not
     # in the list of NonArquillian
-    if [[ $TESTS_NONARQUILLIAN ~= $TEST_PROFILE ]]
+    if [[ "$TESTS_NONARQUILLIAN" =~ "$TEST_PROFILE" ]]
     then
         nonArquillianTest $TEST_PROFILE
     else
         arquillianTest $TEST_PROFILE
     fi
 fi
-
+exit
 # Generate the clover report if necessary
 if [ "$CLOVER" == "-c" ]
 then
