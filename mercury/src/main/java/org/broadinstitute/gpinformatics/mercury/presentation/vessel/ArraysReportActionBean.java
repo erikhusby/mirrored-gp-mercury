@@ -94,6 +94,10 @@ public class ArraysReportActionBean extends CoreActionBean {
             String[] pdoKeys = pdoBusinessKeys.trim().split("\\s+");
             for (String pdoKey : pdoKeys) {
                 ProductOrder productOrder = productOrderDao.findByBusinessKey(pdoKey);
+                if( productOrder == null ) {
+                    addMessage( "PDO " + pdoKey + " not found");
+                    continue;
+                }
                 vesselPositionPairs.addAll(SampleSheetFactory.loadByPdo(productOrder));
                 if (firstProductOrder == null) {
                     firstProductOrder = productOrder;
