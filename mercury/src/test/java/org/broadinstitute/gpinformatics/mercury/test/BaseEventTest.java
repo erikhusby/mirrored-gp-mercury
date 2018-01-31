@@ -972,7 +972,7 @@ public class BaseEventTest {
                             TransferTraverserCriteria.TraversalDirection.Descendants),
                     fileWriter,
                     Arrays.asList(TransferVisualizerV2.AlternativeIds.SAMPLE_ID,
-                            TransferVisualizerV2.AlternativeIds.SINGLE_LCSET));
+                            TransferVisualizerV2.AlternativeIds.INFERRED_LCSET));
             fileWriter.flush();
         } catch (IOException e) {
             throw new RuntimeException(e);

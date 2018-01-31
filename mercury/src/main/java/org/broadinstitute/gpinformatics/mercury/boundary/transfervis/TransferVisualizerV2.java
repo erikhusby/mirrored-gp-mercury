@@ -94,8 +94,8 @@ public class TransferVisualizerV2 {
 
     public enum AlternativeIds {
         SAMPLE_ID("Sample Id"),
-        SINGLE_LCSET("Single LCSET"),
-        ATTACHED_LCSETS("Attached LCSETs"),
+        BUCKET_LCSETS("Bucket Entry LCSET"),
+        INFERRED_LCSET("Inferred LCSET"),
         ALL_LCSETS("All LCSETs");
 
         private String displayName;
@@ -147,8 +147,8 @@ public class TransferVisualizerV2 {
         Traverser(Writer writer, List<AlternativeIds> alternativeIds) throws JSONException {
             this.writer = writer;
             this.alternativeIds = alternativeIds;
-            if (alternativeIds.contains(AlternativeIds.SINGLE_LCSET) ||
-                    alternativeIds.contains(AlternativeIds.ATTACHED_LCSETS) ||
+            if (alternativeIds.contains(AlternativeIds.INFERRED_LCSET) ||
+                    alternativeIds.contains(AlternativeIds.BUCKET_LCSETS) ||
                     alternativeIds.contains(AlternativeIds.ALL_LCSETS)) {
                 lcsetInEvent = true;
             }
@@ -509,7 +509,7 @@ public class TransferVisualizerV2 {
                             dimensionsForAltId(dimensions, mapBarcodeToAlternativeIds, child, ids);
                         }
                         break;
-                    case SINGLE_LCSET: {
+                    case INFERRED_LCSET: {
                         Set<LabBatch> labBatches = new HashSet<>();
                         for (SampleInstanceV2 sampleInstance : child.getSampleInstancesV2()) {
                             LabBatch singleBatch = sampleInstance.getSingleBatch();
@@ -520,7 +520,7 @@ public class TransferVisualizerV2 {
                         dimensionForBatches(dimensions, mapBarcodeToAlternativeIds, child, labBatches);
                         break;
                     }
-                    case ATTACHED_LCSETS: {
+                    case BUCKET_LCSETS: {
                         Set<LabBatch> labBatches = new HashSet<>();
                         for (BucketEntry bucketEntry : child.getBucketEntries()) {
                             if (bucketEntry.getLabBatch() != null) {
