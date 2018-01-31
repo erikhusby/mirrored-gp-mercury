@@ -43,7 +43,7 @@ import java.util.List;
 @TransactionAttribute(TransactionAttributeType.NEVER)
 public class OrspProjectDao {
 
-    @PersistenceContext(unitName = "metrics_pu")
+    @PersistenceContext(unitName = "analytics_pu")
     private EntityManager entityManager;
 
     /**
