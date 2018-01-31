@@ -130,7 +130,7 @@ else
         arquillianTest $TEST_PROFILE
     fi
 fi
-exit
+
 # Generate the clover report if necessary
 if [ "$CLOVER" == "-c" ]
 then
