@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.cognos.entity;
 
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.Test;
 

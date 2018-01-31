@@ -2,9 +2,10 @@ package org.broadinstitute.gpinformatics.infrastructure.cognos;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.OrspProjectDao;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
-import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProject;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.OrspProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.hamcrest.BaseMatcher;
