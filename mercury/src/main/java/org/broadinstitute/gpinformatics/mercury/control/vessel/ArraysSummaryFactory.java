@@ -78,12 +78,9 @@ public class ArraysSummaryFactory {
                 mapPairToSampleInstance.put(vesselPositionPair, sampleInstance);
             } else {
                 printStream.println("Expecting 1 sample at " + chipWellBarcode + ", found " + sampleInstances.size());
-                errors = true;
             }
         }
-        if (errors) {
-            return;
-        }
+
         Map<String, SampleData> mapSampleNameToData = sampleDataFetcher.fetchSampleDataForSamples(sampleNames,
                 BSPSampleSearchColumn.PARTICIPANT_ID, BSPSampleSearchColumn.COLLABORATOR_FAMILY_ID,
                 BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID,
@@ -111,6 +108,9 @@ public class ArraysSummaryFactory {
             LabVessel chip = vesselPositionPair.getLeft();
             VesselPosition vesselPosition = vesselPositionPair.getRight();
             SampleInstanceV2 sampleInstanceV2 = mapPairToSampleInstance.get(vesselPositionPair);
+            if( sampleInstanceV2 == null ) {
+                continue;
+            }
             SampleData sampleData = mapSampleNameToData.get(sampleInstanceV2.getNearestMercurySampleName());
             boolean foundArraysQc = true;
             ArraysQc arraysQc = mapBarcodeToArrayQc.get(chipWellBarcodes.get(i));
