@@ -181,7 +181,7 @@
                         </tr>
                     </c:forEach>
                     <tr>
-                        <th id="legendFooter" style="text-align: right;padding-top: 10px" colspan="${actionBean.vesselGeometry.columnCount + 1}">Legend:&nbsp;&nbsp;<span class="emptyCell" style="text-align: center; padding-left: 20px;padding-right: 20px"> Empty/Error </span>&nbsp;&nbsp;&nbsp;<span class="abandonedCell" style="text-align: center; padding-left: 20px;padding-right: 20px"> Abandoned </span>&nbsp;&nbsp;&nbsp;<span class="unabandonedCell" style="text-align: center; padding-left: 20px;padding-right: 20px"> Not Abandoned </span> </th>
+                        <th id="legendFooter" style="text-align: right;padding-top: 10px" colspan="${actionBean.vesselGeometry.columnCount + 1}">Legend:&nbsp;&nbsp;<span style="text-align: center; padding-left: 20px;padding-right: 20px"> Selected: <img src="${ctxpath}/images/check.png"></span>&nbsp;&nbsp;&nbsp;<span class="emptyCell" style="text-align: center; padding-left: 20px;padding-right: 20px"> Empty/Error </span>&nbsp;&nbsp;&nbsp;<span class="abandonedCell" style="text-align: center; padding-left: 20px;padding-right: 20px"> Abandoned </span>&nbsp;&nbsp;&nbsp;<span class="unabandonedCell" style="text-align: center; padding-left: 20px;padding-right: 20px"> Not Abandoned </span> </th>
                     </tr>
                     </tbody>
                 </table>
