@@ -18,7 +18,6 @@ public class ChildVesselBean {
     private String sampleId;
     private String vesselType;
     private String position;
-    private String productOrder;
 
     /** For JAXB */
     public ChildVesselBean() {
@@ -29,12 +28,6 @@ public class ChildVesselBean {
         this.sampleId = sampleId;
         this.vesselType = vesselType;
         this.position = position;
-    }
-
-    public ChildVesselBean(String manufacturerBarcode, String sampleId, String vesselType, String position,
-            String productOrder) {
-        this(manufacturerBarcode, sampleId, vesselType, position);
-        this.productOrder = productOrder;
     }
 
     public String getManufacturerBarcode() {
@@ -51,9 +44,5 @@ public class ChildVesselBean {
 
     public String getPosition() {
         return position;
-    }
-
-    public String getProductOrder() {
-        return productOrder;
     }
 }

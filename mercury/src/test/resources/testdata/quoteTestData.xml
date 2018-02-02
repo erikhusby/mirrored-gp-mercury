@@ -102,9 +102,7 @@
             <ProjectManager firstName="Tracey" lastName="Honan" userName="honan@broadinstitute.org"/>
         </ProjectManagers>
         <QuoteFunding fundsRemaining="0">
-            <FundingLevel percent="100">
-                <Funding/>
-            </FundingLevel>
+            <FundingLevel percent="100"/>
         </QuoteFunding>
         <Item calculation="" categoryName="Sample Kit" isExpired="true" isExpiringSoon="true"
               name="Cryovials Full Kit (41 - 81 Samples)" platform="Biological Samples" price="200.0" priceItemId="6963"

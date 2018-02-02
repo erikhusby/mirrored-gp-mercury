@@ -57,6 +57,7 @@ public class DeploymentBuilder {
                 .addAsWebInfResource(mercuryDS)
                 .addAsWebInfResource(new File("src/test/resources/squid-" + dataSourceEnvironment + "-ds.xml"))
                 .addAsWebInfResource(new File("src/test/resources/metrics-" + dataSourceEnvironment + "-ds.xml"))
+                .addAsWebInfResource(new File("src/test/resources/analytics-" + dataSourceEnvironment + "-ds.xml"))
                 .addAsResource(new File("src/main/resources/META-INF/persistence.xml"), "META-INF/persistence.xml")
                 .addAsWebInfResource(new File("src/main/webapp/WEB-INF/ejb-jar.xml"))
                         //TODO  Cherry Picking resources is not Ideal.  When we have more auto front end tests, we will need everything in resources.

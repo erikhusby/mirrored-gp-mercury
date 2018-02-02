@@ -33,7 +33,6 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.CustomizationValues;
-import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationWithRollbackException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
@@ -243,12 +242,7 @@ public class ProductOrderEjb {
         kitDetailCollection.removeAll(Collections.singleton(null));
         deletedIds.removeAll(Collections.singleton(null));
 
-        try {
-            editedProductOrder.updateCustomSettings(customizationValues);
-        } catch (ValidationException e) {
-            log.error(e.getMessage(), e);
-            throw new InformaticsServiceException("Error setting customizations for products on the Product Order");
-        }
+        editedProductOrder.updateCustomSettings(customizationValues);
 
         editedProductOrder.prepareToSave(userBean.getBspUser(), saveType);
 
@@ -336,15 +330,34 @@ public class ProductOrderEjb {
      * an SAP order.  This must be done in order to directly bill to SAP from mercury
      *
      * @param editedProductOrder Product order entity which intends to be reflected in SAP
-     * @param messageCollection Storage for error/success messages that happens during the publishing process
-     * @param allowCreateOrder Helper flag to know indicate if the scenario by which the method is called intends to
-     *                         allow a new order to be replaced (e.g. an order previously was associated with an SAP
-     *                         order but needs a new one)
+     * @param messageCollection  Storage for error/success messages that happens during the publishing process
+     * @param allowCreateOrder   Helper flag to know indicate if the scenario by which the method is called intends to
+     *                           allow a new order to be replaced (e.g. an order previously was associated with an SAP
+     *                           order but needs a new one)
+     *
+     * @throws SAPInterfaceException
+     */
+    public void publishProductOrderToSAP(ProductOrder editedProductOrder, MessageCollection messageCollection,
+                                         boolean allowCreateOrder) throws SAPInterfaceException {
+         publishProductOrderToSAP(editedProductOrder, messageCollection, allowCreateOrder, new Date());
+    }
+
+    /**
+     * Takes care of the logic to publish the Product Order to SAP for the purposes of either creating or updating
+     * an SAP order.  This must be done in order to directly bill to SAP from mercury
+     *
+     * @param editedProductOrder Product order entity which intends to be reflected in SAP
+     * @param messageCollection  Storage for error/success messages that happens during the publishing process
+     * @param allowCreateOrder   Helper flag to know indicate if the scenario by which the method is called intends to
+     *                           allow a new order to be replaced (e.g. an order previously was associated with an SAP
+     *                           order but needs a new one)
+     * @param effectiveDate
+     *
      * @throws SAPInterfaceException
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void publishProductOrderToSAP(ProductOrder editedProductOrder, MessageCollection messageCollection,
-                                         boolean allowCreateOrder) throws SAPInterfaceException {
+                                         boolean allowCreateOrder, Date effectiveDate) throws SAPInterfaceException {
         ProductOrder orderToPublish = editedProductOrder;
 
         final List<Product> allProductsOrdered = ProductOrder.getAllProductsOrdered(orderToPublish);
@@ -352,7 +365,7 @@ public class ProductOrderEjb {
             orderToPublish = editedProductOrder.getParentOrder();
         }
         try {
-            if (isOrderEligibleForSAP(orderToPublish)
+            if (isOrderEligibleForSAP(orderToPublish, effectiveDate)
                 && !orderToPublish.getOrderStatus().canPlace()) {
 
                 final List<String> effectivePricesForProducts = productPriceCache
@@ -383,9 +396,8 @@ public class ProductOrderEjb {
                     }
 
                 } else if(orderToPublish.isSavedInSAP()){
-                    if (SapIntegrationServiceImpl.getSampleCount((ProductOrder) orderToPublish,
-                            (Product) orderToPublish.getProduct(),
-                            (int) 0, false) > 0) {
+                    if (SapIntegrationServiceImpl.getSampleCount(orderToPublish, orderToPublish.getProduct(),
+                            0, false) >= 0) {
                         updateOrderInSap(orderToPublish, allProductsOrdered, effectivePricesForProducts, messageCollection);
 
                         for (ProductOrder childProductOrder : orderToPublish.getChildOrders()) {
@@ -402,7 +414,12 @@ public class ProductOrderEjb {
                 }
                 productOrderDao.persist(orderToPublish);
             } else {
-                messageCollection.addInfo("This order is ineligible to post to SAP: ");
+                final String inelligiblOrderError = "This order is ineligible to post to SAP: ";
+                if(orderToPublish.isSavedInSAP()) {
+                    throw new SAPInterfaceException(inelligiblOrderError);
+                } else {
+                    messageCollection.addInfo(inelligiblOrderError);
+                }
             }
         } catch (SAPIntegrationException | QuoteServerException | QuoteNotFoundException | InvalidProductException e) {
             StringBuilder errorMessage = new StringBuilder();
@@ -480,6 +497,7 @@ public class ProductOrderEjb {
 
             sendSapOrderShortCloseRequest(body);
         }
+        orderToPublish.setPriorToSAP1_5(false);
         messageCollection.addInfo("Order "+orderToPublish.getJiraTicketKey() +
                                   " has been successfully created in SAP");
 
@@ -497,6 +515,20 @@ public class ProductOrderEjb {
      */
     public boolean isOrderEligibleForSAP(ProductOrder editedProductOrder)
             throws QuoteServerException, QuoteNotFoundException, InvalidProductException {
+        return isOrderEligibleForSAP(editedProductOrder, new Date());
+    }
+    /**
+     * Helper method to determine if, based on certain criteria, the order is allowed to be pushed to SAP at the time
+     * that the method is called.
+     *
+     * @param editedProductOrder The order to be tested for SAP eligibility
+     * @param effectiveDate
+     * @return Boolean indicator identifying SAP eligibility
+     * @throws QuoteServerException
+     * @throws QuoteNotFoundException
+     */
+    public boolean isOrderEligibleForSAP(ProductOrder editedProductOrder, Date effectiveDate)
+            throws QuoteServerException, QuoteNotFoundException, InvalidProductException {
         Quote orderQuote = quoteService.getQuoteByAlphaId(editedProductOrder.getQuoteId());
         SAPAccessControl accessControl = accessController.getCurrentControlDefinitions();
         boolean eligibilityResult = false;
@@ -509,7 +541,7 @@ public class ProductOrderEjb {
 
             eligibilityResult = editedProductOrder.getProduct()!=null &&
                                 editedProductOrder.getProduct().getPrimaryPriceItem() != null &&
-                                orderQuote != null && orderQuote.isEligibleForSAP() &&
+                                orderQuote != null && orderQuote.isEligibleForSAP(effectiveDate) &&
                                 !CollectionUtils.containsAny(accessControl.getDisabledItems(), priceItemNameList) ;
         }
 
@@ -572,6 +604,9 @@ public class ProductOrderEjb {
             throws InvalidProductException {
         SAPMaterial sapMaterial = null;
         SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = null;
+
+        SAPAccessControl accessControl = accessController.getCurrentControlDefinitions();
+
         try {
             companyCode = SapIntegrationServiceImpl.determineCompanyCode(productOrder);
         } catch (SAPIntegrationException e) {
@@ -580,17 +615,27 @@ public class ProductOrderEjb {
 
         // todo sgm check quote and throw exception if it is null
 
-        sapMaterial = productPriceCache.findByProduct(product, companyCode);
+        if(accessControl.isEnabled() &&
+           !CollectionUtils.containsAny(accessControl.getDisabledItems(),
+                   Collections.singleton(new AccessItem(product.getPrimaryPriceItem().getName())))) {
+            sapMaterial = productPriceCache.findByProduct(product, companyCode);
+        }
 
         PriceItem priceItem = productOrder.determinePriceItemByCompanyCode(product);
         final QuotePriceItem priceListItem = priceListCache.findByKeyFields(priceItem);
-        final BigDecimal effectivePrice = new BigDecimal(priceListItem.getPrice());
-        if (sapMaterial != null && StringUtils.isNotBlank(sapMaterial.getBasePrice())) {
-            final BigDecimal basePrice = new BigDecimal(sapMaterial.getBasePrice());
-            if (!basePrice.equals(effectivePrice)) {
-                throw new InvalidProductException("Unable to continue since the price for the product " +
-                                                  product.getDisplayName() + " has not been properly set up in SAP");
+        if (priceListItem != null) {
+            final BigDecimal effectivePrice = new BigDecimal(priceListItem.getPrice());
+            if (sapMaterial != null && StringUtils.isNotBlank(sapMaterial.getBasePrice())) {
+                final BigDecimal basePrice = new BigDecimal(sapMaterial.getBasePrice());
+                if (basePrice.compareTo(effectivePrice) != 0) {
+                    throw new InvalidProductException("Unable to continue since the price for the product " +
+                                                      product.getDisplayName() + " has not been properly set up in SAP");
+                }
             }
+        } else {
+            throw new InvalidProductException("Unable to continue since the price list item " +
+                                              priceItem.getDisplayName() + " for " + product.getDisplayName() +
+                                              " is invalid.");
         }
         return priceListCache.getEffectivePrice(priceItem, orderQuote);
     }
@@ -1011,6 +1056,7 @@ public class ProductOrderEjb {
      * @param samples                    Samples to change.
      * @param comment                    optional user supplied comment about this action.
      *
+     * @param messageCollection
      * @throws NoSuchPDOException
      * @throws SampleDeliveryStatusChangeException
      * @throws IOException
@@ -1018,11 +1064,19 @@ public class ProductOrderEjb {
     private void transitionSamplesAndUpdateTicket(String jiraTicketKey,
                                                   Set<DeliveryStatus> acceptableStartingStatuses,
                                                   DeliveryStatus targetStatus,
-                                                  Collection<ProductOrderSample> samples, String comment)
-            throws NoSuchPDOException, SampleDeliveryStatusChangeException, IOException {
+                                                  Collection<ProductOrderSample> samples, String comment,
+                                                  MessageCollection messageCollection)
+            throws NoSuchPDOException, SampleDeliveryStatusChangeException, IOException, SAPInterfaceException {
         ProductOrder order = findProductOrder(jiraTicketKey);
 
         transitionSamples(order, acceptableStartingStatuses, targetStatus, samples);
+
+        try {
+            publishProductOrderToSAP(order, messageCollection, false);
+        } catch (SAPInterfaceException e) {
+            log.error("SAP Error when attempting to abandon samples", e);
+            throw e;
+        }
 
         JiraIssue issue = jiraService.getIssue(order.getJiraTicketKey());
         issue.addComment(MessageFormat.format("{0} transitioned samples to status {1}: {2}\n\n{3}",
@@ -1300,28 +1354,29 @@ public class ProductOrderEjb {
      * @param jiraTicketKey the order's JIRA key
      * @param samples       the samples to abandon
      * @param comment       optional user supplied comment about this action.
+     * @param messageCollection
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void abandonSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<ProductOrderSample> samples,
-                               @Nonnull String comment)
-            throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException {
+                               @Nonnull String comment, MessageCollection messageCollection)
+            throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException, SAPInterfaceException {
         transitionSamplesAndUpdateTicket(jiraTicketKey,
                 EnumSet.of(DeliveryStatus.ABANDONED, DeliveryStatus.NOT_STARTED),
                 DeliveryStatus.ABANDONED, samples,
-                comment);
+                comment, messageCollection);
     }
 
     /**
      * Un-abandon a list of samples and add a message to the JIRA ticket to reflect this change.
-     *
      * @param jiraTicketKey the order's JIRA key
      * @param sampleIds     the samples to un-abandon
      * @param comment       optional user supplied comment about this action.
+     * @param reporter
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void unAbandonSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<Long> sampleIds,
-                                 @Nonnull String comment, @Nonnull MessageReporter reporter)
-            throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException {
+                                 @Nonnull String comment, @Nonnull MessageCollection reporter)
+            throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException, SAPInterfaceException {
 
         List<ProductOrderSample> samples = productOrderSampleDao.findListByList(ProductOrderSample.class,
                 ProductOrderSample_.productOrderSampleId, sampleIds);
@@ -1335,9 +1390,9 @@ public class ProductOrderEjb {
         }
 
         transitionSamplesAndUpdateTicket(jiraTicketKey, EnumSet.of(DeliveryStatus.ABANDONED),
-                DeliveryStatus.NOT_STARTED, samples, comment);
+                DeliveryStatus.NOT_STARTED, samples, comment, reporter);
 
-        reporter.addMessage("Un-Abandoned samples: {0}.",
+        reporter.addInfo("Un-Abandoned samples: {0}.",
                 StringUtils.join(ProductOrderSample.getSampleNames(samples), ", "));
     }
 
@@ -1648,12 +1703,16 @@ public class ProductOrderEjb {
      *
      * @param ledgerUpdates a map of PDO sample to a collection of ledger updates
      *
-     * @throws StaleLedgerUpdateException if the previous quantity in any ledger update is out-of-date
+     * @throws ValidationWithRollbackException to capture and relay multiple errors that may have occurred while
+     * creating or updating ledger entries
+     * @throws QuoteNotFoundException if the quote is not found
+     * @throws QuoteServerException if any errors occurs during the attempt to access the quote server during this
+     * method
+     *
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void updateSampleLedgers(Map<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> ledgerUpdates)
-            throws ValidationWithRollbackException, SAPInterfaceException, QuoteNotFoundException,
-            QuoteServerException, InvalidProductException, SAPIntegrationException {
+            throws ValidationWithRollbackException, QuoteNotFoundException, QuoteServerException {
         List<String> errorMessages = new ArrayList<>();
 
         Map<String, Quote> usedQuotesMiniCache = new HashMap<>();
@@ -1674,21 +1733,6 @@ public class ProductOrderEjb {
                     usedQuotesMiniCache.put(orderQuote.getAlphanumericId(), orderQuote);
                 }
 
-
-                final List<Product> allProductsOrdered =
-                        ProductOrder.getAllProductsOrdered(productOrderSample.getProductOrder());
-                List<String> effectivePricesForProducts = priceListCache
-                        .getEffectivePricesForProducts(allProductsOrdered, orderQuote);
-
-                final MessageCollection messageCollection = new MessageCollection();
-                if (productOrderSample.getProductOrder().isSavedInSAP()) {
-                    if (!StringUtils
-                            .equals(productOrderSample.getProductOrder().latestSapOrderDetail().getOrderPricesHash(),
-                                    TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ",")))
-                            ) {
-                        publishProductOrderToSAP(productOrderSample.getProductOrder(), messageCollection, true);
-                    }
-                }
                 updatedOrderMap.put(productOrderSample.getProductOrder().getBusinessKey(), Boolean.TRUE);
             }
 

@@ -1376,4 +1376,79 @@
         </sql>
     </changeSet>
 
+    <changeSet id="GPLIM-5070-1" author="jsacco">
+        <sql>
+            CREATE TABLE MERCURY.ABANDON_VESSEL_BAK
+            AS SELECT * FROM MERCURY.ABANDON_VESSEL;
+
+            CREATE TABLE MERCURY.ABANDON_VESSEL_NEW (
+            ABANDON_VESSEL_ID NUMBER(19,0) NOT NULL ENABLE,
+            LAB_VESSEL NUMBER(19,0),
+            REASON VARCHAR2(64),
+            ABANDONED_ON DATE,
+            VESSEL_POSITION VARCHAR2(32)  );
+
+            INSERT INTO MERCURY.ABANDON_VESSEL_NEW
+            SELECT CASE WHEN ROW_NUMBER() OVER (PARTITION BY av.abandon_vessel_id order by av.abandon_vessel_id ) > 1
+            THEN avp.abandon_vessel_position_id * -1
+            ELSE av.abandon_vessel_id
+            END as abandon_vessel_id,
+            av.lab_vessel,
+            nvl( avp.reason, av.reason ) as reason,
+            av.abandoned_on,
+            avp.vessel_position
+            from ABANDON_VESSEL av
+            left outer join abandon_vessel_position avp
+            on avp.abandon_vessel = av.abandon_vessel_id;
+
+            COMMIT;
+
+            DROP TABLE MERCURY.ABANDON_VESSEL;
+
+            ALTER TABLE MERCURY.ABANDON_VESSEL_NEW RENAME TO ABANDON_VESSEL;
+
+            CREATE UNIQUE INDEX IDX_PK_ABANDON_VESSEL
+            ON MERCURY.ABANDON_VESSEL( ABANDON_VESSEL_ID );
+
+            ALTER TABLE MERCURY.ABANDON_VESSEL
+            ADD CONSTRAINT PK_ABANDON_VESSEL PRIMARY KEY (ABANDON_VESSEL_ID)
+            USING INDEX IDX_PK_ABANDON_VESSEL;
+
+            ALTER TABLE MERCURY.ABANDON_VESSEL_AUD ADD VESSEL_POSITION VARCHAR2(32);
+            ALTER TABLE MERCURY.ABANDON_VESSEL_AUD
+            MODIFY REASON VARCHAR2(64);
+            ALTER TABLE MERCURY.ABANDON_VESSEL_AUD
+            MODIFY ABANDONED_ON DATE;
+
+            UPDATE MERCURY.ABANDON_VESSEL_AUD AUD
+            SET AUD.VESSEL_POSITION = (
+            SELECT AV.VESSEL_POSITION
+            FROM MERCURY.ABANDON_VESSEL AV
+            WHERE AV.ABANDON_VESSEL_ID = AUD.ABANDON_VESSEL_ID );
+
+            INSERT INTO ABANDON_VESSEL_AUD (
+            ABANDON_VESSEL_ID, LAB_VESSEL, REASON, ABANDONED_ON,
+            REV, REVTYPE, VESSEL_POSITION
+            ) SELECT ABANDON_VESSEL_POSITION_ID * -1,
+            0, REASON,
+            ABANDONED_ON, REV, REVTYPE, VESSEL_POSITION
+            from ABANDON_VESSEL_POSITION_AUD;
+
+            UPDATE ABANDON_VESSEL_AUD AUD
+            SET AUD.LAB_VESSEL = ( SELECT AV.LAB_VESSEL
+            FROM MERCURY.ABANDON_VESSEL AV
+            WHERE AV.ABANDON_VESSEL_ID = AUD.ABANDON_VESSEL_ID )
+            WHERE AUD.LAB_VESSEL = 0;
+
+            COMMIT;
+        </sql>
+    </changeSet>
+
+    <!-- Abandons almost always looked up from LabVessel - add index -->
+    <changeSet id="GPLIM-5070-2" author="jsacco">
+        <createIndex schemaName="mercury" tableName="abandon_vessel" indexName="idx_abandon_vessel_vessel">
+            <column name="lab_vessel"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>
