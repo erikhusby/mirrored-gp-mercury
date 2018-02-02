@@ -157,7 +157,7 @@ public class ReworkEjb {
         labVessels.addAll(labVesselDao.findBySampleKeyList(query));
 
         for (LabVessel vessel : labVessels) {
-            List<ProductOrderSample> productOrderSamples = new ArrayList<>();
+            Set<ProductOrderSample> productOrderSamples = new HashSet<>();
             for (SampleInstanceV2 sampleInstanceV2 : vessel.getSampleInstancesV2()) {
                 for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
                     if (productOrderSample.getProductOrder().getOrderStatus().readyForLab()) {
@@ -165,8 +165,7 @@ public class ReworkEjb {
                     }
                 }
             }
-            // For a pooled tube added to a PDO, the above loop on getSampleInstancesV2 won't find ProductOrderSamples.
-            // However, there may be a ProductOrderSample with a "sampleName" of the tube barcode.
+            // The above loop won't find ProductOrderSamples created using a tube barcode, so do a lookup using that.
             if (productOrderSamples.isEmpty()) {
                 List<ProductOrderSample> bySamples = productOrderSampleDao.findBySamples(Collections.singleton(
                         vessel.getLabel()));
@@ -178,27 +177,28 @@ public class ReworkEjb {
         }
 
         /*
-         * For any sample whose sample data lives in Mercury, a bucket candidate will already have been found.
-         * Therefore, there is no risk of querying BSP for these samples from here.
+         * A bucket candidate should have been found for a sample known to Mercury, regardless of the
+         * sample data source. If it's BSP sample data it will not have been fetched at this point but
+         * that doesn't seem to matter.
          *
-         * If there are only BSP-sample-data samples in the query that Mercury does not know about, then
-         *      bucketCandidates will be empty and the query will extend to search in BSP.
-         * If there are only Mercury-sample-data samples in the query, bucketCandidates will not be empty.
-         * If there are a mix of samples in the query, some subset may have been found and bucketCandidates created for
-         *      them, in which case BSP will not be queried.
+         * If no candidates were found then query BSP for samples that Mercury does not know about,
+         * assuming the user request (the query) consists of sample names.
+         *
+         * If there are a mix of samples the ones found in Mercury will have bucket candidates, and BSP
+         * will not be queried.
          *
          * TODO: Filter out of the user's query samples for which we've found candidates in Mercury rather than querying BSP for all samples.
          * The above scenarios need to be taken into account when doing this to avoid querying BSP for samples whose
          * sample data is in Mercury, especially those that are BSP tubes that have been exported to CRSP!
          */
         if (bucketCandidates.isEmpty()) {
-            Collection<ProductOrderSample> sampleCollection = new ArrayList<>();
+            Set<ProductOrderSample> productOrderSamples = new HashSet<>();
             for (ProductOrderSample productOrderSample : productOrderSampleDao.findBySamples(query)) {
                 if (productOrderSample.getProductOrder().getOrderStatus().readyForLab()) {
-                    sampleCollection.add(productOrderSample);
+                    productOrderSamples.add(productOrderSample);
                 }
             }
-            bucketCandidates.addAll(collectBucketCandidatesThatHaveBSPVessels(sampleCollection));
+            bucketCandidates.addAll(collectBucketCandidatesThatHaveBSPVessels(productOrderSamples));
         }
 
         return bucketCandidates;
