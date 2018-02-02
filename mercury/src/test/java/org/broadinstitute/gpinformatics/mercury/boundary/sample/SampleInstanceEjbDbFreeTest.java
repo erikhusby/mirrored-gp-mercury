@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -58,7 +57,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.sample.WalkUpSequen
 import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.IceEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
@@ -292,7 +290,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(metadataMap.get(Metadata.Key.BROAD_PARTICIPANT_ID), select(i, "hh", "ii", "jj"));
             Assert.assertEquals(metadataMap.get(Metadata.Key.SPECIES), "see Organism column for species");
             Assert.assertEquals(metadataMap.get(Metadata.Key.GENDER), select(i, "M", "F", "M"));
-            Assert.assertEquals(metadataMap.get(Metadata.Key.STRAIN), "");
+            Assert.assertTrue(StringUtils.isBlank(metadataMap.get(Metadata.Key.STRAIN)));
             Assert.assertEquals(metadataMap.get(Metadata.Key.MATERIAL_TYPE), "DNA");
             Assert.assertEquals(metadataMap.get(Metadata.Key.ORGANISM), "human");
             Assert.assertNull(metadataMap.get(Metadata.Key.PATIENT_ID));
@@ -374,8 +372,8 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(metadataMap.get(Metadata.Key.BROAD_PARTICIPANT_ID),
                     select(i, "Patient X", "Patient Y"));
             Assert.assertEquals(metadataMap.get(Metadata.Key.SPECIES), "Test Species");
-            Assert.assertEquals(metadataMap.get(Metadata.Key.GENDER), select(i, "F", ""));
-            Assert.assertEquals(metadataMap.get(Metadata.Key.STRAIN), select(i, "n/a", ""));
+            Assert.assertEquals(metadataMap.get(Metadata.Key.GENDER), select(i, "F", null));
+            Assert.assertEquals(metadataMap.get(Metadata.Key.STRAIN), select(i, "n/a", null));
             Assert.assertEquals(metadataMap.get(Metadata.Key.MATERIAL_TYPE), "DNA");
             Assert.assertNull(metadataMap.get(Metadata.Key.ORGANISM));
             Assert.assertNull(metadataMap.get(Metadata.Key.PATIENT_ID));
@@ -738,7 +736,7 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                     @Override
                     public Map<String, MercurySample> answer(InvocationOnMock invocation) throws Throwable {
                         Map<String, MercurySample> map = new HashMap<>();
-                       for (String name : (Set<String>) invocation.getArguments()[0]) {
+                        for (String name : (Set<String>) invocation.getArguments()[0]) {
                             if (metadataMap.containsKey(name)) {
                                 map.put(name, new MercurySample(name, metadataMap.get(name)));
                             } else if (bspSampleData.containsKey(name)) {
@@ -747,6 +745,20 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
                                 // Root samples will have no metadata.
                                 map.put(name, new MercurySample(name, BSPUtil.isInBspFormat(name) ?
                                         MercurySample.MetadataSource.BSP : MercurySample.MetadataSource.MERCURY));
+                            }
+                        }
+                        return map;
+                    }
+                });
+
+        Mockito.when(sampleDataFetcher.fetchSampleData(Mockito.anyCollection())).thenAnswer(
+                new Answer<Map<String, SampleData>>() {
+                    @Override
+                    public Map<String, SampleData> answer(InvocationOnMock invocation) throws Throwable {
+                        Map<String, SampleData> map = new HashMap<>();
+                        for (String name : (Collection<String>) invocation.getArguments()[0]) {
+                            if (bspSampleData.containsKey(name)) {
+                                map.put(name, bspSampleData.get(name));
                             }
                         }
                         return map;

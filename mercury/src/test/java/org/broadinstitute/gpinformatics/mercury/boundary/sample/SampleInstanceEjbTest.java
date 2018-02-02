@@ -22,6 +22,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySample
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleInstanceEntityDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VesselPooledTubesProcessor;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceEntity;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -37,16 +38,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor.REQUIRED_VALUE_IS_MISSING;
 
 @Test(groups = TestGroups.STANDARD)
 public class SampleInstanceEjbTest extends Arquillian {
+
     @Inject
     private SampleInstanceEjb sampleInstanceEjb;
 
@@ -64,40 +68,62 @@ public class SampleInstanceEjbTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV);
     }
 
-    private final Random random = new Random(System.currentTimeMillis());
 
     @Test
     public void testPooledTubeUpload() throws Exception {
-        // Makes randomized barcode, library, sample, root for the non-overwrite case.
-        List<Map<String, String>> alternativeData = new ArrayList<>();
-        int randomNumber = random.nextInt(100000000) * 10;
-        for (int rowIndex : Arrays.asList(1, 2)) {
-            String randomDigits = String.format("%010d", randomNumber + rowIndex);
-            Map<String, String> row = new HashMap<>();
-            row.put("Tube barcode", "E" + randomDigits);
-            row.put("Single sample library name", "Library" + randomDigits);
-            row.put("Broad sample ID", "SM-" + randomDigits);
-            row.put("Root Sample ID", String.format("SM-%010d", randomNumber + (new int[]{1, 3})[rowIndex - 1]));
-            alternativeData.add(row);
-        }
+        String base = String.format("%09d", (new Random(System.currentTimeMillis())).nextInt(100000000));
+        String[] ids =     {base + 0, base + 1};
+        String[] rootIds = {base + 0, base + 2};
 
-        for (Pair<String, Boolean> fileSuccessPair : Arrays.asList(
-                Pair.of("PooledTubeReg.xlsx", true),
-                Pair.of("PooledTube_Test-363_case1.xls", true),
-                Pair.of("PooledTube_Test-363_case2.xls", true),
-                Pair.of("PooledTube_Test-363_case3.xls", false),
-                Pair.of("PooledTube_Test-363_case4.xls", true))) {
+        for (List<String> testParameters : Arrays.asList(
+                Arrays.asList("PooledTubeReg.xlsx",            "T", "F", "T", "F"),
+                Arrays.asList("PooledTubeReg.xlsx",            "T", "T", "T", "T"),
+                Arrays.asList("PooledTube_Test-363_case1.xls", "T", "T", "F", "F"),
+                Arrays.asList("PooledTube_Test-363_case2.xls", "T", "T", "F", "F"),
+                Arrays.asList("PooledTube_Test-363_case3.xls", "F", "F", "F", "F"),
+                Arrays.asList("PooledTube_Test-363_case3.xls", "F", "T", "F", "F"),
+                Arrays.asList("PooledTube_Test-363_case4.xls", "T", "F", "F", "F"))) {
 
-            boolean expectSuccess = fileSuccessPair.getRight();
-            String filename = fileSuccessPair.getLeft();
-            boolean overwrite = filename.startsWith("PooledTube_Test-363_");
+            String filename = testParameters.get(0);
+            boolean expectSuccess = testParameters.get(1).equals("T");
+            boolean overwrite = testParameters.get(2).equals("T");
+            // modifyData means the spreadsheet data will be edited in this code.
+            boolean modifyData = testParameters.get(3).equals("T");
+            // modifyData means the spreadsheet sample metadata will be edited in this code.
+            boolean modifyMetadata = testParameters.get(4).equals("T");
 
             byte[] bytes = IOUtils.toByteArray(Thread.currentThread().getContextClassLoader()
                     .getResourceAsStream(filename));
             Assert.assertTrue(bytes.length > 0, "Zero length spreadsheet file " + filename);
 
-            // Writes unique barcode, library, etc. for the PooledTubeReg spreadsheet.
-            if (filename.startsWith("PooledTubeReg")) {
+            List<Map<String, String>> alternativeData = new ArrayList<>();
+            if (modifyData) {
+                // Makes unique barcode, library, sample name, and root sample name.
+                // These are reused in the second upload.
+                for (int i = 0; i < ids.length; ++i) {
+                    Map<String, String> row = new HashMap<>();
+                    row.put(VesselPooledTubesProcessor.Headers.TUBE_BARCODE.getText(), "E" + ids[i]);
+                    row.put(VesselPooledTubesProcessor.Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText(),
+                            "Library" + ids[i]);
+                    row.put(VesselPooledTubesProcessor.Headers.BROAD_SAMPLE_ID.getText(), "SM-" + ids[i]);
+                    row.put(VesselPooledTubesProcessor.Headers.ROOT_SAMPLE_ID.getText(), "SM-" + rootIds[i]);
+
+                    if (modifyMetadata) {
+                        // Metadata differences in the second upload should update sample data & root
+                        // on the same samples that were uploaded in the first test iteration.
+                        row.put(VesselPooledTubesProcessor.Headers.COLLABORATOR_SAMPLE_ID.getText(), "COLB-100" + i);
+                        row.put(VesselPooledTubesProcessor.Headers.COLLABORATOR_PARTICIPANT_ID.getText(),
+                                "COLAB-P-100" + i);
+                        row.put(VesselPooledTubesProcessor.Headers.BROAD_PARTICIPANT_ID.getText(), "BP-ID-100" + i);
+                        if (i == 1) {
+                            row.put(VesselPooledTubesProcessor.Headers.GENDER.getText(), "M");
+                            row.put(VesselPooledTubesProcessor.Headers.ROOT_SAMPLE_ID.getText(), "SM-" + ids[i]);
+                        }
+                        row.put(VesselPooledTubesProcessor.Headers.LSID.getText(), "lsid:100" + i);
+
+                    }
+                    alternativeData.add(row);
+                }
                 bytes = modifySpreadsheet(new ByteArrayInputStream(bytes), alternativeData);
             }
 
@@ -108,7 +134,8 @@ public class SampleInstanceEjbTest extends Arquillian {
             Pair<TableProcessor, List<SampleInstanceEntity>> pair = sampleInstanceEjb.doExternalUpload(
                     new ByteArrayInputStream(bytes), overwrite, messageCollection);
 
-            VesselPooledTubesProcessor processor = (VesselPooledTubesProcessor)pair.getLeft();
+            VesselPooledTubesProcessor processor = (VesselPooledTubesProcessor) pair.getLeft();
+
             if (expectSuccess) {
                 Assert.assertTrue(messageCollection.getErrors().isEmpty(), "In " + filename + ": " +
                         StringUtils.join(messageCollection.getErrors(), "; "));
@@ -124,26 +151,23 @@ public class SampleInstanceEjbTest extends Arquillian {
                     String msg = filename + " " + sampleName;
                     MercurySample mercurySample = mercurySampleDao.findBySampleKey(sampleName);
                     Assert.assertNotNull(mercurySample, msg);
-
                     SampleData sampleData = mercurySample.getSampleData();
+
                     String rootSampleName = sampleData.getRootSample();
                     MercurySample rootSample = mercurySampleDao.findBySampleKey(rootSampleName);
                     Assert.assertTrue(StringUtils.isBlank(rootSampleName) || rootSample != null,
                             msg + " " + rootSampleName);
 
-                    SampleData rootSampleData = (rootSample != null) ? rootSample.getSampleData() : null;
                     if (!processor.getBroadParticipantId().get(i).isEmpty()) {
-                        Assert.assertEquals((rootSampleData != null ? rootSampleData : sampleData)
-                                .getPatientId(), processor.getBroadParticipantId().get(i), msg);
+                        Assert.assertEquals(sampleData.getPatientId(), processor.getBroadParticipantId().get(i), msg);
                     }
                     if (!processor.getCollaboratorSampleId().get(i).isEmpty()) {
-                        Assert.assertEquals((rootSampleData != null ? rootSampleData : sampleData)
-                                .getCollaboratorsSampleName(), processor.getCollaboratorSampleId().get(i), msg);
+                        Assert.assertEquals(sampleData.getCollaboratorsSampleName(),
+                                processor.getCollaboratorSampleId().get(i), msg);
                     }
                     if (!processor.getCollaboratorParticipantId().get(i).isEmpty()) {
-                        Assert.assertEquals((rootSampleData != null ? rootSampleData : sampleData)
-                                .getCollaboratorParticipantId(), processor.getCollaboratorParticipantId().get(i),
-                                msg);
+                        Assert.assertEquals(sampleData.getCollaboratorParticipantId(),
+                                processor.getCollaboratorParticipantId().get(i), msg);
                     }
                     if (!processor.getGender().get(i).isEmpty()) {
                         Assert.assertEquals(sampleData.getGender(), processor.getGender().get(i), msg);
@@ -154,85 +178,107 @@ public class SampleInstanceEjbTest extends Arquillian {
                     if (!processor.getLsid().get(i).isEmpty()) {
                         Assert.assertEquals(sampleData.getSampleLsid(), processor.getLsid().get(i), msg);
                     }
+                    if (sampleData.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
+                        Set<String> uniqueKeyNames = new HashSet<>();
+                        for (Metadata metadata : mercurySample.getMetadata()) {
+                            Assert.assertTrue(uniqueKeyNames.add(metadata.getKey().name()),
+                                    "Duplicate MercurySample metadata key " + metadata.getKey().name());
+                        }
+                    }
                 }
             } else {
-                // The failing test case should not have persisted any rows.
+                // The failing test cases should not have persisted any new Sample Instances.
                 for (int i = 0; i < processor.getBarcodes().size(); ++i) {
                     String libraryName = processor.getSingleSampleLibraryName().get(i);
                     Assert.assertNull(sampleInstanceEntityDao.findByName(libraryName), filename + " " + libraryName);
                 }
                 // Checks the error messages for expected problems.
-                // FYI metadata for SM-748OO is from Mercury and not BSP even though the sample is in BSP.
+                // NOTE that the metadata for SM-748OO is in Mercury and not BSP even though the sample is in BSP.
                 List<String> errors = new ArrayList<>(messageCollection.getErrors());
-                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.CONFLICT, 2,
-                        VesselPooledTubesProcessor.Headers.BROAD_PARTICIPANT_ID.getText(),
-                        "987654321", "12001-015", "", ""));
-                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.CONFLICT, 2,
-                        VesselPooledTubesProcessor.Headers.SPECIES.getText(), "canine", "null", "", ""));
-                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.CONFLICT, 2,
-                        VesselPooledTubesProcessor.Headers.LSID.getText(), "lsid:1", "null", "", ""));
-                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.DUPLICATE, 3,
-                        VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText() +
-                                " in tube 01509634244"));
-                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN, 3,
-                        VesselPooledTubesProcessor.Headers.ROOT_SAMPLE_ID.getText(), "Mercury",
-                        "Broad Sample already exists"));
-                errorIfMissing(errors, filename, "Row #5 " + String.format(REQUIRED_VALUE_IS_MISSING,
-                        VesselPooledTubesProcessor.Headers.TUBE_BARCODE.getText()));
-                errorIfMissing(errors, filename, "Row #5 " + String.format(REQUIRED_VALUE_IS_MISSING,
-                        VesselPooledTubesProcessor.Headers.EXPERIMENT.getText()));
-                errorIfMissing(errors, filename, "Row #5 " + String.format(REQUIRED_VALUE_IS_MISSING,
-                        VesselPooledTubesProcessor.Headers.CONDITIONS.getText()));
-                errorIfMissing(errors, filename, "Row #6 " + String.format(REQUIRED_VALUE_IS_MISSING,
-                        VesselPooledTubesProcessor.Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText()));
-                errorIfMissing(errors, filename, "Row #7 " + String.format(REQUIRED_VALUE_IS_MISSING,
-                        VesselPooledTubesProcessor.Headers.BROAD_SAMPLE_ID.getText()));
-                errorIfMissing(errors, filename, "Row #7 " + String.format(REQUIRED_VALUE_IS_MISSING,
-                        VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText()));
-                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.CONFLICT, 8,
-                        VesselPooledTubesProcessor.Headers.VOLUME.getText(), "61.00", "60.00", "", ""));
-                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.CONFLICT, 8,
-                        VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE.getText(), "151.00", "150.00", "", ""));
-                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.MUST_NOT_BE, 8,
-                        VesselPooledTubesProcessor.Headers.BAIT.getText() + " and " +
-                        VesselPooledTubesProcessor.Headers.CAT.getText(), "both"));
-                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN, 8,
-                        VesselPooledTubesProcessor.Headers.CONDITIONS.getText(), "sub-tasks of DEV-6796"));
-                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.CONFLICT, 8,
-                        VesselPooledTubesProcessor.Headers.LSID.getText(), "lsid:3", "null", "", ""));
-                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.WRONG_TYPE, 9,
-                        VesselPooledTubesProcessor.Headers.READ_LENGTH.getText(), "numeric"));
-                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.WRONG_TYPE, 9,
-                        VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE.getText(), "numeric"));
-                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.WRONG_TYPE, 9,
-                        VesselPooledTubesProcessor.Headers.VOLUME.getText(), "numeric"));
-                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN, 9,
-                        VesselPooledTubesProcessor.Headers.CONDITIONS.getText(), "sub-tasks of DEV-6796"));
-                errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN, 9,
-                        VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText(), "Mercury"));
-                Assert.assertTrue(errors.isEmpty(), "Found unexpected errors: " + StringUtils.join(errors, "; "));
+                List<String> warnings = new ArrayList<>(messageCollection.getWarnings());
+
+                if (overwrite) {
+                    errorIfMissing(errors, filename, String.format(SampleInstanceEjb.CONFLICT, 3,
+                            VesselPooledTubesProcessor.Headers.COLLABORATOR_PARTICIPANT_ID.getText(), "12001-015", "", "", ""));
+                    errorIfMissing(errors, filename, String.format(SampleInstanceEjb.CONFLICT, 3,
+                            VesselPooledTubesProcessor.Headers.COLLABORATOR_SAMPLE_ID.getText(), "12102402873", "", "", ""));
+                    errorIfMissing(errors, filename, String.format(SampleInstanceEjb.CONFLICT, 3,
+                            VesselPooledTubesProcessor.Headers.GENDER.getText(), "Male", "", "", ""));
+                    errorIfMissing(errors, filename, String.format(SampleInstanceEjb.CONFLICT, 3,
+                            VesselPooledTubesProcessor.Headers.ROOT_SAMPLE_ID.getText(), "SM-UNKNOWN", "", "", ""));
+                    errorIfMissing(errors, filename, String.format(SampleInstanceEjb.DUPLICATE, 3,
+                            VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText() +
+                                    " in tube 01509634244"));
+                    errorIfMissing(errors, filename, String.format(SampleInstanceEjb.CONFLICT, 3,
+                            VesselPooledTubesProcessor.Headers.VOLUME.getText(), "61.00", "60.00", "", ""));
+                    errorIfMissing(errors, filename, String.format(SampleInstanceEjb.CONFLICT, 3,
+                            VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE.getText(), "151.00", "150.00", "", ""));
+                    errorIfMissing(warnings, filename, String.format(SampleInstanceEjb.DUPLICATE_S_M, 3,
+                            "SM-748OO", "Illumina_P5-Nijow_P7-Waren"));
+
+                    errorIfMissing(warnings, filename, String.format(SampleInstanceEjb.DUPLICATE_S_M, 4,
+                            "SM-748OO", "Illumina_P5-Nijow_P7-Waren"));
+
+                    errorIfMissing(errors, filename, "Row #5 " + String.format(REQUIRED_VALUE_IS_MISSING,
+                            VesselPooledTubesProcessor.Headers.TUBE_BARCODE.getText()));
+                    errorIfMissing(errors, filename, "Row #5 " + String.format(REQUIRED_VALUE_IS_MISSING,
+                            VesselPooledTubesProcessor.Headers.EXPERIMENT.getText()));
+                    errorIfMissing(errors, filename, "Row #5 " + String.format(REQUIRED_VALUE_IS_MISSING,
+                            VesselPooledTubesProcessor.Headers.CONDITIONS.getText()));
+
+                    errorIfMissing(errors, filename, "Row #6 " + String.format(REQUIRED_VALUE_IS_MISSING,
+                            VesselPooledTubesProcessor.Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText()));
+
+                    errorIfMissing(errors, filename, "Row #7 " + String.format(REQUIRED_VALUE_IS_MISSING,
+                            VesselPooledTubesProcessor.Headers.BROAD_SAMPLE_ID.getText()));
+                    errorIfMissing(errors, filename, "Row #7 " + String.format(REQUIRED_VALUE_IS_MISSING,
+                            VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText()));
+
+                    errorIfMissing(errors, filename, String.format(SampleInstanceEjb.MUST_NOT_BE, 8,
+                            VesselPooledTubesProcessor.Headers.BAIT.getText() + " and " +
+                                    VesselPooledTubesProcessor.Headers.CAT.getText(), "both"));
+                    errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN_COND, 8, "DEV-6796"));
+                    errorIfMissing(errors, filename, String.format(SampleInstanceEjb.CONFLICT, 8,
+                            VesselPooledTubesProcessor.Headers.LSID.getText(), "lsid:3", "lsid:1", "", ""));
+                    errorIfMissing(warnings, filename, String.format(SampleInstanceEjb.DUPLICATE_S_M, 8,
+                            "SM-748OO", "Illumina_P5-Nijow_P7-Waren"));
+
+                    errorIfMissing(errors, filename, String.format(SampleInstanceEjb.WRONG_TYPE, 9,
+                            VesselPooledTubesProcessor.Headers.READ_LENGTH.getText(), "a positive integer"));
+                    errorIfMissing(errors, filename, String.format(SampleInstanceEjb.WRONG_TYPE, 9,
+                            VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE.getText(), "a positive number"));
+                    errorIfMissing(errors, filename, String.format(SampleInstanceEjb.WRONG_TYPE, 9,
+                            VesselPooledTubesProcessor.Headers.VOLUME.getText(), "a positive number"));
+                    errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN_COND, 9, "DEV-6796"));
+                    errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN, 9,
+                            VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText(), "Mercury"));
+                    Assert.assertTrue(errors.isEmpty(), "Found unexpected errors: " + StringUtils.join(errors, "; "));
+                } else {
+                    // For the non-overwrite case checks for errors on the rows that try to update metadata.
+                    String[] columnNames = {
+                            VesselPooledTubesProcessor.Headers.BROAD_PARTICIPANT_ID.getText(),
+                            VesselPooledTubesProcessor.Headers.LSID.getText(),
+                            VesselPooledTubesProcessor.Headers.SPECIES.getText(),
+                    };
+                    for (int rowNumber : new int[]{3, 4, 8, 9}) {
+                        errorIfMissing(errors, filename, String.format(SampleInstanceEjb.PREXISTING_VALUES, rowNumber,
+                                StringUtils.join(columnNames, ", ")));
+                    }
+                }
             }
         }
     }
 
-    private boolean errorIfMissing(List<String> errors, String filename, String... tokens) {
+    private boolean errorIfMissing(List<String> errors, String filename, String expected) {
         for (Iterator<String> iterator = errors.iterator(); iterator.hasNext(); ) {
             String error = iterator.next();
-            boolean hasAllTokens = true;
-            for (String token : tokens) {
-                if (!error.contains(token)) {
-                    hasAllTokens = false;
-                    break;
-                }
-            }
-            if (hasAllTokens) {
+            if (error.startsWith(expected)) {
                 iterator.remove();
                 return true;
             }
         }
-        Assert.fail(filename + " missing an error message that contains \"" +
-                StringUtils.join(tokens, "\" and \"") + "\"; " +
-                "Existing errors are: " + StringUtils.join(errors, "; "));
+        Assert.fail(filename + " error message \"" + expected + "\" is missing from the remaining errors: " +
+                StringUtils.join(errors, "; "));
         return false;
     }
 
@@ -272,7 +318,6 @@ public class SampleInstanceEjbTest extends Arquillian {
         PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.singletonMap("Sheet1", processor));
         parser.processUploadFile(spreadsheet);
         Assert.assertTrue(CollectionUtils.isNotEmpty(processor.getHeaderNames()));
-        Assert.assertEquals(rows.size(), 2);
 
         // Writes new spreadsheet using alternative data.
         Workbook workbook = new HSSFWorkbook();
@@ -301,6 +346,7 @@ public class SampleInstanceEjbTest extends Arquillian {
         workbook.write(outputStream);
         byte[] bytes = outputStream.toByteArray();
         IOUtils.closeQuietly(outputStream);
+        //org.apache.commons.io.FileUtils.writeByteArrayToFile(new java.io.File("generatedImport.xls"), bytes);
         return bytes;
     }
 }

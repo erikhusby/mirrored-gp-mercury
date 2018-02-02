@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.ReferenceSequenceDao;
@@ -73,7 +74,6 @@ import java.util.TreeSet;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil.isInBspFormat;
-import static org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation_.barcode;
 
 /**
  * This class handles the external library creation from walkup sequencing web serivce calls, pooled tube
@@ -86,11 +86,22 @@ public class SampleInstanceEjb {
     static final String WRONG_TYPE = "Row #%d %s must be %s";
     static final String MUST_NOT_BE = "Row #%d %s must not be %s";
     static final String UNKNOWN = "Row #%d the value for %s is not in %s";
+    static final String UNKNOWN_COND = "Row #%d the value for " +
+            VesselPooledTubesProcessor.Headers.CONDITIONS.getText() +
+            " is not a ticket id for one of the sub-task of %s.";
     static final String DUPLICATE = "Row #%d duplicate value for %s";
+    static final String DUPLICATE_S_M =
+            "Row #%d repeats the combination of sample %s and index %s and indicates these tubes should not be pooled.";
     static final String BSP_FORMAT = "Row #%d the new %s \"%s\" must not have a BSP sample name format";
     static final String MERCURY_FORMAT = "Row #%d the new %s \"%s\" must not have a Mercury barcode format (10 digits)";
-    static final String PREXISTING = "Row #%d %s named \"%s\" already exists in Mercury; set the Overwrite checkbox to re-upload.";
+    static final String PREXISTING =
+            "Row #%d %s named \"%s\" already exists in Mercury; set the Overwrite checkbox to re-upload.";
     static final String PDO_PROBLEM = "Row #%d no %s is defined for Product Order \"%s\"";
+    static final String PREXISTING_VALUES =
+            "Row #%d values for %s already exist in Mercury; set the Overwrite checkbox to re-upload.";
+    static final String BSP_METADATA =
+            "Row #%d values for %s should be blank because BSP data for sample %s cannot be updated";
+    static final String BSP_MISSING = "Row #%d Mercury expects sample \"%s\" to be in BSP and it's not";
 
     public static final String IS_SUCCESS = "Spreadsheet with %d rows successfully uploaded";
     /** A string of the available sequencer model names. */
@@ -225,248 +236,187 @@ public class SampleInstanceEjb {
     }
 
     /**
-     * Verifies the spreadsheet contents and if it's ok, persists the data. If not, adds error messages.
+     * Pooled Tube uploads create SampleInstanceEntities from the user provided spreadsheet. Any errors are
+     * put in UI error messages. This much is the same as External Library uploads. The main differences are:
+     *   - Basic input is tube barcode and sample name, though a unique library name is also required.
+     *   - The tube and sample may or may not be already known to Mercury and BSP.
+     *   - A DEV batch and the relevant subtask tickets must be specified in the spreadsheet.
+     *   - A pool can be uploaded by repeating the barcode in multiple spreadsheet rows with different sample names.
      */
     private List<SampleInstanceEntity> verifyAndPersistSpreadsheet(VesselPooledTubesProcessor processor,
             MessageCollection messages, boolean overWriteFlag) {
 
-        Set<String> volumeErrorReportedForBarcode = new HashSet<>();
-        Set<String> fragmentErrorReportedForBarcode = new HashSet<>();
-
         // rowOffset converts row index to the 1-based row number shown by Excel on the far left of each row.
         int rowOffset = processor.getHeaderRowIndex() + 2;
 
-        // Maps tube barcode to volume, and maps barcode to fragment size.
-        Map<String, BigDecimal> mapBarcodeToVolume = new HashMap<>();
-        Map<String, BigDecimal> mapBarcodeToFragmentSize = new HashMap<>();
-        Set<String> uniqueBarcodes = new HashSet<>(processor.getBarcodes());
-        uniqueBarcodes.removeAll(Collections.singletonList(""));
-        for (String barcode : uniqueBarcodes) {
-            // For each barcode, spins through the rows looking for the first nonzero volume
-            // and fragment size. Errors if conflicts are found.
-            for (int rowIndex = 0; rowIndex < processor.getBarcodes().size(); ++rowIndex) {
-                if (processor.getBarcodes().get(rowIndex).equals(barcode)) {
-                    String volumeValue = processor.getVolume().get(rowIndex);
-                    if (isNotBlank(volumeValue)) {
-                        if (!NumberUtils.isNumber(volumeValue)) {
-                            messages.addError(String.format(WRONG_TYPE, rowIndex + rowOffset,
-                                    VesselPooledTubesProcessor.Headers.VOLUME.getText(), "numeric"));
-                            volumeErrorReportedForBarcode.add(barcode);
-                        } else {
-                            BigDecimal bigDecimal = MathUtils.scaleTwoDecimalPlaces(new BigDecimal(volumeValue));
-                            if (bigDecimal.compareTo(BigDecimal.ZERO) > 0) {
-                                if (mapBarcodeToVolume.containsKey(barcode) &&
-                                        mapBarcodeToVolume.get(barcode).compareTo(bigDecimal) != 0) {
-                                    messages.addError(String.format(CONFLICT, rowIndex + rowOffset,
-                                            VesselPooledTubesProcessor.Headers.VOLUME.getText(),
-                                            bigDecimal.toPlainString(),
-                                            mapBarcodeToVolume.get(barcode).toPlainString(), "", ""));
-                                    volumeErrorReportedForBarcode.add(barcode);
-                                } else {
-                                    mapBarcodeToVolume.put(barcode, bigDecimal);
-                                }
-                            }
-                        }
-                    }
-                    String fragmentSizeValue = processor.getFragmentSize().get(rowIndex);
-                    if (isNotBlank(fragmentSizeValue)) {
-                        if (!NumberUtils.isNumber(fragmentSizeValue)) {
-                            messages.addError(String.format(WRONG_TYPE, rowIndex + rowOffset,
-                                    VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE.getText(), "numeric"));
-                            fragmentErrorReportedForBarcode.add(barcode);
-                        } else {
-                            BigDecimal bigDecimal = MathUtils.scaleTwoDecimalPlaces(new BigDecimal(fragmentSizeValue));
-                            if (bigDecimal.compareTo(BigDecimal.ZERO) > 0) {
-                                if (mapBarcodeToFragmentSize.containsKey(barcode) &&
-                                        mapBarcodeToFragmentSize.get(barcode).compareTo(bigDecimal) != 0) {
-                                    messages.addError(String.format(CONFLICT, rowIndex + rowOffset,
-                                            VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE.getText(),
-                                            bigDecimal.toPlainString(),
-                                            mapBarcodeToFragmentSize.get(barcode).toPlainString(), "", ""));
-                                    fragmentErrorReportedForBarcode.add(barcode);
-                                } else {
-                                    mapBarcodeToFragmentSize.put(barcode, bigDecimal);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        // Errors if any tube is missing a value for volume or fragment size.
-        for (int rowIndex = 0; rowIndex < processor.getBarcodes().size(); ++rowIndex) {
-            if (!processor.getRequiredValuesPresent().get(rowIndex)) {
-                continue;
-            }
-            String barcode = get(processor.getBarcodes(), rowIndex);
-            if (!mapBarcodeToVolume.containsKey(barcode) && volumeErrorReportedForBarcode.add(barcode)) {
-                // Shows the error only for the first row containing the barcode.
-                messages.addError(String.format(MISSING, rowIndex + rowOffset,
-                        VesselPooledTubesProcessor.Headers.VOLUME.getText()));
-            }
-            if (!mapBarcodeToFragmentSize.containsKey(barcode) && fragmentErrorReportedForBarcode.add(barcode)) {
-                // Shows the error only for the first row containing the barcode.
-                messages.addError(String.format(MISSING, rowIndex + rowOffset,
-                        VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE.getText()));
-            }
-        }
-
-        // Maps the Broad sample names and root sample names to existing MercurySamples.
+        // The Broad sample names.
         Set<String> sampleNames = new HashSet<>(processor.getBroadSampleId());
         sampleNames.removeAll(Collections.singletonList(""));
+        // The existing samples.
         Map<String, MercurySample> sampleMap = mercurySampleDao.findMapIdToMercurySample(sampleNames);
 
+        // The root sample names.
         Set<String> rootSampleNames = new HashSet<>(processor.getRootSampleId());
-        sampleNames.removeAll(Collections.singletonList(""));
+        rootSampleNames.removeAll(Collections.singletonList(""));
+        // The existing rootSamples.
         Map<String, MercurySample> rootSampleMap = mercurySampleDao.findMapIdToMercurySample(rootSampleNames);
 
-        Set<String> sampleDataLookups = new HashSet<>();
+        // A BSP lookup is done if sample is unknown in Mercury, or if the spreadsheet has metadata
+        // which will need to be compared to existing sample data which may be in BSP.
+        // The BSP request is batched for efficiency.
+        Set<String> bspSampleLookups = new HashSet<>();
+        for (int rowIndex = 0; rowIndex < processor.getBarcodes().size(); ++rowIndex) {
+            if (!processor.getRequiredValuesPresent().get(rowIndex)) {
+                // Lets the TableProcessor handle the errors for missing required values, and doesn't
+                // try to process those rows.
+                continue;
+            }
+            String sampleName = processor.getBroadSampleId().get(rowIndex);
+            String rootSampleName = processor.getRootSampleId().get(rowIndex);
+            if (!sampleMap.containsKey(sampleName) || dataIsPresent(processor, rowIndex)) {
+                bspSampleLookups.add(sampleName);
+                bspSampleLookups.add(rootSampleName);
+            }
+        }
+        bspSampleLookups.removeAll(Collections.singletonList(""));
+        Map<String, SampleData> fetchedData = sampleDataFetcher.fetchSampleData(bspSampleLookups);
+
+        // Maps sample name to a dto of the spreadsheet's sample data.
         Map<String, SampleDataDto> sampleDataDtoMap = new HashMap<>();
-
-        for (int rowIndex = 0; rowIndex < processor.getBarcodes().size(); ++rowIndex) {
-            if (!processor.getRequiredValuesPresent().get(rowIndex)) {
-                continue;
-            }
-            String sampleName = processor.getBroadSampleId().get(rowIndex);
-            // For new samples, sample metadata must be supplied in the spreadsheet.
-            if (!sampleMap.containsKey(sampleName)) {
-
-                SampleDataDto sampleDataDto = sampleDataDtoMap.get(sampleName);
-                String rootSampleName = processor.getRootSampleId().get(rowIndex);
-                DtoType dtoType = sampleName.equals(rootSampleName) ? DtoType.BOTH : DtoType.SAMPLE;
-                if (sampleDataDto == null) {
-                    // Collects metadata and add error messages for any missing fields.
-                    sampleDataDtoMap.put(sampleName,
-                            new SampleDataDto(dtoType, processor, rowIndex, rowOffset, messages));
-                } else {
-                    // This new sample has appeared previously in the spreadsheet. The metadata fields
-                    // must match previously supplied fields, or be blank.
-                    SampleDataDto actual = new SampleDataDto(dtoType, processor, rowIndex);
-                    validateMetadata(actual, sampleDataDto, rowIndex + rowOffset, messages);
-                }
-            } else {
-                // For existing samples, the spreadsheet should have blank metadata, and if non-blank
-                // the sample name is saved so the existing values can be fetched.
-                if (dataIsPresent(processor, sampleName)) {
-                    sampleDataLookups.add(sampleName);
-                }
-            }
-        }
-        // todo emp XXX update existing metadata when changes are found
-
-        // Collects root sample metadata. Broad samples may be root samples for another spreadsheet row.
-        for (int rowIndex = 0; rowIndex < processor.getBarcodes().size(); ++rowIndex) {
-            if (!processor.getRequiredValuesPresent().get(rowIndex)) {
-                continue;
-            }
-            String sampleName = processor.getBroadSampleId().get(rowIndex);
-            boolean broadSampleExists = sampleMap.containsKey(sampleName);
-            String rootSampleName = processor.getRootSampleId().get(rowIndex);
-            boolean rootSampleExists = rootSampleMap.containsKey(rootSampleName);
-            if (!broadSampleExists) {
-                if (!rootSampleExists) {
-                    // Adds the root sample metadata, or checks metadata fields against previously supplied fields.
-                    SampleDataDto rootDataDto = sampleDataDtoMap.get(rootSampleName);
-                    if (rootDataDto == null) {
-                        sampleDataDtoMap.put(rootSampleName,
-                                new SampleDataDto(DtoType.ROOT, processor, rowIndex, rowOffset, messages));
-                    } else {
-                        SampleDataDto actual = new SampleDataDto(DtoType.ROOT, processor, rowIndex);
-                        validateMetadata(actual, rootDataDto, rowIndex + rowOffset, messages);
-                    }
-                } else {
-                    // If spreadsheet metadata is non-blank then a lookup will be needed to check the metadata.
-                    if (dataIsPresent(processor, rootSampleName)) {
-                        sampleDataLookups.add(rootSampleName);
-                    }
-                }
-            } else {
-                // If the Broad sample is known then the root is unneeded. If a root sample name is given
-                // it must exist and match the Broad sample's root sample.
-                if (isNotBlank(rootSampleName)) {
-                    if (!rootSampleExists) {
-                        messages.addError(String.format(UNKNOWN, rowIndex + rowOffset,
-                                VesselPooledTubesProcessor.Headers.ROOT_SAMPLE_ID.getText(),
-                                "Mercury, and cannot be added because the Broad Sample already exists"));
-                    } else {
-                        String expected = sampleMap.get(sampleName).getSampleData().getRootSample();
-                        if (isBlank(expected)) {
-                            // A blank root sample means the sample serves as its own root.
-                            expected = sampleName;
-                        }
-                        if (!rootSampleName.equals(expected)) {
-                            messages.addError(String.format(CONFLICT, rowIndex + rowOffset,
-                                    VesselPooledTubesProcessor.Headers.ROOT_SAMPLE_ID.getText(),
-                                    rootSampleName, expected, " or blank", ""));
-                        }
-                    }
-                }
-            }
-        }
-
-        // Fetches existing metadata for existing Broad or root samples having non-blank metadata.
-        // Non-blank spreadsheet values must match existing values, because for this first version
-        // the sample metadata cannot be updated from spreadsheet values, even when doing overwriting.
-        Map<String, SampleData> fetchedData = sampleDataFetcher.fetchSampleData(sampleDataLookups);
-        for (int rowIndex = 0; rowIndex < processor.getBarcodes().size(); ++rowIndex) {
-            if (!processor.getRequiredValuesPresent().get(rowIndex)) {
-                continue;
-            }
-            String sampleName = processor.getBroadSampleId().get(rowIndex);
-            String rootSampleName = processor.getRootSampleId().get(rowIndex);
-            if (fetchedData.containsKey(sampleName)) {
-                String sampleDataRoot = sampleMap.get(sampleName).getSampleData().getRootSample();
-                boolean isAlsoRoot = sampleName.equals(rootSampleName) || sampleName.equals(sampleDataRoot) ||
-                        isBlank(sampleDataRoot);
-                SampleData sampleData = fetchedData.get(sampleName);
-                DtoType dtoType = isAlsoRoot ? DtoType.BOTH : DtoType.SAMPLE;
-                validateSampleData(new SampleDataDto(dtoType, processor, rowIndex), sampleData,
-                        rowIndex + rowOffset,  messages);
-            } else if (fetchedData.containsKey(rootSampleName)) {
-                validateSampleData(new SampleDataDto(DtoType.ROOT, processor, rowIndex),
-                        fetchedData.get(rootSampleName), rowIndex + rowOffset,  messages);
-
-            }
-        }
-
+        // Map of samples to be created or updated.
+        Map<String, SampleDataDto> createOrUpdateSample = new HashMap<>();
+        // The unique barcodes in the spreadsheet.
+        Set<String> uniqueBarcodes = new HashSet<>(processor.getBarcodes());
+        uniqueBarcodes.removeAll(Collections.singletonList(""));
         // Maps tube barcode to existing tubes.
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(new ArrayList<>(uniqueBarcodes));
+        // Maps to collect the volume and fragment size which must be given for each tube.
+        Map<String, BigDecimal> mapBarcodeToVolume = new HashMap<>();
+        Map<String, BigDecimal> mapBarcodeToFragmentSize = new HashMap<>();
+        // For checking uniqueness of library names.
         Set<String> uniqueLibraryNames = new HashSet<>();
+        // For checking molecular index is unique for each sample in a pooled tube.
         Set<String> barcodeAndMis = new HashSet<>();
         Set<String> uniqueSampleMis = new HashSet<>();
+        // Maps of the DEV tickets and subtickets.
         Multimap<String, String> experimentConditions = HashMultimap.create();
         Multimap<String, Integer> experimentConditionsRow = HashMultimap.create();
+        // The row dtos are the spreadsheet abstraction that are used in the persist phase.
         List<RowDto> rowDtos = new ArrayList<>();
 
+        // The sample metadata cases:
+        //
+        // If the Broad sample doesn't exist in Mercury (no MercurySample for it):
+        //    If sample metadata is found in BSP then the MercurySample is created with
+        //    metadata source = BSP. Neither metadata nor root sample are needed in the
+        //    spreadsheet but if present it's an error if they don't match.
+        //
+        //    If the sample is not in BSP then the MercurySample is created with metadata
+        //    source = Mercury and the metadata is obtained from the spreadsheet. The
+        //    root sample name must appear in the spreadsheet. If the root sample is
+        //    not in BSP then a root MercurySample is created (why?) and linked to the
+        //    mercury sample. If the root is in BSP then it's an error if the root
+        //    metadata in the spreadsheet doesn't must match BSP.
+        //
+        // If the Broad sample does exist in Mercury:
+        //    If sample metadata source = BSP, neither metadata nor root sample are needed in the
+        //    spreadsheet but if present it's an error if they don't match.
+        //
+        //    If metadata source = Mercury, neither metadata nor root sample name are needed
+        //    but if present and values differ, then the Mercury sample data is updated.
+        //    Since MercurySample metadata contains all root metadata too, only the Broad
+        //    sample mercury metadata is updated, not the root sample mercury metadata.
+        //
         for (int rowIndex = 0; rowIndex < processor.getBarcodes().size(); ++rowIndex) {
             if (!processor.getRequiredValuesPresent().get(rowIndex)) {
+                // Lets the TableProcessor handle the errors for missing required values, and doesn't
+                // try to process those rows.
                 continue;
             }
-            String libraryName = processor.getSingleSampleLibraryName().get(rowIndex);
-            String barcode = processor.getBarcodes().get(rowIndex);
-            String broadSampleName = processor.getBroadSampleId().get(rowIndex);
+            // Dto containing spreadsheet data for this row.
             RowDto rowDto = new RowDto(rowIndex + rowOffset);
             rowDtos.add(rowDto);
 
-            rowDto.setLibraryName(libraryName);
-            if (isBlank(libraryName)) {
-                messages.addError(String.format(MISSING, rowDto.getRowNumber(),
-                        VesselPooledTubesProcessor.Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText()));
+            // Dtos containing spreadsheet sample metadata for the Broad sample and the root sample.
+            SampleDataDto sampleDataDto = new SampleDataDto(processor, rowIndex);
+
+            String sampleName = sampleDataDto.getSampleName();
+
+            rowDto.setBroadSampleId(sampleName);
+            if (!sampleMap.containsKey(sampleName) && isInBspFormat(sampleName)) {
+                // Errors if it's a new Broad Sample name that could collide with a future BSP SM-id.
+                messages.addError(String.format(BSP_FORMAT, rowDto.getRowNumber(), "Broad Sample", sampleName));
+            }
+
+            String rootSampleName = sampleDataDto.getRootSampleName();
+            rowDto.setRootSampleId(rootSampleName);
+
+            SampleData sampleData = fetchedData.get(sampleName);
+            if (sampleData == null && sampleMap.containsKey(sampleName) &&
+                    sampleMap.get(sampleName).getMetadataSource() == MercurySample.MetadataSource.BSP) {
+                messages.addError(String.format(BSP_MISSING, rowIndex + rowOffset, sampleName));
+            }
+            SampleData rootSampleData = fetchedData.get(rootSampleName);
+            if (rootSampleData == null && rootSampleMap.containsKey(rootSampleName) &&
+                    rootSampleMap.get(rootSampleName).getMetadataSource() == MercurySample.MetadataSource.BSP) {
+                messages.addError(String.format(BSP_MISSING, rowIndex + rowOffset, rootSampleName));
+            }
+
+            // If the sample appeared earlier in the spreadsheet its values must be consistent, or left blank.
+            // The first occurrence is expected to have all of the valid or required metadata fields.
+            if (sampleDataDtoMap.containsKey(sampleName)) {
+                sampleDataDto.compareTo(sampleDataDtoMap.get(sampleName), rowIndex + rowOffset, messages);
+                sampleDataDto = sampleDataDtoMap.get(sampleName);
             } else {
-                if (!uniqueLibraryNames.add(libraryName)) {
-                    messages.addError(String.format(DUPLICATE, rowDto.getRowNumber(),
-                            VesselPooledTubesProcessor.Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText()));
-                }
-                if (sampleInstanceEntityDao.findByName(libraryName) != null && !overWriteFlag) {
-                    messages.addError(String.format(PREXISTING, rowDto.getRowNumber(), "Library", libraryName));
+                // Sets the sample data source depending on the fetched sample data.
+                sampleDataDto.setMetadataSource(sampleData != null ?
+                        sampleData.getMetadataSource() : MercurySample.MetadataSource.MERCURY);
+                sampleDataDtoMap.put(sampleName, sampleDataDto);
+            }
+
+            // For existing samples, checks spreadsheet metadata and root updates.
+            if (sampleData != null) {
+                Map<ColumnHeader, String> sampleDataDiffs = sampleDataDto.sampleDataDiffs(sampleData);
+                if (!sampleDataDiffs.isEmpty()) {
+                    if (sampleDataDto.getMetadataSource() == MercurySample.MetadataSource.BSP) {
+                        // It's an error to upload different data on a BSP sample.
+                        messages.addError(String.format(BSP_METADATA, rowIndex + rowOffset,
+                                collectHeaderNames(sampleDataDiffs.keySet()), sampleName));
+                    } else if (!overWriteFlag) {
+                        // It's an error if the overwrite flag is not set.
+                        messages.addError(String.format(PREXISTING_VALUES, rowIndex + rowOffset,
+                                collectHeaderNames(sampleDataDiffs.keySet())));
+                    } else {
+                        // Mercury data gets updated using an updateDto containing only the changed fields.
+                        createOrUpdateSample.put(sampleName, sampleDataDto.makeOnlyDiffs(sampleDataDiffs));
+                    }
                 }
             }
 
-            rowDto.setBarcode(barcode);
-            if (isBlank(barcode)) {
-                messages.addError(String.format(MISSING, rowDto.getRowNumber(),
-                        VesselPooledTubesProcessor.Headers.TUBE_BARCODE.getText()));
+            // Indicates a MercurySample needs to be created for the Broad sample.
+            if (!sampleMap.containsKey(sampleName)) {
+                createOrUpdateSample.put(sampleName, sampleDataDto);
+                if (sampleDataDto.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
+                    sampleDataDto.validate(rowIndex + rowOffset, messages);
+                    // Indicates a MercurySample needs to be created for the root sample.
+                    if (!fetchedData.containsKey(rootSampleName) && !rootSampleMap.containsKey(rootSampleName)) {
+                        createOrUpdateSample.put(rootSampleName, sampleDataDto);
+                    }
+                }
             }
+
+            String libraryName = processor.getSingleSampleLibraryName().get(rowIndex);
+            rowDto.setLibraryName(libraryName);
+            if (!uniqueLibraryNames.add(libraryName)) {
+                messages.addError(String.format(DUPLICATE, rowDto.getRowNumber(),
+                        VesselPooledTubesProcessor.Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText()));
+            }
+            if (sampleInstanceEntityDao.findByName(libraryName) != null && !overWriteFlag) {
+                messages.addError(String.format(PREXISTING, rowDto.getRowNumber(), "Library", libraryName));
+            }
+
+            String barcode = processor.getBarcodes().get(rowIndex);
+            rowDto.setBarcode(barcode);
             LabVessel tube = mapBarcodeToVessel.get(barcode);
             if (tube != null) {
                 if (!overWriteFlag) {
@@ -484,54 +434,76 @@ public class SampleInstanceEjb {
                 }
             }
 
-            rowDto.setBroadSampleId(broadSampleName);
-            if (isBlank(broadSampleName)) {
-                messages.addError(String.format(MISSING, rowDto.getRowNumber(),
-                        VesselPooledTubesProcessor.Headers.BROAD_SAMPLE_ID.getText()));
-            } else {
-                if (!sampleMap.containsKey(broadSampleName) && isInBspFormat(broadSampleName)) {
-                    // Errors if it's a new Broad Sample name that could collide with a future BSP SM-id.
-                    messages.addError(String.format(BSP_FORMAT, rowDto.getRowNumber(),
-                            "Broad Sample", broadSampleName));
+            String volume = get(processor.getVolume(), rowIndex);
+            if (isNotBlank(volume)) {
+                if (!NumberUtils.isNumber(volume) || NumberUtils.createDouble(volume) <= 0) {
+                    messages.addError(String.format(WRONG_TYPE, rowIndex + rowOffset,
+                            VesselPooledTubesProcessor.Headers.VOLUME.getText(), "a positive number"));
+                    // Adds barcode to prevent the error for missing volume.
+                    mapBarcodeToVolume.put(barcode, null);
+                } else {
+                    BigDecimal bigDecimal = MathUtils.scaleTwoDecimalPlaces(new BigDecimal(volume));
+                    // Checks for consistency with previous value for this tube found in the spreadsheet.
+                    if (mapBarcodeToVolume.containsKey(barcode)) {
+                        if (!bigDecimal.equals(mapBarcodeToVolume.get(barcode))) {
+                            messages.addError(String.format(CONFLICT, rowIndex + rowOffset,
+                                    VesselPooledTubesProcessor.Headers.VOLUME.getText(), bigDecimal.toPlainString(),
+                                    mapBarcodeToVolume.get(barcode).toPlainString(), "", ""));
+                        }
+                    } else {
+                        mapBarcodeToVolume.put(barcode, bigDecimal);
+                    }
                 }
             }
 
-            String rootSampleName = processor.getRootSampleId().get(rowIndex);
-            rowDto.setRootSampleId(rootSampleName);
+            String fragmentSize = get(processor.getFragmentSize(), rowIndex);
+            if (isNotBlank(fragmentSize)) {
+                if (!NumberUtils.isNumber(fragmentSize) || NumberUtils.createDouble(fragmentSize) <= 0) {
+                    messages.addError(String.format(WRONG_TYPE, rowIndex + rowOffset,
+                            VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE.getText(), "a positive number"));
+                    // Adds barcode to prevent the error for missing fragment size.
+                    mapBarcodeToFragmentSize.put(barcode, null);
+                } else {
+                    BigDecimal bigDecimal = MathUtils.scaleTwoDecimalPlaces(new BigDecimal(fragmentSize));
+                    // Checks for consistency with previous value for this tube found in the spreadsheet.
+                    if (mapBarcodeToFragmentSize.containsKey(barcode)) {
+                        if (!bigDecimal.equals(mapBarcodeToFragmentSize.get(barcode))) {
+                            messages.addError(String.format(CONFLICT, rowIndex + rowOffset,
+                                    VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE.getText(),
+                                    bigDecimal.toPlainString(),
+                                    mapBarcodeToFragmentSize.get(barcode).toPlainString(), "", ""));
+                        }
+                    } else {
+                        mapBarcodeToFragmentSize.put(barcode, bigDecimal);
+                    }
+                }
+            }
 
             //Does molecular index scheme exist.
             String misName = processor.getMolecularIndexingScheme().get(rowIndex);
-            if (isBlank(misName)) {
-                messages.addError(String.format(MISSING, rowDto.getRowNumber(),
-                        VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText()));
-            } else {
-                MolecularIndexingScheme molecularIndexingScheme = molecularIndexingSchemeDao.findByName(misName);
-                rowDto.setMolecularIndexSchemes(molecularIndexingScheme);
-                if (molecularIndexingScheme == null) {
-                    messages.addError(String.format(UNKNOWN, rowDto.getRowNumber(),
-                            VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText(), "Mercury"));
-                }
-                // Errors if a tube has duplicate Molecular Index Scheme.
-                if (!barcodeAndMis.add(barcode + "_" + misName)) {
-                    messages.addError(String.format(DUPLICATE, rowDto.getRowNumber(),
-                            VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText() +
-                                    " in tube " + barcode));
-                }
-                // Warns if the spreadsheet has duplicate combination of Broad Sample and Molecular Index Scheme
-                // (in different tubes). It's not an error as long as the tubes don't get pooled later on, which
-                // isn't known at upload time.
-                String sampleMis = broadSampleName + ", " + misName;
-                if (!uniqueSampleMis.add(sampleMis)) {
-                    messages.addWarning(String.format(DUPLICATE, rowDto.getRowNumber(),
-                            VesselPooledTubesProcessor.Headers.BROAD_SAMPLE_ID.getText() + " and " +
-                                    VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText() +
-                                    " (" + sampleMis + ")"));
-                }
+            MolecularIndexingScheme molecularIndexingScheme = molecularIndexingSchemeDao.findByName(misName);
+            rowDto.setMolecularIndexSchemes(molecularIndexingScheme);
+            if (molecularIndexingScheme == null) {
+                messages.addError(String.format(UNKNOWN, rowDto.getRowNumber(),
+                        VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText(), "Mercury"));
+            }
+            // Errors if a tube has duplicate Molecular Index Scheme.
+            if (!barcodeAndMis.add(barcode + " " + misName)) {
+                messages.addError(String.format(DUPLICATE, rowDto.getRowNumber(),
+                        VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText() +
+                                " in tube " + barcode));
+            }
+            // Warns if the spreadsheet has duplicate combination of Broad Sample and Molecular Index Scheme
+            // (in different tubes). It's not an error as long as the tubes don't get pooled later on, which
+            // isn't known at upload time.
+            String sampleMis = sampleName + " " + misName;
+            if (!uniqueSampleMis.add(sampleMis)) {
+                messages.addWarning(String.format(DUPLICATE_S_M, rowDto.getRowNumber(), sampleName, misName));
             }
 
             // Either bait or cat may be specified, or neither.
-            String bait = processor.getBait().get(rowIndex);
-            String cat = processor.getCat().get(rowIndex);
+            String bait = get(processor.getBait(), rowIndex);
+            String cat = get(processor.getCat(), rowIndex);
             ReagentDesign reagentDesign = null;
             if (!bait.isEmpty() && !cat.isEmpty()) {
                 messages.addError(String.format(MUST_NOT_BE, rowDto.getRowNumber(),
@@ -554,14 +526,14 @@ public class SampleInstanceEjb {
             rowDto.setReagent(reagentDesign);
 
             // Collects the Jira ticket experiment and Jira sub-task conditions, to validate later.
-            String experiment = processor.getExperiment().get(rowIndex);
+            String experiment = get(processor.getExperiment(), rowIndex);
             rowDto.setExperiment(experiment);
             if (isBlank(experiment)) {
                 messages.addError(String.format(MISSING, rowDto.getRowNumber(),
                         VesselPooledTubesProcessor.Headers.EXPERIMENT.getText()));
             }
 
-            List<String> conditions = processor.getConditions().get(rowIndex);
+            List<String> conditions = get(processor.getConditions(), rowIndex);
             rowDto.setConditions(conditions);
             if (CollectionUtils.isEmpty(conditions)) {
                 messages.addError(String.format(MISSING, rowDto.getRowNumber(),
@@ -574,13 +546,34 @@ public class SampleInstanceEjb {
                 }
             }
 
-            if (isNotBlank(processor.getReadLength().get(rowIndex))) {
-                if (NumberUtils.isNumber(processor.getReadLength().get(rowIndex))) {
+            if (isNotBlank(get(processor.getReadLength(), rowIndex))) {
+                if (NumberUtils.isNumber(processor.getReadLength().get(rowIndex)) &&
+                        Integer.parseInt(processor.getReadLength().get(rowIndex)) > 0) {
                     rowDto.setReadLength(Integer.parseInt(processor.getReadLength().get(rowIndex)));
                 } else {
                     messages.addError(String.format(WRONG_TYPE, rowDto.getRowNumber(),
-                            VesselPooledTubesProcessor.Headers.READ_LENGTH.getText(), "numeric"));
+                            VesselPooledTubesProcessor.Headers.READ_LENGTH.getText(), "a positive integer"));
                 }
+            }
+        }
+
+        // Each tube must have a value for volume and fragment size.
+        for (int rowIndex = 0; rowIndex < processor.getBarcodes().size(); ++rowIndex) {
+            if (!processor.getRequiredValuesPresent().get(rowIndex)) {
+                continue;
+            }
+            String barcode = processor.getBarcodes().get(rowIndex);
+            if (!mapBarcodeToVolume.containsKey(barcode)) {
+                messages.addError(String.format(MISSING, rowIndex + rowOffset,
+                        VesselPooledTubesProcessor.Headers.VOLUME.getText()));
+                // Adds barcode so the error only is shown for the first row encountered.
+                mapBarcodeToVolume.put(barcode, null);
+            }
+            if (!mapBarcodeToFragmentSize.containsKey(barcode)) {
+                messages.addError(String.format(MISSING, rowIndex + rowOffset,
+                        VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE.getText()));
+                // Adds barcode so the error only is shown for the first row encountered.
+                mapBarcodeToFragmentSize.put(barcode, null);
             }
         }
 
@@ -611,8 +604,7 @@ public class SampleInstanceEjb {
                     rowNumbers.addAll(experimentConditionsRow.get(experiment + " " + condition));
                 }
                 for (Integer rowNumber : rowNumbers) {
-                    messages.addError(String.format(UNKNOWN, rowNumber,
-                            VesselPooledTubesProcessor.Headers.CONDITIONS.getText(), "sub-tasks of " + experiment));
+                    messages.addError(String.format(UNKNOWN_COND, rowNumber, experiment));
                 }
             }
         }
@@ -622,7 +614,7 @@ public class SampleInstanceEjb {
             // Passes a combined map of Broad and root samples.
             sampleMap.putAll(rootSampleMap);
             sampleInstanceEntities = persistPooledTubes(rowDtos, mapBarcodeToVessel, mapBarcodeToVolume,
-                    mapBarcodeToFragmentSize, sampleMap, sampleDataDtoMap, messages);
+                    mapBarcodeToFragmentSize, sampleMap, createOrUpdateSample, messages);
         } else {
             sampleInstanceEntities = Collections.emptyList();
         }
@@ -636,12 +628,12 @@ public class SampleInstanceEjb {
      * @param mapBarcodeToVolume       contains all tube barcodes and their volumes.
      * @param mapBarcodeToFragmentSize contains all tube barcodes and their fragment size.
      * @param combinedSampleMap        contains all broad and root sample names and their mercury samples.
-     * @param sampleDataDtoMap         contains sample data for samples which need to be created.
+     * @param createOrUpdateSample     the sample data for samples which need to be created as MercurySample.
      */
     private List<SampleInstanceEntity> persistPooledTubes(List<RowDto> rowDtos,
             Map<String, LabVessel> mapBarcodeToVessel, Map<String, BigDecimal> mapBarcodeToVolume,
             Map<String, BigDecimal> mapBarcodeToFragmentSize, Map<String, MercurySample> combinedSampleMap,
-            Map<String, SampleDataDto> sampleDataDtoMap, MessageCollection messages) {
+            Map<String, SampleDataDto> createOrUpdateSample, MessageCollection messages) {
 
         // Creates any tubes needed. Sets tube volume and fragment size on all tubes.
         List<LabVessel> newLabVessels = new ArrayList<>();
@@ -658,19 +650,63 @@ public class SampleInstanceEjb {
             addLibrarySize(labVessel, mapBarcodeToFragmentSize.get(barcode));
         }
 
-        // Creates any samples needed.
-        for (String sampleName : sampleDataDtoMap.keySet()) {
-            final SampleDataDto sampleDataDto = sampleDataDtoMap.get(sampleName);
-            Set<Metadata> metadata = new HashSet<Metadata>() {{
-                add(new Metadata(Metadata.Key.MATERIAL_TYPE, MaterialType.DNA.getDisplayName()));
-                add(new Metadata(Metadata.Key.SAMPLE_ID, sampleDataDto.getCollaboratorSampleId()));
-                add(new Metadata(Metadata.Key.BROAD_PARTICIPANT_ID, sampleDataDto.getBroadParticipantId()));
-                add(new Metadata(Metadata.Key.PATIENT_ID, sampleDataDto.getCollaboratorParticipantId()));
-                add(new Metadata(Metadata.Key.GENDER, sampleDataDto.getGender()));
-                add(new Metadata(Metadata.Key.LSID, sampleDataDto.getLsid()));
-                add(new Metadata(Metadata.Key.SPECIES, sampleDataDto.getSpecies()));
-            }};
-            combinedSampleMap.put(sampleName, new MercurySample(sampleName, metadata));
+        // Creates the new samples and updates existing samples. Updates will add new metadata,
+        // replace existing metadata values, but will not remove existing keys. Does the roots first.
+        Set<String> rootNames = new HashSet<>();
+        for (Map.Entry<String, SampleDataDto> entry : createOrUpdateSample.entrySet()) {
+            String rootSampleName = entry.getValue().getRootSampleName();
+            if (isNotBlank(rootSampleName)) {
+                rootNames.add(rootSampleName);
+            }
+        }
+
+        for (boolean doRoots : new boolean[]{true, false}) {
+            for (String name : createOrUpdateSample.keySet()) {
+                if (doRoots == rootNames.contains(name)) {
+                    SampleDataDto sampleDataDto = createOrUpdateSample.get(name);
+                    MercurySample mercurySample = combinedSampleMap.get(name);
+
+                    Set<Metadata> metadata = new HashSet<>();
+                    if (mercurySample == null) {
+                        metadata.add(new Metadata(Metadata.Key.MATERIAL_TYPE, MaterialType.DNA.getDisplayName()));
+                    }
+                    if (isNotBlank(sampleDataDto.getCollaboratorSampleId())) {
+                        metadata.add(new Metadata(Metadata.Key.SAMPLE_ID, sampleDataDto.getCollaboratorSampleId()));
+                    }
+                    if (isNotBlank(sampleDataDto.getBroadParticipantId())) {
+                        metadata.add(new Metadata(Metadata.Key.BROAD_PARTICIPANT_ID,
+                                sampleDataDto.getBroadParticipantId()));
+                    }
+                    if (isNotBlank(sampleDataDto.getCollaboratorParticipantId())) {
+                        metadata.add(new Metadata(Metadata.Key.PATIENT_ID,
+                                sampleDataDto.getCollaboratorParticipantId()));
+                    }
+                    if (isNotBlank(sampleDataDto.getGender())) {
+                        metadata.add(new Metadata(Metadata.Key.GENDER, sampleDataDto.getGender()));
+                    }
+                    if (isNotBlank(sampleDataDto.getSpecies())) {
+                        metadata.add(new Metadata(Metadata.Key.SPECIES, sampleDataDto.getSpecies()));
+                    }
+                    if (isNotBlank(sampleDataDto.getLsid())) {
+                        metadata.add(new Metadata(Metadata.Key.LSID, sampleDataDto.getLsid()));
+                    }
+
+                    if (mercurySample == null) {
+                        mercurySample = new MercurySample(name, metadata);
+                    } else {
+                        // Adds new values or replaces existing values in the map of metadata.
+                        mercurySample.updateMetadata(metadata);
+                    }
+
+                    // Links to the root, but not when this sample is its own root.
+                    String rootSampleName = sampleDataDto.getRootSampleName();
+                    if (isNotBlank(rootSampleName) && !rootSampleName.equals(name)) {
+                        ((MercurySampleData) mercurySample.getSampleData()).setRootSampleId(rootSampleName);
+                    }
+
+                    combinedSampleMap.put(name, mercurySample);
+                }
+            }
         }
 
         List<SampleInstanceEntity> sampleInstanceEntities = new ArrayList<>();
@@ -679,11 +715,6 @@ public class SampleInstanceEjb {
             String sampleName = rowDto.getBroadSampleId();
             MercurySample mercurySample = combinedSampleMap.get(sampleName);
             LabVessel labVessel = mapBarcodeToVessel.get(rowDto.getBarcode());
-
-            // Adds the root sample linkage to newly created Mercury samples.
-            if (sampleDataDtoMap.keySet().contains(sampleName)) {
-                ((MercurySampleData) mercurySample.getSampleData()).setRootSampleId(rowDto.getRootSampleId());
-            }
 
             SampleInstanceEntity sampleInstanceEntity = sampleInstanceEntityDao.findByName(rowDto.getLibraryName());
             if (sampleInstanceEntity == null) {
@@ -917,8 +948,8 @@ public class SampleInstanceEjb {
             Map<Integer, ReferenceSequence> referenceSequences,
             Map<Integer, IlluminaFlowcell.FlowcellType> sequencerModels, MessageCollection messages) {
 
-        // Captures the pre-row one-off spreadsheet data in a "kit". This is an unfortunate naming of
-        // the upload manifest because it has no connection with the actual shipped and received kit.
+        // Captures the pre-row one-off spreadsheet data in a "kit request". This unfortunate naming of the
+        // upload manifest is not a request nor has it any connection with the informatics sample kit.
         SampleKitRequest kit = sampleKitRequestDao.find(processor.getEmail(), processor.getOrganization(),
                 processor.getLastName(), processor.getFirstName());
         if (kit == null) {
@@ -965,21 +996,32 @@ public class SampleInstanceEjb {
             MercurySample mercurySample = mercurySamples.get(index);
             if (mercurySample == null) {
                 mercurySample = new MercurySample(libraryName, MercurySample.MetadataSource.MERCURY);
-
-                Set<Metadata> metadata = new HashSet<>();
-                metadata.add(new Metadata(Metadata.Key.SAMPLE_ID, get(processor.getCollaboratorSampleId(), index)));
-                metadata.add(new Metadata(Metadata.Key.BROAD_PARTICIPANT_ID, get(processor.getIndividualName(), index)));
-                metadata.add(new Metadata(Metadata.Key.GENDER, get(processor.getSex(), index)));
-                metadata.add(new Metadata(Metadata.Key.STRAIN, get(processor.getStrain(), index)));
-                String organism = get(processor.getOrganism(), index);
-                if (isNotBlank(organism)) {
-                    metadata.add(new Metadata(Metadata.Key.ORGANISM, organism));
-                }
-                metadata.add(new Metadata(Metadata.Key.SPECIES, processor.getSpecies()));
-                metadata.add(new Metadata(Metadata.Key.MATERIAL_TYPE, MaterialType.DNA.getDisplayName()));
-                mercurySample.addMetadata(metadata);
                 newObjects.add(mercurySample);
             }
+            Set<Metadata> metadata = new HashSet<>();
+            if (isNotBlank(get(processor.getCollaboratorSampleId(), index))) {
+                metadata.add(new Metadata(Metadata.Key.SAMPLE_ID, get(processor.getCollaboratorSampleId(), index)));
+            }
+            if (isNotBlank(get(processor.getIndividualName(), index))) {
+                metadata.add(new Metadata(Metadata.Key.BROAD_PARTICIPANT_ID, get(processor.getIndividualName(),
+                        index)));
+            }
+            if (isNotBlank(get(processor.getSex(), index))) {
+                metadata.add(new Metadata(Metadata.Key.GENDER, get(processor.getSex(), index)));
+            }
+            if (isNotBlank(get(processor.getStrain(), index))) {
+                metadata.add(new Metadata(Metadata.Key.STRAIN, get(processor.getStrain(), index)));
+            }
+            if (isNotBlank(get(processor.getOrganism(), index))) {
+                metadata.add(new Metadata(Metadata.Key.ORGANISM, get(processor.getOrganism(), index)));
+            }
+            if (isNotBlank(processor.getSpecies())) {
+                metadata.add(new Metadata(Metadata.Key.SPECIES, processor.getSpecies()));
+            }
+            if (isNotBlank(MaterialType.DNA.getDisplayName())) {
+                metadata.add(new Metadata(Metadata.Key.MATERIAL_TYPE, MaterialType.DNA.getDisplayName()));
+            }
+            mercurySample.addMetadata(metadata);
             mercurySample.addLabVessel(labVessel);
 
             SampleInstanceEntity sampleInstanceEntity = sampleInstanceEntities.get(index);
@@ -1233,175 +1275,171 @@ public class SampleInstanceEjb {
         labVessel.addMetric(finalLibrarySizeMetric);
     }
 
-    /** Returns true if the Pooled Tube spreadsheet defines any sample metadata for the given sample name. */
-    private boolean dataIsPresent(VesselPooledTubesProcessor processor, String sampleName) {
-        for (int rowIndex = 0; rowIndex < processor.getBarcodes().size(); ++rowIndex) {
-            if ((processor.getBroadSampleId().get(rowIndex).equals(sampleName) &&
-                    (isNotBlank(processor.getGender().get(rowIndex)) ||
-                            isNotBlank(get(processor.getSpecies(), rowIndex)) ||
-                            isNotBlank(get(processor.getLsid(), rowIndex))))
-                    ||
-                    (processor.getRootSampleId().get(rowIndex).equals(sampleName) &&
-                            (isNotBlank(processor.getCollaboratorSampleId().get(rowIndex)) ||
-                                    isNotBlank(processor.getCollaboratorParticipantId().get(rowIndex)) ||
-                                    isNotBlank(processor.getBroadParticipantId().get(rowIndex)) ||
-                                    isNotBlank(processor.getGender().get(rowIndex)) ||
-                                    isNotBlank(processor.getSpecies().get(rowIndex))))) {
-
-                return true;
-            }
-        }
-        return false;
+    /** Returns true if the Pooled Tube spreadsheet defines any sample metadata for the row. */
+    private boolean dataIsPresent(VesselPooledTubesProcessor processor, int rowIndex) {
+        return  isNotBlank(get(processor.getCollaboratorSampleId(), rowIndex)) ||
+                isNotBlank(get(processor.getCollaboratorParticipantId(), rowIndex)) ||
+                isNotBlank(get(processor.getBroadParticipantId(), rowIndex)) ||
+                isNotBlank(get(processor.getGender(), rowIndex)) ||
+                isNotBlank(get(processor.getSpecies(), rowIndex)) ||
+                isNotBlank(get(processor.getLsid(), rowIndex));
     }
 
-    /**
-     * Compares previously supplied metadata to the current row's metadata and generates
-     * error messages on miscompares.
-     */
-    private void validateMetadata(SampleDataDto actual, SampleDataDto expected, int rowNumber,
-            MessageCollection messages) {
-        validateValue(actual.getBroadParticipantId(), expected.getBroadParticipantId(),
-                VesselPooledTubesProcessor.Headers.BROAD_PARTICIPANT_ID.getText(), rowNumber, messages);
-        validateValue(actual.getRootSampleName(), expected.getRootSampleName(),
-                VesselPooledTubesProcessor.Headers.ROOT_SAMPLE_ID.getText(), rowNumber, messages);
-        validateValue(actual.getCollaboratorSampleId(), expected.getCollaboratorSampleId(),
-                VesselPooledTubesProcessor.Headers.COLLABORATOR_SAMPLE_ID.getText(), rowNumber, messages);
-        validateValue(actual.getCollaboratorParticipantId(), expected.getCollaboratorParticipantId(),
-                VesselPooledTubesProcessor.Headers.COLLABORATOR_PARTICIPANT_ID.getText(), rowNumber, messages);
-        validateValue(actual.getGender(), expected.getGender(),
-                VesselPooledTubesProcessor.Headers.GENDER.getText(), rowNumber, messages);
-        validateValue(actual.getSpecies(), expected.getSpecies(),
-                VesselPooledTubesProcessor.Headers.SPECIES.getText(), rowNumber, messages);
-        validateValue(actual.getLsid(), expected.getLsid(),
-                VesselPooledTubesProcessor.Headers.LSID.getText(), rowNumber, messages);
-    }
+    /** DTO for sample metadata found in the spreadsheet. */
+    class SampleDataDto implements Cloneable {
+        private String sampleName;
+        private String rootSampleName;
+        private String collaboratorSampleId;
+        private String collaboratorParticipantId;
+        private String broadParticipantId;
+        private String gender;
+        private String species;
+        private String lsid;
+        private MercurySample.MetadataSource metadataSource;
 
-    /**
-     * Compares non-null values and adds an error message if unequal. This works on different
-     * dto types (sample, root, or both) by ignoring the comparison if either the actual or the
-     * expected value is null, since a true null value is never present in spreadsheet data.
-     * @param actual value to compare
-     * @param expected value to compare
-     * @param column name of the column, for error message
-     * @param rowNumber spreadsheet row number, for error message
-     * @param messages the collection of error messages to add to
-     */
-    private void validateValue(String actual, String expected, String column, int rowNumber,
-            MessageCollection messages) {
-        if (expected != null && actual != null && !expected.equals(actual)) {
-            messages.addError(String.format(CONFLICT, rowNumber, column, actual, expected, "", ""));
-        }
-    }
-
-    /**
-     * Compares existing metadata to the spreadsheet metadata.
-     * @param actual what the spreadsheet has.
-     * @param expected what the existing value are.
-     * @param rowNumber spreadsheet row number.
-     * @param messages any errors found are added to the MessageCollection.
-     */
-    private void validateSampleData(SampleDataDto actual, SampleData expected, int rowNumber,
-            MessageCollection messages) {
-        validateSampleDataValue(actual.getBroadParticipantId(), expected.getPatientId(),
-                VesselPooledTubesProcessor.Headers.BROAD_PARTICIPANT_ID.getText(), rowNumber, messages);
-        validateSampleDataValue(actual.getRootSampleName(), expected.getRootSample(),
-                VesselPooledTubesProcessor.Headers.ROOT_SAMPLE_ID.getText(), rowNumber, messages);
-        validateSampleDataValue(actual.getCollaboratorSampleId(), expected.getCollaboratorsSampleName(),
-                VesselPooledTubesProcessor.Headers.COLLABORATOR_SAMPLE_ID.getText(), rowNumber, messages);
-        validateSampleDataValue(actual.getCollaboratorParticipantId(), expected.getCollaboratorParticipantId(),
-                VesselPooledTubesProcessor.Headers.COLLABORATOR_PARTICIPANT_ID.getText(), rowNumber, messages);
-        validateSampleDataValue(actual.getGender(), expected.getGender(),
-                VesselPooledTubesProcessor.Headers.GENDER.getText(), rowNumber, messages);
-        validateSampleDataValue(actual.getSpecies(), expected.getOrganism(),
-                VesselPooledTubesProcessor.Headers.SPECIES.getText(), rowNumber, messages);
-        validateSampleDataValue(actual.getLsid(), expected.getSampleLsid(),
-                VesselPooledTubesProcessor.Headers.LSID.getText(), rowNumber, messages);
-    }
-
-    private void validateSampleDataValue(String actual, String expected, String column, int rowNumber,
-            MessageCollection messages) {
-        // In this case if spreadsheet data is blank it means the metadata is not supplied by the spreadsheet,
-        // and should not be compared.
-        if (isNotBlank(actual) && !actual.equals(expected)) {
-            messages.addError(String.format(CONFLICT, rowNumber, column, actual, expected, "", ""));
-        }
-    }
-
-    /** The SampleDataDto types. */
-    enum DtoType {SAMPLE, ROOT, BOTH};
-
-    /**
-     * This DTO is for sample metadata needed for newly created samples.
-     * Expects the first row of sample metadata in the spreadsheet have all the fields.
-     */
-    class SampleDataDto {
-        private final String sampleName;
-        private final String rootSampleName;
-        private final String collaboratorSampleId;
-        private final String collaboratorParticipantId;
-        private final String broadParticipantId;
-        private final String gender;
-        private final String species;
-        private final String lsid;
-
-
-        public SampleDataDto(DtoType dtoType, VesselPooledTubesProcessor processor, int rowIndex) {
-            sampleName = (dtoType == DtoType.ROOT) ?
-                    processor.getRootSampleId().get(rowIndex) : processor.getBroadSampleId().get(rowIndex);
-            collaboratorSampleId = (dtoType == DtoType.ROOT || dtoType == DtoType.BOTH) ?
-                    processor.getCollaboratorSampleId().get(rowIndex) : null;
-            collaboratorParticipantId = (dtoType == DtoType.ROOT || dtoType == DtoType.BOTH) ?
-                    processor.getCollaboratorParticipantId().get(rowIndex) : null;
-            broadParticipantId = (dtoType == DtoType.ROOT || dtoType == DtoType.BOTH) ?
-                    processor.getBroadParticipantId().get(rowIndex) : null;
-
+        public SampleDataDto(VesselPooledTubesProcessor processor, int rowIndex) {
+            sampleName = processor.getBroadSampleId().get(rowIndex);
+            rootSampleName = processor.getRootSampleId().get(rowIndex);
+            collaboratorSampleId = processor.getCollaboratorSampleId().get(rowIndex);
+            collaboratorParticipantId = processor.getCollaboratorParticipantId().get(rowIndex);
+            broadParticipantId = processor.getBroadParticipantId().get(rowIndex);
             gender = get(processor.getGender(), rowIndex);
             species = get(processor.getSpecies(), rowIndex);
-            rootSampleName = (dtoType == DtoType.SAMPLE) ? processor.getRootSampleId().get(rowIndex) : null;
-            lsid = (dtoType == DtoType.SAMPLE || dtoType == DtoType.BOTH) ? processor.getLsid().get(rowIndex) : null;
+            lsid = get(processor.getLsid(), rowIndex);
         }
 
-        public SampleDataDto(DtoType dtoType, VesselPooledTubesProcessor processor, int rowIndex,
-                int rowOffset, MessageCollection messages) {
-
-            this(dtoType, processor, rowIndex);
-
-            final int rowNumber = rowIndex + rowOffset;
-
-            // An empty string value indicates a missing value in the spreadsheet; null value indicates
-            // the value does not apply to this dto type and should be skipped.
-            if ("".equals(rootSampleName)) {
+        /**
+         * Generates errors for any required fields that are blank.
+         */
+        public void validate(int rowNumber, MessageCollection messages) {
+            if (StringUtils.isBlank(getSampleName())) {
+                messages.addError(String.format(MISSING, rowNumber,
+                        VesselPooledTubesProcessor.Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText()));
+            }
+            if (StringUtils.isBlank(getRootSampleName())) {
                 messages.addError(String.format(MISSING, rowNumber,
                         VesselPooledTubesProcessor.Headers.ROOT_SAMPLE_ID.getText()));
             }
-            if ("".equals(collaboratorSampleId)) {
-                messages.addError(String.format(MISSING, rowNumber,
-                        VesselPooledTubesProcessor.Headers.COLLABORATOR_SAMPLE_ID.getText()));
-            }
-            if ("".equals(collaboratorParticipantId)) {
-                messages.addError(String.format(MISSING, rowNumber,
-                        VesselPooledTubesProcessor.Headers.COLLABORATOR_PARTICIPANT_ID.getText()));
-            }
-            if ("".equals(broadParticipantId)) {
-                messages.addError(String.format(MISSING, rowNumber,
-                        VesselPooledTubesProcessor.Headers.BROAD_PARTICIPANT_ID.getText()));
-            }
-            if ("".equals(gender)) {
-                messages.addError(String.format(MISSING, rowNumber,
-                        VesselPooledTubesProcessor.Headers.GENDER.getText()));
-            }
-            if ("".equals(species)) {
-                messages.addError(String.format(MISSING, rowNumber,
-                        VesselPooledTubesProcessor.Headers.SPECIES.getText()));
-            }
-            if ("".equals(lsid)) {
+            if (StringUtils.isBlank(getLsid())) {
                 messages.addError(String.format(MISSING, rowNumber,
                         VesselPooledTubesProcessor.Headers.LSID.getText()));
             }
+            if (StringUtils.isBlank(getCollaboratorSampleId())) {
+                messages.addError(String.format(MISSING, rowNumber,
+                        VesselPooledTubesProcessor.Headers.COLLABORATOR_SAMPLE_ID.getText()));
+            }
+            if (StringUtils.isBlank(getCollaboratorParticipantId())) {
+                messages.addError(String.format(MISSING, rowNumber,
+                        VesselPooledTubesProcessor.Headers.COLLABORATOR_PARTICIPANT_ID.getText()));
+            }
+            if (StringUtils.isBlank(getBroadParticipantId())) {
+                messages.addError(String.format(MISSING, rowNumber,
+                        VesselPooledTubesProcessor.Headers.BROAD_PARTICIPANT_ID.getText()));
+            }
+            if (StringUtils.isBlank(getGender())) {
+                messages.addError(String.format(MISSING, rowNumber,
+                        VesselPooledTubesProcessor.Headers.GENDER.getText()));
+            }
+            if (StringUtils.isBlank(getSpecies())) {
+                messages.addError(String.format(MISSING, rowNumber,
+                        VesselPooledTubesProcessor.Headers.SPECIES.getText()));
+            }
         }
 
-        String getSampleName() {
-            return sampleName;
+        /**
+         * Generates error messages on miscompares.
+         */
+        public void compareTo(SampleDataDto expected, int rowNumber, MessageCollection messages) {
+            compareNonBlankValues(getBroadParticipantId(), expected.getBroadParticipantId(),
+                    VesselPooledTubesProcessor.Headers.BROAD_PARTICIPANT_ID.getText(), rowNumber, messages);
+            compareNonBlankValues(getRootSampleName(), expected.getRootSampleName(),
+                    VesselPooledTubesProcessor.Headers.ROOT_SAMPLE_ID.getText(), rowNumber, messages);
+            compareNonBlankValues(getCollaboratorSampleId(), expected.getCollaboratorSampleId(),
+                    VesselPooledTubesProcessor.Headers.COLLABORATOR_SAMPLE_ID.getText(), rowNumber, messages);
+            compareNonBlankValues(getCollaboratorParticipantId(), expected.getCollaboratorParticipantId(),
+                    VesselPooledTubesProcessor.Headers.COLLABORATOR_PARTICIPANT_ID.getText(), rowNumber, messages);
+            compareNonBlankValues(getGender(), expected.getGender(),
+                    VesselPooledTubesProcessor.Headers.GENDER.getText(), rowNumber, messages);
+            compareNonBlankValues(getSpecies(), expected.getSpecies(),
+                    VesselPooledTubesProcessor.Headers.SPECIES.getText(), rowNumber, messages);
+            compareNonBlankValues(getLsid(), expected.getLsid(),
+                    VesselPooledTubesProcessor.Headers.LSID.getText(), rowNumber, messages);
+        }
+
+        /** Helper method to compare non-blank actual values with expecteds, and generate error messages. */
+        private void compareNonBlankValues(String actual, String expected, String column, int rowNumber,
+                MessageCollection messages) {
+            if (isNotBlank(actual) && !actual.equals(expected)) {
+                messages.addError(String.format(CONFLICT, rowNumber, column, actual, expected, "", ""));
+            }
+        }
+
+        /** Compares existing metadata to the spreadsheet metadata and returns any differences. */
+        public Map<ColumnHeader, String> sampleDataDiffs(SampleData expected) {
+            Map<ColumnHeader, String> diffs = new HashMap<>();
+            if (expected != null) {
+                putDiffs(getBroadParticipantId(), expected.getPatientId(), diffs,
+                        VesselPooledTubesProcessor.Headers.BROAD_PARTICIPANT_ID);
+                putDiffs(getRootSampleName(), expected.getRootSample(), diffs,
+                        VesselPooledTubesProcessor.Headers.ROOT_SAMPLE_ID);
+                putDiffs(getCollaboratorSampleId(), expected.getCollaboratorsSampleName(), diffs,
+                        VesselPooledTubesProcessor.Headers.COLLABORATOR_SAMPLE_ID);
+                putDiffs(getCollaboratorParticipantId(), expected.getCollaboratorParticipantId(), diffs,
+                        VesselPooledTubesProcessor.Headers.COLLABORATOR_PARTICIPANT_ID);
+                putDiffs(getGender(), expected.getGender(), diffs,
+                        VesselPooledTubesProcessor.Headers.GENDER);
+                putDiffs(getSpecies(), expected.getOrganism(), diffs,
+                        VesselPooledTubesProcessor.Headers.SPECIES);
+                putDiffs(getLsid(), expected.getSampleLsid(), diffs,
+                        VesselPooledTubesProcessor.Headers.LSID);
+            }
+            return diffs;
+        }
+
+        /** Helper method that adds the column name and value to the map when there is difference. */
+        private void putDiffs(String actual, String expected, Map<ColumnHeader, String> diffs, ColumnHeader header) {
+            // A blank "actual" means the data is not supplied by the spreadsheet, and should not be compared.
+            if (isNotBlank(actual) && !actual.equals(expected)) {
+                diffs.put(header, actual);
+            }
+        }
+
+        /** Converts sample diffs into a sparse-valued dto used for updating existing sample data. */
+        public SampleDataDto makeOnlyDiffs(Map<ColumnHeader, String> sampleDataDiffs) {
+            SampleDataDto dto;
+            try {
+                dto = (SampleDataDto)clone();
+            } catch (CloneNotSupportedException e) {
+                throw new RuntimeException(e);
+            }
+            for (ColumnHeader header : sampleDataDiffs.keySet()) {
+                String value = sampleDataDiffs.get(header);
+                if (isBlank(value)) {
+                    continue;
+                }
+                if (header == VesselPooledTubesProcessor.Headers.BROAD_PARTICIPANT_ID) {
+                    dto.setBroadParticipantId(value);
+                }
+                if (header == VesselPooledTubesProcessor.Headers.ROOT_SAMPLE_ID) {
+                    dto.setRootSampleName(value);
+                }
+                if (header == VesselPooledTubesProcessor.Headers.COLLABORATOR_SAMPLE_ID) {
+                    dto.setCollaboratorSampleId(value);
+                }
+                if (header == VesselPooledTubesProcessor.Headers.COLLABORATOR_PARTICIPANT_ID) {
+                    dto.setCollaboratorParticipantId(value);
+                }
+                if (header == VesselPooledTubesProcessor.Headers.GENDER) {
+                    dto.setGender(value);
+                }
+                if (header == VesselPooledTubesProcessor.Headers.SPECIES) {
+                    dto.setSpecies(value);
+                }
+                if (header == VesselPooledTubesProcessor.Headers.LSID) {
+                    dto.setLsid(value);
+                }
+            }
+            return dto;
         }
 
         String getRootSampleName() {
@@ -1428,9 +1466,59 @@ public class SampleInstanceEjb {
             return species;
         }
 
-        String getLsid() {
+        public String getLsid() {
             return lsid;
         }
+
+        public MercurySample.MetadataSource getMetadataSource() {
+            return metadataSource;
+        }
+
+        public void setRootSampleName(String rootSampleName) {
+            this.rootSampleName = rootSampleName;
+        }
+
+        public void setCollaboratorSampleId(String collaboratorSampleId) {
+            this.collaboratorSampleId = collaboratorSampleId;
+        }
+
+        public void setCollaboratorParticipantId(String collaboratorParticipantId) {
+            this.collaboratorParticipantId = collaboratorParticipantId;
+        }
+
+        public void setBroadParticipantId(String broadParticipantId) {
+            this.broadParticipantId = broadParticipantId;
+        }
+
+        public void setGender(String gender) {
+            this.gender = gender;
+        }
+
+        public void setSpecies(String species) {
+            this.species = species;
+        }
+
+        public void setLsid(String lsid) {
+            this.lsid = lsid;
+        }
+
+        public void setMetadataSource(MercurySample.MetadataSource metadataSource) {
+            this.metadataSource = metadataSource;
+        }
+
+        String getSampleName() {
+            return sampleName;
+        }
+    }
+
+    /** Returns a comma delimited string of the sorted header names. */
+    private String collectHeaderNames(Set<ColumnHeader> headers) {
+        List<String> columns = new ArrayList<>();
+        for (ColumnHeader header : headers) {
+            columns.add(header.getText());
+        }
+        Collections.sort(columns);
+        return StringUtils.join(columns, ", ");
     }
 
     /** Dto containing data in a PooledTube spreadsheet row. */
