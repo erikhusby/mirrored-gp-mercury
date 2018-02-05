@@ -90,7 +90,7 @@ public class ArraysSummaryFactory {
         MultiValuedMap<String, ArraysQcBlacklisting> mapBarcodeToArrayQcBlacklist
                 = arraysQcDao.findBlacklistMapByBarcodes(chipWellBarcodes);
         LabVessel labVessel1 = vesselPositionPairs.get(0).getLeft();
-        String chipType = productEjb.getGenotypingChip(productOrder,
+        String chipType = productOrder==null?"":productEjb.getGenotypingChip(productOrder,
                 labVessel1.getEvents().iterator().next().getEventDate()).getRight();
 
         // Header Group
