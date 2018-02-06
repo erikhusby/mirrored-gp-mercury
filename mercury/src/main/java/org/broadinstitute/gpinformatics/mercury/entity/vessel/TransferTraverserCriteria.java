@@ -560,33 +560,51 @@ public abstract class TransferTraverserCriteria {
 
         // Holds abandon state for vessels and, optionally, positions
         private MultiValuedMap<LabVessel,AbandonVessel> abandonVessels = new HashSetValuedHashMap<>();
+        // Default for Infinium array Autocall is to ignore 'Depleted' abandons
+        private boolean ignoreDepletedAbandons = true;
+
+        /**
+         * Default constructor (ignores Depleted abandons)
+         */
+        public AbandonedLabVesselCriteria( ){
+            this(true);
+        }
+
+        /**
+         * Provide the ability to control whether or not Depleted abandons are considered
+         * @param ignoreDepletedAbandons Defaults to true, set to false to capture depleted abandons
+         */
+        public AbandonedLabVesselCriteria( boolean ignoreDepletedAbandons ){
+            this.ignoreDepletedAbandons = ignoreDepletedAbandons;
+        }
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
 
             LabVessel contextVessel = context.getContextVessel();
-            if (contextVessel != null) {
+            if (contextVessel != null) {  // Not a container
                 if (contextVessel.isVesselAbandoned()) {
                     for ( AbandonVessel abandonVessel : contextVessel.getAbandonVessels() ) {
-                        abandonVessels.put(contextVessel, abandonVessel);
+                        if( isAbandonReasonValid( abandonVessel ) ) {
+                            abandonVessels.put(contextVessel, abandonVessel);
+                        }
                     }
                 }
-            } else {
+            } else { // Vessel is a container
                 VesselContainer vesselContainer = context.getContextVesselContainer();
                 if ( vesselContainer != null ) {
                     Pair<LabVessel, VesselPosition> vesselPositionPair = context.getContextVesselAndPosition();
                     LabVessel labVessel = vesselPositionPair.getLeft();
-                    // Wells have no vessel TODO JMS Why not put the container vessel in vesselPositionPair.getLeft()?
+                    VesselPosition contextVesselPosition = vesselPositionPair.getRight();
+                    // Wells might not have an associated plate well vessel
                     if( labVessel == null ) {
                         labVessel = vesselContainer.getEmbedder();
                     }
-                    VesselPosition contextVesselPosition = vesselPositionPair.getRight();
                     for( AbandonVessel abandonVessel : labVessel.getAbandonVessels() ) {
-                        if( abandonVessel.getVesselPosition() == contextVesselPosition ) {
-                                if (isPlateAbandonReasonValid(vesselContainer.getEmbedder(), contextVesselPosition)) {
-                                    abandonVessels.put(vesselContainer.getEmbedder(), abandonVessel);
-                                }
-                                break;
+                        if( abandonVessel.getVesselPosition() == contextVesselPosition
+                                && isAbandonReasonValid( abandonVessel ) ) {
+                            abandonVessels.put(labVessel, abandonVessel);
+                            break;
                         }
                     }
                 }
@@ -599,20 +617,13 @@ public abstract class TransferTraverserCriteria {
         public void evaluateVesselPostOrder(Context context) {
         }
 
-        // If the vessel is marked as depleted we do not consider it abandoned.
-        private boolean isTubeAbandonReasonValid(LabVessel labVessel) {
-            return !labVessel.getAbandonVessels().iterator().next().getReason().equals(AbandonVessel.Reason.DEPLETED);
-        }
-
-        // Tube in a rack container.
-        private boolean isRackOfTubesReasonValid(LabVessel labVessel) {
-            for (AbandonVessel abandonVessel : labVessel.getAbandonVessels()) {
-                // If the plate position is marked as depleted we do not consider it abandoned.
-                if ( abandonVessel.getReason() == AbandonVessel.Reason.DEPLETED ) {
-                    return false;
-                }
+        // Should we consider a vessel marked as depleted to be abandoned?
+        private boolean isAbandonReasonValid(AbandonVessel abandonVessel) {
+            if( ignoreDepletedAbandons && abandonVessel.getReason().equals(AbandonVessel.Reason.DEPLETED) ) {
+                return false;
+            } else {
+                return true;
             }
-            return false;
         }
 
         // Positions on a plate.
