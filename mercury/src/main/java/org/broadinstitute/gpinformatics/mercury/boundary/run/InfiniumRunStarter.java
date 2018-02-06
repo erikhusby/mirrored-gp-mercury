@@ -46,7 +46,7 @@ public class InfiniumRunStarter {
     private static Date previousNextTimeout = new Date(0);
 
     @Resource
-    TimerService timerService;
+    private TimerService timerService;
 
     @Inject
     private InfiniumRunFinder infiniumRunFinder;

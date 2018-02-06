@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -36,6 +37,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -147,6 +149,7 @@ public class ProductOrderFixupTest extends Arquillian {
 
     @Inject
     private BucketEntryDao bucketEntryDao;
+
 
     // When you run this on prod, change to PROD and prod.
     @Deployment
@@ -1173,7 +1176,7 @@ public class ProductOrderFixupTest extends Arquillian {
         beginTransaction();
         String pdoToComplete = "PDO-12069";
 
-        
+
         productOrderEjb.updateOrderStatus(pdoToComplete, MessageReporter.UNUSED);
 
         productOrderDao.persist(new FixupCommentary("GPLIM-5054: Updating PDO-12069 to Completed."));
@@ -1216,7 +1219,10 @@ public class ProductOrderFixupTest extends Arquillian {
         }
 
         final MessageReporter testOnly = MessageReporter.UNUSED;
-        productOrderEjb.unAbandonSamples(pdoTicket, productOrderSampleIDs, sampleComment, testOnly);
+
+        MessageCollection testCollection = new MessageCollection();
+
+        productOrderEjb.unAbandonSamples(pdoTicket, productOrderSampleIDs, sampleComment, testCollection);
         productOrderEjb.updateOrderStatus(pdoTicket, testOnly);
 
         final MessageCollection messageCollection = new MessageCollection();
@@ -1230,6 +1236,41 @@ public class ProductOrderFixupTest extends Arquillian {
                                                     + "is removed and the new process would not satisfy this case"));
         commitTransaction();
     }
+
+    @Test(enabled = false)
+    public void gplim5364UnabandonSamples() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+        final String sampleComment = "Unabandon due to the current status of the samples in the process.";
+        Set<Long> productOrderSampleIDs = new HashSet<>();
+        String pdoTicket = "PDO-13827";
+
+        List<String> sampleKeys =
+            Arrays.asList("SM-GBMDQ", "SM-GBME1", "SM-GBME3", "SM-GBME8", "SM-GBMES", "SM-GBMCE", "SM-GBOBR",
+                "SM-GBMBT", "SM-GBOB7");
+
+        ProductOrder productOrder = productOrderDao.findByBusinessKey(pdoTicket);
+
+        for (ProductOrderSample sample : productOrder.getSamples()) {
+            if (sampleKeys.contains(sample.getSampleKey())) {
+                productOrderSampleIDs.add(sample.getProductOrderSampleId());
+            }
+        }
+
+        final MessageReporter testOnly = MessageReporter.UNUSED;
+        final MessageCollection messageCollection = new MessageCollection();
+        productOrderEjb.unAbandonSamples(pdoTicket, productOrderSampleIDs, sampleComment, messageCollection);
+        productOrderEjb.updateOrderStatus(pdoTicket, testOnly);
+
+        productOrderEjb.publishProductOrderToSAP(productOrder, messageCollection, false);
+        if (messageCollection.hasErrors() || messageCollection.hasWarnings()) {
+            Assert.fail("Error occured attempting to update SAP in fixupTest");
+
+        }
+        productOrderDao.persist(new FixupCommentary("GPLIM-5364:  unabandon due to the current status of the samples in the process."));
+        commitTransaction();
+    }
+
 
     @Test(enabled = false)
     public void support3407UpdatePDOAssociationsOnLCSET11965() throws Exception {
@@ -1264,4 +1305,103 @@ public class ProductOrderFixupTest extends Arquillian {
         commitTransaction();
     }
 
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/PDOsToBeClosed.txt, so it
+     * can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * SUPPORT-XXXX transitioning pdos to Closed which did not happen during billing
+     * PDO-123
+     * PDO-456
+     */
+    @Test(enabled = false)
+    public void supportTransitionPdosToClosed() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+
+        List<String> fixupLines = IOUtils.readLines(VarioskanParserTest.getTestResource("PDOsToBeClosed.txt"));
+        Assert.assertTrue(CollectionUtils.isNotEmpty(fixupLines), "The file PDOsToBeClosed.txt has no content.");
+        String fixupReason = fixupLines.get(0);
+
+        Assert.assertTrue(StringUtils.isNotBlank(fixupReason), "A fixup reason is necessary in order to record the fixup.");
+
+        List<String> pdosToComplete = fixupLines.subList(1, fixupLines.size());
+        Assert.assertTrue(CollectionUtils.isNotEmpty(pdosToComplete), "No PDOs have been provided to close");
+
+        for (String pdoToComplete : pdosToComplete) {
+            productOrderEjb.updateOrderStatusNoRollback(pdoToComplete);
+            System.out.println("Updated order status for: " + pdoToComplete);
+        }
+
+        productOrderDao.persist(new FixupCommentary(fixupReason ));
+        commitTransaction();
+    }
+
+    @Test(enabled = false)
+    public void support3471AddSampleToSupportData() throws Exception {
+
+        String productOrderString = "PDO-13241";
+        ProductOrderSample sampleToAdd = new ProductOrderSample("SM-DAMWL");
+
+        userBean.loginOSUser();
+        beginTransaction();
+
+
+        productOrderEjb.addSamplesNoSap(productOrderString, Collections.singletonList(sampleToAdd),MessageReporter.UNUSED);
+
+        productOrderDao.persist(new FixupCommentary("SUPPORT-3471:  Adding The stock for a control sample since that is what was sequenced in the LCSet" ));
+        commitTransaction();
+
+    }
+
+    @Test(enabled=false)
+    public void gplim4593BackfillBilledSampleAssociationWithSAPOrders() throws Exception {
+
+        userBean.loginOSUser();
+        List<ProductOrder> ordersToUpdate = productOrderDao.findOrdersWithSAPOrdersAndBilledSamples();
+        for (ProductOrder productOrder : ordersToUpdate) {
+            Set<LedgerEntry> billedLedgerEntries = new HashSet<>();
+            for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
+                billedLedgerEntries.addAll(productOrderSample.getBilledLedgerItems());
+            }
+
+            productOrder.latestSapOrderDetail().addLedgerEntries(billedLedgerEntries);
+            System.out.println("Updating association to SAP order " + productOrder.getSapOrderNumber() + " for PDO " +
+                               productOrder.getBusinessKey() + " with association to the " + billedLedgerEntries.size() +
+                               " ledger entries which have already successfully been billed");
+        }
+
+        productOrderDao.persist(new FixupCommentary("GPLIM-4593: Backfilling sap Order Detail with billing Ledger Associations"));
+    }
+
+    @Test(enabled=false)
+    public void gplim5377MakeCliaPcrFreeWholeGenomeClinical() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+
+        Product pcrFreeProduct = productDao.findByBusinessKey("P-CLA-0008");
+        Product germlineCommercial = productDao.findByBusinessKey("P-CLA-0005");
+        Product somaticCommercial = productDao.findByBusinessKey("P-CLA-0006");
+
+        List<ProductOrder> pcrFreeOrders = productOrderDao.findList(ProductOrder.class, ProductOrder_.product, pcrFreeProduct);
+
+        pcrFreeProduct.setClinicalProduct(true);
+        System.out.println("Set " + pcrFreeProduct.getPartNumber() + " to be a clinical order");
+        pcrFreeProduct.setExternalOnlyProduct(false);
+        System.out.println("Set " + pcrFreeProduct.getPartNumber() + " to not be an external order");
+
+        germlineCommercial.setExternalOnlyProduct(true);
+        somaticCommercial.setExternalOnlyProduct(true);
+
+        for (ProductOrder pcrFreeOrder : pcrFreeOrders) {
+            if(pcrFreeOrder.getOrderStatus() != ProductOrder.OrderStatus.Abandoned &&
+               pcrFreeOrder.getOrderStatus() != ProductOrder.OrderStatus.Draft) {
+                pcrFreeOrder.setClinicalAttestationConfirmed(true);
+                System.out.println("Updating " + pcrFreeOrder.getJiraTicketKey() + " to have Clinical attestation set");
+            }
+        }
+        productOrderDao.persist(new FixupCommentary("GPLIM-5377:  Updated PCR-Free Whole Genome product to be a "
+                                                    + "clinical product, and set the associated orders for them to "
+                                                    + "have the Clinical Attestation Set"));
+
+        commitTransaction();
+    }
 }

@@ -1,6 +1,11 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.submission.FileType;
+import org.broadinstitute.gpinformatics.infrastructure.submission.ISubmissionTuple;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -27,7 +32,7 @@ import java.util.Date;
 @Entity
 @Audited
 @Table(name = "SUBMISSION_TRACKER", schema = "athena")
-public class SubmissionTracker {
+public class SubmissionTracker implements ISubmissionTuple {
 
     public static final String MERCURY_SUBMISSION_ID_PREFIX = "MERCURY_SUB_";
 
@@ -50,13 +55,20 @@ public class SubmissionTracker {
     private String submittedSampleName;
 
     @Enumerated(EnumType.STRING)
-    private BassFileType fileType;
+    private FileType fileType;
 
     /**
      * version of the data file created
      */
     @Column(name = "VERSION")
     private String version;
+
+    // OnPrem or GCP
+    @Column(name = "PROCESSING_LOCATION")
+    private String processingLocation;
+
+    @Column(name = "DATA_TYPE")
+    private String dataType;
 
     /**
      * research project under which the submission has been made.
@@ -71,17 +83,19 @@ public class SubmissionTracker {
     }
 
     SubmissionTracker(Long submissionTrackerId, String project, String submittedSampleName, String version,
-                      BassFileType fileType) {
+                      FileType fileType, String processingLocation, String dataType) {
         this.submissionTrackerId = submissionTrackerId;
         this.submittedSampleName = submittedSampleName;
         this.project = project;
         this.fileType = fileType;
         this.version = version;
-        requestDate = new Date();
+        this.processingLocation = processingLocation;
+        this.dataType = SubmissionLibraryDescriptor.getNormalizedLibraryName(dataType);
+        this.requestDate = new Date();
     }
 
-    public SubmissionTracker(String project, String submittedSampleName, String version, BassFileType fileType) {
-        this(null, project, submittedSampleName, version, fileType);
+    public SubmissionTracker(String project, String submittedSampleName, String version, FileType fileType, String processingLocation, String dataType) {
+        this(null, project, submittedSampleName, version, fileType, processingLocation, dataType);
     }
 
     /**
@@ -111,6 +125,12 @@ public class SubmissionTracker {
         return submittedSampleName;
     }
 
+    @Override
+    public String getSampleName() {
+        return getSubmittedSampleName();
+    }
+
+    @Override
     public String getProject() {
         return project;
     }
@@ -119,15 +139,22 @@ public class SubmissionTracker {
         this.project = project;
     }
 
-    public BassFileType getFileType() {
+    @Override
+    public FileType getFileType() {
         return fileType;
     }
 
-    public void setFileType(BassFileType fileType) {
-        this.fileType = fileType;
+    @Override
+    public String getProcessingLocation() {
+        return processingLocation;
     }
 
     public String getVersion() {
+        return version;
+    }
+
+    @Override
+    public String getVersionString() {
         return version;
     }
 
@@ -135,7 +162,7 @@ public class SubmissionTracker {
         return submissionTrackerId;
     }
 
-    protected void setSubmissionTrackerId(Long id) {
+    void setSubmissionTrackerId(Long id) {
         this.submissionTrackerId = id;
     }
 
@@ -151,9 +178,57 @@ public class SubmissionTracker {
         return requestDate;
     }
 
-    // todo: should be in interface?
+    @Override
+    public String getDataType() {
+        return dataType;
+    }
+
+    @Override
     @Transient
-    public SubmissionTuple getTuple() {
-        return new SubmissionTuple(project, submittedSampleName, version, fileType);
+    public SubmissionTuple getSubmissionTuple() {
+        return new SubmissionTuple(project, submittedSampleName, version, processingLocation, dataType);
+    }
+
+    @Override
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+
+        if (o == null || (!OrmUtil.proxySafeIsInstance(o, SubmissionTracker.class))) {
+            return false;
+        }
+
+        if (!(o instanceof SubmissionTracker)) {
+            return false;
+        }
+
+        SubmissionTracker that = OrmUtil.proxySafeCast(o, SubmissionTracker.class);
+
+        return new EqualsBuilder()
+            .append(getProject(), that.getProject())
+            .append(getSubmittedSampleName(), that.getSubmittedSampleName())
+            .append(getFileType(), that.getFileType())
+            .append(getVersion(), that.getVersion())
+            .append(getProcessingLocation(), that.getProcessingLocation())
+            .append(getDataType(), that.getDataType())
+            .append(getResearchProject(), that.getResearchProject())
+            .append(getRequestDate(), that.getRequestDate())
+            .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+            .append(getProject())
+            .append(getSubmittedSampleName())
+            .append(getFileType())
+            .append(getVersion())
+            .append(getProcessingLocation())
+            .append(getDataType())
+            .append(getResearchProject())
+            .append(getRequestDate())
+            .toHashCode();
     }
 }

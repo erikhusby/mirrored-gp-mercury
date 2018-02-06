@@ -3,8 +3,9 @@ package org.broadinstitute.gpinformatics.athena.control.dao.projects;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker_;
+import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
-import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
+import org.broadinstitute.gpinformatics.infrastructure.submission.ISubmissionTuple;
 
 import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
@@ -30,24 +31,36 @@ public class SubmissionTrackerDao extends GenericDao {
      *     <li>Research Project Jira Key</li>
      *     <li>Sample Name</li>
      *     <li>File Type</li>
+     *     <li>Processing Location</li>
      *     <li>File Version</li>
      * </ul>
-     * @param submissionDtos
+     * @param tupleCollection
      * @return
      */
-    public List<SubmissionTracker> findSubmissionTrackers(Collection<SubmissionDto> submissionDtos) {
+    public List<SubmissionTracker> findSubmissionTrackers(Collection<? extends ISubmissionTuple> tupleCollection) {
         CriteriaBuilder submissionTrackerCriteria = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<SubmissionTracker> criteriaQuery = getCriteriaBuilder().createQuery(SubmissionTracker.class);
         Root<SubmissionTracker> root = criteriaQuery.from(SubmissionTracker.class);
         Join<SubmissionTracker, ResearchProject> researchProjectJoin = root.join(SubmissionTracker_.researchProject);
 
-        Collection<Predicate> predicates = new HashSet<>(submissionDtos.size());
-        for (SubmissionDto submissionDto : submissionDtos) {
+        Collection<Predicate> predicates = new HashSet<>(tupleCollection.size());
+        for (ISubmissionTuple submissionObject : tupleCollection) {
+            SubmissionTuple submissionTuple = submissionObject.getSubmissionTuple();
             predicates.add(submissionTrackerCriteria.and(
-                    submissionTrackerCriteria.equal(root.get(SubmissionTracker_.project), submissionDto.getAggregationProject()),
-                    submissionTrackerCriteria.equal(root.get(SubmissionTracker_.submittedSampleName), submissionDto.getSampleName()),
-                    submissionTrackerCriteria.equal(root.get(SubmissionTracker_.fileType),submissionDto.getFileType())
-//                    submissionTrackerCriteria.equal(root.get(SubmissionTracker_.version), submissionDto.getVersion()),
+                submissionTrackerCriteria.equal(root.get(SubmissionTracker_.project), submissionTuple.getProject()),
+                submissionTrackerCriteria
+                    .equal(root.get(SubmissionTracker_.submittedSampleName), submissionTuple.getSampleName()),
+                submissionTrackerCriteria.or(
+                    submissionTrackerCriteria.equal(root.get(SubmissionTracker_.dataType), submissionTuple.getDataType()),
+                    submissionTrackerCriteria.isNull(root.get(SubmissionTracker_.dataType))
+                ),
+                submissionTrackerCriteria.or(
+                    submissionTrackerCriteria.equal(root.get(SubmissionTracker_.processingLocation),
+                        submissionTuple.getProcessingLocation()),
+
+                    // Until processing location gets back-filled.
+                    submissionTrackerCriteria.isNull(root.get(SubmissionTracker_.processingLocation))),
+                submissionTrackerCriteria.equal(root.get(SubmissionTracker_.fileType), submissionTuple.getFileType())
             ));
         }
         Predicate orPredicate = submissionTrackerCriteria.or(predicates.toArray(new Predicate[predicates.size()]));

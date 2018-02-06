@@ -15,6 +15,7 @@ public enum Role {
     LabManager("Mercury-LabManagers"),
     BillingManager("Mercury-BillingManagers"),
     PipelineManager("Mercury-PipelineAdmins"),
+    GPProjectManager("Mercury-GPProjectManagers"),
     All("All");
 
     public final String name;
@@ -42,8 +43,5 @@ public enum Role {
 
     public String getName() {
         return name;
-    }
-    public String getCrspName() {
-        return "CRSP-"+name;
     }
 }

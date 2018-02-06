@@ -79,6 +79,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVesselFixupTest.WHITESPACE_PATTERN;
 
 /**
  * Fixups to LabEvent entities
@@ -1957,6 +1958,49 @@ public class LabEventFixupTest extends Arquillian {
         labEventDao.persist(new FixupCommentary("GPLIM-4851 Change event 1982110 type to PCR_PLUS_POND_REGISTRATION for workflow" ));
         labEventDao.flush();
         utx.commit();
+    }
+
+    /**
+     * This test reads its parameters from a file, testdata/FixupStations.txt, so it can be used for other similar fixups,
+     * without writing a new test.  Example contents of the file are:
+     * GPLIM-5294
+     * 2458267 SL-HCD SL-HDE
+     *
+     * Where the format for the second line is labEventId, old station, new station
+     */
+    @Test(enabled = false)
+    public void fixupGplim5294() throws Exception {
+        try {
+            userBean.loginOSUser();
+            utx.begin();
+
+            List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("FixupStations.txt"));
+            String jiraTicket = lines.get(0);
+            for (int i = 1; i < lines.size(); i++) {
+                String[] fields = WHITESPACE_PATTERN.split(lines.get(i));
+                if (fields.length != 3) {
+                    throw new RuntimeException("Expected three white-space separated fields in " + lines.get(i));
+                }
+                long labEventId = Long.parseLong(fields[0]);
+                String oldStation = fields[1];
+                String newStation = fields[2];
+                LabEvent labEvent = labEventDao.findById(LabEvent.class, labEventId);
+                if (labEvent == null) {
+                    throw new RuntimeException("Failed to find lab event " + labEventId);
+                } else if (!labEvent.getEventLocation().equals(oldStation)) {
+                    throw new RuntimeException("Did not find expected station of " + oldStation);
+                }
+                System.out.println("Updating station of " + labEventId + " from " +
+                                   oldStation + " to " + newStation);
+                labEvent.setEventLocation(newStation);
+            }
+
+            labEventDao.persist(new FixupCommentary(jiraTicket + " update stations"));
+            labEventDao.flush();
+            utx.commit();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

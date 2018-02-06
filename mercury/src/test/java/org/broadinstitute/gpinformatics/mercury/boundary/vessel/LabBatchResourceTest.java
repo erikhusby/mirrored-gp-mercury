@@ -39,9 +39,9 @@ public class LabBatchResourceTest extends Arquillian {
         labBatchBean.setUsername("jowalsh");
 
         ArrayList<ChildVesselBean> childVesselBeans = new ArrayList<>();
-        ChildVesselBean childVesselBean = new ChildVesselBean("SM-CT82G", "SM-CT82G", "Well [200uL]", "A01", "PDO-9377");
+        ChildVesselBean childVesselBean = new ChildVesselBean("SM-CT82G", "SM-CT82G", "Well [200uL]", "A01");
         childVesselBeans.add(childVesselBean);
-        childVesselBean = new ChildVesselBean("SM-CT82H", "SM-CT82H", "Well [200uL]", "A02", "PDO-9377");
+        childVesselBean = new ChildVesselBean("SM-CT82H", "SM-CT82H", "Well [200uL]", "A02");
         childVesselBeans.add(childVesselBean);
 
         ParentVesselBean parentVesselBean = new ParentVesselBean("CO-19484878", null, "Plate 96 Well PCR [200ul]",

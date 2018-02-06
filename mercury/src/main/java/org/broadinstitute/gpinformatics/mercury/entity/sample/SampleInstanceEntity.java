@@ -106,7 +106,7 @@ public class SampleInstanceEntity {
 
     public void setMolecularIndexScheme(MolecularIndexingScheme molecularIndexingScheme) { this.molecularIndexingScheme = molecularIndexingScheme; }
 
-    public void setMercurySampleId(MercurySample mercurySample){ this.mercurySample = mercurySample; }
+    public void setMercurySample(MercurySample mercurySample){ this.mercurySample = mercurySample; }
 
     public MercurySample getMercurySample() { return this.mercurySample;    }
 
