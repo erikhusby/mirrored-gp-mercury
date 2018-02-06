@@ -12,7 +12,6 @@ import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
-import net.sourceforge.stripes.action.HttpCache;
 import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.StreamingResolution;
@@ -163,16 +162,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderSampleBean.RECEIVED_DATE;
-import static org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderSampleBean.SAMPLE_TYPE;
-import static org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderSampleBean.SHIPPED_DATE;
 import static org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver.SAVE_SEARCH_DATA;
 
 /**
  * This handles all the needed interface processing elements.
  */
 @SuppressWarnings("unused")
-@HttpCache
 @UrlBinding(ProductOrderActionBean.ACTIONBEAN_URL_BINDING)
 public class ProductOrderActionBean extends CoreActionBean {
 
@@ -2226,12 +2221,12 @@ public class ProductOrderActionBean extends CoreActionBean {
                 final Collection<String> allVisibleColumns = preferenceSaver.visibleColumns();
 
                 Set<String> bspColumns = Sets.newHashSet(ProductOrderSampleBean.COLLABORATOR_SAMPLE_ID,
-                        ProductOrderSampleBean.PARTICIPANT_ID, ProductOrderSampleBean.COLLABORATOR_PARTICIPANT_ID,
-                        SAMPLE_TYPE, ProductOrderSampleBean.MATERIAL_TYPE, ProductOrderSampleBean.VOLUME,
-                        ProductOrderSampleBean.SHIPPED_DATE, ProductOrderSampleBean.CONCENTRATION,
-                        ProductOrderSampleBean.RIN, ProductOrderSampleBean.RQS,
-                        ProductOrderSampleBean.DV2000, ProductOrderSampleBean.PICO_RUN_DATE,
-                        ProductOrderSampleBean.RACKSCAN_MISMATCH, RECEIVED_DATE);
+                    ProductOrderSampleBean.PARTICIPANT_ID, ProductOrderSampleBean.COLLABORATOR_PARTICIPANT_ID,
+                    ProductOrderSampleBean.SAMPLE_TYPE, ProductOrderSampleBean.MATERIAL_TYPE,
+                    ProductOrderSampleBean.VOLUME, ProductOrderSampleBean.SHIPPED_DATE,
+                    ProductOrderSampleBean.CONCENTRATION, ProductOrderSampleBean.RIN, ProductOrderSampleBean.RQS,
+                    ProductOrderSampleBean.DV2000, ProductOrderSampleBean.PICO_RUN_DATE,
+                    ProductOrderSampleBean.RACKSCAN_MISMATCH, ProductOrderSampleBean.RECEIVED_DATE);
 
                 boolean withSampleData = false;
                 for (String visibleColumn : allVisibleColumns) {
@@ -2350,7 +2345,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                                              final DatatablesStateSaver preferenceSaver) throws IOException {
         if (includeSampleData) {
             ProductOrder.loadSampleData(productOrderSamples);
-            if (preferenceSaver.showColumn(SHIPPED_DATE) || preferenceSaver.showColumn(RECEIVED_DATE)) {
+            if (preferenceSaver.showColumn(ProductOrderSampleBean.SHIPPED_DATE) ||
+                preferenceSaver.showColumn(ProductOrderSampleBean.RECEIVED_DATE)) {
                 ProductOrder.loadLabEventSampleData(productOrderSamples);
             }
         }
