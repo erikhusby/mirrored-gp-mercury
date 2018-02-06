@@ -19,7 +19,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexing
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.UMIReagent;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.UniqueMolecularIdentifier;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
@@ -598,9 +597,13 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             materialType = resultingMaterialType;
         }
 
+        if (labEvent.getManualOverrideLcSet() != null) {
+            singleWorkflowBatch = labEvent.getManualOverrideLcSet();
+            setSingleBucketEntry(labEventType, singleWorkflowBatch);
+        }
         // Multiple workflow batches need help.
         // Avoid overwriting a singleWorkflowBatch set by applyVesselChanges.
-        if (singleWorkflowBatch == null) {
+        else if (singleWorkflowBatch == null) {
             Set<LabBatch> computedLcsets = labEvent.getComputedLcSets();
             // A single computed LCSET can help resolve ambiguity of multiple bucket entries.
             if (computedLcsets.size() != 1) {
@@ -618,19 +621,23 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             if (computedLcsets.size() == 1) {
                 LabBatch workflowBatch = computedLcsets.iterator().next();
                 singleWorkflowBatch = workflowBatch;
-                for (BucketEntry bucketEntry : allBucketEntries) {
-                    // If there's a bucket entry that matches the computed LCSET, use it.
-                    if (bucketEntry.getLabBatch() != null &&
-                            bucketEntry.getLabBatch().equals(workflowBatch)) {
-                        singleBucketEntry = bucketEntry;
-                        if (LabVessel.DIAGNOSTICS) {
-                            log.info("Setting singleBucketEntry to " +
-                                    singleBucketEntry.getLabBatch().getBatchName() + " in " +
-                                    labEventType.getName());
-                        }
-                        break;
-                    }
+                setSingleBucketEntry(labEventType, workflowBatch);
+            }
+        }
+    }
+
+    private void setSingleBucketEntry(LabEventType labEventType, LabBatch workflowBatch) {
+        for (BucketEntry bucketEntry : allBucketEntries) {
+            // If there's a bucket entry that matches the computed LCSET, use it.
+            if (bucketEntry.getLabBatch() != null &&
+                    bucketEntry.getLabBatch().equals(workflowBatch)) {
+                singleBucketEntry = bucketEntry;
+                if (LabVessel.DIAGNOSTICS) {
+                    log.info("Setting singleBucketEntry to " +
+                            singleBucketEntry.getLabBatch().getBatchName() + " in " +
+                            labEventType.getName());
                 }
+                break;
             }
         }
     }
