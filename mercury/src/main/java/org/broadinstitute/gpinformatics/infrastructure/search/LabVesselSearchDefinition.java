@@ -64,6 +64,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * Builds ConfigurableSearchDefinition for lab vessel user defined search logic
@@ -1552,71 +1553,62 @@ public class LabVesselSearchDefinition {
             public Set<String> evaluate(Object entity, SearchContext context) {
                 LabVessel currentVessel = (LabVessel) entity;
                 Set<String> reasons = null;
-                // Directly abandoned?  don't traverse
-                Set<AbandonVessel> directAbandoned = currentVessel.getAbandonVessels();
-                if( directAbandoned != null && !directAbandoned.isEmpty() ) {
-                    reasons = new HashSet<>();
-                    String reason;
+                TransferTraverserCriteria.AbandonedLabVesselCriteria abandonCriteria =
+                            new TransferTraverserCriteria.AbandonedLabVesselCriteria(false);
 
-                    if( directAbandoned.size() == 1 ) {
-                        AbandonVessel abandonVessel = currentVessel.getAbandonVessels().iterator().next();
-                        reason = abandonVessel.getReason().getDisplayName();
-                        if( abandonVessel.getVesselPosition() != null ) {
-                            reason += "(" + abandonVessel.getVesselPosition().name() + ")";
-                        }
-                        reasons.add( reason );
-                    } else {
-                        // Gather reasons and positions
-                        String position;
-                        Map<String,Set<String>> reasonPositionMap = new HashMap<>();
-                        for( AbandonVessel abandonVessel : directAbandoned ) {
-                            reason = abandonVessel.getReason().getDisplayName();
-                            if( !reasonPositionMap.containsKey( reason ) ) {
-                                reasonPositionMap.put(reason, new HashSet<String>());
-                            }
-                            position = abandonVessel.getVesselPosition() == null?"":abandonVessel.getVesselPosition().name();
-                            reasonPositionMap.get(reason).add( position );
-                        }
-                        for( String key : reasonPositionMap.keySet() ) {
-                            StringBuilder posDisplay = new StringBuilder(64);
-                            for( String pos : reasonPositionMap.get(key)) {
-                                if( pos.length() > 0 ) {
-                                    posDisplay.append(pos).append(",");
-                                }
-                            }
-                            if( posDisplay.length() > 1 ) {
-                                posDisplay.deleteCharAt(posDisplay.length() - 1);
-                                posDisplay.append(")");
-                                posDisplay.insert(0,"(");
-                                posDisplay.insert(0,key );
-                                reasons.add( posDisplay.toString() );
-                            }
-                        }
-                    }
+                if (currentVessel.getContainerRole() == null) {
+                    currentVessel.evaluateCriteria(abandonCriteria,
+                            TransferTraverserCriteria.TraversalDirection.Ancestors);
                 } else {
-                    TransferTraverserCriteria.AbandonedLabVesselCriteria abandonCriteria =
-                            new TransferTraverserCriteria.AbandonedLabVesselCriteria();
+                    currentVessel.getContainerRole().applyCriteriaToAllPositions(abandonCriteria,
+                            TransferTraverserCriteria.TraversalDirection.Ancestors);
+                }
 
-                    if (currentVessel.getContainerRole() == null) {
-                        currentVessel.evaluateCriteria(abandonCriteria,
-                                TransferTraverserCriteria.TraversalDirection.Ancestors);
-                    } else {
-                        currentVessel.getContainerRole().applyCriteriaToAllPositions(abandonCriteria,
-                                TransferTraverserCriteria.TraversalDirection.Ancestors);
+                // Bail out if nothing to do
+                if (! abandonCriteria.isAncestorAbandoned()) {
+                    return reasons;
+                }
+
+                reasons = new HashSet<>();
+                String reason;
+                MultiValuedMap<LabVessel, AbandonVessel> abandonMap = abandonCriteria.getAncestorAbandonVessels();
+
+                // Display each reason with a group of positions (if container) in parentheses
+                if( abandonMap.size() == 1 && abandonMap.mapIterator().next().getAbandonVessels().size() == 1 ) {
+                    // Only one abandon - could be a tube so show position only if available
+                    AbandonVessel abandonVessel = abandonMap.mapIterator().next().getAbandonVessels().iterator().next();
+                    reason = abandonVessel.getReason().getDisplayName();
+                    if( abandonVessel.getVesselPosition() != null ) {
+                        reason += "(" + abandonVessel.getVesselPosition().name() + ")";
                     }
-                    if (abandonCriteria.isAncestorAbandoned()) {
-                        reasons = new HashSet<>();
-                        String reason;
-                        MultiValuedMap<LabVessel, AbandonVessel> abandonMap =
-                                abandonCriteria.getAncestorAbandonVessels();
-                        for (LabVessel labVessel : abandonMap.keySet()) {
-                            for (AbandonVessel abandonVessel : abandonMap.get(labVessel)) {
-                                reason = abandonVessel.getReason().getDisplayName();
-                                if (abandonVessel.getVesselPosition() != null) {
-                                    reason += "(" + abandonVessel.getVesselPosition().name() + ")";
-                                }
-                                reasons.add(reason);
+                    reasons.add( reason );
+                } else {
+                    // Gather reasons and positions
+                    // TODO JMS Display can get ugly when ancestor abandons/positions are mixed in with current vessel
+                    String position;
+                    Map<String,Set<String>> reasonPositionMap = new HashMap<>();
+
+                    for( AbandonVessel abandonVessel : abandonMap.values() ) {
+                        reason = abandonVessel.getReason().getDisplayName();
+                        if( !reasonPositionMap.containsKey( reason ) ) {
+                            reasonPositionMap.put(reason, new TreeSet<String>());
+                        }
+                        position = abandonVessel.getVesselPosition() == null?"":abandonVessel.getVesselPosition().name();
+                        reasonPositionMap.get(reason).add( position );
+                    }
+                    for( String key : reasonPositionMap.keySet() ) {
+                        StringBuilder posDisplay = new StringBuilder(64);
+                        for( String pos : reasonPositionMap.get(key)) {
+                            if( pos.length() > 0 ) {
+                                posDisplay.append(pos).append(",");
                             }
+                        }
+                        if( posDisplay.length() > 1 ) {
+                            posDisplay.deleteCharAt(posDisplay.length() - 1);
+                            posDisplay.append(")");
+                            posDisplay.insert(0,"(");
+                            posDisplay.insert(0,key );
+                            reasons.add( posDisplay.toString() );
                         }
                     }
                 }
@@ -1635,7 +1627,7 @@ public class LabVesselSearchDefinition {
                 LabVessel currentVessel = (LabVessel) entity;
                 Set<Date> dateVal = null;
                 TransferTraverserCriteria.AbandonedLabVesselCriteria abandonCriteria =
-                        new TransferTraverserCriteria.AbandonedLabVesselCriteria();
+                        new TransferTraverserCriteria.AbandonedLabVesselCriteria(false);
 
                 if( currentVessel.getContainerRole() == null ) {
                     currentVessel.evaluateCriteria(abandonCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
