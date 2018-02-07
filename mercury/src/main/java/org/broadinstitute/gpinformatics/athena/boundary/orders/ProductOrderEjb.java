@@ -481,7 +481,7 @@ public class ProductOrderEjb {
                                     boolean closingOrder)
             throws SAPIntegrationException {
 
-        if(closingOrder) {
+        if(closingOrder && orderToPublish.isSavedInSAP()) {
             updateOrderInSap(orderToPublish, allProductsOrdered, effectivePricesForProducts, messageCollection,
                     closingOrder);
         }

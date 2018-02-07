@@ -527,6 +527,7 @@ public class ProductOrderTest {
         Assert.assertEquals(productOrder.getUnbilledSampleCount(), expected);
         primaryItemSampleEntry.setBillingMessage(BillingSession.SUCCESS);
         billingSession.setBilledDate(new Date());
+        productOrder.latestSapOrderDetail().addLedgerEntries(billingSession.getLedgerEntryItems());
     }
 
     public void testQuoteGrantValidityWithUnallocatedFundingSources() throws Exception{

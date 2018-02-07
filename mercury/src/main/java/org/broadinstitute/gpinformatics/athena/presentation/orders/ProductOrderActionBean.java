@@ -1944,8 +1944,9 @@ public class ProductOrderActionBean extends CoreActionBean {
             try {
                 productOrderEjb.abandon(businessKey, businessKey + " abandoned by " + userBean.getLoginUserName());
             } catch (NoJiraTransitionException | ProductOrderEjb.NoSuchPDOException |
-                    ProductOrderEjb.SampleDeliveryStatusChangeException | IOException e) {
-                throw new RuntimeException(e);
+                    ProductOrderEjb.SampleDeliveryStatusChangeException | IOException | SAPInterfaceException e) {
+                addGlobalValidationError(e.getMessage());
+                return getSourcePageResolution();
             }
         }
 
