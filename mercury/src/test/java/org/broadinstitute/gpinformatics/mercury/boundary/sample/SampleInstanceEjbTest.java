@@ -76,20 +76,19 @@ public class SampleInstanceEjbTest extends Arquillian {
         String[] rootIds = {base + 0, base + 2};
 
         for (List<String> testParameters : Arrays.asList(
+                // parameters are:  filename, expectSuccess, overwrite, modifyData, modifyMetadata
                 Arrays.asList("PooledTubeReg.xlsx",            "T", "F", "T", "F"),
                 Arrays.asList("PooledTubeReg.xlsx",            "T", "T", "T", "T"),
                 Arrays.asList("PooledTube_Test-363_case1.xls", "T", "T", "F", "F"),
                 Arrays.asList("PooledTube_Test-363_case2.xls", "T", "T", "F", "F"),
                 Arrays.asList("PooledTube_Test-363_case3.xls", "F", "F", "F", "F"),
                 Arrays.asList("PooledTube_Test-363_case3.xls", "F", "T", "F", "F"),
-                Arrays.asList("PooledTube_Test-363_case4.xls", "T", "F", "F", "F"))) {
+                Arrays.asList("PooledTube_Test-363_case4.xls", "T", "T", "F", "F"))) {
 
             String filename = testParameters.get(0);
             boolean expectSuccess = testParameters.get(1).equals("T");
             boolean overwrite = testParameters.get(2).equals("T");
-            // modifyData means the spreadsheet data will be edited in this code.
             boolean modifyData = testParameters.get(3).equals("T");
-            // modifyData means the spreadsheet sample metadata will be edited in this code.
             boolean modifyMetadata = testParameters.get(4).equals("T");
 
             byte[] bytes = IOUtils.toByteArray(Thread.currentThread().getContextClassLoader()
