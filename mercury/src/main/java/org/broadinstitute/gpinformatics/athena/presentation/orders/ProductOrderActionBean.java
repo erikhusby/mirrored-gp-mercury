@@ -1834,7 +1834,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         final List<ProductOrderSample> replacementSamples = stringToSampleList(replacementSampleList);
 
-        if(editOrder.isSavedInSAP() && editOrder.hasAtLeastOneBilledLedgerEntry() &&
+        if(editOrder.isPriorToSAP1_5() && editOrder.isSavedInSAP() && editOrder.hasAtLeastOneBilledLedgerEntry() &&
            (editOrder.getTotalNonAbandonedCount(ProductOrder.CountAggregation.ALL) < editOrder.latestSapOrderDetail().getPrimaryQuantity()) ) {
             shareSapOrder = true;
         }
