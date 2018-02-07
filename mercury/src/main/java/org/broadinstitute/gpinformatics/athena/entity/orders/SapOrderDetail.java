@@ -1,5 +1,9 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -12,6 +16,7 @@ import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Embedded;
@@ -216,6 +221,20 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
     @Override
     public UpdateData getUpdateData() {
         return updateData;
+    }
+
+    public int getCountOfBilledSamples(final Product targetProduct) {
+        final Iterable<LedgerEntry> billedSamplesByPriceItemFilter = Iterables
+                .filter(getLedgerEntries(), new Predicate<LedgerEntry>() {
+
+                    @Override
+                    public boolean apply(@Nullable LedgerEntry ledgerEntry) {
+                        return StringUtils.isBlank(ledgerEntry.getSapDeliveryDocumentId()) ||
+                               !ledgerEntry.getPriceItem().equals(targetProduct.getPrimaryPriceItem());
+                    }
+                });
+
+        return CollectionUtils.size(billedSamplesByPriceItemFilter);
     }
 
     @Override
