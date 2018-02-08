@@ -18,7 +18,7 @@
 
                 <security:authorizeBlock roles="<%= roles(PDM, GPProjectManager, PM, Developer) %>">
 
-                    <c:if test="${!actionBean.productInSAP(actionBean.editProduct.partNumber)}">
+                    <c:if test="${!actionBean.productInSAP(actionBean.editProduct.partNumber, actionBean.editProduct.determineCompanyConfiguration())}">
                         <stripes:submit name="${actionBean.publishSAPAction}" id="${actionBean.publishSAPAction}"
                                         value="Publish Product to SAP"
                                         class="btn padright" title="Click to Publish Product to SAP"/>

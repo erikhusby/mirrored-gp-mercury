@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
+import com.google.common.collect.ImmutableMap;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -22,6 +23,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.AggregationMetricsFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.AggregationTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationAlignment;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -33,13 +35,14 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
@@ -133,11 +136,58 @@ public class SubmissionDtoFetcherTest {
             assertThat(submissionDto.getLanesInAggregation(), Matchers.equalTo(2));
             assertThat(submissionDto.getSubmittedStatus(),
                     Matchers.equalTo(SubmissionStatusDetailBean.Status.FAILURE.getKey()));
-            assertThat(submissionDto.getSubmissionLibraryDescriptor(), equalTo(SubmissionLibraryDescriptor.WHOLE_GENOME.getDescription()));
+            assertThat(submissionDto.getSubmissionLibraryDescriptor(), equalTo(SubmissionLibraryDescriptor.WHOLE_EXOME.getName()));
             assertThat(submissionDto.getSubmissionRepositoryName(), equalTo(SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR));
 
             assertThat(submissionDto.getStatusDate(), Matchers.notNullValue());
             assertThat(submissionDto.getSubmittedErrors(), Matchers.contains(NCBI_ERROR));
         }
     }
+
+    public void testFetchAggregationDtos() {
+        ProductOrder productOrder = ProductOrderTestFactory.createProductOrder("SM-1", "SM-2");
+        List<ProductOrderSample> samples = productOrder.getSamples();
+        ProductOrderSample sample1 = samples.get(0);
+        ProductOrderSample sample2 = samples.get(1);
+
+        sample1.setSampleData(new BspSampleData(
+            ImmutableMap.of(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "COLAB-" + sample1.getSampleKey())));
+        sample2.setSampleData(new BspSampleData(
+            ImmutableMap.of(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "COLAB-" + sample2.getSampleKey())));
+
+        String rpId = productOrder.getResearchProject().getBusinessKey();
+
+        Aggregation testAggregation1 = getTestAggregation(rpId, sample1.getSampleData().getCollaboratorsSampleName(),
+            SubmissionLibraryDescriptor.WHOLE_EXOME, SubmissionBioSampleBean.GCP);
+        Aggregation testAggregation2 = getTestAggregation(rpId, sample2.getSampleData().getCollaboratorsSampleName(),
+            SubmissionLibraryDescriptor.RNA_SEQ, SubmissionBioSampleBean.ON_PREM);
+
+        aggregations = Arrays.asList(testAggregation1, testAggregation2);
+
+        Mockito
+            .when(aggregationMetricsFetcher.fetch(Mockito.anyCollectionOf(SubmissionTuple.class)))
+            .thenReturn(aggregations);
+
+        Map<SubmissionTuple, Aggregation> tupleMap =
+            submissionDtoFetcher.fetchAggregationDtos(productOrder.getSamples());
+
+        assertThat(tupleMap.size(), is(2));
+        verifyTuple(tupleMap, testAggregation1, sample1);
+        verifyTuple(tupleMap, testAggregation2, sample2);
+    }
+
+    private void verifyTuple(Map<SubmissionTuple, Aggregation> tupleMap, Aggregation aggregation,
+                             ProductOrderSample productOrderSample) {
+        SubmissionTuple tuple = aggregation.getTuple();
+        assertThat(tupleMap.get(tuple), is(aggregation));
+        assertThat(tuple.getSampleName(), is(productOrderSample.getSampleData().getCollaboratorsSampleName()));
+    }
+
+    private Aggregation getTestAggregation(String project, String sample, SubmissionLibraryDescriptor libraryDescriptor,
+                                           String processingLocation) {
+        return new Aggregation(project, sample, null, 1, 1, libraryDescriptor.getName(),
+            Collections.<AggregationAlignment>emptySet(), null, null,
+            null, null, null, processingLocation);
+    }
+
 }

@@ -98,9 +98,13 @@ public class ProductOrderAddOn {
 
     public void setCustomPriceAdjustment(ProductOrderAddOnPriceAdjustment customPriceAdjustment) {
 
-        this.customPriceAdjustments.clear();
+        clearCustomPriceAdjustment();
 
         addCustomPriceAdjustment(customPriceAdjustment);
+    }
+
+    public void clearCustomPriceAdjustment() {
+        this.customPriceAdjustments.clear();
     }
 
     private void addCustomPriceAdjustment(ProductOrderAddOnPriceAdjustment customPriceAdjustment) {

@@ -123,8 +123,9 @@ public class Aggregation {
     public SubmissionTuple getTuple() {
         // These aggregation metrics are specific to BAM files, so the BassFileType is always BAM.
         if (submissionTuple == null) {
-            submissionTuple =
-                new SubmissionTuple(getProject(), getSample(), getVersion().toString(), getProcessingLocation(), getDataType());
+            String library = SubmissionLibraryDescriptor.getNormalizedLibraryName(getDataType());
+            submissionTuple = new SubmissionTuple(getProject(), getSample(), getVersion().toString(),
+                getProcessingLocation(), library);
         }
         return submissionTuple;
     }

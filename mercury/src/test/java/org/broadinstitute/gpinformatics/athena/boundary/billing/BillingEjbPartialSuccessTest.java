@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 import com.google.common.collect.Multimap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -29,6 +30,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quotes;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -114,6 +116,13 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
     private org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment deployment;
 
     private BillingAdaptor billingAdaptor;
+
+    @Inject
+    private SAPProductPriceCache productPriceCache;
+
+    @Inject
+    private SAPAccessControlEjb accessControlEjb;
+
     public enum Result {FAIL, SUCCESS}
 
     public static final Log log = LogFactory.getLog(BillingEjbPartialSuccessTest.class);
@@ -142,7 +151,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         PriceListCache tempPriceListCache = new PriceListCache(quotePriceItems);
 
         billingAdaptor = new BillingAdaptor(billingEjb, billingSessionDao, tempPriceListCache, quoteService,
-                billingSessionAccessEjb, sapService);
+                billingSessionAccessEjb, sapService, productPriceCache, accessControlEjb);
         billingAdaptor.setProductOrderEjb(productOrderEjb);
     }
 

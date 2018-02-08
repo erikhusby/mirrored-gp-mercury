@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
+import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -56,7 +57,11 @@ public class LabBatchTestUtils {
         ProductOrder stubTestPDO = ProductOrderTestFactory.createDummyProductOrder(LabBatchEJBTest.STUB_TEST_PDO_KEY);
         stubTestPDO.setTitle(stubTestPDO.getTitle() + ((new Date()).getTime()));
         stubTestPDO.updateAddOnProducts(Collections.<Product>emptyList());
-        stubTestPDO.setProduct(productDao.findByBusinessKey(Product.EXOME_EXPRESS_V2_PART_NUMBER));
+        try {
+            stubTestPDO.setProduct(productDao.findByBusinessKey(Product.EXOME_EXPRESS_V2_PART_NUMBER));
+        } catch (InvalidProductException e) {
+            Assert.fail(e.getMessage());
+        }
         stubTestPDO.setResearchProject(researchProjectDao.findByTitle("ADHD"));
         for (LabVessel vessel : mapBarcodeToTube.values()) {
             bucket.addEntry(stubTestPDO, vessel, bucketEntryType);

@@ -14,6 +14,9 @@ public class CustomizationValues {
 
     private String productName;
 
+    private String units;
+    private String originalPrice;
+
     public CustomizationValues(String productPartNumber, String quantity, String price, String customName) {
         this.productPartNumber = productPartNumber;
         this.quantity = quantity;
@@ -43,6 +46,22 @@ public class CustomizationValues {
 
     public void setProductName(String productName) {
         this.productName = productName;
+    }
+
+    public String getUnits() {
+        return units;
+    }
+
+    public void setUnits(String units) {
+        this.units = units;
+    }
+
+    public String getOriginalPrice() {
+        return originalPrice;
+    }
+
+    public void setOriginalPrice(String originalPrice) {
+        this.originalPrice = originalPrice;
     }
 
     public boolean isEmpty() {

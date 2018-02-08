@@ -46,10 +46,10 @@ public class AbandonVesselEtl extends GenericEntityEtl<AbandonVessel, AbandonVes
     String dataRecord(String etlDateStr, boolean isDelete, AbandonVessel entity) {
         return genericRecord(etlDateStr, isDelete,
                 entity.getAbandonVesselId(),
-                "AbandonVessel",
                 format(entity.getLabVessel().getLabVesselId()),
                 format(entity.getReason()==null?"":entity.getReason().toString()),
-                format(entity.getAbandonedOn())
+                format(entity.getAbandonedOn()),
+                format(entity.getVesselPosition()==null?"":entity.getVesselPosition().name())
         );
     }
 }

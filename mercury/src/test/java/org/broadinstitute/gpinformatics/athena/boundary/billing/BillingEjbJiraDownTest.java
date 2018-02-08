@@ -2,36 +2,41 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
+import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.infrastructure.SAPAccessControl;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
-import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
+import org.broadinstitute.sap.entity.Condition;
+import org.broadinstitute.sap.entity.DeliveryCondition;
+import org.broadinstitute.sap.entity.SAPMaterial;
+import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
-import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -73,6 +78,11 @@ public class BillingEjbJiraDownTest extends Arquillian {
 
     private BillingAdaptor billingAdaptor;
 
+    private SAPProductPriceCache productPriceCache;
+
+    @Inject
+    private SAPAccessControlEjb accessControlEjb;
+
     @Deployment
     public static WebArchive buildMercuryDeployment() {
         return DeploymentBuilder.buildMercuryWarWithAlternatives(AcceptsAllWorkRegistrationsQuoteServiceStub.class, AlwaysThrowsRuntimeExceptionsJiraStub.class);
@@ -105,8 +115,13 @@ public class BillingEjbJiraDownTest extends Arquillian {
 
         PriceListCache tempPriceListCache = new PriceListCache(quotePriceItems);
 
+        productPriceCache = Mockito.mock(SAPProductPriceCache.class);
         billingAdaptor = new BillingAdaptor(billingEjb, billingSessionDao, tempPriceListCache, quoteService,
-                billingSessionAccessEjb, sapService);
+                billingSessionAccessEjb, sapService, productPriceCache, accessControlEjb);
+        Mockito.when(productPriceCache.findByProduct(Mockito.any(Product.class), Mockito.any(
+                SapIntegrationClientImpl.SAPCompanyConfiguration.class))).thenReturn(new SAPMaterial("Test", "50", Collections.<Condition, BigDecimal>emptyMap(), Collections.singletonMap(
+                DeliveryCondition.LATE_DELIVERY_DISCOUNT, new BigDecimal("200.00"))));
+        Mockito.when(productPriceCache.productExists(Mockito.anyString())).thenReturn(true);
         billingAdaptor.setProductOrderEjb(productOrderEjb);
 
         BillingSession

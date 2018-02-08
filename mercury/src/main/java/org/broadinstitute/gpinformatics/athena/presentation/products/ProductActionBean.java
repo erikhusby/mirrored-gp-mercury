@@ -21,7 +21,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductPdfFactory;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
@@ -50,6 +49,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.sap.services.SAPIntegrationException;
+import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletResponse;
@@ -225,6 +225,7 @@ public class ProductActionBean extends CoreActionBean {
             // This must be a create, so construct a new top level product that has nothing else set
             editProduct = new Product(Product.TOP_LEVEL_PRODUCT);
         }
+        productPriceCache.refreshCache();
         availableChipTechnologyAndChipNames = productEjb.findChipFamiliesAndNames();
     }
 
@@ -282,6 +283,16 @@ public class ProductActionBean extends CoreActionBean {
     @After(stages = LifecycleStage.BindingAndValidation, on = LIST_ACTION)
     public void allProductsInit() {
         allProducts = productDao.findProducts(availability, TopLevelOnly.NO, IncludePDMOnly.YES);
+
+        for (Product product: allProducts) {
+            final QuotePriceItem quotePriceItem = priceListCache.findByKeyFields(product.getPrimaryPriceItem());
+            if (quotePriceItem != null) {
+                product.getPrimaryPriceItem().setPrice(quotePriceItem.getPrice());
+                product.getPrimaryPriceItem().setUnits(quotePriceItem.getUnit());
+
+                product.setSapMaterial(productPriceCache.findByProduct(product, product.determineCompanyConfiguration()));
+            }
+        }
     }
 
     /**
@@ -475,12 +486,16 @@ public class ProductActionBean extends CoreActionBean {
 
     @HandlesEvent(PUBLISH_PRODUCTS_TO_SAP)
     public Resolution publishProductsToSap() {
-        selectedProducts = productDao.findListByList(Product.class, Product_.partNumber, selectedProductPartNumbers);
-        try {
-
+        if(CollectionUtils.isEmpty(selectedProductPartNumbers)) {
+            addGlobalValidationError("Select at least one product when publishing products in bulk.");
+        } else {
+            selectedProducts =
+                    productDao.findListByList(Product.class, Product_.partNumber, selectedProductPartNumbers);
+            try {
                 productEjb.publishProductsToSAP(selectedProducts);
-        } catch (ValidationException e) {
-            addGlobalValidationError("Unable to publish some of the products to SAP. " + e.getMessage("<br/>"));
+            } catch (ValidationException e) {
+                addGlobalValidationError("Unable to publish some of the products to SAP. " + e.getMessage("<br/>"));
+            }
         }
         return new RedirectResolution(ProductActionBean.class,LIST_ACTION);
     }
@@ -547,6 +562,10 @@ public class ProductActionBean extends CoreActionBean {
 
     public Product getEditProduct() {
         return editProduct;
+    }
+
+    public boolean isProductNameSet() {
+        return StringUtils.isNotBlank(editProduct.getPartNumber());
     }
 
     public void setEditProduct(Product product) {
@@ -734,9 +753,9 @@ public class ProductActionBean extends CoreActionBean {
         return workflows;
     }
 
-    public boolean productInSAP(String partNumber) {
+    public boolean productInSAP(String partNumber, SapIntegrationClientImpl.SAPCompanyConfiguration companyCode) {
 
-        return productPriceCache.productExists(partNumber);
+        return productPriceCache.findByPartNumber(partNumber, companyCode) != null;
     }
 
     public ProductDao.Availability getAvailability() {

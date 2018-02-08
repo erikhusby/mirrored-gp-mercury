@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.bucket;
 
+import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
@@ -165,7 +166,11 @@ public class BucketEntryDaoTest extends StubbyContainerTest {
         if(testDupeOrder == null) {
             testDupeOrder = ProductOrderTestFactory.createDummyProductOrder(testPoBusinessKey + "dupe");
             testDupeOrder.setTitle(testDupeOrder.getTitle() + today.getTime());
-            testDupeOrder.setProduct(productDao.findByPartNumber(Product.EXOME_EXPRESS_V2_PART_NUMBER));
+            try {
+                testDupeOrder.setProduct(productDao.findByPartNumber(Product.EXOME_EXPRESS_V2_PART_NUMBER));
+            } catch (InvalidProductException e) {
+                Assert.fail(e.getMessage());
+            }
 
             testDupeOrder.setResearchProject(researchProjectDao.findByTitle("ADHD"));
             testDupeOrder.updateAddOnProducts(Collections.<Product>emptyList());
@@ -233,7 +238,11 @@ public class BucketEntryDaoTest extends StubbyContainerTest {
         if(replacementOrder == null) {
             replacementOrder = ProductOrderTestFactory.createDummyProductOrder(testPoBusinessKey + "new");
             replacementOrder.setTitle(replacementOrder.getTitle() + today.getTime());
-            replacementOrder.setProduct(productDao.findByPartNumber(Product.EXOME_EXPRESS_V2_PART_NUMBER));
+            try {
+                replacementOrder.setProduct(productDao.findByPartNumber(Product.EXOME_EXPRESS_V2_PART_NUMBER));
+            } catch (InvalidProductException e) {
+                Assert.fail(e.getMessage());
+            }
             replacementOrder.setResearchProject(researchProjectDao.findByTitle("ADHD"));
             replacementOrder.updateAddOnProducts(Collections.<Product>emptyList());
         }

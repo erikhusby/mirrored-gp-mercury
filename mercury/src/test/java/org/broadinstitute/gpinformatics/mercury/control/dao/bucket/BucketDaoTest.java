@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.bucket;
 
+import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -99,7 +100,11 @@ public class BucketDaoTest extends StubbyContainerTest {
         ProductOrder testOrder = ProductOrderTestFactory.createDummyProductOrder();
         testOrder.setTitle(testOrder.getTitle() + ((new Date()).getTime()));
         testOrder.updateAddOnProducts(Collections.<Product>emptyList());
-        testOrder.setProduct(productDao.findByBusinessKey(Product.EXOME_EXPRESS_V2_PART_NUMBER));
+        try {
+            testOrder.setProduct(productDao.findByBusinessKey(Product.EXOME_EXPRESS_V2_PART_NUMBER));
+        } catch (InvalidProductException e) {
+            Assert.fail(e.getMessage());
+        }
         testOrder.setResearchProject(researchProjectDao.findByTitle("ADHD"));
 
         testOrder.setJiraTicketKey(ProductOrderTest.PDO_JIRA_KEY);

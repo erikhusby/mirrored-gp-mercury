@@ -13,6 +13,7 @@ import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingAdaptor;
@@ -207,10 +208,15 @@ public class BillingSessionActionBean extends CoreActionBean {
                                     billingResult.getWorkId());
 
                     String link = "<a href=\"" + workUrl + "\" target=\"QUOTE\">click here</a>";
-                    addMessage("Sent to quote server and SAP: " + link + " to see the quotes server value");
+                    final StringBuilder results = new StringBuilder("Sent to quote server");
+                    if(StringUtils.isNotBlank(billingResult.getSAPBillingId())) {
+                        results.append(" and SAP");
+                    }
+                    results.append(": ").append(link) .append(" to see the quotes server value");
+                    addMessage(results.toString());
                 }
             }
-        } catch (BillingException e) {
+        } catch (Exception e) {
             errorsInBilling = true;
             addGlobalValidationError(e.getMessage());
         }

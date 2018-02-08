@@ -29,7 +29,6 @@ import java.util.Collection;
 import java.util.Collections;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.emptyCollectionOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasItemInArray;
@@ -38,6 +37,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.collection.IsEmptyCollection.emptyCollectionOf;
 
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION, singleThreaded = true)
 public class SubmissionsServiceImplTest {
@@ -136,9 +136,9 @@ public class SubmissionsServiceImplTest {
                 submissionResult = submissionsService.postSubmissions(submissionRequestBean);
         assertThat(submissionResult.size(), is(2));
         for (SubmissionStatusDetailBean submissionStatusDetailBean : submissionResult) {
+            assertThat(submissionStatusDetailBean.getErrors(), emptyCollectionOf(String.class));
             assertThat(submissionStatusDetailBean.getStatus(),
                     is(SubmissionStatusDetailBean.Status.READY_FOR_SUBMISSION));
-            assertThat(submissionStatusDetailBean.getErrors(), emptyCollectionOf(String.class));
             assertThat(DateUtils.convertDateTimeToString(submissionStatusDetailBean.getLastStatusUpdate()),
                     notNullValue());
         }
@@ -149,9 +149,9 @@ public class SubmissionsServiceImplTest {
         Collection<SubmissionStatusDetailBean> submissionStatus = submissionsService.getSubmissionStatus(testUUIDs);
         assertThat(submissionStatus.size(), is(testUUIDs.length));
         for (SubmissionStatusDetailBean submissionStatusDetailBean : submissionStatus) {
+            assertThat(submissionStatusDetailBean.getErrors(), emptyCollectionOf(String.class));
             assertThat(testUUIDs, hasItemInArray(submissionStatusDetailBean.getUuid()));
             assertThat(submissionStatusDetailBean.getStatusString(), nullValue());
-            assertThat(submissionStatusDetailBean.getErrors(), emptyCollectionOf(String.class));
             assertThat(submissionStatusDetailBean.getLastStatusUpdate(), nullValue());
         }
     }
@@ -168,18 +168,18 @@ public class SubmissionsServiceImplTest {
                 submissionsService.postSubmissions(submissionRequestBean);
         assertThat(submissionResult.size(), is(1));
         SubmissionStatusDetailBean submissionStatusDetailBean = submissionResult.iterator().next();
+        assertThat(submissionStatusDetailBean.getErrors(), emptyCollectionOf(String.class));
         assertThat(submissionStatusDetailBean.getStatus(),
                 is(SubmissionStatusDetailBean.Status.READY_FOR_SUBMISSION));
-        assertThat(submissionStatusDetailBean.getErrors(), emptyCollectionOf(String.class));
         assertThat(DateUtils.convertDateTimeToString(submissionStatusDetailBean.getLastStatusUpdate()),
                 notNullValue());
 
         submissionResult = submissionsService.getSubmissionStatus(testUUID);
         assertThat(submissionResult.size(), is(1));
         submissionStatusDetailBean = submissionResult.iterator().next();
+        assertThat(submissionStatusDetailBean.getErrors(), emptyCollectionOf(String.class));
         assertThat(submissionStatusDetailBean.getStatus(),
                 is(SubmissionStatusDetailBean.Status.READY_FOR_SUBMISSION));
-        assertThat(submissionStatusDetailBean.getErrors(), emptyCollectionOf(String.class));
         assertThat(DateUtils.convertDateTimeToString(submissionStatusDetailBean.getLastStatusUpdate()),
                 notNullValue());
     }
