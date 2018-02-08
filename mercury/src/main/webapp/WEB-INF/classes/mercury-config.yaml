@@ -1,4 +1,4 @@
-f# External system definitions.  These describe the various deployments of external systems with which Mercury might
+# External system definitions.  These describe the various deployments of external systems with which Mercury might
 # integrate.
 
 app:
@@ -67,7 +67,7 @@ gap:
     DEV:
       login:    seqsystem
       password: bspbsp
-      # Feature branch!  Revert to gapdev.broadinstitute.org at go-live
+      #  Feature branch!  Revert to gapdev.broadinstitute.org at go-live
       host:     vgapdev1.broadinstitute.org
       port:     8080
 
