@@ -7,6 +7,7 @@ import com.google.common.collect.Multimap;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPGetExportedSamplesFromAliquots;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
+import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.SnpListDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -44,7 +45,7 @@ import java.util.Set;
  * JAX-RS web service for fingerprints.
  */
 @Path("/external/fingerprint")
-@RolesAllowed("Mercury-FingerprintWebService")
+@RolesAllowed(Role.Constants.FINGERPRINT_WEB_SERVICE)
 @Stateful
 @RequestScoped
 public class FingerprintResource {
