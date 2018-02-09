@@ -359,43 +359,44 @@ public class SampleInstanceEjb {
             String sampleName = sampleDataDto.getSampleName();
             rowDto.setBroadSampleId(sampleName);
 
-            // A new Broad Sample name must not collide with a future BSP SM-id.
-            if (!sampleMap.containsKey(sampleName) && !fetchedData.containsKey(sampleName) &&
-                    isInBspFormat(sampleName)) {
-                messages.addError(String.format(BSP_FORMAT, rowDto.getRowNumber(), "Broad Sample", sampleName));
-            }
-
             if (isBlank(sampleDataDto.getRootSampleName())) {
                 sampleDataDto.setRootSampleName(mapSampleNameToRootName.get(sampleName));
             }
             String rootSampleName = sampleDataDto.getRootSampleName();
             rowDto.setRootSampleId(rootSampleName);
 
-            // Checks that expected BSP metadata is present.
+            // Determines the source of sampleData for the Broad.
             MercurySample mercurySample = sampleMap.get(sampleName);
-            SampleData sampleData = fetchedData.containsKey(sampleName) ? fetchedData.get(sampleName) :
-                    (mercurySample != null ? mercurySample.getSampleData() : null);
-            if (mercurySample != null && mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP &&
-                    sampleData == null) {
+            boolean sampleHasMercuryData = (mercurySample != null &&
+                    mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) ||
+                    !fetchedData.containsKey(sampleName);
+            SampleData sampleData = sampleHasMercuryData ?
+                    (mercurySample == null ? null : mercurySample.getSampleData()) : fetchedData.get(sampleName);
+            if (!sampleHasMercuryData && sampleData == null) {
                 messages.addError(String.format(BSP_MISSING, rowIndex + rowOffset, sampleName));
             }
             MercurySample rootSample = rootSampleMap.get(rootSampleName);
-            SampleData rootData = fetchedData.containsKey(rootSampleName) ? fetchedData.get(rootSampleName) :
-                    (rootSample != null ? rootSample.getSampleData() : null);
-            if (rootSample != null && rootSample.getMetadataSource() == MercurySample.MetadataSource.BSP &&
-                    rootData == null) {
+            boolean rootHasMercuryData = sampleHasMercuryData &&
+                    ((rootSample != null && rootSample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) ||
+                            !fetchedData.containsKey(rootSampleName));
+            if (!rootHasMercuryData && fetchedData.get(rootSampleName) == null) {
                 messages.addError(String.format(BSP_MISSING, rowIndex + rowOffset, rootSampleName));
             }
 
-            // If the sample appears in multiple spreadsheet rows its values must be consistent, or left blank
-            // after the first occurrence. The first occurrence is expected to have all of the required fields.
+            // If a non-BSP Broad Sample needs to be created its name must not collide with a future BSP SM-id.
+            if (mercurySample == null && sampleHasMercuryData && isInBspFormat(sampleName)) {
+                messages.addError(String.format(BSP_FORMAT, rowDto.getRowNumber(), "Broad Sample", sampleName));
+            }
+
+            // If the sample appears in multiple spreadsheet rows, the sample data values must match or be
+            // blank after the first occurrence. The first occurrence must have all of the sample data fields.
             if (sampleDataDtoMap.containsKey(sampleName)) {
                 sampleDataDto.compareTo(sampleDataDtoMap.get(sampleName), rowIndex + rowOffset, messages);
                 sampleDataDto = sampleDataDtoMap.get(sampleName);
             } else {
                 // Sets the MercurySample sampleData source.
-                sampleDataDto.setMetadataSource(sampleData != null ?
-                        sampleData.getMetadataSource() : MercurySample.MetadataSource.MERCURY);
+                sampleDataDto.setMetadataSource(sampleHasMercuryData ?
+                        MercurySample.MetadataSource.MERCURY : MercurySample.MetadataSource.BSP);
                 sampleDataDtoMap.put(sampleName, sampleDataDto);
             }
 
@@ -404,7 +405,7 @@ public class SampleInstanceEjb {
             // MercurySample metadata, provided the overwrite flag is set.
             Map<ColumnHeader, String> sampleDataDiffs = sampleDataDto.sampleDataDiffs(sampleData);
             if (!sampleDataDiffs.isEmpty()) {
-                if (sampleDataDto.getMetadataSource() == MercurySample.MetadataSource.BSP) {
+                if (!sampleHasMercuryData) {
                     messages.addError(String.format(BSP_METADATA, rowIndex + rowOffset,
                             collectHeaderNames(sampleDataDiffs.keySet()), sampleName));
                 } else if (!overWriteFlag) {

@@ -92,6 +92,7 @@ import static org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleIns
 import static org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjbDbFreeTest.TestType.POOLEDTUBE;
 import static org.broadinstitute.gpinformatics.mercury.test.LabEventTest.FCT_TICKET;
 import static org.mockito.Matchers.anyString;
+import static org.openqa.selenium.remote.BrowserType.MOCK;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
@@ -693,22 +694,23 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         final Map<String, BspSampleData> bspSampleData = new HashMap<>();
         int bspIdx = 0;
         int mercuryIdx = 0;
-        for (String sampleName : Arrays.asList("SM-JT12", "SM-JT23", "Lib-MOCK.FSK1.A", "4442SFF6", "4442SFF7",
-                "4442SFP6", "4442SFP7", "4076255991TEST", "4076255992TEST", "4076255993TEST")) {
+        for (String sampleName : Arrays.asList("SM-JT12", "SM-JT23", "SM-46IRUT1", "SM-46IRUT2",
+                "Lib-MOCK.FSK1.A", "4442SFF6", "4442SFF7", "4442SFP6", "4442SFP7",
+                "4076255991TEST", "4076255992TEST", "4076255993TEST")) {
 
             if (sampleName.startsWith("SM-")) {
                 // BSP samples
                 Map<BSPSampleSearchColumn, String> map = new HashMap<>();
-                map.put(BSPSampleSearchColumn.ROOT_SAMPLE, select(bspIdx, "SM-46IRUT1", "SM-46IRUT2"));
-                map.put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, select(bspIdx,
-                        "COLLAB-JT04121", "COLLAB-JT04122"));
-                map.put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, select(bspIdx,
-                        "COLLAB-P-JT04121", "COLLAB-P-JT04122"));
-                map.put(BSPSampleSearchColumn.PARTICIPANT_ID, select(bspIdx, "PT-JT1", "PT-JT2"));
+                map.put(BSPSampleSearchColumn.ROOT_SAMPLE, select(bspIdx, "SM-46IRUT1", "SM-46IRUT2", null, null));
+                map.put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, select(bspIdx, "COLLAB-JT04121",
+                        "COLLAB-JT04122", "COLLAB-JT04121", "COLLAB-JT04122"));
+                map.put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, select(bspIdx, "COLLAB-P-JT04121",
+                        "COLLAB-P-JT04122", "COLLAB-P-JT04121", "COLLAB-P-JT04122"));
+                map.put(BSPSampleSearchColumn.PARTICIPANT_ID, select(bspIdx, "PT-JT1", "PT-JT2", "PT-JT1", "PT-JT2"));
                 map.put(BSPSampleSearchColumn.GENDER, "");
                 map.put(BSPSampleSearchColumn.SPECIES, "Homo Sapiens");
-                map.put(BSPSampleSearchColumn.LSID, select(bspIdx,
-                        "broadinstitute.org:bsp.dev.sample:JT1", "broadinstitute.org:bsp.dev.sample:JT2"));
+                map.put(BSPSampleSearchColumn.LSID, select(bspIdx, "broadinstitute.org:bsp.dev.sample:JT1",
+                        "broadinstitute.org:bsp.dev.sample:JT2", "root1", "root2"));
                 bspSampleData.put(sampleName, new BspSampleData(map));
                 ++bspIdx;
 
