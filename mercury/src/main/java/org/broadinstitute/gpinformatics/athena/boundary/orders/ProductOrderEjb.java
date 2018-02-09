@@ -456,8 +456,12 @@ public class ProductOrderEjb {
                                   boolean closingOrder)
             throws SAPIntegrationException {
         sapService.updateOrder(orderToUpdate, closingOrder);
-        orderToUpdate.updateSapDetails(SapIntegrationServiceImpl.getSampleCount((ProductOrder) orderToUpdate,
-                (Product) orderToUpdate.getProduct(), (int) 0, false, closingOrder),
+        double sampleCount = 0d;
+        if(orderToUpdate.isPriorToSAP1_5()) {
+            sampleCount = SapIntegrationServiceImpl.getSampleCount(orderToUpdate,
+                    orderToUpdate.getProduct(), 0, false, closingOrder);
+        }
+        orderToUpdate.updateSapDetails(Double.valueOf(sampleCount).intValue(),
                 TubeFormation.makeDigest(StringUtils.join(allProductsOrdered, ",")),
                 TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ",")));
         messageCollection.addInfo("Order "+orderToUpdate.getJiraTicketKey() +
@@ -492,9 +496,7 @@ public class ProductOrderEjb {
         if(StringUtils.isNotBlank(orderToPublish.getSapOrderNumber())) {
             oldNumber = orderToPublish.getSapOrderNumber();
         }
-        orderToPublish.addSapOrderDetail(new SapOrderDetail(sapOrderIdentifier,
-                SapIntegrationServiceImpl.getSampleCount( orderToPublish, orderToPublish.getProduct(),0,
-                        false, false),
+        orderToPublish.addSapOrderDetail(new SapOrderDetail(sapOrderIdentifier,0,
                 orderToPublish.getQuoteId(),
                 SapIntegrationServiceImpl.determineCompanyCode(orderToPublish).getCompanyCode(),
                 TubeFormation.makeDigest(StringUtils.join(allProductsOrdered, ",")),

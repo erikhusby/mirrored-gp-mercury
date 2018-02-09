@@ -24,6 +24,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.sap.entity.Condition;
 import org.broadinstitute.sap.entity.DeliveryCondition;
 import org.broadinstitute.sap.entity.OrderCalculatedValues;
@@ -230,7 +231,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                     quote);
 
             final SAPOrderItem sapOrderItem = new SAPOrderItem(product.getPartNumber(),
-                    getSampleCount(placedOrder, product, additionalSampleCount, creatingNewOrder, closingOrder));
+                    new BigDecimal(getSampleCount(placedOrder, product, additionalSampleCount, creatingNewOrder, closingOrder)));
 
             if(placedOrder.isPriorToSAP1_5()) {
                 sapOrderItem.addCondition(Condition.MATERIAL_PRICE, new BigDecimal(price));
@@ -307,21 +308,21 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             throws SAPIntegrationException {
 
         final SAPOrderItem sapOrderItem =
-                new SAPOrderItem(product.getPartNumber(), getSampleCount(placedOrder, product, additionalSampleCount,
-                        false, closingOrder));
+                new SAPOrderItem(product.getPartNumber(), new BigDecimal(getSampleCount(placedOrder, product, additionalSampleCount,
+                        false, closingOrder)));
         defineConditionsForOrderItem(placedOrder, product, sapOrderItem);
         return sapOrderItem;
     }
 
 
-    public static int getSampleCount(ProductOrder placedOrder, Product product, boolean closingOrder) {
+    public static double getSampleCount(ProductOrder placedOrder, Product product, boolean closingOrder) {
 
         return getSampleCount(placedOrder, product, 0, false, closingOrder);
     }
 
-    public static int getSampleCount(ProductOrder placedOrder, Product product, int additionalSampleCount,
-                                     boolean creatingNewOrder, boolean closingOrder) {
-        int sampleCount = 0;
+    public static double getSampleCount(ProductOrder placedOrder, Product product, int additionalSampleCount,
+                                        boolean creatingNewOrder, boolean closingOrder) {
+        double sampleCount = 0d;
 
         final PriceAdjustment adjustmentForProduct = placedOrder.getAdjustmentForProduct(product);
         Integer adjustmentQuantity = null;
@@ -344,7 +345,10 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         }
 
         if (closingOrder && !placedOrder.isPriorToSAP1_5()) {
-            sampleCount += placedOrder.latestSapOrderDetail().getCountOfBilledSamples(product);
+            if(!placedOrder.isSavedInSAP()) {
+                throw new InformaticsServiceException("To close out the order in SAP, an SAP order should have been created");
+            }
+            sampleCount += placedOrder.latestSapOrderDetail().getBilledSampleQuantity(product);
         } else  if (product.getSupportsNumberOfLanes() && placedOrder.getLaneCount() > 0) {
             sampleCount += (adjustmentQuantity != null) ?adjustmentQuantity :placedOrder.getLaneCount();
         } else {

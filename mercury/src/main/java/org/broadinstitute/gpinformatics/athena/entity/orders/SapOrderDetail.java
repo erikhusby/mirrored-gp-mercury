@@ -7,12 +7,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.Updatable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SAPProductPriceCache;
 import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.hibernate.envers.Audited;
 
@@ -223,18 +223,24 @@ public class SapOrderDetail implements Serializable, Updatable, Comparable<SapOr
         return updateData;
     }
 
-    public int getCountOfBilledSamples(final Product targetProduct) {
+    public double getBilledSampleQuantity(final Product targetProduct) {
         final Iterable<LedgerEntry> billedSamplesByPriceItemFilter = Iterables
                 .filter(getLedgerEntries(), new Predicate<LedgerEntry>() {
 
                     @Override
                     public boolean apply(@Nullable LedgerEntry ledgerEntry) {
-                        return StringUtils.isBlank(ledgerEntry.getSapDeliveryDocumentId()) ||
-                               !ledgerEntry.getPriceItem().equals(targetProduct.getPrimaryPriceItem());
+                        return StringUtils.isNotBlank(ledgerEntry.getSapDeliveryDocumentId()) &&
+                               ledgerEntry.getPriceItem().equals(targetProduct.getPrimaryPriceItem()) &&
+                               StringUtils.equals(ledgerEntry.getBillingMessage(),BillingSession.SUCCESS);
                     }
                 });
 
-        return CollectionUtils.size(billedSamplesByPriceItemFilter);
+        double billedSampleResult = 0d;
+        for (LedgerEntry ledgerEntry : billedSamplesByPriceItemFilter) {
+            billedSampleResult += ledgerEntry.getQuantity();
+        }
+
+        return billedSampleResult;
     }
 
     @Override
