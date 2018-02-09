@@ -503,15 +503,18 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
     public void testDesignationVessel() {
 
         for (boolean poolTest : new boolean[]{false, true}) {
+            // getSequencingTemplate() appears to only support pool tests on a MiSeq.
+            IlluminaFlowcell.FlowcellType flowcellType = poolTest ?
+                    IlluminaFlowcell.FlowcellType.MiSeqFlowcell : IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell;
 
             FlowcellDesignation designation = new FlowcellDesignation(dilutionTube2500, workflowBatch,
                     FlowcellDesignation.IndexType.DUAL, poolTest,
-                    IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, 4, 99, BIG_DECIMAL_7_77, true,
+                    flowcellType, 4, 99, BIG_DECIMAL_7_77, true,
                     FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL);
             flowcellDesignations.clear();
             flowcellDesignations.add(designation);
 
-            template = factory.getSequencingTemplate(denatureTube2500, false);
+            template = factory.getSequencingTemplate(denatureTube2500, poolTest);
             assertThat(template.getBarcode(), Matchers.nullValue());
             if (poolTest) {
                 assertThat(template.getOnRigChemistry(), is("Default"));
@@ -525,7 +528,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
             assertThat(template.getRegulatoryDesignation(), Matchers.hasSize(1));
             assertThat(template.getRegulatoryDesignation(), Matchers.hasItem("RESEARCH_ONLY"));
             assertThat(template.getProducts(), not(empty()));
-            assertThat(template.getLanes().size(), is(2));
+            assertThat(template.getLanes().size(), is(flowcellType.getVesselGeometry().getCapacity()));
             assertThat(template.getConcentration(), is(BIG_DECIMAL_7_77));
 
             Set<String> allLanes = new HashSet<>();
@@ -536,7 +539,9 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
                 assertThat(lane.getLoadingConcentration(), is(BIG_DECIMAL_7_77));
             }
             assertThat(allLanes, hasItem("LANE1"));
-            assertThat(allLanes, hasItem("LANE2"));
+            if (flowcellType != IlluminaFlowcell.FlowcellType.MiSeqFlowcell) {
+                assertThat(allLanes, hasItem("LANE2"));
+            }
         }
     }
 
@@ -554,7 +559,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
 
             Set<VesselAndPosition> vesselsAndPositions = flowcellHiSeq2500.getLoadingVessels();
             MatcherAssert.assertThat(vesselsAndPositions, not(Matchers.empty()));
-            template = factory.getSequencingTemplate(flowcellHiSeq2500, vesselsAndPositions, true);
+            template = factory.getSequencingTemplate(flowcellHiSeq2500, vesselsAndPositions, poolTest);
             if (poolTest) {
                 assertThat(template.getOnRigChemistry(), is("Default"));
                 assertThat(template.getOnRigWorkflow(), is("Resequencing"));
@@ -582,14 +587,15 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
     public void testDesignationReagentKit() {
         for (boolean poolTest : new boolean[]{false, true}) {
 
-            FlowcellDesignation designation = new FlowcellDesignation(dilutionTube2500, workflowBatch,
+            LabVessel loadingTube = miSeqBatch.getLabBatchStartingVessels().iterator().next().getLabVessel();
+            FlowcellDesignation designation = new FlowcellDesignation(loadingTube, workflowBatch,
                     FlowcellDesignation.IndexType.DUAL, poolTest,
                     IlluminaFlowcell.FlowcellType.MiSeqFlowcell, 4, 100, BIG_DECIMAL_7_77, true,
                     FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL);
             flowcellDesignations.clear();
             flowcellDesignations.add(designation);
 
-            template = factory.getSequencingTemplate(reagentKit, false);
+            template = factory.getSequencingTemplate(reagentKit, poolTest);
             assertThat(template.getBarcode(), Matchers.nullValue());
             assertThat(template.getLanes().size(), is(1));
             assertThat(template.getBarcode(), Matchers.nullValue());
