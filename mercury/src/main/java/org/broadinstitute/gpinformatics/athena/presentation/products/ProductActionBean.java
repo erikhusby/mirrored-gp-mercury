@@ -18,6 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductPdfFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
@@ -467,6 +468,9 @@ public class ProductActionBean extends CoreActionBean {
 
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() {
+
+        MessageCollection messaging = new MessageCollection();
+
         // Sets paired end non-null when sequencing params are present.
         if (StringUtils.isNotBlank(editProduct.getAggregationDataType())) {
             editProduct.setPairedEndRead(editProduct.getPairedEndRead());
@@ -474,11 +478,14 @@ public class ProductActionBean extends CoreActionBean {
         productEjb.saveProduct(editProduct, addOnTokenInput, priceItemTokenInput, allLengthsMatch(),
                 criteria, operators, values, genotypingChipInfo, externalPriceItemTokenInput);
         addMessage("Product \"" + editProduct.getProductName() + "\" has been saved");
-            try {
-                productEjb.publishProductToSAP(editProduct);
-            } catch (SAPIntegrationException e) {
-                addGlobalValidationError("Unable to update the product in SAP. " + e.getMessage());
+        try {
+            productEjb.publishProductToSAP(editProduct, messaging);
+            if (messaging.hasWarnings()) {
+                addMessages(messaging);
             }
+        } catch (SAPIntegrationException e) {
+            addGlobalValidationError("Unable to update the product in SAP. " + e.getMessage());
+        }
 
         return new RedirectResolution(ProductActionBean.class, VIEW_ACTION).addParameter(PRODUCT_PARAMETER,
                 editProduct.getPartNumber());
@@ -486,13 +493,18 @@ public class ProductActionBean extends CoreActionBean {
 
     @HandlesEvent(PUBLISH_PRODUCTS_TO_SAP)
     public Resolution publishProductsToSap() {
+
+        MessageCollection messaging = new MessageCollection();
         if(CollectionUtils.isEmpty(selectedProductPartNumbers)) {
             addGlobalValidationError("Select at least one product when publishing products in bulk.");
         } else {
             selectedProducts =
                     productDao.findListByList(Product.class, Product_.partNumber, selectedProductPartNumbers);
             try {
-                productEjb.publishProductsToSAP(selectedProducts);
+                productEjb.publishProductsToSAP(selectedProducts, messaging );
+                if(messaging.hasWarnings()) {
+                    addMessages(messaging);
+                }
             } catch (ValidationException e) {
                 addGlobalValidationError("Unable to publish some of the products to SAP. " + e.getMessage("<br/>"));
             }
@@ -502,9 +514,15 @@ public class ProductActionBean extends CoreActionBean {
 
     @HandlesEvent(PUBLISH_TO_SAP)
     public Resolution publishToSap() {
+        MessageCollection messaging = new MessageCollection();
+
         try {
-            productEjb.publishProductToSAP(editProduct);
-            addMessage("Product \"" + editProduct.getProductName() + "\" Successfully published to SAP");
+            productEjb.publishProductToSAP(editProduct, messaging);
+            if(messaging.hasWarnings()) {
+                addMessages(messaging);
+            } else {
+                addMessage("Product \"" + editProduct.getProductName() + "\" Successfully published to SAP");
+            }
         } catch (SAPIntegrationException e) {
             addGlobalValidationError("Unable to publish the product to SAP. " + e.getMessage());
         }

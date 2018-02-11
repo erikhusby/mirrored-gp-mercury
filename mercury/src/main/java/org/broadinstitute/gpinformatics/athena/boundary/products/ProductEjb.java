@@ -7,6 +7,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
@@ -33,16 +34,13 @@ import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
@@ -319,10 +317,12 @@ public class ProductEjb {
     /**
      * This method has the responsibility to take the given product and attempt to publish it to SAP
      * @param productToPublish A product which needs to have its information either created or updated in SAP
+     * @param messageCollection
      * @throws SAPIntegrationException
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    public void publishProductToSAP(Product productToPublish) throws SAPIntegrationException {
+    public void publishProductToSAP(Product productToPublish,
+                                    MessageCollection messageCollection) throws SAPIntegrationException {
         SAPAccessControl control = accessController.getCurrentControlDefinitions();
         List<AccessItem> accessItemList = new ArrayList<>();
         accessItemList.add(new AccessItem(productToPublish.getPrimaryPriceItem().getName()));
@@ -339,24 +339,24 @@ public class ProductEjb {
                 throw new SAPIntegrationException(e.getMessage());
             }
         } else {
-            throw new SAPIntegrationException(productToPublish.getName() +
+            messageCollection.addWarning(productToPublish.getName() +
                               " has a price item that makes it ineligible to be reflected in SAP.");
         }
-
     }
 
     /**
      * This method has the responsibility of taking the products passed to it and attempting to publish them to SAP.
      * @param productsToPublish a collection of products which needs to have their information either created or
      *                          updated in SAP
+     * @param messageCollection
      * @throws SAPIntegrationException
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    public void publishProductsToSAP(Collection<Product> productsToPublish) throws ValidationException {
+    public void publishProductsToSAP(Collection<Product> productsToPublish, MessageCollection messageCollection) throws ValidationException {
         List<String> errorMessages = new ArrayList<>();
         for (Product productToPublish : productsToPublish) {
             try {
-                publishProductToSAP(productToPublish);
+                publishProductToSAP(productToPublish, messageCollection);
             } catch (SAPIntegrationException e) {
                 errorMessages.add(e.getMessage());
                 log.error(e.getMessage());

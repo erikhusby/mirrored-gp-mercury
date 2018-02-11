@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.products;
 
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.SAPAccessControlEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.AccessItem;
@@ -17,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.sap.entity.SAPMaterial;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
+import org.hamcrest.Matchers;
 import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -26,8 +28,8 @@ import java.util.Date;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductEjbDBFreeTest {
@@ -50,9 +52,11 @@ public class ProductEjbDBFreeTest {
         Product testProduct = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "SGM-TEST-SAP");
         testProduct.setPrimaryPriceItem(new PriceItem("qsID", "testPlatform", "testCategory", "blockThisItem"));
 
+        MessageCollection messageCollection = new MessageCollection();
         try {
-            testEjb.publishProductToSAP(testProduct);
-            Assert.fail();
+            testEjb.publishProductToSAP(testProduct, messageCollection);
+            assertThat(messageCollection.getWarnings(), is(not(Matchers.<String>empty())));
+            messageCollection.clearAll();
         } catch (SAPIntegrationException e) {
 
         }
@@ -61,7 +65,7 @@ public class ProductEjbDBFreeTest {
         Mockito.verify(mockSapService, Mockito.times(0)).publishProductInSAP(testProduct);
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(noControl);
-        testEjb.publishProductToSAP(testProduct);
+        testEjb.publishProductToSAP(testProduct, messageCollection);
 
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockSapService, Mockito.times(1)).publishProductInSAP(testProduct);
@@ -69,8 +73,9 @@ public class ProductEjbDBFreeTest {
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(blockControl);
         try {
-            testEjb.publishProductToSAP(testProduct);
-            Assert.fail();
+            testEjb.publishProductToSAP(testProduct, messageCollection);
+            assertThat(messageCollection.getWarnings(), is(not(Matchers.<String>empty())));
+            messageCollection.clearAll();
         } catch (SAPIntegrationException e) {
         }
 //        Mockito.when(productPriceCache.productExists(Mockito.any(Product.class))).thenReturn(Boolean.TRUE);
@@ -79,23 +84,24 @@ public class ProductEjbDBFreeTest {
 
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(noControl);
-        testEjb.publishProductToSAP(testProduct);
+        testEjb.publishProductToSAP(testProduct, messageCollection);
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockSapService, Mockito.times(2)).publishProductInSAP(testProduct);
 
-        testEjb.publishProductToSAP(testProduct);
+        testEjb.publishProductToSAP(testProduct, messageCollection);
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockSapService, Mockito.times(3)).publishProductInSAP(testProduct);
 
-        testEjb.publishProductToSAP(testProduct);
+        testEjb.publishProductToSAP(testProduct, messageCollection);
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockSapService, Mockito.times(4)).publishProductInSAP(testProduct);
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(blockControl);
 
         try {
-            testEjb.publishProductToSAP(testProduct);
-            Assert.fail();
+            testEjb.publishProductToSAP(testProduct, messageCollection);
+            assertThat(messageCollection.getWarnings(), is(not(Matchers.<String>empty())));
+            messageCollection.clearAll();
         } catch (SAPIntegrationException e) {
 
         }
@@ -122,10 +128,12 @@ public class ProductEjbDBFreeTest {
         Product testProduct = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "SGM-TEST-SAP");
         testProduct.setClinicalProduct(true);
         testProduct.setPrimaryPriceItem(new PriceItem("qsID", "testPlatform", "testCategory", "blockThisItem"));
+        MessageCollection messageCollection = new MessageCollection();
 
         try {
-            testEjb.publishProductToSAP(testProduct);
-            Assert.fail();
+            testEjb.publishProductToSAP(testProduct, messageCollection);
+            assertThat(messageCollection.getWarnings(), is(not(Matchers.<String>empty())));
+            messageCollection.clearAll();
         } catch (SAPIntegrationException e) {
 
         }
@@ -134,7 +142,7 @@ public class ProductEjbDBFreeTest {
         Mockito.verify(mockSapService, Mockito.times(0)).publishProductInSAP(testProduct);
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(noControl);
-        testEjb.publishProductToSAP(testProduct);
+        testEjb.publishProductToSAP(testProduct, messageCollection);
 
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockSapService, Mockito.times(1)).publishProductInSAP(testProduct);
@@ -142,8 +150,9 @@ public class ProductEjbDBFreeTest {
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(blockControl);
         try {
-            testEjb.publishProductToSAP(testProduct);
-            Assert.fail();
+            testEjb.publishProductToSAP(testProduct, messageCollection);
+            assertThat(messageCollection.getWarnings(), is(not(Matchers.<String>empty())));
+            messageCollection.clearAll();
         } catch (SAPIntegrationException e) {
         }
 //        Mockito.when(productPriceCache.productExists(Mockito.any(Product.class))).thenReturn(Boolean.TRUE);
@@ -152,23 +161,24 @@ public class ProductEjbDBFreeTest {
 
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(noControl);
-        testEjb.publishProductToSAP(testProduct);
+        testEjb.publishProductToSAP(testProduct, messageCollection);
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockSapService, Mockito.times(2)).publishProductInSAP(testProduct);
 
-        testEjb.publishProductToSAP(testProduct);
+        testEjb.publishProductToSAP(testProduct, messageCollection);
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockSapService, Mockito.times(3)).publishProductInSAP(testProduct);
 
-        testEjb.publishProductToSAP(testProduct);
+        testEjb.publishProductToSAP(testProduct, messageCollection);
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockSapService, Mockito.times(4)).publishProductInSAP(testProduct);
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(blockControl);
 
         try {
-            testEjb.publishProductToSAP(testProduct);
-            Assert.fail();
+            testEjb.publishProductToSAP(testProduct, messageCollection);
+            assertThat(messageCollection.getWarnings(), is(not(Matchers.<String>empty())));
+            messageCollection.clearAll();
         } catch (SAPIntegrationException e) {
 
         }
@@ -200,10 +210,12 @@ public class ProductEjbDBFreeTest {
         Product testProduct = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "SGM-TEST-SAP");
         testProduct.setClinicalProduct(true);
         testProduct.setPrimaryPriceItem(new PriceItem("qsID", "testPlatform", "testCategory", "blockThisItem"));
+        MessageCollection messageCollection = new MessageCollection();
 
         try {
-            testEjb.publishProductToSAP(testProduct);
-            Assert.fail();
+            testEjb.publishProductToSAP(testProduct, messageCollection);
+            assertThat(messageCollection.getWarnings(), is(not(Matchers.<String>empty())));
+            messageCollection.clearAll();
         } catch (SAPIntegrationException e) {
 
         }
@@ -212,7 +224,7 @@ public class ProductEjbDBFreeTest {
         Mockito.verify(mockSapService, Mockito.times(0)).publishProductInSAP(testProduct);
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(noControl);
-        testEjb.publishProductToSAP(testProduct);
+        testEjb.publishProductToSAP(testProduct, messageCollection);
 
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockSapService, Mockito.times(1)).publishProductInSAP(testProduct);
@@ -220,8 +232,9 @@ public class ProductEjbDBFreeTest {
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(blockControl);
         try {
-            testEjb.publishProductToSAP(testProduct);
-            Assert.fail();
+            testEjb.publishProductToSAP(testProduct, messageCollection);
+            assertThat(messageCollection.getWarnings(), is(not(Matchers.<String>empty())));
+            messageCollection.clearAll();
         } catch (SAPIntegrationException e) {
         }
 //        Mockito.when(productPriceCache.productExists(Mockito.any(Product.class))).thenReturn(Boolean.TRUE);
@@ -230,23 +243,24 @@ public class ProductEjbDBFreeTest {
 
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(noControl);
-        testEjb.publishProductToSAP(testProduct);
+        testEjb.publishProductToSAP(testProduct, messageCollection);
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockSapService, Mockito.times(2)).publishProductInSAP(testProduct);
 
-        testEjb.publishProductToSAP(testProduct);
+        testEjb.publishProductToSAP(testProduct, messageCollection);
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockSapService, Mockito.times(3)).publishProductInSAP(testProduct);
 
-        testEjb.publishProductToSAP(testProduct);
+        testEjb.publishProductToSAP(testProduct, messageCollection);
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockSapService, Mockito.times(4)).publishProductInSAP(testProduct);
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(blockControl);
 
         try {
-            testEjb.publishProductToSAP(testProduct);
-            Assert.fail();
+            testEjb.publishProductToSAP(testProduct, messageCollection);
+            assertThat(messageCollection.getWarnings(), is(not(Matchers.<String>empty())));
+            messageCollection.clearAll();
         } catch (SAPIntegrationException e) {
 
         }
@@ -284,10 +298,12 @@ public class ProductEjbDBFreeTest {
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(blockControl);
         Product testProduct = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "SGM-TEST-SAP");
         testProduct.setPrimaryPriceItem(new PriceItem("qsID", "testPlatform", "testCategory", "blockThisItem"));
+        MessageCollection messageCollection = new MessageCollection();
 
         try {
-            testEjb.publishProductToSAP(testProduct);
-            Assert.fail();
+            testEjb.publishProductToSAP(testProduct, messageCollection);
+            assertThat(messageCollection.getWarnings(), is(not(Matchers.<String>empty())));
+            messageCollection.clearAll();
         } catch (SAPIntegrationException e) {
 
         }
@@ -296,7 +312,7 @@ public class ProductEjbDBFreeTest {
         Mockito.verify(mockWrappedClient, Mockito.times(0)).createMaterial(Mockito.any(SAPMaterial.class));
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(noControl);
-        testEjb.publishProductToSAP(testProduct);
+        testEjb.publishProductToSAP(testProduct, messageCollection);
 
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockWrappedClient, Mockito.times(1)).createMaterial(Mockito.any(SAPMaterial.class));
@@ -304,8 +320,9 @@ public class ProductEjbDBFreeTest {
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(blockControl);
         try {
-            testEjb.publishProductToSAP(testProduct);
-            Assert.fail();
+            testEjb.publishProductToSAP(testProduct, messageCollection);
+            assertThat(messageCollection.getWarnings(), is(not(Matchers.<String>empty())));
+            messageCollection.clearAll();
         } catch (SAPIntegrationException e) {
         }
 //        Mockito.when(productPriceCache.productExists(Mockito.any(Product.class))).thenReturn(Boolean.TRUE);
@@ -323,17 +340,17 @@ public class ProductEjbDBFreeTest {
 
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(noControl);
-        testEjb.publishProductToSAP(testProduct);
+        testEjb.publishProductToSAP(testProduct, messageCollection);
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockWrappedClient, Mockito.times(1)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(1)).changeMaterialDetails(Mockito.any(SAPMaterial.class));
 
-        testEjb.publishProductToSAP(testProduct);
+        testEjb.publishProductToSAP(testProduct, messageCollection);
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockWrappedClient, Mockito.times(1)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(2)).changeMaterialDetails(Mockito.any(SAPMaterial.class));
 
-        testEjb.publishProductToSAP(testProduct);
+        testEjb.publishProductToSAP(testProduct, messageCollection);
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockWrappedClient, Mockito.times(1)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(3)).changeMaterialDetails(Mockito.any(SAPMaterial.class));
@@ -341,8 +358,9 @@ public class ProductEjbDBFreeTest {
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(blockControl);
 
         try {
-            testEjb.publishProductToSAP(testProduct);
-            Assert.fail();
+            testEjb.publishProductToSAP(testProduct, messageCollection);
+            assertThat(messageCollection.getWarnings(), is(not(Matchers.<String>empty())));
+            messageCollection.clearAll();
         } catch (SAPIntegrationException e) {
 
         }
@@ -372,10 +390,12 @@ public class ProductEjbDBFreeTest {
         Product testProduct = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "SGM-TEST-SAP");
         testProduct.setClinicalProduct(Boolean.TRUE);
         testProduct.setPrimaryPriceItem(new PriceItem("qsID", "testPlatform", "testCategory", "blockThisItem"));
+        MessageCollection messageCollection = new MessageCollection();
 
         try {
-            testEjb.publishProductToSAP(testProduct);
-            Assert.fail();
+            testEjb.publishProductToSAP(testProduct, messageCollection);
+            assertThat(messageCollection.getWarnings(), is(not(Matchers.<String>empty())));
+            messageCollection.clearAll();
         } catch (SAPIntegrationException e) {
 
         }
@@ -384,7 +404,7 @@ public class ProductEjbDBFreeTest {
         Mockito.verify(mockWrappedClient, Mockito.times(0)).createMaterial(Mockito.any(SAPMaterial.class));
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(noControl);
-        testEjb.publishProductToSAP(testProduct);
+        testEjb.publishProductToSAP(testProduct, messageCollection);
 
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockWrappedClient, Mockito.times(2)).createMaterial(Mockito.any(SAPMaterial.class));
@@ -392,8 +412,9 @@ public class ProductEjbDBFreeTest {
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(blockControl);
         try {
-            testEjb.publishProductToSAP(testProduct);
-            Assert.fail();
+            testEjb.publishProductToSAP(testProduct, messageCollection);
+            assertThat(messageCollection.getWarnings(), is(not(Matchers.<String>empty())));
+            messageCollection.clearAll();
         } catch (SAPIntegrationException e) {
         }
 //        Mockito.when(productPriceCache.productExists(Mockito.any(Product.class))).thenReturn(Boolean.TRUE);
@@ -418,17 +439,17 @@ public class ProductEjbDBFreeTest {
 
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(noControl);
-        testEjb.publishProductToSAP(testProduct);
+        testEjb.publishProductToSAP(testProduct, messageCollection);
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockWrappedClient, Mockito.times(2)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(2)).changeMaterialDetails(Mockito.any(SAPMaterial.class));
 
-        testEjb.publishProductToSAP(testProduct);
+        testEjb.publishProductToSAP(testProduct, messageCollection);
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockWrappedClient, Mockito.times(2)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(4)).changeMaterialDetails(Mockito.any(SAPMaterial.class));
 
-        testEjb.publishProductToSAP(testProduct);
+        testEjb.publishProductToSAP(testProduct, messageCollection);
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockWrappedClient, Mockito.times(2)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(6)).changeMaterialDetails(Mockito.any(SAPMaterial.class));
@@ -436,8 +457,9 @@ public class ProductEjbDBFreeTest {
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(blockControl);
 
         try {
-            testEjb.publishProductToSAP(testProduct);
-            Assert.fail();
+            testEjb.publishProductToSAP(testProduct, messageCollection);
+            assertThat(messageCollection.getWarnings(), is(not(Matchers.<String>empty())));
+            messageCollection.clearAll();
         } catch (SAPIntegrationException e) {
 
         }
@@ -468,10 +490,12 @@ public class ProductEjbDBFreeTest {
         Product testProduct = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "SGM-TEST-SAP");
         testProduct.setClinicalProduct(Boolean.TRUE);
         testProduct.setPrimaryPriceItem(new PriceItem("qsID", "testPlatform", "testCategory", "blockThisItem"));
+        MessageCollection messageCollection = new MessageCollection();
 
         try {
-            testEjb.publishProductToSAP(testProduct);
-            Assert.fail();
+            testEjb.publishProductToSAP(testProduct, messageCollection);
+            assertThat(messageCollection.getWarnings(), is(not(Matchers.<String>empty())));
+            messageCollection.clearAll();
         } catch (SAPIntegrationException e) {
 
         }
@@ -480,7 +504,7 @@ public class ProductEjbDBFreeTest {
         Mockito.verify(mockWrappedClient, Mockito.times(0)).createMaterial(Mockito.any(SAPMaterial.class));
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(noControl);
-        testEjb.publishProductToSAP(testProduct);
+        testEjb.publishProductToSAP(testProduct, messageCollection);
 
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockWrappedClient, Mockito.times(2)).createMaterial(Mockito.any(SAPMaterial.class));
@@ -488,8 +512,9 @@ public class ProductEjbDBFreeTest {
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(blockControl);
         try {
-            testEjb.publishProductToSAP(testProduct);
-            Assert.fail();
+            testEjb.publishProductToSAP(testProduct, messageCollection);
+            assertThat(messageCollection.getWarnings(), is(not(Matchers.<String>empty())));
+            messageCollection.clearAll();
         } catch (SAPIntegrationException e) {
         }
 //        Mockito.when(productPriceCache.productExists(Mockito.any(Product.class))).thenReturn(Boolean.TRUE);
@@ -514,17 +539,17 @@ public class ProductEjbDBFreeTest {
 
 
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(noControl);
-        testEjb.publishProductToSAP(testProduct);
+        testEjb.publishProductToSAP(testProduct, messageCollection);
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockWrappedClient, Mockito.times(2)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(2)).changeMaterialDetails(Mockito.any(SAPMaterial.class));
 
-        testEjb.publishProductToSAP(testProduct);
+        testEjb.publishProductToSAP(testProduct, messageCollection);
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockWrappedClient, Mockito.times(2)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(4)).changeMaterialDetails(Mockito.any(SAPMaterial.class));
 
-        testEjb.publishProductToSAP(testProduct);
+        testEjb.publishProductToSAP(testProduct, messageCollection);
         assertThat(testProduct.isSavedInSAP(), is(true));
         Mockito.verify(mockWrappedClient, Mockito.times(2)).createMaterial(Mockito.any(SAPMaterial.class));
         Mockito.verify(mockWrappedClient, Mockito.times(6)).changeMaterialDetails(Mockito.any(SAPMaterial.class));
@@ -532,8 +557,9 @@ public class ProductEjbDBFreeTest {
         Mockito.when(mockSapAccessControl.getCurrentControlDefinitions()).thenReturn(blockControl);
 
         try {
-            testEjb.publishProductToSAP(testProduct);
-            Assert.fail();
+            testEjb.publishProductToSAP(testProduct, messageCollection);
+            assertThat(messageCollection.getWarnings(), is(not(Matchers.<String>empty())));
+            messageCollection.clearAll();
         } catch (SAPIntegrationException e) {
 
         }
