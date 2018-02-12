@@ -183,9 +183,9 @@ public class BillingAdaptor implements Serializable {
                     quote.setAlphanumericId(itemForPriceUpdate.getQuoteId());
                     itemForPriceUpdate.setQuote(quote);
 
-                    if(productOrderEjb.isOrderEligibleForSAP(itemForPriceUpdate.getProductOrder(), itemForPriceUpdate.getWorkCompleteDate()) &&
-                       itemForPriceUpdate.getProductOrder().isSavedInSAP() &&
-                       !isPriceItemBlocked(itemForPriceUpdate.getPriceItem().getName())) {
+                    if(!productOrderEjb.areProductsBlocked(Collections.singleton(new AccessItem(itemForPriceUpdate.getPriceItem().getName())))
+                       && productOrderEjb.isOrderEligibleForSAP(itemForPriceUpdate.getProductOrder(), itemForPriceUpdate.getWorkCompleteDate()) &&
+                       itemForPriceUpdate.getProductOrder().isSavedInSAP()) {
 
                         ProductOrder.checkQuoteValidity(quote,
                                 DateUtils.truncate(itemForPriceUpdate.getWorkCompleteDate(), Calendar.DATE));
@@ -295,11 +295,11 @@ public class BillingAdaptor implements Serializable {
                         }
                     }
 
-                    if( productOrderEjb.isOrderEligibleForSAP(item.getProductOrder(),item.getWorkCompleteDate() )
-                        && !item.getProductOrder().getOrderStatus().canPlace()
-                        && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
-                        && StringUtils.isBlank(item.getSapItems())
-                            && !isPriceItemBlocked(priceItemBeingBilled.getName())) {
+                    if(!productOrderEjb.areProductsBlocked(Collections.singleton(new AccessItem(priceItemBeingBilled.getName()))) &&
+                       productOrderEjb.isOrderEligibleForSAP(item.getProductOrder(),item.getWorkCompleteDate() )
+                       && !item.getProductOrder().getOrderStatus().canPlace()
+                       && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
+                       && StringUtils.isBlank(item.getSapItems())) {
 
                         final SAPMaterial material = productPriceCache.findByProduct(item.getProduct(),
                                 item.getProductOrder().getSapCompanyConfigurationForProductOrder());
@@ -331,9 +331,9 @@ public class BillingAdaptor implements Serializable {
                         PriceAdjustment singlePriceAdjustment =
                                 item.getProductOrder().getAdjustmentForProduct(item.getProduct());
 
-                        if (productOrderEjb.isOrderEligibleForSAP(item.getProductOrder(),item.getWorkCompleteDate())
-                            && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
-                            && !isPriceItemBlocked(priceItemBeingBilled.getName())) {
+                        if (!productOrderEjb.areProductsBlocked(Collections.singleton(new AccessItem(priceItemBeingBilled.getName()))) &&
+                            productOrderEjb.isOrderEligibleForSAP(item.getProductOrder(),item.getWorkCompleteDate())
+                            && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
 
 
 
@@ -370,11 +370,11 @@ public class BillingAdaptor implements Serializable {
                     }
 
 
-                    if( productOrderEjb.isOrderEligibleForSAP(item.getProductOrder(), item.getWorkCompleteDate() )
+                    if(!productOrderEjb.areProductsBlocked(Collections.singleton(new AccessItem(priceItemBeingBilled.getName())))
+                        && productOrderEjb.isOrderEligibleForSAP(item.getProductOrder(), item.getWorkCompleteDate() )
                         && !item.getProductOrder().getOrderStatus().canPlace()
                         && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())
-                        && StringUtils.isBlank(item.getSapItems())
-                        && !isPriceItemBlocked(priceItemBeingBilled.getName()))
+                        && StringUtils.isBlank(item.getSapItems()))
                     {
 
                         if(item.getQuantityForSAP() != 0) {
@@ -437,13 +437,6 @@ public class BillingAdaptor implements Serializable {
         }
 
         return results;
-    }
-
-    private boolean isPriceItemBlocked(String priceItemName) {
-        final SAPAccessControl currentControlDefinitions = sapAccessControlEjb.getCurrentControlDefinitions();
-
-        return CollectionUtils.containsAny(currentControlDefinitions.getDisabledItems(),
-                Collections.singleton(new AccessItem(priceItemName)));
     }
 
     /**
