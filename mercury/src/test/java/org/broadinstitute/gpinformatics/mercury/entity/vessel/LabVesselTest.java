@@ -114,7 +114,7 @@ public class LabVesselTest {
                 mapBarcodeToVessel, new HashMap<String, MercurySample>(),
                 new HashMap<String, Set<ProductOrderSample>>(), "jowalsh",
                 new Date(), Collections.singletonList(parentVesselBean), LabEventType.SAMPLE_IMPORT,
-                MercurySample.MetadataSource.BSP);
+                MercurySample.MetadataSource.BSP).getLeft();
         Map<LabEvent, Set<LabVessel>> vesselsForLabEventType = sourceTube1.findVesselsForLabEventType(
                 LabEventType.SAMPLE_IMPORT, true);
         Assert.assertEquals(vesselsForLabEventType.size(), 1);
@@ -167,7 +167,7 @@ public class LabVesselTest {
                 mapBarcodeToVessel, new HashMap<String, MercurySample>(),
                 new HashMap<String, Set<ProductOrderSample>>(), "jowalsh",
                 new Date(), Collections.singletonList(parentVesselBean), LabEventType.SAMPLE_IMPORT,
-                MercurySample.MetadataSource.BSP);
+                MercurySample.MetadataSource.BSP).getLeft();
 
         BarcodedTube tube1 = (BarcodedTube)labVessels.get(0);
         Assert.assertEquals(tube1.getTubeType(), BarcodedTube.BarcodedTubeType.VacutainerBloodTubeEDTA_3);
