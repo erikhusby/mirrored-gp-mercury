@@ -81,7 +81,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil.isInBs
  * In all cases a SampleInstanceEntity and associated MercurySample and LabVessel are created or overwritten.
  */
 public class SampleInstanceEjb {
-    static final String CONFLICT = "Row #%d conflicting value of %s (found \"%s\", expected \"%s\"%s) %s";
+    static final String CONFLICT = "Row #%d conflicting value of %s (found \"%s\", expected \"%s\" %s)";
     static final String MISSING = "Row #%d missing value of %s";
     static final String WRONG_TYPE = "Row #%d %s must be %s";
     static final String MUST_NOT_BE = "Row #%d %s must not be %s";
@@ -239,11 +239,10 @@ public class SampleInstanceEjb {
 
     /**
      * Pooled Tube uploads create SampleInstanceEntities from the user provided spreadsheet. Any errors are
-     * put in UI error messages. This much is the same as External Library uploads. The main differences are:
-     *   - Basic input is tube barcode and sample name, though a unique library name is also required.
-     *   - The tube and sample may or may not be already known to Mercury and BSP.
-     *   - A DEV batch and the relevant subtask tickets must be specified in the spreadsheet.
-     *   - A pool can be uploaded by repeating the barcode in multiple spreadsheet rows with different sample names.
+     * put in UI error messages. The main differences between External Library uploads and Pooled tube uploads
+     * are that pooled tube spreadsheet must give the tube barcode and sample name, which may or may not be
+     * known to Mercury and BSP; a JIRA DEV ticket and the relevant subtask ticket must be given; and a pool
+     * can be uploaded by repeating the barcode in multiple spreadsheet rows with different sample names.
      */
     private List<SampleInstanceEntity> verifyAndPersistSpreadsheet(VesselPooledTubesProcessor processor,
             MessageCollection messages, boolean overWriteFlag) {
@@ -471,7 +470,7 @@ public class SampleInstanceEjb {
                         if (!bigDecimal.equals(mapBarcodeToVolume.get(barcode))) {
                             messages.addError(String.format(CONFLICT, rowIndex + rowOffset,
                                     VesselPooledTubesProcessor.Headers.VOLUME.getText(), bigDecimal.toPlainString(),
-                                    mapBarcodeToVolume.get(barcode).toPlainString(), "", ""));
+                                    mapBarcodeToVolume.get(barcode).toPlainString(), ""));
                         }
                     } else {
                         mapBarcodeToVolume.put(barcode, bigDecimal);
@@ -494,7 +493,7 @@ public class SampleInstanceEjb {
                             messages.addError(String.format(CONFLICT, rowIndex + rowOffset,
                                     VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE.getText(),
                                     bigDecimal.toPlainString(),
-                                    mapBarcodeToFragmentSize.get(barcode).toPlainString(), "", ""));
+                                    mapBarcodeToFragmentSize.get(barcode).toPlainString(), ""));
                         }
                     } else {
                         mapBarcodeToFragmentSize.put(barcode, bigDecimal);
@@ -784,12 +783,13 @@ public class SampleInstanceEjb {
 
 
     /**
-     * Verifies and persists External Library Upload spreadsheet. This differs from the
-     * PooledTube upload in that there is no explicit barcode nor sample name, and the
-     * library name which is unique on the spreadsheet is used for both. This means no
-     * pooling can be done for tubes by repeating their barcode in rows of the spreadsheet,
-     * and all sample metadata must be present on every row. There is no need for this code
-     * to make dtos to track aggregation, since every row will become a sampleInstanceEntity.
+     * Verifies and persists External Library Upload spreadsheet. Unlike PooledTube uploads, External
+     * Library uploads have no sample names, so the library name is used for that. All sample metadata
+     * must be present on every row since samples are expected to be unknown to Mercury and BSP (except
+     * when overwriting a previous external upload). The tube barcode is optional in the spreadsheet.
+     * If it is provided it must not already exist in Mercury (unless a previous upload is being
+     * overwritten), and if not provided then the library name is used, though it's likely that the
+     * tube barcode will be updated by the lab user to the actual value in a later step.
      */
     private List<SampleInstanceEntity> verifyAndPersistSpreadsheet(ExternalLibraryProcessor processor,
             MessageCollection messages, boolean overWriteFlag) {
@@ -825,6 +825,11 @@ public class SampleInstanceEjb {
                 messages.addError(String.format(WRONG_TYPE, rowNumber, "Library Name",
                         "composed of " + RESTRICTED_MESSAGE));
             }
+            // Disallow a library name that could cause the sample to collide with an existing or future BSP sample.
+            if (isInBspFormat(libraryName)) {
+                messages.addError(String.format(BSP_FORMAT, rowNumber, "Library Name", libraryName));
+            }
+
             SampleInstanceEntity sampleInstanceEntity = sampleInstanceEntityDao.findByName(libraryName);
             if (sampleInstanceEntity != null) {
                 sampleInstanceEntities.put(index, sampleInstanceEntity);
@@ -833,16 +838,13 @@ public class SampleInstanceEjb {
                 }
             }
 
-            // Library name is used as the sample name, and if the sample doesn't already exist then
-            // disallow a library name that could cause the sample to collide with a future BSP sample.
+            // Library name is used as the sample name.
             MercurySample mercurySample = mercurySampleDao.findBySampleKey(libraryName);
             if (mercurySample != null) {
                 mercurySamples.put(index, mercurySample);
                 if (!overWriteFlag) {
                     messages.addError(String.format(PREXISTING, rowNumber, "Sample", libraryName));
                 }
-            } else if (isInBspFormat(libraryName)) {
-                messages.addError(String.format(BSP_FORMAT, rowNumber, "Library Name", libraryName));
             }
 
             String barcode = get(processor.getBarcodes(), index);
@@ -853,13 +855,15 @@ public class SampleInstanceEjb {
             }
             // Tube barcode must only appear in one row.
             if (!uniqueBarcodes.add(barcode)) {
-                messages.addError(String.format(DUPLICATE, rowNumber, "Tube Barcode"));
+                messages.addError(String.format(DUPLICATE, rowNumber,
+                        ExternalLibraryProcessorEzPass.Headers.TUBE_BARCODE.getText()));
             }
             LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
             if (labVessel != null) {
                 labVessels.put(index, labVessel);
                 if (!overWriteFlag) {
-                    messages.addError(String.format(PREXISTING, rowNumber, "Tube", barcode));
+                    messages.addError(String.format(PREXISTING, rowNumber,
+                            ExternalLibraryProcessorEzPass.Headers.TUBE_BARCODE.getText(), barcode));
                 }
             } else {
                 // A new tube must not have a barcode that may someday collide with Mercury, so
@@ -918,8 +922,8 @@ public class SampleInstanceEjb {
                         String analysisType = StringUtils.trimToEmpty(get(processor.getDataAnalysisType(), index));
                         if (!analysisType.equalsIgnoreCase(productAnalysisType)) {
                             messages.addError(String.format(CONFLICT, rowNumber, "Data Analysis Type",
-                                    analysisType, productAnalysisType, "defined in Product " +
-                                            productOrder.getProduct().getPartNumber()));
+                                    analysisType, productAnalysisType,
+                                    "from Product " + productOrder.getProduct().getPartNumber()));
                         }
                     }
                     ResearchProject researchProject = productOrder.getResearchProject();
@@ -992,6 +996,7 @@ public class SampleInstanceEjb {
             kit.setGenus(processor.getGenus());
             kit.setSpecies(processor.getSpecies());
             kit.setIrbApprovalRequired(processor.getIrbRequired());
+            sampleKitRequestDao.persist(kit);
         }
 
         Collection<Object> newObjects = new ArrayList<>();
@@ -1237,7 +1242,7 @@ public class SampleInstanceEjb {
                         String.valueOf(researchProject.getResearchProjectId());
                 messages.addError(String.format(CONFLICT, rowNumber, "IRB Number", irbNumber,
                         StringUtils.join(researchProject.getIrbNumbers(), "\" or \""),
-                        "defined in ResearchProject " + identifier));
+                        "from ResearchProject " + identifier));
             }
         }
     }
@@ -1394,7 +1399,7 @@ public class SampleInstanceEjb {
         private void compareNonBlankValues(String actual, String expected, String column, int rowNumber,
                 MessageCollection messages) {
             if (isNotBlank(actual) && !actual.equals(expected)) {
-                messages.addError(String.format(CONFLICT, rowNumber, column, actual, expected, "", ""));
+                messages.addError(String.format(CONFLICT, rowNumber, column, actual, expected, ""));
             }
         }
 

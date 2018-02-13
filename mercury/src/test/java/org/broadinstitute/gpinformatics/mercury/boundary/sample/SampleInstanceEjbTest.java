@@ -198,20 +198,20 @@ public class SampleInstanceEjbTest extends Arquillian {
 
                 if (overwrite) {
                     errorIfMissing(errors, filename, String.format(SampleInstanceEjb.CONFLICT, 3,
-                            VesselPooledTubesProcessor.Headers.COLLABORATOR_PARTICIPANT_ID.getText(), "12001-015", "", "", ""));
+                            VesselPooledTubesProcessor.Headers.COLLABORATOR_PARTICIPANT_ID.getText(), "12001-015", "", ""));
                     errorIfMissing(errors, filename, String.format(SampleInstanceEjb.CONFLICT, 3,
-                            VesselPooledTubesProcessor.Headers.COLLABORATOR_SAMPLE_ID.getText(), "12102402873", "", "", ""));
+                            VesselPooledTubesProcessor.Headers.COLLABORATOR_SAMPLE_ID.getText(), "12102402873", "", ""));
                     errorIfMissing(errors, filename, String.format(SampleInstanceEjb.CONFLICT, 3,
-                            VesselPooledTubesProcessor.Headers.GENDER.getText(), "Male", "", "", ""));
+                            VesselPooledTubesProcessor.Headers.GENDER.getText(), "Male", "", ""));
                     errorIfMissing(errors, filename, String.format(SampleInstanceEjb.CONFLICT, 3,
-                            VesselPooledTubesProcessor.Headers.ROOT_SAMPLE_ID.getText(), "SM-UNKNOWN", "", "", ""));
+                            VesselPooledTubesProcessor.Headers.ROOT_SAMPLE_ID.getText(), "SM-UNKNOWN", "", ""));
                     errorIfMissing(errors, filename, String.format(SampleInstanceEjb.DUPLICATE, 3,
                             VesselPooledTubesProcessor.Headers.MOLECULAR_INDEXING_SCHEME.getText() +
                                     " in tube 01509634244"));
                     errorIfMissing(errors, filename, String.format(SampleInstanceEjb.CONFLICT, 3,
-                            VesselPooledTubesProcessor.Headers.VOLUME.getText(), "61.00", "60.00", "", ""));
+                            VesselPooledTubesProcessor.Headers.VOLUME.getText(), "61.00", "60.00", ""));
                     errorIfMissing(errors, filename, String.format(SampleInstanceEjb.CONFLICT, 3,
-                            VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE.getText(), "151.00", "150.00", "", ""));
+                            VesselPooledTubesProcessor.Headers.FRAGMENT_SIZE.getText(), "151.00", "150.00", ""));
                     errorIfMissing(warnings, filename, String.format(SampleInstanceEjb.DUPLICATE_S_M, 3,
                             "SM-748OO", "Illumina_P5-Nijow_P7-Waren"));
 
@@ -238,7 +238,7 @@ public class SampleInstanceEjbTest extends Arquillian {
                                     VesselPooledTubesProcessor.Headers.CAT.getText(), "both"));
                     errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN_COND, 8, "DEV-6796"));
                     errorIfMissing(errors, filename, String.format(SampleInstanceEjb.CONFLICT, 8,
-                            VesselPooledTubesProcessor.Headers.LSID.getText(), "lsid:3", "lsid:1", "", ""));
+                            VesselPooledTubesProcessor.Headers.LSID.getText(), "lsid:3", "lsid:1", ""));
                     errorIfMissing(warnings, filename, String.format(SampleInstanceEjb.DUPLICATE_S_M, 8,
                             "SM-748OO", "Illumina_P5-Nijow_P7-Waren"));
 

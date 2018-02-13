@@ -62,7 +62,6 @@ public class SampleInstanceEntityDao extends GenericDao {
                 CriteriaQuery<SampleInstanceEntity> criteria = cb.createQuery(SampleInstanceEntity.class);
                 Root<SampleInstanceEntity> root = criteria.from(SampleInstanceEntity.class);
                 Join<SampleInstanceEntity, LabVessel> labVessels = root.join(SampleInstanceEntity_.labVessel);
-                //criteria.select(root).where(labVessels.get(LabVessel_.label).in(parameterList));
                 criteria.select(root).where(labVessels.get(LabVessel_.label).in(parameterList));
                 return getEntityManager().createQuery(criteria);
             }
@@ -71,7 +70,7 @@ public class SampleInstanceEntityDao extends GenericDao {
 
     /**
      * Returns a map of identifier to mercury sample for the sample instance entities identified either
-     * by sample name or by lab vessel barcode. There may be mulitple MercurySamples for one barcode.
+     * by sample name or by lab vessel barcode. There may be multiple MercurySamples for one barcode.
      */
     public Multimap<String, MercurySample> lookupSamplesByIdentifiers(Collection<String> identifiers) {
         Multimap<String, MercurySample> map = HashMultimap.create();
