@@ -1579,14 +1579,14 @@
             <workflowStepDefs>
                 <name>Transfer to microcentrifuge tube</name>
                 <labEventTypes>EXTRACT_BLOOD_TO_MICRO</labEventTypes>
-                <reagentTypes>Proteinase K</reagentTypes>
-                <reagentTypes>Buffer AL</reagentTypes>
                 <instructions>Label one microcentrifuge tube for each sample. Pipet 20ul of proteinase K into the tube.
                     Add 200ul of blood to each microcentrifuge tube.
                     Add 200ul of Buffer AL to each microcentrifuge tube.
                 </instructions>
                 <manualTransferDetails>
                     <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <reagentNames>Proteinase K</reagentNames>
+                    <reagentNames>Buffer AL</reagentNames>
                     <sourceVesselTypeGeometryString>RackType.FlipperRackRow8</sourceVesselTypeGeometryString>
                     <sourceSection>ROWOF8</sourceSection>
                     <targetVesselTypeGeometryString>RackType.FlipperRackRow8</targetVesselTypeGeometryString>
