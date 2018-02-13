@@ -167,7 +167,7 @@ public class SubmissionDto implements ISubmissionTuple {
             datatype = aggregation.getDataType();
             project = aggregation.getProject();
             version = aggregation.getVersion();
-            rpid = aggregation.getProject();
+            rpid = aggregation.getMercuryProject();
             processingLocation = aggregation.getProcessingLocation();
             submissionTuple = aggregation.getTuple();
             fileType = submissionTuple.getFileType();

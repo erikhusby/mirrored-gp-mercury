@@ -126,7 +126,7 @@ public class SubmissionTuple implements ISubmissionTuple {
         return processingLocation;
     }
 
-    public static List<String> extractSampleNames(List<SubmissionTuple> tuples) {
+    public static List<String> extractSampleNames(Collection<SubmissionTuple> tuples) {
         List<String> samples = new ArrayList<>();
         for (SubmissionTuple tuple : tuples) {
             samples.add(tuple.getSampleName());

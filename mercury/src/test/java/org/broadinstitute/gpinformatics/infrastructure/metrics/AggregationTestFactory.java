@@ -35,7 +35,7 @@ public class AggregationTestFactory {
         AggregationWgs aggregationWgs=new AggregationWgs(meanCoverageWgs);
 
         AggregationReadGroup aggregationReadGroup = new AggregationReadGroup(null, 2, null,
-            new ReadGroupIndex(null, null, 2, null, null, null, project, sample, productOrder));
+            new ReadGroupIndex(null, null, 2, null, null, null, project, project, sample, productOrder));
 
         Integer readGroupCount = 2;
 

@@ -14,6 +14,8 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardAnal
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardAnalysis_;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardFingerprint;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardFingerprint_;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.ReadGroupIndex;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.ReadGroupIndex_;
 
 import javax.ejb.Stateful;
 import javax.persistence.EntityManager;
@@ -29,6 +31,7 @@ import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+import javax.persistence.criteria.SetJoin;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -56,6 +59,9 @@ public class AggregationMetricsFetcher {
         CriteriaQuery<Aggregation> criteriaQuery = criteriaBuilder.createQuery(Aggregation.class);
         Root<Aggregation> root = criteriaQuery.from(Aggregation.class);
         root.fetch(Aggregation_.aggregationWgs);
+        SetJoin<Aggregation, AggregationReadGroup> aggregationReadGroupJoin = root.join(Aggregation_.aggregationReadGroups);
+        Join<AggregationReadGroup, ReadGroupIndex> readGroupIndexJoin =
+            aggregationReadGroupJoin.join(AggregationReadGroup_.readGroupIndex);
 
         List<Aggregation> allResults = new ArrayList<>();
         Map<String, Collection<SubmissionTuple>> tuplesByProject = SubmissionTuple.byProject(tuples);
@@ -66,8 +72,12 @@ public class AggregationMetricsFetcher {
             for (List<SubmissionTuple> tuplesSublist : Iterables.partition(tupleList, MAX_AGGREGATION_FETCHER_QUERY_SIZE)) {
                 List<Aggregation> aggregations = new ArrayList<>();
                 List<Predicate> predicates = new ArrayList<>();
-
-                predicates.add(criteriaBuilder.equal(root.get(Aggregation_.project), projectName));
+                Predicate projectJoin = criteriaBuilder.and(
+                    criteriaBuilder.or(
+                        criteriaBuilder.equal(readGroupIndexJoin.get(ReadGroupIndex_.mercuryProject), projectName),
+                        criteriaBuilder.equal(readGroupIndexJoin.get(ReadGroupIndex_.project), projectName)
+                ));
+                predicates.add(projectJoin);
                 predicates.add(criteriaBuilder.isNull(root.get(Aggregation_.library)));
                 predicates.add(criteriaBuilder.isTrue(root.get(Aggregation_.latest)));
                 predicates.add(root.get(Aggregation_.sample).in(SubmissionTuple.extractSampleNames(tuplesSublist)));

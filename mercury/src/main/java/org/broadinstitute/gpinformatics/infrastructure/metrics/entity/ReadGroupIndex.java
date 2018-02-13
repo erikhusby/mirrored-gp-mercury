@@ -42,8 +42,10 @@ public class ReadGroupIndex implements Serializable{
     private String libraryType;
     @Column(name = "ANALYSIS_TYPE", nullable = false, insertable = false, updatable = false)
     private String analysisType;
-    @Column(name = "RESEARCH_PROJECT_ID")
+    @Column(name = "PROJECT")
     private String project;
+    @Column(name = "RESEARCH_PROJECT_ID")
+    private String mercuryProject;
     @Column(name = "SAMPLE_ALIAS")
     private String sampleAlias;
     @Column(name = "PRODUCT_ORDER_ID")
@@ -53,7 +55,8 @@ public class ReadGroupIndex implements Serializable{
     }
 
     public ReadGroupIndex(Long id, String flowcellBarcode, long lane, String libraryName, String libraryType,
-                          String analysisType, String project, String sampleAlias, String productOrderId) {
+                          String analysisType, String project, String mercuryProject, String sampleAlias,
+                          String productOrderId) {
         this.id = id;
         this.flowcellBarcode = flowcellBarcode;
         this.lane = lane;
@@ -61,6 +64,7 @@ public class ReadGroupIndex implements Serializable{
         this.libraryType = libraryType;
         this.analysisType = analysisType;
         this.project = project;
+        this.mercuryProject = mercuryProject;
         this.sampleAlias = sampleAlias;
         this.productOrderId = productOrderId;
     }
@@ -111,6 +115,10 @@ public class ReadGroupIndex implements Serializable{
         return analysisType;
     }
 
+    public String getMercuryProject() {
+        return mercuryProject;
+    }
+
     @Override
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     public boolean equals(Object o) {
@@ -136,6 +144,7 @@ public class ReadGroupIndex implements Serializable{
             .append(libraryType, that.libraryType)
             .append(analysisType, that.analysisType)
             .append(project, that.project)
+            .append(mercuryProject, that.mercuryProject)
             .append(sampleAlias, that.sampleAlias)
             .append(productOrderId, that.productOrderId)
             .isEquals();
@@ -151,6 +160,7 @@ public class ReadGroupIndex implements Serializable{
             .append(libraryType)
             .append(analysisType)
             .append(project)
+            .append(mercuryProject)
             .append(sampleAlias)
             .append(productOrderId)
             .toHashCode();

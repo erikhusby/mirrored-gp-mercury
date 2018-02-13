@@ -57,7 +57,7 @@ public class ReadGroupIndexTest {
     public void testGetAnalysisType(String analysisType, String libraryType, SubmissionLibraryDescriptor expected)
         throws Exception {
         ReadGroupIndex readGroupIndex = new ReadGroupIndex(null, "flowcell", 1l, "my library",
-            libraryType, analysisType, "project", "my sample", "PDO-1234");
+            libraryType, analysisType, "project", "rp-project", "my sample", "PDO-1234");
 
         assertThat(readGroupIndex.getLibraryType(), is(equalTo(expected)));
     }

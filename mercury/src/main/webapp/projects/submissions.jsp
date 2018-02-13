@@ -180,12 +180,14 @@
                         if (Array.isArray(data)) {
                             var pdos=[];
                             for (var i = 0; i < data.length; i++) {
-                                pdoPair = data[i].split(/:\s+/);
-                                pdos.push( jQuery("<a/>", {
-                                    href: "${ctxpath}/orders/order.action?view=&productOrder=" + pdoPair[0],
-                                    class: "noWrap",
-                                    text: pdoPair[0],
-                                })[0].outerHTML);
+                                if (data[i] != null) {
+                                    pdoPair = data[i].split(/:\s+/);
+                                    pdos.push( jQuery("<a/>", {
+                                        href: "${ctxpath}/orders/order.action?view=&productOrder=" + pdoPair[0],
+                                        class: "noWrap",
+                                        text: pdoPair[0],
+                                    })[0].outerHTML);
+                                }
                             }
                             return pdos.join(", ");
                         }

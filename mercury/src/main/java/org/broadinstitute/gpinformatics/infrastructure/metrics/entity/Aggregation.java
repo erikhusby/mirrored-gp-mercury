@@ -118,6 +118,14 @@ public class Aggregation {
         this.levelOfDetection = levelOfDetection;
     }
 
+    public String getMercuryProject() {
+        for (AggregationReadGroup aggregationReadGroup : getAggregationReadGroups()) {
+            if (aggregationReadGroup.getReadGroupIndex() != null) {
+                return aggregationReadGroup.getReadGroupIndex().getMercuryProject();
+            }
+        }
+        return null;
+    }
 
     @Transient
     public SubmissionTuple getTuple() {
