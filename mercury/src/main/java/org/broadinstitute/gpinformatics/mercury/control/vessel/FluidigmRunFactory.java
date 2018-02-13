@@ -1,17 +1,21 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.SnpDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.run.Snp;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.ejb.Stateful;
@@ -24,6 +28,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Upload a Fingerprinting Run and its associated metrics/metadata
@@ -38,15 +43,20 @@ public class FluidigmRunFactory {
     @Inject
     private LabMetricRunDao labMetricRunDao;
 
-    public LabMetricRun createFluidigmChipRun(InputStream inputStream, Long decidingUser, MessageCollection messageCollection) {
+    @Inject
+    private SnpDao snpDao;
+
+    public Pair<StaticPlate, LabMetricRun> createFluidigmChipRun(InputStream inputStream, Long decidingUser, MessageCollection messageCollection) {
         FluidigmChipProcessor fluidigmChipProcessor = new FluidigmChipProcessor();
         FluidigmChipProcessor.FluidigmRun fluidigmRun = fluidigmChipProcessor.parse(inputStream);
         messageCollection.addAll(fluidigmChipProcessor.getMessageCollection());
 
         // Fetch Chip
-        StaticPlate staticPlate = staticPlateDao.findByBarcode(fluidigmRun.getChipBarcode());
+        String chipBarcode = fluidigmRun.getChipBarcode();
+        String formattedBarcode = StringUtils.leftPad(chipBarcode, 12, '0');
+        StaticPlate staticPlate = staticPlateDao.findByBarcode(formattedBarcode);
         if (staticPlate == null) {
-            messageCollection.addError("Failed to find chip " + fluidigmRun.getChipBarcode());
+            messageCollection.addError("Failed to find chip " + formattedBarcode);
             return null;
         }
 
@@ -58,100 +68,211 @@ public class FluidigmRunFactory {
             return null;
         }
 
-        // TODO Maybe get back to this? There isn't really a concept of a run here?
         LabMetricRun labMetricRun = labMetricRunDao.findByName(fluidigmRun.buildRunName());
         if (labMetricRun != null) {
             messageCollection.addError("This run has been uploaded previously.");
-            return labMetricRun;
+            return Pair.of(staticPlate, labMetricRun);
         }
 
         // Run date must be unique so that a search can reveal the latest quant.
         List<LabMetricRun> sameDateRuns = labMetricRunDao.findSameDateRuns(fluidigmRun.getRunDate());
         if (CollectionUtils.isNotEmpty(sameDateRuns)) {
             messageCollection.addError("A previous upload has the same Run Started timestamp.");
-            return sameDateRuns.iterator().next();
+            return Pair.of(staticPlate, sameDateRuns.iterator().next());
         }
 
         traverserResult.getWellToTubePosition();
 
-        // TODO Can you re run the same chip? Like Accept Re-Pico?
-        LabMetricRun run = createFluidigmRunDaoFree(fluidigmRun, staticPlate, decidingUser, messageCollection,
-                traverserResult);
+        Set<String> polyAssays = fluidigmRun.getPolyAssays();
+        Map<String, Snp> mapAssayToSnp = snpDao.findByRsIds(polyAssays);
+        for (Map.Entry<String, Snp> entry: mapAssayToSnp.entrySet()) {
+            if (entry.getValue() == null) {
+                messageCollection.addError("Failed to find assay " + entry.getKey() + " in database.");
+                return null;
+            }
+        }
 
-        return null;
+        LabMetricRun run = createFluidigmRunDaoFree(fluidigmRun, staticPlate, decidingUser, messageCollection,
+                traverserResult, mapAssayToSnp);
+
+        if (!messageCollection.hasErrors()) {
+            labMetricRunDao.persist(run);
+        }
+        return Pair.of(staticPlate, run);
     }
 
     @DaoFree
     public LabMetricRun createFluidigmRunDaoFree(FluidigmChipProcessor.FluidigmRun fluidigmRun,
-                                                 StaticPlate staticPlate, Long decidingUser,
+                                                 StaticPlate ifcChip, Long decidingUser,
                                                  MessageCollection messageCollection,
-                                                 StaticPlate.TubeFormationByWellCriteria.Result traverserResult) {
-        // TODO Lab Metric Run
+                                                 StaticPlate.TubeFormationByWellCriteria.Result traverserResult,
+                                                 Map<String, Snp> mapAssayToSnp) {
         LabMetricRun labMetricRun = new LabMetricRun(fluidigmRun.buildRunName(), fluidigmRun.getRunDate(),
-                LabMetric.MetricType.FINAL_LIBRARY_SIZE);
+                LabMetric.MetricType.FLUIDIGM_FINGERPRINTING);
         labMetricRun.getMetadata().add(new Metadata(Metadata.Key.INSTRUMENT_NAME,
                 fluidigmRun.getInstrumentName()));
 
-        TubeFormation tubeFormation = traverserResult.getTubeFormation();
-        Map<LabVessel, List<FluidigmChipProcessor.FluidigmDataRow>> mapLabVesselToRecords = new HashMap<>();
+        Map<VesselPosition, VesselPosition> tubePositionToWell = new HashMap<>();
+        for (Map.Entry<VesselPosition, VesselPosition> entry : traverserResult.getWellToTubePosition().entrySet()) {
+            tubePositionToWell.put(entry.getValue(), entry.getKey());
+        }
+
+        Map<PlateWell, List<FluidigmChipProcessor.FluidigmDataRow>> mapLabVesselToRecords = new HashMap<>();
+        Map<String, PlateWell> mapSampleNameToPlateWell = new HashMap<>();
         for (FluidigmChipProcessor.FluidigmDataRow record: fluidigmRun.getRecords()) {
             String chamberId = record.getId();
             String sampleName = chamberId.split("-")[0]; // S01
             int sampleNum = Integer.parseInt(sampleName.substring(1));
             String well = convertIntToWellPosition(sampleNum, 12);
-            VesselPosition vesselPosition = VesselPosition.getByName(well);
-            LabVessel sourceTube = tubeFormation.getContainerRole().getVesselAtPosition(vesselPosition);
-            if (!mapLabVesselToRecords.containsKey(sourceTube)) {
-                mapLabVesselToRecords.put(sourceTube, new ArrayList<FluidigmChipProcessor.FluidigmDataRow>());
+            VesselPosition tubeVesselPosition = VesselPosition.getByName(well);
+            VesselPosition vesselPosition = tubePositionToWell.get(tubeVesselPosition);
+            PlateWell plateWell = ifcChip.getContainerRole().getVesselAtPosition(vesselPosition);
+            if (plateWell == null) {
+                plateWell = new PlateWell(ifcChip, vesselPosition);
+                ifcChip.getContainerRole().addContainedVessel(plateWell, vesselPosition);
             }
-            mapLabVesselToRecords.get(sourceTube).add(record);
+            if (!mapLabVesselToRecords.containsKey(plateWell)) {
+                mapLabVesselToRecords.put(plateWell, new ArrayList<FluidigmChipProcessor.FluidigmDataRow>());
+            }
+            mapSampleNameToPlateWell.put(sampleName, plateWell);
+            mapLabVesselToRecords.get(plateWell).add(record);
         }
 
-        double q17CallConfidenceThreshold = 98.0;
+        double q17Threshold = 98.0;
+        double q20Threshold = 99.0;
+        generateCallRateLabMetrics(labMetricRun, LabMetric.MetricType.CALL_RATE_Q17, decidingUser, mapAssayToSnp,
+                mapLabVesselToRecords, q17Threshold);
+        generateCallRateLabMetrics(labMetricRun, LabMetric.MetricType.CALL_RATE_Q20, decidingUser, mapAssayToSnp,
+                mapLabVesselToRecords, q20Threshold);
+        generateRoxIntensities(labMetricRun);
 
-        // For each tube build Q20 Scores??
-        for (Map.Entry<LabVessel, List<FluidigmChipProcessor.FluidigmDataRow>> entry: mapLabVesselToRecords.entrySet()) {
-            LabVessel labVessel = entry.getKey();
+        // ROX Data
+        for (Map.Entry<String, DescriptiveStatistics>  entry: fluidigmRun.getMapAssayToRawStatistics().entrySet()) {
+            String assayKey = entry.getKey();
+            String assayName = fluidigmRun.getAssayNamesByAssayKey().get(assayKey);
+            DescriptiveStatistics descriptiveStatistics = entry.getValue();
+            if (descriptiveStatistics.getN() > 0) {
+//                 TODO What to attach this to
+//                LabMetric labMetric = new LabMetric(descriptiveStatistics.getSum(),
+//                        LabMetric.MetricType.ROX_ASSAY_RAW_DATA_COUNT, LabMetric.LabUnit.NUMBER,
+//                        plateWell.getVesselPosition().name(), new Date());
+            }
+        }
 
-            VesselPosition position = tubeFormation.getContainerRole().getPositionOfVessel(labVessel);
-            // Calculate Q17 Score
-            // Calculate Gender Discordances
-            // Try Count can be in UDS
-            double totalGenotypes = entry.getValue().size();
+        for (Map.Entry<String, DescriptiveStatistics>  entry: fluidigmRun.getMapSampleToRawStatistics().entrySet()) {
+            String sampleKey = entry.getKey();
+            DescriptiveStatistics descriptiveStatistics = entry.getValue();
+            PlateWell plateWell = mapSampleNameToPlateWell.get(sampleKey);
+            if (plateWell != null && descriptiveStatistics.getN() > 0) {
+                BigDecimal sum = new BigDecimal(descriptiveStatistics.getSum());
+                LabMetric sumMetric = new LabMetric(sum, LabMetric.MetricType.ROX_SAMPLE_RAW_DATA_COUNT,
+                        LabMetric.LabUnit.NUMBER, plateWell.getVesselPosition().name(), new Date());
+                labMetricRun.addMetric(sumMetric);
+                plateWell.addMetric(sumMetric);
+
+                BigDecimal mean = new BigDecimal(descriptiveStatistics.getMean());
+                LabMetric meanMetric = new LabMetric(mean, LabMetric.MetricType.ROX_SAMPLE_RAW_DATA_MEAN,
+                        LabMetric.LabUnit.NUMBER, plateWell.getVesselPosition().name(), new Date());
+                labMetricRun.addMetric(meanMetric);
+                plateWell.addMetric(meanMetric);
+
+                BigDecimal median = new BigDecimal(descriptiveStatistics.getPercentile(50));
+                LabMetric medianMetric = new LabMetric(median, LabMetric.MetricType.ROX_SAMPLE_RAW_DATA_MEDIAN,
+                        LabMetric.LabUnit.NUMBER, plateWell.getVesselPosition().name(), new Date());
+                labMetricRun.addMetric(medianMetric);
+                plateWell.addMetric(medianMetric);
+
+                BigDecimal stdDev = new BigDecimal(descriptiveStatistics.getStandardDeviation());
+                LabMetric stdDevMetric = new LabMetric(stdDev, LabMetric.MetricType.ROX_SAMPLE_RAW_DATA_STD_DEV,
+                        LabMetric.LabUnit.NUMBER, plateWell.getVesselPosition().name(), new Date());
+                labMetricRun.addMetric(stdDevMetric);
+                plateWell.addMetric(stdDevMetric);
+            }
+        }
+
+        for (Map.Entry<String, DescriptiveStatistics>  entry: fluidigmRun.getMapSampleToBackgroundStatistics().entrySet()) {
+            String sampleKey = entry.getKey();
+            DescriptiveStatistics descriptiveStatistics = entry.getValue();
+            PlateWell plateWell = mapSampleNameToPlateWell.get(sampleKey);
+            if (plateWell != null && descriptiveStatistics.getN() > 0) {
+                BigDecimal sum = new BigDecimal(descriptiveStatistics.getSum());
+                LabMetric sumMetric = new LabMetric(sum, LabMetric.MetricType.ROX_SAMPLE_BKGD_DATA_COUNT,
+                        LabMetric.LabUnit.NUMBER, plateWell.getVesselPosition().name(), new Date());
+                labMetricRun.addMetric(sumMetric);
+                plateWell.addMetric(sumMetric);
+
+                BigDecimal mean = new BigDecimal(descriptiveStatistics.getMean());
+                LabMetric meanMetric = new LabMetric(mean, LabMetric.MetricType.ROX_SAMPLE_BKGD_DATA_MEAN,
+                        LabMetric.LabUnit.NUMBER, plateWell.getVesselPosition().name(), new Date());
+                labMetricRun.addMetric(meanMetric);
+                plateWell.addMetric(meanMetric);
+
+                BigDecimal median = new BigDecimal(descriptiveStatistics.getPercentile(50));
+                LabMetric medianMetric = new LabMetric(median, LabMetric.MetricType.ROX_SAMPLE_BKGD_DATA_MEDIAN,
+                        LabMetric.LabUnit.NUMBER, plateWell.getVesselPosition().name(), new Date());
+                labMetricRun.addMetric(medianMetric);
+                plateWell.addMetric(medianMetric);
+
+                BigDecimal stdDev = new BigDecimal(descriptiveStatistics.getStandardDeviation());
+                LabMetric stdDevMetric = new LabMetric(stdDev, LabMetric.MetricType.ROX_SAMPLE_BKGD_DATA_STD_DEV,
+                        LabMetric.LabUnit.NUMBER, plateWell.getVesselPosition().name(), new Date());
+                labMetricRun.addMetric(stdDevMetric);
+                plateWell.addMetric(stdDevMetric);
+            }
+        }
+
+        return labMetricRun;
+    }
+
+    /**
+     * Creates a Call Rate Metric of type Q17 or Q20 depending on their thresholds. Stores the num passing calls
+     * and total calls based on this threshold as metadata so ratio can be shown in UDS.
+     */
+    private void generateCallRateLabMetrics(LabMetricRun run, LabMetric.MetricType metricType, long decidingUser,
+                                            Map<String, Snp> mapAssayToSnp,
+                                            Map<PlateWell, List<FluidigmChipProcessor.FluidigmDataRow>> mapLabVesselToRecords,
+                                            double threshold) {
+        for (Map.Entry<PlateWell, List<FluidigmChipProcessor.FluidigmDataRow>> entry: mapLabVesselToRecords.entrySet()) {
+            PlateWell plateWell = entry.getKey();
+            if (plateWell.getVesselPosition() == VesselPosition.H09) {
+                System.out.println("H09");
+            }
             double calls = 0.0;
+            double totalPossibleCalls = 0.0;
             for (FluidigmChipProcessor.FluidigmDataRow row: entry.getValue()) {
                 Genotype genotype = parseGenotype(row);
-                if (false) { //TODO PolyAssay
-
-                } else {
+                if (!mapAssayToSnp.get(row.getAssayName()).isFailed() &&
+                    !mapAssayToSnp.get(row.getAssayName()).isGender()) {
+                    totalPossibleCalls++;
                     boolean userCall = genotype.isUserCall();
                     if (!userCall) {
-                        if (genotype.getConfidence() >= q17CallConfidenceThreshold) {
+                        if (genotype.getConfidence() >= threshold &&
+                            genotype.getAllele1() != null && genotype.getAllele2() != null) {
                             calls++;
                         }
                     } else {
-                        calls++; //TODO Bad Logic here? Not actually
+                        calls++;
                     }
                 }
             }
 
-            BigDecimal callRate = new BigDecimal((calls / totalGenotypes ) * 100);
+            BigDecimal callRate = new BigDecimal((calls / totalPossibleCalls ) * 100);
             callRate = callRate.setScale(2, BigDecimal.ROUND_HALF_UP);
-                System.out.println("Call Rate: " + position.name() + " " + calls + "/" + totalGenotypes);
-
-                LabMetric.MetricType metricType = LabMetric.MetricType.CALL_RATE_Q17;
-            LabMetric labMetric = new LabMetric(callRate, LabMetric.MetricType.CALL_RATE_Q17,
-                    LabMetric.LabUnit.PERCENTAGE, position.name(), new Date());
-            labMetricRun.addMetric(labMetric);
-            LabMetricDecision decision = metricType.getDecider().makeDecision(labVessel, labMetric, decidingUser);
+            LabMetric labMetric = new LabMetric(callRate, metricType, LabMetric.LabUnit.PERCENTAGE,
+                    plateWell.getVesselPosition().name(), new Date());
+            plateWell.addMetric(labMetric);
+            run.addMetric(labMetric);
+            LabMetricDecision decision = metricType.getDecider().makeDecision(plateWell, labMetric, decidingUser);
             labMetric.setLabMetricDecision(decision);
-            Metadata totalCallsMetadata = new Metadata(Metadata.Key.TOTAL_POSSIBLE_CALLS, new BigDecimal(totalGenotypes));
+            Metadata totalCallsMetadata = new Metadata(Metadata.Key.TOTAL_POSSIBLE_CALLS, new BigDecimal(totalPossibleCalls));
             Metadata callsMetadata = new Metadata(Metadata.Key.CALLS, new BigDecimal(calls));
             labMetric.getMetadataSet().add(totalCallsMetadata);
             labMetric.getMetadataSet().add(callsMetadata);
         }
+    }
 
-        return labMetricRun;
+    private void generateRoxIntensities(LabMetricRun labMetricRun) {
+
     }
 
     private Genotype parseGenotype(FluidigmChipProcessor.FluidigmDataRow record) {

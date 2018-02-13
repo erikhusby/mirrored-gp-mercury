@@ -42,7 +42,7 @@ public class FingerprintingEntityBuilder {
 
     public FingerprintingEntityBuilder invoke() {
         fingerprintingJaxbBuilder = new FingerprintingJaxbBuilder(bettaLimsMessageTestFactory, testPrefix,
-                sourceplate.getLabCentricName(), sourceplate.getSampleInstanceCount(),
+                sourceplate.getLabel(), sourceplate.getSampleInstanceCount(),
                 Collections.singletonList(Triple.of("STA", "1234-STA", 1))
         );
         fingerprintingJaxbBuilder.invoke();

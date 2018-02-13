@@ -161,6 +161,29 @@ public enum ColumnValueType {
                     return ColumnValueType.BOOLEAN;
                 }
             }
+    ),
+
+    GENDER(
+            new Formatter<Object>(){
+                @Override
+                public String format( Object value ){
+                    if (value == null) {
+                        return "";
+                    } else if (value.toString().startsWith("F")) {
+                        return "F";
+                    } else if (value.toString().startsWith("M")) {
+                        return "M";
+                    } else {
+                        return value.toString();
+                    }
+                }
+            },
+            new SearchTerm.Evaluator<ColumnValueType>() {
+                @Override
+                public ColumnValueType evaluate(Object entity, SearchContext context) {
+                    return ColumnValueType.GENDER;
+                }
+            }
     );
 
     ColumnValueType(Formatter formatter, SearchTerm.Evaluator<ColumnValueType> defaultEvaluator){

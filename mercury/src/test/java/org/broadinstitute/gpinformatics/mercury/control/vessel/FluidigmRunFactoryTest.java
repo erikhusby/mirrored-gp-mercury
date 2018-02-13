@@ -1,31 +1,43 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.run.Snp;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
+import org.broadinstitute.gpinformatics.mercury.test.builders.FingerprintingEntityBuilder;
 import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.InputStream;
-import java.math.BigDecimal;
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-import static org.broadinstitute.gpinformatics.mercury.control.vessel.FluidigmChipProcessorTest.FLUIDIGM_OUTPUT_CSV;
-import static org.testng.Assert.*;
+import static org.hamcrest.Matchers.isIn;
+import static org.hamcrest.Matchers.not;
+import static org.mockito.Matchers.argThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @Test(groups = TestGroups.DATABASE_FREE)
-public class FluidigmRunFactoryTest {
+public class FluidigmRunFactoryTest extends BaseEventTest {
 
     public static final String FLUIDIGM_OUTPUT_CSV = "FluidigmOutput.csv";
     public static final String CHIP_BARCODE = "000010553069";
@@ -36,38 +48,78 @@ public class FluidigmRunFactoryTest {
         FluidigmChipProcessor fluidigmChipProcessor = new FluidigmChipProcessor();
         FluidigmChipProcessor.FluidigmRun run  = fluidigmChipProcessor.parse(testSpreadSheet);
 
-        Map<String, StaticPlate> mapBarcodeToPlate = new HashMap<>();
-        buildTubesAndTransfers(mapBarcodeToPlate, CHIP_BARCODE, "");
+        StaticPlate ifcChip = buildTubesAndTransfers(CHIP_BARCODE);
         StaticPlate.TubeFormationByWellCriteria.Result result =
-                mapBarcodeToPlate.values().iterator().next().nearestFormationAndTubePositionByWell();
+                ifcChip.nearestFormationAndTubePositionByWell();
 
         MessageCollection messageCollection = new MessageCollection();
         FluidigmRunFactory fluidigmRunFactory = new FluidigmRunFactory();
-        fluidigmRunFactory.createFluidigmRunDaoFree(run, mapBarcodeToPlate.values().iterator().next(), 1L,
-                messageCollection, result);
+
+        // Test that the gender SNP will be skipped
+        Map<String, Snp> mapAssayToSnp = mock(Map.class);
+        Snp snp = new Snp("rsId", false, false);
+
+        List<String> failedSnps = Arrays.asList("rs1052053", "rs390299", "rs2241759", "rs2549797", "rs2737706");
+        List<String> ignoredSnps = Arrays.asList("AMG_3b","rs1052053", "rs390299", "rs2241759", "rs2549797", "rs2737706");
+        when(mapAssayToSnp.get(argThat(not(isIn(ignoredSnps))))).thenReturn(snp);
+
+        Snp genderSnp = new Snp("AMG_3b", false, true);
+        when(mapAssayToSnp.get("AMG_3b")).thenReturn(genderSnp);
+
+        Snp failedSnp = new Snp("rsIFail", true, false);
+        when(mapAssayToSnp.get(argThat(isIn(failedSnps)))).thenReturn(failedSnp);
+
+        LabMetricRun labMetricRun = fluidigmRunFactory.createFluidigmRunDaoFree(run, ifcChip, 1L, messageCollection,
+                result, mapAssayToSnp);
+
+        Assert.assertEquals(labMetricRun.getLabMetrics().size(), 96 * 10);
+        LabMetric labMetric = labMetricRun.getLabMetrics().iterator().next();
+
+        //Check that the total calls metadata was 90 since we skipped the gender/failed assays
+        Metadata totalCalls = findMetadata(labMetric.getMetadataSet(), Metadata.Key.TOTAL_POSSIBLE_CALLS);
+        Assert.assertEquals(totalCalls.getNumberValue().intValue(), 90);
     }
 
-    public static Map<VesselPosition, BarcodedTube> buildTubesAndTransfers(Map<String, StaticPlate> mapBarcodeToPlate,
-                                                                           String plate1Barcode, String tubePrefix) {
-        Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
-        for (VesselPosition vesselPosition : RackOfTubes.RackType.Matrix96.getVesselGeometry().getVesselPositions()) {
-            BarcodedTube barcodedTube = new BarcodedTube(tubePrefix + vesselPosition.toString());
-            barcodedTube.setVolume(new BigDecimal("75"));
-            mapPositionToTube.put(vesselPosition, barcodedTube);
+    private static Metadata findMetadata(Set<Metadata> metadataSet, Metadata.Key key) {
+        for (Metadata metadata: metadataSet) {
+            if (metadata.getKey() == key) {
+                return metadata;
+            }
+        }
+        return null;
+    }
+
+    private StaticPlate buildTubesAndTransfers(String fingerprintingInputPlate) {
+        int numSamples = NUM_POSITIONS_IN_RACK - 2;
+        ProductOrder productOrder = ProductOrderTestFactory.buildFingerprintingProductOrder(numSamples);
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+
+        LabBatch workflowBatch = new LabBatch("Fingerprinting Batch",
+                new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setWorkflow(Workflow.FINGERPRINTING);
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
+
+        TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube, workflowBatch);
+
+        Map<String, LabVessel> mapBarcodeToDaughterTube = new HashMap<>();
+        for (BarcodedTube barcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {
+            mapBarcodeToDaughterTube.put(barcodedTube.getLabel(), barcodedTube);
         }
 
-        TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
+        PlateTransferEventType fingerprintingPlateSetup = getBettaLimsMessageTestFactory().buildRackToPlate(
+                "FingerprintingPlateSetupForwardBsp", "FingerprintingRack",
+                new ArrayList<>(mapBarcodeToDaughterTube.keySet()), fingerprintingInputPlate);
+        LabEvent fingerprintingPlateSetupEvent = getLabEventFactory().buildFromBettaLims(
+                fingerprintingPlateSetup, mapBarcodeToDaughterTube);
+        getLabEventHandler().processEvent(fingerprintingPlateSetupEvent);
+        StaticPlate fingerprintingPlate = (StaticPlate) fingerprintingPlateSetupEvent.getTargetLabVessels().iterator().next();
 
-        StaticPlate staticPlate1 = new StaticPlate(plate1Barcode, StaticPlate.PlateType.Eppendorf96);
-        mapBarcodeToPlate.put(staticPlate1.getLabel(), staticPlate1);
-
-        //TODO Real section transfer in the future
-        LabEvent labEvent1 = new LabEvent(LabEventType.FLUIDIGM_FINAL_TRANSFER, new Date(), "BATMAN", 1L, 101L,
-                "Bravo");
-        labEvent1.getSectionTransfers().add(new SectionTransfer(tubeFormation.getContainerRole(), SBSSection.ALL96,
-                null, staticPlate1.getContainerRole(), SBSSection.ALL96, null, labEvent1));
-
-        return mapPositionToTube;
+        FingerprintingEntityBuilder entityBuilder = new FingerprintingEntityBuilder(
+                getBettaLimsMessageTestFactory(), getLabEventFactory(), getLabEventHandler(),
+                fingerprintingPlate, "Fingerprinting");
+        entityBuilder.invoke();
+        return entityBuilder.getIfcChip();
     }
 
 }

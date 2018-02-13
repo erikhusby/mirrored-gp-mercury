@@ -6,6 +6,7 @@ import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.MappingStrategy;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 
 import java.beans.IntrospectionException;
@@ -20,8 +21,10 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -60,7 +63,7 @@ public class FluidigmChipProcessor {
             fluidigmRun.setRecords(records);
             processDoseMeterRows(reader, fluidigmRun);
             processRawData(reader, fluidigmRun);
-            //TODO Process Bkgd ROX
+            processBackgroundData(reader, fluidigmRun);
             return fluidigmRun;
         } catch (ParseException e) {
             logger.error("Failed to parse run date.", e);
@@ -126,10 +129,30 @@ public class FluidigmChipProcessor {
     }
 
     private void processRawData(BufferedReader reader, FluidigmRun fluidigmRun) throws IOException {
+        Map<String, DescriptiveStatistics> mapAssayToStatistics = new HashMap<>();
+        Map<String, DescriptiveStatistics> mapSampleToStatistics = new HashMap<>();
+        processRoxData(reader, fluidigmRun, "Raw Data for Passive Reference ROX", mapAssayToStatistics,
+                mapSampleToStatistics);
+        fluidigmRun.setMapAssayToRawStatistics(mapAssayToStatistics);
+        fluidigmRun.setMapSampleToRawStatistics(mapSampleToStatistics);
+    }
+
+    private void processBackgroundData(BufferedReader reader, FluidigmRun fluidigmRun) throws IOException {
+        Map<String, DescriptiveStatistics> mapAssayToStatistics = new HashMap<>();
+        Map<String, DescriptiveStatistics> mapSampleToStatistics = new HashMap<>();
+        processRoxData(reader, fluidigmRun, "Bkgd Data for Passive Reference ROX", mapAssayToStatistics,
+                mapSampleToStatistics);
+        fluidigmRun.setMapAssayToBackgroundStatistics(mapAssayToStatistics);
+        fluidigmRun.setMapSampleToBackgroundStatistics(mapSampleToStatistics);
+    }
+
+    private void processRoxData(BufferedReader reader, FluidigmRun fluidigmRun, String sectionName,
+                                Map<String, DescriptiveStatistics> mapAssayToStatistics,
+                                Map<String, DescriptiveStatistics> mapSampleToStatistics) throws IOException {
         // Skip Headers
         while (true) {
             String line = reader.readLine();
-            if (line != null && line.startsWith("Raw Data for Passive Reference ROX")) {
+            if (line != null && line.startsWith(sectionName)) {
                 break;
             }
         }
@@ -147,12 +170,26 @@ public class FluidigmChipProcessor {
                 throw new RuntimeException("Unexpected end of data in section '");
             }
             String[] values = line.split(",");
-            Integer value = validateLine("Raw Data for Passive Reference ROX", line, values);
+            Integer value = validateLine(sectionName, line, values);
 
             // The first column has the S[Position]-[arrayindex], pull the position as well number.
             String sampleArray = values[0];
             fluidigmRun.getChamberIdToRox().put(sampleArray, value);
+
+            String sampleKeyFromSampleName = getSampleKeyFromSampleArray(sampleArray);
+            String assayKeyFromSampleArray = getAssayKeyFromSampleArray(sampleArray);
+            handleRoxStatisticsByKey(sampleKeyFromSampleName, mapSampleToStatistics, value);
+            handleRoxStatisticsByKey(assayKeyFromSampleArray, mapAssayToStatistics, value);
         }
+    }
+
+    private void handleRoxStatisticsByKey(String key, Map<String, DescriptiveStatistics> mapKeyToStats, Integer value) {
+        DescriptiveStatistics descriptiveStatistics = mapKeyToStats.get(key);
+        if (descriptiveStatistics == null) {
+            descriptiveStatistics = new DescriptiveStatistics();
+            mapKeyToStats.put(key, descriptiveStatistics);
+        }
+        descriptiveStatistics.addValue(value);
     }
 
     private Integer validateLine(String sectionName, String line, String[] values) {
@@ -193,7 +230,6 @@ public class FluidigmChipProcessor {
     }
 
     private String getAssayKeyFromSampleArray(String sampleName) {
-        System.out.println(sampleName);
         return sampleName.split("-")[1];
     }
 
@@ -203,6 +239,9 @@ public class FluidigmChipProcessor {
         String[] columns = line.split(",");
         fluidigmRun.setChipBarcode(columns[2]);
         fluidigmRun.setControlDye(columns[5]);
+        if (!fluidigmRun.getControlDye().equals("ROX")) {
+            throw new RuntimeException("Control dye needs to be set to ROX");
+        }
         fluidigmRun.setRunDateFromString(columns[7]);
         //read version line
         line = reader.readLine();
@@ -276,6 +315,10 @@ public class FluidigmChipProcessor {
         private Object expPacket;
         private Map<String, Integer> chamberIdToRox;
         private String controlDye;
+        private Map<String, DescriptiveStatistics> mapAssayToRawStatistics;
+        private Map<String, DescriptiveStatistics> mapSampleToRawStatistics;
+        private Map<String, DescriptiveStatistics> mapAssayToBackgroundStatistics;
+        private Map<String, DescriptiveStatistics> mapSampleToBackgroundStatistics;
 
         public FluidigmRun() {
             assayNamesByAssayKey = new HashMap<>(96);
@@ -509,6 +552,48 @@ public class FluidigmChipProcessor {
 
         public String buildRunName() {
             return chipBarcode + "_" + new SimpleDateFormat("MM-dd-yyyy HH:mm").format(getRunDate());
+        }
+
+        public Set<String> getPolyAssays() {
+            Set<String> polyAssays = new HashSet<>();
+            for (FluidigmDataRow row: getRecords()) {
+                polyAssays.add(row.getAssayName());
+            }
+            return polyAssays;
+        }
+
+        public void setMapAssayToRawStatistics(Map<String,DescriptiveStatistics> mapAssayToRawStatistics) {
+            this.mapAssayToRawStatistics = mapAssayToRawStatistics;
+        }
+
+        public Map<String, DescriptiveStatistics> getMapAssayToRawStatistics() {
+            return mapAssayToRawStatistics;
+        }
+
+        public void setMapSampleToRawStatistics(Map<String,DescriptiveStatistics> mapSampleToRawStatistics) {
+            this.mapSampleToRawStatistics = mapSampleToRawStatistics;
+        }
+
+        public Map<String, DescriptiveStatistics> getMapSampleToRawStatistics() {
+            return mapSampleToRawStatistics;
+        }
+
+        public void setMapAssayToBackgroundStatistics(
+                Map<String,DescriptiveStatistics> mapAssayToBackgroundStatistics) {
+            this.mapAssayToBackgroundStatistics = mapAssayToBackgroundStatistics;
+        }
+
+        public Map<String, DescriptiveStatistics> getMapAssayToBackgroundStatistics() {
+            return mapAssayToBackgroundStatistics;
+        }
+
+        public void setMapSampleToBackgroundStatistics(
+                Map<String,DescriptiveStatistics> mapSampleToBackgroundStatistics) {
+            this.mapSampleToBackgroundStatistics = mapSampleToBackgroundStatistics;
+        }
+
+        public Map<String, DescriptiveStatistics> getMapSampleToBackgroundStatistics() {
+            return mapSampleToBackgroundStatistics;
         }
     }
 
