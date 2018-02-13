@@ -161,9 +161,13 @@ public class SubmissionDtoFetcher {
             SubmissionTracker submissionTracker = researchProject.getSubmissionTracker(tuple);
             SubmissionStatusDetailBean statusDetailBean = null;
             if (submissionTracker != null) {
-                statusDetailBean = sampleSubmissionMap.get(submissionTracker.createSubmissionIdentifier());
+                try {
+                    statusDetailBean = sampleSubmissionMap.get(submissionTracker.createSubmissionIdentifier());
+                    results.add(new SubmissionDto(aggregation, statusDetailBean));
+                } catch (Exception e) {
+                    messageReporter.addMessage(e.getMessage());
+                }
             }
-            results.add(new SubmissionDto(aggregation, statusDetailBean));
         }
         if (!errors.isEmpty()) {
             messageReporter.addMessage("Picard data not found for samples<ul><li>{0}</ul>", errors);

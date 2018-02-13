@@ -15,6 +15,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.hibernate.annotations.BatchSize;
 
@@ -119,12 +120,20 @@ public class Aggregation {
     }
 
     public String getMercuryProject() {
+        Set<String> mercuryProjects = new HashSet<>();
         for (AggregationReadGroup aggregationReadGroup : getAggregationReadGroups()) {
-            if (aggregationReadGroup.getReadGroupIndex() != null) {
-                return aggregationReadGroup.getReadGroupIndex().getMercuryProject();
+            ReadGroupIndex readGroupIndex = aggregationReadGroup.getReadGroupIndex();
+            if (readGroupIndex != null && readGroupIndex.getMercuryProject() != null) {
+                mercuryProjects.add(readGroupIndex.getMercuryProject());
             }
         }
-        return null;
+        if (mercuryProjects.isEmpty()) {
+            throw new InformaticsServiceException("No Research Project found for Aggregation.");
+        }
+        if (mercuryProjects.size() != 1) {
+            throw new InformaticsServiceException("Ambiguous Research project for Aggregation " + mercuryProjects);
+        }
+        return mercuryProjects.iterator().next();
     }
 
     @Transient

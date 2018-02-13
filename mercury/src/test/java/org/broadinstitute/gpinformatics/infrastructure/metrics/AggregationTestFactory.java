@@ -21,6 +21,8 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDet
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.ReadGroupIndex;
 
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 public class AggregationTestFactory {
     public static Aggregation buildAggregation(String project, String productOrder, String sample,
@@ -38,9 +40,11 @@ public class AggregationTestFactory {
             new ReadGroupIndex(null, null, 2, null, null, null, project, project, sample, productOrder));
 
         Integer readGroupCount = 2;
+        Set<AggregationReadGroup> aggregationReadGroupSet = new HashSet<>();
+        aggregationReadGroupSet.add(aggregationReadGroup);
 
         return new Aggregation(project, sample, null, version, readGroupCount, dataType,
                 Collections.singleton(aggregationAlignment), aggregationContam, aggregationHybridSelection,
-                Collections.singleton(aggregationReadGroup), aggregationWgs, fingerprintLod, processingLocation);
+            aggregationReadGroupSet, aggregationWgs, fingerprintLod, processingLocation);
     }
 }

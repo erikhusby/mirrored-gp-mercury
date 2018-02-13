@@ -24,7 +24,9 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.AggregationMetric
 import org.broadinstitute.gpinformatics.infrastructure.metrics.AggregationTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationAlignment;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.ReadGroupIndex;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
@@ -34,6 +36,7 @@ import org.mockito.Mockito;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -46,6 +49,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.startsWith;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class SubmissionDtoFetcherTest {
@@ -144,6 +148,41 @@ public class SubmissionDtoFetcherTest {
         }
     }
 
+    public void testFetchWithMultipleAggregationProjects(){
+        researchProject.addSubmissionTracker(new SubmissionTrackerTest.SubmissionTrackerStub(1234L, RESEARCH_PROJECT_ID,
+            COLLABORATOR_SAMPLE_ID, "1", FileType.BAM, SubmissionBioSampleBean.ON_PREM));
+
+        String anotherSample = "Another_" + COLLABORATOR_SAMPLE_ID;
+        researchProject.addSubmissionTracker(new SubmissionTrackerTest.SubmissionTrackerStub(1234L, RESEARCH_PROJECT_ID,
+            anotherSample, "1", FileType.BAM, SubmissionBioSampleBean.ON_PREM));
+
+        // Create an Aggregation
+        Aggregation aggregation = AggregationTestFactory
+            .buildAggregation(RESEARCH_PROJECT_ID, PRODUCT_ORDER_ID, COLLABORATOR_SAMPLE_ID, 1, CONTAMINATION,
+                FINGERPRINT_LOD, DATA_TYPE, QUALITY_METRIC, null, null, SubmissionBioSampleBean.ON_PREM);
+
+        // add an additional ReadGroup, but with a different research_project_id. This condition is not permitted.
+        aggregation.getAggregationReadGroups().add(new AggregationReadGroup(null, 1l, null,
+            new ReadGroupIndex(null, "", 1l, "", "", "", RESEARCH_PROJECT_ID, RESEARCH_PROJECT_ID + "FOO", "", "")));
+
+        // Create a second aggregation. This one is not expected to cause problems
+        Aggregation aggregation2 = AggregationTestFactory
+            .buildAggregation(RESEARCH_PROJECT_ID, PRODUCT_ORDER_ID, anotherSample, 1, CONTAMINATION, FINGERPRINT_LOD,
+                DATA_TYPE, QUALITY_METRIC, null, null, SubmissionBioSampleBean.ON_PREM);
+        aggregations.add(aggregation);
+        aggregations.add(aggregation2);
+
+        StringReporter stringReporter = new StringReporter();
+
+        // Because one of the aggregations is linked to multiple research projects it will not be returned, but an
+        // error will be added to the message reporter.
+        List<SubmissionDto> submissionDtoList = submissionDtoFetcher.fetch(researchProject, stringReporter);
+        assertThat(submissionDtoList.size(), is(1));
+        assertThat(submissionDtoList.iterator().next().getResearchProject(), is(RESEARCH_PROJECT_ID));
+        assertThat(stringReporter.getMessages().iterator().next(),
+            startsWith("Ambiguous Research project for Aggregation"));
+    }
+
     public void testFetchAggregationDtos() {
         ProductOrder productOrder = ProductOrderTestFactory.createProductOrder("SM-1", "SM-2");
         List<ProductOrderSample> samples = productOrder.getSamples();
@@ -190,4 +229,20 @@ public class SubmissionDtoFetcherTest {
             null, null, null, processingLocation);
     }
 
+    /**
+     * A MessageReporter that records its messages. This is useful for testing.
+     */
+    class StringReporter implements MessageReporter {
+        private List<String> messages = new ArrayList<>();
+
+        @Override
+        public String addMessage(String message, Object... arguments) {
+            messages.add(MessageFormat.format(message, arguments));
+            return message;
+        }
+
+        public List<String> getMessages() {
+            return messages;
+        }
+    }
 }
