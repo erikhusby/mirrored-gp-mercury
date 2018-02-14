@@ -4,6 +4,11 @@ import clover.org.apache.commons.lang3.tuple.ImmutablePair;
 import clover.org.apache.commons.lang3.tuple.Pair;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import edu.mit.broad.picard.genotype.fingerprint.v2.DownloadGenotypes;
+import htsjdk.samtools.reference.ReferenceSequenceFile;
+import htsjdk.samtools.reference.ReferenceSequenceFileFactory;
+import htsjdk.samtools.util.SequenceUtil;
+import htsjdk.variant.variantcontext.VariantContext;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPGetExportedSamplesFromAliquots;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
@@ -19,6 +24,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.jetbrains.annotations.NotNull;
+import picard.fingerprint.HaplotypeMap;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateful;
@@ -32,6 +38,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.File;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,6 +48,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 
 /**
  * JAX-RS web service for fingerprints.
@@ -213,6 +222,7 @@ public class FingerprintResource {
                 snpList, Fingerprint.Gender.byAbbreviation(fingerprintBean.getGender()),
                 true);
 
+        List<DownloadGenotypes.GapGetGenotypesResult> gapResults = new ArrayList<>();
         for (FingerprintCallsBean fingerprintCallsBean : fingerprintBean.getCalls()) {
             Snp snp = snpList.getMapRsIdToSnp().get(fingerprintCallsBean.getRsid());
             if (snp == null) {
@@ -221,10 +231,12 @@ public class FingerprintResource {
             }
             fingerprint.addFpGenotype(new FpGenotype(fingerprint, snp, fingerprintCallsBean.getGenotype(),
                     new BigDecimal(fingerprintCallsBean.getCallConfidence())));
+            gapResults.add(new DownloadGenotypes.GapGetGenotypesResult(fingerprintBean.getAliquotLsid(),
+                    sampleKey, fingerprintCallsBean.getRsid(), fingerprintCallsBean.getGenotype(),
+                    fingerprintBean.getPlatform()));
         }
 
         // todo jmt check concordance
-/*
         HaplotypeMap haplotypes = new HaplotypeMap(
                 new File("/notes/Homo_sapiens_assembly19.haplotype_database.txt"));
         DownloadGenotypes downloadGenotypes = new DownloadGenotypes();
@@ -239,7 +251,6 @@ public class FingerprintResource {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-*/
 /*
         FingerprintChecker fingerprintChecker = new FingerprintChecker(haplotypes);
         picard.fingerprint.Fingerprint observedFp = new picard.fingerprint.Fingerprint("", null, "");

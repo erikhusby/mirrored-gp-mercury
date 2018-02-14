@@ -1883,19 +1883,17 @@ nodePrinter.print(webapp)
             <version>7.1.1.Final</version>
         </dependency>
 
-        <!--
-                <dependency>
-                    <groupId>com.github.broadinstitute</groupId>
-                    <artifactId>picard</artifactId>
-                    <version>2.16.0</version>
-                </dependency>
+        <dependency>
+            <groupId>com.github.broadinstitute</groupId>
+            <artifactId>picard</artifactId>
+            <version>2.16.0</version>
+        </dependency>
 
-                <dependency>
-                    <groupId>com.github.broadinstitute</groupId>
-                    <artifactId>picard-private</artifactId>
-                    <version>1.1</version>
-                </dependency>
-        -->
+        <dependency>
+            <groupId>com.github.broadinstitute</groupId>
+            <artifactId>picard-private</artifactId>
+            <version>1.1</version>
+        </dependency>
     </dependencies>
 
     <build>
