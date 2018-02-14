@@ -363,53 +363,54 @@ public class ProductOrderEjb {
         if(editedProductOrder.getParentOrder() != null && editedProductOrder.getSapOrderNumber() != null) {
             orderToPublish = editedProductOrder.getParentOrder();
         }
-        try {
-            if (isOrderEligibleForSAP(orderToPublish, effectiveDate)
-                && !orderToPublish.getOrderStatus().canPlace()) {
+        if (!areProductsOnOrderBlocked(orderToPublish)) {
+            try {
+                if (isOrderEligibleForSAP(orderToPublish, effectiveDate)
+                    && !orderToPublish.getOrderStatus().canPlace()) {
 
-                final List<String> effectivePricesForProducts = productPriceCache
-                        .getEffectivePricesForProducts(allProductsOrdered,editedProductOrder,
-                                quoteService.getQuoteByAlphaId(orderToPublish.getQuoteId()));
+                    final List<String> effectivePricesForProducts = productPriceCache
+                            .getEffectivePricesForProducts(allProductsOrdered,editedProductOrder,
+                                    quoteService.getQuoteByAlphaId(orderToPublish.getQuoteId()));
 
-                final boolean quoteIdChange = orderToPublish.isSavedInSAP() &&
-                                              !orderToPublish.getQuoteId()
-                                                      .equals(orderToPublish.latestSapOrderDetail().getQuoteId());
+                    final boolean quoteIdChange = orderToPublish.isSavedInSAP() &&
+                                                  !orderToPublish.getQuoteId()
+                                                          .equals(orderToPublish.latestSapOrderDetail().getQuoteId());
 
-                boolean priceChangeForNewOrder = false;
-                if(orderToPublish.isSavedInSAP() && orderToPublish.isPriorToSAP1_5()) {
-                    priceChangeForNewOrder = !StringUtils.equals(orderToPublish.latestSapOrderDetail().getOrderPricesHash(),
-                            TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ",")))
-                                             && orderToPublish.hasAtLeastOneBilledLedgerEntry();
-                }
-
-                if ((!orderToPublish.isSavedInSAP() && allowCreateOrder) || quoteIdChange || priceChangeForNewOrder) {
-                    final String newSapOrderNumber = createOrderInSAP(orderToPublish, quoteIdChange,allProductsOrdered,
-                            effectivePricesForProducts, messageCollection, priceChangeForNewOrder, true);
-
-                    // Create orders for any Child orders that does not share
-                    for (ProductOrder childOrder : orderToPublish.getChildOrders()) {
-                        if(!ProductOrder.sharesSAPOrderWithParent(childOrder, newSapOrderNumber)) {
-                            createOrderInSAP(childOrder, quoteIdChange, allProductsOrdered, effectivePricesForProducts,
-                                    messageCollection, priceChangeForNewOrder, true);
-                        }
+                    boolean priceChangeForNewOrder = false;
+                    if(orderToPublish.isSavedInSAP() && orderToPublish.isPriorToSAP1_5()) {
+                        priceChangeForNewOrder = !StringUtils.equals(orderToPublish.latestSapOrderDetail().getOrderPricesHash(),
+                                TubeFormation.makeDigest(StringUtils.join(effectivePricesForProducts, ",")))
+                                                 && orderToPublish.hasAtLeastOneBilledLedgerEntry();
                     }
+
+                    if ((!orderToPublish.isSavedInSAP() && allowCreateOrder) || quoteIdChange || priceChangeForNewOrder) {
+                        final String newSapOrderNumber = createOrderInSAP(orderToPublish, quoteIdChange,allProductsOrdered,
+                                effectivePricesForProducts, messageCollection, priceChangeForNewOrder, true);
+
+                        // Create orders for any Child orders that does not share
+                        for (ProductOrder childOrder : orderToPublish.getChildOrders()) {
+                            if(!ProductOrder.sharesSAPOrderWithParent(childOrder, newSapOrderNumber)) {
+                                createOrderInSAP(childOrder, quoteIdChange, allProductsOrdered, effectivePricesForProducts,
+                                        messageCollection, priceChangeForNewOrder, true);
+                            }
+                        }
 
                 } else if(orderToPublish.isSavedInSAP()){
 
-                    updateOrderInSap(orderToPublish, allProductsOrdered, effectivePricesForProducts, messageCollection,
+                        updateOrderInSap(orderToPublish, allProductsOrdered, effectivePricesForProducts, messageCollection,
                             CollectionUtils.containsAny(Arrays.asList(OrderStatus.Abandoned, OrderStatus.Completed),
                                     Collections.singleton(orderToPublish.getOrderStatus()))
                             && !orderToPublish.isPriorToSAP1_5());
 
-                    for (ProductOrder childProductOrder : orderToPublish.getChildOrders()) {
+                        for (ProductOrder childProductOrder : orderToPublish.getChildOrders()) {
 
-                        if (childProductOrder.isSubmitted() &&
-                            !StringUtils.equals(childProductOrder.getSapOrderNumber(),
-                                    orderToPublish.getSapOrderNumber())) {
+                            if (childProductOrder.isSubmitted() &&
+                                !StringUtils.equals(childProductOrder.getSapOrderNumber(),
+                                        orderToPublish.getSapOrderNumber())) {
 
-                            updateOrderInSap(childProductOrder, allProductsOrdered, effectivePricesForProducts,
-                                    messageCollection,
-                                    CollectionUtils.containsAny(Arrays.asList(OrderStatus.Abandoned,
+                                updateOrderInSap(childProductOrder, allProductsOrdered, effectivePricesForProducts,
+                                        messageCollection,
+                            CollectionUtils.containsAny(Arrays.asList(OrderStatus.Abandoned,
                                             OrderStatus.Completed),
                                             Collections.singleton(orderToPublish.getOrderStatus()))
                                     && !orderToPublish.isPriorToSAP1_5());
@@ -437,7 +438,7 @@ public class ProductOrderEjb {
             messageCollection.addError(errorMessage.toString());
             log.error(errorMessage, e);
             if(orderToPublish.isSavedInSAP()) {
-                throw new SAPInterfaceException(errorMessage.toString(), e);
+                throw new SAPInterfaceException(errorMessage.toString(), e);}
             }
         }
     }
@@ -568,6 +569,26 @@ public class ProductOrderEjb {
                                               editedProductOrder.getName() + " is invalid");
         }
         return eligibilityResult;
+    }
+
+    private boolean areProductsOnOrderBlocked(ProductOrder targetOrder) {
+        Set<AccessItem> priceItemNameList = new HashSet<>();
+
+        if(targetOrder.getProduct() != null) {
+            priceItemNameList.add(new AccessItem(targetOrder.getProduct().getPrimaryPriceItem().getName()));
+        }
+        for (ProductOrderAddOn productOrderAddOn : targetOrder.getAddOns()) {
+            priceItemNameList.add(new AccessItem(productOrderAddOn.getAddOn().getPrimaryPriceItem().getName()));
+        }
+
+        return areProductsBlocked(priceItemNameList);
+
+    }
+
+    public boolean areProductsBlocked(Set<AccessItem> priceItemNameList) {
+        SAPAccessControl accessControl = accessController.getCurrentControlDefinitions();
+        return !accessControl.isEnabled() ||
+               CollectionUtils.containsAny(accessControl.getDisabledItems(), priceItemNameList);
     }
 
     public boolean areProductPricesValid(ProductOrder editedProductOrder, Set<AccessItem> priceItemNameList,
