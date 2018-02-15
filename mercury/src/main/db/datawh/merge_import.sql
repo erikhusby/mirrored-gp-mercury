@@ -688,12 +688,6 @@ AS
       FOR new IN (SELECT * FROM im_lab_metric WHERE is_delete = 'F') LOOP
         BEGIN
 
-          -- RPT-3131 - Delete any older metrics for same vessel
-          DELETE FROM lab_metric
-          WHERE vessel_barcode =  new.vessel_barcode
-                AND quant_type     =  new.quant_type
-                AND run_date       < new.run_date;
-
           SELECT MAX(ETL_DATE)
           INTO V_LATEST_ETL_DATE
           FROM lab_metric
