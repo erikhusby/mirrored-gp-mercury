@@ -35,13 +35,13 @@
             }
 
             .blacklisted {
-                background-image:url("../images/b.png");
+                background-image:url("../images/blacklist.png");
                 background-position: right center;
                 background-repeat: no-repeat;
             }
 
             .abandoned {
-                background-image:url("../images/a.png");
+                background-image:url("../images/abandon.png");
                 background-position: right center;
                 background-repeat: no-repeat;
             }
