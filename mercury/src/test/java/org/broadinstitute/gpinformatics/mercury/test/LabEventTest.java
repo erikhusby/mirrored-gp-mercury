@@ -2051,6 +2051,7 @@ public class LabEventTest extends BaseEventTest {
 
         ProductOrder productOrder = ProductOrderTestFactory.buildPcrPlusProductOrder(NUM_POSITIONS_IN_RACK);
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
+        productOrder.setAnalyzeUmiOverride(true);
 
         // Grab denature tube from one UMI LC set and build another without
         Pair<Map<String, BarcodedTube>, QtpEntityBuilder> pairUmi =
@@ -2149,6 +2150,24 @@ public class LabEventTest extends BaseEventTest {
                 Assert.fail("Wrong sequencing library found " + zimsIlluminaChamber.getSequencedLibrary());
             }
         }
+        for (LibraryBean libraryBean: zimsIlluminaRun.getLanes().iterator().next().getLibraries()) {
+            if (libraryBean != null) {
+                if (libraryBean.isNegativeControl() == null  && libraryBean.isPositiveControl() == null) {
+                    Assert.assertEquals(libraryBean.isAnalyzeUmis(), true);
+                }
+            }
+        }
+
+        productOrder.setAnalyzeUmiOverride(false);
+        zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
+        for (LibraryBean libraryBean: zimsIlluminaRun.getLanes().iterator().next().getLibraries()) {
+            if (libraryBean != null) {
+                if (libraryBean.isNegativeControl() == null  && libraryBean.isPositiveControl() == null) {
+                    Assert.assertEquals(libraryBean.isAnalyzeUmis(), false);
+                }
+            }
+        }
+
     }
 
     private void testGenomeWorkflow(ProductOrder productOrder, LibraryConstructionJaxbBuilder.PondType pondType,

@@ -22,7 +22,6 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.CustomizationValues;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
-import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDataFetcher;
@@ -40,7 +39,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
-import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
@@ -261,6 +259,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Column(name = "CLINICAL_ATTESTATION_CONFIRMED")
     private Boolean clinicalAttestationConfirmed = false;
 
+    @Column(name = "ANALYZE_UMI_OVERRIDE")
+    private Boolean analyzeUmiOverride;
 
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.
@@ -2208,6 +2208,17 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public void setClinicalAttestationConfirmed(Boolean clinicalAttestationConfirmed) {
         this.clinicalAttestationConfirmed = clinicalAttestationConfirmed;
+    }
+
+    public boolean getAnalyzeUmiOverride() {
+        if (analyzeUmiOverride == null) {
+            return getProduct() != null && getProduct().getAnalyzeUmi();
+        }
+        return analyzeUmiOverride;
+    }
+
+    public void setAnalyzeUmiOverride(boolean analyzeUmiOverride) {
+        this.analyzeUmiOverride = analyzeUmiOverride;
     }
 
     public static void checkQuoteValidity(Quote quote) throws QuoteServerException {
