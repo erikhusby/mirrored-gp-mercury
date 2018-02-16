@@ -28,7 +28,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -140,8 +139,6 @@ public class SubmissionTrackerFixupTest extends Arquillian {
                 }
             }
             submissionTrackerDao.persist(new FixupCommentary("GPLIM-5408 Back-fill processingLocation and datatype"));
-        } else {
-            Assert.fail("Error updating records");
         }
     }
 
