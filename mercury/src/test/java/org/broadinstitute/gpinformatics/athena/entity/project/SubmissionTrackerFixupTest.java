@@ -115,7 +115,7 @@ public class SubmissionTrackerFixupTest extends Arquillian {
         int index = 1;
         Set<String> keys = submissionTrackersByUuid.keySet();
         int total = keys.size();
-            if (!keys.isEmpty()) {
+        if (!keys.isEmpty()) {
             Collection<SubmissionStatusDetailBean> submissionStatus =
                 submissionService.getSubmissionStatus(keys.toArray(new String[0]));
 
@@ -123,13 +123,8 @@ public class SubmissionTrackerFixupTest extends Arquillian {
                 SubmissionTracker submissionTracker =
                     submissionTrackersByUuid.get(submissionStatusDetailBean.getUuid());
                 if (submissionTracker != null) {
-                    String submissionDatatype = submissionStatusDetailBean.getSubmissionDatatype();
-                    if (submissionTracker.getDataType() == null) {
-                        submissionTracker.setDataType(submissionDatatype);
-                    }
-                    if (submissionTracker.getProcessingLocation() == null) {
-                        submissionTracker.setProcessingLocation(SubmissionBioSampleBean.ON_PREM);
-                    }
+                    submissionTracker.setDataType(submissionStatusDetailBean.getSubmissionDatatype());
+                    submissionTracker.setProcessingLocation(SubmissionBioSampleBean.ON_PREM);
                 } else {
                     log.info(
                         String.format("SubmissionTracker not found for %s", submissionStatusDetailBean.getUuid()));
