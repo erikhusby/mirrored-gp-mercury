@@ -169,10 +169,9 @@ public class SubmissionDto implements ISubmissionTuple {
             version = aggregation.getVersion();
             rpid = aggregation.getMercuryProject();
             processingLocation = aggregation.getProcessingLocation();
-            submissionTuple = aggregation.getTuple();
+            submissionTuple = aggregation.getSubmissionTuple();
             fileType = submissionTuple.getFileType();
             fileTypeString = fileType.toString();
-            String datatype = aggregation.getDataType();
             if (StringUtils.isNotBlank(datatype)) {
                 qualityMetric = aggregation.getQualityMetric();
             }
@@ -421,15 +420,9 @@ public class SubmissionDto implements ISubmissionTuple {
             .append(submittedErrorsArray, that.submittedErrorsArray)
             .append(submissionTuple, that.submissionTuple)
             .append(uuid, that.uuid)
-            .append(sample, that.sample)
-            .append(datatype, that.datatype)
-            .append(project, that.project)
             .append(fileTypeString, that.fileTypeString)
-            .append(fileType, that.fileType)
-            .append(version, that.version)
             .append(qualityMetricString, that.qualityMetricString)
             .append(contaminationString, that.contaminationString)
-            .append(rpid, that.rpid)
             .append(readGroupCount, that.readGroupCount)
             .append(fileName, that.fileName)
             .append(processingLocation, that.processingLocation)
@@ -458,15 +451,9 @@ public class SubmissionDto implements ISubmissionTuple {
             .append(submittedErrorsArray)
             .append(submissionTuple)
             .append(uuid)
-            .append(sample)
-            .append(datatype)
-            .append(project)
             .append(fileTypeString)
-            .append(fileType)
-            .append(version)
             .append(qualityMetricString)
             .append(contaminationString)
-            .append(rpid)
             .append(readGroupCount)
             .append(fileName)
             .append(processingLocation)

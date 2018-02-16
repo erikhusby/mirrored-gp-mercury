@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcGtConcordance;
 import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProject;
 import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProjectConsent;
+import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.PicardAggregationSample;
 import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.SampleCoverageFirstMet;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationAlignment;
@@ -74,7 +75,8 @@ public class HibernateMetadataTest extends ContainerTest {
         PicardAnalysis.class.getName(),
         PicardFingerprint.class.getName(),
         ReadGroupIndex.class.getName(),
-        SampleCoverageFirstMet.class.getName()
+        SampleCoverageFirstMet.class.getName(),
+        PicardAggregationSample.class.getName()
     };
 
     /**

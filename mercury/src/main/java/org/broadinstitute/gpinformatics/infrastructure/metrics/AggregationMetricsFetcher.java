@@ -4,6 +4,8 @@ import com.google.common.collect.Iterables;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
+import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.PicardAggregationSample;
+import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.PicardAggregationSample_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
@@ -14,8 +16,6 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardAnal
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardAnalysis_;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardFingerprint;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardFingerprint_;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.ReadGroupIndex;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.ReadGroupIndex_;
 
 import javax.ejb.Stateful;
 import javax.persistence.EntityManager;
@@ -31,7 +31,6 @@ import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
-import javax.persistence.criteria.SetJoin;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -59,9 +58,7 @@ public class AggregationMetricsFetcher {
         CriteriaQuery<Aggregation> criteriaQuery = criteriaBuilder.createQuery(Aggregation.class);
         Root<Aggregation> root = criteriaQuery.from(Aggregation.class);
         root.fetch(Aggregation_.aggregationWgs);
-        SetJoin<Aggregation, AggregationReadGroup> aggregationReadGroupJoin = root.join(Aggregation_.aggregationReadGroups);
-        Join<AggregationReadGroup, ReadGroupIndex> readGroupIndexJoin =
-            aggregationReadGroupJoin.join(AggregationReadGroup_.readGroupIndex);
+        Join<Aggregation, PicardAggregationSample> picardAggregationSampleJoin = root.join(Aggregation_.picardAggregationSample);
 
         List<Aggregation> allResults = new ArrayList<>();
         Map<String, Collection<SubmissionTuple>> tuplesByProject = SubmissionTuple.byProject(tuples);
@@ -74,8 +71,10 @@ public class AggregationMetricsFetcher {
                 List<Predicate> predicates = new ArrayList<>();
                 Predicate projectJoin = criteriaBuilder.and(
                     criteriaBuilder.or(
-                        criteriaBuilder.equal(readGroupIndexJoin.get(ReadGroupIndex_.mercuryProject), projectName),
-                        criteriaBuilder.equal(readGroupIndexJoin.get(ReadGroupIndex_.project), projectName)
+                        criteriaBuilder.equal(
+                            picardAggregationSampleJoin.get(PicardAggregationSample_.researchProject), projectName),
+                        criteriaBuilder.equal(
+                            picardAggregationSampleJoin.get(PicardAggregationSample_.project), projectName)
                 ));
                 predicates.add(projectJoin);
                 predicates.add(criteriaBuilder.isNull(root.get(Aggregation_.library)));

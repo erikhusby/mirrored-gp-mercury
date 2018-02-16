@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.metrics;
 
+import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.PicardAggregationSample;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationAlignment;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationContam;
@@ -35,7 +36,7 @@ public class AggregationTestFactory {
         AggregationHybridSelection aggregationHybridSelection = new AggregationHybridSelection(pctTargetBases20X);
         AggregationAlignment aggregationAlignment = new AggregationAlignment(totalReadsAlignedInPairs, "PAIR");
         AggregationWgs aggregationWgs=new AggregationWgs(meanCoverageWgs);
-
+        PicardAggregationSample picardAggregationSample = new PicardAggregationSample(project, project, sample, dataType);
         AggregationReadGroup aggregationReadGroup = new AggregationReadGroup(null, 2, null,
             new ReadGroupIndex(null, null, 2, null, null, null, project, project, sample, productOrder));
 
@@ -45,6 +46,6 @@ public class AggregationTestFactory {
 
         return new Aggregation(project, sample, null, version, readGroupCount, dataType,
                 Collections.singleton(aggregationAlignment), aggregationContam, aggregationHybridSelection,
-            aggregationReadGroupSet, aggregationWgs, fingerprintLod, processingLocation);
+            aggregationReadGroupSet, aggregationWgs, fingerprintLod, picardAggregationSample, processingLocation);
     }
 }
