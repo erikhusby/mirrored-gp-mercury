@@ -13,7 +13,6 @@ import static org.testng.Assert.*;
 public class FluidigmChipProcessorTest {
 
     public static final String FLUIDIGM_OUTPUT_CSV = "FluidigmOutput.csv";
-    public static final String PLATE_BARCODE = "000010553069";
 
     @Test
     public void testParseBasic() throws Exception {

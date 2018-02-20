@@ -4,7 +4,6 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -85,7 +84,6 @@ public class LabVesselFingerprintingMetricPlugin implements ListPlugin {
             , @Nonnull SearchContext context) {
         List<PlateWell> labVesselList = (List<PlateWell>) entityList;
         List<ConfigurableList.Row> metricRows = new ArrayList<>();
-        LabVesselDao labVesselDao = ServiceAccessUtility.getBean(LabVesselDao.class);
         SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
 
         // Append headers for metric data of interest.
@@ -104,7 +102,6 @@ public class LabVesselFingerprintingMetricPlugin implements ListPlugin {
             String stockSampleId = null;
             String rootSampleId = null;
             String aliquotSampleId = null;
-            String reportedGender = null;
             String collaboratorParticipantId = null;
             Set<SampleInstanceV2> sampleInstancesV2 = plateWell.getSampleInstancesV2();
             int tryCount = 0;
@@ -116,7 +113,6 @@ public class LabVesselFingerprintingMetricPlugin implements ListPlugin {
                     if (sampleData != null) {
                         stockSampleId = sampleData.getStockSample();
                         rootSampleId = sampleData.getRootSample();
-                        reportedGender = sampleData.getGender();
                         collaboratorParticipantId = sampleData.getCollaboratorParticipantId();
                     }
                     Set<LabVessel> rootLabVessels = rootSample.getLabVessel();
@@ -201,16 +197,6 @@ public class LabVesselFingerprintingMetricPlugin implements ListPlugin {
 
                 row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.COLLABORATOR_PARTICIPANT_ID.getResultHeader(),
                         collaboratorParticipantId, collaboratorParticipantId));
-
-                //TODO How to do gender discrepencies
-                value = "NA/" + ColumnValueType.GENDER.format(reportedGender, "");
-                row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.GENDER.getResultHeader(),
-                        value, value));
-
-                //TODO Fails
-                value = "Fail";
-                row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.GENDER_CONCORDANCE_RESULT.getResultHeader(),
-                        value, value));
 
                 metricRows.add(row);
             }

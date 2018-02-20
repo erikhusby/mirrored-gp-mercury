@@ -73,11 +73,20 @@ public class FluidigmRunFactoryTest extends BaseEventTest {
                 result, mapAssayToSnp);
 
         Assert.assertEquals(labMetricRun.getLabMetrics().size(), 96 * 10);
-        LabMetric labMetric = labMetricRun.getLabMetrics().iterator().next();
+        LabMetric labMetric = findLabMetric(LabMetric.MetricType.CALL_RATE_Q20, labMetricRun.getLabMetrics());
 
         //Check that the total calls metadata was 90 since we skipped the gender/failed assays
         Metadata totalCalls = findMetadata(labMetric.getMetadataSet(), Metadata.Key.TOTAL_POSSIBLE_CALLS);
         Assert.assertEquals(totalCalls.getNumberValue().intValue(), 90);
+    }
+
+    private LabMetric findLabMetric(LabMetric.MetricType metricType, Set<LabMetric> labMetrics) {
+        for (LabMetric labMetric: labMetrics) {
+            if (labMetric.getName() == metricType) {
+                return labMetric;
+            }
+        }
+        return null;
     }
 
     private static Metadata findMetadata(Set<Metadata> metadataSet, Metadata.Key key) {

@@ -144,21 +144,8 @@ public class FluidigmRunFactory {
                 mapLabVesselToRecords, q17Threshold);
         generateCallRateLabMetrics(labMetricRun, LabMetric.MetricType.CALL_RATE_Q20, decidingUser, mapAssayToSnp,
                 mapLabVesselToRecords, q20Threshold);
-        generateRoxIntensities(labMetricRun);
 
         // ROX Data
-        for (Map.Entry<String, DescriptiveStatistics>  entry: fluidigmRun.getMapAssayToRawStatistics().entrySet()) {
-            String assayKey = entry.getKey();
-            String assayName = fluidigmRun.getAssayNamesByAssayKey().get(assayKey);
-            DescriptiveStatistics descriptiveStatistics = entry.getValue();
-            if (descriptiveStatistics.getN() > 0) {
-//                 TODO What to attach this to
-//                LabMetric labMetric = new LabMetric(descriptiveStatistics.getSum(),
-//                        LabMetric.MetricType.ROX_ASSAY_RAW_DATA_COUNT, LabMetric.LabUnit.NUMBER,
-//                        plateWell.getVesselPosition().name(), new Date());
-            }
-        }
-
         for (Map.Entry<String, DescriptiveStatistics>  entry: fluidigmRun.getMapSampleToRawStatistics().entrySet()) {
             String sampleKey = entry.getKey();
             DescriptiveStatistics descriptiveStatistics = entry.getValue();
@@ -234,9 +221,6 @@ public class FluidigmRunFactory {
                                             double threshold) {
         for (Map.Entry<PlateWell, List<FluidigmChipProcessor.FluidigmDataRow>> entry: mapLabVesselToRecords.entrySet()) {
             PlateWell plateWell = entry.getKey();
-            if (plateWell.getVesselPosition() == VesselPosition.H09) {
-                System.out.println("H09");
-            }
             double calls = 0.0;
             double totalPossibleCalls = 0.0;
             for (FluidigmChipProcessor.FluidigmDataRow row: entry.getValue()) {
@@ -271,10 +255,6 @@ public class FluidigmRunFactory {
         }
     }
 
-    private void generateRoxIntensities(LabMetricRun labMetricRun) {
-
-    }
-
     private Genotype parseGenotype(FluidigmChipProcessor.FluidigmDataRow record) {
         Genotype genotype = new Genotype();
         genotype.setConfidence(new Double(record.getConfidence()));
@@ -290,9 +270,6 @@ public class FluidigmRunFactory {
             convertedFinalCallB = null;
         } else {
             String[] genotypes = convertedFinalCall.split(":");
-
-            // This used to get an array index out of bounds error, so now we throw an error to let the user
-            // know that their file is invalid.
             if (genotypes.length < 2) {
                 throw new RuntimeException("Sample: " + record.getSampleName() +
                                            " did not have a genotype with at least one colon and it is not NTC, No Call or Invalid");
