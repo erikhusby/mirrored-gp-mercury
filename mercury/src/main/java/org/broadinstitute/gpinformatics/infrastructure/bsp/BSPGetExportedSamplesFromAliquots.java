@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
 import org.broadinstitute.gpinformatics.mercury.BSPJerseyClient;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 
+import javax.enterprise.context.Dependent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -11,6 +12,7 @@ import java.util.List;
 /**
  * Client to get exported sample from BSP.
  */
+@Dependent
 public class BSPGetExportedSamplesFromAliquots extends BSPJerseyClient {
 
     public static class ExportedSample {
