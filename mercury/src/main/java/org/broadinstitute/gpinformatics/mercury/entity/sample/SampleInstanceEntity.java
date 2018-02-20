@@ -16,6 +16,8 @@ import javax.annotation.Nonnull;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -91,6 +93,8 @@ public class SampleInstanceEntity {
     private Boolean pairedEndRead;
     private String comments;
     private Integer numberLanes;
+
+    @Enumerated(EnumType.STRING)
     private IlluminaFlowcell.FlowcellType sequencerModel;
 
     public void removeSubTasks() {

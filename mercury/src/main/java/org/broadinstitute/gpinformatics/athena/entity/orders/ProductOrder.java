@@ -23,7 +23,6 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.CustomizationValues;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
-import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDataFetcher;
@@ -42,7 +41,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
-import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
@@ -484,10 +482,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
 
         // Samples created from externally uploaded samples will not have a Mercury Sample link yet
-        // and it needs to be present in order to correctly look up sample data. The PDO sample may
-        // be either a Mercury Sample name or a tube barcode.
+        // and it needs to be present in order to correctly look up sample data.
         if (!linkableSamples.isEmpty()) {
             SampleInstanceEntityDao dao = ServiceAccessUtility.getBean(SampleInstanceEntityDao.class);
+            // Finds Mercury Sample using PDO sample name which may be a Mercury Sample name or a tube barcode.
             Multimap<String, MercurySample> map = dao.lookupSamplesByIdentifiers(linkableSamples.keySet());
             for (String identifier : map.keySet()) {
                 if (map.get(identifier).size() > 1) {
@@ -506,20 +504,36 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             }
         }
 
-        // This gets all the sample names. We could get unique sample names from BSP as a future optimization.
+        // In order to do risk calculation on a new PDO sample the FFPE status is fetched for BSP
+        // samples though it's not needed for Mercury samples.
+        Map<String, MercurySample> pdoSampleToMercurySample = new HashMap<>();
+        for (ProductOrderSample productOrderSample : samples) {
+            MercurySample mercurySample = productOrderSample.getMercurySample();
+            if (mercurySample != null && mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
+                pdoSampleToMercurySample.put(productOrderSample.getName(), mercurySample);
+            }
+        }
+
+        if (pdoSampleToMercurySample.isEmpty()) {
+            // This early return is needed to avoid making a unnecessary injection, which could cause
+            // DB Free automated tests to fail.
+            return;
+        }
+
         SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
         Map<String, SampleData> sampleDataMap = Collections.emptyMap();
-
         try {
-            sampleDataMap = sampleDataFetcher.fetchSampleDataForSamples(samples, bspSampleSearchColumns);
+            // Fetches BSP data by Mercury Sample not PDO Sample which may be a tube barcode.
+            sampleDataMap = sampleDataFetcher.fetchSampleDataForSamples(pdoSampleToMercurySample.values(),
+                    bspSampleSearchColumns);
         } catch (BSPLookupException ignored) {
             // not a bsp sample?
         }
-
         // Collect SampleData which we will then use to look up FFPE status.
         List<SampleData> nonNullSampleData = new ArrayList<>();
         for (ProductOrderSample sample : samples) {
-            SampleData sampleData = sampleDataMap.get(sample.getName());
+            MercurySample mercurySample = sample.getMercurySample();
+            SampleData sampleData = sampleDataMap.get(mercurySample.getSampleKey());
 
             // If the DTO is null, we do not need to set it because it defaults to DUMMY inside sample.
             if (sampleData != null) {

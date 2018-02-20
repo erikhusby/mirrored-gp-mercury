@@ -92,7 +92,6 @@ import static org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleIns
 import static org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjbDbFreeTest.TestType.POOLEDTUBE;
 import static org.broadinstitute.gpinformatics.mercury.test.LabEventTest.FCT_TICKET;
 import static org.mockito.Matchers.anyString;
-import static org.openqa.selenium.remote.BrowserType.MOCK;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
@@ -204,12 +203,13 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         }
         Assert.assertEquals(metadataMap.get(Metadata.Key.SAMPLE_ID), "MOCK.FSK1.A"); // from Collaborator Sample Id
         Assert.assertEquals(metadataMap.get(Metadata.Key.BROAD_PARTICIPANT_ID), "MOCK1"); // from Individual Name
-        Assert.assertEquals(metadataMap.get(Metadata.Key.SPECIES), "S");
+        Assert.assertEquals(metadataMap.get(Metadata.Key.SPECIES), "G S");
         Assert.assertEquals(metadataMap.get(Metadata.Key.GENDER), "M");
         Assert.assertEquals(metadataMap.get(Metadata.Key.STRAIN), "n/a");
         Assert.assertEquals(metadataMap.get(Metadata.Key.MATERIAL_TYPE), "DNA");
         Assert.assertNull(metadataMap.get(Metadata.Key.ORGANISM));
-        Assert.assertNull(metadataMap.get(Metadata.Key.PATIENT_ID));
+        Assert.assertEquals(metadataMap.get(Metadata.Key.PATIENT_ID),
+                metadataMap.get(Metadata.Key.BROAD_PARTICIPANT_ID));
         Assert.assertNull(metadataMap.get(Metadata.Key.LSID));
 
         LabVessel tube = entity.getLabVessel();
@@ -289,12 +289,14 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(metadataMap.get(Metadata.Key.SAMPLE_ID), select(i,
                     "SampleColab20", "SampleColab21", "SampleColab22"));
             Assert.assertEquals(metadataMap.get(Metadata.Key.BROAD_PARTICIPANT_ID), select(i, "hh", "ii", "jj"));
-            Assert.assertEquals(metadataMap.get(Metadata.Key.SPECIES), "see Organism column for species");
+            Assert.assertEquals(metadataMap.get(Metadata.Key.SPECIES),
+                    "see Organism column for genus see Organism column for species");
             Assert.assertEquals(metadataMap.get(Metadata.Key.GENDER), select(i, "M", "F", "M"));
             Assert.assertTrue(StringUtils.isBlank(metadataMap.get(Metadata.Key.STRAIN)));
             Assert.assertEquals(metadataMap.get(Metadata.Key.MATERIAL_TYPE), "DNA");
             Assert.assertEquals(metadataMap.get(Metadata.Key.ORGANISM), "human");
-            Assert.assertNull(metadataMap.get(Metadata.Key.PATIENT_ID));
+            Assert.assertEquals(metadataMap.get(Metadata.Key.PATIENT_ID),
+                    metadataMap.get(Metadata.Key.BROAD_PARTICIPANT_ID));
             Assert.assertNull(metadataMap.get(Metadata.Key.LSID));
 
             LabVessel tube = entity.getLabVessel();
@@ -372,12 +374,13 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(metadataMap.get(Metadata.Key.SAMPLE_ID), select(i, "DDDSS2244", "DDDSS2245"));
             Assert.assertEquals(metadataMap.get(Metadata.Key.BROAD_PARTICIPANT_ID),
                     select(i, "Patient X", "Patient Y"));
-            Assert.assertEquals(metadataMap.get(Metadata.Key.SPECIES), "Test Species");
+            Assert.assertEquals(metadataMap.get(Metadata.Key.SPECIES), "Test Genus Test Species");
             Assert.assertEquals(metadataMap.get(Metadata.Key.GENDER), select(i, "F", null));
             Assert.assertEquals(metadataMap.get(Metadata.Key.STRAIN), select(i, "n/a", null));
             Assert.assertEquals(metadataMap.get(Metadata.Key.MATERIAL_TYPE), "DNA");
             Assert.assertNull(metadataMap.get(Metadata.Key.ORGANISM));
-            Assert.assertNull(metadataMap.get(Metadata.Key.PATIENT_ID));
+            Assert.assertEquals(metadataMap.get(Metadata.Key.PATIENT_ID),
+                    metadataMap.get(Metadata.Key.BROAD_PARTICIPANT_ID));
             Assert.assertNull(metadataMap.get(Metadata.Key.LSID));
 
             LabVessel tube = entity.getLabVessel();
@@ -455,12 +458,13 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
             Assert.assertEquals(metadataMap.get(Metadata.Key.SAMPLE_ID), select(i, "DDDSS2244", "DDDSS2245"));
             Assert.assertEquals(metadataMap.get(Metadata.Key.BROAD_PARTICIPANT_ID),
                     select(i, "Patient1", "Patient2"));
-            Assert.assertEquals(metadataMap.get(Metadata.Key.SPECIES), "SS");
+            Assert.assertEquals(metadataMap.get(Metadata.Key.SPECIES), "GG SS");
             Assert.assertEquals(metadataMap.get(Metadata.Key.GENDER), select(i, "M", "M"));
             Assert.assertEquals(metadataMap.get(Metadata.Key.STRAIN), select(i, "3", "3"));
             Assert.assertEquals(metadataMap.get(Metadata.Key.MATERIAL_TYPE), "DNA");
             Assert.assertNull(metadataMap.get(Metadata.Key.ORGANISM));
-            Assert.assertNull(metadataMap.get(Metadata.Key.PATIENT_ID));
+            Assert.assertEquals(metadataMap.get(Metadata.Key.PATIENT_ID),
+                    metadataMap.get(Metadata.Key.BROAD_PARTICIPANT_ID));
             Assert.assertNull(metadataMap.get(Metadata.Key.LSID));
 
             LabVessel tube = entity.getLabVessel();

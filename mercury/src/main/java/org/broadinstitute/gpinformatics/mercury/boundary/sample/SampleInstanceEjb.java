@@ -81,29 +81,29 @@ import static org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil.isInBs
  * In all cases a SampleInstanceEntity and associated MercurySample and LabVessel are created or overwritten.
  */
 public class SampleInstanceEjb {
-    static final String CONFLICT = "Row #%d conflicting value of %s (found \"%s\", expected \"%s\" %s)";
-    static final String MISSING = "Row #%d missing value of %s";
-    static final String WRONG_TYPE = "Row #%d %s must be %s";
-    static final String MUST_NOT_BE = "Row #%d %s must not be %s";
-    static final String UNKNOWN = "Row #%d the value for %s is not in %s";
+    static final String CONFLICT = "Row #%d conflicting value of %s (found \"%s\", expected \"%s\" %s).";
+    static final String MISSING = "Row #%d missing value of %s.";
+    static final String WRONG_TYPE = "Row #%d %s must be %s.";
+    static final String MUST_NOT_BE = "Row #%d %s must not be %s.";
+    static final String UNKNOWN = "Row #%d the value for %s is not in %s.";
     static final String UNKNOWN_COND = "Row #%d the value for " +
             VesselPooledTubesProcessor.Headers.CONDITIONS.getText() +
             " is not a ticket id for one of the sub-task of %s.";
-    static final String DUPLICATE = "Row #%d duplicate value for %s";
+    static final String DUPLICATE = "Row #%d duplicate value for %s.";
     static final String DUPLICATE_S_M =
             "Row #%d repeats the combination of sample %s and index %s and indicates these tubes should not be pooled.";
-    static final String BSP_FORMAT = "Row #%d the new %s \"%s\" must not have a BSP sample name format";
-    static final String MERCURY_FORMAT = "Row #%d the new %s \"%s\" must not have a Mercury barcode format (10 digits)";
+    static final String BSP_FORMAT = "Row #%d the new %s \"%s\" must not have a BSP sample name format.";
+    static final String MERCURY_FORMAT = "Row #%d the new %s \"%s\" must not have a Mercury barcode format (10 digits).";
     static final String PREXISTING =
             "Row #%d %s named \"%s\" already exists in Mercury; set the Overwrite checkbox to re-upload.";
-    static final String PDO_PROBLEM = "Row #%d no %s is defined for Product Order \"%s\"";
+    static final String PDO_PROBLEM = "Row #%d no %s is defined for Product Order \"%s\".";
     static final String PREXISTING_VALUES =
             "Row #%d values for %s already exist in Mercury; set the Overwrite checkbox to re-upload.";
     static final String BSP_METADATA =
-            "Row #%d values for %s should be blank because BSP data for sample %s cannot be updated";
-    static final String BSP_MISSING = "Row #%d Mercury expects sample \"%s\" to be in BSP and it's not";
+            "Row #%d values for %s should be blank because BSP data for sample %s cannot be updated.";
+    static final String BSP_MISSING = "Row #%d Mercury expects sample \"%s\" to be in BSP and it's not.";
 
-    public static final String IS_SUCCESS = "Spreadsheet with %d rows successfully uploaded";
+    public static final String IS_SUCCESS = "Spreadsheet with %d rows successfully uploaded.";
     /** A string of the available sequencer model names. */
     public static final String SEQUENCER_MODELS;
 
@@ -1028,13 +1028,12 @@ public class SampleInstanceEjb {
                 newObjects.add(mercurySample);
             }
             Set<Metadata> metadata = new HashSet<>();
-            if (isNotBlank(get(processor.getCollaboratorSampleId(), index))) {
-                metadata.add(new Metadata(Metadata.Key.SAMPLE_ID, get(processor.getCollaboratorSampleId(), index)));
-            }
-            if (isNotBlank(get(processor.getIndividualName(), index))) {
-                metadata.add(new Metadata(Metadata.Key.BROAD_PARTICIPANT_ID, get(processor.getIndividualName(),
-                        index)));
-            }
+            metadata.add(new Metadata(Metadata.Key.SAMPLE_ID, get(processor.getCollaboratorSampleId(), index)));
+            String patientId = StringUtils.trimToEmpty(get(processor.getIndividualName(), index));
+            metadata.add(new Metadata(Metadata.Key.BROAD_PARTICIPANT_ID, patientId));
+            // Ideally collaborator participant id goes into patient id. This is a necessary stand-in.
+            metadata.add(new Metadata(Metadata.Key.PATIENT_ID, patientId));
+
             if (isNotBlank(get(processor.getSex(), index))) {
                 metadata.add(new Metadata(Metadata.Key.GENDER, get(processor.getSex(), index)));
             }
@@ -1044,9 +1043,8 @@ public class SampleInstanceEjb {
             if (isNotBlank(get(processor.getOrganism(), index))) {
                 metadata.add(new Metadata(Metadata.Key.ORGANISM, get(processor.getOrganism(), index)));
             }
-            if (isNotBlank(processor.getSpecies())) {
-                metadata.add(new Metadata(Metadata.Key.SPECIES, processor.getSpecies()));
-            }
+            metadata.add(new Metadata(Metadata.Key.SPECIES,
+                    StringUtils.trimToEmpty(processor.getGenus() + " " + processor.getSpecies())));
             if (isNotBlank(MaterialType.DNA.getDisplayName())) {
                 metadata.add(new Metadata(Metadata.Key.MATERIAL_TYPE, MaterialType.DNA.getDisplayName()));
             }
@@ -1091,7 +1089,7 @@ public class SampleInstanceEjb {
         }
         sampleInstanceEntityDao.persistAll(newObjects);
 
-        messages.addInfo("Spreadsheet with " + numberOfEntities + " rows successfully uploaded.");
+        messages.addInfo(String.format(IS_SUCCESS, numberOfEntities));
     }
 
     /**

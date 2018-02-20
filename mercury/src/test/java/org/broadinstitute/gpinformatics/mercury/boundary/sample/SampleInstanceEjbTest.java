@@ -235,7 +235,7 @@ public class SampleInstanceEjbTest extends Arquillian {
 
                     errorIfMissing(errors, filename, String.format(SampleInstanceEjb.MUST_NOT_BE, 8,
                             VesselPooledTubesProcessor.Headers.BAIT.getText() + " and " +
-                                    VesselPooledTubesProcessor.Headers.CAT.getText(), "both"));
+                                    VesselPooledTubesProcessor.Headers.CAT.getText(), "both defined"));
                     errorIfMissing(errors, filename, String.format(SampleInstanceEjb.UNKNOWN_COND, 8, "DEV-6796"));
                     errorIfMissing(errors, filename, String.format(SampleInstanceEjb.CONFLICT, 8,
                             VesselPooledTubesProcessor.Headers.LSID.getText(), "lsid:3", "lsid:1", ""));
