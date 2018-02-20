@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.mercury.boundary.run;
+package org.broadinstitute.gpinformatics.mercury.control.run;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -27,21 +27,16 @@ import java.util.Date;
 import static javax.ejb.ConcurrencyManagementType.BEAN;
 
 /**
- * Singleton to configure and schedule the timer for Infinium run starting activities.
+ * Singleton to configure and schedule the timer for daily activities, initially Infinium archiving.
  */
 @Startup
 @Singleton
 @ConcurrencyManagement(BEAN)
-public class InfiniumRunStarter {
-    private static final Log log = LogFactory.getLog(InfiniumRunStarter.class);
+public class InfiniumArchiveStarter {
+    private static final Log log = LogFactory.getLog(InfiniumArchiveStarter.class);
 
     @Inject
     private Deployment deployment;
-
-    /**
-     * Interval in minutes for the timer to fire off.
-     */
-    private int timerPeriod = 5;
 
     private static Date previousNextTimeout = new Date(0);
 
@@ -49,7 +44,7 @@ public class InfiniumRunStarter {
     private TimerService timerService;
 
     @Inject
-    private InfiniumRunFinder infiniumRunFinder;
+    private InfiniumArchiver infiniumArchiver;
 
     @Inject
     private SessionContextUtility sessionContextUtility;
@@ -60,16 +55,20 @@ public class InfiniumRunStarter {
     @PostConstruct
     public void initialize() {
         ScheduleExpression expression = new ScheduleExpression();
-        expression.minute("*/" + timerPeriod).hour("*");
+        if (deployment.equals(Deployment.PROD)) {
+            // 10pm
+            expression.hour("22");
+        } else {
+            // Every 5 minutes
+            expression.minute("*/5").hour("*");
+        }
         timerService.createCalendarTimer(expression, new TimerConfig("Infinium run timer", false));
     }
 
     /**
      * This method does all the work -- it gets called at every interval defined by the timerPeriod.  The check for the
-     * isEnabled() is done here instead of the initialize() is simply because YAML needs to get a servlet or file
+     * isEnabled() is done here instead of the initialize() simply because YAML needs to get a servlet or file
      * protocol handler.
-     *
-     * @see {@link AbstractConfig}
      *
      * @param timer the defined {@Timer}
      */
@@ -83,28 +82,24 @@ public class InfiniumRunStarter {
                 sessionContextUtility.executeInContext(new SessionContextUtility.Function() {
                     @Override
                     public void apply() {
-                        try {
-                            userBean.login("seqsystem");
-                            infiniumRunFinder.find();
-                        } catch (SystemException e) {
-                            log.error("Error finding infinium runs", e);
-                        }
+                        userBean.login("seqsystem");
+                        infiniumArchiver.archive();
                     }
                 });
             } else {
-                log.trace("Skipping Infinium Starter timer retry");
+                log.trace("Skipping Infinium Archive timer retry");
             }
         }
     }
 
     /**
-     * Check Mercury configuration in the YAML file and see if the Infinium Starter system is enabled for this
+     * Check Mercury configuration in the YAML file and see if the Infinium Archiver system is enabled for this
      * environment.  If it is not, then the configuration will be null.
      *
      * @return true if it's an environment where the Infinium Starter should be run
      */
     private boolean isEnabled() {
-        boolean useRunFinder = Boolean.getBoolean("useInfiniumRunFinder");
+        boolean useRunFinder = Boolean.getBoolean("useInfiniumArchiver");
         // Can't use @Inject for this object or we'll run into VFS protocol errors.
         InfiniumStarterConfig infiniumStarterConfig = (InfiniumStarterConfig) MercuryConfiguration.getInstance().
                 getConfig(InfiniumStarterConfig.class, deployment);

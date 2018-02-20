@@ -422,22 +422,8 @@ public class LabEventFactory implements Serializable {
                         }
                     }
                     for (LabVessel labVessel : labVessels) {
-                        for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                            ProductOrderSample productOrderSample =
-                                    sampleInstanceV2.getProductOrderSampleForSingleBucket();
-                            if (productOrderSample != null) {
-                                Pair<String, String> chipFamilyAndName = productEjb.getGenotypingChip(
-                                        productOrderSample.getProductOrder(), labEvent.getEventDate());
-                                if (chipFamilyAndName.getLeft() != null && chipFamilyAndName.getRight() != null) {
-                                    GenotypingChip chip = attributeArchetypeDao.findGenotypingChip(
-                                            chipFamilyAndName.getLeft(), chipFamilyAndName.getRight());
-                                    forwardToGap = chip.getAttributeMap().get("forward_to_gap");
-                                    if (forwardToGap != null) {
-                                        break;
-                                    }
-                                }
-                            }
-                        }
+                        forwardToGap = determineForwardToGap(labEvent, labVessel, productEjb,
+                                attributeArchetypeDao);
                     }
                     if (forwardToGap == null || forwardToGap.equalsIgnoreCase("Y")) {
                         gapHandler.postToGap(bettaLIMSMessage);
@@ -450,6 +436,29 @@ public class LabEventFactory implements Serializable {
             }
         }
         return labEvents;
+    }
+
+    @Nullable
+    public static String determineForwardToGap(LabEvent labEvent, LabVessel labVessel,
+            ProductEjb productEjb, AttributeArchetypeDao attributeArchetypeDao) {
+        String forwardToGap = null;
+        for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+            ProductOrderSample productOrderSample =
+                    sampleInstanceV2.getProductOrderSampleForSingleBucket();
+            if (productOrderSample != null) {
+                Pair<String, String> chipFamilyAndName = productEjb.getGenotypingChip(
+                        productOrderSample.getProductOrder(), labEvent.getEventDate());
+                if (chipFamilyAndName.getLeft() != null && chipFamilyAndName.getRight() != null) {
+                    GenotypingChip chip = attributeArchetypeDao.findGenotypingChip(
+                            chipFamilyAndName.getLeft(), chipFamilyAndName.getRight());
+                    forwardToGap = chip.getAttributeMap().get("forward_to_gap");
+                    if (forwardToGap != null) {
+                        break;
+                    }
+                }
+            }
+        }
+        return forwardToGap;
     }
 
     /**

@@ -9,7 +9,7 @@
         <div>Vessel Type: ${vessel.type.name}</div>
         <div>Vessel Label: ${vessel.label}</div>
         <div>Create Date: <fmt:formatDate value="${vessel.createdOn}" pattern="${bean.datePattern}"/></div>
-        <div>Abandon Reason: ${vessel.abandonReason}</div>
-        <div>Abandon Date: ${vessel.abandonedDate}</div>
+        <div>Abandon Reason: ${bean.abandonReason}</div>
+        <div>Abandon Date: ${bean.abandonDate}</div>
     </div>
 </stripes:layout-definition>

@@ -172,11 +172,15 @@ public enum DisplayExpression {
         public List<String> evaluate(Object entity, SearchContext context) {
             SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) entity;
             List<String> results = new ArrayList<>();
-            // todo jmt try getSingleProductOrderSample first
-            for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
-                if (productOrderSample.getProductOrder().getProduct() != null) {
-                    results.add(productOrderSample.getProductOrder().getProduct().getDisplayName());
+            ProductOrderSample pdoSampleForSingleBucket = sampleInstanceV2.getProductOrderSampleForSingleBucket();
+            if (pdoSampleForSingleBucket == null) {
+                for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
+                    if (productOrderSample.getProductOrder().getProduct() != null) {
+                        results.add(productOrderSample.getProductOrder().getProduct().getDisplayName());
+                    }
                 }
+            } else {
+                results.add(pdoSampleForSingleBucket.getProductOrder().getProduct().getDisplayName());
             }
             return results;
         }
