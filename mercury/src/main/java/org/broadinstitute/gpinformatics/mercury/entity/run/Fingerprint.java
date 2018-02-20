@@ -10,6 +10,7 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
@@ -103,6 +104,7 @@ public class Fingerprint {
     private Long fingerprintId;
 
     @ManyToOne
+    @JoinColumn(name = "MERCURY_SAMPLE")
     private MercurySample mercurySample;
 
     @Enumerated(EnumType.STRING)
@@ -117,6 +119,7 @@ public class Fingerprint {
     private Date dateGenerated;
 
     @ManyToOne
+    @JoinColumn(name = "SNP_LIST")
     private SnpList snpList;
 
     @OneToMany(mappedBy = "fingerprint", cascade = CascadeType.PERSIST)

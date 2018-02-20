@@ -6,6 +6,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -26,9 +27,11 @@ public class FpGenotype {
     private Long fpGenotypeId;
 
     @ManyToOne
+    @JoinColumn(name = "FINGERPRINT")
     private Fingerprint fingerprint;
 
     @ManyToOne
+    @JoinColumn(name = "SNP")
     private Snp snp;
 
     private String genotype;

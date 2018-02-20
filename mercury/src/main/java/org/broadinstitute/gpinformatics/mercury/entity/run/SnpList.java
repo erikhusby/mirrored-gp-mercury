@@ -7,6 +7,8 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.OrderColumn;
 import javax.persistence.SequenceGenerator;
@@ -34,6 +36,9 @@ public class SnpList {
     private String name;
 
     @ManyToMany(cascade = CascadeType.PERSIST)
+    @JoinTable(schema = "mercury", name="SNP_LIST_SNPS"
+            , joinColumns = {@JoinColumn(name = "snp_list")}
+            , inverseJoinColumns = {@JoinColumn(name = "snps")})
     @OrderColumn()
     private List<Snp> snps = new ArrayList<>();
 
