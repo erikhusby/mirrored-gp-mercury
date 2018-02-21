@@ -1,10 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.sample;
 
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+
 import java.io.Serializable;
 
 /**
  * Represents the data from a walkup sequencing submission.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class WalkUpSequencing implements Serializable {
     private String emailAddress;
     private String submitDate;

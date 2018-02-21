@@ -55,9 +55,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample_.sampleKey;
-import static org.broadinstitute.gpinformatics.mercury.entity.storage.StorageLocation_.labVessels;
-
 @Stateful
 @RequestScoped
 public class BucketEjb {
