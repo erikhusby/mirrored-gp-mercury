@@ -11,6 +11,7 @@ import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
@@ -77,6 +78,9 @@ public class CreateFCTActionBean extends CoreActionBean {
 
     @Inject
     private BucketEntryDao bucketEntryDao;
+
+    @Inject
+    private ProductDao productDao;
 
     @Validate(required = true, on = {LOAD_DENATURE,LOAD_NORM,LOAD_POOLNORM})
     private String lcsetNames;
@@ -268,9 +272,8 @@ public class CreateFCTActionBean extends CoreActionBean {
                     }
                 }
 
-                CreateFctDto createFctDto = new CreateFctDto(loadingTube.getLabel(), targetLcset.getBatchName(), additionalLcsets,
-                        StringUtils.join(eventDates, "<br/>"),
-                        StringUtils.join(productNameList, "<br/>"),
+                CreateFctDto createFctDto = new CreateFctDto(loadingTube.getLabel(), targetLcset.getBatchName(),
+                        additionalLcsets, StringUtils.join(eventDates, "<br/>"), productNameList,
                         StringUtils.join(startingVesselList, "\n"),
                         selectedEventTypeDisplay, defaultLoadingConc, targetLcset.getJiraTicket().getBrowserUrl(),
                         regulatoryDesignation, numberSamples);
@@ -340,9 +343,12 @@ public class CreateFCTActionBean extends CoreActionBean {
                     regulatoryDesignation = createFctDto.getRegulatoryDesignation();
                 }
                 if (!regulatoryDesignation.equals(createFctDto.getRegulatoryDesignation()) ||
-                    regulatoryDesignation.equals(MIXED)) {
-                    addGlobalValidationError("Cannot mix Clinical and Research on a flowcell.");
-                    return new ForwardResolution(VIEW_PAGE);
+                        regulatoryDesignation.equals(MIXED)) {
+                    boolean mixedFlowcellOk = labBatchEjb.isMixedFlowcellOk(createFctDto);
+                    if (!mixedFlowcellOk) {
+                        addGlobalValidationError("Cannot mix Clinical and Research on a flowcell.");
+                        return new ForwardResolution(VIEW_PAGE);
+                    }
                 }
             }
         }

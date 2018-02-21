@@ -24,6 +24,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventRefDataFetcher;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -52,6 +53,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
@@ -77,8 +79,6 @@ import java.util.Map;
 import java.util.Random;
 
 import static org.broadinstitute.gpinformatics.Matchers.argThat;
-import static org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation_.loadingConc;
-import static org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation_.poolTest;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -146,8 +146,12 @@ public class ZimsIlluminaRunFactoryTest {
         Mockito.when(flowcellDesignationEjb.getFlowcellDesignations(Mockito.any(Collection.class))).
                 thenReturn(flowcellDesignations);
 
+        WorkflowLoader workflowLoader = new WorkflowLoader();
+        WorkflowConfig workflowConfig = workflowLoader.load();
+
         SequencingTemplateFactory sequencingTemplateFactory = new SequencingTemplateFactory();
         sequencingTemplateFactory.setFlowcellDesignationEjb(flowcellDesignationEjb);
+        sequencingTemplateFactory.setWorkflowConfig(workflowConfig);
 
         Mockito.when(mockJiraService.createTicketUrl(Mockito.anyString())).thenReturn("jira://LCSET-1");
 
@@ -394,7 +398,6 @@ public class ZimsIlluminaRunFactoryTest {
         boolean pairedRead = false;
 
         FlowcellDesignation flowcellDesignation = new FlowcellDesignation(denatureTube, null,
-                new LabEvent(LabEventType.DENATURE_TRANSFER, runDate, "location", 1L, 2L, "programName"),
                 FlowcellDesignation.IndexType.DUAL, false, IlluminaFlowcell.FlowcellType.HiSeqFlowcell, 8,
                 78, new BigDecimal(199), pairedRead, FlowcellDesignation.Status.IN_FCT,
                 FlowcellDesignation.Priority.NORMAL);

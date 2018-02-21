@@ -6,7 +6,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
@@ -27,11 +26,8 @@ import javax.persistence.TemporalType;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Data Access Object for designation tubes.
@@ -116,22 +112,21 @@ public class FlowcellDesignationEjb {
      * @param targetableStatuses
      * @return
      */
-    public Map<DesignationDto, FlowcellDesignation> update(Collection<DesignationDto> dtos,
-                                                           EnumSet<FlowcellDesignation.Status> targetableStatuses) {
-        Map<DesignationDto, FlowcellDesignation> dtoAndTube = new HashMap<>();
+    public List<Pair<DesignationDto, FlowcellDesignation>> update(Collection<DesignationDto> dtos,
+            EnumSet<FlowcellDesignation.Status> targetableStatuses) {
+        List<Pair<DesignationDto, FlowcellDesignation>> dtoAndTube = new ArrayList<>();
         for (DesignationDto dto : dtos) {
             if (dto.isSelected() && targetableStatuses.contains(dto.getStatus())) {
                 if (dto.getDesignationId() == null) {
                     LabVessel loadingTube = barcodedTubeDao.findByBarcode(dto.getBarcode());
-                    LabEvent loadingTubeEvent = labBatchDao.findById(LabEvent.class, dto.getTubeEventId());
                     LabBatch chosenLcset = StringUtils.isBlank(dto.getChosenLcset()) ?
                             null : labBatchDao.findByName(dto.getChosenLcset());
                     FlowcellDesignation designation = new FlowcellDesignation(loadingTube, chosenLcset,
-                            loadingTubeEvent, dto.getIndexType(), dto.getPoolTest(), dto.getSequencerModel(),
+                            dto.getIndexType(), dto.getPoolTest(), dto.getSequencerModel(),
                             dto.getNumberLanes(), dto.getReadLength(), dto.getLoadingConc(), dto.getPairedEndRead(),
                             dto.getStatus(), dto.getPriority());
                     labBatchDao.persist(designation);
-                    dtoAndTube.put(dto, designation);
+                    dtoAndTube.add(Pair.of(dto, designation));
                 } else {
                     FlowcellDesignation designation = barcodedTubeDao.findById(FlowcellDesignation.class,
                             dto.getDesignationId());
@@ -143,7 +138,7 @@ public class FlowcellDesignationEjb {
                     designation.setIndexType(dto.getIndexType());
                     designation.setPoolTest(dto.getPoolTest());
                     designation.setStatus(dto.getStatus());
-                    dtoAndTube.put(dto, designation);
+                    dtoAndTube.add(Pair.of(dto, designation));
                 }
             }
         }

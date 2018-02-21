@@ -266,6 +266,10 @@ public class Metadata {
          */
         BUICK_COLLECTION_DATE(Category.SAMPLE, DataType.STRING, "Buick Collection Date", Visibility.USER),
         BUICK_VISIT(Category.SAMPLE, DataType.STRING, "Visit", Visibility.USER),
+        RECEIPT_RECORD(Category.SAMPLE, DataType.STRING, "Receipt Record", Visibility.NONE),
+        LSID(Category.SAMPLE, DataType.STRING, "Life Science Identifier", Visibility.USER),
+        SPECIES(Category.SAMPLE, DataType.STRING, "Species", Visibility.USER),
+        BROAD_PARTICIPANT_ID(Category.SAMPLE, DataType.STRING, "Broad Participant ID", Visibility.USER),
 
         CORRELATION_COEFFICIENT_R2(Category.LAB_METRIC_RUN, DataType.STRING, "R Squared Correlation Coefficient",
                 Visibility.USER),
@@ -273,15 +277,14 @@ public class Metadata {
         INSTRUMENT_SERIAL_NUMBER(Category.LAB_METRIC_RUN, DataType.STRING, "Serial Number", Visibility.USER),
 
         TOTAL_NG(Category.LAB_METRIC, DataType.NUMBER, "Total ng", Visibility.USER),
-        RECEIPT_RECORD(Category.SAMPLE, DataType.STRING, "Receipt Record", Visibility.NONE),
-
         DV_200(Category.LAB_METRIC, DataType.NUMBER, "DV200", Visibility.USER),
         LOWER_MARKER_TIME(Category.LAB_METRIC, DataType.NUMBER, "Lower Marker Time", Visibility.USER),
         NA(Category.LAB_METRIC, DataType.STRING, "NA", Visibility.USER),
-        BAIT_WELL(Category.REAGENT, DataType.STRING, "Bait Well", Visibility.USER),
         LSID(Category.SAMPLE, DataType.STRING, "Life Science Identifier", Visibility.USER),
         SPECIES(Category.SAMPLE, DataType.STRING, "Species", Visibility.USER),
         FLOWRATE(Category.LIQUID_HANDLER_METRIC, DataType.NUMBER, "Flowrate", Visibility.USER);
+
+        BAIT_WELL(Category.REAGENT, DataType.STRING, "Bait Well", Visibility.USER);
 
         private final Category category;
         private final DataType dataType;

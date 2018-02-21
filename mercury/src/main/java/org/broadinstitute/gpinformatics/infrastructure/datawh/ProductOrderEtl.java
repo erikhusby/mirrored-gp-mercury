@@ -6,8 +6,12 @@ import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
+import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
+import org.broadinstitute.gpinformatics.mercury.entity.run.ArchetypeAttribute;
+import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 
 import javax.ejb.Stateful;
 import javax.inject.Inject;
@@ -21,15 +25,17 @@ import java.util.Date;
 public class ProductOrderEtl extends GenericEntityAndStatusEtl<ProductOrder, ProductOrder> {
     private BSPUserList userList;
     private ProductEjb productEjb;
+    private AttributeArchetypeDao archetypeDao;
 
     public ProductOrderEtl() {
     }
 
     @Inject
-    public ProductOrderEtl(ProductOrderDao dao, BSPUserList userList, ProductEjb productEjb) {
+    public ProductOrderEtl(ProductOrderDao dao, BSPUserList userList, ProductEjb productEjb, AttributeArchetypeDao archetypeDao) {
         super(ProductOrder.class, "product_order", "product_order_status", "athena.product_order_aud", "product_order_id", dao);
         this.userList = userList;
         this.productEjb = productEjb;
+        this.archetypeDao = archetypeDao;
     }
 
     @Override
@@ -70,9 +76,32 @@ public class ProductOrderEtl extends GenericEntityAndStatusEtl<ProductOrder, Pro
             regInfoData = getRegInfoData(entity);
         }
 
-        String arrayChipType;
+        String arrayChipType = null;
+        String callThreshold = null;
         Pair<String,String> chipData = productEjb.getGenotypingChip(entity, entity.getCreatedDate());
-        arrayChipType = chipData == null?"":chipData.getRight();
+        // "Infinium" -> "InfiniumOmniExpressExome-8v1-3_A"
+        if( chipData != null ) {
+            arrayChipType = chipData.getRight();
+            GenotypingChip chip = archetypeDao.findGenotypingChip( chipData.getLeft(), chipData.getRight() );
+            if( chip != null ) {
+                ArchetypeAttribute attrib = chip.getAttribute(GenotypingProductOrderMapping.CALL_RATE_THRESHOLD);
+                if( attrib != null ) {
+                    callThreshold = attrib.getAttributeValue();
+                }
+                // Check if a mapping override exists for this pdo, if so override default values if not null
+                GenotypingProductOrderMapping genotypingProductOrderMapping =
+                        archetypeDao.findGenotypingProductOrderMapping(entity.getProductOrderId());
+                if (genotypingProductOrderMapping != null) {
+                    for (ArchetypeAttribute attribute : genotypingProductOrderMapping.getAttributes()) {
+                        if( attribute.getAttributeName().equals(GenotypingProductOrderMapping.CALL_RATE_THRESHOLD)) {
+                            if (attribute.getAttributeValue() != null) {
+                                callThreshold = attribute.getAttributeValue();
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         return genericRecord(etlDateStr, isDelete,
                 entity.getProductOrderId(),
@@ -89,6 +118,7 @@ public class ProductOrderEtl extends GenericEntityAndStatusEtl<ProductOrder, Pro
                 format(entity.getSkipRegulatoryReason()),
                 format(entity.getSapOrderNumber()),
                 format(arrayChipType),
+                format(callThreshold),
                 format(regInfoData)
         );
     }

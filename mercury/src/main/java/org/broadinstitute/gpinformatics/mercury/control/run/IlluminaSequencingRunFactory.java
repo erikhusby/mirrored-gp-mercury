@@ -110,7 +110,7 @@ public class IlluminaSequencingRunFactory implements Serializable {
         return new IlluminaSequencingRun(illuminaFlowcell, runName, solexaRunBean.getRunBarcode(),
                 solexaRunBean.getMachineName(),
                 null
-                                                /* TODO SGM -- Operator information is always missing.  may revisit later*/,
+                                                /* TODO -- Operator information is always missing.  may revisit later*/,
                 false, solexaRunBean.getRunDate(), solexaRunBean.getRunDirectory());
     }
 }

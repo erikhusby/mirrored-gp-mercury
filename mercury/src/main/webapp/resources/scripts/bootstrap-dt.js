@@ -36,7 +36,7 @@ function enableDefaultPagingOptions(){
  *  Set the defaults for DataTables initialization
  */
 $j.extend(true, $j.fn.dataTable.defaults, {
-    "sDom": "<'row-fluid'<'span8'f><'span4'B>r>t<'row-fluid'<'span6'i><'span6'p>>",
+    'sDom': "<'row-fluid'<'span8'f>><'row-fluid'<'span4'l><'span4 pull-right'<'pull-right'B>>>rt<'row-fluid'<'span6'l><'span6 pull-right'p>>",
     "bAutoWidth": false,
     "bInfo": false,
     "bStateSave": true,
@@ -50,7 +50,8 @@ $j.extend(true, $j.fn.dataTable.defaults, {
 });
 if (isLegacyDataTables()) {
     $j.extend(true, $j.fn.dataTable.defaults, {
-        "sDom": "<'row-fluid'<'span8'f><'span4'T>r>t<'row-fluid'<'span6'i><'span6'p>>",
+        'sDom': "<'row-fluid'<'span6'f><'span4'T><'span2'il>>rt<'row-fluid'<'span6'l><'span6'p>>",
+        "sPaginationType": "bootstrap",
     });
 }
 
@@ -96,13 +97,10 @@ function standardButtons(checkboxClass="shiftCheckbox", headerClass) {
         }
     };
 
-    return [{
-        extend: 'excelHtml5',
-        exportOptions: defaultOptions
-    }, {
-        extend: 'copyHtml5',
-        exportOptions: defaultOptions
-    }];
+    return [
+        {extend: 'copy', exportOptions: defaultOptions },
+        { extend: 'excel', exportOptions: defaultOptions},
+        ];
 }
 
 /**
@@ -125,7 +123,7 @@ function includeAdvancedFilter(oTable, tableID) {
     });
 
 
-    $j(".dataTables_filter input[type='text']").keyup();
+    $j(".dataTables_filter").find("input[type='text'],input[type='search']").keyup();
 }
 
 function findDataTableWrapper(oTable) {
@@ -133,7 +131,7 @@ function findDataTableWrapper(oTable) {
 }
 
 function findFilterTextInput(oTable) {
-    return $j(findDataTableWrapper(oTable)).find(".dataTables_filter input[type='text']");
+    return $j(findDataTableWrapper(oTable)).find(".dataTables_filter").find("input[type='text'],input[type='search']");
 }
 /**
  * Define the regular expression for the AND and OR filter.  The OR filter needs to create

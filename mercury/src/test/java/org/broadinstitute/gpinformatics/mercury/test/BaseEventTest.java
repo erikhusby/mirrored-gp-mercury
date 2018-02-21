@@ -41,11 +41,11 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventRefDataFetcher;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.BspNewRootHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.DenatureToDilutionTubeHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.EventHandlerSelector;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.FlowcellLoadedHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.FlowcellMessageHandler;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.SonicAliquotHandler;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
 import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
@@ -77,6 +77,8 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEnt
 import org.broadinstitute.gpinformatics.mercury.test.builders.IceEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.IceJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.InfiniumEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.InfiniumJaxbBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionCellFreeUMIEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.MiSeqReagentKitEntityBuilder;
@@ -90,7 +92,6 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuil
 import org.broadinstitute.gpinformatics.mercury.test.builders.StoolTNAEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.TenXEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.TruSeqStrandSpecificEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.TruSeqStrandSpecificJaxbBuilder;
 import org.easymock.EasyMock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -220,8 +221,9 @@ public class BaseEventTest {
         flowcellLoadedHandler.setEmailSender(emailSender);
         flowcellLoadedHandler.setAppConfig(appConfig);
 
-        EventHandlerSelector eventHandlerSelector = new EventHandlerSelector(new SonicAliquotHandler(),
-                new DenatureToDilutionTubeHandler(), flowcellMessageHandler, flowcellLoadedHandler);
+        EventHandlerSelector eventHandlerSelector = new EventHandlerSelector(
+                new DenatureToDilutionTubeHandler(), flowcellMessageHandler, flowcellLoadedHandler,
+                new BspNewRootHandler());
         labEventFactory.setEventHandlerSelector(eventHandlerSelector);
 
         bucketEjb = new BucketEjb(labEventFactory, jiraService, null, null, null, null,
@@ -504,6 +506,34 @@ public class BaseEventTest {
     }
 
     /**
+     * This method runs the entities through the library construction process with UMI.
+     * @return Returns the entity builder that contains the entities after this process has been invoked.
+     */
+    public LibraryConstructionCellFreeUMIEntityBuilder runLibraryConstructionProcessWithUMI(
+            Map<String, BarcodedTube> mapBarcodeToVessel, TubeFormation initialRack, LibraryConstructionEntityBuilder.Umi umi) {
+        LibraryConstructionCellFreeUMIEntityBuilder builder = new LibraryConstructionCellFreeUMIEntityBuilder(
+                mapBarcodeToVessel, initialRack, bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
+                NUM_POSITIONS_IN_RACK, "CellFreeUMI", umi);
+        return builder.invoke();
+    }
+
+    public LibraryConstructionEntityBuilder runWgsLibraryConstructionProcessWithUMI(StaticPlate shearingCleanupPlate,
+                                                                                 String shearCleanPlateBarcode,
+                                                                                 StaticPlate shearingPlate,
+                                                                                 String barcodeSuffix,
+                                                                                 LibraryConstructionJaxbBuilder.PondType pondType,
+                                                                                 LibraryConstructionEntityBuilder.Indexing indexing,
+                                                                                 LibraryConstructionEntityBuilder.Umi umi) {
+        LibraryConstructionEntityBuilder builder = new LibraryConstructionEntityBuilder(
+                bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
+                shearingCleanupPlate, shearCleanPlateBarcode, shearingPlate, NUM_POSITIONS_IN_RACK, barcodeSuffix,
+                indexing,
+                pondType, umi);
+        builder.setIncludeUmi(true);
+        return builder.invoke();
+    }
+
+    /**
      * This method runs the entities through the hybrid selection process.
      *
      * @param pondRegRack         The pond registration rack coming out of the library construction process.
@@ -532,7 +562,20 @@ public class BaseEventTest {
      */
     public IceEntityBuilder runIceProcess(List<TubeFormation> pondRegRacks, String barcodeSuffix) {
         return new IceEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(), pondRegRacks,
-                barcodeSuffix, IceJaxbBuilder.PlexType.PLEX96).invoke();
+                barcodeSuffix, IceJaxbBuilder.PlexType.PLEX96, IceJaxbBuilder.PrepType.ICE).invoke();
+    }
+
+    /**
+     * Creates an entity graph for HyperPrep Illumina Content Exome.
+     *
+     * @param pondRegRacks         The pond registration racks coming out of the library construction process.
+     * @param barcodeSuffix       Makes unique the generated vessel barcodes. Don't use date if test quickly invoked twice.
+     *
+     * @return Returns the entity builder that contains the entities after this process has been invoked.
+     */
+    public IceEntityBuilder runHyperPrepIceProcess(List<TubeFormation> pondRegRacks, String barcodeSuffix) {
+        return new IceEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(), pondRegRacks,
+                barcodeSuffix, IceJaxbBuilder.PlexType.PLEX96, IceJaxbBuilder.PrepType.HYPER_PREP_ICE).invoke();
     }
 
     /**
@@ -657,11 +700,11 @@ public class BaseEventTest {
 
     public InfiniumEntityBuilder runInfiniumProcess(StaticPlate sourcePlate, String barcodeSuffix) {
         return runInfiniumProcessWithMethylation(sourcePlate, barcodeSuffix,
-                InfiniumEntityBuilder.IncludeMethylation.FALSE);
+                InfiniumJaxbBuilder.IncludeMethylation.FALSE);
     }
 
     public InfiniumEntityBuilder runInfiniumProcessWithMethylation(
-            StaticPlate sourcePlate, String barcodeSuffix, InfiniumEntityBuilder.IncludeMethylation includeMethylation) {
+            StaticPlate sourcePlate, String barcodeSuffix, InfiniumJaxbBuilder.IncludeMethylation includeMethylation) {
         return new InfiniumEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
                 sourcePlate, barcodeSuffix, includeMethylation).invoke();
     }
@@ -984,7 +1027,9 @@ public class BaseEventTest {
                 thenReturn(flowcellDesignations);
         Mockito.when(flowcellDesignationEjb.getFlowcellDesignations(Mockito.any(Collection.class))).
                 thenReturn(flowcellDesignations);
-
+        SequencingTemplateFactory sequencingTemplateFactory = new SequencingTemplateFactory();
+        sequencingTemplateFactory.setFlowcellDesignationEjb(flowcellDesignationEjb);
+        sequencingTemplateFactory.setWorkflowConfig(new WorkflowLoader().load());
         return new ZimsIlluminaRunFactory(
                 new SampleDataFetcher() {
                     @Override
@@ -998,7 +1043,7 @@ public class BaseEventTest {
                         return controlList;
                     }
                 },
-                new SequencingTemplateFactory(),
+                sequencingTemplateFactory,
                 productOrderDao,
                 crspPipelineUtils, flowcellDesignationEjb
         );

@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.annotation.Resource;
@@ -80,24 +81,27 @@ public class InfiniumRunFinder implements Serializable {
             List<LabVessel> infiniumChips = labVesselDao.findAllWithEventButMissingAnother(LabEventType.INFINIUM_XSTAIN,
                     LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
             for (LabVessel labVessel : infiniumChips) {
-                UserTransaction utx = ejbContext.getUserTransaction();
-                try {
-                    if (OrmUtil.proxySafeIsInstance(labVessel, StaticPlate.class)) {
-                        StaticPlate staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
-                        utx.begin();
-                        processChip(staticPlate);
-                        // The commit doesn't cause a flush (not clear why), so we must do it explicitly.
-                        labEventDao.flush();
-                        utx.commit();
+                if (labEventDao != null && labEventDao.getEntityManager() != null &&
+                    labEventDao.getEntityManager().isOpen()) {
+                    UserTransaction utx = ejbContext.getUserTransaction();
+                    try {
+                        if (OrmUtil.proxySafeIsInstance(labVessel, StaticPlate.class)) {
+                            StaticPlate staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
+                            utx.begin();
+                            processChip(staticPlate);
+                            // The commit doesn't cause a flush (not clear why), so we must do it explicitly.
+                            labEventDao.flush();
+                            utx.commit();
+                        }
+                    } catch (Exception e) {
+                        utx.rollback();
+                        log.error("Failed to process chip " + labVessel.getLabel(), e);
+                        emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
+                                Collections.<String>emptyList(),
+                                "[Mercury] Failed to process infinium chip", "For " + labVessel.getLabel() +
+                                                                             " with error: " + e.getMessage(),
+                                false);
                     }
-                } catch (Exception e) {
-                    utx.rollback();
-                    log.error("Failed to process chip " + labVessel.getLabel(), e);
-                    emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
-                            Collections.<String>emptyList(),
-                            "[Mercury] Failed to process infinium chip", "For " + labVessel.getLabel() +
-                                                                                     " with error: " + e.getMessage(),
-                            false);
                 }
             }
         } finally {
@@ -129,7 +133,7 @@ public class InfiniumRunFinder implements Serializable {
         boolean allComplete = true;
         for (VesselPosition vesselPosition : chipWellResults.getPositionWithSampleInstance()) {
             //Check to see if any of the wells in the chip are abandoned.
-            if(!staticPlate.isPositionAbandoned(vesselPosition.toString())) {
+            if(!isAbandoned(staticPlate,vesselPosition)) {
                 boolean autocallStarted = false;
                 for (LabEventMetadata metadata : labEventMetadata) {
                     if (metadata.getLabEventMetadataType() ==
@@ -154,7 +158,7 @@ public class InfiniumRunFinder implements Serializable {
         boolean starterCalledOnAllWells = true;
         for (VesselPosition vesselPosition: staticPlate.getVesselGeometry().getVesselPositions()) {
             //Check to see if any of the wells in the chip are abandoned.
-            if(!staticPlate.isPositionAbandoned(vesselPosition.toString())) {
+            if(!isAbandoned(staticPlate,vesselPosition)) {
                 Set<SampleInstanceV2> sampleInstancesAtPositionV2 =
                         staticPlate.getContainerRole().getSampleInstancesAtPositionV2(vesselPosition);
                 if (sampleInstancesAtPositionV2 != null && !sampleInstancesAtPositionV2.isEmpty()) {
@@ -182,6 +186,20 @@ public class InfiniumRunFinder implements Serializable {
                 sendFailedToFindScannerNameEmail(staticPlate);
             }
         }
+    }
+
+
+    /**
+     *  Check to see if the any position on the current chip or any ancestor plates or vessels are abandoned.
+     */
+    private boolean isAbandoned(StaticPlate staticPlate, VesselPosition vesselPosition) {
+        TransferTraverserCriteria.AbandonedLabVesselCriteria abandonedLabVesselCriteria =
+                new TransferTraverserCriteria.AbandonedLabVesselCriteria();
+        staticPlate.getContainerRole().evaluateCriteria(vesselPosition, abandonedLabVesselCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors, 0);
+        if(abandonedLabVesselCriteria.isAncestorAbandoned()) {
+            return true;
+        }
+        return false;
     }
 
     public boolean start(StaticPlate staticPlate, VesselPosition vesselPosition, LabEvent someStartedEvent) {

@@ -167,6 +167,8 @@ public class MercurySample extends AbstractSample {
     @BatchSize(size = 100)
     protected Set<LabVessel> labVessel = new HashSet<>();
 
+    private Boolean isRoot;
+
     /**
      * For JPA
      */
@@ -182,6 +184,18 @@ public class MercurySample extends AbstractSample {
     public MercurySample(String sampleKey, MetadataSource metadataSource) {
         this.sampleKey = sampleKey;
         this.metadataSource = metadataSource;
+    }
+
+    /**
+     * Creates a new MercurySample with a specific metadata source in the absence of the actual sample data.
+     *
+     * @param sampleKey         the name of the sample
+     * @param metadataSource    the source of the sample data
+     * @param isRoot            true if this is a new root
+     */
+    public MercurySample(String sampleKey, MetadataSource metadataSource, Boolean isRoot) {
+        this(sampleKey, metadataSource);
+        this.isRoot = isRoot;
     }
 
     /**
@@ -283,6 +297,10 @@ public class MercurySample extends AbstractSample {
         return labVessel;
     }
 
+    public Boolean isRoot() {
+        return isRoot;
+    }
+
     /**
      * Find the latest material type by first searching the event history then falling back on the sample's metadata.
      */
@@ -297,13 +315,20 @@ public class MercurySample extends AbstractSample {
     }
 
     public Date getReceivedDate() {
+        LabEvent receiptEvent = getReceiptEvent();
+        if (receiptEvent != null) {
+            return receiptEvent.getEventDate();
+        }
+        return null;
+    }
 
+    public LabEvent getReceiptEvent() {
         for(LabVessel currentVessel:labVessel) {
             Map<LabEvent, Set<LabVessel>> vesselsForEvent = currentVessel
                     .findVesselsForLabEventType(LabEventType.SAMPLE_RECEIPT, true,
                             EnumSet.of(TransferTraverserCriteria.TraversalDirection.Ancestors));
             if (!vesselsForEvent.isEmpty()) {
-                return vesselsForEvent.keySet().iterator().next().getEventDate();
+                return vesselsForEvent.keySet().iterator().next();
             }
         }
 

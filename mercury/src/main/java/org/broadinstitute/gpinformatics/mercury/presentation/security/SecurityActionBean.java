@@ -140,6 +140,7 @@ public class SecurityActionBean extends CoreActionBean {
         // Order of roles is important, if user is both PDM and PM we want to go to PDM's page.
         PDM("/orders/order.action?list", Role.PDM),
         PM(ResearchProjectActionBean.PROJECT_LIST_PAGE, Role.PM),
+        GPPM(ResearchProjectActionBean.PROJECT_LIST_PAGE, Role.GPProjectManager),
         OTHER("/index.jsp", null);
 
         private static final String APP_CONTEXT = "/Mercury"; // getContext().getRequest().getContextPath();

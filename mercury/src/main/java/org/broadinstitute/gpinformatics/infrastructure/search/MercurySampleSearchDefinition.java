@@ -82,7 +82,7 @@ public class MercurySampleSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("LCSET");
-        searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getLcsetInputConverter());
+        searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getBatchNameInputConverter());
         criteriaPaths = new ArrayList<>();
 
         // Mercury only cares about workflow batches

@@ -43,7 +43,6 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Fundi
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProjectList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
@@ -99,7 +98,8 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     private static final String LIBRARY_DESCRIPTOR_PARAMETER = "selectedSubmissionLibraryDescriptor";
     private static final String REPOSITORY_PARAMETER = "selectedSubmissionRepository";
     public static final String SUBMISSION_TUPLES_PARAMETER = "selectedSubmissionTuples";
-    public static final int RESEARCH_PROJECT_SUBMISSIONS_TAB = 2;
+    public static final String RESEARCH_PROJECT_ORDERS_TAB = "ordersTab";
+    public static final String RESEARCH_PROJECT_SUBMISSIONS_TAB = "submissionsTab";
 
     private static final String PROJECT = "Research Project";
     public static final String CREATE_PROJECT = CoreActionBean.CREATE + PROJECT;
@@ -129,22 +129,16 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     public static final String STRIPES_MESSAGES_KEY = "stripesMessages";
     public static final String STRIPES_MESSAGE_TYPE = "messageType";
 
-    @Inject
     private ResearchProjectDao researchProjectDao;
 
-    @Inject
     private BSPUserList bspUserList;
 
-    @Inject
     private BSPCohortList cohortList;
 
-    @Inject
     private ProjectTokenInput projectTokenInput;
 
-    @Inject
     private BioProjectTokenInput bioProjectTokenInput;
 
-    @Inject
     private SubmissionsService submissionsService;
 
     private List<SubmissionRepository> submissionRepositories=new ArrayList<>();
@@ -158,13 +152,10 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     private String selectedSubmissionLibraryDescriptor;
     private String selectedSubmissionRepository;
 
-    @Inject
     private RegulatoryInfoEjb regulatoryInfoEjb;
 
-    @Inject
     private SubmissionDtoFetcher submissionDtoFetcher;
 
-    @Inject
     private OrspProjectDao orspProjectDao;
 
     /**
@@ -216,7 +207,6 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     @Validate(converter = SubmissionTupleTypeConverter.class)
     private List<SubmissionTuple> selectedSubmissionTuples=new ArrayList<>();
 
-    @Inject
     private AlignerDao alignerDao;
 
     private SessionCache<List<SubmissionDto>> sessionCache;
@@ -238,37 +228,27 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     @ValidateNestedProperties(
             @Validate(field = "listOfKeys", label = "Project Managers", required = true, on = {SAVE_ACTION})
     )
-    @Inject
+
     private UserTokenInput projectManagerList;
 
-    @Inject
     private UserTokenInput scientistList;
 
-    @Inject
     private UserTokenInput externalCollaboratorList;
 
-    @Inject
     private UserTokenInput broadPiList;
 
-    @Inject
     private UserTokenInput otherUserList;
 
-    @Inject
     private FundingTokenInput fundingSourceList;
 
-    @Inject
     private CohortTokenInput cohortsList;
 
-    @Inject
     private ProductOrderDao productOrderDao;
 
-    @Inject
     private ResearchProjectEjb researchProjectEjb;
 
-    @Inject
     private CollaborationService collaborationService;
 
-    @Inject
     private ReferenceSequenceDao referenceSequenceDao;
 
     private String irbList;
@@ -279,9 +259,8 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
 
     private boolean validCollaborationPortal;
 
-    private int rpSelectedTab = 1;
+    private String rpSelectedTab = RESEARCH_PROJECT_ORDERS_TAB;
 
-    @Inject
     private BioProjectList bioProjectList;
 
     public ResearchProjectActionBean() {
@@ -362,29 +341,28 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
             setSubmissionRepositories(submissionsService.getSubmissionRepositories());
 
             if (submissionRepository == null && StringUtils.isBlank(selectedSubmissionRepository)) {
-                if (getActiveRepositories().size() == 1) {
-                    selectedSubmissionRepository = getActiveRepositories().iterator().next().getDescription();
-                }
-            }
-            String eventName = getContext().getEventName();
-            if (StringUtils.isNotBlank(editResearchProject.getSubmissionRepositoryName())) {
                 selectedSubmissionRepository = editResearchProject.getSubmissionRepositoryName();
-                submissionRepository = submissionsService.findRepositoryByKey(selectedSubmissionRepository);
-                if (submissionRepository != null && !submissionRepository.isActive() && eventName
-                        .equals(VIEW_SUBMISSIONS_ACTION)) {
-                    addMessage("Selected submission site ''{0}'' is not active.",
-                            submissionRepository.getDescription());
+                if (StringUtils.isNotBlank(selectedSubmissionRepository)) {
+                    submissionRepository = submissionsService.findRepositoryByKey(selectedSubmissionRepository);
                 }
             }
-
+            if (submissionRepository != null && !submissionRepository.isActive() && getContext().getEventName()
+                    .equals(VIEW_SUBMISSIONS_ACTION)) {
+                addMessage("Selected submission site ''{0}'' is not active.",
+                        submissionRepository.getDescription());
+            }
             if (submissionLibraryDescriptor == null) {
-                submissionLibraryDescriptor = findDefaultSubmissionType(editResearchProject);
-                if (submissionLibraryDescriptor != null) {
-                    selectedSubmissionLibraryDescriptor = submissionLibraryDescriptor.getName();
+                if (StringUtils.isNotBlank(selectedSubmissionLibraryDescriptor)) {
+                    submissionLibraryDescriptor =
+                            submissionsService.findLibraryDescriptorTypeByKey(selectedSubmissionLibraryDescriptor);
+                } else {
+                    submissionLibraryDescriptor = findDefaultSubmissionType(editResearchProject);
+                    if (submissionLibraryDescriptor != null) {
+                        selectedSubmissionLibraryDescriptor = submissionLibraryDescriptor.getName();
+                    }
                 }
             }
         }
-
     }
 
     SubmissionLibraryDescriptor findDefaultSubmissionType(ResearchProject researchProject) {
@@ -875,13 +853,14 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
 
         // Test both the user's role and whether or not they are listed as a project manager in the project. This
         // protects from the case where the user's role has been revoked, but the project people haven't been updated.
-        boolean isPm = getUserBean().isPMUser() && projectManagerIds.contains(getUserBean().getBspUser().getUserId());
+        boolean isPm = (getUserBean().isPMUser() || getUserBean().isGPPMUser()) && projectManagerIds.contains(getUserBean().getBspUser().getUserId());
         if (!isPm) {
             accessRestriction.add(String.format("Project Managers of %s", researchProject));
         }
         if (accessRestriction.isEmpty()) {
             return true;
         }
+
         if (!supressValidationErrors) {
             addGlobalValidationError(
                     String.format("Data submissions are available for %s.", StringUtils.join(accessRestriction, " and ")));
@@ -896,6 +875,9 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
                 populateSubmissionSamples(true);
             } catch (SessionCacheException e) {
                 log.error("Error retrieving samples from cache", e);
+            } catch (Exception e) {
+                log.error("Error retrieving samples data", e);
+                addMessage(e.getLocalizedMessage());
             }
         }
     }
@@ -965,27 +947,35 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
             addGlobalValidationError("You must select a submission site in order to post for submissions.");
             errors = true;
         }
+        List<SubmissionDto> selectedSubmissions = new ArrayList<>();
         if (!errors) {
-            List<SubmissionDto> selectedSubmissions = new ArrayList<>();
-            Map<SubmissionTuple, BassDTO> bassDtoMap = submissionDtoFetcher.fetchBassDtos(
-                    editResearchProject.getBusinessKey(),
-                    tupleToSampleMap.values().toArray(new String[tupleToSampleMap.values().size()]));
-            for (BassDTO bassDTO : bassDtoMap.values()) {
-                if (tupleToSampleMap.containsKey(bassDTO.getTuple())) {
-                    // All required data are in the bassDTO
-                    selectedSubmissions
-                            .add(new SubmissionDto(bassDTO, null, editResearchProject.getProductOrders(), null));
+
+
+            for (SubmissionDto submissionDto : submissionDtoFetcher.fetch(editResearchProject, this)) {
+                Set<SubmissionLibraryDescriptor> libraryTypes = submissionDto.getAggregation().getLibraryTypes();
+                if (tupleToSampleMap.containsKey(submissionDto.getSubmissionTuple())) {
+                    // All required data are in the submissionDto
+                    selectedSubmissions.add(submissionDto);
+                    for (SubmissionLibraryDescriptor libraryType : libraryTypes) {
+                        if (!libraryType.getName().equals(selectedSubmissionLibraryDescriptor)) {
+                            addGlobalValidationError("Data selected for submission of ''{2}'' is ''{3}'' but library ''{4}'' was selected.",
+                                submissionDto.getSampleName(), libraryType.getName(), selectedSubmissionLibraryDescriptor);
+                            errors = true;
+                        }
+                    }
                 }
             }
-
+        }
+        if (!errors){
             try {
                 Collection<SubmissionStatusDetailBean> submissionStatuses =
                         researchProjectEjb
                                 .processSubmissions(researchProject, new BioProject(selectedProject.getAccession()),
                                         selectedSubmissions, submissionRepository, submissionLibraryDescriptor);
                 updateUuid(selectedSubmissions);
-                addMessage("The selected samples for submission have been successfully posted to NCBI.  See the " +
-                           "Submission Requests tab for further details");
+                addMessage("The selected samples for submission have been successfully posted to ''{0}''. " +
+                           "See the Submission Requests tab for further details",
+                    submissionsService.findRepositoryByKey(selectedSubmissionRepository).getDescription());
             } catch (InformaticsServiceException | ValidationException e) {
                 log.error(e.getMessage(), e);
                 addGlobalValidationError(e.getMessage());
@@ -1043,6 +1033,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         return cohortsList;
     }
 
+    @Inject
     public void setCohortsList(CohortTokenInput cohortsList) {
         this.cohortsList = cohortsList;
     }
@@ -1051,6 +1042,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         return fundingSourceList;
     }
 
+    @Inject
     public void setFundingSourceList(FundingTokenInput fundingSourceList) {
         this.fundingSourceList = fundingSourceList;
     }
@@ -1059,6 +1051,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         return broadPiList;
     }
 
+    @Inject
     void setBroadPiList(UserTokenInput broadPiList) {
         this.broadPiList = broadPiList;
     }
@@ -1067,6 +1060,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         return externalCollaboratorList;
     }
 
+    @Inject
     public void setExternalCollaboratorList(UserTokenInput externalCollaboratorList) {
         this.externalCollaboratorList = externalCollaboratorList;
     }
@@ -1075,6 +1069,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         return scientistList;
     }
 
+    @Inject
     public void setScientistList(UserTokenInput scientistList) {
         this.scientistList = scientistList;
     }
@@ -1083,6 +1078,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         return projectManagerList;
     }
 
+    @Inject
     public void setProjectManagerList(UserTokenInput projectManagerList) {
         this.projectManagerList = projectManagerList;
     }
@@ -1091,6 +1087,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         return otherUserList;
     }
 
+    @Inject
     public void setOtherUserList(UserTokenInput otherUserList) {
         this.otherUserList = otherUserList;
     }
@@ -1193,7 +1190,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     }
 
     public static boolean isEditAllowed(UserBean userBean) {
-        return userBean.isDeveloperUser() || userBean.isPMUser() || userBean.isPDMUser();
+        return userBean.isDeveloperUser() || userBean.isPMUser() || userBean.isPDMUser() || userBean.isGPPMUser();
     }
 
     public CollaborationData getCollaborationData() {
@@ -1256,7 +1253,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         return bioProjectTokenInput;
     }
 
-
+    @Inject
     public void setBioProjectTokenInput(BioProjectTokenInput bioProjectTokenInput) {
         this.bioProjectTokenInput = bioProjectTokenInput;
     }
@@ -1269,11 +1266,11 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         this.selectedSubmissionTuples = selectedSubmissionTuples;
     }
 
-    public int getRpSelectedTab() {
+    public String getRpSelectedTab() {
         return rpSelectedTab;
     }
 
-    public void setRpSelectedTab(int rpSelectedTab) {
+    public void setRpSelectedTab(String rpSelectedTab) {
         this.rpSelectedTab = rpSelectedTab;
     }
 
@@ -1284,7 +1281,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
      */
     public boolean isCanBeginCollaborations() {
         if (isResearchOnly()) {
-            return getUserBean().isDeveloperUser() || getUserBean().isPMUser();
+            return getUserBean().isDeveloperUser() || getUserBean().isPMUser() || getUserBean().isGPPMUser();
         }
         return false;
     }
@@ -1379,18 +1376,71 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         }
     }
 
+    @Inject
+    public void setProjectTokenInput(ProjectTokenInput projectTokenInput) {
+        this.projectTokenInput = projectTokenInput;
+    }
+
+    @Inject
+    public void setRegulatoryInfoEjb(RegulatoryInfoEjb regulatoryInfoEjb) {
+        this.regulatoryInfoEjb = regulatoryInfoEjb;
+    }
+
+    @Inject
+    public void setSubmissionDtoFetcher(SubmissionDtoFetcher submissionDtoFetcher) {
+        this.submissionDtoFetcher = submissionDtoFetcher;
+    }
+
+    @Inject
+    public void setOrspProjectDao(OrspProjectDao orspProjectDao) {
+        this.orspProjectDao = orspProjectDao;
+    }
+
+    @Inject
+    public void setAlignerDao(AlignerDao alignerDao) {
+        this.alignerDao = alignerDao;
+    }
+
+    @Inject
+    public void setProductOrderDao(ProductOrderDao productOrderDao) {
+        this.productOrderDao = productOrderDao;
+    }
+
+    @Inject
+    public void setResearchProjectEjb(ResearchProjectEjb researchProjectEjb) {
+        this.researchProjectEjb = researchProjectEjb;
+    }
+
+    @Inject
+    public void setReferenceSequenceDao(ReferenceSequenceDao referenceSequenceDao) {
+        this.referenceSequenceDao = referenceSequenceDao;
+    }
+
+    @Inject
+    public void setCohortList(BSPCohortList cohortList) {
+        this.cohortList = cohortList;
+    }
+
+    @Inject
+    public void setCollaborationService(CollaborationService collaborationService) {
+        this.collaborationService = collaborationService;
+    }
+
     void setEditResearchProject(ResearchProject editResearchProject) {
         this.editResearchProject = editResearchProject;
     }
 
+    @Inject
     void setUserBean(UserBean userBean) {
         this.userBean = userBean;
     }
 
+    @Inject
     void setBspUserList(BSPUserList bspUserList) {
         this.bspUserList = bspUserList;
     }
 
+    @Inject
     void setSubmissionsService(SubmissionsService submissionsService) {
         this.submissionsService = submissionsService;
     }
@@ -1401,6 +1451,16 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
 
     public void setSupressValidationErrors(boolean supressValidationErrors) {
         this.supressValidationErrors = supressValidationErrors;
+    }
+
+    @Inject
+    public void setResearchProjectDao(ResearchProjectDao researchProjectDao) {
+        this.researchProjectDao = researchProjectDao;
+    }
+
+    @Inject
+    public void setBioProjectList(BioProjectList bioProjectList) {
+        this.bioProjectList = bioProjectList;
     }
 
 }

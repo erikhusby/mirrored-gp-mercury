@@ -8,7 +8,7 @@
     file as well until such a time that we reconfigure the mercury structure to have a dependant project or something
      that can inherit this version setting. -->
 
-    <version>1.79-SNAPSHOT</version>
+    <version>1.86-SNAPSHOT</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
@@ -160,8 +160,8 @@
 
     <properties>
         <!-- Clover -->
-        <clover.version>4.1.1</clover.version>
-        <clover.plugin.version>4.1.1</clover.plugin.version>
+        <clover.version>4.1.2</clover.version>
+        <clover.plugin.version>4.1.2</clover.plugin.version>
         <clover.targetPercentage>15%</clover.targetPercentage>
 
 
@@ -204,11 +204,12 @@
         <database.delimiterType>normal</database.delimiterType>
         <!--<passwords.properties>must be specified as the location of the password properties file</passwords.properties>-->
 
-        <!-- Note - For the RC builds, the mercury.rc.ip must contain an @ otherwise the mercury-rc-ds.xml will not be syntactically correct. The @ is a meta character to the maven filtering such that the combination of
-        @${mercury.rc.ip} does not get subsituted at all. Hence mercury-rc-ds.xml only contains ${mercury.rc.ip} -->
+        <!-- Note - For the Feature branch builds, the mercury.fb.ip must contain an @ otherwise the resources-fb/mercury-dev-ds.xml will not be syntactically correct.
+        The @ is a meta character to the maven filtering such that the combination of
+        @${mercury.fb.ip} does not get subsituted at all. Hence the resources-fb/mercury-dev-ds.xml only contains ${mercury.rc.ip} -->
 
-        <!-- Switching MercuryRC to use the MercuryQA datbase. -->
-        <!--<mercury.rc.ip>@192.168.195.28</mercury.rc.ip>-->
+        <!-- A Feature Branch gpgold server -->
+        <mercury.fb.ip>MustBeSpecified</mercury.fb.ip>
 
         <umlgraph.path>must be specified</umlgraph.path>
 
@@ -218,7 +219,9 @@
 
         <jboss.socket.https>8443</jboss.socket.https>
 
-        <bspclient.version>1.3.96</bspclient.version>
+        <bspclient.version>[1.3,)</bspclient.version>
+
+	<mercuryCloverDatabase>${project.build.directory}/clover/clover.db</mercuryCloverDatabase>
 
     </properties>
 
@@ -242,7 +245,7 @@
                         <groupId>com.atlassian.maven.plugins</groupId>
                         <artifactId>clover-maven-plugin</artifactId>
                         <configuration>
-                            <cloverDatabase>${project.build.directory}/clover/clover.db</cloverDatabase>
+                            <cloverDatabase>${mercuryCloverDatabase}</cloverDatabase>
                             <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
                             <includesAllSourceRoots>false</includesAllSourceRoots>
                             <targetPercentage>${clover.targetPercentage}</targetPercentage>
@@ -286,7 +289,7 @@
                         <groupId>com.atlassian.maven.plugins</groupId>
                         <artifactId>clover-maven-plugin</artifactId>
                         <configuration>
-                            <cloverDatabase>${project.build.directory}/clover/clover.db</cloverDatabase>
+                            <cloverDatabase>${mercuryCloverDatabase}</cloverDatabase>
                             <fullRunEvery>60</fullRunEvery>
                             <snapshot>${user.home}/.clover/${project.groupId}-${project.artifactId}/clover.snapshot
                             </snapshot>
@@ -316,10 +319,11 @@
                         <groupId>com.atlassian.maven.plugins</groupId>
                         <artifactId>clover-maven-plugin</artifactId>
                         <configuration>
-                            <cloverDatabase>${project.build.directory}/clover/clover.db</cloverDatabase>
+                            <cloverDatabase>${mercuryCloverDatabase}</cloverDatabase>
                             <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
                             <includesAllSourceRoots>false</includesAllSourceRoots>
                             <targetPercentage>${clover.targetPercentage}</targetPercentage>
+			    <flushPolicy>threaded</flushPolicy>
                             <generateHtml>true</generateHtml>
                             <generateXml>true</generateXml>
                         </configuration>
@@ -343,7 +347,7 @@
                         <groupId>com.atlassian.maven.plugins</groupId>
                         <artifactId>clover-maven-plugin</artifactId>
                         <configuration>
-                            <cloverDatabase>${project.build.directory}/clover/clover.db</cloverDatabase>
+                            <cloverDatabase>${mercuryCloverDatabase}</cloverDatabase>
                             <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
                             <includesAllSourceRoots>false</includesAllSourceRoots>
                             <targetPercentage>${clover.targetPercentage}</targetPercentage>
@@ -383,7 +387,7 @@
                         <artifactId>clover-maven-plugin</artifactId>
                         <version>${clover.plugin.version}</version>
                         <configuration>
-                            <cloverDatabase>${project.build.directory}/clover/clover.db</cloverDatabase>
+                            <cloverDatabase>${mercuryCloverDatabase}</cloverDatabase>
                             <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
                             <generateHistorical>true</generateHistorical>
                             <generateHtml>true</generateHtml>
@@ -545,8 +549,8 @@
                                 </property>
                             </systemProperties>
                             <argLine>${surefire.argLine}</argLine>
-<!--                            <forkCount>2</forkCount> -->
-<!--                            <reuseForks>true</reuseForks> -->
+                            <!--                            <forkCount>2</forkCount> -->
+                            <!--                            <reuseForks>true</reuseForks> -->
                             <!--<parallel>methods</parallel>-->
                             <!--<threadCount>10</threadCount>-->
                         </configuration>
@@ -905,6 +909,28 @@
                 <testResources>
                     <testResource>
                         <directory>src/test/resources-dev</directory>
+                    </testResource>
+                </testResources>
+            </build>
+        </profile>
+
+        <profile>
+            <!-- For Feature Branch builds -->
+            <id>FB</id>
+            <properties>
+                <database>oracle</database>
+                <database.delimiterType>row</database.delimiterType>
+
+                <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
+                <database.url>jdbc:oracle:thin:${mercury.fb.ip}:1521:gpgold</database.url>
+                <passwords.properties>src/test/resources-fb/fb-passwords.properties</passwords.properties>
+            </properties>
+
+            <build>
+                <testResources>
+                    <testResource>
+                        <directory>src/test/resources-fb</directory>
+                        <filtering>true</filtering>
                     </testResource>
                 </testResources>
             </build>
@@ -1288,9 +1314,9 @@ nodePrinter.print(webapp)
             <scope>test</scope>
         </dependency>
         <dependency>
-             <groupId>org.mock-server</groupId>
-             <artifactId>mockserver-netty</artifactId>
-             <version>3.10.4</version>
+            <groupId>org.mock-server</groupId>
+            <artifactId>mockserver-netty</artifactId>
+            <version>3.10.4</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -1538,6 +1564,11 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-client</artifactId>
+            <version>${jersey.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.jersey.contribs</groupId>
+            <artifactId>jersey-multipart</artifactId>
             <version>${jersey.version}</version>
         </dependency>
 
@@ -1789,13 +1820,19 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.broadinstitute.sapservices</groupId>
             <artifactId>SAPServices</artifactId>
-            <version>1.4</version>
+            <version>1.7.2</version>
             <exclusions>
                 <exclusion>
                     <groupId>javax.servlet</groupId>
                     <artifactId>servlet-api</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>uk.com.robust-it</groupId>
+            <artifactId>cloning</artifactId>
+            <version>1.9.5</version>
         </dependency>
     </dependencies>
 
@@ -1904,10 +1941,10 @@ nodePrinter.print(webapp)
                 </plugin>
 
                 <plugin>
-                     <groupId>external.atlassian.jgitflow</groupId>
-                     <artifactId>jgitflow-maven-plugin</artifactId>
-                     <version>1.0-m5.1</version>
-                 </plugin>
+                    <groupId>external.atlassian.jgitflow</groupId>
+                    <artifactId>jgitflow-maven-plugin</artifactId>
+                    <version>1.0-m5.1</version>
+                </plugin>
 
                 <!--
                                 <plugin>
@@ -2206,9 +2243,9 @@ nodePrinter.print(webapp)
                 <artifactId>maven-pmd-plugin</artifactId>
                 <configuration>
                     <targetJdk>1.7</targetJdk>
-<!--
-                    <includeTests>true</includeTests>
--->
+                    <!--
+                                        <includeTests>true</includeTests>
+                    -->
                 </configuration>
             </plugin>
 
@@ -2434,7 +2471,7 @@ nodePrinter.print(webapp)
                     <noDeploy>true</noDeploy>
                     <!-- Do push the release branches to the remote upstream -->
                     <pushReleases>true</pushReleases>
-                    <!-- Do push the hotfix branches to the remote upstream --> 
+                    <!-- Do push the hotfix branches to the remote upstream -->
                     <pushHotfixes>true</pushHotfixes>
                     <noHotfixBuild>true</noHotfixBuild>
                 </configuration>

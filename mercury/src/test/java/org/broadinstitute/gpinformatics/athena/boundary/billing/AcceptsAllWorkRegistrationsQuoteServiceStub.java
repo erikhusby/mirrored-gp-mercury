@@ -16,8 +16,10 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quotes;
 
 import javax.enterprise.inject.Alternative;
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -46,20 +48,22 @@ class AcceptsAllWorkRegistrationsQuoteServiceStub implements QuoteService {
     @Override
     public String registerNewWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
                                   Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
-                                  String callbackParameterName, String callbackParameterValue) {
+                                  String callbackParameterName, String callbackParameterValue,
+                                  BigDecimal priceAdjustment) {
         return WORK_ITEM_PREPEND + (1000 + counter++);
     }
 
     @Override
     public String registerNewSAPWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
                                      Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
-                                     String callbackParameterName, String callbackParameterValue) {
+                                     String callbackParameterName, String callbackParameterValue,
+                                     BigDecimal priceAdjustment) {
         return WORK_ITEM_PREPEND + (1000 + counter++);
     }
 
     @Override
     public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
-        FundingLevel level = new FundingLevel("100", new Funding(Funding.PURCHASE_ORDER,null, null));
+        FundingLevel level = new FundingLevel("100", Collections.singleton(new Funding(Funding.PURCHASE_ORDER,null, null)));
         QuoteFunding funding = new QuoteFunding(Collections.singleton(level));
         final Quote quote = new Quote("test1", funding, ApprovalStatus.FUNDED);
 
@@ -68,7 +72,7 @@ class AcceptsAllWorkRegistrationsQuoteServiceStub implements QuoteService {
 
     @Override
     public Quote getQuoteWithPriceItems(String alphaId) throws QuoteServerException, QuoteNotFoundException {
-        FundingLevel level = new FundingLevel("100", new Funding(Funding.PURCHASE_ORDER,null, null));
+        FundingLevel level = new FundingLevel("100", Collections.singleton(new Funding(Funding.PURCHASE_ORDER,null, null)));
         QuoteFunding funding = new QuoteFunding(Collections.singleton(level));
         final Quote quote = new Quote("test1", funding, ApprovalStatus.FUNDED);
 
@@ -87,6 +91,21 @@ class AcceptsAllWorkRegistrationsQuoteServiceStub implements QuoteService {
     @Override
     public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException {
         return null;
+    }
+
+    @Override
+    public PriceList getPriceItemsForDate(List<QuoteImportItem> targetedPriceItemCriteria)
+            throws QuoteServerException, QuoteNotFoundException {
+        final PriceList allPriceItems = getAllPriceItems();
+        for (QuoteImportItem quoteImportItem : targetedPriceItemCriteria) {
+
+            final QuotePriceItem quotePriceItem =
+                    QuotePriceItem.convertMercuryPriceItem(quoteImportItem.getPriceItem());
+            quotePriceItem.setPrice("50.00");
+            allPriceItems.add(quotePriceItem);
+        }
+
+        return allPriceItems;
     }
 
     @Override

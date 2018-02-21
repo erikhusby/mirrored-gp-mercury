@@ -565,7 +565,7 @@ public class LabEventSearchDefinition {
                 "LCSET term will only locate events associated with batch or rework batch vessels.<br>"
                 + "Traversal option(s) should be selected if chain of custody events are desired.<br>"
                 + "Note: The LCSET term is exclusive, no other terms can be selected.");
-        searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getLcsetInputConverter());
+        searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getBatchNameInputConverter());
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
@@ -629,6 +629,11 @@ public class LabEventSearchDefinition {
         searchTerm = new SearchTerm();
         searchTerm.setName("Molecular Index");
         searchTerm.setDisplayExpression(DisplayExpression.MOLECULAR_INDEX);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Unique Molecular Identifier");
+        searchTerm.setDisplayExpression(DisplayExpression.UNIQUE_MOLECULAR_IDENTIFIER);
         searchTerms.add(searchTerm);
 
         return searchTerms;

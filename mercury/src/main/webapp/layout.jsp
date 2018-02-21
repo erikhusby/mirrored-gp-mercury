@@ -36,7 +36,6 @@
         <script src="${ctxpath}/resources/scripts/jquery-1.10.1.min.js"></script>
         <script type="text/javascript"> var $j = jQuery.noConflict(); </script>
         <script src="${ctxpath}/resources/scripts/jquery-ui-1.9.2.custom.min.js"></script>
-
         <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-dropdown.js"></script>
         <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-tooltip.js"></script>
         <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-popover.js"></script>
@@ -51,8 +50,6 @@
                       href="${ctxpath}/resources/scripts/DataTables-1.10.12/css/jquery.dataTables.min.css"/>
                 <link rel="stylesheet"
                       href="${ctxpath}/resources/scripts/DataTables-1.10.12/css/dataTables.bootstrap.min.css"/>
-
-                <%--https://datatables.net/extensions/buttons--%>
                 <script type="text/javascript"
                         src="${ctxpath}/resources/scripts/DataTablesPlugins-1.10/JSZip-2.5.0/jszip.min.js"></script>
                 <script type="text/javascript"
@@ -86,6 +83,7 @@
 
         <c:if test="${withColVis}">
             <script src="${ctxpath}/resources/scripts/DataTablesPlugins-1.10/Buttons-1.2.2/js/buttons.colVis.min.js"></script>
+            <link rel="stylesheet"  href="${ctxpath}/resources/css/mercury.colvis.css"/>
         </c:if>
 
         <c:if test="${withColReorder}">

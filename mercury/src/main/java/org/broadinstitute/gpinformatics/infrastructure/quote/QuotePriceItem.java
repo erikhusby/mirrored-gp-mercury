@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
 
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.LongDateAdapter;
 
 import javax.annotation.Nonnull;
 import javax.xml.bind.annotation.XmlElement;
@@ -22,6 +23,7 @@ public class QuotePriceItem {
     private String unit;
     private Date submittedDate;
     private Date effectiveDate;
+    private Date expirationDate;
     private String platformName;
     private String categoryName;
     private String priceItemStatus;
@@ -122,7 +124,7 @@ public class QuotePriceItem {
     }
 
     @XmlElement(name = "submittedDate")
-    @XmlJavaTypeAdapter(DateAdapter.class)
+    @XmlJavaTypeAdapter(LongDateAdapter.class)
     public Date getSubmittedDate() {
         return submittedDate;
     }
@@ -132,7 +134,7 @@ public class QuotePriceItem {
     }
 
     @XmlElement(name = "effectiveDate")
-    @XmlJavaTypeAdapter(DateAdapter.class)
+    @XmlJavaTypeAdapter(LongDateAdapter.class)
     public Date getEffectiveDate() {
         return effectiveDate;
     }
@@ -221,6 +223,16 @@ public class QuotePriceItem {
 
     public void setReplacementItems(ReplacementItems replacementItems) {
         this.replacementItems = replacementItems;
+    }
+
+    @XmlElement(name = "expirationDate")
+    @XmlJavaTypeAdapter(LongDateAdapter.class)
+    public Date getExpirationDate() {
+        return expirationDate;
+    }
+
+    public void setExpirationDate(Date expirationDate) {
+        this.expirationDate = expirationDate;
     }
 
     @Override

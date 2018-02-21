@@ -254,7 +254,7 @@ public class DesignationActionBean extends CoreActionBean implements Designation
         if (isNotBlank(lcsetsBarcodes)) {
             // Keeps only the decimal digits, ascii letters, hyphen, and space delimiters.
             String[] tokens = lcsetsBarcodes.replaceAll("[^\\p{Nd}\\p{Ll}\\p{Lu}\\p{Pd}]", " ").
-                    replaceAll("[^\\x20-\\x7E]", "").toUpperCase().split(" ");
+                    replaceAll("[^\\x20-\\x7E]", "").split(" ");
             for (String token : tokens) {
                 if (isNotBlank(token)) {
                     BarcodedTube tube = barcodedTubeDao.findByBarcode(token);
@@ -289,52 +289,40 @@ public class DesignationActionBean extends CoreActionBean implements Designation
         // Iterates on the loading tubes specified by barcode by the user.
         for (LabVessel loadingTube : loadingTubeToLcset.keySet()) {
             Set<LabVessel> startingVessels = new HashSet<>();
-            for (LabEvent labEvent : loadingTube.getInPlaceAndTransferToEvents()) {
-                if (labEvent.getLabEventType() == LabEventType.DENATURE_TRANSFER ||
-                    labEvent.getLabEventType() == LabEventType.NORMALIZATION_TRANSFER ||
-                    labEvent.getLabEventType() == LabEventType.POOLING_TRANSFER) {
+            loadingTubeToLabEvent.putAll(loadingTube, loadingTube.getEvents());
 
-                    loadingTubeToLabEvent.put(loadingTube, labEvent);
-                }
-            }
+            // The tube's single LCSET has already been determined by traversal or been chosen by the user.
+            LabBatch lcset = loadingTubeToLcset.get(loadingTube);
 
-            if (CollectionUtils.isNotEmpty(loadingTubeToLabEvent.get(loadingTube))) {
-                // The tube's single LCSET has already been determined by traversal or been chosen by the user.
-                LabBatch lcset = loadingTubeToLcset.get(loadingTube);
-
-                for (SampleInstanceV2 sampleInstance : loadingTube.getSampleInstancesV2()) {
-                    if (sampleInstance.getSingleBatch() != null &&
+            for (SampleInstanceV2 sampleInstance : loadingTube.getSampleInstancesV2()) {
+                if (sampleInstance.getSingleBatch() != null &&
                         sampleInstance.getSingleBatch().equals(lcset) ||
                         sampleInstance.getSingleBatch() == null &&
-                        sampleInstance.getAllWorkflowBatches().contains(lcset)) {
+                                sampleInstance.getAllWorkflowBatches().contains(lcset)) {
 
-                        // Finds starting vessels for the loading tube in this lcset.
-                        for (LabBatchStartingVessel startingVessel :
-                                sampleInstance.getAllBatchVessels(lcset.getLabBatchType())) {
-                            if (lcset.equals(startingVessel.getLabBatch())) {
-                                startingVessels.add(startingVessel.getLabVessel());
-                            }
+                    // Finds starting vessels for the loading tube in this lcset.
+                    for (LabBatchStartingVessel startingVessel :
+                            sampleInstance.getAllBatchVessels(lcset.getLabBatchType())) {
+                        if (lcset.equals(startingVessel.getLabBatch())) {
+                            startingVessels.add(startingVessel.getLabVessel());
                         }
+                    }
 
-                        // Finds bucket entries for this lcset.
-                        for (BucketEntry bucketEntry : sampleInstance.getAllBucketEntries()) {
-                            if (lcset.equals(bucketEntry.getLabBatch())) {
-                                loadingTubeToBucketEntry.put(loadingTube, bucketEntry);
-                            }
+                    // Finds bucket entries for this lcset.
+                    for (BucketEntry bucketEntry : sampleInstance.getAllBucketEntries()) {
+                        if (lcset.equals(bucketEntry.getLabBatch())) {
+                            loadingTubeToBucketEntry.put(loadingTube, bucketEntry);
                         }
                     }
                 }
+            }
 
-                // A starting vessel with no bucket entry is a positive control.
-                Set<LabVessel> controls = new HashSet<>(startingVessels);
-                for (BucketEntry bucketEntry : loadingTubeToBucketEntry.get(loadingTube)) {
-                    controls.remove(bucketEntry.getLabVessel());
-                }
-                loadingTubeToControl.putAll(loadingTube, controls);
+            // A starting vessel with no bucket entry is a positive control.
+            Set<LabVessel> controls = new HashSet<>(startingVessels);
+            for (BucketEntry bucketEntry : loadingTubeToBucketEntry.get(loadingTube)) {
+                controls.remove(bucketEntry.getLabVessel());
             }
-            if (CollectionUtils.isEmpty(loadingTubeToLabEvent.get(loadingTube))) {
-                addMessage("No denature, norm, or pooling event found for " + loadingTube.getLabel());
-            }
+            loadingTubeToControl.putAll(loadingTube, controls);
         }
 
         // Iterates on the LCSETs specified by the user.
@@ -404,9 +392,9 @@ public class DesignationActionBean extends CoreActionBean implements Designation
             LabBatch lcset = loadingTubeToLcset.get(loadingTube);
 
             DesignationDto newDto = DesignationUtils.makeDesignationDto(loadingTube,
-                    loadingTubeToLcset.get(loadingTube), loadingTubeToLabEvent.get(loadingTube),
-                    loadingTubeToBucketEntry.get(loadingTube), loadingTubeToControl.get(loadingTube), null);
-
+                    loadingTubeToLcset.get(loadingTube), loadingTubeToBucketEntry.get(loadingTube),
+                    loadingTubeToControl.get(loadingTube), null);
+            newDto.setTypeAndDate(loadingTube);
             // Persists the lcset choice made by the user.
             for (DesignationUtils.LcsetAssignmentDto assignmentDto : tubeLcsetAssignments) {
                 if (assignmentDto.getBarcode().equals(loadingTube.getLabel()) &&

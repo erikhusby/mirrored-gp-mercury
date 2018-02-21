@@ -20,6 +20,7 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
@@ -52,40 +53,40 @@ public class SapIntegrationServiceImplTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
-    @Test
+    @Test(enabled = false)
     public void testCustomerSearch() {
 
-        String testUser = "Scott.G.MATThEws@GMail.CoM";
+        String testUser = "ScottmATT@broadinstitute.org";
         String testBadUser = "scottnobody@broadInstitute.org";
 
         Funding fundingDefined = new Funding(Funding.PURCHASE_ORDER,null, null);
         fundingDefined.setPurchaseOrderContact(testUser);
-        FundingLevel fundingLevel = new FundingLevel("100",fundingDefined);
+        FundingLevel fundingLevel = new FundingLevel("100", Collections.singleton(fundingDefined));
         QuoteFunding quoteFunding = new QuoteFunding(Collections.singleton(fundingLevel));
         Quote testGoodQuote = new Quote("GPTest", quoteFunding, ApprovalStatus.FUNDED);
 
 
         Funding badContactFundingDefined = new Funding(Funding.PURCHASE_ORDER,null, null);
         badContactFundingDefined.setPurchaseOrderContact(testBadUser);
-        FundingLevel badContactPurchaseOrderFundingLevel = new FundingLevel("100",badContactFundingDefined);
+        FundingLevel badContactPurchaseOrderFundingLevel = new FundingLevel("100", Collections.singleton(badContactFundingDefined));
         QuoteFunding quoteFundingBadContact = new QuoteFunding(Collections.singleton(badContactPurchaseOrderFundingLevel));
         Quote testBadContactQuote = new Quote("GPBadContact", quoteFundingBadContact, ApprovalStatus.FUNDED);
 
 
         Funding test3POFundingDefined = new Funding(Funding.PURCHASE_ORDER,null, null);
         test3POFundingDefined.setPurchaseOrderContact(testUser);
-        FundingLevel test3PurchaseOrderFundingLevel = new FundingLevel("50",test3POFundingDefined);
+        FundingLevel test3PurchaseOrderFundingLevel = new FundingLevel("50", Collections.singleton(test3POFundingDefined));
 
         Funding test3PO2FundingDefined = new Funding(Funding.PURCHASE_ORDER, null, null);
         test3PO2FundingDefined.setPurchaseOrderContact("Second"+testUser);
-        FundingLevel test3PO2FundingLevel = new FundingLevel("50", test3PO2FundingDefined);
+        FundingLevel test3PO2FundingLevel = new FundingLevel("50", Collections.singleton(test3PO2FundingDefined));
         QuoteFunding test3Funding = new QuoteFunding(Arrays.asList(new FundingLevel[]{test3PurchaseOrderFundingLevel,test3PO2FundingLevel}));
         Quote testMultipleLevelQuote = new Quote("GPTest", test3Funding, ApprovalStatus.FUNDED);
 
 
         Funding testFRFundingDefind = new Funding(Funding.FUNDS_RESERVATION, null, null);
 
-        FundingLevel testFRFundingLevel = new FundingLevel("50", testFRFundingDefind);
+        FundingLevel testFRFundingLevel = new FundingLevel("50", Collections.singleton(testFRFundingDefind));
         QuoteFunding testFRFunding = new QuoteFunding(Collections.singletonList(testFRFundingLevel));
         Quote testFRQuote = new Quote("GPTest", testFRFunding, ApprovalStatus.FUNDED);
 
@@ -104,17 +105,20 @@ public class SapIntegrationServiceImplTest extends Arquillian {
 
         try {
 
-            testGoodQuote.getFirstRelevantFundingLevel().getFunding().setPurchaseOrderContact("zarasearle@broadinstitute.org");
-            String dupeName2 = sapIntegrationClient.findCustomer(
-                    SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
-                    testGoodQuote.getFirstRelevantFundingLevel());
-            Assert.assertEquals(dupeName2 , "0000300022");
 
-            testGoodQuote.getFirstRelevantFundingLevel().getFunding().setPurchaseOrderContact("zarasearle1@broadinstitute.org");
-            String dupeNameOne = sapIntegrationClient.findCustomer(
-                    SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
-                    testGoodQuote.getFirstRelevantFundingLevel());
-            Assert.assertEquals(dupeNameOne , "0000300023");
+            for (Funding funding :testGoodQuote.getFirstRelevantFundingLevel().getFunding()) {
+                funding.setPurchaseOrderContact("zarasearle@broadinstitute.org");
+                String dupeName2 = sapIntegrationClient.findCustomer(
+                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
+                        testGoodQuote.getFirstRelevantFundingLevel());
+                Assert.assertEquals(dupeName2 , "0000300022");
+
+                funding.setPurchaseOrderContact("zarasearle1@broadinstitute.org");
+                String dupeNameOne = sapIntegrationClient.findCustomer(
+                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
+                        testGoodQuote.getFirstRelevantFundingLevel());
+                Assert.assertEquals(dupeNameOne , "0000300023");
+            }
 
         } catch (SAPIntegrationException e) {
             Assert.fail(e.getMessage());
@@ -150,12 +154,15 @@ public class SapIntegrationServiceImplTest extends Arquillian {
         }
 
         try {
-            testBadContactQuote.getFirstRelevantFundingLevel().getFunding().setPurchaseOrderContact("Shriekrvce@gmail.com");
 
-            String duplicateCustomerNumber = sapIntegrationClient.findCustomer(
-                    SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
-                    testBadContactQuote.getFirstRelevantFundingLevel());
-            Assert.fail("This should have thrown a system error");
+            for (Funding funding : testBadContactQuote.getFirstRelevantFundingLevel().getFunding()) {
+                funding.setPurchaseOrderContact("Shriekrvce@gmail.com");
+
+                String duplicateCustomerNumber = sapIntegrationClient.findCustomer(
+                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD,
+                        testBadContactQuote.getFirstRelevantFundingLevel());
+                Assert.fail("This should have thrown a system error");
+            }
         } catch (SAPIntegrationException e) {
             log.debug(e.getMessage());
             Assert.assertTrue(e.getMessage().contains("the Quote is associated with more than 1 SAP Customer account"));

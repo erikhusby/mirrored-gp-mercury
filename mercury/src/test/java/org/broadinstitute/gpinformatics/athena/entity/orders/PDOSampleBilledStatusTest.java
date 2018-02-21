@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 
+import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
@@ -28,7 +29,11 @@ public class PDOSampleBilledStatusTest {
     public void setUp() {
         pdoSample = new ProductOrderSample("A Sample");
         ProductOrder pdo = new ProductOrder();
-        pdo.setProduct(new Product());
+        try {
+            pdo.setProduct(new Product());
+        } catch (InvalidProductException e) {
+            Assert.fail(e.getMessage());
+        }
         pdo.addSample(pdoSample);
         pdo.getProduct().setPrimaryPriceItem(primaryPriceItem);
         pdoSample.addLedgerItem(new Date(System.currentTimeMillis()), primaryPriceItem,3d);
