@@ -108,9 +108,7 @@ public class SubmissionTrackerFixupTest extends Arquillian {
 
         Map<String, SubmissionTracker> submissionTrackersByUuid = new HashMap<>();
         for (SubmissionTracker submissionTracker : allTrackers) {
-            if (submissionTracker.getProcessingLocation() == null || submissionTracker.getDataType() == null) {
-                submissionTrackersByUuid.put(submissionTracker.createSubmissionIdentifier(), submissionTracker);
-            }
+            submissionTrackersByUuid.put(submissionTracker.createSubmissionIdentifier(), submissionTracker);
         }
         int index = 1;
         Set<String> keys = submissionTrackersByUuid.keySet();
