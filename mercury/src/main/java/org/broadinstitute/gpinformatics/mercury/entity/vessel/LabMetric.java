@@ -120,7 +120,7 @@ public class LabMetric implements Comparable<LabMetric> {
                 return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
             }
         }),
-        PLATING_PICO("Plating Pico", true, Category.CONCENTRATION, new Decider() {
+        PLATING_PICO("Plating Pico", true, Category.CONCENTRATION, LabUnit.NG_PER_UL, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
                 LabMetricDecision.Decision decision;
