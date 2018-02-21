@@ -2170,7 +2170,7 @@ public enum LabEventType {
         private int numEvents = 1;
 
         /** Prompts user for reagents. */
-        private String[] reagentNames;
+        private String[] reagentNames = {};
 
         /** Prompts user with a list of machines. */
         private String[] machineNames = {};
