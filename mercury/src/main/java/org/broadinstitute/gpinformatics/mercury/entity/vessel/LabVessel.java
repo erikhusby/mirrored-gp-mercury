@@ -1488,7 +1488,7 @@ public abstract class LabVessel implements Serializable {
     public Collection<String> getSampleNames() {
         Set<String> sampleNames = new HashSet<>();
         for (SampleInstanceV2 sampleInstance : getSampleInstancesV2()) {
-            MercurySample sample = sampleInstance.getRootOrEarliestMercurySample();
+            MercurySample sample = sampleInstance.getNearestMercurySample();
             if (sample != null) {
                 String sampleKey = StringUtils.trimToNull(sample.getSampleKey());
                 if (sampleKey != null) {
