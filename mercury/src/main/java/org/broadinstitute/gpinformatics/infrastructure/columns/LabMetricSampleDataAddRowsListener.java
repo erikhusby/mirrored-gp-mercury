@@ -27,23 +27,21 @@ public class LabMetricSampleDataAddRowsListener implements ConfigurableList.AddR
      * If no BSP related columns in requested result columns, then skip the overhead of performing
      * SampleInstancesV2 traversal and related BSP service access
      */
-    private boolean shouldFetchFromBsp( SearchContext context ) {
-        Set<String> columnNames = new HashSet<>();
-        columnNames.addAll(context.getSearchInstance().getPredefinedViewColumns());
-        if( context.getSearchInstance().getColumnSetColumnNameList() != null ) {
-            columnNames.addAll(context.getSearchInstance().getColumnSetColumnNameList());
+    private boolean shouldFetchFromBsp(List<ColumnTabulation> columnTabulations ) {
+        for (ColumnTabulation columnTabulation : columnTabulations) {
+            String name = columnTabulation.getName();
+            if (name.equals(LabMetricSearchDefinition.MultiRefTerm.BSP_MATERIAL.getTermRefName()) ||
+                    name.equals(LabMetricSearchDefinition.MultiRefTerm.BSP_PARTICIPANT.getTermRefName())) {
+                return true;
+            }
         }
-        if( context.getSearchInstance().getPredefinedDownloadColumns() != null ) {
-            columnNames.addAll(context.getSearchInstance().getPredefinedDownloadColumns());
-        }
-        return columnNames.contains(LabMetricSearchDefinition.MultiRefTerm.BSP_MATERIAL.getTermRefName())
-                || columnNames.contains(LabMetricSearchDefinition.MultiRefTerm.BSP_PARTICIPANT.getTermRefName());
+        return false;
     }
 
     @Override
     public void addRows(List<?> entityList, SearchContext context, List<ColumnTabulation> nonPluginTabulations) {
 
-        if( !shouldFetchFromBsp(context)) {
+        if( !shouldFetchFromBsp(nonPluginTabulations)) {
             mapSampleIdToData = Collections.EMPTY_MAP;
             return;
         }
