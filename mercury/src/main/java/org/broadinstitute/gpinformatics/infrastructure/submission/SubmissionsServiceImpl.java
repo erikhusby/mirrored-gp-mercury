@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.common.QueryStringSplitte
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -160,7 +161,8 @@ public class SubmissionsServiceImpl implements SubmissionsService {
             return JerseyUtils.getWebResource(submissionsConfig.getWSUrl(servicePath),
                     MediaType.APPLICATION_JSON_TYPE, parameters).get(ClientResponse.class);
         } catch (Exception e) {
-            throw new InformaticsServiceException("Error communicating with Submissions server. Please contact support using the <span class='badge'>Feedback</span> link above", e);
+            throw new InformaticsServiceException(
+                "Error communicating with Submissions server. " + CoreActionBean.ERROR_CONTACT_SUPPORT, e);
         }
     }
 

@@ -51,6 +51,7 @@ import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRequ
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionStatusDetailBean;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsService;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.Nonnull;
@@ -316,12 +317,16 @@ public class ResearchProjectEjb {
                 });
         List<String> errorMessages = new ArrayList<>();
 
-        updateSubmissionDtoStatusFromResults(submissionDtoMap, submissionResults, submissionIdentifierToTracker,
-            errorMessages);
-
-        if(CollectionUtils.isNotEmpty(errorMessages)) {
-            throw new ValidationException(
-                    "There were some errors during submission.  ", errorMessages);
+        List<SubmissionTracker> trackersToDelete =
+            updateSubmissionDtoStatusFromResults(submissionProject, submissionDtoMap, submissionResults,
+                submissionIdentifierToTracker,
+                errorMessages);
+        for (SubmissionTracker deleteTracker : trackersToDelete) {
+            submissionTrackerDao.remove(deleteTracker);
+        }
+        if (CollectionUtils.isNotEmpty(errorMessages)) {
+            submissionTrackerDao.persist(submissionProject);
+            throw new ValidationException("There were some errors during submission.  ", errorMessages);
         }
 
         return submissionResults;
@@ -373,29 +378,50 @@ public class ResearchProjectEjb {
         }
     }
 
-    protected void updateSubmissionDtoStatusFromResults(Map<SubmissionTracker, SubmissionDto> submissionDtoMap,
-                                                        Collection<SubmissionStatusDetailBean> submissionResults,
-                                                        Map<String, SubmissionTracker> submissionIdentifierToTracker,
-                                                        List<String> errorMessages) {
+    protected List<SubmissionTracker> updateSubmissionDtoStatusFromResults(
+        ResearchProject researchProject, Map<SubmissionTracker, SubmissionDto> submissionDtoMap,
+        Collection<SubmissionStatusDetailBean> submissionResults,
+        Map<String, SubmissionTracker> submissionIdentifierToTracker,
+        List<String> errorMessages) {
+        List<SubmissionStatusDetailBean> unmatchedSubmissionStatusDetailBeans = new ArrayList<>();
+        List<SubmissionTracker> removeTrackers = new ArrayList<>();
         for (SubmissionStatusDetailBean status : submissionResults) {
-            if (StringUtils.isBlank(status.getUuid())) {
-                if (!status.getErrors().isEmpty()) {
+            SubmissionTracker submissionTracker = submissionIdentifierToTracker.get(status.getUuid());
+
+            if (CollectionUtils.isNotEmpty(status.getErrors())) {
+                if (StringUtils.isBlank(status.getUuid())) {
+                    unmatchedSubmissionStatusDetailBeans.add(status);
                     errorMessages.addAll(status.getErrors());
                 } else {
-                    errorMessages.add("Unknown error while posting submission.");
+                    if (CollectionUtils.isNotEmpty(status.getErrors())) {
+                        for (String errorMessage : status.getErrors()) {
+                            errorMessages
+                                .add(String.format("%s: %s", submissionTracker.getSubmittedSampleName(), errorMessage));
+                        }
+                    }
+                }
+                if (submissionTracker != null) {
+                    removeTrackers.add(submissionTracker);
                 }
             } else {
-                SubmissionTracker submissionTracker = submissionIdentifierToTracker.get(status.getUuid());
-                if (CollectionUtils.isNotEmpty(status.getErrors())) {
-                    for (String errorMessage : status.getErrors()) {
-                        errorMessages
-                            .add(String.format("%s: %s", submissionTracker.getSubmittedSampleName(), errorMessage));
-                    }
-                } else {
-                    submissionDtoMap.get(submissionTracker).setStatusDetailBean(status);
-                }
+                submissionDtoMap.get(submissionTracker).setStatusDetailBean(status);
             }
         }
+
+        researchProject.getSubmissionTrackers().removeAll(removeTrackers);
+        if (CollectionUtils.isNotEmpty(unmatchedSubmissionStatusDetailBeans)) {
+            String serializedStatus = "";
+            try {
+                serializedStatus = MercuryStringUtils.serializeJsonBean(unmatchedSubmissionStatusDetailBeans);
+            } catch (IOException e) {
+                log.error("Error generating error message", e);
+            }
+            String errorMessage = String.format("Unable to determine if there is a SubmissionTracker for some samples. %s",
+                CoreActionBean.ERROR_CONTACT_SUPPORT);
+            log.error(String.format("%s: %s", errorMessage, serializedStatus));
+            errorMessages.add(errorMessage);
+        }
+        return removeTrackers;
     }
 
     public void validateSubmissionSamples(BioProject bioProject, Collection<SubmissionDto> submissionDtos)
