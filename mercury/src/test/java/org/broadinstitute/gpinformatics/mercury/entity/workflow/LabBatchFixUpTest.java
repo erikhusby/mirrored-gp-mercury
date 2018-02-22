@@ -12,11 +12,14 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -44,6 +47,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -62,14 +66,20 @@ import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Writer;
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -114,6 +124,9 @@ public class LabBatchFixUpTest extends Arquillian {
 
     @Inject
     private UserBean userBean;
+
+    @Inject
+    private BSPUserList bspUserList;
 
     @Inject
     private MercurySampleDao mercurySampleDao;
@@ -1482,4 +1495,168 @@ public class LabBatchFixUpTest extends Arquillian {
         labBatchDao.flush();
         userTransaction.commit();
     }
+
+
+    /**
+     * This test is used to add missing in-place SampleImport events to the tube formations and rack of tubes exported from BSP <br/>
+     * The rack of tubes, tube formation, and in-place event is not getting persisted on BSP sample export and thus, no positions are available for Sampleimport events <br/>
+     * The BSP query (change the date range criteria as required): <br/>
+     * <pre>
+          SELECT 'EX-' || to_char(se.job_id) AS EXPORT_BATCH,
+              'SM-' || se.sample_id AS sample_id,
+              to_char( se.export_date, 'mm/dd/yyyy hh24:mi' ) as export_date,
+              se.exported_by,
+              'CO-' || r.receptacle_group_id as rack,
+              CHR( ASCII('A') + r.receptacle_row ) || substr( to_char( r.receptacle_column + 101 ), 2) as position,
+              r.external_id as tube_label,
+              count(se.sample_id) over ( partition by se.job_id ) as tube_count
+         FROM bsp_sample_export se
+            , bsp_sample s
+            , bsp_receptacle r
+        where se.destination = 'Mercury'
+          and se.export_date > to_date( '01/01/2018', 'MM/DD/YYYY')
+          --and r.receptacle_group_id = 25673470
+          and s.sample_id = se.sample_id
+          and r.receptacle_id = s.receptacle_id
+        order by se.job_id, r.receptacle_row, r.receptacle_column
+     </pre> <br/>
+     * ... Export the results to a text file, include header, tab delimit, no quote delimiters
+     */
+    @Test(enabled = false)
+    public void fixupGPLIM5380() throws Exception {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy hh:mm");
+
+        userBean.loginOSUser();
+        userTransaction.begin();
+
+        // The data file to read (mercury\src\test\resources\testdata\2018_bsp_exports.txt)
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("2018_bsp_exports.txt"));
+
+        // Tack on a dummy line to handle edge case of last batch in file
+        lines.add("EX-EXPORTFAKE\tSM-FAKE\t01/01/1970 00:00\tjsacco\tCO-DUMMY\tA01\tBARCODE\t0");
+
+        // We want a detailed log of all the activity
+        String logDirName = System.getProperty("jboss.server.log.dir");
+        Writer processLogWriter = new FileWriter(logDirName + File.separator + "gplim5380_fixup.log", true);
+        ToStringBuilder.setDefaultStyle(ToStringStyle.SHORT_PREFIX_STYLE);
+        processLogWriter.write("======== STARTING GPLIM-5380 FIXUP =============\n");
+        processLogWriter.write(SimpleDateFormat.getDateTimeInstance().format(new Date()));
+        processLogWriter.write( "\n");
+
+        boolean headerLine = true;
+
+        String currentBatchName = "NONE";
+        String skipMissingBatch = "NONE";
+        String nextBatchName;
+
+        Date exportDate = null;
+        String userLogin = null;
+        Long userId = null;
+        String rackLabel = null;
+        VesselPosition position = null;
+        String tubeLabel = null;
+        int vesselCount = 0;
+        LabBatch labBatch = null;
+        RackOfTubes rackOfTubes = null;
+        Map<VesselPosition, BarcodedTube> mapPositionToTube = null;
+
+        for( String line : lines ) {
+
+            // Ignore header and any obviously short lines
+            if( headerLine || line.length() < 12 ) {
+                headerLine = false;
+                continue;
+            }
+
+            String[] tokens = line.split("\t", 8);
+            nextBatchName = tokens[0];
+
+            // Don't waste the time with a missing batch
+            if( nextBatchName.equals(skipMissingBatch )) {
+                continue;
+            }
+
+            if( !currentBatchName.equals(nextBatchName )) {
+
+                // Persist data for previous batch
+                if( mapPositionToTube != null && !mapPositionToTube.isEmpty() ) {
+                    processLogWriter.write("Verifying batch " + currentBatchName + "\n");
+                    TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
+                    LabVessel labVessel = labVesselDao.findByIdentifier(tubeFormation.getLabel());
+                    if( labVessel != null ) {
+                        processLogWriter.write(".. Tube formation exists in mercury\n");
+                        tubeFormation = OrmUtil.proxySafeCast(labVessel, TubeFormation.class);
+                    } else {
+                        processLogWriter.write(".. Tube formation DOES NOT exist in mercury\n");
+                    }
+
+                    boolean foundImport = false;
+                    for( LabEvent labEvent : tubeFormation.getInPlaceLabEvents() ) {
+                        if( labEvent.getLabEventType() == LabEventType.SAMPLE_IMPORT ) {
+                            processLogWriter.write(".. Found in place SampleImport event for tube formation\n");
+                            foundImport = true;
+                            break;
+                        }
+                    }
+                    if( !foundImport ) {
+                        labVesselDao.persist(tubeFormation);
+
+                        LabVessel labVesselRack = labVesselDao.findByIdentifier(rackLabel);
+                        if( labVesselRack == null ) {
+                            rackOfTubes = new RackOfTubes(rackLabel, RackOfTubes.RackType.Matrix96);
+                        } else if( OrmUtil.proxySafeIsInstance(labVesselRack, RackOfTubes.class)) {
+                            rackOfTubes = OrmUtil.proxySafeCast(labVesselRack, RackOfTubes.class);
+                        } else {
+                            rackOfTubes = null;
+                        }
+
+                        if( rackOfTubes != null ) {
+                            labVesselDao.persist(rackOfTubes);
+                            tubeFormation.addRackOfTubes(rackOfTubes);
+                        }
+                        processLogWriter.write(".. Persisting in place SampleImport event for tube formation " + tubeFormation.getLabel() + ", rack " + rackOfTubes.getLabel() + "\n");
+                        tubeFormation.addInPlaceEvent( new LabEvent(LabEventType.SAMPLE_IMPORT, exportDate, "BSP", 1L + mapPositionToTube.size(), userId,
+                                "BSP"));
+                    }
+                }
+
+                // build new
+                mapPositionToTube = new HashMap<>();
+                currentBatchName = nextBatchName;
+                labBatch = labBatchDao.findByName(currentBatchName);
+                if( labBatch == null ) {
+                    processLogWriter.write("Can't find import batch " + currentBatchName + "\n");
+                    skipMissingBatch = currentBatchName;
+                    continue;
+                }
+            }
+
+            // All is persisted at new batch - get data for current line and build out tube formation
+            exportDate  = dateFormat.parse(tokens[2]);
+            userLogin = tokens[3];
+            userId = bspUserList.getByUsername(userLogin).getUserId();
+            rackLabel = tokens[4];
+            position = VesselPosition.getByName(tokens[5]);
+            tubeLabel = tokens[6];
+            vesselCount = Integer.parseInt(tokens[7]);
+
+            if( labBatch.getLabBatchStartingVessels().size() != vesselCount ) {
+                // Mercury does not match BSP?
+                processLogWriter.write("BSP tube count (" + vesselCount + ") does not match mercury batch starting vessel count (" + labBatch.getLabBatchStartingVessels().size() + ")\n");
+            }
+
+            mapPositionToTube.put(position, new BarcodedTube(tubeLabel));
+
+        }
+
+        labBatchDao.persist(new FixupCommentary("GPLIM-5380 Add missing SampleImport events for tube formations"));
+        labBatchDao.flush();
+        userTransaction.commit();
+
+        processLogWriter.write("======== FINISHED GPLIM-5380 FIXUP =============\n");
+        processLogWriter.write(SimpleDateFormat.getDateTimeInstance().format(new Date()));
+        processLogWriter.flush();
+        processLogWriter.close();
+    }
+
 }
