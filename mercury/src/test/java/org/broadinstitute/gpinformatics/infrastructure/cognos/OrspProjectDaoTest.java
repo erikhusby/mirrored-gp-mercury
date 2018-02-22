@@ -93,11 +93,12 @@ public class OrspProjectDaoTest extends Arquillian {
 
         // for SC-10244 (even though ORSP-1769 is "Closed")
         assertThat(orspProjects, hasItem(OrspProjectMatcher.orspProjectWithKey("ORSP-1769")));
+        assertThat(orspProjects, hasItem(OrspProjectMatcher.orspProjectWithKey("ORSP-1733")));
 
         // for SC-10364
         assertThat(orspProjects, hasItem(OrspProjectMatcher.orspProjectWithKey("ORSP-641")));
 
-        assertThat(orspProjects, hasSize(4));
+        assertThat(orspProjects, hasSize(5));
     }
 
     private static class OrspProjectMatcher extends BaseMatcher<OrspProject> {
