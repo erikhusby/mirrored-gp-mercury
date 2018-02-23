@@ -4,6 +4,7 @@ import com.sun.jersey.api.client.ClientResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProjects;
 import org.broadinstitute.gpinformatics.infrastructure.common.QueryStringSplitter;
@@ -198,4 +199,26 @@ public class SubmissionsServiceImpl implements SubmissionsService {
             throw new InformaticsServiceException(errorMessage);
         }
     }
+
+    /**
+     * Queries the SubmissionService to determine if a UUID has been submitted.
+     */
+    @Override
+    public List<SubmissionTracker> findOrphans(Collection<SubmissionTracker> submissionTrackers) {
+        List<SubmissionTracker> orphans = new ArrayList<>();
+
+        // Since the SubmissionService does not return the submitted sample name in it's response it is necessary to
+        // look up the submission statuses individually to find if it exists on the Epsilon 9.
+        for (SubmissionTracker submissionTracker : submissionTrackers) {
+            Collection<SubmissionStatusDetailBean> submissionStatus =
+                getSubmissionStatus(submissionTracker.createSubmissionIdentifier());
+            for (SubmissionStatusDetailBean status : submissionStatus) {
+                if (!status.submissionServiceHasRequest()) {
+                    orphans.add(submissionTracker);
+                }
+            }
+        }
+        return orphans;
+    }
+
 }

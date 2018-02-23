@@ -21,6 +21,7 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregatio
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionStatusDetailBean;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsService;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
@@ -58,7 +59,7 @@ public class ResearchProjectEjbSubmissionTest {
     public void testValidateSubmissionsDtoHasNullsDto() throws Exception {
         SubmissionDto submissionDto = new SubmissionDto(null, null);
 
-        ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(null);
+        ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(null, null);
 
         try {
             researchProjectEjb.validateSubmissionDto(Collections.singletonList(submissionDto));
@@ -69,7 +70,7 @@ public class ResearchProjectEjbSubmissionTest {
     }
 
     public void testValidateSubmissionsEmptyDtoList() throws Exception {
-        ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(null);
+        ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(null, null);
         try {
             researchProjectEjb.validateSubmissionDto(Collections.<SubmissionDto>emptyList());
             Assert.fail("Since a list of empty submissionDTOs was passed in, an exception should have ben thrown.");
@@ -81,7 +82,7 @@ public class ResearchProjectEjbSubmissionTest {
     public void testValidateSubmissionsDtoWithNoDaoResultPass() {
         SubmissionTrackerDao submissionTrackerDao = Mockito.mock(SubmissionTrackerDao.class);
         setupSubmissionTrackerMock(submissionTrackerDao, Collections.<SubmissionTracker>emptyList());
-        ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
+        ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao, null);
 
         SubmissionDto submissionDto = getSubmissionDto(dummyProductOrder, TEST_SAMPLE_1, ON_PREM, TEST_VERSION_1);
 
@@ -120,7 +121,7 @@ public class ResearchProjectEjbSubmissionTest {
                                                     List<SubmissionTracker> submissionTrackers, boolean willPass) {
         SubmissionTrackerDao submissionTrackerDao = Mockito.mock(SubmissionTrackerDao.class);
         setupSubmissionTrackerMock(submissionTrackerDao, submissionTrackers);
-        ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
+        ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao, null);
 
         try {
             researchProjectEjb.validateSubmissionDto(submissionDTOs);
@@ -141,7 +142,7 @@ public class ResearchProjectEjbSubmissionTest {
         SubmissionDto submissionDto2 = getSubmissionDto(dummyProductOrder, TEST_SAMPLE_1, ON_PREM, TEST_VERSION_1);
 
         SubmissionTrackerDao submissionTrackerDao = Mockito.mock(SubmissionTrackerDao.class);
-        ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
+        ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao, null);
 
         try {
             researchProjectEjb.validateSubmissionDto(Arrays.asList(submissionDto, submissionDto2));
@@ -157,7 +158,7 @@ public class ResearchProjectEjbSubmissionTest {
         SubmissionDto submissionDto2 = getSubmissionDto(dummyProductOrder, TEST_SAMPLE_1, ON_PREM, TEST_VERSION_1);
 
         SubmissionTrackerDao submissionTrackerDao = Mockito.mock(SubmissionTrackerDao.class);
-        ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
+        ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao, null);
         try {
             researchProjectEjb.validateSubmissionDto(Arrays.asList(submissionDto, submissionDto2));
             Assert.fail("You should not be able to submit two duplicate submissions.");
@@ -214,7 +215,8 @@ public class ResearchProjectEjbSubmissionTest {
                                                    Map<String, SubmissionTracker> idToTracker,
                                                    String resultErrorMessage, int expectedTrackerCountInResearchProject,
                                                    int expectedErrorCount) {
-        ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(null);
+        SubmissionsService submissionsService = Mockito.mock(SubmissionsService.class);
+        ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(null, submissionsService);
         assertThat(testResearchProject.getSubmissionTrackers(), hasSize(1));
         List<String> errors = new ArrayList<>();
         researchProjectEjb.updateSubmissionDtoStatusFromResults(testResearchProject, submisionDtoMap, results, idToTracker, errors);
@@ -224,8 +226,9 @@ public class ResearchProjectEjbSubmissionTest {
         assertThat(errors.iterator().next(), equalTo(resultErrorMessage));
     }
 
-    private ResearchProjectEjb getResearchProjectEjb(SubmissionTrackerDao submissionTrackerDao) {
-        return new ResearchProjectEjb(null, null, null, null, null, null, null, submissionTrackerDao);
+    private ResearchProjectEjb getResearchProjectEjb(SubmissionTrackerDao submissionTrackerDao,
+                                                     SubmissionsService submissionsService) {
+        return new ResearchProjectEjb(null, null, null, null, null, null, submissionsService, submissionTrackerDao);
     }
 
     private SubmissionDto getSubmissionDto(ProductOrder productOrder, String sample, String processingLocation, int version) {

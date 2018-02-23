@@ -11,8 +11,6 @@
 
 package org.broadinstitute.gpinformatics.athena.boundary.projects;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Maps;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -55,7 +53,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -308,13 +305,9 @@ public class ResearchProjectEjb {
 
         Collection<SubmissionStatusDetailBean> submissionResults = submissionsService.postSubmissions(requestBean);
 
-        Map<String, SubmissionTracker> submissionIdentifierToTracker = Maps
-                .uniqueIndex(submissionProject.getSubmissionTrackers(), new Function<SubmissionTracker, String>() {
-                    @Override
-                    public String apply(@Nullable SubmissionTracker submissionTracker) {
-                        return submissionTracker.createSubmissionIdentifier();
-                    }
-                });
+        Map<String, SubmissionTracker> submissionIdentifierToTracker =
+            SubmissionTracker.uuidMap(submissionProject.getSubmissionTrackers());
+
         List<String> errorMessages = new ArrayList<>();
 
         List<SubmissionTracker> trackersToDelete =
@@ -381,12 +374,16 @@ public class ResearchProjectEjb {
     protected List<SubmissionTracker> updateSubmissionDtoStatusFromResults(
         ResearchProject researchProject, Map<SubmissionTracker, SubmissionDto> submissionDtoMap,
         Collection<SubmissionStatusDetailBean> submissionResults,
-        Map<String, SubmissionTracker> submissionIdentifierToTracker,
-        List<String> errorMessages) {
+        Map<String, SubmissionTracker> submissionIdentifierToTracker, List<String> errorMessages) {
         List<SubmissionStatusDetailBean> unmatchedSubmissionStatusDetailBeans = new ArrayList<>();
+
+        // Since the database persists SubmissionTrackers in order to generate UUIDs to pass to the submissionsService,
+        // We need to check for errors and manually remove ones which failed.
         List<SubmissionTracker> removeTrackers = new ArrayList<>();
         for (SubmissionStatusDetailBean status : submissionResults) {
-            SubmissionTracker submissionTracker = submissionIdentifierToTracker.get(status.getUuid());
+
+            // remove current tracker from the map, so we can look up any trackers remaining when we exit the loop.
+            SubmissionTracker submissionTracker = submissionIdentifierToTracker.remove(status.getUuid());
 
             if (CollectionUtils.isNotEmpty(status.getErrors())) {
                 if (StringUtils.isBlank(status.getUuid())) {
@@ -407,6 +404,9 @@ public class ResearchProjectEjb {
                 submissionDtoMap.get(submissionTracker).setStatusDetailBean(status);
             }
         }
+
+        List<SubmissionTracker> orphanTrackers = submissionsService.findOrphans(submissionIdentifierToTracker.values());
+        removeTrackers.addAll(orphanTrackers);
 
         researchProject.getSubmissionTrackers().removeAll(removeTrackers);
         if (CollectionUtils.isNotEmpty(unmatchedSubmissionStatusDetailBeans)) {
