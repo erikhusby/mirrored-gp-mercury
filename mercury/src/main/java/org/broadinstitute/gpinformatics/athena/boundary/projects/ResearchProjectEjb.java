@@ -310,10 +310,8 @@ public class ResearchProjectEjb {
 
         List<String> errorMessages = new ArrayList<>();
 
-        List<SubmissionTracker> trackersToDelete =
-            updateSubmissionDtoStatusFromResults(submissionProject, submissionDtoMap, submissionResults,
-                submissionIdentifierToTracker,
-                errorMessages);
+        List<SubmissionTracker> trackersToDelete = updateSubmissionDtoStatusFromResults(submissionDtoMap,
+            submissionResults, submissionIdentifierToTracker, errorMessages);
         for (SubmissionTracker deleteTracker : trackersToDelete) {
             submissionTrackerDao.remove(deleteTracker);
         }
@@ -371,9 +369,16 @@ public class ResearchProjectEjb {
         }
     }
 
+    /**
+     * Update SubmissionDtoStatus after submission request is made to Epsilon 9. Epsilon 9 will return any errors
+     * generated when attempting to create submission requests. If there were any errors returned the corresponding
+     * SubmissionTrackers need to be removed. In order to keep this method DAO free, a List of trackers needing
+     * removal are returned. It is the callers responsibility to complete the removal.
+     *
+     * @return a List of are returned containing SubmissionTrackers which need to be removed.
+     */
     protected List<SubmissionTracker> updateSubmissionDtoStatusFromResults(
-        ResearchProject researchProject, Map<SubmissionTracker, SubmissionDto> submissionDtoMap,
-        Collection<SubmissionStatusDetailBean> submissionResults,
+        Map<SubmissionTracker, SubmissionDto> submissionDtoMap, Collection<SubmissionStatusDetailBean> submissionResults,
         Map<String, SubmissionTracker> submissionIdentifierToTracker, List<String> errorMessages) {
         List<SubmissionStatusDetailBean> unmatchedSubmissionStatusDetailBeans = new ArrayList<>();
 
@@ -408,7 +413,6 @@ public class ResearchProjectEjb {
         List<SubmissionTracker> orphanTrackers = submissionsService.findOrphans(submissionIdentifierToTracker.values());
         removeTrackers.addAll(orphanTrackers);
 
-        researchProject.getSubmissionTrackers().removeAll(removeTrackers);
         if (CollectionUtils.isNotEmpty(unmatchedSubmissionStatusDetailBeans)) {
             String serializedStatus = "";
             try {
