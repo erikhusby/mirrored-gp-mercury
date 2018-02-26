@@ -219,7 +219,8 @@ public class ResearchProjectEjbSubmissionTest {
         ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(null, submissionsService);
         assertThat(testResearchProject.getSubmissionTrackers(), hasSize(1));
         List<String> errors = new ArrayList<>();
-        researchProjectEjb.updateSubmissionDtoStatusFromResults(submisionDtoMap, results, idToTracker, errors);
+        researchProjectEjb.updateSubmissionDtoStatusFromResults(testResearchProject, submisionDtoMap, results,
+            idToTracker, errors);
 
         assertThat(errors, hasSize(expectedErrorCount));
         assertThat(testResearchProject.getSubmissionTrackers(), hasSize(expectedTrackerCountInResearchProject));
