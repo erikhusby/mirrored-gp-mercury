@@ -604,6 +604,48 @@ public class SapIntegrationServiceImplDBFreeTest {
         }
     }
 
+    public void testTetSampleCountFreshOrderNoOverrides() throws Exception {
+        PriceList priceList = new PriceList();
+        Collection<QuoteItem> quoteItems = new HashSet<>();
+        Set<SAPMaterial> materials = new HashSet<>();
+
+        ProductOrder countTestPDO = ProductOrderTestFactory.createDummyProductOrder(10, "PDO-smpcnt");
+        countTestPDO.setQuoteId(testSingleSourceQuote.getAlphanumericId());
+        countTestPDO.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+        countTestPDO.addSapOrderDetail(new SapOrderDetail("testSAPOrder", 10, testSingleSourceQuote.getAlphanumericId(),
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD.getCompanyCode(), "", ""));
+
+        final Product primaryProduct = countTestPDO.getProduct();
+        addTestProductMaterialPrice("50.00", priceList, quoteItems, materials, primaryProduct,
+                testSingleSourceQuote.getAlphanumericId());
+
+        for (ProductOrderAddOn addOn : countTestPDO.getAddOns()) {
+            addTestProductMaterialPrice("30.00", priceList, quoteItems, materials, addOn.getAddOn(),
+                    testSingleSourceQuote.getAlphanumericId());
+        }
+        testSingleSourceQuote.setQuoteItems(quoteItems);
+
+        for()
+
+        double primarySampleCount =
+                SapIntegrationServiceImpl.getSampleCount(countTestPDO, countTestPDO.getProduct(), 0, false, false);
+        double primaryClosingCount =
+                SapIntegrationServiceImpl.getSampleCount(countTestPDO, countTestPDO.getProduct(), 0, false, true);
+        assertThat(primarySampleCount, is(equalTo(Double.valueOf(countTestPDO.getSamples().size()))));
+        assertThat(primaryClosingCount, is(equalTo(0d)));
+
+
+        for (ProductOrderAddOn addOn : countTestPDO.getAddOns()) {
+            final double addonSampleCount =
+                    SapIntegrationServiceImpl.getSampleCount(countTestPDO, addOn.getAddOn(), 0, false, false);
+            final double addonClosingCount =
+                    SapIntegrationServiceImpl.getSampleCount(countTestPDO, addOn.getAddOn(), 0, false, true);
+            assertThat(addonSampleCount, is(equalTo(Double.valueOf(countTestPDO.getSamples().size()))));
+            assertThat(addonClosingCount, is(equalTo(0d)));
+        }
+
+    }
+
     public static void addTestProductMaterialPrice(String primaryMaterialBasePrice, PriceList priceList,
                                             Collection<QuoteItem> quoteItems, Set<SAPMaterial> materials,
                                             Product primaryProduct, String quoteId) {
