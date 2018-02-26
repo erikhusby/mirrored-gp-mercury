@@ -310,18 +310,27 @@ public class ResearchProjectEjb {
 
         List<String> errorMessages = new ArrayList<>();
 
+        updateAndPersistSubmissionDtoStatusFromResults(submissionProject, submissionDtoMap, submissionResults,
+            submissionIdentifierToTracker, errorMessages);
+        if (CollectionUtils.isNotEmpty(errorMessages)) {
+            throw new ValidationException("There were some errors during submission.  ", errorMessages);
+        }
+
+        return submissionResults;
+    }
+
+    public void updateAndPersistSubmissionDtoStatusFromResults(ResearchProject submissionProject,
+                                                                  Map<SubmissionTracker, SubmissionDto> submissionDtoMap,
+                                                                  Collection<SubmissionStatusDetailBean> submissionResults,
+                                                                  Map<String, SubmissionTracker> submissionIdentifierToTracker,
+                                                                  List<String> errorMessages) {
         List<SubmissionTracker> trackersToDelete =
             updateSubmissionDtoStatusFromResults(submissionProject, submissionDtoMap, submissionResults,
                 submissionIdentifierToTracker, errorMessages);
         for (SubmissionTracker deleteTracker : trackersToDelete) {
             submissionTrackerDao.remove(deleteTracker);
         }
-        if (CollectionUtils.isNotEmpty(errorMessages)) {
-            submissionTrackerDao.persist(submissionProject);
-            throw new ValidationException("There were some errors during submission.  ", errorMessages);
-        }
-
-        return submissionResults;
+        submissionTrackerDao.persist(submissionProject);
     }
 
     /**
