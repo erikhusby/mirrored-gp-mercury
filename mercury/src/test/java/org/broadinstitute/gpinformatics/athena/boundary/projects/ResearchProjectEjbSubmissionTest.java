@@ -188,9 +188,7 @@ public class ResearchProjectEjbSubmissionTest {
         submisionDtoMap.put(testTracker, submissionDto);
         submisionDtoMap.put(testTracker2, submissionDto2);
 
-        Map<String, SubmissionTracker> idToTracker = new HashMap<>();
-        idToTracker.put(myUuid, testTracker);
-        idToTracker.put(myOtherUuid, testTracker2);
+        Map<String, SubmissionTracker> idToTracker = SubmissionTracker.uuidMap(Arrays.asList(testTracker, testTracker2));
 
         List<Object[]> testCases = new ArrayList<>();
         testCases.add(new Object[]{testTracker.getResearchProject(), Collections.singleton(
