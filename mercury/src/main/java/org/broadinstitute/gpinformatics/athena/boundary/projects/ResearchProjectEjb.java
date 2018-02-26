@@ -330,7 +330,9 @@ public class ResearchProjectEjb {
         for (SubmissionTracker deleteTracker : trackersToDelete) {
             submissionTrackerDao.remove(deleteTracker);
         }
-        submissionTrackerDao.persist(submissionProject);
+        if (!trackersToDelete.isEmpty()) {
+            submissionTrackerDao.persist(submissionProject);
+        }
     }
 
     /**
