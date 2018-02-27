@@ -54,28 +54,13 @@ public final class PoiSpreadsheetParser {
      * Data validation errors can be found in processor.getMessages().
      */
     public void processRows(Sheet workSheet, TableProcessor processor) throws ValidationException {
-        processRows(workSheet, processor, false);
-    }
-
-    /**
-     * Does the generic parsing of a spreadsheet.  This method pulls the data row by row from the
-     * spreadsheet and holds that data in such a way that a concrete implementation of TableProcessor
-     * can parse the data in a way specific to that parser.
-     *
-     * @param headerOnly if true, stops after processing the headers.
-     * @throws ValidationException if the header row cannot be found or the header validation failed.
-     * Data validation errors can be found in processor.getMessages().
-     */
-    public void processRows(Sheet workSheet, TableProcessor processor, boolean headerOnly) throws ValidationException {
         // If the header row index is invalid then it is found by searching for a row with the required header names.
         if (processor.getHeaderRowIndex() < 0) {
             processor.setHeaderRowIndex(processor.findHeaderRow(workSheet));
         }
         Iterator<Row> rows = workSheet.rowIterator();
         processHeaders(processor, rows);
-        if (!headerOnly) {
-            processData(processor, rows);
-        }
+        processData(processor, rows);
     }
 
     /**
@@ -322,26 +307,6 @@ public final class PoiSpreadsheetParser {
      * (defined in ColumnHeader). Other validation errors are in the returned list.
      */
     public static List<String> processSingleWorksheet(InputStream spreadsheet, TableProcessor processor)
-            throws InvalidFormatException, IOException, ValidationException {
-        PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.<String, TableProcessor>emptyMap());
-        try {
-            Workbook workbook = WorkbookFactory.create(spreadsheet);
-            processor.validateNumberOfWorksheets(workbook.getNumberOfSheets());
-            parser.processRows(workbook.getSheetAt(0), processor);
-            return processor.getMessages();
-        } finally {
-            processor.close();
-        }
-    }
-
-    /**
-     * Returns the error messages obtained by validating the headers of a single page spreadsheet.
-     *
-     * @param spreadsheet The spreadsheet stream of data.
-     * @param processor The table processor.
-     * @return the list of validation error messages.
-     */
-    public static List<String> singleWorksheetHeaderErrors(InputStream spreadsheet, TableProcessor processor)
             throws InvalidFormatException, IOException, ValidationException {
         PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.<String, TableProcessor>emptyMap());
         try {

@@ -14,16 +14,22 @@
     });
 </script>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="Upload External Library" sectionTitle="Upload External Library">
+<stripes:layout-render name="/layout.jsp" pageTitle="External Library Upload" sectionTitle="External Library Upload">
     <stripes:layout-component name="extraHead">
     </stripes:layout-component>
     <stripes:layout-component name="content">
         <stripes:form beanclass="${actionBean.class.name}" id="uploadForm">
             <div class="form-horizontal">
                 <div class="control-group">
-                    <stripes:label for="samplesSpreadsheet" class="control-label">
-                        Samples Spreadsheet
-                    </stripes:label>
+                    <stripes:label for="spreadsheetType" class="control-label">Spreadsheet Type</stripes:label>
+                    <div class="controls">
+                        <stripes:select id="spreadsheetType" name="spreadsheetType">
+                            <stripes:option value="">Select a Spreadsheet Type</stripes:option>
+                            <stripes:options-enumeration
+                                    enum="org.broadinstitute.gpinformatics.mercury.presentation.sample.ExternalLibraryUploadActionBean.SpreadsheetTypes"
+                                    label="displayName"/>
+                        </stripes:select>
+                    </div>
                     <div style="margin-left: 180px; width: auto;">
                         <stripes:checkbox id="overWriteFlag" name="overWriteFlag"/>
                         <stripes:label for="overWriteFlag">
@@ -36,7 +42,7 @@
                 </div>
                 <div class="control-group">
                     <div class="controls">
-                        <stripes:submit name="uploadSamples" value="Upload External Library" class="btn btn-primary"/>
+                        <stripes:submit name="uploadSamples" value="Upload Spreadsheet" class="btn btn-primary"/>
                     </div>
                 </div>
             </div>

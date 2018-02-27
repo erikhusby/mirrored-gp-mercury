@@ -6,8 +6,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -28,10 +26,9 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySample
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleInstanceEntityDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleKitRequestDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryBarcodeUpdate;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorEzPass;
-import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorNonPooled;
-import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorPooledMultiOrganism;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VesselPooledTubesProcessor;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
@@ -51,12 +48,9 @@ import org.broadinstitute.gpinformatics.mercury.presentation.workflow.CreateFCTA
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 
 import javax.inject.Inject;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -66,9 +60,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedMap;
 import java.util.SortedSet;
-import java.util.TreeMap;
 import java.util.TreeSet;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -85,7 +77,9 @@ public class SampleInstanceEjb {
     static final String MISSING = "Row #%d missing value of %s.";
     static final String WRONG_TYPE = "Row #%d %s must be %s.";
     static final String MUST_NOT_BE = "Row #%d %s must not be %s.";
+    static final String ALREADY_EXISTS = "Row #%d %s \"%s\" already exists in %s.";
     static final String UNKNOWN = "Row #%d the value for %s is not in %s.";
+    static final String NONEXISTENT = "Row #%d the value for %s \"%s\" does not exist in %s.";
     static final String UNKNOWN_COND = "Row #%d the value for " +
             VesselPooledTubesProcessor.Headers.CONDITIONS.getText() +
             " is not a ticket id for one of the sub-task of %s.";
@@ -104,6 +98,7 @@ public class SampleInstanceEjb {
     static final String BSP_MISSING = "Row #%d Mercury expects sample \"%s\" to be in BSP and it's not.";
 
     public static final String IS_SUCCESS = "Spreadsheet with %d rows successfully uploaded.";
+    public static final String IS_SUCCESS2 = "%d tube barcodes were updated.";
     /** A string of the available sequencer model names. */
     public static final String SEQUENCER_MODELS;
 
@@ -182,59 +177,34 @@ public class SampleInstanceEjb {
      *
      * @param inputStream the spreadsheet inputStream.
      * @param overwrite specifies if existing entities should be overwritten.
+     * @param processor the TableProcessor subclass that should parse the spreadsheet.
      * @param messages the errors, warnings, and info to be passed back.
      */
-    public Pair<TableProcessor, List<SampleInstanceEntity>> doExternalUpload(InputStream inputStream, boolean overwrite,
-            MessageCollection messages) throws IOException, InvalidFormatException, ValidationException {
+    public List<SampleInstanceEntity> doExternalUpload(InputStream inputStream,
+            boolean overwrite, TableProcessor processor, MessageCollection messages) {
 
-        Pair<TableProcessor, List<String>> pair = bestProcessor(inputStream);
-        TableProcessor processor = pair.getLeft();
-        messages.addErrors(pair.getRight());
-        List<SampleInstanceEntity> entities = (processor instanceof VesselPooledTubesProcessor) ?
-                verifyAndPersistSpreadsheet((VesselPooledTubesProcessor) processor, messages, overwrite) :
-                verifyAndPersistSpreadsheet((ExternalLibraryProcessor) processor, messages, overwrite);
-
-        return Pair.of(processor, entities);
-    }
-
-    /**
-     * Parses the spreadsheet header columns and returns the processor that agrees with it best.
-     * Always returns a processor even if there are missing required headers, so that error messages
-     * will be presented.
-     *
-     * @param inputStream the spreadsheet.
-     * @return Pair of TableProcessor and the list of errors found when parsing it. There should be none.
-     */
-    public Pair<TableProcessor, List<String>> bestProcessor(InputStream inputStream) throws IOException {
-
-        SortedMap<Integer, Pair<TableProcessor, List<String>>> processorMap = new TreeMap<>();
-        byte[] inputStreamBytes = IOUtils.toByteArray(inputStream);
-        for (TableProcessor processor : Arrays.asList(
-                new VesselPooledTubesProcessor(null),
-                new ExternalLibraryProcessorEzPass(null),
-                new ExternalLibraryProcessorPooledMultiOrganism(null),
-                new ExternalLibraryProcessorNonPooled(null))) {
-            int rank;
-            List<String> messages = new ArrayList<>();
-            try {
-                messages.addAll(PoiSpreadsheetParser.singleWorksheetHeaderErrors(
-                        new ByteArrayInputStream(inputStreamBytes), processor));
-                // Uses warnings (typically extraneous headers) as a lower ranking tie breaker.
-                rank = processor.getMessages().size() * 100 + processor.getWarnings().size();
-                if (processor.getMessages().isEmpty()) {
-                    messages.addAll(processor.getWarnings());
-                }
-            } catch (ValidationException e) {
-                messages.addAll(e.getValidationMessages());
-                rank = e.getValidationMessages().size() * 100 + processor.getWarnings().size();
-            } catch (InvalidFormatException e) {
-                messages.add(e.getMessage());
-                rank = Integer.MAX_VALUE;
-            }
-            processorMap.put(rank, Pair.of(processor, messages));
+        messages.clearAll();
+        if (processor == null) {
+            messages.addError("Missing spreadsheet parser.");
         }
-        // The first one has the lowest error count.
-        return processorMap.entrySet().iterator().next().getValue();
+        try {
+            PoiSpreadsheetParser.processSingleWorksheet(inputStream, processor);
+            messages.addErrors(processor.getMessages());
+            messages.addWarning(processor.getWarnings());
+            return processor instanceof VesselPooledTubesProcessor ?
+                    verifyAndPersistSpreadsheet((VesselPooledTubesProcessor) processor, messages, overwrite) :
+                    (processor instanceof ExternalLibraryBarcodeUpdate ?
+                            updateBarcodes((ExternalLibraryBarcodeUpdate) processor, messages, overwrite) :
+                            verifyAndPersistSpreadsheet((ExternalLibraryProcessor) processor, messages, overwrite));
+        } catch (ValidationException e) {
+            messages.addErrors(processor.getMessages());
+            messages.addWarning(processor.getWarnings());
+        } catch (Exception e) {
+            messages.addError("Cannot process spreadsheet: " + e);
+        } finally {
+            IOUtils.closeQuietly(inputStream);
+        }
+        return null;
     }
 
     /**
@@ -849,11 +819,11 @@ public class SampleInstanceEjb {
 
             String barcode = get(processor.getBarcodes(), index);
             // Uses the libraryName if a barcode is not present.
-            boolean barcodeIsLibrary = barcode == null;
+            boolean barcodeIsLibrary = isBlank(barcode);
             if (barcodeIsLibrary) {
                 barcode = libraryName;
             }
-            // Tube barcode must only appear in one row.
+            // Tube barcode must be unique in the spreadsheet.
             if (!uniqueBarcodes.add(barcode)) {
                 messages.addError(String.format(DUPLICATE, rowNumber,
                         ExternalLibraryProcessorEzPass.Headers.TUBE_BARCODE.getText()));
@@ -1310,6 +1280,51 @@ public class SampleInstanceEjb {
                 isNotBlank(get(processor.getGender(), rowIndex)) ||
                 isNotBlank(get(processor.getSpecies(), rowIndex)) ||
                 isNotBlank(get(processor.getLsid(), rowIndex));
+    }
+
+    /**
+     * Updates existing SampleInstanceEntity tube barcode labels.
+     */
+    private List<SampleInstanceEntity> updateBarcodes(ExternalLibraryBarcodeUpdate processor,
+            MessageCollection messages, boolean overwrite) {
+
+        final int rowOffset = processor.getHeaderRowIndex() + 1;
+        Map<LabVessel, String> tubeToNewBarcode = new HashMap<>();
+        List<SampleInstanceEntity> sampleInstanceEntities = new ArrayList<>();
+
+        if (!overwrite) {
+            messages.addError("Set the Overwrite checkbox to update tube barcodes.");
+        }
+        for (int rowIdx = 0; rowIdx < processor.getLibraryNames().size(); ++rowIdx) {
+            String libraryName = get(processor.getLibraryNames(), rowIdx);
+            String newBarcode = get(processor.getBarcodes(), rowIdx);
+            if (isNotBlank(libraryName) && isNotBlank(newBarcode)) {
+                SampleInstanceEntity sampleInstanceEntity = sampleInstanceEntityDao.findByName(libraryName);
+                if (sampleInstanceEntity == null) {
+                    messages.addError(String.format(NONEXISTENT, rowIdx + rowOffset,
+                            ExternalLibraryBarcodeUpdate.Headers.LIBRARY_NAME.getText(),
+                            libraryName, "Mercury"));
+                } else {
+                    if (labVesselDao.findByIdentifier(newBarcode) != null) {
+                        messages.addError(String.format(ALREADY_EXISTS, rowIdx + rowOffset,
+                                ExternalLibraryBarcodeUpdate.Headers.TUBE_BARCODE, newBarcode, "Mercury"));
+                    }
+                    sampleInstanceEntities.add(sampleInstanceEntity);
+                    tubeToNewBarcode.put(sampleInstanceEntity.getLabVessel(), newBarcode);
+                }
+            }
+        }
+
+        // Persist changes if there are no errors.
+        if (messages.getErrors().isEmpty()) {
+            for (Map.Entry<LabVessel, String> mapEntry : tubeToNewBarcode.entrySet()) {
+                mapEntry.getKey().setLabel(mapEntry.getValue());
+            }
+            labVesselDao.persistAll(tubeToNewBarcode.keySet());
+            messages.addInfo(String.format(IS_SUCCESS2, tubeToNewBarcode.size()));
+        }
+
+        return sampleInstanceEntities;
     }
 
     /** DTO for sample metadata found in the spreadsheet. */

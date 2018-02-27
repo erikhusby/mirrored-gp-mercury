@@ -266,6 +266,10 @@ public class UploadQuantsActionBean extends CoreActionBean {
             return null;
         }
         Result traverserResult = runAndRackOfTubes.getMiddle();
+
+        // Mercury must only send initial pico quants to BSP since this assumption is built into the BSP
+        // logic that calculates Total Yield. If Mercury were to send another set of quants they'd be
+        // treated as a re-do of initiation pico in BSP.
         if (quantType == LabMetric.MetricType.INITIAL_PICO) {
 
             Set<VesselPosition> researchTubePositions = new HashSet<>();

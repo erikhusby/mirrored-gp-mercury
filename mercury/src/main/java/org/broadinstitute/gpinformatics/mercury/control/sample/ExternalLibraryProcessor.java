@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.sample;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.HeaderValueRow;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.HeaderValueRowTableProcessor;
 
@@ -154,13 +155,38 @@ public abstract class ExternalLibraryProcessor extends HeaderValueRowTableProces
     public void close() {
     }
 
-    /** Strips parethetical material off and trim blanks off of the header cell before matching it. */
+    /**
+     * Normalizes the spreadsheet header names.
+     * Cuts off after four words, after any parenthesis, at the word "bp.".
+     * Lower cases all words. Trims blanks off.
+     */
     public String adjustHeaderName(String headerCell) {
-        return stripTrimLowerCase(headerCell);
+        StringBuilder builder = new StringBuilder();
+        int count = 0;
+        for (String word : headerCell.trim().toLowerCase().split(" ")) {
+            if (count > 3 || word.startsWith("(") || word.equals("bp.")) {
+                break;
+            }
+            if (StringUtils.isNotBlank(word)) {
+                if (count > 0) {
+                    builder.append(" ");
+                }
+                builder.append(word);
+                ++count;
+            }
+        }
+        return builder.toString();
     }
 
-    public static String stripTrimLowerCase(String headerCell) {
-        return StringUtils.substringBefore(headerCell, "(").trim().toLowerCase();
+    /** Uses the first non-blank data value for the given headers. */
+    protected String getFromRow(Map<String, String> dataRow, ColumnHeader... headers) {
+        for (ColumnHeader header : headers) {
+            String data = dataRow.get(getAdjustedNames().get(adjustHeaderName(header.getText())));
+            if (StringUtils.isNotBlank(data)) {
+                return data;
+            }
+        }
+        return "";
     }
 
     /** Returns a mapping of adjusted header name to actual header name. */

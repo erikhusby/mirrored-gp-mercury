@@ -1,8 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
-import org.apache.commons.io.IOUtils;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -12,14 +11,12 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
-import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
-import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
@@ -32,10 +29,12 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleInstanc
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleKitRequestDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
+import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryBarcodeUpdate;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorEzPass;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorNonPooled;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorPooledMultiOrganism;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VesselPooledTubesProcessor;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
@@ -71,7 +70,6 @@ import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.InputStream;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -130,125 +128,124 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
 
     @Test
     public void parseExternalLibarayEZFail() throws Exception {
-        InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                "testdata/ExternalLibraryEZFailTest.xlsx");
-        ExternalLibraryProcessorEzPass processor = new ExternalLibraryProcessorEzPass(null);
-        try {
-            PoiSpreadsheetParser.processSingleWorksheet(inputStream, processor);
-            Assert.fail("Should have thrown exception.");
-        } catch (ValidationException e) {
-            int count = 0;
-            for (String msg : e.getValidationMessages()) {
-                if (msg.startsWith(String.format(TableProcessor.DUPLICATE_HEADER, "Virtual GSSR ID")) ||
-                        msg.startsWith(String.format(TableProcessor.DUPLICATE_HEADER, "SQUID Project"))) {
-                    ++count;
-                }
+        String file = "testdata/ExternalLibraryEZFailTest.xlsx";
+        SampleInstanceEjb sampleInstanceEjb = setMocks(EZPASS);
+        MessageCollection messageCollection = new MessageCollection();
+
+        List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
+                VarioskanParserTest.getSpreadsheet(file), OVERWRITE,
+                new ExternalLibraryProcessorEzPass(null), messageCollection);
+
+        Assert.assertTrue(CollectionUtils.isEmpty(entities));
+
+        int count = 0;
+        for (String msg : messageCollection.getErrors()) {
+            if (msg.startsWith(String.format(TableProcessor.DUPLICATE_HEADER, "Virtual GSSR ID")) ||
+                    msg.startsWith(String.format(TableProcessor.DUPLICATE_HEADER, "SQUID Project"))) {
+                ++count;
             }
-            Assert.assertEquals(count, 2);
-            Assert.assertEquals(processor.getWarnings().iterator().next(), TableProcessor.getPrefixedMessage(
-                    String.format(TableProcessor.UNKNOWN_HEADER, "Sample No."), null, 29));
         }
+        Assert.assertEquals(count, 2, StringUtils.join(messageCollection.getErrors(), "; "));
+        Assert.assertEquals(messageCollection.getWarnings().iterator().next(), TableProcessor.getPrefixedMessage(
+                String.format(TableProcessor.UNKNOWN_HEADER, "Sample No."), null, 29));
     }
 
     @Test
     public void testExternalLibraryEZPass() throws Exception {
         String file = "testdata/ExternalLibraryEZPassTest.xlsx";
-
-        byte[] bytes = IOUtils.toByteArray(Thread.currentThread().getContextClassLoader().getResourceAsStream(file));
         SampleInstanceEjb sampleInstanceEjb = setMocks(EZPASS);
-        TableProcessor testProcessor = sampleInstanceEjb.bestProcessor(new ByteArrayInputStream(bytes)).getLeft();
-        Assert.assertTrue(testProcessor instanceof ExternalLibraryProcessorEzPass, testProcessor.getClass().getName());
-
         MessageCollection messageCollection = new MessageCollection();
-        Pair<TableProcessor, List<SampleInstanceEntity>> pair = sampleInstanceEjb.doExternalUpload(
-                new ByteArrayInputStream(bytes), OVERWRITE, messageCollection);
+
+        List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
+                VarioskanParserTest.getSpreadsheet(file), OVERWRITE,
+                new ExternalLibraryProcessorEzPass(null), messageCollection);
+
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
-        Assert.assertTrue(messageCollection.getInfos().iterator().next()
-                .startsWith(String.format(SampleInstanceEjb.IS_SUCCESS, 1)),
+        Assert.assertEquals(messageCollection.getInfos().iterator().next(),
+                String.format(SampleInstanceEjb.IS_SUCCESS, entities.size()),
                 StringUtils.join(messageCollection.getInfos(), "; "));
+        Assert.assertFalse(entities.isEmpty());
+        for (int i = 0; i < entities.size(); ++i) {
+            SampleInstanceEntity entity = entities.get(i);
 
-        List<SampleInstanceEntity> entities = pair.getRight();
-        Assert.assertEquals(entities.size(), 1);
-        SampleInstanceEntity entity = entities.get(0);
+            SampleKitRequest sampleKitRequest = entity.getSampleKitRequest();
+            Assert.assertEquals(sampleKitRequest.getCollaboratorName(), "David W");
+            Assert.assertEquals(sampleKitRequest.getOrganization(), "Broad");
+            Assert.assertEquals(sampleKitRequest.getAddress(), "Charles St");
+            Assert.assertEquals(sampleKitRequest.getCity(), "Cambridge");
+            Assert.assertEquals(sampleKitRequest.getState(), "Ma");
+            Assert.assertEquals(sampleKitRequest.getPostalCode(), "2215");
+            Assert.assertEquals(sampleKitRequest.getCountry(), "USA");
+            Assert.assertEquals(sampleKitRequest.getPhone(), "718-234-5510");
+            Assert.assertEquals(sampleKitRequest.getEmail(), "test@test.com");
+            Assert.assertNull(sampleKitRequest.getCommonName());
+            Assert.assertEquals(sampleKitRequest.getGenus(), "G");
+            Assert.assertEquals(sampleKitRequest.getSpecies(), "S");
+            Assert.assertNull(sampleKitRequest.getIrbApprovalRequired());
+            String mock = select(i, "MOCK.FSK1.A", "MOCK.FSK1.B", "MOCK.FSK1.C");
+            String libraryName = "Lib-" + mock;
+            Assert.assertEquals(entity.getSampleLibraryName(), libraryName);
 
-        SampleKitRequest sampleKitRequest = entity.getSampleKitRequest();
-        Assert.assertEquals(sampleKitRequest.getCollaboratorName(), "David W");
-        Assert.assertEquals(sampleKitRequest.getOrganization(), "Broad");
-        Assert.assertEquals(sampleKitRequest.getAddress(), "Charles St");
-        Assert.assertEquals(sampleKitRequest.getCity(), "Cambridge");
-        Assert.assertEquals(sampleKitRequest.getState(), "Ma");
-        Assert.assertEquals(sampleKitRequest.getPostalCode(), "2215");
-        Assert.assertEquals(sampleKitRequest.getCountry(), "USA");
-        Assert.assertEquals(sampleKitRequest.getPhone(), "718-234-5510");
-        Assert.assertEquals(sampleKitRequest.getEmail(), "test@test.com");
-        Assert.assertNull(sampleKitRequest.getCommonName());
-        Assert.assertEquals(sampleKitRequest.getGenus(), "G");
-        Assert.assertEquals(sampleKitRequest.getSpecies(), "S");
-        Assert.assertNull(sampleKitRequest.getIrbApprovalRequired());
+            Assert.assertTrue(entity.getSequencerModel().getDisplayName().startsWith("NovaSeq"),
+                    entity.getSequencerModel().getDisplayName());
 
-        String libraryName = "Lib-MOCK.FSK1.A";
-        Assert.assertEquals(entity.getSampleLibraryName(), libraryName);
+            MercurySample mercurySample = entity.getMercurySample();
+            Assert.assertNotNull(mercurySample, libraryName);
+            Assert.assertEquals(mercurySample.getSampleKey(), libraryName);
 
-        Assert.assertTrue(entity.getSequencerModel().getDisplayName().startsWith("NovaSeq"),
-                entity.getSequencerModel().getDisplayName());
+            Assert.assertEquals(mercurySample.getMetadataSource(), MercurySample.MetadataSource.MERCURY);
+            Map<Metadata.Key, String> metadataMap = new HashMap<>();
+            for (Metadata metadata : mercurySample.getMetadata()) {
+                metadataMap.put(metadata.getKey(), metadata.getStringValue());
+            }
+            Assert.assertEquals(metadataMap.get(Metadata.Key.SAMPLE_ID), mock); // from Collaborator Sample Id
+            Assert.assertEquals(metadataMap.get(Metadata.Key.BROAD_PARTICIPANT_ID), "MOCK1"); // from Individual Name
+            Assert.assertEquals(metadataMap.get(Metadata.Key.SPECIES), "G S");
+            if (i == 0) {
+                Assert.assertEquals(metadataMap.get(Metadata.Key.GENDER), "M");
+                Assert.assertEquals(metadataMap.get(Metadata.Key.STRAIN), "n/a");
+                Assert.assertEquals(entity.getMolecularIndexingScheme().getName(), "Illumina_P5-Bipof_P7-Dihib");
+            }
+            Assert.assertEquals(metadataMap.get(Metadata.Key.MATERIAL_TYPE), "DNA");
+            Assert.assertNull(metadataMap.get(Metadata.Key.ORGANISM));
+            Assert.assertEquals(metadataMap.get(Metadata.Key.PATIENT_ID),
+                    metadataMap.get(Metadata.Key.BROAD_PARTICIPANT_ID));
+            Assert.assertNull(metadataMap.get(Metadata.Key.LSID));
 
-        MercurySample mercurySample = entity.getMercurySample();
-        Assert.assertNotNull(mercurySample, libraryName);
-        Assert.assertEquals(mercurySample.getSampleKey(), libraryName);
+            LabVessel tube = entity.getLabVessel();
+            Assert.assertEquals(tube.getLabel(), i == 0 ? "E0098972718" : libraryName);
+            Assert.assertEquals(tube.getVolume(), new BigDecimal(select(i, "96.00", "97.00", "98.00")));
+            Assert.assertEquals(tube.getConcentration(), new BigDecimal(select(i, "7.40", "8.00", "9.00")));
+            Assert.assertEquals(tube.getMetrics().size(), 1);
+            LabMetric labMetric = tube.getMetrics().iterator().next();
+            Assert.assertEquals(labMetric.getName(), LabMetric.MetricType.FINAL_LIBRARY_SIZE);
+            Assert.assertEquals(labMetric.getValue(), new BigDecimal("419.00"));
+            Assert.assertTrue(tube.getMercurySamples().contains(mercurySample), libraryName);
 
-        Assert.assertEquals(mercurySample.getMetadataSource(), MercurySample.MetadataSource.MERCURY);
-        Map<Metadata.Key, String> metadataMap = new HashMap<>();
-        for (Metadata metadata : mercurySample.getMetadata()) {
-            metadataMap.put(metadata.getKey(), metadata.getStringValue());
+            Assert.assertEquals(entity.getLibraryType(), "WholeGenomeShotgun");
+            Assert.assertEquals(entity.getProductOrder().getTitle(), "Poon - LLDeep samples for Low-Input Metagenomic");
+            Assert.assertEquals(entity.getNumberLanes(), 1);
+            Assert.assertEquals(entity.getComments(), "SSF-1344; Tiffany Poon");
+            Assert.assertTrue(entity.getPooled());
+            Assert.assertEquals(entity.getReferenceSequence().getName(), "N/A");
         }
-        Assert.assertEquals(metadataMap.get(Metadata.Key.SAMPLE_ID), "MOCK.FSK1.A"); // from Collaborator Sample Id
-        Assert.assertEquals(metadataMap.get(Metadata.Key.BROAD_PARTICIPANT_ID), "MOCK1"); // from Individual Name
-        Assert.assertEquals(metadataMap.get(Metadata.Key.SPECIES), "G S");
-        Assert.assertEquals(metadataMap.get(Metadata.Key.GENDER), "M");
-        Assert.assertEquals(metadataMap.get(Metadata.Key.STRAIN), "n/a");
-        Assert.assertEquals(metadataMap.get(Metadata.Key.MATERIAL_TYPE), "DNA");
-        Assert.assertNull(metadataMap.get(Metadata.Key.ORGANISM));
-        Assert.assertEquals(metadataMap.get(Metadata.Key.PATIENT_ID),
-                metadataMap.get(Metadata.Key.BROAD_PARTICIPANT_ID));
-        Assert.assertNull(metadataMap.get(Metadata.Key.LSID));
-
-        LabVessel tube = entity.getLabVessel();
-        Assert.assertEquals(tube.getLabel(), "E0098972718");
-        Assert.assertEquals(tube.getVolume(), new BigDecimal("96.00"));
-        Assert.assertEquals(tube.getConcentration(), new BigDecimal("7.40"));
-        Assert.assertEquals(tube.getMetrics().size(), 1);
-        LabMetric labMetric = tube.getMetrics().iterator().next();
-        Assert.assertEquals(labMetric.getName(), LabMetric.MetricType.FINAL_LIBRARY_SIZE);
-        Assert.assertEquals(labMetric.getValue(), new BigDecimal("419.00"));
-        Assert.assertTrue(tube.getMercurySamples().contains(mercurySample), libraryName);
-
-        Assert.assertEquals(entity.getLibraryType(), "WholeGenomeShotgun");
-        Assert.assertEquals(entity.getProductOrder().getTitle(), "Poon - LLDeep samples for Low-Input Metagenomic");
-        Assert.assertEquals(entity.getNumberLanes(), 1);
-        Assert.assertEquals(entity.getComments(), "SSF-1344; Tiffany Poon");
-        Assert.assertTrue(entity.getPooled());
-        Assert.assertEquals(entity.getReferenceSequence().getName(), "N/A");
-        Assert.assertEquals(entity.getMolecularIndexingScheme().getName(), "Illumina_P5-Bipof_P7-Dihib");
     }
 
     @Test
     public void testExternalLibraryMultiOrganism() throws Exception {
         String file = "testdata/ExternalLibraryMultiOrganismTest.xlsx";
-        byte[] bytes = IOUtils.toByteArray(Thread.currentThread().getContextClassLoader().getResourceAsStream(file));
         SampleInstanceEjb sampleInstanceEjb = setMocks(MULTIORGANISM);
-        TableProcessor testProcessor = sampleInstanceEjb.bestProcessor(new ByteArrayInputStream(bytes)).getLeft();
-        Assert.assertTrue(testProcessor instanceof ExternalLibraryProcessorPooledMultiOrganism,
-                testProcessor.getClass().getName());
-
         MessageCollection messageCollection = new MessageCollection();
-        Pair<TableProcessor, List<SampleInstanceEntity>> pair = sampleInstanceEjb.doExternalUpload(
-                new ByteArrayInputStream(bytes), OVERWRITE, messageCollection);
+
+        List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
+                VarioskanParserTest.getSpreadsheet(file), OVERWRITE,
+                new ExternalLibraryProcessorPooledMultiOrganism(null), messageCollection);
+
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertTrue(messageCollection.getInfos().iterator().next()
-                        .startsWith(String.format(SampleInstanceEjb.IS_SUCCESS, 3)),
+                        .startsWith(String.format(SampleInstanceEjb.IS_SUCCESS, entities.size())),
                 StringUtils.join(messageCollection.getInfos(), "; "));
 
-        List<SampleInstanceEntity> entities = pair.getRight();
         Assert.assertEquals(entities.size(), 3);
 
         SampleKitRequest sampleKitRequest = entities.get(0).getSampleKitRequest();
@@ -329,21 +326,18 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
     @Test
     public void testExternalLibraryPooled() throws Exception {
         String file = "testdata/ExternalLibraryPooledTest.xlsx";
-        InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(file);
         SampleInstanceEjb sampleInstanceEjb = setMocks(TestType.POOLED);
-
         MessageCollection messageCollection = new MessageCollection();
-        Pair<TableProcessor, List<SampleInstanceEntity>> pair = sampleInstanceEjb.doExternalUpload(
-                inputStream, OVERWRITE, messageCollection);
+
+        List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
+                VarioskanParserTest.getSpreadsheet(file), OVERWRITE,
+                new ExternalLibraryProcessorPooledMultiOrganism(null), messageCollection);
+
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertTrue(messageCollection.getInfos().iterator().next()
                 .startsWith(String.format(SampleInstanceEjb.IS_SUCCESS, 2)),
                 StringUtils.join(messageCollection.getInfos(), "; "));
 
-        Assert.assertTrue(pair.getLeft() instanceof ExternalLibraryProcessorPooledMultiOrganism,
-                pair.getLeft().getClass().getName());
-
-        List<SampleInstanceEntity> entities = pair.getRight();
         Assert.assertEquals(entities.size(), 2);
 
         SampleKitRequest sampleKitRequest = entities.get(0).getSampleKitRequest();
@@ -413,21 +407,18 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
     @Test
     public void testExternalLibraryNonPooled() throws Exception {
         String file = "testdata/ExternalLibraryNONPooledTest.xlsx";
-        InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(file);
         SampleInstanceEjb sampleInstanceEjb = setMocks(NONPOOLED);
-
         MessageCollection messageCollection = new MessageCollection();
-        Pair<TableProcessor, List<SampleInstanceEntity>> pair = sampleInstanceEjb.doExternalUpload(
-                inputStream, OVERWRITE, messageCollection);
+
+        List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
+                VarioskanParserTest.getSpreadsheet(file), OVERWRITE,
+                new ExternalLibraryProcessorNonPooled(null), messageCollection);
+
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertTrue(messageCollection.getInfos().iterator().next()
                 .startsWith(String.format(SampleInstanceEjb.IS_SUCCESS, 2)),
                 StringUtils.join(messageCollection.getInfos(), "; "));
 
-        Assert.assertTrue(pair.getLeft() instanceof ExternalLibraryProcessorNonPooled,
-                pair.getLeft().getClass().getName());
-
-        List<SampleInstanceEntity> entities = pair.getRight();
         Assert.assertEquals(entities.size(), 2);
 
         SampleKitRequest sampleKitRequest = entities.get(0).getSampleKitRequest();
@@ -498,20 +489,17 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
     public void testPooledTubes() throws Exception {
         // Uploads the spreadsheet.
         String file = "testdata/PooledTubesTest.xlsx";
-        InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(file);
         SampleInstanceEjb sampleInstanceEjb = setMocks(POOLEDTUBE);
         MessageCollection messageCollection = new MessageCollection();
+        VesselPooledTubesProcessor processor = new VesselPooledTubesProcessor(null);
 
-        Pair<TableProcessor, List<SampleInstanceEntity>> pair = sampleInstanceEjb.doExternalUpload(
-                inputStream, OVERWRITE, messageCollection);
+        List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
+                VarioskanParserTest.getSpreadsheet(file), OVERWRITE, processor, messageCollection);
+
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), "; "));
         Assert.assertTrue(messageCollection.getInfos().iterator().next()
                 .startsWith(String.format(SampleInstanceEjb.IS_SUCCESS, 2)),
                 StringUtils.join(messageCollection.getInfos(), "; "));
-
-        Assert.assertTrue(pair.getLeft() instanceof VesselPooledTubesProcessor, pair.getLeft().getClass().getName());
-        VesselPooledTubesProcessor vesselPooledTubesProcessor = (VesselPooledTubesProcessor)pair.getLeft();
-        List<SampleInstanceEntity> entities = pair.getRight();
 
         // Checks SampleInstanceEntities that were created.
         Assert.assertFalse(messageCollection.hasErrors(), StringUtils.join(messageCollection.getErrors(), ". "));
@@ -652,9 +640,46 @@ public class SampleInstanceEjbDbFreeTest extends BaseEventTest {
         for (SampleInstanceV2 sampleInstanceV2 : run.getSampleCartridge().getSampleInstancesV2()) {
             flowcellSamples.add(sampleInstanceV2.getNearestMercurySampleName());
         }
-        Assert.assertTrue(flowcellSamples.containsAll(vesselPooledTubesProcessor.getBroadSampleId()));
+        Assert.assertTrue(flowcellSamples.containsAll(processor.getBroadSampleId()));
     }
 
+    @Test
+    public void testExternalLibraryBarcodeUpdateHeaders() throws Exception {
+        String file = "ExternalLibrarySampleBarcodeUpdate.xlsx";
+        SampleInstanceEjb sampleInstanceEjb = setMocks(EZPASS);
+        MessageCollection messageCollection = new MessageCollection();
+
+        List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
+                VarioskanParserTest.getSpreadsheet(file), OVERWRITE,
+                new ExternalLibraryBarcodeUpdate(null), messageCollection);
+
+        // Should get two errors since the libraries are not in Mercury.
+        Assert.assertEquals(messageCollection.getErrors().size(), 2,
+                StringUtils.join(messageCollection.getErrors(), "; "));
+        Assert.assertTrue(messageCollection.getErrors().get(0).contains("does not exist in Mercury"),
+                StringUtils.join(messageCollection.getErrors(), "; "));
+        Assert.assertTrue(messageCollection.getErrors().get(1).contains("does not exist in Mercury"),
+                StringUtils.join(messageCollection.getErrors(), "; "));
+
+        Assert.assertTrue(CollectionUtils.isEmpty(entities));
+    }
+
+    @Test
+    public void testNullSpreadsheet() throws Exception {
+        SampleInstanceEjb sampleInstanceEjb = setMocks(EZPASS);
+        MessageCollection messageCollection = new MessageCollection();
+
+        List<SampleInstanceEntity> entities = sampleInstanceEjb.doExternalUpload(
+                new ByteArrayInputStream(new byte[]{0}),
+                OVERWRITE, new ExternalLibraryBarcodeUpdate(null), messageCollection);
+
+        Assert.assertEquals(messageCollection.getErrors().size(), 1,
+                StringUtils.join(messageCollection.getErrors(), "; "));
+        Assert.assertTrue(messageCollection.getErrors().get(0).startsWith("Cannot process spreadsheet:"),
+                StringUtils.join(messageCollection.getErrors(), "; "));
+
+        Assert.assertTrue(CollectionUtils.isEmpty(entities));
+    }
 
     private <VESSEL extends LabVessel> void assertSampleInstanceEntitiesPresent(Collection<VESSEL> labVessels,
             Collection<SampleInstanceEntity> entities) {

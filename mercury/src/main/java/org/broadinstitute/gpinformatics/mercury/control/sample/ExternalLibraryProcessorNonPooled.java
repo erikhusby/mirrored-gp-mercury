@@ -10,10 +10,6 @@ public class ExternalLibraryProcessorNonPooled extends ExternalLibraryProcessor 
         super(sheetName);
     }
 
-    private String getFromRow(Map<String, String> dataRow, Headers header) {
-        return dataRow.get(getAdjustedNames().get(adjustHeaderName(header.getText())));
-    }
-
     public void processRowDetails(Map<String, String> dataRow, int dataRowNumber, boolean requiredValuesPresent) {
         accessList.add(getFromRow(dataRow, Headers.ACCESS_LIST));
         additionalAssemblyInformation.add(getFromRow(dataRow, Headers.ASSEMBLY_INFORMATION));
@@ -26,12 +22,12 @@ public class ExternalLibraryProcessorNonPooled extends ExternalLibraryProcessor 
         fundingSource.add(getFromRow(dataRow, Headers.FUNDING_SOURCE));
         illuminaKitUsed.add(getFromRow(dataRow, Headers.ILLUMINA_KIT_USED));
         individualName.add(getFromRow(dataRow, Headers.INDIVIDUAL_NAME));
-        insertSize.add(getFromRow(dataRow, Headers.INSERT_SIZE_RANGE_BP));
+        insertSize.add(getFromRow(dataRow, Headers.INSERT_SIZE_RANGE));
         irbNumber.add(getFromRow(dataRow, Headers.IRB_NUMBER));
         jumpSize.add(getFromRow(dataRow, Headers.JUMP_SIZE));
-        librarySize.add(getFromRow(dataRow, Headers.LIBRARY_SIZE_RANGE_BP));
+        librarySize.add(getFromRow(dataRow, Headers.LIBRARY_SIZE_RANGE));
         libraryType.add(getFromRow(dataRow, Headers.LIBRARY_TYPE));
-        molecularBarcodeName.add(getFromRow(dataRow, (Headers.MOLECULAR_BARCODE_NAME)));
+        molecularBarcodeName.add(getFromRow(dataRow, Headers.MOLECULAR_BARCODE_NAME, Headers.MOLECULE_BARCODE_NAME));
         molecularBarcodeSequence.add(getFromRow(dataRow, Headers.MOLECULAR_BARCODE_SEQUENCE));
         numberOfLanes.add(getFromRow(dataRow, Headers.COVERAGE));
         projectTitle.add(getFromRow(dataRow, Headers.PROJECT_TITLE));
@@ -43,7 +39,7 @@ public class ExternalLibraryProcessorNonPooled extends ExternalLibraryProcessor 
         sequencingTechnology.add(getFromRow(dataRow, Headers.SEQUENCING_TECHNOLOGY));
         sex.add(getFromRow(dataRow, Headers.SEX));
         singleDoubleStranded.add(getFromRow(dataRow, Headers.SINGLE_DOUBLE_STRANDED));
-        singleSampleLibraryName.add(getFromRow(dataRow, Headers.SINGLE_SAMPLE_LIBRARY_NAME));
+        singleSampleLibraryName.add(getFromRow(dataRow, Headers.LIBRARY_NAME));
         strain.add(getFromRow(dataRow, Headers.STRAIN));
         tissueType.add(getFromRow(dataRow, Headers.TISSUE_TYPE));
         totalLibraryConcentration.add(getFromRow(dataRow, Headers.TOTAL_LIBRARY_CONCENTRATION));
@@ -54,41 +50,43 @@ public class ExternalLibraryProcessorNonPooled extends ExternalLibraryProcessor 
         return Headers.values();
     }
 
+    // Only the first four words of header text are used (case insensitive) and the rest are ignored.
     public enum Headers implements ColumnHeader {
-        BLANK("", OPTIONAL),
-        SEQUENCING_TECHNOLOGY("Sequencing Technology", REQUIRED),
-        IRB_NUMBER("IRB Number", REQUIRED),
-        STRAIN("Strain", OPTIONAL),
-        SEX("Sex", OPTIONAL),
-        CELL_LINE("Cell Line", OPTIONAL),
-        TISSUE_TYPE("Tissue Type", OPTIONAL),
-        COLLABORATOR_SAMPLE_ID("Sample Collaborator ID", REQUIRED),
-        INDIVIDUAL_NAME("Individual Name", REQUIRED),
-        SINGLE_SAMPLE_LIBRARY_NAME("Library Name", REQUIRED),
-        LIBRARY_TYPE("Library Type", REQUIRED),
-        INSERT_SIZE_RANGE_BP("Insert Size Range bp.", REQUIRED),
-        LIBRARY_SIZE_RANGE_BP("Library Size Range bp.", REQUIRED),
-        JUMP_SIZE("Jump Size", OPTIONAL),
-        ILLUMINA_KIT_USED("Illumina or 454 Kit Used", REQUIRED),
-        RESTRICTION_ENZYMES("Restriction Enzyme if applicable", OPTIONAL),
-        MOLECULAR_BARCODE_SEQUENCE("Molecular barcode sequence", OPTIONAL),
-        MOLECULAR_BARCODE_NAME("Molecule barcode name", OPTIONAL),
-        TOTAL_LIBRARY_VOLUME("Sample Volume", REQUIRED),
-        TOTAL_LIBRARY_CONCENTRATION("Sample Concentration", REQUIRED),
+        ACCESS_LIST("If Data Access Controlled", OPTIONAL),
         ADDITIONAL_SAMPLE_INFORMATION("Additional Sample Information", OPTIONAL),
-        SINGLE_DOUBLE_STRANDED("Single/Double Stranded", REQUIRED),
-        DESIRED_READ_LENGTH("Desired Read Length for Illumina and note specific cluster density, if required .", REQUIRED),
-        PROJECT_TITLE("Project Title", REQUIRED),
-        FUNDING_SOURCE("Funding Source", REQUIRED),
-        COVERAGE("Coverage", REQUIRED),
-        APPROVED_BY("Approved By", REQUIRED),
-        REFERENCE_SEQUENCE("Reference Sequence", REQUIRED),
-        REQUESTED_COMPLETION_DATE("Requested Completion Date", REQUIRED),
-        DATA_SUBMISSION("Data Submission", REQUIRED),
-        REQUIRED_ACCESS("Require controlled Access for Data", REQUIRED),
-        ACCESS_LIST("IF Data Access Controlled is Desired, please Indicate individuals who should have access", OPTIONAL),
+        APPROVED_BY("Approved By", OPTIONAL),
         ASSEMBLY_INFORMATION("Additional Assembly and Analysis Information", OPTIONAL),
+        BLANK("", OPTIONAL),
+        CELL_LINE("Cell Line", OPTIONAL),
+        COLLABORATOR_SAMPLE_ID("Sample Collaborator ID", REQUIRED),
+        COVERAGE("Coverage", REQUIRED),
         DATA_ANALYSIS_TYPE("Data Analysis Type", OPTIONAL),
+        DATA_SUBMISSION("Data Submission", OPTIONAL),
+        DESIRED_READ_LENGTH("Desired Read Length for", REQUIRED),
+        FUNDING_SOURCE("Funding Source", OPTIONAL),
+        ILLUMINA_KIT_USED("Illumina or 454 Kit Used", OPTIONAL),
+        INDIVIDUAL_NAME("Individual Name", REQUIRED),
+        INSERT_SIZE_RANGE("Insert Size Range", OPTIONAL),
+        IRB_NUMBER("IRB Number", REQUIRED),
+        JUMP_SIZE("Jump Size", OPTIONAL),
+        LIBRARY_SIZE_RANGE("Library Size Range", REQUIRED),
+        LIBRARY_TYPE("Library Type", REQUIRED),
+        MOLECULAR_BARCODE_NAME("Molecular barcode name", OPTIONAL),
+        MOLECULAR_BARCODE_SEQUENCE("Molecular barcode sequence", OPTIONAL),
+        MOLECULE_BARCODE_NAME("Molecule barcode name", OPTIONAL),
+        PROJECT_TITLE("Project Title", REQUIRED),
+        REFERENCE_SEQUENCE("Reference Sequence", REQUIRED),
+        REQUESTED_COMPLETION_DATE("Requested Completion Date", OPTIONAL),
+        REQUIRED_ACCESS("Require controlled Access for Data", OPTIONAL),
+        RESTRICTION_ENZYMES("Restriction Enzyme if applicable", OPTIONAL),
+        SEQUENCING_TECHNOLOGY("Sequencing Technology", REQUIRED),
+        SEX("Sex", OPTIONAL),
+        SINGLE_DOUBLE_STRANDED("Single/Double Stranded", REQUIRED),
+        LIBRARY_NAME("Library Name", REQUIRED),
+        STRAIN("Strain", OPTIONAL),
+        TISSUE_TYPE("Tissue Type", OPTIONAL),
+        TOTAL_LIBRARY_CONCENTRATION("Sample Concentration", REQUIRED),
+        TOTAL_LIBRARY_VOLUME("Sample Volume", REQUIRED),
         ;
 
         private final String text;

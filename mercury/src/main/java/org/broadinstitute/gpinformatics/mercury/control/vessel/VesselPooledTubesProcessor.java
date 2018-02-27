@@ -45,25 +45,26 @@ public class VesselPooledTubesProcessor extends TableProcessor {
     }
 
     public void processRowDetails(Map<String, String> dataRow, int dataRowNumber, boolean requiredValuesPresent) {
-        barcodes.add(dataRow.get(Headers.TUBE_BARCODE.getText()));
-        singleSampleLibraryName.add(dataRow.get(Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText()));
-        broadSampleId.add(dataRow.get(Headers.BROAD_SAMPLE_ID.getText()));
-        rootSampleID.add(dataRow.get(Headers.ROOT_SAMPLE_ID.getText()));
-        molecularIndexingScheme.add(dataRow.get(Headers.MOLECULAR_INDEXING_SCHEME.getText()));
-        bait.add(dataRow.get(Headers.BAIT.getText()));
-        cat.add(dataRow.get(Headers.CAT.getText()));
-        experiment.add(dataRow.get(Headers.EXPERIMENT.getText()));
         String conditionsString = dataRow.get(Headers.CONDITIONS.getText());
-        conditions.add(Arrays.asList(StringUtils.stripAll(conditionsString.split(","))));
-        collaboratorSampleId.add(dataRow.get(Headers.COLLABORATOR_SAMPLE_ID.getText()));
-        collaboratorParticipantId.add(dataRow.get(Headers.COLLABORATOR_PARTICIPANT_ID.getText()));
+        bait.add(dataRow.get(Headers.BAIT.getText()));
+        barcodes.add(dataRow.get(Headers.TUBE_BARCODE.getText()));
         broadParticipantId.add(dataRow.get(Headers.BROAD_PARTICIPANT_ID.getText()));
-        gender.add(dataRow.get(Headers.GENDER.getText()));
-        species.add(dataRow.get(Headers.SPECIES.getText()));
-        lsid.add(dataRow.get(Headers.LSID.getText()));
-        volume.add(dataRow.get(Headers.VOLUME.getText()));
+        broadSampleId.add(dataRow.get(Headers.BROAD_SAMPLE_ID.getText()));
+        cat.add(dataRow.get(Headers.CAT.getText()));
+        collaboratorParticipantId.add(dataRow.get(Headers.COLLABORATOR_PARTICIPANT_ID.getText()));
+        collaboratorSampleId.add(dataRow.get(Headers.COLLABORATOR_SAMPLE_ID.getText()));
+        conditions.add(Arrays.asList(StringUtils.stripAll(conditionsString.split(","))));
+        experiment.add(dataRow.get(Headers.EXPERIMENT.getText()));
         fragmentSize.add(dataRow.get(Headers.FRAGMENT_SIZE.getText()));
+        gender.add(dataRow.get(Headers.GENDER.getText()));
+        lsid.add(dataRow.get(Headers.LSID.getText()));
+        molecularIndexingScheme.add(dataRow.get(Headers.MOLECULAR_INDEXING_SCHEME.getText()));
         readLength.add(dataRow.get(Headers.READ_LENGTH.getText()));
+        rootSampleID.add(dataRow.get(Headers.ROOT_SAMPLE_ID.getText()));
+        singleSampleLibraryName.add(dataRow.get(Headers.SINGLE_SAMPLE_LIBRARY_NAME.getText()));
+        species.add(dataRow.get(Headers.SPECIES.getText()));
+        volume.add(dataRow.get(Headers.VOLUME.getText()));
+
         this.requiredValuesPresent.add(requiredValuesPresent);
     }
 
@@ -75,24 +76,24 @@ public class VesselPooledTubesProcessor extends TableProcessor {
     }
 
     public enum Headers implements ColumnHeader {
-        TUBE_BARCODE("Tube barcode", ColumnHeader.REQUIRED_VALUE, true),
-        SINGLE_SAMPLE_LIBRARY_NAME("Single sample library name", ColumnHeader.REQUIRED_VALUE, true),
-        BROAD_SAMPLE_ID("Broad sample ID", ColumnHeader.REQUIRED_VALUE, true),
-        ROOT_SAMPLE_ID("Root Sample ID", ColumnHeader.OPTIONAL_VALUE, true),
-        MOLECULAR_INDEXING_SCHEME("Molecular indexing scheme", ColumnHeader.REQUIRED_VALUE, true),
         BAIT("Bait", ColumnHeader.OPTIONAL_VALUE, true),
-        CAT("CAT", ColumnHeader.OPTIONAL_VALUE, true),
-        EXPERIMENT("Experiment", ColumnHeader.REQUIRED_VALUE, true),
-        CONDITIONS("Conditions", ColumnHeader.REQUIRED_VALUE, true),
-        COLLABORATOR_SAMPLE_ID("Collaborator sample ID", ColumnHeader.OPTIONAL_VALUE, true),
-        COLLABORATOR_PARTICIPANT_ID("Collaborator participant ID", ColumnHeader.OPTIONAL_VALUE, true),
         BROAD_PARTICIPANT_ID("Broad participant ID", ColumnHeader.OPTIONAL_VALUE, true),
-        GENDER("Gender", ColumnHeader.OPTIONAL_VALUE, true),
-        SPECIES("Species", ColumnHeader.OPTIONAL_VALUE, true),
-        VOLUME("Volume", ColumnHeader.OPTIONAL_VALUE, true),
+        BROAD_SAMPLE_ID("Broad sample ID", ColumnHeader.REQUIRED_VALUE, true),
+        CAT("CAT", ColumnHeader.OPTIONAL_VALUE, true),
+        COLLABORATOR_PARTICIPANT_ID("Collaborator participant ID", ColumnHeader.OPTIONAL_VALUE, true),
+        COLLABORATOR_SAMPLE_ID("Collaborator sample ID", ColumnHeader.OPTIONAL_VALUE, true),
+        CONDITIONS("Conditions", ColumnHeader.REQUIRED_VALUE, true),
+        EXPERIMENT("Experiment", ColumnHeader.REQUIRED_VALUE, true),
         FRAGMENT_SIZE("Fragment Size", ColumnHeader.OPTIONAL_VALUE, true),
+        GENDER("Gender", ColumnHeader.OPTIONAL_VALUE, true),
+        LSID("Lsid", ColumnHeader.OPTIONAL_VALUE, true),
+        MOLECULAR_INDEXING_SCHEME("Molecular indexing scheme", ColumnHeader.REQUIRED_VALUE, true),
         READ_LENGTH("Read Length", ColumnHeader.OPTIONAL_VALUE, true),
-        LSID("Lsid", ColumnHeader.OPTIONAL_VALUE, true);
+        ROOT_SAMPLE_ID("Root Sample ID", ColumnHeader.OPTIONAL_VALUE, true),
+        SINGLE_SAMPLE_LIBRARY_NAME("Single sample library name", ColumnHeader.REQUIRED_VALUE, true),
+        SPECIES("Species", ColumnHeader.OPTIONAL_VALUE, true),
+        TUBE_BARCODE("Tube barcode", ColumnHeader.REQUIRED_VALUE, true),
+        VOLUME("Volume", ColumnHeader.OPTIONAL_VALUE, true);
 
         private final String text;
         private boolean isRequired;
