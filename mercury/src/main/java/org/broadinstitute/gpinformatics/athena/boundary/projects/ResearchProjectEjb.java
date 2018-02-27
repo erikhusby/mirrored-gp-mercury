@@ -408,11 +408,9 @@ public class ResearchProjectEjb {
                     unmatchedSubmissionStatusDetailBeans.add(status);
                     errorMessages.addAll(status.getErrors());
                 } else {
-                    if (CollectionUtils.isNotEmpty(status.getErrors())) {
-                        for (String errorMessage : status.getErrors()) {
-                            errorMessages
-                                .add(String.format("%s: %s", submissionTracker.getSubmittedSampleName(), errorMessage));
-                        }
+                    for (String errorMessage : status.getErrors()) {
+                        errorMessages
+                            .add(String.format("%s: %s", submissionTracker.getSubmittedSampleName(), errorMessage));
                     }
                 }
                 if (submissionTracker != null) {
