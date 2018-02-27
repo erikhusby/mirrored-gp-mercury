@@ -3,6 +3,7 @@
  */
 package org.broadinstitute.gpinformatics.athena.entity.billing;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -21,6 +22,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
@@ -140,5 +142,37 @@ public class BillingSessionFixupTest extends Arquillian {
         }
 
         billingSessionDao.persist(new FixupCommentary("GPLIM-4730: Changed the Quote for PDO-11370 on ledger entries to allow billing to proceed in Mercury"));
+    }
+
+    @Test(enabled = false)
+    public void gplim5416UpdateLedgerItems() throws Exception {
+        userBean.loginOSUser();
+
+        Map<Pair<String, String>, String> deliveryPairings = new HashMap<>();
+        deliveryPairings.put(Pair.of("PDO-13777", "02/14/2018"), "200002667");
+        deliveryPairings.put(Pair.of("PDO-14070", "02/14/2018"), "200002666");
+        deliveryPairings.put(Pair.of("PDO-14078", "02/14/2018"), "200002664");
+        deliveryPairings.put(Pair.of("PDO-14078", "02/15/2018"), "200002665");
+        deliveryPairings.put(Pair.of("PDO-14137", "02/14/2018"), "200002662");
+        deliveryPairings.put(Pair.of("PDO-14137", "02/13/2018"), "200002663");
+        BillingSession session = billingSessionDao.findByBusinessKey("BILL-12437");
+
+        for (LedgerEntry ledgerEntry : session.getLedgerEntryItems()) {
+            final String targetBusinessKey = ledgerEntry.getProductOrderSample().getProductOrder().getBusinessKey();
+            final String targetDate = (new SimpleDateFormat("MM/dd/yyyy")).format(ledgerEntry.getWorkCompleteDate());
+            if(deliveryPairings.containsKey(Pair.of(targetBusinessKey, targetDate))) {
+                ledgerEntry.setSapDeliveryDocumentId(deliveryPairings.get(Pair.of(targetBusinessKey, targetDate)));
+                System.out.println("Added a delivery Document ID of " +
+                                   deliveryPairings.get(Pair.of(targetBusinessKey, targetDate)) +
+                                   " To the ledger entry for " + targetBusinessKey + " work date of " + targetDate +
+                                   " in billing session " + session.getBusinessKey());
+                ledgerEntry.setBillingMessage(BillingSession.SUCCESS);
+                ledgerEntry.getProductOrderSample().getProductOrder().latestSapOrderDetail().addLedgerEntry(ledgerEntry);
+            }
+        }
+        billingSessionDao.persist(new FixupCommentary("GPLIM-5416: Updated the delivery document for a set of "
+                                                      + "ledger entries which successfully created Delivery documents "
+                                                      + "in SAP but SAP incorrectly recorded a failure along with the "
+                                                      + "success so the success was not captured"));
     }
 }

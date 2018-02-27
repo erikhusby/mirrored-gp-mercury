@@ -336,14 +336,16 @@ public class MetricsViewActionBean extends CoreActionBean {
         for (LabEvent labEvent : hybEvents) {
             Set<CherryPickTransfer> cherryPickTransfers = labEvent.getCherryPickTransfers();
             for (CherryPickTransfer cherryPickTransfer : cherryPickTransfers) {
-                VesselPosition sourcePosition = cherryPickTransfer.getSourcePosition();
-                VesselPosition destinationPosition = cherryPickTransfer.getTargetPosition();
                 LabVessel chip = cherryPickTransfer.getTargetVesselContainer().getEmbedder();
-                String chipWellBarcode = chip.getLabel() + "_" + destinationPosition.name();
-                if (isHybChip) {
-                    chipWellToSourcePosition.put(chipWellBarcode, destinationPosition.name());
-                } else {
-                    chipWellToSourcePosition.put(chipWellBarcode, sourcePosition.name());
+                if (!isHybChip || chip.equals(staticPlate)) {
+                    VesselPosition sourcePosition = cherryPickTransfer.getSourcePosition();
+                    VesselPosition destinationPosition = cherryPickTransfer.getTargetPosition();
+                    String chipWellBarcode = chip.getLabel() + "_" + destinationPosition.name();
+                    if (isHybChip) {
+                        chipWellToSourcePosition.put(chipWellBarcode, destinationPosition.name());
+                    } else {
+                        chipWellToSourcePosition.put(chipWellBarcode, sourcePosition.name());
+                    }
                 }
             }
         }
