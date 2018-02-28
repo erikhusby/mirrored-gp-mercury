@@ -243,13 +243,7 @@ public class ArraysSummaryFactory {
             printStream.print(dnaPlateAndPosition.getPosition() + "\t");
 
             // Lab abandon vessel reason and date
-            // To test abandon output:  foundArraysQc = false;
-            if( !foundArraysQc ) {
-                // No metrics data, try if cause is an abandon
-                printStream.print( getAbandon(chip, vesselPosition) + "\t" );
-            }else {
-                printStream.print(" \t");
-            }
+            printStream.print( getAbandon(chip, vesselPosition) + "\t" );
 
             // Pipeline blacklist date, reason, whitelist date
             if( arraysQcBlacklistings == null || arraysQcBlacklistings.isEmpty() ) {
