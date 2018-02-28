@@ -303,6 +303,35 @@ public class ExtractTransformTest extends Arquillian {
         }
     }
 
+    @Test(enabled = true, groups = TestGroups.ALTERNATIVES)
+    public void testVesselBackfill() throws Exception {
+        // Tests vessel backfill gets event_fact and sequencing_sample_fact entries
+        // Normalization tube 0182870410
+        // 5 downstream events, 968 total event_fact entries
+        // 1 sequencing run id, 184 sequencing_sample_fact entries
+        try {
+            Response response = extractTransform.backfillEtlForVessel("0182870410");
+            Assert.assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+            Assert.assertTrue(((String) response.getEntity()).toLowerCase().contains("created"));
+        } catch (Exception e) {
+            Assert.fail("TestVesselBackfill call failed.", e);
+        }
+
+        // First and last events
+        long eventId;
+        eventId = 993627L;
+        Assert.assertTrue(
+                searchEtlFile( datafileDir, "event_fact.dat", "F", eventId), "Expected event id " + eventId );
+        eventId = 994556L;
+        Assert.assertTrue(
+                searchEtlFile( datafileDir, "event_fact.dat", "F", eventId), "Expected event id " + eventId );
+
+        // Only sequencing run
+        long runID = 81038L;
+        Assert.assertTrue(
+            searchEtlFile( datafileDir, "sequencing_sample_fact.dat", "F", runID), "Expected run id " + runID );
+    }
+
     /**
      * Looks for etl files having name timestamps in the given range, then searches them for a record having
      * the given isDelete and entityId values.
