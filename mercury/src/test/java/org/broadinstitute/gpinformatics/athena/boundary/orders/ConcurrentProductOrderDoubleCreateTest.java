@@ -87,7 +87,7 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
 
         basePdoKey = (new Date()).getTime();
 
-        ProductOrder testOrder = ProductOrderTestFactory.createProductOrder("SM-test2", "SM-243w");
+        ProductOrder testOrder = ProductOrderTestFactory.createProductOrder("SM-"+basePdoKey, "SM-"+basePdoKey+1);
         testOrder.setQuoteId("MMM4AM");
         testOrder.setCreatedBy(BSPManagerFactoryStub.QA_DUDE_USER_ID);
         testOrder.setJiraTicketKey("");

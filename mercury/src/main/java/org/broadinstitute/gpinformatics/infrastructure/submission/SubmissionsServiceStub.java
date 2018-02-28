@@ -40,15 +40,15 @@ public class SubmissionsServiceStub implements SubmissionsService {
 
         for (String uuid : uuids) {
             SubmissionStatusDetailBean detail =
-                    new SubmissionStatusDetailBean(uuid, SubmissionStatusDetailBean.Status.SUBMITTED.getKey(),
-                            SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR, SubmissionLibraryDescriptor.WHOLE_GENOME_DESCRIPTION,
+                    new SubmissionStatusDetailBean(uuid, SubmissionStatusDetailBean.Status.SUBMITTED,
+                            SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR, SubmissionLibraryDescriptor.WHOLE_GENOME.getName(),
                             getDateOfLastUpdate());
             results.getSubmissionStatuses().add(detail);
         }
         for (String uuid : uuids) {
             SubmissionStatusDetailBean detail =
-                    new SubmissionStatusDetailBean(uuid, SubmissionStatusDetailBean.Status.FAILURE.getKey(),
-                            SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR, SubmissionLibraryDescriptor.WHOLE_GENOME_DESCRIPTION,
+                    new SubmissionStatusDetailBean(uuid, SubmissionStatusDetailBean.Status.FAILURE,
+                            SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR, SubmissionLibraryDescriptor.WHOLE_GENOME.getName(),
                             getDateOfLastUpdate(), "And error was returned from NCBI");
             results.getSubmissionStatuses().add(detail);
         }
@@ -77,12 +77,12 @@ public class SubmissionsServiceStub implements SubmissionsService {
         for (SubmissionBean submissionBean : submission.getSubmissions()) {
             String uuid = submissionBean.getUuid();
             SubmissionStatusDetailBean detail =
-                    new SubmissionStatusDetailBean(uuid, SubmissionStatusDetailBean.Status.SUBMITTED.getKey(),
-                            SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR, SubmissionLibraryDescriptor.WHOLE_GENOME_DESCRIPTION,
+                    new SubmissionStatusDetailBean(uuid, SubmissionStatusDetailBean.Status.SUBMITTED,
+                            SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR, SubmissionLibraryDescriptor.WHOLE_GENOME.getDescription(),
                             getDateOfLastUpdate());
             results.getSubmissionStatuses().add(detail);
-            detail = new SubmissionStatusDetailBean(uuid, SubmissionStatusDetailBean.Status.FAILURE.getKey(),
-                    SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR, SubmissionLibraryDescriptor.WHOLE_GENOME_DESCRIPTION,
+            detail = new SubmissionStatusDetailBean(uuid, SubmissionStatusDetailBean.Status.FAILURE,
+                    SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR, SubmissionLibraryDescriptor.WHOLE_GENOME.getDescription(),
                     getDateOfLastUpdate(), uuid + " failed");
             results.getSubmissionStatuses().add(detail);
         }

@@ -177,7 +177,7 @@ public class MercurySampleData implements SampleData {
     @Override
     public double getVolume() {
         if (initializeQuantData()) {
-            return quantData.getVolume();
+            return quantData.getVolume() == null ? 0 : quantData.getVolume();
         }
         return 0;
     }
@@ -196,9 +196,9 @@ public class MercurySampleData implements SampleData {
      */
     public static class QuantData {
         private Date picoRunDate;
-        private double volume;
+        private Double volume;
         private Double concentration;
-        private double totalDna;
+        private Double totalDna;
 
         private QuantData() {
         }
@@ -225,7 +225,8 @@ public class MercurySampleData implements SampleData {
         public void updateFromLabMetric(LabMetric labMetric) {
             concentration = labMetric.getValue().doubleValue();
             if (labMetric.getTotalNg() != null) {
-                totalDna = labMetric.getTotalNg().doubleValue();
+                // convert ng to ug
+                totalDna = labMetric.getTotalNg().doubleValue()  / 1000.0;
             }
             LabMetricRun labMetricRun = labMetric.getLabMetricRun();
 
@@ -241,7 +242,7 @@ public class MercurySampleData implements SampleData {
             return picoRunDate;
         }
 
-        public double getVolume() {
+        public Double getVolume() {
             return volume;
         }
 
@@ -249,7 +250,7 @@ public class MercurySampleData implements SampleData {
             return concentration;
         }
 
-        public double getTotalDna() {
+        public Double getTotalDna() {
             return totalDna;
         }
     }
@@ -356,7 +357,7 @@ public class MercurySampleData implements SampleData {
     @Override
     public double getTotal() {
         if (initializeQuantData()) {
-            return quantData.getTotalDna();
+            return quantData.getTotalDna() == null ? 0 : quantData.getTotalDna();
         }
         return 0;
     }

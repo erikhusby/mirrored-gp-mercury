@@ -189,7 +189,6 @@ public class ExtractTransform implements Serializable {
             FctCreateEtl fctCreateEtl,
             FctLoadEtl fctLoadEtl,
             AbandonVesselEtl abandonVesselEtl,
-            AbandonVesselPositionEtl abandonVesselPositionEtl,
             ArrayProcessFlowEtl arrayProcessFlowEtl,
             FixUpEtl fixUpEtl
     ) {
@@ -218,7 +217,6 @@ public class ExtractTransform implements Serializable {
         etlInstances.add(fctCreateEtl);
         etlInstances.add(fctLoadEtl);
         etlInstances.add(abandonVesselEtl);
-        etlInstances.add(abandonVesselPositionEtl);
         etlInstances.add(arrayProcessFlowEtl);
         etlInstances.add(fixUpEtl);
     }

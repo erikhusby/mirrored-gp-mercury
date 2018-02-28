@@ -362,8 +362,8 @@ public class BucketViewActionBean extends CoreActionBean {
         separateEntriesByType();
 
         try {
-            labBatchEjb.addToLabBatch(selectedLcset, bucketEntryIds, reworkEntryIds, selectedBucket, this,
-                    jiraUserTokenInput.getTokenBusinessKeys());
+            labBatchEjb.updateLabBatch(selectedLcset, bucketEntryIds, reworkEntryIds, Collections.<Long>emptyList(),
+                    selectedBucket, this, jiraUserTokenInput.getTokenBusinessKeys());
 
             // clears tokenInput selections when the page returns
             jiraUserTokenInput.setup();

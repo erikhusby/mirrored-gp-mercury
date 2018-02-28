@@ -55,6 +55,20 @@ public class BucketEntryDao extends GenericDao {
         }
     }
 
+    public List<BucketEntry> findByProductOrder(ProductOrder productOrder) {
+
+        CriteriaBuilder vesselPOCriteria = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<BucketEntry> query = vesselPOCriteria.createQuery(BucketEntry.class);
+        Root<BucketEntry> root = query.from(BucketEntry.class);
+        query.where(vesselPOCriteria.equal(root.get(BucketEntry_.productOrder),
+                                                                productOrder));
+        try {
+            return getEntityManager().createQuery(query).getResultList();
+        } catch (NoResultException ignored) {
+            return null;
+        }
+    }
+
     public List<BucketEntry> findByVesselAndBatch(LabVessel vessel, LabBatch labBatch) {
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<BucketEntry> query = criteriaBuilder.createQuery(BucketEntry.class);

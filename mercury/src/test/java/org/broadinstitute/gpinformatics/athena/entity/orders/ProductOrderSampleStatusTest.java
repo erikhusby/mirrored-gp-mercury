@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
@@ -93,7 +94,11 @@ public class ProductOrderSampleStatusTest extends ContainerTest {
         ProductOrder order = productOrderDao.findByBusinessKey(testKey);
         List<ProductOrderSample> samples = order.getSamples();
         List<ProductOrderSample> samplesToAbandon = Arrays.asList(samples.get(1), samples.get(3), samples.get(5));
-        productOrderEjb.abandonSamples(testKey, samplesToAbandon, "Why I abandoned you let me count the ways...");
+
+        final MessageCollection messageCollection = new MessageCollection();
+
+        productOrderEjb.abandonSamples(testKey, samplesToAbandon, "Why I abandoned you let me count the ways...",
+                messageCollection);
         Assert.assertEquals(order.getOrderStatus(), ProductOrder.OrderStatus.Draft);
         Assert.assertEquals(samples.size(), NUM_TEST_SAMPLES);
         for (ProductOrderSample sample : samples) {

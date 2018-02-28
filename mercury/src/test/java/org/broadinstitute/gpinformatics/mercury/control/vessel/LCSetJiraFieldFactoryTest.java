@@ -245,8 +245,11 @@ public class LCSetJiraFieldFactoryTest {
         reworks.add(tube2);
 
         LabBatch batch = new LabBatch("test", newTubes, LabBatch.LabBatchType.WORKFLOW);
+        batch.addBucketEntry(new BucketEntry(tube1, testProductOrder, bucket, BucketEntry.BucketEntryType.PDO_ENTRY, 1));
 
         batch.addReworks(reworks);
+        batch.addBucketEntry(new BucketEntry(tube2, testProductOrder, bucket, BucketEntry.BucketEntryType.REWORK_ENTRY,
+                1));
 
         String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch);
 
@@ -263,6 +266,8 @@ public class LCSetJiraFieldFactoryTest {
         newTubes.add(tube);
 
         LabBatch batch = new LabBatch("test", newTubes, LabBatch.LabBatchType.WORKFLOW);
+        batch.addBucketEntry(new BucketEntry(tube, testProductOrder, new Bucket("Test"),
+                BucketEntry.BucketEntryType.PDO_ENTRY, 1));
 
         String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch);
 
@@ -299,8 +304,12 @@ public class LCSetJiraFieldFactoryTest {
         reworks.add(tube2);
 
         LabBatch batch = new LabBatch("test", newTubes, LabBatch.LabBatchType.WORKFLOW);
+        batch.addBucketEntry(new BucketEntry(tube1, testProductOrder, bucket, BucketEntry.BucketEntryType.PDO_ENTRY,
+                1));
 
         batch.addReworks(reworks);
+        batch.addBucketEntry(new BucketEntry(tube2, testProductOrder, bucket, BucketEntry.BucketEntryType.REWORK_ENTRY,
+                1));
 
         String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch);
 
@@ -326,6 +335,8 @@ public class LCSetJiraFieldFactoryTest {
         newTubes.add(tube);
 
         LabBatch batch = new LabBatch("test", newTubes, LabBatch.LabBatchType.WORKFLOW);
+        batch.addBucketEntry(new BucketEntry(tube, testProductOrder, new Bucket("test"),
+                BucketEntry.BucketEntryType.PDO_ENTRY, 1));
 
         String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch);
 

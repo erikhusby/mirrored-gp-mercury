@@ -57,6 +57,7 @@ public class UserBean implements Serializable {
         setUserId(-1L);
         setUsername("");
     }};
+    private boolean GPPMUser;
 
     private boolean isTestUser() {
         return BSPUserList.isTestUser(bspUser);
@@ -299,6 +300,10 @@ public class UserBean implements Serializable {
 
     public boolean isDeveloperUser() {
         return roles.contains(Role.Developer);
+    }
+
+    public boolean isGPPMUser() {
+        return roles.contains(Role.GPProjectManager);
     }
 
     public String getRolesString() {

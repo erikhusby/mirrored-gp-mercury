@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexRea
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.UMIReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
@@ -94,6 +95,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     private List<LabBatch> allWorkflowBatches = new ArrayList<>();
     private List<LabBatchDepth> allWorkflowBatchDepths = new ArrayList<>();
     private LabBatch singleWorkflowBatch;
+    private List<BucketEntry> pendingBucketEntries = new ArrayList<>();
     private List<BucketEntry> allBucketEntries = new ArrayList<>();
     private BucketEntry singleBucketEntry;
     // todo jmt this doesn't include reworks
@@ -179,6 +181,7 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             singleWorkflowBatch = other.singleWorkflowBatch;
         }
         allBucketEntries.addAll(other.allBucketEntries);
+        pendingBucketEntries.addAll(other.pendingBucketEntries);
         singleBucketEntry = other.singleBucketEntry;
 
         allProductOrderSamples.addAll(other.allProductOrderSamples);
@@ -335,6 +338,10 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
         return singleBucketEntry;
     }
 
+    public List<BucketEntry> getPendingBucketEntries() {
+        return pendingBucketEntries;
+    }
+
     /**
      * Returns the batch from the single bucket entry, or the single inferred batch.
      */
@@ -416,6 +423,19 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
     @Nullable
     public MolecularIndexingScheme getMolecularIndexingScheme() {
         return molecularIndexingScheme;
+    }
+
+    @Nullable
+    public Set<UMIReagent> getUmiReagents() {
+        Set<UMIReagent> umiReagents = new HashSet<>();
+        for (Reagent reagent: getReagents()) {
+            if (OrmUtil.proxySafeIsInstance(reagent, UMIReagent.class)) {
+                UMIReagent umiReagent =
+                        OrmUtil.proxySafeCast(reagent, UMIReagent.class);
+                umiReagents.add(umiReagent);
+            }
+        }
+        return umiReagents;
     }
 
     public boolean isReagentOnly() {
@@ -532,10 +552,13 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             singleWorkflowBatch = allWorkflowBatches.get(0);
         }
 
+        // todo jmt need a collection that includes pending bucket entries
         // filter out bucket entries without a lab batch
         Set<BucketEntry> bucketEntries = new HashSet<>();
         for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
-            if (bucketEntry.getLabBatch() != null) {
+            if (bucketEntry.getLabBatch() == null) {
+                pendingBucketEntries.add(bucketEntry);
+            } else {
                 bucketEntries.add(bucketEntry);
             }
         }
@@ -571,9 +594,13 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             materialType = resultingMaterialType;
         }
 
+        if (labEvent.getManualOverrideLcSet() != null) {
+            singleWorkflowBatch = labEvent.getManualOverrideLcSet();
+            setSingleBucketEntry(labEventType, singleWorkflowBatch);
+        }
         // Multiple workflow batches need help.
         // Avoid overwriting a singleWorkflowBatch set by applyVesselChanges.
-        if (singleWorkflowBatch == null) {
+        else if (singleWorkflowBatch == null) {
             Set<LabBatch> computedLcsets = labEvent.getComputedLcSets();
             // A single computed LCSET can help resolve ambiguity of multiple bucket entries.
             if (computedLcsets.size() != 1) {
@@ -591,19 +618,23 @@ public class SampleInstanceV2 implements Comparable<SampleInstanceV2> {
             if (computedLcsets.size() == 1) {
                 LabBatch workflowBatch = computedLcsets.iterator().next();
                 singleWorkflowBatch = workflowBatch;
-                for (BucketEntry bucketEntry : allBucketEntries) {
-                    // If there's a bucket entry that matches the computed LCSET, use it.
-                    if (bucketEntry.getLabBatch() != null &&
-                            bucketEntry.getLabBatch().equals(workflowBatch)) {
-                        singleBucketEntry = bucketEntry;
-                        if (LabVessel.DIAGNOSTICS) {
-                            log.info("Setting singleBucketEntry to " +
-                                    singleBucketEntry.getLabBatch().getBatchName() + " in " +
-                                    labEventType.getName());
-                        }
-                        break;
-                    }
+                setSingleBucketEntry(labEventType, workflowBatch);
+            }
+        }
+    }
+
+    private void setSingleBucketEntry(LabEventType labEventType, LabBatch workflowBatch) {
+        for (BucketEntry bucketEntry : allBucketEntries) {
+            // If there's a bucket entry that matches the computed LCSET, use it.
+            if (bucketEntry.getLabBatch() != null &&
+                    bucketEntry.getLabBatch().equals(workflowBatch)) {
+                singleBucketEntry = bucketEntry;
+                if (LabVessel.DIAGNOSTICS) {
+                    log.info("Setting singleBucketEntry to " +
+                            singleBucketEntry.getLabBatch().getBatchName() + " in " +
+                            labEventType.getName());
                 }
+                break;
             }
         }
     }
