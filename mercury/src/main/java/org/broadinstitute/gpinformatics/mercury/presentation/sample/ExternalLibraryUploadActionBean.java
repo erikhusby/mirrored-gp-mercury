@@ -30,17 +30,17 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
 
     /** The types of spreadsheet that can be uploaded. */
     public enum SpreadsheetType {
-        PooledTubes("Pooled Tubes", new VesselPooledTubesProcessor(null)),
-        EzPassLibraries("EZ Pass Libraries", new ExternalLibraryProcessorEzPass(null)),
+        PooledTubes("Pooled Tubes", VesselPooledTubesProcessor.class),
+        EzPassLibraries("EZ Pass Libraries", ExternalLibraryProcessorEzPass.class),
         PooledMultiOrganismLibraries("Pooled or Multi-Organism Libraries",
-                new ExternalLibraryProcessorPooledMultiOrganism(null)),
-        NonPooledLibraries("Non-pooled Libraries", new ExternalLibraryProcessorNonPooled(null)),
-        BarcodeUpdates("Tube Barcode Updates", new ExternalLibraryBarcodeUpdate(null));
+                ExternalLibraryProcessorPooledMultiOrganism.class),
+        NonPooledLibraries("Non-pooled Libraries", ExternalLibraryProcessorNonPooled.class),
+        BarcodeUpdates("Tube Barcode Updates", ExternalLibraryBarcodeUpdate.class);
 
         private String displayName;
-        private TableProcessor processor;
+        private Class processor;
 
-        SpreadsheetType(String displayName, TableProcessor processor) {
+        SpreadsheetType(String displayName, Class processor) {
             this.displayName = displayName;
             this.processor = processor;
         }
@@ -49,7 +49,7 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
             return displayName;
         }
 
-        public TableProcessor getProcessor() {
+        public Class getProcessor() {
             return processor;
         }
     }
@@ -74,15 +74,23 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
      */
     @HandlesEvent(UPLOAD_SAMPLES)
     public Resolution uploadTubes() {
-        MessageCollection messageCollection = new MessageCollection();
         InputStream inputStream = null;
         try {
             inputStream = samplesSpreadsheet.getInputStream();
         } catch (IOException e) {
             addMessage("Cannot upload spreadsheet: " + e);
         }
-        sampleInstanceEjb.doExternalUpload(inputStream, overWriteFlag, spreadsheetType.getProcessor(),
-                messageCollection);
+
+        Class processorClass = spreadsheetType.getProcessor();
+        TableProcessor processor;
+        try {
+            processor = (TableProcessor)processorClass.getConstructor(String.class).newInstance((String)null);
+        } catch (Exception e) {
+            throw new RuntimeException("Cannot instantiate " + processorClass.getCanonicalName() + ": " + e);
+        }
+
+        MessageCollection messageCollection = new MessageCollection();
+        sampleInstanceEjb.doExternalUpload(inputStream, overWriteFlag, processor, messageCollection);
         addMessages(messageCollection);
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
@@ -101,5 +109,9 @@ public class ExternalLibraryUploadActionBean extends CoreActionBean {
 
     public SpreadsheetType getSpreadsheetType() {
         return spreadsheetType;
+    }
+
+    public void setSpreadsheetType(SpreadsheetType spreadsheetType) {
+        this.spreadsheetType = spreadsheetType;
     }
 }

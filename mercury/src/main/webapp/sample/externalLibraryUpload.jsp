@@ -21,12 +21,11 @@
         <stripes:form beanclass="${actionBean.class.name}" id="uploadForm">
             <div class="form-horizontal">
                 <div class="control-group">
-                    <stripes:label for="spreadsheetType" class="control-label">Spreadsheet Type</stripes:label>
                     <div class="controls">
                         <stripes:select id="spreadsheetType" name="spreadsheetType">
                             <stripes:option value="">Select a Spreadsheet Type</stripes:option>
                             <stripes:options-enumeration
-                                    enum="org.broadinstitute.gpinformatics.mercury.presentation.sample.ExternalLibraryUploadActionBean.SpreadsheetTypes"
+                                    enum="org.broadinstitute.gpinformatics.mercury.presentation.sample.ExternalLibraryUploadActionBean.SpreadsheetType"
                                     label="displayName"/>
                         </stripes:select>
                     </div>
