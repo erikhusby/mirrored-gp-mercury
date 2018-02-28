@@ -75,7 +75,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     }
 
     @Override
-    Collection<String> dataRecords(String etlDateStr, boolean isDelete, LabEvent entity) {
+    public Collection<String> dataRecords(String etlDateStr, boolean isDelete, LabEvent entity) {
 
         Collection<String> eventFactRecords = new ArrayList<>();
         try {
@@ -215,25 +215,6 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         }
         return writeRecords( eventList, deletedEntityIds, etlDateStr );
     }
-
-    /**
-
-    /**
-     * Modifies the id lists and possibly also invokes sequencingSampleFact ETL, in order to fixup the downstream
-     * event facts and sequencing facts when there are lab event deletions and modifications, which are due to a
-     * manual fixup.
-     *
-     * @param deletedEntityIds the deleted event ids.
-     * @param modifiedEntityIds the modified event ids, and the downstream event ids get added to this list.
-     * @param etlDateStr the etl date.
-     */
-    @Override
-    protected void processFixups(Collection<Long> deletedEntityIds,
-                                 Collection<Long> modifiedEntityIds,
-                                 String etlDateStr) throws Exception {
-        // See GPLIM-4731 This didn't catch all the necessary downstream dependent events, etc. to do a full fixup
-    }
-
 
     /**
      * Holds extract data for lab event ETL.  Data should be considered immutable after constructor. <br />
