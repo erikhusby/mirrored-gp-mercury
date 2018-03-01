@@ -163,7 +163,7 @@ public class SubmissionDto implements ISubmissionTuple {
         dateCompleted = null;
         if (aggregation != null) {
             sample = aggregation.getSample();
-            datatype = aggregation.getDataType();
+            datatype = SubmissionLibraryDescriptor.getNormalizedLibraryName(aggregation.getDataType());
             project = aggregation.getProject();
             version = aggregation.getVersion();
             rpid = aggregation.getMercuryProject();

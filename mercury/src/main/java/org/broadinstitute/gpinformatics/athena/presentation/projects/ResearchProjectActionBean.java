@@ -955,12 +955,15 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
                 if (tupleToSampleMap.containsKey(submissionDto.getSubmissionTuple())) {
                     // All required data are in the submissionDto
                     selectedSubmissions.add(submissionDto);
-                    if (!submissionDto.getDataType().equals(selectedSubmissionLibraryDescriptor)
-                        && !submissionDto.getDataType().equals("N/A")) {
-                            addGlobalValidationError("Data selected for submission of ''{2}'' is ''{3}'' but library ''{4}'' was selected.",
-                                submissionDto.getSampleName(), submissionDto.getDataType(), selectedSubmissionLibraryDescriptor);
-                            errors = true;
-                        }
+
+                    if (!Arrays.asList(selectedSubmissionLibraryDescriptor, "N/A")
+                        .contains(submissionDto.getDataType())) {
+                        addGlobalValidationError(
+                            "Data selected for submission of ''{2}'' is ''{3}'' but library ''{4}'' was selected.",
+                            submissionDto.getSampleName(), submissionDto.getDataType(),
+                            selectedSubmissionLibraryDescriptor);
+                        errors = true;
+                    }
                 }
             }
         }
