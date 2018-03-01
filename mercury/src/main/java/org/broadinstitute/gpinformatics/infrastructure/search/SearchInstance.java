@@ -1131,6 +1131,7 @@ public class SearchInstance implements Serializable {
             }
         }
         if (searchInstance == null) {
+            // todo jmt XSS
             throw new RuntimeException("No saved search instance named '" + searchName + "' is available");
         }
         searchInstance.establishRelationships(configurableSearchDef);

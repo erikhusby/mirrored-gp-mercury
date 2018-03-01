@@ -314,9 +314,11 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
             if (! CollectionUtils.isEmpty(quotes.getQuotes())) {
                 quote = quotes.getQuotes().get(0);
             } else {
+                // todo jmt XSS
                 throw new QuoteNotFoundException("Could not find quote " + id + " at " + url);
             }
         } catch (UniformInterfaceException e) {
+            // todo jmt XSS
             throw new QuoteNotFoundException("Could not find quote " + id + " at " + url);
         } catch (ClientHandlerException e) {
             throw new QuoteServerException(String.format(COMMUNICATION_ERROR, url, e.getLocalizedMessage()));

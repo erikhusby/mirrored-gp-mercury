@@ -44,6 +44,7 @@ public final class SearchActionBean extends CoreActionBean {
         // whatever.  This happens when we've looked through all search types and nothing has been found.  Allowing
         // this to be null ensures we don't have to encode any prefix string in order determine what kind of search
         // it is, but keeps things generic.
+        // todo jmt XSS
         addGlobalValidationError("There were no matching items for ''{2}''.", searchKey);
 
         // Can't just stay where you are and report back the error because page could have been submitting data and
