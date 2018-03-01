@@ -20,7 +20,6 @@ import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationContam;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
@@ -187,11 +186,7 @@ public class SubmissionDto implements ISubmissionTuple {
             }
             readGroupCount = aggregation.getReadGroupCount();
             contaminationString = aggregation.getContaminationString();
-            for (AggregationReadGroup aggregationReadGroup : aggregation.getAggregationReadGroups()) {
-                if (aggregationReadGroup.getReadGroupIndex() != null) {
-                    productOrders.add(aggregationReadGroup.getReadGroupIndex().getProductOrderId());
-                }
-            }
+            productOrders.add(aggregation.getPicardAggregationSample().getProductOrder());
         }
         initializeStatusDetailBean(statusDetailBean);
         submittedErrorsArray = submittedErrors.toArray(new String[submittedErrors.size()]);

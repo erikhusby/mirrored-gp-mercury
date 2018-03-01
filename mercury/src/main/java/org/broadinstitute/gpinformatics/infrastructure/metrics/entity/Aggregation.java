@@ -348,15 +348,4 @@ public class Aggregation implements ISubmissionTuple  {
             .append(levelOfDetection);
         return hashCodeBuilder.toHashCode();
     }
-
-    public Set<SubmissionLibraryDescriptor> getLibraryTypes() {
-        Set<SubmissionLibraryDescriptor> submissionLibraryDescriptors = new HashSet<>();
-        for (AggregationReadGroup aggregationReadGroup : getAggregationReadGroups()) {
-            ReadGroupIndex readGroupIndex = aggregationReadGroup.getReadGroupIndex();
-            if (readGroupIndex != null) {
-                submissionLibraryDescriptors.add(readGroupIndex.getLibraryType());
-            }
-        }
-        return submissionLibraryDescriptors;
-    }
 }

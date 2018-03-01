@@ -19,7 +19,6 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregatio
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationWgs;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.ReadGroupIndex;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -37,8 +36,7 @@ public class AggregationTestFactory {
         AggregationAlignment aggregationAlignment = new AggregationAlignment(totalReadsAlignedInPairs, "PAIR");
         AggregationWgs aggregationWgs=new AggregationWgs(meanCoverageWgs);
         PicardAggregationSample picardAggregationSample = new PicardAggregationSample(project, project, sample, dataType);
-        AggregationReadGroup aggregationReadGroup = new AggregationReadGroup(null, 2, null,
-            new ReadGroupIndex(null, null, 2, null, null, null, project, project, sample, productOrder));
+        AggregationReadGroup aggregationReadGroup = new AggregationReadGroup(null, 2, null);
 
         Integer readGroupCount = 2;
         Set<AggregationReadGroup> aggregationReadGroupSet = new HashSet<>();

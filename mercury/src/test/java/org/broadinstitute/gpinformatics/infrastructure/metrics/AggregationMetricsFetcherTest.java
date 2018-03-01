@@ -81,7 +81,7 @@ public class AggregationMetricsFetcherTest extends ContainerTest {
         assertThat(lod.getMax(), equalTo(MAX_LOD));
         assertThat(lod.getMin(), equalTo(MIN_LOD));
         AggregationReadGroup readGroup = aggregation.getAggregationReadGroups().iterator().next();
-        assertThat(readGroup.getReadGroupIndex().getProductOrderId(), Matchers.either(is("PDO-3853")).or(is("PDO-3974")));
+        assertThat(aggregation.getPicardAggregationSample().getProductOrder(), Matchers.either(is("PDO-3853")).or(is("PDO-3974")));
     }
 
     public void testFetchMetricsWithBadProject() {

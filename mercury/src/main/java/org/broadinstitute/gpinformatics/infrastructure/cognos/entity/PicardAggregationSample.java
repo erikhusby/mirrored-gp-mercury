@@ -38,6 +38,8 @@ public class PicardAggregationSample implements Serializable {
     private String dataType;
     @Column(name = "RESEARCH_PROJECT_NUMBER", nullable = false, insertable = false, updatable = false)
     private String researchProject;
+    @Column(name = "PRODUCT_ORDER_KEY", nullable = false, insertable = false, updatable = false)
+    private String productOrder;
 
     public PicardAggregationSample() {
     }
@@ -63,6 +65,10 @@ public class PicardAggregationSample implements Serializable {
 
     public String getResearchProject() {
         return researchProject;
+    }
+
+    public String getProductOrder() {
+        return productOrder;
     }
 
     /*

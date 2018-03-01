@@ -29,7 +29,6 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregatio
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardAnalysis;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardFingerprint;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.ReadGroupIndex;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -74,7 +73,6 @@ public class HibernateMetadataTest extends ContainerTest {
         OrspProjectConsent.class.getName(),
         PicardAnalysis.class.getName(),
         PicardFingerprint.class.getName(),
-        ReadGroupIndex.class.getName(),
         SampleCoverageFirstMet.class.getName(),
         PicardAggregationSample.class.getName()
     };
