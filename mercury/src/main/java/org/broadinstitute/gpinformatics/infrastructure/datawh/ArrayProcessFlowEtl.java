@@ -132,7 +132,7 @@ public class ArrayProcessFlowEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
         Set<LabEvent> dnaPlateXfers = dnaPlateWell.getTransfersTo();
         LabEvent platingEvent = null;
-        // There should never be more than 1 section transfer event, but make sure it's ArrayPlatingDilution
+        // Try getting ArrayPlatingDilution section transfer event
         if( dnaPlateXfers != null ) {
             for (LabEvent event : dnaPlateXfers) {
                 if (event.getLabEventType() == LabEventType.ARRAY_PLATING_DILUTION) {
@@ -143,8 +143,9 @@ public class ArrayProcessFlowEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         }
 
         if (platingEvent == null) {
-            logErrors.add("No plating event prior to InfiniumBucket event, ID: " + bucketEvent.getLabEventId());
-            // Don't die here, continue looking for downstream events
+            logErrors.add("No plating events prior to InfiniumBucket event, ID: " + bucketEvent.getLabEventId() + ", ignoring record");
+            // Die here, an event is required
+            return arrayFlowDtos;
         }
 
         VesselPosition dnaPlatePosition = dnaPlateWell.getVesselPosition();
