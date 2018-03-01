@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.athena.entity.preference.SearchInstanceList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
+import org.owasp.encoder.Encode;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -1131,8 +1132,7 @@ public class SearchInstance implements Serializable {
             }
         }
         if (searchInstance == null) {
-            // todo jmt XSS
-            throw new RuntimeException("No saved search instance named '" + searchName + "' is available");
+            throw new RuntimeException("No saved search instance named '" + Encode.forHtml(searchName) + "' is available");
         }
         searchInstance.establishRelationships(configurableSearchDef);
         searchInstance.postLoad();
