@@ -65,6 +65,14 @@ public class VesselToSectionTransfer extends VesselTransfer {
         this.sourceVessel = sourceVessel;
     }
 
+    /**
+     * Added to support Hibernate envers not properly instantiating VesselContainer.embedder. <br />
+     * Preference should be getTargetVesselContainer()
+     */
+    public LabVessel getTargetVessel(){
+        return targetVessel;
+    }
+
     public SBSSection getTargetSection() {
         return targetSection;
     }

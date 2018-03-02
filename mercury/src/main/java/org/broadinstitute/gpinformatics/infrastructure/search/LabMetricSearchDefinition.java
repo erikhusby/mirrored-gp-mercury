@@ -165,6 +165,7 @@ public class LabMetricSearchDefinition {
 
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("Barcode");
+        searchTerm.setRackScanSupported(Boolean.TRUE);
         searchTerm.setDbSortPath("labVessel.label");
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();

@@ -12,9 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
-import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
-import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -27,7 +25,6 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -573,14 +570,6 @@ public class EventEtlDbFreeTest {
         EasyMock.verify(mocks);
     }
 
-    public void testNoFixups() throws Exception {
-        Collection<Long> deletedEntityIds = new ArrayList<>();
-        Collection<Long> modifiedEntityIds = new ArrayList<>();
-        Collection<Long> addedEntityIds = new ArrayList<>();
-        String etlDateStr = "20130623182000";
-
-        tst.processFixups(deletedEntityIds, modifiedEntityIds, etlDateStr);
-    }
 
     private void verifyRecord(String record, String eventName) {
         verifyRecord(record, eventName, labBatchName);

@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import com.google.common.io.LineReader;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
@@ -22,6 +23,8 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.persistence.Query;
@@ -31,8 +34,12 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -57,6 +64,8 @@ public class ExtractTransformTest extends Arquillian {
     private AuditReaderDao auditReaderDao;
     @Inject
     private LabVesselDao labVesselDao;
+    @Inject
+    private FixUpEtl fixUpEtl;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -296,6 +305,35 @@ public class ExtractTransformTest extends Arquillian {
         }
     }
 
+    @Test(enabled = true, groups = TestGroups.ALTERNATIVES)
+    public void testVesselBackfill() throws Exception {
+        // Tests vessel backfill gets event_fact and sequencing_sample_fact entries
+        // Normalization tube 0182870410
+        // 5 downstream events, 968 total event_fact entries
+        // 1 sequencing run id, 184 sequencing_sample_fact entries
+        try {
+            Response response = extractTransform.backfillEtlForVessel("0182870410");
+            Assert.assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+            Assert.assertTrue(((String) response.getEntity()).toLowerCase().contains("created"));
+        } catch (Exception e) {
+            Assert.fail("TestVesselBackfill call failed.", e);
+        }
+
+        // First and last events
+        long eventId;
+        eventId = 993627L;
+        Assert.assertTrue(
+                searchEtlFile( datafileDir, "event_fact.dat", "F", eventId), "Expected event id " + eventId );
+        eventId = 994556L;
+        Assert.assertTrue(
+                searchEtlFile( datafileDir, "event_fact.dat", "F", eventId), "Expected event id " + eventId );
+
+        // Only sequencing run
+        long runID = 81038L;
+        Assert.assertTrue(
+            searchEtlFile( datafileDir, "sequencing_sample_fact.dat", "F", runID), "Expected run id " + runID );
+    }
+
     /**
      * Looks for etl files having name timestamps in the given range, then searches them for a record having
      * the given isDelete and entityId values.
@@ -361,4 +399,140 @@ public class ExtractTransformTest extends Arquillian {
         String missing = StringUtils.join(query.getResultList(), ", ");
         Assert.assertTrue(StringUtils.isBlank(missing), "Indexes should exist on " + missing + ".");
     }
+
+
+    /**
+     * Tests fix-up logic - certain fixups have an effect on any downstream fact tables
+     *    (event_fact, sequencing_sample_fact) which may have been ETL'ed
+     */
+    @Test(enabled = true)
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public void testEventFixUpEtl() throws Exception {
+
+       // Use existing fixup commentary revision ID for a deleted shearing transfer event
+        Long fixupCommentaryRevId = new Long(1145601);
+        String etlDateStr = ExtractTransform.formatTimestamp(new Date());
+
+        String eventFileName = etlDateStr + "_event_fact.dat";
+        String seqSampleFileName = etlDateStr + "_sequencing_sample_fact.dat";
+        String libraryAncestryFileName = etlDateStr + "_library_ancestry.dat";
+
+        // Not going to re-test audit revision pickup logic, just force one
+        int recordCount = fixUpEtl.doIncrementalEtl(Collections.singleton(fixupCommentaryRevId), etlDateStr);
+
+        // Event is way back in workflow so there's many downstream events * samples
+        Assert.assertTrue(recordCount > 29000, "Extracted row count is less than expected");
+        Assert.assertTrue( new File(datafileDir, eventFileName ).exists(), "Event fact ETL file does not exist");
+        Assert.assertTrue( new File(datafileDir, libraryAncestryFileName ).exists(), "Library ancestry ETL file does not exist");
+        Assert.assertTrue( new File(datafileDir, seqSampleFileName ).exists(), "Sequencing sample fact ETL file does not exist");
+
+        // Check for a handful of events
+        Map<String, Boolean> expectedIds = new HashMap<>();
+        expectedIds.put("1928131", Boolean.FALSE);  // PicoMicrofluorTransfer
+        expectedIds.put("1935708", Boolean.FALSE);  // AdapterLigationCleanup
+        expectedIds.put("1940869", Boolean.FALSE);  // IceCatchEnrichmentSetup
+        expectedIds.put("1941567", Boolean.FALSE);  // CatchPico
+        expectedIds.put("1945775", Boolean.FALSE);  // FlowcellTransfer
+
+        FileReader reader = new FileReader( new File(datafileDir, eventFileName ));
+        LineReader lineReader = new LineReader(reader);
+        String line;
+        Set<String> ids = expectedIds.keySet();
+        while( (line = lineReader.readLine()) != null ) {
+            // All data records start with: lineNumber, etlDate, deletionFlag, entityId.
+            String[] parts = line.split(",");
+            if( ids.contains(parts[3]) ) {
+                expectedIds.put(parts[3],Boolean.TRUE);
+            }
+        }
+        IOUtils.closeQuietly(reader);
+        Assert.assertFalse(expectedIds.containsValue(Boolean.FALSE), "Expected event missing from ETL");
+
+        expectedIds = new HashMap<>();
+        expectedIds.put("151161", Boolean.FALSE);
+        expectedIds.put("151162", Boolean.FALSE);
+
+        reader = new FileReader( new File(datafileDir, seqSampleFileName ));
+        lineReader = new LineReader(reader);
+        ids = expectedIds.keySet();
+        while( (line = lineReader.readLine()) != null ) {
+            // All data records start with: lineNumber, etlDate, deletionFlag, entityId.
+            String[] parts = line.split(",");
+            if( ids.contains(parts[3]) ) {
+                expectedIds.put(parts[3],Boolean.TRUE);
+            }
+        }
+        IOUtils.closeQuietly(reader);
+        Assert.assertFalse(expectedIds.containsValue(Boolean.FALSE), "Expected sequencing sample missing from ETL");
+
+        EtlTestUtilities.deleteEtlFiles(datafileDir);
+    }
+
+    /**
+     * Tests fix-up logic - certain fixups have an effect on any downstream fact tables
+     *    (event_fact, sequencing_sample_fact) which may have been ETL'ed
+     */
+    @Test(enabled = true)
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public void testBatchFixUpEtl() throws Exception {
+
+        // Use existing fixup commentary revision ID for a lab batch starting vessel modification
+        Long fixupCommentaryRevId = new Long(1096251);
+        String etlDateStr = ExtractTransform.formatTimestamp(new Date());
+
+        String eventFileName = etlDateStr + "_event_fact.dat";
+        String seqSampleFileName = etlDateStr + "_sequencing_sample_fact.dat";
+
+        // Not going to re-test audit revision pickup logic, just force one
+        int recordCount = fixUpEtl.doIncrementalEtl(Collections.singleton(fixupCommentaryRevId), etlDateStr);
+
+        // Batch vessel change is way back in workflow so there's many downstream events * samples
+        Assert.assertTrue(recordCount > 38000, "Extracted row count is less than expected");
+        Assert.assertTrue( new File(datafileDir, eventFileName ).exists(), "Event fact ETL file does not exist");
+        Assert.assertTrue( new File(datafileDir, seqSampleFileName ).exists(), "Sequencing sample fact ETL file does not exist");
+
+        // Check for a handful of events
+        Map<String, Boolean> expectedIds = new HashMap<>();
+        expectedIds.put("1741406", Boolean.FALSE);  // SampleReceipt
+        expectedIds.put("1741479", Boolean.FALSE);  // CollaboratorTransfer
+        expectedIds.put("1775757", Boolean.FALSE);  // PicoPlatingBucket
+        expectedIds.put("1875227", Boolean.FALSE);  // IceCatchEnrichmentSetup
+        expectedIds.put("1876473", Boolean.FALSE);  // EcoTransfer
+        expectedIds.put("1877421", Boolean.FALSE);  // DilutionToFlowcellTransfer
+
+        FileReader reader = new FileReader( new File(datafileDir, eventFileName ));
+        LineReader lineReader = new LineReader(reader);
+        String line;
+        Set<String> ids = expectedIds.keySet();
+        while( (line = lineReader.readLine()) != null ) {
+            // All data records start with: lineNumber, etlDate, deletionFlag, entityId.
+            String[] parts = line.split(",");
+            if( ids.contains(parts[3]) ) {
+                expectedIds.put(parts[3],Boolean.TRUE);
+            }
+        }
+        IOUtils.closeQuietly(reader);
+        Assert.assertFalse(expectedIds.containsValue(Boolean.FALSE), "Expected event missing from ETL");
+
+        expectedIds = new HashMap<>();
+        expectedIds.put("143173", Boolean.FALSE);
+
+        reader = new FileReader( new File(datafileDir, seqSampleFileName ));
+        lineReader = new LineReader(reader);
+        ids = expectedIds.keySet();
+        while( (line = lineReader.readLine()) != null ) {
+            // All data records start with: lineNumber, etlDate, deletionFlag, entityId.
+            String[] parts = line.split(",");
+            if( ids.contains(parts[3]) ) {
+                expectedIds.put(parts[3],Boolean.TRUE);
+            }
+        }
+        IOUtils.closeQuietly(reader);
+        Assert.assertFalse(expectedIds.containsValue(Boolean.FALSE), "Expected sequencing sample missing from ETL");
+
+        EtlTestUtilities.deleteEtlFiles(datafileDir);
+    }
+
+
+
 }

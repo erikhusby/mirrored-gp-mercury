@@ -57,6 +57,16 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
         return root.get(SequencingRun_.sequencingRunId);
     }
 
+    /**
+     * Scope relaxed from protected to public to allow a backfill service hook
+     */
+    @Override
+    public int writeRecords(Collection<SequencingRun> entities,
+                            Collection<Long>deletedEntityIds,
+                            String etlDateStr) throws Exception {
+        return super.writeRecords(entities, deletedEntityIds, etlDateStr);
+    }
+
     @Override
     Collection<String> dataRecords(String etlDateStr, boolean isDelete, Long entityId) {
         return dataRecords(etlDateStr, isDelete, dao.findById(SequencingRun.class, entityId));
@@ -68,7 +78,7 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
     }
 
     @Override
-    Collection<String> dataRecords(String etlDateStr, boolean isDelete, SequencingRun entity) {
+    public Collection<String> dataRecords(String etlDateStr, boolean isDelete, SequencingRun entity) {
         try {
             return dataRecords(etlDateStr, isDelete, entity.getSequencingRunId(), makeSequencingRunDtos(entity));
         } catch (Exception e) {

@@ -159,6 +159,11 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In Plating</statusTransition>
+                    <endStatus>In Plating</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Initial Pico</name>
@@ -211,6 +216,11 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <numberOfRepeats>1</numberOfRepeats>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In Plating</statusTransition>
+                    <endStatus>In Plating</endStatus>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Shearing Pico</name>

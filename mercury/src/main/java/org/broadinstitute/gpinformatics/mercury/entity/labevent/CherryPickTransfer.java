@@ -85,6 +85,22 @@ public class CherryPickTransfer extends VesselTransfer {
     protected CherryPickTransfer() {
     }
 
+    /**
+     * Added to support Hibernate envers not properly instantiating VesselContainer.embedder. <br />
+     * Preference should be getSourceVesselContainer()
+     */
+    public LabVessel getSourceVessel(){
+        return sourceVessel;
+    }
+
+    /**
+     * Added to support Hibernate envers not properly instantiating VesselContainer.embedder. <br />
+     * Preference should be getTargetVesselContainer()
+     */
+    public LabVessel getTargetVessel(){
+        return targetVessel;
+    }
+
     public VesselContainer<?> getSourceVesselContainer() {
         return sourceVessel.getContainerRole();
     }
