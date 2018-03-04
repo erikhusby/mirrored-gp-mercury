@@ -15,7 +15,9 @@
                 $j("#owner").tokenInput(
                         "${ctxpath}/projects/project.action?usersAutocomplete=", {
                             hintText: "Type a name",
+                            <enhance:out escapeXml="false">
                             prePopulate: ${actionBean.ensureStringResult(actionBean.owner.completeData)},
+                            </enhance:out>
                             tokenDelimiter: "${actionBean.owner.separator}",
                             resultsFormatter: formatInput,
                             autoSelectFirstResult: true
@@ -26,7 +28,9 @@
                         "${ctxpath}/orders/order.action?productAutocomplete=", {
                             hintText: "Type a Product name or Part Number   ",
                             resultsFormatter: formatInput,
+                            <enhance:out escapeXml="false">
                             prePopulate: ${actionBean.ensureStringResult(actionBean.productTokenInput.completeData)},
+                            </enhance:out>
                             tokenDelimiter: "${actionBean.productTokenInput.separator}",
                             autoSelectFirstResult: true
                         }

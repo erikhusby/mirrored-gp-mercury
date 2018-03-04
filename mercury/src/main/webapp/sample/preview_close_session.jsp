@@ -113,6 +113,7 @@
 <stripes:form beanclass="${actionBean.class.name}">
     <div class="actionButtons">
         <stripes:hidden name="selectedSessionId" id="selectedSessionId"/>
+        <input type="hidden" name="<csrf:tokenname/>" value="<csrf:tokenvalue/>"/>
         <stripes:submit name="<%= ManifestAccessioningActionBean.CLOSE_SESSION_ACTION %>"
                         value="Complete Session" class="btn"/>
         <stripes:link beanclass="${actionBean.class.name}">

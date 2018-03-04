@@ -284,7 +284,9 @@
                     $j("#owner").tokenInput(
                             "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                 hintText: "Type a name",
+                                <enhance:out escapeXml="false">
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.owner.completeData)},
+                                </enhance:out>
                                 tokenLimit: 1,
                                 tokenDelimiter: "${actionBean.owner.separator}",
                                 resultsFormatter: formatInput,
@@ -298,7 +300,9 @@
                                 hintText: "Type a Research Project key or title",
                                 onAdd: updateUIForProjectChoice,
                                 onDelete: updateUIForProjectChoice,
+                                <enhance:out escapeXml="false">
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.projectTokenInput.completeData)},
+                                </enhance:out>
                                 resultsFormatter: formatInput,
                                 tokenDelimiter: "${actionBean.projectTokenInput.separator}",
                                 tokenLimit: 1,
@@ -314,7 +318,9 @@
                                 onDelete: updateUIForProductChoice,
                                 onChange: resetCustomizationChoices,
                                 resultsFormatter: formatInput,
+                                <enhance:out escapeXml="false">
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.productTokenInput.completeData)},
+                                </enhance:out>
                                 tokenDelimiter: "${actionBean.productTokenInput.separator}",
                                 tokenLimit: 1,
                                 autoSelectFirstResult: true
@@ -324,7 +330,9 @@
                     $j("#kitCollection").tokenInput(
                             "${ctxpath}/orders/order.action?groupCollectionAutocomplete=", {
                                 hintText: "Search for group and collection",
+                                <enhance:out escapeXml="false">
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.bspGroupCollectionTokenInput.getCompleteData(!actionBean.editOrder.draft)) },
+                                </enhance:out>
                                 onAdd: updateUIForCollectionChoice,
                                 onDelete: updateUIForCollectionChoice,
                                 resultsFormatter: formatInput,
@@ -337,7 +345,9 @@
                     $j("#shippingLocation").tokenInput(
                             getShippingLocationURL, {
                                 hintText: "Search for shipping location",
+                                <enhance:out escapeXml="false">
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.bspShippingLocationTokenInput.getCompleteData(!actionBean.editOrder.draft))},
+                                </enhance:out>
                                 resultsFormatter: formatInput,
                                 tokenDelimiter: "${actionBean.bspShippingLocationTokenInput.separator}",
                                 tokenLimit: 1,
@@ -348,7 +358,9 @@
                     $j("#notificationList").tokenInput(
                             "${ctxpath}/orders/order.action?anyUsersAutocomplete=", {
                                 hintText: "Enter a user name",
+                                <enhance:out escapeXml="false">
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.notificationListTokenInput.getCompleteData(!actionBean.editOrder.draft))},
+                                </enhance:out>
                                 tokenDelimiter: "${actionBean.notificationListTokenInput.separator}",
                                 preventDuplicates: true,
                                 resultsFormatter: formatInput,

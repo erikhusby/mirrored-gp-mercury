@@ -70,6 +70,7 @@
 	                if(item[0].detachEvent){
 	                    item[0].detachEvent(item[1], item[2]);
 	                };
+	                item[0][item[1]] = null;
 	            };
 	        }
 	    };
@@ -414,16 +415,18 @@
 				hijackStandard();
 			}
 		
-		var xhr = window.XMLHttpRequest ? new window.XMLHttpRequest : new window.ActiveXObject("Microsoft.XMLHTTP");
-		var csrfToken = {};
-		xhr.open("POST", "%SERVLET_PATH%", false);
-		xhr.setRequestHeader("FETCH-CSRF-TOKEN", "1");
-		xhr.send(null);
+		// var xhr = window.XMLHttpRequest ? new window.XMLHttpRequest : new window.ActiveXObject("Microsoft.XMLHTTP");
+		// var csrfToken = {};
+		// xhr.open("POST", "%SERVLET_PATH%", false);
+		// xhr.setRequestHeader("FETCH-CSRF-TOKEN", "1");
+		// xhr.send(null);
 		
-		var token_pair = xhr.responseText;
-		token_pair = token_pair.split(":");
-		var token_name = token_pair[0];
-		var token_value = token_pair[1];
+		// var token_pair = xhr.responseText;
+		// token_pair = token_pair.split(":");
+		// var token_name = token_pair[0];
+		// var token_value = token_pair[1];
+			var token_name = "%TOKEN_NAME%";
+			var token_value = "%TOKEN_VALUE%";
 
 			XMLHttpRequest.prototype.onsend = function(data) {
 				if(isValidUrl(this.url)) {

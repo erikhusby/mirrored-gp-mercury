@@ -12,7 +12,9 @@
             $j(document).ready(function () {
                 $j("#reagentDesign").tokenInput(
                         "${ctxpath}/reagent/design.action?reagentListAutocomplete=&reagentDesign=${actionBean.editReagentDesign.businessKey}", {
+                            <enhance:out escapeXml="false">
                             prePopulate: ${actionBean.ensureStringResult(actionBean.reagentDesignTokenInput.completeData)},
+                            </enhance:out>
                             resultsFormatter: formatInput,
                             tokenLimit: 1,
                             tokenDelimiter: "${actionBean.reagentDesignTokenInput.separator}",

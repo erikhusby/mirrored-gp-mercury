@@ -60,7 +60,9 @@
                     $j("#primaryPriceItem").tokenInput(
                         "${ctxpath}/products/product.action?priceItemAutocomplete=&product=${actionBean.editProduct.businessKey}", {
                             hintText: "Type a Price Item name",
+                            <enhance:out escapeXml="false">
                             prePopulate: ${actionBean.ensureStringResult(actionBean.priceItemTokenInput.completeData)},
+                            </enhance:out>
                             resultsFormatter: formatInput,
                             tokenLimit: 1,
                             tokenDelimiter: "${actionBean.priceItemTokenInput.separator}",
@@ -72,7 +74,9 @@
                     $j("#externalPriceItem").tokenInput(
                         "${ctxpath}/products/product.action?externalPriceItemAutocomplete=&product=${actionBean.editProduct.businessKey}", {
                             hintText: "Type an External Price Item name",
+                            <enhance:out escapeXml="false">
                             prePopulate: ${actionBean.ensureStringResult(actionBean.externalPriceItemTokenInput.completeData)},
+                            </enhance:out>
                             resultsFormatter: formatInput,
                             tokenLimit: 1,
                             tokenDelimiter: "${actionBean.externalPriceItemTokenInput.separator}",
@@ -84,7 +88,9 @@
                     $j("#addOns").tokenInput(
                         "${ctxpath}/products/product.action?addOnsAutocomplete=&product=${actionBean.editProduct.businessKey}", {
                             hintText: "Type a Product name",
+                            <enhance:out escapeXml="false">
                             prePopulate: ${actionBean.ensureStringResult(actionBean.addOnTokenInput.completeData)},
+                            </enhance:out>
                             resultsFormatter: formatInput,
                             tokenDelimiter: "${actionBean.addOnTokenInput.separator}",
                             preventDuplicates: true,

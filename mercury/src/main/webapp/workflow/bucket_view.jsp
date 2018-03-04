@@ -333,7 +333,9 @@
                 });
 
                 // define columns which cause the page to render slowly.
+                <enhance:out escapeXml="false">
                 var slowColumns = ${actionBean.slowColumns}
+                </enhance:out>
 
                 // When the "Show or Hide" button is clicked
                 $j(document.body).on("click", "a.buttons-colvis", function (event) {
@@ -543,7 +545,9 @@
             });
             $j("#watchers").tokenInput(
                 "${ctxpath}/workflow/bucketView.action?watchersAutoComplete=", {
+                    <enhance:out escapeXml="false">
                     prePopulate: ${actionBean.ensureStringResult(actionBean.jiraUserTokenInput.completeData)},
+                    </enhance:out>
                     tokenDelimiter: "${actionBean.jiraUserTokenInput.separator}",
                     preventDuplicates: true,
                     queryParam: 'jiraUserQuery',
@@ -642,12 +646,14 @@
                 <div class="control-group batch-create" style="display: none;">
                     <stripes:label for="dueDate" name="Due Date" class="control-label"/>
                     <div class="controls">
+                        <enhance:out escapeXml="false">
                         <stripes:text id="dueDate" name="dueDate" class="defaultText"
                                       title="enter date (MM/dd/yyyy)"
                                       value="${actionBean.dueDate}"
                                       formatPattern="MM/dd/yyyy"><fmt:formatDate
                                 value="${actionBean.dueDate}"
                                 dateStyle="short"/></stripes:text>
+                        </enhance:out>
                     </div>
                 </div>
                 <div class="control-group batch-create batch-append" style="display: none;">

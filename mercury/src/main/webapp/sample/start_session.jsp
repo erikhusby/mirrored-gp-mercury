@@ -17,7 +17,9 @@
                         // form submission.
                         "${ctxpath}/projects/project.action?projectAutocomplete=", {
                             hintText: "Type a Research Project key or title",
+                            <enhance:out escapeXml="false">
                             prePopulate: ${actionBean.ensureStringResult(actionBean.projectTokenInput.completeData)},
+                            </enhance:out>
                             resultsFormatter: formatInput,
                             tokenDelimiter: "${actionBean.projectTokenInput.separator}",
                             tokenLimit: 1,
