@@ -718,6 +718,7 @@ public enum LabEventType {
                     sourceContainerPrefix("CSFSource").
                     targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.FluidX_6mL).
                     targetContainerPrefix("CSFTarget").
+                    requireSingleParticipant(true).
                     build(),
             MaterialType.BODILY_FLUID_CEREBROSPINAL_FLUID, LibraryType.NONE_ASSIGNED),
     URINE_TRANSFER("UrineTransfer",
@@ -730,6 +731,7 @@ public enum LabEventType {
                     sourceContainerPrefix("UrineSource").
                     targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.CentriCutieSC_5).
                     targetContainerPrefix("UrineTarget").
+                    requireSingleParticipant(true).
                     build(),
             MaterialType.BODILY_FLUID_URINE, LibraryType.NONE_ASSIGNED),
     URINE_SECOND_TRANSFER("UrineSecondTransfer",
@@ -743,6 +745,7 @@ public enum LabEventType {
                     targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.FluidX_6mL).
                     targetContainerPrefix("UrineTarget").
                     targetVolume(true).
+                    requireSingleParticipant(true).
                     build(),
             MaterialType.BODILY_FLUID_URINE, LibraryType.POOLED),
     BLOOD_PLASMA_POOLING_TRANSFER("BloodPlasmaPoolingTransfer",
