@@ -21,6 +21,8 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySample
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.SampleInstanceEntityDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryBarcodeUpdate;
+import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorNonPooled;
+import org.broadinstitute.gpinformatics.mercury.control.sample.ExternalLibraryProcessorPooledMultiOrganism;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VesselPooledTubesProcessor;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -48,9 +50,11 @@ import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor.REQUIRED_VALUE_IS_MISSING;
+import static org.broadinstitute.gpinformatics.mercury.boundary.sample.SampleInstanceEjbDbFreeTest.TestType.NONPOOLED;
 
 @Test(groups = TestGroups.STANDARD)
 public class SampleInstanceEjbTest extends Arquillian {
+    final private boolean OVERWRITE = true;
 
     @Inject
     private SampleInstanceEjb sampleInstanceEjb;
@@ -264,7 +268,6 @@ public class SampleInstanceEjbTest extends Arquillian {
 
     @Test
     public void testTubeBarcodeUpdate() throws Exception {
-        final boolean OVERWRITE = true;
         String base = String.format("%09d", (new Random(System.currentTimeMillis())).nextInt(100000000));
         String[] ids = {base + 0, base + 1};
         String[] rootIds = {base + 0, base + 2};
@@ -328,6 +331,60 @@ public class SampleInstanceEjbTest extends Arquillian {
             Assert.assertTrue(barcode.startsWith("F"));
             Assert.assertEquals(sampleInstanceEntityDao.findByName(libraryName).getLabVessel().getLabel(),
                     barcode, filename2 + " " + libraryName);
+        }
+    }
+
+    @Test
+    public void testNonPooledExternalLibrary() {
+        String file = "ExternalLibraryNONPooledTest.xlsx";
+        MessageCollection messages = new MessageCollection();
+        InputStream spreadsheet = VarioskanParserTest.getSpreadsheet(file);
+        ExternalLibraryProcessorNonPooled processor = new ExternalLibraryProcessorNonPooled(null);
+        sampleInstanceEjb.doExternalUpload(spreadsheet, OVERWRITE, processor, messages);
+
+        Assert.assertTrue(messages.getErrors().isEmpty(), StringUtils.join(messages.getErrors(), "; "));
+        // Should have persisted all rows.
+        for (int i = 0; i < processor.getBarcodes().size(); ++i) {
+            String barcode = processor.getBarcodes().get(i);
+            Assert.assertNotNull(labVesselDao.findByIdentifier(barcode), barcode);
+            String libraryName = processor.getSingleSampleLibraryName().get(i);
+            Assert.assertNotNull(sampleInstanceEntityDao.findByName(libraryName), libraryName);
+        }
+    }
+
+    @Test
+    public void testMultiOrganismExternalLibrary() {
+        String file = "ExternalLibraryMultiOrganismTest.xlsx";
+        MessageCollection messages = new MessageCollection();
+        InputStream spreadsheet = VarioskanParserTest.getSpreadsheet(file);
+        ExternalLibraryProcessorPooledMultiOrganism processor = new ExternalLibraryProcessorPooledMultiOrganism(null);
+        sampleInstanceEjb.doExternalUpload(spreadsheet, OVERWRITE, processor, messages);
+
+        Assert.assertTrue(messages.getErrors().isEmpty(), StringUtils.join(messages.getErrors(), "; "));
+        // Should have persisted all rows.
+        for (int i = 0; i < processor.getBarcodes().size(); ++i) {
+            String barcode = processor.getBarcodes().get(i);
+            Assert.assertNotNull(labVesselDao.findByIdentifier(barcode), barcode);
+            String libraryName = processor.getSingleSampleLibraryName().get(i);
+            Assert.assertNotNull(sampleInstanceEntityDao.findByName(libraryName), libraryName);
+        }
+    }
+
+    @Test
+    public void testPooledExternalLibrary() {
+        String file = "ExternalLibraryPooledTest.xlsx";
+        MessageCollection messages = new MessageCollection();
+        InputStream spreadsheet = VarioskanParserTest.getSpreadsheet(file);
+        ExternalLibraryProcessorPooledMultiOrganism processor = new ExternalLibraryProcessorPooledMultiOrganism(null);
+        sampleInstanceEjb.doExternalUpload(spreadsheet, OVERWRITE, processor, messages);
+
+        Assert.assertTrue(messages.getErrors().isEmpty(), StringUtils.join(messages.getErrors(), "; "));
+        // Should have persisted all rows.
+        for (int i = 0; i < processor.getBarcodes().size(); ++i) {
+            String barcode = processor.getBarcodes().get(i);
+            Assert.assertNotNull(labVesselDao.findByIdentifier(barcode), barcode);
+            String libraryName = processor.getSingleSampleLibraryName().get(i);
+            Assert.assertNotNull(sampleInstanceEntityDao.findByName(libraryName), libraryName);
         }
     }
 

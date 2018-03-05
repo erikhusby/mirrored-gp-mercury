@@ -1469,11 +1469,11 @@ public class SampleInstanceEjb {
         }
 
         /** Helper method that adds the column name and value to the map when there is difference. */
-        private void putDiffs(String actual, String expected, Map<VesselPooledTubesProcessor.Headers, String> diffs,
-                VesselPooledTubesProcessor.Headers header) {
-            // A blank "actual" means the data is not supplied by the spreadsheet, and should not be compared.
-            if (isNotBlank(actual) && !actual.equals(expected)) {
-                diffs.put(header, actual);
+        private void putDiffs(String spreadsheetValue, String existingValue,
+                Map<VesselPooledTubesProcessor.Headers, String> diffs, VesselPooledTubesProcessor.Headers header) {
+            // A blank spreadsheet value should not be compared.
+            if (isNotBlank(spreadsheetValue) && !spreadsheetValue.equals(existingValue)) {
+                diffs.put(header, spreadsheetValue);
             }
         }
 
@@ -1519,6 +1519,9 @@ public class SampleInstanceEjb {
         /** Fills in any missing values from Mercury or BSP sampleData. */
         public void addMissingValues(SampleData sampleData) {
             if (sampleData != null) {
+                if (isBlank(rootSampleName)) {
+                    setRootSampleName(sampleData.getRootSample());
+                }
                 if (isBlank(broadParticipantId)) {
                     setBroadParticipantId(sampleData.getPatientId());
                 }
