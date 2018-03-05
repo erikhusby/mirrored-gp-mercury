@@ -13,6 +13,7 @@ package org.broadinstitute.gpinformatics.infrastructure.test;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcBlacklisting;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcFingerprint;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcGtConcordance;
 import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProject;
@@ -49,6 +50,9 @@ public class HibernateMetadataTest extends ContainerTest {
     @PersistenceContext(unitName = "metrics_pu")
     private EntityManager metricsEntityManager;
 
+    @PersistenceContext(unitName = "analytics_pu")
+    private EntityManager analyticsEntityManager;
+
     /** Add exceptions to this list; the goal is to keep this list empty. */
     private static final String[] ignoredEntities = {
             LevelOfDetection.class.getName()
@@ -65,15 +69,23 @@ public class HibernateMetadataTest extends ContainerTest {
         AggregationHybridSelection.class.getName(),
         AggregationReadGroup.class.getName(),
         AggregationWgs.class.getName(),
-        ArraysQc.class.getName(),
-        ArraysQcFingerprint.class.getName(),
-        ArraysQcGtConcordance.class.getName(),
         OrspProject.class.getName(),
         OrspProjectConsent.class.getName(),
         PicardAnalysis.class.getName(),
         PicardFingerprint.class.getName(),
         ReadGroupIndex.class.getName(),
         SampleCoverageFirstMet.class.getName()
+    };
+
+    /**
+     * Entities that should be checked against the metrics analytics unit and, therefore, should not be checked
+     * against other persistence units.
+     */
+    private static final String[] analyticsEntities = {
+        ArraysQc.class.getName(),
+        ArraysQcFingerprint.class.getName(),
+        ArraysQcGtConcordance.class.getName(),
+        ArraysQcBlacklisting.class.getName()
     };
 
     /**
@@ -101,13 +113,19 @@ public class HibernateMetadataTest extends ContainerTest {
     @Test(groups = TestGroups.STUBBY, description = "Tests all the hibernate mappings in the mercury_pu")
     public void testMercuryPersistenceUnit() throws Exception {
         Session session = entityManager.unwrap(Session.class);
-        testPersistenceUnit(session, metricsEntities, null);
+        testPersistenceUnit(session, ArrayUtils.addAll(metricsEntities, analyticsEntities), null);
     }
 
     @Test(groups = TestGroups.STUBBY, description = "Tests all the hibernate mappings in the metrics_pu.")
     public void testMetricsPersistenceUnit() throws Exception {
         Session session = metricsEntityManager.unwrap(Session.class);
         testPersistenceUnit(session, null, metricsEntities);
+    }
+
+    @Test(groups = TestGroups.STUBBY, description = "Tests all the hibernate mappings in the analytics_pu.")
+    public void testAnalyticsPersistenceUnit() throws Exception {
+        Session session = analyticsEntityManager.unwrap(Session.class);
+        testPersistenceUnit(session, null, analyticsEntities);
     }
 
     private void testPersistenceUnit(Session session, String[] blackList, String[] whiteList) {

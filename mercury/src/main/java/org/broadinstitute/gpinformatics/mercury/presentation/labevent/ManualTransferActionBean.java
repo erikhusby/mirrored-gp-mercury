@@ -8,6 +8,7 @@ import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -217,7 +218,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
     public Resolution chooseLabEventType() {
         List<String> reagentNames;
         int[] reagentFieldCounts;
-        if (workflowStepDef != null) {
+        if (workflowStepDef != null && !CollectionUtils.isEmpty(workflowStepDef.getReagentTypes())) {
             reagentNames = workflowStepDef.getReagentTypes();
             reagentFieldCounts = new int[reagentNames.size()];
             Arrays.fill(reagentFieldCounts, 1);
@@ -384,7 +385,6 @@ public class ManualTransferActionBean extends RackScanActionBean {
         if (workflowProcessName != null) {
             workflowStepDef = workflowConfig.getStep(workflowProcessName, workflowStepName,
                     workflowEffectiveDate);
-            workflowStepDef.getReagentTypes();
         }
         return workflowStepDef;
     }
@@ -898,7 +898,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     //Target
                     VesselTypeGeometry targetVesselTypeGeometryCp = localManualTransferDetails.getTargetVesselTypeGeometry();
                     assignSyntheticBarcode(plateCherryPickEvent.getPlate().get(0), targetVesselTypeGeometryCp,
-                            localManualTransferDetails.getTargetContainerPrefix());
+                            localManualTransferDetails.getTargetContainerPrefix() + anonymousRackDisambiguator);
                     for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
                         if (!sourceVesselTypeGeometryCp.isBarcoded()) {
                             cherryPickSourceType.setBarcode(plateCherryPickEvent.getSourcePlate().get(0).getBarcode());

@@ -45,6 +45,7 @@ public class PriceList {
                 if(effectiveDate == null ||
                    (DateUtils.truncate(effectiveDate, Calendar.DATE).equals(quotePriceItem.getEffectiveDate()))) {
                     foundItem = quotePriceItem;
+                    break;
                 }
             }
         }
