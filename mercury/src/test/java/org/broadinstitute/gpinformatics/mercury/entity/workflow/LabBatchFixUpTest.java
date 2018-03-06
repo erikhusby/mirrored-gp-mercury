@@ -11,7 +11,9 @@
 
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -140,15 +142,20 @@ public class LabBatchFixUpTest extends Arquillian {
 
     private List<LabBatchStartingVessel> removeSamples(List<String> sampleNames, LabBatch labBatch) {
         List<LabBatchStartingVessel> vesselsToRemove = new ArrayList<>();
+        List<String> sampleNamesFound = new ArrayList<>();
         for (LabBatchStartingVessel startingVessel : labBatch.getLabBatchStartingVessels()) {
             Set<SampleInstanceV2> sampleInstances = startingVessel.getLabVessel().getSampleInstancesV2();
             for (SampleInstanceV2 sampleInstance : sampleInstances) {
                 String sample = sampleInstance.getRootOrEarliestMercurySampleName();
                 if (sampleNames.contains(sample)) {
+                    System.out.println("Removing " + sample + " from " + labBatch.getBatchName());
                     vesselsToRemove.add(startingVessel);
+                    sampleNamesFound.add(sample);
                 }
             }
         }
+        Assert.assertEquals(sampleNamesFound, sampleNames, labBatch.getBatchName() + " does not contain " +
+                StringUtils.join(CollectionUtils.subtract(sampleNames, sampleNamesFound), ", "));
         for (LabBatchStartingVessel vesselToRemove : vesselsToRemove) {
             labBatch.getLabBatchStartingVessels().remove(vesselToRemove);
             vesselToRemove.getLabVessel().getLabBatchStartingVessels().remove(vesselToRemove);
@@ -1479,6 +1486,34 @@ public class LabBatchFixUpTest extends Arquillian {
 
         }
         labBatchDao.persist(new FixupCommentary(lines.get(0)));
+        labBatchDao.flush();
+        userTransaction.commit();
+    }
+
+    /*
+     * This test removes samples from an LCSET.  It reads its parameters from a file,
+     * testdata/RemoveLabBatchSample.txt, so it can be used for other similar fixups, without writing a new test.
+     * The file needs a ticket id, an lcset, and comma-delimited list of samples.
+     * For example:
+     * SUPPORT-1234
+     * LCSET-1234
+     * SM-ABCD1,SM-ABCD2,SM-ABCD3
+     */
+    @Test(enabled = false)
+    public void removeFromLcset() throws Exception {
+        userBean.loginOSUser();
+        userTransaction.begin();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("RemoveLabBatchSample.txt"));
+        Assert.assertEquals(lines.size(), 3);
+
+        String lcsetName = lines.get(1);
+        LabBatch labBatch = labBatchDao.findByName(lcsetName);
+        Assert.assertNotNull(labBatch, "Cannot find LCSET: '" + lcsetName + "'");
+        List<String> samplesToRemove = Arrays.asList(lines.get(2).split(","));
+        removeSamples(samplesToRemove, labBatch);
+
+        labBatchDao.persist(new FixupCommentary(lines.get(0) + " Removed samples from " + lcsetName));
         labBatchDao.flush();
         userTransaction.commit();
     }

@@ -51,6 +51,7 @@ import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -628,6 +629,12 @@ public class SequencingTemplateFactory {
                 }
             }
         }
+
+        // If mix of single and dual index, then choose dual index read structure
+        if (molecularIndexReadStructures.size() > 1 && molecularIndexReadStructures.contains("8B8B")) {
+            molecularIndexReadStructures.clear();
+            molecularIndexReadStructures.add("8B8B");
+        }
     }
 
     private void validateCollections(Set<String> designations, Set<Product> products, Set<String> structures) {
@@ -649,9 +656,6 @@ public class SequencingTemplateFactory {
                 && (designations.contains(ResearchProject.RegulatoryDesignation.GENERAL_CLIA_CAP.name()) ||
                     designations.contains(ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS.name()))){
             throw new InformaticsServiceException("Template tube has mix of Research and Clinical regulatory designations");
-        }
-        if (structures.size() > 1) {
-            throw new InformaticsServiceException("Found mix of different index lengths.");
         }
     }
 

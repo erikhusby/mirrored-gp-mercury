@@ -83,6 +83,16 @@ public class Metadata {
         }
     }
 
+    public static Metadata createMetadata(Key key, String stringValue) {
+        switch (key.getDataType()) {
+        case STRING:
+            return new Metadata(key, stringValue);
+        case NUMBER:
+            return new Metadata(key, new BigDecimal(stringValue));
+        }
+        throw new RuntimeException("Unhandled data type " + key.getDataType());
+    }
+
     @Nonnull
     public Key getKey() {
         return key;
@@ -166,6 +176,7 @@ public class Metadata {
     }
 
     public enum Category {
+        LIQUID_HANDLER_METRIC,
         SAMPLE,
         LAB_METRIC_RUN,
         LAB_METRIC,
@@ -262,12 +273,9 @@ public class Metadata {
         DV_200(Category.LAB_METRIC, DataType.NUMBER, "DV200", Visibility.USER),
         LOWER_MARKER_TIME(Category.LAB_METRIC, DataType.NUMBER, "Lower Marker Time", Visibility.USER),
         NA(Category.LAB_METRIC, DataType.STRING, "NA", Visibility.USER),
-        BAIT_WELL(Category.REAGENT, DataType.STRING, "Bait Well", Visibility.USER),
-        CELL_LINE(Category.SAMPLE, DataType.STRING, "Cell Line", Visibility.USER),
-        TISSUE_TYPE(Category.SAMPLE, DataType.STRING, "Tissue Type", Visibility.USER),
-        INDIVIDUAL_NAME(Category.SAMPLE, DataType.STRING, "Individual Name", Visibility.USER),
-        ORGANISM(Category.SAMPLE, DataType.STRING, "Organism", Visibility.USER),
-        STRAIN(Category.SAMPLE, DataType.STRING, "Strain", Visibility.USER);
+        FLOWRATE(Category.LIQUID_HANDLER_METRIC, DataType.NUMBER, "Flowrate", Visibility.USER),
+        BAIT_WELL(Category.REAGENT, DataType.STRING, "Bait Well", Visibility.USER);
+
 
         private final Category category;
         private final DataType dataType;
