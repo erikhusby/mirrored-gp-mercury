@@ -245,7 +245,7 @@
         <div class="clearfix"></div>
 
         <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
-            <stripes:hidden id="dialogAction" name=""/>
+            <input type="hidden" id="dialogAction"/>
             <div class="actionButtons">
 
                 <security:authorizeBlock roles="<%= roles(Developer) %>">

@@ -71,7 +71,8 @@ function isBlank(value){
  *
  * Exported data includes all checked entries in the DataTable with filtering, sorting:
  */
-function standardButtons(checkboxClass="shiftCheckbox", headerClass) {
+function standardButtons(checkboxClass, headerClass) {
+    checkboxClass = checkboxClass || "shiftCheckbox";
     var defaultOptions = {
         /* do not export colum 0 (the checkbox column) */
         columns: ':visible :gt(0)',

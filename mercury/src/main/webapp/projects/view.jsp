@@ -221,7 +221,7 @@
                                     <c:otherwise>
                                         <c:if test="${actionBean.canBeginCollaborations}">
                                             <div style="float:left">
-                                                <stripes:hidden id="dialogAction" name="" value=""/>
+                                                <input type="hidden" id="dialogAction"/>
                                                 <stripes:hidden id="selectedCollaborator" name="selectedCollaborator" value=""/>
                                                 <stripes:hidden id="specifiedCollaborator" name="specifiedCollaborator" value=""/>
                                                 <stripes:hidden id="collaborationMessage" name="collaborationMessage" value=""/>

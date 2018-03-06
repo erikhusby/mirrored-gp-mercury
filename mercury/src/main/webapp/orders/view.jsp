@@ -405,6 +405,34 @@ $j(document).ready(function () {
 var bspDataCount = 0;
 
 function setupDialogs() {
+    $j("[name='deleteOrder']").on("click", function(){
+        showDeleteConfirm('deleteOrder');
+    });
+    $j("[name='placeOrder']").on("click", function(){
+        showPlaceConfirm('placeOrder');
+    });
+    $j("[name='deleteSamples']").on("click", function(){
+        showConfirm('deleteSamples', 'delete');
+    });
+    $j("#abandonOrders").on("click", function(){
+        showAbandonConfirm('abandonOrders', 'abandon', ${actionBean.abandonWarning});
+    });
+    $j("#replaceOrderSamples").on("click", function(){
+        showSampleReplacementDialog();
+    });
+    $j("[name='abandonSamples']").on("click", function(){
+        showAbandonDialog();
+    });
+    $j("[name='recalculateRisk']").on("click", function(){
+        showRecalculateRiskDialog();
+    });
+    $j("[name='setRisk']").on("click", function(){
+        showRiskDialog();
+    });
+    $j("[name='setProceedOos']").on("click", function(){
+        showProceedOosDialog();
+    });
+
     function handleCancelEvent () {
         $j(this).dialog("close");
         $j("#dialogAction").attr("name", "");
@@ -728,7 +756,7 @@ function updateSampleInformation(samples, table, includeSampleSummary) {
             success: function (json) {
                 if (json) {
                     var dataMap = {};
-                    for (var item of json.data) {
+                    for (var item in json.data) {
                         dataMap[item.rowId] = item;
                     }
                     table.rows().every(function () {
@@ -1162,7 +1190,7 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
 </div>
 
 <stripes:hidden name="productOrder" value="${actionBean.editOrder.businessKey}"/>
-<stripes:hidden id="dialogAction" name=""/>
+<input type="hidden" id="dialogAction"/>
 <stripes:hidden id="riskStatus" name="riskStatus" value=""/>
 <stripes:hidden id="riskComment" name="riskComment" value=""/>
 <stripes:hidden id="proceedOos" name="proceedOos" value=""/>
@@ -1192,15 +1220,14 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
             </stripes:link>
 
             <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager, PM) %>">
-                <stripes:button onclick="showDeleteConfirm('deleteOrder')" name="deleteOrder"
+                <stripes:button name="deleteOrder"
                                 value="Delete Draft" style="margin-left: 10px;" class="btn"/>
             </security:authorizeBlock>
         </c:when>
         <c:otherwise>
             <c:if test="${actionBean.canPlaceOrder}">
                 <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager, PM) %>">
-                    <stripes:button onclick="showPlaceConfirm('placeOrder')" name="placeOrder"
-                                    value="Place Order" class="btn"/>
+                    <stripes:button name="placeOrder" value="Place Order" class="btn"/>
                 </security:authorizeBlock>
             </c:if>
             <security:authorizeBlock roles="${actionBean.modifyOrderRoles}">
@@ -1218,7 +1245,6 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
                     </c:otherwise>
                 </c:choose>
                 <stripes:button name="abandonOrders" id="abandonOrders" value="Abandon Order"
-                                onclick="showAbandonConfirm('abandonOrders', 'abandon', ${actionBean.abandonWarning})"
                                 class="btn padright" title="${abandonTitle}" disabled="${abandonDisable}"/>
             </security:authorizeBlock>
 
@@ -1752,26 +1778,20 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
         <c:if test="${!actionBean.editOrder.draft}">
             <span class="actionButtons">
                 <security:authorizeBlock roles="${actionBean.modifyOrderRoles}">
-                    <stripes:button name="deleteSamples" value="Delete Samples" class="btn"
-                                    style="margin-left:30px;"
-                                    onclick="showConfirm('deleteSamples', 'delete')"/>
+                    <stripes:button name="deleteSamples" value="Delete Samples" class="btn" style="margin-left:30px;"/>
 
                     <c:if test="${!actionBean.editOrder.pending}">
                         <stripes:button name="abandonSamples" value="Abandon Samples" class="btn"
-                                        style="margin-left:15px;"
-                                        onclick="showAbandonDialog()"/>
+                                        style="margin-left:15px;"/>
 
                         <c:if test="${!actionBean.editOrder.childOrder}">
                             <stripes:button name="replaceOrderSamples" id="replaceOrderSamples" value="Replace Abandoned Samples"
-                                            onclick="showSampleReplacementDialog()" class="btn padright"
-                                            title="Click to add replacement samples for abandoned samples" />
+                                            class="btn padright" title="Click to add replacement samples for abandoned samples" />
                         </c:if>
                     </c:if>
-                    <stripes:button name="recalculateRisk" value="Recalculate Risk" class="btn"
-                                    style="margin-left:15px;" onclick="showRecalculateRiskDialog()"/>
+                    <stripes:button name="recalculateRisk" value="Recalculate Risk" class="btn" style="margin-left:15px;"/>
 
-                    <stripes:button name="setRisk" value="Set Risk" class="btn"
-                                    style="margin-left:5px;" onclick="showRiskDialog()"/>
+                    <stripes:button name="setRisk" value="Set Risk" class="btn" style="margin-left:5px;"/>
 
                 </security:authorizeBlock>
                 <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
@@ -1794,8 +1814,7 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
         </c:if>
 
         <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager, PM) %>">
-            <stripes:button name="setProceedOos" value="Set Proceed OOS" class="btn"
-                    style="margin-left:5px;" onclick="showProceedOosDialog()"/>
+            <stripes:button name="setProceedOos" value="Set Proceed OOS" class="btn" style="margin-left:5px;"/>
         </security:authorizeBlock>
 
     </div>
