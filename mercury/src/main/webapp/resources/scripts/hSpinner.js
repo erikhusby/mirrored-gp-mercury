@@ -9,8 +9,8 @@ $j.widget('mercury.hSpinner', {
         this._super(key, value);
 
         if (key == 'disabled') {
-            this.$controlButtons.attr('disabled', value);
-            this.$controlButtons.toggleClass('ui-state-disabled', value);
+            this.controlButtons.attr('disabled', value);
+            this.controlButtons.toggleClass('ui-state-disabled', value);
             this.element.attr('disabled', value);
         }
     },
@@ -234,5 +234,6 @@ $j.widget('mercury.hSpinner', {
     /**
      * Apply additional additional 'changed' class to this selector.
      */
-    additionalChangedSelector: ""
+    additionalChangedSelector: "",
+    initialVisibility: "visible"
 });
