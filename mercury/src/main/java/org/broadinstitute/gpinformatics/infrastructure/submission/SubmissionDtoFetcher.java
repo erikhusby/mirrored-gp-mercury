@@ -96,7 +96,12 @@ public class SubmissionDtoFetcher {
         ProductOrder.loadCollaboratorSampleName(productOrderSamples);
 
         // Gather status for anything that has already been submitted
-        Map<String, SubmissionStatusDetailBean> sampleSubmissionMap = buildSampleToSubmissionMap(researchProject);
+        Map<String, SubmissionStatusDetailBean> sampleSubmissionMap = new HashMap<>();
+        try {
+            sampleSubmissionMap.putAll(buildSampleToSubmissionMap(researchProject));
+        } catch (Exception e) {
+            messageReporter.addMessage(e.getLocalizedMessage());
+        }
 
         /*
          * Since Mercury currently only works with BAM files, always fetch aggregation metrics. If Mercury needs to
@@ -131,14 +136,12 @@ public class SubmissionDtoFetcher {
         }
         final Map<SubmissionTuple, Aggregation> aggregationMap = new HashMap<>();
         List<Aggregation> aggregations = aggregationMetricsFetcher.fetch(tupleList);
-        for (final Aggregation aggregation : aggregations) {
-            aggregationMap.putAll(Maps.uniqueIndex(aggregations, new Function<Aggregation, SubmissionTuple>() {
-                @Override
-                public SubmissionTuple apply(@Nullable Aggregation aggregation) {
-                    return aggregation.getTuple();
-                }
-            }));
-        }
+        aggregationMap.putAll(Maps.uniqueIndex(aggregations, new Function<Aggregation, SubmissionTuple>() {
+            @Override
+            public SubmissionTuple apply(@Nullable Aggregation aggregation) {
+                return aggregation.getTuple();
+            }
+        }));
 
         return aggregationMap;
     }
@@ -177,12 +180,19 @@ public class SubmissionDtoFetcher {
             Collection<SubmissionStatusDetailBean> submissionStatus =
                     submissionsService.getSubmissionStatus(submissionIds.toArray(new String[submissionIds.size()]));
             for (SubmissionStatusDetailBean submissionStatusDetailBean : submissionStatus) {
-                SubmissionTuple submissionTuple = submissionTupleMap.get(submissionStatusDetailBean.getUuid());
-                submissionStatusDetailBean.setSubmittedVersion(submissionTuple.getVersion());
-                sampleSubmissionMap.put(submissionStatusDetailBean.getUuid(), submissionStatusDetailBean);
+                if (hasSubmission(submissionStatusDetailBean)) {
+                    SubmissionTuple submissionTuple = submissionTupleMap.get(submissionStatusDetailBean.getUuid());
+                    submissionStatusDetailBean.setSubmittedVersion(submissionTuple.getVersion());
+                    submissionStatusDetailBean.setSubmissionDatatype(submissionTuple.getDataType());
+                    sampleSubmissionMap.put(submissionStatusDetailBean.getUuid(), submissionStatusDetailBean);
+                }
             }
         }
         return sampleSubmissionMap;
+    }
+
+    private boolean hasSubmission(SubmissionStatusDetailBean submissionStatusDetailBean) {
+        return submissionStatusDetailBean.getStatus() != null;
     }
 
     public void refreshSubmissionStatuses(ResearchProject editResearchProject, List<SubmissionDto> submissionDataList) {
@@ -199,7 +209,10 @@ public class SubmissionDtoFetcher {
         /** SubmissionTracker uses sampleName for accessionIdentifier
          @see: org/broadinstitute/gpinformatics/athena/boundary/projects/ ResearchProjectEjb.java:243 **/
         for (SubmissionTracker submissionTracker : researchProject.getSubmissionTrackers()) {
-            submissionIds.put(submissionTracker.createSubmissionIdentifier(), submissionTracker.getSubmissionTuple());
+            String uuid = submissionTracker.createSubmissionIdentifier();
+            if (!submissionIds.containsKey(uuid)) {
+                submissionIds.put(uuid, submissionTracker.getSubmissionTuple());
+            }
         }
         return submissionIds;
     }

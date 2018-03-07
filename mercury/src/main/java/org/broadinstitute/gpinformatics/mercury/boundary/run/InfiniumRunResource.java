@@ -174,10 +174,8 @@ public class InfiniumRunResource {
                         }
                     }
 
-                    if (productOrders.size() == 1) {
+                    if (productOrders.size() >= 1) {
                         productOrder = productOrders.iterator().next();
-                    } else if (productOrders.size() > 1) {
-                        throw new ResourceException("Found mix of product orders ", Response.Status.INTERNAL_SERVER_ERROR);
                     } else {
                         throw new ResourceException("Found no product orders ", Response.Status.INTERNAL_SERVER_ERROR);
                     }

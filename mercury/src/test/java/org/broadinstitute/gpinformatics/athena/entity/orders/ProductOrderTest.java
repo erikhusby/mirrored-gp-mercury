@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.apache.commons.lang3.time.DateUtils;
+import org.broadinstitute.gpinformatics.athena.boundary.products.InvalidProductException;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
@@ -19,6 +20,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFa
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
+import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.meanbean.lang.EquivalentFactory;
 import org.meanbean.test.BeanTester;
@@ -566,5 +568,36 @@ public class ProductOrderTest {
             Assert.fail();
         } catch (Exception shouldNotHappen) {
         }
+    }
+
+    public void testGuardCompanyCodeSwtiching() throws Exception {
+        ProductOrder testProductOrder = ProductOrderTestFactory.createDummyProductOrder();
+
+        testProductOrder.addSapOrderDetail(new SapOrderDetail("test number", testProductOrder.getSampleCount(), testProductOrder.getQuoteId(), testProductOrder.getSapCompanyConfigurationForProductOrder().getCompanyCode(), "", ""));
+
+        assertThat(testProductOrder.getSapCompanyConfigurationForProductOrder(), is(equalTo(
+                SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD)) );
+
+        assertThat(testProductOrder.isSavedInSAP(), is(true));
+
+        Product externalProduct = ProductTestFactory.createTestProduct();
+
+        externalProduct.setExternalOnlyProduct(true);
+        try {
+            testProductOrder.setProduct(externalProduct);
+            Assert.fail("Setting an external product on a research order should be an exception");
+        } catch (InvalidProductException e) {
+            
+        }
+
+        Product clinicalProduct = ProductTestFactory.createTestProduct();
+        clinicalProduct.setClinicalProduct(true);
+        try {
+            testProductOrder.setProduct(clinicalProduct);
+            Assert.fail("Setting a clinical product on a research order should be an exception");
+        } catch (InvalidProductException e) {
+
+        }
+
     }
 }

@@ -23,7 +23,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.SapOrderDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfoFixupTest;
@@ -32,7 +31,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -56,9 +54,7 @@ import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Join;
 import javax.persistence.criteria.ParameterExpression;
-import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
@@ -91,7 +87,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
@@ -1224,7 +1219,10 @@ public class ProductOrderFixupTest extends Arquillian {
         }
 
         final MessageReporter testOnly = MessageReporter.UNUSED;
-        productOrderEjb.unAbandonSamples(pdoTicket, productOrderSampleIDs, sampleComment, testOnly);
+
+        MessageCollection testCollection = new MessageCollection();
+
+        productOrderEjb.unAbandonSamples(pdoTicket, productOrderSampleIDs, sampleComment, testCollection);
         productOrderEjb.updateOrderStatus(pdoTicket, testOnly);
 
         final MessageCollection messageCollection = new MessageCollection();
@@ -1238,6 +1236,41 @@ public class ProductOrderFixupTest extends Arquillian {
                                                     + "is removed and the new process would not satisfy this case"));
         commitTransaction();
     }
+
+    @Test(enabled = false)
+    public void gplim5364UnabandonSamples() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+        final String sampleComment = "Unabandon due to the current status of the samples in the process.";
+        Set<Long> productOrderSampleIDs = new HashSet<>();
+        String pdoTicket = "PDO-13827";
+
+        List<String> sampleKeys =
+            Arrays.asList("SM-GBMDQ", "SM-GBME1", "SM-GBME3", "SM-GBME8", "SM-GBMES", "SM-GBMCE", "SM-GBOBR",
+                "SM-GBMBT", "SM-GBOB7");
+
+        ProductOrder productOrder = productOrderDao.findByBusinessKey(pdoTicket);
+
+        for (ProductOrderSample sample : productOrder.getSamples()) {
+            if (sampleKeys.contains(sample.getSampleKey())) {
+                productOrderSampleIDs.add(sample.getProductOrderSampleId());
+            }
+        }
+
+        final MessageReporter testOnly = MessageReporter.UNUSED;
+        final MessageCollection messageCollection = new MessageCollection();
+        productOrderEjb.unAbandonSamples(pdoTicket, productOrderSampleIDs, sampleComment, messageCollection);
+        productOrderEjb.updateOrderStatus(pdoTicket, testOnly);
+
+        productOrderEjb.publishProductOrderToSAP(productOrder, messageCollection, false);
+        if (messageCollection.hasErrors() || messageCollection.hasWarnings()) {
+            Assert.fail("Error occured attempting to update SAP in fixupTest");
+
+        }
+        productOrderDao.persist(new FixupCommentary("GPLIM-5364:  unabandon due to the current status of the samples in the process."));
+        commitTransaction();
+    }
+
 
     @Test(enabled = false)
     public void support3407UpdatePDOAssociationsOnLCSET11965() throws Exception {
@@ -1337,5 +1370,52 @@ public class ProductOrderFixupTest extends Arquillian {
         }
 
         productOrderDao.persist(new FixupCommentary("GPLIM-4593: Backfilling sap Order Detail with billing Ledger Associations"));
+    }
+
+    @Test(enabled=false)
+    public void gplim5377MakeCliaPcrFreeWholeGenomeClinical() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+
+        Product pcrFreeProduct = productDao.findByBusinessKey("P-CLA-0008");
+        Product germlineCommercial = productDao.findByBusinessKey("P-CLA-0005");
+        Product somaticCommercial = productDao.findByBusinessKey("P-CLA-0006");
+
+        List<ProductOrder> pcrFreeOrders = productOrderDao.findList(ProductOrder.class, ProductOrder_.product, pcrFreeProduct);
+
+        pcrFreeProduct.setClinicalProduct(true);
+        System.out.println("Set " + pcrFreeProduct.getPartNumber() + " to be a clinical order");
+        pcrFreeProduct.setExternalOnlyProduct(false);
+        System.out.println("Set " + pcrFreeProduct.getPartNumber() + " to not be an external order");
+
+        germlineCommercial.setExternalOnlyProduct(true);
+        somaticCommercial.setExternalOnlyProduct(true);
+
+        for (ProductOrder pcrFreeOrder : pcrFreeOrders) {
+            if(pcrFreeOrder.getOrderStatus() != ProductOrder.OrderStatus.Abandoned &&
+               pcrFreeOrder.getOrderStatus() != ProductOrder.OrderStatus.Draft) {
+                pcrFreeOrder.setClinicalAttestationConfirmed(true);
+                System.out.println("Updating " + pcrFreeOrder.getJiraTicketKey() + " to have Clinical attestation set");
+            }
+        }
+        productOrderDao.persist(new FixupCommentary("GPLIM-5377:  Updated PCR-Free Whole Genome product to be a "
+                                                    + "clinical product, and set the associated orders for them to "
+                                                    + "have the Clinical Attestation Set"));
+
+        commitTransaction();
+    }
+
+    @Test(enabled=false)
+    public void gplimSupport3853ChangeOrderType() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+
+        ProductOrder orderToUpdate = productOrderDao.findByBusinessKey("PDO-13052");
+
+        orderToUpdate.setOrderType(ProductOrder.OrderAccessType.COMMERCIAL);
+
+        productOrderDao.persist(new FixupCommentary("SUPPORT-3853: updated PDO-13052 to allow it to switch to a commercial order type"));
+
+        commitTransaction();
     }
 }

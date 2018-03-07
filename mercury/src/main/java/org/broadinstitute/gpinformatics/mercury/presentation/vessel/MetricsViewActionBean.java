@@ -8,7 +8,10 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationMethod;
+import org.apache.commons.collections4.BidiMap;
+import org.apache.commons.collections4.ListValuedMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -20,6 +23,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProduct
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.ArraysQcDao;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcBlacklisting;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcFingerprint;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcGtConcordance;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
@@ -33,6 +37,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.run.ArchetypeAttribute;
 import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.AbandonVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
@@ -44,6 +49,7 @@ import org.codehaus.jackson.map.annotate.JsonSerialize;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.text.Format;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -59,6 +65,7 @@ import java.util.TreeSet;
 @UrlBinding(value = "/view/metricsView.action")
 public class MetricsViewActionBean extends CoreActionBean {
     private static final Log logger = LogFactory.getLog(LabEventFactory.class);
+    private static final Format DATE_FORMAT = FastDateFormat.getInstance("MM/dd/yyyy");
 
     private static final String VIEW_PAGE = "/vessel/vessel_metrics_view.jsp";
 
@@ -285,7 +292,7 @@ public class MetricsViewActionBean extends CoreActionBean {
     public PlateMap buildInfiniumMetricsTable(StaticPlate staticPlate) throws IOException {
         boolean isHybChip = false;
         Set<LabVessel> chips = new HashSet<>();
-        Map<String, String> chipWellToSourcePosition;
+        BidiMap<String, String > chipWellToSourcePosition;
         Set<String> chipTypes = barcodeToChipTypes.get(staticPlate.getLabel());
         Set<ProductOrder> productOrders = barcodeToProductOrders.get(staticPlate.getLabel());
         GenotypingChip genotypingChip = barcodeToGenotypingChip.get(staticPlate.getLabel());
@@ -296,7 +303,7 @@ public class MetricsViewActionBean extends CoreActionBean {
             chips.add(staticPlate);
             hybEvents.addAll(staticPlate.getTransfersTo());
             isHybChip = true;
-            chipWellToSourcePosition = new HashMap<>();
+            chipWellToSourcePosition = new DualHashBidiMap<>();
         } else {
             // Positions on Amp plates or DNA plates should only be mapped to the latest chip well (re-hyb)
             // The event list sorted ascending overwrites older map positions to chip well barcode
@@ -329,23 +336,29 @@ public class MetricsViewActionBean extends CoreActionBean {
         for (LabEvent labEvent : hybEvents) {
             Set<CherryPickTransfer> cherryPickTransfers = labEvent.getCherryPickTransfers();
             for (CherryPickTransfer cherryPickTransfer : cherryPickTransfers) {
-                VesselPosition sourcePosition = cherryPickTransfer.getSourcePosition();
-                VesselPosition destinationPosition = cherryPickTransfer.getTargetPosition();
                 LabVessel chip = cherryPickTransfer.getTargetVesselContainer().getEmbedder();
-                String chipWellBarcode = chip.getLabel() + "_" + destinationPosition.name();
-                if (isHybChip) {
-                    chipWellToSourcePosition.put(chipWellBarcode, destinationPosition.name());
-                } else {
-                    chipWellToSourcePosition.put(chipWellBarcode, sourcePosition.name());
+                if (!isHybChip || chip.equals(staticPlate)) {
+                    VesselPosition sourcePosition = cherryPickTransfer.getSourcePosition();
+                    VesselPosition destinationPosition = cherryPickTransfer.getTargetPosition();
+                    String chipWellBarcode = chip.getLabel() + "_" + destinationPosition.name();
+                    if (isHybChip) {
+                        chipWellToSourcePosition.put(chipWellBarcode, destinationPosition.name());
+                    } else {
+                        chipWellToSourcePosition.put(chipWellBarcode, sourcePosition.name());
+                    }
                 }
             }
         }
 
+        // ******* Get pipeline array data for chip wells *********
         List<ArraysQc> arraysQcList = arraysQcDao.findByBarcodes(new ArrayList<>(chipWellToSourcePosition.keySet()));
         if (arraysQcList.isEmpty()) {
+            // No pipeline data at all is fatal
             addGlobalValidationError("Failed to find any Arrays QC data for vessel " + staticPlate.getLabel());
             return null;
         }
+        ListValuedMap<String, ArraysQcBlacklisting>  wellBlacklistMap = arraysQcDao.findBlacklistMapByBarcodes(new ArrayList<>(chipWellToSourcePosition.keySet()));
+        // ******* Pipeline array data for chip wells gotten *********
 
         // Call Rate threshold depends on the Genotyping Chip
         int passingCallRateThreshold = 98;
@@ -394,8 +407,9 @@ public class MetricsViewActionBean extends CoreActionBean {
 
         List<Options> genderOptions = new OptionsBuilder().addOption("M", "M", BLUE).addOption("F", "F", RED).build();
 
-        List<Options> trueFalseOption = new OptionsBuilder().addOption("True", Boolean.TRUE.toString(), GREEN)
-                .addOption("False",  Boolean.FALSE.toString(), RED).build();
+        List<Options> passFailNotApplicableOption = new OptionsBuilder().addOption("Pass", "Pass", GREEN)
+                .addOption("Fail",  "Fail", RED)
+                .addOption("N/A",  "N/A", SLATE_GRAY).build();
 
         List<Options> hetPctOptions = new OptionsBuilder().addOption(">= 25", "25", RED).
                 addOption(">= 20", "20", YELLOW).
@@ -437,7 +451,8 @@ public class MetricsViewActionBean extends CoreActionBean {
             metadata.add(Metadata.create("zCall Call Rate", String.valueOf(arraysQc.getCallRate())));
             metadata.add(Metadata.create("Total SNPs", String.valueOf(arraysQc.getTotalSnps())));
             metadata.add(Metadata.create("Total Assays", String.valueOf(arraysQc.getTotalAssays())));
-            metadata.add(Metadata.create("Chip Well Barcode", (arraysQc.getChipWellBarcode())));
+            metadata.add(Metadata.create("Chip Well Barcode", arraysQc.getChipWellBarcode()));
+            metadata.add(Metadata.create("Autocall Date", DATE_FORMAT.format( arraysQc.getAutocallDate() )));
 
             // Sample ID metadata
             VesselPosition vesselPosition = VesselPosition.getByName(startPosition);
@@ -451,6 +466,19 @@ public class MetricsViewActionBean extends CoreActionBean {
                 }
             }
 
+            // Blacklisting
+            if( wellBlacklistMap.containsKey(chipWellbarcode) ) {
+                plateMap.setWellStatus(startPosition, WellStatus.Blacklisted);
+                for( ArraysQcBlacklisting blacklisting : wellBlacklistMap.get(chipWellbarcode)) {
+                    metadata.add(Metadata.create("Pipeline Blacklist", DATE_FORMAT.format(blacklisting.getBlacklistedOn()) + " - " + blacklisting.getBlacklistReason()));
+                    if( blacklisting.getWhitelistedOn() != null ) {
+                        metadata.add(Metadata.create("Whitelisted", DATE_FORMAT.format(blacklisting.getWhitelistedOn())));
+                    }
+                }
+            }
+
+            plateMap.getWellMetadataMap().put(vesselPosition.name(), metadata);
+
             // Autocall Call Rate
             String value;
             if (autocallCallRate == null) {
@@ -463,14 +491,14 @@ public class MetricsViewActionBean extends CoreActionBean {
                 }
             }
             WellDataset wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.AUTOCALL_CALL_RATE);
-            wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
+            wellDataset.getWellData().add(new WellData(startPosition, value));
             wellDataset.setOptions(callRateOptions);
 
             // zCall Call Rate
             BigDecimal callRate = arraysQc.getCallRate().multiply(BigDecimal.valueOf(100));
             value = ColumnValueType.TWO_PLACE_DECIMAL.format(callRate, "");
             wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.CALL_RATE);
-            wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
+            wellDataset.getWellData().add(new WellData(startPosition, value));
             wellDataset.setOptions(callRateOptions);
             if (callRate.intValue() >= passingCallRateThreshold) {
                 wellsPassingZCallCallRate++;
@@ -479,44 +507,44 @@ public class MetricsViewActionBean extends CoreActionBean {
             // FP Gender
             value = String.valueOf(arraysQc.getFpGender());
             wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.FP_GENDER);
-            wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
+            wellDataset.getWellData().add(new WellData(startPosition, value));
             wellDataset.setOptions(fpGenderOptions);
 
             // Reported Gender
             value = String.valueOf(arraysQc.getReportedGender());
             wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.REPORTED_GENDER);
-            wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
+            wellDataset.getWellData().add(new WellData(startPosition, value));
             wellDataset.setOptions(genderOptions);
 
             // Autocall Gender
             value = String.valueOf(arraysQc.getAutocallGender());
             wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.AUTOCALL_GENDER);
-            wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
+            wellDataset.getWellData().add(new WellData(startPosition, value));
             wellDataset.setOptions(genderOptions);
 
             // Gender Concordance PF
             value = arraysQc.getGenderConcordancePf();
             wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.GENDER_CONCORDANCE_PF);
-            wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
-            wellDataset.setOptions(trueFalseOption);
+            wellDataset.getWellData().add(new WellData(startPosition, value));
+            wellDataset.setOptions(passFailNotApplicableOption);
 
             // Het PCT
             value = ColumnValueType.TWO_PLACE_DECIMAL.format(
                     arraysQc.getHetPct().multiply(BigDecimal.valueOf(100)), "");
             wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.HET_PCT);
-            wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
+            wellDataset.getWellData().add(new WellData(startPosition, value));
             wellDataset.setOptions(hetPctOptions);
 
             // P95_GREEN
             value = String.valueOf(arraysQc.getP95Green());
             wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.P95_GREEN);
-            wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
+            wellDataset.getWellData().add(new WellData(startPosition, value));
             wellDataset.setOptions(emptyOptions);
 
             // P95 Red
             value = String.valueOf(arraysQc.getP95Red());
             wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.P95_RED);
-            wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
+            wellDataset.getWellData().add(new WellData(startPosition, value));
             wellDataset.setOptions(emptyOptions);
 
             // Fingerprinting Concordance
@@ -524,7 +552,7 @@ public class MetricsViewActionBean extends CoreActionBean {
                 ArraysQcFingerprint arraysQcFingerprint = arraysQc.getArraysQcFingerprints().iterator().next();
                 value = String.valueOf(arraysQcFingerprint.getLodExpectedSample());
                 wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.FINGERPRINT_CONCORDANCE);
-                wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
+                wellDataset.getWellData().add(new WellData(startPosition, value));
                 wellDataset.setOptions(fingerprintingConcordanceOptions);
             }
 
@@ -534,7 +562,7 @@ public class MetricsViewActionBean extends CoreActionBean {
                 value = String.valueOf(Math.abs(arraysQcFingerprint.getHaplotypesConfidentlyChecked() -
                                                 arraysQcFingerprint.getHaplotypesConfidentlyMatchin()));
                 wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.HAPLOTYPE_DIFFERENCE);
-                wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
+                wellDataset.getWellData().add(new WellData(startPosition, value));
                 wellDataset.setOptions(emptyOptions);
             }
 
@@ -544,7 +572,7 @@ public class MetricsViewActionBean extends CoreActionBean {
                     value = ColumnValueType.TWO_PLACE_DECIMAL.format(
                             arraysQcGtConcordance.getGenotypeConcordance().multiply(BigDecimal.valueOf(100)), "");
                     wellDataset = plateMapToWellDataSet.get(PlateMapMetrics.HAPMAP_CONCORDANCE);
-                    wellDataset.getWellData().add(new WellData(startPosition, value, metadata));
+                    wellDataset.getWellData().add(new WellData(startPosition, value));
                     wellDataset.setOptions(hapMapConcordanceOptions);
                 }
             }
@@ -572,8 +600,45 @@ public class MetricsViewActionBean extends CoreActionBean {
         plateMap.getPlateMetadata().add(Metadata.create(percentZCallWellsPassingKey,
                 percentZCallCallWellsPassingString));
 
-        allPositionNames.removeAll(chipWellToSourcePosition.values());
-        plateMap.setEmptyWells(allPositionNames);
+        // Empty wells
+        for( String platePosition : allPositionNames ) {
+            if( chipWellToSourcePosition.containsValue(platePosition) ) {
+                continue;
+            } else {
+                plateMap.setWellStatus(platePosition, WellStatus.Empty);
+                plateMap.getWellMetadataMap().put(platePosition, new ArrayList<Metadata>());
+                plateMap.getWellMetadataMap().get(platePosition).add( Metadata.create("(Empty)", ""));
+            }
+        }
+
+        // Abandoned wells - work backward from chip (only if no array data)
+        // TODO: JMS Add some type of distinction to indicate that pipeline has not begun processing (vs. being abandoned)
+        if( chipWellToSourcePosition.size() != plateMap.getWellMetadataMap().size()) {
+            for (String platePosition : allPositionNames) {
+                if (plateMap.getWellMetadataMap().get(platePosition) == null) {
+                    String chipWellBarcode = chipWellToSourcePosition.getKey(platePosition);
+                    int pos = chipWellBarcode.indexOf("_");
+                    String chipBarcode = chipWellBarcode.substring(0, pos );
+                    VesselPosition chipPosition = VesselPosition.getByName(chipWellBarcode.substring( pos + 1 ));
+                    for( LabVessel chip : chips ) {
+                        if( chip.getLabel().equals(chipBarcode)) {
+                            TransferTraverserCriteria.AbandonedLabVesselCriteria abandonCriteria = new TransferTraverserCriteria.AbandonedLabVesselCriteria();
+                            chip.getContainerRole().evaluateCriteria(chipPosition, abandonCriteria,
+                                    TransferTraverserCriteria.TraversalDirection.Ancestors, 0);
+                            if( abandonCriteria.isAncestorAbandoned() ) {
+                                List<Metadata> metadataList = new ArrayList<>();
+                                AbandonVessel abandon = abandonCriteria.getAncestorAbandonVessels().values().iterator().next();
+                                metadataList.add(Metadata.create("Lab Abandon Reason", abandon.getReason().getDisplayName()));
+                                metadataList.add(Metadata.create("Abandoned On", DATE_FORMAT.format( abandon.getAbandonedOn() ) ));
+                                plateMap.getWellMetadataMap().put(platePosition, metadataList);
+                                plateMap.setWellStatus(platePosition, WellStatus.Abandoned);
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        }
 
         return plateMap;
     }
@@ -635,7 +700,8 @@ public class MetricsViewActionBean extends CoreActionBean {
         private List<WellDataset> datasets;
         private String label;
         private List<Metadata> plateMetadata;
-        private Set<String> emptyWells;
+        private Map<String, WellStatus> wellStatusMap;
+        private Map<String,List<Metadata>> wellMetadataMap;
 
         public List<WellDataset> getDatasets() {
             if (datasets == null) {
@@ -661,15 +727,18 @@ public class MetricsViewActionBean extends CoreActionBean {
             this.plateMetadata = plateMetadata;
         }
 
-        public Set<String> getEmptyWells() {
-            if (emptyWells == null) {
-                emptyWells = new HashSet<>();
-            }
-            return emptyWells;
+        /**
+         * JSON needs this to serialize as map
+         */
+        public Map<String, WellStatus> getWellStatusMap(){
+            return wellStatusMap;
         }
 
-        public void setEmptyWells(Set<String> emptyWells) {
-            this.emptyWells = emptyWells;
+        public void setWellStatus(String well, WellStatus wellStatus){
+            if( wellStatusMap == null ) {
+                wellStatusMap = new HashMap<>();
+            }
+            wellStatusMap.put(well, wellStatus);
         }
 
         public String getLabel() {
@@ -678,6 +747,18 @@ public class MetricsViewActionBean extends CoreActionBean {
 
         public void setLabel(String label) {
             this.label = label;
+        }
+
+        public Map<String, List<Metadata>> getWellMetadataMap() {
+            if( wellMetadataMap == null ) {
+                wellMetadataMap = new HashMap<>();
+            }
+            return wellMetadataMap;
+        }
+
+        public void setWellMetadataMap(
+                Map<String, List<Metadata>> wellMetadataMap) {
+            this.wellMetadataMap = wellMetadataMap;
         }
     }
 
@@ -714,12 +795,10 @@ public class MetricsViewActionBean extends CoreActionBean {
     public class WellData {
         private String well;
         private String value;
-        private List<Metadata> metadata;
 
-        public WellData(String well, String value, List<Metadata> metadata) {
+        public WellData(String well, String value) {
             this.well = well;
             this.value = value;
-            this.metadata = metadata;
         }
 
         public String getWell() {
@@ -729,14 +808,18 @@ public class MetricsViewActionBean extends CoreActionBean {
         public String getValue() {
             return value;
         }
-
-        public List<Metadata> getMetadata() {
-            return metadata;
-        }
     }
 
     public enum ChartType {
         Category, Heatmap
+    }
+
+    /**
+     * Mapped to UI display css logic <br/>
+     * Should be mutually exclusive, but other use cases may apply so stored as a Set
+     */
+    public enum WellStatus {
+        Empty, Blacklisted, Abandoned
     }
 
     private static class OptionsBuilder {

@@ -103,6 +103,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFunding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
@@ -143,6 +144,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.StringReader;
+import java.math.BigDecimal;
 import java.text.MessageFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -455,7 +457,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private String orderType;
 
     private List<CustomizationValues> productCustomizations = new ArrayList();
-
+    private String customPricePlaceholder;
     /**
      * @return the required confirmation message for IRB attestation.
      */
@@ -756,7 +758,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         if(action.equals(PLACE_ORDER_ACTION) && editOrder.getProduct().isClinicalProduct()) {
-            requireField(editOrder.isClinicalAttestationConfirmed(),
+            requireField(editOrder.isClinicalAttestationConfirmed().booleanValue(),
                     "the checkbox that confirms you have completed requirements to place a clinical order",
                     action);
         }
@@ -774,9 +776,9 @@ public class ProductOrderActionBean extends CoreActionBean {
                                     DateUtils.getNumDaysBetween(new Date(), funding.getGrantEndDate());
                             if (numDaysBetween > 0 && numDaysBetween < 45) {
                                 addMessage("The Funding Source " + funding.getDisplayName() + " on " +
-                                        quote.getAlphanumericId() + "  Quote expires in " + numDaysBetween +
-                                        " days. If it is likely this work will not be completed by then, please work on "
-                                        + "updating the Funding Source so Billing Errors can be avoided.");
+                                           quote.getAlphanumericId() + "  Quote expires in " + numDaysBetween +
+                                           " days. If it is likely this work will not be completed by then, please work on "
+                                           + "updating the Funding Source so Billing Errors can be avoided.");
                             }
                         }
                     }
@@ -944,10 +946,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         Set<ProductOrder> justParents = new HashSet<>();
         for (ProductOrder order : ordersWithCommonQuote) {
             if(order.isChildOrder()) {
-                if(order.getParentOrder().isSavedInSAP() && exclusionSapOrders.contains(order.getParentOrder().getSapOrderNumber())) {
+                if((order.getParentOrder().isSavedInSAP() && exclusionSapOrders.contains(order.getParentOrder().getSapOrderNumber())) ||
+                   (order.isSavedInSAP() && exclusionSapOrders.contains(order.getSapOrderNumber()))) {
                     continue;
                 }
                 justParents.add(order.getParentOrder());
+
             } else {
                 if(order.isSavedInSAP() && exclusionSapOrders.contains(order.getSapOrderNumber())) {
                     continue;
@@ -1340,6 +1344,21 @@ public class ProductOrderActionBean extends CoreActionBean {
                 }
             }
 
+            QuotePriceItem priceItemByKeyFields = null;
+            if (editOrder.getProduct() != null) {
+                priceItemByKeyFields = priceListCache.findByKeyFields(editOrder.getProduct().getPrimaryPriceItem());
+                if (priceItemByKeyFields != null) {
+                    editOrder.getProduct().getPrimaryPriceItem().setUnits(priceItemByKeyFields.getUnit());
+                }
+            }
+
+            for (ProductOrderAddOn productOrderAddOn : editOrder.getAddOns()) {
+                final QuotePriceItem addOnPriceItemByKeyFields =
+                        priceListCache.findByKeyFields(productOrderAddOn.getAddOn().getPrimaryPriceItem());
+                if (addOnPriceItemByKeyFields != null ) {
+                    productOrderAddOn.getAddOn().getPrimaryPriceItem().setUnits(addOnPriceItemByKeyFields.getUnit());
+                }
+            }
         }
     }
 
@@ -1390,7 +1409,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             item.put("key", quoteIdentifier);
             if (quoteIdentifier != null) {
                 Quote quote = quoteService.getQuoteByAlphaId(quoteIdentifier);
-                double fundsRemaining = Double.parseDouble(quote.getQuoteFunding().getFundsRemaining());
+                final QuoteFunding quoteFunding = quote.getQuoteFunding();
+                double fundsRemaining = Double.parseDouble(quoteFunding.getFundsRemaining());
                 item.put("fundsRemaining", NumberFormat.getCurrencyInstance().format(fundsRemaining));
                 item.put("status", quote.getApprovalStatus().getValue());
 
@@ -1401,34 +1421,44 @@ public class ProductOrderActionBean extends CoreActionBean {
 
                 final Date todayTruncated = org.apache.commons.lang3.time.DateUtils.truncate(new Date(), Calendar.DATE);
 
-                for (FundingLevel fundingLevel : quote.getQuoteFunding().getFundingLevel(true)) {
-                    for (Funding funding:fundingLevel.getFunding()) {
-                        if(funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
-                            JSONObject fundingInfo = new JSONObject();
-                            fundingInfo.put("grantTitle", funding.getDisplayName());
-                            fundingInfo.put("grantEndDate",
-                                    DateUtils.getDate(funding.getGrantEndDate()));
-                            fundingInfo.put("grantNumber", funding.getGrantNumber());
-                            fundingInfo.put("grantStatus", funding.getGrantStatus());
+                if (CollectionUtils.isNotEmpty(quoteFunding.getFundingLevel())) {
+                    for (FundingLevel fundingLevel : quoteFunding.getFundingLevel(true)) {
 
-                            final Date today = new Date();
-                            fundingInfo.put("activeGrant", (FundingLevel.isGrantActiveForDate(todayTruncated,funding)));
-                            fundingInfo.put("daysTillExpire",
-                                    DateUtils.getNumDaysBetween(today, funding.getGrantEndDate()));
-                            fundingDetails.put(fundingInfo);
+                        if (CollectionUtils.isNotEmpty(fundingLevel.getFunding())) {
+                            for (Funding funding:fundingLevel.getFunding()) {
+                                if (StringUtils.isNotBlank(funding.getFundingType())) {
+                                    if(funding.getFundingType().equals(Funding.FUNDS_RESERVATION)) {
+                                        JSONObject fundingInfo = new JSONObject();
+                                        fundingInfo.put("grantTitle", funding.getDisplayName());
+                                        fundingInfo.put("grantEndDate",
+                                                DateUtils.getDate(funding.getGrantEndDate()));
+                                        fundingInfo.put("grantNumber", funding.getGrantNumber());
+                                        fundingInfo.put("grantStatus", funding.getGrantStatus());
+
+                                        final Date today = new Date();
+                                        fundingInfo.put("activeGrant", (FundingLevel.isGrantActiveForDate(todayTruncated,funding)));
+                                        fundingInfo.put("daysTillExpire",
+                                                DateUtils.getNumDaysBetween(today, funding.getGrantEndDate()));
+                                        fundingDetails.put(fundingInfo);
+                                    }
+                                }
+                        /*
+                        This really only needs to loop once since the information that is retrieved will be the same for each
+                        funding instance under fundingLevel
+                        */
+
+                                break;
+                            }
                         }
-                /*
-                This really only needs to loop once since the information that is retrieved will be the same for each
-                funding instance under fundingLevel
-                */
-
-                        break;
                     }
+                } else {
+                    item.put("error", "This quote has no active Funding Sources.");
                 }
                 item.put("fundingDetails", fundingDetails);
             }
 
         } catch (Exception ex) {
+            logger.error("Error occured calculating quote funding", ex);
             try {
                 item.put("error", "Unable to complete evaluating order values:  " + ex.getMessage());
             } catch (Exception ex1) {
@@ -1687,6 +1717,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution save() throws Exception {
 
         MessageCollection saveOrderMessageCollection = new MessageCollection();
+        String originalBusinessKey = editOrder.getBusinessKey();
 
         // Update the modified by and created by, if necessary.
         ProductOrder.SaveType saveType = ProductOrder.SaveType.UPDATING;
@@ -1708,9 +1739,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 //                } else {
                         editOrder.setOrderType(ProductOrder.OrderAccessType.BROAD_PI_ENGAGED_WORK);
 //                }
-                if (StringUtils.isNotBlank(customizationJsonString)) {
-                    buildJsonObjectFromEditOrderProductCustomizations();
-                }
+            }
+            if (StringUtils.isNotBlank(customizationJsonString)) {
+                buildJsonObjectFromEditOrderProductCustomizations();
             }
         }
 
@@ -1722,6 +1753,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         try {
             productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails,
                     productCustomizations, saveOrderMessageCollection);
+            originalBusinessKey = null;
+
+
             if (isInfinium() && editOrder.getPipelineLocation() == null) {
                 editOrder.setPipelineLocation(ProductOrder.PipelineLocation.US_CLOUD);
                 productOrderDao.persist(editOrder);
@@ -1729,6 +1763,11 @@ public class ProductOrderActionBean extends CoreActionBean {
             addMessages(saveOrderMessageCollection);
             addMessage("Product Order \"{0}\" has been saved.", editOrder.getTitle());
         } catch (SAPInterfaceException e) {
+            if (originalBusinessKey != null) {
+                productOrderDao.clear();
+                editOrder = productOrderDao.findByBusinessKey(originalBusinessKey);
+            }
+
             addGlobalValidationError(e.getMessage());
             getSourcePageResolution();
         }
@@ -1837,15 +1876,23 @@ public class ProductOrderActionBean extends CoreActionBean {
                 tokenProject != null ? researchProjectDao.findByBusinessKey(tokenProject.getBusinessKey()) : null;
         Product tokenProduct = productTokenInput.getTokenObject();
         Product product = tokenProduct != null ? productDao.findByPartNumber(tokenProduct.getPartNumber()) : null;
+        if(product != null) {
+            product.setSapMaterial(productPriceCache.findByPartNumber(product.getPartNumber(),
+                    product.determineCompanyConfiguration()));
+        }
+        List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
 
-        if(editOrder.isSavedInSAP() && !editOrder.latestSapOrderDetail().getCompanyCode().equals(
-                editOrder.getSapCompanyConfigurationForProductOrder().getCompanyCode())) {
-            addGlobalValidationError("Unable to update the order in SAP.  This combination of Product and Order is "
-                                     + "attempting to change the company code to which this order will be associated.");
+        for (Product addOnProduct : addOnProducts) {
+            addOnProduct.setSapMaterial(productPriceCache.findByPartNumber(addOnProduct.getPartNumber(),
+                    addOnProduct.determineCompanyConfiguration()));
         }
 
-        List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
-        editOrder.updateData(project, product, addOnProducts, stringToSampleListExisting(sampleList));
+        try {
+            editOrder.updateData(project, product, addOnProducts, stringToSampleListExisting(sampleList));
+        } catch (InvalidProductException e) {
+            addGlobalValidationError(e.getMessage());
+        }
+
         BspUser tokenOwner = owner.getTokenObject();
         editOrder.setCreatedBy(tokenOwner != null ? tokenOwner.getUserId() : null);
 
@@ -1937,7 +1984,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                     priceTitle = "clinicalPrice";
                 }
 
-                item.put(priceTitle , priceListCache.findByKeyFields(addOn.getPrimaryPriceItem()).getPrice());
+                BigDecimal priceForFormat = new BigDecimal(priceListCache.findByKeyFields(addOn.getPrimaryPriceItem()).getPrice());
+                item.put(priceTitle , NumberFormat.getCurrencyInstance().format(priceForFormat));
 
 //                String externalPrice = null;
 //                if (addOn.getExternalPriceItem() != null) {
@@ -2365,8 +2413,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                 priceTitle = "clinicalPrice";
             }
 
-
-            productInfo.put(priceTitle, priceListCache.findByKeyFields(productEntity.getPrimaryPriceItem()).getPrice());
+            BigDecimal priceForFormat = new BigDecimal(priceListCache.findByKeyFields(productEntity.getPrimaryPriceItem()).getPrice());
+            productInfo.put(priceTitle, NumberFormat.getCurrencyInstance().format(priceForFormat));
 //            String externalPrice = null;
 //            if (productEntity.getExternalPriceItem() != null) {
 //                final QuotePriceItem externalPriceItem = priceListCache.findByKeyFields(productEntity.getExternalPriceItem());
@@ -2566,19 +2614,15 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         if (!selectedProductOrderSamples.isEmpty()) {
-            productOrderEjb.abandonSamples(editOrder.getJiraTicketKey(), selectedProductOrderSamples, abandonComment);
+            MessageCollection abandonSamplesMessageCollection = new MessageCollection();
+            productOrderEjb.abandonSamples(editOrder.getJiraTicketKey(), selectedProductOrderSamples, abandonComment,
+                    abandonSamplesMessageCollection);
             addMessage("Abandoned samples: {0}.",
                     StringUtils.join(ProductOrderSample.getSampleNames(selectedProductOrderSamples), ", "));
+
+
             productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey(), this);
 
-            MessageCollection abandonSamplesMessageCollection = new MessageCollection();
-
-            try {
-                productOrderEjb.publishProductOrderToSAP(editOrder, abandonSamplesMessageCollection, false);
-            } catch (SAPInterfaceException e) {
-                logger.error("SAP Error when attempting to abandon samples", e);
-                addGlobalValidationError(e.getMessage());
-            }
             addMessages(abandonSamplesMessageCollection);
         }
         return createViewResolution(editOrder.getBusinessKey());
@@ -2588,28 +2632,24 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution unAbandonSamples() throws Exception {
 
         if (CollectionUtils.isNotEmpty(selectedProductOrderSampleIds)) {
+            MessageCollection abandonSamplesMessageCollection = new MessageCollection();
             try {
                 productOrderEjb.unAbandonSamples(editOrder.getJiraTicketKey(), selectedProductOrderSampleIds,
-                        unAbandonComment, this);
+                        unAbandonComment, abandonSamplesMessageCollection);
             } catch (ProductOrderEjb.SampleDeliveryStatusChangeException e) {
                 addGlobalValidationError(e.getMessage());
                 return new ForwardResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter(
                         PRODUCT_ORDER_PARAMETER,
                         editOrder.getBusinessKey());
             }
+
             productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey(), this);
 
-            MessageCollection abandonSamplesMessageCollection = new MessageCollection();
-            try {
-                productOrderEjb.publishProductOrderToSAP(editOrder, abandonSamplesMessageCollection, false);
-            } catch (SAPInterfaceException e) {
-                logger.error("SAP Error when attempting to abandon samples", e);
-                addGlobalValidationError(e.getMessage());
-            }
             addMessages(abandonSamplesMessageCollection);
         }
         return createViewResolution(editOrder.getBusinessKey());
     }
+
     @ValidationMethod(on = ADD_SAMPLES_ACTION)
     public void addSampleExtraValidations() throws Exception {
         try {
@@ -2626,19 +2666,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-//    private void testForPriceItemValidity(ProductOrder editOrder, Quote orderQuote) {
-//        try {
-//            if(!productOrderEjb.areProductPricesValid(editOrder, new HashSet<AccessItem>(), orderQuote)) {
-//                final String errorMessage = "One of the price items on this orders products is invalid";
-//                if(editOrder.isSavedInSAP()) {
-//                    addGlobalValidationError(errorMessage);
-//                }
-//            }
-//        } catch (InvalidProductException e) {
-//            addGlobalValidationError(e.getMessage());
-//        }
-//    }
-//
     @HandlesEvent(ADD_SAMPLES_ACTION)
     public Resolution addSamples() throws Exception {
         List<ProductOrderSample> samplesToAdd = stringToSampleList(addSamplesText);
@@ -2809,12 +2836,18 @@ public class ProductOrderActionBean extends CoreActionBean {
         while(keys.hasNext()) {
             String productPartNumber = (String)keys.next();
             JSONObject currentCustomization = (JSONObject) customizationJson.get(productPartNumber);
+            
+            final Product product = productDao.findByPartNumber(productPartNumber);
 
             final CustomizationValues customizedProductInfo = new CustomizationValues(productPartNumber,
                     (String) ((currentCustomization.has("quantity") && currentCustomization.get("quantity") != null) ?currentCustomization.get("quantity"):""),
                     (String) ((currentCustomization.has("price") && currentCustomization.get("price") != null) ?currentCustomization.get("price"):""),
                     (String) ((currentCustomization.has("customName") && currentCustomization.get("customName") != null) ?currentCustomization.get("customName"):""));
-            customizedProductInfo.setProductName(productDao.findByPartNumber(productPartNumber).getProductName());
+            customizedProductInfo.setProductName(product.getProductName());
+            final QuotePriceItem priceListItem = priceListCache.findByKeyFields(product.getPrimaryPriceItem());
+            customizedProductInfo.setUnits(priceListItem.getUnit().toLowerCase());
+            BigDecimal formatedPrice = new BigDecimal(priceListItem.getPrice());
+            customizedProductInfo.setOriginalPrice(NumberFormat.getCurrencyInstance().format(formatedPrice));
             productCustomizations.add(customizedProductInfo);
         }
     }
@@ -3738,6 +3771,14 @@ public class ProductOrderActionBean extends CoreActionBean {
         return customizationJsonString;
     }
 
+    public String getCustomPricePlaceholder() {
+        return customPricePlaceholder;
+    }
+
+    public void setCustomPricePlaceholder(String customPricePlaceholder) {
+        this.customPricePlaceholder = customPricePlaceholder;
+    }
+
     public void setCustomizationJsonString(String customizationJsonString) {
         this.customizationJsonString = customizationJsonString;
     }
@@ -3746,5 +3787,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         return "I acknowledge that I have been properly trained in the handling of clinical projects, samples, and "
                + "data per Broad Genomics requirements, including HIPAA and data security policies, in order to order "
                + "clinical products";
+    }
+
+    public Boolean canEditPrice(String units) {
+        return StringUtils.equalsIgnoreCase(units, "Sample") && (userBean.isPDMUser() || userBean.isDeveloperUser()) || !StringUtils.equalsIgnoreCase(units, "Sample") ;
     }
 }

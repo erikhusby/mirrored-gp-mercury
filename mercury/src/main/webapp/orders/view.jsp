@@ -53,21 +53,6 @@
             background: #c4eec0;
             height: 15px;
         }
-        /* css used to indicate slow columns */
-        .em-turtle {
-            background-image: url("${ctxpath}/images/turtle.png") !important;
-            background-size: 16px 16px;
-            background-repeat: no-repeat;
-            background-position: right 5px center;
-        }
-        .image-small {
-            width: 16px;
-            height: 16px;
-        }
-        .slow-colunms-hidden {
-            box-shadow: inset 0 0 10px orange
-        }
-
         .sampleDataProgressText{
             position: absolute;
             margin-left: 1em;
@@ -83,48 +68,16 @@ var kitDefinitionIndex = 0;
 $j(document).ready(function () {
     $j('body').popover({selector: '[rel=popover]'});
 //    if ($j("#sampleData tbody>tr").length > 0) {
-    $j("#ledgerLink").on('click', function(){
-        window.stop();
-    });
     enableDefaultPagingOptions();
     function loadBspData(settings) {
         var api = new $j.fn.dataTable.Api(settings);
         var table = api.table();
         var remainingSamples = [];
-        table.rows().data().each(function (row) {
-            var data = $j(row);
-            data.each(function () {
-                var pdoId = this.PRODUCT_ORDER_SAMPLE_ID;
-                if (!this.includeSampleData && remainingSamples.indexOf(pdoId)<0){
-                    remainingSamples.push(pdoId);
-                }
-            });
+        table.column(0).data().each(function (cell) {
+            remainingSamples.push($j(cell)[0]);
         });
+
         sampleInfoBatchUpdate(remainingSamples, table);
-        updateSampleSummary();
-    }
-
-    function updateSampleSummary(){
-        $j.ajax({
-            url: "${ctxpath}/orders/order.action?<%= ProductOrderActionBean.GET_SAMPLE_SUMMARY %>",
-            data: {
-                'productOrder': "${actionBean.editOrder.businessKey}",
-            },
-            method: 'POST',
-            dataType: 'json',
-            error: function (obj, error, ex) {
-                console.log(error, obj.responseText, JSON.stringify(ex));
-            },
-            success: function (json) {
-                if (json['summary']) {
-                    writeSummaryData(json);
-                }
-                if (json['<%=ProductOrderSampleBean.SAMPLES_NOT_RECEIVED%>']) {
-                    $j("#numberSamplesNotReceived").html(json['<%=ProductOrderSampleBean.SAMPLES_NOT_RECEIVED%>']);
-                }
-            }
-        })
-
     }
 
     function sampleInfoBatchUpdate(samplesToFetch, settings) {
@@ -135,11 +88,12 @@ $j(document).ready(function () {
         var table = new $j.fn.dataTable.Api(settings).table();
 
         // When there are greater than 1000 samples split the call to updateSampleInformation
-        fetchSize = pdoSampleCount > 2000 ? 2000: pdoSampleCount;
-        while (samplesToFetch.length > 0) {
-            (function (samples) {
-                updateSampleInformation(samples, table, false);
-            }(samplesToFetch.splice(0, fetchSize)));
+        if (pdoSampleCount > 1000) {
+            fetchSize = Math.ceil(pdoSampleCount / 2);
+            updateSampleInformation(samplesToFetch.splice(0, fetchSize), table, true);
+            updateSampleInformation(samplesToFetch.splice(0, fetchSize), table, false);
+        } else {
+            updateSampleInformation(samplesToFetch, table, true);
         }
     }
 
@@ -223,11 +177,10 @@ $j(document).ready(function () {
                     }
                 }],
             }, standardButtons()],
-            order: [[ 1, 'asc' ]],
+            order: [[ 1, 'desc' ]],
             ajax: {
                 url: "${ctxpath}/orders/order.action?<%= ProductOrderActionBean.GET_SAMPLE_DATA %>",
                 method: 'POST',
-                dataType: 'json',
                 data: function (data, settings) {
                     data.productOrder = "${actionBean.editOrder.businessKey}";
                     data.initialLoad = true;
@@ -240,6 +193,12 @@ $j(document).ready(function () {
                     var rowsWithSampleData = data['<%=ProductOrderSampleBean.SAMPLE_DATA_ROW_COUNT%>'];
                     var recordsTotal = data['<%=ProductOrderSampleBean.RECORDS_TOTAL%>'];
                     initSampleDataProgress(rowsWithSampleData, recordsTotal);
+                    if (data['<%=ProductOrderSampleBean.COMMENT%>']) {
+                        writeSummaryData(data);
+                    }
+                    if (data['<%=ProductOrderSampleBean.SAMPLES_NOT_RECEIVED%>']) {
+                        $j("#numberSamplesNotReceived").html(data['<%=ProductOrderSampleBean.SAMPLES_NOT_RECEIVED%>']);
+                    }
                 },
             },
             "columns": [
@@ -272,7 +231,7 @@ $j(document).ready(function () {
                 {"data": "${columnHeaderOnRiskString}", "title": "${columnHeaderOnRisk}"},
                 {"data": "${columnHeaderProceedOutOfSpec}", "title": "${columnHeaderProceedOutOfSpec}"},
                 {"data": "${columnHeaderStatus}", "title": "${columnHeaderStatus}"},
-                { "data": "${columnHeaderCompletelyBilled}", "title": "${columnHeaderCompletelyBilled}", "sType": "boolean", render: renderBilled}, {"data": "${columnHeaderComment}", "title": "${columnHeaderComment}"}
+                { "data": "${columnHeaderCompletelyBilled}", "title": "${columnHeaderCompletelyBilled}", "sType": "title-string", render: renderBilled}, {"data": "${columnHeaderComment}", "title": "${columnHeaderComment}"}
             ],
             "stateSaveCallback": function (settings, data) {
                 var api = new $j.fn.dataTable.Api(settings);
@@ -348,40 +307,43 @@ $j(document).ready(function () {
                     showKitDetail();
                 }
             },
-            "drawCallback": function(){
-                $j(".shiftCheckbox").enableCheckboxRangeSelection();
-            }
+        "drawCallback": function(){
+            $j(".shiftCheckbox").enableCheckboxRangeSelection();
+        }
 });
 
     function renderRackscanMismatch(data, type, row, meta) {
+        var result = data;
         if (type === 'display') {
             if (data === true) {
-                return imageForBoolean(data, "${ctxpath}/images/error.png")
+                result = imageForBoolean(data, "${ctxpath}/images/error.png")
             } else {
-                return "";
+                result = "";
             }
         }
-        return data;
+        return result;
     }
 
     function renderBilled(data, type, row, meta) {
+        var result = data;
         if (type === 'display') {
             if (data && data === true) {
                 return imageForBoolean(data, "${ctxpath}/images/check.png");
             } else {
-                return "";
+                result = "";
             }
         }
-        return data;
+        return result;
     }
 
-    function imageForBoolean(data, imageSrc) {
+    function imageForBoolean(data, image) {
         var result = data;
         if (data) {
-            var image = document.createElement("img");
-            image.src = imageSrc;
-            image.title = true;
-            result = image.outerHTML;
+            tagAttributes = {
+                src: image,
+                title: true
+            }
+            result = jQuery("<img/>", tagAttributes)[0].outerHTML;
         }
         return result;
     }
@@ -391,60 +353,14 @@ $j(document).ready(function () {
     function initColumnVisibility(settings) {
         var api=$j.fn.dataTable.Api(settings);
         var columnVisibilityKey = "columnVisibility";
-        var $sampleDataTable = $j('#sampleData');
-        var $colVis = $j(".buttons-colvis");
-
-        $sampleDataTable.on('column-visibility.dt', function (e, settings, column, state) {
+        $j('#sampleData').on('column-visibility.dt', function (e, settings, column, state) {
             $j("body").data(columnVisibilityKey, state);
         });
-
-
-        $colVis.popover({
-            trigger: "hover", placement: 'top', html: true,
-            content: "Click to change column visibility. Columns marked with a <img src='${ctxpath}/images/turtle.png' class='image-small'/> will negatively impact page performance.</div>"
-        });
-
-        function updateShowHideButton() {
-            var $popover = $colVis.closest(".popover")
-            if (api.column(":hidden").length>0) {
-                $colVis.addClass("slow-colunms-hidden");
-                $colVis.attr('data-original-title','Some data columns are hidden.');
-            } else {
-                $colVis.removeClass("slow-colunms-hidden");
-                $colVis.attr('data-original-title','Hide unneeded columns.');
-            }
-        }
-
-        $j(".slow-colunms-hidden").on('hover', function(){
-           this.setAttribute('tooltip', 'Some data columns are hidden')
-        });
-        $sampleDataTable.on('init.dt', updateShowHideButton);
-
-        var slowColumns = ${actionBean.slowColumns}
-
-            // When the "Show or Hide" button is clicked
-            $j(document.body).on("click", "a.buttons-colvis", function (event) {
-                // When colvis modal is loading
-                $j.when($j(event.target).load()).then(function (event2) {
-                    var slowButtons = $j("a.buttons-columnVisibility").filter(function () {
-                        var $button = $j(this);
-                        // test if the column headers is in the slowColumns array.
-                        // the check for undefined is to prevent this from being called very time
-                        return $button.data('tooltip') === undefined && slowColumns.indexOf($button.text().trim()) >= 0;
-                    });
-                    slowButtons.addClass("em-turtle");
-                    slowButtons.attr('title', 'Enabling this column may slow page loading');
-                    slowButtons.tooltip();
-                });
-//                updateHowHideButton();
-            })
 
         // If a column that was previously hidden but becomes visible the page
         // must be reloaded since there is no data in that column.
         $j(document.body).on("click", ".dt-button-background", function () {
             api.state.save();
-            updateShowHideButton();
-
             var sessionVisibility = !undefined && $j("body").data(columnVisibilityKey) || false;
             if (sessionVisibility) {
 //                api.ajax.reload();
@@ -465,14 +381,14 @@ $j(document).ready(function () {
     function renderCheckbox(data, type, row) {
         var result = data;
         if (type === 'display') {
-            var input = document.createElement("input");
-            input.name = "selectedProductOrderSampleIds"
-            input.className = "shiftCheckbox";
-            input.type = "checkbox";
-            input.value = data;
-            input.setAttribute("data-sample-checkbox", row["<%= ProductOrderSampleBean.SAMPLE_ID %>"]);
-
-            result = input.outerHTML;
+            tagAttributes = {
+                "name": "selectedProductOrderSampleIds",
+                "value": data,
+                "type": "checkbox",
+                "class": "shiftCheckbox",
+                "data-sample-checkbox" :row["<%= ProductOrderSampleBean.SAMPLE_ID %>"]
+            };
+            result = jQuery("<input/>", tagAttributes)[0].outerHTML;
         }
         return result;
 
@@ -734,7 +650,7 @@ function setupDialogs() {
 
 function writeSummaryData(json) {
     var dataList = '<ul>';
-    json.summary.map(function (item) {
+    json.comments.map(function (item) {
         dataList += '<li>' + item + '</li>'
     });
     dataList += '</ul>';
@@ -811,13 +727,24 @@ function updateSampleInformation(samples, table, includeSampleSummary) {
             },
             success: function (json) {
                 if (json) {
+                    var dataMap = {};
                     for (var item of json.data) {
-                        var row = table.row("#"+item.rowId);
-                        row.data(item);
-                        row.invalidate;
+                        dataMap[item.rowId] = item;
                     }
-
+                    table.rows().every(function () {
+                        var newData = dataMap[this.data().rowId];
+                        if (newData) {
+                            this.data(newData);
+                            this.invalidate();
+                        }
+                    });
+                    if (json.comments) {
+                        writeSummaryData(json);
+                    }
                     updateSampleDataProgress(json.rowsWithSampleData, recordsTotal);
+                    if (json.numberSamplesNotReceived) {
+                        $j("#numberSamplesNotReceived").html(json.numberSamplesNotReceived);
+                    }
                 }
             },
             complete: function () {
@@ -831,11 +758,12 @@ function updateSampleInformation(samples, table, includeSampleSummary) {
 
 function renderPico(data, type, row, meta) {
     var result = data;
+    if (result === null) {
+        result = "";
+    }
     if (type === 'display') {
-        var outerDiv = document.createElement("div");
-        var picoSpan=document.createElement("span");
-        if (result === "" && row.includeSampleData) {
-            picoSpan.innerHTML = "No Pico";
+        if (result === "") {
+            result = "No Pico";
         } else {
             var oneYearAgo = meta.settings.oneYearAgo;
             var almostOneYearAgo = meta.settings.almostOneYearAgo;
@@ -857,18 +785,17 @@ function renderPico(data, type, row, meta) {
             } else if (picoDate.getTime() < almostOneYearAgo.getTime()) {
                 containerClass = "label label-warning";
             }
-            picoSpan.innerHTML=data;
-            picoSpan.className=containerClass;
+
         }
-        outerDiv.appendChild(picoSpan);
-        result = outerDiv.outerHTML;
+        var $container = $j("<span></span>", {text: result, class: containerClass});
+        result = $container.wrap("<div></div>").parent().html();
     }
     return result;
 }
 
 function updateFundsRemaining() {
     var quoteIdentifier = '${actionBean.editOrder.quoteId}';
-    var productOrderKey = $j("input[name='productOrder'").val();
+    var productOrderKey = $j("input[name='productOrder']").val();
     if ($j.trim(quoteIdentifier)) {
         $j.ajax({
             url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier="+quoteIdentifier+"&productOrder=" + productOrderKey,
@@ -1304,7 +1231,7 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
                 <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
 
                     &nbsp;&nbsp;&nbsp;&nbsp;
-                    <stripes:link id="ledgerLink" beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.BillingLedgerActionBean"><stripes:param name="orderId" value="${actionBean.editOrder.jiraTicketKey}"/>Online Billing Ledger</stripes:link>
+                    <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.BillingLedgerActionBean"><stripes:param name="orderId" value="${actionBean.editOrder.jiraTicketKey}"/>Online Billing Ledger</stripes:link>
                 </security:authorizeBlock>
 
             </c:if>
@@ -1549,36 +1476,38 @@ function showKitDetail(samples, kitType, organismName, materialInfo, postReceive
     </div>
 </c:if>
 
-<div class="view-control-group control-group">
-    <label class="control-label label-form">Add-ons</label>
-
-    <div class="controls">
-        <div class="form-value">${actionBean.editOrder.addOnList}</div>
-    </div>
-</div>
-
-    <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager) %>">
     <div class="view-control-group control-group">
-        <label class="control-label label-form">Order Customizations</label>
+        <label class="control-label label-form">Add-ons</label>
 
         <div class="controls">
-            <div class="form-value" id="customizationContent"></div>
+            <div class="form-value">${actionBean.editOrder.addOnList}</div>
         </div>
     </div>
+
+    <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager) %>">
+        <c:if test="${!actionBean.editOrder.priorToSAP1_5}">
+            <div class="view-control-group control-group">
+                <label class="control-label label-form">Order Customizations</label>
+
+                <div class="controls">
+                    <div class="form-value" id="customizationContent"></div>
+                </div>
+            </div>
+        </c:if>
     </security:authorizeBlock>
 
-<div class="view-control-group control-group">
-    <label class="control-label label-form">Quote ID</label>
+    <div class="view-control-group control-group">
+        <label class="control-label label-form">Quote ID</label>
 
-    <div class="controls">
-        <div class="form-value">
-            <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">
-                    ${actionBean.editOrder.quoteId}
-            </a>
-            <div id="fundsRemaining"> </div>
+        <div class="controls">
+            <div class="form-value">
+                <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">
+                        ${actionBean.editOrder.quoteId}
+                </a>
+                <div id="fundsRemaining"></div>
+            </div>
         </div>
     </div>
-</div>
 <c:if test="${actionBean.editOrder.skipQuoteReason != null}">
     <div class="view-control-group control-group">
         <label class="control-label label-form">Quote Skip Reason</label>

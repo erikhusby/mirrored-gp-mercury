@@ -312,6 +312,7 @@
                                 hintText: "Type a Product name or Part Number   ",
                                 onAdd: updateUIForProductChoice,
                                 onDelete: updateUIForProductChoice,
+                                onChange: resetCustomizationChoices,
                                 resultsFormatter: formatInput,
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.productTokenInput.completeData)},
                                 tokenDelimiter: "${actionBean.productTokenInput.separator}",
@@ -390,7 +391,7 @@
                     $j("#customizedProductSettings").dialog({
                         modal: true,
                         autoOpen: false,
-                        position: {my: "center top", at: "center top", of: window},
+                        position: {my: "left top", at: "left top", of: window},
                         buttons: [
                             {
                                 id: "assignCustomizations",
@@ -415,6 +416,12 @@
                                           && (isNaN(price ))) {
                                               errors.push(partnumberIndex + ": If you enter a value for quantity it must be numeric");
                                               foundError = true;
+                                          }
+                                          if((productName !== undefined) && (productName !== "") && (productName !== 'null')) {
+                                              if(productName.length >40) {
+                                                  errors.push(partnumberIndex + ": A customized product name must be 40 Characters or less");
+                                                  foundError = true;
+                                              }
                                           }
                                         if(!foundError) {
                                             addCustomizationValue(partnumberIndex, price, quantity, productName);
@@ -465,7 +472,6 @@
                     $j("#skipQuoteDiv").hide();
                     $j("#showCustomizeWindow").hide();
                     $j("#clinicalAttestationDiv").hide();
-//                    $j("#customizationContent").hide();
                     $j("#primaryProductListPrice").hide();
                     updateUIForProductChoice();
                     updateUIForProjectChoice();
@@ -628,7 +634,7 @@
             var selectedAddonProducts = "";
 
             $j('#createForm').find('input:checkbox[name="addOnKeys"]:checked').each(function () {
-                if (selectedAddonProducts != "") {
+                if (selectedAddonProducts !== "") {
                     selectedAddonProducts += "|@|";
                 }
                 selectedAddonProducts += $(this).val();
@@ -643,7 +649,9 @@
         function updateUIForProductChoice() {
 
             var productKey = $j("#product").val();
-            if ((productKey == null) || (productKey == "")) {
+            if ((productKey === null) || (productKey === "")) {
+                $j("#customizationJsonString").val("");
+                customizationValues = {};
                 $j("#addOnCheckboxes").text('If you select a product, its Add-ons will show up here');
                 $j("#sampleInitiationKitRequestEdit").hide();
                 $j("#numberOfLanesDiv").fadeOut(duration);
@@ -651,7 +659,6 @@
                 $j("#quote").show();
                 $j("#showCustomizeWindow").hide();
                 $j("#clinicalAttestationDiv").hide();
-//                $j("#customizationContent").hide();
                 $j("#primaryProductListPrice").hide();
 
             } else {
@@ -846,7 +853,7 @@
             var priceListText = "";
 
             if(data.researchListPrice !== undefined && data.researchListPrice.length > 0) {
-                priceListText += "research list price: $" + data.researchListPrice;
+                priceListText += "research list price: " + data.researchListPrice;
             }
 
             if(data.externalListPrice !== undefined && data.externalListPrice.length > 0) {
@@ -854,7 +861,7 @@
                     priceListText += ",  ";
                 }
 
-                priceListText += "external list price: $" + data.externalListPrice;
+                priceListText += "external list price: " + data.externalListPrice;
             }
 
             if(data.clinicalPrice  !== undefined && data.clinicalPrice.length > 0) {
@@ -862,7 +869,7 @@
                     priceListText += ",  ";
                 }
 
-                priceListText += "Clinical list price: $" + data.clinicalPrice;
+                priceListText += "Clinical list price: " + data.clinicalPrice;
             }
             $j("#primaryProductListPrice").text(priceListText);
             if(priceListText.length > 0) {
@@ -909,17 +916,24 @@
                     checkboxText += ' (';
                 }
                 if(val.researchListPrice !== undefined && val.researchListPrice.length > 0) {
-                    checkboxText += 'research list price: $' + val.researchListPrice;
+                    checkboxText += 'research list price: ' + val.researchListPrice;
                 }
                 if(val.externalListPrice !== undefined && val.externalListPrice.length > 0) {
                     if(val.researchListPrice !== undefined && val.researchListPrice.length > 0) {
                         checkboxText += ', ';
                     }
-                    checkboxText += 'external list price: $' + val.externalListPrice ;
+                    checkboxText += 'external list price: ' + val.externalListPrice ;
                 }
-
+                if(val.clinicalPrice  !== undefined && val.clinicalPrice.length > 0) {
+                    if((val.researchListPrice !== undefined && val.researchListPrice.length > 0) ||
+                        (val.externalListPrice !== undefined && val.externalListPrice.length > 0)) {
+                        checkboxText += ', ';
+                    }
+                    checkboxText += 'clinical list price: ' + val.clinicalPrice ;
+                }
                 if((val.externalListPrice !== undefined && val.externalListPrice.length > 0) ||
-                    (val.researchListPrice !== undefined && val.researchListPrice.length > 0)) {
+                    (val.researchListPrice !== undefined && val.researchListPrice.length > 0) ||
+                    (val.clinicalPrice !== undefined && val.clinicalPrice.length > 0)) {
                     checkboxText += ')';
                 }
                 </security:authorizeBlock>
@@ -991,7 +1005,7 @@
 
         function updateFundsRemaining() {
             var quoteIdentifier = $j("#quote").val();
-            var productOrderKey = $j("input[name='productOrder'").val();
+            var productOrderKey = $j("input[name='productOrder']").val();
             if ($j.trim(quoteIdentifier)) {
                 $j.ajax({
                     url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=" + quoteIdentifier + "&productOrder=" + productOrderKey,
@@ -1101,6 +1115,10 @@
             quantityValue = quantityValue || "";
             priceValue = priceValue || "";
             customizationValues[productPart] = new CustomizationValue(priceValue, quantityValue, customNameValue);
+        }
+
+        function resetCustomizationChoices() {
+            customizationValues = {};
         }
 
         /**
@@ -1290,6 +1308,7 @@
         }
 
         function renderCustomizationSummary() {
+            $j("#customizationContent").html("");
             var customJSONString = $j("#customizationJsonString").val();
             if(customJSONString !== null && customJSONString!==undefined && customJSONString !== "") {
                 var customSettings = JSON.parse(customJSONString);
@@ -1581,7 +1600,9 @@
                     </div>
                 </div>
 
-                <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager) %>">
+
+            <security:authorizeBlock roles="<%= roles(Developer, PDM, GPProjectManager) %>">
+                <c:if test="${!actionBean.editOrder.priorToSAP1_5}">
                     <div class="control-group">
                         <label class="control-label">Order Customizations</label>
 
@@ -1589,31 +1610,9 @@
                             <div class="form-value" id="customizationContent"></div>
                         </div>
                     </div>
-
-                    <%--<div class="control-group">--%>
-                        <%--<stripes:label for="orderType" class="control-label">--%>
-                            <%--Order Type <c:if test="${not actionBean.editOrder.draft}">*</c:if>--%>
-                        <%--</stripes:label>--%>
-                        <%--<div class="controls">--%>
-                            <%--<c:choose>--%>
-                                <%--<c:when test="${actionBean.editOrder.childOrder}">--%>
-                                    <%--<c:if test="${actionBean.editOrder.orderType != null}">--%>
-                                        <%--<stripes:hidden name="orderType" id="orderType"--%>
-                                                        <%--value="${actionBean.editOrder.orderType.displayName}"/>--%>
-                                    <%--</c:if>--%>
-                                <%--</c:when>--%>
-                                <%--<c:otherwise>--%>
-                                    <%--<stripes:select name="orderType" id="orderType" class="form-value">--%>
-                                        <%--<stripes:option value="">Select an Order Type</stripes:option>--%>
-                                        <%--<stripes:options-collection collection="${actionBean.orderTypeDisplayNames}"--%>
-                                                                    <%--label="displayName"--%>
-                                                                    <%--value="displayName"/>--%>
-                                    <%--</stripes:select>--%>
-                                <%--</c:otherwise>--%>
-                            <%--</c:choose>--%>
-                        <%--</div>--%>
-                    <%--</div>--%>
-                </security:authorizeBlock>
+                    
+                </c:if>
+            </security:authorizeBlock>
 
                 <div class="control-group">
                     <stripes:label for="selectedAddOns" class="control-label">
@@ -1632,10 +1631,12 @@
                     </c:choose>
                 </div>
                 <security:authorizeBlock roles="<%= roles(GPProjectManager, PDM, Developer) %>">
+                    <c:if test="${!actionBean.editOrder.priorToSAP1_5}">
                     <div class="control-group">
                         <div class="controls">
                             <a href="#" id="showCustomizeWindow" class="form-value">Customize product and add-ons for this order</a></div>
                     </div>
+                    </c:if>
                 </security:authorizeBlock>
 
                 <div id="clinicalAttestationDiv" class="controls controls-text">

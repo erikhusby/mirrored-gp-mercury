@@ -429,7 +429,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
             Map<String, String> barcodeToLcset = new HashMap<>();
             int laneCount = 0;
             // Makes action bean dtos that are queued designations.
-            Set<DesignationDto> designationDtos = new HashSet<>();
+            List<DesignationDto> designationDtos = new ArrayList<>();
             for (LabVessel loadingTube : lanesPerTubeMap.keySet()) {
                 DesignationDto dto = new DesignationDto();
                 dto.setBarcode(loadingTube.getLabel());
@@ -453,7 +453,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
                 if (dto.getNumberLanes() == 17) {
                     dto.setPriority(FlowcellDesignation.Priority.LOW);
                     splitDtoBarcode = dto.getBarcode();
-                    splitDtoGrouping = dto.fctGrouping(false);
+                    splitDtoGrouping = LabBatchEjb.dtoGroupDescription(dto);
                 }
                 designationDtos.add(dto);
                 barcodeToLcset.put(dto.getBarcode(), dto.getLcset());
@@ -586,10 +586,9 @@ public class LabBatchEjbStandardTest extends Arquillian {
         }
     }
 
-
     @Test(groups = TestGroups.STANDARD)
     public void testContiguousLanes() throws Exception {
-        final Set<DesignationDto> designationDtos = new HashSet<>();
+        final List<DesignationDto> designationDtos = new ArrayList<>();
         final StringBuilder messages = new StringBuilder();
         final MessageReporter messageReporter = new MessageReporter() {
             @Override
@@ -767,8 +766,8 @@ public class LabBatchEjbStandardTest extends Arquillian {
             DesignationDto dto = dtos.get(index);
             int emptyLanes = flowcellType.getVesselGeometry().getVesselPositions().length -
                              (index < 4 ? numberLanes : 2 * numberLanes);
-            String msg = MessageFormat.format(LabBatchEjb.PARTIAL_FCT_MESSAGE, dto.fctGrouping(false), emptyLanes);
-
+            String msg = MessageFormat.format(LabBatchEjb.PARTIAL_FCT_MESSAGE, LabBatchEjb.dtoGroupDescription(dto),
+                    emptyLanes);
             Assert.assertTrue(messageLines.remove(msg), "Expected: " + msg);
         }
         Assert.assertTrue(CollectionUtils.isEmpty(messageLines), "Unexpected: " + StringUtils.join(messageLines, ", "));

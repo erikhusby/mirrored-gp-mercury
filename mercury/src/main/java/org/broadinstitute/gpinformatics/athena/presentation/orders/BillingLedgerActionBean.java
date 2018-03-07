@@ -225,19 +225,9 @@ public class BillingLedgerActionBean extends CoreActionBean {
             } catch (ValidationException e) {
                 logger.error(e);
                 addGlobalValidationErrors(e.getValidationMessages());
-            } catch (SAPIntegrationException | QuoteNotFoundException | QuoteServerException e) {
+            } catch (QuoteNotFoundException | QuoteServerException e) {
                 logger.error(e);
                 addGlobalValidationError(e.getMessage());
-            } catch (SAPInterfaceException sie) {
-                String errorMessage = "While updating this order in SAP an error occurred:  ";
-                logger.error(sie);
-                addGlobalValidationError(errorMessage + sie.getMessage());
-            } catch (InvalidProductException ipe) {
-                String errorMessage = "Either the product or one of the selected add-ons for this order is associated "
-                                      + "with an invalid Price item.  Please set the correct price item before "
-                                      + "continuing for this will cause issues when billing: ";
-                logger.error(ipe);
-                addGlobalValidationError(errorMessage+ipe.getMessage());
             }
         }
         if (redirectOnSuccess) {

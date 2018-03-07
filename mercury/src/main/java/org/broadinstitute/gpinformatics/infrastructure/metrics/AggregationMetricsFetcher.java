@@ -55,6 +55,7 @@ public class AggregationMetricsFetcher {
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaQuery<Aggregation> criteriaQuery = criteriaBuilder.createQuery(Aggregation.class);
         Root<Aggregation> root = criteriaQuery.from(Aggregation.class);
+        root.fetch(Aggregation_.aggregationWgs);
 
         List<Aggregation> allResults = new ArrayList<>();
         Map<String, Collection<SubmissionTuple>> tuplesByProject = SubmissionTuple.byProject(tuples);
