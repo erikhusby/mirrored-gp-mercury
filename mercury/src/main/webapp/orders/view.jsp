@@ -1,3 +1,4 @@
+<%--suppress ALL --%>
 <%@ page import="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
@@ -6,7 +7,6 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderSampleBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.datatables.DatatablesStateSaver" %>
-<%@ page import="static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderAccessType.*" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -387,12 +387,12 @@ $j(document).ready(function () {
 
     function initColumnVisibility(settings) {
         var api=$j.fn.dataTable.Api(settings);
-        var columnVisibilityKey = "columnVisibility";
+        var columnVisibilityChangedKey = "columnVisibilityChanged";
         var $sampleDataTable = $j('#sampleData');
         var $colVis = $j(".buttons-colvis");
 
         $sampleDataTable.on('column-visibility.dt', function (e, settings, column, state) {
-            $j("body").data(columnVisibilityKey, state);
+            $j("body").data(columnVisibilityChangedKey, state);
         });
 
 
@@ -402,7 +402,6 @@ $j(document).ready(function () {
         });
 
         function updateShowHideButton() {
-            var $popover = $colVis.closest(".popover")
             if (api.column(":hidden").length>0) {
                 $colVis.addClass("slow-colunms-hidden");
                 $colVis.attr('data-original-title','Some data columns are hidden.');
@@ -434,7 +433,7 @@ $j(document).ready(function () {
                     slowButtons.tooltip();
                 });
 //                updateHowHideButton();
-            })
+            });
 
         // If a column that was previously hidden but becomes visible the page
         // must be reloaded since there is no data in that column.
@@ -442,9 +441,12 @@ $j(document).ready(function () {
             api.state.save();
             updateShowHideButton();
 
-            var sessionVisibility = !undefined && $j("body").data(columnVisibilityKey) || false;
+            var sessionVisibility = !undefined && $j("body").data(columnVisibilityChangedKey) || false;
             if (sessionVisibility) {
                 loadBspData(settings);
+
+                // After data reload, reset the columnVisibilityChanged flag to false.
+                $j("body").data(columnVisibilityChangedKey, false);
             }
         });
     }
