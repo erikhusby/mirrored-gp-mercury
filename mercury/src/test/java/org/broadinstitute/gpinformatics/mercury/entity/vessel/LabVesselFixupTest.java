@@ -1627,7 +1627,7 @@ public class LabVesselFixupTest extends Arquillian {
      * SM-G811M A1119993
      * SM-9T6OH A9920002
      */
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void fixupSupport3871ChangeSampleName() throws Exception {
         userBean.loginOSUser();
 
