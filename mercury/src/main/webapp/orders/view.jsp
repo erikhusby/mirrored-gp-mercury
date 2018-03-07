@@ -444,9 +444,7 @@ $j(document).ready(function () {
 
             var sessionVisibility = !undefined && $j("body").data(columnVisibilityKey) || false;
             if (sessionVisibility) {
-//                api.ajax.reload();
                 loadBspData(settings);
-//                location.reload();
             }
         });
     }
