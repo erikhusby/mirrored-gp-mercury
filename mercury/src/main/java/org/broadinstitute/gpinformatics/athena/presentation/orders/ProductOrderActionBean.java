@@ -213,7 +213,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public static final String GET_SAMPLE_DATA = "getSampleData";
     public static final String GET_SAMPLE_SUMMARY = "getSampleSummary";
     public static final String OPEN_CUSTOM_VIEW_ACTION = "openCustomView";
-    public static final String GET_SAMPLE_SUMMARY = "getSampleSummary";
+
     private String sampleSummary;
     private State state;
 
