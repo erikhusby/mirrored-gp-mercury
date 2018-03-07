@@ -1620,4 +1620,34 @@ public class LabVesselFixupTest extends Arquillian {
         utx.commit();
     }
 
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/AlterSampleName.txt,
+     * so it can be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * SUPPORT-3871 change name of incorrectly accessioned sample and vessel
+     * SM-G811M A1119993
+     * SM-9T6OH A9920002
+     */
+    @Test(enabled = true)
+    public void fixupSupport3871ChangeSampleName() throws Exception {
+        userBean.loginOSUser();
+
+        List<String> sampleUpdateLines = IOUtils.readLines(VarioskanParserTest.getTestResource("AlterSampleName.txt"));
+
+        for(int i = 1; i < sampleUpdateLines.size(); i++) {
+            String[] fields = LabVesselFixupTest.WHITESPACE_PATTERN.split(sampleUpdateLines.get(i));
+            if(fields.length != 2) {
+                throw new RuntimeException("Expected two white-space separated fields in " + sampleUpdateLines.get(i));
+            }
+               LabVessel vessel = labVesselDao.findByIdentifier(fields[1]);
+
+            Assert.assertNotNull(vessel, fields[1] + " not found");
+            final String replacementVesselLabel = fields[1] + "_bad_vessel";
+            System.out.println("Changing " + vessel.getLabel() + " to " + replacementVesselLabel);
+            vessel.setLabel(replacementVesselLabel);
+        }
+
+        labVesselDao.persist(new FixupCommentary(sampleUpdateLines.get(0)));
+        labVesselDao.flush();
+    }
+
 }
