@@ -1960,9 +1960,15 @@ public class LabEventTest extends BaseEventTest {
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
 
         String[] expectedEventNames = {
-                "SamplesDaughterPlateCreation",
-                "SamplesNormalizationTransfer",
-                "PicoPlatingPostNorm",
+                "PicoTransfer",
+                "PicoTransfer",
+                "FingerprintingAliquot",
+                "PicoTransfer",
+                "PicoTransfer",
+                "FingerprintingPlateSetup",
+                "ShearingAliquot",
+                "PicoTransfer",
+                "PicoTransfer",
                 "ShearingTransfer",
                 "PostShearingTransferCleanup",
                 "ShearingQC",
@@ -2215,20 +2221,38 @@ public class LabEventTest extends BaseEventTest {
         String lcsetSuffix = "1";
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, lcsetSuffix);
 
-        TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube, workflowBatch);
-        Map<String, BarcodedTube> mapBarcodeToDaughterTube = new HashMap<>();
-        for (BarcodedTube barcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {
-            mapBarcodeToDaughterTube.put(barcodedTube.getLabel(), barcodedTube);
+        TubeFormation platingTubeFormation = null;
+        String platingBarcode = null;
+        Map<String, BarcodedTube> mapBarcodeToDaughterTube = null;
+        Map<String, BarcodedTube> mapBarcodeToPlatingVessel = null;
+        if (workflow == Workflow.ICE_EXOME_EXPRESS_HYPER_PREP) {
+            CrspPicoEntityBuilder crspPicoEntityBuilder = new CrspPicoEntityBuilder(getBettaLimsMessageTestFactory(),
+                    getLabEventFactory(), getLabEventHandler(), "", "CRSP", mapBarcodeToTube).invoke();
+            platingTubeFormation = (TubeFormation) crspPicoEntityBuilder.getShearingAliquotEntity().
+                    getTargetLabVessels().iterator().next();
+            platingBarcode = platingTubeFormation.getLabCentricName();
+            mapBarcodeToPlatingVessel = new HashMap<>();
+            for (BarcodedTube barcodedTube : platingTubeFormation.getContainerRole().getContainedVessels()) {
+                mapBarcodeToPlatingVessel.put(barcodedTube.getLabel(), barcodedTube);
+            }
+        } else {
+            TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube, workflowBatch);
+            mapBarcodeToDaughterTube = new HashMap<>();
+            for (BarcodedTube barcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {
+                mapBarcodeToDaughterTube.put(barcodedTube.getLabel(), barcodedTube);
+            }
+            PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToDaughterTube,
+                    "P", lcsetSuffix, true);
+            platingTubeFormation = picoPlatingEntityBuilder.getNormTubeFormation();
+            platingBarcode = picoPlatingEntityBuilder.getNormalizationBarcode();
+            mapBarcodeToPlatingVessel = picoPlatingEntityBuilder.getNormBarcodeToTubeMap();
         }
-
-        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToDaughterTube,
-                "P", lcsetSuffix, true);
 
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder;
         if (workflow == Workflow.CELL_FREE_HYPER_PREP_UMIS && umi != LibraryConstructionEntityBuilder.Umi.NONE) {
             LibraryConstructionCellFreeUMIEntityBuilder libraryConstructionProcessWithUMI =
-                    runLibraryConstructionProcessWithUMI(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
-                            picoPlatingEntityBuilder.getNormTubeFormation(), umi);
+                    runLibraryConstructionProcessWithUMI(mapBarcodeToPlatingVessel,
+                            platingTubeFormation, umi);
             QtpEntityBuilder qtpEntityBuilder = runQtpProcess(libraryConstructionProcessWithUMI.getPondRegRack(),
                     libraryConstructionProcessWithUMI.getPondRegTubeBarcodes(),
                     libraryConstructionProcessWithUMI.getMapBarcodeToPondRegTubes(), barcodeSuffix);
@@ -2236,9 +2260,9 @@ public class LabEventTest extends BaseEventTest {
             return Pair.of(mapBarcodeToDaughterTube, qtpEntityBuilder);
         } else if (umi == LibraryConstructionEntityBuilder.Umi.DUAL) {
             ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
-                    runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
-                            picoPlatingEntityBuilder.getNormTubeFormation(),
-                            picoPlatingEntityBuilder.getNormalizationBarcode(), lcsetSuffix);
+                    runExomeExpressShearingProcess(mapBarcodeToPlatingVessel,
+                            platingTubeFormation,
+                            platingBarcode, lcsetSuffix);
 
             StaticPlate shearingCleanupPlate = exomeExpressShearingEntityBuilder.getShearingCleanupPlate();
             UniqueMolecularIdentifier umiReagent = new UniqueMolecularIdentifier(
@@ -2258,9 +2282,8 @@ public class LabEventTest extends BaseEventTest {
                     indexing, LibraryConstructionEntityBuilder.Umi.DUAL);
         } else {
             ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
-                    runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
-                            picoPlatingEntityBuilder.getNormTubeFormation(),
-                            picoPlatingEntityBuilder.getNormalizationBarcode(), lcsetSuffix);
+                    runExomeExpressShearingProcess(mapBarcodeToPlatingVessel, platingTubeFormation, platingBarcode,
+                            lcsetSuffix);
 
             libraryConstructionEntityBuilder = new LibraryConstructionEntityBuilder(
                     getBettaLimsMessageTestFactory(), getLabEventFactory(), getLabEventHandler(),

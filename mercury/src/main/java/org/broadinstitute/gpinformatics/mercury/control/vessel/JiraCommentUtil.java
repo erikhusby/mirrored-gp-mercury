@@ -193,6 +193,8 @@ public class JiraCommentUtil {
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
+            } catch (NoJiraTransitionException ex) {
+                logger.warn("Failed to transition jira issue: " + jiraIssue.getKey(), ex);
             }
         }
 

@@ -22,10 +22,14 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
 import javax.transaction.UserTransaction;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -223,19 +227,10 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
                          Collection<RevInfoPair<AUDITED_ENTITY_CLASS>> revInfoPairs,
                          String etlDateStr) throws Exception {
         try {
-            processFixups(deletedEntityIds, modifiedEntityIds, etlDateStr);
             return writeRecords(deletedEntityIds, modifiedEntityIds, addedEntityIds, revInfoPairs, etlDateStr);
         } finally {
             postEtlLogging();
         }
-    }
-
-    /**
-     * Used when necessary to re-etl related entities (e.g. downstream events) when fixups occur.
-     */
-    protected void processFixups(Collection<Long> deletedEntityIds,
-                                 Collection<Long> modifiedEntityIds,
-                                 String etlDateStr) throws Exception {
     }
 
     /**
@@ -635,10 +630,29 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
     protected static class DataFile {
         private final String filename;
         private BufferedWriter writer;
-        private int lineCount;
+        private int lineCount = 0;
 
         DataFile(String filename) {
             this.filename = filename;
+
+            // There are cases (fixup tests) where records are appended to existing files
+            // Adjust line counter as required
+            java.nio.file.Path path = FileSystems.getDefault().getPath(filename);
+            if(Files.exists(path) ) {
+                BufferedReader lineCounter = null;
+                try {
+                    lineCounter = Files.newBufferedReader(path, Charset.defaultCharset());
+                    while( lineCounter.readLine() != null ) {
+                        lineCount++;
+                    }
+                    // Roll counter back to accommodate empty last line
+                    lineCount--;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    IOUtils.closeQuietly(lineCounter);
+                }
+            }
         }
 
         int getRecordCount() {
@@ -655,7 +669,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
             }
             lineCount++;
             if (writer == null) {
-                writer = new BufferedWriter(new FileWriter(filename));
+                writer = new BufferedWriter(new FileWriter(filename, true));
             }
             writer.write(lineCount + ExtractTransform.DELIMITER + record);
             writer.newLine();
