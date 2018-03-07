@@ -84,7 +84,7 @@ $j(document).ready(function () {
     $j('body').popover({selector: '[rel=popover]'});
 //    if ($j("#sampleData tbody>tr").length > 0) {
     enableDefaultPagingOptions();
-    function loadBspData(settings) {
+    function loadBspData(settings, refresh=false) {
         var api = new $j.fn.dataTable.Api(settings);
         var table = api.table();
         var remainingSamples = [];
@@ -92,7 +92,7 @@ $j(document).ready(function () {
             var data = $j(row);
             data.each(function () {
                 var pdoId = this.PRODUCT_ORDER_SAMPLE_ID;
-                if (!this.includeSampleData && remainingSamples.indexOf(pdoId)<0){
+                if ((!this.includeSampleData) && remainingSamples.indexOf(pdoId) < 0 || refresh) {
                     remainingSamples.push(pdoId);
                 }
             });
@@ -397,8 +397,8 @@ $j(document).ready(function () {
 
 
         $colVis.popover({
-            trigger: "hover", placement: 'top', html: true,
-            content: "Click to change column visibility. Columns marked with a <img src='${ctxpath}/images/turtle.png' class='image-small'/> will negatively impact page performance.</div>"
+            trigger: "hover", placement: 'top', html: true, delay: { "show": 500, "hide": 100 },
+            content: "Click to change column visibility. Columns marked with a <img src='${ctxpath}/images/turtle.png' class='image-small'/> will negatively impact page loading time.</div>"
         });
 
         function updateShowHideButton() {
@@ -443,7 +443,7 @@ $j(document).ready(function () {
 
             var sessionVisibility = !undefined && $j("body").data(columnVisibilityChangedKey) || false;
             if (sessionVisibility) {
-                loadBspData(settings);
+                loadBspData(settings, true);
 
                 // After data reload, reset the columnVisibilityChanged flag to false.
                 $j("body").data(columnVisibilityChangedKey, false);
