@@ -1575,11 +1575,18 @@ public enum LabEventType {
                     reagentNames(new String[]{"Proteinase K", "Buffer AL", "100% Ethanol"}).build(), LibraryType.NONE_ASSIGNED),
     // Transfer blood to spin column
     EXTRACT_BLOOD_MICRO_TO_SPIN("ExtractBloodMicroToSpin",
-            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            new ManualTransferDetails.Builder(MessageType.RECEPTACLE_TRANSFER_EVENT,
-                    BarcodedTube.BarcodedTubeType.EppendoffFliptop15, BarcodedTube.BarcodedTubeType.SpinColumn).
-                    reagentNames(new String[]{"Buffer AW1", "Buffer AW2", "Buffer AE"}).build(), LibraryType.NONE_ASSIGNED),
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.BSP, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT,
+                    RackOfTubes.RackType.FlipperRackRow24,
+                    RackOfTubes.RackType.FlipperRackRow24).
+                    sourceBarcodedTubeType(BarcodedTube.BarcodedTubeType.EppendoffFliptop15).
+                    targetBarcodedTubeType(BarcodedTube.BarcodedTubeType.SpinColumn).
+                    sourceSection(SBSSection.ROWOF24).
+                    targetSection(SBSSection.ROWOF24).
+                    targetVolume(true).
+                    reagentNames(new String[]{"Buffer AW1", "Buffer AW2", "Buffer AE"}).
+                    useWebCam(true).build(), LibraryType.NONE_ASSIGNED),
     // Transfer blood to matrix tube
     EXTRACT_BLOOD_SPIN_TO_MATRIX("ExtractBloodSpinToMatrix",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
@@ -2204,6 +2211,9 @@ public enum LabEventType {
         /** If transfer can be filled from a generated LIMs file from automation. */
         private boolean limsFile = false;
 
+        /** If transfer can be filled from scanning a picture via a webcam */
+        private boolean useWebCam = false;
+
         /** For JAXB */
         public ManualTransferDetails() {
         }
@@ -2235,6 +2245,7 @@ public enum LabEventType {
             sourceVesselTypeGeometries = builder.sourceVesselTypeGeometries;
             targetVesselTypeGeometries = builder.targetVesselTypeGeometries;
             limsFile = builder.limsFile;
+            useWebCam = builder.useWebCam;
         }
 
         public static class Builder {
@@ -2264,6 +2275,7 @@ public enum LabEventType {
             private boolean targetExpectedToExist = false;
             private boolean targetExpectedEmpty = true;
             private boolean limsFile = false;
+            private boolean useWebCam = false;
 
             public Builder(MessageType messageType, VesselTypeGeometry sourceVesselTypeGeometry,
                     VesselTypeGeometry targetVesselTypeGeometry) {
@@ -2379,6 +2391,11 @@ public enum LabEventType {
 
             public Builder limsFile(boolean limsFile) {
                 this.limsFile = limsFile;
+                return this;
+            }
+
+            public Builder useWebCam(boolean useWebCam) {
+                this.useWebCam = useWebCam;
                 return this;
             }
 
@@ -2540,6 +2557,10 @@ public enum LabEventType {
 
         public boolean isLimsFile() {
             return limsFile;
+        }
+
+        public boolean isUseWebCam() {
+            return useWebCam;
         }
     }
 

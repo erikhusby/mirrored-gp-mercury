@@ -276,6 +276,20 @@ infiniumStarter:
         login: mercury-pipeline
         passwordFileName: mercury-pipeline-prod-passwords.properties
 
+decoder:
+
+    DEV:
+      host:     jowalsh-vm.broadinstitute.org
+      port:     5000
+
+    QA:
+      host:     jowalsh-vm.broadinstitute.org
+      port:     5000
+
+    PROD:
+      host:     jowalsh-vm.broadinstitute.org
+      port:     5000
+
 hipchat:
     DEV:
         baseUrl: https://www.hipchat.com/v1/rooms/message
@@ -343,6 +357,7 @@ mercury:
       submission: DEV
       infiniumStarter: DEV
       sap:  RC
+      decoder: DEV
 
 
     AUTO_BUILD:
@@ -363,6 +378,7 @@ mercury:
       submission: DEV
       infiniumStarter: DEV
       sap:  RC
+      decoder: DEV
 
     TEST:
 
@@ -382,6 +398,7 @@ mercury:
       submission: DEV
       infiniumStarter: DEV
       sap:  RC
+      decoder: DEV
 
     QA:
       app:      QA
@@ -400,6 +417,7 @@ mercury:
       submission: DEV
       infiniumStarter: QA
       sap:  RC
+      decoder: QA
 
     RC:
 
@@ -419,6 +437,7 @@ mercury:
       submission: DEV
       infiniumStarter: QA
       sap:  RC
+      decoder: QA
 
 
     PROD:
@@ -439,4 +458,5 @@ mercury:
       submission: PROD
       infiniumStarter: PROD
       sap:  PROD
+      decoder: PROD
 

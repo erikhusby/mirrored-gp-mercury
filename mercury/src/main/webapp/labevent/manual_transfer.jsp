@@ -32,6 +32,11 @@
                 width: 70px;
                 font-size: 12px;
             }
+
+            #analyzebtnid .ui-icon-waiting {
+                background-image: url("${ctxpath}/images/spinner.gif");
+                background-position: 0 center;
+            }
         </style>
 
         <script src="${ctxpath}/resources/scripts/jsPlumb-2.1.4.js"></script>
@@ -53,6 +58,163 @@
                 }, "* Duplicate");
                 $j.validator.classRuleSettings.unique = { unique: true };
                 $j("#transferForm").validate();
+
+                var camHeight = 612;//$(window).height() - 60;
+                var camWidth = 816;//$(window).width() - 60;//
+                $j("#camera_overlay").dialog({
+                    title: "Camera",
+                    autoOpen: false,
+                    height: camHeight + 115,
+                    width: camWidth + 40,
+                    modal: true,
+                    buttons: {
+                        "Record": {
+                            text: "Record",
+                            id: "recordbtnid",
+                            click : function() {
+                                $j('#video').show();
+                                $j('#camera_alert').hide();
+                                $j('#canvas').hide();
+                                $j('#video').get(0).play();
+                                $j('#snapbtnid').button('enable');
+                                $j('#analyzebtnid').button('disable');
+                                $j('#addbtnid').button('disable');
+                            }
+                        },
+                        "Snap": {
+                            text: "Snap",
+                            id: "snapbtnid",
+                            click: function () {
+                                $j('#video').get(0).pause();
+                                $j('#snapbtnid').button('disable');
+                                $j('#analyzebtnid').button('enable');
+                            }
+                        },
+                        "Analyze": {
+                            text: "Analyze",
+                            id: "analyzebtnid",
+                            click: function () {
+                                $j('#snapbtnid').button('disable');
+                                var video = document.getElementById('video');
+                                var canvas = document.getElementById('canvas');
+                                var context = canvas.getContext('2d');
+                                context.drawImage(video, 0, 0, camWidth, camHeight);
+                                var scale = 4;
+                                var tempCanvas = document.createElement("canvas");
+                                tempCanvas.width = video.videoWidth * scale;
+                                tempCanvas.height = video.videoHeight * scale;
+                                tempCanvas.getContext('2d')
+                                        .drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+
+                                var canvasData = tempCanvas.toDataURL("image/png");
+                                var data = new FormData();
+                                data.append("imageFile", canvasData);
+                                $j('#canvas').data(null);
+                                jQuery.ajax({
+                                    url: '/Mercury/labevent/manualtransfer.action?decodeImage',
+                                    data: data,
+                                    cache: false,
+                                    contentType: false,
+                                    processData: false,
+                                    datatype: "application/json",
+                                    type: 'POST',
+                                    beforeSend: function() {
+                                        $j('#analyzebtnid').button('disable');
+                                        $j('#analyzebtnid').button('option', 'icons', { primary: 'ui-icon-waiting' } );
+                                    },
+                                    success: function (data) {
+                                        console.log(data);
+                                        var canvas = document.getElementById('canvas');
+                                        var context = canvas.getContext('2d');
+                                        $j('#video').hide();
+                                        $j('#canvas').show();
+                                        if (data.hasErrors) {
+                                            cameraAlert(data.errorMessage);
+
+                                        }
+                                        if (data.decodeBitmapBase64 !== null) {
+                                            var img = new window.Image();
+                                            img.addEventListener("load", function () {
+                                                $j('#video').hide();
+                                                $j('#canvas').show();
+                                                context.drawImage(img, 0, 0, camWidth, camHeight);
+                                                if (data.count > 0) {
+                                                    $j('#addbtnid').button('enable');
+                                                    $j('#canvas').data(data);
+                                                }
+                                            });
+                                            img.setAttribute("src", data.decodeBitmapBase64);
+                                        }
+                                    },
+                                    error: function (req, textstatus, msg) {
+                                        cameraAlert("An error occured when attempting to decode barcodes");
+                                        console.log(req);
+                                        console.log(msg);
+                                    },
+                                    complete: function () {
+                                        $j('#analyzebtnid').button('option', 'icons', { primary: null} );
+                                    }
+                                });
+                            }
+                        },
+                        "Add Barcodes": {
+                            text: "Add",
+                            id: "addbtnid",
+                            click: function () {
+                                var data = $j('#canvas').data();
+                                console.log(data);
+                                $(data.transfers).each(function( idx, transfer ) {
+                                    console.log( transfer );
+                                    $('#srcRcpBcd0_' + (transfer.index - 1)).val(transfer.sourceTubeBarcode);
+                                    $('#destRcpBcd0_' + (transfer.index - 1)).val(transfer.destinationTubeBarcode);
+                                });
+                                $j(this).dialog("close");
+                            }
+                        },
+                        "Cancel": function() {
+                            $j(this).dialog("close");
+                        }
+                    },
+                    open: function(){
+                        $j('#camera_alert').hide();
+                        $j('#analyzebtnid').button('disable');
+                        $j('#addbtnid').button('disable');
+                        if (initializeCamera()) {
+                            var video = $j('<video id="video" width="' + camWidth + '" height="' + camHeight + '" autoplay></video>');
+                            $j("#camera_overlay").append(video);
+                            var canvas = $j('<canvas id="canvas" width="' + camWidth + '" height="' + camHeight + '"></canvas>').hide();
+                            $j("#camera_overlay").append(canvas);
+                        }
+                    }
+                });
+                function initializeCamera() {
+                    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                        navigator.mediaDevices.getUserMedia({video: true}).then(function (stream) {
+                            var video = $j('<video id="video" width="' + camWidth + '" height="' + camHeight + '" autoplay></video>');
+                            $j("#camera_overlay").append(video);
+                            var canvas = $j('<canvas id="canvas" width="' + camWidth + '" height="' + camHeight + '"></canvas>').hide();
+                            $j("#camera_overlay").append(canvas);
+                            video[0].src = window.URL.createObjectURL(stream);
+                            video[0].play();
+                            return true;
+                        }).catch(function (err) {
+                            console.log(err);
+                            cameraAlert("Failed to initialize camera, is it turned on? If not, start and reload page.");
+                            return false;
+                        });
+                    }
+                }
+
+                function cameraAlert(msg) {
+                    $j('#camera_alert_msg').text(msg);
+                    $j('#camera_alert').show();
+                    $j('#video').hide();
+                    $j('#canvas').hide();
+                }
+
+                <c:if test="${actionBean.useWebCam}">
+                    $j("#camera_overlay").dialog("open");
+                </c:if>
             });
 
             // Some scanners send carriage return, we don't want this to submit the form
@@ -72,6 +234,12 @@
             </stripes:form>
         </c:if>
 
+        <div id="camera_overlay">
+            <div id="camera_alert">
+                <span class="ui-icon ui-icon-alert"></span>
+                <strong>Alert:</strong><p id="camera_alert_msg">Sample ui-state-error style.</p>
+            </div>
+        </div>
         <c:choose>
             <c:when test="${actionBean.parseLimsFile}">
                 <stripes:form beanclass="${actionBean.class.name}" id="transferForm">
